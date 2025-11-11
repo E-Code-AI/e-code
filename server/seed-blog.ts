@@ -3,8 +3,6 @@ import { blogPosts } from "@shared/schema";
 
 const seedBlogPosts = async () => {
   try {
-    console.log("Seeding blog posts...");
-
     const posts = [
       {
         title: "Revolutionary AI Agent: Build Complete Apps in Seconds",
@@ -760,8 +758,6 @@ Ready to transform how your team builds software? Create your team account today
 
     // Insert blog posts
     await db.insert(blogPosts).values(posts);
-    
-    console.log(`Successfully seeded ${posts.length} blog posts`);
   } catch (error) {
     console.error("Error seeding blog posts:", error);
     process.exit(1);
@@ -770,6 +766,5 @@ Ready to transform how your team builds software? Create your team account today
 
 // Run the seed function
 seedBlogPosts().then(() => {
-  console.log("Blog seeding completed");
   process.exit(0);
 });

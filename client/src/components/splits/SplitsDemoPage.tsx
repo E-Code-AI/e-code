@@ -12,19 +12,15 @@ const demoFiles: File[] = [
 
 export function SplitsDemoPage() {
   const handleFileSelect = (file: File) => {
-    console.log('File selected:', file);
   };
 
   const handleFileCreate = (name: string, isFolder: boolean, parentId?: number) => {
-    console.log('Creating file:', { name, isFolder, parentId });
   };
 
   const handleFileDelete = (fileId: number) => {
-    console.log('Deleting file:', fileId);
   };
 
   const handleFileRename = (fileId: number, newName: string) => {
-    console.log('Renaming file:', { fileId, newName });
   };
 
   // Demo content for panels

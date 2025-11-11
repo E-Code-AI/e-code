@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { Pool } from 'pg';
 import crypto from 'crypto';
 const logger = {
-  info: (message: string, ...args: any[]) => console.log(`[real-database-management] INFO: ${message}`, ...args),
+  info: (message: string, ...args: any[]) => {},
   error: (message: string, ...args: any[]) => console.error(`[real-database-management] ERROR: ${message}`, ...args),
   warn: (message: string, ...args: any[]) => console.warn(`[real-database-management] WARN: ${message}`, ...args),
 };

@@ -314,7 +314,7 @@ export function ReplitFileExplorer({
                 e.preventDefault();
                 if (draggedItem && file.type === "folder" && draggedItem.id !== file.id) {
                   // Logique de déplacement de fichier
-                  console.log("Move", draggedItem.name, "to", file.path);
+                  // TODO: Implement file move operation
                 }
               }}
             >

@@ -108,7 +108,6 @@ export function CollaborativeProvider({
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('Collaborative WebSocket connected');
         setIsConnected(true);
         reconnectAttemptsRef.current = 0;
 
@@ -137,7 +136,6 @@ export function CollaborativeProvider({
       };
 
       ws.onclose = () => {
-        console.log('WebSocket disconnected');
         setIsConnected(false);
         wsRef.current = null;
 
@@ -147,7 +145,6 @@ export function CollaborativeProvider({
           reconnectAttemptsRef.current++;
           
           reconnectTimeoutRef.current = setTimeout(() => {
-            console.log(`Attempting to reconnect (attempt ${reconnectAttemptsRef.current})...`);
             connect();
           }, delay);
         } else {

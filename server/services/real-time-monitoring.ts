@@ -221,7 +221,7 @@ export class RealTimeMonitoringService {
         const computeHours = metrics.containerStats.cpuUsage / 100 * (30 / 3600); // 30 seconds in hours
         
         await this.storage.trackUsage(
-          metrics.userId,
+          String(metrics.userId),
           'compute',
           computeHours,
           {
@@ -235,7 +235,7 @@ export class RealTimeMonitoringService {
         const storageGB = metrics.containerStats.diskUsage / (1024 * 1024 * 1024);
         
         await this.storage.trackUsage(
-          metrics.userId,
+          String(metrics.userId),
           'storage',
           storageGB,
           {
@@ -248,7 +248,7 @@ export class RealTimeMonitoringService {
         const bandwidthGB = (metrics.containerStats.networkBytesIn + metrics.containerStats.networkBytesOut) / (1024 * 1024 * 1024);
         
         await this.storage.trackUsage(
-          metrics.userId,
+          String(metrics.userId),
           'bandwidth',
           bandwidthGB,
           {
@@ -286,14 +286,11 @@ export class RealTimeMonitoringService {
       uptime: 0,
       lastActivity: new Date()
     });
-    
-    console.log(`[monitoring] Registered project ${projectId} for monitoring`);
   }
 
   // Unregister project
   unregisterProject(projectId: number): void {
     this.activeProjects.delete(projectId);
-    console.log(`[monitoring] Unregistered project ${projectId} from monitoring`);
   }
 
   // Get current metrics for a project

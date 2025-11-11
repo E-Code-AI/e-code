@@ -160,7 +160,6 @@ export default function Shell() {
     const ws = new WebSocket(`${protocol}//${window.location.host}/shell?sessionId=${sessionId}`);
     
     ws.onopen = () => {
-      console.log('Shell WebSocket connected');
       session.terminal.write('\r\n\x1b[32mE-Code Shell\x1b[0m - Full Linux Environment\r\n');
       session.terminal.write('Type \x1b[33mhelp\x1b[0m for available commands\r\n\r\n');
       session.terminal.write('\x1b[32m~\x1b[0m $ ');
@@ -176,7 +175,6 @@ export default function Shell() {
     };
 
     ws.onclose = () => {
-      console.log('Shell WebSocket closed');
       session.terminal.write('\r\n\x1b[31mConnection closed.\x1b[0m\r\n');
     };
 

@@ -119,10 +119,6 @@ export function AIAgentPanel({ projectId, onClose }: AIAgentPanelProps) {
                 setCurrentStreamMessage(assistantMessage.content);
               }
               
-              if (data.status === 'connected') {
-                console.log('Connected to AI stream');
-              }
-              
               if (data.totalTokens) {
                 setTokenCount(prev => prev + data.totalTokens);
               }

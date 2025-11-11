@@ -134,7 +134,6 @@ export class AICodeCompletionProvider implements monaco.languages.InlineCompleti
     item: monaco.languages.InlineCompletion
   ): void {
     // Track when completions are shown (for analytics)
-    console.log('AI completion shown:', item.insertText);
   }
 
   setEnabled(enabled: boolean): void {
@@ -197,7 +196,6 @@ export function registerAICodeCompletion(
       run: () => {
         const currentState = provider['isEnabled'];
         provider.setEnabled(!currentState);
-        console.log(`AI completions ${!currentState ? 'enabled' : 'disabled'}`);
       }
     })
   );

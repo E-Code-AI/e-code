@@ -50,8 +50,6 @@ export class ResourceMonitor {
 
   // Start monitoring resources for a project
   async startProjectMonitoring(projectId: number, userId: number): Promise<void> {
-    console.log(`[ResourceMonitor] Starting monitoring for project ${projectId}`);
-    
     // Initialize project metrics
     this.projectMetrics.set(projectId, {
       projectId,
@@ -75,8 +73,6 @@ export class ResourceMonitor {
 
   // Stop monitoring and save final metrics
   async stopProjectMonitoring(projectId: number): Promise<void> {
-    console.log(`[ResourceMonitor] Stopping monitoring for project ${projectId}`);
-    
     const interval = this.monitoringIntervals.get(projectId);
     if (interval) {
       clearInterval(interval);
@@ -344,7 +340,6 @@ export class ResourceMonitor {
         }
       }
 
-      console.log(`[ResourceMonitor] Saved metrics for project ${projectId}`);
     } catch (error) {
       console.error(`[ResourceMonitor] Error saving metrics:`, error);
     }
@@ -357,8 +352,6 @@ export class ResourceMonitor {
 
   // Monitor deployment resources
   async trackDeploymentResources(deploymentId: number, projectId: number, userId: number, deploymentType: string): Promise<void> {
-    console.log(`[ResourceMonitor] Tracking deployment ${deploymentId} resources`);
-
     // Base deployment costs by type
     const deploymentCosts: Record<string, number> = {
       'static': 0.50,        // $0.50 per deployment

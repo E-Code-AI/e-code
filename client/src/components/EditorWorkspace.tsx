@@ -102,8 +102,8 @@ export function EditorWorkspace({
   useEffect(() => {
     if (!activeFileId && files.length > 0) {
       // Find index.html or the first file
-      const indexHtmlFile = files.find(f => f.name === 'index.html' && !f.isFolder);
-      const firstFile = files.find(f => !f.isFolder);
+      const indexHtmlFile = files.find(f => f.name === 'index.html' && !f.isDirectory);
+      const firstFile = files.find(f => !f.isDirectory);
       
       if (indexHtmlFile) {
         setActiveFileId(indexHtmlFile.id);
@@ -168,7 +168,7 @@ export function EditorWorkspace({
 
   // Handle file selection
   const handleFileSelect = (file: File) => {
-    if (!file.isFolder) {
+    if (!file.isDirectory) {
       setActiveFileId(file.id);
     }
   };
@@ -265,7 +265,7 @@ export function EditorWorkspace({
         });
         break;
       default:
-        console.log(`Command not implemented: ${action}`);
+        break;
     }
   };
   
@@ -305,11 +305,15 @@ export function EditorWorkspace({
             id: file.id,
             name: file.name,
             content: file.content || '',
+            path: file.path || '',
             projectId: project.id,
             parentId: file.parentId,
-            isFolder: file.type === 'folder',
+            isDirectory: file.type === 'folder',
+            language: null,
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            storageKey: null,
+            storageUrl: null
           })}
           selectedFileId={activeFileId || undefined}
         />
@@ -321,7 +325,7 @@ export function EditorWorkspace({
   if (editorOnly) {
     return (
       <div className="h-full">
-        {activeFile && !activeFile.isFolder ? (
+        {activeFile && !activeFile.isDirectory ? (
           <CodeEditor
             file={activeFile}
             onChange={(content) => onFileUpdate(activeFile.id, content)}
@@ -359,7 +363,7 @@ export function EditorWorkspace({
 
           {/* Agent Tab Content */}
           <TabsContent value="agent" className="flex-1 overflow-hidden m-0 border-0 p-0">
-            <MobileAgentInterface projectId={project.id} className="h-full" />
+            <MobileAgentInterface projectId={parseInt(project.id)} className="h-full" />
           </TabsContent>
 
           {/* Files Tab Content */}
@@ -372,11 +376,15 @@ export function EditorWorkspace({
                     id: file.id,
                     name: file.name,
                     content: file.content || '',
+                    path: file.path || '',
                     projectId: project.id,
                     parentId: file.parentId,
-                    isFolder: file.type === 'folder',
+                    isDirectory: file.type === 'folder',
+                    language: null,
                     createdAt: new Date(),
-                    updatedAt: new Date()
+                    updatedAt: new Date(),
+                    storageKey: null,
+                    storageUrl: null
                   });
                   // Switch to editor tab after selecting a file
                   if (file.type !== 'folder') {
@@ -441,7 +449,7 @@ export function EditorWorkspace({
                   
                   <div className="flex-1 overflow-hidden">
                     <ReplitAgent 
-                      projectId={project.id}
+                      projectId={parseInt(project.id)}
                       selectedFile={activeFile?.name}
                       selectedCode=""
                     />
@@ -478,11 +486,15 @@ export function EditorWorkspace({
                         id: file.id,
                         name: file.name,
                         content: file.content || '',
+                        path: file.path || '',
                         projectId: project.id,
                         parentId: file.parentId,
-                        isFolder: file.type === 'folder',
+                        isDirectory: file.type === 'folder',
+                        language: null,
                         createdAt: new Date(),
-                        updatedAt: new Date()
+                        updatedAt: new Date(),
+                        storageKey: null,
+                        storageUrl: null
                       })}
                       selectedFileId={activeFileId || undefined}
                     />
@@ -571,7 +583,7 @@ export function EditorWorkspace({
       {showTerminal && !terminalMinimized && (
         <div className="hidden md:block h-1/3 border-t border-border">
           <Terminal 
-            project={project}
+            projectId={parseInt(project.id)}
             minimized={terminalMinimized}
             onMinimize={() => setTerminalMinimized(true)}
             onMaximize={() => setTerminalMinimized(false)}
@@ -584,7 +596,7 @@ export function EditorWorkspace({
       {showTerminal && terminalMinimized && (
         <div className="fixed bottom-4 right-4 z-50">
           <Terminal
-            project={project}
+            projectId={parseInt(project.id)}
             minimized={terminalMinimized}
             onMinimize={() => setTerminalMinimized(true)}
             onMaximize={() => setTerminalMinimized(false)}
@@ -597,7 +609,7 @@ export function EditorWorkspace({
       {showCollaboration && activeFile && (
         <div className="fixed top-0 right-0 h-full w-80 z-40">
           <CollaborationPanel
-            projectId={project.id}
+            projectId={parseInt(project.id)}
           />
         </div>
       )}
@@ -609,7 +621,10 @@ export function EditorWorkspace({
       
       {/* Keyboard Shortcuts */}
       {showKeyboardShortcuts && (
-        <KeyboardShortcuts />
+        <KeyboardShortcuts 
+          open={showKeyboardShortcuts}
+          onOpenChange={setShowKeyboardShortcuts}
+        />
       )}
       
       {/* ReplitDB */}
@@ -617,7 +632,7 @@ export function EditorWorkspace({
         <Dialog open={showReplitDB} onOpenChange={setShowReplitDB}>
           <DialogContent className="max-w-6xl h-[80vh]">
             <ReplitDB 
-              projectId={project.id}
+              projectId={parseInt(project.id)}
               className="h-full"
             />
           </DialogContent>
@@ -627,7 +642,7 @@ export function EditorWorkspace({
       {/* Nix Config */}
       {showNixConfig && (
         <NixConfig
-          projectId={project.id}
+          projectId={parseInt(project.id)}
         />
       )}
     </div>

@@ -301,7 +301,6 @@ export class MCPHttpServer {
         if (now.getTime() - session.lastActivity.getTime() > timeout) {
           session.transport.close();
           sessionsToDelete.push(sessionId);
-          console.log(`Cleaned up inactive session: ${sessionId}`);
         }
       });
       

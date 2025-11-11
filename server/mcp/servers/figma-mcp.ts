@@ -19,9 +19,6 @@ export class FigmaMCPServer {
       this.apiKey = process.env.FIGMA_API_KEY || null;
       if (this.apiKey) {
         this.initialized = true;
-        console.log('[figma-mcp] Figma MCP server initialized successfully');
-      } else {
-        console.log('[figma-mcp] Figma API key not configured');
       }
     } catch (error) {
       console.error('[figma-mcp] Failed to initialize:', error);

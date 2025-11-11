@@ -352,7 +352,6 @@ export function generateDefaultCommands(callbacks: {
       icon: <Rocket className="h-4 w-4 text-green-500" />,
       keywords: ['run', 'start', 'dev', 'serve'],
       action: () => {
-        console.log('Run project');
         // TODO: Implement run action
       },
     },
@@ -364,7 +363,6 @@ export function generateDefaultCommands(callbacks: {
       icon: <Rocket className="h-4 w-4 text-blue-500" />,
       keywords: ['deploy', 'publish', 'production'],
       action: () => {
-        console.log('Deploy project');
         // TODO: Implement deploy action
       },
     },

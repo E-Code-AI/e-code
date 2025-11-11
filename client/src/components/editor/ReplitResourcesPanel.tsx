@@ -55,7 +55,6 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
         wsRef.current = ws;
 
         ws.onopen = () => {
-          console.log('[ResourcesPanel] WebSocket connected');
           reconnectAttemptsRef.current = 0; // Reset on successful connection
         };
 
@@ -86,7 +85,6 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
         ws.onerror = (error) => console.error('[ResourcesPanel] WebSocket error:', error);
 
         ws.onclose = () => {
-          console.log('[ResourcesPanel] WebSocket disconnected');
           wsRef.current = null;
           
           // Exponential backoff: 1s, 2s, 4s, 8s, 16s, max 30s
@@ -97,7 +95,6 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
           
           reconnectAttemptsRef.current += 1;
           
-          console.log(`[ResourcesPanel] Reconnecting in ${(delay + jitter) / 1000}s (attempt ${reconnectAttemptsRef.current})`);
           reconnectTimeoutRef.current = setTimeout(() => connectWebSocket(), delay + jitter);
         };
       } catch (error) {

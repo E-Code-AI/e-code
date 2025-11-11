@@ -32,11 +32,9 @@ export class ContainerBuilder {
 
     try {
       // Build the Docker image
-      console.log(`Building Docker image: ${imageName}`);
       await execAsync(`docker build -t ${imageName} ${projectDir}`);
 
       // Push to registry
-      console.log(`Pushing image to registry: ${imageName}`);
       await execAsync(`docker push ${imageName}`);
 
       return imageName;

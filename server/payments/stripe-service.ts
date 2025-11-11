@@ -390,7 +390,8 @@ export class StripePaymentService {
         break;
         
       default:
-        console.log(`Unhandled webhook event type: ${event.type}`);
+        // Unhandled webhook event type
+        break;
     }
   }
 
@@ -420,19 +421,16 @@ export class StripePaymentService {
   }
 
   private async handlePaymentSucceeded(invoice: Stripe.Invoice) {
-    console.log(`Payment succeeded for invoice: ${invoice.id}`);
     // Could send email notification, update credits, etc.
   }
 
   private async handlePaymentFailed(invoice: Stripe.Invoice) {
-    console.log(`Payment failed for invoice: ${invoice.id}`);
     // Could send email notification, restrict access, etc.
   }
 
   private async saveUsageRecord(record: UsageRecord): Promise<void> {
     // Save to database
     // In production, this would use a proper database table
-    console.log('Saving usage record:', record);
   }
 
   private async getUsageRecords(

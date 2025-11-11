@@ -115,10 +115,6 @@ class PerformanceMonitor {
       if (metricKey in this.metrics.webVitals) {
         this.metrics.webVitals[metricKey] = metric.value;
       }
-      
-      if (this.config.enableDetailedLogging) {
-        console.log(`[Performance] ${metric.name}:`, metric.value);
-      }
 
       this.queueReport({
         type: 'web-vital',
@@ -307,10 +303,6 @@ class PerformanceMonitor {
     const timestamp = performance.now();
     performance.mark(name);
     this.metrics.customMarks.set(name, timestamp);
-
-    if (this.config.enableDetailedLogging) {
-      console.log(`[Performance] Mark: ${name} at ${timestamp}ms`);
-    }
   }
 
   public measure(name: string, startMark?: string, endMark?: string): void {
@@ -321,10 +313,6 @@ class PerformanceMonitor {
       if (measures.length > 0) {
         const measure = measures[measures.length - 1];
         this.metrics.customMeasures.set(name, measure.duration);
-        
-        if (this.config.enableDetailedLogging) {
-          console.log(`[Performance] Measure: ${name} = ${measure.duration}ms`);
-        }
 
         this.queueReport({
           type: 'custom-measure',
@@ -344,10 +332,6 @@ class PerformanceMonitor {
     return () => {
       const duration = performance.now() - startTime;
       this.metrics.customMeasures.set(name, duration);
-      
-      if (this.config.enableDetailedLogging) {
-        console.log(`[Performance] Timer: ${name} = ${duration}ms`);
-      }
 
       this.queueReport({
         type: 'timer',

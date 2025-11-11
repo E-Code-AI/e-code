@@ -137,7 +137,6 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
   };
 
   const confirmRestore = () => {
-    console.log('Restoring to checkpoint:', restoreTarget);
     setShowRestoreDialog(false);
     setRestoreTarget(null);
   };

@@ -194,7 +194,6 @@ export function AdvancedTerminal({
     const ws = new WebSocket(wsUrl);
     
     ws.onopen = () => {
-      console.log(`Terminal session ${id} connected`);
       terminal.writeln('\x1b[1;32mConnected to terminal\x1b[0m');
       terminal.writeln('');
     };

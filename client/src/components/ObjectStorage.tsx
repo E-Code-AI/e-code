@@ -203,7 +203,6 @@ export function ObjectStorage() {
 
   const handleUploadComplete = (result: any) => {
     // Handle upload completion
-    console.log('Upload completed:', result);
     queryClient.invalidateQueries({ queryKey: ['/api/storage/files'] });
   };
 
@@ -219,7 +218,6 @@ export function ObjectStorage() {
 
   const handleBulkAction = (action: 'delete' | 'makePublic' | 'makePrivate') => {
     // Handle bulk actions on selected files
-    console.log(`Bulk action: ${action} on`, Array.from(selectedFiles));
     setSelectedFiles(new Set());
   };
 

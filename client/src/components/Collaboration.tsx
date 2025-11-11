@@ -11,7 +11,7 @@ import { cn, getInitials, getRandomColor } from '@/lib/utils';
 
 // Types for collaboration
 export type CollaboratorInfo = {
-  userId: number;
+  userId: string;
   username: string;
   color: string;
   position?: {
@@ -22,7 +22,7 @@ export type CollaboratorInfo = {
 };
 
 export type ChatMessage = {
-  userId: number;
+  userId: string;
   username: string;
   content: string;
   timestamp: number;
@@ -70,7 +70,6 @@ export default function Collaboration({
     
     // Connection opened
     ws.addEventListener('open', () => {
-      console.log('Connected to collaboration server');
       setIsConnected(true);
       
       // Send join message
@@ -109,7 +108,7 @@ export default function Collaboration({
             
             // Add system message to chat
             setChatMessages(prev => [...prev, {
-              userId: 0,
+              userId: '0',
               username: 'System',
               content: `${message.username} joined the project`,
               timestamp: message.timestamp,
@@ -123,7 +122,7 @@ export default function Collaboration({
             
             // Add system message to chat
             setChatMessages(prev => [...prev, {
-              userId: 0,
+              userId: '0',
               username: 'System',
               content: `${message.username} left the project`,
               timestamp: message.timestamp,
@@ -169,7 +168,6 @@ export default function Collaboration({
     
     // Handle connection close
     ws.addEventListener('close', () => {
-      console.log('Disconnected from collaboration server');
       setIsConnected(false);
     });
     

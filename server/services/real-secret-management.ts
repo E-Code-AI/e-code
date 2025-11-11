@@ -4,7 +4,7 @@ import { projects, users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
 const logger = {
-  info: (message: string, ...args: any[]) => console.log(`[real-secret-management] INFO: ${message}`, ...args),
+  info: (message: string, ...args: any[]) => {},
   error: (message: string, ...args: any[]) => console.error(`[real-secret-management] ERROR: ${message}`, ...args),
   warn: (message: string, ...args: any[]) => console.warn(`[real-secret-management] WARN: ${message}`, ...args),
 };

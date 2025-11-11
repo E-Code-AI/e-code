@@ -375,7 +375,7 @@ export class MentorshipService {
       });
 
       if (meeting) {
-        console.log(`[MentorshipService] Zoom meeting created for session ${sessionId}: ${meeting.id}`);
+        
         return meeting.join_url;
       } else {
         console.error(`[MentorshipService] Failed to create Zoom meeting for session ${sessionId}`);

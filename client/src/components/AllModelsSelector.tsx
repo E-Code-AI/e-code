@@ -127,8 +127,6 @@ export function AllModelsSelector() {
         title: "Model Test Successful",
         description: `${selectedModel} generated response successfully`,
       });
-
-      console.log('Response:', data);
     } catch (error: any) {
       toast({
         title: "Test Failed",
@@ -192,7 +190,7 @@ export function AllModelsSelector() {
 
             <TabsContent value="all" className="space-y-4">
               <div className="grid gap-4">
-                {Object.entries(groupedModels).map(([provider, models]) => (
+                {(Object.entries(groupedModels) as [string, ModelInfo[]][]).map(([provider, models]) => (
                   <div key={provider} className="space-y-2">
                     <h3 className="text-sm font-semibold flex items-center gap-2">
                       {getProviderIcon(provider)}
@@ -218,7 +216,7 @@ export function AllModelsSelector() {
                           </CardHeader>
                           <CardContent className="space-y-2">
                             <div className="flex flex-wrap gap-1">
-                              {model.capabilities?.slice(0, 3).map((cap) => (
+                              {model.capabilities?.slice(0, 3).map((cap: string) => (
                                 <Badge key={cap} variant="secondary" className="text-xs">
                                   {cap}
                                 </Badge>

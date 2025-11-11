@@ -15,7 +15,7 @@ type BudgetLimit = typeof budgetLimits.$inferSelect;
 type UsageAlert = typeof usageAlerts.$inferSelect;
 
 const logger = {
-  info: (...args: any[]) => console.log('[billing-service]', ...args),
+  info: (...args: any[]) => {},
   error: (...args: any[]) => console.error('[billing-service] ERROR:', ...args),
   warn: (...args: any[]) => console.warn('[billing-service] WARN:', ...args)
 };

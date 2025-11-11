@@ -743,11 +743,6 @@ export class DeploymentManager {
       
       if (!isConfigured) {
         // Provide instructions for manual DNS configuration
-        console.log(`DNS Configuration Required for ${domain}:
-          - Add A record pointing to: ${targetIPs[0]}
-          - Or add CNAME record pointing to: ${targetHost}
-        `);
-        
         // In production, this would integrate with DNS providers API
         // For now, we verify the configuration exists
         throw new Error(`Please configure DNS for ${domain} to point to ${targetHost} (${targetIPs.join(', ')})`);

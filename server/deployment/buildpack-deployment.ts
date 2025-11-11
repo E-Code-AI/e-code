@@ -281,7 +281,6 @@ server {
     // 1. Update DNS records
     // 2. Configure SSL with Let's Encrypt
     // 3. Add nginx server block for custom domain
-    console.log(`[buildpack-deployment] Configuring custom domain ${customDomain} -> ${targetSubdomain}`);
   }
 
   async getDeploymentLogs(deploymentId: string): Promise<string[]> {

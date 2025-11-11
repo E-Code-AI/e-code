@@ -117,10 +117,6 @@ export function initializeMCPRoutes(app: any) {
     next();
   });
   
-  console.log('[MCP] MCP Server routes initialized with authentication and CORS');
-  console.log('[MCP] OAuth endpoint: /mcp/oauth/authorize');
-  console.log('[MCP] API endpoint: /mcp/connect (requires API key or OAuth token)');
-  
   return {
     httpServer,
     mcpServer: mcpServerInstance

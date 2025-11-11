@@ -250,9 +250,6 @@ export class RealDeploymentServiceV2 {
     // 2. Configure SSL certificate via Let's Encrypt
     // 3. Update ingress rules
     
-    // For now, we'll simulate this
-    console.log(`[real-deployment-v2] Setting up custom domain ${customDomain} -> ${targetUrl}`);
-    
     // Return the custom domain URL
     return `https://${customDomain}`;
   }

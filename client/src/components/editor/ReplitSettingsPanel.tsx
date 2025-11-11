@@ -66,12 +66,12 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
   ];
 
   const handleSave = () => {
-    console.log('Saving settings...');
+
     setIsDirty(false);
   };
 
   const handleReset = () => {
-    console.log('Resetting settings...');
+
     setIsDirty(false);
   };
 

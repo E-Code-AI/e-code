@@ -592,7 +592,7 @@ export function ReplitMonacoEditor({
               <div className="absolute bottom-4 right-4 z-10">
                 <AICodeReview
                   projectId={String(projectId)}
-                  fileId={fileId}
+                  fileId={fileId?.toString()}
                   filePath={currentFile.path}
                   code={editorContent || currentFile.content}
                   onIssueFix={handleCodeReviewFix}
@@ -613,7 +613,6 @@ export function ReplitMonacoEditor({
                   onIssueSelect={handleCodeReviewIssueClick}
                   onFileOpen={(fileId) => {
                     // Handle file open if needed
-                    console.log('Open file:', fileId);
                   }}
                 />
               </div>

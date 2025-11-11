@@ -27,7 +27,6 @@ export class WebSocketWrapper {
 
     // Skip WebSocket connection in development unless explicitly enabled
     if (this.isDevelopment && !this.options.enableInDevelopment) {
-      console.log('[WebSocket] Skipping connection in development mode:', url);
       // Call onOpen immediately in dev to allow components to function
       if (this.options.onOpen) {
         setTimeout(this.options.onOpen, 0);

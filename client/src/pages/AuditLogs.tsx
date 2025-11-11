@@ -53,7 +53,6 @@ export function AuditLogs() {
 
   const exportLogs = () => {
     // In real implementation, would trigger CSV/JSON export
-    console.log('Exporting logs...');
   };
 
   const getActionIcon = (action: string) => {

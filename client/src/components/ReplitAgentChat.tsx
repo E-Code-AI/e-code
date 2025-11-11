@@ -266,7 +266,6 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
                   if (!fileResponse.ok) {
                     console.error('Failed to create file:', action.data.path, await fileResponse.text());
                   } else {
-                    console.log('Successfully created file:', action.data.path);
                     queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
                     
                     // If this is a main file, show preview
@@ -295,7 +294,6 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
                   if (!folderResponse.ok) {
                     console.error('Failed to create folder:', action.data.path, await folderResponse.text());
                   } else {
-                    console.log('Successfully created folder:', action.data.path);
                     queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
                   }
                 } catch (error) {
@@ -309,8 +307,6 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
                   
                   if (!packageResponse.ok) {
                     console.error('Failed to install packages:', action.data.packages, await packageResponse.text());
-                  } else {
-                    console.log('Successfully installed packages:', action.data.packages);
                   }
                 } catch (error) {
                   console.error('Error installing packages:', action.data.packages, error);
@@ -591,7 +587,6 @@ Would you like me to explain any part of the implementation or make adjustments?
               if (!fileResponse.ok) {
                 console.error('Failed to create file:', action.data.path, await fileResponse.text());
               } else {
-                console.log('Successfully created file:', action.data.path);
                 // Invalidate files cache to refresh file explorer
                 queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
               }
@@ -608,7 +603,6 @@ Would you like me to explain any part of the implementation or make adjustments?
               if (!folderResponse.ok) {
                 console.error('Failed to create folder:', action.data.path, await folderResponse.text());
               } else {
-                console.log('Successfully created folder:', action.data.path);
                 // Invalidate files cache to refresh file explorer
                 queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
               }
@@ -623,8 +617,6 @@ Would you like me to explain any part of the implementation or make adjustments?
               
               if (!packageResponse.ok) {
                 console.error('Failed to install packages:', action.data.packages, await packageResponse.text());
-              } else {
-                console.log('Successfully installed packages:', action.data.packages);
               }
             } catch (error) {
               console.error('Error installing packages:', action.data.packages, error);

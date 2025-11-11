@@ -1,4 +1,4 @@
-console.log('[DEBUG] Starting server with error catching...');
+
 
 process.on('uncaughtException', (error) => {
   console.error('[DEBUG] Uncaught Exception:', error);
@@ -11,7 +11,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 import('./index.js').then(() => {
-  console.log('[DEBUG] Server module loaded successfully');
+  
 }).catch((error) => {
   console.error('[DEBUG] Failed to load server module:', error);
   process.exit(1);

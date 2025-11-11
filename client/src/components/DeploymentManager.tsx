@@ -187,7 +187,6 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
         if (status.pods && status.pods.length > 0) {
           const running = status.pods.filter((p: any) => p.status === 'Running').length;
           const total = status.pods.length;
-          console.log(`Container status: ${running}/${total} pods running`);
         }
       }
     } catch (error) {
@@ -277,13 +276,10 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
       setTimeout(() => {
         apiRequest('POST', `/api/projects/${actualProjectId}/container`, {})
           .then(response => {
-            if (response.ok) {
-              console.log('Container environment created successfully');
-            }
+            // Container environment created successfully
           })
           .catch(err => {
-            // Silently log errors - deployment handles container creation if needed
-            console.log('Background container creation:', err.message);
+            // Silently handle errors - deployment handles container creation if needed
           });
       }, 0);
 

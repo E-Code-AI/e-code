@@ -99,7 +99,6 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
   };
 
   const runQuery = () => {
-    console.log('Running query:', query);
     setActiveTab('results');
   };
 

@@ -360,7 +360,6 @@ export class AutoScalingService extends EventEmitter {
 
   private async scaleDeployment(deploymentId: string, targetInstances: number): Promise<void> {
     // In production, this would call the container orchestration API
-    console.log(`Scaling deployment ${deploymentId} to ${targetInstances} instances`);
     
     // Simulate scaling action
     await new Promise(resolve => setTimeout(resolve, 1000));

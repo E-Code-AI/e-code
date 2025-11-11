@@ -133,11 +133,6 @@ function validateProductionCors(origins: string[]): void {
         console.warn('[CORS WARNING] Consider using HTTPS for security');
       }
     }
-    
-    console.log('[CORS] ✓ Production mode - Allowed origins configured:');
-    origins.forEach(origin => console.log(`[CORS]   - ${origin}`));
-  } else {
-    console.log('[CORS] Development mode - Allowed origins:', origins.length > 0 ? origins : ['localhost (development default)']);
   }
 }
 
@@ -213,7 +208,6 @@ export function configureCors(app: Express): void {
   try {
     const corsOptions = createCorsMiddleware();
     app.use(cors(corsOptions));
-    console.log('[CORS] Secure CORS configuration applied successfully');
   } catch (error) {
     console.error('[CORS] Failed to configure CORS:', error);
     if (process.env.NODE_ENV === 'production') {

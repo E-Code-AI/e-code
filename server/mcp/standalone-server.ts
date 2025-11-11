@@ -366,7 +366,7 @@ const TOOL_DEFINITIONS: Record<string, {
           temperature: args.temperature ?? 0.7,
         }),
       });
-      const aiData = await aiResponse.json();
+      const aiData: any = await aiResponse.json();
       return {
         content: [{
           type: 'text',
@@ -702,10 +702,6 @@ app.post('/disconnect', (req, res) => {
 // Start server
 export function startMCPStandaloneServer() {
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[MCP] ✅ Standalone MCP Server running on port ${PORT}`);
-    console.log(`[MCP] Available at: http://localhost:${PORT}`);
-    console.log(`[MCP] Connect endpoint: http://localhost:${PORT}/connect`);
-    console.log(`[MCP] Tools endpoint: http://localhost:${PORT}/tools`);
-    console.log(`[MCP] Ready for AI agent operations`);
+    // MCP Server started
   });
 }

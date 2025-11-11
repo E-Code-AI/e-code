@@ -147,7 +147,7 @@ router.get('/activities', async (req, res) => {
         message: `Deployment ${d.status} for project #${d.projectId}`,
         timestamp: d.createdAt
       }))
-    ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    ].sort((a, b) => new Date(b.timestamp || new Date()).getTime() - new Date(a.timestamp || new Date()).getTime());
 
     res.json(activities);
   } catch (error) {

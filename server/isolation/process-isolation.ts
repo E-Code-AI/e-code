@@ -319,7 +319,6 @@ cd /workspace
     
     // In real implementation, would create actual PostgreSQL schema
     // For now, return the schema name that would be used
-    console.log(`Would create database schema: ${schemaName}`);
     
     return schemaName;
   }

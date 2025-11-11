@@ -92,8 +92,6 @@ export const devAuthBypass = (req: Request, res: Response, next: NextFunction) =
       updatedAt: new Date(),
       password: '***PROTECTED***'
     } as any;
-    
-    console.log('⚠️ Auth Bypass: Simulation d\'authentification activée pour cette demande');
   }
   
   next();
@@ -121,7 +119,6 @@ export function setupAuthBypass(app: any) {
     }
 
     bypassAuth = true;
-    console.log('⚠️ Auth Bypass: ACTIVÉ - Toutes les vérifications d\'authentification seront ignorées');
     res.json({
       status: 'enabled',
       warning: 'Le contournement d\'authentification est activé. À utiliser uniquement pour le développement.'
@@ -138,7 +135,6 @@ export function setupAuthBypass(app: any) {
     }
 
     bypassAuth = false;
-    console.log('✅ Auth Bypass: DÉSACTIVÉ - L\'authentification normale est restaurée');
     res.json({ status: 'disabled' });
   });
 
@@ -191,7 +187,6 @@ export function setupAuthBypass(app: any) {
       }
       
       bypassAuth = true;
-      console.log('⚠️ Auth Bypass: User logged in via bypass');
       res.json({ 
         success: true,
         message: 'Auth bypass enabled',
@@ -199,10 +194,4 @@ export function setupAuthBypass(app: any) {
       });
     });
   });
-
-  console.log('🔧 Auth Bypass: Points de terminaison de débogage initialisés pour le développement');
-  
-  if (bypassAuth) {
-    console.log('⚠️ Auth Bypass: ACTIVÉ par défaut en développement');
-  }
 }

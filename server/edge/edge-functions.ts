@@ -48,8 +48,6 @@ export class EdgeFunctionsService extends EventEmitter {
   }
 
   private initializeService(): void {
-    console.log('[2025-07-30T20:58:00.000Z] [edge-functions] INFO: Edge Functions service initialized');
-    
     // Start deployment worker
     setInterval(() => this.processDeploymentQueue(), 5000);
     
@@ -179,7 +177,7 @@ export class EdgeFunctionsService extends EventEmitter {
       request,
       env: func.env,
       console: {
-        log: (msg: string) => console.log(`[EdgeFunction ${func.id}] ${msg}`),
+        log: (msg: string) => {},
         error: (msg: string) => console.error(`[EdgeFunction ${func.id}] ${msg}`),
       },
       fetch: global.fetch,
@@ -309,7 +307,6 @@ export class EdgeFunctionsService extends EventEmitter {
 
   private processDeploymentQueue(): void {
     for (const [functionId, func] of Array.from(this.deploymentQueue)) {
-      console.log(`[edge-functions] Deploying function ${functionId} to regions: ${func.regions.join(', ')}`);
       this.deploymentQueue.delete(functionId);
     }
   }
@@ -321,7 +318,7 @@ export class EdgeFunctionsService extends EventEmitter {
         
         // Scale down inactive functions
         if (inactiveDuration > 300000) { // 5 minutes
-          console.log(`[edge-functions] Scaling down inactive function: ${functionId}`);
+          // Function can be scaled down
         }
       }
     }

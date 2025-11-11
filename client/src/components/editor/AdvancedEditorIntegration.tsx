@@ -9,10 +9,16 @@ interface FileNode {
   name: string;
   path: string;
   type: "file" | "folder";
-  content?: string;
-  language?: string;
+  size: number;
   lastModified: Date;
+  language?: string;
+  isReadOnly?: boolean;
+  isHidden?: boolean;
+  isStarred?: boolean;
+  permissions?: "read" | "write" | "execute";
+  content?: string;
   children?: FileNode[];
+  parent?: FileNode;
 }
 
 interface AdvancedEditorIntegrationProps {
@@ -35,7 +41,6 @@ export function AdvancedEditorIntegration({
   };
 
   const handleFileCreate = (path: string, type: "file" | "folder") => {
-    console.log("Creating", type, "at", path);
   };
 
   const handleRunCode = () => {
@@ -53,7 +58,6 @@ export function AdvancedEditorIntegration({
   };
 
   const handleCommandExecute = (command: string) => {
-    console.log("Terminal command:", command);
   };
 
   return (

@@ -20,10 +20,8 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
     
     if (process.env.NODE_ENV === 'development') {
       await viteModule.setupVite(app, server);
-      console.log('[VITE] ✅ Development server configured successfully with HMR');
     } else {
       viteModule.serveStatic(app);
-      console.log('[VITE] ✅ Static file serving configured successfully');
     }
     
     return true;
@@ -46,8 +44,6 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
  * Serves pre-built static files from dist/ folder
  */
 export async function setupFallbackServer(app: Application): Promise<void> {
-  console.log('[FALLBACK] Setting up static file server...');
-  
   // Use dynamic imports for ES modules
   const express = await import('express');
   const path = await import('path');
@@ -60,8 +56,6 @@ export async function setupFallbackServer(app: Application): Promise<void> {
   if (fs.existsSync(publicPath) && fs.existsSync(builtIndexPath)) {
     // We have a complete pre-built frontend!
     app.use(express.static(publicPath));
-    console.log('[FALLBACK] ✅ Serving pre-built frontend from dist/public/');
-    console.log('[FALLBACK] ✅ Frontend assets: CSS, JS, images, service worker');
     
     // Read the built index.html
     const builtHTML = fs.readFileSync(builtIndexPath, 'utf-8');
@@ -76,7 +70,6 @@ export async function setupFallbackServer(app: Application): Promise<void> {
       return res.status(200).set({ 'Content-Type': 'text/html' }).end(builtHTML);
     });
     
-    console.log('[FALLBACK] ✅ React application ready - full UI functional!');
     return;
   }
   
@@ -202,6 +195,4 @@ export async function setupFallbackServer(app: Application): Promise<void> {
       </html>
     `);
   });
-  
-  console.log('[FALLBACK] Fallback HTML server ready');
 }

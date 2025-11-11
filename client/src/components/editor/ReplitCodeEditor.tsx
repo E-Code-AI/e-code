@@ -206,7 +206,7 @@ export function ReplitCodeEditor({
 
   // Open file in new tab or activate existing tab
   useEffect(() => {
-    if (activeFile && !activeFile.isFolder) {
+    if (activeFile && !activeFile.isDirectory) {
       const existingTab = tabs.find(tab => tab.fileId === activeFile.id);
       
       if (existingTab) {
@@ -346,7 +346,6 @@ export function ReplitCodeEditor({
   };
 
   const handleEditorMount = (editor: any, monaco: any) => {
-    console.log('Monaco initialization: success');
     editorRef.current = editor;
     setIsLoading(false);
     setHasError(false);

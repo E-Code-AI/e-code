@@ -59,7 +59,6 @@ class NetworkOptimizer {
     
     // Check for pending request (deduplication)
     if (this.config.enableDeduplication && this.pendingRequests.has(requestKey)) {
-      console.log(`[Network] Deduplicating request: ${requestKey}`);
       return this.pendingRequests.get(requestKey)!;
     }
     
@@ -67,7 +66,6 @@ class NetworkOptimizer {
     if (this.config.enableCache && config.method === 'GET') {
       const cached = this.getFromCache(requestKey);
       if (cached) {
-        console.log(`[Network] Cache hit: ${requestKey}`);
         return Promise.resolve(cached);
       }
     }
@@ -141,8 +139,6 @@ class NetworkOptimizer {
     
     const batch = [...this.batchQueue];
     this.batchQueue = [];
-    
-    console.log(`[Network] Flushing batch of ${batch.length} requests`);
     
     // Group requests by endpoint
     const grouped = this.groupRequestsByEndpoint(batch);
@@ -335,7 +331,6 @@ class NetworkOptimizer {
 
   private onConnectionChange(): void {
     const connection = (navigator as any).connection;
-    console.log(`[Network] Connection changed to: ${connection?.effectiveType}`);
     
     // Clear cache on significant connection change
     if (connection?.effectiveType === 'slow-2g' || connection?.effectiveType === '2g') {
@@ -410,7 +405,6 @@ class NetworkOptimizer {
     
     // Don't prefetch on slow connections or when save data is enabled
     if (saveData || effectiveType === 'slow-2g' || effectiveType === '2g') {
-      console.log('[Network] Skipping prefetch due to connection constraints');
       return;
     }
     

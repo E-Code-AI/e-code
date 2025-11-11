@@ -90,8 +90,6 @@ export class EnhancedAuthService {
     // - Discord: passport-discord
     // - Slack: @aoberoi/passport-slack
     // - Azure AD: passport-azure-ad-oauth2
-    
-    console.log('[Enhanced Auth] Additional OAuth providers ready for configuration when packages are installed');
   }
 
   getEnabledProviders(): OAuthProvider[] {

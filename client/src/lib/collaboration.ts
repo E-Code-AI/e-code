@@ -49,8 +49,6 @@ export function useCollaboration(projectId: number | undefined, fileId: number |
     const userColor = getUserColor(user.id);
     
     ws.onopen = () => {
-      console.log('WebSocket connected');
-      
       // Send join message
       const joinMessage: CollaborationMessage = {
         type: 'user_joined',
@@ -143,7 +141,7 @@ export function useCollaboration(projectId: number | undefined, fileId: number |
             break;
             
           default:
-            console.log('Unknown message type', message);
+            break;
         }
       } catch (error) {
         console.error('Error parsing WebSocket message', error);
@@ -155,7 +153,6 @@ export function useCollaboration(projectId: number | undefined, fileId: number |
     };
     
     ws.onclose = () => {
-      console.log('WebSocket disconnected');
       // Send leave message before socket closes
       if (ws.readyState === WebSocket.OPEN) {
         const leaveMessage: CollaborationMessage = {

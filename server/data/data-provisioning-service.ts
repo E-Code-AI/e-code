@@ -457,8 +457,6 @@ export class DataProvisioningService {
   }
 
   private async insertDataToDatabase(projectId: number, data: GeneratedData): Promise<void> {
-    console.log(`Inserting ${data.records} records into ${data.table} for project ${projectId}`);
-    
     try {
       // Create table if it doesn't exist
       await this.createTableIfNotExists(data.table, data.data[0]);
@@ -469,8 +467,6 @@ export class DataProvisioningService {
         const batch = data.data.slice(i, i + batchSize);
         await this.insertBatch(data.table, batch);
       }
-      
-      console.log(`Successfully inserted ${data.records} records into ${data.table}`);
     } catch (error: any) {
       console.error(`Error inserting data into ${data.table}:`, error.message);
       throw error;
@@ -525,7 +521,6 @@ export class DataProvisioningService {
 
     try {
       await db.execute(sql.raw(createTableSQL));
-      console.log(`Table ${tableName} created or already exists`);
     } catch (error: any) {
       console.warn(`Could not create table ${tableName}:`, error.message);
     }

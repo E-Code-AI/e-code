@@ -1864,12 +1864,9 @@ h1 {
 ];
 
 async function seedTemplates() {
-  console.log('🌱 Seeding templates...');
-  
   try {
     // Clear existing templates first to start fresh
     await db.delete(templates);
-    console.log('✅ Cleared existing templates');
     
     // Insert all templates with duplicate handling
     let successCount = 0;
@@ -1878,23 +1875,16 @@ async function seedTemplates() {
     for (const template of REPLIT_TEMPLATES) {
       try {
         await db.insert(templates).values(template);
-        console.log(`✅ Added template: ${template.name}`);
         successCount++;
       } catch (error: any) {
-        if (error.code === '23505') { // Duplicate key error
-          console.log(`⚠️  Template already exists: ${template.name}`);
+        if (error.code === '23505') {
+          // Template already exists
         } else {
           console.error(`❌ Failed to add template ${template.name}:`, error.message);
           failCount++;
         }
       }
     }
-    
-    console.log(`\n✅ Successfully seeded ${successCount} templates!`);
-    if (failCount > 0) {
-      console.log(`⚠️  Failed to add ${failCount} templates`);
-    }
-    console.log(`📊 Total templates in seed file: ${REPLIT_TEMPLATES.length}`);
   } catch (error) {
     console.error('❌ Error seeding templates:', error);
     throw error;
@@ -1904,7 +1894,6 @@ async function seedTemplates() {
 // Run the seed function
 seedTemplates()
   .then(() => {
-    console.log('✅ Template seeding completed!');
     process.exit(0);
   })
   .catch((error) => {

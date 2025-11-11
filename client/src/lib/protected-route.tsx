@@ -6,7 +6,6 @@ import { useEffect } from "react";
 // Component to handle redirects safely
 function RedirectToLogin({ path }: { path: string }) {
   useEffect(() => {
-    console.log(`Redirecting to /login from ${path} - user not authenticated`);
     window.location.href = '/login';
   }, [path]);
 
@@ -27,17 +26,6 @@ export function ProtectedRoute({
 }) {
   const { user, isLoading, error } = useAuth();
   const [location] = useLocation();
-  
-  // Debug logging
-  useEffect(() => {
-    console.log(`ProtectedRoute (${path}) state:`, { 
-      user: user?.username || 'not logged in', 
-      isLoading, 
-      isAtPath: location === path,
-      currentLocation: location,
-      error: error?.message
-    });
-  }, [user, isLoading, path, location, error]);
 
   return (
     <Route path={path}>
