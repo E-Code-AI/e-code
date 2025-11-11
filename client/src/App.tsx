@@ -21,6 +21,7 @@ import { addImagePreloadLinks } from "./utils/image-optimization";
 const NotFound = instrumentedLazy(() => import("@/pages/not-found"), "NotFound");
 const Home = instrumentedLazy(() => import("@/pages/Home"), "Home");
 const Editor = instrumentedLazy(() => import("@/pages/Editor"), "Editor");
+const IDEPage = instrumentedLazy(() => import("@/pages/IDEPage"), "IDEPage");
 const ResponsiveEditorRoute = instrumentedLazy(() => import("@/pages/ResponsiveEditorRoute"), "ResponsiveEditorRoute");
 const AuthPage = instrumentedLazy(() => import("@/pages/auth-page"), "AuthPage");
 const ProjectsPage = instrumentedLazy(() => import("@/pages/ProjectsPage"), "ProjectsPage");
@@ -658,6 +659,9 @@ function AppContent() {
           <Route path="/u/:username" component={UserProfileWrapper} />
           <ProtectedRoute path="/editor/:id" component={() => (
             <ResponsiveEditorRoute />
+          )} />
+          <ProtectedRoute path="/ide/:id" component={() => (
+            <IDEPage />
           )} />
           <ProtectedRoute path="/runtimes" component={() => (
             <ReplitLayout showSidebar={false}>
