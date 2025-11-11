@@ -131,8 +131,7 @@ export default function Editor(props: EditorProps = {}) {
 
   const saveFileMutation = useMutation({
     mutationFn: async ({ fileId, content }: { fileId: number, content: string }) => {
-      const res = await apiRequest("PATCH", `/api/files/${fileId}`, { content });
-      return await res.json();
+      return await apiRequest("PATCH", `/api/files/${fileId}`, { content });
     },
     onSuccess: (data) => {
       if (!resolvedProjectId) return;
@@ -159,13 +158,12 @@ export default function Editor(props: EditorProps = {}) {
       if (!resolvedProjectId) {
         throw new Error("Project is not available for file creation");
       }
-      const res = await apiRequest("POST", `/api/files/${resolvedProjectId}`, {
+      return await apiRequest("POST", `/api/files/${resolvedProjectId}`, {
         name,
         isFolder,
         parentId: parentId ?? null,
         content: isFolder ? null : "",
       });
-      return await res.json();
     },
     onSuccess: (data) => {
       if (!resolvedProjectId) return;
@@ -211,8 +209,7 @@ export default function Editor(props: EditorProps = {}) {
 
   const renameFileMutation = useMutation({
     mutationFn: async ({ fileId, name }: { fileId: number, name: string }) => {
-      const res = await apiRequest("PATCH", `/api/files/${fileId}`, { name });
-      return await res.json();
+      return await apiRequest("PATCH", `/api/files/${fileId}`, { name });
     },
     onSuccess: (data) => {
       if (!resolvedProjectId) return;

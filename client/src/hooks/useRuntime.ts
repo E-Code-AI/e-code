@@ -66,8 +66,8 @@ export function useRuntime(projectId: number) {
    */
   const startRuntime = useMutation<RuntimeStartResult, Error>({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/runtime/${projectId}/start`);
-      return await res.json();
+      // apiRequest already returns parsed JSON
+      return await apiRequest('POST', `/api/runtime/${projectId}/start`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
@@ -79,8 +79,8 @@ export function useRuntime(projectId: number) {
    */
   const stopRuntime = useMutation<RuntimeStopResult, Error>({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/runtime/${projectId}/stop`);
-      return await res.json();
+      // apiRequest already returns parsed JSON
+      return await apiRequest('POST', `/api/runtime/${projectId}/stop`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
@@ -92,8 +92,8 @@ export function useRuntime(projectId: number) {
    */
   const executeCommand = useMutation<{ success: boolean; output: string }, Error, string>({
     mutationFn: async (command: string) => {
-      const res = await apiRequest('POST', `/api/runtime/${projectId}/execute`, { command });
-      return await res.json();
+      // apiRequest already returns parsed JSON
+      return await apiRequest('POST', `/api/runtime/${projectId}/execute`, { command });
     },
   });
 
