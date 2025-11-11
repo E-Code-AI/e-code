@@ -75,6 +75,30 @@ interface Tab {
   closable?: boolean;
 }
 
+// Helper to get storage key for this project
+const getStorageKey = (projectId: string) => `ide-state-${projectId}`;
+
+// Helper to load state from sessionStorage
+const loadPersistedState = (projectId: string) => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = sessionStorage.getItem(getStorageKey(projectId));
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+};
+
+// Helper to save state to sessionStorage
+const savePersistedState = (projectId: string, state: any) => {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(getStorageKey(projectId), JSON.stringify(state));
+  } catch {
+    // Ignore quota errors
+  }
+};
+
 export default function IDEPage() {
   const params = useParams();
   const [, navigate] = useLocation();
@@ -84,13 +108,16 @@ export default function IDEPage() {
   
   const projectId = (params.projectId || params.id) as string;
   
-  // State
-  const [activeTab, setActiveTab] = useState('preview');
-  const [tabs, setTabs] = useState<Tab[]>([
+  // Load persisted state on mount
+  const persistedState = loadPersistedState(projectId);
+  
+  // State with persistence restoration
+  const [activeTab, setActiveTab] = useState(persistedState?.activeTab || 'preview');
+  const [tabs, setTabs] = useState<Tab[]>(persistedState?.tabs || [
     { id: 'preview', label: 'Preview', closable: false }
   ]);
-  const [selectedFileId, setSelectedFileId] = useState<number | undefined>();
-  const [showFileExplorer, setShowFileExplorer] = useState(true);
+  const [selectedFileId, setSelectedFileId] = useState<number | undefined>(persistedState?.selectedFileId);
+  const [showFileExplorer, setShowFileExplorer] = useState(persistedState?.showFileExplorer ?? true);
   const [isRunning, setIsRunning] = useState(false);
   const [gitBranch, setGitBranch] = useState('main');
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
@@ -110,6 +137,17 @@ export default function IDEPage() {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('keyboard-shortcut-tester') === 'true';
   });
+  
+  // Persist state to sessionStorage on changes (fixes browser back/forward navigation)
+  useEffect(() => {
+    if (!projectId) return;
+    savePersistedState(projectId, {
+      activeTab,
+      tabs,
+      selectedFileId,
+      showFileExplorer,
+    });
+  }, [projectId, activeTab, tabs, selectedFileId, showFileExplorer]);
   
   // Listen for keyboard settings changes
   useEffect(() => {
