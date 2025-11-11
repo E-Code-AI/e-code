@@ -489,6 +489,24 @@ export interface IStorage {
     sessionId: string;
     timestamp: Date;
   }): Promise<any>;
+  
+  // AI Conversation operations
+  createAiConversation(conversation: InsertAiConversation): Promise<AiConversation>;
+  getAiConversation(id: number): Promise<AiConversation | undefined>;
+  updateAiConversation(id: number, updates: Partial<InsertAiConversation>): Promise<AiConversation | undefined>;
+  addMessageToConversation(conversationId: number, message: any): Promise<void>;
+  
+  // Agent Message operations
+  createAgentMessage(message: {
+    conversationId: number;
+    projectId: string;
+    userId: string;
+    role: string;
+    content: string;
+    model?: string;
+    metadata?: Record<string, any>;
+  }): Promise<any>;
+  getAgentMessages(conversationId: number): Promise<any[]>;
 
   // Dynamic Intelligence / Agent Preferences operations
   getDynamicIntelligenceSettings(userId: string): Promise<DynamicIntelligence | undefined>;
@@ -2849,21 +2867,39 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async addMessageToConversation(conversationId: number, message: any): Promise<AiConversation | undefined> {
+  async addMessageToConversation(conversationId: number, message: any): Promise<void> {
     const conversation = await this.getAiConversation(conversationId);
-    if (!conversation) return undefined;
+    if (!conversation) return;
 
     const messages = [...conversation.messages as any[], message];
-    const [updated] = await this.db
+    await this.db
       .update(aiConversations)
       .set({
         messages,
         totalTokensUsed: sql`${aiConversations.totalTokensUsed} + ${message.tokens || 0}`,
         updatedAt: new Date()
       })
-      .where(eq(aiConversations.id, conversationId))
-      .returning();
-    return updated;
+      .where(eq(aiConversations.id, conversationId));
+  }
+
+  // Agent Message operations
+  async createAgentMessage(message: {
+    conversationId: number;
+    projectId: string;
+    userId: string;
+    role: string;
+    content: string;
+    model?: string;
+    metadata?: Record<string, any>;
+  }): Promise<any> {
+    const { agentMessages } = await import('@shared/schema');
+    const [created] = await this.db.insert(agentMessages).values(message).returning();
+    return created;
+  }
+
+  async getAgentMessages(conversationId: number): Promise<any[]> {
+    const { agentMessages } = await import('@shared/schema');
+    return await this.db.select().from(agentMessages).where(eq(agentMessages.conversationId, conversationId));
   }
 
   // Dynamic Intelligence operations
