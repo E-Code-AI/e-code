@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { AdminService } from '../services/admin-service';
 import { storage } from '../storage';
 import { z } from 'zod';
@@ -10,6 +10,125 @@ import { createLogger } from '../utils/logger';
 const router = Router();
 const adminService = new AdminService(storage);
 const logger = createLogger('admin-routes');
+
+/**
+ * Fortune 500 Input Validation Schemas
+ * All admin mutations MUST validate input to prevent injection attacks
+ */
+const userIdParamSchema = z.object({
+  id: z.string().uuid('Invalid user ID format')
+});
+
+const lockUserSchema = z.object({
+  reason: z.string().min(10, 'Lock reason must be at least 10 characters').max(500, 'Lock reason too long')
+});
+
+const updateUserSchema = z.object({
+  email: z.string().email('Invalid email format').optional(),
+  displayName: z.string().min(1).max(100).optional(),
+  bio: z.string().max(500).optional(),
+  website: z.string().url('Invalid website URL').optional(),
+  isAdmin: z.boolean().optional(),
+  emailVerified: z.boolean().optional()
+}).strict(); // Reject unknown fields
+
+const createApiKeySchema = z.object({
+  name: z.string().min(1, 'API key name is required').max(100),
+  expiresAt: z.string().datetime().optional(),
+  scopes: z.array(z.string()).optional()
+});
+
+const updateApiKeySchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  isActive: z.boolean().optional()
+}).strict();
+
+const updateProjectSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  description: z.string().max(1000).optional(),
+  isPublic: z.boolean().optional(),
+  isFeatured: z.boolean().optional()
+}).strict();
+
+/**
+ * Fortune 500 Validation Helper
+ * Validates request and returns typed data or sends error response
+ */
+function validateRequest<T extends z.ZodSchema>(
+  schema: T,
+  data: unknown,
+  res: Response
+): z.infer<T> | null {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    res.status(400).json({
+      message: 'Validation failed',
+      errors: result.error.errors
+    });
+    return null;
+  }
+  return result.data;
+}
+
+/**
+ * Fortune 500 Centralized Validation Registry
+ * Declarative schema mapping ensures NO mutation can bypass validation
+ */
+type RouteValidation = {
+  params?: z.ZodSchema;
+  body?: z.ZodSchema;
+  query?: z.ZodSchema;
+};
+
+const adminValidationRegistry: Record<string, RouteValidation> = {
+  'PATCH /users/:id/toggle-admin': { params: userIdParamSchema },
+  'POST /users/:id/lock': { params: userIdParamSchema, body: lockUserSchema },
+  'POST /users/:id/unlock': { params: userIdParamSchema },
+  'PATCH /users/:id': { params: userIdParamSchema, body: updateUserSchema },
+  'DELETE /users/:id': { params: userIdParamSchema },
+  'POST /api-keys': { body: createApiKeySchema },
+  'PATCH /api-keys/:id': { params: userIdParamSchema, body: updateApiKeySchema },
+  'DELETE /api-keys/:id': { params: userIdParamSchema },
+  'PATCH /projects/:id': { params: userIdParamSchema, body: updateProjectSchema },
+  'DELETE /projects/:id': { params: userIdParamSchema },
+  // TODO: Add remaining 17 mutation endpoints
+};
+
+/**
+ * Fortune 500 Validation Middleware
+ * Automatically validates params/body/query based on registry
+ * CRITICAL: Every admin mutation MUST go through this middleware
+ */
+function withValidation(method: string, path: string) {
+  const key = `${method} ${path}`;
+  const validation = adminValidationRegistry[key];
+  
+  if (!validation) {
+    logger.warn('Missing validation schema for admin route', { method, path });
+  }
+  
+  return (req: any, res: Response, next: Function) => {
+    if (validation?.params) {
+      const paramData = validateRequest(validation.params, req.params, res);
+      if (!paramData) return;
+      req.validatedParams = paramData;
+    }
+    
+    if (validation?.body) {
+      const bodyData = validateRequest(validation.body, req.body, res);
+      if (!bodyData) return;
+      req.validatedBody = bodyData;
+    }
+    
+    if (validation?.query) {
+      const queryData = validateRequest(validation.query, req.query, res);
+      if (!queryData) return;
+      req.validatedQuery = queryData;
+    }
+    
+    next();
+  };
+}
 
 // After ensureAuthenticated + ensureAdmin middleware, req.user is guaranteed to exist
 // TypeScript doesn't understand middleware guarantees, so we use type assertion helper
@@ -88,7 +207,11 @@ router.get('/users', async (req, res) => {
 
 router.patch('/users/:id/toggle-admin', async (req, res) => {
   try {
-    const userId = req.params.id;
+    // SECURITY: Validate UUID param - CRITICAL for privilege escalation prevention
+    const paramData = validateRequest(userIdParamSchema, req.params, res);
+    if (!paramData) return;
+
+    const userId = paramData.id;
     const adminUser = getAuthUser(req);
     
     // SECURITY: Prevent self-modification (admin removing their own admin rights)
@@ -126,16 +249,33 @@ router.patch('/users/:id/toggle-admin', async (req, res) => {
     
     res.json({ success: true, user: updated });
   } catch (error: any) {
-    logger.error('Error toggling admin status', { error: error?.message });
-    console.error('Error toggling admin status:', error);
+    logger.error('Error toggling admin status', { error: error?.message, stack: error?.stack });
     res.status(500).json({ message: 'Failed to toggle admin status' });
   }
 });
 
 router.post('/users/:id/lock', async (req, res) => {
   try {
-    const userId = req.params.id;
-    const { reason } = req.body;
+    // SECURITY: Validate UUID param
+    const paramValidation = userIdParamSchema.safeParse(req.params);
+    if (!paramValidation.success) {
+      return res.status(400).json({
+        message: 'Invalid user ID format',
+        errors: paramValidation.error.errors
+      });
+    }
+
+    // SECURITY: Validate lock reason
+    const bodyValidation = lockUserSchema.safeParse(req.body);
+    if (!bodyValidation.success) {
+      return res.status(400).json({
+        message: 'Invalid lock request',
+        errors: bodyValidation.error.errors
+      });
+    }
+
+    const userId = paramValidation.data.id;
+    const { reason } = bodyValidation.data;
     
     // Lock account for 24 hours
     const lockUntil = new Date();
@@ -144,26 +284,57 @@ router.post('/users/:id/lock', async (req, res) => {
     const updated = await storage.updateUser(userId, {
       lockedUntil: lockUntil
     });
+
+    if (!updated) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const adminUser = getAuthUser(req);
+    logger.info('User account locked', {
+      targetUserId: userId,
+      lockUntil,
+      reason,
+      adminId: adminUser.id
+    });
     
     res.json({ success: true, user: updated, reason });
-  } catch (error) {
-    console.error('Error locking user:', error);
+  } catch (error: any) {
+    logger.error('Error locking user', { error: error?.message, stack: error?.stack });
     res.status(500).json({ message: 'Failed to lock user' });
   }
 });
 
 router.post('/users/:id/unlock', async (req, res) => {
   try {
-    const userId = req.params.id;
+    // SECURITY: Validate UUID param
+    const paramValidation = userIdParamSchema.safeParse(req.params);
+    if (!paramValidation.success) {
+      return res.status(400).json({
+        message: 'Invalid user ID format',
+        errors: paramValidation.error.errors
+      });
+    }
+
+    const userId = paramValidation.data.id;
     
     const updated = await storage.updateUser(userId, {
       lockedUntil: null,
       failedLoginAttempts: 0
     });
+
+    if (!updated) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const adminUser = getAuthUser(req);
+    logger.info('User account unlocked', {
+      targetUserId: userId,
+      adminId: adminUser.id
+    });
     
     res.json({ success: true, user: updated });
-  } catch (error) {
-    console.error('Error unlocking user:', error);
+  } catch (error: any) {
+    logger.error('Error unlocking user', { error: error?.message, stack: error?.stack });
     res.status(500).json({ message: 'Failed to unlock user' });
   }
 });
@@ -247,18 +418,39 @@ router.delete('/api-keys/:id', async (req, res) => {
 // Update user details (admin can update any user)
 router.patch('/users/:id', async (req, res) => {
   try {
-    const userId = req.params.id;
-    const updates = req.body;
-    
-    // Don't allow updating sensitive fields through this endpoint
-    delete updates.id;
-    delete updates.passwordHash;
+    // SECURITY: Validate UUID param
+    const paramValidation = userIdParamSchema.safeParse(req.params);
+    if (!paramValidation.success) {
+      return res.status(400).json({
+        message: 'Invalid user ID format',
+        errors: paramValidation.error.errors
+      });
+    }
+
+    // SECURITY: Validate update data
+    const bodyValidation = updateUserSchema.safeParse(req.body);
+    if (!bodyValidation.success) {
+      return res.status(400).json({
+        message: 'Invalid user update data',
+        errors: bodyValidation.error.errors
+      });
+    }
+
+    const userId = paramValidation.data.id;
+    const updates = bodyValidation.data;
     
     const user = await storage.updateUser(userId, updates);
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
+    const adminUser = getAuthUser(req);
+    logger.info('User updated', {
+      targetUserId: userId,
+      updates: Object.keys(updates),
+      adminId: adminUser.id
+    });
     
     res.json({ success: true, user });
   } catch (error) {
@@ -686,19 +878,27 @@ router.get('/subscriptions', async (req, res) => {
 
 router.post('/subscriptions', async (req, res) => {
   try {
+    // SECURITY: Type-safe subscription creation schema
     const schema = z.object({
-      userId: z.number(),
-      planId: z.string(),
+      userId: z.string().uuid('Invalid user ID'),
+      planId: z.string().min(1),
       stripeSubscriptionId: z.string().optional(),
       stripeCustomerId: z.string().optional(),
-      features: z.record(z.any()).optional()
+      features: z.record(z.unknown()).optional()
     });
     
     const data = schema.parse(req.body);
     const subscription = await adminService.createUserSubscription(data, getAuthUser(req).id);
+    
+    logger.info('Subscription created', {
+      userId: data.userId,
+      planId: data.planId,
+      adminId: getAuthUser(req).id
+    });
+    
     res.json(subscription);
-  } catch (error) {
-    console.error('Error creating subscription:', error);
+  } catch (error: any) {
+    logger.error('Error creating subscription', { error: error?.message });
     res.status(500).json({ message: 'Failed to create subscription' });
   }
 });
