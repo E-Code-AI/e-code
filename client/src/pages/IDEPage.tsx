@@ -53,8 +53,6 @@ interface Tab {
 }
 
 export default function IDEPage() {
-  console.log('[IDEPage] ========== COMPONENT MOUNTED ==========');
-  
   const params = useParams();
   const [, navigate] = useLocation();
   const { user } = useAuth();
@@ -62,7 +60,6 @@ export default function IDEPage() {
   const queryClient = useQueryClient();
   
   const projectId = (params.projectId || params.id) as string;
-  console.log('[IDEPage] Project ID:', projectId);
   
   // State
   const [activeTab, setActiveTab] = useState('preview');
@@ -91,21 +88,13 @@ export default function IDEPage() {
   useEffect(() => {
     const handleKeyboardSettingsChanged = () => {
       if (typeof window === 'undefined') return;
-      const hintValue = localStorage.getItem('keyboard-shortcut-hint');
-      const testerValue = localStorage.getItem('keyboard-shortcut-tester');
-      console.log('[IDEPage] Keyboard settings changed - hint:', hintValue, 'tester:', testerValue);
-      setEnableShortcutHint(hintValue !== 'false');
-      setEnableShortcutTester(testerValue === 'true');
+      setEnableShortcutHint(localStorage.getItem('keyboard-shortcut-hint') !== 'false');
+      setEnableShortcutTester(localStorage.getItem('keyboard-shortcut-tester') === 'true');
     };
     
     window.addEventListener('keyboard-settings-changed', handleKeyboardSettingsChanged);
     return () => window.removeEventListener('keyboard-settings-changed', handleKeyboardSettingsChanged);
   }, []);
-  
-  // Debug: Log keyboard utilities state on mount and state changes
-  useEffect(() => {
-    console.log('[IDEPage] Keyboard utilities state - enableShortcutHint:', enableShortcutHint, 'enableShortcutTester:', enableShortcutTester);
-  }, [enableShortcutHint, enableShortcutTester]);
   
   // Load project
   const { data: project, isLoading: isLoadingProject } = useQuery<Project>({

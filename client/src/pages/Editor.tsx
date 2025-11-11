@@ -24,8 +24,6 @@ type EditorProps = {
 };
 
 export default function Editor(props: EditorProps = {}) {
-  console.log('[Editor.tsx] ========== COMPONENT MOUNTED ==========');
-  
   const { id } = useParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -35,8 +33,6 @@ export default function Editor(props: EditorProps = {}) {
 
   const resolvedProjectId = props.projectId ?? id ?? null;
   const initialProject = props.initialProject ?? null;
-  
-  console.log('[Editor.tsx] Resolved Project ID:', resolvedProjectId);
 
   const [activeFileId, setActiveFileId] = useState<number | null>(null);
   const [leftPanelOpen, setLeftPanelOpen] = useState(true);
@@ -539,8 +535,7 @@ export default function Editor(props: EditorProps = {}) {
         onToggleAI={handleCollaborationOpen}
       />
       
-      {/* Keyboard Utilities - Debug */}
-      {console.log('[Editor.tsx] Rendering keyboard utilities - Hint:', enableShortcutHint, 'Tester:', enableShortcutTester)}
+      {/* Keyboard Utilities */}
       {enableShortcutHint && <ShortcutHint />}
       {enableShortcutTester && <ShortcutTester />}
     </div>

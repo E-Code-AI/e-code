@@ -11,6 +11,7 @@ import { ReplitBottomTabs } from './ReplitBottomTabs';
 import { MobileFAB } from './MobileFAB';
 import { useTabPersistence, useFileBrowserPersistence } from '@/hooks/use-mobile-persistence';
 import { ReplitAgentPanelV3 } from '../ai/ReplitAgentPanelV3';
+import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 
 export type MobileTab = 'agent' | 'files' | 'code' | 'terminal' | 'preview' | 'more';
 
@@ -18,6 +19,9 @@ interface MobileIDEViewProps {
   projectId: string | number; // Support both UUID strings and numeric IDs
   className?: string;
 }
+
+// Normalize projectId to string for all child components
+const normalizeProjectId = (id: string | number): string => String(id);
 
 const tabs: { id: MobileTab; label: string; icon: typeof FileText }[] = [
   { id: 'agent', label: 'Agent', icon: Sparkles },
@@ -29,15 +33,44 @@ const tabs: { id: MobileTab; label: string; icon: typeof FileText }[] = [
 ];
 
 export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
+  // Normalize projectId to string
+  const normalizedProjectId = normalizeProjectId(projectId);
+  
   // Persistent tab state
-  const [activeTab, setActiveTab] = useTabPersistence(projectId);
+  const [activeTab, setActiveTab] = useTabPersistence(normalizedProjectId);
   
   // Persistent file browser state
-  const { selectedFileId, setSelectedFileId } = useFileBrowserPersistence(projectId);
+  const { selectedFileId, setSelectedFileId } = useFileBrowserPersistence(normalizedProjectId);
   
   const [isDragging, setIsDragging] = useState(false);
   const [isFilesOpen, setIsFilesOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  
+  // Keyboard utilities feature flags
+  const [enableShortcutHint, setEnableShortcutHint] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem('keyboard-shortcut-hint') !== 'false';
+  });
+  const [enableShortcutTester, setEnableShortcutTester] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('keyboard-shortcut-tester') === 'true';
+  });
+  
+  // Listen for keyboard settings changes
+  useEffect(() => {
+    const handleKeyboardSettingsChanged = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      // Use event detail if available, otherwise fallback to localStorage
+      const hintValue = customEvent.detail?.shortcutHint ?? localStorage.getItem('keyboard-shortcut-hint');
+      const testerValue = customEvent.detail?.shortcutTester ?? localStorage.getItem('keyboard-shortcut-tester');
+      
+      setEnableShortcutHint(hintValue !== 'false');
+      setEnableShortcutTester(testerValue === 'true');
+    };
+    
+    window.addEventListener('keyboard-settings-changed', handleKeyboardSettingsChanged);
+    return () => window.removeEventListener('keyboard-settings-changed', handleKeyboardSettingsChanged);
+  }, []);
   
   const x = useMotionValue(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -188,16 +221,16 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
       />
 
       {/* Floating Action Button (Run) */}
-      <MobileFAB projectId={projectId} />
+      <MobileFAB projectId={normalizedProjectId} />
 
       {/* File Explorer Modal */}
       <MobileFileExplorer
         isOpen={isFilesOpen}
         onClose={() => setIsFilesOpen(false)}
-        projectId={projectId}
+        projectId={normalizedProjectId}
         onFileSelect={(file) => {
           setSelectedFileId(file.id);
-          setActiveTab('code' as string);
+          setActiveTab('code' as MobileTab);
           setIsFilesOpen(false);
         }}
         currentFileId={selectedFileId}
@@ -205,10 +238,14 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
 
       {/* More Menu Modal */}
       <MobileMoreMenu
-        projectId={projectId}
+        projectId={normalizedProjectId}
         isOpen={isMoreMenuOpen}
         onClose={() => setIsMoreMenuOpen(false)}
       />
+      
+      {/* Keyboard Utilities (work with external keyboards on mobile) */}
+      {enableShortcutHint && <ShortcutHint />}
+      {enableShortcutTester && <ShortcutTester />}
     </div>
   );
 }

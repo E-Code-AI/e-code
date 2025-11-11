@@ -33,6 +33,7 @@ import { LazyMobileCodeEditor } from '@/components/mobile/LazyMobileCodeEditor';
 import { MobileTerminal } from '@/components/mobile/MobileTerminal';
 import { MobilePreviewPanel } from '@/components/mobile/MobilePreviewPanel';
 import { useToast } from '@/hooks/use-toast';
+import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 
 export type TabletPanel = 'editor' | 'terminal' | 'preview';
 
@@ -57,6 +58,32 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
     rightPanelSize, 
     setRightPanelSize 
   } = usePanelSizesPersistence(projectId);
+  
+  // Keyboard utilities feature flags
+  const [enableShortcutHint, setEnableShortcutHint] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem('keyboard-shortcut-hint') !== 'false';
+  });
+  const [enableShortcutTester, setEnableShortcutTester] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('keyboard-shortcut-tester') === 'true';
+  });
+  
+  // Listen for keyboard settings changes
+  useEffect(() => {
+    const handleKeyboardSettingsChanged = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      // Use event detail if available, otherwise fallback to localStorage
+      const hintValue = customEvent.detail?.shortcutHint ?? localStorage.getItem('keyboard-shortcut-hint');
+      const testerValue = customEvent.detail?.shortcutTester ?? localStorage.getItem('keyboard-shortcut-tester');
+      
+      setEnableShortcutHint(hintValue !== 'false');
+      setEnableShortcutTester(testerValue === 'true');
+    };
+    
+    window.addEventListener('keyboard-settings-changed', handleKeyboardSettingsChanged);
+    return () => window.removeEventListener('keyboard-settings-changed', handleKeyboardSettingsChanged);
+  }, []);
   
   // Refs for gesture handling
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -432,6 +459,10 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
           )}
         </div>
       </div>
+      
+      {/* Keyboard Utilities (work with external keyboards on tablet) */}
+      {enableShortcutHint && <ShortcutHint />}
+      {enableShortcutTester && <ShortcutTester />}
     </div>
   );
 }
