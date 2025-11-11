@@ -7,11 +7,12 @@
  * implementing the exact layout specified by the user.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { useDeviceType } from '@/hooks/use-media-query';
 import { File, Project } from '@shared/schema';
 import { 
   ResizableHandle, 
@@ -50,7 +51,6 @@ import { ReplitSecurityPanel } from '@/components/editor/ReplitSecurityPanel';
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 
 // Additional missing components from EditorPage
-import { lazy, Suspense } from 'react';
 import { CommandPalette } from '@/components/editor/CommandPalette';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { EnvironmentVariables } from '@/components/EnvironmentVariables';
@@ -68,6 +68,10 @@ import { Shell } from '@/components/Shell';
 const DeploymentManager = lazy(() => import('@/components/DeploymentManager').then(module => ({ default: module.DeploymentManager })));
 const WebPreview = lazy(() => import('@/components/WebPreview').then(module => ({ default: module.WebPreview })));
 const PackageViewer = lazy(() => import('@/components/PackageViewer').then(module => ({ default: module.PackageViewer })));
+
+// Device-specific views (lazy loaded)
+const LazyTabletIDEView = lazy(() => import('@/components/tablet/LazyTabletIDEView').then(m => ({ default: m.LazyTabletIDEView })));
+const MobileIDEView = lazy(() => import('@/components/mobile/MobileIDEView').then(m => ({ default: m.MobileIDEView })));
 
 interface Tab {
   id: string;
@@ -105,19 +109,28 @@ export default function IDEPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const deviceType = useDeviceType();
   
   const projectId = (params.projectId || params.id) as string;
   
-  // Load persisted state on mount
+  // Load persisted state on mount with validation
   const persistedState = loadPersistedState(projectId);
   
+  // Validate file tab consistency: if selectedFileId exists, ensure corresponding tab exists
+  const validatedState = persistedState ? {
+    ...persistedState,
+    selectedFileId: persistedState.selectedFileId && persistedState.tabs?.some((t: Tab) => t.id === `file:${persistedState.selectedFileId}`)
+      ? persistedState.selectedFileId
+      : undefined,
+  } : null;
+  
   // State with persistence restoration
-  const [activeTab, setActiveTab] = useState(persistedState?.activeTab || 'preview');
-  const [tabs, setTabs] = useState<Tab[]>(persistedState?.tabs || [
+  const [activeTab, setActiveTab] = useState(validatedState?.activeTab || 'preview');
+  const [tabs, setTabs] = useState<Tab[]>(validatedState?.tabs || [
     { id: 'preview', label: 'Preview', closable: false }
   ]);
-  const [selectedFileId, setSelectedFileId] = useState<number | undefined>(persistedState?.selectedFileId);
-  const [showFileExplorer, setShowFileExplorer] = useState(persistedState?.showFileExplorer ?? true);
+  const [selectedFileId, setSelectedFileId] = useState<number | undefined>(validatedState?.selectedFileId);
+  const [showFileExplorer, setShowFileExplorer] = useState(validatedState?.showFileExplorer ?? true);
   const [isRunning, setIsRunning] = useState(false);
   const [gitBranch, setGitBranch] = useState('main');
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
@@ -328,7 +341,7 @@ export default function IDEPage() {
       case 'import-export':
         return <ImportExport projectId={parseInt(projectId, 10)} />;
       case 'database-browser':
-        return <DatabaseBrowser projectId={parseInt(projectId, 10)} />;
+        return <DatabaseBrowser projectId={projectId} />;
       case 'package-viewer':
         return (
           <Suspense fallback={<ECodeLoading size="md" text="Loading package viewer..." />}>
@@ -338,7 +351,7 @@ export default function IDEPage() {
       case 'ai-assistant':
         return <AIAssistant projectId={parseInt(projectId, 10)} />;
       case 'billing':
-        return <BillingSystem userId={user?.id || 0} />;
+        return <BillingSystem userId={typeof user?.id === 'number' ? user.id : parseInt(String(user?.id || '0'), 10)} />;
       case 'extensions':
         return <ExtensionsMarketplace />;
       case 'test-runner':
@@ -367,6 +380,25 @@ export default function IDEPage() {
     }
   };
   
+  // Device-aware rendering: Route to optimized views for mobile/tablet
+  // This preserves gesture-optimized UX without rebuilding responsive logic
+  if (deviceType === 'mobile') {
+    return (
+      <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading mobile workspace..." />}>
+        <MobileIDEView projectId={projectId} />
+      </Suspense>
+    );
+  }
+  
+  if (deviceType === 'tablet') {
+    return (
+      <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading tablet workspace..." />}>
+        <LazyTabletIDEView projectId={projectId} />
+      </Suspense>
+    );
+  }
+  
+  // Desktop view continues below with 3-panel layout
   if (isLoadingProject) {
     return <ECodeLoading fullScreen size="lg" text="Loading workspace..." />;
   }
@@ -401,7 +433,7 @@ export default function IDEPage() {
         availableTools={availableTools}
         onAddTool={handleAddTool}
         showFileExplorer={showFileExplorer}
-        onToggleFileExplorer={() => setShowFileExplorer(prev => !prev)}
+        onToggleFileExplorer={() => setShowFileExplorer((prev: boolean) => !prev)}
       />
       
       {/* 3-Panel Layout */}

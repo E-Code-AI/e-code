@@ -22,7 +22,6 @@ const NotFound = instrumentedLazy(() => import("@/pages/not-found"), "NotFound")
 const Home = instrumentedLazy(() => import("@/pages/Home"), "Home");
 const Editor = instrumentedLazy(() => import("@/pages/Editor"), "Editor");
 const IDEPage = instrumentedLazy(() => import("@/pages/IDEPage"), "IDEPage");
-const ResponsiveEditorRoute = instrumentedLazy(() => import("@/pages/ResponsiveEditorRoute"), "ResponsiveEditorRoute");
 const EditorRedirect = instrumentedLazy(() => import("@/pages/EditorRedirect"), "EditorRedirect");
 const AuthPage = instrumentedLazy(() => import("@/pages/auth-page"), "AuthPage");
 const ProjectsPage = instrumentedLazy(() => import("@/pages/ProjectsPage"), "ProjectsPage");
