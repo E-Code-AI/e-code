@@ -7,7 +7,7 @@ import { billingService } from './billing-service';
 
 export interface DeploymentConfig {
   id: string;
-  projectId: number;
+  projectId: string | number; // Support both UUID strings and numeric IDs
   type: 'static' | 'autoscale' | 'reserved-vm' | 'scheduled' | 'serverless';
   domain?: string;
   customDomain?: string;
@@ -43,6 +43,7 @@ export interface DeploymentConfig {
 
 export interface DeploymentStatus {
   id: string;
+  projectId: string | number; // CRITICAL: Must store projectId for filtering
   status: 'pending' | 'building' | 'deploying' | 'active' | 'failed' | 'stopped';
   url?: string;
   customUrl?: string;
@@ -90,6 +91,7 @@ export class DeploymentManager {
     
     const deployment: DeploymentStatus = {
       id: deploymentId,
+      projectId: config.projectId, // CRITICAL: Store projectId for filtering
       status: 'pending',
       buildLog: [],
       deploymentLog: [],
@@ -583,10 +585,12 @@ export class DeploymentManager {
   }
 
   async listDeployments(projectId: string | number): Promise<DeploymentStatus[]> {
+    // CRITICAL FIX: Filter by deployment.projectId, not by checking if UUID includes projectId
     const projectIdStr = typeof projectId === 'number' ? projectId.toString() : projectId;
-    return Array.from(this.deployments.values()).filter(d => 
-      d.id.includes(projectIdStr)
-    );
+    return Array.from(this.deployments.values()).filter(d => {
+      const deploymentProjectId = typeof d.projectId === 'number' ? d.projectId.toString() : d.projectId;
+      return deploymentProjectId === projectIdStr;
+    });
   }
 
   async updateDeployment(deploymentId: string, config: Partial<DeploymentConfig>): Promise<void> {

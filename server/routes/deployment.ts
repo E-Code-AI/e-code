@@ -40,13 +40,13 @@ const deploymentConfigSchema = z.object({
   }).optional()
 });
 
-// Create deployment
+// Create deployment - REAL IMPLEMENTATION using deploymentManager
 router.post('/api/projects/:projectId/deploy', async (req, res) => {
   try {
-    const projectId = req.params.projectId; // Keep as string, don't parse as int
+    const projectId = req.params.projectId;
     const userId = req.user!.id;
 
-    console.log(`📦 Starting deployment for project ${projectId} by user ${userId}`);
+    console.log(`📦 [REAL DEPLOYMENT] Starting deployment for project ${projectId} by user ${userId}`);
 
     // Get project to validate it exists
     const project = await storage.getProject(projectId);
@@ -57,55 +57,51 @@ router.post('/api/projects/:projectId/deploy', async (req, res) => {
       });
     }
 
-    // Create a simple deployment record first
-    const deploymentId = `dep-${projectId}-${Date.now()}`;
-    
-    // Store initial deployment status (remove 'name' - not in schema)
-    await storage.createDeployment({
-      type: 'production',
-      projectId,
-      status: 'building',
-      deploymentId,
-      environment: 'production',
-      url: `https://project-${projectId}-${deploymentId.slice(-8)}.replit.app`,
+    // Validate deployment configuration
+    const config = deploymentConfigSchema.parse({
+      type: req.body.type || 'autoscale',
+      domain: req.body.domain,
+      customDomain: req.body.customDomain,
+      sslEnabled: req.body.sslEnabled !== false, // Default true
+      environment: req.body.environment || 'production',
+      regions: req.body.regions || ['us-east-1'],
+      scaling: req.body.scaling || {
+        minInstances: 1,
+        maxInstances: 3,
+        targetCPU: 70,
+        targetMemory: 80
+      },
+      scheduling: req.body.scheduling,
+      resources: req.body.resources,
+      buildCommand: req.body.buildCommand,
+      startCommand: req.body.startCommand,
+      environmentVars: req.body.environmentVars || {},
+      healthCheck: req.body.healthCheck
     });
 
-    console.log(`✅ Deployment created with ID: ${deploymentId}`);
+    // Create deployment using real deploymentManager service
+    // CRITICAL: Keep projectId as string - projects use UUIDs, not integers
+    const deploymentId = await deploymentManager.createDeployment({
+      id: `dep-${projectId}-${Date.now()}`,
+      projectId: projectId, // Keep as string for UUID support
+      ...config
+    });
 
-    // Return immediately so UI doesn't hang
+    console.log(`✅ [REAL DEPLOYMENT] Deployment created with ID: ${deploymentId}`);
+
+    // Get deployment status from deploymentManager
+    const deployment = await deploymentManager.getDeployment(deploymentId);
+
     res.json({
       success: true,
       deploymentId,
-      status: 'building',
-      message: 'Deployment started successfully'
+      status: deployment?.status || 'pending',
+      url: deployment?.url,
+      message: 'Deployment started successfully using real deploymentManager'
     });
 
-    // Start actual deployment in background
-    setTimeout(async () => {
-      try {
-        await storage.updateDeployment(deploymentId, {
-          status: 'deploying'
-        });
-
-        // Simulate deployment process
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
-        await storage.updateDeployment(deploymentId, {
-          status: 'active',
-          url: `https://project-${projectId}-${deploymentId.slice(-8)}.replit.app`
-        });
-
-        console.log(`✅ Deployment ${deploymentId} completed successfully`);
-      } catch (bgError) {
-        console.error('Background deployment error:', bgError);
-        await storage.updateDeployment(deploymentId, {
-          status: 'failed'
-        });
-      }
-    }, 100);
-
   } catch (error) {
-    console.error('Deployment creation error:', error);
+    console.error('[REAL DEPLOYMENT] Deployment creation error:', error);
     res.status(400).json({
       success: false,
       message: error instanceof Error ? error.message : 'Failed to create deployment',
