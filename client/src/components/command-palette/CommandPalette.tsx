@@ -352,7 +352,8 @@ export function generateDefaultCommands(callbacks: {
       icon: <Rocket className="h-4 w-4 text-green-500" />,
       keywords: ['run', 'start', 'dev', 'serve'],
       action: () => {
-        // TODO: Implement run action
+        // Run action available via Shell panel and workflow endpoints
+        callbacks.onToolSelect?.('shell');
       },
     },
     {
@@ -363,7 +364,8 @@ export function generateDefaultCommands(callbacks: {
       icon: <Rocket className="h-4 w-4 text-blue-500" />,
       keywords: ['deploy', 'publish', 'production'],
       action: () => {
-        // TODO: Implement deploy action
+        // Deploy action available via Deployment panel
+        callbacks.onToolSelect?.('deployment');
       },
     },
   ];

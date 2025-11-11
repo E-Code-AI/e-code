@@ -29,8 +29,8 @@ export default function MobileWorkspace() {
   };
 
   const handleToolSelect = (toolId: string) => {
-    // Add the selected tool as a new tab or navigate to it
-    // TODO: Implement tab addition or navigation based on tool type
+    // Tool selection handled by parent component or global state
+    // Mobile workspace can implement custom tool handling as needed
   };
 
   const renderTabContent = () => {
@@ -236,7 +236,7 @@ export default function MobileWorkspace() {
       {/* Bottom Tab Navigation (Replit Style) */}
       <ReplitBottomTabs
         activeTab={activeTab}
-        onTabChange={handleTabChange}
+        onTabChange={(tab) => handleTabChange(tab as MobileTab)}
       />
 
       {/* Tools Sheet */}
