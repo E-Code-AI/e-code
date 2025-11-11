@@ -1571,7 +1571,7 @@ What would you like me to build?`,
       setIsLoading(true);
       addProgressLog('info', `Generating execution plan for: ${goal}`);
       
-      const response = await apiRequest('POST', '/api/agent/plan/generate', {
+      const data = await apiRequest('POST', '/api/agent/plan/generate', {
         goal,
         context: context || {
           projectType: 'web application',
@@ -1581,11 +1581,7 @@ What would you like me to build?`,
         }
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to generate plan');
-      }
-      
-      const data = await response.json();
+      // apiRequest already returns parsed JSON, use directly
       setCurrentPlan(data.plan);
       setActiveTab('autonomous'); // Switch to autonomous tab to show plan
       
