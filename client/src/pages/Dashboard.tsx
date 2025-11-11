@@ -135,7 +135,9 @@ export default function Dashboard() {
   const handleWorkflowComplete = () => {
     if (activeProjectId) {
       const projectUrl = getProjectUrl({ id: activeProjectId } as Project, user?.username);
-      window.location.href = projectUrl;
+      // Add ?agent=true to trigger AI agent auto-start in workspace IDE
+      const workspaceUrl = `${projectUrl}?agent=true`;
+      window.location.href = workspaceUrl;
     }
   };
 

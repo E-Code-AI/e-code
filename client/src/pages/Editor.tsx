@@ -60,19 +60,42 @@ export default function Editor(props: EditorProps = {}) {
     enabled: !!resolvedProjectId && !!user,
   });
 
-  // Check for agent and prompt query parameters
+  // Check for agent auto-start from URL params or sessionStorage (Vibe flow)
   useEffect(() => {
     if (!hasStartedAgent.current && user && resolvedProjectId) {
       const urlParams = new URLSearchParams(window.location.search);
       const isAgent = urlParams.get('agent') === 'true';
-      const prompt = urlParams.get('prompt');
+      const promptFromUrl = urlParams.get('prompt');
       
-      if (isAgent && prompt) {
+      // Check sessionStorage for prompt from Dashboard/Workflow (Vibe creation flow)
+      const promptFromSession = window.sessionStorage.getItem(`agent-prompt-${resolvedProjectId}`);
+      
+      // Determine initial prompt source and handle encoding correctly
+      let initialPrompt: string | null = null;
+      if (promptFromUrl) {
+        // URL params are percent-encoded, must decode
+        try {
+          initialPrompt = decodeURIComponent(promptFromUrl);
+        } catch (e) {
+          console.error('Failed to decode URL prompt:', e);
+          initialPrompt = promptFromUrl; // Fallback to raw value
+        }
+      } else if (promptFromSession) {
+        // SessionStorage values are NOT encoded, use directly
+        initialPrompt = promptFromSession;
+      }
+      
+      if (isAgent && initialPrompt) {
         // Open the agent panel
         setActiveRightPanel('agent');
         setRightPanelOpen(true);
-        setInitialAgentPrompt(decodeURIComponent(prompt));
+        setInitialAgentPrompt(initialPrompt);
         hasStartedAgent.current = true;
+        
+        // Clean up sessionStorage to prevent re-trigger
+        if (promptFromSession) {
+          window.sessionStorage.removeItem(`agent-prompt-${resolvedProjectId}`);
+        }
         
         // Clean up the URL to remove the query parameters
         const cleanUrl = window.location.pathname;
