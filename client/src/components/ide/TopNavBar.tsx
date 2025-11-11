@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -7,6 +8,12 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Code, 
@@ -24,6 +31,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
+import { WorkspaceSettings } from '@/components/WorkspaceSettings';
 
 interface Tab {
   id: string;
@@ -73,10 +81,11 @@ export function TopNavBar({
   showFileExplorer,
   onToggleFileExplorer
 }: TopNavBarProps) {
-  const { user, logout } = useAuth();
+  const { user, logoutMutation } = useAuth();
+  const [showSettings, setShowSettings] = useState(false);
   
   const handleLogout = async () => {
-    await logout();
+    logoutMutation.mutate();
     window.location.href = '/login';
   };
   
@@ -233,7 +242,7 @@ export function TopNavBar({
               data-testid="button-user-menu"
             >
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.avatarUrl} />
+                <AvatarImage src={user?.profileImageUrl || undefined} />
                 <AvatarFallback>
                   {user?.username?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
@@ -246,7 +255,7 @@ export function TopNavBar({
               <span>{user?.username || 'User'}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowSettings(true)}>
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
             </DropdownMenuItem>
@@ -258,6 +267,16 @@ export function TopNavBar({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      
+      {/* Settings Dialog */}
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+          <DialogHeader className="px-6 pt-6 pb-0">
+            <DialogTitle>User Settings</DialogTitle>
+          </DialogHeader>
+          <WorkspaceSettings />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

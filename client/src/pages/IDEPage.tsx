@@ -44,6 +44,7 @@ import { ReplitProblemsPanel } from '@/components/editor/ReplitProblemsPanel';
 import { ReplitSearchPanel } from '@/components/editor/ReplitSearchPanel';
 import { ReplitDebuggerPanel } from '@/components/editor/ReplitDebuggerPanel';
 import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
+import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 
 interface Tab {
   id: string;
@@ -72,6 +73,28 @@ export default function IDEPage() {
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
   const [showQuickFileSearch, setShowQuickFileSearch] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  
+  // Keyboard utilities feature flags (SSR-safe)
+  const [enableShortcutHint, setEnableShortcutHint] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem('keyboard-shortcut-hint') !== 'false';
+  });
+  const [enableShortcutTester, setEnableShortcutTester] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('keyboard-shortcut-tester') === 'true';
+  });
+  
+  // Listen for keyboard settings changes
+  useEffect(() => {
+    const handleKeyboardSettingsChanged = () => {
+      if (typeof window === 'undefined') return;
+      setEnableShortcutHint(localStorage.getItem('keyboard-shortcut-hint') !== 'false');
+      setEnableShortcutTester(localStorage.getItem('keyboard-shortcut-tester') === 'true');
+    };
+    
+    window.addEventListener('keyboard-settings-changed', handleKeyboardSettingsChanged);
+    return () => window.removeEventListener('keyboard-settings-changed', handleKeyboardSettingsChanged);
+  }, []);
   
   // Load project
   const { data: project, isLoading: isLoadingProject } = useQuery<Project>({
@@ -341,6 +364,10 @@ export default function IDEPage() {
         open={showKeyboardShortcuts}
         onOpenChange={setShowKeyboardShortcuts}
       />
+      
+      {/* Keyboard Utilities */}
+      {enableShortcutHint && <ShortcutHint />}
+      {enableShortcutTester && <ShortcutTester />}
     </div>
   );
 }
