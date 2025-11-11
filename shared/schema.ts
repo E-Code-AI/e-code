@@ -660,6 +660,7 @@ export const codeReviews = pgTable('code_reviews', {
   fileId: integer('file_id').references(() => files.id),
   reviewType: varchar('review_type').notNull().default('manual'), // manual, automatic, git-diff, pre-commit
   status: varchar('status').notNull().default('pending'), // pending, completed, failed
+  filesChanged: jsonb('files_changed').$type<string[]>().default([]), // Array of changed file paths
   totalIssues: integer('total_issues').notNull().default(0),
   criticalIssues: integer('critical_issues').notNull().default(0),
   highIssues: integer('high_issues').notNull().default(0),
@@ -1500,7 +1501,9 @@ export const submissions = pgTable("submissions", {
   studentId: integer("student_id").notNull().references(() => users.id),
   projectId: integer("project_id").references(() => projects.id), // Link to the project containing the submission
   submittedAt: timestamp("submitted_at").notNull().defaultNow(),
-  grade: integer("grade"),
+  grade: integer("grade"), // Legacy field - kept for backwards compatibility
+  autoGradeScore: integer("auto_grade_score"), // Automated grading score
+  manualGradeScore: integer("manual_grade_score"), // Manual grading score
   feedback: text("feedback"),
   status: varchar("status").notNull().default('submitted'), // 'submitted', 'graded', 'returned'
   gradedBy: integer("graded_by").references(() => users.id),

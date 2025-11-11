@@ -39,8 +39,8 @@ export interface QueryResult {
 export class DatabaseManagementService {
   async getTables(): Promise<TableInfo[]> {
     try {
-      // Get all tables in the database
-      const tablesQuery = await pool.query(`
+      // Get all tables in the database using postgres-js syntax
+      const tablesQuery = await pool`
         SELECT 
           schemaname,
           tablename,
@@ -50,14 +50,14 @@ export class DatabaseManagementService {
         LEFT JOIN pg_stat_user_tables 
           ON pg_tables.tablename = pg_stat_user_tables.relname
         WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
-        ORDER BY tablename;
-      `);
+        ORDER BY tablename
+      `;
 
       const tables: TableInfo[] = [];
 
-      for (const table of tablesQuery.rows) {
-        // Get column information
-        const columnsQuery = await pool.query(`
+      for (const table of tablesQuery) {
+        // Get column information using postgres-js syntax
+        const columnsQuery = await pool`
           SELECT
             columns.column_name,
             columns.data_type,
@@ -74,14 +74,14 @@ export class DatabaseManagementService {
             JOIN information_schema.key_column_usage ku
               ON tc.constraint_name = ku.constraint_name
             WHERE tc.constraint_type = 'PRIMARY KEY'
-              AND tc.table_name = $1
+              AND tc.table_name = ${table.tablename}
           ) pk ON columns.column_name = pk.column_name
-          WHERE table_schema = $2 AND table_name = $1
-          ORDER BY ordinal_position;
-        `, [table.tablename, table.schemaname]);
+          WHERE table_schema = ${table.schemaname} AND table_name = ${table.tablename}
+          ORDER BY ordinal_position
+        `;
 
         // Get index information
-        const indexesQuery = await pool.query(`
+        const indexesQuery = await pool`
           SELECT 
             indexname as name,
             indexdef,
@@ -94,22 +94,22 @@ export class DatabaseManagementService {
               ELSE false 
             END as is_primary
           FROM pg_indexes
-          WHERE schemaname = $1 AND tablename = $2;
-        `, [table.schemaname, table.tablename]);
+          WHERE schemaname = ${table.schemaname} AND tablename = ${table.tablename}
+        `;
 
         tables.push({
           tableName: table.tablename,
           schema: table.schemaname,
           rowCount: parseInt(table.row_count) || 0,
           sizeInBytes: parseInt(table.size_bytes) || 0,
-          columns: columnsQuery.rows.map((col: any) => ({
+          columns: columnsQuery.map((col: any) => ({
             name: col.column_name,
             type: col.data_type,
             nullable: col.is_nullable === 'YES',
             defaultValue: col.column_default,
             isPrimaryKey: col.is_primary_key
           })),
-          indexes: indexesQuery.rows.map((idx: any) => ({
+          indexes: indexesQuery.map((idx: any) => ({
             name: idx.name,
             columns: this.extractColumnsFromIndexDef(idx.indexdef),
             isUnique: idx.is_unique,
@@ -133,34 +133,31 @@ export class DatabaseManagementService {
         throw new Error('Invalid table name');
       }
 
-      const columnsQuery = await pool.query(
-        `
-          SELECT
-            columns.column_name,
-            columns.data_type,
-            columns.is_nullable,
-            columns.column_default,
-            CASE
-              WHEN pk.column_name IS NOT NULL THEN true
-              ELSE false
-            END as is_primary_key
-          FROM information_schema.columns columns
-          LEFT JOIN (
-            SELECT ku.column_name
-            FROM information_schema.table_constraints tc
-            JOIN information_schema.key_column_usage ku
-              ON tc.constraint_name = ku.constraint_name
-            WHERE tc.constraint_type = 'PRIMARY KEY'
-              AND tc.table_name = $1
-              AND tc.table_schema = $2
-          ) pk ON columns.column_name = pk.column_name
-          WHERE columns.table_schema = $2 AND columns.table_name = $1
-          ORDER BY columns.ordinal_position;
-        `,
-        [tableName, schema]
-      );
+      const columnsQuery = await pool`
+        SELECT
+          columns.column_name,
+          columns.data_type,
+          columns.is_nullable,
+          columns.column_default,
+          CASE
+            WHEN pk.column_name IS NOT NULL THEN true
+            ELSE false
+          END as is_primary_key
+        FROM information_schema.columns columns
+        LEFT JOIN (
+          SELECT ku.column_name
+          FROM information_schema.table_constraints tc
+          JOIN information_schema.key_column_usage ku
+            ON tc.constraint_name = ku.constraint_name
+          WHERE tc.constraint_type = 'PRIMARY KEY'
+            AND tc.table_name = ${tableName}
+            AND tc.table_schema = ${schema}
+        ) pk ON columns.column_name = pk.column_name
+        WHERE columns.table_schema = ${schema} AND columns.table_name = ${tableName}
+        ORDER BY columns.ordinal_position
+      `;
 
-      return columnsQuery.rows.map((col: any) => ({
+      return columnsQuery.map((col: any) => ({
         name: col.column_name,
         type: col.data_type,
         nullable: col.is_nullable === 'YES',
@@ -192,12 +189,16 @@ export class DatabaseManagementService {
         }
       }
 
-      const result = await pool.query(query);
+      // FIXED: Use postgres-js unsafe query for dynamic SQL
+      const result = await pool.unsafe(query);
       const executionTime = Date.now() - startTime;
 
+      // Handle both SELECT (returns array) and DML (returns count) results
       return {
-        rows: result.rows,
-        rowCount: result.rowCount || 0,
+        rows: Array.isArray(result) ? result : [],
+        rowCount: typeof (result as any).count === 'number' 
+          ? (result as any).count  // INSERT/UPDATE/DELETE affected rows
+          : Array.isArray(result) ? result.length : 0,  // SELECT result count
         executionTime
       };
     } catch (error: any) {
@@ -225,21 +226,14 @@ export class DatabaseManagementService {
       const safeLimit = Math.max(1, Math.min(1000, Math.floor(limit)));
       const safeOffset = Math.max(0, Math.floor(offset));
 
-      // SECURITY: Use parameterized query for limit/offset
-      const query = `SELECT * FROM ${tableName} LIMIT $1 OFFSET $2`;
-      
-      const pool = DatabasePool.getInstance().getPool();
-      if (!pool) {
-        throw new Error('Database connection not available');
-      }
-
+      // FIXED: Use postgres-js template literal syntax with validated table name
       const startTime = Date.now();
-      const result = await pool.query(query, [safeLimit, safeOffset]);
+      const result = await pool.unsafe(`SELECT * FROM ${tableName} LIMIT ${safeLimit} OFFSET ${safeOffset}`);
       const executionTime = Date.now() - startTime;
 
       return {
-        rows: result.rows,
-        rowCount: result.rowCount || 0,
+        rows: Array.isArray(result) ? result : [],
+        rowCount: Array.isArray(result) ? result.length : 0,
         executionTime
       };
     } catch (error) {
@@ -255,11 +249,11 @@ export class DatabaseManagementService {
       
       // In a real implementation, this would create an actual database backup
       // For now, we'll simulate it by getting database statistics
-      const sizeQuery = await pool.query(`
-        SELECT pg_database_size(current_database()) as size;
-      `);
+      const sizeQuery = await pool`
+        SELECT pg_database_size(current_database()) as size
+      `;
       
-      const size = parseInt(sizeQuery.rows[0].size) || 0;
+      const size = parseInt(sizeQuery[0]?.size) || 0;
       
       logger.info(`Created backup ${backupId} with size ${size} bytes`);
       
@@ -282,17 +276,17 @@ export class DatabaseManagementService {
   }> {
     try {
       const [sizeResult, tableCountResult, connectionResult, uptimeResult] = await Promise.all([
-        pool.query('SELECT pg_database_size(current_database()) as size'),
-        pool.query("SELECT count(*) FROM information_schema.tables WHERE table_schema NOT IN ('pg_catalog', 'information_schema')"),
-        pool.query('SELECT count(*) FROM pg_stat_activity'),
-        pool.query("SELECT EXTRACT(EPOCH FROM (now() - pg_postmaster_start_time())) as uptime")
+        pool`SELECT pg_database_size(current_database()) as size`,
+        pool`SELECT count(*) FROM information_schema.tables WHERE table_schema NOT IN ('pg_catalog', 'information_schema')`,
+        pool`SELECT count(*) FROM pg_stat_activity`,
+        pool`SELECT EXTRACT(EPOCH FROM (now() - pg_postmaster_start_time())) as uptime`
       ]);
 
       return {
-        totalSize: parseInt(sizeResult.rows[0].size) || 0,
-        tableCount: parseInt(tableCountResult.rows[0].count) || 0,
-        connectionCount: parseInt(connectionResult.rows[0].count) || 0,
-        uptime: parseInt(uptimeResult.rows[0].uptime) || 0
+        totalSize: parseInt(sizeResult[0]?.size) || 0,
+        tableCount: parseInt(tableCountResult[0]?.count) || 0,
+        connectionCount: parseInt(connectionResult[0]?.count) || 0,
+        uptime: parseInt(uptimeResult[0]?.uptime) || 0
       };
     } catch (error) {
       logger.error('Error getting database stats:', error);
