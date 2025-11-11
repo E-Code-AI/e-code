@@ -14,28 +14,13 @@ import type { Server } from 'http';
  * top-level import failures from crashing the entire server
  */
 export async function safeSetupVite(app: Application, server: Server): Promise<boolean> {
-  // First, check if rollup module exists before attempting import
   try {
-    // Attempt to require the problematic module first
-    const path = require('path');
-    const rollupPath = path.resolve(process.cwd(), 'node_modules/rollup/dist/native.js');
-    
-    // This will throw if rollup's native module is broken
-    require.resolve('@rollup/rollup-linux-x64-gnu');
-  } catch (resolveError: any) {
-    console.warn('[VITE] ⚠️  Rollup native module not available');
-    console.warn('[VITE] Cannot start Vite development server due to missing optional dependency');
-    console.warn('[VITE] This is a known npm bug: https://github.com/npm/cli/issues/4828');
-    return false;
-  }
-  
-  try {
-    // Now safe to import vite module
+    // Import vite module - Vite/Rollup handle their own platform detection
     const viteModule = await import('./vite');
     
     if (process.env.NODE_ENV === 'development') {
       await viteModule.setupVite(app, server);
-      console.log('[VITE] ✅ Development server configured successfully');
+      console.log('[VITE] ✅ Development server configured successfully with HMR');
     } else {
       viteModule.serveStatic(app);
       console.log('[VITE] ✅ Static file serving configured successfully');
@@ -43,7 +28,15 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
     
     return true;
   } catch (error: any) {
-    console.error('[VITE] Failed to setup Vite:', error.message);
+    // Check if this is a genuine Rollup native module missing error
+    if (error.code === 'ERR_MODULE_NOT_FOUND' && error.message.includes('@rollup/')) {
+      console.warn('[VITE] ⚠️  Rollup native module not available');
+      console.warn('[VITE] Cannot start Vite development server due to missing optional dependency');
+      console.warn('[VITE] Error:', error.message);
+    } else {
+      console.error('[VITE] Failed to setup Vite:', error.message);
+      console.error('[VITE] Stack:', error.stack);
+    }
     return false;
   }
 }
