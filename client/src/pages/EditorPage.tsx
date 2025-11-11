@@ -1,3 +1,16 @@
+/**
+ * @deprecated This component is being phased out in favor of IDEPage.tsx
+ * 
+ * Legacy EditorPage component - used by ResponsiveEditorRoute for device-specific views.
+ * All new workspace features should be added to IDEPage.tsx instead.
+ * 
+ * Migration Status:
+ * - /editor/:id route now redirects to /ide/:id (see EditorRedirect.tsx)
+ * - ResponsiveEditorRoute still uses this component for mobile/tablet views
+ * - Do not add new features here - use IDEPage.tsx for all new development
+ * 
+ * TODO: Migrate mobile/tablet views to IDEPage before removing this file
+ */
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, Route, Switch } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';

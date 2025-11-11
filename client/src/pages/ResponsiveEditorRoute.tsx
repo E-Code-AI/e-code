@@ -1,3 +1,16 @@
+/**
+ * @deprecated This route component is being phased out as part of routing consolidation
+ * 
+ * Legacy ResponsiveEditorRoute - provides device-aware routing to different editor views.
+ * The /editor/:id route now redirects to /ide/:id (see EditorRedirect.tsx).
+ * 
+ * Migration Status:
+ * - No longer used in production routing (replaced by EditorRedirect)
+ * - Kept for backward compatibility and reference
+ * - Will be removed once all mobile/tablet views are integrated into IDEPage
+ * 
+ * New Development: Use IDEPage.tsx for all new workspace features
+ */
 import { lazy, Suspense } from 'react';
 import { useParams } from 'wouter';
 import { useDeviceType } from '@/hooks/use-media-query';
