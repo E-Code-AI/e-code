@@ -10,7 +10,6 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { autonomousEngine } from '../services/agent-autonomous-engine.service';
-import { planGenerator } from '../services/agent-plan-generator.service';
 import { ensureAuthenticated } from '../middleware/auth';
 import { ensureAdmin } from '../middleware/admin-auth';
 import { createLogger } from '../utils/logger';
@@ -58,36 +57,6 @@ async function ensureSessionOwnership(req: Request, res: Response, next: NextFun
   } catch (error: any) {
     logger.error('Error in session ownership check:', error);
     res.status(500).json({ error: 'Failed to verify session ownership' });
-  }
-}
-
-/**
- * Middleware to verify plan ownership
- * Verifies the plan belongs to the authenticated user using getPlanForUser
- */
-async function ensurePlanOwnership(req: Request, res: Response, next: NextFunction) {
-  try {
-    const planId = req.params.planId;
-    const userId = req.user!.id;
-
-    if (!planId) {
-      return res.status(400).json({ error: 'planId is required' });
-    }
-
-    // Use getPlanForUser to verify ownership
-    const plan = planGenerator.getPlanForUser(planId, userId);
-    
-    if (!plan) {
-      logger.warn(`Plan ownership check failed: planId=${planId}, userId=${userId}`);
-      return res.status(404).json({ error: 'Plan not found or access denied' });
-    }
-
-    // Attach verified plan to request for downstream use
-    (req as any).agentPlan = plan;
-    next();
-  } catch (error: any) {
-    logger.error('Error in plan ownership check:', error);
-    res.status(500).json({ error: 'Failed to verify plan ownership' });
   }
 }
 
@@ -250,84 +219,6 @@ router.get('/actions/:sessionId', ensureSessionOwnership, async (req, res) => {
 });
 
 /**
- * POST /api/agent/plan/generate
- * Generate an execution plan from a goal or prompt
- */
-router.post('/plan/generate', async (req, res) => {
-  try {
-    // Support both 'goal' and 'prompt' field names
-    const goal = req.body.goal || req.body.prompt;
-    const context = req.body.context || {};
-    const userId = req.user!.id;
-    
-    if (!goal) {
-      return res.status(400).json({ error: 'goal or prompt is required' });
-    }
-    
-    // Pass userId to plan generator for ownership tracking
-    const plan = await planGenerator.generatePlan(goal, { ...context, userId });
-    
-    logger.info(`Plan generated: ${plan.id} with ${plan.tasks.length} tasks for user ${req.user?.id}`);
-    
-    res.json({
-      success: true,
-      plan
-    });
-  } catch (error: any) {
-    logger.error('Error generating plan:', error);
-    res.status(500).json({ error: error.message || 'Failed to generate plan' });
-  }
-});
-
-/**
- * GET /api/agent/plan/:planId
- * Get a specific execution plan
- */
-router.get('/plan/:planId', ensurePlanOwnership, async (req, res) => {
-  try {
-    const { planId } = req.params;
-    
-    const plan = planGenerator.getPlan(planId);
-    
-    if (!plan) {
-      return res.status(404).json({ error: 'Plan not found' });
-    }
-    
-    res.json({ plan });
-  } catch (error: any) {
-    logger.error('Error getting plan:', error);
-    res.status(500).json({ error: error.message || 'Failed to get plan' });
-  }
-});
-
-/**
- * POST /api/agent/plan/:planId/task/:taskId/status
- * Update task status in a plan
- */
-router.post('/plan/:planId/task/:taskId/status', ensurePlanOwnership, async (req, res) => {
-  try {
-    const { planId, taskId } = req.params;
-    const { status } = req.body;
-    
-    if (!['completed', 'failed', 'in_progress'].includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
-    }
-    
-    planGenerator.updateTaskStatus(planId, taskId, status);
-    
-    res.json({
-      success: true,
-      planId,
-      taskId,
-      status
-    });
-  } catch (error: any) {
-    logger.error('Error updating task status:', error);
-    res.status(500).json({ error: error.message || 'Failed to update task status' });
-  }
-});
-
-/**
  * GET /api/agent/autonomous/health
  * Health check for autonomous system
  */
@@ -338,7 +229,6 @@ router.get('/health', (req, res) => {
     features: [
       'risk_assessment',
       'autonomous_execution',
-      'plan_generation',
       'dependency_analysis',
       'parallel_execution'
     ]
