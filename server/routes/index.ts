@@ -92,14 +92,15 @@ export class MainRouter {
     // Agent routes (admin only)
     app.use('/api/admin/agent', agentRouter);
     
+    // Agent plan routes (REAL AI-powered plan generation with streaming) - authenticated users
+    // Mounted at /api/agent to avoid conflicts with legacy endpoints
+    app.use('/api/agent', createAgentPlanRouter(this.storage));
+    
     // Autonomous agent routes (authenticated users) - single mount point
     app.use('/api/agent', agentAutonomousRouter);
     
     // Agent workflow routes (feature generation, build selection) - authenticated users
     app.use('/api/agent', agentWorkflowRouter);
-    
-    // Agent plan routes (REAL AI-powered plan generation with streaming) - authenticated users
-    app.use('/api/agent/plan', createAgentPlanRouter(this.storage));
     
     // Agent testing routes (browser testing, element selector, recording) - Phase 2 (ADMIN ONLY)
     app.use('/api/admin/agent', agentTestingRouter);
