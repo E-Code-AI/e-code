@@ -37,6 +37,13 @@ import { ReplitConsole } from '@/components/editor/ReplitConsole';
 import { ReplitGitPanel } from '@/components/editor/ReplitGitPanel';
 import { ReplitDatabasePanel } from '@/components/editor/ReplitDatabasePanel';
 import { ReplitTerminalPanel } from '@/components/editor/ReplitTerminalPanel';
+import { ReplitSecretsPanel } from '@/components/editor/ReplitSecretsPanel';
+import { ReplitPackagesPanel } from '@/components/editor/ReplitPackagesPanel';
+import { ReplitTestingPanel } from '@/components/editor/ReplitTestingPanel';
+import { ReplitProblemsPanel } from '@/components/editor/ReplitProblemsPanel';
+import { ReplitSearchPanel } from '@/components/editor/ReplitSearchPanel';
+import { ReplitDebuggerPanel } from '@/components/editor/ReplitDebuggerPanel';
+import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
 
 interface Tab {
   id: string;
@@ -78,6 +85,21 @@ export default function IDEPage() {
     enabled: !!projectId && !!user,
   });
   
+  // Available tools/panels that can be added
+  const availableTools = [
+    { id: 'console', label: 'Console', icon: '🖥️' },
+    { id: 'terminal', label: 'Terminal', icon: '⌨️' },
+    { id: 'git', label: 'Git', icon: '🔀' },
+    { id: 'database', label: 'Database', icon: '💾' },
+    { id: 'secrets', label: 'Secrets', icon: '🔐' },
+    { id: 'packages', label: 'Packages', icon: '📦' },
+    { id: 'testing', label: 'Tests', icon: '🧪' },
+    { id: 'problems', label: 'Problems', icon: '⚠️' },
+    { id: 'search', label: 'Search', icon: '🔍' },
+    { id: 'debugger', label: 'Debugger', icon: '🐛' },
+    { id: 'settings', label: 'Settings', icon: '⚙️' },
+  ];
+
   // Handlers
   const handleFileSelect = (file: any) => {
     setSelectedFileId(file.id);
@@ -86,6 +108,20 @@ export default function IDEPage() {
       setTabs(prev => [...prev, { id: tabId, label: file.name, closable: true }]);
     }
     setActiveTab(tabId);
+  };
+  
+  const handleAddTool = (toolId: string) => {
+    const tool = availableTools.find(t => t.id === toolId);
+    if (!tool) return;
+    
+    // Don't add duplicate tabs
+    if (tabs.find(t => t.id === toolId)) {
+      setActiveTab(toolId);
+      return;
+    }
+    
+    setTabs(prev => [...prev, { id: toolId, label: tool.label, closable: true }]);
+    setActiveTab(toolId);
   };
   
   const handleTabClose = (tabId: string) => {
@@ -126,33 +162,45 @@ export default function IDEPage() {
   
   // Render main content based on active tab
   const renderContent = () => {
-    if (activeTab === 'preview') {
-      return <ResponsiveWebPreview projectId={projectId} />;
+    switch (activeTab) {
+      case 'preview':
+        return <ResponsiveWebPreview projectId={projectId} />;
+      case 'console':
+        return <ReplitConsole />;
+      case 'terminal':
+        return <ReplitTerminalPanel projectId={projectId} />;
+      case 'git':
+        return <ReplitGitPanel projectId={projectId} />;
+      case 'database':
+        return <ReplitDatabasePanel projectId={projectId} />;
+      case 'secrets':
+        return <ReplitSecretsPanel projectId={projectId} />;
+      case 'packages':
+        return <ReplitPackagesPanel projectId={projectId} />;
+      case 'testing':
+        return <ReplitTestingPanel projectId={projectId} />;
+      case 'problems':
+        return <ReplitProblemsPanel projectId={projectId} />;
+      case 'search':
+        return <ReplitSearchPanel projectId={projectId} />;
+      case 'debugger':
+        return <ReplitDebuggerPanel projectId={projectId} />;
+      case 'settings':
+        return <ReplitSettingsPanel projectId={projectId} />;
+      default:
+        if (activeTab.startsWith('file:') && selectedFileId) {
+          return (
+            <ReplitMonacoEditor
+              projectId={projectId}
+              fileId={selectedFileId}
+              onRunCode={handleRunStop}
+              onStopCode={handleRunStop}
+              isRunning={isRunning}
+            />
+          );
+        }
+        return <div className="flex items-center justify-center h-full text-muted-foreground">Select a file or tool</div>;
     }
-    if (activeTab === 'console') {
-      return <ReplitConsole />;
-    }
-    if (activeTab === 'git') {
-      return <ReplitGitPanel projectId={projectId} />;
-    }
-    if (activeTab === 'database') {
-      return <ReplitDatabasePanel projectId={projectId} />;
-    }
-    if (activeTab === 'terminal') {
-      return <ReplitTerminalPanel projectId={projectId} />;
-    }
-    if (activeTab.startsWith('file:') && selectedFileId) {
-      return (
-        <ReplitMonacoEditor
-          projectId={projectId}
-          fileId={selectedFileId}
-          onRunCode={handleRunStop}
-          onStopCode={handleRunStop}
-          isRunning={isRunning}
-        />
-      );
-    }
-    return <div className="flex items-center justify-center h-full text-muted-foreground">Select a file or tool</div>;
   };
   
   if (isLoadingProject) {
@@ -186,7 +234,8 @@ export default function IDEPage() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onTabClose={handleTabClose}
-        onAddTab={() => setTabs(prev => [...prev, { id: 'console', label: 'Console', closable: true }])}
+        availableTools={availableTools}
+        onAddTool={handleAddTool}
         showFileExplorer={showFileExplorer}
         onToggleFileExplorer={() => setShowFileExplorer(prev => !prev)}
       />

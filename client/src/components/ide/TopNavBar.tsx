@@ -32,6 +32,12 @@ interface Tab {
   closable?: boolean;
 }
 
+interface AvailableTool {
+  id: string;
+  label: string;
+  icon: string;
+}
+
 interface TopNavBarProps {
   projectName: string;
   projectSlug: string;
@@ -43,7 +49,9 @@ interface TopNavBarProps {
   activeTab: string;
   onTabChange: (tabId: string) => void;
   onTabClose: (tabId: string) => void;
-  onAddTab: () => void;
+  onAddTab?: () => void;
+  availableTools?: AvailableTool[];
+  onAddTool?: (toolId: string) => void;
   showFileExplorer: boolean;
   onToggleFileExplorer: () => void;
 }
@@ -60,6 +68,8 @@ export function TopNavBar({
   onTabChange,
   onTabClose,
   onAddTab,
+  availableTools,
+  onAddTool,
   showFileExplorer,
   onToggleFileExplorer
 }: TopNavBarProps) {
@@ -136,16 +146,48 @@ export function TopNavBar({
           </DropdownMenu>
         )}
         
-        {/* Add Tab Button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onAddTab}
-          data-testid="button-add-tab"
-          className="h-8 w-8 p-0"
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
+        {/* Add Tool/Tab Dropdown */}
+        {availableTools && onAddTool ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                data-testid="button-add-tab"
+                className="h-8 w-8 p-0"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                Add Tool
+              </div>
+              <DropdownMenuSeparator />
+              {availableTools.map((tool) => (
+                <DropdownMenuItem
+                  key={tool.id}
+                  onClick={() => onAddTool(tool.id)}
+                  className="gap-2"
+                  data-testid={`add-tool-${tool.id}`}
+                >
+                  <span className="text-base">{tool.icon}</span>
+                  <span>{tool.label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onAddTab}
+            data-testid="button-add-tab"
+            className="h-8 w-8 p-0"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       
       {/* Right Actions */}
