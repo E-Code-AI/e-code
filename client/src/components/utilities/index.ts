@@ -11,3 +11,6 @@ export {
   VirtualListItem,
   default as VirtualScrollListDefault,
 } from './VirtualScrollList';
+
+export { ShortcutHint } from './ShortcutHint';
+export { ShortcutTester } from './ShortcutTester';
