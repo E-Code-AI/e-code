@@ -158,7 +158,8 @@ export class CodeAnalyzer {
         readFile: () => '',
         getCanonicalFileName: (fileName) => fileName,
         useCaseSensitiveFileNames: () => true,
-        getNewLine: () => '\n'
+        getNewLine: () => '\n',
+        getDefaultLibFileName: (options) => ts.getDefaultLibFilePath(options)
       });
 
       const sourceFile = program.getSourceFile('temp.ts');

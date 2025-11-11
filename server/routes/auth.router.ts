@@ -13,6 +13,9 @@ import { z } from "zod";
 import { db } from "../db";
 import { eq, and, gte } from "drizzle-orm";
 import { sessionManager } from "../auth/session-manager";
+import { createLogger } from "../utils/logger";
+
+const logger = createLogger('auth-router');
 
 // Define a UserForAuth type that includes password for authentication
 interface UserForAuth extends User {
