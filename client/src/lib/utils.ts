@@ -96,6 +96,15 @@ export function getProjectUrl(project: ProjectLike, fallbackUsername?: string | 
     return '/projects';
   }
 
+  // ALWAYS use /ide/:id route for consistent workspace experience with Add Tab dropdown
+  // This ensures all navigation paths (cards, play, edit, slugs) land on the new IDE
+  const projectId = project.id ?? project.projectId ?? null;
+  if (projectId) {
+    return `/ide/${projectId}`;
+  }
+  
+  // Legacy slug support: redirect through canonical route
+  // Slugs are preserved for sharing but now resolve to /ide/:id for UX consistency
   const slug = project.slug ?? project.projectSlug ?? null;
   const ownerUsername =
     project.owner?.username ??
@@ -105,13 +114,9 @@ export function getProjectUrl(project: ProjectLike, fallbackUsername?: string | 
     null;
 
   if (slug && ownerUsername) {
+    // Note: /@username/slug URLs still work but resolve to /ide/:id via ProjectPage redirect
     return `/@${ownerUsername}/${slug}`;
   }
 
-  // Fallback to IDE route with project ID (supports both UUID strings and numeric IDs)
-  const projectId = project.id ?? project.projectId ?? null;
-  if (projectId) {
-    return `/ide/${projectId}`;
-  }
   return '/projects';
 }

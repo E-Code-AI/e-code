@@ -44,7 +44,30 @@ import { ReplitProblemsPanel } from '@/components/editor/ReplitProblemsPanel';
 import { ReplitSearchPanel } from '@/components/editor/ReplitSearchPanel';
 import { ReplitDebuggerPanel } from '@/components/editor/ReplitDebuggerPanel';
 import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
+import { ReplitOutputPanel } from '@/components/editor/ReplitOutputPanel';
+import { ReplitResourcesPanel } from '@/components/editor/ReplitResourcesPanel';
+import { ReplitSecurityPanel } from '@/components/editor/ReplitSecurityPanel';
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
+
+// Additional missing components from EditorPage
+import { lazy, Suspense } from 'react';
+import { CommandPalette } from '@/components/editor/CommandPalette';
+import { GlobalSearch } from '@/components/GlobalSearch';
+import { EnvironmentVariables } from '@/components/EnvironmentVariables';
+import { DatabaseBrowser } from '@/components/DatabaseBrowser';
+import { ReplitDB } from '@/components/ReplitDB';
+import { ImportExport } from '@/components/ImportExport';
+import { AIAssistant } from '@/components/AIAssistant';
+import { BillingSystem } from '@/components/BillingSystem';
+import { ExtensionsMarketplace } from '@/components/ExtensionsMarketplace';
+import { CollaborationPresence } from '@/components/editor/CollaborationPresence';
+import { TestRunner } from '@/components/TestRunner';
+import { Shell } from '@/components/Shell';
+
+// Lazy load for performance (heavy components)
+const DeploymentManager = lazy(() => import('@/components/DeploymentManager').then(module => ({ default: module.DeploymentManager })));
+const WebPreview = lazy(() => import('@/components/WebPreview').then(module => ({ default: module.WebPreview })));
+const PackageViewer = lazy(() => import('@/components/PackageViewer').then(module => ({ default: module.PackageViewer })));
 
 interface Tab {
   id: string;
@@ -73,6 +96,10 @@ export default function IDEPage() {
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
   const [showQuickFileSearch, setShowQuickFileSearch] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+  const [showReplitDB, setShowReplitDB] = useState(false);
+  const [showCollaboration, setShowCollaboration] = useState(false);
   
   // Keyboard utilities feature flags (SSR-safe)
   const [enableShortcutHint, setEnableShortcutHint] = useState(() => {
@@ -108,7 +135,7 @@ export default function IDEPage() {
     enabled: !!projectId && !!user,
   });
   
-  // Available tools/panels that can be added
+  // Available tools/panels that can be added (comprehensive list with all features)
   const availableTools = [
     { id: 'console', label: 'Console', icon: '🖥️' },
     { id: 'terminal', label: 'Terminal', icon: '⌨️' },
@@ -121,6 +148,21 @@ export default function IDEPage() {
     { id: 'search', label: 'Search', icon: '🔍' },
     { id: 'debugger', label: 'Debugger', icon: '🐛' },
     { id: 'settings', label: 'Settings', icon: '⚙️' },
+    // Additional tools from EditorPage
+    { id: 'output', label: 'Output', icon: '📄' },
+    { id: 'security', label: 'Security', icon: '🛡️' },
+    { id: 'resources', label: 'Resources', icon: '📊' },
+    { id: 'deployment', label: 'Deploy', icon: '🚀' },
+    { id: 'env', label: 'Environment', icon: '🔑' },
+    { id: 'import-export', label: 'Import/Export', icon: '📁' },
+    { id: 'database-browser', label: 'DB Browser', icon: '🗄️' },
+    { id: 'package-viewer', label: 'Package Viewer', icon: '📦' },
+    { id: 'ai-assistant', label: 'AI Assistant', icon: '🤖' },
+    { id: 'billing', label: 'Billing', icon: '💳' },
+    { id: 'extensions', label: 'Extensions', icon: '🧩' },
+    { id: 'test-runner', label: 'Test Runner', icon: '🧪' },
+    { id: 'shell', label: 'Shell', icon: '⌨️' },
+    { id: 'webpreview', label: 'Web Preview', icon: '🌐' },
   ];
 
   // Handlers
@@ -162,17 +204,37 @@ export default function IDEPage() {
     });
   };
   
-  // Keyboard shortcuts
+  // Keyboard shortcuts (comprehensive)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const modKey = isMac ? e.metaKey : e.ctrlKey;
       
+      // Cmd/Ctrl + P: Quick File Search
       if (modKey && e.key === 'p') {
         e.preventDefault();
         setShowQuickFileSearch(true);
       }
       
+      // Cmd/Ctrl + K: Command Palette
+      if (modKey && e.key === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(true);
+      }
+      
+      // Cmd/Ctrl + Shift + F: Global Search
+      if (modKey && e.shiftKey && e.key === 'F') {
+        e.preventDefault();
+        setShowGlobalSearch(true);
+      }
+      
+      // Cmd/Ctrl + Shift + E: Environment Variables
+      if (modKey && e.shiftKey && e.key === 'E') {
+        e.preventDefault();
+        handleAddTool('env');
+      }
+      
+      // Cmd/Ctrl + /: Keyboard Shortcuts
       if (modKey && e.key === '/') {
         e.preventDefault();
         setShowKeyboardShortcuts(true);
@@ -183,7 +245,7 @@ export default function IDEPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
   
-  // Render main content based on active tab
+  // Render main content based on active tab (comprehensive with all features)
   const renderContent = () => {
     switch (activeTab) {
       case 'preview':
@@ -210,6 +272,47 @@ export default function IDEPage() {
         return <ReplitDebuggerPanel projectId={projectId} />;
       case 'settings':
         return <ReplitSettingsPanel projectId={projectId} />;
+      // Additional panels from EditorPage
+      case 'output':
+        return <ReplitOutputPanel projectId={projectId} />;
+      case 'security':
+        return <ReplitSecurityPanel projectId={projectId} />;
+      case 'resources':
+        return <ReplitResourcesPanel projectId={projectId} />;
+      case 'deployment':
+        return (
+          <Suspense fallback={<ECodeLoading size="md" text="Loading deployment..." />}>
+            <DeploymentManager projectId={parseInt(projectId, 10)} />
+          </Suspense>
+        );
+      case 'env':
+        return <EnvironmentVariables projectId={parseInt(projectId, 10)} />;
+      case 'import-export':
+        return <ImportExport projectId={parseInt(projectId, 10)} />;
+      case 'database-browser':
+        return <DatabaseBrowser projectId={parseInt(projectId, 10)} />;
+      case 'package-viewer':
+        return (
+          <Suspense fallback={<ECodeLoading size="md" text="Loading package viewer..." />}>
+            <PackageViewer projectId={projectId} />
+          </Suspense>
+        );
+      case 'ai-assistant':
+        return <AIAssistant projectId={parseInt(projectId, 10)} />;
+      case 'billing':
+        return <BillingSystem userId={user?.id || 0} />;
+      case 'extensions':
+        return <ExtensionsMarketplace />;
+      case 'test-runner':
+        return <TestRunner projectId={projectId} />;
+      case 'shell':
+        return <Shell projectId={parseInt(projectId, 10)} />;
+      case 'webpreview':
+        return (
+          <Suspense fallback={<ECodeLoading size="md" text="Loading web preview..." />}>
+            <WebPreview projectId={parseInt(projectId, 10)} />
+          </Suspense>
+        );
       default:
         if (activeTab.startsWith('file:') && selectedFileId) {
           return (
@@ -364,6 +467,47 @@ export default function IDEPage() {
         open={showKeyboardShortcuts}
         onOpenChange={setShowKeyboardShortcuts}
       />
+      
+      {/* Command Palette */}
+      <CommandPalette
+        open={showCommandPalette}
+        onOpenChange={setShowCommandPalette}
+        files={files}
+        onFileSelect={(file) => {
+          setShowCommandPalette(false);
+          handleFileSelect(file);
+        }}
+        onToolSelect={(tool) => {
+          setShowCommandPalette(false);
+          handleAddTool(tool);
+        }}
+      />
+      
+      {/* Global Search */}
+      <GlobalSearch
+        isOpen={showGlobalSearch}
+        onClose={() => setShowGlobalSearch(false)}
+        projectId={projectId}
+        onFileSelect={(file) => {
+          handleFileSelect({ id: file.id, name: file.name, path: file.name });
+          setShowGlobalSearch(false);
+        }}
+      />
+      
+      {/* Replit DB Modal */}
+      {showReplitDB && (
+        <ReplitDB
+          projectId={parseInt(projectId, 10)}
+        />
+      )}
+      
+      {/* Collaboration Presence Modal */}
+      {showCollaboration && user && (
+        <CollaborationPresence
+          projectId={parseInt(projectId, 10)}
+          currentUserId={user.id}
+        />
+      )}
       
       {/* Keyboard Utilities */}
       {enableShortcutHint && <ShortcutHint />}
