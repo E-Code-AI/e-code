@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 
 interface MobileMoreMenuProps {
-  projectId: number;
+  projectId: string | number; // Support both UUID strings and numeric IDs
   isOpen: boolean;
   onClose: () => void;
   problemsCount?: number;

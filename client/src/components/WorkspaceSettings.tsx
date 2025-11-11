@@ -533,7 +533,12 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
                 onCheckedChange={(checked) => {
                   setKeyboardShortcutHint(checked);
                   localStorage.setItem('keyboard-shortcut-hint', String(checked));
-                  window.dispatchEvent(new CustomEvent('keyboard-settings-changed'));
+                  window.dispatchEvent(new CustomEvent('keyboard-settings-changed', {
+                    detail: {
+                      shortcutHint: String(checked),
+                      shortcutTester: localStorage.getItem('keyboard-shortcut-tester')
+                    }
+                  }));
                 }}
               />
             </div>
@@ -553,7 +558,12 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
                 onCheckedChange={(checked) => {
                   setKeyboardShortcutTester(checked);
                   localStorage.setItem('keyboard-shortcut-tester', String(checked));
-                  window.dispatchEvent(new CustomEvent('keyboard-settings-changed'));
+                  window.dispatchEvent(new CustomEvent('keyboard-settings-changed', {
+                    detail: {
+                      shortcutHint: localStorage.getItem('keyboard-shortcut-hint'),
+                      shortcutTester: String(checked)
+                    }
+                  }));
                 }}
               />
             </div>
