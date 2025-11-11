@@ -23,6 +23,7 @@ const Home = instrumentedLazy(() => import("@/pages/Home"), "Home");
 const Editor = instrumentedLazy(() => import("@/pages/Editor"), "Editor");
 const IDEPage = instrumentedLazy(() => import("@/pages/IDEPage"), "IDEPage");
 const ResponsiveEditorRoute = instrumentedLazy(() => import("@/pages/ResponsiveEditorRoute"), "ResponsiveEditorRoute");
+const EditorRedirect = instrumentedLazy(() => import("@/pages/EditorRedirect"), "EditorRedirect");
 const AuthPage = instrumentedLazy(() => import("@/pages/auth-page"), "AuthPage");
 const ProjectsPage = instrumentedLazy(() => import("@/pages/ProjectsPage"), "ProjectsPage");
 
@@ -683,9 +684,12 @@ function AppContent() {
             </ReplitLayout>
           )} />
           
+          {/* DEPRECATED: Legacy /editor/:id route - redirects to /ide/:id for backward compatibility */}
           <ProtectedRoute path="/editor/:id" component={() => (
-            <ResponsiveEditorRoute />
+            <EditorRedirect />
           )} />
+          
+          {/* New unified workspace route with Add Tab dropdown and complete feature parity */}
           <ProtectedRoute path="/ide/:id" component={() => (
             <IDEPage />
           )} />

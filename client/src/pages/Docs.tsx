@@ -88,7 +88,7 @@ const documentationArticles: Record<DocKey, DocArticle> = {
           loading="lazy"
         />
         <figcaption className="mt-3 text-sm text-muted-foreground">
-          The default workspace pairs the Monaco editor with a live preview and terminals surfaced from <code>client/src/pages/EditorPage.tsx</code>.
+          The unified workspace pairs the Monaco editor with a live preview and terminals surfaced from <code>client/src/pages/IDEPage.tsx</code>.
         </figcaption>
       </figure>
     ),
