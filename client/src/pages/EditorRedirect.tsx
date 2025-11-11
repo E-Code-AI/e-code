@@ -19,10 +19,25 @@ export default function EditorRedirect() {
 
   useEffect(() => {
     if (id) {
-      // Preserve query parameters and hash fragments from legacy URLs
-      // This ensures ?agent=true, #section, and other deep links continue working
+      // Telemetry: Track legacy /editor/:id redirect usage
       const search = window.location.search;
       const hash = window.location.hash;
+      const hasParams = search || hash;
+      
+      // Log to console (can be replaced with analytics service)
+      console.info('[EditorRedirect] Legacy route accessed', {
+        projectId: id,
+        hasQueryParams: !!search,
+        hasHashFragment: !!hash,
+        fullPath: `/editor/${id}${search}${hash}`,
+        timestamp: new Date().toISOString(),
+      });
+      
+      // Optional: Send to analytics/telemetry service
+      // Example: analytics.track('legacy_editor_redirect', { projectId: id, hasParams });
+      
+      // Preserve query parameters and hash fragments from legacy URLs
+      // This ensures ?agent=true, #section, and other deep links continue working
       const newPath = `/ide/${id}${search}${hash}`;
       
       // Use replace: true to avoid history bloat (don't add intermediate redirect to history)
