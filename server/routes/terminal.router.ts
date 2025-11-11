@@ -1,23 +1,13 @@
 import { Router } from 'express';
 import { ensureAuthenticated } from '../middleware/auth';
 import { storage } from '../storage';
+import type { InsertTerminalLog } from '@shared/schema';
 
 const router = Router();
 
-// In-memory logs storage (could be moved to database or Redis for persistence)
-interface TerminalLog {
-  id: number;
-  type: 'info' | 'error' | 'warn' | 'log' | 'debug';
-  message: string;
-  timestamp: Date;
-  stack?: string;
-}
-
-const terminalLogs = new Map<number, TerminalLog[]>();
-
 /**
  * GET /api/terminal/logs
- * Fetch initial console logs for a project
+ * Fetch console logs for a project from database (persistent)
  */
 router.get('/api/terminal/logs', ensureAuthenticated, async (req, res) => {
   try {
@@ -27,11 +17,7 @@ router.get('/api/terminal/logs', ensureAuthenticated, async (req, res) => {
       return res.status(400).json({ error: 'Project ID is required' });
     }
     
-    const projectId = parseInt(projectIdParam as string);
-    
-    if (isNaN(projectId)) {
-      return res.status(400).json({ error: 'Invalid project ID' });
-    }
+    const projectId = projectIdParam as string;
     
     // Check project access
     const userId = req.user?.id;
@@ -54,8 +40,8 @@ router.get('/api/terminal/logs', ensureAuthenticated, async (req, res) => {
       }
     }
     
-    // Get logs for the project (or return empty array if none exist)
-    const logs = terminalLogs.get(projectId) || [];
+    // Get logs from database (persistent storage)
+    const logs = await storage.getTerminalLogs(projectId);
     
     res.json(logs);
   } catch (error) {
@@ -66,11 +52,11 @@ router.get('/api/terminal/logs', ensureAuthenticated, async (req, res) => {
 
 /**
  * POST /api/terminal/logs
- * Add a log entry (called by runtime execution)
+ * Add a log entry to database (persistent storage)
  */
 router.post('/api/terminal/logs', ensureAuthenticated, async (req, res) => {
   try {
-    const { projectId, type, message, stack } = req.body;
+    const { projectId, type, message, stack, source } = req.body;
     
     if (!projectId || !type || !message) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -97,26 +83,17 @@ router.post('/api/terminal/logs', ensureAuthenticated, async (req, res) => {
       }
     }
     
-    // Get or create logs array for project
-    if (!terminalLogs.has(projectId)) {
-      terminalLogs.set(projectId, []);
-    }
-    
-    const logs = terminalLogs.get(projectId)!;
-    const newLog: TerminalLog = {
-      id: Date.now(),
+    // Create log entry in database (persistent)
+    const logEntry: InsertTerminalLog = {
+      projectId,
+      userId,
       type,
       message,
-      timestamp: new Date(),
-      stack
+      stack,
+      source: source || 'terminal'
     };
     
-    logs.push(newLog);
-    
-    // Keep only last 1000 logs per project to prevent memory issues
-    if (logs.length > 1000) {
-      logs.shift();
-    }
+    const newLog = await storage.createTerminalLog(logEntry);
     
     res.json({ success: true, log: newLog });
   } catch (error) {
@@ -127,7 +104,7 @@ router.post('/api/terminal/logs', ensureAuthenticated, async (req, res) => {
 
 /**
  * DELETE /api/terminal/logs
- * Clear logs for a project
+ * Clear logs for a project from database (persistent)
  */
 router.delete('/api/terminal/logs', ensureAuthenticated, async (req, res) => {
   try {
@@ -137,11 +114,7 @@ router.delete('/api/terminal/logs', ensureAuthenticated, async (req, res) => {
       return res.status(400).json({ error: 'Project ID is required' });
     }
     
-    const projectId = parseInt(projectIdParam as string);
-    
-    if (isNaN(projectId)) {
-      return res.status(400).json({ error: 'Invalid project ID' });
-    }
+    const projectId = projectIdParam as string;
     
     // Check project access
     const userId = req.user?.id;
@@ -164,8 +137,8 @@ router.delete('/api/terminal/logs', ensureAuthenticated, async (req, res) => {
       }
     }
     
-    // Clear logs
-    terminalLogs.delete(projectId);
+    // Clear logs from database (persistent)
+    await storage.clearTerminalLogs(projectId);
     
     res.json({ success: true, message: 'Logs cleared' });
   } catch (error) {
@@ -175,4 +148,3 @@ router.delete('/api/terminal/logs', ensureAuthenticated, async (req, res) => {
 });
 
 export default router;
-export { terminalLogs };

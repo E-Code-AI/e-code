@@ -614,6 +614,11 @@ export interface IStorage {
   getBuildLogs(projectId: string, buildId?: string, limit?: number): Promise<BuildLog[]>;
   clearBuildLogs(projectId: string, buildId?: string): Promise<void>;
 
+  // Terminal Logs operations - Persistent Console Logs
+  createTerminalLog(log: InsertTerminalLog): Promise<TerminalLog>;
+  getTerminalLogs(projectId: string, limit?: number): Promise<TerminalLog[]>;
+  clearTerminalLogs(projectId: string): Promise<void>;
+
   // Test Runs operations - For Testing Panel
   createTestRun(run: InsertTestRun): Promise<TestRun>;
   getTestRun(id: string): Promise<TestRun | undefined>;
@@ -4367,6 +4372,25 @@ Constraints: {{constraints}}`,
     }
 
     await query;
+  }
+
+  // Terminal Logs Methods - Persistent Console Logs
+  async createTerminalLog(log: InsertTerminalLog): Promise<TerminalLog> {
+    const [created] = await this.db.insert(terminalLogs).values(log).returning();
+    return created;
+  }
+
+  async getTerminalLogs(projectId: string, limit: number = 1000): Promise<TerminalLog[]> {
+    return await this.db
+      .select()
+      .from(terminalLogs)
+      .where(eq(terminalLogs.projectId, projectId))
+      .orderBy(desc(terminalLogs.timestamp))
+      .limit(limit);
+  }
+
+  async clearTerminalLogs(projectId: string): Promise<void> {
+    await this.db.delete(terminalLogs).where(eq(terminalLogs.projectId, projectId));
   }
 
   // Test Runs Methods - For Testing Panel (stub implementations)

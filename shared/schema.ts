@@ -195,6 +195,19 @@ export const securityLogs = pgTable("security_logs", {
   timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
 
+// Terminal logs table for persistent console output storage
+export const terminalLogs = pgTable("terminal_logs", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  projectId: varchar("project_id").notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").references(() => users.id),
+  type: varchar("type", { length: 32 }).notNull(), // 'info', 'error', 'warn', 'log', 'debug'
+  message: text("message").notNull(),
+  stack: text("stack"),
+  source: varchar("source", { length: 64 }), // 'runtime', 'terminal', 'build', etc.
+  metadata: jsonb("metadata").$type<Record<string, any>>(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+});
+
 export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   id: serial("id").primaryKey(),
   email: varchar("email", { length: 320 }).notNull().unique(),
@@ -2677,6 +2690,14 @@ export type InsertLspDiagnostic = z.infer<typeof insertLspDiagnosticSchema>;
 
 export type BuildLog = typeof buildLogs.$inferSelect;
 export type InsertBuildLog = z.infer<typeof insertBuildLogSchema>;
+
+export const insertTerminalLogSchema = createInsertSchema(terminalLogs).omit({
+  id: true,
+  timestamp: true,
+});
+
+export type TerminalLog = typeof terminalLogs.$inferSelect;
+export type InsertTerminalLog = z.infer<typeof insertTerminalLogSchema>;
 
 export type TestRun = typeof testRuns.$inferSelect;
 export type InsertTestRun = z.infer<typeof insertTestRunSchema>;
