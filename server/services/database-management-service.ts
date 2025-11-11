@@ -215,14 +215,33 @@ export class DatabaseManagementService {
 
   async getTableData(tableName: string, limit: number = 100, offset: number = 0): Promise<QueryResult> {
     try {
-      // Validate table name to prevent SQL injection
+      // SECURITY: Validate table name to prevent SQL injection
       const tableNameRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
       if (!tableNameRegex.test(tableName)) {
-        throw new Error('Invalid table name');
+        throw new Error('Invalid table name format');
       }
 
-      const query = `SELECT * FROM ${tableName} LIMIT ${limit} OFFSET ${offset}`;
-      return await this.executeQuery(query);
+      // SECURITY: Validate limit and offset are positive integers
+      const safeLimit = Math.max(1, Math.min(1000, Math.floor(limit)));
+      const safeOffset = Math.max(0, Math.floor(offset));
+
+      // SECURITY: Use parameterized query for limit/offset
+      const query = `SELECT * FROM ${tableName} LIMIT $1 OFFSET $2`;
+      
+      const pool = DatabasePool.getInstance().getPool();
+      if (!pool) {
+        throw new Error('Database connection not available');
+      }
+
+      const startTime = Date.now();
+      const result = await pool.query(query, [safeLimit, safeOffset]);
+      const executionTime = Date.now() - startTime;
+
+      return {
+        rows: result.rows,
+        rowCount: result.rowCount || 0,
+        executionTime
+      };
     } catch (error) {
       logger.error('Error getting table data:', error);
       throw error;

@@ -12,6 +12,19 @@ export interface PostgresMCPConfig {
   password?: string;
 }
 
+// SECURITY: Fortune 500 Structured Filter System (replaces unsafe WHERE strings)
+export interface StructuredFilter {
+  column: string;
+  operator: '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE' | 'ILIKE' | 'IN' | 'NOT IN' | 'IS NULL' | 'IS NOT NULL';
+  value?: any; // Optional for IS NULL/IS NOT NULL
+}
+
+export interface StructuredSort {
+  column: string;
+  direction: 'ASC' | 'DESC';
+  nulls?: 'FIRST' | 'LAST';
+}
+
 export class PostgresMCPServer {
   private pool: Pool;
 
@@ -192,29 +205,149 @@ export class PostgresMCPServer {
     }
   }
 
-  // Data operations
+  // SECURITY: Validate identifier (schema/table/column) to prevent SQL injection
+  private validateIdentifier(identifier: string, type: string): void {
+    const identifierRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+    if (!identifierRegex.test(identifier)) {
+      throw new Error(`Invalid ${type} identifier format: ${identifier}`);
+    }
+    // Additional length check
+    if (identifier.length > 63) { // PostgreSQL max identifier length
+      throw new Error(`${type} identifier too long (max 63 chars)`);
+    }
+  }
+
+  // SECURITY: Whitelist allowed schemas (Fortune 500 approach)
+  private readonly ALLOWED_SCHEMAS = ['public', 'app', 'analytics', 'logs'];
+
+  private validateSchema(schema: string): void {
+    if (!this.ALLOWED_SCHEMAS.includes(schema)) {
+      throw new Error(`Schema '${schema}' not allowed. Allowed schemas: ${this.ALLOWED_SCHEMAS.join(', ')}`);
+    }
+    this.validateIdentifier(schema, 'schema');
+  }
+
+  /**
+   * Build parameterized WHERE clause from structured filters
+   * SECURITY: Prevents SQL injection by validating operators and parameterizing values
+   */
+  private buildWhereClause(filters: StructuredFilter[], params: any[]): string {
+    if (!filters || filters.length === 0) return '';
+
+    const conditions = filters.map(filter => {
+      // SECURITY: Validate column name
+      this.validateIdentifier(filter.column, 'column');
+      const quotedColumn = `"${filter.column}"`;
+
+      // SECURITY: Whitelist operators only
+      const allowedOperators = ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'ILIKE', 'IN', 'NOT IN', 'IS NULL', 'IS NOT NULL'];
+      if (!allowedOperators.includes(filter.operator)) {
+        throw new Error(`Operator '${filter.operator}' not allowed. Allowed: ${allowedOperators.join(', ')}`);
+      }
+
+      // Handle NULL checks (no value needed)
+      if (filter.operator === 'IS NULL' || filter.operator === 'IS NOT NULL') {
+        return `${quotedColumn} ${filter.operator}`;
+      }
+
+      // Handle IN/NOT IN (array values)
+      if (filter.operator === 'IN' || filter.operator === 'NOT IN') {
+        if (!Array.isArray(filter.value)) {
+          throw new Error(`${filter.operator} requires array value`);
+        }
+        // SECURITY: Properly parameterize each array value
+        const placeholders = filter.value.map((val) => {
+          params.push(val);
+          return `$${params.length}`;
+        }).join(', ');
+        return `${quotedColumn} ${filter.operator} (${placeholders})`;
+      }
+
+      // Standard comparison operators - parameterize value
+      params.push(filter.value);
+      return `${quotedColumn} ${filter.operator} $${params.length}`;
+    });
+
+    return ' WHERE ' + conditions.join(' AND ');
+  }
+
+  /**
+   * Build safe ORDER BY clause from structured sort
+   * SECURITY: Validates column names, only allows ASC/DESC + NULLS FIRST/LAST
+   */
+  private buildOrderByClause(sorts: StructuredSort[]): string {
+    if (!sorts || sorts.length === 0) return '';
+
+    const orderClauses = sorts.map(sort => {
+      // SECURITY: Validate column name
+      this.validateIdentifier(sort.column, 'column');
+      const quotedColumn = `"${sort.column}"`;
+
+      // SECURITY: Whitelist direction
+      if (sort.direction !== 'ASC' && sort.direction !== 'DESC') {
+        throw new Error(`Sort direction must be ASC or DESC, got: ${sort.direction}`);
+      }
+
+      let clause = `${quotedColumn} ${sort.direction}`;
+
+      // SECURITY: Whitelist NULLS handling
+      if (sort.nulls) {
+        if (sort.nulls !== 'FIRST' && sort.nulls !== 'LAST') {
+          throw new Error(`NULLS must be FIRST or LAST, got: ${sort.nulls}`);
+        }
+        clause += ` NULLS ${sort.nulls}`;
+      }
+
+      return clause;
+    });
+
+    return ' ORDER BY ' + orderClauses.join(', ');
+  }
+
+  // Data operations - SECURE VERSION with structured filters
   async selectData(
     tableName: string,
     schema: string = 'public',
     limit: number = 100,
     offset: number = 0,
-    where?: string,
-    orderBy?: string
+    filters?: StructuredFilter[],
+    sorts?: StructuredSort[]
   ) {
     try {
-      let query = `SELECT * FROM ${schema}.${tableName}`;
+      // SECURITY: Validate all identifiers
+      this.validateSchema(schema);
+      this.validateIdentifier(tableName, 'table');
+      
+      // SECURITY: Sanitize numeric inputs
+      const safeLimit = Math.max(1, Math.min(1000, Math.floor(limit)));
+      const safeOffset = Math.max(0, Math.floor(offset));
+
       const params: any[] = [];
+      const quotedSchema = `"${schema}"`;
+      const quotedTable = `"${tableName}"`;
       
-      if (where) {
-        query += ` WHERE ${where}`;
+      let query = `SELECT * FROM ${quotedSchema}.${quotedTable}`;
+      
+      // SECURITY: Build safe parameterized WHERE clause from structured filters
+      if (filters && filters.length > 0) {
+        query += this.buildWhereClause(filters, params);
       }
       
-      if (orderBy) {
-        query += ` ORDER BY ${orderBy}`;
+      // SECURITY: Build safe ORDER BY clause from structured sorts
+      if (sorts && sorts.length > 0) {
+        query += this.buildOrderByClause(sorts);
       }
       
+      // SECURITY: Parameterize LIMIT and OFFSET
       query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-      params.push(limit, offset);
+      params.push(safeLimit, safeOffset);
+      
+      logger.info('Executing structured query', {
+        table: tableName,
+        schema,
+        filterCount: filters?.length || 0,
+        sortCount: sorts?.length || 0
+      });
       
       const result = await this.pool.query(query, params);
       return {
@@ -229,12 +362,25 @@ export class PostgresMCPServer {
 
   async insertData(tableName: string, schema: string = 'public', data: Record<string, any>) {
     try {
+      // SECURITY: Validate schema and table
+      this.validateSchema(schema);
+      this.validateIdentifier(tableName, 'table');
+
       const columns = Object.keys(data);
+      
+      // SECURITY: Validate all column names
+      columns.forEach(col => this.validateIdentifier(col, 'column'));
+      
       const values = Object.values(data);
       const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
       
+      // SECURITY: Use quoted identifiers
+      const quotedSchema = `"${schema}"`;
+      const quotedTable = `"${tableName}"`;
+      const quotedColumns = columns.map(col => `"${col}"`).join(', ');
+      
       const query = `
-        INSERT INTO ${schema}.${tableName} (${columns.join(', ')})
+        INSERT INTO ${quotedSchema}.${quotedTable} (${quotedColumns})
         VALUES (${placeholders})
         RETURNING *
       `;
@@ -251,21 +397,49 @@ export class PostgresMCPServer {
     tableName: string,
     schema: string = 'public',
     data: Record<string, any>,
-    where: string
+    filters: StructuredFilter[]
   ) {
     try {
+      // SECURITY: Validate schema and table
+      this.validateSchema(schema);
+      this.validateIdentifier(tableName, 'table');
+
       const columns = Object.keys(data);
+      
+      // SECURITY: Validate all column names
+      columns.forEach(col => this.validateIdentifier(col, 'column'));
+      
       const values = Object.values(data);
-      const setClause = columns.map((col, i) => `${col} = $${i + 1}`).join(', ');
+      const params: any[] = [...values]; // Start with SET values
+      
+      // SECURITY: Use quoted identifiers in SET clause with parameterized values
+      const setClause = columns.map((col, i) => `"${col}" = $${i + 1}`).join(', ');
+
+      const quotedSchema = `"${schema}"`;
+      const quotedTable = `"${tableName}"`;
+      
+      // SECURITY: Build safe parameterized WHERE clause
+      if (!filters || filters.length === 0) {
+        throw new Error('UPDATE requires WHERE clause filters (safety check)');
+      }
+      
+      const whereClause = this.buildWhereClause(filters, params);
       
       const query = `
-        UPDATE ${schema}.${tableName}
+        UPDATE ${quotedSchema}.${quotedTable}
         SET ${setClause}
-        WHERE ${where}
+        ${whereClause}
         RETURNING *
       `;
       
-      const result = await this.pool.query(query, values);
+      logger.info('Executing structured UPDATE', {
+        table: tableName,
+        schema,
+        columns: columns.length,
+        filterCount: filters.length
+      });
+      
+      const result = await this.pool.query(query, params);
       return {
         rows: result.rows,
         rowCount: result.rowCount
@@ -276,15 +450,37 @@ export class PostgresMCPServer {
     }
   }
 
-  async deleteData(tableName: string, schema: string = 'public', where: string) {
+  async deleteData(tableName: string, schema: string = 'public', filters: StructuredFilter[]) {
     try {
+      // SECURITY: Validate schema and table
+      this.validateSchema(schema);
+      this.validateIdentifier(tableName, 'table');
+
+      // SECURITY: Require filters for DELETE (prevent accidental full table deletion)
+      if (!filters || filters.length === 0) {
+        throw new Error('DELETE requires WHERE clause filters (safety check)');
+      }
+
+      const quotedSchema = `"${schema}"`;
+      const quotedTable = `"${tableName}"`;
+      const params: any[] = [];
+      
+      // SECURITY: Build safe parameterized WHERE clause
+      const whereClause = this.buildWhereClause(filters, params);
+      
       const query = `
-        DELETE FROM ${schema}.${tableName}
-        WHERE ${where}
+        DELETE FROM ${quotedSchema}.${quotedTable}
+        ${whereClause}
         RETURNING *
       `;
       
-      const result = await this.pool.query(query);
+      logger.info('Executing structured DELETE', {
+        table: tableName,
+        schema,
+        filterCount: filters.length
+      });
+      
+      const result = await this.pool.query(query, params);
       return {
         rows: result.rows,
         rowCount: result.rowCount

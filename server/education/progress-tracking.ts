@@ -5,7 +5,7 @@
 
 import { db } from '../db';
 import { users, submissions, assignments, projects, files } from '@shared/schema';
-import { eq, and, gte, lte, sql } from 'drizzle-orm';
+import { eq, and, gte, lte, sql, inArray } from 'drizzle-orm';
 
 interface StudentProgress {
   studentId: number;
@@ -276,10 +276,12 @@ export class ProgressTrackingService {
 
     // Get all submissions for these assignments
     const assignmentIds = courseAssignments.map(a => a.id);
+    
+    // SECURITY: Use parameterized query instead of sql.raw for array values
     const courseSubmissions = assignmentIds.length > 0 
       ? await db.select()
           .from(submissions)
-          .where(sql`${submissions.assignmentId} IN (${sql.raw(assignmentIds.join(','))})`)
+          .where(inArray(submissions.assignmentId, assignmentIds))
       : [];
 
     // Get unique student IDs from submissions (simulating enrolled students)

@@ -479,7 +479,14 @@ export class DataProvisioningService {
 
   private async getTableData(projectId: number, tableName: string): Promise<any[]> {
     try {
-      const result = await db.execute(sql.raw(`SELECT * FROM ${tableName}`));
+      // SECURITY: Validate table name to prevent SQL injection
+      const tableNameRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+      if (!tableNameRegex.test(tableName)) {
+        throw new Error('Invalid table name format');
+      }
+
+      // SECURITY: Use sql.identifier for safe dynamic table names
+      const result = await db.execute(sql`SELECT * FROM ${sql.identifier(tableName)}`);
       return result.rows || [];
     } catch (error: any) {
       console.error(`Error fetching data from ${tableName}:`, error.message);
