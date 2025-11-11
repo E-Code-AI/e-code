@@ -50,6 +50,66 @@ const updateProjectSchema = z.object({
   isFeatured: z.boolean().optional()
 }).strict();
 
+// CMS & Documentation Schemas
+const createCMSPageSchema = z.object({
+  title: z.string().min(1).max(200),
+  content: z.string().min(1),
+  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
+  status: z.enum(['draft', 'published']).optional()
+}).strict();
+
+const updateCMSPageSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  content: z.string().optional(),
+  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/).optional(),
+  status: z.enum(['draft', 'published']).optional()
+}).strict();
+
+const createDocCategorySchema = z.object({
+  name: z.string().min(1).max(100),
+  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/),
+  description: z.string().max(500).optional(),
+  order: z.number().int().min(0).optional()
+}).strict();
+
+const createDocSchema = z.object({
+  title: z.string().min(1).max(200),
+  content: z.string().min(1),
+  categoryId: z.number().int(),
+  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/),
+  order: z.number().int().min(0).optional()
+}).strict();
+
+const updateDocSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  content: z.string().optional(),
+  categoryId: z.number().int().optional(),
+  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/).optional(),
+  order: z.number().int().min(0).optional()
+}).strict();
+
+// Support Ticket Schemas
+const createTicketReplySchema = z.object({
+  content: z.string().min(1).max(5000),
+  isInternal: z.boolean().optional()
+}).strict();
+
+const assignTicketSchema = z.object({
+  assigneeId: z.string().uuid('Invalid assignee ID')
+}).strict();
+
+// Subscription Schemas
+const updateSubscriptionSchema = z.object({
+  status: z.enum(['active', 'cancelled', 'expired', 'past_due']).optional(),
+  planId: z.string().optional(),
+  features: z.record(z.unknown()).optional()
+}).strict();
+
+// Generic ID param schemas for numeric IDs (legacy endpoints)
+const numericIdParamSchema = z.object({
+  id: z.string().regex(/^\d+$/, 'Invalid numeric ID').transform(Number)
+});
+
 /**
  * Fortune 500 Validation Helper
  * Validates request and returns typed data or sends error response
@@ -81,17 +141,54 @@ type RouteValidation = {
 };
 
 const adminValidationRegistry: Record<string, RouteValidation> = {
+  // User Management (5 endpoints)
   'PATCH /users/:id/toggle-admin': { params: userIdParamSchema },
   'POST /users/:id/lock': { params: userIdParamSchema, body: lockUserSchema },
   'POST /users/:id/unlock': { params: userIdParamSchema },
   'PATCH /users/:id': { params: userIdParamSchema, body: updateUserSchema },
   'DELETE /users/:id': { params: userIdParamSchema },
+  
+  // API Key Management (3 endpoints)
   'POST /api-keys': { body: createApiKeySchema },
-  'PATCH /api-keys/:id': { params: userIdParamSchema, body: updateApiKeySchema },
-  'DELETE /api-keys/:id': { params: userIdParamSchema },
+  'PATCH /api-keys/:id': { params: numericIdParamSchema, body: updateApiKeySchema },
+  'DELETE /api-keys/:id': { params: numericIdParamSchema },
+  
+  // Project Management (4 endpoints)
   'PATCH /projects/:id': { params: userIdParamSchema, body: updateProjectSchema },
   'DELETE /projects/:id': { params: userIdParamSchema },
-  // TODO: Add remaining 17 mutation endpoints
+  'PATCH /projects/:id/pin': { params: userIdParamSchema },
+  'PATCH /projects/:id/unpin': { params: userIdParamSchema },
+  
+  // CMS Pages (4 endpoints)
+  'POST /cms/pages': { body: createCMSPageSchema },
+  'PATCH /cms/pages/:id': { params: numericIdParamSchema, body: updateCMSPageSchema },
+  'POST /cms/pages/:id/publish': { params: numericIdParamSchema },
+  'DELETE /cms/pages/:id': { params: numericIdParamSchema },
+  
+  // Documentation (5 endpoints)
+  'POST /docs/categories': { body: createDocCategorySchema },
+  'POST /docs': { body: createDocSchema },
+  'PATCH /docs/:id': { params: numericIdParamSchema, body: updateDocSchema },
+  'POST /docs/:id/publish': { params: numericIdParamSchema },
+  
+  // Support Tickets (4 endpoints)
+  'POST /support/tickets/:id/replies': { params: numericIdParamSchema, body: createTicketReplySchema },
+  'POST /support/tickets/:id/assign': { params: numericIdParamSchema, body: assignTicketSchema },
+  'POST /support/tickets/:id/resolve': { params: numericIdParamSchema },
+  'POST /support/tickets/:id/close': { params: numericIdParamSchema },
+  
+  // Subscriptions (3 endpoints)
+  'POST /subscriptions': { 
+    body: z.object({
+      userId: z.string().uuid('Invalid user ID'),
+      planId: z.string().min(1),
+      stripeSubscriptionId: z.string().optional(),
+      stripeCustomerId: z.string().optional(),
+      features: z.record(z.unknown()).optional()
+    }).strict()
+  },
+  'PATCH /subscriptions/:id': { params: numericIdParamSchema, body: updateSubscriptionSchema },
+  'POST /subscriptions/:id/cancel': { params: numericIdParamSchema }
 };
 
 /**
