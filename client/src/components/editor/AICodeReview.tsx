@@ -200,15 +200,15 @@ export default function AICodeReview({
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return 'bg-red-500 text-white hover:bg-red-600';
+        return 'bg-status-critical hover:bg-status-critical';
       case 'high':
-        return 'bg-red-400 text-white hover:bg-red-500';
+        return 'bg-status-critical hover:bg-status-critical';
       case 'medium':
-        return 'bg-orange-400 text-white hover:bg-orange-500';
+        return 'bg-status-warning hover:bg-status-warning';
       case 'low':
-        return 'bg-blue-400 text-white hover:bg-blue-500';
+        return 'bg-status-info hover:bg-status-info';
       default:
-        return 'bg-gray-400 text-white hover:bg-gray-500';
+        return 'bg-muted text-foreground hover:bg-muted';
     }
   };
 
@@ -273,7 +273,7 @@ export default function AICodeReview({
               </Badge>
             )}
             {reviewData.metrics.mediumIssues > 0 && (
-              <Badge className="bg-orange-500 text-white text-xs">
+              <Badge className="bg-status-warning text-xs">
                 {reviewData.metrics.mediumIssues} Medium
               </Badge>
             )}
@@ -288,13 +288,13 @@ export default function AICodeReview({
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Sparkles className="w-5 h-5 text-orange-500" />
+            <Sparkles className="w-5 h-5 text-status-warning" />
             AI Code Review
           </CardTitle>
           <Button
             onClick={startReview}
             disabled={isReviewing}
-            className="bg-orange-500 hover:bg-orange-600"
+            className="bg-status-warning hover:bg-status-warning"
             data-testid="button-start-review"
           >
             {isReviewing ? (
@@ -323,41 +323,41 @@ export default function AICodeReview({
         
         {reviewData && !isReviewing && (
           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-green-500/10 to-green-600/10 border border-green-500/20">
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-status-success/10 to-green-600/10 border border-status-success/20">
+              <CheckCircle2 className="w-5 h-5 text-status-success" />
               <div>
                 <p className="text-xs text-muted-foreground">Quality Score</p>
-                <p className="text-lg font-bold text-green-500">
+                <p className="text-lg font-bold text-status-success">
                   {reviewData.metrics.codeQualityScore}%
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-red-500/10 to-red-600/10 border border-red-500/20">
-              <XCircle className="w-5 h-5 text-red-500" />
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-status-critical/10 to-red-600/10 border border-status-critical/20">
+              <XCircle className="w-5 h-5 text-status-critical" />
               <div>
                 <p className="text-xs text-muted-foreground">Critical</p>
-                <p className="text-lg font-bold text-red-500">
+                <p className="text-lg font-bold text-status-critical">
                   {reviewData.metrics.criticalIssues}
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-orange-500/20">
-              <AlertTriangle className="w-5 h-5 text-orange-500" />
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-status-warning/10 to-orange-600/10 border border-status-warning/20">
+              <AlertTriangle className="w-5 h-5 text-status-warning" />
               <div>
                 <p className="text-xs text-muted-foreground">Medium</p>
-                <p className="text-lg font-bold text-orange-500">
+                <p className="text-lg font-bold text-status-warning">
                   {reviewData.metrics.mediumIssues}
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-blue-500/10 to-blue-600/10 border border-blue-500/20">
-              <Info className="w-5 h-5 text-blue-500" />
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-status-info/10 to-blue-600/10 border border-status-info/20">
+              <Info className="w-5 h-5 text-status-info" />
               <div>
                 <p className="text-xs text-muted-foreground">Low</p>
-                <p className="text-lg font-bold text-blue-500">
+                <p className="text-lg font-bold text-status-info">
                   {reviewData.metrics.lowIssues}
                 </p>
               </div>
@@ -405,7 +405,7 @@ export default function AICodeReview({
                       exit={{ opacity: 0, y: -20 }}
                       className={cn(
                         'p-4 rounded-lg border transition-all',
-                        'hover:shadow-md hover:border-orange-500/50',
+                        'hover:shadow-md hover:border-status-warning/50',
                         'bg-card'
                       )}
                     >
@@ -460,15 +460,15 @@ export default function AICodeReview({
                                 )}
                                 
                                 {issue.suggestion && (
-                                  <div className="p-3 rounded bg-blue-500/10 border border-blue-500/20 text-sm">
-                                    <p className="font-medium mb-1 text-blue-500">Suggestion:</p>
+                                  <div className="p-3 rounded bg-status-info/10 border border-status-info/20 text-sm">
+                                    <p className="font-medium mb-1 text-status-info">Suggestion:</p>
                                     <p>{issue.suggestion}</p>
                                   </div>
                                 )}
                                 
                                 {issue.fixCode && (
-                                  <div className="p-3 rounded bg-green-500/10 border border-green-500/20">
-                                    <p className="font-medium mb-1 text-green-500 text-sm">Suggested Fix:</p>
+                                  <div className="p-3 rounded bg-status-success/10 border border-status-success/20">
+                                    <p className="font-medium mb-1 text-status-success text-sm">Suggested Fix:</p>
                                     <pre className="text-xs overflow-x-auto">
                                       <code>{issue.fixCode}</code>
                                     </pre>
@@ -499,7 +499,7 @@ export default function AICodeReview({
                                   fixCode: issue.fixCode!
                                 });
                               }}
-                              className="text-green-500 hover:bg-green-500/10"
+                              className="text-status-success hover:bg-status-success/10"
                               data-testid={`button-apply-fix-${issue.id}`}
                             >
                               <CheckCircle2 className="w-4 h-4 mr-1" />
@@ -528,7 +528,7 @@ export default function AICodeReview({
         
         {reviewData && reviewData.issues.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <CheckCircle2 className="w-12 h-12 text-green-500 mb-4" />
+            <CheckCircle2 className="w-12 h-12 text-status-success mb-4" />
             <h3 className="text-lg font-semibold mb-2">Perfect Code!</h3>
             <p className="text-muted-foreground">
               No issues found. Your code follows all best practices.
@@ -538,7 +538,7 @@ export default function AICodeReview({
         
         {!reviewData && !isReviewing && (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Sparkles className="w-12 h-12 text-orange-500 mb-4" />
+            <Sparkles className="w-12 h-12 text-status-warning mb-4" />
             <h3 className="text-lg font-semibold mb-2">Ready to Review</h3>
             <p className="text-muted-foreground mb-4">
               Click "Start Review" to analyze your code for issues and improvements.

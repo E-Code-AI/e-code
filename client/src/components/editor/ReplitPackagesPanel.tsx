@@ -130,17 +130,17 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string }) {
   };
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200">
+      <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2 mb-3">
-          <Package className="h-5 w-5 text-gray-600" />
-          <h3 className="font-semibold text-gray-900">Packages</h3>
+          <Package className="h-5 w-5 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground">Packages</h3>
         </div>
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -172,36 +172,36 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string }) {
           <ScrollArea className="h-full">
             <div className="p-2">
               {installedPackages.map((pkg) => (
-                <div key={pkg.name} className="mb-2 border border-gray-200 rounded">
+                <div key={pkg.name} className="mb-2 border border-border rounded">
                   <div
-                    className="p-3 cursor-pointer hover:bg-gray-50"
+                    className="p-3 cursor-pointer hover:bg-muted"
                     onClick={() => togglePackageExpansion(pkg.name)}
                   >
                     <div className="flex items-start gap-2">
                       <button className="mt-1">
                         {expandedPackages.has(pkg.name) ? (
-                          <ChevronDown className="h-3 w-3 text-gray-400" />
+                          <ChevronDown className="h-3 w-3 text-muted-foreground" />
                         ) : (
-                          <ChevronRight className="h-3 w-3 text-gray-400" />
+                          <ChevronRight className="h-3 w-3 text-muted-foreground" />
                         )}
                       </button>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm text-gray-900">
+                          <span className="font-medium text-sm text-foreground">
                             {pkg.name}
                           </span>
                           <Badge variant="outline" className="text-xs px-1.5 py-0">
                             v{pkg.version}
                           </Badge>
                           {pkg.hasUpdate && (
-                            <Badge className="text-xs px-1.5 py-0 bg-green-50 text-green-700">
+                            <Badge className="text-xs px-1.5 py-0 bg-status-success/10 text-status-success">
                               Update available
                             </Badge>
                           )}
                         </div>
-                        <p className="text-xs text-gray-600 mt-1">{pkg.description}</p>
-                        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground mt-1">{pkg.description}</p>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                           <span>{pkg.size}</span>
                           <span>•</span>
                           <span>{formatWeeklyDownloads(pkg.weekly)} weekly</span>
@@ -211,20 +211,20 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string }) {
                       <div className="flex gap-1">
                         {pkg.hasUpdate && (
                           <Button variant="ghost" size="icon" className="h-7 w-7">
-                            <ArrowUp className="h-3 w-3 text-green-600" />
+                            <ArrowUp className="h-3 w-3 text-status-success" />
                           </Button>
                         )}
                         <Button variant="ghost" size="icon" className="h-7 w-7">
-                          <Trash2 className="h-3 w-3 text-red-600" />
+                          <Trash2 className="h-3 w-3 text-status-critical" />
                         </Button>
                       </div>
                     </div>
                   </div>
 
                   {expandedPackages.has(pkg.name) && pkg.dependencies && (
-                    <div className="px-3 pb-3 border-t border-gray-100">
+                    <div className="px-3 pb-3 border-t border-border">
                       <div className="mt-2">
-                        <span className="text-xs text-gray-600">Dependencies:</span>
+                        <span className="text-xs text-muted-foreground">Dependencies:</span>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {pkg.dependencies.map((dep) => (
                             <Badge key={dep} variant="outline" className="text-xs px-2 py-0">
@@ -247,19 +247,19 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string }) {
             <div className="p-2">
               {searchQuery ? (
                 searchResults.map((pkg) => (
-                  <div key={pkg.name} className="mb-2 p-3 border border-gray-200 rounded hover:bg-gray-50">
+                  <div key={pkg.name} className="mb-2 p-3 border border-border rounded hover:bg-muted">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm text-gray-900">
+                          <span className="font-medium text-sm text-foreground">
                             {pkg.name}
                           </span>
                           <Badge variant="outline" className="text-xs px-1.5 py-0">
                             v{pkg.version}
                           </Badge>
                         </div>
-                        <p className="text-xs text-gray-600 mt-1">{pkg.description}</p>
-                        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground mt-1">{pkg.description}</p>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                           <span>{pkg.size}</span>
                           <span>•</span>
                           <span>{formatWeeklyDownloads(pkg.weekly)} weekly</span>
@@ -290,8 +290,8 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string }) {
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center h-full py-8">
-                  <Package className="h-12 w-12 text-gray-300 mb-3" />
-                  <p className="text-sm text-gray-500">Search for packages to install</p>
+                  <Package className="h-12 w-12 text-muted-foreground mb-3" />
+                  <p className="text-sm text-muted-foreground">Search for packages to install</p>
                 </div>
               )}
             </div>
@@ -304,9 +304,9 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string }) {
             <div className="p-3">
               <div className="space-y-2">
                 {installedPackages.map((pkg) => (
-                  <div key={pkg.name} className="border-l-2 border-gray-200 pl-4">
+                  <div key={pkg.name} className="border-l-2 border-border pl-4">
                     <div className="flex items-center gap-2">
-                      <Package className="h-3 w-3 text-gray-400" />
+                      <Package className="h-3 w-3 text-muted-foreground" />
                       <span className="text-sm font-medium">{pkg.name}</span>
                       <Badge variant="outline" className="text-xs px-1 py-0">
                         {pkg.version}
@@ -315,8 +315,8 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string }) {
                     {pkg.dependencies && pkg.dependencies.length > 0 && (
                       <div className="ml-5 mt-2 space-y-1">
                         {pkg.dependencies.map((dep) => (
-                          <div key={dep} className="flex items-center gap-2 text-xs text-gray-600">
-                            <ChevronRight className="h-3 w-3 text-gray-400" />
+                          <div key={dep} className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <ChevronRight className="h-3 w-3 text-muted-foreground" />
                             {dep}
                           </div>
                         ))}

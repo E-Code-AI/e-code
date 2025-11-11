@@ -94,7 +94,7 @@ export function ReplitSidebarMenu({ isOpen, onClose, onNavigate }: ReplitSidebar
       {/* Header */}
       <div className="h-14 flex items-center justify-between px-4 border-b border-[var(--ecode-border)]">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-gradient-to-br from-status-warning to-orange-600 rounded-lg flex items-center justify-center">
             <Code className="h-5 w-5 text-white" />
           </div>
           <span className="font-semibold text-[var(--ecode-text)]">E-Code</span>

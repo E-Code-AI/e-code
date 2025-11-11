@@ -91,7 +91,7 @@ export function ReplitStatusBar({
             <GitBranch className="h-3.5 w-3.5 text-[var(--ecode-text-secondary)]" />
             <span className="text-[var(--ecode-text)]">{gitBranch}</span>
             {hasGitChanges && (
-              <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+              <div className="w-1.5 h-1.5 rounded-full bg-status-warning" />
             )}
           </button>
         )}
@@ -105,19 +105,19 @@ export function ReplitStatusBar({
           >
             {errorCount > 0 && (
               <div className="flex items-center gap-1">
-                <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+                <AlertCircle className="h-3.5 w-3.5 text-status-critical" />
                 <span className="text-[var(--ecode-text)]">{errorCount}</span>
               </div>
             )}
             {warningCount > 0 && (
               <div className="flex items-center gap-1">
-                <AlertTriangle className="h-3.5 w-3.5 text-yellow-500" />
+                <AlertTriangle className="h-3.5 w-3.5 text-status-warning" />
                 <span className="text-[var(--ecode-text)]">{warningCount}</span>
               </div>
             )}
             {infoCount > 0 && (
               <div className="flex items-center gap-1">
-                <Info className="h-3.5 w-3.5 text-blue-500" />
+                <Info className="h-3.5 w-3.5 text-status-info" />
                 <span className="text-[var(--ecode-text)]">{infoCount}</span>
               </div>
             )}
@@ -130,13 +130,13 @@ export function ReplitStatusBar({
             <div className="flex items-center gap-1.5 cursor-default">
               {isConnected ? (
                 <>
-                  <Wifi className="h-3.5 w-3.5 text-green-500" />
+                  <Wifi className="h-3.5 w-3.5 text-status-success" />
                   <span className="text-[var(--ecode-text-secondary)]">Connected</span>
                 </>
               ) : (
                 <>
-                  <WifiOff className="h-3.5 w-3.5 text-red-500" />
-                  <span className="text-red-500">Disconnected</span>
+                  <WifiOff className="h-3.5 w-3.5 text-status-critical" />
+                  <span className="text-status-critical">Disconnected</span>
                 </>
               )}
             </div>
@@ -167,7 +167,7 @@ export function ReplitStatusBar({
         <HoverCard>
           <HoverCardTrigger asChild>
             <div className="flex items-center gap-1 cursor-default">
-              <Zap className="h-3.5 w-3.5 text-yellow-500" />
+              <Zap className="h-3.5 w-3.5 text-status-warning" />
             </div>
           </HoverCardTrigger>
           <HoverCardContent side="top" className="w-48">

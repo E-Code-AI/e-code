@@ -507,7 +507,7 @@ export function ReplitCodeEditor({
         <div className="ml-auto flex items-center px-2 gap-2">
           {/* AI Status Badge */}
           {aiProcessing && (
-            <Badge variant="outline" className="text-xs bg-[#F26207]/10 border-[#F26207]">
+            <Badge variant="outline" className="text-xs bg-primary/10 border-primary">
               <Sparkles className="h-3 w-3 mr-1 animate-pulse" />
               AI Processing...
             </Badge>
@@ -522,7 +522,7 @@ export function ReplitCodeEditor({
                   size="icon"
                   className={cn(
                     "h-7 w-7",
-                    aiPreferences.enabled && "bg-[#F26207] hover:bg-[#F26207]/90"
+                    aiPreferences.enabled && "bg-primary hover:bg-primary/90"
                   )}
                   onClick={toggleAIEnabled}
                 >
@@ -594,7 +594,7 @@ export function ReplitCodeEditor({
                   max="100"
                   value={aiPreferences.confidenceThreshold * 100}
                   onChange={(e) => setConfidenceThreshold(parseInt(e.target.value) / 100)}
-                  className="w-full h-1 bg-gray-200 rounded-lg cursor-pointer"
+                  className="w-full h-1 bg-muted rounded-lg cursor-pointer"
                 />
               </DropdownMenuItem>
             </DropdownMenuContent>

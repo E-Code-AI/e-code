@@ -49,14 +49,14 @@
   --ecode-text-muted: #666666;
   --ecode-accent: #F26207;  /* E-Code Orange */
   --ecode-accent-hover: #D04E00;
-  --ecode-danger: #dc3545;
-  --ecode-warning: #f59e0b;
-  --ecode-info: #3b82f6;  /* Keep blue for info */
+  /* Status Colors - HSL channels for Tailwind opacity support */
+  --ecode-danger: 354 70% 54%;
+  --ecode-warning: 37 92% 50%;
+  --ecode-info: 219 91% 60%;
+  --ecode-green: 159 64% 39%;
 
   --ecode-surface-hover: #f5f5f5;
   --ecode-surface-elevated: #ffffff;
-
-  --ecode-green: #10b981;
   --ecode-blue: #3b82f6;  /* Keep blue for certain elements */
   --ecode-purple: #7c3aed;
   --ecode-orange: #F26207;  /* E-Code Orange */
@@ -172,14 +172,14 @@
   --ecode-text-muted: #8b95a7;
   --ecode-accent: #F26207;  /* E-Code Orange */
   --ecode-accent-hover: #FF7A2B;
-  --ecode-danger: #ef4444;
-  --ecode-warning: #f59e0b;
-  --ecode-info: #38bdf8;
+  /* Status Colors - HSL channels for Tailwind opacity support (Dark Mode) */
+  --ecode-danger: 0 84% 60%;
+  --ecode-warning: 37 92% 50%;
+  --ecode-info: 199 89% 48%;
+  --ecode-green: 158 64% 52%;
 
   --ecode-surface-hover: rgba(59, 130, 246, 0.16);
   --ecode-surface-elevated: rgba(28, 35, 51, 0.92);
-
-  --ecode-green: #34d399;
   --ecode-blue: #3b82f6;
   --ecode-purple: #a78bfa;
   --ecode-orange: #fb923c;
@@ -273,11 +273,11 @@
   --ecode-text-muted: #666666;
   --ecode-accent: #F26207;  /* E-Code Orange */
   --ecode-accent-hover: #D04E00;
-  --ecode-danger: #dc3545;
-  --ecode-warning: #f59e0b;
-  --ecode-info: #3b82f6;  /* Keep blue for info */
-
-  --ecode-green: #10b981;
+  /* Status Colors - HSL channels for Tailwind opacity support */
+  --ecode-danger: 354 70% 54%;
+  --ecode-warning: 37 92% 50%;
+  --ecode-info: 219 91% 60%;
+  --ecode-green: 159 64% 39%;
   --ecode-blue: #3b82f6;  /* Keep blue for certain elements */
   --ecode-purple: #7c3aed;
   --ecode-orange: #F26207;  /* E-Code Orange */
@@ -654,4 +654,160 @@
     --ecode-space-6: 20px;
     --ecode-space-8: 28px;
   }
+}
+
+/* =============================================================================
+   SEMANTIC STATUS UTILITIES - Fortune 500 Theme Token System
+   ============================================================================= */
+
+/* Base Status Background Classes */
+.bg-status-critical {
+  background-color: var(--ecode-danger);
+  color: white;
+}
+
+.bg-status-success {
+  background-color: var(--ecode-green);
+  color: white;
+}
+
+.bg-status-warning {
+  background-color: var(--ecode-warning);
+  color: white;
+}
+
+.bg-status-info {
+  background-color: var(--ecode-info);
+  color: white;
+}
+
+/* Soft/Subtle Status Backgrounds (for light tints) */
+.bg-status-critical-soft {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--ecode-danger);
+}
+
+.bg-status-success-soft {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--ecode-green);
+}
+
+.bg-status-warning-soft {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--ecode-warning);
+}
+
+.bg-status-info-soft {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--ecode-info);
+}
+
+/* Dark Mode Soft Backgrounds */
+.dark .bg-status-critical-soft {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
+.dark .bg-status-success-soft {
+  background-color: rgba(52, 211, 153, 0.15);
+  color: #6ee7b7;
+}
+
+.dark .bg-status-warning-soft {
+  background-color: rgba(251, 146, 60, 0.15);
+  color: #fdba74;
+}
+
+.dark .bg-status-info-soft {
+  background-color: rgba(56, 189, 248, 0.15);
+  color: #7dd3fc;
+}
+
+/* Status Text Classes */
+.text-status-critical {
+  color: var(--ecode-danger);
+}
+
+.text-status-success {
+  color: var(--ecode-green);
+}
+
+.text-status-warning {
+  color: var(--ecode-warning);
+}
+
+.text-status-info {
+  color: var(--ecode-info);
+}
+
+/* Dark Mode Text Colors */
+.dark .text-status-critical {
+  color: #fca5a5;
+}
+
+.dark .text-status-success {
+  color: #6ee7b7;
+}
+
+.dark .text-status-warning {
+  color: #fdba74;
+}
+
+.dark .text-status-info {
+  color: #7dd3fc;
+}
+
+/* Status Border Classes */
+.border-status-critical {
+  border-color: var(--ecode-danger);
+}
+
+.border-status-success {
+  border-color: var(--ecode-green);
+}
+
+.border-status-warning {
+  border-color: var(--ecode-warning);
+}
+
+.border-status-info {
+  border-color: var(--ecode-info);
+}
+
+/* Hover States */
+.hover\:bg-status-critical:hover {
+  background-color: var(--ecode-danger);
+  color: white;
+}
+
+.hover\:bg-status-success:hover {
+  background-color: var(--ecode-green);
+  color: white;
+}
+
+.hover\:bg-status-warning:hover {
+  background-color: var(--ecode-warning);
+  color: white;
+}
+
+.hover\:bg-status-info:hover {
+  background-color: var(--ecode-info);
+  color: white;
+}
+
+/* Focus Ring States */
+.focus\:ring-status-critical:focus {
+  --tw-ring-color: var(--ecode-danger);
+}
+
+.focus\:ring-status-success:focus {
+  --tw-ring-color: var(--ecode-green);
+}
+
+.focus\:ring-status-warning:focus {
+  --tw-ring-color: var(--ecode-warning);
+}
+
+.focus\:ring-status-info:focus {
+  --tw-ring-color: var(--ecode-info);
 }

@@ -156,7 +156,7 @@ export function CollaboratorPresence({
   };
 
   const getStatusColor = (isActive: boolean) => {
-    return isActive ? 'bg-green-500' : 'bg-gray-400';
+    return isActive ? 'bg-status-success' : 'bg-muted';
   };
 
   const visibleParticipants = showFullList ? participants : participants.slice(0, maxVisible);
@@ -172,9 +172,9 @@ export function CollaboratorPresence({
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1">
                 {isConnected ? (
-                  <Wifi className="h-4 w-4 text-green-500" />
+                  <Wifi className="h-4 w-4 text-status-success" />
                 ) : (
-                  <WifiOff className="h-4 w-4 text-red-500" />
+                  <WifiOff className="h-4 w-4 text-status-critical" />
                 )}
                 <span className="text-xs text-muted-foreground">
                   {isConnected ? 'Connected' : 'Disconnected'}
@@ -197,7 +197,7 @@ export function CollaboratorPresence({
                     onClick={() => handleFollowUser(participant.user.id)}
                     className={cn(
                       "relative inline-block ring-2 ring-background rounded-full transition-transform hover:z-10 hover:scale-110",
-                      followingUserId === participant.user.id && "ring-blue-500 z-10"
+                      followingUserId === participant.user.id && "ring-status-info z-10"
                     )}
                   >
                     <Avatar className="h-8 w-8 border-2" style={{ borderColor: participant.user.color }}>
@@ -206,7 +206,7 @@ export function CollaboratorPresence({
                       </AvatarFallback>
                     </Avatar>
                     {followingUserId === participant.user.id && (
-                      <Eye className="absolute -bottom-1 -right-1 h-3 w-3 text-blue-500" />
+                      <Eye className="absolute -bottom-1 -right-1 h-3 w-3 text-status-info" />
                     )}
                   </button>
                 </TooltipTrigger>
@@ -243,7 +243,7 @@ export function CollaboratorPresence({
                 disabled={isGeneratingLink}
               >
                 {copied ? (
-                  <Check className="h-4 w-4 text-green-500" />
+                  <Check className="h-4 w-4 text-status-success" />
                 ) : (
                   <Share2 className="h-4 w-4" />
                 )}
@@ -273,7 +273,7 @@ export function CollaboratorPresence({
             Active Collaborators
           </CardTitle>
           <Badge variant={isConnected ? "default" : "destructive"} className="gap-1">
-            <Circle className={cn("h-2 w-2 fill-current", isConnected ? "text-green-500" : "text-red-500")} />
+            <Circle className={cn("h-2 w-2 fill-current", isConnected ? "text-status-success" : "text-status-critical")} />
             {isConnected ? 'Live' : 'Offline'}
           </Badge>
         </div>
@@ -295,7 +295,7 @@ export function CollaboratorPresence({
                   className={cn(
                     "flex items-center justify-between p-2 rounded-lg transition-colors",
                     "hover:bg-muted/50",
-                    followingUserId === participant.user.id && "bg-blue-500/10 ring-1 ring-blue-500"
+                    followingUserId === participant.user.id && "bg-status-info/10 ring-1 ring-status-info"
                   )}
                 >
                   <div className="flex items-center gap-3">
@@ -369,7 +369,7 @@ export function CollaboratorPresence({
           >
             {copied ? (
               <>
-                <Check className="mr-2 h-4 w-4 text-green-500" />
+                <Check className="mr-2 h-4 w-4 text-status-success" />
                 Copied!
               </>
             ) : (

@@ -129,13 +129,13 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'error':
-        return 'text-red-500';
+        return 'text-status-critical';
       case 'warn':
-        return 'text-yellow-500';
+        return 'text-status-warning';
       case 'info':
-        return 'text-blue-500';
+        return 'text-status-info';
       case 'debug':
-        return 'text-gray-500';
+        return 'text-muted-foreground';
       default:
         return 'text-[var(--ecode-text)]';
     }
@@ -146,7 +146,7 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
       case 'error':
         return <Badge variant="destructive" className="text-xs">ERROR</Badge>;
       case 'warn':
-        return <Badge className="text-xs bg-yellow-500">WARN</Badge>;
+        return <Badge className="text-xs bg-status-warning/100">WARN</Badge>;
       case 'info':
         return <Badge variant="secondary" className="text-xs">INFO</Badge>;
       case 'debug':

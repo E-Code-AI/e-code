@@ -63,13 +63,13 @@ export function ReplitProblemsPanel({ projectId, onFileNavigate }: ReplitProblem
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'error':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
+        return <AlertCircle className="h-4 w-4 text-status-critical" />;
       case 'warning':
-        return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+        return <AlertTriangle className="h-4 w-4 text-status-warning" />;
       case 'info':
-        return <Info className="h-4 w-4 text-blue-500" />;
+        return <Info className="h-4 w-4 text-status-info" />;
       default:
-        return <Info className="h-4 w-4 text-gray-500" />;
+        return <Info className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -150,7 +150,7 @@ export function ReplitProblemsPanel({ projectId, onFileNavigate }: ReplitProblem
             variant={filter === 'warnings' ? 'default' : 'outline'}
             className={cn(
               "cursor-pointer",
-              filter === 'warnings' && "bg-yellow-500 hover:bg-yellow-600"
+              filter === 'warnings' && "bg-status-warning/100 hover:bg-status-warning"
             )}
             onClick={() => setFilter('warnings')}
           >
@@ -160,7 +160,7 @@ export function ReplitProblemsPanel({ projectId, onFileNavigate }: ReplitProblem
             variant={filter === 'info' ? 'default' : 'outline'}
             className={cn(
               "cursor-pointer",
-              filter === 'info' && "bg-blue-500 hover:bg-blue-600"
+              filter === 'info' && "bg-status-info hover:bg-status-info"
             )}
             onClick={() => setFilter('info')}
           >

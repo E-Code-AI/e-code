@@ -192,19 +192,19 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
   };
 
   return (
-    <div className={cn("h-full flex flex-col bg-[#1e1e1e]", className)}>
+    <div className={cn("h-full flex flex-col bg-background", className)}>
       {/* Header */}
-      <div className="h-10 px-3 flex items-center justify-between bg-[#252525] border-b border-[#3c3c3c]">
+      <div className="h-10 px-3 flex items-center justify-between bg-muted border-b border-border">
         <div className="flex items-center gap-2">
-          <Terminal className="h-4 w-4 text-gray-400" />
-          <span className="text-sm text-gray-300">Shell</span>
+          <Terminal className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Shell</span>
         </div>
 
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-gray-400 hover:text-gray-200 hover:bg-[#3c3c3c]"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-accent"
             onClick={handleCopy}
           >
             <Copy className="h-3.5 w-3.5" />
@@ -212,7 +212,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-gray-400 hover:text-gray-200 hover:bg-[#3c3c3c]"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-accent"
             onClick={handleClear}
           >
             <X className="h-3.5 w-3.5" />
@@ -220,7 +220,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-gray-400 hover:text-gray-200 hover:bg-[#3c3c3c]"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-accent"
             onClick={handleReset}
           >
             <RotateCcw className="h-3.5 w-3.5" />
@@ -228,7 +228,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-gray-400 hover:text-gray-200 hover:bg-[#3c3c3c]"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-accent"
             onClick={() => setIsFullscreen(!isFullscreen)}
           >
             {isFullscreen ? (
@@ -240,7 +240,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-gray-400 hover:text-gray-200 hover:bg-[#3c3c3c]"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-accent"
           >
             <Plus className="h-3.5 w-3.5" />
           </Button>
@@ -250,8 +250,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
       {/* Terminal */}
       <div
         ref={terminalRef}
-        className="flex-1 p-2"
-        style={{ backgroundColor: '#1e1e1e' }}
+        className="flex-1 p-2 bg-background"
       />
     </div>
   );

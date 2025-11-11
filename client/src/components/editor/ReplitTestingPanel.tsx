@@ -177,11 +177,11 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
   const getTestIcon = (status: TestCase['status']) => {
     switch (status) {
       case 'passed':
-        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+        return <CheckCircle2 className="h-4 w-4 text-status-success" />;
       case 'failed':
-        return <XCircle className="h-4 w-4 text-red-500" />;
+        return <XCircle className="h-4 w-4 text-status-critical" />;
       case 'skipped':
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+        return <AlertCircle className="h-4 w-4 text-status-warning" />;
       case 'pending':
         return <Clock className="h-4 w-4 text-[var(--ecode-text-secondary)]" />;
     }
@@ -235,17 +235,17 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
               Total: {totalTests}
             </Badge>
             {passedTests > 0 && (
-              <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
+              <Badge variant="outline" className="bg-status-success/10 text-status-success border-status-success/30">
                 Passed: {passedTests}
               </Badge>
             )}
             {failedTests > 0 && (
-              <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/30">
+              <Badge variant="outline" className="bg-status-critical/10 text-status-critical border-status-critical/30">
                 Failed: {failedTests}
               </Badge>
             )}
             {skippedTests > 0 && (
-              <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/30">
+              <Badge variant="outline" className="bg-status-warning/100/10 text-status-warning border-status-warning/30">
                 Skipped: {skippedTests}
               </Badge>
             )}
@@ -343,7 +343,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
                             {test.testName}
                           </p>
                           {test.error && (
-                            <p className="text-xs text-red-500 mt-0.5 font-[family-name:var(--ecode-font-mono)] whitespace-pre-wrap">
+                            <p className="text-xs text-status-critical mt-0.5 font-[family-name:var(--ecode-font-mono)] whitespace-pre-wrap">
                               {test.error}
                             </p>
                           )}
@@ -376,10 +376,10 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
                 className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-[var(--ecode-sidebar-hover)] cursor-pointer"
                 data-testid={`run-${run.id}`}
               >
-                {run.status === 'passed' && <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />}
-                {run.status === 'failed' && <XCircle className="h-3.5 w-3.5 text-red-500" />}
-                {run.status === 'running' && <RefreshCw className="h-3.5 w-3.5 text-blue-500 animate-spin" />}
-                {run.status === 'cancelled' && <AlertCircle className="h-3.5 w-3.5 text-yellow-500" />}
+                {run.status === 'passed' && <CheckCircle2 className="h-3.5 w-3.5 text-status-success" />}
+                {run.status === 'failed' && <XCircle className="h-3.5 w-3.5 text-status-critical" />}
+                {run.status === 'running' && <RefreshCw className="h-3.5 w-3.5 text-status-info animate-spin" />}
+                {run.status === 'cancelled' && <AlertCircle className="h-3.5 w-3.5 text-status-warning" />}
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-[var(--ecode-text)] font-[family-name:var(--ecode-font-mono)]">
                     {run.runner} • {run.runId.slice(0, 8)}
@@ -393,9 +393,9 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
                   variant="outline" 
                   className={cn(
                     "text-xs",
-                    run.status === 'passed' && "bg-green-500/10 text-green-500 border-green-500/30",
-                    run.status === 'failed' && "bg-red-500/10 text-red-500 border-red-500/30",
-                    run.status === 'running' && "bg-blue-500/10 text-blue-500 border-blue-500/30"
+                    run.status === 'passed' && "bg-status-success/10 text-status-success border-status-success/30",
+                    run.status === 'failed' && "bg-status-critical/10 text-status-critical border-status-critical/30",
+                    run.status === 'running' && "bg-status-info/10 text-status-info border-status-info/30"
                   )}
                 >
                   {run.status}

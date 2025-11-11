@@ -185,11 +185,11 @@ export function AIAgentPanel({ projectId, onClose }: AIAgentPanelProps) {
   ];
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-zinc-900">
+    <div className="flex flex-col h-full bg-background">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-orange-500" />
+          <Sparkles className="h-5 w-5 text-status-warning" />
           <h2 className="font-semibold">AI Agent</h2>
           <Badge variant="secondary" className="ml-2">
             {isStreaming ? 'Streaming' : 'Ready'}
@@ -273,7 +273,7 @@ export function AIAgentPanel({ projectId, onClose }: AIAgentPanelProps) {
         <div className="space-y-4">
           {messages.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
-              <Sparkles className="h-12 w-12 mx-auto mb-4 text-orange-500/20" />
+              <Sparkles className="h-12 w-12 mx-auto mb-4 text-status-warning/20" />
               <p className="text-sm">Ask me anything about your code!</p>
               <p className="text-xs mt-2">I can help you build, debug, and improve your application.</p>
             </div>
@@ -287,18 +287,18 @@ export function AIAgentPanel({ projectId, onClose }: AIAgentPanelProps) {
               }`}
             >
               {message.role === 'assistant' && (
-                <div className="h-8 w-8 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0">
-                  <Bot className="h-4 w-4 text-orange-600" />
+                <div className="h-8 w-8 rounded-full bg-status-warning/10 flex items-center justify-center flex-shrink-0">
+                  <Bot className="h-4 w-4 text-status-warning" />
                 </div>
               )}
               
               <div
                 className={`max-w-[80%] rounded-lg px-3 py-2 ${
                   message.role === 'user'
-                    ? 'bg-blue-500 text-white'
+                    ? 'bg-status-info text-primary-foreground'
                     : message.role === 'system'
-                    ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
-                    : 'bg-gray-100 dark:bg-zinc-800'
+                    ? 'bg-status-critical/10 text-status-critical dark:text-status-critical'
+                    : 'bg-muted dark:bg-muted'
                 }`}
               >
                 {message.thinking && (
@@ -320,8 +320,8 @@ export function AIAgentPanel({ projectId, onClose }: AIAgentPanelProps) {
               </div>
               
               {message.role === 'user' && (
-                <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
-                  <User className="h-4 w-4 text-blue-600" />
+                <div className="h-8 w-8 rounded-full bg-status-info/10 flex items-center justify-center flex-shrink-0">
+                  <User className="h-4 w-4 text-status-info" />
                 </div>
               )}
             </div>
@@ -329,10 +329,10 @@ export function AIAgentPanel({ projectId, onClose }: AIAgentPanelProps) {
           
           {isStreaming && currentStreamMessage && (
             <div className="flex gap-3 justify-start">
-              <div className="h-8 w-8 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0">
-                <Loader2 className="h-4 w-4 text-orange-600 animate-spin" />
+              <div className="h-8 w-8 rounded-full bg-status-warning/10 flex items-center justify-center flex-shrink-0">
+                <Loader2 className="h-4 w-4 text-status-warning animate-spin" />
               </div>
-              <div className="max-w-[80%] rounded-lg px-3 py-2 bg-gray-100 dark:bg-zinc-800">
+              <div className="max-w-[80%] rounded-lg px-3 py-2 bg-muted dark:bg-muted">
                 <p className="text-sm whitespace-pre-wrap">{currentStreamMessage}</p>
               </div>
             </div>

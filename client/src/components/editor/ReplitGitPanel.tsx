@@ -203,10 +203,10 @@ export function ReplitGitPanel({ projectId }: { projectId?: string }) {
             {status.branch}
           </span>
           {status.ahead > 0 && (
-            <span className="text-xs text-green-500">↑{status.ahead}</span>
+            <span className="text-xs text-status-success">↑{status.ahead}</span>
           )}
           {status.behind > 0 && (
-            <span className="text-xs text-orange-500">↓{status.behind}</span>
+            <span className="text-xs text-status-warning">↓{status.behind}</span>
           )}
         </div>
       </div>
@@ -234,7 +234,7 @@ export function ReplitGitPanel({ projectId }: { projectId?: string }) {
                   data-testid={`item-staged-${file}`}
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <FileCode className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                    <FileCode className="h-3.5 w-3.5 text-status-success flex-shrink-0" />
                     <span className="text-xs font-[family-name:var(--ecode-font-mono)] truncate text-[var(--ecode-text)]">
                       {file}
                     </span>
@@ -277,7 +277,7 @@ export function ReplitGitPanel({ projectId }: { projectId?: string }) {
                   data-testid={`item-unstaged-${file}`}
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <FileCode className="h-3.5 w-3.5 text-orange-500 flex-shrink-0" />
+                    <FileCode className="h-3.5 w-3.5 text-status-warning flex-shrink-0" />
                     <span className="text-xs font-[family-name:var(--ecode-font-mono)] truncate text-[var(--ecode-text)]">
                       {file}
                     </span>

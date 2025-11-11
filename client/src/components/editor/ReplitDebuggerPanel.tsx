@@ -199,13 +199,13 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
       return <span className="text-[var(--ecode-text-muted)]">{'{ ... }'}</span>;
     }
     if (type === 'string') {
-      return <span className="text-green-600">"{value}"</span>;
+      return <span className="text-status-success">"{value}"</span>;
     }
     if (type === 'boolean') {
-      return <span className="text-blue-600">{value.toString()}</span>;
+      return <span className="text-status-info">{value.toString()}</span>;
     }
     if (type === 'number') {
-      return <span className="text-orange-600">{value}</span>;
+      return <span className="text-status-warning">{value}</span>;
     }
     return <span className="text-[var(--ecode-text)]">{value}</span>;
   };
@@ -230,7 +230,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
             {isRunning && (
               <Badge className={cn(
                 "text-xs",
-                isPaused ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-100" : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100"
+                isPaused ? "bg-status-warning/20 text-status-warning" : "bg-status-success/20 text-status-success"
               )}>
                 {isPaused ? 'Paused' : 'Running'}
               </Badge>
@@ -371,7 +371,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                     />
                     <Circle className={cn(
                       "h-3 w-3",
-                      bp.isEnabled ? "text-red-500 fill-red-500" : "text-[var(--ecode-text-muted)]"
+                      bp.isEnabled ? "text-status-critical fill-status-critical" : "text-[var(--ecode-text-muted)]"
                     )} />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-[family-name:var(--ecode-font-mono)] text-[var(--ecode-text)] truncate">
@@ -393,7 +393,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                       onClick={() => deleteBreakpointMutation.mutate({ breakpointId: bp.id })}
                       data-testid={`button-delete-breakpoint-${bp.id}`}
                     >
-                      <Trash2 className="h-3 w-3 text-red-500" />
+                      <Trash2 className="h-3 w-3 text-status-critical" />
                     </Button>
                   </div>
                 ))
@@ -512,7 +512,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                   </span>
                   <span className="text-sm text-[var(--ecode-text-muted)] font-[family-name:var(--ecode-font-mono)]">
                     {isRunning && isPaused ? (
-                      <span className="text-green-600">"value"</span>
+                      <span className="text-status-success">"value"</span>
                     ) : (
                       <span className="text-[var(--ecode-text-muted)]">-</span>
                     )}
@@ -542,13 +542,13 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                     key={frame.id}
                     className={cn(
                       "px-2 py-2 hover:bg-[var(--ecode-surface-hover)] rounded cursor-pointer",
-                      frame.isActive && "bg-blue-50 dark:bg-blue-950"
+                      frame.isActive && "bg-status-info/10"
                     )}
                     data-testid={`callstack-frame-${frame.id}`}
                   >
                     <div className="flex items-center gap-2">
                       {frame.isActive && (
-                        <ChevronRight className="h-3 w-3 text-blue-600" />
+                        <ChevronRight className="h-3 w-3 text-status-info" />
                       )}
                       <div className={cn(
                         "flex-1",
