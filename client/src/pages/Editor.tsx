@@ -55,10 +55,10 @@ export default function Editor(props: EditorProps = {}) {
   });
 
   useEffect(() => {
-    const handleKeyboardSettingsChanged = () => {
-      const hintValue = localStorage.getItem('keyboard-shortcut-hint');
-      const testerValue = localStorage.getItem('keyboard-shortcut-tester');
-      console.log('[Editor.tsx] Keyboard settings changed - hint:', hintValue, 'tester:', testerValue);
+    const handleKeyboardSettingsChanged = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const hintValue = customEvent.detail?.shortcutHint ?? localStorage.getItem('keyboard-shortcut-hint');
+      const testerValue = customEvent.detail?.shortcutTester ?? localStorage.getItem('keyboard-shortcut-tester');
       setEnableShortcutHint(hintValue !== 'false');
       setEnableShortcutTester(testerValue === 'true');
     };
@@ -66,11 +66,6 @@ export default function Editor(props: EditorProps = {}) {
     window.addEventListener('keyboard-settings-changed', handleKeyboardSettingsChanged);
     return () => window.removeEventListener('keyboard-settings-changed', handleKeyboardSettingsChanged);
   }, []);
-  
-  // Debug: Log keyboard utilities state
-  useEffect(() => {
-    console.log('[Editor.tsx] Keyboard utilities state - enableShortcutHint:', enableShortcutHint, 'enableShortcutTester:', enableShortcutTester);
-  }, [enableShortcutHint, enableShortcutTester]);
 
   const { data: project, isLoading: isProjectLoading } = useQuery<Project>({
     queryKey: [`/api/projects/${resolvedProjectId}`],
