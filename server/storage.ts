@@ -995,6 +995,9 @@ export class DatabaseStorage implements IStorage {
     byCountry: { country: string; count: number }[];
     campaignsSent: number;
     lastSentAt: Date | null;
+    // Derived fields (computed at runtime, not stored in DB)
+    campaignsByStatus?: Record<string, number>;
+    recentFailures?: any[];
   }> {
     const subscribers = await this.db.select().from(newsletterSubscribers);
 
@@ -1317,7 +1320,6 @@ export class DatabaseStorage implements IStorage {
             filesChanged: normalizeStringArray(reviewData.filesChanged, []) as CodeReviewInsertModel["filesChanged"],
           }
         : {}),
-      updatedAt: new Date(),
     };
 
     const [review] = await this.db
