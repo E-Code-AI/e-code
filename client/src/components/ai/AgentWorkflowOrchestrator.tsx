@@ -37,6 +37,8 @@ export function AgentWorkflowOrchestrator({
   const [buildChoice, setBuildChoice] = useState<'full' | 'design' | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [buildProgress, setBuildProgress] = useState(0);
+  const [conversationId, setConversationId] = useState<number | null>(null);
+  const [planId, setPlanId] = useState<string | null>(null);
 
   // Generate feature list from initial prompt
   useEffect(() => {
@@ -48,24 +50,120 @@ export function AgentWorkflowOrchestrator({
   const generateFeatureList = async () => {
     setIsProcessing(true);
     try {
-      // Call backend to generate feature list using AI
-      const response = await apiRequest('POST', '/api/agent/features/generate', {
-        projectId,
-        prompt: initialPrompt
-      }) as { features: string[] };
+      // REAL AI-POWERED PLAN GENERATION via Server-Sent Events
+      // Connect to streaming endpoint for real-time plan generation from OpenAI GPT-5
+      // FIXED: Correct route is /api/agent/stream (not /plan/stream)
+      const response = await fetch('/api/agent/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          projectId,
+          goal: initialPrompt,
+          context: {
+            projectType: 'web-app',
+            technologies: ['react', 'typescript', 'express'],
+          }
+        }),
+      });
 
-      setFeatureList(response.features || [
-        'User authentication and authorization',
-        'Responsive design for mobile and desktop',
-        'Database integration for data persistence',
-        'RESTful API endpoints',
-        'Interactive user interface',
-      ]);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText || 'Failed to connect to plan generation service'}`);
+      }
+
+      if (!response.body) {
+        throw new Error('Response body is null');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      const features: string[] = [];
+      let receivedPlan = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            
+            // Skip empty lines and heartbeat messages
+            if (!data || data.startsWith(':')) continue;
+            
+            try {
+              const event = JSON.parse(data);
+              
+              if (event.type === 'plan' && event.data) {
+                receivedPlan = true;
+                
+                // FIXED: Robust task extraction with proper validation
+                const plan = event.data;
+                if (plan.tasks && Array.isArray(plan.tasks) && plan.tasks.length > 0) {
+                  // Extract features from task titles
+                  features.push(...plan.tasks.map((task: any) => task.title || task.description || 'Unnamed task'));
+                  
+                  // Store full task list for downstream build process
+                  setTaskList(plan.tasks.map((task: any) => task.description || task.title || 'Unnamed task'));
+                } else {
+                  console.warn('Plan received but no tasks found:', plan);
+                }
+              } else if (event.type === 'saved' && event.data) {
+                // FIXED: Capture conversationId and planId for memory retention
+                const { conversationId: convId, planId: pId } = event.data;
+                if (convId) setConversationId(convId);
+                if (pId) setPlanId(pId);
+                
+                // Store in sessionStorage for IDE auto-agent startup
+                if (convId && pId) {
+                  sessionStorage.setItem(`agent-conversation-${projectId}`, JSON.stringify({
+                    conversationId: convId,
+                    planId: pId,
+                    timestamp: Date.now()
+                  }));
+                }
+              } else if (event.type === 'error') {
+                throw new Error(event.data?.message || 'Plan generation failed');
+              } else if (event.type === 'done') {
+                // Stream completed successfully
+                break;
+              }
+            } catch (parseError) {
+              console.error('Failed to parse SSE event:', data, parseError);
+              // Continue processing other events
+            }
+          }
+        }
+      }
+
+      if (features.length > 0 && receivedPlan) {
+        setFeatureList(features);
+        toast({
+          title: "Plan Generated",
+          description: `AI generated ${features.length} tasks for your project`,
+        });
+      } else {
+        throw new Error('No plan received from AI service');
+      }
       
       setPhase('selecting_build_option');
     } catch (error) {
-      console.error('Feature generation failed:', error);
-      // Fallback to default features
+      console.error('Real AI feature generation failed:', error);
+      toast({
+        title: "Generation Error",
+        description: error instanceof Error ? error.message : "Failed to generate plan. Using fallback.",
+        variant: "destructive"
+      });
+      
+      // Fallback to default features only if real AI fails
       setFeatureList([
         'User authentication and authorization',
         'Responsive design for mobile and desktop',
