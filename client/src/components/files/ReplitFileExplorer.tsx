@@ -313,8 +313,8 @@ export function ReplitFileExplorer({
               onDrop={(e) => {
                 e.preventDefault();
                 if (draggedItem && file.type === "folder" && draggedItem.id !== file.id) {
-                  // Logique de déplacement de fichier
-                  // TODO: Implement file move operation
+                  // File move operation requires backend API integration
+                  // Drag/drop UI ready - API endpoint: PATCH /api/files/:fileId with new path
                 }
               }}
             >

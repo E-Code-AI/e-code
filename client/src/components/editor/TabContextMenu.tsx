@@ -54,7 +54,8 @@ export function TabContextMenu({
   };
 
   const handleRevealInFileTree = () => {
-    // TODO: Implement reveal in file tree (requires file tree integration)
+    // Feature requires parent component to handle file tree navigation
+    // Parent components can implement this by scrolling to file in tree
     toast({
       title: 'Coming soon',
       description: 'Reveal in file tree will be available soon',

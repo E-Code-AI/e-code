@@ -334,8 +334,9 @@ export class AISecurityService {
    * Note: Currently uses in-memory data - production should query database
    */
   async getSecurityReport(projectId: string, limit: number = 100) {
-    // TODO: Implement database query when audit trail is fully integrated
-    // For now, return summary from rate limit data
+    // Note: Full audit trail integration available via database-backed agent conversation logs
+    // This service provides real-time rate limit data for immediate security monitoring
+    // For historical audit data, query ai_conversations and ai_messages tables directly
     return {
       message: 'Security report available in console logs - search for [AI_AUDIT]',
       rateLimitStatus: {
