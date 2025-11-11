@@ -108,13 +108,10 @@ export function getProjectUrl(project: ProjectLike, fallbackUsername?: string | 
     return `/@${ownerUsername}/${slug}`;
   }
 
-  // Prefer `id` over `projectId` if both are present
-  const projectNumericId = 
-    typeof project.id === 'number' ? project.id :
-    typeof project.projectId === 'number' ? project.projectId :
-    null;
-  if (projectNumericId !== null) {
-    return `/project/${projectNumericId}`;
+  // Fallback to IDE route with project ID (supports both UUID strings and numeric IDs)
+  const projectId = project.id ?? project.projectId ?? null;
+  if (projectId) {
+    return `/ide/${projectId}`;
   }
   return '/projects';
 }

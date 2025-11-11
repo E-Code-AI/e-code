@@ -376,7 +376,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-1 mt-2">
                   {recentProjects.slice(0, 5).map((project) => (
-                    <Link key={project.id} href={`/project/${project.id}`}>
+                    <Link key={project.id} href={`/ide/${project.id}`}>
                       <div className="flex items-center justify-between p-2 rounded-md hover:bg-[var(--ecode-sidebar-hover)] cursor-pointer group replit-transition">
                         <div className="flex items-center min-w-0 flex-1">
                           <div className="flex-shrink-0">
