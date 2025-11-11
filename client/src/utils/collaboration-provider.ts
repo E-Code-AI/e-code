@@ -11,7 +11,7 @@ export class CollaborationProvider {
 
   constructor(
     roomName: string,
-    userInfo: { userId: number; username: string; color: string }
+    userInfo: { userId: string | number; username: string; color: string }
   ) {
     this.doc = new Y.Doc();
     

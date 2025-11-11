@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/use-auth';
 
 interface Collaborator {
   clientId: number;
-  userId: number;
+  userId: string | number;
   username: string;
   color: string;
   cursor?: {
@@ -20,6 +20,16 @@ interface Collaborator {
       endColumn: number;
     };
   };
+}
+
+// Hash string to number for color selection
+function hashStringToIndex(str: string, arrayLength: number): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash) % arrayLength;
 }
 
 interface UseYjsCollaborationOptions {
@@ -51,15 +61,15 @@ export function useYjsCollaboration({
   useEffect(() => {
     if (!user || !projectId || !fileId) return;
 
-    // Generate a color for this user
-    const userColor = COLORS[user.id % COLORS.length];
+    // Generate a color for this user (user.id is always a string UUID)
+    const userColor = COLORS[hashStringToIndex(user.id, COLORS.length)];
     
     // Create collaboration provider
     const provider = new CollaborationProvider(
       `project-${projectId}`,
       {
         userId: user.id,
-        username: user.username,
+        username: user.username || 'Anonymous',
         color: userColor
       }
     );
@@ -102,10 +112,10 @@ export function useYjsCollaboration({
 
     // Listen for cursor position changes
     const disposable = editor.onDidChangeCursorPosition((e) => {
-      if (providerRef.current) {
+      if (providerRef.current && editor) {
         providerRef.current.sendCursorUpdate(
           e.position,
-          editor.getSelection() || undefined
+          editor?.getSelection() || undefined
         );
       }
     });

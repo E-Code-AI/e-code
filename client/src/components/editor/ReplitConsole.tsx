@@ -30,7 +30,7 @@ export function ReplitConsole({ projectId, isRunning, executionId, className }: 
   // Fetch initial logs - REAL BACKEND
   const { data: initialLogs } = useQuery<ConsoleLog[]>({
     queryKey: [`/api/terminal/logs?projectId=${projectId}`],
-    enabled: !!projectId && projectId > 0,
+    enabled: Boolean(projectId), // Support both UUID strings and numeric IDs
   });
 
   // WebSocket connection for real-time logs
