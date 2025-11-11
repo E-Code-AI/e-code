@@ -439,8 +439,36 @@ export class FilesRouter {
         console.log('[FILES-API] Project ID:', projectId);
         console.log('[FILES-API] Request body:', JSON.stringify(req.body, null, 2));
         
+        // FORTUNE 500: Server-side path derivation
+        // Accept both legacy (explicit path) and new (name + parentId) payloads
+        let filePath = req.body.path;
+        
+        if (!filePath && req.body.name) {
+          // Derive path from parent hierarchy (single source of truth)
+          const { name, parentId } = req.body;
+          
+          if (parentId) {
+            // Fetch parent to build canonical path
+            const parent = await this.storage.getFile(parentId);
+            if (!parent) {
+              return res.status(400).json({
+                message: "Parent folder not found",
+                code: "PARENT_NOT_FOUND"
+              });
+            }
+            // Normalize path separators
+            filePath = parent.path.endsWith('/') ? `${parent.path}${name}` : `${parent.path}/${name}`;
+          } else {
+            // Root level file
+            filePath = name;
+          }
+          
+          console.log('[FILES-API] Derived path from name+parentId:', filePath);
+        }
+        
         const validatedData = insertFileSchema.parse({
           ...req.body,
+          path: filePath,  // Use derived or explicit path
           projectId
         });
         

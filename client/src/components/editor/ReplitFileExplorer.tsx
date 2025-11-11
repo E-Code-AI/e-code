@@ -103,21 +103,27 @@ export function ReplitFileExplorer({
 
   // Fetch files from API - REAL BACKEND
   const { data: files = [], isLoading, refetch } = useQuery<FileNode[]>({
-    queryKey: [`/api/files/${projectId}`],
+    queryKey: [`/api/projects/${projectId}/files`],
     enabled: !!projectId,
   });
 
   // File operations mutations - REAL BACKEND
   const createFileMutation = useMutation({
-    mutationFn: async (data: { name: string; isFolder: boolean; parentId: number | null; content?: string }) => 
-      apiRequest("POST", `/api/files`, data),
+    mutationFn: async (data: { name: string; isFolder: boolean; parentId: number | null; content?: string }) => {
+      console.log('[FILE-EXPLORER] Creating file with data:', data, 'projectId:', projectId);
+      const result = await apiRequest("POST", `/api/files/${projectId}`, data);
+      console.log('[FILE-EXPLORER] File creation result:', result);
+      return result;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       toast({ title: "Success", description: "File created successfully" });
       setNewItemDialog(null);
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to create file", variant: "destructive" });
+    onError: (error: any) => {
+      console.error('[FILE-EXPLORER] File creation error:', error);
+      console.error('[FILE-EXPLORER] Error details:', error.message, error.stack);
+      toast({ title: "Error", description: `Failed to create file: ${error.message || 'Unknown error'}`, variant: "destructive" });
     },
   });
 
@@ -125,7 +131,7 @@ export function ReplitFileExplorer({
     mutationFn: async ({ id, ...data }: { id: number; name?: string; content?: string }) =>
       apiRequest("PATCH", `/api/files/${id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       toast({ title: "Success", description: "File updated successfully" });
       setRenameDialog(null);
     },
@@ -138,7 +144,7 @@ export function ReplitFileExplorer({
     mutationFn: async (id: number) =>
       apiRequest("DELETE", `/api/files/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       toast({ title: "Success", description: "File deleted successfully" });
       setDeleteConfirmDialog(null);
     },
