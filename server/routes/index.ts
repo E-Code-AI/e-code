@@ -39,6 +39,7 @@ import debugRouter from "./debug.router";
 import agentAutonomousRouter from "./agent-autonomous.router";
 import agentTestingRouter from "./agent-testing.router";
 import agentWorkflowRouter from "./agent-workflow.router";
+import createAgentPlanRouter from "./agent-plan.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -96,6 +97,9 @@ export class MainRouter {
     
     // Agent workflow routes (feature generation, build selection) - authenticated users
     app.use('/api/agent', agentWorkflowRouter);
+    
+    // Agent plan routes (REAL AI-powered plan generation with streaming) - authenticated users
+    app.use('/api/agent/plan', createAgentPlanRouter(this.storage));
     
     // Agent testing routes (browser testing, element selector, recording) - Phase 2 (ADMIN ONLY)
     app.use('/api/admin/agent', agentTestingRouter);
