@@ -15,6 +15,7 @@ import { ReplitConsole } from "@/components/editor/ReplitConsole";
 import { ReplitDB } from "@/components/ReplitDB";
 import { NixConfig } from "@/components/NixConfig";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
+import { ShortcutHint, ShortcutTester } from "@/components/utilities";
 import { Bot, Database, Globe, Package } from "lucide-react";
 
 type EditorProps = {
@@ -43,6 +44,25 @@ export default function Editor(props: EditorProps = {}) {
   const [isProjectRunning, setIsProjectRunning] = useState(false);
   const [executionId, setExecutionId] = useState<string | undefined>();
   const [initialAgentPrompt, setInitialAgentPrompt] = useState<string | null>(null);
+  
+  const [enableShortcutHint, setEnableShortcutHint] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem('keyboard-shortcut-hint') !== 'false';
+  });
+  const [enableShortcutTester, setEnableShortcutTester] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('keyboard-shortcut-tester') === 'true';
+  });
+
+  useEffect(() => {
+    const handleKeyboardSettingsChanged = () => {
+      setEnableShortcutHint(localStorage.getItem('keyboard-shortcut-hint') !== 'false');
+      setEnableShortcutTester(localStorage.getItem('keyboard-shortcut-tester') === 'true');
+    };
+
+    window.addEventListener('keyboard-settings-changed', handleKeyboardSettingsChanged);
+    return () => window.removeEventListener('keyboard-settings-changed', handleKeyboardSettingsChanged);
+  }, []);
 
   const { data: project, isLoading: isProjectLoading } = useQuery<Project>({
     queryKey: [`/api/projects/${resolvedProjectId}`],
@@ -506,6 +526,9 @@ export default function Editor(props: EditorProps = {}) {
         onToggleTerminal={() => setBottomPanelOpen(prev => !prev)}
         onToggleAI={handleCollaborationOpen}
       />
+      
+      {enableShortcutHint && <ShortcutHint />}
+      {enableShortcutTester && <ShortcutTester />}
     </div>
   );
 }

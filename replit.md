@@ -46,6 +46,11 @@ The platform utilizes a polyglot backend architecture with Go for container orch
 - **Workspace Parity**: True backend integration for IDE panels (LSP/Problems, Build Logs/Output, Testing, Security Scanner) with real-time WebSocket updates, including a functional Mobile Monaco Editor, Mobile Terminal, Mobile File Tree, and Floating Action Button (FAB).
 - **Responsive UI**: Desktop, Tablet, and Mobile layouts.
 - **Multi-Tab Editor System**: Maintains independent Monaco editor instances per tab via MultiEditorManager.
+- **Keyboard Utilities**: Production-ready keyboard shortcut helpers with opt-in feature flags:
+  - **ShortcutHint**: Displays available shortcuts when modifier keys (Cmd/Ctrl/Alt/Shift) are pressed. Enabled by default, can be disabled via User Settings → Advanced Developer Settings → "Keyboard Shortcut Hint". Uses framer-motion for smooth animations, supports Mac/Windows cross-platform detection.
+  - **ShortcutTester**: Developer tool showing last pressed keyboard shortcut combination. Disabled by default, can be enabled via User Settings → Advanced Developer Settings → "Keyboard Shortcut Tester". Useful for debugging custom keyboard shortcuts.
+  - **Implementation**: Both utilities use localStorage for persistence (`keyboard-shortcut-hint`, `keyboard-shortcut-tester`), with SSR-safe initialization and real-time sync via custom events. Located in `client/src/components/utilities/`, integrated into Editor.tsx IDE shell, and configurable via WorkspaceSettings.tsx.
+  - **Keyboard Shortcut Mappings**: See KeyboardShortcutsOverlay.tsx for complete shortcut reference. Common shortcuts: Cmd/Ctrl+K (Command Palette), Cmd/Ctrl+P (Quick File Search), Cmd/Ctrl+B (Toggle File Explorer), Cmd/Ctrl+S (Save File), Cmd/Ctrl+L (Focus AI Chat).
 
 **System Design Choices:**
 - **Vertical Slice Approach**: End-to-end feature development.

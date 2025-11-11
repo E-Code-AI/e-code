@@ -58,6 +58,14 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
   const [filetreeGitStatus, setFiletreeGitStatus] = useState(true);
   const [accessibleTerminal, setAccessibleTerminal] = useState(false);
   const [shellBellIndicator, setShellBellIndicator] = useState(false);
+  const [keyboardShortcutHint, setKeyboardShortcutHint] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem('keyboard-shortcut-hint') !== 'false';
+  });
+  const [keyboardShortcutTester, setKeyboardShortcutTester] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('keyboard-shortcut-tester') === 'true';
+  });
 
   return (
     <ScrollArea className="h-full">
@@ -507,6 +515,46 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
                 id="shell-bell"
                 checked={shellBellIndicator}
                 onCheckedChange={setShellBellIndicator}
+              />
+            </div>
+            
+            <Separator />
+            
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <Label htmlFor="shortcut-hint">Keyboard Shortcut Hint</Label>
+                <p className="text-sm text-muted-foreground">
+                  Show available shortcuts when pressing modifier keys (Cmd/Ctrl/Alt/Shift).
+                </p>
+              </div>
+              <Switch
+                id="shortcut-hint"
+                checked={keyboardShortcutHint}
+                onCheckedChange={(checked) => {
+                  setKeyboardShortcutHint(checked);
+                  localStorage.setItem('keyboard-shortcut-hint', String(checked));
+                  window.dispatchEvent(new CustomEvent('keyboard-settings-changed'));
+                }}
+              />
+            </div>
+            
+            <Separator />
+            
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <Label htmlFor="shortcut-tester">Keyboard Shortcut Tester</Label>
+                <p className="text-sm text-muted-foreground">
+                  Display last pressed keyboard shortcut (developer tool for debugging shortcuts).
+                </p>
+              </div>
+              <Switch
+                id="shortcut-tester"
+                checked={keyboardShortcutTester}
+                onCheckedChange={(checked) => {
+                  setKeyboardShortcutTester(checked);
+                  localStorage.setItem('keyboard-shortcut-tester', String(checked));
+                  window.dispatchEvent(new CustomEvent('keyboard-settings-changed'));
+                }}
               />
             </div>
           </CardContent>
