@@ -1,0 +1,465 @@
+/**
+ * Real Terminal Component with WebSocket
+ * Production-ready terminal with xterm.js and WebSocket backend
+ * 
+ * Features:
+ * - Full WebSocket bidirectional communication
+ * - Terminal history & scrollback
+ * - Resize support
+ * - Multiple shell support (sh, bash, zsh)
+ * - Session management
+ * - Auto-reconnect on disconnect
+ */
+
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { Terminal } from 'xterm';
+import { FitAddon } from 'xterm-addon-fit';
+import { WebLinksAddon } from 'xterm-addon-web-links';
+import { SearchAddon } from 'xterm-addon-search';
+import 'xterm/css/xterm.css';
+import { projectId as supabaseProjectId, publicAnonKey } from '../utils/supabase/info';
+import { useAuth } from '../contexts/AuthContext';
+import { Button } from './ui/button';
+import { 
+  Terminal as TerminalIcon, 
+  RefreshCw, 
+  X, 
+  Maximize2, 
+  Minimize2,
+  Settings,
+  Copy,
+  Search,
+} from 'lucide-react';
+import { toast } from 'sonner@2.0.3';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+import { cn } from '../lib/utils';
+
+interface RealTerminalProps {
+  projectId: string;
+  className?: string;
+}
+
+type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
+type ShellType = 'sh' | 'bash' | 'zsh';
+
+export function RealTerminal({ projectId, className }: RealTerminalProps) {
+  const { session } = useAuth();
+  const terminalRef = useRef<HTMLDivElement>(null);
+  const xtermRef = useRef<Terminal | null>(null);
+  const fitAddonRef = useRef<FitAddon | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const [status, setStatus] = useState<ConnectionStatus>('disconnected');
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [shell, setShell] = useState<ShellType>('bash');
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const [searchVisible, setSearchVisible] = useState(false);
+
+  const SERVER_URL = `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-d5e2ec87`;
+
+  /**
+   * Initialize terminal
+   */
+  const initTerminal = useCallback(() => {
+    if (!terminalRef.current || xtermRef.current) return;
+
+    const terminal = new Terminal({
+      cursorBlink: true,
+      cursorStyle: 'block',
+      fontSize: 14,
+      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+      lineHeight: 1.2,
+      letterSpacing: 0,
+      scrollback: 10000,
+      tabStopWidth: 4,
+      theme: {
+        background: '#1e1e1e',
+        foreground: '#d4d4d4',
+        cursor: '#ffffff',
+        cursorAccent: '#000000',
+        selection: 'rgba(255, 255, 255, 0.3)',
+        black: '#000000',
+        red: '#cd3131',
+        green: '#0dbc79',
+        yellow: '#e5e510',
+        blue: '#2472c8',
+        magenta: '#bc3fbc',
+        cyan: '#11a8cd',
+        white: '#e5e5e5',
+        brightBlack: '#666666',
+        brightRed: '#f14c4c',
+        brightGreen: '#23d18b',
+        brightYellow: '#f5f543',
+        brightBlue: '#3b8eea',
+        brightMagenta: '#d670d6',
+        brightCyan: '#29b8db',
+        brightWhite: '#e5e5e5',
+      },
+    });
+
+    const fitAddon = new FitAddon();
+    const webLinksAddon = new WebLinksAddon();
+    const searchAddon = new SearchAddon();
+
+    terminal.loadAddon(fitAddon);
+    terminal.loadAddon(webLinksAddon);
+    terminal.loadAddon(searchAddon);
+
+    terminal.open(terminalRef.current);
+    fitAddon.fit();
+
+    xtermRef.current = terminal;
+    fitAddonRef.current = fitAddon;
+
+    // Handle window resize
+    const resizeObserver = new ResizeObserver(() => {
+      fitAddon.fit();
+    });
+    resizeObserver.observe(terminalRef.current);
+
+    // Welcome message
+    terminal.writeln('\x1b[1;32m╔═══════════════════════════════════════════════════════════╗\x1b[0m');
+    terminal.writeln('\x1b[1;32m║\x1b[0m  \x1b[1;36mE-Code Terminal v2.0\x1b[0m - Production Ready             \x1b[1;32m║\x1b[0m');
+    terminal.writeln('\x1b[1;32m╚═══════════════════════════════════════════════════════════╝\x1b[0m');
+    terminal.writeln('');
+    terminal.writeln('\x1b[33m⚡ Initializing terminal session...\x1b[0m');
+    terminal.writeln('');
+
+    return () => {
+      resizeObserver.disconnect();
+      terminal.dispose();
+    };
+  }, []);
+
+  /**
+   * Create terminal session
+   */
+  const createSession = useCallback(async () => {
+    if (!session?.access_token) {
+      toast.error('Authentication required');
+      return null;
+    }
+
+    try {
+      setStatus('connecting');
+      
+      const response = await fetch(`${SERVER_URL}/terminal/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          projectId,
+          shell,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create terminal session');
+      }
+
+      const data = await response.json();
+      setSessionId(data.sessionId);
+      
+      xtermRef.current?.writeln('\x1b[32m✓ Session created\x1b[0m');
+      xtermRef.current?.writeln(`\x1b[36mSession ID:\x1b[0m ${data.sessionId}`);
+      xtermRef.current?.writeln(`\x1b[36mShell:\x1b[0m ${data.shell}`);
+      xtermRef.current?.writeln('');
+      
+      return data.sessionId;
+    } catch (error: any) {
+      console.error('[Terminal] Create session error:', error);
+      setStatus('error');
+      xtermRef.current?.writeln(`\x1b[31m✗ Error: ${error.message}\x1b[0m`);
+      toast.error('Failed to create terminal session');
+      return null;
+    }
+  }, [session, projectId, shell, SERVER_URL]);
+
+  /**
+   * Connect WebSocket
+   */
+  const connectWebSocket = useCallback((sid: string) => {
+    if (!session?.access_token) return;
+
+    try {
+      const wsUrl = `wss://${supabaseProjectId}.supabase.co/functions/v1/make-server-d5e2ec87/terminal/ws/${sid}?token=${session.access_token}`;
+      
+      xtermRef.current?.writeln('\x1b[33m⚡ Connecting to terminal...\x1b[0m');
+      
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        console.log('[Terminal] WebSocket connected');
+        setStatus('connected');
+        setReconnectAttempts(0);
+        xtermRef.current?.writeln('\x1b[32m✓ Connected to remote shell\x1b[0m');
+        xtermRef.current?.writeln('');
+        toast.success('Terminal connected');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'output') {
+            xtermRef.current?.write(data.data);
+          } else if (data.type === 'error') {
+            xtermRef.current?.writeln(`\x1b[31m[Error] ${data.message}\x1b[0m`);
+          } else if (data.type === 'exit') {
+            xtermRef.current?.writeln(`\x1b[33m[Process exited with code ${data.code}]\x1b[0m`);
+          }
+        } catch (e) {
+          // Raw output
+          xtermRef.current?.write(event.data);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('[Terminal] WebSocket error:', error);
+        setStatus('error');
+        xtermRef.current?.writeln('\x1b[31m✗ Connection error\x1b[0m');
+      };
+
+      ws.onclose = () => {
+        console.log('[Terminal] WebSocket closed');
+        setStatus('disconnected');
+        xtermRef.current?.writeln('\x1b[33m⚠ Terminal disconnected\x1b[0m');
+        
+        // Auto-reconnect
+        if (reconnectAttempts < 3) {
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+          xtermRef.current?.writeln(`\x1b[33m⟳ Reconnecting in ${delay / 1000}s...\x1b[0m`);
+          
+          reconnectTimerRef.current = setTimeout(() => {
+            setReconnectAttempts(prev => prev + 1);
+            handleConnect();
+          }, delay);
+        } else {
+          xtermRef.current?.writeln('\x1b[31m✗ Max reconnection attempts reached\x1b[0m');
+          toast.error('Connection lost. Please reconnect manually.');
+        }
+      };
+
+      // Handle terminal input
+      xtermRef.current?.onData((data) => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'input',
+            data,
+          }));
+        }
+      });
+
+    } catch (error: any) {
+      console.error('[Terminal] WebSocket connection error:', error);
+      setStatus('error');
+      xtermRef.current?.writeln(`\x1b[31m✗ Failed to connect: ${error.message}\x1b[0m`);
+    }
+  }, [session, supabaseProjectId, reconnectAttempts]);
+
+  /**
+   * Handle connect
+   */
+  const handleConnect = useCallback(async () => {
+    const sid = await createSession();
+    if (sid) {
+      connectWebSocket(sid);
+    }
+  }, [createSession, connectWebSocket]);
+
+  /**
+   * Handle disconnect
+   */
+  const handleDisconnect = useCallback(() => {
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+    setStatus('disconnected');
+    setSessionId(null);
+    setReconnectAttempts(0);
+    xtermRef.current?.writeln('\x1b[33m⚠ Disconnected\x1b[0m');
+  }, []);
+
+  /**
+   * Clear terminal
+   */
+  const handleClear = useCallback(() => {
+    xtermRef.current?.clear();
+  }, []);
+
+  /**
+   * Copy selection
+   */
+  const handleCopy = useCallback(() => {
+    const selection = xtermRef.current?.getSelection();
+    if (selection) {
+      navigator.clipboard.writeText(selection);
+      toast.success('Copied to clipboard');
+    }
+  }, []);
+
+  /**
+   * Change shell
+   */
+  const handleChangeShell = useCallback((newShell: ShellType) => {
+    if (status === 'connected') {
+      toast.error('Disconnect first to change shell');
+      return;
+    }
+    setShell(newShell);
+    toast.success(`Shell changed to ${newShell}`);
+  }, [status]);
+
+  /**
+   * Initialize on mount
+   */
+  useEffect(() => {
+    const cleanup = initTerminal();
+    return cleanup;
+  }, [initTerminal]);
+
+  /**
+   * Cleanup on unmount
+   */
+  useEffect(() => {
+    return () => {
+      handleDisconnect();
+      xtermRef.current?.dispose();
+    };
+  }, [handleDisconnect]);
+
+  return (
+    <div className={cn("h-full flex flex-col bg-[#1e1e1e]", className)}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-gray-700">
+        <div className="flex items-center gap-3">
+          <TerminalIcon className="w-4 h-4 text-gray-400" />
+          <span className="text-sm text-gray-300">Terminal</span>
+          
+          <div className="flex items-center gap-2 ml-4">
+            <div className={cn(
+              "w-2 h-2 rounded-full transition-colors",
+              status === 'connected' && 'bg-green-500',
+              status === 'connecting' && 'bg-yellow-500 animate-pulse',
+              status === 'disconnected' && 'bg-gray-500',
+              status === 'error' && 'bg-red-500'
+            )} />
+            <span className="text-xs text-gray-400 capitalize">{status}</span>
+          </div>
+
+          {sessionId && (
+            <span className="text-xs text-gray-500 font-mono">
+              {sessionId.slice(0, 16)}...
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {status === 'disconnected' || status === 'error' ? (
+            <Button
+              onClick={handleConnect}
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+            >
+              <TerminalIcon className="w-3 h-3 mr-1" />
+              Connect
+            </Button>
+          ) : (
+            <Button
+              onClick={handleDisconnect}
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+            >
+              <X className="w-3 h-3 mr-1" />
+              Disconnect
+            </Button>
+          )}
+
+          <Button
+            onClick={handleClear}
+            size="sm"
+            variant="ghost"
+            className="h-7 w-7 p-0"
+            title="Clear terminal"
+          >
+            <RefreshCw className="w-3 h-3" />
+          </Button>
+
+          <Button
+            onClick={handleCopy}
+            size="sm"
+            variant="ghost"
+            className="h-7 w-7 p-0"
+            title="Copy selection"
+          >
+            <Copy className="w-3 h-3" />
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
+                <Settings className="w-3 h-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Shell Type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleChangeShell('bash')}>
+                <span className={shell === 'bash' ? 'font-bold' : ''}>Bash</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleChangeShell('sh')}>
+                <span className={shell === 'sh' ? 'font-bold' : ''}>Sh</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleChangeShell('zsh')}>
+                <span className={shell === 'zsh' ? 'font-bold' : ''}>Zsh</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setIsFullscreen(!isFullscreen)}>
+                {isFullscreen ? (
+                  <>
+                    <Minimize2 className="w-3 h-3 mr-2" />
+                    Exit Fullscreen
+                  </>
+                ) : (
+                  <>
+                    <Maximize2 className="w-3 h-3 mr-2" />
+                    Fullscreen
+                  </>
+                )}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Terminal */}
+      <div 
+        ref={terminalRef} 
+        className={cn(
+          "flex-1 overflow-hidden",
+          isFullscreen && "fixed inset-0 z-50 bg-[#1e1e1e]"
+        )}
+      />
+    </div>
+  );
+}

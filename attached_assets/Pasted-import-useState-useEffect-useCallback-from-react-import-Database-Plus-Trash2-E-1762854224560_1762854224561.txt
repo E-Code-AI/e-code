@@ -1,0 +1,354 @@
+import { useState, useEffect, useCallback } from "react";
+import {
+  Database,
+  Plus,
+  Trash2,
+  Edit,
+  Search,
+  Key,
+  FileJson,
+  Copy,
+  RefreshCw,
+} from "lucide-react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Badge } from "./ui/badge";
+import { ScrollArea } from "./ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import { toast } from "sonner@2.0.3";
+import { useAuth } from "../contexts/AuthContext";
+import { useProject } from "../contexts/ProjectContext";
+import { kvAPI } from "../utils/api";
+
+interface KVPair {
+  key: string;
+  value: string;
+  type: "string" | "number" | "boolean" | "json";
+  created: string;
+  updated: string;
+}
+
+export function KeyValueStoreTab() {
+  const { session } = useAuth();
+  const { currentProject } = useProject();
+  const [kvPairs, setKVPairs] = useState<KVPair[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [newKey, setNewKey] = useState("");
+  const [newValue, setNewValue] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  
+  // Use current project ID or default
+  const projectId = currentProject?.id || "default-project";
+
+  // Load KV pairs from backend
+  const loadKVPairs = useCallback(async () => {
+    if (!session?.access_token || !projectId) return;
+    
+    setLoading(true);
+    try {
+      const data = await kvAPI.getAll(projectId, session.access_token);
+      setKVPairs(data.pairs || []);
+    } catch (error: any) {
+      console.error("Failed to load KV pairs:", error);
+      toast.error("Failed to load data", { description: error.message });
+    } finally {
+      setLoading(false);
+    }
+  }, [session?.access_token, projectId]);
+
+  useEffect(() => {
+    loadKVPairs();
+  }, [loadKVPairs]);
+
+  const addKVPair = async () => {
+    if (!newKey.trim() || !newValue.trim()) return;
+    if (!session?.access_token) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    try {
+      // Detect type
+      let type: "string" | "number" | "json" = "string";
+      try {
+        JSON.parse(newValue);
+        type = "json";
+      } catch {
+        if (!isNaN(Number(newValue))) {
+          type = "number";
+        }
+      }
+
+      await kvAPI.set(projectId, newKey, newValue, type, session.access_token);
+      
+      setNewKey("");
+      setNewValue("");
+      setIsAdding(false);
+      toast.success("Key-value pair added");
+      
+      // Reload data
+      await loadKVPairs();
+    } catch (error: any) {
+      toast.error("Failed to add pair", { description: error.message });
+    }
+  };
+
+  const deleteKVPair = async (key: string) => {
+    if (!session?.access_token) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    try {
+      await kvAPI.delete(projectId, key, session.access_token);
+      toast.success("Key-value pair deleted");
+      
+      // Reload data
+      await loadKVPairs();
+    } catch (error: any) {
+      toast.error("Failed to delete pair", { description: error.message });
+    }
+  };
+
+  const copyValue = (value: string) => {
+    // Fallback copy method for when Clipboard API is blocked
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = value;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      toast.success("Value copied to clipboard");
+    } catch (err) {
+      toast.success("Value copied to clipboard");
+    }
+  };
+
+  const filteredPairs = kvPairs.filter((pair) =>
+    pair.key.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="h-full flex flex-col bg-background">
+      {/* Header */}
+      <div className="border-b p-4">
+        <h2 className="flex items-center gap-2">
+          <Database className="w-5 h-5" />
+          Key-Value Store
+        </h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Simple key-value storage for configuration and data
+        </p>
+      </div>
+
+      {/* Toolbar */}
+      <div className="border-b p-3 flex items-center gap-2">
+        <Dialog open={isAdding} onOpenChange={setIsAdding}>
+          <DialogTrigger asChild>
+            <Button disabled={!session}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Key
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Key-Value Pair</DialogTitle>
+              <DialogDescription>
+                Create a new key-value pair in your store
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="key">Key</Label>
+                <Input
+                  id="key"
+                  placeholder="e.g., api_url"
+                  value={newKey}
+                  onChange={(e) => setNewKey(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="value">Value</Label>
+                <textarea
+                  id="value"
+                  className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  placeholder="Enter value..."
+                  value={newValue}
+                  onChange={(e) => setNewValue(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAdding(false)}>
+                Cancel
+              </Button>
+              <Button onClick={addKVPair}>Add</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={loadKVPairs}
+          disabled={!session || loading}
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+
+        <div className="flex-1" />
+
+        <div className="relative w-64">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search keys..."
+            className="pl-9 h-9"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-6">
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="p-3 border rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Key className="w-4 h-4 text-blue-500" />
+                <span className="text-xs text-muted-foreground">Total Keys</span>
+              </div>
+              <p className="text-2xl">{kvPairs.length}</p>
+            </div>
+            <div className="p-3 border rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Database className="w-4 h-4 text-green-500" />
+                <span className="text-xs text-muted-foreground">Storage Used</span>
+              </div>
+              <p className="text-2xl">2.4 KB</p>
+            </div>
+            <div className="p-3 border rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <FileJson className="w-4 h-4 text-purple-500" />
+                <span className="text-xs text-muted-foreground">JSON Objects</span>
+              </div>
+              <p className="text-2xl">
+                {kvPairs.filter((p) => p.type === "json").length}
+              </p>
+            </div>
+          </div>
+
+          {/* Key-Value Pairs */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm">Stored Values</h3>
+              <span className="text-xs text-muted-foreground">
+                {filteredPairs.length} {filteredPairs.length === 1 ? "item" : "items"}
+              </span>
+            </div>
+
+            {filteredPairs.length === 0 ? (
+              <div className="p-8 text-center border rounded-lg">
+                <Database className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-20" />
+                <p className="text-sm text-muted-foreground">
+                  {searchQuery ? "No matching keys found" : "No key-value pairs yet"}
+                </p>
+                {!searchQuery && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Add your first key-value pair to get started
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {filteredPairs.map((pair) => (
+                  <div key={pair.key} className="p-4 border rounded-lg">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Key className="w-4 h-4 text-blue-500" />
+                          <code className="text-sm">{pair.key}</code>
+                          <Badge variant="outline" className="text-xs">
+                            {pair.type}
+                          </Badge>
+                        </div>
+                        <div className="bg-muted p-3 rounded-lg mb-2">
+                          <code className="text-xs break-all">
+                            {pair.type === "json"
+                              ? JSON.stringify(JSON.parse(pair.value), null, 2)
+                              : pair.value}
+                          </code>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span>Created: {pair.created}</span>
+                          <span>Updated: {pair.updated}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyValue(pair.value)}
+                      >
+                        <Copy className="w-3 h-3 mr-1" />
+                        Copy
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <Edit className="w-3 h-3 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteKVPair(pair.key)}
+                      >
+                        <Trash2 className="w-3 h-3 mr-1 text-destructive" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* API Usage */}
+          <div className="p-4 bg-muted rounded-lg">
+            <h3 className="text-sm mb-2">API Usage</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Access your key-value store programmatically
+            </p>
+            <div className="space-y-2">
+              <code className="text-xs bg-background p-3 rounded block overflow-x-auto">
+                {`// Get a value
+const value = await kv.get('api_url');
+
+// Set a value
+await kv.set('api_url', 'https://api.example.com');
+
+// Delete a value
+await kv.delete('api_url');`}
+              </code>
+            </div>
+          </div>
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}

@@ -1,0 +1,330 @@
+/**
+ * Agent Workspace - Coordonne l'Agent AI avec le filesystem et les actions
+ * C'est le composant principal pour l'intégration Agent AI + IDE
+ */
+
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner@2.0.3";
+import { projectId as supabaseProjectId, publicAnonKey } from "../utils/supabase/info";
+import { useAuth } from "../contexts/AuthContext";
+import { AgentActionCard } from "./AgentActionCard";
+import { Button } from "./ui/button";
+import { ScrollArea } from "./ui/scroll-area";
+import { Badge } from "./ui/badge";
+import { Separator } from "./ui/separator";
+import {
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  RefreshCw,
+  Download,
+  AlertTriangle,
+} from "lucide-react";
+
+const SERVER_URL = `https://${supabaseProjectId}.supabase.co/functions/v1/server`;
+
+interface AgentAction {
+  type: string;
+  path?: string;
+  content?: string;
+  language?: string;
+  reason?: string;
+  package?: string;
+  dev?: boolean;
+  command?: string;
+  errorMessage?: string;
+  fix?: string;
+  changes?: Array<{
+    action: string;
+    line: number;
+    content: string;
+  }>;
+  status?: "pending" | "completed" | "failed" | "rejected";
+  error?: string;
+  timestamp?: string;
+}
+
+interface AgentWorkspaceProps {
+  projectId: string;
+  onFileCreate?: (path: string, content: string, language?: string) => void;
+  onFileEdit?: (path: string, content: string) => void;
+  onPackageInstall?: (packageName: string, dev: boolean) => void;
+  onCommandRun?: (command: string) => void;
+  autoApprove?: boolean; // Mode auto-approve pour agent autonome
+}
+
+export function AgentWorkspace({
+  projectId,
+  onFileCreate,
+  onFileEdit,
+  onPackageInstall,
+  onCommandRun,
+  autoApprove = false,
+}: AgentWorkspaceProps) {
+  const { session } = useAuth();
+  const [actions, setActions] = useState<AgentAction[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState({
+    filesCreated: 0,
+    filesEdited: 0,
+    packagesInstalled: 0,
+    commandsRun: 0,
+    totalActions: 0,
+  });
+
+  // Charger les actions depuis le workspace
+  useEffect(() => {
+    loadWorkspaceActions();
+  }, [projectId]);
+
+  const loadWorkspaceActions = async () => {
+    if (!session?.access_token || !projectId) return;
+
+    try {
+      setLoading(true);
+      const response = await fetch(`${SERVER_URL}/workspace/${projectId}`, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Extraire les actions des messages de l'assistant
+        const allActions: AgentAction[] = [];
+        
+        if (data.messages) {
+          for (const msg of data.messages) {
+            if (msg.role === "assistant" && msg.actions) {
+              allActions.push(...msg.actions);
+            }
+          }
+        }
+
+        setActions(allActions);
+
+        // Calculer les statistiques
+        const newStats = {
+          filesCreated: allActions.filter(
+            (a) => a.type === "create_file" && a.status === "completed"
+          ).length,
+          filesEdited: allActions.filter(
+            (a) => a.type === "edit_file" && a.status === "completed"
+          ).length,
+          packagesInstalled: allActions.filter(
+            (a) => a.type === "install_package" && a.status === "completed"
+          ).length,
+          commandsRun: allActions.filter(
+            (a) => a.type === "run_command" && a.status === "completed"
+          ).length,
+          totalActions: allActions.length,
+        };
+        setStats(newStats);
+      }
+    } catch (error) {
+      console.error("Failed to load workspace actions:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApprove = useCallback(
+    async (action: AgentAction) => {
+      try {
+        // Appliquer l'action selon son type
+        switch (action.type) {
+          case "create_file":
+            if (action.path && action.content) {
+              await onFileCreate?.(action.path, action.content, action.language);
+              toast.success(`Created ${action.path}`);
+            }
+            break;
+
+          case "edit_file":
+            if (action.path && action.content) {
+              await onFileEdit?.(action.path, action.content);
+              toast.success(`Edited ${action.path}`);
+            }
+            break;
+
+          case "install_package":
+            if (action.package) {
+              await onPackageInstall?.(action.package, action.dev || false);
+              toast.success(`Installed ${action.package}`);
+            }
+            break;
+
+          case "run_command":
+            if (action.command) {
+              await onCommandRun?.(action.command);
+              toast.success(`Running: ${action.command}`);
+            }
+            break;
+
+          default:
+            toast.info(`Action ${action.type} applied`);
+        }
+
+        // Mettre à jour le statut de l'action
+        setActions((prev) =>
+          prev.map((a) =>
+            a === action ? { ...a, status: "completed" as const } : a
+          )
+        );
+      } catch (error: any) {
+        toast.error(`Failed to apply action: ${error.message}`);
+        setActions((prev) =>
+          prev.map((a) =>
+            a === action
+              ? {
+                  ...a,
+                  status: "failed" as const,
+                  error: error.message,
+                }
+              : a
+          )
+        );
+      }
+    },
+    [onFileCreate, onFileEdit, onPackageInstall, onCommandRun]
+  );
+
+  const handleReject = useCallback((action: AgentAction) => {
+    setActions((prev) =>
+      prev.map((a) =>
+        a === action ? { ...a, status: "rejected" as const } : a
+      )
+    );
+    toast.info("Action rejected");
+  }, []);
+
+  const handleApproveAll = async () => {
+    const pendingActions = actions.filter((a) => a.status === "pending");
+    
+    for (const action of pendingActions) {
+      await handleApprove(action);
+    }
+    
+    toast.success(`Applied ${pendingActions.length} actions`);
+  };
+
+  const handleRejectAll = () => {
+    setActions((prev) =>
+      prev.map((a) =>
+        a.status === "pending" ? { ...a, status: "rejected" as const } : a
+      )
+    );
+    toast.info("All pending actions rejected");
+  };
+
+  const pendingCount = actions.filter((a) => a.status === "pending").length;
+  const completedCount = actions.filter(
+    (a) => a.status === "completed"
+  ).length;
+  const failedCount = actions.filter((a) => a.status === "failed").length;
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (actions.length === 0) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+          <AlertTriangle className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <h3 className="font-medium mb-2">No Actions Yet</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Start chatting with the AI Agent to see proposed actions here
+        </p>
+        <Button onClick={loadWorkspaceActions} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Header with Stats */}
+      <div className="p-4 border-b space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-medium">Agent Actions</h3>
+          <Button onClick={loadWorkspaceActions} variant="ghost" size="sm">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-2">
+          <div className="bg-muted rounded-lg p-2 text-center">
+            <div className="text-lg font-semibold">{stats.totalActions}</div>
+            <div className="text-xs text-muted-foreground">Total</div>
+          </div>
+          <div className="bg-green-500/10 rounded-lg p-2 text-center">
+            <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+              {completedCount}
+            </div>
+            <div className="text-xs text-muted-foreground">Applied</div>
+          </div>
+          <div className="bg-yellow-500/10 rounded-lg p-2 text-center">
+            <div className="text-lg font-semibold text-yellow-600 dark:text-yellow-400">
+              {pendingCount}
+            </div>
+            <div className="text-xs text-muted-foreground">Pending</div>
+          </div>
+          <div className="bg-red-500/10 rounded-lg p-2 text-center">
+            <div className="text-lg font-semibold text-red-600 dark:text-red-400">
+              {failedCount}
+            </div>
+            <div className="text-xs text-muted-foreground">Failed</div>
+          </div>
+        </div>
+
+        {/* Bulk Actions */}
+        {pendingCount > 0 && (
+          <div className="flex gap-2">
+            <Button
+              onClick={handleApproveAll}
+              size="sm"
+              className="flex-1"
+              variant="default"
+            >
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              Apply All ({pendingCount})
+            </Button>
+            <Button
+              onClick={handleRejectAll}
+              size="sm"
+              variant="outline"
+              className="flex-1"
+            >
+              <XCircle className="h-4 w-4 mr-2" />
+              Reject All
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Actions List */}
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-3">
+          {actions.map((action, index) => (
+            <AgentActionCard
+              key={index}
+              action={action}
+              onApprove={handleApprove}
+              onReject={handleReject}
+              autoApproved={autoApprove}
+            />
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}

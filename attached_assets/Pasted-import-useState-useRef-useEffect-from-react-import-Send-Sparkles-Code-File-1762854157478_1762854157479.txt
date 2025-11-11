@@ -1,0 +1,2062 @@
+import { useState, useRef, useEffect } from "react";
+import { 
+  Send, 
+  Sparkles, 
+  Code, 
+  FileCode, 
+  Lightbulb, 
+  Trash2, 
+  Mic,
+  Paperclip,
+  Settings,
+  Zap,
+  Brain,
+  MoreVertical,
+  Image as ImageIcon,
+  FileText,
+  PlayCircle,
+  ChevronDown,
+  Upload,
+  Globe,
+  Wrench,
+  X,
+  HelpCircle,
+  Check,
+  Search,
+  Clock,
+  ArrowUp,
+  ArrowDown,
+  Square,
+  Package,
+  Edit,
+  RotateCcw,
+  Eye,
+  RefreshCw,
+  Circle,
+  CheckCircle2,
+  Timer,
+  ChevronRight,
+  ChevronUp,
+  Undo2,
+  FileEdit,
+  Target,
+  Cog,
+  ListChecks,
+  UserPlus,
+  Maximize2,
+  ExternalLink
+} from "lucide-react";
+import { Button } from "./ui/button";
+import { Textarea } from "./ui/textarea";
+import { ScrollArea } from "./ui/scroll-area";
+import { Badge } from "./ui/badge";
+import { Avatar, AvatarFallback } from "./ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Progress } from "./ui/progress";
+import { Switch } from "./ui/switch";
+import { Label } from "./ui/label";
+import { Separator } from "./ui/separator";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "./ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import { Input } from "./ui/input";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "./ui/collapsible";
+import { Checkbox } from "./ui/checkbox";
+import { projectId as supabaseProjectId, publicAnonKey } from "../utils/supabase/info";
+import { useAuth } from "../contexts/AuthContext";
+import { toast } from "sonner";
+import { safeFetch, safeMutation } from "../utils/safeFetch";
+import { logAgentInteraction, captureAgentError, startAgentTransaction } from "../utils/sentryHelpers";
+
+const SERVER_URL = `https://${supabaseProjectId}.supabase.co/functions/v1/server`;
+
+type MessageItemType = 
+  | "text"
+  | "code"
+  | "action"
+  | "checkpoint"
+  | "task-list"
+  | "task-item"
+  | "task-block"
+  | "status"
+  | "user"
+  | "section-header"
+  | "work-duration"
+  | "test-result"
+  | "test-action"
+  | "work-summary";
+
+interface MessageAction {
+  type: "searched" | "decided" | "opened" | "edited" | "replaced" | "uninstalled" | "installed" | "planned" | "architected" | "transformed" | "implementing" | "created" | "delegated" | "optimized";
+  description: string;
+  duration?: string;
+}
+
+interface MessageCheckpoint {
+  title: string;
+  timestamp: string;
+  tasks?: { text: string; done: boolean }[];
+}
+
+interface Task {
+  text: string;
+  done: boolean;
+  hasSettings?: boolean;
+}
+
+interface MessageSection {
+  title: string;
+  count: string;
+  collapsible: boolean;
+  defaultOpen?: boolean;
+}
+
+interface MessageItem {
+  id: string;
+  type: MessageItemType;
+  content?: string;
+  timestamp: Date;
+  action?: MessageAction;
+  checkpoint?: MessageCheckpoint;
+  code?: { language: string; content: string };
+  status?: { text: string; active: boolean };
+  taskList?: { 
+    title: string; 
+    progress: string; 
+    tasks: Task[];
+    showMore?: boolean;
+    hiddenCount?: number;
+  };
+  userMessage?: boolean;
+  expandable?: boolean;
+  expanded?: boolean;
+  section?: MessageSection;
+  workDuration?: string;
+  agentBadge?: string;
+  taskItem?: {
+    text: string;
+    done: boolean;
+  };
+  taskBlock?: {
+    title: string;
+    description: string;
+    tasks?: Task[];
+    showMore?: boolean;
+  };
+  testResult?: {
+    title: string;
+    testName: string;
+    errorMessage?: string;
+    explanation?: string;
+  };
+  testAction?: {
+    actionType: "restarted" | "stopped" | "started";
+    description: string;
+  };
+  workSummary?: {
+    duration: string;
+    timeWorked: string;
+    workDone: string;
+    itemsRead: string;
+    agentUsage: string;
+  };
+}
+
+interface AIAgentProps {
+  onCodeGenerate?: (code: string, fileName: string) => void;
+  onFileModify?: (filePath: string, code: string) => void;
+  projectId?: string;
+  initialPrompt?: string; // Prompt from homepage
+  onOpenPreview?: () => void; // Callback to open preview tab
+  onStartServer?: () => void; // Callback to start server
+  onFilesCreated?: (files: any[]) => void; // Callback when files are created
+}
+
+// Utility function to calculate relative time
+const getRelativeTime = (timestamp: Date): string => {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - timestamp.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) {
+    return "Just now";
+  }
+  
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) {
+    return diffInMinutes === 1 ? "1 minute ago" : `${diffInMinutes} minutes ago`;
+  }
+  
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return diffInHours === 1 ? "1 hour ago" : `${diffInHours} hours ago`;
+  }
+  
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays === 1) {
+    return "Yesterday";
+  }
+  if (diffInDays < 7) {
+    return `${diffInDays} days ago`;
+  }
+  
+  const diffInWeeks = Math.floor(diffInDays / 7);
+  if (diffInWeeks < 4) {
+    return diffInWeeks === 1 ? "1 week ago" : `${diffInWeeks} weeks ago`;
+  }
+  
+  const diffInMonths = Math.floor(diffInDays / 30);
+  if (diffInMonths < 12) {
+    return diffInMonths === 1 ? "1 month ago" : `${diffInMonths} months ago`;
+  }
+  
+  const diffInYears = Math.floor(diffInDays / 365);
+  return diffInYears === 1 ? "1 year ago" : `${diffInYears} years ago`;
+};
+
+export function AIAgent({ onCodeGenerate, onFileModify, projectId, initialPrompt, onOpenPreview, onStartServer, onFilesCreated }: AIAgentProps) {
+  const { session } = useAuth();
+  const initialPromptProcessed = useRef(false);
+  const [messages, setMessages] = useState<MessageItem[]>([
+    {
+      id: "1",
+      type: "text",
+      content: "👋 Hi! I'm E-Code Agent, your intelligent coding partner. I can help you:\n\n• Build complete applications from scratch\n• Debug and fix code issues\n• Refactor and optimize your code\n• Explain complex concepts\n• Generate components and features\n\nWhat would you like to create today?",
+      timestamp: new Date(),
+    },
+  ]);
+  
+  const [showDemoMessages, setShowDemoMessages] = useState(false);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [agentMode, setAgentMode] = useState<"chat" | "autonomous">("chat");
+  
+  // Agent Tools states
+  const [showAgentTools, setShowAgentTools] = useState(false);
+  const [appTesting, setAppTesting] = useState(false);
+  const [autonomyLevel, setAutonomyLevel] = useState<"Low" | "Medium" | "High" | "Max">("Medium");
+  const [selectedModel, setSelectedModel] = useState<string>("gpt-4"); // AI model selection
+  const [webSearch, setWebSearch] = useState(false);
+  const [imageGeneration, setImageGeneration] = useState(false);
+  
+  // Attachment states
+  const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
+  const [showFigmaDialog, setShowFigmaDialog] = useState(false);
+  const [figmaUrl, setFigmaUrl] = useState("");
+  
+  // Section states
+  const [sectionsOpen, setSectionsOpen] = useState<{ [key: string]: boolean }>({
+    "section-1": false,
+    "section-2": false,
+    "section-3": false,
+  });
+
+  // Hover state for task items
+  const [hoveredTaskItem, setHoveredTaskItem] = useState<string | null>(null);
+
+  // Handle initial prompt from homepage
+  useEffect(() => {
+    if (initialPrompt && initialPrompt.trim() && !initialPromptProcessed.current) {
+      initialPromptProcessed.current = true;
+      // Pre-fill the input
+      setInput(initialPrompt);
+    }
+  }, [initialPrompt]);
+
+  // Demo messages for showcase
+  const demoMessages: MessageItem[] = [
+    // E-Code theme customization messages from screenshots
+    {
+      id: "demo-user-logo-request",
+      type: "user",
+      content: "peux tu mettre le logo E-Code comme la homepage pour la page /login",
+      timestamp: new Date(Date.now() - 45 * 60 * 1000),
+      userMessage: true,
+    },
+    {
+      id: "demo-action-decided-logo",
+      type: "action",
+      action: { type: "decided", description: "E-Code logo integration", duration: "3 seconds" },
+      timestamp: new Date(Date.now() - 44 * 60 * 1000),
+    },
+    {
+      id: "demo-text-logo-integration",
+      type: "text",
+      content: "Je vais ajouter le logo E-Code à la page de login pour qu'elle soit cohérente avec la homepage. Je vais d'abord vérifier comment le logo est implémenté sur la homepage et ensuite l'ajouter à la page de login.",
+      timestamp: new Date(Date.now() - 44 * 60 * 1000),
+    },
+    {
+      id: "demo-action-opened-homepage",
+      type: "action",
+      action: { type: "opened", description: "pages/LandingPage.tsx" },
+      timestamp: new Date(Date.now() - 43 * 60 * 1000),
+    },
+    {
+      id: "demo-action-searched-logo",
+      type: "action",
+      action: { type: "searched", description: "logo implementation" },
+      timestamp: new Date(Date.now() - 43 * 60 * 1000),
+    },
+    {
+      id: "demo-action-opened-login",
+      type: "action",
+      action: { type: "opened", description: "pages/Login.tsx" },
+      timestamp: new Date(Date.now() - 42 * 60 * 1000),
+    },
+    {
+      id: "demo-action-edited-login-logo",
+      type: "action",
+      action: { type: "edited", description: "pages/Login.tsx" },
+      timestamp: new Date(Date.now() - 42 * 60 * 1000),
+    },
+    {
+      id: "demo-text-logo-added",
+      type: "text",
+      content: "Parfait ! J'ai ajouté le logo E-Code à la page de login. Le logo est maintenant affiché en haut à gauche de la page, exactement comme sur la homepage.",
+      timestamp: new Date(Date.now() - 41 * 60 * 1000),
+    },
+    {
+      id: "demo-section-3-messages",
+      type: "section-header",
+      section: {
+        title: "3 messages & 24 actions",
+        count: "",
+        collapsible: true,
+        defaultOpen: false,
+      },
+      timestamp: new Date(Date.now() - 40 * 60 * 1000),
+    },
+    {
+      id: "demo-user-color-request",
+      type: "user",
+      content: "peux tu adapter les couleurs à droite au thème Ecode",
+      timestamp: new Date(Date.now() - 39 * 60 * 1000),
+      userMessage: true,
+    },
+    {
+      id: "demo-action-decided-ecode-theme",
+      type: "action",
+      action: { type: "decided", description: "E-Code color theme", duration: "4 seconds" },
+      timestamp: new Date(Date.now() - 38 * 60 * 1000),
+    },
+    {
+      id: "demo-text-color-adaptation",
+      type: "text",
+      content: "Je vais adapter les couleurs de la partie droite de la page de login pour qu'elles correspondent au thème E-Code avec les couleurs orange caractéristiques du logo.",
+      timestamp: new Date(Date.now() - 38 * 60 * 1000),
+    },
+    {
+      id: "demo-action-opened-login-colors",
+      type: "action",
+      action: { type: "opened", description: "pages/Login.tsx" },
+      timestamp: new Date(Date.now() - 37 * 60 * 1000),
+    },
+    {
+      id: "demo-action-edited-login-colors",
+      type: "action",
+      action: { type: "edited", description: "pages/Login.tsx" },
+      timestamp: new Date(Date.now() - 37 * 60 * 1000),
+    },
+    {
+      id: "demo-action-decided-theme-colors",
+      type: "action",
+      action: { type: "decided", description: "E-Code theme colors", duration: "4 seconds" },
+      timestamp: new Date(Date.now() - 36 * 60 * 1000),
+    },
+    {
+      id: "demo-text-additional-colors",
+      type: "text",
+      content: "Je vais aussi adapter les autres éléments de couleur pour qu'ils correspondent au thème E-Code. Je vais modifier les couleurs des boutons, des liens et des textes pour créer une cohérence visuelle parfaite.",
+      timestamp: new Date(Date.now() - 36 * 60 * 1000),
+    },
+    {
+      id: "demo-action-edited-login-final",
+      type: "action",
+      action: { type: "edited", description: "pages/Login.tsx" },
+      timestamp: new Date(Date.now() - 35 * 60 * 1000),
+    },
+    {
+      id: "demo-text-colors-completed",
+      type: "text",
+      content: "✅ J'ai terminé l'adaptation des couleurs ! La page de login utilise maintenant les couleurs orange caractéristiques d'E-Code (#FF6B35, #F7931E) avec un dégradé harmonieux. Tous les éléments visuels sont maintenant cohérents avec votre identité de marque.",
+      timestamp: new Date(Date.now() - 34 * 60 * 1000),
+    },
+    {
+      id: "demo-section-2-messages",
+      type: "section-header",
+      section: {
+        title: "2 messages & 9 actions",
+        count: "",
+        collapsible: true,
+        defaultOpen: false,
+      },
+      timestamp: new Date(Date.now() - 33 * 60 * 1000),
+    },
+    {
+      id: "demo-user-replit-docs",
+      type: "user",
+      content: "Je vais chercher dans la documentation officielle de Replit pour te donner des informations précises sur les Reserved VMs et l'object storage intégré.",
+      timestamp: new Date(Date.now() - 32 * 60 * 1000),
+      userMessage: true,
+    },
+    {
+      id: "demo-action-searched-replit-docs",
+      type: "action",
+      action: { type: "searched", description: "Replit Reserved VM documentation" },
+      timestamp: new Date(Date.now() - 31 * 60 * 1000),
+    },
+    {
+      id: "demo-text-replit-info",
+      type: "text",
+      content: "D'après la documentation officielle de Replit, les Reserved VMs offrent :\n\n• **Object Storage intégré** : Stockage persistant sans configuration externe\n• **4 vCPU et 8GB RAM** : Performance garantie\n• **Always-on** : Disponibilité 24/7\n• **Pas besoin de Google Cloud** : Tout est natif dans Replit\n\nJe vais donc procéder à la migration complète vers l'infrastructure Replit.",
+      timestamp: new Date(Date.now() - 31 * 60 * 1000),
+    },
+    {
+      id: "demo-header",
+      type: "text",
+      content: "Apply a clean white theme with dark text for better readability",
+      timestamp: new Date(),
+      agentBadge: "Agent 3",
+    },
+    {
+      id: "demo-tasks-header",
+      type: "task-list",
+      taskList: {
+        title: "In progress tasks",
+        progress: "0 / 6",
+        tasks: [
+          { text: "Remove cloud storage tools from list", done: false, hasSettings: true },
+          { text: "Use built-in storage instead of cloud", done: false },
+          { text: "Remove connection to Google Drive", done: false },
+          { text: "Update guide, remove cloud mentions", done: false },
+          { text: "Update main page, remove cloud", done: false },
+          { text: "Remove cloud references everywhere", done: false },
+        ],
+        showMore: true,
+        hiddenCount: 9,
+      },
+      timestamp: new Date(),
+      expanded: true,
+    },
+    {
+      id: "demo-show-more",
+      type: "text",
+      content: "",
+      timestamp: new Date(),
+      expandable: true,
+      expanded: false,
+    },
+    {
+      id: "demo-action-decided-1",
+      type: "action",
+      action: { type: "decided", description: "Google Cloud cleanup (5 seconds)" },
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-text-context",
+      type: "text",
+      content: "I'll help you remove all Google Cloud references from your codebase. Since you're using Replit Reserved VM, you should use Replit's built-in object storage instead of Google Cloud Storage. Let me create a comprehensive cleanup plan:",
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-action-decided-2",
+      type: "action",
+      action: { type: "decided", description: "Google references removal (7 seconds)" },
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-text-removing",
+      type: "text",
+      content: "Now let me start removing all Google Cloud references. First, let me remove the Google Cloud packages:",
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-action-uninstalled",
+      type: "action",
+      action: { type: "uninstalled", description: "@google-cloud/storage, @google/genai, @google/generative-ai, go..." },
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-action-decided-3",
+      type: "action",
+      action: { type: "decided", description: "object storage interface" },
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-text-packages",
+      type: "text",
+      content: "Good! Google Cloud packages removed. Now let me replace the object storage service to use Replit's built-in object storage:",
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-action-opened",
+      type: "action",
+      action: { type: "opened", description: "server/services/real-object-storage.ts" },
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-action-replaced",
+      type: "action",
+      action: { type: "replaced", description: "file with simpler version" },
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-text-replace",
+      type: "text",
+      content: "Now let me replace this file with a version that uses Replit's built-in object storage instead of Google Cloud:",
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-action-edited",
+      type: "action",
+      action: { type: "edited", description: "server/services/real-object-storage.ts" },
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-action-decided-4",
+      type: "action",
+      action: { type: "decided", description: "task completion status" },
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-text-perfect",
+      type: "text",
+      content: "Perfect! Now let me remove the Google Drive MCP server and update the AI providers:",
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-status-working",
+      type: "status",
+      status: { text: "Working.", active: true },
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-section-1",
+      type: "section-header",
+      section: {
+        title: "14 messages & 61 actions",
+        count: "",
+        collapsible: true,
+        defaultOpen: false,
+      },
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-checkpoint-1",
+      type: "checkpoint",
+      checkpoint: {
+        title: "Improve the user interface and project management features",
+        timestamp: "16 minutes ago",
+      },
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-work-duration-1",
+      type: "work-duration",
+      workDuration: "11 minutes of work",
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-checkpoint-2",
+      type: "checkpoint",
+      checkpoint: {
+        title: "Fix deployment startup issues by ensuring the server listens correctly",
+        timestamp: "15 minutes ago",
+      },
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-section-2",
+      type: "section-header",
+      section: {
+        title: "1 action",
+        count: "",
+        collapsible: true,
+        defaultOpen: false,
+      },
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-user-message",
+      type: "user",
+      content: "i dont see my app in prod i see an error : Internal Server Error",
+      timestamp: new Date(),
+      userMessage: true,
+    },
+    {
+      id: "demo-test-result",
+      type: "test-result",
+      testResult: {
+        title: "Testing your app",
+        testName: "Dashboard Responsiveness and Functionality Check",
+        errorMessage: "There was an error connecting to the browser",
+        explanation: "Oh no, it seems I entered the wrong password, and the login failed! To speed things up, I'm going to use a special 'Quick Login' button meant for development. After that, I'll check if I landed on the dashboard and if the welcome message and search bar are there.",
+      },
+      timestamp: new Date(),
+      expanded: true,
+    },
+    {
+      id: "demo-test-action",
+      type: "test-action",
+      testAction: {
+        actionType: "restarted",
+        description: "Start application",
+      },
+      timestamp: new Date(),
+    },
+    {
+      id: "demo-work-summary",
+      type: "work-summary",
+      workSummary: {
+        duration: "2 minutes of work",
+        timeWorked: "2 minutes",
+        workDone: "3 actions",
+        itemsRead: "118 lines",
+        agentUsage: "$0.43",
+      },
+      timestamp: new Date(),
+      expanded: false,
+    },
+    // New demo messages matching the image
+    {
+      id: "demo-planned-ui",
+      type: "action",
+      action: { type: "planned", description: "comprehensive UI overhaul", duration: "6 seconds" },
+      timestamp: new Date(Date.now() - 3 * 60 * 1000), // 3 minutes ago
+    },
+    {
+      id: "demo-long-text",
+      type: "text",
+      content: "I'll help you achieve 100% UI completion for the entire E-Code platform, transforming it into a Fortune 500-grade production website. This is a comprehensive task that will involve enhancing every page with pixel-perfect design, real media assets, full theme support, and complete responsiveness.\n\nLet me start by creating a detailed plan and then systematically work through each area:",
+      timestamp: new Date(Date.now() - 3 * 60 * 1000),
+    },
+    {
+      id: "demo-architected",
+      type: "action",
+      action: { type: "architected", description: "comprehensive UI overhaul plan", duration: "7 seconds" },
+      timestamp: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
+    },
+    {
+      id: "demo-planned-strategy",
+      type: "action",
+      action: { type: "planned", description: "E-Code UI modernization strategy" },
+      timestamp: new Date(Date.now() - 6 * 60 * 1000),
+    },
+    {
+      id: "demo-planned-overhaul",
+      type: "action",
+      action: { type: "planned", description: "UI overhaul strategy" },
+      timestamp: new Date(Date.now() - 7 * 60 * 1000),
+    },
+    {
+      id: "demo-task-check-pages",
+      type: "task-item",
+      taskItem: { text: "Check all pages for updates needed", done: true },
+      timestamp: new Date(Date.now() - 8 * 60 * 1000),
+    },
+    {
+      id: "demo-task-add-pictures",
+      type: "task-item",
+      taskItem: { text: "Add real pictures, remove placeholders.", done: true },
+      timestamp: new Date(Date.now() - 9 * 60 * 1000),
+    },
+    {
+      id: "demo-created-task",
+      type: "action",
+      action: { type: "created", description: "UI overhaul task for subagent" },
+      timestamp: new Date(Date.now() - 10 * 60 * 1000),
+    },
+    {
+      id: "demo-transformed",
+      type: "action",
+      action: { type: "transformed", description: "platform UI to Fortune 500 standards" },
+      timestamp: new Date(Date.now() - 12 * 60 * 1000),
+    },
+    {
+      id: "demo-planned-next",
+      type: "action",
+      action: { type: "planned", description: "next phase of UI overhaul" },
+      timestamp: new Date(Date.now() - 15 * 60 * 1000),
+    },
+    {
+      id: "demo-task-update-main",
+      type: "task-item",
+      taskItem: { text: "Update main page with real assets.", done: true },
+      timestamp: new Date(Date.now() - 18 * 60 * 1000),
+    },
+    {
+      id: "demo-task-pricing",
+      type: "task-item",
+      taskItem: { text: "Improve pricing page with animations.", done: true },
+      timestamp: new Date(Date.now() - 20 * 60 * 1000),
+    },
+    {
+      id: "demo-task-signin",
+      type: "task-item",
+      taskItem: { text: "Polish sign in/up pages professionally.", done: true },
+      timestamp: new Date(Date.now() - 22 * 60 * 1000),
+    },
+    {
+      id: "demo-delegated",
+      type: "action",
+      action: { type: "delegated", description: "next phase of work" },
+      timestamp: new Date(Date.now() - 25 * 60 * 1000),
+    },
+    {
+      id: "demo-implementing",
+      type: "action",
+      action: { type: "implementing", description: "core product pages UI" },
+      timestamp: new Date(Date.now() - 28 * 60 * 1000),
+    },
+    {
+      id: "demo-task-block",
+      type: "task-block",
+      taskBlock: {
+        title: "Task",
+        description: "Enhance Dashboard, Projects, Templates, and Deployments pages with Fortune 500-grade design, animations, responsiveness, and theme support.",
+        tasks: [
+          { text: "Enhance deployments with metrics and charts", done: true },
+        ],
+        showMore: true,
+      },
+      timestamp: new Date(Date.now() - 30 * 60 * 1000),
+      expanded: false,
+    },
+    {
+      id: "demo-optimized",
+      type: "action",
+      action: { type: "optimized", description: "Agent memory" },
+      timestamp: new Date(Date.now() - 35 * 60 * 1000),
+    },
+  ];
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  // Auto-refresh timestamps every 30 seconds
+  const [, setTimestampRefresh] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimestampRefresh((prev) => prev + 1);
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Extract the send logic into a reusable function
+  const sendMessage = async (messageText: string) => {
+    if (!messageText.trim() || isLoading) return;
+
+    const userMessage: MessageItem = {
+      id: Date.now().toString(),
+      type: "user",
+      content: messageText,
+      timestamp: new Date(),
+      userMessage: true,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    const userInput = messageText;
+    setInput("");
+    setIsLoading(true);
+
+    // Start Sentry transaction for monitoring
+    const transaction = startAgentTransaction('ai-agent-request', {
+      projectId: projectId || 'unknown',
+      aiModel: selectedModel,
+    });
+    const startTime = Date.now();
+
+    // Call the AGENT backend API (creates files automatically like Replit)
+    try {
+      if (!session?.access_token) {
+        toast.error("Please sign in to use the AI agent");
+        setIsLoading(false);
+        transaction.setStatus('unauthenticated');
+        transaction.finish();
+        return;
+      }
+
+      if (!projectId) {
+        toast.error("No project selected");
+        setIsLoading(false);
+        transaction.setStatus('failed_precondition');
+        transaction.finish();
+        return;
+      }
+
+      // Show "Agent is thinking..." status
+      const thinkingMessage: MessageItem = {
+        id: (Date.now() + 1).toString(),
+        type: "status",
+        status: { text: "Agent is thinking...", active: true },
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, thinkingMessage]);
+
+      const result = await safeMutation(`${SERVER_URL}/chat/agent`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          message: userInput,
+          projectId: projectId,
+          userId: session.user?.id,
+          aiModel: selectedModel,
+          autonomyLevel,
+          appTesting,
+          webSearch,
+          imageGeneration,
+        }),
+      });
+
+      if (!result.ok) {
+        // Log error to Sentry with context
+        captureAgentError(new Error(result.error || "AI Agent API error"), {
+          projectId,
+          aiModel: selectedModel,
+          userInput,
+        });
+        throw new Error(result.error || "AI Agent unavailable");
+      }
+
+      const data = result.data;
+      
+      // Remove thinking status
+      setMessages((prev) => prev.filter((m) => m.id !== thinkingMessage.id));
+
+      // Process actions and add messages
+      const actionsToDisplay: MessageItem[] = [];
+      let filesCreatedCount = 0;
+      let filesEditedCount = 0;
+      const createdFiles: any[] = [];
+
+      for (const action of data.actions || []) {
+        if (action.type === "message") {
+          actionsToDisplay.push({
+            id: Date.now().toString() + Math.random(),
+            type: "text",
+            content: action.content,
+            timestamp: new Date(),
+          });
+        } else if (action.type === "create_file") {
+          // Show action in chat
+          actionsToDisplay.push({
+            id: Date.now().toString() + Math.random(),
+            type: "action",
+            action: {
+              type: "created",
+              description: `Created ${action.path}`,
+              duration: "0.5s",
+            },
+            timestamp: new Date(),
+          });
+
+          // Actually create the file via callback
+          if (onCodeGenerate) {
+            const fileName = action.path.split('/').pop() || action.path;
+            onCodeGenerate(action.content, fileName);
+          }
+
+          filesCreatedCount++;
+          createdFiles.push(action);
+        } else if (action.type === "edit_file") {
+          // Show action in chat
+          actionsToDisplay.push({
+            id: Date.now().toString() + Math.random(),
+            type: "action",
+            action: {
+              type: "edited",
+              description: `Edited ${action.path}`,
+              duration: "0.3s",
+            },
+            timestamp: new Date(),
+          });
+
+          // Actually edit the file via callback
+          if (onFileModify) {
+            onFileModify(action.path, action.content);
+          }
+
+          filesEditedCount++;
+        } else if (action.type === "install_package") {
+          actionsToDisplay.push({
+            id: Date.now().toString() + Math.random(),
+            type: "action",
+            action: {
+              type: "installed",
+              description: `Installed ${action.package}`,
+              duration: "1.2s",
+            },
+            timestamp: new Date(),
+          });
+        } else if (action.type === "start_server") {
+          // Auto-start server
+          if (onStartServer) {
+            onStartServer();
+          }
+          actionsToDisplay.push({
+            id: Date.now().toString() + Math.random(),
+            type: "status",
+            status: { text: "Starting development server...", active: true },
+            timestamp: new Date(),
+          });
+        } else if (action.type === "run_command") {
+          actionsToDisplay.push({
+            id: Date.now().toString() + Math.random(),
+            type: "action",
+            action: {
+              type: "planned",
+              description: `Running: ${action.command}`,
+              duration: "2s",
+            },
+            timestamp: new Date(),
+          });
+        }
+      }
+
+      // Add summary message
+      if (data.summary) {
+        actionsToDisplay.push({
+          id: Date.now().toString() + Math.random(),
+          type: "text",
+          content: `✅ ${data.summary}`,
+          timestamp: new Date(),
+        });
+      }
+
+      // Show next steps
+      if (data.nextSteps && data.nextSteps.length > 0) {
+        actionsToDisplay.push({
+          id: Date.now().toString() + Math.random(),
+          type: "text",
+          content: `**Next steps:**\n${data.nextSteps.map((step: string, i: number) => `${i + 1}. ${step}`).join('\n')}`,
+          timestamp: new Date(),
+        });
+      }
+
+      setMessages((prev) => [...prev, ...actionsToDisplay]);
+
+      // Log success to Sentry
+      const duration = Date.now() - startTime;
+      logAgentInteraction({
+        projectId: projectId || 'unknown',
+        aiModel: selectedModel,
+        action: 'chat_completion',
+        success: true,
+        filesCreated: filesCreatedCount,
+        filesEdited: filesEditedCount,
+        duration,
+      });
+
+      // Auto-open preview if files were created or edited
+      if (filesCreatedCount > 0 || filesEditedCount > 0) {
+        const totalChanges = filesCreatedCount + filesEditedCount;
+        toast.success(`${filesCreatedCount > 0 ? `Created ${filesCreatedCount} file(s)` : ''} ${filesEditedCount > 0 ? `Edited ${filesEditedCount} file(s)` : ''}`.trim(), {
+          description: "Opening preview...",
+        });
+        
+        // Notify parent about files created
+        if (onFilesCreated && createdFiles.length > 0) {
+          onFilesCreated(createdFiles);
+        }
+
+        // Auto-open preview after a short delay
+        setTimeout(() => {
+          if (onOpenPreview) {
+            onOpenPreview();
+          }
+        }, 1000);
+      }
+
+      transaction.setStatus('ok');
+    } catch (error: any) {
+      console.error("AI Agent error:", error);
+      
+      // Log to Sentry with full context
+      captureAgentError(error, {
+        projectId,
+        aiModel: selectedModel,
+        userInput,
+        autonomyLevel,
+      });
+      
+      toast.error(error.message || "Failed to get AI response");
+      
+      const errorMessage: MessageItem = {
+        id: (Date.now() + 1).toString(),
+        type: "text",
+        content: "Sorry, I encountered an error processing your request. Please try again.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      
+      transaction.setStatus('unknown_error');
+    } finally {
+      setIsLoading(false);
+      transaction.finish();
+    }
+  };
+
+  // Process initialPrompt from Homepage/Dashboard on first load
+  useEffect(() => {
+    if (initialPrompt && !initialPromptProcessed.current && session?.access_token) {
+      initialPromptProcessed.current = true;
+      
+      // Show loading toast
+      toast.info("🚀 Starting your project with AI Agent...");
+      
+      // Automatically send the initial prompt
+      setTimeout(() => {
+        sendMessage(initialPrompt);
+      }, 800);
+    }
+  }, [initialPrompt, session]);
+
+  // Wrapper function for the send button
+  const handleSend = async () => {
+    await sendMessage(input);
+  };
+
+  const toggleExpandable = (id: string) => {
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === id ? { ...msg, expanded: !msg.expanded } : msg
+      )
+    );
+  };
+
+  const toggleSection = (sectionId: string) => {
+    setSectionsOpen((prev) => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
+  };
+
+  const handleClearChat = () => {
+    setMessages([
+      {
+        id: "1",
+        type: "text",
+        content: "👋 Hi! I'm E-Code Agent, your intelligent coding partner. What would you like to create today?",
+        timestamp: new Date(),
+      },
+    ]);
+    setShowDemoMessages(false);
+  };
+
+  const loadDemoMessages = () => {
+    setShowDemoMessages(true);
+    setMessages([...messages, ...demoMessages]);
+  };
+
+  const renderActionIcon = (type: string) => {
+    switch (type) {
+      case "searched":
+        return <Search className="w-3.5 h-3.5" />;
+      case "decided":
+        return <Brain className="w-3.5 h-3.5" />;
+      case "opened":
+        return <FileText className="w-3.5 h-3.5" />;
+      case "edited":
+        return <FileEdit className="w-3.5 h-3.5" />;
+      case "replaced":
+        return <RefreshCw className="w-3.5 h-3.5" />;
+      case "uninstalled":
+        return <Package className="w-3.5 h-3.5" />;
+      case "installed":
+        return <Package className="w-3.5 h-3.5" />;
+      case "planned":
+        return <Target className="w-3.5 h-3.5" />;
+      case "architected":
+        return <Target className="w-3.5 h-3.5" />;
+      case "transformed":
+        return <Cog className="w-3.5 h-3.5" />;
+      case "implementing":
+        return <Cog className="w-3.5 h-3.5" />;
+      case "created":
+        return <Target className="w-3.5 h-3.5" />;
+      case "delegated":
+        return <UserPlus className="w-3.5 h-3.5" />;
+      case "optimized":
+        return <Target className="w-3.5 h-3.5" />;
+      default:
+        return <Circle className="w-3.5 h-3.5" />;
+    }
+  };
+
+  const renderMessage = (msg: MessageItem) => {
+    // Agent badge header
+    if (msg.agentBadge) {
+      return (
+        <div key={msg.id} className="mb-4">
+          <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border mb-2">
+            <div className="flex items-center gap-2">
+              <Undo2 className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm">{msg.content}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                <Sparkles className="w-3 h-3 mr-1" />
+                {msg.agentBadge}
+              </Badge>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                <RefreshCw className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // User message
+    if (msg.type === "user") {
+      return (
+        <div key={msg.id} className="flex justify-end mb-4">
+          <div className="max-w-[80%]">
+            <div className="bg-blue-500 text-white rounded-2xl rounded-tr-sm px-4 py-2.5">
+              <p className="text-sm leading-relaxed">{msg.content}</p>
+            </div>
+            <div className="flex items-center justify-end gap-1.5 mt-1 px-2">
+              <span className="text-[10px] text-muted-foreground">
+                {getRelativeTime(msg.timestamp)}
+              </span>
+              <Circle className="w-1.5 h-1.5 text-muted-foreground fill-muted-foreground" />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Section header (collapsible)
+    if (msg.type === "section-header" && msg.section) {
+      const sectionId = msg.id;
+      const isOpen = sectionsOpen[sectionId] ?? msg.section.defaultOpen ?? false;
+      
+      return (
+        <div key={msg.id} className="mb-3">
+          <button
+            onClick={() => toggleSection(sectionId)}
+            className="w-full flex items-center justify-between p-3 bg-muted/50 hover:bg-muted rounded-lg transition-colors border"
+          >
+            <span className="text-sm font-medium">{msg.section.title}</span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+      );
+    }
+
+    // Work summary (detailed statistics)
+    if (msg.type === "work-summary" && msg.workSummary) {
+      return (
+        <div key={msg.id} className="mb-4">
+          <Collapsible
+            open={msg.expanded}
+            onOpenChange={() => toggleExpandable(msg.id)}
+          >
+            <div className="bg-muted/30 rounded-lg border">
+              <CollapsibleTrigger className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-2">
+                  <Timer className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    {msg.expanded ? "Show less" : msg.workSummary.duration}
+                  </span>
+                </div>
+                <ChevronDown className={`w-4 h-4 transition-transform ${msg.expanded ? 'rotate-180' : ''}`} />
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent>
+                <div className="px-3 pb-3 space-y-2">
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm">Time worked</span>
+                    <span className="text-sm font-medium">{msg.workSummary.timeWorked}</span>
+                  </div>
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm">Work done</span>
+                    <span className="text-sm font-medium">{msg.workSummary.workDone}</span>
+                  </div>
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm">Items read</span>
+                    <span className="text-sm font-medium">{msg.workSummary.itemsRead}</span>
+                  </div>
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">Agent Usage</span>
+                      <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                    </div>
+                    <span className="text-sm font-medium">{msg.workSummary.agentUsage}</span>
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
+          <div className="flex items-center gap-1.5 mt-1.5 ml-2">
+            <Circle className="w-1.5 h-1.5 text-muted-foreground fill-muted-foreground" />
+            <span className="text-[10px] text-muted-foreground">
+              {getRelativeTime(msg.timestamp)}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    // Work duration
+    if (msg.type === "work-duration") {
+      return (
+        <div key={msg.id} className="mb-3">
+          <button
+            onClick={() => toggleSection(msg.id)}
+            className="w-full flex items-center justify-between p-3 bg-muted/30 hover:bg-muted/50 rounded-lg transition-colors border"
+          >
+            <div className="flex items-center gap-2">
+              <Timer className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm">{msg.workDuration}</span>
+            </div>
+            <ChevronDown className={`w-4 h-4 transition-transform ${sectionsOpen[msg.id] ? 'rotate-180' : ''}`} />
+          </button>
+          <div className="flex items-center justify-end gap-1.5 mt-1.5 mr-2">
+            <span className="text-[10px] text-muted-foreground">
+              {getRelativeTime(msg.timestamp)}
+            </span>
+            <Circle className="w-1.5 h-1.5 text-muted-foreground fill-muted-foreground" />
+          </div>
+        </div>
+      );
+    }
+
+    // Test result (Testing your app)
+    if (msg.type === "test-result" && msg.testResult) {
+      return (
+        <div key={msg.id} className="mb-4">
+          <Collapsible
+            open={msg.expanded}
+            onOpenChange={() => toggleExpandable(msg.id)}
+          >
+            <CollapsibleTrigger className="w-full flex items-center justify-between p-3 hover:bg-muted/30 rounded-lg transition-colors border-b">
+              <div className="flex items-center gap-2">
+                <ChevronDown className={`w-4 h-4 transition-transform ${msg.expanded ? '' : '-rotate-90'}`} />
+                <span className="text-sm font-medium">{msg.testResult.title}</span>
+              </div>
+              <ChevronUp className="w-4 h-4 text-muted-foreground" />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="mt-3">
+                {/* Test header */}
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-t-lg border border-b-0">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
+                    <span className="text-sm">{msg.testResult.testName}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                      <PlayCircle className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Browser preview */}
+                <div className="relative bg-muted/30 rounded-b-lg border border-t-0 overflow-hidden" style={{ minHeight: '400px' }}>
+                  <div className="absolute inset-0 flex items-center justify-center bg-neutral-300 dark:bg-neutral-700">
+                    <p className="text-sm text-neutral-600 dark:text-neutral-300">
+                      {msg.testResult.errorMessage}
+                    </p>
+                  </div>
+                  {/* Purple button in bottom right */}
+                  <div className="absolute bottom-4 right-4">
+                    <div className="w-10 h-10 rounded-lg bg-purple-500 flex items-center justify-center shadow-lg">
+                      <Circle className="w-5 h-5 text-white fill-white" />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Explanation text */}
+                {msg.testResult.explanation && (
+                  <div className="mt-3 p-4 bg-muted/30 rounded-lg border">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {msg.testResult.explanation}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+      );
+    }
+
+    // Test action (Restarted, etc.)
+    if (msg.type === "test-action" && msg.testAction) {
+      return (
+        <div key={msg.id} className="mb-2">
+          <div className="flex items-start gap-2 text-sm text-muted-foreground">
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>
+              <span className="capitalize">{msg.testAction.actionType}</span>{" "}
+              <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{msg.testAction.description}</code>
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    // Agent action
+    if (msg.type === "action" && msg.action) {
+      return (
+        <div key={msg.id} className="mb-2">
+          <div className="flex items-start gap-2 text-sm text-muted-foreground">
+            {renderActionIcon(msg.action.type)}
+            <span>
+              <span className="capitalize">{msg.action.type}</span>{" "}
+              {msg.action.description}
+              {msg.action.duration && <span className="text-muted-foreground/60"> ({msg.action.duration})</span>}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    // Task item (individual task with checkmark)
+    if (msg.type === "task-item" && msg.taskItem) {
+      const isHovered = hoveredTaskItem === msg.id;
+      
+      return (
+        <div 
+          key={msg.id} 
+          className="mb-2 group"
+          onMouseEnter={() => setHoveredTaskItem(msg.id)}
+          onMouseLeave={() => setHoveredTaskItem(null)}
+        >
+          <div className="flex items-start justify-between gap-2 text-sm">
+            <div className="flex items-start gap-2 flex-1">
+              <CheckCircle2 className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${msg.taskItem.done ? 'text-green-600 dark:text-green-500' : 'text-muted-foreground'}`} />
+              <span className={msg.taskItem.done ? 'line-through text-muted-foreground' : ''}>
+                {msg.taskItem.text}
+              </span>
+            </div>
+            {isHovered && msg.taskItem.done && (
+              <button 
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
+                onClick={() => console.log('View changes for:', msg.taskItem?.text)}
+              >
+                <span>View changes</span>
+                <ExternalLink className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Task block (special Task section)
+    if (msg.type === "task-block" && msg.taskBlock) {
+      return (
+        <div key={msg.id} className="mb-4">
+          <Collapsible
+            open={msg.expanded}
+            onOpenChange={() => toggleExpandable(msg.id)}
+            className="border rounded-lg bg-muted/20"
+          >
+            <div className="p-3 border-b bg-muted/30">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">{msg.taskBlock.title}</span>
+                <Maximize2 className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </div>
+            <div className="p-3">
+              <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
+                {msg.taskBlock.description}
+              </p>
+              {msg.taskBlock.tasks && (
+                <div className="space-y-2">
+                  {msg.taskBlock.tasks.map((task, idx) => {
+                    const taskId = `${msg.id}-task-${idx}`;
+                    const isHovered = hoveredTaskItem === taskId;
+                    
+                    return (
+                      <div 
+                        key={idx} 
+                        className="flex items-center justify-between gap-2 text-sm group"
+                        onMouseEnter={() => setHoveredTaskItem(taskId)}
+                        onMouseLeave={() => setHoveredTaskItem(null)}
+                      >
+                        <div className="flex items-center gap-2 flex-1">
+                          <CheckCircle2 className={`w-3.5 h-3.5 flex-shrink-0 ${task.done ? 'text-green-600 dark:text-green-500' : 'text-muted-foreground'}`} />
+                          <span className={task.done ? 'line-through text-muted-foreground' : ''}>
+                            {task.text}
+                          </span>
+                        </div>
+                        {isHovered && task.done && (
+                          <button 
+                            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
+                            onClick={() => console.log('View changes for:', task.text)}
+                          >
+                            <span>View changes</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            {msg.taskBlock.showMore && (
+              <CollapsibleTrigger className="w-full flex items-center justify-center gap-2 p-2 border-t hover:bg-muted/50 transition-colors">
+                <ArrowDown className={`w-3 h-3 transition-transform ${msg.expanded ? 'rotate-180' : ''}`} />
+                <span className="text-xs">Show more</span>
+              </CollapsibleTrigger>
+            )}
+          </Collapsible>
+        </div>
+      );
+    }
+
+    // Checkpoint
+    if (msg.type === "checkpoint" && msg.checkpoint) {
+      return (
+        <div key={msg.id} className="mb-4">
+          <div className="p-4 bg-muted/50 rounded-lg border">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-500" />
+              <span className="text-xs text-muted-foreground">
+                Checkpoint made {msg.checkpoint.timestamp}
+              </span>
+            </div>
+            <p className="text-sm mb-3 font-medium">{msg.checkpoint.title}</p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="h-8 text-xs">
+                <RotateCcw className="w-3 h-3 mr-1.5" />
+                Rollback here
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 text-xs"
+                onClick={() => toast.info("Code changes", { description: "Opening diff view..." })}
+              >
+                <Code className="w-3 h-3 mr-1.5" />
+                Changes
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 text-xs"
+                onClick={() => toast.success("Preview updated", { description: "Rendering latest changes" })}
+              >
+                <Eye className="w-3 h-3 mr-1.5" />
+                Preview
+              </Button>
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-1.5 mt-1.5 mr-2">
+            <span className="text-[10px] text-muted-foreground">
+              {getRelativeTime(msg.timestamp)}
+            </span>
+            <Circle className="w-1.5 h-1.5 text-muted-foreground fill-muted-foreground" />
+          </div>
+        </div>
+      );
+    }
+
+    // Task list
+    if (msg.type === "task-list" && msg.taskList) {
+      return (
+        <div key={msg.id} className="mb-4">
+          <Collapsible
+            open={msg.expanded}
+            onOpenChange={() => toggleExpandable(msg.id)}
+            className="border rounded-lg bg-background"
+          >
+            <CollapsibleTrigger className="w-full flex items-center justify-between p-3 hover:bg-muted/50">
+              <div className="flex items-center gap-2">
+                <ChevronRight className={`w-4 h-4 transition-transform ${msg.expanded ? 'rotate-90' : ''}`} />
+                <span className="text-sm font-medium">{msg.taskList.title}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{msg.taskList.progress}</span>
+                <RefreshCw className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="px-3 pb-3 space-y-2.5">
+                {msg.taskList.tasks.map((task, idx) => (
+                  <div key={idx} className="flex items-center gap-2.5 text-sm">
+                    <Checkbox 
+                      checked={task.done} 
+                      className="h-4 w-4 rounded-full"
+                    />
+                    <span className={task.done ? "line-through text-muted-foreground" : ""}>
+                      {task.text}
+                    </span>
+                    {task.hasSettings && (
+                      <Settings className="w-3.5 h-3.5 text-muted-foreground ml-auto" />
+                    )}
+                  </div>
+                ))}
+                {msg.taskList.showMore && msg.taskList.hiddenCount && (
+                  <button 
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground pl-6 pt-1"
+                    onClick={() => toast.info("Expanding tasks", { description: `Showing ${msg.taskList!.hiddenCount} more tasks` })}
+                  >
+                    <ArrowDown className="w-3 h-3" />
+                    <span>Show {msg.taskList.hiddenCount} more</span>
+                  </button>
+                )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+      );
+    }
+
+    // Status (Working...)
+    if (msg.type === "status" && msg.status) {
+      return (
+        <div key={msg.id} className="mb-4">
+          <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+              <span className="text-sm text-purple-700 dark:text-purple-400">{msg.status.text}</span>
+            </div>
+            {msg.status.active && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 text-xs border-purple-300 dark:border-purple-700"
+                onClick={() => toast.success("Process stopped", { description: "Agent work cancelled" })}
+              >
+                <Square className="w-3 h-3 mr-1.5" />
+                Stop
+              </Button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Code block
+    if (msg.type === "code" && msg.code) {
+      return (
+        <div key={msg.id} className="mb-4">
+          <div className="bg-muted/50 rounded-lg border overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 bg-muted border-b">
+              <span className="text-xs font-medium">{msg.code.language}</span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 text-xs"
+                onClick={() => {
+                  navigator.clipboard.writeText(msg.code!.content);
+                  toast.success("Code copied to clipboard");
+                }}
+              >
+                Copy
+              </Button>
+            </div>
+            <pre className="p-4 text-sm overflow-x-auto">
+              <code className="text-orange-600 dark:text-orange-400">{msg.code.content}</code>
+            </pre>
+          </div>
+        </div>
+      );
+    }
+
+    // Regular text message
+    if (msg.type === "text") {
+      const isExpandable = msg.expandable;
+      const content = msg.content || "";
+      
+      if (isExpandable && content === "") {
+        return (
+          <button 
+            key={msg.id} 
+            onClick={() => toggleExpandable(msg.id)}
+            className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline mb-3"
+          >
+            <ArrowDown className="w-3 h-3" />
+            <span>Show 9 more</span>
+          </button>
+        );
+      }
+      
+      if (isExpandable) {
+        return (
+          <div key={msg.id} className="mb-4">
+            <Collapsible open={msg.expanded} onOpenChange={() => toggleExpandable(msg.id)}>
+              <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-2">
+                <ChevronUp className={`w-3 h-3 transition-transform ${msg.expanded ? '' : 'rotate-180'}`} />
+                <span>Show {msg.expanded ? 'less' : 'more'}</span>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                  {content}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+        );
+      }
+
+      return (
+        <div key={msg.id} className="mb-3">
+          <div className="text-sm leading-relaxed whitespace-pre-wrap">
+            {content}
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-background border-l">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
+              <Brain className="w-4 h-4 text-white" />
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-background rounded-full"></div>
+          </div>
+          <div>
+            <h3 className="font-medium">E-Code Agent</h3>
+            <p className="text-xs text-muted-foreground">AI-Powered Development</p>
+          </div>
+        </div>
+        <div className="flex gap-1">
+          <Badge variant="outline" className="text-xs">
+            {selectedModel === "gpt-4" && "GPT-4"}
+            {selectedModel === "gpt-4-turbo" && "GPT-4 Turbo"}
+            {selectedModel === "claude-3-5-sonnet" && "Claude 3.5"}
+            {selectedModel === "claude-3-sonnet" && "Claude 3"}
+          </Badge>
+          <Badge variant={agentMode === "autonomous" ? "default" : "secondary"} className="text-xs">
+            {agentMode === "autonomous" ? (
+              <>
+                <Zap className="w-3 h-3 mr-1" />
+                Autonomous
+              </>
+            ) : (
+              "Chat Mode"
+            )}
+          </Badge>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setAgentMode("chat")}>
+                Chat Mode
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setAgentMode("autonomous")}>
+                <Zap className="w-4 h-4 mr-2" />
+                Autonomous Mode
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={loadDemoMessages}>
+                <Eye className="w-4 h-4 mr-2" />
+                Load Demo Messages
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="w-4 h-4 mr-2" />
+                Agent Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleClearChat}>
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clear Chat
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Pinned In Progress Tasks */}
+      {messages.some(msg => msg.type === "task-list" && msg.taskList?.title === "In progress tasks") && (
+        <div className="border-b bg-background">
+          <div className="px-4 py-3">
+            {messages
+              .filter(msg => msg.type === "task-list" && msg.taskList?.title === "In progress tasks")
+              .map((msg) => renderMessage(msg))}
+          </div>
+        </div>
+      )}
+
+      {/* Messages */}
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="px-4 py-4" ref={scrollRef}>
+            {/* Show previous events button */}
+            {messages.length > 5 && (
+              <button className="w-full flex items-center justify-center gap-2 p-3 mb-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                <ChevronUp className="w-4 h-4" />
+                <span className="text-sm">Show previous events</span>
+              </button>
+            )}
+            
+            <div className="space-y-2">
+              {messages
+                .filter(msg => !(msg.type === "task-list" && msg.taskList?.title === "In progress tasks"))
+                .map((msg) => renderMessage(msg))}
+            </div>
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Input */}
+      <div className="p-3 border-t bg-background">
+        <div className="relative border rounded-lg bg-background">
+          {/* Top toolbar */}
+          <div className="flex items-center justify-between px-3 py-2 border-b">
+            <div className="flex items-center gap-1">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 gap-1 px-2">
+                    <PlayCircle className="w-3.5 h-3.5" />
+                    <span className="text-xs">Build</span>
+                    <ChevronDown className="w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem>
+                    <PlayCircle className="w-4 h-4 mr-2" />
+                    Build
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Deploy
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Wrench className="w-4 h-4 mr-2" />
+                    Test
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <Separator orientation="vertical" className="h-4" />
+              
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                <Sparkles className="w-3.5 h-3.5" />
+              </Button>
+              
+              <Popover open={showAttachmentMenu} onOpenChange={setShowAttachmentMenu}>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                    <Paperclip className="w-3.5 h-3.5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-64 p-0">
+                  <div className="p-1.5">
+                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                      Add attachments
+                    </div>
+                    
+                    <button
+                      onClick={() => {
+                        setShowAttachmentMenu(false);
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.click();
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-accent transition-colors text-left"
+                    >
+                      <Upload className="w-4 h-4" />
+                      <span className="text-sm">Upload a file</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setShowAttachmentMenu(false);
+                        setShowFigmaDialog(true);
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-accent transition-colors text-left"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 12L12 24M12 12L6 12C3.79086 12 2 10.2091 2 8C2 5.79086 3.79086 4 6 4L12 4L12 12ZM12 12L18 12C20.2091 12 22 10.2091 22 8C22 5.79086 20.2091 4 18 4L12 4L12 12ZM12 12L12 0M12 12C12 14.2091 10.2091 16 8 16C5.79086 16 4 14.2091 4 12C4 9.79086 5.79086 8 8 8L12 12Z" fill="url(#figma-gradient)" />
+                        <defs>
+                          <linearGradient id="figma-gradient" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                            <stop stopColor="#F24E1E" />
+                            <stop offset="0.25" stopColor="#FF7262" />
+                            <stop offset="0.5" stopColor="#A259FF" />
+                            <stop offset="0.75" stopColor="#1ABCFE" />
+                            <stop offset="1" stopColor="#0ACF83" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
+                      <span className="text-sm">Attach a Figma design</span>
+                    </button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <Popover open={showAgentTools} onOpenChange={setShowAgentTools}>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                    <Settings className="w-3.5 h-3.5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[340px] p-4" align="end">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Wrench className="w-4 h-4" />
+                      <h3 className="font-semibold">Agent Tools</h3>
+                    </div>
+                    
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 space-y-0.5">
+                        <Label className="text-sm font-medium">App testing</Label>
+                        <p className="text-xs text-muted-foreground leading-snug">
+                          Automatically test your app
+                        </p>
+                      </div>
+                      <Switch 
+                        checked={appTesting} 
+                        onCheckedChange={setAppTesting}
+                      />
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-2.5">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">Autonomy level</Label>
+                        <p className="text-xs text-muted-foreground leading-snug">
+                          How independently should the agent work
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {(["Low", "Medium", "High", "Max"] as const).map((level) => (
+                          <Button
+                            key={level}
+                            variant={autonomyLevel === level ? "default" : "outline"}
+                            size="sm"
+                            className="text-xs h-8 px-2"
+                            onClick={() => setAutonomyLevel(level)}
+                          >
+                            {level}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-2.5">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">AI Model</Label>
+                        <p className="text-xs text-muted-foreground leading-snug">
+                          Select the AI model to use
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <Button
+                          variant={selectedModel === "gpt-4" ? "default" : "outline"}
+                          size="sm"
+                          className="text-xs h-8 px-2"
+                          onClick={() => setSelectedModel("gpt-4")}
+                        >
+                          GPT-4
+                        </Button>
+                        <Button
+                          variant={selectedModel === "gpt-4-turbo" ? "default" : "outline"}
+                          size="sm"
+                          className="text-xs h-8 px-2"
+                          onClick={() => setSelectedModel("gpt-4-turbo")}
+                        >
+                          GPT-4 Turbo
+                        </Button>
+                        <Button
+                          variant={selectedModel === "claude-3-5-sonnet" ? "default" : "outline"}
+                          size="sm"
+                          className="text-xs h-8 px-2"
+                          onClick={() => setSelectedModel("claude-3-5-sonnet")}
+                        >
+                          Claude 3.5
+                        </Button>
+                        <Button
+                          variant={selectedModel === "claude-3-sonnet" ? "default" : "outline"}
+                          size="sm"
+                          className="text-xs h-8 px-2"
+                          onClick={() => setSelectedModel("claude-3-sonnet")}
+                        >
+                          Claude 3
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 space-y-0.5">
+                        <Label className="text-sm font-medium flex items-center gap-1.5">
+                          <Globe className="w-3.5 h-3.5" />
+                          Web search
+                        </Label>
+                        <p className="text-xs text-muted-foreground leading-snug">
+                          Search the web for information
+                        </p>
+                      </div>
+                      <Switch 
+                        checked={webSearch} 
+                        onCheckedChange={setWebSearch}
+                      />
+                    </div>
+
+                    <Separator />
+
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 space-y-0.5">
+                        <Label className="text-sm font-medium flex items-center gap-1.5">
+                          <ImageIcon className="w-3.5 h-3.5" />
+                          Image generation
+                        </Label>
+                        <p className="text-xs text-muted-foreground leading-snug">
+                          Generate images with AI
+                        </p>
+                      </div>
+                      <Switch 
+                        checked={imageGeneration} 
+                        onCheckedChange={setImageGeneration}
+                      />
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          {/* Textarea */}
+          <div className="relative">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="Make, test, iterate..."
+              className="min-h-[80px] resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none rounded-b-lg"
+            />
+          </div>
+
+          {/* Send button */}
+          <Button
+            onClick={handleSend}
+            disabled={!input.trim() || isLoading}
+            size="icon"
+            className="absolute bottom-2 right-2 h-8 w-8 rounded-md bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700"
+          >
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Bottom hint */}
+        <p className="text-xs text-muted-foreground mt-2 px-1">
+          <Sparkles className="w-3 h-3 inline mr-1" />
+          E-Code Agent can make mistakes. Always review generated code.
+        </p>
+      </div>
+
+      {/* Figma Import Dialog */}
+      <Dialog open={showFigmaDialog} onOpenChange={setShowFigmaDialog}>
+        <DialogContent className="sm:max-w-[540px]">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                <path d="M12 12L12 24M12 12L6 12C3.79086 12 2 10.2091 2 8C2 5.79086 3.79086 4 6 4L12 4L12 12ZM12 12L18 12C20.2091 12 22 10.2091 22 8C22 5.79086 20.2091 4 18 4L12 4L12 12ZM12 12L12 0M12 12C12 14.2091 10.2091 16 8 16C5.79086 16 4 14.2091 4 12C4 9.79086 5.79086 8 8 8L12 12Z" fill="url(#figma-gradient-dialog)" />
+                <defs>
+                  <linearGradient id="figma-gradient-dialog" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#F24E1E" />
+                    <stop offset="0.25" stopColor="#FF7262" />
+                    <stop offset="0.5" stopColor="#A259FF" />
+                    <stop offset="0.75" stopColor="#1ABCFE" />
+                    <stop offset="1" stopColor="#0ACF83" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <DialogTitle>Import Figma design</DialogTitle>
+              <Badge variant="secondary" className="ml-1">Beta</Badge>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="figma-url">Figma frame URL</Label>
+              <Input
+                id="figma-url"
+                placeholder="https://www.figma.com/file/..."
+                value={figmaUrl}
+                onChange={(e) => setFigmaUrl(e.target.value)}
+                className="h-10"
+              />
+            </div>
+
+            <div className="flex gap-2 p-3 bg-muted/50 rounded-lg">
+              <HelpCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+              <div className="text-xs text-muted-foreground">
+                <span className="font-medium">How to find your frame URL:</span> In Figma Design, right click on the frame you want to import, then click "Copy/Paste as" and finally "Copy link to selection".
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowFigmaDialog(false);
+                setFigmaUrl("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={!figmaUrl.trim()}
+              onClick={() => {
+                console.log("Importing Figma design:", figmaUrl);
+                setShowFigmaDialog(false);
+                setFigmaUrl("");
+              }}
+            >
+              Attach to prompt
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
