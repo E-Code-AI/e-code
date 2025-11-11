@@ -13,9 +13,9 @@ import { Project, File } from '@shared/schema';
 
 const logger = createLogger('runtime');
 
-// Map to track active project runtimes
-const activeRuntimes: Map<number, {
-  projectId: number;
+// Map to track active project runtimes (using string UUIDs)
+const activeRuntimes: Map<string, {
+  projectId: string;
   language: Language;
   containerId?: string;
   port?: number;
@@ -250,7 +250,7 @@ export async function startProject(
 /**
  * Stop a project runtime
  */
-export async function stopProject(projectId: number): Promise<boolean> {
+export async function stopProject(projectId: string): Promise<boolean> {
   try {
     logger.info(`Stopping project ${projectId}`);
     
@@ -291,7 +291,7 @@ export async function stopProject(projectId: number): Promise<boolean> {
 /**
  * Get the status of a project runtime
  */
-export function getProjectStatus(projectId: number): {
+export function getProjectStatus(projectId: string): {
   isRunning: boolean;
   language?: Language;
   containerId?: string;
@@ -324,7 +324,7 @@ export function getProjectStatus(projectId: number): {
 /**
  * Execute a command in a project runtime
  */
-export async function executeCommand(projectId: number, command: string): Promise<{
+export async function executeCommand(projectId: string, command: string): Promise<{
   success: boolean;
   output: string;
 }> {
@@ -374,7 +374,7 @@ export async function executeCommand(projectId: number, command: string): Promis
 /**
  * Stream project logs
  */
-export function streamProjectLogs(projectId: number, callback: (log: string) => void): () => void {
+export function streamProjectLogs(projectId: string, callback: (log: string) => void): () => void {
   if (!activeRuntimes.has(projectId)) {
     const errorMessage = `Project ${projectId} is not running`;
     logger.warn(errorMessage);
@@ -591,7 +591,7 @@ async function createProjectDir(project: Project, files: File[]): Promise<string
   let fileCount = 0;
   for (const file of files) {
     // Skip folders - we'll create them when writing files
-    if (file.isFolder) continue;
+    if (file.isDirectory) continue;
     
     // Make sure parent directories exist
     const filePath = path.join(projectDir, file.name);
@@ -617,7 +617,7 @@ function detectProjectLanguage(files: File[]): Language | undefined {
   logger.info(`Detecting project language from ${files.length} files`);
   
   // Filter out folder entries
-  const nonFolderFiles = files.filter(file => !file.isFolder);
+  const nonFolderFiles = files.filter(file => !file.isDirectory);
   
   // If no files, return undefined
   if (nonFolderFiles.length === 0) {
