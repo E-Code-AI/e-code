@@ -24,6 +24,8 @@ type EditorProps = {
 };
 
 export default function Editor(props: EditorProps = {}) {
+  console.log('[Editor.tsx] ========== COMPONENT MOUNTED ==========');
+  
   const { id } = useParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -33,6 +35,8 @@ export default function Editor(props: EditorProps = {}) {
 
   const resolvedProjectId = props.projectId ?? id ?? null;
   const initialProject = props.initialProject ?? null;
+  
+  console.log('[Editor.tsx] Resolved Project ID:', resolvedProjectId);
 
   const [activeFileId, setActiveFileId] = useState<number | null>(null);
   const [leftPanelOpen, setLeftPanelOpen] = useState(true);
@@ -56,13 +60,21 @@ export default function Editor(props: EditorProps = {}) {
 
   useEffect(() => {
     const handleKeyboardSettingsChanged = () => {
-      setEnableShortcutHint(localStorage.getItem('keyboard-shortcut-hint') !== 'false');
-      setEnableShortcutTester(localStorage.getItem('keyboard-shortcut-tester') === 'true');
+      const hintValue = localStorage.getItem('keyboard-shortcut-hint');
+      const testerValue = localStorage.getItem('keyboard-shortcut-tester');
+      console.log('[Editor.tsx] Keyboard settings changed - hint:', hintValue, 'tester:', testerValue);
+      setEnableShortcutHint(hintValue !== 'false');
+      setEnableShortcutTester(testerValue === 'true');
     };
 
     window.addEventListener('keyboard-settings-changed', handleKeyboardSettingsChanged);
     return () => window.removeEventListener('keyboard-settings-changed', handleKeyboardSettingsChanged);
   }, []);
+  
+  // Debug: Log keyboard utilities state
+  useEffect(() => {
+    console.log('[Editor.tsx] Keyboard utilities state - enableShortcutHint:', enableShortcutHint, 'enableShortcutTester:', enableShortcutTester);
+  }, [enableShortcutHint, enableShortcutTester]);
 
   const { data: project, isLoading: isProjectLoading } = useQuery<Project>({
     queryKey: [`/api/projects/${resolvedProjectId}`],
@@ -527,6 +539,8 @@ export default function Editor(props: EditorProps = {}) {
         onToggleAI={handleCollaborationOpen}
       />
       
+      {/* Keyboard Utilities - Debug */}
+      {console.log('[Editor.tsx] Rendering keyboard utilities - Hint:', enableShortcutHint, 'Tester:', enableShortcutTester)}
       {enableShortcutHint && <ShortcutHint />}
       {enableShortcutTester && <ShortcutTester />}
     </div>
