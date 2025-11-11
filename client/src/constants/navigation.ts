@@ -4,7 +4,6 @@ import {
   Code2,
   Home,
   LifeBuoy,
-  Rocket,
   Settings2,
   Sparkles,
   User,
@@ -60,15 +59,6 @@ export const primaryNavigation: NavigationItem[] = [
     description: "Track your resource usage and allocations",
     ctaLabel: "Check usage analytics",
     activePaths: ["/usage"],
-  },
-  {
-    key: "deployments",
-    label: "Deployments",
-    path: "/deployments",
-    icon: Rocket,
-    description: "Monitor and manage application deployments",
-    ctaLabel: "Review deployments",
-    activePaths: ["/deployments"],
   },
   {
     key: "settings",
