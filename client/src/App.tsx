@@ -471,6 +471,23 @@ function AppContent() {
           {/* Shared snippet page */}
           <Route path="/share/:shareId" component={SharedSnippet} />
 
+          {/* Project creation routes - all redirect to dashboard */}
+          <ProtectedRoute path="/new" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Dashboard />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/editor/new" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Dashboard />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/projects/new" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Dashboard />
+            </ReplitLayout>
+          )} />
+
           <ProtectedRoute path="/dashboard" component={() => (
             <ReplitLayout showSidebar={false}>
               <Dashboard />
@@ -657,6 +674,15 @@ function AppContent() {
 
           {/* User profile routes */}
           <Route path="/u/:username" component={UserProfileWrapper} />
+          
+          {/* IMPORTANT: Specific routes MUST come before parameterized routes */}
+          {/* /editor/new must be before /editor/:id to avoid treating "new" as project ID */}
+          <ProtectedRoute path="/editor/new" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Dashboard />
+            </ReplitLayout>
+          )} />
+          
           <ProtectedRoute path="/editor/:id" component={() => (
             <ResponsiveEditorRoute />
           )} />
