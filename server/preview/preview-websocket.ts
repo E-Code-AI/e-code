@@ -58,7 +58,6 @@ class PreviewWebSocketService {
           const client: PreviewClient = { ws, userId };
           this.clients.set(clientId, client);
 
-          console.log(`Preview WebSocket client connected: ${clientId} (user: ${userId})`);
           this.setupClient(clientId, ws);
         });
       } catch (error) {
@@ -110,7 +109,6 @@ class PreviewWebSocketService {
       });
 
       ws.on('close', () => {
-        console.log(`Preview WebSocket client disconnected: ${clientId}`);
         this.clients.delete(clientId);
       });
 

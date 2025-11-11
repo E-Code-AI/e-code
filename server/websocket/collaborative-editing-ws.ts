@@ -48,8 +48,6 @@ export class CollaborativeEditingWebSocketHandler {
   }
 
   private async handleConnection(ws: AuthenticatedWebSocket, request: any) {
-    console.log('New collaborative editing WebSocket connection');
-
     // Set up ping/pong to detect disconnected clients
     ws.pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {

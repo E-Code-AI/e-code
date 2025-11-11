@@ -181,7 +181,6 @@ export default function GitHubImport() {
         }
       } catch (error) {
         // User hasn't connected GitHub yet
-        console.log('GitHub not connected');
       }
     };
 

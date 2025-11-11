@@ -500,11 +500,8 @@ class PerformanceBudgetMonitor {
       report.violations.forEach(violation => {
         const icon = violation.severity === ViolationSeverity.CRITICAL ? '🔴' :
                     violation.severity === ViolationSeverity.ERROR ? '🟠' : '🟡';
-        console.log(`${icon} ${violation.message}`);
       });
       console.groupEnd();
-    } else {
-      console.log('✅ All metrics within budget!');
     }
     
     if (report.recommendations.length > 0) {

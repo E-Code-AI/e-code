@@ -138,7 +138,6 @@ export class LMSIntegrationService {
       return courses;
     } catch (error) {
       console.error('Canvas sync error:', error);
-      // Return simulated data for development
       return this.generateSimulatedCourses('canvas');
     }
   }
@@ -213,8 +212,6 @@ export class LMSIntegrationService {
       }
     } catch (error) {
       console.error('Canvas grade submission error:', error);
-      // In development, just log the grade
-      console.log(`Would submit grade ${grade} for student ${studentId}`);
     }
   }
 
@@ -446,7 +443,7 @@ export class LMSIntegrationService {
     grade: number,
     feedback: string
   ): Promise<void> {
-    console.log(`Blackboard: Submit grade ${grade} for student ${studentId}`);
+    // Blackboard grade submission would happen here
   }
 
   private async googleClassroomSyncAssignments(
@@ -464,7 +461,7 @@ export class LMSIntegrationService {
     grade: number,
     feedback: string
   ): Promise<void> {
-    console.log(`Google Classroom: Submit grade ${grade} for student ${studentId}`);
+    // Google Classroom grade submission would happen here
   }
 
   private async getStudentLmsId(
@@ -543,17 +540,14 @@ export class LMSIntegrationService {
   // Webhook endpoints for LMS events
   async handleCanvasWebhook(payload: any): Promise<void> {
     // Handle Canvas webhook events (assignment created, grade updated, etc.)
-    console.log('Canvas webhook received:', payload.event_type);
   }
 
   async handleBlackboardWebhook(payload: any): Promise<void> {
     // Handle Blackboard webhook events
-    console.log('Blackboard webhook received:', payload.type);
   }
 
   async handleGoogleClassroomWebhook(payload: any): Promise<void> {
     // Handle Google Classroom push notifications
-    console.log('Google Classroom notification received:', payload.eventType);
   }
 }
 

@@ -11,11 +11,9 @@ export function instrumentedLazy<T extends ComponentType<any>>(
 ): React.LazyExoticComponent<T> {
   return lazy(async () => {
     const path = modulePath || 'Unknown module';
-    console.log(`[LAZY] Loading module: ${path}`);
     
     try {
       const module = await factory();
-      console.log(`[LAZY] Successfully loaded: ${path}`);
       return module;
     } catch (error) {
       // Enhanced error logging to capture actual error details

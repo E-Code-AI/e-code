@@ -137,7 +137,6 @@ export function MultiTabEditor({
       // Add keyboard shortcuts
       editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
         // Save file (TODO: implement save API call)
-        console.log('Save file:', file.name);
       });
       
       return {
@@ -354,7 +353,6 @@ export function MultiTabEditor({
           onToggleMinimap={toggleMinimap}
           onBreadcrumbClick={(segment, index) => {
             // TODO: Implement file tree reveal/navigation
-            console.log('Breadcrumb clicked:', segment, index);
           }}
         />
       )}

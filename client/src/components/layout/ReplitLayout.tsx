@@ -132,12 +132,10 @@ export function ReplitLayout({
   };
 
   const handleFileSelect = (file: any) => {
-    console.log('Selected file:', file);
     // Handle file selection
   };
 
   const handleCreateProject = (template: any) => {
-    console.log('Creating project with template:', template);
     navigate('/ide/new');
   };
 

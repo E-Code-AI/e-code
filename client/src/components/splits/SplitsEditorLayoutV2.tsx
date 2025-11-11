@@ -107,16 +107,14 @@ export function SplitsEditorLayoutV2({
           <div className="h-full flex flex-col bg-[var(--ecode-editor-bg)]">
             <ReplitBreadcrumbs
               filePath={files?.find(f => f.id === activeFileId)?.path || ''}
-              onNavigate={(path) => console.log('Navigate to:', path)}
+              onNavigate={(path) => {}}
             />
             <div className="flex-1 overflow-hidden">
               <MultiTabEditor
                 files={files}
                 activeFileId={activeFileId}
                 onFileSelect={onFileSelect}
-                onChange={(fileId, content) => {
-                  console.log('File changed:', fileId, content);
-                }}
+                onChange={(fileId, content) => {}}
               />
             </div>
           </div>
@@ -133,9 +131,7 @@ export function SplitsEditorLayoutV2({
         problems: (
           <ReplitProblemsPanel 
             projectId={projectId}
-            onFileNavigate={(file, line, column) => {
-              console.log('Navigate to:', file, line, column);
-            }}
+            onFileNavigate={(file, line, column) => {}}
           />
         ),
         console: (
@@ -197,9 +193,7 @@ export function SplitsEditorLayoutV2({
   // Command palette commands
   const commands = useMemo(() => generateDefaultCommands({
     onToolSelect: handleToolChange,
-    onNavigate: (path) => {
-      console.log('Navigate to:', path);
-    },
+    onNavigate: (path) => {},
   }), [handleToolChange]);
 
   return (

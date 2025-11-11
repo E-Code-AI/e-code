@@ -97,7 +97,7 @@ export function MobileTerminal({
       wsRef.current = ws; // Store WebSocket in ref for clearBackendBuffer()
       
       ws.onopen = () => {
-        console.log('[MobileTerminal] WebSocket connected');
+        // WebSocket connected
       };
       
       ws.onmessage = (event) => {
@@ -120,7 +120,6 @@ export function MobileTerminal({
       };
       
       ws.onclose = () => {
-        console.log('[MobileTerminal] WebSocket disconnected');
         terminal.writeln('\r\n\x1b[33mTerminal disconnected. Please refresh.\x1b[0m\r\n');
         wsRef.current = null; // Clear ref on disconnect
       };

@@ -47,7 +47,6 @@ router.post('/api/containers/create', async (req, res) => {
         { authorization: req.headers.authorization }
       );
     } catch (goError) {
-      console.log('[CONTAINERS] Go service unavailable, using local implementation');
       
       // Fallback to local container simulation
       const containerId = `container-${projectId}-${Date.now()}`;
@@ -73,7 +72,6 @@ router.post('/api/containers/create', async (req, res) => {
       };
     }
     
-    console.log(`[CONTAINERS] Created container for project ${projectId} with image ${image}`);
     res.status(result.status).json(result.data);
   } catch (error) {
     console.error('[CONTAINERS] Error creating container:', error);

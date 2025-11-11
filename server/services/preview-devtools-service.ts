@@ -4,9 +4,7 @@ const logger = {
   error: (message: string, error?: any) => {
     console.error(`[preview-devtools] ERROR: ${message}`, error);
   },
-  info: (message: string, ...args: any[]) => {
-    console.log(`[preview-devtools] INFO: ${message}`, ...args);
-  }
+  info: (message: string, ...args: any[]) => {}
 };
 
 interface DevToolsClient {

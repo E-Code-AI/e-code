@@ -53,15 +53,8 @@ async function ensureDatabaseMigrated(force = false) {
     }
   }
 
-  const statusMessage = isFreshDatabase
-    ? "Database schema is missing. Applying initial migrations..."
-    : "Ensuring database schema is up to date via migrations...";
-
-  console.log(statusMessage);
-
   try {
     await migrate(db, { migrationsFolder });
-    console.log("Database migrations applied successfully.");
     migrationsEnsured = true;
   } catch (migrationError: any) {
     // Check if error is due to existing enum types (which is safe to ignore)
@@ -73,7 +66,6 @@ async function ensureDatabaseMigrated(force = false) {
                                (fullErrorText.includes('type') || fullErrorText.includes('enum') || fullErrorText.includes('CREATE TYPE'));
     
     if (isEnumExistsError) {
-      console.log("Database migration skipped: Enum types already exist (this is safe).");
       migrationsEnsured = true;
     } else {
       console.error("Automatic database migration failed:", migrationError);
@@ -90,14 +82,11 @@ export async function initializeDatabase() {
   
   while (retries > 0) {
     try {
-      console.log(`Initializing database... (attempt ${4 - retries})`);
-
       await ensureDatabaseMigrated();
 
       // Check if tables are created by checking if we have any users
       const users = await db.select().from(schema.users);
       if (users && users.length > 0) {
-        console.log("Database already initialized. Skipping initialization.");
         return;
       }
     
@@ -213,7 +202,6 @@ document.addEventListener('DOMContentLoaded', function() {
       projectId: project.id
     });
     
-      console.log("Database initialized successfully with default data.");
       return; // Success - exit the function
       
     } catch (error) {

@@ -19,9 +19,6 @@ export class SlackMCPServer {
       if (token) {
         this.client = new WebClient(token);
         this.initialized = true;
-        console.log('[slack-mcp] Slack MCP server initialized successfully');
-      } else {
-        console.log('[slack-mcp] Slack bot token not configured');
       }
     } catch (error) {
       console.error('[slack-mcp] Failed to initialize:', error);

@@ -3,7 +3,7 @@ import { users, projects } from '@shared/schema';
 import { eq, and, or, inArray } from 'drizzle-orm';
 
 const logger = {
-  info: (message: string, ...args: any[]) => console.log(`[real-custom-roles] INFO: ${message}`, ...args),
+  info: (message: string, ...args: any[]) => {},
   error: (message: string, ...args: any[]) => console.error(`[real-custom-roles] ERROR: ${message}`, ...args),
   warn: (message: string, ...args: any[]) => console.warn(`[real-custom-roles] WARN: ${message}`, ...args),
 };

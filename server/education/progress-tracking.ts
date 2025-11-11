@@ -72,14 +72,8 @@ export class ProgressTrackingService {
     activityType: 'coding' | 'reading' | 'testing' | 'debugging',
     duration: number
   ): Promise<void> {
-    // For now, log activity (would be stored in activity tracking table)
-    console.log('Activity tracked:', {
-      studentId,
-      projectId,
-      activityType,
-      duration,
-      timestamp: new Date()
-    });
+    // Activity would be stored in activity tracking table
+    // Implementation pending database schema update
   }
 
   // Get detailed student progress

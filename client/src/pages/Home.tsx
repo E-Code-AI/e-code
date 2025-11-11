@@ -95,7 +95,6 @@ export default function Home() {
         const urlWithAgent = isAIPrompt 
           ? `${projectUrl}?agent=true&prompt=${encodeURIComponent(promptToUse)}`
           : projectUrl;
-        console.log(`Navigating to: ${urlWithAgent}`);
         window.location.href = urlWithAgent;
       }, 500);
       

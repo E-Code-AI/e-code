@@ -110,27 +110,24 @@ export default function ChatGPTAdmin() {
     });
 
     newSocket.on('connect', () => {
-      console.log('Connected to agent WebSocket');
+      // Connected to agent WebSocket
     });
 
     newSocket.on('file:operation', (event) => {
-      console.log('File operation:', event);
       refreshFileExplorer();
     });
 
     newSocket.on('command:event', (event) => {
-      console.log('Command event:', event);
       if (event.type === 'output') {
         setCommandOutput(prev => prev + event.data);
       }
     });
 
     newSocket.on('tool:event', (event) => {
-      console.log('Tool event:', event);
+      // Tool event received
     });
 
     newSocket.on('workflow:event', (event) => {
-      console.log('Workflow event:', event);
       if (event.type === 'step_complete') {
         setWorkflowSteps(prev => prev.map(step => 
           step.id === event.stepId ? { ...step, status: 'completed' } : step
@@ -139,7 +136,7 @@ export default function ChatGPTAdmin() {
     });
 
     newSocket.on('agent:function', (event) => {
-      console.log('Agent function:', event);
+      // Agent function event
     });
 
     setSocket(newSocket);
@@ -248,7 +245,7 @@ export default function ChatGPTAdmin() {
                   assistantMessage += parsed.content;
                   updateLastMessage(assistantMessage);
                 } else if (parsed.type === 'function_result') {
-                  console.log('Function executed:', parsed);
+                  // Function executed
                 }
               } catch (e) {
                 console.error('Error parsing SSE data:', e);

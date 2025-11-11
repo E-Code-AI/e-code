@@ -114,7 +114,6 @@ export default function PerformanceDashboard() {
       const websocket = new WebSocket(wsUrl);
       
       websocket.onopen = () => {
-        console.log('Monitoring WebSocket connected');
         // Authenticate if needed
         const token = localStorage.getItem('token');
         if (token) {
@@ -146,7 +145,6 @@ export default function PerformanceDashboard() {
       };
 
       websocket.onclose = () => {
-        console.log('WebSocket disconnected');
         setWs(null);
       };
 

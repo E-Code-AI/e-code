@@ -73,8 +73,6 @@ function normalizeLayout(root: LayoutNode | null, centerStackHeight: number | nu
             if (node.children[siblingIndex]) {
               node.children[siblingIndex].percent = 100 - clampedPercent;
             }
-            
-            console.log('[normalizeLayout] Clamped center-bottom from', currentPercent.toFixed(1), '%  to', clampedPercent.toFixed(1), '% (min', MIN_BOTTOM_PANEL_PX, 'px)');
           }
         }
         
@@ -951,13 +949,10 @@ const useSplitsStore = create<SplitsStore>()(
         const previousHeight = state.centerStackHeight;
         state.centerStackHeight = height;
         
-        console.log('[SplitsStore] Center stack height measured:', height, 'px', previousHeight ? `(was ${previousHeight}px)` : '(initial)');
-        
         // CRITICAL: Re-normalize layout with actual measured height
         // This ensures 216px minimum is enforced with REAL container height, not heuristic
         if (state.root && height !== previousHeight) {
           normalizeLayout(state.root, height);
-          console.log('[SplitsStore] Layout re-normalized with measured height');
         }
       });
       

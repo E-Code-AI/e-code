@@ -30,7 +30,6 @@ export default function MobileWorkspace() {
 
   const handleToolSelect = (toolId: string) => {
     // Add the selected tool as a new tab or navigate to it
-    console.log('Selected tool:', toolId);
     // TODO: Implement tab addition or navigation based on tool type
   };
 

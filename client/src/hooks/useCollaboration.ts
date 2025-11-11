@@ -33,7 +33,6 @@ export function useCollaboration(projectId: number, fileId: number) {
 
     // Skip WebSocket connection in development to avoid errors
     if (import.meta.env.DEV) {
-      console.log('[Collaboration] Skipping WebSocket connection in development mode');
       return;
     }
 
@@ -45,7 +44,6 @@ export function useCollaboration(projectId: number, fileId: number) {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('Connected to collaboration server');
         setIsConnected(true);
         
         // Authenticate
@@ -82,7 +80,6 @@ export function useCollaboration(projectId: number, fileId: number) {
       };
 
       ws.onclose = () => {
-        console.log('Disconnected from collaboration server');
         setIsConnected(false);
       };
 

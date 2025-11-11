@@ -38,8 +38,6 @@ export function setupWebRTCServer(server: HttpServer) {
     ws.roomId = roomId;
     ws.isAlive = true;
 
-    console.log(`[WebRTC] User ${username} (${userId}) joined room ${roomId}`);
-
     // Join voice/video session
     try {
       await voiceVideoService.joinSession(roomId, userId, username, ws);
@@ -66,7 +64,6 @@ export function setupWebRTCServer(server: HttpServer) {
 
     // Handle disconnection
     ws.on('close', async () => {
-      console.log(`[WebRTC] User ${username} (${userId}) left room ${roomId}`);
       await voiceVideoService.leaveSession(ws);
     });
 
@@ -80,7 +77,6 @@ export function setupWebRTCServer(server: HttpServer) {
   const heartbeatInterval = setInterval(() => {
     wss.clients.forEach((ws: AuthenticatedWebSocket) => {
       if (ws.isAlive === false) {
-        console.log('[WebRTC] Terminating inactive connection');
         return ws.terminate();
       }
 
@@ -92,8 +88,6 @@ export function setupWebRTCServer(server: HttpServer) {
   wss.on('close', () => {
     clearInterval(heartbeatInterval);
   });
-
-  console.log('[WebRTC] Voice/Video service initialized');
 
   return voiceVideoService;
 }

@@ -25,5 +25,4 @@ self.MonacoEnvironment = {
 // Configure Monaco settings
 export const configureMonaco = () => {
   // Additional Monaco configurations can be added here
-  console.log('Monaco Editor configured');
 };

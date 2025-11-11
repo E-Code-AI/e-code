@@ -52,10 +52,8 @@ export class ZoomService {
 
     if (this.clientId && this.clientSecret && this.accountId) {
       this.initialized = true;
-      console.log('[ZoomService] Initialized with Server-to-Server OAuth');
     } else if (this.apiKey && this.apiSecret) {
       this.initialized = true;
-      console.log('[ZoomService] Initialized with JWT (legacy)');
     } else {
       console.warn('[ZoomService] Not configured. Set ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET, and ZOOM_ACCOUNT_ID for OAuth.');
       console.warn('[ZoomService] Or set ZOOM_API_KEY and ZOOM_API_SECRET for legacy JWT.');
@@ -88,7 +86,6 @@ export class ZoomService {
       this.accessToken = response.data.access_token;
       this.tokenExpiry = now + (response.data.expires_in * 1000) - 60000; // Refresh 1 min early
       
-      console.log('[ZoomService] OAuth access token obtained');
       return this.accessToken;
     } catch (error) {
       console.error('[ZoomService] Failed to get OAuth access token:', error);
@@ -169,7 +166,6 @@ export class ZoomService {
         timezone: response.data.timezone
       };
 
-      console.log('[ZoomService] Meeting created successfully:', meeting.id);
       return meeting;
     } catch (error: any) {
       console.error('[ZoomService] Error creating meeting:', error.response?.data || error.message);
@@ -253,7 +249,6 @@ export class ZoomService {
         }
       );
 
-      console.log('[ZoomService] Meeting deleted successfully:', meetingId);
       return true;
     } catch (error: any) {
       console.error('[ZoomService] Error deleting meeting:', error.response?.data || error.message);

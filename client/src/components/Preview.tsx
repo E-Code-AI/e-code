@@ -326,7 +326,6 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     wsRef.current = ws;
     
     ws.onopen = () => {
-      console.log('Preview WebSocket connected');
       setWsConnected(true);
       // Subscribe to this project's preview updates
       ws.send(JSON.stringify({ type: 'subscribe', projectId }));
@@ -337,8 +336,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
       
       switch (data.type) {
         case 'preview:start':
-          setPreviewStatus('starting');
-          setPreviewLogs(prev => [...prev, `Starting preview server on port ${data.port}...`]);
+          setPreviewStatus({ status: 'starting' });
           break;
           
         case 'preview:ready':
@@ -375,7 +373,6 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           
         case 'preview:log':
           // Handle logs from specific services
-          console.log(`[${data.service}:${data.port}] ${data.log}`);
           break;
           
         case 'preview:port-switch':
@@ -392,7 +389,6 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           break;
           
         case 'preview:rebuild':
-          setPreviewLogs(prev => [...prev, data.message]);
           break;
           
         case 'preview:status':
@@ -424,7 +420,6 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     };
     
     ws.onclose = () => {
-      console.log('Preview WebSocket disconnected');
       setWsConnected(false);
     };
     
@@ -505,7 +500,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
   // Clean up preview on unmount
   useEffect(() => {
     return () => {
-      if (previewStatus === 'running') {
+      if (previewStatus.status === 'running') {
         stopPreview();
       }
     };
@@ -557,9 +552,9 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           
           {/* WebSocket connection status */}
           {wsConnected ? (
-            <Wifi className="h-3 w-3 text-green-600" title="Real-time updates connected" />
+            <Wifi className="h-3 w-3 text-green-600" />
           ) : (
-            <WifiOff className="h-3 w-3 text-gray-400" title="Real-time updates disconnected" />
+            <WifiOff className="h-3 w-3 text-gray-400" />
           )}
         </div>
         

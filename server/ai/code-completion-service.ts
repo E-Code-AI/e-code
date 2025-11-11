@@ -254,12 +254,6 @@ Only provide completions that are highly relevant and would actually help the de
     context: CompletionRequest
   ): Promise<void> {
     // This could be used to improve future completions
-    // For now, just log it
-    console.log('[CodeCompletionService] Completion feedback:', {
-      completion,
-      accepted,
-      language: context.language,
-      fileName: context.fileName
-    });
+    // Feedback data could be stored in database for analysis
   }
 }

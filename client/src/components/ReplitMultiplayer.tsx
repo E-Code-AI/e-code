@@ -52,7 +52,6 @@ export function ReplitMultiplayer({ projectId }: ReplitMultiplayerProps) {
       
       ws.onopen = () => {
         setIsConnected(true);
-        console.log('Multiplayer connection established');
       };
 
       ws.onmessage = (event) => {
@@ -62,7 +61,6 @@ export function ReplitMultiplayer({ projectId }: ReplitMultiplayerProps) {
 
       ws.onclose = () => {
         setIsConnected(false);
-        console.log('Multiplayer connection closed');
         // Reconnect after 3 seconds
         setTimeout(connectWebSocket, 3000);
       };

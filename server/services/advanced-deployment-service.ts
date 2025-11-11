@@ -209,7 +209,6 @@ export class AdvancedDeploymentService {
 
   private scheduleCronJob(jobId: number, schedule: string, command: string): void {
     // In production, use a proper job scheduler like node-cron
-    console.log(`Scheduled cron job ${jobId} with schedule ${schedule}`);
   }
 
   async createEnvironmentDeployment(data: {

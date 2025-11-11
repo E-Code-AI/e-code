@@ -447,7 +447,7 @@ export class MobileCompiler {
 
   private async saveBuildResult(result: MobileBuildResult): Promise<void> {
     // Save build result to storage
-    console.log('Saving build result:', result);
+    // Implementation pending database schema update
   }
 
   async getBuildStatus(buildId: string): Promise<MobileBuildResult | null> {

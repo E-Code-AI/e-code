@@ -58,13 +58,13 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
         wsRef.current = ws;
 
         ws.onopen = () => {
-          console.log('[SecurityPanel] WebSocket connected');
+
         };
 
         ws.onmessage = (event) => {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
-            console.log('[SecurityPanel] WebSocket message received:', message);
+
 
             switch (message.type) {
               case 'initial':
@@ -118,12 +118,12 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
         };
 
         ws.onclose = () => {
-          console.log('[SecurityPanel] WebSocket disconnected');
+
           wsRef.current = null;
 
           // Attempt to reconnect after 3 seconds
           reconnectTimeoutRef.current = setTimeout(() => {
-            console.log('[SecurityPanel] Attempting to reconnect WebSocket...');
+
             connectWebSocket();
           }, 3000);
         };

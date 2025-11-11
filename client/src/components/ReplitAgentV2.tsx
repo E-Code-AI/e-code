@@ -135,7 +135,6 @@ export const ReplitAgentV2: React.FC<ReplitAgentV2Props> = ({
       const websocket = new WebSocket(wsUrl);
       
       websocket.onopen = () => {
-        console.log('Connected to agent WebSocket');
         // Send connection info
         websocket.send(JSON.stringify({
           type: 'connect',
@@ -165,7 +164,6 @@ export const ReplitAgentV2: React.FC<ReplitAgentV2Props> = ({
       };
       
       websocket.onclose = () => {
-        console.log('WebSocket closed');
         setWs(null);
       };
       

@@ -36,7 +36,6 @@ export class FCMService {
       }
 
       this.initialized = true;
-      console.log('[FCMService] Firebase Cloud Messaging initialized successfully');
     } catch (error) {
       console.error('[FCMService] Failed to initialize Firebase Admin SDK:', error);
       console.warn('[FCMService] Push notifications will not work. Set FIREBASE_SERVICE_ACCOUNT_JSON environment variable.');
@@ -79,7 +78,6 @@ export class FCMService {
       };
 
       const response = await admin.messaging().send(message);
-      console.log('[FCMService] Successfully sent notification:', response);
       return true;
     } catch (error) {
       console.error('[FCMService] Error sending notification:', error);
@@ -122,7 +120,6 @@ export class FCMService {
       };
 
       const response = await admin.messaging().sendEachForMulticast(message);
-      console.log(`[FCMService] Sent to ${response.successCount}/${deviceTokens.length} devices`);
       
       return {
         successCount: response.successCount,
@@ -155,7 +152,6 @@ export class FCMService {
       };
 
       const response = await admin.messaging().send(message);
-      console.log('[FCMService] Successfully sent topic notification:', response);
       return true;
     } catch (error) {
       console.error('[FCMService] Error sending topic notification:', error);
@@ -171,7 +167,6 @@ export class FCMService {
 
     try {
       await admin.messaging().subscribeToTopic(tokens, topic);
-      console.log(`[FCMService] Successfully subscribed ${tokens.length} tokens to topic: ${topic}`);
     } catch (error) {
       console.error('[FCMService] Error subscribing to topic:', error);
     }
@@ -185,7 +180,6 @@ export class FCMService {
 
     try {
       await admin.messaging().unsubscribeFromTopic(tokens, topic);
-      console.log(`[FCMService] Successfully unsubscribed ${tokens.length} tokens from topic: ${topic}`);
     } catch (error) {
       console.error('[FCMService] Error unsubscribing from topic:', error);
     }

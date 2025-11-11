@@ -162,7 +162,7 @@ export function SplitsEditorLayout({
       }
     },
     onNavigate: (path) => {
-      console.log('Navigate to:', path);
+      // Navigation handler
     },
   });
 
@@ -311,7 +311,7 @@ export function SplitsEditorLayout({
                     {/* Breadcrumbs Navigation */}
                     <ReplitBreadcrumbs
                       filePath={files?.find(f => f.id === activeFileId)?.path || ''}
-                      onNavigate={(path) => console.log('Navigate to:', path)}
+                      onNavigate={(path) => {}}
                     />
                     
                     {/* Multi-Tab Editor - One Monaco instance per open tab */}
@@ -321,7 +321,6 @@ export function SplitsEditorLayout({
                         activeFileId={activeFileId}
                         onFileSelect={onFileSelect}
                         onChange={(fileId, content) => {
-                          console.log('File changed:', fileId, content);
                           // TODO: Implement file update API call
                         }}
                       />
@@ -382,7 +381,6 @@ export function SplitsEditorLayout({
                         <ReplitProblemsPanel 
                           projectId={projectId}
                           onFileNavigate={(file, line, column) => {
-                            console.log('Navigate to:', file, line, column);
                             // TODO: Implement file navigation
                           }}
                         />
@@ -414,7 +412,7 @@ export function SplitsEditorLayout({
                 {/* Breadcrumbs when bottom panel is closed */}
                 <ReplitBreadcrumbs
                   filePath={files?.find(f => f.id === activeFileId)?.path || ''}
-                  onNavigate={(path) => console.log('Navigate to:', path)}
+                  onNavigate={(path) => {}}
                 />
                 
                 {/* Multi-Tab Editor - One Monaco instance per open tab */}
@@ -424,7 +422,6 @@ export function SplitsEditorLayout({
                     activeFileId={activeFileId}
                     onFileSelect={onFileSelect}
                     onChange={(fileId, content) => {
-                      console.log('File changed:', fileId, content);
                       // TODO: Implement file update API call
                     }}
                   />

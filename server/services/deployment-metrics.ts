@@ -688,8 +688,6 @@ export class DeploymentMetricsService extends EventEmitter {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       
-      console.log('[deployment-metrics] Performing metrics aggregation...');
-      
       // This would aggregate metrics into summary tables in a production system
       // For now, we just clean up old data
       

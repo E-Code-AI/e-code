@@ -94,7 +94,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log('[TestRuns] WebSocket connected');
+
     };
 
     ws.onmessage = (event) => {
@@ -103,7 +103,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
         
         if (message.type === 'initial') {
           // Initial test runs received
-          console.log('[TestRuns] Received initial test runs:', message.testRuns);
+
         } else if (message.type === 'update' || message.type === 'complete') {
           // Test run updated - refetch to get latest data
           refetch();
@@ -124,7 +124,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
     };
 
     ws.onclose = () => {
-      console.log('[TestRuns] WebSocket disconnected');
+
     };
 
     return () => {

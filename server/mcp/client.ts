@@ -125,7 +125,6 @@ export class MCPClient {
       await this.transport.start();
       await this.client.connect(this.transport as any);
       this.isConnected = true;
-      console.log("Connected to MCP server");
     } catch (error) {
       console.error("Failed to connect to MCP server:", error);
       throw error;

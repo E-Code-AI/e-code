@@ -146,7 +146,6 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
     const websocket = new WebSocket(wsUrl);
     
     websocket.onopen = () => {
-      console.log('Connected to agent WebSocket');
       websocket.send(JSON.stringify({
         type: 'connect',
         projectId,
@@ -188,7 +187,7 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
     };
     
     websocket.onclose = () => {
-      console.log('WebSocket closed');
+      // WebSocket connection closed
     };
     
     setWs(websocket);

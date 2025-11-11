@@ -3,7 +3,7 @@ import { usageTracking, users, projects } from '@shared/schema';
 import { eq, and, gte, lte, sql, desc } from 'drizzle-orm';
 
 const logger = {
-  info: (message: string, ...args: any[]) => console.log(`[real-usage-tracking] INFO: ${message}`, ...args),
+  info: (message: string, ...args: any[]) => {},
   error: (message: string, ...args: any[]) => console.error(`[real-usage-tracking] ERROR: ${message}`, ...args),
   warn: (message: string, ...args: any[]) => console.warn(`[real-usage-tracking] WARN: ${message}`, ...args),
 };

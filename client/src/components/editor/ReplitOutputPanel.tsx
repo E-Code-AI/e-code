@@ -74,7 +74,6 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
     const ws = new WebSocket(`${protocol}//${window.location.host}/api/build-logs/ws?projectId=${projectId}`);
 
     ws.onopen = () => {
-      console.log('[Output] Connected to build logs stream');
     };
 
     ws.onmessage = (event) => {
@@ -111,7 +110,6 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
     };
 
     ws.onclose = () => {
-      console.log('[Output] Disconnected from build logs stream');
     };
 
     return () => {

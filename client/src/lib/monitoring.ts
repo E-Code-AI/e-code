@@ -65,7 +65,6 @@ class MonitoringService {
     this.setupVisibilityMonitoring();
     
     this.isInitialized = true;
-    console.log('[MONITORING] Initializing production monitoring service...');
   }
 
   private setupErrorHandlers() {

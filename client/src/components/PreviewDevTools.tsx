@@ -114,7 +114,7 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log('Connected to preview dev tools');
+      // Connected to preview dev tools
     };
 
     ws.onmessage = (event) => {

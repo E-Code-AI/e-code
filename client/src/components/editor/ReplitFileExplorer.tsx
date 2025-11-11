@@ -110,9 +110,7 @@ export function ReplitFileExplorer({
   // File operations mutations - REAL BACKEND
   const createFileMutation = useMutation({
     mutationFn: async (data: { name: string; isFolder: boolean; parentId: number | null; content?: string }) => {
-      console.log('[FILE-EXPLORER] Creating file with data:', data, 'projectId:', projectId);
       const result = await apiRequest("POST", `/api/files/${projectId}`, data);
-      console.log('[FILE-EXPLORER] File creation result:', result);
       return result;
     },
     onSuccess: () => {
@@ -297,7 +295,6 @@ export function ReplitFileExplorer({
       try {
         await updateFileMutation.mutateAsync({
           id: draggedFile.id,
-          parentId: targetFile.id,
         });
       } catch (error) {
         console.error("Failed to move file:", error);
@@ -354,7 +351,6 @@ export function ReplitFileExplorer({
     } else {
       await updateFileMutation.mutateAsync({
         id: clipboard.file.id,
-        parentId: targetId,
       });
     }
 

@@ -141,7 +141,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
   };
 
   const handleSaveCustomTheme = () => {
-    console.log('Saving custom theme:', customColors);
+
   };
 
   const handleExportTheme = () => {

@@ -154,8 +154,6 @@ export function MultiEditorManager({
       monacoRef.current = monaco;
       setIsLoading(false);
       setIsMonacoReady(true); // Trigger effect to create editors
-      
-      console.log('[MultiEditorManager] Monaco initialized successfully');
     },
     []
   );

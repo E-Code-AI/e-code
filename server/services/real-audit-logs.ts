@@ -4,7 +4,7 @@ import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
 import { EventEmitter } from 'events';
 
 const logger = {
-  info: (message: string, ...args: any[]) => console.log(`[real-audit-logs] INFO: ${message}`, ...args),
+  info: (message: string, ...args: any[]) => {},
   error: (message: string, ...args: any[]) => console.error(`[real-audit-logs] ERROR: ${message}`, ...args),
   warn: (message: string, ...args: any[]) => console.warn(`[real-audit-logs] WARN: ${message}`, ...args),
 };

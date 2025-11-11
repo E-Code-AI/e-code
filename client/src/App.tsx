@@ -250,7 +250,6 @@ function AtSymbolRedirectHandler({ children }: { children: React.ReactNode }) {
       const search = window.location.search;
       const hash = window.location.hash;
 
-      console.log('Redirecting from', location, 'to', newPath);
       navigate(`${newPath}${search}${hash}`, { replace: true });
     }
   }, [location, navigate]);
@@ -312,7 +311,6 @@ function AppContent() {
     // This prevents indefinite loading states
     const timer = setTimeout(() => {
       if (authLoading) {
-        console.log('Auth loading timeout reached, showing content');
         setShowContent(true);
       }
     }, 2000);

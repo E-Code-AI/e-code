@@ -70,7 +70,7 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
 
   const handleSearch = () => {
     // Simulate search
-    console.log('Searching for:', searchQuery);
+
   };
 
   const getResultIcon = (type: string) => {
