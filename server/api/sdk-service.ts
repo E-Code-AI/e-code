@@ -55,7 +55,7 @@ export class SDKService {
         permissions: keyRecord.permissions || []
       };
     } catch (error) {
-      console.error('Error validating API key:', error);
+      console.error('[SDKService] Error validating API key:', error);
       return { isValid: false };
     }
   }

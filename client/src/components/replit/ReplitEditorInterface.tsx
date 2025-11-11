@@ -247,7 +247,7 @@ body {
         onRun={handleRun}
         onStop={() => setIsRunning(false)}
         onSave={handleSave}
-        onShare={() => console.log('Share project')}
+        onShare={() => {}}
       />
 
       {/* Tab Bar */}
@@ -262,7 +262,7 @@ body {
       {/* Breadcrumb */}
       <ReplitBreadcrumb
         items={breadcrumbItems}
-        onItemClick={(item) => console.log('Navigate to:', item.path)}
+        onItemClick={(item) => {}}
       />
 
       {/* Main Editor Area */}
@@ -273,8 +273,8 @@ body {
             <>
               <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
                 <ReplitSearchBox
-                  onSearch={(query, options) => console.log('Search:', query, options)}
-                  onResultClick={(result) => console.log('Navigate to result:', result)}
+                  onSearch={(query, options) => {}}
+                  onResultClick={(result) => {}}
                   results={[
                     {
                       id: '1',
@@ -308,7 +308,7 @@ body {
               <div className="flex-1 relative">
                 <ReplitContextMenu
                   type="editor"
-                  onAction={(actionId) => console.log('Editor action:', actionId)}
+                  onAction={(actionId) => {}}
                 >
                   <div className="h-full bg-[var(--ecode-background)] p-4 font-mono text-sm overflow-auto">
                     <pre className="whitespace-pre-wrap text-[var(--ecode-text)]">
@@ -324,7 +324,7 @@ body {
                   content={currentContent}
                   currentLine={1}
                   visibleRange={{ start: 1, end: 20 }}
-                  onLineClick={(line) => console.log('Navigate to line:', line)}
+                  onLineClick={(line) => {}}
                 />
               )}
             </div>

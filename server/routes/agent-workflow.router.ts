@@ -121,7 +121,6 @@ router.post('/build/extended', requireAuth, async (req, res) => {
     const { projectId, taskList } = extendedBuildSchema.parse(req.body);
 
     // TODO: Trigger extended autonomous build
-    console.log(`Starting extended build for project ${projectId} with ${taskList.length} tasks`);
 
     res.json({
       success: true,

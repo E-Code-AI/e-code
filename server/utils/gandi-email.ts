@@ -17,7 +17,6 @@ let transporter: Transporter | null = null;
 // Initialize Gandi transporter
 function getTransporter(): Transporter | null {
   if (!GANDI_SMTP_USER || !GANDI_SMTP_PASS) {
-    console.log('⚠️  Gandi email not configured - missing GANDI_SMTP_USER or GANDI_SMTP_PASS');
     return null;
   }
 
@@ -123,14 +122,6 @@ export async function sendGandiEmail(options: {
   const transport = getTransporter();
 
   if (!transport) {
-    console.log('📧 Email (Gandi not configured):');
-    console.log(`To: ${options.to}`);
-    console.log(`Subject: ${options.subject}`);
-    if (options.headers) {
-      console.log('Headers:', options.headers);
-    }
-    console.log('---');
-    console.log(options.html);
     return { success: true }; // Return true to not break the flow
   }
 
@@ -144,7 +135,6 @@ export async function sendGandiEmail(options: {
       headers: options.headers,
     });
 
-    console.log(`✅ Email sent via Gandi: ${info.messageId}`);
     return { success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown email delivery error';
@@ -265,13 +255,11 @@ export async function testGandiConnection(): Promise<boolean> {
   const transport = getTransporter();
 
   if (!transport) {
-    console.log('❌ Gandi email not configured');
     return false;
   }
 
   try {
     await transport.verify();
-    console.log('✅ Gandi SMTP connection verified');
     return true;
   } catch (error) {
     console.error('❌ Gandi SMTP connection failed:', error);
@@ -344,7 +332,6 @@ export async function sendAdminAlertEmail(options: {
   const text = textLines.join('\n');
 
   if (recipients.length === 0) {
-    console.log('ℹ️ Admin alert (no recipients configured):', options.subject, options.metadata || options.description);
     return false;
   }
 

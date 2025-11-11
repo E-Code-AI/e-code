@@ -61,8 +61,6 @@ export class MainRouter {
    * Register all routers with the Express application
    */
   registerRoutes(app: Application): void {
-    console.log('[MainRouter] Registering modular routes...');
-    
     // Health check routes (no auth required)
     app.use(this.healthRouter.getRouter());
     
@@ -167,38 +165,6 @@ export class MainRouter {
     
     // Debug routes
     app.use('/api/debug', debugRouter);
-    
-    // Log registered routes
-    console.log('[MainRouter] Routes registered successfully');
-    console.log('[MainRouter] Available route groups:');
-    console.log('  - Health: /api/health, /api/cors-health');
-    console.log('  - Auth: /api/register, /api/login, /api/logout, /api/me');
-    console.log('  - Users: /api/users/:id, /api/users/:username');
-    console.log('  - Projects: /api/projects, /api/u/:username/:slug');
-    console.log('  - Files: /api/projects/:id/files');
-    console.log('  - Collaboration: /api/collaboration/*');
-    console.log('  - Deployment: /api/projects/:id/deploy, /api/deployments/*');
-    console.log('  - File Upload: /api/upload/*');
-    console.log('  - Notifications: /api/notifications/*');
-    console.log('  - Preview: /api/preview/*');
-    console.log('  - Shell: /api/shell/*');
-    console.log('  - Containers: /api/containers/*');
-    console.log('  - Scalability: /api/scalability/*');
-    console.log('  - Marketplace: /api/marketplace/*');
-    console.log('  - Admin: /api/admin/*');
-    console.log('  - ChatGPT Admin: /api/admin/chatgpt/* (admin only)');
-    console.log('  - Agent Admin: /api/admin/agent/* (admin only)');
-    console.log('  - AI: /api/ai/completion, /api/ai/explanation, /api/ai/convert, /api/ai/documentation, /api/ai/tests');
-    console.log('  - AI Streaming: /api/agent/chat/stream (SSE), /api/agent/chat/stop, /api/agent/models');
-    console.log('  - Voice/Video: /api/voice-video/sessions (WebRTC)');
-    console.log('  - Data Provisioning: /api/data-provisioning/seed, /api/data-provisioning/generate, /api/data-provisioning/import');
-    console.log('  - Terminal: /api/terminal/logs (HTTP), ws://…/api/terminal/ws (WebSocket)');
-    console.log('  - Runtime: /api/projects/:id/runtime/* (canonical), /api/runtime/* (compatibility)');
-    console.log('  - Packages: /api/packages/:projectId/install, /api/packages/:projectId/uninstall, /api/packages/installed');
-    console.log('  - Workspace: /api/workspace/projects/:id/diagnostics, /api/workspace/projects/:id/build-logs, /api/workspace/projects/:id/test-runs');
-    console.log('  - Mobile: /mobile/auth/login, /mobile/auth/refresh, /mobile/projects, /mobile/ai/chat');
-    console.log('  - Git: /api/git/status, /api/git/diff/:filePath, /api/git/stage, /api/git/unstage, /api/git/commit, /api/git/push, /api/git/pull');
-    console.log('  - Debug: /api/debug/session/:projectId, /api/debug/start/:projectId, /api/debug/pause/:projectId, /api/debug/breakpoint/toggle/:projectId');
   }
   
   /**

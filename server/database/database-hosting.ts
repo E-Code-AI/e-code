@@ -120,7 +120,6 @@ export class DatabaseHostingService {
 
   private async initializeService() {
     // Initialize database hosting service without sample data
-    console.log('Database hosting service initialized - ready for real database instances');
   }
 
   private startMetricsCollection() {

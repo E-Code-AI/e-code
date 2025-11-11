@@ -76,7 +76,6 @@ export class MobileContainerService {
       port: 3000 + projectId
     });
     
-    console.log(`[Mobile Container] Created container ${containerId} for project ${projectId}`);
     return containerId;
   }
 
@@ -84,7 +83,6 @@ export class MobileContainerService {
     const container = this.containers.get(projectId);
     if (container) {
       container.status = 'stopped';
-      console.log(`[Mobile Container] Stopped container ${container.id}`);
     }
   }
 

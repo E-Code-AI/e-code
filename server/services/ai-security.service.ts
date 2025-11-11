@@ -111,15 +111,13 @@ export class AISecurityService {
    */
   validateAction(action: unknown): { valid: boolean; action?: ValidatedAction; reason?: string } {
     try {
-      console.log('[AI-Security] Validating action:', JSON.stringify(action, null, 2));
       const validated = ActionSchema.parse(action);
-      console.log('[AI-Security] ✅ Validation successful');
       return {
         valid: true,
         action: validated
       };
     } catch (error: any) {
-      console.error('[AI-Security] ❌ Validation failed:', JSON.stringify(error.errors || error.message, null, 2));
+      console.error('[AI-Security] Validation failed');
       return {
         valid: false,
         reason: error.errors?.[0]?.message || 'Invalid action format'
@@ -197,24 +195,17 @@ export class AISecurityService {
       }
     }
     
-    console.log(`[AI-Security] Found ${jsonMatches.length} JSON matches in response`);
-    
     for (let i = 0; i < jsonMatches.length; i++) {
       const jsonStr = jsonMatches[i];
-      console.log(`[AI-Security] Processing match ${i + 1}/${jsonMatches.length}: ${jsonStr.substring(0, 100)}...`);
       
       try {
         const parsed = JSON.parse(jsonStr);
-        console.log(`[AI-Security] Parsed object:`, JSON.stringify(parsed, null, 2));
         
         // Check if it looks like an action
-        console.log(`[AI-Security] Checking type: ${parsed.type}, has action: ${!!parsed.action}`);
         if (parsed.type === 'action' && parsed.action) {
-          console.log('[AI-Security] ✅ Matched action pattern, validating...');
           // Validate the action schema
           const schemaResult = this.validateAction(parsed.action);
           if (!schemaResult.valid) {
-            console.log('[AI-Security] ❌ Schema validation failed:', schemaResult.reason);
             rejected.push({ action: parsed.action, reason: schemaResult.reason || 'Schema validation failed' });
             continue;
           }
@@ -223,7 +214,6 @@ export class AISecurityService {
           if ('path' in schemaResult.action!) {
             const pathResult = this.validatePath(schemaResult.action.path);
             if (!pathResult.valid) {
-              console.log('[AI-Security] ❌ Path validation failed:', pathResult.reason);
               rejected.push({ action: parsed.action, reason: pathResult.reason || 'Path validation failed' });
               continue;
             }
@@ -233,18 +223,12 @@ export class AISecurityService {
           }
           
           // Action passed all validations
-          console.log('[AI-Security] ✅ Action validated successfully, adding to queue');
           actions.push(schemaResult.action!);
-        } else {
-          console.log('[AI-Security] ⏭️  Not an action, skipping');
         }
       } catch (e: any) {
-        console.log('[AI-Security] ❌ JSON parse error:', e.message);
         // Invalid JSON, skip
       }
     }
-    
-    console.log(`[AI-Security] Extraction complete: ${actions.length} valid, ${rejected.length} rejected`);
     return { actions, rejected };
   }
 
@@ -288,31 +272,8 @@ export class AISecurityService {
         securityValidation,
       });
       
-      // Also log to console for real-time monitoring
-      console.log('[AI_AUDIT]', JSON.stringify({
-        timestamp: new Date().toISOString(),
-        userId,
-        projectId,
-        approvalId,
-        actionType: action.type,
-        actionPath: 'path' in action ? action.path : null,
-        result: result.success ? 'success' : 'failure',
-        error: result.error || null,
-        fileId: result.fileId || null,
-        storage: 'DATABASE_PERSISTED',
-      }));
-      
     } catch (error) {
       console.error('[AISecurityService] CRITICAL: Failed to log action to database:', error);
-      // Still log to console as fallback
-      console.log('[AI_AUDIT_FALLBACK]', JSON.stringify({
-        timestamp: new Date().toISOString(),
-        userId,
-        projectId,
-        action,
-        result,
-        error: 'Database logging failed',
-      }));
     }
   }
 

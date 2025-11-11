@@ -146,7 +146,7 @@ const mobileEnsureAuthenticated = async (req: Request, res: Response, next: Next
 
     return next();
   } catch (error) {
-    console.error('Mobile auth validation failed:', error);
+    console.error('[Mobile] Auth validation failed:', error);
     return res.status(401).json({ error: 'Authentication required' });
   }
 };
@@ -209,7 +209,7 @@ router.post('/mobile/auth/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Mobile login error:', error);
+    console.error('[Mobile] Login error:', error);
     res.status(500).json({ message: 'Login failed' });
   }
 });
@@ -254,7 +254,7 @@ router.post('/mobile/auth/refresh', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Token refresh error:', error);
+    console.error('[Mobile] Token refresh error:', error);
     res.status(500).json({ 
       message: 'Token refresh failed',
       error: 'REFRESH_FAILED'
@@ -288,7 +288,7 @@ router.get('/mobile/projects', mobileEnsureAuthenticated, async (req, res) => {
       }
     })));
   } catch (error) {
-    console.error('Failed to fetch mobile projects:', error);
+    console.error('[Mobile] Failed to fetch projects:', error);
     res.status(500).json({ message: 'Failed to fetch projects' });
   }
 });

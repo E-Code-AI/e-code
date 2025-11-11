@@ -285,7 +285,6 @@ export class DeploymentManager {
           lastDeployedAt: new Date()
         });
         
-        console.log(`✅ Deployment ${deploymentId} (DB ID: ${dbDeployment.id}) successfully marked as active in database`);
         dbUpdateSuccess = true;
         
       } catch (dbError) {
@@ -293,7 +292,6 @@ export class DeploymentManager {
         
         // Retry once with delay
         try {
-          console.log(`🔄 Retrying database update for deployment ${deploymentId}...`);
           await new Promise(resolve => setTimeout(resolve, 2000));
           
           const dbDeployment = await storage.getDeploymentByExternalId(deploymentId);
@@ -307,7 +305,6 @@ export class DeploymentManager {
             lastDeployedAt: new Date()
           });
           
-          console.log(`✅ Deployment ${deploymentId} (DB ID: ${dbDeployment.id}) retry successful`);
           dbUpdateSuccess = true;
           
         } catch (retryError) {

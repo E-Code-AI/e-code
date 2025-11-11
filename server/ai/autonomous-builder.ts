@@ -1680,12 +1680,10 @@ export default defineConfig({
     const template = this.detectAppType(description);
     
     if (template) {
-      console.log(`Detected app type: ${template.name}`);
       return template.actions;
     }
 
     // If no template matches, generate basic web app structure
-    console.log('No specific template matched, generating basic web app');
     return this.generateBasicWebApp(description);
   }
 

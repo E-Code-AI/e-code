@@ -1017,11 +1017,9 @@ What would you like me to build for you today?`,
   };
 
   const executeAction = async (action: AgentAction) => {
-    console.log('[executeAction] Called with action:', action);
     try {
       // If action has actionId, use approval endpoint (from AI Agent)
       if (action.actionId) {
-        console.log('[executeAction] Using approval endpoint for actionId:', action.actionId);
         
         const response = await apiRequest('POST', `/api/projects/${projectId}/ai/approve/${action.actionId}`, {});
         
@@ -1049,7 +1047,6 @@ What would you like me to build for you today?`,
         }
         
         const result = await response.json();
-        console.log('[executeAction] Approval result:', result);
         return; // Exit after approval endpoint handles everything
       }
       
@@ -1057,7 +1054,6 @@ What would you like me to build for you today?`,
       switch (action.type) {
         case 'create_file':
           if (action.path && action.content !== undefined) {
-            console.log('[executeAction] Creating file (direct):', action.path);
             const requestBody = {
               name: action.path.split('/').pop(),
               path: action.path,
@@ -1486,7 +1482,6 @@ What would you like me to build for you today?`,
                 ));
               } else if (data.type === 'action_pending_approval') {
                 // AI wants to execute an action - add to message with clickable button
-                console.log('[AI Chat] Action pending approval:', data.actionId, data.action);
                 const actionWithId = { ...data.action, actionId: data.actionId };
                 setMessages(prev => prev.map(m => 
                   m.id === assistantMessageId 
@@ -1736,7 +1731,6 @@ What would you like me to build?`,
                       variant="default"
                       className="flex-1 bg-green-600 hover:bg-green-700 text-xs"
                       onClick={async () => {
-                        console.log('[Approve Button] Approving action:', action);
                         try {
                           await executeAction(action);
                           toast({
@@ -1798,8 +1792,6 @@ What would you like me to build?`,
                       title: "Thank you for your feedback!",
                       description: "We'll use this to improve our AI agent.",
                     });
-                    // Log feedback for future improvements
-                    console.log('User feedback:', feedback, 'for message:', message.id);
                   }
                 }}
               >
@@ -2053,7 +2045,7 @@ What would you like me to build?`,
               <PlanVisualizer
                 plan={currentPlan}
                 onTaskClick={(taskId) => {
-                  console.log('Task clicked:', taskId);
+                  // Task clicked
                 }}
                 onApprove={() => {
                   toast({

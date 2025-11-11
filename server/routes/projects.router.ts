@@ -86,7 +86,6 @@ export class ProjectsRouter {
     }
     
     if (!project) {
-      console.log('[Projects] Project not found (UUID or slug):', projectId);
       return res.status(404).json({
         message: "Project not found",
         code: "PROJECT_NOT_FOUND",
@@ -100,7 +99,6 @@ export class ProjectsRouter {
     
     // Check if user is owner
     if (project.ownerId === userId) {
-      console.log('[Projects] Project access granted - owner');
       return next();
     }
     
@@ -109,17 +107,13 @@ export class ProjectsRouter {
     const isCollaborator = collaborators.some(c => c.userId === userId);
     
     if (isCollaborator) {
-      console.log('[Projects] Project access granted - collaborator');
       return next();
     }
     
     // Check if project is public
     if (project.visibility === 'public') {
-      console.log('[Projects] Project access granted - public');
       return next();
     }
-    
-    console.log('[Projects] Access denied for user:', userId, 'to project:', projectId);
     return res.status(403).json({
       message: "Access denied",
       code: "ACCESS_DENIED",
@@ -304,12 +298,10 @@ export class ProjectsRouter {
       try {
         const { username, slug } = req.params;
         
-        console.log(`[Projects] Project access request: @${username}/${slug}`);
-        
         // Get user by username
         const user = await this.storage.getUserByUsername(username);
         if (!user) {
-          console.error(`[Projects] User not found: ${username}`);
+          console.error('[Projects] User not found');
           return res.status(404).json({ 
             error: 'User not found',
             code: 'USER_NOT_FOUND',
@@ -320,7 +312,7 @@ export class ProjectsRouter {
         // Get project by slug belonging to the user
         const project = await this.storage.getProjectBySlug(slug, user.id);
         if (!project) {
-          console.error(`[Projects] Project not found: ${slug} for user ${username}`);
+          console.error('[Projects] Project not found');
           return res.status(404).json({ 
             error: 'Project not found',
             code: 'PROJECT_NOT_FOUND',
@@ -333,7 +325,6 @@ export class ProjectsRouter {
         // This fixes the "Workspace unavailable" error when Dashboard sends users to /u/:username/:slug
         const wantsWorkspace = req.query.workspace === 'true' || req.query.open === 'true' || req.header('X-Open-Workspace') === 'true';
         if (wantsWorkspace && project?.id) {
-          console.log(`[Projects] Redirecting to editor for project: ${project.id}`);
           return res.json({
             ...project,
             redirectTo: `/editor/${project.id}`,
@@ -348,7 +339,6 @@ export class ProjectsRouter {
         if (project.visibility === 'private') {
           // Private projects require authentication
           if (!req.user) {
-            console.log(`[Projects] Authentication required for private project: ${slug}`);
             return res.status(401).json({ 
               error: 'Authentication required for private project',
               code: 'AUTH_REQUIRED' 
@@ -359,7 +349,6 @@ export class ProjectsRouter {
           if ((req.user as User).id !== project.ownerId) {
             const isCollaborator = await this.storage.isProjectCollaborator(project.id, (req.user as User).id);
             if (!isCollaborator) {
-              console.log(`[Projects] Access denied for user ${(req.user as User).id} to project ${slug}`);
               return res.status(403).json({ 
                 error: 'Access denied',
                 code: 'ACCESS_DENIED' 
@@ -370,8 +359,6 @@ export class ProjectsRouter {
         
         // Get additional project info including owner
         const owner = await this.storage.getUser(project.ownerId);
-        
-        console.log(`[Projects] Successfully loaded project: ${slug}`);
         res.json({
           ...project,
           owner
@@ -397,8 +384,6 @@ export class ProjectsRouter {
             code: 'INVALID_MESSAGE' 
           });
         }
-
-        console.log(`[ProjectAI] Chat request for project ${projectId}: "${message.substring(0, 100)}..."`);
 
         // Set up Server-Sent Events (SSE) for streaming
         res.setHeader('Content-Type', 'text/event-stream');
@@ -479,8 +464,6 @@ export class ProjectsRouter {
           return res.status(401).json({ error: 'Unauthorized', code: 'NO_USER' });
         }
 
-        console.log(`[ProjectAI] Approval request for action ${actionId} in project ${projectId}`);
-
         // Get action from approval queue
         const action = await aiApprovalQueue.approve(actionId, userId);
 
@@ -490,8 +473,6 @@ export class ProjectsRouter {
             code: 'ACTION_NOT_FOUND' 
           });
         }
-
-        console.log(`[ProjectAI] Action approved:`, action);
 
         // Execute the action based on type
         if (action.type === 'create_file') {
@@ -523,8 +504,6 @@ export class ProjectsRouter {
               success: true,
               fileId: String(file.id)
             }, actionId);
-
-            console.log(`[ProjectAI] File created successfully:`, file.id);
 
             return res.json({ 
               success: true,

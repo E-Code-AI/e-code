@@ -114,7 +114,6 @@ export class TestRunsService {
         }
 
         await this.handleConnection(ws, request, projectId, userId, runId);
-        console.log(`[TestRuns] Authenticated client connected: project=${projectId}, user=${userId}`);
       } catch (error) {
         console.error('[TestRuns] Connection error:', error);
         ws.close(1011, 'Internal server error');
@@ -171,8 +170,6 @@ export class TestRunsService {
    * Handle new WebSocket connection for test runs streaming
    */
   async handleConnection(ws: WebSocket, request: IncomingMessage, projectId: string, userId: string, runId?: string): Promise<void> {
-    console.log(`[TestRuns] New connection for project ${projectId}, user ${userId}, runId: ${runId || 'all'}`);
-
     const client: TestRunsClient = {
       ws,
       projectId,
@@ -195,7 +192,6 @@ export class TestRunsService {
 
     ws.on('close', () => {
       this.removeClient(projectId, client);
-      console.log(`[TestRuns] Client disconnected: project=${projectId}, user=${userId}`);
     });
 
     ws.on('error', (error) => {
@@ -365,8 +361,6 @@ export function setupTestRunsWebSocket(httpServer: any, storage: IStorage): Test
   });
   
   testRunsService.initialize(wss);
-  console.log('[TestRuns] Service initialized');
-  console.log('[TestRuns] WebSocket server initialized at /api/test-runs/ws');
   
   return testRunsService;
 }

@@ -159,7 +159,7 @@ export class MobileAppService {
         });
         return { deviceId: device.deviceId, success: true };
       } catch (error) {
-        console.error(`Failed to send notification to device ${device.deviceId}:`, error);
+        console.error(`[MobileAppService] Failed to send notification to device ${device.deviceId}:`, error);
         return { deviceId: device.deviceId, success: false, error };
       }
     });
@@ -187,8 +187,6 @@ export class MobileAppService {
     // In a real implementation, this would integrate with:
     // - Firebase Cloud Messaging (FCM) for Android
     // - Apple Push Notification Service (APNs) for iOS
-    
-    console.log(`Sending push notification to ${device.platform} device ${device.deviceId}:`, payload);
     
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 100));

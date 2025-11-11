@@ -31,7 +31,6 @@ app.use(express.json({ limit: '50mb' }));
 
 // Logging middleware
 app.use((req, res, next) => {
-  console.log(`[MCP-3200] ${req.method} ${req.path}`);
   next();
 });
 
@@ -503,7 +502,6 @@ setInterval(() => {
   const cutoff = Date.now() - 1000 * 60 * 30; // 30 minutes
   for (const [sessionId, session] of sessions) {
     if (session.lastActivity.getTime() < cutoff) {
-      console.log(`[MCP-3200] Cleaning up inactive session ${sessionId}`);
       removeSession(sessionId);
     }
   }
@@ -523,8 +521,6 @@ app.get('/tools', (req, res) => {
 app.post('/tools/:toolName', async (req, res) => {
   const { toolName } = req.params;
   const args = req.body;
-
-  console.log(`[MCP-3200] Executing tool: ${toolName}`, args);
 
   try {
     const result = await executeTool(toolName, args);

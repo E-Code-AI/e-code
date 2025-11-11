@@ -38,16 +38,13 @@ export function setupPassportAuth(app: Application) {
   passport.use(
     new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
       try {
-        console.log(`Authentication attempt for email: ${email}`);
         const user = await storage.getUserByEmail(email);
         if (!user) {
-          console.log(`User not found: ${email}`);
           return done(null, false, { message: "Incorrect email or password" });
         }
         
         // Handle null password
         if (!user.passwordHash) {
-          console.log(`User has no password set: ${email}`);
           return done(null, false, { message: "Password not set" });
         }
         
@@ -55,11 +52,9 @@ export function setupPassportAuth(app: Application) {
         const isValid = await bcrypt.compare(password, user.passwordHash);
         
         if (!isValid) {
-          console.log(`Invalid password for email: ${email}`);
           return done(null, false, { message: "Incorrect email or password" });
         }
         
-        console.log(`Authentication successful for email: ${email}`);
         return done(null, user);
       } catch (error) {
         console.error('Authentication error:', error);
@@ -82,6 +77,4 @@ export function setupPassportAuth(app: Application) {
       done(error, null);
     }
   });
-  
-  console.log('[Passport] Authentication middleware initialized');
 }

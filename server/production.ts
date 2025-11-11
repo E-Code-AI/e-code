@@ -8,8 +8,6 @@ import { configureCors } from "./middleware/cors-config";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-console.log('[PRODUCTION SERVER] Starting production server...');
-
 const app = express();
 
 // Secure CORS configuration - must be before other middleware
@@ -70,7 +68,6 @@ app.get('/api/cors-health', async (_req, res) => {
     
     const mainRouter = new MainRouter(storage);
     mainRouter.registerRoutes(app);
-    console.log('[PRODUCTION SERVER] Modular routes registered successfully');
   } catch (error) {
     console.error('[PRODUCTION SERVER] Failed to register routes:', error);
   }
@@ -85,10 +82,8 @@ app.get('/api/cors-health', async (_req, res) => {
   
   let staticPath = null;
   for (const p of possiblePaths) {
-    console.log(`[PRODUCTION SERVER] Checking for build files at: ${p}`);
     if (existsSync(p)) {
       staticPath = p;
-      console.log(`[PRODUCTION SERVER] Found build files at: ${staticPath}`);
       break;
     }
   }
@@ -108,8 +103,6 @@ app.get('/api/cors-health', async (_req, res) => {
         }
       }
     });
-    
-    console.log(`[PRODUCTION SERVER] Static file serving configured from: ${staticPath}`);
   } else {
     console.error('[PRODUCTION SERVER] No build files found!');
     console.error('[PRODUCTION SERVER] Tried:', possiblePaths);
@@ -144,16 +137,11 @@ app.get('/api/cors-health', async (_req, res) => {
   try {
     const { initializeDatabase } = await import("./db-init");
     await initializeDatabase();
-    console.log('[PRODUCTION SERVER] Database initialized');
   } catch (error) {
     console.warn('[PRODUCTION SERVER] Database initialization failed (non-critical):', error.message);
   }
-
-  console.log('[PRODUCTION SERVER] Application ready!');
 })();
 
 // Start listening
 httpServer.listen(port, "0.0.0.0", () => {
-  console.log(`[PRODUCTION SERVER] Server listening on port ${port}`);
-  console.log(`[PRODUCTION SERVER] Environment: ${process.env.NODE_ENV}`);
 });

@@ -113,14 +113,6 @@ export function setupAuth(app: Express) {
     rolling: true // Reset expiry on activity
   };
   
-  // Debug session configuration
-  console.log("Session configuration:", {
-    secret: sessionSettings.secret ? 'Set (hidden)' : 'Not set',
-    resave: sessionSettings.resave,
-    saveUninitialized: sessionSettings.saveUninitialized,
-    cookieSecure: sessionSettings.cookie?.secure,
-    environment: process.env.NODE_ENV
-  });
 
   // Setup session middleware and passport
   app.set("trust proxy", 1);
@@ -143,30 +135,25 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
-        console.log(`Authentication attempt for user: ${username}`);
         const user = await storage.getUserByUsername(username);
         if (!user) {
-          console.log(`User not found: ${username}`);
           return done(null, false, { message: "Incorrect username" });
         }
         
         // Handle null password
         if (!user.passwordHash) {
-          console.log(`No password set for user: ${username}`);
           return done(null, false, { message: "No password set for this user" });
         }
         
         const isValidPassword = await comparePasswords(password, user.passwordHash);
         if (!isValidPassword) {
-          console.log(`Invalid password for user: ${username}`);
           return done(null, false, { message: "Incorrect password" });
         }
         
-        console.log(`Authentication successful for user: ${username}`);
         // Return the user directly - Express.User now extends our schema User type
         return done(null, user);
       } catch (err) {
-        console.error(`Authentication error for user ${username}:`, err);
+        console.error("Authentication error:", err);
         return done(err);
       }
     })
@@ -174,20 +161,16 @@ export function setupAuth(app: Express) {
 
   // Serialize user to the session
   passport.serializeUser((user: Express.User, done) => {
-    console.log('[Passport] Serializing user to session:', user.id, 'type:', typeof user.id);
     done(null, user.id);
   });
 
   // Deserialize user from the session
   passport.deserializeUser(async (id: string, done) => {
     try {
-      console.log('[Passport] Deserializing user from session:', id, 'type:', typeof id);
       const user = await storage.getUser(id);
       if (!user) {
-        console.log('[Passport] User not found during deserialization:', id);
         return done(null, false);
       }
-      console.log('[Passport] User found during deserialization:', user.username);
       // Return the user directly - Express.User now extends our schema User type
       return done(null, user);
     } catch (err) {
@@ -241,11 +224,6 @@ export function setupAuth(app: Express) {
         email,
         displayName: displayName || username,
       });
-
-      console.log("User registered successfully:", user.username);
-      
-      // Send verification email (simplified for now)
-      console.log(`Email verification token for ${user.username}: ${token}`);
       
       // Don't auto-login - require email verification first
       res.status(201).json({ 
@@ -289,7 +267,6 @@ export function setupAuth(app: Express) {
 
     try {
       const user = await storage.getUserByUsername(username);
-      console.log('[Auth Debug] User object:', JSON.stringify(user, null, 2));
 
       passport.authenticate("local", async (err: any, authenticatedUser: Express.User | false, info: { message: string }) => {
           if (err) return next(err);
@@ -297,9 +274,6 @@ export function setupAuth(app: Express) {
           if (!authenticatedUser) {
             // Log failed attempt
             if (user) {
-              console.log('[Auth Debug] Before logLoginAttempt - userId:', user.id, 'type:', typeof user.id);
-              console.log('[Auth Debug] ipAddress:', ipAddress, 'type:', typeof ipAddress);
-              console.log('[Auth Debug] userAgent:', userAgent, 'type:', typeof userAgent);
               // Login attempt logging simplified
               
               // Skip failed login attempt tracking for now since the fields don't exist
@@ -325,13 +299,8 @@ export function setupAuth(app: Express) {
               // }
             }
             
-            console.log(`Login failed for ${username}: ${info?.message || "Authentication failed"}`);
             return res.status(401).json({ message: info?.message || "Authentication failed" });
           }
-          
-          // Debug: Check user object structure
-          console.log('[Auth Debug] Authenticated user object:', JSON.stringify(authenticatedUser, null, 2));
-          console.log('[Auth Debug] emailVerified value:', authenticatedUser.emailVerified);
           
           // Check if email is verified (skip for admin user during development)
           // Skip email verification check for now since emailVerified might be null
@@ -360,8 +329,6 @@ export function setupAuth(app: Express) {
                 console.error("Login error:", err);
                 return next(err);
               }
-
-              console.log(`User ${authenticatedUser.username} logged in successfully`);
 
               req.session.userAgent = req.headers['user-agent'] || 'Unknown';
               req.session.ipAddress = req.ip || 'Unknown';
@@ -403,11 +370,6 @@ export function setupAuth(app: Express) {
   app.post("/api/auth/login", loginHandler);
 
   const logoutHandler = (req: Request, res: Response, next: NextFunction) => {
-    console.log('[Logout] Request received');
-    console.log('[Logout] Session ID:', req.sessionID);
-    console.log('[Logout] User authenticated:', req.isAuthenticated());
-    console.log('[Logout] User:', req.user?.username);
-
     // First logout using Passport
     req.logout((err) => {
       if (err) {
@@ -415,16 +377,12 @@ export function setupAuth(app: Express) {
         return next(err);
       }
       
-      console.log('[Logout] Passport logout successful');
-      
       // Then destroy the session completely
       req.session.destroy((sessionErr) => {
         if (sessionErr) {
           console.error('[Logout] Session destroy error:', sessionErr);
           return next(sessionErr);
         }
-        
-        console.log('[Logout] Session destroyed');
         
         // Clear the session cookie
         res.clearCookie('plot.sid', {
@@ -434,7 +392,6 @@ export function setupAuth(app: Express) {
           sameSite: 'lax'
         });
         
-        console.log('[Logout] Cookie cleared, logout complete');
         res.sendStatus(200);
       });
     });
@@ -485,9 +442,6 @@ export function setupAuth(app: Express) {
       
       // Skip password reset token storage as fields don't exist in schema
       // Would need to add passwordResetToken and passwordResetExpiry to users table
-      
-      // Log reset token (simplified for now)
-      console.log(`Password reset token for ${user.username}: ${token}`);
       
       res.json({ message: "If that email exists, a password reset link has been sent." });
     } catch (error) {
@@ -658,7 +612,6 @@ export function setupAuth(app: Express) {
         console.error('Dev login error:', err);
         return res.status(500).json({ message: 'Login failed', error: err.message });
       }
-      console.log('Dev user logged in successfully:', devUser.username);
       res.json({ success: true, message: 'Logged in successfully', user: devUser });
     });
   });
@@ -670,14 +623,6 @@ export function setupAuth(app: Express) {
       // Type-safe session access
       type PassportSession = { passport?: { user?: string } };
       
-      console.log('User auth check:', {
-        isAuthenticated: req.isAuthenticated(),
-        hasSession: !!req.session,
-        hasUser: !!req.user,
-        sessionId: req.sessionID,
-        passportUser: (req.session as PassportSession)?.passport?.user
-      });
-      
       // In development, try to recover session if passport user exists but req.user doesn't
       if (!req.user && process.env.NODE_ENV === 'development') {
         const userId = (req.session as PassportSession)?.passport?.user;
@@ -686,7 +631,6 @@ export function setupAuth(app: Express) {
             const user = await storage.getUser(userId);
             if (user) {
               req.user = user;
-              console.log('Recovered user from session:', user.username);
             }
           } catch (error) {
             console.error('Failed to recover user from session:', error);
@@ -695,13 +639,11 @@ export function setupAuth(app: Express) {
       }
       
       if (!req.isAuthenticated() || !req.user) {
-        console.log("User not authenticated when accessing /api/user");
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       // Return user info - User schema doesn't have password field (it's passwordHash)
       // passwordHash is excluded by not including it in the response
-      console.log(`User ${req.user?.username} retrieved their profile`);
       const { passwordHash, ...userWithoutPassword } = req.user;
       res.json(userWithoutPassword);
     });

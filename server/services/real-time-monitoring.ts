@@ -47,7 +47,7 @@ export interface ProjectMetrics {
 
 export class RealTimeMonitoringService {
   private storage: DatabaseStorage;
-  private metricsInterval: NodeJS.Timer | null = null;
+  private metricsInterval: NodeJS.Timeout | null = null;
   private activeProjects: Map<number, ProjectMetrics> = new Map();
   private previousNetworkStats: any = null;
 
@@ -57,8 +57,6 @@ export class RealTimeMonitoringService {
 
   // Start real-time monitoring
   start(): void {
-    console.log('[monitoring] Starting real-time system monitoring');
-    
     // Collect system metrics every 30 seconds
     this.metricsInterval = setInterval(async () => {
       try {
@@ -82,7 +80,6 @@ export class RealTimeMonitoringService {
       clearInterval(this.metricsInterval);
       this.metricsInterval = null;
     }
-    console.log('[monitoring] Stopped real-time monitoring');
   }
 
   // Collect system-wide metrics
@@ -205,7 +202,6 @@ export class RealTimeMonitoringService {
     // Store in database for historical analysis
     try {
       // This would store system-wide metrics for admin monitoring
-      console.log(`[monitoring] System metrics - CPU: ${metrics.cpu.usage.toFixed(1)}%, Memory: ${metrics.memory.percentage.toFixed(1)}%, Disk: ${metrics.disk.percentage.toFixed(1)}%`);
     } catch (error) {
       console.error('[monitoring] Failed to store system metrics:', error);
     }
@@ -272,7 +268,6 @@ export class RealTimeMonitoringService {
   private async trackActiveUsage(): Promise<void> {
     // This would integrate with the usage tracking service
     // to automatically track resource consumption
-    console.log(`[monitoring] Tracking usage for ${this.activeProjects.size} active projects`);
   }
 
   // Register active project
