@@ -27,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
+  email: z.string().min(1, "Email is required"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -56,7 +56,7 @@ export default function AuthPage() {
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
@@ -100,7 +100,7 @@ export default function AuthPage() {
                     variant="secondary" 
                     size="sm" 
                     onClick={() => {
-                      loginForm.setValue('username', 'admin');
+                      loginForm.setValue('email', 'admin@replit.com');
                       loginForm.setValue('password', 'admin');
                       setActiveTab('login');
                     }}
@@ -110,15 +110,15 @@ export default function AuthPage() {
                 </div>
                 <div className="flex justify-between items-center mt-1">
                   <div>
-                    <span>Username: <code className="bg-slate-700 px-1 rounded">demo</code></span><br/>
-                    <span>Password: <code className="bg-slate-700 px-1 rounded">password</code></span>
+                    <span>Email: <code className="bg-slate-700 px-1 rounded">test@ecode.com</code></span><br/>
+                    <span>Password: <code className="bg-slate-700 px-1 rounded">admin123</code></span>
                   </div>
                   <Button 
                     variant="secondary" 
                     size="sm" 
                     onClick={() => {
-                      loginForm.setValue('username', 'demo');
-                      loginForm.setValue('password', 'password');
+                      loginForm.setValue('email', 'test@ecode.com');
+                      loginForm.setValue('password', 'admin123');
                       setActiveTab('login');
                     }}
                   >
@@ -140,12 +140,12 @@ export default function AuthPage() {
                   <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                     <FormField
                       control={loginForm.control}
-                      name="username"
+                      name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Username</FormLabel>
+                          <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input placeholder="Your username" {...field} />
+                            <Input type="email" placeholder="Your email" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -186,7 +186,7 @@ export default function AuthPage() {
                           variant="outline" 
                           className="flex-1"
                           onClick={() => {
-                            loginForm.setValue('username', 'admin');
+                            loginForm.setValue('email', 'admin@replit.com');
                             loginForm.setValue('password', 'admin');
                             loginForm.handleSubmit(onLoginSubmit)();
                           }}
@@ -198,8 +198,8 @@ export default function AuthPage() {
                           variant="outline" 
                           className="flex-1"
                           onClick={() => {
-                            loginForm.setValue('username', 'demo');
-                            loginForm.setValue('password', 'password');
+                            loginForm.setValue('email', 'test@ecode.com');
+                            loginForm.setValue('password', 'admin123');
                             loginForm.handleSubmit(onLoginSubmit)();
                           }}
                         >
