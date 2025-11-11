@@ -1,0 +1,347 @@
+import { useState } from "react";
+import {
+  Check,
+  X,
+  FileText,
+  Package,
+  Terminal,
+  Code,
+  AlertCircle,
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Eye,
+} from "lucide-react";
+import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
+import { Card, CardContent, CardHeader } from "./ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import { ScrollArea } from "./ui/scroll-area";
+import { toast } from "sonner@2.0.3";
+
+interface AgentAction {
+  type: string;
+  path?: string;
+  content?: string;
+  language?: string;
+  reason?: string;
+  package?: string;
+  dev?: boolean;
+  command?: string;
+  errorMessage?: string;
+  fix?: string;
+  changes?: Array<{
+    action: string;
+    line: number;
+    content: string;
+  }>;
+  status?: "pending" | "completed" | "failed" | "rejected";
+  error?: string;
+  timestamp?: string;
+}
+
+interface AgentActionCardProps {
+  action: AgentAction;
+  onApprove?: (action: AgentAction) => void;
+  onReject?: (action: AgentAction) => void;
+  autoApproved?: boolean;
+}
+
+export function AgentActionCard({
+  action,
+  onApprove,
+  onReject,
+  autoApproved = false,
+}: AgentActionCardProps) {
+  const [expanded, setExpanded] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const getActionIcon = () => {
+    switch (action.type) {
+      case "create_file":
+      case "edit_file":
+        return <FileText className="h-4 w-4" />;
+      case "install_package":
+        return <Package className="h-4 w-4" />;
+      case "run_command":
+        return <Terminal className="h-4 w-4" />;
+      case "analyze_error":
+        return <AlertCircle className="h-4 w-4" />;
+      default:
+        return <Code className="h-4 w-4" />;
+    }
+  };
+
+  const getActionTitle = () => {
+    switch (action.type) {
+      case "create_file":
+        return `Create ${action.path}`;
+      case "edit_file":
+        return `Edit ${action.path}`;
+      case "install_package":
+        return `Install ${action.package}`;
+      case "run_command":
+        return `Run: ${action.command}`;
+      case "analyze_error":
+        return "Error Analysis";
+      default:
+        return action.type;
+    }
+  };
+
+  const getStatusBadge = () => {
+    if (autoApproved || action.status === "completed") {
+      return (
+        <Badge variant="default" className="bg-green-500">
+          <Check className="h-3 w-3 mr-1" />
+          Applied
+        </Badge>
+      );
+    }
+    if (action.status === "rejected") {
+      return (
+        <Badge variant="destructive">
+          <X className="h-3 w-3 mr-1" />
+          Rejected
+        </Badge>
+      );
+    }
+    if (action.status === "failed") {
+      return (
+        <Badge variant="destructive">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          Failed
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-300">
+        Pending Review
+      </Badge>
+    );
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
+  };
+
+  const renderActionContent = () => {
+    if (!expanded) return null;
+
+    switch (action.type) {
+      case "create_file":
+      case "edit_file":
+        return (
+          <div className="mt-3 space-y-2">
+            {action.reason && (
+              <div className="text-sm text-muted-foreground">
+                <strong>Reason:</strong> {action.reason}
+              </div>
+            )}
+            {action.content && (
+              <div className="relative">
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowPreview(true)}
+                  >
+                    <Eye className="h-3 w-3 mr-1" />
+                    Preview
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => copyToClipboard(action.content || "")}
+                  >
+                    <Copy className="h-3 w-3 mr-1" />
+                    Copy
+                  </Button>
+                </div>
+                <pre className="bg-muted p-3 rounded-md overflow-x-auto text-xs max-h-60">
+                  <code>{action.content.substring(0, 500)}{action.content.length > 500 ? "..." : ""}</code>
+                </pre>
+              </div>
+            )}
+            {action.changes && action.changes.length > 0 && (
+              <div className="space-y-1">
+                <strong className="text-sm">Changes:</strong>
+                {action.changes.map((change, idx) => (
+                  <div
+                    key={idx}
+                    className="text-xs bg-muted p-2 rounded flex items-start gap-2"
+                  >
+                    <Badge variant="outline" className="text-xs">
+                      {change.action}
+                    </Badge>
+                    <span className="text-muted-foreground">Line {change.line}:</span>
+                    <code className="flex-1">{change.content}</code>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
+      case "install_package":
+        return (
+          <div className="mt-3 space-y-2">
+            <div className="text-sm">
+              <strong>Package:</strong> {action.package}
+              {action.dev && (
+                <Badge variant="secondary" className="ml-2">
+                  Dev Dependency
+                </Badge>
+              )}
+            </div>
+            {action.reason && (
+              <div className="text-sm text-muted-foreground">
+                <strong>Reason:</strong> {action.reason}
+              </div>
+            )}
+          </div>
+        );
+
+      case "run_command":
+        return (
+          <div className="mt-3 space-y-2">
+            <div className="bg-black text-green-400 p-3 rounded-md font-mono text-sm">
+              $ {action.command}
+            </div>
+            {action.reason && (
+              <div className="text-sm text-muted-foreground">
+                <strong>Reason:</strong> {action.reason}
+              </div>
+            )}
+          </div>
+        );
+
+      case "analyze_error":
+        return (
+          <div className="mt-3 space-y-2">
+            {action.errorMessage && (
+              <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-md">
+                <strong className="text-sm text-red-600 dark:text-red-400">
+                  Error:
+                </strong>
+                <pre className="text-xs mt-1 text-red-700 dark:text-red-300">
+                  {action.errorMessage}
+                </pre>
+              </div>
+            )}
+            {action.fix && (
+              <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-md">
+                <strong className="text-sm text-green-600 dark:text-green-400">
+                  Fix:
+                </strong>
+                <p className="text-xs mt-1 text-green-700 dark:text-green-300">
+                  {action.fix}
+                </p>
+              </div>
+            )}
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <>
+      <Card className="border-l-4 border-l-primary">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setExpanded(!expanded)}
+                className="h-6 w-6 p-0"
+              >
+                {expanded ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </Button>
+              <div className="flex items-center gap-2">
+                {getActionIcon()}
+                <span className="font-medium">{getActionTitle()}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {getStatusBadge()}
+              {!autoApproved && action.status === "pending" && (
+                <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onApprove?.(action)}
+                    className="h-7"
+                  >
+                    <Check className="h-3 w-3 mr-1" />
+                    Apply
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onReject?.(action)}
+                    className="h-7"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        {renderActionContent()}
+        {action.error && (
+          <CardContent className="pt-0">
+            <div className="bg-red-500/10 border border-red-500/20 p-2 rounded text-sm text-red-600 dark:text-red-400">
+              <AlertCircle className="h-3 w-3 inline mr-1" />
+              {action.error}
+            </div>
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Preview Dialog */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>{action.path}</DialogTitle>
+            <DialogDescription>
+              {action.language && (
+                <Badge variant="secondary">{action.language}</Badge>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="h-[60vh]">
+            <pre className="bg-muted p-4 rounded-md text-sm">
+              <code>{action.content}</code>
+            </pre>
+          </ScrollArea>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => copyToClipboard(action.content || "")}
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              Copy Code
+            </Button>
+            <Button onClick={() => setShowPreview(false)}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
