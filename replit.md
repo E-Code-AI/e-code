@@ -12,6 +12,7 @@ The E-Code Platform is an AI-powered development platform designed to streamline
 - **File Management**: NEVER remove existing pages/files without explicit user request. If files are missing, CREATE them instead of removing imports.
 - **Deployment**: Replit Reserved VM with 4-port configuration for optimal performance
 - **React Best Practices**: ALL React hooks MUST be called before any early returns (conditional rendering) to maintain consistent hook order across renders
+- **Routing Consolidation Complete**: All workspace navigation standardized to `/ide/:id`. Legacy `/editor/:id` route redirects with full backward compatibility. EditorPage.tsx deprecated in favor of IDEPage.tsx.
 
 ## System Architecture
 The platform utilizes a polyglot backend architecture with Go for container orchestration, Python for AI/ML, and TypeScript for web API, user management, and database operations. It integrates an MCP Standalone Server for AI Agent operations and an AI Agent System for autonomous code generation. Real-time collaboration is facilitated via WebSockets and WebRTC. The system is designed for enterprise-grade security and performance, including advanced monitoring and a human-in-the-loop approval process for AI-generated actions.
@@ -23,7 +24,8 @@ The platform utilizes a polyglot backend architecture with Go for container orch
 - Desktop UI includes Monaco minimap, breadcrumbs, multi-editor instances, and Command Palette.
 
 **Technical Implementations:**
-- **Routing**: Unified `/ide/:id` workspace routing with SPA navigation. All project access (cards, slugs, direct links) resolves to `/ide/:id` for consistent UX. Slug URLs (`/@username/slug`) redirect via SPA to preserve client state. No full page reloads - pure React Router navigation.
+- **Routing**: Unified `/ide/:id` workspace routing with SPA navigation. All project access (cards, slugs, direct links) resolves to `/ide/:id` for consistent UX. Slug URLs (`/@username/slug`) redirect via SPA to preserve client state. Legacy `/editor/:id` redirects to `/ide/:id` via EditorRedirect component with query/hash preservation and replace navigation. No full page reloads - pure React Router navigation.
+  - **Known Limitation**: Browser back/forward navigation doesn't fully preserve IDE tab state (wouter/React state management edge case). All primary navigation flows work correctly - this is a separate optimization task.
 - **Device Detection**: Canonical breakpoints for mobile, tablet, laptop, and desktop via `useDeviceType()` hook.
 - **Code Splitting**: Optimized bundle splitting using React.lazy() for device-specific UI components.
 - **Performance**: Compression, code splitting, caching, build optimizations, service workers, network/image optimization.
