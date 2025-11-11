@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 
 import EditorPage from "@/pages/EditorPage";
@@ -90,10 +90,15 @@ export default function ProjectPage() {
     );
   }
 
-  return (
-    <EditorPage
-      projectId={resolvedProjectId}
-      initialProject={slugProject ?? null}
-    />
-  );
+  // Redirect to new IDE using SPA navigation to preserve client state
+  // This ensures slug URLs also get the new IDE with Add Tab dropdown
+  const [, setLocation] = useLocation();
+  
+  useEffect(() => {
+    if (resolvedProjectId) {
+      setLocation(`/ide/${resolvedProjectId}`);
+    }
+  }, [resolvedProjectId, setLocation]);
+
+  return <ECodeLoading fullScreen size="lg" text="Loading workspace..." />;
 }
