@@ -23,7 +23,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { WorkspaceSettings } from "@/components/WorkspaceSettings";
 
 interface TopNavbarProps {
   project: Project | undefined;
@@ -62,6 +69,7 @@ const TopNavbar = ({
 }: TopNavbarProps) => {
   const { user, logoutMutation } = useAuth();
   const [isRunning, setIsRunning] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleRun = () => {
     setIsRunning(true);
@@ -164,9 +172,23 @@ const TopNavbar = ({
             <DropdownMenuItem>
               Secrets
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setShowSettings(true)}>
+              Settings
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      
+      {/* Settings Dialog */}
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+          <DialogHeader className="px-6 pt-6 pb-0">
+            <DialogTitle>User Settings</DialogTitle>
+          </DialogHeader>
+          <WorkspaceSettings />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

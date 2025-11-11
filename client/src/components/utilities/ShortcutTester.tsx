@@ -50,6 +50,7 @@ export function ShortcutTester() {
 
   return (
     <motion.div
+      data-component-name="ShortcutTester"
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.8 }}
