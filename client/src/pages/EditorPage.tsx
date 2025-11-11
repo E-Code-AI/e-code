@@ -109,8 +109,7 @@ export default function EditorPage(props: EditorPageProps = {}) {
     queryKey: ['/api/projects', projectIdValue],
     queryFn: async () => {
       if (!hasProjectId) throw new Error('Missing project id');
-      const res = await apiRequest('GET', `/api/projects/${projectIdValue}`);
-      return res.json();
+      return await apiRequest('GET', `/api/projects/${projectIdValue}`);
     },
     enabled: hasProjectId && !!user,
     initialData: initialProject && resolvedProjectId && initialProject.id === resolvedProjectId ? initialProject : undefined,
@@ -129,8 +128,7 @@ export default function EditorPage(props: EditorPageProps = {}) {
   // Update file content mutation
   const updateFileMutation = useMutation({
     mutationFn: async ({ fileId, content }: { fileId: number, content: string }) => {
-      const res = await apiRequest('PATCH', `/api/files/${fileId}`, { content });
-      return res.json();
+      return await apiRequest('PATCH', `/api/files/${fileId}`, { content });
     },
     onSuccess: (data) => {
       if (projectIdValue) {
@@ -149,13 +147,12 @@ export default function EditorPage(props: EditorPageProps = {}) {
   // Create file mutation
   const createFileMutation = useMutation({
     mutationFn: async ({ name, isFolder, parentId }: { name: string, isFolder: boolean, parentId?: number | null }) => {
-      const res = await apiRequest('POST', `/api/files/${projectIdValue}`, {
+      return await apiRequest('POST', `/api/files/${projectIdValue}`, {
         name,
         isFolder,
         parentId: parentId || null,
         content: '',
       });
-      return res.json();
     },
     onSuccess: (data) => {
       if (projectIdValue) {
@@ -178,8 +175,7 @@ export default function EditorPage(props: EditorPageProps = {}) {
   // Delete file mutation
   const deleteFileMutation = useMutation({
     mutationFn: async (fileId: number) => {
-      const res = await apiRequest('DELETE', `/api/files/${fileId}`);
-      return res.json();
+      return await apiRequest('DELETE', `/api/files/${fileId}`);
     },
     onSuccess: () => {
       if (projectIdValue) {
