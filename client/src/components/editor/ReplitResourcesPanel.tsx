@@ -117,9 +117,9 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
   }, [projectId]);
 
   const getUsageColor = (percent: number) => {
-    if (percent >= 90) return 'bg-red-500';
-    if (percent >= 70) return 'bg-yellow-500';
-    return 'bg-green-500';
+    if (percent >= 90) return 'bg-status-critical';
+    if (percent >= 70) return 'bg-status-warning/100';
+    return 'bg-status-success';
   };
 
   const formatBytes = (bytes: number) => {
@@ -131,14 +131,14 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
   };
 
   return (
-    <div className={cn('flex flex-col h-full bg-[#1E1E1E] text-[#CCCCCC]', className)} data-testid="resources-panel">
+    <div className={cn('flex flex-col h-full bg-background text-foreground', className)} data-testid="resources-panel">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-[#2D2D2D]">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
         <div className="flex items-center gap-2">
-          <Activity className="w-4 h-4 text-[#E07B39]" />
+          <Activity className="w-4 h-4 text-warning" />
           <span className="text-sm font-medium">Resources</span>
         </div>
-        <span className={cn('text-xs', wsRef.current?.readyState === WebSocket.OPEN ? 'text-green-500' : 'text-yellow-500')}>
+        <span className={cn('text-xs', wsRef.current?.readyState === WebSocket.OPEN ? 'text-status-success' : 'text-status-warning')}>
           {wsRef.current?.readyState === WebSocket.OPEN ? '● Live' : '○ Connecting...'}
         </span>
       </div>
@@ -155,7 +155,7 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
               </div>
               <span>{latest.cpuUsage.toFixed(1)}%</span>
             </div>
-            <div className="w-full h-2 bg-[#2D2D2D] rounded overflow-hidden">
+            <div className="w-full h-2 bg-border rounded overflow-hidden">
               <div 
                 className={cn('h-full transition-all', getUsageColor(latest.cpuUsage))}
                 style={{ width: `${Math.min(latest.cpuUsage, 100)}%` }}
@@ -172,7 +172,7 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
               </div>
               <span>{latest.memoryUsage.toFixed(0)} / {latest.memoryLimit.toFixed(0)} MB</span>
             </div>
-            <div className="w-full h-2 bg-[#2D2D2D] rounded overflow-hidden">
+            <div className="w-full h-2 bg-border rounded overflow-hidden">
               <div 
                 className={cn('h-full transition-all', getUsageColor((latest.memoryUsage / latest.memoryLimit) * 100))}
                 style={{ width: `${Math.min((latest.memoryUsage / latest.memoryLimit) * 100, 100)}%` }}
@@ -189,7 +189,7 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
               </div>
               <span>{latest.diskUsage.toFixed(0)} / {latest.diskLimit.toFixed(0)} MB</span>
             </div>
-            <div className="w-full h-2 bg-[#2D2D2D] rounded overflow-hidden">
+            <div className="w-full h-2 bg-border rounded overflow-hidden">
               <div 
                 className={cn('h-full transition-all', getUsageColor((latest.diskUsage / latest.diskLimit) * 100))}
                 style={{ width: `${Math.min((latest.diskUsage / latest.diskLimit) * 100, 100)}%` }}
@@ -205,22 +205,22 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
                 <span>Network</span>
               </div>
             </div>
-            <div className="flex justify-between text-xs text-[#858585]">
+            <div className="flex justify-between text-xs text-muted-foreground">
               <span>↓ {formatBytes(latest.networkRxBytes || 0)}</span>
               <span>↑ {formatBytes(latest.networkTxBytes || 0)}</span>
             </div>
           </div>
 
           {/* Active Connections */}
-          <div className="flex items-center justify-between text-xs pt-2 border-t border-[#2D2D2D]">
-            <span className="text-[#858585]">Active Connections</span>
+          <div className="flex items-center justify-between text-xs pt-2 border-t border-border">
+            <span className="text-muted-foreground">Active Connections</span>
             <span className="font-mono">{latest.activeConnections || 0}</span>
           </div>
         </div>
       )}
 
       {!latest && (
-        <div className="flex-1 flex items-center justify-center text-sm text-[#858585]">
+        <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
           No resource metrics available
         </div>
       )}

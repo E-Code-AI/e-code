@@ -158,37 +158,37 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
   const getCheckpointIcon = (type: string) => {
     switch (type) {
       case 'auto':
-        return <Clock className="h-4 w-4 text-gray-400" />;
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
       case 'manual':
-        return <Save className="h-4 w-4 text-blue-500" />;
+        return <Save className="h-4 w-4 text-status-info" />;
       case 'deploy':
-        return <GitCommit className="h-4 w-4 text-green-500" />;
+        return <GitCommit className="h-4 w-4 text-status-success" />;
       default:
-        return <History className="h-4 w-4 text-gray-400" />;
+        return <History className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'added':
-        return 'text-green-600';
+        return 'text-status-success';
       case 'modified':
-        return 'text-blue-600';
+        return 'text-status-info';
       case 'deleted':
-        return 'text-red-600';
+        return 'text-status-critical';
       default:
-        return 'text-gray-600';
+        return 'text-muted-foreground';
     }
   };
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200">
+      <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <History className="h-5 w-5 text-gray-600" />
-            <h3 className="font-semibold text-gray-900">History</h3>
+            <History className="h-5 w-5 text-muted-foreground" />
+            <h3 className="font-semibold text-foreground">History</h3>
           </div>
           <Button
             size="sm"
@@ -201,14 +201,14 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
         </div>
 
         {/* Auto-save Status */}
-        <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+        <div className="flex items-center justify-between p-2 bg-muted rounded">
           <div className="flex items-center gap-2">
             {autoSaveEnabled ? (
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <CheckCircle className="h-4 w-4 text-status-success" />
             ) : (
-              <AlertCircle className="h-4 w-4 text-yellow-500" />
+              <AlertCircle className="h-4 w-4 text-status-warning" />
             )}
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-foreground">
               Auto-save {autoSaveEnabled ? 'enabled' : 'disabled'}
             </span>
           </div>
@@ -229,20 +229,20 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
           {/* Timeline */}
           <div className="relative">
             {/* Timeline line */}
-            <div className="absolute left-5 top-0 bottom-0 w-px bg-gray-200" />
+            <div className="absolute left-5 top-0 bottom-0 w-px bg-muted" />
 
             {checkpoints.map((checkpoint, index) => (
               <div key={checkpoint.id} className="relative mb-4">
                 {/* Timeline dot */}
-                <div className="absolute left-3.5 w-3 h-3 bg-white border-2 border-gray-300 rounded-full" />
+                <div className="absolute left-3.5 w-3 h-3 bg-background border-2 border-border rounded-full" />
 
                 <div className="ml-10">
                   <div
                     className={cn(
                       "p-3 border rounded-lg cursor-pointer transition-all",
                       selectedCheckpoint === checkpoint.id
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                        ? "border-status-info bg-status-info/10"
+                        : "border-border hover:border-border hover:bg-muted"
                     )}
                     onClick={() => {
                       setSelectedCheckpoint(checkpoint.id);
@@ -256,7 +256,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                         {getCheckpointIcon(checkpoint.type)}
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-medium text-gray-900">
+                            <h4 className="text-sm font-medium text-foreground">
                               {checkpoint.title}
                             </h4>
                             {checkpoint.type === 'auto' && (
@@ -265,17 +265,17 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                               </Badge>
                             )}
                             {index === 0 && (
-                              <Badge className="text-xs px-1 py-0 bg-yellow-100 text-yellow-700">
+                              <Badge className="text-xs px-1 py-0 bg-status-warning/20 text-status-warning">
                                 Current
                               </Badge>
                             )}
                           </div>
                           {checkpoint.description && (
-                            <p className="text-xs text-gray-600 mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                               {checkpoint.description}
                             </p>
                           )}
-                          <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                             <span>{checkpoint.author}</span>
                             <span>•</span>
                             <span>{getTimeAgo(checkpoint.timestamp)}</span>
@@ -284,12 +284,12 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <div className="text-xs text-gray-600 text-right">
+                        <div className="text-xs text-muted-foreground text-right">
                           <div className="flex items-center gap-2">
-                            <span className="text-green-600">+{checkpoint.changes.additions}</span>
-                            <span className="text-red-600">-{checkpoint.changes.deletions}</span>
+                            <span className="text-status-success">+{checkpoint.changes.additions}</span>
+                            <span className="text-status-critical">-{checkpoint.changes.deletions}</span>
                           </div>
-                          <div className="text-gray-500 mt-0.5">
+                          <div className="text-muted-foreground mt-0.5">
                             {checkpoint.changes.files} file{checkpoint.changes.files !== 1 ? 's' : ''}
                           </div>
                         </div>
@@ -298,22 +298,22 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
 
                     {/* File Changes */}
                     {checkpoint.files && expandedCheckpoints.has(checkpoint.id) && (
-                      <div className="mt-3 pt-3 border-t border-gray-200">
+                      <div className="mt-3 pt-3 border-t border-border">
                         <div className="space-y-1">
                           {checkpoint.files.map((file, fileIndex) => (
                             <div
                               key={fileIndex}
-                              className="flex items-center justify-between py-1 px-2 hover:bg-gray-50 rounded text-xs"
+                              className="flex items-center justify-between py-1 px-2 hover:bg-muted rounded text-xs"
                             >
                               <div className="flex items-center gap-2">
-                                <FileText className="h-3 w-3 text-gray-400" />
+                                <FileText className="h-3 w-3 text-muted-foreground" />
                                 <span className={getStatusColor(file.status)}>
                                   {file.name}
                                 </span>
                               </div>
                               <div className="flex items-center gap-2 text-xs">
-                                <span className="text-green-600">+{file.additions}</span>
-                                <span className="text-red-600">-{file.deletions}</span>
+                                <span className="text-status-success">+{file.additions}</span>
+                                <span className="text-status-critical">-{file.deletions}</span>
                               </div>
                             </div>
                           ))}
@@ -323,7 +323,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
 
                     {/* Actions */}
                     {index > 0 && (
-                      <div className="flex gap-2 mt-3 pt-3 border-t border-gray-200">
+                      <div className="flex gap-2 mt-3 pt-3 border-t border-border">
                         <Button
                           size="sm"
                           variant="outline"
@@ -380,12 +380,12 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
           
           {restoreTarget && (
             <div className="py-3">
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
+              <div className="p-3 bg-status-warning/10 border border-status-warning rounded">
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
+                  <AlertCircle className="h-4 w-4 text-status-warning mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-medium text-yellow-800">Warning</p>
-                    <p className="text-yellow-700 mt-1">
+                    <p className="font-medium text-status-warning">Warning</p>
+                    <p className="text-status-warning mt-1">
                       Your current unsaved changes will be lost. Consider saving a checkpoint first.
                     </p>
                   </div>

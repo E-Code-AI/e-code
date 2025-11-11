@@ -93,7 +93,7 @@ export function ReplitEditorLayout({
   if (useSplitsLayout) {
     return (
       <React.Suspense fallback={
-        <div className="flex items-center justify-center h-screen bg-[#f6f6f6]">
+        <div className="flex items-center justify-center h-screen bg-muted">
           <div className="flex flex-col items-center gap-2">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             <p className="text-sm text-muted-foreground">Loading editor layout...</p>
@@ -188,7 +188,7 @@ export function ReplitEditorLayout({
         return <ReplitTerminalPanel projectId={projectId} />;
       case 'preview':
         return (
-          <div className="p-4 text-center text-gray-500">
+          <div className="p-4 text-center text-muted-foreground">
             <p className="text-sm">Webview preview coming soon...</p>
           </div>
         );
@@ -204,7 +204,7 @@ export function ReplitEditorLayout({
         return <ReplitMultiplayers projectId={projectId} />;
       default:
         return (
-          <div className="p-4 text-center text-gray-500">
+          <div className="p-4 text-center text-muted-foreground">
             <p className="text-sm">{activeTool} coming soon...</p>
           </div>
         );
@@ -278,9 +278,9 @@ export function ReplitEditorLayout({
   // Mobile layout
   if (isMobile) {
     return (
-      <div className="h-full flex flex-col bg-white">
+      <div className="h-full flex flex-col bg-background">
         {/* Mobile Tool Dock */}
-        <div className="flex border-b border-gray-200 bg-white overflow-x-auto">
+        <div className="flex border-b border-border bg-background overflow-x-auto">
           <ReplitToolDock
             activeTool={activeTool}
             onToolChange={setActiveTool}
@@ -289,7 +289,7 @@ export function ReplitEditorLayout({
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 bg-white overflow-hidden">
+        <div className="flex-1 bg-background overflow-hidden">
           {centerPanel}
         </div>
 
@@ -298,17 +298,17 @@ export function ReplitEditorLayout({
           <>
             <button
               onClick={() => setMobileBottomPanelOpen(!mobileBottomPanelOpen)}
-              className="p-2 border-t border-gray-200 bg-gray-50 flex items-center justify-between"
+              className="p-2 border-t border-border bg-muted flex items-center justify-between"
             >
-              <span className="text-sm text-gray-700">Console</span>
+              <span className="text-sm text-foreground">Console</span>
               {mobileBottomPanelOpen ? (
-                <ChevronDown className="h-4 w-4 text-gray-500" />
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
               ) : (
-                <ChevronUp className="h-4 w-4 text-gray-500" />
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
               )}
             </button>
             {mobileBottomPanelOpen && (
-              <div className="h-[40vh] border-t border-gray-200 bg-white">
+              <div className="h-[40vh] border-t border-border bg-background">
                 {bottomPanel}
               </div>
             )}
@@ -319,7 +319,7 @@ export function ReplitEditorLayout({
   }
 
   return (
-    <div className="h-full flex bg-white">
+    <div className="h-full flex bg-background">
       {/* Left Tool Dock - Fixed 40px width */}
       <ReplitToolDock
         activeTool={activeTool}
@@ -334,15 +334,15 @@ export function ReplitEditorLayout({
               defaultSize={20} 
               minSize={15} 
               maxSize={30}
-              className="bg-white"
+              className="bg-background"
             >
-              <div className="h-full bg-white border-r border-[#e1e4e8]">
+              <div className="h-full bg-background border-r border-border">
                 {getToolContent()}
               </div>
             </ResizablePanel>
 
             <ResizableHandle
-              className="w-[1px] bg-[#e1e4e8] hover:cursor-col-resize"
+              className="w-[1px] bg-border hover:cursor-col-resize"
             />
           </>
         )}
@@ -351,43 +351,43 @@ export function ReplitEditorLayout({
         <ResizablePanel 
           defaultSize={rightPanelOpen ? 50 : 70} 
           minSize={30}
-          className="bg-white"
+          className="bg-background"
         >
           {bottomPanelOpen ? (
             <ResizablePanelGroup direction="vertical">
               <ResizablePanel defaultSize={70}>
-                <div className="h-full bg-white">
+                <div className="h-full bg-background">
                   {centerPanel}
                 </div>
               </ResizablePanel>
 
               <ResizableHandle
-                className="h-[1px] bg-[#e1e4e8] hover:cursor-row-resize"
+                className="h-[1px] bg-border hover:cursor-row-resize"
               />
               
               <ResizablePanel defaultSize={25} minSize={10} maxSize={50}>
-                <div className="h-full bg-[#0e1525] border-t border-[#e1e4e8]">
+                <div className="h-full bg-background border-t border-border">
                   {/* Console/Terminal Header */}
-                  <div className="h-8 flex items-center justify-between px-3 bg-[#0e1525] border-b border-[#1a1f2e]">
-                    <div className="flex items-center gap-2 text-xs font-medium text-[#4ade80]">
+                  <div className="h-8 flex items-center justify-between px-3 bg-background border-b border-border">
+                    <div className="flex items-center gap-2 text-xs font-medium text-status-success">
                       <TerminalIcon className="h-3.5 w-3.5" />
                       Console
                     </div>
                     <button
                       onClick={() => updateBottomPanelOpen(false)}
-                      className="p-1 hover:bg-[#1a1f2e] rounded"
+                      className="p-1 hover:bg-muted rounded"
                     >
-                      <X className="h-3 w-3 text-[#4ade80]" />
+                      <X className="h-3 w-3 text-status-success" />
                     </button>
                   </div>
-                  <div className="h-[calc(100%-32px)] bg-[#0e1525]">
+                  <div className="h-[calc(100%-32px)] bg-background">
                     {bottomPanel}
                   </div>
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>
           ) : (
-            <div className="h-full bg-white">
+            <div className="h-full bg-background">
               {centerPanel}
             </div>
           )}
@@ -396,7 +396,7 @@ export function ReplitEditorLayout({
         {rightPanelOpen && enhancedRightPanels.length > 0 && (
           <>
             <ResizableHandle
-              className="w-[1px] bg-[#e1e4e8] hover:cursor-col-resize"
+              className="w-[1px] bg-border hover:cursor-col-resize"
             />
 
             {/* Right Panel - Multiplayers/Preview/etc */}
@@ -404,11 +404,11 @@ export function ReplitEditorLayout({
               defaultSize={25} 
               minSize={20} 
               maxSize={40}
-              className="bg-white"
+              className="bg-background"
             >
-              <div className="h-full bg-white border-l border-[#e0e0e0] flex flex-col">
+              <div className="h-full bg-background border-l border-border flex flex-col">
                 {/* Right Panel Tab Headers - Replit Style */}
-                <div className="h-10 flex items-center border-b border-[#e0e0e0] bg-white px-2">
+                <div className="h-10 flex items-center border-b border-border bg-background px-2">
                   {enhancedRightPanels.map((panel, index) => {
                     const isActive = activeRightPanel === panel.id;
                     return (
@@ -418,8 +418,8 @@ export function ReplitEditorLayout({
                         className={cn(
                           "px-3 py-1 text-sm font-medium transition-colors rounded-md mr-1",
                           isActive
-                            ? "bg-gray-100 text-gray-900"
-                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                            ? "bg-muted text-foreground"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
                         )}
                       >
                         {panel.title}
@@ -431,14 +431,14 @@ export function ReplitEditorLayout({
                   
                   <button
                     onClick={() => updateRightPanelOpen(false)}
-                    className="p-1 hover:bg-gray-100 rounded"
+                    className="p-1 hover:bg-muted rounded"
                   >
-                    <X className="h-3.5 w-3.5 text-gray-500" />
+                    <X className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
                 </div>
 
                 {/* Right Panel Content */}
-                <div className="flex-1 overflow-hidden bg-white">
+                <div className="flex-1 overflow-hidden bg-background">
                   {enhancedRightPanels.map((panel) => (
                     <div
                       key={panel.id}
@@ -461,28 +461,28 @@ export function ReplitEditorLayout({
       {!leftPanelOpen && (
         <button
           onClick={() => updateLeftPanelOpen(true)}
-          className="fixed left-14 top-20 p-1.5 bg-white border border-gray-200 rounded-md shadow-sm hover:shadow-md transition-shadow"
+          className="fixed left-14 top-20 p-1.5 bg-background border border-border rounded-md shadow-sm hover:shadow-md transition-shadow"
         >
-          <ChevronRight className="h-4 w-4 text-gray-600" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
       )}
 
       {!rightPanelOpen && (
         <button
           onClick={() => updateRightPanelOpen(true)}
-          className="fixed right-2 top-20 p-1.5 bg-white border border-gray-200 rounded-md shadow-sm hover:shadow-md transition-shadow"
+          className="fixed right-2 top-20 p-1.5 bg-background border border-border rounded-md shadow-sm hover:shadow-md transition-shadow"
         >
-          <ChevronLeft className="h-4 w-4 text-gray-600" />
+          <ChevronLeft className="h-4 w-4 text-muted-foreground" />
         </button>
       )}
 
       {!bottomPanelOpen && bottomPanel && (
         <button
           onClick={() => updateBottomPanelOpen(true)}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-white border border-gray-200 rounded-md shadow-sm hover:shadow-md transition-shadow flex items-center gap-2"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-background border border-border rounded-md shadow-sm hover:shadow-md transition-shadow flex items-center gap-2"
         >
-          <TerminalIcon className="h-3.5 w-3.5 text-gray-600" />
-          <span className="text-sm text-gray-600">Console</span>
+          <TerminalIcon className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Console</span>
         </button>
       )}
     </div>

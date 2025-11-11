@@ -160,21 +160,21 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
   };
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200">
+      <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2 mb-3">
-          <Palette className="h-5 w-5 text-gray-600" />
-          <h3 className="font-semibold text-gray-900">Themes</h3>
+          <Palette className="h-5 w-5 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground">Themes</h3>
         </div>
 
         {/* Mode Selector */}
-        <div className="flex gap-1 p-1 bg-gray-100 rounded">
+        <div className="flex gap-1 p-1 bg-muted rounded">
           <button
             className={cn(
               "flex-1 px-3 py-1.5 text-sm rounded transition-colors",
               "flex items-center justify-center gap-2",
-              selectedTheme === 'light' && "bg-white shadow-sm"
+              selectedTheme === 'light' && "bg-background shadow-sm"
             )}
             onClick={() => setSelectedTheme('light')}
           >
@@ -185,7 +185,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
             className={cn(
               "flex-1 px-3 py-1.5 text-sm rounded transition-colors",
               "flex items-center justify-center gap-2",
-              selectedTheme === 'dark' && "bg-white shadow-sm"
+              selectedTheme === 'dark' && "bg-background shadow-sm"
             )}
             onClick={() => setSelectedTheme('dark')}
           >
@@ -196,7 +196,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
             className={cn(
               "flex-1 px-3 py-1.5 text-sm rounded transition-colors",
               "flex items-center justify-center gap-2",
-              selectedTheme === 'system' && "bg-white shadow-sm"
+              selectedTheme === 'system' && "bg-background shadow-sm"
             )}
             onClick={() => setSelectedTheme('system')}
           >
@@ -225,8 +225,8 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
                     className={cn(
                       "p-4 border rounded-lg cursor-pointer transition-all",
                       selectedTheme === theme.id 
-                        ? "border-blue-500 bg-blue-50" 
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                        ? "border-status-info bg-status-info/10" 
+                        : "border-border hover:border-border hover:bg-muted"
                     )}
                     onClick={() => !theme.isPro && setSelectedTheme(theme.id)}
                   >
@@ -246,10 +246,10 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
                             </Badge>
                           )}
                           {selectedTheme === theme.id && (
-                            <Check className="h-4 w-4 text-blue-600" />
+                            <Check className="h-4 w-4 text-status-info" />
                           )}
                         </div>
-                        <p className="text-xs text-gray-600 mt-1">{theme.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{theme.description}</p>
                       </div>
                     </div>
 
@@ -258,7 +258,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
                       {Object.entries(theme.colors).slice(0, 5).map(([key, color]) => (
                         <div
                           key={key}
-                          className="flex-1 h-8 rounded border border-gray-200"
+                          className="flex-1 h-8 rounded border border-border"
                           style={{ backgroundColor: color }}
                           title={key}
                         />
@@ -284,10 +284,10 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
                     </Label>
                     <div className="flex items-center gap-2">
                       <div
-                        className="w-6 h-6 rounded border border-gray-300"
+                        className="w-6 h-6 rounded border border-border"
                         style={{ backgroundColor: value }}
                       />
-                      <span className="text-xs font-mono text-gray-600">{value}</span>
+                      <span className="text-xs font-mono text-muted-foreground">{value}</span>
                     </div>
                   </div>
                   <Input
@@ -301,12 +301,12 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
               ))}
 
               {/* Typography */}
-              <div className="pt-4 border-t border-gray-200">
+              <div className="pt-4 border-t border-border">
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <Label className="text-sm">Font Size</Label>
-                      <span className="text-xs text-gray-600">{fontSize[0]}px</span>
+                      <span className="text-xs text-muted-foreground">{fontSize[0]}px</span>
                     </div>
                     <Slider
                       value={fontSize}
@@ -320,7 +320,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <Label className="text-sm">Border Radius</Label>
-                      <span className="text-xs text-gray-600">{borderRadius[0]}px</span>
+                      <span className="text-xs text-muted-foreground">{borderRadius[0]}px</span>
                     </div>
                     <Slider
                       value={borderRadius}
@@ -357,11 +357,11 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
                 {['VS Code', 'Monokai', 'GitHub', 'Solarized', 'Dracula', 'Nord'].map((theme) => (
                   <button
                     key={theme}
-                    className="w-full p-3 text-left border border-gray-200 rounded hover:bg-gray-50 transition-colors"
+                    className="w-full p-3 text-left border border-border rounded hover:bg-muted transition-colors"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-900">{theme}</span>
-                      <Eye className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-foreground">{theme}</span>
+                      <Eye className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </button>
                 ))}
@@ -370,22 +370,22 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
               {/* Live Preview */}
               <div className="mt-6">
                 <h4 className="text-sm font-medium mb-3">Preview</h4>
-                <div className="p-4 bg-gray-900 rounded text-white font-mono text-xs">
-                  <div className="text-blue-400">// Sample code preview</div>
+                <div className="p-4 bg-background rounded text-white font-mono text-xs">
+                  <div className="text-status-info">// Sample code preview</div>
                   <div>
-                    <span className="text-purple-400">function</span>{' '}
-                    <span className="text-yellow-300">hello</span>
-                    <span className="text-gray-400">(</span>
-                    <span className="text-orange-400">name</span>
-                    <span className="text-gray-400">)</span>{' '}
-                    <span className="text-gray-400">{'{'}</span>
+                    <span className="text-primary">function</span>{' '}
+                    <span className="text-status-warning">hello</span>
+                    <span className="text-muted-foreground">(</span>
+                    <span className="text-status-warning">name</span>
+                    <span className="text-muted-foreground">)</span>{' '}
+                    <span className="text-muted-foreground">{'{'}</span>
                   </div>
                   <div className="ml-4">
-                    <span className="text-purple-400">return</span>{' '}
-                    <span className="text-green-400">`Hello, ${'{'}name{'}'}`</span>
-                    <span className="text-gray-400">;</span>
+                    <span className="text-primary">return</span>{' '}
+                    <span className="text-status-success">`Hello, ${'{'}name{'}'}`</span>
+                    <span className="text-muted-foreground">;</span>
                   </div>
-                  <div className="text-gray-400">{'}'}</div>
+                  <div className="text-muted-foreground">{'}'}</div>
                 </div>
               </div>
             </div>

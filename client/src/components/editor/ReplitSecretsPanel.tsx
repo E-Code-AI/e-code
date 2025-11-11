@@ -136,13 +136,13 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string }) {
   };
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200">
+      <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-gray-600" />
-            <h3 className="font-semibold text-gray-900">Secrets</h3>
+            <Shield className="h-5 w-5 text-muted-foreground" />
+            <h3 className="font-semibold text-foreground">Secrets</h3>
             <Badge variant="secondary" className="text-xs">
               {secrets.length}
             </Badge>
@@ -159,7 +159,7 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string }) {
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -169,9 +169,9 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string }) {
         </div>
 
         {/* Warning */}
-        <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded flex items-start gap-2">
-          <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
-          <div className="text-xs text-yellow-800">
+        <div className="mt-3 p-2 bg-status-warning/10 border border-status-warning rounded flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 text-status-warning mt-0.5" />
+          <div className="text-xs text-status-warning">
             <p className="font-medium">Keep your secrets safe!</p>
             <p className="mt-0.5">Never commit secrets to your repository or share them publicly.</p>
           </div>
@@ -179,7 +179,7 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string }) {
       </div>
 
       {/* Actions Bar */}
-      <div className="px-4 py-2 border-b border-gray-200 flex items-center gap-2">
+      <div className="px-4 py-2 border-b border-border flex items-center gap-2">
         <Button variant="outline" size="sm" className="text-xs" onClick={handleExport}>
           <Download className="h-3 w-3 mr-1" />
           Export .env
@@ -197,13 +197,13 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string }) {
             filteredSecrets.map((secret) => (
               <div
                 key={secret.id}
-                className="mb-2 p-3 border border-gray-200 rounded hover:bg-gray-50"
+                className="mb-2 p-3 border border-border rounded hover:bg-muted"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <Key className="h-4 w-4 text-gray-400" />
-                      <span className="font-mono text-sm font-medium text-gray-900">
+                      <Key className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-mono text-sm font-medium text-foreground">
                         {secret.key}
                       </span>
                       <Badge variant="outline" className="text-xs px-1 py-0">
@@ -212,7 +212,7 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string }) {
                     </div>
                     
                     <div className="mt-2 flex items-center gap-2">
-                      <code className="flex-1 px-2 py-1 bg-gray-100 rounded text-xs font-mono text-gray-700">
+                      <code className="flex-1 px-2 py-1 bg-muted rounded text-xs font-mono text-foreground">
                         {secret.isRevealed ? secret.value : maskValue(secret.value)}
                       </code>
                     </div>
@@ -226,9 +226,9 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string }) {
                       onClick={() => handleToggleReveal(secret.id)}
                     >
                       {secret.isRevealed ? (
-                        <EyeOff className="h-3.5 w-3.5 text-gray-500" />
+                        <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
                       ) : (
-                        <Eye className="h-3.5 w-3.5 text-gray-500" />
+                        <Eye className="h-3.5 w-3.5 text-muted-foreground" />
                       )}
                     </Button>
                     <Button
@@ -238,9 +238,9 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string }) {
                       onClick={() => handleCopyValue(secret)}
                     >
                       {copiedId === secret.id ? (
-                        <Check className="h-3.5 w-3.5 text-green-600" />
+                        <Check className="h-3.5 w-3.5 text-status-success" />
                       ) : (
-                        <Copy className="h-3.5 w-3.5 text-gray-500" />
+                        <Copy className="h-3.5 w-3.5 text-muted-foreground" />
                       )}
                     </Button>
                     <Button
@@ -253,7 +253,7 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string }) {
                         setNewSecretValue(secret.value);
                       }}
                     >
-                      <Edit className="h-3.5 w-3.5 text-gray-500" />
+                      <Edit className="h-3.5 w-3.5 text-muted-foreground" />
                     </Button>
                     <Button
                       variant="ghost"
@@ -261,7 +261,7 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string }) {
                       className="h-7 w-7"
                       onClick={() => handleDeleteSecret(secret.id)}
                     >
-                      <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                      <Trash2 className="h-3.5 w-3.5 text-status-critical" />
                     </Button>
                   </div>
                 </div>
@@ -269,8 +269,8 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string }) {
             ))
           ) : (
             <div className="flex flex-col items-center justify-center py-12">
-              <Lock className="h-12 w-12 text-gray-300 mb-3" />
-              <p className="text-sm text-gray-500">
+              <Lock className="h-12 w-12 text-muted-foreground mb-3" />
+              <p className="text-sm text-muted-foreground">
                 {searchQuery ? 'No secrets found' : 'No secrets yet'}
               </p>
               {!searchQuery && (
@@ -322,7 +322,7 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string }) {
                 placeholder="SECRET_KEY_NAME"
                 className="mt-1 font-mono"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Use uppercase letters and underscores
               </p>
             </div>

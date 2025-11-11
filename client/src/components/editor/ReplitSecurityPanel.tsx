@@ -171,30 +171,30 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return <XCircle className="w-4 h-4 text-red-500" />;
+        return <XCircle className="w-4 h-4 text-status-critical" />;
       case 'high':
-        return <AlertCircle className="w-4 h-4 text-orange-500" />;
+        return <AlertCircle className="w-4 h-4 text-status-warning" />;
       case 'medium':
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+        return <AlertTriangle className="w-4 h-4 text-status-warning" />;
       case 'low':
-        return <Info className="w-4 h-4 text-blue-500" />;
+        return <Info className="w-4 h-4 text-status-info" />;
       default:
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-status-success" />;
     }
   };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return 'text-red-500 bg-red-500/10 border-red-500/20';
+        return 'text-status-critical bg-status-critical/10 border-status-critical/20';
       case 'high':
-        return 'text-orange-500 bg-orange-500/10 border-orange-500/20';
+        return 'text-status-warning bg-status-warning/10 border-status-warning/20';
       case 'medium':
-        return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
+        return 'text-status-warning bg-status-warning/100/10 border-status-warning/20';
       case 'low':
-        return 'text-blue-500 bg-blue-500/10 border-blue-500/20';
+        return 'text-status-info bg-status-info/10 border-status-info/20';
       default:
-        return 'text-gray-500 bg-gray-500/10 border-gray-500/20';
+        return 'text-muted-foreground bg-muted/10 border-border/20';
     }
   };
 
@@ -202,27 +202,27 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'running':
-        return 'text-blue-500 bg-blue-500/10';
+        return 'text-status-info bg-status-info/10';
       case 'completed':
-        return 'text-green-500 bg-green-500/10';
+        return 'text-status-success bg-status-success/10';
       case 'failed':
-        return 'text-red-500 bg-red-500/10';
+        return 'text-status-critical bg-status-critical/10';
       case 'queued':
-        return 'text-yellow-500 bg-yellow-500/10';
+        return 'text-status-warning bg-status-warning/100/10';
       default:
-        return 'text-gray-500 bg-gray-500/10';
+        return 'text-muted-foreground bg-muted/10';
     }
   };
 
   return (
-    <div className={cn('flex flex-col h-full bg-[#1E1E1E] text-[#CCCCCC]', className)} data-testid="security-panel">
+    <div className={cn('flex flex-col h-full bg-background text-foreground', className)} data-testid="security-panel">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-[#2D2D2D]">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
         <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-[#E07B39]" />
+          <Shield className="w-4 h-4 text-warning" />
           <span className="text-sm font-medium">Security Scanner</span>
         </div>
-        <div className="flex items-center gap-2 text-xs text-[#858585]">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className={cn('px-2 py-1 rounded', getSeverityColor('critical'))}>
             {severityCounts.critical} Critical
           </span>
@@ -236,24 +236,24 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
       </div>
 
       {/* Search and Filters */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-[#2D2D2D]">
-        <div className="flex items-center flex-1 gap-2 px-3 py-1.5 bg-[#3C3C3C] rounded">
-          <Search className="w-4 h-4 text-[#858585]" />
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-border">
+        <div className="flex items-center flex-1 gap-2 px-3 py-1.5 bg-muted rounded">
+          <Search className="w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search vulnerabilities..."
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-[#858585]"
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             data-testid="input-search-vulnerabilities"
           />
         </div>
         <div className="flex items-center gap-1">
-          <Filter className="w-4 h-4 text-[#858585]" />
+          <Filter className="w-4 h-4 text-muted-foreground" />
           <select
             value={selectedSeverity}
             onChange={(e) => setSelectedSeverity(e.target.value)}
-            className="px-2 py-1 text-sm bg-[#3C3C3C] rounded outline-none"
+            className="px-2 py-1 text-sm bg-muted rounded outline-none"
             data-testid="select-severity-filter"
           >
             <option value="all">All ({severityCounts.all})</option>
@@ -266,8 +266,8 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
       </div>
 
       {/* Scans List (Top Section) */}
-      <div className="flex-shrink-0 border-b border-[#2D2D2D]">
-        <div className="px-4 py-2 text-xs font-medium text-[#858585] bg-[#252526]">
+      <div className="flex-shrink-0 border-b border-border">
+        <div className="px-4 py-2 text-xs font-medium text-muted-foreground bg-muted">
           Recent Scans
         </div>
         <div className="max-h-32 overflow-y-auto">
@@ -276,35 +276,35 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
               key={scan.id}
               onClick={() => setSelectedScan(scan)}
               className={cn(
-                'px-4 py-2 border-b border-[#2D2D2D] cursor-pointer hover:bg-[#2A2D2E] transition-colors',
-                selectedScan?.id === scan.id && 'bg-[#2A2D2E]'
+                'px-4 py-2 border-b border-border cursor-pointer hover:bg-muted transition-colors',
+                selectedScan?.id === scan.id && 'bg-muted'
               )}
               data-testid={`scan-item-${scan.id}`}
             >
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <Clock className="w-3 h-3 text-[#858585]" />
-                  <span className="text-xs text-[#CCCCCC]">{scan.scanType}</span>
+                  <Clock className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-xs text-foreground">{scan.scanType}</span>
                   <span className={cn('px-2 py-0.5 rounded text-xs', getStatusColor(scan.status))}>
                     {scan.status}
                   </span>
                 </div>
-                <span className="text-xs text-[#858585]">
+                <span className="text-xs text-muted-foreground">
                   {new Date(scan.startedAt).toLocaleTimeString()}
                 </span>
               </div>
               {scan.totalVulnerabilities !== null && scan.totalVulnerabilities > 0 && (
-                <div className="flex items-center gap-2 mt-1 text-xs text-[#858585]">
-                  <span className="text-red-500">{scan.criticalCount} critical</span>
-                  <span className="text-orange-500">{scan.highCount} high</span>
-                  <span className="text-yellow-500">{scan.mediumCount} medium</span>
-                  <span className="text-blue-500">{scan.lowCount} low</span>
+                <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                  <span className="text-status-critical">{scan.criticalCount} critical</span>
+                  <span className="text-status-warning">{scan.highCount} high</span>
+                  <span className="text-status-warning">{scan.mediumCount} medium</span>
+                  <span className="text-status-info">{scan.lowCount} low</span>
                 </div>
               )}
             </div>
           ))}
           {scans.length === 0 && (
-            <div className="px-4 py-8 text-center text-sm text-[#858585]">
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">
               No security scans available
             </div>
           )}
@@ -315,8 +315,8 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
       <div className="flex-1 overflow-y-auto">
         {filteredVulnerabilities.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-3">
-            <CheckCircle className="w-12 h-12 text-green-500/50" />
-            <p className="text-sm text-[#858585]">
+            <CheckCircle className="w-12 h-12 text-status-success/50" />
+            <p className="text-sm text-muted-foreground">
               {searchQuery || selectedSeverity !== 'all'
                 ? 'No vulnerabilities match your filters'
                 : 'No vulnerabilities found'}
@@ -326,24 +326,24 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
           filteredVulnerabilities.map((vuln) => (
             <div
               key={vuln.id}
-              className="px-4 py-3 border-b border-[#2D2D2D] hover:bg-[#2A2D2E] cursor-pointer transition-colors"
+              className="px-4 py-3 border-b border-border hover:bg-muted cursor-pointer transition-colors"
               data-testid={`vulnerability-item-${vuln.id}`}
             >
               <div className="flex items-start gap-3">
                 {getSeverityIcon(vuln.severity)}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <h4 className="text-sm font-medium text-[#CCCCCC] truncate">
+                    <h4 className="text-sm font-medium text-foreground truncate">
                       {vuln.title}
                     </h4>
                     <span className={cn('px-2 py-0.5 rounded text-xs whitespace-nowrap', getSeverityColor(vuln.severity))}>
                       {vuln.severity}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-[#858585] line-clamp-2">
+                  <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
                     {vuln.description}
                   </p>
-                  <div className="flex items-center gap-3 mt-2 text-xs text-[#858585]">
+                  <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                     {vuln.filePath && (
                       <span className="truncate max-w-md" title={vuln.filePath}>
                         {vuln.filePath}
@@ -354,12 +354,12 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                       <span className="font-mono">{vuln.packageName}</span>
                     )}
                     {vuln.cve && (
-                      <span className="text-[#E07B39]">{vuln.cve}</span>
+                      <span className="text-warning">{vuln.cve}</span>
                     )}
                   </div>
                   {vuln.recommendation && (
-                    <div className="mt-2 p-2 bg-[#252526] rounded text-xs text-[#CCCCCC]">
-                      <span className="text-[#858585]">Fix: </span>
+                    <div className="mt-2 p-2 bg-muted rounded text-xs text-foreground">
+                      <span className="text-muted-foreground">Fix: </span>
                       {vuln.recommendation}
                     </div>
                   )}
@@ -371,11 +371,11 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
       </div>
 
       {/* Status Bar */}
-      <div className="flex items-center justify-between px-4 py-1.5 border-t border-[#2D2D2D] bg-[#252526] text-xs text-[#858585]">
+      <div className="flex items-center justify-between px-4 py-1.5 border-t border-border bg-muted text-xs text-muted-foreground">
         <span>
           {filteredVulnerabilities.length} of {vulnerabilities.length} vulnerabilities
         </span>
-        <span className={wsRef.current?.readyState === WebSocket.OPEN ? 'text-green-500' : 'text-yellow-500'}>
+        <span className={wsRef.current?.readyState === WebSocket.OPEN ? 'text-status-success' : 'text-status-warning'}>
           {wsRef.current?.readyState === WebSocket.OPEN ? '● Live' : '○ Connecting...'}
         </span>
       </div>

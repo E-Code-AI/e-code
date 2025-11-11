@@ -225,6 +225,7 @@ export function AICodeCompletion({
         // Add AI badge and styling to the item when resolved
         if (item.isAIGenerated) {
           // Add AI indicator to documentation
+          // THEME_EXCEPTION: Monaco inline HTML doesn't support CSS variables
           if (typeof item.documentation === 'object' && item.documentation.value) {
             item.documentation.value = `<div style="color: #F26207;">🤖 AI Generated</div>\n${item.documentation.value}`;
           }
@@ -283,6 +284,8 @@ export function AICodeCompletion({
       document.head.appendChild(styleElement);
     }
 
+    // THEME_EXCEPTION: Monaco editor widget CSS doesn't support CSS variables
+    // Using hardcoded brand color #F26207 in injected styles
     styleElement.textContent = `
       /* AI Completion Styles */
       .monaco-list-row:has(.codicon-ai) {

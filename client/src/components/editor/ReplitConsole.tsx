@@ -104,10 +104,10 @@ export function ReplitConsole({ projectId, isRunning, executionId, className }: 
 
   const getLogColor = (type: ConsoleLog['type']) => {
     switch (type) {
-      case 'error': return 'text-red-500';
-      case 'warn': return 'text-yellow-500';
-      case 'info': return 'text-blue-500';
-      case 'debug': return 'text-gray-500';
+      case 'error': return 'text-status-critical';
+      case 'warn': return 'text-status-warning';
+      case 'info': return 'text-status-info';
+      case 'debug': return 'text-muted-foreground';
       default: return 'text-[var(--ecode-text)]';
     }
   };

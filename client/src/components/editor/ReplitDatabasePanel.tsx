@@ -104,13 +104,13 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
   };
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200">
+      <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Database className="h-5 w-5 text-gray-600" />
-            <h3 className="font-semibold text-gray-900">Database</h3>
+            <Database className="h-5 w-5 text-muted-foreground" />
+            <h3 className="font-semibold text-foreground">Database</h3>
           </div>
           <Button variant="ghost" size="icon" className="h-7 w-7">
             <Settings className="h-4 w-4" />
@@ -121,11 +121,11 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {isConnected ? (
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <CheckCircle className="h-4 w-4 text-status-success" />
             ) : (
-              <AlertCircle className="h-4 w-4 text-red-500" />
+              <AlertCircle className="h-4 w-4 text-status-critical" />
             )}
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-foreground">
               {isConnected ? 'Connected to PostgreSQL' : 'Disconnected'}
             </span>
           </div>
@@ -137,10 +137,10 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
 
       <div className="flex-1 flex">
         {/* Left Sidebar - Tables */}
-        <div className="w-1/3 border-r border-gray-200">
-          <div className="p-2 border-b border-gray-200">
+        <div className="w-1/3 border-r border-border">
+          <div className="p-2 border-b border-border">
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400" />
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
               <Input
                 placeholder="Search tables..."
                 className="h-7 pl-7 text-xs"
@@ -155,18 +155,18 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
                   <button
                     onClick={() => toggleTableExpansion(table.name)}
                     className={cn(
-                      "w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 text-left",
-                      selectedTable === table.name && "bg-blue-50"
+                      "w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted text-left",
+                      selectedTable === table.name && "bg-status-info/10"
                     )}
                   >
                     {expandedTables.has(table.name) ? (
-                      <ChevronDown className="h-3 w-3 text-gray-400" />
+                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
                     ) : (
-                      <ChevronRight className="h-3 w-3 text-gray-400" />
+                      <ChevronRight className="h-3 w-3 text-muted-foreground" />
                     )}
-                    <Table className="h-3 w-3 text-gray-500" />
-                    <span className="text-sm text-gray-900 flex-1">{table.name}</span>
-                    <span className="text-xs text-gray-500">{table.rowCount}</span>
+                    <Table className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-sm text-foreground flex-1">{table.name}</span>
+                    <span className="text-xs text-muted-foreground">{table.rowCount}</span>
                   </button>
 
                   {expandedTables.has(table.name) && (
@@ -174,14 +174,14 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
                       {table.columns.map((column) => (
                         <div
                           key={column.name}
-                          className="flex items-center justify-between px-2 py-0.5 text-xs hover:bg-gray-50 rounded"
+                          className="flex items-center justify-between px-2 py-0.5 text-xs hover:bg-muted rounded"
                         >
                           <div className="flex items-center gap-2">
-                            <Circle className="h-2 w-2 text-gray-300" />
-                            <span className="text-gray-700">{column.name}</span>
+                            <Circle className="h-2 w-2 text-muted-foreground" />
+                            <span className="text-foreground">{column.name}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <span className="text-gray-500">{column.type}</span>
+                            <span className="text-muted-foreground">{column.type}</span>
                             {!column.nullable && (
                               <Badge variant="outline" className="text-[10px] px-1 py-0">
                                 NOT NULL
@@ -201,7 +201,7 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
         {/* Right Panel - Query & Results */}
         <div className="flex-1 flex flex-col">
           {/* Query Editor */}
-          <div className="p-3 border-b border-gray-200">
+          <div className="p-3 border-b border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Select value="sql" disabled>
@@ -244,18 +244,18 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
           <ScrollArea className="flex-1">
             <div className="p-3">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-700">Query Results</span>
-                <span className="text-xs text-gray-500">
+                <span className="text-sm text-foreground">Query Results</span>
+                <span className="text-xs text-muted-foreground">
                   {queryResults.length} rows • 0.023s
                 </span>
               </div>
 
-              <div className="border border-gray-200 rounded overflow-hidden">
+              <div className="border border-border rounded overflow-hidden">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="bg-gray-50 border-b border-gray-200">
+                    <tr className="bg-muted border-b border-border">
                       {Object.keys(queryResults[0] || {}).map((key) => (
-                        <th key={key} className="px-3 py-2 text-left font-medium text-gray-700">
+                        <th key={key} className="px-3 py-2 text-left font-medium text-foreground">
                           {key}
                         </th>
                       ))}
@@ -263,9 +263,9 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
                   </thead>
                   <tbody>
                     {queryResults.map((row, index) => (
-                      <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                      <tr key={index} className="border-b border-border hover:bg-muted">
                         {Object.values(row).map((value, i) => (
-                          <td key={i} className="px-3 py-2 text-gray-600">
+                          <td key={i} className="px-3 py-2 text-muted-foreground">
                             {value}
                           </td>
                         ))}

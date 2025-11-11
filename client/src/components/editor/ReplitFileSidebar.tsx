@@ -74,28 +74,28 @@ function getFileIcon(fileName: string) {
     case 'jsx':
     case 'ts':
     case 'tsx':
-      return <Code className="h-3.5 w-3.5 text-yellow-500" />;
+      return <Code className="h-3.5 w-3.5 text-status-warning" />;
     case 'json':
     case 'jsonc':
-      return <FileJson className="h-3.5 w-3.5 text-orange-500" />;
+      return <FileJson className="h-3.5 w-3.5 text-status-warning" />;
     case 'html':
     case 'htm':
-      return <FileText className="h-3.5 w-3.5 text-red-500" />;
+      return <FileText className="h-3.5 w-3.5 text-status-critical" />;
     case 'css':
     case 'scss':
     case 'sass':
-      return <FileText className="h-3.5 w-3.5 text-blue-500" />;
+      return <FileText className="h-3.5 w-3.5 text-status-info" />;
     case 'png':
     case 'jpg':
     case 'jpeg':
     case 'gif':
     case 'svg':
-      return <Image className="h-3.5 w-3.5 text-purple-500" />;
+      return <Image className="h-3.5 w-3.5 text-primary" />;
     case 'md':
     case 'mdx':
-      return <FileText className="h-3.5 w-3.5 text-gray-500" />;
+      return <FileText className="h-3.5 w-3.5 text-muted-foreground" />;
     default:
-      return <File className="h-3.5 w-3.5 text-[#6c757d]" />;
+      return <File className="h-3.5 w-3.5 text-muted-foreground" />;
   }
 }
 
@@ -158,7 +158,7 @@ function FileTreeItem({
       <div
         className={cn(
           "group flex items-center px-2 cursor-pointer hover:bg-[rgba(0,0,0,0.04)]",
-          activeFileId === file.id && "bg-[#e7f3ff] text-[#0969da]"
+          activeFileId === file.id && "bg-accent text-primary"
         )}
         style={{ paddingLeft: `${level * 12 + 8}px`, lineHeight: '22px' }}
         onClick={() => {
@@ -189,9 +189,9 @@ function FileTreeItem({
         
         {file.isDirectory ? (
           expanded ? (
-            <FolderOpen className="h-3.5 w-3.5 ml-1 text-[#6c757d]" />
+            <FolderOpen className="h-3.5 w-3.5 ml-1 text-muted-foreground" />
           ) : (
-            <Folder className="h-3.5 w-3.5 ml-1 text-[#6c757d]" />
+            <Folder className="h-3.5 w-3.5 ml-1 text-muted-foreground" />
           )
         ) : (
           <div className="ml-1">{getFileIcon(file.name)}</div>
@@ -240,7 +240,7 @@ function FileTreeItem({
             </DropdownMenuItem>
             <DropdownMenuItem 
               onClick={() => onFileDelete(file.id)}
-              className="text-red-600"
+              className="text-status-critical"
             >
               Delete
             </DropdownMenuItem>
@@ -331,9 +331,9 @@ export function ReplitFileSidebar({
   };
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-background">
       {/* No Header - Start with actions */}
-      <div className="flex items-center justify-end px-2 py-1 border-b border-[#e1e4e8]">
+      <div className="flex items-center justify-end px-2 py-1 border-b border-border">
         <div className="flex items-center gap-1">
           <DropdownMenu open={showNewMenu} onOpenChange={setShowNewMenu}>
             <DropdownMenuTrigger asChild>

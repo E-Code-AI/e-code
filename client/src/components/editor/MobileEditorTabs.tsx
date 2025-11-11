@@ -238,7 +238,7 @@ export function MobileEditorTabs({
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--ecode-surface-hover)] transition-colors touch-manipulation active:scale-98"
                   data-testid="mobile-more-debug"
                 >
-                  <Bug className="h-5 w-5 text-green-500" />
+                  <Bug className="h-5 w-5 text-status-success" />
                   <div className="flex-1 text-left">
                     <div className="font-medium">Debug</div>
                     <div className="text-xs text-[var(--ecode-text-muted)]">Debugger panel</div>
@@ -254,7 +254,7 @@ export function MobileEditorTabs({
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--ecode-surface-hover)] transition-colors touch-manipulation active:scale-98"
                   data-testid="mobile-more-problems"
                 >
-                  <AlertCircle className="h-5 w-5 text-orange-500" />
+                  <AlertCircle className="h-5 w-5 text-status-warning" />
                   <div className="flex-1 text-left">
                     <div className="font-medium">Problems</div>
                     <div className="text-xs text-[var(--ecode-text-muted)]">Code diagnostics</div>
@@ -270,7 +270,7 @@ export function MobileEditorTabs({
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--ecode-surface-hover)] transition-colors touch-manipulation active:scale-98"
                   data-testid="mobile-more-settings"
                 >
-                  <SettingsIcon className="h-5 w-5 text-blue-500" />
+                  <SettingsIcon className="h-5 w-5 text-status-info" />
                   <div className="flex-1 text-left">
                     <div className="font-medium">Settings</div>
                     <div className="text-xs text-[var(--ecode-text-muted)]">Project settings</div>
@@ -286,7 +286,7 @@ export function MobileEditorTabs({
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--ecode-surface-hover)] transition-colors touch-manipulation active:scale-98"
                   data-testid="mobile-more-share"
                 >
-                  <Share2 className="h-5 w-5 text-purple-500" />
+                  <Share2 className="h-5 w-5 text-primary" />
                   <div className="flex-1 text-left">
                     <div className="font-medium">Share</div>
                     <div className="text-xs text-[var(--ecode-text-muted)]">Share project</div>

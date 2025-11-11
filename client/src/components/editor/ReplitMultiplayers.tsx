@@ -73,14 +73,14 @@ export function ReplitMultiplayers({
   ];
 
   return (
-    <div className={cn("h-full flex flex-col bg-white", className)}>
+    <div className={cn("h-full flex flex-col bg-background", className)}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-base font-semibold text-gray-900 mb-3">
+      <div className="p-4 border-b border-border">
+        <h3 className="text-base font-semibold text-foreground mb-3">
           Multiplayers
         </h3>
         
-        <p className="text-sm text-gray-600 mb-3">
+        <p className="text-sm text-muted-foreground mb-3">
           Add people by username or email
         </p>
         
@@ -93,12 +93,12 @@ export function ReplitMultiplayers({
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
-              className="flex-1 text-sm h-8 border-gray-300"
+              className="flex-1 text-sm h-8 border-border"
             />
             <Button
               size="sm"
               onClick={handleInvite}
-              className="h-8 px-3 bg-blue-500 hover:bg-blue-600 text-white text-xs"
+              className="h-8 px-3 bg-status-info hover:bg-status-info text-white text-xs"
             >
               Invite
             </Button>
@@ -108,8 +108,8 @@ export function ReplitMultiplayers({
 
       {/* No one else here section */}
       {mockCollaborators.length === 1 && (
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-          <p className="text-sm font-medium text-gray-900">
+        <div className="px-4 py-3 bg-muted border-b border-border">
+          <p className="text-sm font-medium text-foreground">
             No one else is here
           </p>
         </div>
@@ -121,33 +121,33 @@ export function ReplitMultiplayers({
           {mockCollaborators.map((collaborator) => (
             <div
               key={collaborator.id}
-              className="flex items-center gap-3 p-2 rounded hover:bg-gray-50"
+              className="flex items-center gap-3 p-2 rounded hover:bg-muted"
             >
               <div className="relative">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={collaborator.avatarUrl} />
-                  <AvatarFallback className="bg-gray-200 text-gray-700 text-xs">
+                  <AvatarFallback className="bg-muted text-foreground text-xs">
                     {collaborator.username[0]?.toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 {collaborator.status === 'online' && (
-                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />
+                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-status-success rounded-full border-2 border-white" />
                 )}
               </div>
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-900 truncate">
+                  <span className="text-sm font-medium text-foreground truncate">
                     {collaborator.username}
                   </span>
                   {collaborator.role === 'owner' && (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground">
                       (owner)
                     </span>
                   )}
                 </div>
                 {collaborator.currentFile && (
-                  <p className="text-xs text-gray-500 truncate">
+                  <p className="text-xs text-muted-foreground truncate">
                     {collaborator.currentFile}
                   </p>
                 )}
@@ -155,11 +155,11 @@ export function ReplitMultiplayers({
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="p-1 hover:bg-gray-100 rounded opacity-0 group-hover:opacity-100">
-                    <MoreVertical className="h-3 w-3 text-gray-500" />
+                  <button className="p-1 hover:bg-muted rounded opacity-0 group-hover:opacity-100">
+                    <MoreVertical className="h-3 w-3 text-muted-foreground" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-white">
+                <DropdownMenuContent align="end" className="bg-background">
                   <DropdownMenuItem>View Profile</DropdownMenuItem>
                   <DropdownMenuItem>Send Message</DropdownMenuItem>
                 </DropdownMenuContent>
@@ -170,9 +170,9 @@ export function ReplitMultiplayers({
       </ScrollArea>
 
       {/* Refer a Friend Section */}
-      <div className="p-4 border-t border-gray-200 bg-blue-50">
+      <div className="p-4 border-t border-border bg-status-info/10">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-sm font-medium text-gray-900">
+          <span className="text-sm font-medium text-foreground">
             Refer a friend and earn more credits
           </span>
         </div>
@@ -180,7 +180,7 @@ export function ReplitMultiplayers({
           variant="outline"
           size="sm"
           onClick={handleCopyLink}
-          className="w-full h-8 text-xs border-blue-200 hover:bg-blue-100"
+          className="w-full h-8 text-xs border-status-info hover:bg-status-info-soft"
         >
           {copiedLink ? (
             <>

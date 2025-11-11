@@ -144,13 +144,13 @@ export function ReplitAgentPanel({ projectId, className }: ReplitAgentPanelProps
   };
 
   return (
-    <div className={cn("h-full flex flex-col bg-white", className)}>
+    <div className={cn("h-full flex flex-col bg-background", className)}>
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[#e1e4e8]">
+      <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-[#0969da]" />
-            <h3 className="text-sm font-medium text-gray-900">AI</h3>
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-medium text-foreground">AI</h3>
           </div>
           <Button
             variant="ghost"
@@ -179,8 +179,8 @@ export function ReplitAgentPanel({ projectId, className }: ReplitAgentPanelProps
                 <AvatarFallback className={cn(
                   "text-xs",
                   message.role === 'assistant' 
-                    ? "bg-blue-100 text-blue-700" 
-                    : "bg-gray-100 text-gray-700"
+                    ? "bg-status-info-soft text-status-info" 
+                    : "bg-muted text-foreground"
                 )}>
                   {message.role === 'assistant' ? 'AI' : 'You'}
                 </AvatarFallback>
@@ -194,8 +194,8 @@ export function ReplitAgentPanel({ projectId, className }: ReplitAgentPanelProps
                 <div className={cn(
                   "rounded-lg px-3 py-2 max-w-[85%]",
                   message.role === 'assistant'
-                    ? "bg-[#f1f3f5] text-black"
-                    : "bg-[#0969da] text-white"
+                    ? "bg-muted text-foreground"
+                    : "bg-primary text-white"
                 )}>
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 </div>
@@ -206,20 +206,20 @@ export function ReplitAgentPanel({ projectId, className }: ReplitAgentPanelProps
           {isThinking && (
             <div className="flex gap-3">
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
+                <AvatarFallback className="bg-status-info-soft text-status-info text-xs">
                   AI
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 {streamingContent ? (
-                  <div className="bg-[#f1f3f5] text-black rounded-lg px-3 py-2 max-w-[85%]">
+                  <div className="bg-muted text-foreground rounded-lg px-3 py-2 max-w-[85%]">
                     <p className="text-sm whitespace-pre-wrap">{streamingContent}</p>
-                    <span className="inline-block w-2 h-4 bg-blue-600 animate-pulse ml-1" />
+                    <span className="inline-block w-2 h-4 bg-status-info animate-pulse ml-1" />
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg">
-                    <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                    <span className="text-sm text-gray-600">Thinking...</span>
+                  <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
+                    <Loader2 className="h-4 w-4 animate-spin text-status-info" />
+                    <span className="text-sm text-muted-foreground">Thinking...</span>
                   </div>
                 )}
               </div>
@@ -230,7 +230,7 @@ export function ReplitAgentPanel({ projectId, className }: ReplitAgentPanelProps
 
 
       {/* Input area */}
-      <div className="p-4 border-t border-[#e1e4e8]">
+      <div className="p-4 border-t border-border">
         <div className="relative">
           <Textarea
             value={input}
@@ -243,7 +243,7 @@ export function ReplitAgentPanel({ projectId, className }: ReplitAgentPanelProps
             size="icon"
             onClick={handleSend}
             disabled={!input.trim() || isThinking}
-            className="absolute bottom-2 right-2 h-7 w-7 bg-[#0969da] hover:bg-[#0757b8] rounded"
+            className="absolute bottom-2 right-2 h-7 w-7 bg-primary hover:bg-primary/90 rounded"
           >
             <Send className="h-3.5 w-3.5" />
           </Button>

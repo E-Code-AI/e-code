@@ -85,7 +85,7 @@ export function PreviewPanel({ projectId, isRunning }: PreviewPanelProps) {
       </div>
       
       {/* Preview Content */}
-      <div className="flex-1 relative bg-white dark:bg-zinc-950">
+      <div className="flex-1 relative bg-background dark:bg-background">
         {!isRunning ? (
           <div className="h-full flex items-center justify-center text-center p-8">
             <div>

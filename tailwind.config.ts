@@ -37,6 +37,16 @@ export default {
           tint: '#ffe4d3',
         },
         'ecode-yellow': '#F99D25',
+        
+        // Semantic Status Colors (Fortune 500 Theme Token System)
+        // Using HSL wrapper to enable Tailwind opacity modifiers (/10, /20, etc.)
+        status: {
+          critical: 'hsl(var(--ecode-danger))',
+          success: 'hsl(var(--ecode-green))',
+          warning: 'hsl(var(--ecode-warning))',
+          info: 'hsl(var(--ecode-info))',
+        },
+        
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

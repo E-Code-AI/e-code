@@ -227,11 +227,11 @@ export default function CodeReviewPanel({
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-red-500 text-white';
-      case 'high': return 'bg-red-400 text-white';
-      case 'medium': return 'bg-orange-400 text-white';
-      case 'low': return 'bg-blue-400 text-white';
-      default: return 'bg-gray-400 text-white';
+      case 'critical': return 'bg-status-critical';
+      case 'high': return 'bg-status-critical';
+      case 'medium': return 'bg-status-warning';
+      case 'low': return 'bg-status-info';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -252,7 +252,7 @@ export default function CodeReviewPanel({
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Activity className="w-5 h-5 text-orange-500" />
+              <Activity className="w-5 h-5 text-status-warning" />
               Code Review Panel
             </CardTitle>
             <CardDescription>
@@ -294,37 +294,37 @@ export default function CodeReviewPanel({
         
         {/* Summary Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-          <div className="p-3 rounded-lg bg-gradient-to-r from-blue-500/10 to-blue-600/10 border border-blue-500/20">
+          <div className="p-3 rounded-lg bg-gradient-to-r from-status-info/10 to-blue-600/10 border border-status-info/20">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Total Reviews</p>
                 <p className="text-xl font-bold">{reviews.length}</p>
               </div>
-              <GitBranch className="w-5 h-5 text-blue-500" />
+              <GitBranch className="w-5 h-5 text-status-info" />
             </div>
           </div>
           
-          <div className="p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-orange-500/20">
+          <div className="p-3 rounded-lg bg-gradient-to-r from-status-warning/10 to-orange-600/10 border border-status-warning/20">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Open Issues</p>
                 <p className="text-xl font-bold">{totalIssues - fixedIssues}</p>
               </div>
-              <AlertCircle className="w-5 h-5 text-orange-500" />
+              <AlertCircle className="w-5 h-5 text-status-warning" />
             </div>
           </div>
           
-          <div className="p-3 rounded-lg bg-gradient-to-r from-green-500/10 to-green-600/10 border border-green-500/20">
+          <div className="p-3 rounded-lg bg-gradient-to-r from-status-success/10 to-green-600/10 border border-status-success/20">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Fix Rate</p>
                 <p className="text-xl font-bold">{fixRate}%</p>
               </div>
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
+              <CheckCircle2 className="w-5 h-5 text-status-success" />
             </div>
           </div>
           
-          <div className="p-3 rounded-lg bg-gradient-to-r from-purple-500/10 to-purple-600/10 border border-purple-500/20">
+          <div className="p-3 rounded-lg bg-gradient-to-r from-purple-500/10 to-purple-600/10 border border-border/20">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Avg Quality</p>
@@ -334,7 +334,7 @@ export default function CodeReviewPanel({
                     : 0}%
                 </p>
               </div>
-              <TrendingUp className="w-5 h-5 text-purple-500" />
+              <TrendingUp className="w-5 h-5 text-primary" />
             </div>
           </div>
         </div>
@@ -404,7 +404,7 @@ export default function CodeReviewPanel({
             
             {/* Batch Actions */}
             {selectedIssues.size > 0 && (
-              <div className="flex items-center justify-between p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
+              <div className="flex items-center justify-between p-3 bg-status-warning/10 rounded-lg border border-status-warning/20">
                 <span className="text-sm">
                   {selectedIssues.size} issue{selectedIssues.size > 1 ? 's' : ''} selected
                 </span>
@@ -419,7 +419,7 @@ export default function CodeReviewPanel({
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-green-500 hover:bg-green-600"
+                    className="bg-status-success hover:bg-status-success"
                     onClick={() => batchFixMutation.mutate(Array.from(selectedIssues))}
                     disabled={batchFixMutation.isPending}
                     data-testid="button-batch-fix"
@@ -453,7 +453,7 @@ export default function CodeReviewPanel({
                         animate={{ opacity: 1, x: 0 }}
                         className={cn(
                           'flex items-start gap-3 p-3 rounded-lg border transition-all',
-                          'hover:shadow-md hover:border-orange-500/50',
+                          'hover:shadow-md hover:border-status-warning/50',
                           issue.isFixed && 'opacity-60'
                         )}
                       >
@@ -475,7 +475,7 @@ export default function CodeReviewPanel({
                               {issue.category}
                             </Badge>
                             {issue.isFixed && (
-                              <Badge className="bg-green-500 text-white">
+                              <Badge className="bg-status-success">
                                 <CheckCircle2 className="w-3 h-3 mr-1" />
                                 Fixed
                               </Badge>
@@ -521,7 +521,7 @@ export default function CodeReviewPanel({
                   </>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <CheckCircle2 className="w-12 h-12 text-green-500 mb-4" />
+                    <CheckCircle2 className="w-12 h-12 text-status-success mb-4" />
                     <h3 className="text-lg font-semibold mb-2">No Issues Found</h3>
                     <p className="text-muted-foreground">
                       {filterStatus !== 'all' || filterSeverity !== 'all' || filterCategory !== 'all'
@@ -625,7 +625,7 @@ export default function CodeReviewPanel({
                           <Badge variant="outline">
                             Review #{review.id}
                           </Badge>
-                          <Badge className={review.status === 'completed' ? 'bg-green-500' : 'bg-blue-500'}>
+                          <Badge className={review.status === 'completed' ? 'bg-status-success' : 'bg-status-info'}>
                             {review.status}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
@@ -635,11 +635,11 @@ export default function CodeReviewPanel({
                         
                         <div className="flex items-center gap-4 text-sm">
                           <div className="flex items-center gap-1">
-                            <Activity className="w-4 h-4 text-orange-500" />
+                            <Activity className="w-4 h-4 text-status-warning" />
                             <span>Quality: {review.codeQualityScore}%</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <AlertCircle className="w-4 h-4 text-red-500" />
+                            <AlertCircle className="w-4 h-4 text-status-critical" />
                             <span>{review.totalIssues} issues</span>
                           </div>
                         </div>
@@ -649,16 +649,16 @@ export default function CodeReviewPanel({
                         </p>
                         
                         <div className="flex gap-2 text-xs">
-                          <span className="text-red-500">
+                          <span className="text-status-critical">
                             {review.criticalIssues} critical
                           </span>
-                          <span className="text-orange-500">
+                          <span className="text-status-warning">
                             {review.highIssues} high
                           </span>
-                          <span className="text-yellow-500">
+                          <span className="text-status-warning">
                             {review.mediumIssues} medium
                           </span>
-                          <span className="text-blue-500">
+                          <span className="text-status-info">
                             {review.lowIssues} low
                           </span>
                         </div>

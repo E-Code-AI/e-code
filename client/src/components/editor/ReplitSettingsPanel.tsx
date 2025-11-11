@@ -223,9 +223,9 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
                 { action: 'New File', keys: 'Cmd+N' },
                 { action: 'Close Tab', keys: 'Cmd+W' }
               ].map((shortcut) => (
-                <div key={shortcut.action} className="flex items-center justify-between py-2 px-3 hover:bg-gray-50 rounded">
-                  <span className="text-sm text-gray-700">{shortcut.action}</span>
-                  <kbd className="px-2 py-1 text-xs bg-gray-100 rounded border border-gray-200">
+                <div key={shortcut.action} className="flex items-center justify-between py-2 px-3 hover:bg-muted rounded">
+                  <span className="text-sm text-foreground">{shortcut.action}</span>
+                  <kbd className="px-2 py-1 text-xs bg-muted rounded border border-border">
                     {shortcut.keys}
                   </kbd>
                 </div>
@@ -322,26 +322,26 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full">
-            <Settings className="h-12 w-12 text-gray-300 mb-3" />
-            <p className="text-sm text-gray-500">Section coming soon</p>
+            <Settings className="h-12 w-12 text-muted-foreground mb-3" />
+            <p className="text-sm text-muted-foreground">Section coming soon</p>
           </div>
         );
     }
   };
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200">
+      <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
-          <Settings className="h-5 w-5 text-gray-600" />
-          <h3 className="font-semibold text-gray-900">Settings</h3>
+          <Settings className="h-5 w-5 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground">Settings</h3>
         </div>
       </div>
 
       <div className="flex-1 flex">
         {/* Sidebar */}
-        <div className="w-48 border-r border-gray-200">
+        <div className="w-48 border-r border-border">
           <ScrollArea className="h-full">
             <div className="p-2">
               {sections.map((section) => {
@@ -353,8 +353,8 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
                     className={cn(
                       "w-full flex items-center gap-2 px-3 py-2 text-sm rounded transition-colors",
                       activeSection === section.id
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-gray-700 hover:bg-gray-50"
+                        ? "bg-status-info/10 text-status-info"
+                        : "text-foreground hover:bg-muted"
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -377,9 +377,9 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
 
           {/* Footer */}
           {isDirty && (
-            <div className="border-t border-gray-200 p-4 bg-gray-50">
+            <div className="border-t border-border p-4 bg-muted">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">You have unsaved changes</span>
+                <span className="text-sm text-muted-foreground">You have unsaved changes</span>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={handleReset}>
                     <RotateCcw className="h-3 w-3 mr-1" />

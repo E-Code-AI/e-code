@@ -419,15 +419,15 @@ export function CommandPalette({
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'file':
-        return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+        return 'bg-status-info/10 text-status-info border-status-info/20';
       case 'tool':
-        return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+        return 'bg-primary/10 text-primary border-border/20';
       case 'action':
-        return 'bg-green-500/10 text-green-400 border-green-500/20';
+        return 'bg-status-success/10 text-status-success border-status-success/20';
       case 'recent':
-        return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+        return 'bg-status-warning/10 text-status-warning border-status-warning/20';
       default:
-        return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+        return 'bg-muted/10 text-muted-foreground border-border/20';
     }
   };
 
