@@ -482,7 +482,7 @@ export class ProjectsRouter {
         console.log(`[ProjectAI] Approval request for action ${actionId} in project ${projectId}`);
 
         // Get action from approval queue
-        const action = aiApprovalQueue.approve(actionId, userId);
+        const action = await aiApprovalQueue.approve(actionId, userId);
 
         if (!action) {
           return res.status(404).json({ 
@@ -546,61 +546,16 @@ export class ProjectsRouter {
               code: 'EXECUTION_FAILED' 
             });
           }
-        } else if (action.type === 'create_folder') {
-          try {
-            // Validate path
-            const pathValidation = aiSecurityService.validatePath(action.path);
-            if (!pathValidation.valid) {
-              await aiSecurityService.logAction(userId, projectId, action, {
-                success: false,
-                error: `Path validation failed: ${pathValidation.reason}`
-              });
-
-              return res.status(403).json({ 
-                error: pathValidation.reason,
-                code: 'SECURITY_BLOCKED' 
-              });
-            }
-
-            // Create folder as directory file
-            const folder = await this.storage.createFile({
-              projectId,
-              path: pathValidation.sanitized || action.path,
-              content: '',
-              isDirectory: true
-            });
-
-            // Log successful action
-            await aiSecurityService.logAction(userId, projectId, action, {
-              success: true,
-              folderId: String(folder.id)
-            }, actionId);
-
-            console.log(`[ProjectAI] Folder created successfully:`, folder.id);
-
-            return res.json({ 
-              success: true,
-              folder,
-              message: `Created folder ${action.path}` 
-            });
-
-          } catch (error: any) {
-            console.error(`[ProjectAI] Failed to create folder:`, error);
-
-            await aiSecurityService.logAction(userId, projectId, action, {
-              success: false,
-              error: error.message
-            });
-
-            return res.status(500).json({ 
-              error: error.message || 'Failed to create folder',
-              code: 'EXECUTION_FAILED' 
-            });
-          }
+        } else if (action.type === 'edit_file') {
+          // Handle edit_file action
+          return res.status(501).json({ 
+            error: 'Edit file action not yet implemented',
+            code: 'NOT_IMPLEMENTED' 
+          });
         } else {
-          // Unsupported action type
+          // TypeScript ensures this is unreachable, but keeping for safety
           return res.status(400).json({ 
-            error: `Unsupported action type: ${action.type}`,
+            error: `Unsupported action type`,
             code: 'UNSUPPORTED_ACTION' 
           });
         }
@@ -658,7 +613,7 @@ export class ProjectsRouter {
           return res.status(401).json({ error: 'Unauthorized', code: 'NO_USER' });
         }
 
-        const pending = aiApprovalQueue.getPendingActions(userId, projectId);
+        const pending = await aiApprovalQueue.getPendingActions(userId, projectId);
 
         return res.json({ 
           actions: pending.map(p => ({
