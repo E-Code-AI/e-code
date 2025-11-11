@@ -150,9 +150,9 @@ export function getLanguageRecommendations(dependencies: any): string[] {
  */
 export async function startProjectRuntime(req: Request, res: Response) {
   try {
-    const projectId = parseInt(req.params.id);
+    const projectId = req.params.id; // Keep as string (UUID)
     
-    if (isNaN(projectId)) {
+    if (!projectId) {
       return res.status(400).json({ message: 'Invalid project ID' });
     }
     
@@ -165,7 +165,7 @@ export async function startProjectRuntime(req: Request, res: Response) {
     }
     
     // Get project files
-    const files = await storage.getFilesByProject(projectId);
+    const files = await storage.getFilesByProjectId(projectId);
     if (!files.length) {
       return res.status(400).json({ message: 'No files found in project' });
     }
@@ -220,9 +220,9 @@ export async function startProjectRuntime(req: Request, res: Response) {
  */
 export async function stopProjectRuntime(req: Request, res: Response) {
   try {
-    const projectId = parseInt(req.params.id);
+    const projectId = req.params.id; // Keep as string (UUID)
     
-    if (isNaN(projectId)) {
+    if (!projectId) {
       return res.status(400).json({ message: 'Invalid project ID' });
     }
     
@@ -256,9 +256,9 @@ export async function stopProjectRuntime(req: Request, res: Response) {
  */
 export function getProjectRuntimeStatus(req: Request, res: Response) {
   try {
-    const projectId = parseInt(req.params.id);
+    const projectId = req.params.id; // Keep as string (UUID)
     
-    if (isNaN(projectId)) {
+    if (!projectId) {
       return res.status(400).json({ message: 'Invalid project ID' });
     }
     
@@ -284,9 +284,9 @@ export function getProjectRuntimeStatus(req: Request, res: Response) {
  */
 export async function executeProjectCommand(req: Request, res: Response) {
   try {
-    const projectId = parseInt(req.params.id);
+    const projectId = req.params.id; // Keep as string (UUID)
     
-    if (isNaN(projectId)) {
+    if (!projectId) {
       return res.status(400).json({ message: 'Invalid project ID' });
     }
     
@@ -320,9 +320,9 @@ export async function executeProjectCommand(req: Request, res: Response) {
  */
 export function getProjectRuntimeLogs(req: Request, res: Response) {
   try {
-    const projectId = parseInt(req.params.id);
+    const projectId = req.params.id; // Keep as string (UUID)
     
-    if (isNaN(projectId)) {
+    if (!projectId) {
       return res.status(400).json({ message: 'Invalid project ID' });
     }
     

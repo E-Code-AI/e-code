@@ -22,7 +22,7 @@ const activeContainers: Map<string, {
 
 // Interface for container configuration
 interface ContainerConfig {
-  projectId: number;
+  projectId: string;
   language: Language;
   projectDir: string;
   environmentVariables?: Record<string, string>;
