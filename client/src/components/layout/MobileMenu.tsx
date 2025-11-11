@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/use-auth';
 import {
   Menu, Home, Code, Globe, Users, Database, Book,
   Settings, User, HelpCircle, Crown, Plus, Search,
-  Terminal, GitBranch, Sparkles, Package, Shield, LogOut,
+  Terminal, GitBranch, Package, Shield, LogOut,
   ChevronRight, Zap, Briefcase, GraduationCap, Workflow, HardDrive
 } from 'lucide-react';
 
@@ -37,13 +37,10 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
 
   const navigationLinks = [
     { icon: Home, label: 'Home', path: '/dashboard' },
-    { icon: Code, label: 'My Projects', path: '/projects' },
-    { icon: Sparkles, label: 'AI Agent', path: '/ai-agent' },
+    { icon: Code, label: 'My Repls', path: '/projects' },
     { icon: Book, label: 'Templates', path: '/templates' },
     { icon: Package, label: 'Deployments', path: '/deployments' },
     { icon: Users, label: 'Community', path: '/community' },
-    { icon: Database, label: 'Database', path: '/database' },
-    { icon: HardDrive, label: 'Storage', path: '/storage' },
   ];
 
   const toolsLinks = [
