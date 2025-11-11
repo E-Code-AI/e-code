@@ -309,7 +309,7 @@ export default function UserProfile() {
                     <div 
                       key={project.id}
                       className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent cursor-pointer transition-colors"
-                      onClick={() => navigate(`/editor/${project.id}`)}
+                      onClick={() => navigate(`/ide/${project.id}`)}
                     >
                       <div className="flex-1">
                         <h4 className="font-medium">{project.name}</h4>
@@ -394,7 +394,7 @@ export default function UserProfile() {
                 <div className="grid md:grid-cols-2 gap-4">
                   {profile.topProjects.map(project => (
                     <Card key={project.id} className="hover:shadow-md transition-shadow cursor-pointer"
-                          onClick={() => navigate(`/editor/${project.id}`)}>
+                          onClick={() => navigate(`/ide/${project.id}`)}>
                       <CardContent className="p-4">
                         <h3 className="font-semibold mb-2">{project.name}</h3>
                         <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
@@ -451,7 +451,7 @@ export default function UserProfile() {
                           <Button 
                             variant="link" 
                             className="p-0 h-auto text-sm"
-                            onClick={() => navigate(`/editor/${activity.projectId}`)}
+                            onClick={() => navigate(`/ide/${activity.projectId}`)}
                           >
                             {activity.projectName}
                           </Button>

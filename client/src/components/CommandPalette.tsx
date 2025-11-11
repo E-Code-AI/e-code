@@ -240,7 +240,7 @@ export function CommandPalette() {
                 <CommandItem
                   key={project.id}
                   onSelect={() => {
-                    navigate(`/editor/${project.id}`);
+                    navigate(`/ide/${project.id}`);
                     setOpen(false);
                   }}
                 >
