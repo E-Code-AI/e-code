@@ -197,10 +197,6 @@ export class MobileAppService {
   private async sendToDevice(pushToken: string, data: any): Promise<void> {
     if (!fcmService.isInitialized()) {
       console.warn('[MobileAppService] FCM service not initialized. Set FIREBASE_SERVICE_ACCOUNT_JSON environment variable.');
-      console.log(`[MobileAppService] Push notification queued (not sent) for ${pushToken}:`, {
-        title: data.title,
-        body: data.body?.substring(0, 50)
-      });
       return;
     }
 
@@ -212,9 +208,7 @@ export class MobileAppService {
       ) : undefined
     });
 
-    if (success) {
-      console.log(`[MobileAppService] Push notification sent successfully to ${pushToken}`);
-    } else {
+    if (!success) {
       console.error(`[MobileAppService] Failed to send push notification to ${pushToken}`);
     }
   }

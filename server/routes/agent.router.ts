@@ -534,8 +534,6 @@ export function setupAgentWebSocket(io: SocketIOServer) {
   });
 
   agentNamespace.on('connection', (socket) => {
-    console.log('Agent WebSocket connected');
-
     // Subscribe to agent events
     const handlers = {
       fileOperation: (event: any) => socket.emit('file:operation', event),

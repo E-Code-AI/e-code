@@ -4010,14 +4010,11 @@ export class DatabaseStorage implements IStorage {
       // Handle different result formats
       const rows = Array.isArray(columnCheck) ? columnCheck : (columnCheck.rows || []);
       if (rows.length < 4) {
-        console.log('[Storage] Skipping prompt templates initialization (optional feature) - table schema mismatch or missing columns');
         return;
       }
     } catch (error: any) {
-      console.log('[Storage] Skipping prompt templates initialization (optional feature):', error?.message || 'Unknown error');
       return;
     }
-    console.log('[Storage] Prompt templates table found with correct schema, initializing defaults...');
 
     const defaultTemplates = [
       {
@@ -4252,14 +4249,10 @@ Constraints: {{constraints}}`,
             examples: template.examples as any,
           });
         }
-        console.log('[Storage] Default prompt templates initialized successfully');
-      } else {
-        console.log('[Storage] Default prompt templates already exist, skipping initialization');
       }
     } catch (error: any) {
       // Gracefully handle table schema mismatches or missing tables
       // This is a non-critical optional feature for AI prompt templates
-      console.log('[Storage] Skipping prompt templates initialization (optional feature):', error?.message || 'Unknown error');
     }
   }
 
@@ -4724,31 +4717,19 @@ Constraints: {{constraints}}`,
 }
 
 // Initialize storage
-console.log('[Storage Module] Creating DatabaseStorage instance...');
 export const storage = new DatabaseStorage();
-console.log('[Storage Module] DatabaseStorage instance created successfully');
 
 // Export a getter function for compatibility with modular routers
 export const getStorage = () => storage;
 
 // Initialize default templates on startup
-console.log('[Storage Module] Starting default templates initialization...');
 (async () => {
   try {
     await storage.initializeDefaultPromptTemplates();
-    console.log('[Storage Module] Default templates initialization completed');
   } catch (error) {
     console.error('Failed to initialize default prompt templates:', error);
   }
 })();
-console.log('[Storage Module] Default templates initialization scheduled');
-
-// Session store with pg pool
-console.log('[Storage Module] About to import Pool from pg...');
-// Note: Pool import has been moved to top of file
-console.log('[Storage Module] Pool imported successfully');
-
-console.log('[Storage Module] Starting session store initialization...');
 
 // Initialize session store with error handling
 let sessionStore: any;
@@ -4764,7 +4745,6 @@ try {
       touch: (_sid: string, _session: any, callback: Function) => callback(null),
     };
   } else {
-    console.log('[Storage Module] Creating PostgreSQL pool for session store...');
     // Create a native pg pool for session store
     const pgPool = new Pool({
       connectionString: process.env.DATABASE_URL,
@@ -4773,16 +4753,13 @@ try {
       connectionTimeoutMillis: 10000,
     });
 
-    console.log('[Storage Module] Creating pgStore...');
     const pgStore = connectPg(session);
     
-    console.log('[Storage Module] Initializing session store...');
     sessionStore = new pgStore({
       pool: pgPool,
       createTableIfMissing: true,
       ttl: 7 * 24 * 60 * 60, // 7 days
     });
-    console.log('[Storage Module] Session store initialized successfully');
   }
 } catch (error) {
   console.error('[Storage Module] Failed to initialize session store:', error);

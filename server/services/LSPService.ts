@@ -133,8 +133,6 @@ export class LSPService {
       const client: LSPClient = { ws, projectId, userId: authenticatedUserId };
       this.addClient(projectId, client);
 
-      console.log(`[LSP] Authenticated client connected: project=${projectId}, user=${authenticatedUserId}`);
-
       // Send initial diagnostics
       this.sendInitialDiagnostics(client);
 
@@ -149,7 +147,6 @@ export class LSPService {
 
       ws.on('close', () => {
         this.removeClient(projectId, client);
-        console.log(`[LSP] Client disconnected: project=${projectId}`);
       });
 
       ws.on('error', (error) => {
@@ -396,12 +393,10 @@ export class LSPService {
         const teamMember = await this.storage.getTeamMemberByUserAndProject?.(userId, projectId);
         if (teamMember) {
           // User is a team member - has access
-          console.log(`[LSP] Team member ${userId} authorized for project ${projectId}`);
           return true;
         }
       } catch (error) {
         // Team feature might not be available yet, log but don't fail
-        console.debug('[LSP] Team membership check skipped:', error);
       }
 
       // User is neither owner nor team member
@@ -435,6 +430,5 @@ export function setupLSPWebSocket(httpServer: any, storage: IStorage): LSPServic
     }
   });
 
-  console.log('[LSP] WebSocket server initialized at /api/lsp/ws');
   return lspService;
 }

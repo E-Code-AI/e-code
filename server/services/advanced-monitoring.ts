@@ -230,19 +230,15 @@ export class AdvancedMonitoringService extends EventEmitter {
     switch (action.type) {
       case 'email':
         // Would send email via email service
-        console.log(`[Alert Email] ${alert.message}`);
         break;
       case 'webhook':
         // Would call webhook
-        console.log(`[Alert Webhook] ${action.config.url} - ${alert.message}`);
         break;
       case 'slack':
         // Would send Slack message
-        console.log(`[Alert Slack] ${alert.message}`);
         break;
       case 'pagerduty':
         // Would create PagerDuty incident
-        console.log(`[Alert PagerDuty] ${alert.message}`);
         break;
     }
   }

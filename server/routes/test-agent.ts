@@ -5,14 +5,10 @@ const router = Router();
 
 // Test endpoint for agent functionality (no auth required for testing)
 router.post('/api/test/agent', async (req, res) => {
-  console.log('[Test Agent] Endpoint called');
-  
   try {
     // Create a test session
     const testUserId = '30711e48-281e-4dcd-9372-d0941ddf8a1e'; // Admin user ID from database
     const session = await agentOrchestrator.createSession(testUserId, undefined, 'gpt-5');
-    
-    console.log('[Test Agent] Session created:', session.id);
     
     // Execute agent with test message
     const messages = req.body.messages || [{
@@ -25,8 +21,6 @@ router.post('/api/test/agent', async (req, res) => {
       messages,
       testUserId
     );
-    
-    console.log('[Test Agent] Execution complete');
     
     res.json({
       success: true,

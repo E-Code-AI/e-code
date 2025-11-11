@@ -435,9 +435,6 @@ export class FilesRouter {
     this.router.post("/api/files/:projectId", this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectId = req.params.projectId;
-        console.log('[FILES-API] ===== FILE CREATE REQUEST =====');
-        console.log('[FILES-API] Project ID:', projectId);
-        console.log('[FILES-API] Request body:', JSON.stringify(req.body, null, 2));
         
         // FORTUNE 500: Server-side path derivation
         // Accept both legacy (explicit path) and new (name + parentId) payloads
@@ -462,8 +459,6 @@ export class FilesRouter {
             // Root level file
             filePath = name;
           }
-          
-          console.log('[FILES-API] Derived path from name+parentId:', filePath);
         }
         
         const validatedData = insertFileSchema.parse({
@@ -472,13 +467,9 @@ export class FilesRouter {
           projectId
         });
         
-        console.log('[FILES-API] Validated data:', JSON.stringify(validatedData, null, 2));
-        
         // SECURITY: Fortune 500 path validation
         const { aiSecurityService } = await import('../services/ai-security.service');
-        console.log('[FILES-API] About to validate path:', validatedData.path);
         const pathValidation = aiSecurityService.validatePath(validatedData.path);
-        console.log('[FILES-API] Validation result:', JSON.stringify(pathValidation, null, 2));
         
         if (!pathValidation.valid) {
           console.warn(`[FILES-SECURITY] Blocked (compat): ${validatedData.path} - ${pathValidation.reason}`);

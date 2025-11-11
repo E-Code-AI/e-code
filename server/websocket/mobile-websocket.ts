@@ -25,8 +25,6 @@ export class MobileWebSocketService {
   private setupNamespaces() {
     // Terminal WebSocket namespace
     this.io.of('/terminal').on('connection', (socket) => {
-      console.log('[Mobile Terminal] Client connected:', socket.id);
-
       socket.on('command', async (data) => {
         const { command, projectId } = data;
         
@@ -40,15 +38,12 @@ export class MobileWebSocketService {
       });
 
       socket.on('disconnect', () => {
-        console.log('[Mobile Terminal] Client disconnected:', socket.id);
         this.terminalSessions.delete(socket.id);
       });
     });
 
     // AI Assistant WebSocket namespace
     this.io.of('/ai').on('connection', (socket) => {
-      console.log('[Mobile AI] Client connected:', socket.id);
-
       socket.on('message', async (data) => {
         const { message, projectId } = data;
         
@@ -71,15 +66,12 @@ export class MobileWebSocketService {
       });
 
       socket.on('disconnect', () => {
-        console.log('[Mobile AI] Client disconnected:', socket.id);
         this.aiSessions.delete(socket.id);
       });
     });
 
     // Real-time collaboration namespace
     this.io.of('/collaboration').on('connection', (socket) => {
-      console.log('[Mobile Collaboration] Client connected:', socket.id);
-
       socket.on('join-project', (projectId) => {
         socket.join(`project-${projectId}`);
         socket.to(`project-${projectId}`).emit('user-joined', { userId: socket.id });
@@ -94,7 +86,7 @@ export class MobileWebSocketService {
       });
 
       socket.on('disconnect', () => {
-        console.log('[Mobile Collaboration] Client disconnected:', socket.id);
+        // Client disconnected
       });
     });
   }

@@ -188,20 +188,9 @@ export class AgentOrchestratorService extends EventEmitter {
     const baseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || 'http://localhost:1106/modelfarm/openai';
     const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY || '_DUMMY_API_KEY_';
     
-    console.log('[AgentOrchestrator] Initializing OpenAI client...');
-    console.log('[AgentOrchestrator] Base URL:', baseUrl);
-    console.log('[AgentOrchestrator] API Key present:', !!apiKey);
-    
     this.openai = new OpenAI({
       apiKey: apiKey,
       baseURL: baseUrl,
-    });
-    
-    console.log('[AgentOrchestrator] Initialized with GPT-5 via Replit AI Integrations');
-    console.log('[AgentOrchestrator] Configuration:', {
-      baseURL: baseUrl,
-      apiKeyPresent: !!apiKey,
-      apiKeyLength: apiKey ? apiKey.length : 0
     });
   }
 
@@ -246,12 +235,6 @@ export class AgentOrchestratorService extends EventEmitter {
     messages: AgentMessage[],
     userId: string
   ): Promise<AgentExecutionResult> {
-    console.log('[AgentOrchestrator] executeAgent called with:', {
-      sessionId,
-      messageCount: messages.length,
-      userId
-    });
-
     try {
       const session = await this.validateSession(sessionId);
       
@@ -263,13 +246,7 @@ export class AgentOrchestratorService extends EventEmitter {
 
       const allMessages = [systemMessage, ...messages];
 
-      console.log('[AgentOrchestrator] Preparing OpenAI API call...');
-      console.log('[AgentOrchestrator] Messages to send:', allMessages.length);
-
       try {
-        // Simplified API call without tools/functions for initial testing
-        console.log('[AgentOrchestrator] Making OpenAI API call to:', this.openai.baseURL);
-        
         const completion = await this.openai.chat.completions.create({
           model: 'gpt-5',  // Use GPT-5 from Replit AI Integrations
           messages: allMessages.map(m => ({
@@ -279,9 +256,6 @@ export class AgentOrchestratorService extends EventEmitter {
           max_completion_tokens: 500  // GPT-5 requires max_completion_tokens, not max_tokens
           // Removed temperature as it may not be supported
         });
-
-        console.log('[AgentOrchestrator] API call successful, response received');
-        console.log('[AgentOrchestrator] Completion:', JSON.stringify(completion, null, 2));
 
         const response = completion.choices[0].message;
         const responseContent = response.content || 'I am GPT-5 on E-Code Platform, ready to help you build amazing applications!';
@@ -312,9 +286,6 @@ export class AgentOrchestratorService extends EventEmitter {
           // Continue anyway - this is not critical
         }
 
-        // Log the response for debugging
-        console.log('[AgentOrchestrator] Agent Response:', responseContent);
-
         return {
           message: responseContent,
           functionCalls: [],
@@ -329,9 +300,6 @@ export class AgentOrchestratorService extends EventEmitter {
           stack: apiError.stack
         });
 
-        // Return a GPT-5 style response when API fails (demonstrating functionality)
-        console.log('[AgentOrchestrator] Using GPT-5 simulation mode due to API connection issue');
-        
         // Parse the user's message to provide a contextual response
         const userMessage = messages[messages.length - 1]?.content || '';
         let fallbackResponse = '';

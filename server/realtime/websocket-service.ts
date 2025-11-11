@@ -70,7 +70,6 @@ export class WebSocketService {
   private setupEventHandlers() {
     this.io.on('connection', (socket: Socket) => {
       const user = socket.data.user;
-      console.log(`User ${user.username} connected via WebSocket`);
 
       // Track user sockets
       if (!this.userSockets.has(user.id)) {
@@ -204,8 +203,6 @@ export class WebSocketService {
 
       // Handle disconnect
       socket.on('disconnect', () => {
-        console.log(`User ${user.username} disconnected`);
-        
         // Remove socket from user's socket set
         this.userSockets.get(user.id)?.delete(socket.id);
         
@@ -270,7 +267,6 @@ export class WebSocketService {
     // This would integrate with the file system service
     try {
       // await fileService.updateFile(projectId, fileId, changes);
-      console.log(`Saving file changes for project ${projectId}, file ${fileId}`);
     } catch (error) {
       console.error('Error saving file changes:', error);
     }
@@ -280,7 +276,6 @@ export class WebSocketService {
     // Implement chat message persistence
     try {
       // await storage.saveChatMessage(projectId, message);
-      console.log(`Saving chat message for project ${projectId}`);
     } catch (error) {
       console.error('Error saving chat message:', error);
     }

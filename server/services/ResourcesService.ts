@@ -21,7 +21,6 @@ export class ResourcesService {
     this.storage = storage;
 
     this.wss = new WebSocket.Server({ noServer: true });
-    console.log('[Resources] Service initialized');
 
     server.on('upgrade', async (request: IncomingMessage, socket, head) => {
       if (!request.url?.startsWith('/api/resources/ws')) {
@@ -151,8 +150,6 @@ export class ResourcesService {
     this.wss.on('connection', (ws: WebSocket, request: IncomingMessage, projectId: string, userId: string) => {
       this.handleConnection(ws, request, projectId, userId);
     });
-
-    console.log('[Resources] WebSocket server initialized at /api/resources/ws');
   }
 
   /**
@@ -168,7 +165,6 @@ export class ResourcesService {
 
       // Check if user is project owner
       if (project.ownerId === userId) {
-        console.log(`[Resources] Owner ${userId} authorized for project ${projectId}`);
         return true;
       }
 
@@ -176,7 +172,6 @@ export class ResourcesService {
       try {
         const teamMember = await this.storage.getTeamMemberByUserAndProject?.(userId, projectId);
         if (teamMember) {
-          console.log(`[Resources] Team member ${userId} authorized for project ${projectId}`);
           return true;
         }
       } catch (error) {
@@ -197,8 +192,6 @@ export class ResourcesService {
    * Handle new WebSocket connection for resource metrics streaming
    */
   async handleConnection(ws: WebSocket, request: IncomingMessage, projectId: string, userId: string): Promise<void> {
-    console.log(`[Resources] New connection for project ${projectId}, user ${userId}`);
-
     const client: ResourcesClient = {
       ws,
       projectId,
@@ -231,7 +224,6 @@ export class ResourcesService {
 
     // Handle disconnection
     ws.on('close', () => {
-      console.log(`[Resources] Client disconnected for project ${projectId}`);
       this.removeClient(projectId, client);
     });
 
@@ -244,7 +236,6 @@ export class ResourcesService {
     ws.on('message', (data) => {
       try {
         const message = JSON.parse(data.toString());
-        console.log('[Resources] Received message:', message);
         // Handle commands like requesting specific time ranges, etc.
       } catch (error) {
         console.error('[Resources] Error parsing message:', error);
@@ -274,11 +265,8 @@ export class ResourcesService {
   async broadcastMetricUpdate(projectId: string, metric: ResourceMetric): Promise<void> {
     const clients = this.clients.get(projectId);
     if (!clients || clients.length === 0) {
-      console.log(`[Resources] No clients connected for project ${projectId}`);
       return;
     }
-
-    console.log(`[Resources] Broadcasting metric update to ${clients.length} client(s) for project ${projectId}`);
 
     const message = JSON.stringify({
       type: 'metric_update',

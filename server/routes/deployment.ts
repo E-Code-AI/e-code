@@ -46,8 +46,6 @@ router.post('/api/projects/:projectId/deploy', async (req, res) => {
     const projectId = req.params.projectId;
     const userId = req.user!.id;
 
-    console.log(`📦 [REAL DEPLOYMENT] Starting deployment for project ${projectId} by user ${userId}`);
-
     // Get project to validate it exists
     const project = await storage.getProject(projectId);
     if (!project) {
@@ -86,8 +84,6 @@ router.post('/api/projects/:projectId/deploy', async (req, res) => {
       projectId: projectId, // Keep as string for UUID support
       ...config
     });
-
-    console.log(`✅ [REAL DEPLOYMENT] Deployment created with ID: ${deploymentId}`);
 
     // Get deployment status from deploymentManager
     const deployment = await deploymentManager.getDeployment(deploymentId);

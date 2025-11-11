@@ -106,6 +106,4 @@ export function validateOriginConfig(): void {
       'Example: ALLOWED_ORIGINS=https://yourdomain.com,http://localhost:3000'
     );
   }
-  
-  console.log('[SECURITY] Allowed origins configured:', origins);
 }

@@ -127,7 +127,6 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
     const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
     
     ws.onopen = () => {
-      console.log('[WebSocket] Connected for AI progress updates');
       setWsConnected(true);
       // Send authentication/project info
       ws.send(JSON.stringify({ 
@@ -146,7 +145,6 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
             if (data.projectId === projectId) {
               setCurrentStep(data.step);
               setBuildProgress(data.progress);
-              console.log(`[AI Progress] ${data.step} - ${data.progress}%`);
               
               // Add progress message to chat
               const progressMessage: Message = {
@@ -164,7 +162,7 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
             
           case 'ai:status':
             if (data.projectId === projectId) {
-              console.log(`[AI Status] ${data.status}: ${data.message}`);
+              // AI status update
             }
             break;
             
@@ -191,7 +189,6 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
     };
     
     ws.onclose = () => {
-      console.log('[WebSocket] Disconnected');
       setWsConnected(false);
     };
     
@@ -214,7 +211,6 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
       
       // Automatically start AI generation like Replit
       setTimeout(() => {
-        console.log('[AI Agent] Starting automatic generation from prompt:', storedPrompt);
         handleAutoGenerate(storedPrompt);
       }, 500); // Small delay to ensure component is fully mounted
     }
@@ -233,7 +229,6 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
           const tools = await response.json();
           setMcpTools(tools);
           setMcpConnected(true);
-          console.log(`[MCP] ✅ Connected to MCP server with ${tools.length} tools available`);
           toast({
             title: 'MCP Server Connected',
             description: `Connected to Model Context Protocol with ${tools.length} tools`,
@@ -251,10 +246,8 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
   // Execute MCP tool - Used by AI agent for all operations
   const executeMCPTool = async (toolName: string, args: any) => {
     try {
-      console.log(`[MCP] 🔧 Executing tool: ${toolName}`, args);
       const response = await apiRequest('POST', `http://localhost:3200/tools/${toolName}`, args);
       const result = await response.json();
-      console.log(`[MCP] ✅ Tool ${toolName} result:`, result);
       return result;
     } catch (error) {
       console.error(`[MCP] ❌ Failed to execute tool ${toolName}:`, error);

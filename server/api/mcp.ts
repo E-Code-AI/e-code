@@ -126,15 +126,10 @@ export function initializeMCPServer(app: Express) {
     setTimeout(async () => {
       try {
         await mcpClient?.connect();
-        console.log('[MCP] Client connected to server successfully');
       } catch (error) {
         console.error('[MCP] Failed to connect client:', error);
       }
     }, 1000);
-    
-    console.log('[MCP] ✅ Server fully initialized with HTTP transport on /mcp/*');
-    console.log('[MCP] Available tools: fs_read, fs_write, exec_command, db_query, ai_complete, and 70+ more');
-    console.log('[MCP] AI Agent can now use MCP for all operations');
 
     return true;
   } catch (error) {

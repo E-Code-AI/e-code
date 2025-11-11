@@ -19,7 +19,6 @@ export class BuildLogsService {
 
   constructor(storage: IStorage) {
     this.storage = storage;
-    console.log('[BuildLogs] Service initialized');
   }
 
   /**
@@ -41,7 +40,6 @@ export class BuildLogsService {
 
       // Check if user owns the project
       if (project.ownerId === userId) {
-        console.log(`[BuildLogs] Owner ${userId} authorized for project ${projectId}`);
         return true;
       }
 
@@ -49,12 +47,10 @@ export class BuildLogsService {
       try {
         const teamMember = await this.storage.getTeamMemberByUserAndProject?.(userId, projectId);
         if (teamMember) {
-          console.log(`[BuildLogs] Team member ${userId} authorized for project ${projectId}`);
           return true;
         }
       } catch (error) {
         // Team feature might not be available yet, log but don't fail
-        console.debug('[BuildLogs] Team membership check skipped:', error);
       }
 
       // User is neither owner nor team member
@@ -70,8 +66,6 @@ export class BuildLogsService {
    * Handle new WebSocket connection for build logs streaming
    */
   async handleConnection(ws: WebSocket, request: IncomingMessage, projectId: string, userId: string, buildId?: string): Promise<void> {
-    console.log(`[BuildLogs] New connection for project ${projectId}, user ${userId}, buildId: ${buildId || 'all'}`);
-
     const client: BuildLogsClient = {
       ws,
       projectId,
@@ -187,7 +181,6 @@ export class BuildLogsService {
     const index = projectClients.findIndex(c => c.ws === ws);
     if (index !== -1) {
       projectClients.splice(index, 1);
-      console.log(`[BuildLogs] Client disconnected from project ${projectId}`);
     }
 
     // Clean up empty project arrays
@@ -295,7 +288,6 @@ export class BuildLogsService {
         }
 
         await this.handleConnection(ws, request, projectId, userId, buildId);
-        console.log(`[BuildLogs] Authenticated client connected: project=${projectId}, user=${userId}`);
       } catch (error) {
         console.error('[BuildLogs] Connection error:', error);
         ws.close(1011, 'Internal server error');
@@ -339,6 +331,5 @@ export function setupBuildLogsWebSocket(httpServer: any, storage: IStorage): Bui
     }
   });
 
-  console.log('[BuildLogs] WebSocket server initialized at /api/build-logs/ws');
   return buildLogsService;
 }

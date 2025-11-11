@@ -57,8 +57,6 @@ export class CollaborationServer {
   }
 
   private handleConnection(ws: WebSocket, req: any) {
-    console.log('New collaboration connection');
-
     // Initialize client info
     const clientInfo: CollaborationClient = {
       ws,
@@ -146,7 +144,7 @@ export class CollaborationServer {
         break;
 
       default:
-        console.warn('Unknown message type:', message.type);
+        console.warn('[CollaborationServer] Unknown message type:', message.type);
     }
   }
 
@@ -483,8 +481,6 @@ export class CollaborationServer {
 
     // Remove from clients
     this.clients.delete(ws);
-
-    console.log(`User ${client.username} disconnected`);
   }
 
   private send(ws: WebSocket, data: any) {

@@ -154,11 +154,6 @@ export class AuthRouter {
           );
         } catch (emailError: any) {
           console.error('Failed to send verification email:', emailError.message || emailError);
-          // Only log tokens in development mode for testing
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Verification token (for testing):', verificationToken);
-            console.log('Verification link:', `${process.env.APP_URL || 'http://localhost:5000'}/verify-email?token=${verificationToken}`);
-          }
         }
 
         // Log registration event
@@ -222,10 +217,6 @@ export class AuthRouter {
 
     // Login endpoint
     this.router.post("/api/login", csrfProtection, (req: Request, res: Response, next: NextFunction) => {
-      // Security: Only log non-sensitive fields
-      console.log('[LOGIN] Authentication attempt - Email:', req.body?.email);
-      console.log('[LOGIN] Password present:', req.body?.password ? 'YES' : 'NO');
-      
       passport.authenticate('local', (err: any, user: User, info: any) => {
         if (err) {
           console.error('Login error:', err);
@@ -369,11 +360,6 @@ export class AuthRouter {
           );
         } catch (emailError: any) {
           console.error('Failed to send verification email:', emailError.message || emailError);
-          // Only log tokens in development mode for testing
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Verification token (for testing):', verificationToken);
-            console.log('Verification link:', `${process.env.APP_URL || 'http://localhost:5000'}/verify-email?token=${verificationToken}`);
-          }
         }
 
         // Log registration event
@@ -437,9 +423,6 @@ export class AuthRouter {
 
     // Alias: /api/auth/login -> /api/login
     this.router.post("/api/auth/login", csrfProtection, (req: Request, res: Response, next: NextFunction) => {
-      console.log('[LOGIN] Authentication attempt - Email:', req.body?.email);
-      console.log('[LOGIN] Password present:', req.body?.password ? 'YES' : 'NO');
-      
       passport.authenticate('local', (err: any, user: User, info: any) => {
         if (err) {
           console.error('Login error:', err);

@@ -35,7 +35,6 @@ export class AIApprovalQueueService {
       expiresAt,
     });
     
-    console.log(`[ApprovalQueue] Action ${created.id} added to database`);
     return created.id;
   }
 
@@ -47,7 +46,6 @@ export class AIApprovalQueueService {
     await this.cleanupExpired();
     
     const pending = await storage.getPendingAiApprovals(userId, projectId);
-    console.log(`[ApprovalQueue] Found ${pending.length} pending actions for user ${userId} in project ${projectId}`);
     
     return pending.map(p => ({
       id: p.id,
@@ -88,7 +86,6 @@ export class AIApprovalQueueService {
     // Update status in database
     await storage.updateAiApprovalStatus(actionId, 'approved', userId);
     
-    console.log(`[ApprovalQueue] Action ${actionId} approved by ${userId} (database persisted)`);
     return pending.action as ValidatedAction;
   }
 
@@ -110,7 +107,6 @@ export class AIApprovalQueueService {
     // Update status in database
     await storage.updateAiApprovalStatus(actionId, 'rejected', userId, reason);
     
-    console.log(`[ApprovalQueue] Action ${actionId} rejected by ${userId}: ${reason || 'no reason'} (database persisted)`);
     return true;
   }
 
@@ -120,10 +116,6 @@ export class AIApprovalQueueService {
    */
   async cleanupExpired(): Promise<number> {
     const count = await storage.expireOldAiApprovals();
-    
-    if (count > 0) {
-      console.log(`[ApprovalQueue] Cleaned up ${count} expired actions in database`);
-    }
     
     return count;
   }

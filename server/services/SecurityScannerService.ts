@@ -21,7 +21,6 @@ export class SecurityScannerService {
     this.storage = storage;
 
     this.wss = new WebSocket.Server({ noServer: true });
-    console.log('[SecurityScanner] Service initialized');
 
     server.on('upgrade', async (request: IncomingMessage, socket, head) => {
       if (!request.url?.startsWith('/api/security-scans/ws')) {
@@ -151,8 +150,6 @@ export class SecurityScannerService {
     this.wss.on('connection', (ws: WebSocket, request: IncomingMessage, projectId: string, userId: string) => {
       this.handleConnection(ws, request, projectId, userId);
     });
-
-    console.log('[SecurityScanner] WebSocket server initialized at /api/security-scans/ws');
   }
 
   /**
@@ -168,7 +165,6 @@ export class SecurityScannerService {
 
       // Check if user is project owner
       if (project.ownerId === userId) {
-        console.log(`[SecurityScanner] Owner ${userId} authorized for project ${projectId}`);
         return true;
       }
 
@@ -176,7 +172,6 @@ export class SecurityScannerService {
       try {
         const teamMember = await this.storage.getTeamMemberByUserAndProject?.(userId, projectId);
         if (teamMember) {
-          console.log(`[SecurityScanner] Team member ${userId} authorized for project ${projectId}`);
           return true;
         }
       } catch (error) {
@@ -197,8 +192,6 @@ export class SecurityScannerService {
    * Handle new WebSocket connection for security scan streaming
    */
   async handleConnection(ws: WebSocket, request: IncomingMessage, projectId: string, userId: string): Promise<void> {
-    console.log(`[SecurityScanner] New connection for project ${projectId}, user ${userId}`);
-
     const client: SecurityScannerClient = {
       ws,
       projectId,
@@ -231,7 +224,6 @@ export class SecurityScannerService {
 
     // Handle disconnection
     ws.on('close', () => {
-      console.log(`[SecurityScanner] Client disconnected for project ${projectId}`);
       this.removeClient(projectId, client);
     });
 
@@ -244,7 +236,6 @@ export class SecurityScannerService {
     ws.on('message', (data) => {
       try {
         const message = JSON.parse(data.toString());
-        console.log('[SecurityScanner] Received message:', message);
         // Handle commands like requesting rescan, marking vulnerabilities, etc.
       } catch (error) {
         console.error('[SecurityScanner] Error parsing message:', error);
@@ -274,11 +265,8 @@ export class SecurityScannerService {
   async broadcastScanUpdate(projectId: string, scan: SecurityScan): Promise<void> {
     const clients = this.clients.get(projectId);
     if (!clients || clients.length === 0) {
-      console.log(`[SecurityScanner] No clients connected for project ${projectId}`);
       return;
     }
-
-    console.log(`[SecurityScanner] Broadcasting scan update to ${clients.length} client(s) for project ${projectId}`);
 
     const message = JSON.stringify({
       type: 'scan_update',
@@ -298,11 +286,8 @@ export class SecurityScannerService {
   async broadcastVulnerabilityUpdate(projectId: string, vulnerability: Vulnerability): Promise<void> {
     const clients = this.clients.get(projectId);
     if (!clients || clients.length === 0) {
-      console.log(`[SecurityScanner] No clients connected for project ${projectId}`);
       return;
     }
-
-    console.log(`[SecurityScanner] Broadcasting vulnerability update to ${clients.length} client(s) for project ${projectId}`);
 
     const message = JSON.stringify({
       type: 'vulnerability_update',

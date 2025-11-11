@@ -77,7 +77,6 @@ const emailTemplates = {
 // Send verification email
 export async function sendVerificationEmail(email: string, token: string): Promise<void> {
   if (!transporter) {
-    console.log('Email not configured. Verification token:', token);
     return;
   }
   
@@ -93,7 +92,6 @@ export async function sendVerificationEmail(email: string, token: string): Promi
 // Send password reset email
 export async function sendPasswordResetEmail(email: string, token: string): Promise<void> {
   if (!transporter) {
-    console.log('Email not configured. Reset token:', token);
     return;
   }
   
@@ -109,7 +107,6 @@ export async function sendPasswordResetEmail(email: string, token: string): Prom
 // Send account locked email
 export async function sendAccountLockedEmail(email: string): Promise<void> {
   if (!transporter) {
-    console.log('Email not configured. Account locked for:', email);
     return;
   }
   

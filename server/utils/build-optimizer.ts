@@ -8,8 +8,6 @@ export class BuildOptimizer {
   private static readonly BUNDLE_SIZE_LIMIT = 2000; // KB
 
   static async optimizeForProduction(): Promise<void> {
-    console.log('🚀 Starting production build optimization...');
-    
     try {
       // 1. Clean previous builds
       await this.cleanBuildDirectory();
@@ -25,9 +23,6 @@ export class BuildOptimizer {
       
       // 5. Compress static assets
       await this.compressAssets();
-      
-      console.log('✅ Production build optimization completed successfully');
-      
     } catch (error) {
       console.error('❌ Build optimization failed:', error);
       throw error;
@@ -39,7 +34,6 @@ export class BuildOptimizer {
     if (fs.existsSync(distPath)) {
       fs.rmSync(distPath, { recursive: true, force: true });
     }
-    console.log('🧹 Cleaned build directory');
   }
 
   private static async optimizeJavaScript(): Promise<void> {
@@ -64,12 +58,10 @@ export class BuildOptimizer {
         comments: false
       }
     };
-    console.log('📦 JavaScript optimization configured');
   }
 
   private static async optimizeCSS(): Promise<void> {
     // CSS optimization and purging
-    console.log('🎨 CSS optimization configured');
   }
 
   private static async generateServiceWorker(): Promise<void> {
@@ -109,12 +101,10 @@ self.addEventListener('fetch', (event) => {
     }
     
     fs.writeFileSync(path.join(distPublic, 'sw.js'), swContent.trim());
-    console.log('🔧 Service worker generated');
   }
 
   private static async compressAssets(): Promise<void> {
     // Gzip compression for static assets
-    console.log('🗜️ Asset compression configured');
   }
 
   static validateBundleSize(bundlePath: string): void {
@@ -127,10 +117,7 @@ self.addEventListener('fetch', (event) => {
     const sizeKB = Math.round(stats.size / 1024);
     
     if (sizeKB > this.CHUNK_SIZE_LIMIT) {
-      console.warn(`⚠️ Large bundle detected: ${bundlePath} (${sizeKB}KB > ${this.CHUNK_SIZE_LIMIT}KB)`);
-      console.warn('Consider code splitting or removing unused dependencies');
-    } else {
-      console.log(`✅ Bundle size OK: ${bundlePath} (${sizeKB}KB)`);
+      console.warn(`⚠️ Large bundle detected: ${bundlePath} (${sizeKB}KB > ${this.CHUNK_SIZE_LIMIT}KB) - consider code splitting`);
     }
   }
 }

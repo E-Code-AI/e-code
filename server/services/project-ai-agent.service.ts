@@ -22,10 +22,6 @@ export class ProjectAIAgentService {
       baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || 'http://localhost:1106/modelfarm/openai',
       apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || '_DUMMY_API_KEY_',
     });
-
-    console.log('[ProjectAI Agent] Initialized with Replit AI Integrations');
-    console.log('[ProjectAI Agent] Base URL:', process.env.AI_INTEGRATIONS_OPENAI_BASE_URL);
-    console.log('[ProjectAI Agent] API Key configured:', !!process.env.AI_INTEGRATIONS_OPENAI_API_KEY);
   }
 
   /**
@@ -118,13 +114,7 @@ Always generate complete, production-ready code. No placeholders or TODOs.`;
         content: message
       });
 
-      console.log(`[ProjectAIAgent] ===== PROCESSING CHAT =====`);
-      console.log(`[ProjectAIAgent] Project: ${projectId}`);
-      console.log(`[ProjectAIAgent] Message: "${message}"`);
-      console.log(`[ProjectAIAgent] System prompt length: ${systemPrompt.length} chars`);
-
       // Stream response from OpenAI
-      console.log(`[ProjectAIAgent] Calling OpenAI with model: gpt-5`);
       const stream = await this.openai.chat.completions.create({
         model: 'gpt-5', // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
         messages,
@@ -132,27 +122,18 @@ Always generate complete, production-ready code. No placeholders or TODOs.`;
         max_completion_tokens: 4000,
       });
 
-      console.log(`[ProjectAIAgent] Stream started, receiving chunks...`);
       let fullResponse = '';
-      let chunkCount = 0;
 
       for await (const chunk of stream) {
         const content = chunk.choices[0]?.delta?.content || '';
         if (content) {
           fullResponse += content;
-          chunkCount++;
           yield content;
         }
       }
 
-      console.log(`[ProjectAIAgent] Stream complete. Received ${chunkCount} chunks, total ${fullResponse.length} chars`);
-      console.log(`[ProjectAIAgent] Full response preview: ${fullResponse.substring(0, 200)}...`);
-
       // Parse and execute actions from the response
       yield '\n';
-      
-      console.log(`[ProjectAIAgent] ===== EXTRACTING ACTIONS =====`);
-      console.log(`[ProjectAIAgent] Response to parse:`, fullResponse);
       
       // SECURITY: Use strict validation to extract and validate AI actions
       // This prevents prompt injection and arbitrary file access
@@ -161,11 +142,9 @@ Always generate complete, production-ready code. No placeholders or TODOs.`;
         projectId
       );
       
-      console.log(`[ProjectAIAgent] Extraction complete. Valid: ${validActions.length}, Rejected: ${rejected.length}`);
-      
       // Log rejected actions for security monitoring
       if (rejected.length > 0) {
-        console.warn('[ProjectAIAgent] Rejected insecure actions:', JSON.stringify(rejected));
+        console.warn('[ProjectAIAgent] Rejected insecure actions');
         yield JSON.stringify({ 
           type: 'security_warning', 
           message: `${rejected.length} actions blocked by security filters`
@@ -250,8 +229,6 @@ Always generate complete, production-ready code. No placeholders or TODOs.`;
         parentId: null,
         isDirectory: false,
       });
-
-      console.log(`[ProjectAIAgent] Created file: ${filePath}`);
       
       return { 
         success: true, 
@@ -283,8 +260,6 @@ Always generate complete, production-ready code. No placeholders or TODOs.`;
 
       // Update the file
       await this.storage.updateFile(file.id, { content });
-      
-      console.log(`[ProjectAIAgent] Updated file: ${filePath}`);
       
       return { 
         success: true, 

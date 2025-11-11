@@ -96,9 +96,7 @@ export class PolyglotCoordinator {
           responseTime
         });
 
-        if (response.ok) {
-          console.log(`[POLYGLOT] ${serviceName} service healthy (${responseTime}ms)`);
-        } else {
+        if (!response.ok) {
           console.warn(`[POLYGLOT] ${serviceName} service returned ${response.status}`);
         }
       } catch (error) {
@@ -158,9 +156,6 @@ export class PolyglotCoordinator {
           capability,
           message: err.message
         });
-      },
-      onProxyReq: (proxyReq, req, res) => {
-        console.log(`[POLYGLOT] Routing ${req.method} ${req.url} to ${capability} service`);
       }
     });
   }

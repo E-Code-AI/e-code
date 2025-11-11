@@ -198,7 +198,6 @@ export async function startProject(projectId: number, userId?: number): Promise<
     const packageJson = files.find(f => f.name === 'package.json');
     if (packageJson && !fs.existsSync(path.join(projectDir, 'node_modules'))) {
       // Run npm install first
-      console.log(`Installing dependencies for project ${projectId}...`);
       const installProcess = spawn('npm', ['install'], {
         cwd: projectDir,
         env: processEnv
@@ -216,7 +215,6 @@ export async function startProject(projectId: number, userId?: number): Promise<
     }
     
     // Start the process
-    console.log(`Starting project ${projectId} with command: ${command} ${args.join(' ')}`);
     const childProcess = spawn(command, args, {
       cwd: projectDir,
       env: processEnv,
@@ -240,7 +238,6 @@ export async function startProject(projectId: number, userId?: number): Promise<
     // Capture output
     childProcess.stdout.on('data', (data: Buffer) => {
       const log = data.toString();
-      console.log(`[Project ${projectId}]`, log);
       projectData.logs.push(log);
     });
     
@@ -251,7 +248,6 @@ export async function startProject(projectId: number, userId?: number): Promise<
     });
     
     childProcess.on('exit', async (code: number | null) => {
-      console.log(`Project ${projectId} exited with code ${code}`);
       projectData.status = 'stopped';
       releasePort(port);
       // Stop resource monitoring when project exits

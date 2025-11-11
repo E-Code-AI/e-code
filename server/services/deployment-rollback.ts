@@ -562,37 +562,31 @@ export class DeploymentRollbackService extends EventEmitter {
 
   private async stopDeployment(deploymentId: string): Promise<void> {
     // In production, this would stop the actual deployment
-    console.log(`Stopping deployment ${deploymentId}`);
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
   private async restoreFiles(deploymentId: string, snapshot: DeploymentSnapshot): Promise<void> {
     // In production, this would restore actual files
-    console.log(`Restoring files for ${deploymentId} from version ${snapshot.version}`);
     await new Promise(resolve => setTimeout(resolve, 2000));
   }
 
   private async restoreConfig(deploymentId: string, snapshot: DeploymentSnapshot): Promise<void> {
     // In production, this would restore configuration
-    console.log(`Restoring config for ${deploymentId}`);
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
   private async restoreDatabase(deploymentId: string, snapshot: DeploymentSnapshot): Promise<void> {
     // In production, this would restore database
-    console.log(`Restoring database for ${deploymentId}`);
     await new Promise(resolve => setTimeout(resolve, 3000));
   }
 
   private async startDeployment(deploymentId: string, snapshot: DeploymentSnapshot): Promise<void> {
     // In production, this would start the deployment with restored config
-    console.log(`Starting deployment ${deploymentId} with version ${snapshot.version}`);
     await new Promise(resolve => setTimeout(resolve, 2000));
   }
 
   private async verifyDeployment(deploymentId: string): Promise<void> {
     // In production, this would verify the deployment is healthy
-    console.log(`Verifying deployment ${deploymentId}`);
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     // Check health metrics
@@ -603,7 +597,6 @@ export class DeploymentRollbackService extends EventEmitter {
   }
 
   private async attemptRecovery(deploymentId: string): Promise<void> {
-    console.log(`Attempting recovery for deployment ${deploymentId}`);
     // In production, this would attempt to restore the previous working state
   }
 
@@ -752,7 +745,6 @@ export class DeploymentRollbackService extends EventEmitter {
         if (alert.deploymentId === deploymentId && alert.level === 'critical') {
           const health = await deploymentMetricsService.getHealthStatus(deploymentId);
           if (health.score < healthThreshold) {
-            console.log(`Auto-rollback triggered for ${deploymentId} (health: ${health.score})`);
             const snapshots = await this.getSnapshots(deploymentId);
             if (snapshots.length > 1) {
               // Rollback to previous version
@@ -780,8 +772,6 @@ export class DeploymentRollbackService extends EventEmitter {
             lte(deploymentSnapshots.createdAt, cutoffDate)
           )
         );
-      
-      console.log('Cleaned up old snapshots');
     } catch (error) {
       console.error('Failed to cleanup old snapshots:', error);
     }

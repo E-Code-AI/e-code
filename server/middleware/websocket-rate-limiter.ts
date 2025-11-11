@@ -108,10 +108,6 @@ export class WebSocketRateLimiter {
     for (const identifier of toDelete) {
       this.limits.delete(identifier);
     }
-
-    if (toDelete.length > 0) {
-      console.log(`[RateLimiter] Cleaned up ${toDelete.length} expired entries`);
-    }
   }
 
   /**

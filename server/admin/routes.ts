@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '../db';
-// import { users, projects, files, deployments } from '@shared/schema';
+import { users, projects, files, deployments } from '@shared/schema';
 import { sql, count, sum } from 'drizzle-orm';
 import * as os from 'os';
 import * as fs from 'fs/promises';
@@ -160,7 +160,6 @@ router.get('/activities', async (req, res) => {
 router.post('/cache/clear', async (req, res) => {
   try {
     // In a real implementation, this would clear Redis or other caches
-    console.log('Clearing application caches...');
     
     res.json({ message: 'Cache cleared successfully' });
   } catch (error) {
@@ -172,8 +171,6 @@ router.post('/cache/clear', async (req, res) => {
 // Run maintenance
 router.post('/maintenance/run', async (req, res) => {
   try {
-    console.log('Running maintenance tasks...');
-    
     // In production, this would:
     // - Vacuum the database
     // - Clean up orphaned files

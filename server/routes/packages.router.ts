@@ -68,7 +68,6 @@ function isValidVersion(version: string): boolean {
 async function resolveProjectDirectory(projectId: string): Promise<string | null> {
   // SECURITY: Validate projectId first to prevent path traversal
   if (!isValidProjectId(projectId)) {
-    console.log(`[Packages] Invalid project ID: ${projectId}`);
     return null;
   }
   
@@ -79,7 +78,6 @@ async function resolveProjectDirectory(projectId: string): Promise<string | null
     return projectDir;
   } catch {
     // SECURITY: Do NOT fallback to process.cwd() - that would allow installing in server root
-    console.log(`[Packages] Project directory ${projectDir} not found`);
     return null;
   }
 }
@@ -237,9 +235,6 @@ router.post('/:projectId/install', ensureAuthenticated, ensureProjectAccess, asy
       });
     }
     
-    console.log(`[Packages] Installing ${pkgToInstall}${version ? '@' + version : ''} for project ${projectId}`);
-    console.log(`[Packages] Working directory: ${workingDir}`);
-    
     // Determine package manager
     let packageManager: string;
     let installArgs: string[];
@@ -265,7 +260,6 @@ router.post('/:projectId/install', ensureAuthenticated, ensureProjectAccess, asy
     // Execute installation using spawn (secure)
     const { stdout, stderr } = await spawnPackageManager(packageManager, installArgs, workingDir);
     
-    console.log(`[Packages] Installation output:`, stdout);
     if (stderr && !stderr.includes('npm WARN')) {
       console.error(`[Packages] Installation warnings:`, stderr);
     }
@@ -326,9 +320,6 @@ router.post('/:projectId/uninstall', ensureAuthenticated, ensureProjectAccess, a
       });
     }
     
-    console.log(`[Packages] Uninstalling ${packageName} from project ${projectId}`);
-    console.log(`[Packages] Working directory: ${workingDir}`);
-    
     // Determine package manager
     let packageManager: string;
     let uninstallArgs: string[];
@@ -349,8 +340,6 @@ router.post('/:projectId/uninstall', ensureAuthenticated, ensureProjectAccess, a
     }
     
     const { stdout, stderr } = await spawnPackageManager(packageManager, uninstallArgs, workingDir);
-    
-    console.log(`[Packages] Uninstallation output:`, stdout);
     
     res.json({
       success: true,
@@ -396,8 +385,6 @@ router.get('/installed', ensureAuthenticated, ensureProjectAccess, async (req, r
         message: 'Project directory does not exist',
       });
     }
-    
-    console.log(`[Packages] Fetching installed packages for project ${projectId}`);
     
     // Try to read package.json
     try {

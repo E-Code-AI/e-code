@@ -11,8 +11,6 @@ const isTestEnv = process.env.NODE_ENV === 'test';
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '';
 if (SENDGRID_API_KEY && !isTestEnv) {
   sgMail.setApiKey(SENDGRID_API_KEY);
-} else if (isTestEnv) {
-  console.log('[SendGrid] Test mode: Email sending mocked');
 }
 
 // Configuration
@@ -262,18 +260,10 @@ async function logEmailEvent(userId: string | null, action: string, email: strin
 export async function sendVerificationEmail(userId: string, email: string, displayName: string, token: string): Promise<void> {
   // Mock email sending in test mode
   if (isTestEnv) {
-    console.log('[SendGrid Mock] Verification email sent to:', email);
     return;
   }
   
   if (!SENDGRID_API_KEY) {
-    // Only log tokens in development mode for testing
-    if (process.env.NODE_ENV === 'development') {
-      console.log('SendGrid not configured. Verification token:', token);
-      console.log('Verification link:', `${APP_URL}/verify-email?token=${token}`);
-    } else {
-      console.log('SendGrid not configured. Email verification requested for:', email);
-    }
     return;
   }
   
@@ -292,7 +282,6 @@ export async function sendVerificationEmail(userId: string, email: string, displ
     });
     
     await logEmailEvent(userId, 'email_verification_sent', email, 'success', { type: 'verification' });
-    console.log(`Verification email sent to ${email}`);
   } catch (error: any) {
     await logEmailEvent(userId, 'email_verification_sent', email, 'failure', { 
       error: error.message,
@@ -307,18 +296,10 @@ export async function sendVerificationEmail(userId: string, email: string, displ
 export async function sendPasswordResetEmail(userId: string, email: string, displayName: string, token: string): Promise<void> {
   // Mock email sending in test mode
   if (isTestEnv) {
-    console.log('[SendGrid Mock] Password reset email sent to:', email);
     return;
   }
   
   if (!SENDGRID_API_KEY) {
-    // Only log tokens in development mode for testing
-    if (process.env.NODE_ENV === 'development') {
-      console.log('SendGrid not configured. Reset token:', token);
-      console.log('Reset link:', `${APP_URL}/reset-password?token=${token}`);
-    } else {
-      console.log('SendGrid not configured. Password reset requested for:', email);
-    }
     return;
   }
   
@@ -337,7 +318,6 @@ export async function sendPasswordResetEmail(userId: string, email: string, disp
     });
     
     await logEmailEvent(userId, 'password_reset_sent', email, 'success', { type: 'password_reset' });
-    console.log(`Password reset email sent to ${email}`);
   } catch (error: any) {
     await logEmailEvent(userId, 'password_reset_sent', email, 'failure', { 
       error: error.message,
@@ -351,13 +331,6 @@ export async function sendPasswordResetEmail(userId: string, email: string, disp
 // Resend verification email
 export async function resendVerificationEmail(userId: string, email: string, displayName: string, token: string): Promise<void> {
   if (!SENDGRID_API_KEY) {
-    // Only log tokens in development mode for testing
-    if (process.env.NODE_ENV === 'development') {
-      console.log('SendGrid not configured. New verification token:', token);
-      console.log('Verification link:', `${APP_URL}/verify-email?token=${token}`);
-    } else {
-      console.log('SendGrid not configured. Verification resend requested for:', email);
-    }
     return;
   }
   
@@ -376,7 +349,6 @@ export async function resendVerificationEmail(userId: string, email: string, dis
     });
     
     await logEmailEvent(userId, 'verification_resent', email, 'success', { type: 'resend_verification' });
-    console.log(`New verification email sent to ${email}`);
   } catch (error: any) {
     await logEmailEvent(userId, 'verification_resent', email, 'failure', { 
       error: error.message,
@@ -390,7 +362,6 @@ export async function resendVerificationEmail(userId: string, email: string, dis
 // Account locked email
 export async function sendAccountLockedEmail(userId: string, email: string, displayName: string): Promise<void> {
   if (!SENDGRID_API_KEY) {
-    console.log('Account locked for:', email);
     return;
   }
   

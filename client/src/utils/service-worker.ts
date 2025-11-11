@@ -21,7 +21,6 @@ class ServiceWorkerManager {
 
   public async register(): Promise<void> {
     if (!('serviceWorker' in navigator)) {
-      console.log('[SW] Service Workers not supported');
       return;
     }
 
@@ -37,7 +36,6 @@ class ServiceWorkerManager {
     const isDevelopment = process.env.NODE_ENV === 'development';
     
     if (isDevelopment && !this.config.enableInDevelopment && isLocalhost) {
-      console.log('[SW] Skipping registration in development');
       return;
     }
 
@@ -47,8 +45,6 @@ class ServiceWorkerManager {
       this.registration = await navigator.serviceWorker.register(swUrl, {
         scope: '/',
       });
-
-      console.log('[SW] Service Worker registered:', this.registration);
 
       // Check for updates
       this.registration.addEventListener('updatefound', () => {
@@ -60,7 +56,6 @@ class ServiceWorkerManager {
               if (navigator.serviceWorker.controller) {
                 // New update available
                 this.updateAvailable = true;
-                console.log('[SW] New content available; please refresh');
                 
                 if (this.config.onUpdate) {
                   this.config.onUpdate(this.registration!);
@@ -70,7 +65,6 @@ class ServiceWorkerManager {
                 this.notifyUpdate();
               } else {
                 // Content cached for offline use
-                console.log('[SW] Content cached for offline use');
                 
                 if (this.config.onSuccess) {
                   this.config.onSuccess(this.registration!);
@@ -110,10 +104,7 @@ class ServiceWorkerManager {
     const registrations = await navigator.serviceWorker.getRegistrations();
     
     for (const registration of registrations) {
-      const success = await registration.unregister();
-      if (success) {
-        console.log('[SW] Unregistered:', registration);
-      }
+      await registration.unregister();
     }
     
     return true;
@@ -123,7 +114,6 @@ class ServiceWorkerManager {
     if (this.registration) {
       try {
         await this.registration.update();
-        console.log('[SW] Checked for updates');
       } catch (error) {
         console.error('[SW] Update check failed:', error);
       }
@@ -140,7 +130,6 @@ class ServiceWorkerManager {
   public async clearCache(): Promise<void> {
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_CACHE' });
-      console.log('[SW] Cache cleared');
     }
     
     // Also clear browser caches
@@ -186,10 +175,10 @@ class ServiceWorkerManager {
 const serviceWorkerManager = new ServiceWorkerManager({
   enableInDevelopment: false,
   onSuccess: (registration) => {
-    console.log('[SW] Success:', registration);
+    // Service worker registered successfully
   },
   onUpdate: (registration) => {
-    console.log('[SW] Update available:', registration);
+    // Update available
   },
   onError: (error) => {
     console.error('[SW] Error:', error);
