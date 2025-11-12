@@ -113,8 +113,8 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
     return 'text-green-600 dark:text-green-400';
   };
 
-  const completedTasks = plan.tasks.filter(t => t.status === 'completed').length;
-  const progress = (completedTasks / plan.tasks.length) * 100;
+  const completedTasks = plan.tasks?.filter(t => t.status === 'completed').length ?? 0; // 🔧 Safe access
+  const progress = plan.tasks ? (completedTasks / plan.tasks.length) * 100 : 0; // 🔧 Safe division
 
   return (
     <div className="space-y-4">
@@ -127,15 +127,15 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
               <CardDescription className="mt-2 flex items-center gap-4 text-sm">
                 <span className="flex items-center gap-1">
                   <ListTodo className="h-4 w-4" />
-                  {plan.tasks.length} tasks
+                  {plan.tasks?.length ?? 0} tasks
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
                   ~{plan.totalEstimatedMinutes} min
                 </span>
-                <span className={`flex items-center gap-1 ${getRiskColor(plan.riskAssessment.overallRisk)}`}>
+                <span className={`flex items-center gap-1 ${getRiskColor(plan.riskAssessment?.overallRisk ?? 50)}`}>
                   <AlertTriangle className="h-4 w-4" />
-                  Risk: {plan.riskAssessment.overallRisk}/100
+                  Risk: {plan.riskAssessment?.overallRisk ?? 50}/100
                 </span>
               </CardDescription>
             </div>
@@ -158,7 +158,7 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Progress</span>
-                <span className="font-medium">{completedTasks} / {plan.tasks.length}</span>
+                <span className="font-medium">{completedTasks} / {plan.tasks?.length ?? 0}</span>
               </div>
               <Progress value={progress} className="h-2" data-testid="progress-plan" />
             </div>
@@ -172,12 +172,12 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
           <CardTitle className="text-base">Execution Steps</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {plan.tasks.map((task, index) => {
+          {plan.tasks?.map((task, index) => {
             const isExpanded = expandedTasks.has(task.id);
-            const isOnCriticalPath = plan.criticalPath.includes(task.id);
-            const canRunInParallel = plan.parallelizableTasks.some(group => 
+            const isOnCriticalPath = plan.criticalPath?.includes(task.id) ?? false; // 🔧 Safe access
+            const canRunInParallel = plan.parallelizableTasks?.some(group => 
               group.includes(task.id) && group.length > 1
-            );
+            ) ?? false; // 🔧 Safe access
             
             return (
               <Collapsible
@@ -243,7 +243,7 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
                     <div className="space-y-2 text-sm">
                       <p className="opacity-90">{task.description}</p>
                       
-                      {task.dependencies.length > 0 && (
+                      {task.dependencies && task.dependencies.length > 0 && (
                         <div>
                           <span className="font-medium">Dependencies:</span>
                           <div className="flex flex-wrap gap-1 mt-1">
@@ -256,7 +256,7 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
                         </div>
                       )}
                       
-                      {task.requiredTools.length > 0 && (
+                      {task.requiredTools && task.requiredTools.length > 0 && (
                         <div>
                           <span className="font-medium">Tools:</span>
                           <div className="flex flex-wrap gap-1 mt-1">
@@ -278,7 +278,7 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
       </Card>
 
       {/* Risk Assessment & Mitigation */}
-      {plan.riskAssessment.highRiskTasks.length > 0 && (
+      {plan.riskAssessment?.highRiskTasks && plan.riskAssessment.highRiskTasks.length > 0 && (
         <Card className="border-orange-200 dark:border-orange-800">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
@@ -287,7 +287,7 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {plan.riskAssessment.mitigationStrategies.map((strategy, idx) => (
+            {plan.riskAssessment.mitigationStrategies?.map((strategy, idx) => (
               <div key={idx} className="flex items-start gap-2 text-sm">
                 <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                 <span>{strategy}</span>
@@ -298,7 +298,7 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
       )}
 
       {/* Alternative Approaches */}
-      {plan.alternativeApproaches.length > 0 && (
+      {plan.alternativeApproaches && plan.alternativeApproaches.length > 0 && (
         <Collapsible open={showAlternatives} onOpenChange={setShowAlternatives}>
           <Card className="border-[var(--ecode-border)]">
             <CardHeader>
