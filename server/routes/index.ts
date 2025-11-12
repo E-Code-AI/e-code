@@ -12,6 +12,7 @@ import { UsersRouter } from "./users.router";
 import { HealthRouter } from "./health.router";
 import { ChatGPTRouter } from "./chatgpt.router";
 import agentRouter from "./agent.router";
+import createAgentPreferencesRouter from "./agent-preferences.router";
 import testAgentRouter from "./test-agent";
 import collaborationRouter from "./collaboration";
 import deploymentRouter from "./deployment";
@@ -90,6 +91,9 @@ export class MainRouter {
     
     // ChatGPT admin routes
     app.use(this.chatgptRouter.getRouter());
+    
+    // Agent preferences routes (authenticated users) - user-facing preferences
+    app.use('/api/agent', createAgentPreferencesRouter(this.storage));
     
     // Agent routes (admin only)
     app.use('/api/admin/agent', agentRouter);
