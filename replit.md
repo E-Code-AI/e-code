@@ -17,6 +17,14 @@ The E-Code Platform is an AI-powered development platform designed to streamline
 ## System Architecture
 The platform utilizes a polyglot backend architecture with Go for container orchestration, Python for AI/ML, and TypeScript for web API, user management, and database operations. It integrates an MCP Standalone Server for AI Agent operations and an AI Agent System for autonomous code generation. Real-time collaboration is facilitated via WebSockets and WebRTC. The system is designed for enterprise-grade security and performance, including advanced monitoring and a human-in-the-loop approval process for AI-generated actions.
 
+**AI Agent Chat Architecture (Nov 12, 2025):**
+- **Structured Message Rendering**: Replit-identical message components with professional-grade UX
+- **Component Architecture**: MessageRenderer (dispatcher), ThinkingMessage, TaskMessage, ActionMessage, SystemMessage
+- **Adapter Pattern**: convertLegacyMessage() preserves backward compatibility while enabling structured rendering
+- **Message Types**: chat, thinking, task, action, system, error, progress, success
+- **Visual Features**: Message separators/breakpoints, status badges, progress bars, collapsible artifacts, code highlighting
+- **Theming**: Full dark/light mode support via CSS variables (--ecode-*)
+
 **UI/UX Decisions:**
 - Replit-identical IDE interface with a dark theme, centralized design tokens, and consistent spacing.
 - ReplitAgent UI matches Replit's exact interface with a clean header, inline compact model selector, and extended Agent Tools dropdown.
