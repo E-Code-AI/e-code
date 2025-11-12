@@ -19,7 +19,6 @@ import { getProjectUrl, cn } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { TABLET_GRID_CLASSES } from '@shared/responsive-config';
 import { apiRequest } from '@/lib/queryClient';
-import { AgentWorkflowOrchestrator } from '@/components/ai/AgentWorkflowOrchestrator';
 import { AIModelSelector } from '@/components/ai/AIModelSelector';
 
 // Get personalized greeting based on time of day
@@ -79,9 +78,6 @@ export default function Dashboard() {
   const [aiPrompt, setAiPrompt] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [showWorkflow, setShowWorkflow] = useState(false);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-  const [activePrompt, setActivePrompt] = useState('');
   const inputRef = useRef<HTMLInputElement | null>(null);
   const greeting = getGreeting();
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -116,11 +112,11 @@ export default function Dashboard() {
         visibility: 'private'
       }) as any;
 
-      // Show workflow orchestrator instead of redirecting
-      setActiveProjectId(project.id);
-      setActivePrompt(aiPrompt);
-      setShowWorkflow(true);
-      window.sessionStorage.setItem(`agent-prompt-${project.id}`, aiPrompt);
+      // 🚀 REPLIT FLOW: Redirect to IDE with AI Agent panel (auto-start build)
+      const params = new URLSearchParams();
+      params.set('panel', 'agent');
+      params.set('prompt', aiPrompt);
+      navigate(`/ide/${project.id}?${params.toString()}`);
     } catch (error) {
       console.error('Failed to create project:', error);
       toast({
@@ -131,22 +127,6 @@ export default function Dashboard() {
     } finally {
       setIsCreating(false);
     }
-  };
-
-  const handleWorkflowComplete = () => {
-    if (activeProjectId) {
-      const projectUrl = getProjectUrl({ id: activeProjectId } as Project, user?.username);
-      // Add ?agent=true to trigger AI agent auto-start in workspace IDE
-      const workspaceUrl = `${projectUrl}?agent=true`;
-      window.location.href = workspaceUrl;
-    }
-  };
-
-  const handleBackToDashboard = () => {
-    setShowWorkflow(false);
-    setActiveProjectId(null);
-    setActivePrompt('');
-    setAiPrompt('');
   };
 
   const quickActions = [
@@ -187,33 +167,6 @@ export default function Dashboard() {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <ECodeLoading size="lg" text="Loading your dashboard..." />
-      </div>
-    );
-  }
-
-  // Show workflow orchestrator after project creation
-  if (showWorkflow && activeProjectId && activePrompt) {
-    return (
-      <div className="min-h-screen bg-background">
-        {/* Back button */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-          <Button
-            variant="ghost"
-            onClick={handleBackToDashboard}
-            className="flex items-center gap-2"
-            data-testid="button-back-to-dashboard"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </Button>
-        </div>
-
-        {/* Workflow Orchestrator */}
-        <AgentWorkflowOrchestrator
-          projectId={activeProjectId}
-          initialPrompt={activePrompt}
-          onComplete={handleWorkflowComplete}
-        />
       </div>
     );
   }

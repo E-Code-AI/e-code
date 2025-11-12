@@ -415,40 +415,34 @@ function AppContent() {
             return null;
           }} />
           <Route path="/ai-agent" component={() => {
-            // NEW: Redirect authenticated users to IDE with AI Agent panel
+            // 🚀 AI AGENT ONLY IN IDE - No standalone page
             const { user } = useAuth();
             const [, navigate] = useLocation();
             
             useEffect(() => {
-              if (user) {
-                // Check for projectId or prompt in query params
-                const searchParams = new URLSearchParams(window.location.search);
-                const projectId = searchParams.get('projectId');
-                const prompt = searchParams.get('prompt');
-                
-                if (projectId) {
-                  // Redirect to existing project's IDE with agent panel
-                  const params = new URLSearchParams();
-                  params.set('panel', 'agent');
-                  if (prompt) params.set('prompt', prompt);
-                  navigate(`/ide/${projectId}?${params.toString()}`);
-                } else {
-                  // No project specified - store prompt in global sessionStorage for dashboard
-                  if (prompt) {
-                    sessionStorage.setItem('pending-agent-prompt', prompt);
-                  }
-                  // Redirect to dashboard (which can show modal to create project with prompt context)
-                  navigate('/projects');
+              const searchParams = new URLSearchParams(window.location.search);
+              const projectId = searchParams.get('projectId');
+              const prompt = searchParams.get('prompt');
+              
+              if (user && projectId) {
+                // Authenticated + projectId → Redirect to IDE with agent panel
+                const params = new URLSearchParams();
+                params.set('panel', 'agent');
+                if (prompt) params.set('prompt', prompt);
+                navigate(`/ide/${projectId}?${params.toString()}`);
+              } else if (user) {
+                // Authenticated without project → Store prompt and go to dashboard
+                if (prompt) {
+                  sessionStorage.setItem('pending-agent-prompt', prompt);
                 }
+                navigate('/projects');
+              } else {
+                // Unauthenticated → Redirect to homepage with invitation
+                navigate('/');
               }
             }, [user, navigate]);
             
-            // Unauthenticated users get the marketing page
-            if (!user) {
-              return <AIAgent />;
-            }
-            
-            return <div>Redirecting to AI Agent...</div>;
+            return <div>Redirecting...</div>;
           }} />
           <ProtectedRoute path="/ai-agent/studio" component={() => (
             <ReplitLayout showSidebar={false}>
