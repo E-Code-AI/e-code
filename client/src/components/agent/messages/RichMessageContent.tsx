@@ -106,8 +106,8 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
             const isCopied = copiedCode === codeString;
             
             return (
-              <div className="relative group my-3">
-                <div className="flex items-center justify-between px-3 py-1.5 bg-[#1e1e1e] border border-[var(--ecode-border)] rounded-t-lg">
+              <div className="relative group my-3 max-w-full">
+                <div className="flex items-center justify-between px-3 py-2 md:py-1.5 bg-[#1e1e1e] border border-[var(--ecode-border)] rounded-t-lg">
                   {language && (
                     <span className="text-xs font-mono text-gray-400 uppercase">
                       {language}
@@ -117,34 +117,39 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
                     size="icon"
                     variant="ghost"
                     onClick={() => copyCode(codeString)}
-                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="h-10 w-10 md:h-8 md:w-8 min-h-[44px] min-w-[44px] md:min-h-[32px] md:min-w-[32px] opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity touch-manipulation"
+                    data-testid="copy-code-button"
                   >
                     {isCopied ? (
-                      <Check className="h-3 w-3 text-green-500" />
+                      <Check className="h-4 w-4 md:h-3 md:w-3 text-green-500" />
                     ) : (
-                      <Copy className="h-3 w-3" />
+                      <Copy className="h-4 w-4 md:h-3 md:w-3" />
                     )}
                   </Button>
                 </div>
-                <div className="border border-t-0 border-[var(--ecode-border)] rounded-b-lg overflow-hidden">
-                  <SyntaxHighlighter
-                    language={language}
-                    style={vscDarkPlus}
-                    customStyle={{
-                      margin: 0,
-                      padding: '12px',
-                      fontSize: '12px',
-                      lineHeight: '1.5',
-                      background: '#1e1e1e'
-                    }}
-                    codeTagProps={{
-                      style: {
-                        fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace'
-                      }
-                    }}
-                  >
-                    {codeString}
-                  </SyntaxHighlighter>
+                <div className="border border-t-0 border-[var(--ecode-border)] rounded-b-lg overflow-hidden max-w-full">
+                  <div className="overflow-x-auto max-w-full">
+                    <SyntaxHighlighter
+                      language={language}
+                      style={vscDarkPlus}
+                      customStyle={{
+                        margin: 0,
+                        padding: '12px',
+                        fontSize: '12px',
+                        lineHeight: '1.5',
+                        background: '#1e1e1e',
+                        maxWidth: '100%',
+                        overflowX: 'auto'
+                      }}
+                      codeTagProps={{
+                        style: {
+                          fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace'
+                        }
+                      }}
+                    >
+                      {codeString}
+                    </SyntaxHighlighter>
+                  </div>
                 </div>
               </div>
             );

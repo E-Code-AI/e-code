@@ -34,36 +34,37 @@ export function ThinkingMessage({ steps, isStreaming, totalTokens, thinkingTime 
       {/* Header - Clickable to expand/collapse */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-[var(--ecode-surface-secondary)] transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 min-h-[44px] hover:bg-[var(--ecode-surface-secondary)] transition-colors touch-manipulation"
+        data-testid="thinking-toggle"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {isExpanded ? (
-            <ChevronDown className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
+            <ChevronDown className="h-5 w-5 md:h-4 md:w-4 text-[var(--ecode-text-secondary)] flex-shrink-0" />
           ) : (
-            <ChevronRight className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
+            <ChevronRight className="h-5 w-5 md:h-4 md:w-4 text-[var(--ecode-text-secondary)] flex-shrink-0" />
           )}
-          <div className="p-1.5 rounded-md bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10">
-            <Brain className="h-4 w-4 text-violet-500" />
+          <div className="p-1.5 rounded-md bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 flex-shrink-0">
+            <Brain className="h-5 w-5 md:h-4 md:w-4 text-violet-500" />
           </div>
-          <span className="text-sm font-medium text-[var(--ecode-text)]">
+          <span className="text-sm font-medium text-[var(--ecode-text)] truncate">
             {isStreaming ? 'Thinking...' : 'Thought Process'}
           </span>
           {isStreaming && <VibingAnimation size="sm" />}
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
           {!isStreaming && thinkingTime && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs whitespace-nowrap">
               {thinkingTime}ms
             </Badge>
           )}
           {!isStreaming && totalTokens && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs whitespace-nowrap">
               {totalTokens} tokens
             </Badge>
           )}
           {steps.length > 0 && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs whitespace-nowrap">
               {steps.filter(s => s.status === 'completed').length}/{steps.length} steps
             </Badge>
           )}
