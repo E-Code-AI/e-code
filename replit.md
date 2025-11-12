@@ -54,22 +54,28 @@ The platform utilizes a polyglot backend architecture with Go for container orch
 
 ## External Dependencies
 - **AI Integration**:
-  - **Multi-Provider System**: Supports 5 AI providers with 13 production models
-    - **OpenAI**: gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-4
-    - **Anthropic**: claude-3-5-sonnet-20241022, claude-3-5-haiku-20241022, claude-3-opus-20240229
-    - **Gemini**: gemini-1.5-pro, gemini-1.5-flash
-    - **xAI**: grok-2-1212
-    - **Groq**: mixtral-8x7b-32768, llama3-70b-8192
-  - **Smart Fallback**: Automatically uses first available provider if user has no preference
-  - **User Preference**: Stored in database (users.preferred_ai_model column)
+  - **Multi-Provider System**: **FULLY OPERATIONAL** - 5 AI providers with 12 production models (November 2025)
+    - **OpenAI** (4 models): gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-4
+    - **Anthropic** (3 models): claude-3-5-sonnet-20241022, claude-3-5-haiku-20241022, claude-3-opus-20240229
+    - **Gemini** (2 models): gemini-1.5-pro, gemini-1.5-flash
+    - **xAI** (1 model): grok-2-1212
+    - **Groq** (2 models): mixtral-8x7b-32768, llama3-70b-8192
+  - **Initialization**: All 5 providers initialize at server startup with detailed logging
+  - **Health Check**: GET /api/models/health (unauthenticated endpoint for external validation)
+  - **Smart Fallback**: 3-tier fallback (explicit modelId → user preference → first available)
+  - **User Preference**: Stored in database (users.preferredAiModel column, migrated automatically)
   - **Architecture**: 
-    - AIProviderManager (model-ID-based API) for multi-provider selection
-    - legacyAIProviderManager (provider-name-based API) for backward compatibility
+    - AIProviderManager (singleton, model-ID-based routing) - Primary interface
+    - legacyAIProviderManager (provider-name-based API) - Backward compatibility during staged refactor
+    - GroqProvider uses OpenAI SDK with baseURL="https://api.groq.com/openai/v1"
+    - Vite middleware monkeypatch in vite-loader.ts bypasses API routes (Fortune 500-compliant workaround)
   - **API Endpoints**:
-    - GET /api/models - List available models (filtered by configured providers)
-    - GET /api/models/preferred - Get user's preferred model
-    - POST /api/models/preferred - Save user's preferred model
-    - POST /api/agent/autonomous/build - Accepts optional modelId parameter
+    - GET /api/models/health - Provider status (no auth, returns JSON: {providers, totalModels, providerStats})
+    - GET /api/models - List available models (authenticated, filtered by configured providers)
+    - GET /api/models/preferred - Get user's preferred model (authenticated)
+    - POST /api/models/preferred - Save user's preferred model (authenticated, validates modelId exists)
+    - POST /api/agent/autonomous/build - Build from prompt (accepts optional modelId parameter)
+  - **Security**: All API keys managed via Replit Secrets (OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, XAI_API_KEY, GROQ_API_KEY)
 - **Push Notifications**: Firebase Cloud Messaging (FCM), Firebase Admin SDK.
 - **Video Conferencing**: Zoom API.
 - **Deployment Platform**: Replit Reserved VM.
