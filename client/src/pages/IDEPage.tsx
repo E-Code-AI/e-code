@@ -114,10 +114,28 @@ export default function IDEPage() {
   
   const projectId = (params.projectId || params.id) as string;
   
-  // REAL: Detect ?agent=true for auto-start from vibe creation flow (Task 10a/10b)
+  // REAL: Detect ?agent=true OR ?panel=agent for auto-start (Task 10a/10b + AI Agent integration)
   const searchParams = new URLSearchParams(window.location.search);
-  const autoStartAgent = searchParams.get('agent') === 'true';
+  const panelParam = searchParams.get('panel');
+  const promptParam = searchParams.get('prompt'); // Already decoded by URLSearchParams.get
+  const autoStartAgent = searchParams.get('agent') === 'true' || panelParam === 'agent';
+  
+  // NEW: Support ?prompt=... query param for direct agent invocation
   const storedPrompt = projectId ? sessionStorage.getItem(`agent-prompt-${projectId}`) : null;
+  const agentInitialPrompt = promptParam || (autoStartAgent && storedPrompt ? storedPrompt : null);
+  
+  // NEW: If prompt is provided via query param, persist it to agent session
+  useEffect(() => {
+    if (promptParam && projectId) {
+      // Store prompt in session for ReplitAgent to pick up (no need to decode, already decoded)
+      sessionStorage.setItem(`agent-prompt-${projectId}`, promptParam);
+      
+      // Optional: Clean URL after prompt is stored (for better UX)
+      const url = new URL(window.location.href);
+      url.searchParams.delete('prompt');
+      window.history.replaceState({}, '', url);
+    }
+  }, [promptParam, projectId]);
   
   // Load persisted state on mount with validation
   const persistedState = loadPersistedState(projectId);
@@ -462,7 +480,7 @@ export default function IDEPage() {
               <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden">
                 <ReplitAgent 
                   projectId={projectId}
-                  initialPrompt={autoStartAgent && storedPrompt ? storedPrompt : undefined}
+                  initialPrompt={agentInitialPrompt || undefined}
                   onBuildComplete={async () => {
                     // REAL: Auto-start preview when build completes (Task 12)
                     setActiveTab('preview');

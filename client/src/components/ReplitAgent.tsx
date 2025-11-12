@@ -44,6 +44,7 @@ import { AutonomousControls } from './agent/AutonomousControls';
 import { PlanVisualizer } from './agent/PlanVisualizer';
 import { TestingToolsPanel } from './agent/TestingToolsPanel';
 import { apiRequest } from '@/lib/queryClient';
+import { useAgentSession } from '@/hooks/use-agent-session';
 
 interface ReplitAgentProps {
   projectId: string | number;
@@ -730,6 +731,11 @@ const QUICK_ACTIONS = [
 ];
 
 export function ReplitAgent({ projectId, selectedFile, selectedCode, className, initialPrompt, onBuildComplete }: ReplitAgentProps) {
+  // NEW: Load persisted session for this project
+  const { session, isLoading: sessionLoading, saveSession, updateMessages, updateSettings } = useAgentSession(projectId);
+  const hasHydrated = useRef(false);
+  
+  // State with default values (hydrated from session in useEffect below)
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -805,46 +811,93 @@ What would you like me to build for you today?`,
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
+  // NEW: Hydrate persisted state from session (guarded to avoid races and flicker)
+  useEffect(() => {
+    // FIX: Mark as hydrated even if no session exists (first-time users)
+    if (!sessionLoading && !hasHydrated.current) {
+      hasHydrated.current = true;
+      
+      if (session) {
+        console.log(`[ReplitAgent] Hydrating session for project ${projectId}`, session);
+        
+        // Restore messages (convert timestamps back to Date objects)
+        if (session.messages && session.messages.length > 0) {
+          const hydratedMessages = session.messages.map((m: any) => ({
+            ...m,
+            timestamp: new Date(m.timestamp),
+          }));
+          setMessages(hydratedMessages);
+        }
+        
+        // Restore settings
+        if (session.selectedModel) setSelectedModel(session.selectedModel);
+        if (session.extendedThinking !== undefined) setExtendedThinking(session.extendedThinking);
+        if (session.highPowerMode !== undefined) setHighPowerMode(session.highPowerMode);
+        if (session.autoCheckpoints !== undefined) setAutoCheckpoints(session.autoCheckpoints);
+        if (session.agentMode) setAutonomousModeEnabled(session.agentMode === 'autonomous');
+        
+        // Restore pending actions (if any)
+        if (session.pendingActions) {
+          console.log(`[ReplitAgent] Restored ${session.pendingActions.length} pending actions`);
+        }
+      } else {
+        console.log(`[ReplitAgent] No session found for project ${projectId}, starting fresh`);
+      }
+    }
+  }, [sessionLoading, session, projectId]);
+
+  // NEW: Auto-save messages to session when they change (Task 2b)
+  useEffect(() => {
+    // Only save after hydration is complete to avoid overwriting with defaults
+    if (!sessionLoading && hasHydrated.current && messages.length > 0) {
+      // Save messages to session (debounced to avoid too many writes)
+      const timeoutId = setTimeout(() => {
+        updateMessages(messages);
+        console.log(`[ReplitAgent] Auto-saved ${messages.length} messages to session`);
+      }, 500);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [messages, updateMessages, sessionLoading]);
+
+  // NEW: Auto-save settings to session when they change (Task 2b)
+  useEffect(() => {
+    // Only save after hydration is complete
+    if (!sessionLoading && hasHydrated.current) {
+      const settings = {
+        selectedModel,
+        extendedThinking,
+        highPowerMode,
+        autoCheckpoints,
+        agentMode: autonomousModeEnabled ? 'autonomous' as const : 'plan' as const,
+      };
+      
+      updateSettings(settings);
+      console.log('[ReplitAgent] Auto-saved settings to session', settings);
+    }
+  }, [selectedModel, extendedThinking, highPowerMode, autoCheckpoints, autonomousModeEnabled, updateSettings, sessionLoading]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  // REAL: Load conversation from sessionStorage if exists (from AgentWorkflowOrchestrator)
-  useEffect(() => {
-    const loadConversationFromStorage = () => {
-      try {
-        const storedData = sessionStorage.getItem(`agent-conversation-${projectId}`);
-        if (storedData) {
-          const { conversationId: convId, planId: pId } = JSON.parse(storedData);
-          setConversationId(convId);
-          setPlanId(pId);
-          
-          // Load the actual plan from the backend
-          if (pId) {
-            loadPlanFromBackend(convId, pId);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load conversation from sessionStorage:', error);
-      }
-    };
-    
-    loadConversationFromStorage();
-  }, [projectId]);
+  // REMOVED: Legacy sessionStorage loading (Task 2c)
+  // Conversation/plan state now managed via useAgentSession hook
+  // If conversationId/planId persistence is needed, add to AgentSessionData in useAgentSession
 
-  // Handle initial prompt if provided
+  // Handle initial prompt if provided (NEW: gated on hydration completion)
   useEffect(() => {
-    if (initialPrompt && messages.length === 1) {
-      // Only send if we haven't already started a conversation
-      const hasStarted = sessionStorage.getItem(`agent-started-${projectId}`);
-      if (!hasStarted) {
-        sessionStorage.setItem(`agent-started-${projectId}`, 'true');
+    // Wait for session to finish loading before auto-sending prompt
+    if (!sessionLoading && initialPrompt && messages.length === 1) {
+      // Only send if we haven't already hydrated a stored conversation
+      // REMOVED agent-started transient flag (Task 2c) - rely on session.messages check only
+      if (!session?.messages?.length) {
         setTimeout(() => {
           sendMessage(initialPrompt);
         }, 500);
       }
     }
-  }, [initialPrompt, projectId]);
+  }, [sessionLoading, initialPrompt, projectId, messages.length, session?.messages]);
 
   // Load feature flags and user preferences
   useEffect(() => {
@@ -1859,14 +1912,8 @@ What would you like me to build?`,
                 if (convId) setConversationId(convId);
                 if (pId) setPlanId(pId);
                 
-                // Store in sessionStorage for future sessions
-                if (convId && pId) {
-                  sessionStorage.setItem(`agent-conversation-${projectId}`, JSON.stringify({
-                    conversationId: convId,
-                    planId: pId,
-                    timestamp: Date.now()
-                  }));
-                }
+                // REMOVED: Legacy sessionStorage (Task 2c)
+                // conversationId/planId persistence now handled via useAgentSession if needed
               } else if (event.type === 'error') {
                 throw new Error(event.data?.message || 'Plan generation failed');
               } else if (event.type === 'done') {

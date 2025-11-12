@@ -66,8 +66,9 @@ export function useAgentSession(projectId: string | number): UseAgentSessionRetu
   // Save session to sessionStorage
   const saveSession = useCallback((data: Partial<AgentSessionData>) => {
     try {
+      // FIX: Guard against null session (first-time users)
       const updated: AgentSessionData = {
-        ...session,
+        ...(session || {}),
         ...data,
         timestamp: Date.now(),
       };
