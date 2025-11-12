@@ -1875,7 +1875,7 @@ What would you like me to build?`,
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
-      let receivedPlan = false;
+      let receivedPlanData = null; // 🔧 Store plan locally instead of relying on state
 
       while (true) {
         const { done, value } = await reader.read();
@@ -1900,14 +1900,14 @@ What would you like me to build?`,
                 // Show streaming progress
                 addProgressLog('info', event.data.content || 'Generating...');
               } else if (event.type === 'plan' && event.data) {
-                receivedPlan = true;
+                // 🔧 Store plan LOCALLY - React state updates are async!
+                receivedPlanData = event.data;
                 
-                // Store the complete plan
-                const plan = event.data;
-                setCurrentPlan(plan);
+                // Also update React state for UI
+                setCurrentPlan(event.data);
                 setActiveTab('autonomous'); // Switch to autonomous tab to show plan
                 
-                addProgressLog('success', `Plan generated with ${plan.tasks?.length || 0} tasks`);
+                addProgressLog('success', `Plan generated with ${event.data.tasks?.length || 0} tasks`);
               } else if (event.type === 'saved' && event.data) {
                 // Capture conversationId and planId for memory retention
                 const { conversationId: convId, planId: pId } = event.data;
@@ -1930,12 +1930,13 @@ What would you like me to build?`,
         }
       }
 
-      if (receivedPlan && currentPlan) {
+      // 🔧 Use local variable instead of React state (state update is async!)
+      if (receivedPlanData) {
         toast({
           title: 'Execution Plan Ready',
-          description: `Generated ${currentPlan.tasks?.length || 0} tasks. Review in Autonomous tab.`,
+          description: `Generated ${receivedPlanData.tasks?.length || 0} tasks. Review in Autonomous tab.`,
         });
-        return currentPlan;
+        return receivedPlanData;
       } else {
         throw new Error('No plan received from AI service');
       }
