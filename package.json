@@ -183,6 +183,8 @@
     "recharts": "^2.15.4",
     "redis": "^5.8.0",
     "redis-rate-limiter": "^1.2.0",
+    "rehype-highlight": "^7.0.2",
+    "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
     "rollup": "^4.53.2",
     "rollup-plugin-visualizer": "^6.0.5",
