@@ -160,11 +160,11 @@ export default function Landing() {
           visibility: 'private'
         }) as any;
 
-        window.sessionStorage.setItem(`agent-prompt-${project.id}`, description);
-        const projectUrl = getProjectUrl(project, user?.username);
-        setTimeout(() => {
-          window.location.href = `${projectUrl}?agent=true&prompt=${encodeURIComponent(description)}`;
-        }, 500);
+        // 🚀 REPLIT FLOW: Redirect to IDE with AI Agent panel (auto-start build)
+        const params = new URLSearchParams();
+        params.set('panel', 'agent');
+        params.set('prompt', description);
+        navigate(`/ide/${project.id}?${params.toString()}`);
       } catch (error) {
         console.error('Failed to create project:', error);
         toast({
