@@ -30,7 +30,7 @@ import { StatusBar } from '@/components/ide/StatusBar';
 import { QuickFileSearch } from '@/components/ide/QuickFileSearch';
 import { KeyboardShortcutsOverlay } from '@/components/ide/KeyboardShortcutsOverlay';
 import { AgentActionsPanel } from '@/components/ide/AgentActionsPanel';
-import { AIAgentPanel } from '@/components/ide/AIAgentPanel';
+import { ReplitAgent } from '@/components/ReplitAgent';
 import { ReplitFileExplorer } from '@/components/editor/ReplitFileExplorer';
 import { ReplitMonacoEditor } from '@/components/editor/ReplitMonacoEditor';
 import { ResponsiveWebPreview } from '@/components/editor/ResponsiveWebPreview';
@@ -112,6 +112,11 @@ export default function IDEPage() {
   const deviceType = useDeviceType();
   
   const projectId = (params.projectId || params.id) as string;
+  
+  // REAL: Detect ?agent=true for auto-start from vibe creation flow (Task 10a/10b)
+  const searchParams = new URLSearchParams(window.location.search);
+  const autoStartAgent = searchParams.get('agent') === 'true';
+  const storedPrompt = projectId ? sessionStorage.getItem(`agent-prompt-${projectId}`) : null;
   
   // Load persisted state on mount with validation
   const persistedState = loadPersistedState(projectId);
@@ -454,7 +459,10 @@ export default function IDEPage() {
               </TabsList>
               
               <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden">
-                <AIAgentPanel projectId={projectId} />
+                <ReplitAgent 
+                  projectId={projectId}
+                  initialPrompt={autoStartAgent && storedPrompt ? storedPrompt : undefined}
+                />
               </TabsContent>
               
               <TabsContent value="actions" className="flex-1 mt-0 overflow-hidden">
