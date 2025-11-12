@@ -34,17 +34,17 @@ export function CollapsibleSection({
       <Button
         variant="ghost"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full justify-between px-3 py-2 h-auto hover:bg-[var(--ecode-surface)]"
+        className="w-full justify-between px-3 py-3 md:py-2 h-auto min-h-[44px] hover:bg-[var(--ecode-surface)] touch-manipulation"
         data-testid="collapsible-trigger"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {isOpen ? (
-            <ChevronDown className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
+            <ChevronDown className="h-5 w-5 md:h-4 md:w-4 text-[var(--ecode-text-secondary)] flex-shrink-0" />
           ) : (
-            <ChevronRight className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
+            <ChevronRight className="h-5 w-5 md:h-4 md:w-4 text-[var(--ecode-text-secondary)] flex-shrink-0" />
           )}
           {icon && <div className="flex-shrink-0">{icon}</div>}
-          <span className="text-sm font-medium text-[var(--ecode-text)]">
+          <span className="text-sm font-medium text-[var(--ecode-text)] truncate">
             {title}
           </span>
         </div>

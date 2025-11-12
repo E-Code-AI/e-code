@@ -96,7 +96,7 @@ export function ToolExecutionList({ tools }: ToolExecutionListProps) {
   if (tools.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2 my-3">
+    <div className="flex flex-wrap gap-2 my-3 max-w-full">
       {tools.map((tool) => (
         <ToolExecutionBadge
           key={tool.id}

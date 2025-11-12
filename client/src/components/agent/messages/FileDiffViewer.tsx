@@ -35,21 +35,21 @@ export function FileDiffViewer({ diff, defaultExpanded = false }: FileDiffViewer
       <Button
         variant="ghost"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full justify-between px-3 py-2 h-auto hover:bg-[var(--ecode-surface)]"
+        className="w-full justify-between px-3 py-3 md:py-2 h-auto min-h-[44px] hover:bg-[var(--ecode-surface)] touch-manipulation"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {isExpanded ? (
-            <ChevronDown className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
+            <ChevronDown className="h-5 w-5 md:h-4 md:w-4 text-[var(--ecode-text-secondary)] flex-shrink-0" />
           ) : (
-            <ChevronRight className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
+            <ChevronRight className="h-5 w-5 md:h-4 md:w-4 text-[var(--ecode-text-secondary)] flex-shrink-0" />
           )}
-          <FileText className="h-4 w-4 text-blue-500" />
-          <span className="text-sm font-mono text-[var(--ecode-text)]">
+          <FileText className="h-5 w-5 md:h-4 md:w-4 text-blue-500 flex-shrink-0" />
+          <span className="text-sm font-mono text-[var(--ecode-text)] truncate">
             {diff.path}
           </span>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {diff.linesAdded > 0 && (
             <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800">
               <Plus className="h-3 w-3 mr-1" />
@@ -74,13 +74,13 @@ export function FileDiffViewer({ diff, defaultExpanded = false }: FileDiffViewer
       {isExpanded && (
         <div className="border-t border-[var(--ecode-border)]">
           {diff.before ? (
-            <div className="grid grid-cols-2 divide-x divide-[var(--ecode-border)]">
+            <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x divide-[var(--ecode-border)]">
               {/* Before */}
-              <div className="bg-red-50 dark:bg-red-950/10">
-                <div className="px-3 py-1 bg-red-100 dark:bg-red-900/20 border-b border-[var(--ecode-border)]">
+              <div className="bg-red-50 dark:bg-red-950/10 md:border-b-0 border-b border-[var(--ecode-border)]">
+                <div className="px-3 py-2 bg-red-100 dark:bg-red-900/20 border-b border-[var(--ecode-border)]">
                   <span className="text-xs font-semibold text-red-700 dark:text-red-400">Before</span>
                 </div>
-                <pre className="p-3 overflow-x-auto text-xs font-mono">
+                <pre className="p-3 overflow-x-auto text-xs font-mono max-w-full">
                   {beforeLines.map((line, i) => (
                     <div key={i} className="flex">
                       <span className="text-red-400 dark:text-red-600 mr-3 select-none w-8 text-right">{i + 1}</span>
@@ -92,10 +92,10 @@ export function FileDiffViewer({ diff, defaultExpanded = false }: FileDiffViewer
 
               {/* After */}
               <div className="bg-green-50 dark:bg-green-950/10">
-                <div className="px-3 py-1 bg-green-100 dark:bg-green-900/20 border-b border-[var(--ecode-border)]">
+                <div className="px-3 py-2 bg-green-100 dark:bg-green-900/20 border-b border-[var(--ecode-border)]">
                   <span className="text-xs font-semibold text-green-700 dark:text-green-400">After</span>
                 </div>
-                <pre className="p-3 overflow-x-auto text-xs font-mono">
+                <pre className="p-3 overflow-x-auto text-xs font-mono max-w-full">
                   {afterLines.map((line, i) => (
                     <div key={i} className="flex">
                       <span className="text-green-400 dark:text-green-600 mr-3 select-none w-8 text-right">{i + 1}</span>
@@ -108,10 +108,10 @@ export function FileDiffViewer({ diff, defaultExpanded = false }: FileDiffViewer
           ) : (
             // New file (no before)
             <div className="bg-green-50 dark:bg-green-950/10">
-              <div className="px-3 py-1 bg-green-100 dark:bg-green-900/20 border-b border-[var(--ecode-border)]">
+              <div className="px-3 py-2 bg-green-100 dark:bg-green-900/20 border-b border-[var(--ecode-border)]">
                 <span className="text-xs font-semibold text-green-700 dark:text-green-400">New File</span>
               </div>
-              <pre className="p-3 overflow-x-auto text-xs font-mono">
+              <pre className="p-3 overflow-x-auto text-xs font-mono max-w-full">
                 {afterLines.map((line, i) => (
                   <div key={i} className="flex">
                     <span className="text-green-400 dark:text-green-600 mr-3 select-none w-8 text-right">{i + 1}</span>

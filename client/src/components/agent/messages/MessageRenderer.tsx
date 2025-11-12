@@ -59,7 +59,7 @@ export function MessageRenderer({ message, onApproveAction, onRejectAction }: Me
   return (
     <div 
       className={cn(
-        "flex gap-3 px-4 py-4 border-b border-[var(--ecode-border)]",
+        "flex gap-3 px-3 md:px-4 py-4 border-b border-[var(--ecode-border)] max-w-full",
         isUser && "bg-[var(--ecode-surface-secondary)]",
         isUser ? "agent-message-user" : "agent-message-assistant"
       )}
@@ -67,13 +67,13 @@ export function MessageRenderer({ message, onApproveAction, onRejectAction }: Me
     >
       {/* Avatar */}
       {!isUser && (
-        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
-          <Bot className="h-4 w-4 text-white" />
+        <div className="flex-shrink-0 w-8 h-8 md:w-7 md:h-7 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
+          <Bot className="h-5 w-5 md:h-4 md:w-4 text-white" />
         </div>
       )}
       {isUser && (
-        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[var(--ecode-surface)] border border-[var(--ecode-border)] flex items-center justify-center">
-          <User className="h-4 w-4 text-[var(--ecode-text)]" />
+        <div className="flex-shrink-0 w-8 h-8 md:w-7 md:h-7 rounded-full bg-[var(--ecode-surface)] border border-[var(--ecode-border)] flex items-center justify-center">
+          <User className="h-5 w-5 md:h-4 md:w-4 text-[var(--ecode-text)]" />
         </div>
       )}
 
