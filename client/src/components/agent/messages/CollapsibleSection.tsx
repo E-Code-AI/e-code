@@ -1,0 +1,111 @@
+/**
+ * Collapsible Section - Replit-style "Show more/less" accordion
+ * Smooth animations and clean UX
+ */
+
+import { useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+
+interface CollapsibleSectionProps {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  previewLines?: number;
+  icon?: React.ReactNode;
+  badge?: React.ReactNode;
+  className?: string;
+}
+
+export function CollapsibleSection({
+  title,
+  children,
+  defaultOpen = false,
+  previewLines,
+  icon,
+  badge,
+  className
+}: CollapsibleSectionProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className={cn("border border-[var(--ecode-border)] rounded-lg overflow-hidden", className)}>
+      <Button
+        variant="ghost"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full justify-between px-3 py-2 h-auto hover:bg-[var(--ecode-surface)]"
+        data-testid="collapsible-trigger"
+      >
+        <div className="flex items-center gap-2">
+          {isOpen ? (
+            <ChevronDown className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
+          )}
+          {icon && <div className="flex-shrink-0">{icon}</div>}
+          <span className="text-sm font-medium text-[var(--ecode-text)]">
+            {title}
+          </span>
+        </div>
+        {badge && <div className="flex-shrink-0">{badge}</div>}
+      </Button>
+      
+      <div
+        className={cn(
+          "transition-all duration-300 ease-in-out overflow-hidden",
+          isOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
+        )}
+      >
+        <div className="p-3 border-t border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface CodeCollapsibleProps {
+  code: string;
+  language?: string;
+  maxLines?: number;
+}
+
+export function CodeCollapsible({ code, language, maxLines = 10 }: CodeCollapsibleProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const lines = code.split('\n');
+  const shouldCollapse = lines.length > maxLines;
+  const displayCode = isExpanded || !shouldCollapse
+    ? code
+    : lines.slice(0, maxLines).join('\n');
+
+  return (
+    <div className="relative">
+      <pre className="p-3 bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-lg overflow-x-auto">
+        {language && (
+          <div className="text-xs font-mono text-[var(--ecode-text-secondary)] mb-2 uppercase">
+            {language}
+          </div>
+        )}
+        <code className="text-xs font-mono text-[var(--ecode-text)]">
+          {displayCode}
+        </code>
+      </pre>
+      
+      {shouldCollapse && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="mt-2 text-xs h-7"
+        >
+          {isExpanded ? (
+            <>Show less</>
+          ) : (
+            <>Show {lines.length - maxLines} more lines</>
+          )}
+        </Button>
+      )}
+    </div>
+  );
+}

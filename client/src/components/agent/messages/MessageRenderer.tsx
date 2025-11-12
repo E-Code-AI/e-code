@@ -10,6 +10,8 @@ import { AgentMessage } from './types';
 import { ThinkingMessage } from './ThinkingMessage';
 import { TaskMessage } from './TaskMessage';
 import { ActionMessage } from './ActionMessage';
+import { RichMessageContent } from './RichMessageContent';
+import { VibingAnimation } from './VibingAnimation';
 import { Button } from '@/components/ui/button';
 import { Copy } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -77,43 +79,9 @@ export function MessageRenderer({ message, onApproveAction, onRejectAction }: Me
 
       {/* Content */}
       <div className="flex-1 min-w-0 space-y-3">
-        {/* Main text content */}
+        {/* Main text content with rich markdown formatting */}
         {message.content && (
-          <div className="text-sm text-[var(--ecode-text)] leading-relaxed">
-            {message.content.split('```').map((part, index) => {
-              if (index % 2 === 1) {
-                const [lang, ...codeLines] = part.split('\n');
-                const code = codeLines.join('\n');
-                return (
-                  <div key={index} className="my-3">
-                    <div className="relative group">
-                      <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => copyCode(code)}
-                          className="h-7 w-7 bg-[var(--ecode-surface)] hover:bg-[var(--ecode-surface-secondary)]"
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                      <div className="rounded-lg bg-[var(--ecode-surface)] border border-[var(--ecode-border)] overflow-hidden">
-                        {lang.trim() && (
-                          <div className="px-3 py-1.5 text-xs text-[var(--ecode-text-secondary)] border-b border-[var(--ecode-border)] font-mono">
-                            {lang.trim()}
-                          </div>
-                        )}
-                        <pre className="p-3 overflow-x-auto">
-                          <code className="text-xs font-mono">{code}</code>
-                        </pre>
-                      </div>
-                    </div>
-                  </div>
-                );
-              }
-              return <p key={index} className={index > 0 ? "mt-2" : ""}>{part}</p>;
-            })}
-          </div>
+          <RichMessageContent content={message.content} />
         )}
 
         {/* Thinking Process */}

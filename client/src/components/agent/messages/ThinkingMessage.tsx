@@ -3,10 +3,12 @@
  * Displays AI extended thinking process with streaming animation
  */
 
-import { Brain, CheckCircle2, Circle, Loader2, XCircle } from 'lucide-react';
+import { Brain, CheckCircle2, Circle, Loader2, XCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThinkingStep } from './types';
 import { Badge } from '@/components/ui/badge';
+import { VibingAnimation } from './VibingAnimation';
+import { useState } from 'react';
 
 interface ThinkingMessageProps {
   steps: ThinkingStep[];
@@ -23,40 +25,55 @@ const STEP_TYPE_CONFIG = {
 };
 
 export function ThinkingMessage({ steps, isStreaming, totalTokens, thinkingTime }: ThinkingMessageProps) {
+  const [isExpanded, setIsExpanded] = useState(true);
+  
   if (steps.length === 0 && !isStreaming) return null;
 
   return (
-    <div className="p-4 rounded-lg border border-[var(--ecode-border)] bg-[var(--ecode-surface)]" data-testid="thinking-message">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+    <div className="rounded-lg border border-[var(--ecode-border)] bg-[var(--ecode-surface)] overflow-hidden" data-testid="thinking-message">
+      {/* Header - Clickable to expand/collapse */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-[var(--ecode-surface-secondary)] transition-colors"
+      >
         <div className="flex items-center gap-2">
+          {isExpanded ? (
+            <ChevronDown className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
+          )}
           <div className="p-1.5 rounded-md bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10">
             <Brain className="h-4 w-4 text-violet-500" />
           </div>
           <span className="text-sm font-medium text-[var(--ecode-text)]">
             {isStreaming ? 'Thinking...' : 'Thought Process'}
           </span>
+          {isStreaming && <VibingAnimation size="sm" />}
         </div>
         
-        {!isStreaming && (
-          <div className="flex items-center gap-2">
-            {thinkingTime && (
-              <Badge variant="outline" className="text-xs">
-                {thinkingTime}ms
-              </Badge>
-            )}
-            {totalTokens && (
-              <Badge variant="outline" className="text-xs">
-                {totalTokens} tokens
-              </Badge>
-            )}
-          </div>
-        )}
-      </div>
+        <div className="flex items-center gap-2">
+          {!isStreaming && thinkingTime && (
+            <Badge variant="outline" className="text-xs">
+              {thinkingTime}ms
+            </Badge>
+          )}
+          {!isStreaming && totalTokens && (
+            <Badge variant="outline" className="text-xs">
+              {totalTokens} tokens
+            </Badge>
+          )}
+          {steps.length > 0 && (
+            <Badge variant="outline" className="text-xs">
+              {steps.filter(s => s.status === 'completed').length}/{steps.length} steps
+            </Badge>
+          )}
+        </div>
+      </button>
 
-      {/* Thinking Steps */}
-      <div className="space-y-2">
-        {steps.map((step, index) => {
+      {/* Thinking Steps - Collapsible */}
+      {isExpanded && (
+        <div className="px-4 pb-3 space-y-2 border-t border-[var(--ecode-border)] pt-3">
+          {steps.map((step, index) => {
           const config = STEP_TYPE_CONFIG[step.type];
           const Icon = config.icon;
           
@@ -102,16 +119,17 @@ export function ThinkingMessage({ steps, isStreaming, totalTokens, thinkingTime 
           );
         })}
 
-        {/* Streaming Indicator */}
-        {isStreaming && steps.length === 0 && (
-          <div className="flex items-center gap-2 p-3">
-            <Loader2 className="h-4 w-4 text-violet-500 animate-spin" />
-            <span className="text-sm text-[var(--ecode-text-secondary)]">
-              Processing...
-            </span>
-          </div>
-        )}
-      </div>
+          {/* Streaming Indicator */}
+          {isStreaming && steps.length === 0 && (
+            <div className="flex items-center gap-3 p-3 rounded-md bg-blue-50 dark:bg-blue-950/10 border border-blue-200 dark:border-blue-800">
+              <VibingAnimation />
+              <span className="text-sm text-[var(--ecode-text)]">
+                Processing your request...
+              </span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
