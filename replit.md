@@ -40,6 +40,13 @@ The platform utilizes a polyglot backend architecture with Go for container orch
 **Feature Specifications:**
 - **Workspace Persistence & Responsive Design**: IDEPage implements device-aware rendering (mobile/tablet/desktop) with lazy-loaded device-specific views and sessionStorage persistence for IDE state.
 - **AI Agent System**: Autonomous code generation with real tool execution, extended thinking via Anthropic Claude, and database-backed audit logging. Includes "Build from Prompt" feature with autonomous build process (plan generation, risk assessment, file creation, IDE redirect, auto-start preview, auto-execute runtime). Features include Model Selection API, Extended Thinking Streaming, Conversation Persistence, Security Hardening, Autonomous Mode, and Plan Mode (blocking tool execution).
+  - **Session Persistence (November 12, 2025)**: Per-project AI Agent state persistence using sessionStorage with auto-save and hydration:
+    - **useAgentSession Hook**: Custom hook (`client/src/hooks/use-agent-session.ts`) manages session lifecycle with storage key `agent-session-${projectId}`, 24-hour expiry, and null-guard for first-time users. Stores messages, selectedModel, extendedThinking, highPowerMode, autoCheckpoints, agentMode, pendingActions, and timestamp.
+    - **Auto-Save Mechanism**: Debounced auto-save (500ms) for messages, immediate save for settings changes. Only saves after hydration completes to avoid overwriting defaults.
+    - **Hydration on Load**: ReplitAgent component hydrates state from sessionStorage on mount, converting timestamps to Date objects. Works for both first-time and returning users.
+    - **IDE Integration**: IDEPage supports query params `?panel=agent&prompt=...` to auto-select agent tab and pass prompts. Prompts stored in `agent-prompt-${projectId}` and cleaned from URL after storage.
+    - **Routing**: `/ai-agent?projectId=X&prompt=Y` redirects to `/ide/X?panel=agent&prompt=Y`. No-project path (`/ai-agent?prompt=Y`) stores prompt in global `pending-agent-prompt` and redirects to dashboard.
+    - **Legacy Cleanup**: Removed all legacy sessionStorage keys (`agent-conversation-${projectId}`, `agent-started-${projectId}`) from ReplitAgent.tsx.
 - **Browser Testing & QA Infrastructure**: Playwright-based testing orchestrator, element selector service, session recording, and admin-only API routes.
 - **Tools**: Extended set of 35 tools including file operations, commands, web search, browser testing, performance analysis, and accessibility checks.
 - **Real-time Collaboration**: WebSocket-based editing and WebRTC for voice/video/screen sharing.
