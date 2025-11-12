@@ -200,10 +200,11 @@ Remember:
         // ✅ CRITICAL FIX: Replace JavaScript template literals with escaped strings
         // Claude sometimes uses `content` instead of "content"
         // This regex finds backtick-quoted strings and converts them to JSON strings
-        jsonString = jsonString.replace(/`([^`]*)`/g, (match, content) => {
+        // IMPORTANT: Use [\s\S] to match newlines (. doesn't match \n by default)
+        jsonString = jsonString.replace(/`([\s\S]*?)`/g, (match, content) => {
           // Escape special JSON characters in the content
           const escaped = content
-            .replace(/\\/g, '\\\\')   // Escape backslashes
+            .replace(/\\/g, '\\\\')   // Escape backslashes FIRST
             .replace(/"/g, '\\"')     // Escape quotes
             .replace(/\n/g, '\\n')    // Escape newlines
             .replace(/\r/g, '\\r')    // Escape carriage returns
