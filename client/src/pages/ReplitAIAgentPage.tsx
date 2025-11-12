@@ -196,17 +196,6 @@ export default function ReplitAIAgentPage() {
     console.log('[ReplitAIAgentPage] Agent closed, state cleared');
   };
 
-  // Cleanup on unmount or navigation
-  useEffect(() => {
-    return () => {
-      // Only clear if user navigates away (not just component re-render)
-      if (!showAgent) {
-        sessionStorage.removeItem('ai-agent-state');
-        console.log('[ReplitAIAgentPage] Unmounting, cleared state');
-      }
-    };
-  }, [showAgent]);
-
   if (showAgent && projectId) {
     return (
       <ReplitLayout showSidebar={false}>
