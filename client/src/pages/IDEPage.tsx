@@ -13,6 +13,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { useDeviceType } from '@/hooks/use-media-query';
+import { apiRequest } from '@/lib/queryClient';
 import { File, Project } from '@shared/schema';
 import { 
   ResizableHandle, 
@@ -462,13 +463,38 @@ export default function IDEPage() {
                 <ReplitAgent 
                   projectId={projectId}
                   initialPrompt={autoStartAgent && storedPrompt ? storedPrompt : undefined}
-                  onBuildComplete={() => {
+                  onBuildComplete={async () => {
                     // REAL: Auto-start preview when build completes (Task 12)
                     setActiveTab('preview');
-                    toast({
-                      title: 'Build Complete',
-                      description: 'Preview is now available',
-                    });
+                    
+                    // REAL: Auto-start runtime (Task 13) - Run button executes by default
+                    try {
+                      const res = await apiRequest('POST', '/api/runtime/start', {
+                        projectId,
+                        mainFile: undefined, // Auto-detection
+                        timeout: 30000
+                      });
+                      
+                      if (res.ok) {
+                        toast({
+                          title: 'Build Complete',
+                          description: 'Preview is starting...',
+                        });
+                      } else {
+                        const error = await res.json();
+                        toast({
+                          title: 'Build Complete',
+                          description: 'Preview available (runtime start failed)',
+                          variant: 'destructive',
+                        });
+                      }
+                    } catch (err) {
+                      toast({
+                        title: 'Build Complete',
+                        description: 'Preview available (runtime start failed)',
+                        variant: 'destructive',
+                      });
+                    }
                   }}
                 />
               </TabsContent>
