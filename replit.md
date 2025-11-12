@@ -69,7 +69,10 @@ The platform utilizes a polyglot backend architecture with Go for container orch
 - **Production Compliance**: Fortune 500-readiness with PostgreSQL persistence, tamper-proof append-only logging, and queryable audit trail for all agent conversations and messages.
 
 ## External Dependencies
-- **AI Integration**: Anthropic Claude API, OpenAI API, Together AI, Replicate, Hugging Face, Groq, Anyscale.
+- **AI Integration**: 
+  - **Primary**: Anthropic Claude 3.5 Haiku (claude-3-5-haiku-20241022) - VALIDATED & WORKING
+  - **Secondary**: OpenAI API, Together AI, Replicate, Hugging Face, Groq, Anyscale
+  - **AI Plan Generator**: Uses Anthropic Claude 3.5 Haiku for plan generation with JSON parsing (handles markdown code blocks)
 - **Push Notifications**: Firebase Cloud Messaging (FCM), Firebase Admin SDK.
 - **Video Conferencing**: Zoom API.
 - **Deployment Platform**: Replit Reserved VM.

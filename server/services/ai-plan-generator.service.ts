@@ -178,7 +178,17 @@ Remember:
 
       // Parse the complete response
       try {
-        const planData = JSON.parse(fullResponse);
+        // Strip markdown code blocks if present (Claude often returns ```json ... ```)
+        let cleanedResponse = fullResponse.trim();
+        
+        // Remove opening backticks with optional language identifier
+        cleanedResponse = cleanedResponse.replace(/^```(?:json)?\s*/i, '');
+        
+        // Remove closing backticks
+        cleanedResponse = cleanedResponse.replace(/\s*```\s*$/i, '');
+        
+        // Parse JSON
+        const planData = JSON.parse(cleanedResponse);
         
         const plan: ExecutionPlan = {
           id: `plan-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,

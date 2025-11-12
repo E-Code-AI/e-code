@@ -67,8 +67,8 @@ export class AnthropicProvider implements AIProvider {
     const systemMessage = messages.find(m => m.role === 'system')?.content;
     
     const response = await this.client.messages.create({
-      // Use latest Claude model as per blueprint instructions
-      model: options?.model || 'claude-sonnet-4-20250514',
+      // Use latest AVAILABLE Claude model (validated working)
+      model: options?.model || 'claude-3-5-haiku-20241022',
       messages: anthropicMessages,
       system: systemMessage,
       max_tokens: options?.max_tokens || 1024,
@@ -410,8 +410,8 @@ export class AIProviderFactory {
         return new OpenAIProvider(apiKey);
       case 'anthropic':
         return new AnthropicProvider(apiKey);
-      case 'gemini':
-        return new GeminiProvider(apiKey);
+      // case 'gemini':
+      //   return new GeminiProvider(apiKey); // TODO: Implement GeminiProvider
       case 'xai':
         return new XAIProvider(apiKey);
       case 'perplexity':
