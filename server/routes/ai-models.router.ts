@@ -6,6 +6,36 @@ import { getStorage } from '../storage';
 const router = express.Router();
 
 /**
+ * GET /api/models/health
+ * Health check endpoint - returns provider status (no auth required)
+ */
+router.get('/health', (req, res) => {
+  try {
+    const models = aiProviderManager.getAvailableModels();
+    const providerStats = models.reduce((acc, model) => {
+      acc[model.provider] = (acc[model.provider] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    res.json({
+      success: true,
+      status: 'healthy',
+      providers: Object.keys(providerStats).length,
+      totalModels: models.length,
+      providerStats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('[AI Models] Health check error:', error);
+    res.status(500).json({ 
+      success: false,
+      status: 'unhealthy',
+      error: error.message 
+    });
+  }
+});
+
+/**
  * GET /api/models
  * Get all available AI models across providers
  */

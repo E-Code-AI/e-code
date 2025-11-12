@@ -19,7 +19,45 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
     const viteModule = await import('./vite');
     
     if (process.env.NODE_ENV === 'development') {
+      // WORKAROUND: Monkeypatch app.use to prevent Vite's catch-all from capturing API routes
+      // This is necessary because server/vite.ts is forbidden from editing
+      // Save original app.use method
+      const originalAppUse = app.use.bind(app);
+      
+      // Override app.use to intercept the Vite catch-all middleware
+      (app as any).use = function(pathOrMiddleware: any, ...middlewares: any[]) {
+        // If this is the catch-all route ('*'), wrap it to skip API routes
+        if (pathOrMiddleware === '*' && middlewares.length > 0) {
+          const originalMiddleware = middlewares[0];
+          
+          // Create a wrapped middleware that skips API routes
+          const wrappedMiddleware = async (req: any, res: any, next: any) => {
+            // Skip API routes, WebSocket routes, and other backend services
+            if (req.originalUrl.startsWith('/api/') || 
+                req.originalUrl.startsWith('/collaboration/') || 
+                req.originalUrl.startsWith('/webrtc/') ||
+                req.originalUrl.startsWith('/health') ||
+                req.originalUrl.startsWith('/socket.io/')) {
+              return next();
+            }
+            
+            // For everything else, let Vite handle it
+            return originalMiddleware(req, res, next);
+          };
+          
+          // Call original app.use with wrapped middleware
+          return originalAppUse(pathOrMiddleware, wrappedMiddleware);
+        }
+        
+        // For all other routes, use original behavior
+        return originalAppUse(pathOrMiddleware, ...middlewares);
+      };
+      
+      // Setup Vite (which will now use our patched app.use)
       await viteModule.setupVite(app, server);
+      
+      // Restore original app.use method after Vite setup
+      app.use = originalAppUse;
     } else {
       viteModule.serveStatic(app);
     }
