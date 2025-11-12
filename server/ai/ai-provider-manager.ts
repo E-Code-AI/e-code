@@ -343,7 +343,7 @@ export class AIProviderManager {
   private async *streamOpenAI(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.openaiClient) throw new Error('OpenAI client not initialized');
     
-    // @ts-ignore - OpenAI SDK stream type inference
+    // OpenAI SDK returns Stream<ChatCompletionChunk> when stream: true
     const stream = await this.openaiClient.chat.completions.create({
       model: modelId,
       messages,
@@ -351,10 +351,10 @@ export class AIProviderManager {
       max_tokens: options?.max_tokens || 4000,
       temperature: options?.temperature || 0.7,
       ...options
-    });
+    }) as AsyncIterable<any>;
     
     for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content;
+      const content = chunk.choices?.[0]?.delta?.content;
       if (content) {
         yield content;
       }
