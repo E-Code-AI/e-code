@@ -508,6 +508,27 @@ export interface IStorage {
   }): Promise<any>;
   getAgentMessages(conversationId: number): Promise<any[]>;
 
+  // Build Execution operations
+  createBuildExecution(execution: {
+    projectId: string;
+    conversationId?: number;
+    planId: string;
+    totalTasks: number;
+    metadata?: any;
+  }): Promise<any>;
+  getBuildExecution(id: string): Promise<any | undefined>;
+  getBuildExecutionsByProject(projectId: string): Promise<any[]>;
+  updateBuildExecution(id: string, updates: {
+    status?: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+    currentTaskId?: string;
+    currentTaskIndex?: number;
+    progress?: number;
+    executionLog?: any[];
+    error?: string;
+    startedAt?: Date;
+    completedAt?: Date;
+  }): Promise<any | undefined>;
+
   // Dynamic Intelligence / Agent Preferences operations
   getDynamicIntelligenceSettings(userId: string): Promise<DynamicIntelligence | undefined>;
   updateDynamicIntelligenceSettings(userId: string, settings: Partial<InsertDynamicIntelligence>): Promise<DynamicIntelligence>;
@@ -2900,6 +2921,53 @@ export class DatabaseStorage implements IStorage {
   async getAgentMessages(conversationId: number): Promise<any[]> {
     const { agentMessages } = await import('@shared/schema');
     return await this.db.select().from(agentMessages).where(eq(agentMessages.conversationId, conversationId));
+  }
+
+  // Build Execution operations
+  async createBuildExecution(execution: {
+    projectId: string;
+    conversationId?: number;
+    planId: string;
+    totalTasks: number;
+    metadata?: any;
+  }): Promise<any> {
+    const { buildExecutions } = await import('@shared/schema');
+    const [created] = await this.db.insert(buildExecutions).values(execution).returning();
+    return created;
+  }
+
+  async getBuildExecution(id: string): Promise<any | undefined> {
+    const { buildExecutions } = await import('@shared/schema');
+    const [execution] = await this.db.select().from(buildExecutions).where(eq(buildExecutions.id, id));
+    return execution;
+  }
+
+  async getBuildExecutionsByProject(projectId: string): Promise<any[]> {
+    const { buildExecutions } = await import('@shared/schema');
+    return await this.db
+      .select()
+      .from(buildExecutions)
+      .where(eq(buildExecutions.projectId, projectId))
+      .orderBy(buildExecutions.createdAt);
+  }
+
+  async updateBuildExecution(id: string, updates: {
+    status?: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+    currentTaskId?: string;
+    currentTaskIndex?: number;
+    progress?: number;
+    executionLog?: any[];
+    error?: string;
+    startedAt?: Date;
+    completedAt?: Date;
+  }): Promise<any | undefined> {
+    const { buildExecutions } = await import('@shared/schema');
+    const [updated] = await this.db
+      .update(buildExecutions)
+      .set(updates)
+      .where(eq(buildExecutions.id, id))
+      .returning();
+    return updated;
   }
 
   // Dynamic Intelligence operations
