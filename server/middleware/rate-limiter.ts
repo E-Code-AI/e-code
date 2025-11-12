@@ -56,19 +56,20 @@ export const rateLimiters = {
   }),
   
   // AI endpoint rate limiter
+  // Development: 1000 requests/min | Production: 10 requests/min
   ai: redisClient ? new RateLimiterRedis({
     storeClient: redisClient,
     keyPrefix: 'rl_ai',
-    points: 10, // 10 requests
+    points: process.env.NODE_ENV === 'development' ? 1000 : 10, // ✅ 1000 in dev
     duration: 60, // per minute
-    blockDuration: 300, // block for 5 minutes
-    execEvenly: true, // spread requests evenly
+    blockDuration: process.env.NODE_ENV === 'development' ? 1 : 300, // ✅ 1 sec in dev, 5 min in prod
+    execEvenly: false, // ✅ Don't spread in dev
   }) : new RateLimiterMemory({
     keyPrefix: 'rl_ai',
-    points: 10,
+    points: process.env.NODE_ENV === 'development' ? 1000 : 10,
     duration: 60,
-    blockDuration: 300,
-    execEvenly: true,
+    blockDuration: process.env.NODE_ENV === 'development' ? 1 : 300,
+    execEvenly: false,
   }),
   
   // Deployment rate limiter
