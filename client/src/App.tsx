@@ -433,8 +433,11 @@ function AppContent() {
                   if (prompt) params.set('prompt', prompt);
                   navigate(`/ide/${projectId}?${params.toString()}`);
                 } else {
-                  // No project specified - redirect to dashboard with modal to create project
-                  // User can create project and it will open IDE with agent panel
+                  // No project specified - store prompt in global sessionStorage for dashboard
+                  if (prompt) {
+                    sessionStorage.setItem('pending-agent-prompt', prompt);
+                  }
+                  // Redirect to dashboard (which can show modal to create project with prompt context)
                   navigate('/projects');
                 }
               }
@@ -445,7 +448,7 @@ function AppContent() {
               return <AIAgent />;
             }
             
-            return null; // Redirecting...
+            return <div>Redirecting to AI Agent...</div>;
           }} />
           <ProtectedRoute path="/ai-agent/studio" component={() => (
             <ReplitLayout showSidebar={false}>
