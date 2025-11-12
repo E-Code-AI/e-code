@@ -462,6 +462,14 @@ export default function IDEPage() {
                 <ReplitAgent 
                   projectId={projectId}
                   initialPrompt={autoStartAgent && storedPrompt ? storedPrompt : undefined}
+                  onBuildComplete={() => {
+                    // REAL: Auto-start preview when build completes (Task 12)
+                    setActiveTab('preview');
+                    toast({
+                      title: 'Build Complete',
+                      description: 'Preview is now available',
+                    });
+                  }}
                 />
               </TabsContent>
               
