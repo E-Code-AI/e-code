@@ -313,7 +313,23 @@ export class AIProviderManager {
     
     // Use native streaming for providers that support it
     if (model.provider === 'anthropic' && this.anthropicClient) {
-      yield* this.streamAnthropic(modelId, messages, options);
+      try {
+        yield* this.streamAnthropic(modelId, messages, options);
+      } catch (error: any) {
+        // Fallback to GPT-4o if Anthropic fails (404, rate limit, etc.)
+        const fallbackModelId = 'gpt-4o';
+        console.error(`[AIProviderManager] Anthropic streaming failed for ${modelId}:`, error.message);
+        console.log(`[AIProviderManager] Falling back to ${fallbackModelId}`);
+        
+        // Verify fallback model exists
+        const fallbackModel = this.getModel(fallbackModelId);
+        if (fallbackModel && this.openaiClient) {
+          yield* this.streamOpenAI(fallbackModelId, messages, options);
+        } else {
+          // If fallback also fails, throw original error
+          throw error;
+        }
+      }
     } else if (model.provider === 'openai' && this.openaiClient) {
       yield* this.streamOpenAI(modelId, messages, options);
     } else if (model.provider === 'gemini' && this.geminiClient) {
