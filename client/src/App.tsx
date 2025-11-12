@@ -86,7 +86,6 @@ const Desktop = lazy(() => import("@/pages/Desktop"));
 
 const AIAgent = lazy(() => import("@/pages/AIAgent"));
 const AIAgentStudio = lazy(() => import("@/pages/AIAgentStudio"));
-const ReplitAIAgentPage = lazy(() => import("@/pages/ReplitAIAgentPage"));
 const PublicTeamPage = lazy(() => import("@/pages/PublicTeamPage"));
 const PublicDeploymentsPage = lazy(() => import("@/pages/PublicDeploymentsPage"));
 const Scalability = lazy(() => import("@/pages/Scalability"));
@@ -407,36 +406,61 @@ function AppContent() {
           <Route path="/ai-documentation" component={AIDocumentation} />
           {/* AI Agent Routes - Real Implementation */}
           <Route path="/agent" component={() => {
-            // Redirect /agent to /ai-agent (real implementation)
+            // Redirect /agent to /ai-agent (preserves query params)
             const [, navigate] = useLocation();
-            useEffect(() => navigate('/ai-agent'), []);
+            useEffect(() => {
+              const searchParams = new URLSearchParams(window.location.search);
+              navigate(`/ai-agent?${searchParams.toString()}`);
+            }, [navigate]);
             return null;
           }} />
           <Route path="/ai-agent" component={() => {
-            // Adaptive routing: marketing for anonymous, agent for authenticated
+            // NEW: Redirect authenticated users to IDE with AI Agent panel
             const { user } = useAuth();
-            if (user) {
-              // Authenticated users get the full ReplitAIAgentPage
-              return (
-                <ReplitLayout showSidebar={false}>
-                  <ReplitAIAgentPage />
-                </ReplitLayout>
-              );
-            } else {
-              // Unauthenticated users get the marketing page
+            const [, navigate] = useLocation();
+            
+            useEffect(() => {
+              if (user) {
+                // Check for projectId or prompt in query params
+                const searchParams = new URLSearchParams(window.location.search);
+                const projectId = searchParams.get('projectId');
+                const prompt = searchParams.get('prompt');
+                
+                if (projectId) {
+                  // Redirect to existing project's IDE with agent panel
+                  const params = new URLSearchParams();
+                  params.set('panel', 'agent');
+                  if (prompt) params.set('prompt', prompt);
+                  navigate(`/ide/${projectId}?${params.toString()}`);
+                } else {
+                  // No project specified - redirect to dashboard with modal to create project
+                  // User can create project and it will open IDE with agent panel
+                  navigate('/projects');
+                }
+              }
+            }, [user, navigate]);
+            
+            // Unauthenticated users get the marketing page
+            if (!user) {
               return <AIAgent />;
             }
+            
+            return null; // Redirecting...
           }} />
           <ProtectedRoute path="/ai-agent/studio" component={() => (
             <ReplitLayout showSidebar={false}>
               <AIAgentStudio />
             </ReplitLayout>
           )} />
-          <ProtectedRoute path="/replit-ai-agent" component={() => (
-            <ReplitLayout showSidebar={false}>
-              <ReplitAIAgentPage />
-            </ReplitLayout>
-          )} />
+          <ProtectedRoute path="/replit-ai-agent" component={() => {
+            // Redirect to /ai-agent (which then redirects to IDE)
+            const [, navigate] = useLocation();
+            useEffect(() => {
+              const searchParams = new URLSearchParams(window.location.search);
+              navigate(`/ai-agent?${searchParams.toString()}`);
+            }, [navigate]);
+            return <div>Redirecting to AI Agent...</div>;
+          }} />
           <Route path="/code-generation" component={CodeGeneration} />
           <Route path="/mcp" component={MCPInterface} />
           <Route path="/polyglot" component={PolyglotBackendPage} />
