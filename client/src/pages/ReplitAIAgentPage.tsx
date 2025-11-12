@@ -50,24 +50,63 @@ export default function ReplitAIAgentPage() {
   const [showAgent, setShowAgent] = useState(false);
   const [projectId, setProjectId] = useState<number | null>(null);
   const [project, setProject] = useState<any>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
-  // Get prompt from URL params and auto-submit
+  // Restore state from sessionStorage on mount (secure: only projectId, validated via API)
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlPrompt = urlParams.get('prompt') || urlParams.get('build');
-    if (urlPrompt) {
-      const decodedPrompt = decodeURIComponent(urlPrompt);
-      setPrompt(decodedPrompt);
-      // Auto-submit if prompt is provided
-      setTimeout(() => {
-        handleAutoSubmit(decodedPrompt);
-      }, 100);
-    }
+    const restoreSession = async () => {
+      const savedState = sessionStorage.getItem('ai-agent-state');
+      if (savedState) {
+        try {
+          const { projectId: savedProjectId, timestamp } = JSON.parse(savedState);
+          
+          // Invalidate sessions older than 1 hour
+          if (timestamp && Date.now() - timestamp > 3600000) {
+            console.log('[ReplitAIAgentPage] Session expired, clearing stale state');
+            sessionStorage.removeItem('ai-agent-state');
+            return;
+          }
+          
+          // Validate projectId exists via API before restoring
+          if (savedProjectId) {
+            try {
+              const projectData = await apiRequest('GET', `/api/projects/${savedProjectId}`);
+              setProjectId(projectData.id);
+              setProject(projectData);
+              setShowAgent(true);
+              console.log('[ReplitAIAgentPage] Session restored and validated:', savedProjectId);
+              return; // Don't process URL params if we have saved state
+            } catch (error) {
+              console.error('[ReplitAIAgentPage] Failed to validate project, clearing state:', error);
+              sessionStorage.removeItem('ai-agent-state');
+            }
+          }
+        } catch (error) {
+          console.error('[ReplitAIAgentPage] Failed to restore state:', error);
+          sessionStorage.removeItem('ai-agent-state');
+        }
+      }
+
+      // Get prompt from URL params and auto-submit
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlPrompt = urlParams.get('prompt') || urlParams.get('build');
+      if (urlPrompt) {
+        const decodedPrompt = decodeURIComponent(urlPrompt);
+        setPrompt(decodedPrompt);
+        // Auto-submit if prompt is provided
+        setTimeout(() => {
+          handleAutoSubmit(decodedPrompt);
+        }, 100);
+      }
+    };
+
+    restoreSession();
   }, []);
 
   const handleAutoSubmit = async (promptText: string) => {
     if (!promptText.trim()) return;
 
+    setIsCreating(true);
     // Create a new project for this AI session
     try {
       const projectData = await apiRequest('POST', '/api/projects', {
@@ -80,12 +119,22 @@ export default function ReplitAIAgentPage() {
       setProjectId(projectData.id);
       setProject(projectData);
       setShowAgent(true);
+      
+      // Save ONLY projectId to sessionStorage (secure: no sensitive data)
+      sessionStorage.setItem('ai-agent-state', JSON.stringify({
+        projectId: projectData.id,
+        timestamp: Date.now(),
+      }));
+      
+      console.log('[ReplitAIAgentPage] Project created and state saved:', projectData.id);
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Failed to create project. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -93,6 +142,7 @@ export default function ReplitAIAgentPage() {
     e?.preventDefault();
     if (!prompt.trim()) return;
 
+    setIsCreating(true);
     // Create a new project for this AI session
     try {
       const requestBody = {
@@ -108,6 +158,14 @@ export default function ReplitAIAgentPage() {
       setProject(projectData);
       setShowAgent(true);
       
+      // Save ONLY projectId to sessionStorage (secure: no sensitive data)
+      sessionStorage.setItem('ai-agent-state', JSON.stringify({
+        projectId: projectData.id,
+        timestamp: Date.now(),
+      }));
+      
+      console.log('[ReplitAIAgentPage] Project created and state saved:', projectData.id);
+      
       toast({
         title: "Project created",
         description: "Starting to build your application...",
@@ -118,6 +176,8 @@ export default function ReplitAIAgentPage() {
         description: error.message || "Failed to connect to server. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -125,6 +185,27 @@ export default function ReplitAIAgentPage() {
     setPrompt(exampleText);
     handleSubmit();
   };
+
+  const handleCloseAgent = () => {
+    // Clear sessionStorage and reset state
+    sessionStorage.removeItem('ai-agent-state');
+    setShowAgent(false);
+    setProjectId(null);
+    setProject(null);
+    setPrompt('');
+    console.log('[ReplitAIAgentPage] Agent closed, state cleared');
+  };
+
+  // Cleanup on unmount or navigation
+  useEffect(() => {
+    return () => {
+      // Only clear if user navigates away (not just component re-render)
+      if (!showAgent) {
+        sessionStorage.removeItem('ai-agent-state');
+        console.log('[ReplitAIAgentPage] Unmounting, cleared state');
+      }
+    };
+  }, [showAgent]);
 
   if (showAgent && projectId) {
     return (
@@ -137,8 +218,9 @@ export default function ReplitAIAgentPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => navigate('/dashboard')}
+                  onClick={handleCloseAgent}
                   className="h-8 w-8"
+                  data-testid="close-agent-button"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
