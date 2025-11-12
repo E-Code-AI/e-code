@@ -8,6 +8,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* AI Agent Chat Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.agent-message-enter {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.agent-message-user {
+  animation: fadeInUp 0.2s ease-out;
+}
+
 /* Terminal styling */
 .terminal-container {
   width: 100%;

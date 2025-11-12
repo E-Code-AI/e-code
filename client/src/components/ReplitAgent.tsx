@@ -1941,7 +1941,8 @@ What would you like me to build?`,
     return (
       <div key={message.id} className={cn(
         "flex gap-3 px-4 py-4",
-        isUser && "bg-[var(--ecode-surface-secondary)]"
+        isUser && "bg-[var(--ecode-surface-secondary)]",
+        isUser ? "agent-message-user" : "agent-message-enter"
       )}>
         {!isUser && (
           <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
@@ -2198,7 +2199,7 @@ What would you like me to build?`,
         
         <TabsContent value="chat" className="flex-1 m-0">
           <ScrollArea className="h-full">
-            <div className="py-4">
+            <div className="py-4" role="log" aria-live="polite" aria-relevant="additions">
           {messages.length === 0 ? (
             <div className="px-4 py-8">
               <div className="flex items-center gap-3 mb-6">
@@ -2577,17 +2578,45 @@ What would you like me to build?`,
               ? "I'm in high power mode - ready for intensive tasks..."
               : "Ask me anything about your code..."
           }
-          className="min-h-[44px] max-h-[150px] pr-12 resize-none bg-[var(--ecode-surface-secondary)] border-[var(--ecode-border)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-tertiary)]"
+          className="min-h-[44px] max-h-[150px] pr-12 pb-7 resize-none bg-[var(--ecode-surface-secondary)] border-[var(--ecode-border)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-tertiary)]"
           disabled={isLoading}
+          data-testid="agent-input"
+          aria-label="Chat input"
         />
-        <Button
-          size="icon"
-          onClick={() => sendMessage(input)}
-          disabled={isLoading || !input.trim()}
-          className="absolute right-2 bottom-2 h-8 w-8 bg-gradient-to-br from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600"
-        >
-          <Send className="h-4 w-4" />
-        </Button>
+        {/* Keyboard shortcut hint - positioned to avoid text overlap */}
+        {!input.trim() && !isLoading && (
+          <div className="absolute left-3 bottom-2 text-xs text-[var(--ecode-text-tertiary)] pointer-events-none">
+            <kbd className="px-1.5 py-0.5 bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded text-[10px]">Enter</kbd> to send • <kbd className="px-1.5 py-0.5 bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded text-[10px]">Shift+Enter</kbd> for new line
+          </div>
+        )}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                onClick={() => sendMessage(input)}
+                disabled={isLoading || !input.trim()}
+                className={cn(
+                  "absolute right-2 bottom-2 h-8 w-8 transition-all",
+                  isLoading 
+                    ? "bg-gray-400 cursor-not-allowed" 
+                    : "bg-gradient-to-br from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600"
+                )}
+                data-testid="send-button"
+                aria-label={isLoading ? "Processing message" : input.trim() ? "Send message" : "Type a message to send"}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              {isLoading ? "Processing..." : input.trim() ? "Send message (Enter)" : "Type a message first"}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   </div>
