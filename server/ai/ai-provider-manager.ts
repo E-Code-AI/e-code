@@ -202,17 +202,32 @@ export class AIProviderManager {
       }
     }
     
-    // xAI
+    // xAI (Grok)
     if (process.env.XAI_API_KEY) {
       try {
         this.providers.set('xai', AIProviderFactory.create('xai', process.env.XAI_API_KEY));
+        console.log('[AI Provider Manager] ✓ xAI provider initialized');
       } catch (error) {
-        console.warn('Failed to initialize xAI provider:', error);
+        console.warn('[AI Provider Manager] Failed to initialize xAI provider:', error);
       }
+    } else {
+      console.warn('[AI Provider Manager] xAI API key not found in environment');
     }
     
-    // Other providers
-    const otherProviders = ['perplexity', 'mixtral', 'llama', 'cohere', 'deepseek', 'mistral'];
+    // Groq (Mixtral, Llama)
+    if (process.env.GROQ_API_KEY) {
+      try {
+        this.providers.set('groq', AIProviderFactory.create('groq', process.env.GROQ_API_KEY));
+        console.log('[AI Provider Manager] ✓ Groq provider initialized');
+      } catch (error) {
+        console.warn('[AI Provider Manager] Failed to initialize Groq provider:', error);
+      }
+    } else {
+      console.warn('[AI Provider Manager] Groq API key not found in environment');
+    }
+    
+    // Other providers (for future expansion)
+    const otherProviders = ['perplexity', 'cohere', 'deepseek', 'mistral'];
     otherProviders.forEach(provider => {
       const envKey = `${provider.toUpperCase()}_API_KEY`;
       if (process.env[envKey]) {

@@ -99,6 +99,43 @@ export class AnthropicProvider implements AIProvider {
   }
 }
 
+export class GroqProvider implements AIProvider {
+  name = 'groq';
+  private client: OpenAI;
+  
+  constructor(apiKey: string) {
+    // Groq uses OpenAI SDK with different base URL
+    this.client = new OpenAI({
+      baseURL: "https://api.groq.com/openai/v1",
+      apiKey,
+      maxRetries: 3,
+      timeout: 60000
+    });
+  }
+  
+  async generateChat(messages: any[], options?: any): Promise<string> {
+    const response = await this.client.chat.completions.create({
+      model: options?.model || 'mixtral-8x7b-32768',
+      messages,
+      ...options
+    });
+    
+    return response.choices[0].message.content || '';
+  }
+  
+  async generateCodeWithUnderstanding(messages: any[], codeAnalysis: any, options?: any): Promise<string> {
+    const enhancedMessages = [...messages];
+    if (codeAnalysis) {
+      enhancedMessages.push({
+        role: 'system',
+        content: `Code Analysis: ${JSON.stringify(codeAnalysis, null, 2)}`
+      });
+    }
+    
+    return this.generateChat(enhancedMessages, options);
+  }
+}
+
 export class XAIProvider implements AIProvider {
   name = 'xai';
   private client: OpenAI;
@@ -107,7 +144,9 @@ export class XAIProvider implements AIProvider {
     // xAI uses OpenAI SDK with different base URL
     this.client = new OpenAI({ 
       baseURL: "https://api.x.ai/v1", 
-      apiKey 
+      apiKey,
+      maxRetries: 3,
+      timeout: 60000
     });
   }
   
@@ -489,6 +528,8 @@ export class AIProviderFactory {
         return new GeminiProvider(apiKey);
       case 'xai':
         return new XAIProvider(apiKey);
+      case 'groq':
+        return new GroqProvider(apiKey);
       case 'perplexity':
         return new PerplexityProvider(apiKey);
       case 'mixtral':
@@ -507,6 +548,6 @@ export class AIProviderFactory {
   }
   
   static getAvailableProviders(): string[] {
-    return ['openai', 'anthropic', 'gemini', 'xai', 'perplexity', 'mixtral', 'llama', 'cohere', 'deepseek', 'mistral'];
+    return ['openai', 'anthropic', 'gemini', 'xai', 'groq', 'perplexity', 'mixtral', 'llama', 'cohere', 'deepseek', 'mistral'];
   }
 }
