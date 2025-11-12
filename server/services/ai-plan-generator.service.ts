@@ -1,5 +1,5 @@
 import { OpenAI } from 'openai';
-import { type IStorage } from '../storage';
+import { type IStorage, getStorage } from '../storage';
 import type { Project } from '@shared/schema';
 
 /**
@@ -287,6 +287,7 @@ Remember:
   }
 }
 
+// REAL: Use getStorage() instead of undefined (global as any).storage
 export const aiPlanGenerator = new AIPlanGeneratorService(
-  (global as any).storage
+  getStorage()
 );
