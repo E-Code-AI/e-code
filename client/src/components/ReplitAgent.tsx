@@ -51,6 +51,7 @@ interface ReplitAgentProps {
   selectedCode?: string;
   className?: string;
   initialPrompt?: string | null;
+  onBuildComplete?: () => void; // Callback when build execution completes (Task 12)
 }
 
 interface Message {
@@ -728,7 +729,7 @@ const QUICK_ACTIONS = [
   { id: 'generate', label: 'Generate', icon: Code }
 ];
 
-export function ReplitAgent({ projectId, selectedFile, selectedCode, className, initialPrompt }: ReplitAgentProps) {
+export function ReplitAgent({ projectId, selectedFile, selectedCode, className, initialPrompt, onBuildComplete }: ReplitAgentProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -1723,6 +1724,11 @@ What would you like me to build?`,
         description: 'Your project is ready!',
       });
       eventSource.close();
+      
+      // REAL: Auto-start preview when build completes (Task 12)
+      if (onBuildComplete) {
+        onBuildComplete();
+      }
     });
 
     eventSource.addEventListener('error', (e) => {
