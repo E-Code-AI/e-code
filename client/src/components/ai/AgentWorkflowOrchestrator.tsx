@@ -148,13 +148,21 @@ export function AgentWorkflowOrchestrator({
         setFeatureList(features);
         toast({
           title: "Plan Generated",
-          description: `AI generated ${features.length} tasks for your project`,
+          description: `AI generated ${features.length} tasks for your project. Redirecting to IDE for approval...`,
         });
+        
+        // REAL: Redirect to IDE immediately after plan generation
+        // Let ReplitAgent handle plan approval and build execution (no duplicate builds!)
+        setTimeout(() => {
+          setPhase('complete');
+          onComplete?.();
+        }, 1500); // Brief delay to show success toast
       } else {
         throw new Error('No plan received from AI service');
       }
       
-      setPhase('selecting_build_option');
+      // Skip build selection - redirect to IDE for approval
+      // setPhase('selecting_build_option');
     } catch (error) {
       console.error('Real AI feature generation failed:', error);
       toast({
