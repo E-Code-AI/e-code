@@ -120,12 +120,14 @@ export const AI_MODELS: AIModel[] = [
     costPer1kTokens: 0.002
   },
   
-  // Groq Models (via Together AI) - REAL models only
+  // Groq Models - REAL models only
+  // Note: provider='groq' indicates the serving infrastructure (Groq API)
+  // Model IDs follow Groq's API naming convention
   {
     id: 'mixtral-8x7b-32768',
     name: 'Mixtral 8x7B',
-    provider: 'mixtral',
-    description: 'Open-source mixture of experts model',
+    provider: 'groq',
+    description: 'Open-source mixture of experts model served by Groq',
     maxTokens: 32768,
     supportsStreaming: false,
     costPer1kTokens: 0.0006
@@ -133,8 +135,8 @@ export const AI_MODELS: AIModel[] = [
   {
     id: 'llama3-70b-8192',
     name: 'Llama 3 70B',
-    provider: 'llama',
-    description: 'Meta open-source flagship model',
+    provider: 'groq',
+    description: 'Meta open-source model served by Groq',
     maxTokens: 8192,
     supportsStreaming: false,
     costPer1kTokens: 0.0009
