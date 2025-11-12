@@ -1591,14 +1591,14 @@ What would you like me to build?`,
     try {
       addProgressLog('info', 'Loading plan from previous session...');
       
-      const response = await apiRequest('GET', `/api/agent/conversation/${convId}`);
+      const response = await apiRequest('GET', `/api/agent/${convId}`);
       
       if (response.ok) {
         const data = await response.json();
         
         // Extract the plan from conversation messages
-        if (data.messages && data.messages.length > 0) {
-          const planMessage = data.messages.find((msg: any) => msg.planId === pId);
+        if (data.conversation?.messages && data.conversation.messages.length > 0) {
+          const planMessage = data.conversation.messages.find((msg: any) => msg.planId === pId);
           if (planMessage && planMessage.content) {
             const plan = JSON.parse(planMessage.content);
             setCurrentPlan(plan);
@@ -1611,10 +1611,14 @@ What would you like me to build?`,
             });
           }
         }
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Failed to load conversation:', response.status, errorData);
+        addProgressLog('warning', 'Could not restore previous plan - starting fresh');
       }
     } catch (error) {
       console.error('Failed to load plan from backend:', error);
-      addProgressLog('error', 'Could not load previous plan');
+      addProgressLog('warning', 'Could not restore previous plan - starting fresh');
     }
   };
 
