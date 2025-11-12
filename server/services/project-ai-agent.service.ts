@@ -16,7 +16,7 @@ export class ProjectAIAgentService {
   constructor(storage: IStorage) {
     this.storage = storage;
     
-    // Initialize Anthropic client with user's API key
+    // Initialize Anthropic client with API key
     const apiKey = process.env.ANTHROPIC_API_KEY || '_DUMMY_API_KEY_';
     
     this.anthropic = new Anthropic({
@@ -61,8 +61,8 @@ export class ProjectAIAgentService {
       const files = await this.storage.getProjectFiles(projectId);
       const fileList = files.map(f => f.path).join('\n');
 
-      // Build system prompt
-      const systemPrompt = `You are an AI coding assistant helping to build a ${project.language} project named "${project.name}".
+      // Build system prompt with file context if provided
+      let systemPrompt = `You are an AI coding assistant helping to build a ${project.language} project named "${project.name}".
 
 Current project files:
 ${fileList || 'No files yet'}
@@ -90,22 +90,17 @@ For explanations, use:
 
 Always generate complete, production-ready code. No placeholders or TODOs.`;
 
-      // Build messages array
-      const messages: any[] = [
-        { role: 'system', content: systemPrompt }
-      ];
+      // IMPORTANT: Merge file/code context into system prompt to preserve context
+      if (context?.file && context?.code) {
+        systemPrompt += `\n\nUser is currently viewing file: ${context.file}\n\nCurrent code:\n${context.code}`;
+      }
+
+      // Build messages array (no system role messages)
+      const messages: any[] = [];
 
       // Add history if provided
       if (context?.history) {
         messages.push(...context.history.slice(-5));
-      }
-
-      // Add current context if provided
-      if (context?.file && context?.code) {
-        messages.push({
-          role: 'system',
-          content: `User is viewing file: ${context.file}\n\nCurrent code:\n${context.code}`
-        });
       }
 
       // Add user message
@@ -114,21 +109,28 @@ Always generate complete, production-ready code. No placeholders or TODOs.`;
         content: message
       });
 
-      // Stream response from OpenAI
-      const stream = await this.openai.chat.completions.create({
-        model: 'gpt-5', // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-        messages,
+      // Stream response from Anthropic Claude
+      const stream = await this.anthropic.messages.create({
+        model: 'claude-3-5-haiku-20241022', // Latest available Claude model
+        system: systemPrompt,
+        messages: messages.filter(m => m.role !== 'system').map(m => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content
+        })),
         stream: true,
-        max_completion_tokens: 4000,
+        max_tokens: 4000,
+        temperature: 0.7,
       });
 
       let fullResponse = '';
 
       for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content || '';
-        if (content) {
-          fullResponse += content;
-          yield content;
+        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+          const content = chunk.delta.text || '';
+          if (content) {
+            fullResponse += content;
+            yield content;
+          }
         }
       }
 
@@ -188,6 +190,73 @@ Always generate complete, production-ready code. No placeholders or TODOs.`;
         type: 'error', 
         content: error.message || 'An error occurred while processing your request' 
       });
+    }
+  }
+
+  /**
+   * Generate build actions from prompt (for autonomous build endpoint)
+   * Returns validated actions without executing them
+   */
+  async generateBuildActions(
+    userId: string,
+    projectId: string,
+    prompt: string
+  ): Promise<{ actions: ValidatedAction[], rejected: any[] }> {
+    try {
+      // Get project details
+      const project = await this.storage.getProject(projectId);
+      if (!project) {
+        throw new Error('Project not found');
+      }
+
+      // Get existing files for context
+      const files = await this.storage.getProjectFiles(projectId);
+      const fileList = files.map(f => f.path).join('\n');
+
+      // Build system prompt for build mode
+      const systemPrompt = `You are an AI coding assistant building a ${project.language} project named "${project.name}".
+
+Current project files:
+${fileList || 'No files yet'}
+
+User wants to build:
+${prompt}
+
+Generate ALL necessary files with complete, working code. Respond with JSON actions:
+{
+  "type": "action",
+  "action": {
+    "type": "create_file",
+    "path": "filename.ext",
+    "content": "full file content"
+  }
+}
+
+Generate EVERY file needed for a complete, working application. No placeholders or TODOs.`;
+
+      // Call Claude to generate build plan
+      const response = await this.anthropic.messages.create({
+        model: 'claude-3-5-haiku-20241022',
+        system: systemPrompt,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 8000,
+        temperature: 0.7,
+      });
+
+      // Extract text from response
+      const content = response.content[0];
+      const fullResponse = content.type === 'text' ? content.text : '';
+
+      // Extract and validate actions
+      const { actions: validActions, rejected } = aiSecurityService.extractValidActions(
+        fullResponse,
+        projectId
+      );
+
+      return { actions: validActions, rejected };
+    } catch (error: any) {
+      console.error('[ProjectAIAgent] Error generating build actions:', error);
+      throw error;
     }
   }
 

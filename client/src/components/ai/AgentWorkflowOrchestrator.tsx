@@ -83,64 +83,74 @@ export function AgentWorkflowOrchestrator({
       const features: string[] = [];
       let receivedPlan = false;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        
-        if (done) break;
-        
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n\n');
-        buffer = lines.pop() || '';
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          // CRITICAL: Exit immediately when stream ends (with or without 'done' event)
+          if (done) break;
+          
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n\n');
+          buffer = lines.pop() || '';
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6).trim();
-            
-            // Skip empty lines and heartbeat messages
-            if (!data || data.startsWith(':')) continue;
-            
-            try {
-              const event = JSON.parse(data);
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6).trim();
               
-              if (event.type === 'plan' && event.data) {
-                receivedPlan = true;
+              // Skip empty lines and heartbeat messages
+              if (!data || data.startsWith(':')) continue;
+              
+              try {
+                const event = JSON.parse(data);
                 
-                // FIXED: Robust task extraction with proper validation
-                const plan = event.data;
-                if (plan.tasks && Array.isArray(plan.tasks) && plan.tasks.length > 0) {
-                  // Extract features from task titles
-                  features.push(...plan.tasks.map((task: any) => task.title || task.description || 'Unnamed task'));
+                if (event.type === 'plan' && event.data) {
+                  receivedPlan = true;
                   
-                  // Store full task list for downstream build process
-                  setTaskList(plan.tasks.map((task: any) => task.description || task.title || 'Unnamed task'));
-                } else {
-                  console.warn('Plan received but no tasks found:', plan);
+                  // FIXED: Robust task extraction with proper validation
+                  const plan = event.data;
+                  if (plan.tasks && Array.isArray(plan.tasks) && plan.tasks.length > 0) {
+                    // Extract features from task titles
+                    features.push(...plan.tasks.map((task: any) => task.title || task.description || 'Unnamed task'));
+                    
+                    // Store full task list for downstream build process
+                    setTaskList(plan.tasks.map((task: any) => task.description || task.title || 'Unnamed task'));
+                  } else {
+                    console.warn('Plan received but no tasks found:', plan);
+                  }
+                } else if (event.type === 'saved' && event.data) {
+                  // FIXED: Capture conversationId and planId for memory retention
+                  const { conversationId: convId, planId: pId } = event.data;
+                  if (convId) setConversationId(convId);
+                  if (pId) setPlanId(pId);
+                  
+                  // Store in sessionStorage for IDE auto-agent startup
+                  if (convId && pId) {
+                    sessionStorage.setItem(`agent-conversation-${projectId}`, JSON.stringify({
+                      conversationId: convId,
+                      planId: pId,
+                      timestamp: Date.now()
+                    }));
+                  }
+                } else if (event.type === 'error') {
+                  throw new Error(event.data?.message || 'Plan generation failed');
+                } else if (event.type === 'done') {
+                  // Stream completed successfully - exit loop next iteration
+                  // Note: reader.read() will return done=true on next call
                 }
-              } else if (event.type === 'saved' && event.data) {
-                // FIXED: Capture conversationId and planId for memory retention
-                const { conversationId: convId, planId: pId } = event.data;
-                if (convId) setConversationId(convId);
-                if (pId) setPlanId(pId);
-                
-                // Store in sessionStorage for IDE auto-agent startup
-                if (convId && pId) {
-                  sessionStorage.setItem(`agent-conversation-${projectId}`, JSON.stringify({
-                    conversationId: convId,
-                    planId: pId,
-                    timestamp: Date.now()
-                  }));
-                }
-              } else if (event.type === 'error') {
-                throw new Error(event.data?.message || 'Plan generation failed');
-              } else if (event.type === 'done') {
-                // Stream completed successfully
-                break;
+              } catch (parseError) {
+                console.error('Failed to parse SSE event:', data, parseError);
+                // Continue processing other events
               }
-            } catch (parseError) {
-              console.error('Failed to parse SSE event:', data, parseError);
-              // Continue processing other events
             }
           }
+        }
+      } finally {
+        // CRITICAL: Always cleanup reader to prevent resource leak
+        try {
+          reader.cancel();
+        } catch (e) {
+          // Ignore cleanup errors
         }
       }
 
@@ -148,15 +158,60 @@ export function AgentWorkflowOrchestrator({
         setFeatureList(features);
         toast({
           title: "Plan Generated",
-          description: `AI generated ${features.length} tasks for your project. Redirecting to IDE for approval...`,
+          description: `AI generated ${features.length} tasks for your project. Building application...`,
         });
         
-        // REAL: Redirect to IDE immediately after plan generation
-        // Let ReplitAgent handle plan approval and build execution (no duplicate builds!)
-        setTimeout(() => {
-          setPhase('complete');
-          onComplete?.();
-        }, 1500); // Brief delay to show success toast
+        // CRITICAL FIX: Call autonomous build endpoint to actually create files
+        // This was the missing piece - plan generated but NO files created!
+        try {
+          setPhase('building_full');
+          setBuildProgress(10);
+          
+          const buildResponse = await apiRequest('POST', '/api/agent/autonomous/build', {
+            projectId,
+            prompt: initialPrompt
+          }) as {
+            success: boolean;
+            filesCreated: number;
+            filesBlockedByRisk: number;
+            filesFailed: number;
+            actionsRejected: number;
+            securityCompliant: boolean;
+            results: any[];
+          };
+          
+          setBuildProgress(90);
+          
+          if (buildResponse.success && buildResponse.filesCreated > 0) {
+            toast({
+              title: "Application Built! 🎉",
+              description: `Successfully created ${buildResponse.filesCreated} files. Redirecting to IDE...`,
+            });
+            
+            setBuildProgress(100);
+            
+            // Redirect to IDE after successful build
+            setTimeout(() => {
+              setPhase('complete');
+              onComplete?.();
+            }, 1500);
+          } else {
+            throw new Error(`Build failed: ${buildResponse.filesFailed} files failed, ${buildResponse.filesBlockedByRisk} blocked by security`);
+          }
+        } catch (buildError) {
+          console.error('Autonomous build failed:', buildError);
+          toast({
+            title: "Build Error",
+            description: buildError instanceof Error ? buildError.message : "Failed to build application",
+            variant: "destructive"
+          });
+          
+          // Still redirect to IDE so user can manually fix
+          setTimeout(() => {
+            setPhase('complete');
+            onComplete?.();
+          }, 2000);
+        }
       } else {
         throw new Error('No plan received from AI service');
       }

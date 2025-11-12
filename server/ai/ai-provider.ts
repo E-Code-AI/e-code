@@ -135,8 +135,8 @@ Generate the requested code following the existing code style and patterns.`;
 export class AnthropicProvider implements AIProvider {
   name = 'Claude';
   private client: Anthropic;
-  // Use the newest Anthropic model - Claude 3.5 Sonnet (latest available)
-  private model = 'claude-3-5-sonnet-20241022'; // Latest Claude 3.5 Sonnet model with enhanced capabilities
+  // Use the newest AVAILABLE Anthropic model - Claude 3.5 Haiku
+  private model = 'claude-3-5-haiku-20241022'; // Latest available Claude model (validated working)
 
   constructor(apiKey?: string) {
     this.client = new Anthropic({

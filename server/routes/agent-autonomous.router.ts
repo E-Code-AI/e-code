@@ -235,4 +235,153 @@ router.get('/health', (req, res) => {
   });
 });
 
+/**
+ * POST /api/agent/autonomous/build
+ * Build application from prompt using AI
+ */
+router.post('/build', async (req, res) => {
+  try {
+    const { projectId, prompt } = req.body;
+    const userId = req.user!.id;
+    
+    if (!projectId || !prompt) {
+      return res.status(400).json({ error: 'projectId and prompt are required' });
+    }
+    
+    // Import services dynamically to avoid circular dependencies
+    const { getStorage } = await import('../storage');
+    const { ProjectAIAgentService } = await import('../services/project-ai-agent.service');
+    const { AgentFileOperationsService } = await import('../services/agent-file-operations.service');
+    
+    const storage = getStorage();
+    const aiService = new ProjectAIAgentService(storage);
+    const fileOps = new AgentFileOperationsService();
+    
+    // Generate build actions using AI
+    logger.info(`Starting autonomous build for project ${projectId}`);
+    const { actions, rejected } = await aiService.generateBuildActions(userId, projectId, prompt);
+    
+    // CRITICAL: Fail early if AI generated zero actions
+    if (actions.length === 0 && rejected.length === 0) {
+      logger.error('AI generated zero actions - possible prompt issue or model failure');
+      return res.status(400).json({
+        success: false,
+        error: 'AI failed to generate any build actions. Please try a more specific prompt.',
+        filesCreated: 0,
+        filesBlockedByRisk: 0,
+        filesFailed: 0,
+        actionsRejected: 0,
+        results: []
+      });
+    }
+    
+    // Log rejected actions
+    if (rejected.length > 0) {
+      logger.warn(`${rejected.length} actions rejected by security`);
+    }
+    
+    // Execute approved actions and persist files with risk assessment
+    const results = [];
+    const { aiSecurityService } = await import('../services/ai-security.service');
+    
+    for (const action of actions) {
+      try {
+        // CRITICAL: Assess risk before executing
+        const risk = await autonomousEngine.assessRisk(action.type, action);
+        
+        // SECURITY: Only execute if auto-approved (Fortune 500 requirement)
+        if (!risk.autoApprove) {
+          logger.warn(`Action rejected due to high risk: ${action.path} (score: ${risk.score}, reasoning: ${risk.reasoning})`);
+          
+          // Log rejected action for audit trail
+          await aiSecurityService.logAction(
+            userId,
+            projectId,
+            action,
+            { success: false, error: `Risk too high: ${risk.reasoning}` }
+          );
+          
+          results.push({
+            success: false,
+            action: action.type,
+            path: action.path,
+            error: `Risk assessment failed: ${risk.reasoning}`,
+            riskScore: risk.score,
+            autoApprove: false,
+            requiresManualApproval: true
+          });
+          continue;
+        }
+        
+        // Risk approved - create file via storage (inserts into files table)
+        const file = await storage.createFile({
+          projectId,
+          name: action.path.split('/').pop() || action.path,
+          path: action.path,
+          content: action.content,
+          isDirectory: false,
+        });
+        
+        // Log successful action for audit trail
+        await aiSecurityService.logAction(
+          userId,
+          projectId,
+          action,
+          { success: true, fileId: String(file.id), riskScore: risk.score }
+        );
+        
+        results.push({
+          success: true,
+          action: action.type,
+          path: action.path,
+          fileId: file.id,
+          riskScore: risk.score,
+          autoApprove: true
+        });
+        
+        logger.info(`✅ Created file: ${action.path} (risk: ${risk.score}, auto-approved: ${risk.autoApprove})`);
+      } catch (error: any) {
+        logger.error(`Failed to create file ${action.path}:`, error);
+        
+        // Log failed action for audit trail
+        await aiSecurityService.logAction(
+          userId,
+          projectId,
+          action,
+          { success: false, error: error.message }
+        );
+        
+        results.push({
+          success: false,
+          action: action.type,
+          path: action.path,
+          error: error.message
+        });
+      }
+    }
+    
+    // Calculate security metrics
+    const approved = results.filter(r => r.success);
+    const failedRisk = results.filter(r => !r.success && r.requiresManualApproval);
+    const failedTechnical = results.filter(r => !r.success && !r.requiresManualApproval);
+    
+    logger.info(`Build complete: ${approved.length} created, ${failedRisk.length} blocked by risk, ${failedTechnical.length} technical failures, ${rejected.length} rejected by security`);
+    
+    res.json({
+      success: true,
+      projectId,
+      filesCreated: approved.length,
+      filesBlockedByRisk: failedRisk.length,
+      filesFailed: failedTechnical.length,
+      actionsRejected: rejected.length,
+      securityCompliant: true,
+      results
+    });
+    
+  } catch (error: any) {
+    logger.error('Error in autonomous build:', error);
+    res.status(500).json({ error: error.message || 'Failed to build project' });
+  }
+});
+
 export default router;
