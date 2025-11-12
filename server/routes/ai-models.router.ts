@@ -37,9 +37,9 @@ router.get('/health', (req, res) => {
 
 /**
  * GET /api/models
- * Get all available AI models across providers
+ * Get all available AI models across providers (public endpoint)
  */
-router.get('/', ensureAuthenticated, (req, res) => {
+router.get('/', (req, res) => {
   try {
     const models = aiProviderManager.getAvailableModels();
     res.json({
