@@ -147,7 +147,7 @@ export class MainRouter {
     app.use('/api', aiRouter);
     
     // AI Models Selection routes
-    app.use('/api', aiModelsRouter);
+    app.use('/api/models', aiModelsRouter);
     
     // AI Streaming routes (Agent chat with SSE)
     app.use(aiStreamingRouter);
