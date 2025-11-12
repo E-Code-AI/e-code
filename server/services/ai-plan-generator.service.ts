@@ -92,7 +92,8 @@ Given a user's goal, create a comprehensive execution plan with the following:
 4. **Dependencies**: Identify task dependencies
 5. **Risk Assessment**: Evaluate potential risks and challenges
 
-**CRITICAL**: Respond ONLY with valid JSON in this exact format:
+**CRITICAL**: Respond ONLY with valid JSON in this exact format.
+⚠️ IMPORTANT: Use DOUBLE QUOTES for all strings, NOT backticks or template literals!
 
 {
   "summary": "Brief overview of what will be built",
@@ -110,7 +111,7 @@ Given a user's goal, create a comprehensive execution plan with the following:
       "files": [
         {
           "path": "path/to/file.ext",
-          "content": "complete file content here",
+          "content": "complete file content here - use \\n for newlines, NO backticks",
           "language": "javascript"
         }
       ],
@@ -178,7 +179,7 @@ Remember:
 
       // Parse the complete response
       try {
-        // Strip markdown code blocks if present (Claude often returns ```json ... ```)
+        // ✅ ROBUST JSON EXTRACTION (fixes backtick template literal bug)
         let cleanedResponse = fullResponse.trim();
         
         // Remove opening backticks with optional language identifier
@@ -187,8 +188,31 @@ Remember:
         // Remove closing backticks
         cleanedResponse = cleanedResponse.replace(/\s*```\s*$/i, '');
         
+        // ✅ CRITICAL FIX: Extract JSON object/array only (ignore surrounding text)
+        // Claude sometimes adds commentary before/after JSON
+        const jsonMatch = cleanedResponse.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+        if (!jsonMatch) {
+          throw new Error('No JSON object found in response');
+        }
+        
+        let jsonString = jsonMatch[1];
+        
+        // ✅ CRITICAL FIX: Replace JavaScript template literals with escaped strings
+        // Claude sometimes uses `content` instead of "content"
+        // This regex finds backtick-quoted strings and converts them to JSON strings
+        jsonString = jsonString.replace(/`([^`]*)`/g, (match, content) => {
+          // Escape special JSON characters in the content
+          const escaped = content
+            .replace(/\\/g, '\\\\')   // Escape backslashes
+            .replace(/"/g, '\\"')     // Escape quotes
+            .replace(/\n/g, '\\n')    // Escape newlines
+            .replace(/\r/g, '\\r')    // Escape carriage returns
+            .replace(/\t/g, '\\t');   // Escape tabs
+          return `"${escaped}"`;
+        });
+        
         // Parse JSON
-        const planData = JSON.parse(cleanedResponse);
+        const planData = JSON.parse(jsonString);
         
         const plan: ExecutionPlan = {
           id: `plan-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -221,13 +245,17 @@ Remember:
           data: plan 
         };
 
-      } catch (parseError) {
-        console.error('[AIPlanGenerator] Failed to parse plan JSON:', parseError);
+      } catch (parseError: any) {
+        console.error('[AIPlanGenerator] ❌ Failed to parse plan JSON:', parseError.message);
+        console.error('[AIPlanGenerator] 📄 Raw response preview:', fullResponse.substring(0, 800));
+        console.error('[AIPlanGenerator] 🔍 Error location:', parseError.stack?.split('\n')[0]);
+        
         yield { 
           type: 'error', 
           data: { 
-            message: 'Failed to parse plan. Please try again.',
-            rawResponse: fullResponse.substring(0, 500)
+            message: 'AI response could not be parsed. This usually means the AI generated invalid JSON. Please try again or rephrase your request.',
+            rawResponse: fullResponse.substring(0, 500),
+            errorDetails: parseError.message
           } 
         };
       }
