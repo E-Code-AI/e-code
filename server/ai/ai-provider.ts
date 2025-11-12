@@ -455,4 +455,7 @@ export class AIProviderManager {
   }
 }
 
-export const aiProviderManager = new AIProviderManager();
+// Legacy AI Provider Manager (provider-name-based API)
+// This is kept for backward compatibility with existing services
+// New code should use aiProviderManager from './ai-provider-manager' (model-ID-based API)
+export const legacyAIProviderManager = new AIProviderManager();

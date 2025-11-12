@@ -159,14 +159,24 @@ export class AIProviderManager {
    * Initialize all available providers from environment variables
    */
   private initializeProviders() {
+    // DEBUG: Log environment variable state
+    console.log('[AI Provider Manager] Initializing providers...');
+    console.log('[AI Provider Manager] OPENAI_API_KEY exists:', !!process.env.OPENAI_API_KEY);
+    console.log('[AI Provider Manager] ANTHROPIC_API_KEY exists:', !!process.env.ANTHROPIC_API_KEY);
+    console.log('[AI Provider Manager] GEMINI_API_KEY exists:', !!process.env.GEMINI_API_KEY);
+    console.log('[AI Provider Manager] XAI_API_KEY exists:', !!process.env.XAI_API_KEY);
+    
     // OpenAI
     if (process.env.OPENAI_API_KEY) {
       try {
         this.providers.set('openai', AIProviderFactory.create('openai', process.env.OPENAI_API_KEY));
         this.openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        console.log('[AI Provider Manager] ✓ OpenAI provider initialized');
       } catch (error) {
-        console.warn('Failed to initialize OpenAI provider:', error);
+        console.warn('[AI Provider Manager] Failed to initialize OpenAI provider:', error);
       }
+    } else {
+      console.warn('[AI Provider Manager] OpenAI API key not found in environment');
     }
     
     // Anthropic
@@ -174,9 +184,12 @@ export class AIProviderManager {
       try {
         this.providers.set('anthropic', AIProviderFactory.create('anthropic', process.env.ANTHROPIC_API_KEY));
         this.anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+        console.log('[AI Provider Manager] ✓ Anthropic provider initialized');
       } catch (error) {
-        console.warn('Failed to initialize Anthropic provider:', error);
+        console.warn('[AI Provider Manager] Failed to initialize Anthropic provider:', error);
       }
+    } else {
+      console.warn('[AI Provider Manager] Anthropic API key not found in environment');
     }
     
     // Gemini
@@ -205,11 +218,19 @@ export class AIProviderManager {
       if (process.env[envKey]) {
         try {
           this.providers.set(provider, AIProviderFactory.create(provider, process.env[envKey]!));
+          console.log(`[AI Provider Manager] ✓ ${provider} provider initialized`);
         } catch (error) {
-          console.warn(`Failed to initialize ${provider} provider:`, error);
+          console.warn(`[AI Provider Manager] Failed to initialize ${provider} provider:`, error);
         }
       }
     });
+    
+    // Log summary
+    const providerCount = this.providers.size;
+    console.log(`[AI Provider Manager] Initialization complete: ${providerCount} provider(s) initialized`);
+    if (providerCount === 0) {
+      console.error('[AI Provider Manager] ⚠️  NO PROVIDERS INITIALIZED! Please configure API keys in Replit Secrets.');
+    }
   }
   
   /**
