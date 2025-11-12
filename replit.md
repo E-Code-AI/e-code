@@ -19,6 +19,12 @@ The platform utilizes a polyglot backend architecture with Go for container orch
 
 **UI/UX Decisions:**
 - Replit-identical IDE interface with a dark theme, centralized design tokens, and consistent spacing.
+- **ReplitAgent UI (November 12, 2025)**: Refactored to match Replit's exact interface:
+  - Clean header: Only "AI Agent" title, session dropdown, and pause/resume button (no cluttered switches)
+  - Model selector: Inline compact variant in input zone (NOT full-width card)
+  - Agent Tools dropdown: Extended Thinking, High Power Mode, Auto-checkpoints moved from header to dropdown menu
+  - Layout: `[AI Model: GPT-4o ▼] [⚙️ Agent Tools]` on first row, action buttons on second row
+  - E2e validated: Playwright test confirms UI matches Replit screenshots exactly
 - Mobile UI features a bottom tab bar, swipe panels, and bottom sheet/full-screen modals.
 - Tablet UI is optimized for dual-panel layouts, with comprehensive device detection, sliding drawer navigation, and touch-optimized controls.
 - Desktop UI includes Monaco minimap, breadcrumbs, multi-editor instances, and Command Palette.

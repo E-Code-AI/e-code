@@ -412,7 +412,21 @@ function AppContent() {
             useEffect(() => navigate('/ai-agent'), []);
             return null;
           }} />
-          <Route path="/ai-agent" component={AIAgent} />
+          <Route path="/ai-agent" component={() => {
+            // Adaptive routing: marketing for anonymous, agent for authenticated
+            const { user } = useAuth();
+            if (user) {
+              // Authenticated users get the full ReplitAIAgentPage
+              return (
+                <ReplitLayout showSidebar={false}>
+                  <ReplitAIAgentPage />
+                </ReplitLayout>
+              );
+            } else {
+              // Unauthenticated users get the marketing page
+              return <AIAgent />;
+            }
+          }} />
           <ProtectedRoute path="/ai-agent/studio" component={() => (
             <ReplitLayout showSidebar={false}>
               <AIAgentStudio />
