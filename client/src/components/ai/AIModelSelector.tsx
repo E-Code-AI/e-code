@@ -62,10 +62,11 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
     queryKey: ['/api/models'],
   });
 
-  // Fetch user's preferred model
+  // Fetch user's preferred model (may fail on public pages - that's OK)
   const { data: preferredData, isLoading: preferredLoading } = useQuery<{ preferredModel: string | null; availableModels: number }>({
     queryKey: ['/api/models/preferred'],
     staleTime: 30000, // Cache for 30s
+    retry: false, // Don't retry on auth failures (public pages)
   });
 
   // Mutation to save preferred model

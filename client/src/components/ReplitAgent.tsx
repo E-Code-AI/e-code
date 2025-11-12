@@ -6,7 +6,7 @@ import {
   Wrench, Rocket, GitBranch, Database, Globe, Server,
   MessageSquare, DollarSign, Link, Camera, Brain, Power,
   Pause, Play, Plus, ChevronLeft, ChevronRight, FileTerminal,
-  History, Palette, Heart, Edit, BeakerIcon
+  History, Palette, Heart, Edit, BeakerIcon, Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -2156,65 +2156,6 @@ What would you like me to build?`,
           )}
         </div>
         <div className="flex items-center gap-2">
-          {/* Model Selection */}
-          <div className="flex-shrink-0">
-            <AIModelSelector
-              variant="inline"
-              className="w-[200px]"
-              onModelChange={handleModelChange}
-            />
-          </div>
-          
-          {/* Advanced Capabilities */}
-          <div className="flex items-center gap-4 text-xs">
-            {featureFlags?.aiUx?.extendedThinking !== false && (
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="extended-thinking"
-                  checked={extendedThinking}
-                  onCheckedChange={(checked) => {
-                    setExtendedThinking(checked);
-                    savePreferences({ extendedThinking: checked });
-                  }}
-                />
-                <Label htmlFor="extended-thinking" className="cursor-pointer">
-                  <Brain className="h-3 w-3 inline mr-1" />
-                  Extended Thinking
-                </Label>
-              </div>
-            )}
-            {featureFlags?.aiUx?.highPowerMode !== false && (
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="high-power"
-                  checked={highPowerMode}
-                  onCheckedChange={(checked) => {
-                    setHighPowerMode(checked);
-                    savePreferences({ highPowerMode: checked });
-                  }}
-                />
-                <Label htmlFor="high-power" className="cursor-pointer">
-                  <Power className="h-3 w-3 inline mr-1" />
-                  High Power
-                </Label>
-              </div>
-            )}
-            <div className="flex items-center gap-2">
-              <Switch
-                id="auto-checkpoints"
-                checked={autoCheckpoints}
-                onCheckedChange={(checked) => {
-                  setAutoCheckpoints(checked);
-                  savePreferences({ autoCheckpoints: checked });
-                }}
-              />
-              <Label htmlFor="auto-checkpoints" className="cursor-pointer">
-                <History className="h-3 w-3 inline mr-1" />
-                Auto-checkpoints
-              </Label>
-            </div>
-          </div>
-          
           {/* Pause/Resume Button */}
           {isBuilding && featureFlags?.aiUx?.pauseResume !== false && (
             <Button
@@ -2463,6 +2404,83 @@ What would you like me to build?`,
 
     {/* Enhanced Input area */}
     <div className="p-4 border-t border-[var(--ecode-border)]">
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
+        {/* AI Model Selector - Compact inline like Replit */}
+        <div className="text-xs text-[var(--ecode-text-secondary)]">AI Model:</div>
+        <div className="flex-shrink-0">
+          <AIModelSelector
+            variant="inline"
+            className="w-auto"
+            onModelChange={handleModelChange}
+          />
+        </div>
+
+        {/* Agent Tools Menu - Extended Thinking, High Power Mode */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs"
+            >
+              <Settings className="h-3 w-3 mr-1" />
+              Agent Tools
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-80">
+            <div className="p-3 space-y-4">
+              <div className="text-xs font-semibold text-[var(--ecode-text)]">Agent Tools</div>
+              
+              {featureFlags?.aiUx?.extendedThinking !== false && (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-sm">Extended Thinking</div>
+                    <div className="text-xs text-muted-foreground">Agent thinks longer for complex tasks</div>
+                  </div>
+                  <Switch
+                    checked={extendedThinking}
+                    onCheckedChange={(checked) => {
+                      setExtendedThinking(checked);
+                      savePreferences({ extendedThinking: checked });
+                    }}
+                  />
+                </div>
+              )}
+              
+              {featureFlags?.aiUx?.highPowerMode !== false && (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-sm">High Power Model</div>
+                    <div className="text-xs text-muted-foreground">Uses advanced model, higher cost</div>
+                  </div>
+                  <Switch
+                    checked={highPowerMode}
+                    onCheckedChange={(checked) => {
+                      setHighPowerMode(checked);
+                      savePreferences({ highPowerMode: checked });
+                    }}
+                  />
+                </div>
+              )}
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-sm">Auto-checkpoints</div>
+                  <div className="text-xs text-muted-foreground">Automatic save points during builds</div>
+                </div>
+                <Switch
+                  checked={autoCheckpoints}
+                  onCheckedChange={(checked) => {
+                    setAutoCheckpoints(checked);
+                    savePreferences({ autoCheckpoints: checked });
+                  }}
+                />
+              </div>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       <div className="flex gap-2 mb-2">
         <TooltipProvider>
           <Tooltip>
