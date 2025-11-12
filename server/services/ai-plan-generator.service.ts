@@ -1,10 +1,10 @@
-import { OpenAI } from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { type IStorage, getStorage } from '../storage';
 import type { Project } from '@shared/schema';
 
 /**
  * AI Plan Generator Service
- * Generates detailed execution plans using OpenAI GPT-5
+ * Generates detailed execution plans using Anthropic Claude
  * REAL implementation - NO MOCKS
  */
 
@@ -41,30 +41,23 @@ export interface ExecutionPlan {
 }
 
 export class AIPlanGeneratorService {
-  private openai: OpenAI;
+  private anthropic: Anthropic;
   private storage: IStorage;
 
   constructor(storage: IStorage) {
     this.storage = storage;
     
-    // Initialize OpenAI client with user's API key
-    const apiKey = process.env.OPENAI_API_KEY || 
-                   process.env.AI_INTEGRATIONS_OPENAI_API_KEY || 
-                   '_DUMMY_API_KEY_';
+    // Initialize Anthropic client with user's API key
+    const apiKey = process.env.ANTHROPIC_API_KEY || '_DUMMY_API_KEY_';
     
-    const baseURL = process.env.OPENAI_API_KEY 
-      ? undefined
-      : (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || 'http://localhost:1106/modelfarm/openai');
-    
-    this.openai = new OpenAI({
+    this.anthropic = new Anthropic({
       apiKey,
-      ...(baseURL && { baseURL }),
     });
   }
 
   /**
    * Generate a detailed execution plan from a user's prompt
-   * REAL streaming implementation using OpenAI GPT-5
+   * REAL streaming implementation using Anthropic Claude
    */
   async *generatePlan(
     userId: string,
@@ -155,30 +148,31 @@ Remember:
 4. Order tasks by dependencies
 5. Respond with ONLY valid JSON`;
 
-      // Stream response from OpenAI
-      const stream = await this.openai.chat.completions.create({
-        model: 'gpt-5', // Latest OpenAI model
+      // Stream response from Anthropic Claude
+      const stream = await this.anthropic.messages.create({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 8192,
+        temperature: 0.7,
+        system: systemPrompt,
         messages: [
-          { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
         stream: true,
-        max_completion_tokens: 8192,
-        temperature: 0.7,
-        response_format: { type: 'json_object' }
       });
 
       let fullResponse = '';
 
       // Stream chunks to client
       for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content || '';
-        if (content) {
-          fullResponse += content;
-          yield { 
-            type: 'chunk', 
-            data: { content } 
-          };
+        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+          const content = chunk.delta.text;
+          if (content) {
+            fullResponse += content;
+            yield { 
+              type: 'chunk', 
+              data: { content } 
+            };
+          }
         }
       }
 
@@ -260,7 +254,7 @@ Remember:
           technologies: plan.technologies
         },
         totalTokensUsed: 0,
-        model: 'gpt-5',
+        model: 'claude-3-5-sonnet-20241022',
         agentMode: 'build'
       });
 
@@ -271,7 +265,7 @@ Remember:
         userId,
         role: 'assistant',
         content: JSON.stringify(plan, null, 2),
-        model: 'gpt-5',
+        model: 'claude-3-5-sonnet-20241022',
         metadata: {
           planId: plan.id,
           totalTasks: plan.totalTasks,
