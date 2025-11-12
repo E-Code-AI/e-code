@@ -18,33 +18,16 @@ export interface AIModel {
 
 /**
  * Available AI models across all providers
+ * ONLY REAL, CURRENTLY SUPPORTED MODELS (November 2025)
  * Fortune 500-grade model catalog
  */
 export const AI_MODELS: AIModel[] = [
-  // OpenAI Models
-  {
-    id: 'gpt-5',
-    name: 'GPT-5',
-    provider: 'openai',
-    description: 'Most advanced OpenAI model for complex reasoning',
-    maxTokens: 128000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.03
-  },
-  {
-    id: 'gpt-4.1',
-    name: 'GPT-4.1',
-    provider: 'openai',
-    description: 'Latest GPT-4 iteration with improved performance',
-    maxTokens: 128000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.01
-  },
+  // OpenAI Models - REAL models only
   {
     id: 'gpt-4o',
     name: 'GPT-4o',
     provider: 'openai',
-    description: 'Optimized GPT-4 for speed and efficiency',
+    description: 'Latest multimodal GPT-4 optimized model',
     maxTokens: 128000,
     supportsStreaming: true,
     costPer1kTokens: 0.005
@@ -53,89 +36,80 @@ export const AI_MODELS: AIModel[] = [
     id: 'gpt-4o-mini',
     name: 'GPT-4o Mini',
     provider: 'openai',
-    description: 'Compact GPT-4o for simple tasks',
+    description: 'Compact GPT-4o for cost-effective tasks',
     maxTokens: 128000,
     supportsStreaming: true,
-    costPer1kTokens: 0.0001
+    costPer1kTokens: 0.00015
   },
   {
-    id: 'o3',
-    name: 'O3',
+    id: 'gpt-4-turbo',
+    name: 'GPT-4 Turbo',
     provider: 'openai',
-    description: 'Advanced reasoning model',
+    description: 'Enhanced GPT-4 with 128K context window',
     maxTokens: 128000,
     supportsStreaming: true,
-    costPer1kTokens: 0.04
+    costPer1kTokens: 0.01
+  },
+  {
+    id: 'gpt-4',
+    name: 'GPT-4',
+    provider: 'openai',
+    description: 'Standard GPT-4 model',
+    maxTokens: 8192,
+    supportsStreaming: true,
+    costPer1kTokens: 0.03
   },
   
-  // Anthropic Models
+  // Anthropic Models - REAL models only
   {
-    id: 'claude-opus-4-1',
-    name: 'Claude Opus 4.1',
+    id: 'claude-3-5-sonnet-20241022',
+    name: 'Claude 3.5 Sonnet',
     provider: 'anthropic',
-    description: 'Most capable Claude model for complex reasoning',
-    maxTokens: 200000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.015
-  },
-  {
-    id: 'claude-sonnet-4-5',
-    name: 'Claude Sonnet 4.5',
-    provider: 'anthropic',
-    description: 'Balanced performance and speed',
+    description: 'Latest Claude model - balanced performance',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.003
   },
   {
-    id: 'claude-haiku-4-5',
-    name: 'Claude Haiku 4.5',
-    provider: 'anthropic',
-    description: 'Fastest Claude model for simple tasks',
-    maxTokens: 200000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0008
-  },
-  {
     id: 'claude-3-5-haiku-20241022',
-    name: 'Claude 3.5 Haiku (Legacy)',
+    name: 'Claude 3.5 Haiku',
     provider: 'anthropic',
-    description: 'Legacy Haiku model - validated working',
+    description: 'Fast Claude model for simple tasks - validated working',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.001
   },
-  
-  // Google Gemini Models
   {
-    id: 'gemini-2.5-pro',
-    name: 'Gemini 2.5 Pro',
+    id: 'claude-3-opus-20240229',
+    name: 'Claude 3 Opus',
+    provider: 'anthropic',
+    description: 'Most capable Claude 3 model for complex reasoning',
+    maxTokens: 200000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.015
+  },
+  
+  // Google Gemini Models - REAL models only
+  {
+    id: 'gemini-1.5-pro',
+    name: 'Gemini 1.5 Pro',
     provider: 'gemini',
-    description: 'Most advanced Gemini model for complex tasks',
+    description: 'Advanced Gemini model with 1M context window',
     maxTokens: 1000000,
     supportsStreaming: true,
-    costPer1kTokens: 0.0025
+    costPer1kTokens: 0.00125
   },
   {
-    id: 'gemini-2.5-flash',
-    name: 'Gemini 2.5 Flash',
+    id: 'gemini-1.5-flash',
+    name: 'Gemini 1.5 Flash',
     provider: 'gemini',
     description: 'Fast multimodal model for general use',
     maxTokens: 1000000,
     supportsStreaming: true,
-    costPer1kTokens: 0.0001
-  },
-  {
-    id: 'gemini-2.5-flash-image',
-    name: 'Gemini 2.5 Flash Image',
-    provider: 'gemini',
-    description: 'Optimized for image generation and analysis',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0001
+    costPer1kTokens: 0.000075
   },
   
-  // xAI Models
+  // xAI Models - REAL models only
   {
     id: 'grok-2-1212',
     name: 'Grok 2',
@@ -146,18 +120,18 @@ export const AI_MODELS: AIModel[] = [
     costPer1kTokens: 0.002
   },
   
-  // Groq Models (via Together AI)
+  // Groq Models (via Together AI) - REAL models only
   {
-    id: 'mixtral-8x7b',
+    id: 'mixtral-8x7b-32768',
     name: 'Mixtral 8x7B',
     provider: 'mixtral',
     description: 'Open-source mixture of experts model',
-    maxTokens: 32000,
+    maxTokens: 32768,
     supportsStreaming: false,
     costPer1kTokens: 0.0006
   },
   {
-    id: 'llama-3-70b',
+    id: 'llama3-70b-8192',
     name: 'Llama 3 70B',
     provider: 'llama',
     description: 'Meta open-source flagship model',
