@@ -1,5 +1,5 @@
 import { createLogger } from '../utils/logger';
-import { aiProviderManager } from '../ai/ai-provider';
+import { legacyAIProviderManager as aiProviderManager } from '../ai/ai-provider';
 import { checkpointService } from './checkpoint-service';
 
 const logger = createLogger('PromptRefinementService');

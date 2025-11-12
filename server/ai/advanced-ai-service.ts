@@ -1,5 +1,5 @@
 import { CodeAnalyzer } from './code-analyzer';
-import { AIProvider, aiProviderManager } from './ai-provider';
+import { legacyAIProviderManager as aiProviderManager, type AIProvider } from './ai-provider';
 import { File, Project } from '@shared/schema';
 
 // Helper function to get the default AI provider

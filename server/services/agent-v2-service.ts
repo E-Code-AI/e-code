@@ -5,7 +5,7 @@ import { checkpointService } from './checkpoint-service';
 import { effortPricingService } from './effort-pricing-service';
 import { autonomousBuilder } from '../ai/autonomous-builder';
 import { agentUsageTrackingService } from './agent-usage-tracking-service';
-import { aiProviderManager } from '../ai/ai-provider';
+import { legacyAIProviderManager as aiProviderManager } from '../ai/ai-provider';
 
 export interface AgentV2Task {
   projectId: number;
