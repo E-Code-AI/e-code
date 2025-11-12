@@ -248,6 +248,34 @@ export class AIProviderManager {
   }
   
   /**
+   * Get model details by ID (alias for getModel)
+   */
+  getModelById(modelId: string): AIModel | undefined {
+    return this.getModel(modelId);
+  }
+  
+  /**
+   * Stream chat completion with the selected model
+   * Routes to appropriate provider based on model ID
+   * 
+   * @param modelId The model ID to use (e.g., "gpt-4o", "claude-3-5-sonnet-20241022")
+   * @param messages Array of chat messages with role and content
+   * @param options Additional options like system prompt, max_tokens, temperature
+   */
+  async *streamChat(
+    modelId: string,
+    messages: any[],
+    options?: { system?: string; max_tokens?: number; temperature?: number }
+  ): AsyncGenerator<string> {
+    // Add system message to messages array if provided
+    const messagesWithSystem = options?.system 
+      ? [{ role: 'system', content: options.system }, ...messages]
+      : messages;
+    
+    yield* this.generateChatStream(modelId, messagesWithSystem, options);
+  }
+  
+  /**
    * Generate chat completion with streaming support
    * Routes to appropriate provider based on model ID
    */
