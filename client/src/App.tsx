@@ -84,7 +84,6 @@ const Partners = lazy(() => import("@/pages/Partners"));
 const Security = lazy(() => import("@/pages/Security"));
 const Desktop = lazy(() => import("@/pages/Desktop"));
 
-const AIAgent = lazy(() => import("@/pages/AIAgent"));
 const AIAgentStudio = lazy(() => import("@/pages/AIAgentStudio"));
 const PublicTeamPage = lazy(() => import("@/pages/PublicTeamPage"));
 const PublicDeploymentsPage = lazy(() => import("@/pages/PublicDeploymentsPage"));
