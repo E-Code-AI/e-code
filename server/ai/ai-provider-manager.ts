@@ -344,6 +344,7 @@ export class AIProviderManager {
     if (!this.openaiClient) throw new Error('OpenAI client not initialized');
     
     // OpenAI SDK returns Stream<ChatCompletionChunk> when stream: true
+    // TypeScript can't infer the return type, so we need to cast it
     const stream = await this.openaiClient.chat.completions.create({
       model: modelId,
       messages,
@@ -351,7 +352,7 @@ export class AIProviderManager {
       max_tokens: options?.max_tokens || 4000,
       temperature: options?.temperature || 0.7,
       ...options
-    }) as AsyncIterable<any>;
+    }) as unknown as AsyncIterable<any>;
     
     for await (const chunk of stream) {
       const content = chunk.choices?.[0]?.delta?.content;
