@@ -1586,6 +1586,163 @@ What would you like me to build?`,
     }
   };
 
+  // REAL: Execute approved plan via build execution system
+  const executeBuild = async () => {
+    if (!currentPlan || !conversationId || !planId) {
+      toast({
+        title: 'Cannot execute build',
+        description: 'Missing plan or conversation data',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsBuilding(true);
+      setBuildProgress(0);
+      addProgressLog('info', '🚀 Starting build execution...');
+
+      // Call build execution API with full plan payload
+      const response = await apiRequest('POST', `/api/agent/build/execute`, {
+        projectId,
+        conversationId,
+        planId,
+        plan: currentPlan, // CRITICAL: Backend requires full plan object
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        
+        // Handle 409 - build already running
+        if (response.status === 409) {
+          const buildId = errorData.buildId;
+          toast({
+            title: 'Build Already Running',
+            description: `Another build is already in progress for this project.`,
+            variant: 'destructive',
+          });
+          addProgressLog('warning', `Build already running (ID: ${buildId})`);
+          
+          // Connect to existing build stream (only mark approved if stream exists)
+          if (buildId) {
+            setIsPlanApproved(true);  // Mark approved since we're connecting to active build
+            streamBuildProgress(buildId);
+          }
+          return;
+        }
+
+        throw new Error(errorData.error || 'Failed to start build');
+      }
+
+      const { buildId } = await response.json();
+      
+      // ✅ CRITICAL: Only mark approved AFTER backend confirms build started
+      setIsPlanApproved(true);
+      addProgressLog('success', `Build started (ID: ${buildId})`);
+
+      // Stream build progress via SSE
+      streamBuildProgress(buildId);
+
+    } catch (error: any) {
+      console.error('Build execution failed:', error);
+      
+      // ✅ CRITICAL: Reset all build state on failure so user can retry
+      setIsBuilding(false);
+      setIsPlanApproved(false);
+      setBuildProgress(0);
+      setCurrentTask('');
+      
+      addProgressLog('error', `Build failed: ${error.message}`);
+      toast({
+        title: 'Build Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Stream build progress via SSE
+  const streamBuildProgress = (buildId: string) => {
+    const eventSource = new EventSource(`/api/agent/build/${buildId}/stream`);
+    
+    let totalTasks = 0;
+    let currentTaskIndex = 0;
+
+    // Handle 'init' event - initial build state snapshot
+    eventSource.addEventListener('init', (e) => {
+      const data = JSON.parse(e.data);
+      totalTasks = data.totalTasks || 0;
+      currentTaskIndex = data.currentTaskIndex || 0;
+      const progress = totalTasks > 0 ? Math.floor((currentTaskIndex / totalTasks) * 100) : 0;
+      setBuildProgress(progress);
+      addProgressLog('info', `Resuming build: ${currentTaskIndex}/${totalTasks} tasks completed`);
+    });
+
+    eventSource.addEventListener('start', (e) => {
+      const data = JSON.parse(e.data);
+      totalTasks = data.totalTasks || 0;
+      addProgressLog('info', `Build started: ${totalTasks} tasks`);
+    });
+
+    eventSource.addEventListener('task_start', (e) => {
+      const data = JSON.parse(e.data);
+      setCurrentTask(data.title);
+      currentTaskIndex = data.taskIndex || currentTaskIndex;
+      
+      // Calculate progress from task index
+      const progress = totalTasks > 0 ? Math.floor((currentTaskIndex / totalTasks) * 100) : 0;
+      setBuildProgress(progress);
+      
+      addProgressLog('info', `Starting task ${currentTaskIndex + 1}/${totalTasks}: ${data.title}`);
+    });
+
+    eventSource.addEventListener('task_complete', (e) => {
+      const data = JSON.parse(e.data);
+      currentTaskIndex = data.taskIndex !== undefined ? data.taskIndex + 1 : currentTaskIndex + 1;
+      
+      // Calculate progress from completed tasks
+      const progress = totalTasks > 0 ? Math.floor((currentTaskIndex / totalTasks) * 100) : 0;
+      setBuildProgress(progress);
+      
+      addProgressLog('success', `✅ Completed ${currentTaskIndex}/${totalTasks}: ${data.title}`);
+    });
+
+    eventSource.addEventListener('task_error', (e) => {
+      const data = JSON.parse(e.data);
+      addProgressLog('error', `❌ Failed: ${data.title} - ${data.error}`);
+    });
+
+    eventSource.addEventListener('complete', (e) => {
+      const data = JSON.parse(e.data);
+      setIsBuilding(false);
+      setBuildProgress(100);
+      setCurrentTask('');
+      addProgressLog('success', `🎉 Build completed! (${data.totalTasks} tasks)`);
+      toast({
+        title: 'Build Complete',
+        description: 'Your project is ready!',
+      });
+      eventSource.close();
+    });
+
+    eventSource.addEventListener('error', (e) => {
+      const data = JSON.parse((e as MessageEvent).data || '{}');
+      setIsBuilding(false);
+      setCurrentTask('');
+      addProgressLog('error', `Build error: ${data.error || 'Unknown error'}`);
+      toast({
+        title: 'Build Error',
+        description: data.error || 'Build execution failed',
+        variant: 'destructive',
+      });
+      eventSource.close();
+    });
+
+    eventSource.onerror = () => {
+      eventSource.close();
+    };
+  };
+
   // REAL: Load plan from backend database using conversationId
   const loadPlanFromBackend = async (convId: number, pId: string) => {
     try {
@@ -2185,14 +2342,11 @@ What would you like me to build?`,
               <PlanVisualizer
                 plan={currentPlan}
                 onTaskClick={(taskId) => {
-                  // Task clicked
+                  // Task clicked - could scroll to task or show details
                 }}
                 onApprove={() => {
-                  toast({
-                    title: 'Plan Approved',
-                    description: 'Starting execution...',
-                  });
-                  addProgressLog('success', `Starting execution of plan: ${currentPlan.goal}`);
+                  // REAL: Execute build via backend build execution system
+                  executeBuild();
                 }}
                 onReject={() => {
                   toast({
@@ -2200,6 +2354,7 @@ What would you like me to build?`,
                     description: 'Plan cancelled',
                   });
                   setCurrentPlan(null);
+                  setPlanId(null);
                 }}
               />
             )}
