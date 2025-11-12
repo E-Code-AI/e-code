@@ -40,6 +40,7 @@ import agentAutonomousRouter from "./agent-autonomous.router";
 import agentTestingRouter from "./agent-testing.router";
 import agentWorkflowRouter from "./agent-workflow.router";
 import createAgentPlanRouter from "./agent-plan.router";
+import createAgentBuildRouter from "./agent-build.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -95,6 +96,9 @@ export class MainRouter {
     // Agent plan routes (REAL AI-powered plan generation with streaming) - authenticated users
     // Mounted at /api/agent to avoid conflicts with legacy endpoints
     app.use('/api/agent', createAgentPlanRouter(this.storage));
+    
+    // Agent build routes (build execution with SSE progress streaming) - authenticated users
+    app.use('/api/agent/build', createAgentBuildRouter(this.storage));
     
     // Autonomous agent routes (authenticated users) - single mount point
     app.use('/api/agent', agentAutonomousRouter);

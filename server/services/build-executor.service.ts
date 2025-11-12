@@ -3,7 +3,7 @@ import { type PlanTask, type ExecutionPlan } from './ai-plan-generator.service';
 import { createLogger } from '../utils/logger';
 import * as fs from 'fs';
 import * as path from 'path';
-import { exec } from 'child_process';
+import { exec, type ChildProcess } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
@@ -51,6 +51,7 @@ export class BuildExecutorService {
   private storage: IStorage;
   private projectRoot: string;
   private eventListeners: Map<string, ((event: BuildExecutionEvent) => void)[]> = new Map();
+  private runningProcesses: Map<string, ChildProcess[]> = new Map();
 
   constructor(storage: IStorage, projectRoot?: string) {
     this.storage = storage;
@@ -97,35 +98,41 @@ export class BuildExecutorService {
   /**
    * Execute a complete build plan
    * Returns buildExecutionId for progress tracking
+   * @param buildId - Optional pre-created buildExecution ID (if router already created record)
    */
   async executeBuild(
     projectId: string,
     conversationId: number | undefined,
     plan: ExecutionPlan,
-    userId: string
+    userId: string,
+    buildId?: string
   ): Promise<string> {
-    logger.info('Starting build execution', { projectId, planId: plan.id });
+    logger.info('Starting build execution', { projectId, planId: plan.id, providedBuildId: buildId });
 
-    // Create build execution record
-    const buildExecution = await this.storage.createBuildExecution({
-      projectId,
-      conversationId,
-      planId: plan.id,
-      totalTasks: plan.totalTasks,
-      metadata: {
-        approvedBy: userId,
-        estimatedTime: plan.estimatedTime,
-        technologies: plan.technologies,
-        riskLevel: plan.riskAssessment.level,
-      },
-    });
-
-    const buildId = buildExecution.id;
+    // Use provided buildId or create new build execution record
+    let finalBuildId: string;
+    if (buildId) {
+      finalBuildId = buildId;
+    } else {
+      const buildExecution = await this.storage.createBuildExecution({
+        projectId,
+        conversationId,
+        planId: plan.id,
+        totalTasks: plan.totalTasks,
+        metadata: {
+          approvedBy: userId,
+          estimatedTime: plan.estimatedTime,
+          technologies: plan.technologies,
+          riskLevel: plan.riskAssessment.level,
+        },
+      });
+      finalBuildId = buildExecution.id;
+    }
 
     // Emit start event
     this.emitEvent({
       type: 'start',
-      buildId,
+      buildId: finalBuildId,
       timestamp: new Date(),
       data: {
         totalTasks: plan.totalTasks,
@@ -135,7 +142,7 @@ export class BuildExecutorService {
     });
 
     // Update status to running
-    await this.storage.updateBuildExecution(buildId, {
+    await this.storage.updateBuildExecution(finalBuildId, {
       status: 'running',
       startedAt: new Date(),
     });
@@ -149,7 +156,7 @@ export class BuildExecutorService {
         const task = orderedTasks[i];
         
         // Update current task
-        await this.storage.updateBuildExecution(buildId, {
+        await this.storage.updateBuildExecution(finalBuildId, {
           currentTaskId: task.id,
           currentTaskIndex: i,
           progress: Math.floor((i / orderedTasks.length) * 100),
@@ -158,7 +165,7 @@ export class BuildExecutorService {
         // Emit task start event
         this.emitEvent({
           type: 'task_start',
-          buildId,
+          buildId: finalBuildId,
           timestamp: new Date(),
           data: {
             taskId: task.id,
@@ -169,7 +176,7 @@ export class BuildExecutorService {
         });
 
         // Execute task
-        const result = await this.executeTask(buildId, task, projectId);
+        const result = await this.executeTask(finalBuildId, task, projectId);
         
         // Add to execution log
         executionLog.push({
@@ -185,7 +192,7 @@ export class BuildExecutorService {
         });
 
         // Update execution log in database
-        await this.storage.updateBuildExecution(buildId, {
+        await this.storage.updateBuildExecution(finalBuildId, {
           executionLog,
         });
 
@@ -193,7 +200,7 @@ export class BuildExecutorService {
           // Emit task complete event
           this.emitEvent({
             type: 'task_complete',
-            buildId,
+            buildId: finalBuildId,
             timestamp: new Date(),
             data: {
               taskId: task.id,
@@ -207,7 +214,7 @@ export class BuildExecutorService {
           // Task failed - emit error and stop build
           this.emitEvent({
             type: 'task_error',
-            buildId,
+            buildId: finalBuildId,
             timestamp: new Date(),
             data: {
               taskId: task.id,
@@ -218,7 +225,7 @@ export class BuildExecutorService {
             },
           });
 
-          await this.storage.updateBuildExecution(buildId, {
+          await this.storage.updateBuildExecution(finalBuildId, {
             status: 'failed',
             error: `Task "${task.title}" failed: ${result.error}`,
             completedAt: new Date(),
@@ -229,7 +236,7 @@ export class BuildExecutorService {
       }
 
       // Build completed successfully
-      await this.storage.updateBuildExecution(buildId, {
+      await this.storage.updateBuildExecution(finalBuildId, {
         status: 'completed',
         progress: 100,
         completedAt: new Date(),
@@ -237,7 +244,7 @@ export class BuildExecutorService {
 
       this.emitEvent({
         type: 'complete',
-        buildId,
+        buildId: finalBuildId,
         timestamp: new Date(),
         data: {
           totalTasks: orderedTasks.length,
@@ -245,13 +252,13 @@ export class BuildExecutorService {
         },
       });
 
-      logger.info('Build execution completed', { buildId, projectId });
-      return buildId;
+      logger.info('Build execution completed', { buildId: finalBuildId, projectId });
+      return finalBuildId;
 
     } catch (error: any) {
       logger.error('Build execution failed:', error);
 
-      await this.storage.updateBuildExecution(buildId, {
+      await this.storage.updateBuildExecution(finalBuildId, {
         status: 'failed',
         error: error.message,
         completedAt: new Date(),
@@ -259,7 +266,7 @@ export class BuildExecutorService {
 
       this.emitEvent({
         type: 'error',
-        buildId,
+        buildId: finalBuildId,
         timestamp: new Date(),
         data: {
           error: error.message,
@@ -435,6 +442,38 @@ export class BuildExecutorService {
   }
 
   /**
+   * Execute command with process tracking for cancellation support
+   */
+  private execWithTracking(
+    buildId: string,
+    command: string,
+    options: any
+  ): Promise<{ stdout: string; stderr: string }> {
+    return new Promise((resolve, reject) => {
+      const childProcess = exec(command, options, (error, stdout, stderr) => {
+        // Remove from tracking
+        const processes = this.runningProcesses.get(buildId) || [];
+        const index = processes.indexOf(childProcess);
+        if (index > -1) {
+          processes.splice(index, 1);
+        }
+
+        if (error) {
+          reject(error);
+        } else {
+          resolve({ stdout, stderr });
+        }
+      });
+
+      // Track the process for cancellation
+      if (!this.runningProcesses.has(buildId)) {
+        this.runningProcesses.set(buildId, []);
+      }
+      this.runningProcesses.get(buildId)!.push(childProcess);
+    });
+  }
+
+  /**
    * Execute package installation
    * NOTE: Actual packager_tool integration requires agent framework
    * This implementation uses npm directly for now
@@ -461,8 +500,8 @@ export class BuildExecutorService {
       });
 
       try {
-        // Execute npm install with timeout (2 minutes)
-        const { stdout, stderr } = await execAsync(`npm install ${pkg}`, {
+        // Execute npm install with timeout (2 minutes) and process tracking
+        await this.execWithTracking(buildId, `npm install ${pkg}`, {
           cwd: this.projectRoot,
           timeout: 120000,
         });
@@ -513,7 +552,7 @@ export class BuildExecutorService {
       });
 
       try {
-        const result = await execAsync(command, {
+        const result = await this.execWithTracking(buildId, command, {
           cwd: this.projectRoot,
           timeout: 300000, // 5 minutes
         });
@@ -584,8 +623,32 @@ export class BuildExecutorService {
 
   /**
    * Cancel a running build
+   * Kills all child processes and updates database status
    */
   async cancelBuild(buildId: string): Promise<void> {
+    // Kill all running processes for this build
+    const processes = this.runningProcesses.get(buildId);
+    if (processes) {
+      for (const childProcess of processes) {
+        try {
+          // Send SIGTERM for graceful shutdown
+          childProcess.kill('SIGTERM');
+          
+          // If still running after 2 seconds, force kill with SIGKILL
+          setTimeout(() => {
+            if (!childProcess.killed) {
+              childProcess.kill('SIGKILL');
+            }
+          }, 2000);
+        } catch (error) {
+          logger.warn('Failed to kill child process:', error);
+        }
+      }
+      
+      // Clear process list
+      this.runningProcesses.delete(buildId);
+    }
+
     await this.storage.updateBuildExecution(buildId, {
       status: 'cancelled',
       completedAt: new Date(),
@@ -600,7 +663,7 @@ export class BuildExecutorService {
       },
     });
 
-    logger.info('Build cancelled', { buildId });
+    logger.info('Build cancelled', { buildId, processesKilled: processes?.length || 0 });
   }
 }
 
