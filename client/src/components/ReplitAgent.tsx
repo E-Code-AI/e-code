@@ -885,15 +885,17 @@ What would you like me to build for you today?`,
   // Conversation/plan state now managed via useAgentSession hook
   // If conversationId/planId persistence is needed, add to AgentSessionData in useAgentSession
 
-  // Handle initial prompt if provided (NEW: gated on hydration completion)
+  // Handle initial prompt if provided (NEW: Auto-start BUILD flow instead of chat)
   useEffect(() => {
-    // Wait for session to finish loading before auto-sending prompt
+    // Wait for session to finish loading before auto-starting build
     if (!sessionLoading && initialPrompt && messages.length === 1) {
-      // Only send if we haven't already hydrated a stored conversation
-      // REMOVED agent-started transient flag (Task 2c) - rely on session.messages check only
+      // Only auto-start if we haven't already hydrated a stored conversation
       if (!session?.messages?.length) {
-        setTimeout(() => {
-          sendMessage(initialPrompt);
+        setTimeout(async () => {
+          // 🚀 AUTO-START BUILD FLOW (like Replit)
+          // Generate plan instead of sending chat message
+          addProgressLog('info', `🤖 Auto-starting build from prompt: "${initialPrompt}"`);
+          await generatePlan(initialPrompt);
         }, 500);
       }
     }

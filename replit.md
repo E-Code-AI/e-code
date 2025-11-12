@@ -46,6 +46,7 @@ The platform utilizes a polyglot backend architecture with Go for container orch
     - **Hydration on Load**: ReplitAgent component hydrates state from sessionStorage on mount, converting timestamps to Date objects. Works for both first-time and returning users.
     - **IDE Integration**: IDEPage supports query params `?panel=agent&prompt=...` to auto-select agent tab and pass prompts. Prompts stored in `agent-prompt-${projectId}` and cleaned from URL after storage.
     - **Routing**: `/ai-agent?projectId=X&prompt=Y` redirects to `/ide/X?panel=agent&prompt=Y`. No-project path (`/ai-agent?prompt=Y`) stores prompt in global `pending-agent-prompt` and redirects to dashboard.
+    - **Auto-Start Build Flow (Replit-identical)**: When user arrives with `initialPrompt` via query param, agent automatically calls `generatePlan()` instead of chat, switching to Autonomous tab to display plan for approval. After approval, executes REAL build with file creation, preview auto-start, and Run button automation.
     - **Legacy Cleanup**: Removed all legacy sessionStorage keys (`agent-conversation-${projectId}`, `agent-started-${projectId}`) from ReplitAgent.tsx.
 - **Browser Testing & QA Infrastructure**: Playwright-based testing orchestrator, element selector service, session recording, and admin-only API routes.
 - **Tools**: Extended set of 35 tools including file operations, commands, web search, browser testing, performance analysis, and accessibility checks.
