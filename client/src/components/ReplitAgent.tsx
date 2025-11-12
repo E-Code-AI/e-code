@@ -38,7 +38,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { useLocation } from 'wouter';
 import { PendingApprovalsPanel } from './PendingApprovalsPanel';
-import { ModelSelector } from './agent/ModelSelector';
+import { AIModelSelector } from './ai/AIModelSelector';
 import { ExtendedThinkingDisplay } from './agent/ExtendedThinkingDisplay';
 import { AutonomousControls } from './agent/AutonomousControls';
 import { PlanVisualizer } from './agent/PlanVisualizer';
@@ -2158,10 +2158,10 @@ What would you like me to build?`,
         <div className="flex items-center gap-2">
           {/* Model Selection */}
           <div className="flex-shrink-0">
-            <ModelSelector
-              selectedModel={selectedModel}
-              onModelChange={handleModelChange}
+            <AIModelSelector
+              variant="inline"
               className="w-[200px]"
+              onModelChange={handleModelChange}
             />
           </div>
           
