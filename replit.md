@@ -54,8 +54,22 @@ The platform utilizes a polyglot backend architecture with Go for container orch
 
 ## External Dependencies
 - **AI Integration**:
-  - **Primary**: Anthropic Claude 3.5 Haiku (claude-3-5-haiku-20241022)
-  - **Secondary**: OpenAI API, Together AI, Replicate, Hugging Face, Groq, Anyscale
+  - **Multi-Provider System**: Supports 5 AI providers with 13 production models
+    - **OpenAI**: gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-4
+    - **Anthropic**: claude-3-5-sonnet-20241022, claude-3-5-haiku-20241022, claude-3-opus-20240229
+    - **Gemini**: gemini-1.5-pro, gemini-1.5-flash
+    - **xAI**: grok-2-1212
+    - **Groq**: mixtral-8x7b-32768, llama3-70b-8192
+  - **Smart Fallback**: Automatically uses first available provider if user has no preference
+  - **User Preference**: Stored in database (users.preferred_ai_model column)
+  - **Architecture**: 
+    - AIProviderManager (model-ID-based API) for multi-provider selection
+    - legacyAIProviderManager (provider-name-based API) for backward compatibility
+  - **API Endpoints**:
+    - GET /api/models - List available models (filtered by configured providers)
+    - GET /api/models/preferred - Get user's preferred model
+    - POST /api/models/preferred - Save user's preferred model
+    - POST /api/agent/autonomous/build - Accepts optional modelId parameter
 - **Push Notifications**: Firebase Cloud Messaging (FCM), Firebase Admin SDK.
 - **Video Conferencing**: Zoom API.
 - **Deployment Platform**: Replit Reserved VM.
