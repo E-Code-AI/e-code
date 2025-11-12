@@ -238,10 +238,11 @@ router.get('/health', (req, res) => {
 /**
  * POST /api/agent/autonomous/build
  * Build application from prompt using AI
+ * Supports multi-provider model selection
  */
 router.post('/build', async (req, res) => {
   try {
-    const { projectId, prompt } = req.body;
+    const { projectId, prompt, modelId } = req.body;
     const userId = req.user!.id;
     
     if (!projectId || !prompt) {
@@ -257,9 +258,9 @@ router.post('/build', async (req, res) => {
     const aiService = new ProjectAIAgentService(storage);
     const fileOps = new AgentFileOperationsService();
     
-    // Generate build actions using AI
-    logger.info(`Starting autonomous build for project ${projectId}`);
-    const { actions, rejected } = await aiService.generateBuildActions(userId, projectId, prompt);
+    // Generate build actions using AI with optional model selection
+    logger.info(`Starting autonomous build for project ${projectId} using model ${modelId || 'claude-3-5-haiku-20241022'}`);
+    const { actions, rejected } = await aiService.generateBuildActions(userId, projectId, prompt, modelId);
     
     // CRITICAL: Fail early if AI generated zero actions
     if (actions.length === 0 && rejected.length === 0) {

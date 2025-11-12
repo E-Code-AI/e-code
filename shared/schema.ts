@@ -89,6 +89,8 @@ export const users = pgTable("users", {
   lastLogin: timestamp("last_login"),
   failedLoginAttempts: integer("failed_login_attempts").default(0),
   lockedUntil: timestamp("locked_until"),
+  // AI Preferences
+  preferredAiModel: varchar("preferred_ai_model"), // User's preferred AI model (e.g., 'gpt-5', 'claude-opus-4-1')
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

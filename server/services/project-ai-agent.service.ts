@@ -3,25 +3,33 @@ import { type IStorage } from '../storage';
 import type { File, Project } from '@shared/schema';
 import { aiSecurityService, type ValidatedAction } from './ai-security.service';
 import { aiApprovalQueue } from './ai-approval-queue.service';
+import { aiProviderManager, type AIModel } from '../ai/ai-provider-manager';
 
 /**
  * Project AI Agent Service
  * Handles AI-powered code generation for user projects
- * Uses Anthropic Claude for AI generation
+ * Supports multiple AI providers: OpenAI, Anthropic, Gemini, xAI, etc.
+ * Fortune 500-grade multi-provider architecture
  */
 export class ProjectAIAgentService {
-  private anthropic: Anthropic;
   private storage: IStorage;
+  
+  // Legacy Anthropic client for backward compatibility
+  private anthropic: Anthropic;
 
   constructor(storage: IStorage) {
     this.storage = storage;
     
-    // Initialize Anthropic client with API key
+    // Initialize legacy Anthropic client for backward compatibility
     const apiKey = process.env.ANTHROPIC_API_KEY || '_DUMMY_API_KEY_';
-    
-    this.anthropic = new Anthropic({
-      apiKey,
-    });
+    this.anthropic = new Anthropic({ apiKey });
+  }
+  
+  /**
+   * Get available AI models across all providers
+   */
+  getAvailableModels(): AIModel[] {
+    return aiProviderManager.getAvailableModels();
   }
 
   /**
@@ -196,11 +204,13 @@ Always generate complete, production-ready code. No placeholders or TODOs.`;
   /**
    * Generate build actions from prompt (for autonomous build endpoint)
    * Returns validated actions without executing them
+   * Supports multi-provider model selection
    */
   async generateBuildActions(
     userId: string,
     projectId: string,
-    prompt: string
+    prompt: string,
+    modelId?: string
   ): Promise<{ actions: ValidatedAction[], rejected: any[] }> {
     try {
       // Get project details
@@ -234,18 +244,28 @@ Generate ALL necessary files with complete, working code. Respond with JSON acti
 
 Generate EVERY file needed for a complete, working application. No placeholders or TODOs.`;
 
-      // Call Claude to generate build plan
-      const response = await this.anthropic.messages.create({
-        model: 'claude-3-5-haiku-20241022',
-        system: systemPrompt,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 8000,
-        temperature: 0.7,
-      });
-
-      // Extract text from response
-      const content = response.content[0];
-      const fullResponse = content.type === 'text' ? content.text : '';
+      // Use specified model or intelligently fallback to first available model
+      let selectedModel = modelId;
+      if (!selectedModel) {
+        const availableModels = aiProviderManager.getAvailableModels();
+        if (availableModels.length === 0) {
+          throw new Error('No AI providers configured. Please set OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, or XAI_API_KEY environment variable.');
+        }
+        selectedModel = availableModels[0].id; // Smart fallback to first available
+      }
+      
+      // Generate response using AIProviderManager (multi-provider support)
+      const fullResponse = await aiProviderManager.generateChat(
+        selectedModel,
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt }
+        ],
+        {
+          max_tokens: 8000,
+          temperature: 0.7,
+        }
+      );
 
       // Extract and validate actions
       const { actions: validActions, rejected } = aiSecurityService.extractValidActions(

@@ -17,6 +17,43 @@ async function hashPassword(password: string) {
 
 let migrationsEnsured = false;
 
+/**
+ * Ensure preferred_ai_model column exists in users table
+ * This is a critical migration for multi-provider AI model selection
+ * Runs automatically at startup - idempotent and safe
+ */
+async function ensurePreferredAiModelColumn() {
+  try {
+    // Check if column exists
+    const [result] = await client`
+      SELECT EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_schema = 'public'
+          AND table_name = 'users'
+          AND column_name = 'preferred_ai_model'
+      ) as "exists";
+    `;
+
+    if (!result?.exists) {
+      console.log('[DB Init] Creating preferred_ai_model column...');
+      
+      // Create column with ALTER TABLE (safe, idempotent)
+      await client`
+        ALTER TABLE users 
+        ADD COLUMN preferred_ai_model varchar;
+      `;
+      
+      console.log('[DB Init] ✓ preferred_ai_model column created successfully');
+    } else {
+      console.log('[DB Init] ✓ preferred_ai_model column already exists');
+    }
+  } catch (error: any) {
+    // Log error but don't crash - column might already exist
+    console.warn('[DB Init] Failed to ensure preferred_ai_model column:', error.message);
+  }
+}
+
 async function ensureDatabaseMigrated(force = false) {
   if (migrationsEnsured && !force) {
     return;
@@ -83,6 +120,9 @@ export async function initializeDatabase() {
   while (retries > 0) {
     try {
       await ensureDatabaseMigrated();
+      
+      // Ensure preferred_ai_model column exists (multi-provider AI model selection)
+      await ensurePreferredAiModelColumn();
 
       // Check if tables are created by checking if we have any users
       const users = await db.select().from(schema.users);
