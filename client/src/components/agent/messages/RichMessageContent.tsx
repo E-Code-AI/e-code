@@ -1,10 +1,12 @@
 /**
  * Rich Message Content - Markdown parsing with Replit-style formatting
- * Supports: Headers, bullets, bold, italic, code, emojis, tables
+ * Supports: Headers, bullets, bold, italic, code, emojis, tables, syntax highlighting
  */
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Copy, Check } from 'lucide-react';
@@ -97,17 +99,17 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
               );
             }
             
-            // Code block
+            // Code block with syntax highlighting
             const match = /language-(\w+)/.exec(className || '');
-            const language = match ? match[1] : '';
+            const language = match ? match[1] : 'text';
             const codeString = String(children).replace(/\n$/, '');
             const isCopied = copiedCode === codeString;
             
             return (
               <div className="relative group my-3">
-                <div className="flex items-center justify-between px-3 py-1.5 bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-t-lg">
+                <div className="flex items-center justify-between px-3 py-1.5 bg-[#1e1e1e] border border-[var(--ecode-border)] rounded-t-lg">
                   {language && (
-                    <span className="text-xs font-mono text-[var(--ecode-text-secondary)] uppercase">
+                    <span className="text-xs font-mono text-gray-400 uppercase">
                       {language}
                     </span>
                   )}
@@ -124,11 +126,26 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
                     )}
                   </Button>
                 </div>
-                <pre className="p-3 bg-[var(--ecode-surface)] border border-t-0 border-[var(--ecode-border)] rounded-b-lg overflow-x-auto">
-                  <code className="text-xs font-mono text-[var(--ecode-text)]">
+                <div className="border border-t-0 border-[var(--ecode-border)] rounded-b-lg overflow-hidden">
+                  <SyntaxHighlighter
+                    language={language}
+                    style={vscDarkPlus}
+                    customStyle={{
+                      margin: 0,
+                      padding: '12px',
+                      fontSize: '12px',
+                      lineHeight: '1.5',
+                      background: '#1e1e1e'
+                    }}
+                    codeTagProps={{
+                      style: {
+                        fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace'
+                      }
+                    }}
+                  >
                     {codeString}
-                  </code>
-                </pre>
+                  </SyntaxHighlighter>
+                </div>
               </div>
             );
           },
