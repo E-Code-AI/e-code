@@ -25,6 +25,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Spinner } from '@/components/ui/spinner';
 import { getProjectUrl } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
+import { AIModelSelector } from '@/components/ai/AIModelSelector';
 import { 
   SiPython, SiJavascript, SiHtml5, SiCss3,
   SiTypescript, SiGo, SiReact, SiNodedotjs, SiSpring,
@@ -274,9 +275,19 @@ export default function Landing() {
               to deliver Fortune 500 development velocity to every team.
             </motion.p>
 
+            {/* AI Model Selection */}
+            <motion.div
+              className="max-w-4xl mx-auto mt-8"
+              variants={fadeInUp}
+            >
+              <div className="flex justify-center">
+                <AIModelSelector variant="card" className="w-full max-w-2xl" />
+              </div>
+            </motion.div>
+
             {/* AI Input Section */}
             <motion.div 
-              className="max-w-4xl mx-auto mt-12"
+              className="max-w-4xl mx-auto mt-8"
               variants={fadeInUp}
             >
               <div className="relative group">
