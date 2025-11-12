@@ -150,7 +150,7 @@ Remember:
 
       // Stream response from Anthropic Claude
       const stream = await this.anthropic.messages.create({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-3-5-haiku-20241022',
         max_tokens: 8192,
         temperature: 0.7,
         system: systemPrompt,
@@ -254,7 +254,7 @@ Remember:
           technologies: plan.technologies
         },
         totalTokensUsed: 0,
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-3-5-haiku-20241022',
         agentMode: 'build'
       });
 
@@ -265,7 +265,7 @@ Remember:
         userId,
         role: 'assistant',
         content: JSON.stringify(plan, null, 2),
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-3-5-haiku-20241022',
         metadata: {
           planId: plan.id,
           totalTasks: plan.totalTasks,
