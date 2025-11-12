@@ -45,9 +45,10 @@ The platform utilizes a polyglot backend architecture with Go for container orch
     - **Auto-Save Mechanism**: Debounced auto-save (500ms) for messages, immediate save for settings changes. Only saves after hydration completes to avoid overwriting defaults.
     - **Hydration on Load**: ReplitAgent component hydrates state from sessionStorage on mount, converting timestamps to Date objects. Works for both first-time and returning users.
     - **IDE Integration**: IDEPage supports query params `?panel=agent&prompt=...` to auto-select agent tab and pass prompts. Prompts stored in `agent-prompt-${projectId}` and cleaned from URL after storage.
-    - **Routing**: `/ai-agent?projectId=X&prompt=Y` redirects to `/ide/X?panel=agent&prompt=Y`. No-project path (`/ai-agent?prompt=Y`) stores prompt in global `pending-agent-prompt` and redirects to dashboard.
+    - **Dashboard Build Flow (November 12, 2025)**: Dashboard "Build" button creates project and redirects to `/ide/:id?panel=agent&prompt=...` (AgentWorkflowOrchestrator removed - no in-place orchestrator display).
+    - **AI Agent Page Removed (November 12, 2025)**: `/ai-agent` route is now a redirector ONLY - no standalone page exists. Authenticated users with projectId redirect to `/ide/:id?panel=agent`, authenticated without project redirect to `/projects` (with `pending-agent-prompt` sessionStorage), unauthenticated redirect to `/` homepage. AI Agent exists EXCLUSIVELY in IDE left sidebar panel.
     - **Auto-Start Build Flow (Replit-identical)**: When user arrives with `initialPrompt` via query param, agent automatically calls `generatePlan()` instead of chat, switching to Autonomous tab to display plan for approval. After approval, executes REAL build with file creation, preview auto-start, and Run button automation.
-    - **Legacy Cleanup**: Removed all legacy sessionStorage keys (`agent-conversation-${projectId}`, `agent-started-${projectId}`) from ReplitAgent.tsx.
+    - **Legacy Cleanup**: Removed all legacy sessionStorage keys (`agent-conversation-${projectId}`, `agent-started-${projectId}`), AgentWorkflowOrchestrator component, and AIAgent standalone page from codebase.
 - **Browser Testing & QA Infrastructure**: Playwright-based testing orchestrator, element selector service, session recording, and admin-only API routes.
 - **Tools**: Extended set of 35 tools including file operations, commands, web search, browser testing, performance analysis, and accessibility checks.
 - **Real-time Collaboration**: WebSocket-based editing and WebRTC for voice/video/screen sharing.
