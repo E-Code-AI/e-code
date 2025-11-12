@@ -97,7 +97,8 @@ export function CodeCollapsible({ code, language, maxLines = 10 }: CodeCollapsib
           variant="ghost"
           size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="mt-2 text-xs h-7"
+          className="mt-2 text-xs min-h-[44px] h-auto py-2 px-3 touch-manipulation"
+          data-testid="code-collapsible-toggle"
         >
           {isExpanded ? (
             <>Show less</>
