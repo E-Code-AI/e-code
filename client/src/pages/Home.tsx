@@ -45,6 +45,7 @@ import { Input } from "@/components/ui/input";
 import { ECodeLoading } from '@/components/ECodeLoading';
 import { AuthModal } from '@/components/AuthModal';
 import { getProjectUrl } from '@/lib/utils';
+import { AIModelSelector } from '@/components/ai/AIModelSelector';
 
 export default function Home() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -143,6 +144,11 @@ export default function Home() {
             <h1 className="text-4xl font-bold mb-4">Let's build something amazing</h1>
             <p className="text-xl mb-6 text-orange-50">The collaborative, in-browser IDE that makes coding accessible</p>
             
+            {/* AI Model Selection */}
+            <div className="mb-4">
+              <AIModelSelector variant="inline" />
+            </div>
+
             <div className="bg-white/10 backdrop-blur-sm p-2 rounded-lg border border-white/20 shadow-xl">
               <div className="flex items-center gap-2 bg-white dark:bg-black rounded-md p-1">
                 <Input 
