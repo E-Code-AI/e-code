@@ -37,6 +37,9 @@ export class ProjectAIAgentService {
    * Streams responses back to client
    * 
    * Security: Rate limiting, path validation, and audit logging applied
+   * 
+   * @param modelId Optional model ID to use (e.g., "gpt-4o", "claude-3-5-sonnet-20241022")
+   *                If not provided, uses user's preferred model or first available provider
    */
   async *processChat(
     userId: string,
@@ -46,6 +49,7 @@ export class ProjectAIAgentService {
       file?: string;
       code?: string;
       history?: any[];
+      modelId?: string;
     }
   ): AsyncGenerator<string> {
     // SECURITY: Check rate limits before processing
@@ -117,28 +121,62 @@ Always generate complete, production-ready code. No placeholders or TODOs.`;
         content: message
       });
 
-      // Stream response from Anthropic Claude
-      const stream = await this.anthropic.messages.create({
-        model: 'claude-3-5-haiku-20241022', // Latest available Claude model
-        system: systemPrompt,
-        messages: messages.filter(m => m.role !== 'system').map(m => ({
+      // MULTI-PROVIDER: Get user's preferred model or use first available
+      let selectedModelId = context?.modelId;
+      
+      // If no model specified, try to get user's preference from database
+      if (!selectedModelId) {
+        const user = await this.storage.getUser(userId);
+        selectedModelId = user?.preferredAiModel || undefined;
+      }
+      
+      // Smart fallback: Use first available model if no preference set
+      const availableModels = aiProviderManager.getAvailableModels();
+      if (availableModels.length === 0) {
+        yield JSON.stringify({ 
+          type: 'error', 
+          content: 'No AI providers configured. Please configure at least one API key (OpenAI, Anthropic, Gemini, xAI, or Groq).'
+        });
+        return;
+      }
+      
+      if (!selectedModelId) {
+        selectedModelId = availableModels[0].id;
+        console.log(`[ProjectAIAgent] No model preference found, using fallback: ${selectedModelId}`);
+      }
+      
+      // Get the model and provider
+      const model = aiProviderManager.getModelById(selectedModelId);
+      if (!model) {
+        yield JSON.stringify({ 
+          type: 'error', 
+          content: `Model "${selectedModelId}" not found or provider not configured`
+        });
+        return;
+      }
+      
+      console.log(`[ProjectAIAgent] Using model: ${model.name} (${model.id}) from provider: ${model.provider}`);
+      
+      // Stream response from the selected AI provider
+      const stream = await aiProviderManager.streamChat(
+        selectedModelId,
+        messages.filter(m => m.role !== 'system').map(m => ({
           role: m.role as 'user' | 'assistant',
           content: m.content
         })),
-        stream: true,
-        max_tokens: 4000,
-        temperature: 0.7,
-      });
+        {
+          system: systemPrompt,
+          max_tokens: 4000,
+          temperature: 0.7,
+        }
+      );
 
       let fullResponse = '';
 
       for await (const chunk of stream) {
-        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-          const content = chunk.delta.text || '';
-          if (content) {
-            fullResponse += content;
-            yield content;
-          }
+        if (chunk) {
+          fullResponse += chunk;
+          yield chunk;
         }
       }
 
