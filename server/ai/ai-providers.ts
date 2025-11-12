@@ -1,10 +1,13 @@
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export interface AIProvider {
   name: string;
   generateChat(messages: any[], options?: any): Promise<string>;
   generateCodeWithUnderstanding(messages: any[], codeAnalysis: any, options?: any): Promise<string>;
+  
+  generateChatStream?(messages: any[], options?: any): AsyncGenerator<string>;
 }
 
 export class OpenAIProvider implements AIProvider {
@@ -403,6 +406,78 @@ export class MistralProvider implements AIProvider {
   }
 }
 
+export class GeminiProvider implements AIProvider {
+  name = 'gemini';
+  private client: GoogleGenerativeAI;
+  
+  constructor(apiKey: string) {
+    this.client = new GoogleGenerativeAI(apiKey);
+  }
+  
+  async generateChat(messages: any[], options?: any): Promise<string> {
+    const model = this.client.getGenerativeModel({ 
+      model: options?.model || 'gemini-2.5-flash'
+    });
+    
+    const systemMessage = messages.find(m => m.role === 'system')?.content || '';
+    const chatMessages = messages.filter(m => m.role !== 'system');
+    
+    const chat = model.startChat({
+      history: chatMessages.slice(0, -1).map(m => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.content }]
+      })),
+      systemInstruction: systemMessage,
+    });
+    
+    const lastMessage = chatMessages[chatMessages.length - 1]?.content || '';
+    const result = await chat.sendMessage(lastMessage);
+    const response = await result.response;
+    return response.text();
+  }
+  
+  async *generateChatStream(messages: any[], options?: any): AsyncGenerator<string> {
+    const model = this.client.getGenerativeModel({ 
+      model: options?.model || 'gemini-2.5-flash'
+    });
+    
+    const systemMessage = messages.find(m => m.role === 'system')?.content || '';
+    const chatMessages = messages.filter(m => m.role !== 'system');
+    
+    const chat = model.startChat({
+      history: chatMessages.slice(0, -1).map(m => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.content }]
+      })),
+      systemInstruction: systemMessage,
+    });
+    
+    const lastMessage = chatMessages[chatMessages.length - 1]?.content || '';
+    const result = await chat.sendMessageStream(lastMessage);
+    
+    for await (const chunk of result.stream) {
+      yield chunk.text();
+    }
+  }
+  
+  async generateCodeWithUnderstanding(messages: any[], codeAnalysis: any, options?: any): Promise<string> {
+    const enhancedMessages = [...messages];
+    if (codeAnalysis) {
+      const systemMsg = messages.find(m => m.role === 'system');
+      if (systemMsg) {
+        systemMsg.content += `\n\nCode Analysis: ${JSON.stringify(codeAnalysis, null, 2)}`;
+      } else {
+        enhancedMessages.unshift({
+          role: 'system',
+          content: `Code Analysis: ${JSON.stringify(codeAnalysis, null, 2)}`
+        });
+      }
+    }
+    
+    return this.generateChat(enhancedMessages, options);
+  }
+}
+
 export class AIProviderFactory {
   static create(provider: string, apiKey: string): AIProvider {
     switch (provider.toLowerCase()) {
@@ -410,8 +485,8 @@ export class AIProviderFactory {
         return new OpenAIProvider(apiKey);
       case 'anthropic':
         return new AnthropicProvider(apiKey);
-      // case 'gemini':
-      //   return new GeminiProvider(apiKey); // TODO: Implement GeminiProvider
+      case 'gemini':
+        return new GeminiProvider(apiKey);
       case 'xai':
         return new XAIProvider(apiKey);
       case 'perplexity':
