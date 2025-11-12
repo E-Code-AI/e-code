@@ -1,4 +1,4 @@
-import { OpenAI } from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { type IStorage } from '../storage';
 import type { File, Project } from '@shared/schema';
 import { aiSecurityService, type ValidatedAction } from './ai-security.service';
@@ -7,28 +7,20 @@ import { aiApprovalQueue } from './ai-approval-queue.service';
 /**
  * Project AI Agent Service
  * Handles AI-powered code generation for user projects
- * Uses Replit AI Integrations (OpenAI-compatible)
+ * Uses Anthropic Claude for AI generation
  */
 export class ProjectAIAgentService {
-  private openai: OpenAI;
+  private anthropic: Anthropic;
   private storage: IStorage;
 
   constructor(storage: IStorage) {
     this.storage = storage;
     
-    // Initialize OpenAI client with user's API key
-    // Prioritize user's OPENAI_API_KEY, fallback to AI Integrations
-    const apiKey = process.env.OPENAI_API_KEY || 
-                   process.env.AI_INTEGRATIONS_OPENAI_API_KEY || 
-                   '_DUMMY_API_KEY_';
+    // Initialize Anthropic client with user's API key
+    const apiKey = process.env.ANTHROPIC_API_KEY || '_DUMMY_API_KEY_';
     
-    const baseURL = process.env.OPENAI_API_KEY 
-      ? undefined // Use OpenAI's default endpoint
-      : (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || 'http://localhost:1106/modelfarm/openai');
-    
-    this.openai = new OpenAI({
+    this.anthropic = new Anthropic({
       apiKey,
-      ...(baseURL && { baseURL }),
     });
   }
 
