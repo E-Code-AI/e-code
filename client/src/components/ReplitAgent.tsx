@@ -45,6 +45,7 @@ import { PlanVisualizer } from './agent/PlanVisualizer';
 import { TestingToolsPanel } from './agent/TestingToolsPanel';
 import { apiRequest } from '@/lib/queryClient';
 import { useAgentSession } from '@/hooks/use-agent-session';
+import { MessageRenderer, AgentMessage as NewAgentMessage, Action } from './agent/messages';
 
 interface ReplitAgentProps {
   projectId: string | number;
@@ -1961,200 +1962,164 @@ What would you like me to build?`,
     }
   };
 
-  const renderMessage = (message: Message) => {
-    const isUser = message.role === 'user';
-    const isSystem = message.role === 'system';
-    
-    if (isSystem) {
-      return (
-        <div key={message.id} className="px-4 py-2">
-          <div className={cn(
-            "text-xs flex items-center gap-2",
-            message.type === 'progress' ? "text-[var(--ecode-accent)]" : "text-[var(--ecode-text-secondary)]"
-          )}>
-            {message.type === 'action' && <Zap className="h-3 w-3" />}
-            {message.type === 'progress' && <RefreshCw className="h-3 w-3 animate-spin" />}
-            {message.content}
-          </div>
-          {message.metadata?.progress !== undefined && (
-            <div className="mt-2 w-full bg-[var(--ecode-surface)] rounded-full h-2 overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-500"
-                style={{ width: `${message.metadata.progress}%` }}
-              />
-            </div>
-          )}
-        </div>
-      );
+  /**
+   * Adapter: Converts legacy Message to new AgentMessage format
+   * Preserves all existing functionality while enabling structured rendering
+   */
+  const convertLegacyMessage = (message: Message): NewAgentMessage => {
+    // Map legacy actions to new Action format with stable IDs
+    const convertedActions: Action[] | undefined = message.actions?.map((action, idx) => ({
+      id: action.actionId || `${message.id}-action-${idx}`,
+      type: action.type as any,
+      path: action.path,
+      content: action.content,
+      command: action.type === 'run_code' ? action.content : undefined,
+      package: action.package,
+      description: action.description || `${action.type} ${action.path || ''}`,
+      status: 'pending' as const,
+      timestamp: message.timestamp,
+    }));
+
+    // Map thinking steps (already compatible structure)
+    const thinking = message.thinking ? {
+      steps: message.thinking.steps || [],
+      isStreaming: message.thinking.isStreaming || false,
+      totalTokens: message.thinking.totalTokens,
+      thinkingTime: message.thinking.thinkingTime,
+    } : undefined;
+
+    // Build AgentMessage
+    return {
+      id: message.id,
+      role: message.role,
+      type: (message.type as any) || 'chat',
+      content: message.content,
+      timestamp: message.timestamp,
+      thinking,
+      actions: convertedActions,
+      checkpoint: message.checkpoint,
+      metadata: message.metadata ? {
+        tokensUsed: message.metrics?.tokensUsed,
+        executionTimeMs: message.metrics?.executionTimeMs,
+        ...message.metadata,
+      } : undefined,
+      pricing: message.pricing,
+    };
+  };
+
+  /**
+   * Action approval handler - preserves existing approval workflow
+   */
+  const handleApproveAction = async (action: Action) => {
+    try {
+      // Convert Action back to legacy AgentAction for executeAction
+      const legacyAction: AgentAction = {
+        type: action.type as any,
+        path: action.path,
+        content: action.content,
+        package: action.package,
+        description: action.description,
+      };
+      
+      await executeAction(legacyAction);
+      
+      toast({
+        title: "✅ Action Approved",
+        description: `${action.type === 'create_file' ? 'Created' : 'Updated'} ${action.path || action.package}`,
+      });
+      
+      // Remove action from legacy message state
+      setMessages(prev => prev.map(m => {
+        if (m.actions?.some(a => a.actionId === action.id || `${m.id}-action-${m.actions.indexOf(a)}` === action.id)) {
+          return {
+            ...m,
+            actions: m.actions?.filter(a => 
+              a.actionId !== action.id && `${m.id}-action-${m.actions.indexOf(a)}` !== action.id
+            )
+          };
+        }
+        return m;
+      }));
+    } catch (error: any) {
+      console.error('[Approve Action] Failed:', error);
+      toast({
+        title: "Approval Failed",
+        description: error.message || 'Could not execute action',
+        variant: 'destructive'
+      });
     }
+  };
+
+  /**
+   * Action rejection handler
+   */
+  const handleRejectAction = (action: Action) => {
+    // Remove action from legacy message state
+    setMessages(prev => prev.map(m => {
+      if (m.actions?.some(a => a.actionId === action.id || `${m.id}-action-${m.actions.indexOf(a)}` === action.id)) {
+        return {
+          ...m,
+          actions: m.actions?.filter(a => 
+            a.actionId !== action.id && `${m.id}-action-${m.actions.indexOf(a)}` !== action.id
+          )
+        };
+      }
+      return m;
+    }));
+    
+    toast({
+      title: "Action Rejected",
+      description: `Rejected ${action.type}`,
+    });
+  };
+
+  /**
+   * Renders a message using the new structured MessageRenderer
+   */
+  const renderMessage = (message: Message) => {
+    const agentMessage = convertLegacyMessage(message);
     
     return (
-      <div key={message.id} className={cn(
-        "flex gap-3 px-4 py-4",
-        isUser && "bg-[var(--ecode-surface-secondary)]",
-        isUser ? "agent-message-user" : "agent-message-enter"
-      )}>
-        {!isUser && (
-          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
-            <Bot className="h-4 w-4 text-white" />
+      <div key={message.id}>
+        <MessageRenderer 
+          message={agentMessage}
+          onApproveAction={handleApproveAction}
+          onRejectAction={handleRejectAction}
+        />
+        
+        {/* Preserve legacy components that aren't in MessageRenderer yet */}
+        {message.pricing && (
+          <div className="px-4 pb-4">
+            <AgentPricingDisplay 
+              pricing={message.pricing}
+              metrics={message.metrics}
+              checkpoint={message.checkpoint}
+            />
           </div>
         )}
         
-        <div className={cn("flex-1", isUser && "ml-10")}>
-          <div className="text-sm text-[var(--ecode-text)] leading-relaxed">
-            {message.content.split('```').map((part, index) => {
-              if (index % 2 === 1) {
-                const [lang, ...codeLines] = part.split('\n');
-                const code = codeLines.join('\n');
-                return (
-                  <div key={index} className="my-3">
-                    <div className="relative group">
-                      <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => copyCode(code)}
-                          className="h-7 w-7 bg-[var(--ecode-surface)] hover:bg-[var(--ecode-surface-secondary)]"
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                      <pre className="p-3 rounded-lg bg-[var(--ecode-surface)] overflow-x-auto">
-                        <code className="text-xs">{code}</code>
-                      </pre>
-                    </div>
-                  </div>
-                );
-              }
-              return <p key={index} className={index > 0 ? "mt-2" : ""}>{part}</p>;
-            })}
+        {/* Feedback Mechanism - Show after AI messages with actions */}
+        {message.role === 'assistant' && ((message.actions && message.actions.length > 0) || message.completed) && (
+          <div className="px-4 pb-4 flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs h-7"
+              onClick={() => {
+                const feedback = prompt('Please share your feedback about this response:');
+                if (feedback) {
+                  toast({
+                    title: "Thank you for your feedback!",
+                    description: "We'll use this to improve our AI agent.",
+                  });
+                }
+              }}
+            >
+              <MessageSquare className="h-3 w-3 mr-1" />
+              Have feedback?
+            </Button>
           </div>
-          
-          {/* Extended Thinking Display for assistant messages */}
-          {!isUser && message.thinking && (
-            <div className="mt-3">
-              <ExtendedThinkingDisplay
-                steps={message.thinking.steps || []}
-                isThinking={message.thinking.isStreaming || false}
-              />
-            </div>
-          )}
-          
-          {/* Display pricing information if available */}
-          {message.pricing && (
-            <div className="mt-4">
-              <AgentPricingDisplay 
-                pricing={message.pricing}
-                metrics={message.metrics}
-                checkpoint={message.checkpoint}
-              />
-            </div>
-          )}
-          {/* Render approval action buttons (Fortune 500 Security) */}
-          {message.actions && message.actions.length > 0 && (
-            <div className="mt-3 space-y-2">
-              {message.actions.map((action, idx) => (
-                <div 
-                  key={idx} 
-                  className="p-3 rounded-lg border-l-4 border-l-amber-500 bg-amber-50 dark:bg-amber-950/10"
-                  data-testid={`action-card-${action.type}-${idx}`}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-md bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400">
-                        {action.type === 'create_file' && <FileText className="h-4 w-4" />}
-                        {action.type === 'edit_file' && <Edit className="h-4 w-4" />}
-                      </div>
-                      <div>
-                        <div className="font-medium text-sm">
-                          {action.type === 'create_file' ? `Create ${action.path}` : `Edit ${action.path}`}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {action.type.replace('_', ' ')}
-                        </div>
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      <AlertCircle className="h-3 w-3 mr-1 text-amber-600" />
-                      Requires Approval
-                    </Badge>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="default"
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-xs"
-                      onClick={async () => {
-                        try {
-                          await executeAction(action);
-                          toast({
-                            title: "✅ Action Approved",
-                            description: `${action.type === 'create_file' ? 'Created' : 'Updated'} ${action.path}`,
-                          });
-                          // Remove this action from the message after execution
-                          setMessages(prev => prev.map(m => 
-                            m.id === message.id 
-                              ? { ...m, actions: m.actions?.filter((_, i) => i !== idx) }
-                              : m
-                          ));
-                        } catch (error: any) {
-                          console.error('[Approve Button] Approval failed:', error);
-                        }
-                      }}
-                      data-testid={`approve-button-${action.type}-${idx}`}
-                    >
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Approve & Execute
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="text-xs"
-                      onClick={() => {
-                        // Remove this action without executing
-                        setMessages(prev => prev.map(m => 
-                          m.id === message.id 
-                            ? { ...m, actions: m.actions?.filter((_, i) => i !== idx) }
-                            : m
-                        ));
-                        toast({
-                          title: "Action Rejected",
-                          description: `Rejected ${action.type}`,
-                        });
-                      }}
-                      data-testid={`reject-button-${action.type}-${idx}`}
-                    >
-                      <X className="h-3 w-3 mr-1" />
-                      Reject
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {/* Feedback Mechanism - Show after AI messages with actions */}
-          {message.role === 'assistant' && ((message.actions && message.actions.length > 0) || message.completed) && (
-            <div className="mt-3 flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs h-7"
-                onClick={() => {
-                  const feedback = prompt('Please share your feedback about this response:');
-                  if (feedback) {
-                    toast({
-                      title: "Thank you for your feedback!",
-                      description: "We'll use this to improve our AI agent.",
-                    });
-                  }
-                }}
-              >
-                <MessageSquare className="h-3 w-3 mr-1" />
-                Have feedback?
-              </Button>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     );
   };
