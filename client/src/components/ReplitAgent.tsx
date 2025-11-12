@@ -782,6 +782,9 @@ What would you like me to build for you today?`,
   const [activeTab, setActiveTab] = useState<'chat' | 'approvals' | 'progress' | 'autonomous' | 'testing'>('chat');
   const [autonomousModeEnabled, setAutonomousModeEnabled] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<any>(null);
+  const [conversationId, setConversationId] = useState<number | null>(null);
+  const [planId, setPlanId] = useState<string | null>(null);
+  const [isPlanApproved, setIsPlanApproved] = useState(false);
   const [progressLogs, setProgressLogs] = useState<Array<{
     id: string;
     timestamp: Date;
@@ -804,6 +807,29 @@ What would you like me to build for you today?`,
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // REAL: Load conversation from sessionStorage if exists (from AgentWorkflowOrchestrator)
+  useEffect(() => {
+    const loadConversationFromStorage = () => {
+      try {
+        const storedData = sessionStorage.getItem(`agent-conversation-${projectId}`);
+        if (storedData) {
+          const { conversationId: convId, planId: pId } = JSON.parse(storedData);
+          setConversationId(convId);
+          setPlanId(pId);
+          
+          // Load the actual plan from the backend
+          if (pId) {
+            loadPlanFromBackend(convId, pId);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load conversation from sessionStorage:', error);
+      }
+    };
+    
+    loadConversationFromStorage();
+  }, [projectId]);
 
   // Handle initial prompt if provided
   useEffect(() => {
@@ -1560,33 +1586,143 @@ What would you like me to build?`,
     }
   };
 
-  // Generate execution plan from user goal
+  // REAL: Load plan from backend database using conversationId
+  const loadPlanFromBackend = async (convId: number, pId: string) => {
+    try {
+      addProgressLog('info', 'Loading plan from previous session...');
+      
+      const response = await apiRequest('GET', `/api/agent/conversation/${convId}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Extract the plan from conversation messages
+        if (data.messages && data.messages.length > 0) {
+          const planMessage = data.messages.find((msg: any) => msg.planId === pId);
+          if (planMessage && planMessage.content) {
+            const plan = JSON.parse(planMessage.content);
+            setCurrentPlan(plan);
+            setActiveTab('autonomous'); // Show plan in autonomous tab
+            
+            addProgressLog('success', `Loaded plan with ${plan.tasks?.length || 0} tasks`);
+            toast({
+              title: 'Plan Loaded',
+              description: 'Previous plan loaded from session',
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load plan from backend:', error);
+      addProgressLog('error', 'Could not load previous plan');
+    }
+  };
+
+  // REAL: Generate execution plan from user goal using OpenAI GPT-5 streaming
   const generatePlan = async (goal: string, context?: any) => {
     try {
       setIsLoading(true);
       addProgressLog('info', `Generating execution plan for: ${goal}`);
       
-      const data = await apiRequest('POST', '/api/agent/plan/generate', {
-        goal,
-        context: context || {
-          projectType: 'web application',
-          existingFiles: [],
-          technologies: ['React', 'TypeScript', 'Node.js'],
-          constraints: []
+      // REAL AI-POWERED PLAN GENERATION via Server-Sent Events
+      // Connect to streaming endpoint for real-time plan generation from OpenAI GPT-5
+      const response = await fetch('/api/agent/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          projectId,
+          goal,
+          context: context || {
+            projectType: 'web-app',
+            technologies: ['react', 'typescript', 'express'],
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText || 'Failed to connect to plan generation service'}`);
+      }
+
+      if (!response.body) {
+        throw new Error('Response body is null');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let receivedPlan = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            
+            // Skip empty lines and heartbeat messages
+            if (!data || data.startsWith(':')) continue;
+            
+            try {
+              const event = JSON.parse(data);
+              
+              if (event.type === 'chunk' && event.data) {
+                // Show streaming progress
+                addProgressLog('info', event.data.content || 'Generating...');
+              } else if (event.type === 'plan' && event.data) {
+                receivedPlan = true;
+                
+                // Store the complete plan
+                const plan = event.data;
+                setCurrentPlan(plan);
+                setActiveTab('autonomous'); // Switch to autonomous tab to show plan
+                
+                addProgressLog('success', `Plan generated with ${plan.tasks?.length || 0} tasks`);
+              } else if (event.type === 'saved' && event.data) {
+                // Capture conversationId and planId for memory retention
+                const { conversationId: convId, planId: pId } = event.data;
+                if (convId) setConversationId(convId);
+                if (pId) setPlanId(pId);
+                
+                // Store in sessionStorage for future sessions
+                if (convId && pId) {
+                  sessionStorage.setItem(`agent-conversation-${projectId}`, JSON.stringify({
+                    conversationId: convId,
+                    planId: pId,
+                    timestamp: Date.now()
+                  }));
+                }
+              } else if (event.type === 'error') {
+                throw new Error(event.data?.message || 'Plan generation failed');
+              } else if (event.type === 'done') {
+                // Stream completed successfully
+                break;
+              }
+            } catch (parseError) {
+              console.error('Failed to parse SSE event:', data, parseError);
+              // Continue processing other events
+            }
+          }
         }
-      });
-      
-      // apiRequest already returns parsed JSON, use directly
-      setCurrentPlan(data.plan);
-      setActiveTab('autonomous'); // Switch to autonomous tab to show plan
-      
-      addProgressLog('success', `Plan generated with ${data.plan.tasks.length} tasks`);
-      toast({
-        title: 'Execution Plan Ready',
-        description: `Generated ${data.plan.tasks.length} tasks. Review in Autonomous tab.`,
-      });
-      
-      return data.plan;
+      }
+
+      if (receivedPlan && currentPlan) {
+        toast({
+          title: 'Execution Plan Ready',
+          description: `Generated ${currentPlan.tasks?.length || 0} tasks. Review in Autonomous tab.`,
+        });
+        return currentPlan;
+      } else {
+        throw new Error('No plan received from AI service');
+      }
     } catch (error: any) {
       console.error('Plan generation error:', error);
       addProgressLog('error', 'Failed to generate plan');

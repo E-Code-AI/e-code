@@ -42,6 +42,7 @@ export const aiModelEnum = pgEnum('ai_model', [
   'gemini-ultra'
 ]);
 export const agentModeEnum = pgEnum('agent_mode', ['plan', 'build']);
+export const buildExecutionStatusEnum = pgEnum('build_execution_status', ['pending', 'running', 'completed', 'failed', 'cancelled']);
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -997,6 +998,44 @@ export const agentMessages = pgTable('agent_messages', {
   index('agent_messages_timeline_idx').on(table.projectId, table.createdAt), // For timeline queries
 ]);
 
+// Build Executions - Track automated build execution from approved plans
+export const buildExecutions = pgTable('build_executions', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  projectId: varchar('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  conversationId: integer('conversation_id').references(() => aiConversations.id),
+  planId: varchar('plan_id').notNull(),
+  status: buildExecutionStatusEnum('status').notNull().default('pending'),
+  currentTaskId: varchar('current_task_id'),
+  currentTaskIndex: integer('current_task_index').default(0),
+  progress: integer('progress').default(0), // 0-100
+  totalTasks: integer('total_tasks').notNull(),
+  executionLog: jsonb('execution_log').$type<Array<{
+    taskId: string;
+    taskTitle: string;
+    status: 'pending' | 'running' | 'completed' | 'failed';
+    startedAt?: string;
+    completedAt?: string;
+    error?: string;
+    filesCreated?: string[];
+    packagesInstalled?: string[];
+    commandsExecuted?: string[];
+  }>>().default([]),
+  error: text('error'),
+  metadata: jsonb('metadata').$type<{
+    approvedBy: string;
+    estimatedTime?: string;
+    technologies?: string[];
+    riskLevel?: 'low' | 'medium' | 'high';
+  }>(),
+  startedAt: timestamp('started_at'),
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('build_executions_project_id_idx').on(table.projectId),
+  index('build_executions_status_idx').on(table.status),
+  index('build_executions_conversation_id_idx').on(table.conversationId),
+]);
+
 // Secrets Management
 export const secrets = pgTable('secrets', {
   id: serial('id').primaryKey(),
@@ -1287,6 +1326,7 @@ export const insertAiConversationSchema = createInsertSchema(aiConversations).om
 export const insertDynamicIntelligenceSchema = createInsertSchema(dynamicIntelligence).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertWebSearchHistorySchema = createInsertSchema(webSearchHistory).omit({ id: true, timestamp: true });
 export const insertAgentMessageSchema = createInsertSchema(agentMessages).omit({ id: true, createdAt: true });
+export const insertBuildExecutionSchema = createInsertSchema(buildExecutions).omit({ id: true, createdAt: true });
 export const insertSecretSchema = createInsertSchema(secrets).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertEnvironmentVariableSchema = createInsertSchema(environmentVariables).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertGitRepositorySchema = createInsertSchema(gitRepositories).omit({ id: true, createdAt: true, updatedAt: true });
