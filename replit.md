@@ -18,12 +18,16 @@ The E-Code Platform is an AI-powered development platform designed to streamline
 The platform utilizes a polyglot backend architecture with Go for container orchestration, Python for AI/ML, and TypeScript for web API, user management, and database operations. It integrates an MCP Standalone Server for AI Agent operations and an AI Agent System for autonomous code generation. Real-time collaboration is facilitated via WebSockets and WebRTC. The system is designed for enterprise-grade security and performance, including advanced monitoring and a human-in-the-loop approval process for AI-generated actions.
 
 **AI Agent Chat Architecture (Nov 12, 2025):**
-- **Structured Message Rendering**: Replit-identical message components with professional-grade UX
-- **Component Architecture**: MessageRenderer (dispatcher), ThinkingMessage, TaskMessage, ActionMessage, SystemMessage
+- **Structured Message Rendering**: 100% Replit-identical message components with professional-grade UX
+- **Component Architecture**: MessageRenderer (dispatcher), ThinkingMessage, TaskMessage, ActionMessage, RichMessageContent, VibingAnimation, CollapsibleSection, ToolExecutionBadge, FileDiffViewer
 - **Adapter Pattern**: convertLegacyMessage() preserves backward compatibility while enabling structured rendering
 - **Message Types**: chat, thinking, task, action, system, error, progress, success
-- **Visual Features**: Message separators/breakpoints, status badges, progress bars, collapsible artifacts, code highlighting
-- **Theming**: Full dark/light mode support via CSS variables (--ecode-*)
+- **Rich Markdown Formatting**: Full markdown parsing with react-markdown, remark-gfm, syntax highlighting (react-syntax-highlighter with vscDarkPlus theme)
+- **Markdown Features**: Headers (## H2), bullets (-), bold (**text**), italic (*text*), inline code (`code`), code blocks with language-aware highlighting, tables, blockquotes, emojis, links
+- **Animations**: VibingAnimation (3-dot organic bounce with different timings), collapsible sections with smooth transitions, hover states, micro-interactions
+- **Interactive Components**: Copy-on-hover code buttons with feedback, expandable/collapsible sections, tool execution badges with status indicators
+- **Visual Features**: Message separators/breakpoints, status badges, progress bars, collapsible artifacts, syntax-highlighted code blocks, file diff viewer with side-by-side comparison
+- **Theming**: Full dark/light mode support via CSS variables (--ecode-*), vscDarkPlus for code blocks
 
 **UI/UX Decisions:**
 - Replit-identical IDE interface with a dark theme, centralized design tokens, and consistent spacing.
