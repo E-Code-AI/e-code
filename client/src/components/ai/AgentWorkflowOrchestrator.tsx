@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AgentWorkflowSelector } from './AgentWorkflowSelector';
 import { DesignPrototypeViewer } from './DesignPrototypeViewer';
 import { MVPCompletionDialog } from './MVPCompletionDialog';
@@ -39,6 +40,12 @@ export function AgentWorkflowOrchestrator({
   const [buildProgress, setBuildProgress] = useState(0);
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [planId, setPlanId] = useState<string | null>(null);
+
+  // Fetch user's preferred AI model
+  const { data: preferredData } = useQuery<{ preferredModel: string | null }>({
+    queryKey: ['/api/models/preferred'],
+    staleTime: 30000, // Cache for 30s
+  });
 
   // Generate feature list from initial prompt
   useEffect(() => {
@@ -169,7 +176,8 @@ export function AgentWorkflowOrchestrator({
           
           const buildResponse = await apiRequest('POST', '/api/agent/autonomous/build', {
             projectId,
-            prompt: initialPrompt
+            prompt: initialPrompt,
+            modelId: preferredData?.preferredModel || undefined // Use user's preferred model
           }) as {
             success: boolean;
             filesCreated: number;

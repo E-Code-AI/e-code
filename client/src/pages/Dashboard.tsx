@@ -20,6 +20,7 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import { TABLET_GRID_CLASSES } from '@shared/responsive-config';
 import { apiRequest } from '@/lib/queryClient';
 import { AgentWorkflowOrchestrator } from '@/components/ai/AgentWorkflowOrchestrator';
+import { AIModelSelector } from '@/components/ai/AIModelSelector';
 
 // Get personalized greeting based on time of day
 function getGreeting() {
@@ -235,6 +236,11 @@ export default function Dashboard() {
           <p className="text-white/90 mb-4">
             What would you like to build today?
           </p>
+
+          {/* AI Model Selection */}
+          <div className="mb-4">
+            <AIModelSelector variant="inline" />
+          </div>
 
           {/* AI Prompt Input */}
           <form onSubmit={handleCreateProject} className="max-w-2xl">
