@@ -798,6 +798,45 @@ export function ReplitAgentPanelV3({
               onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
               data-testid="current-model-chip"
             />
+            
+            {/* Extended Thinking Toggle - Always visible, disabled when model doesn't support */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-accent/50 transition-colors">
+                    <Label 
+                      htmlFor="extended-thinking-header-toggle" 
+                      className={cn(
+                        "text-xs cursor-pointer flex items-center gap-1.5",
+                        !modelSupportsExtendedThinking && "opacity-50"
+                      )}
+                    >
+                      <Brain className="h-3 w-3" />
+                      <span>Extended Thinking</span>
+                      {!modelSupportsExtendedThinking && (
+                        <AlertCircle className="h-3 w-3 text-yellow-500" />
+                      )}
+                    </Label>
+                    <Switch
+                      id="extended-thinking-header-toggle"
+                      checked={capabilities.find(c => c.id === 'extended_thinking')?.enabled || false}
+                      disabled={!modelSupportsExtendedThinking}
+                      onCheckedChange={(checked) => {
+                        setCapabilities(prev => prev.map(cap =>
+                          cap.id === 'extended_thinking' ? { ...cap, enabled: checked } : cap
+                        ));
+                      }}
+                      data-testid="toggle-extended-thinking"
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {modelSupportsExtendedThinking 
+                    ? "Deep reasoning with visible thought process" 
+                    : `Current model doesn't support Extended Thinking. Select a compatible model (e.g., Claude Sonnet) to enable.`}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <div className="flex items-center gap-1">
             {isWorking && (
