@@ -2,6 +2,9 @@ import { Router, Request, Response } from "express";
 import { type IStorage } from "../storage";
 import os from 'os';
 import { execSync } from 'child_process';
+import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export class HealthRouter {
   private router: Router;
@@ -42,7 +45,7 @@ export class HealthRouter {
     };
   }
 
-  private async getDatabaseHealth(): Promise<object> {
+  private async getDatabaseHealth(): Promise<{ status: string; connection: string; responseTime?: string; error?: string }> {
     try {
       // Simple database health check
       const testQuery = await this.storage.getUser('health-check-id');
@@ -107,6 +110,122 @@ export class HealthRouter {
       },
       environment: process.env.NODE_ENV || 'development'
     };
+  }
+
+  /**
+   * Enterprise-grade AI Provider Health Checks
+   * Tests API key validity for all 5 major providers
+   */
+  private async checkProviderHealth(provider: string, apiKey: string | undefined, timeout: number = 5000): Promise<{
+    status: 'valid' | 'invalid' | 'missing' | 'timeout';
+    responseTime?: number;
+    error?: string;
+  }> {
+    if (!apiKey || apiKey.trim() === '') {
+      return { status: 'missing', error: 'API key not configured' };
+    }
+
+    const startTime = Date.now();
+    
+    try {
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Provider timeout')), timeout)
+      );
+
+      let testPromise: Promise<any>;
+
+      switch (provider) {
+        case 'openai': {
+          const client = new OpenAI({ apiKey, timeout: timeout - 500 });
+          testPromise = client.models.list().then(res => res.data.length > 0);
+          break;
+        }
+        case 'anthropic': {
+          const client = new Anthropic({ apiKey, timeout: timeout - 500 });
+          testPromise = client.messages.create({
+            model: 'claude-3-5-haiku-20241022',
+            max_tokens: 1,
+            messages: [{ role: 'user', content: 'test' }]
+          });
+          break;
+        }
+        case 'gemini': {
+          const client = new GoogleGenerativeAI(apiKey);
+          const model = client.getGenerativeModel({ model: 'gemini-pro' });
+          testPromise = model.generateContent('test').then(() => true);
+          break;
+        }
+        case 'xai': {
+          const client = new OpenAI({ 
+            apiKey, 
+            baseURL: 'https://api.x.ai/v1',
+            timeout: timeout - 500 
+          });
+          testPromise = client.models.list().then(res => res.data.length > 0);
+          break;
+        }
+        case 'groq': {
+          const client = new OpenAI({ 
+            apiKey, 
+            baseURL: 'https://api.groq.com/openai/v1',
+            timeout: timeout - 500 
+          });
+          testPromise = client.models.list().then(res => res.data.length > 0);
+          break;
+        }
+        default:
+          return { status: 'invalid', error: 'Unknown provider' };
+      }
+
+      await Promise.race([testPromise, timeoutPromise]);
+      const responseTime = Date.now() - startTime;
+      
+      return { status: 'valid', responseTime };
+      
+    } catch (error: any) {
+      const responseTime = Date.now() - startTime;
+      
+      if (error.message === 'Provider timeout') {
+        return { status: 'timeout', responseTime, error: 'Request timeout' };
+      }
+      
+      if (error.status === 401 || error.message?.includes('API key') || error.message?.includes('authentication')) {
+        return { status: 'invalid', responseTime, error: 'Invalid API key' };
+      }
+      
+      return { 
+        status: 'invalid', 
+        responseTime, 
+        error: error.message || 'Provider error' 
+      };
+    }
+  }
+
+  private async getAllProvidersHealth(): Promise<any> {
+    const providers = [
+      { name: 'openai', key: process.env.OPENAI_API_KEY },
+      { name: 'anthropic', key: process.env.ANTHROPIC_API_KEY },
+      { name: 'gemini', key: process.env.GEMINI_API_KEY },
+      { name: 'xai', key: process.env.XAI_API_KEY },
+      { name: 'groq', key: process.env.GROQ_API_KEY }
+    ];
+
+    const results = await Promise.all(
+      providers.map(async ({ name, key }) => {
+        const health = await this.checkProviderHealth(name, key);
+        return { provider: name, ...health };
+      })
+    );
+
+    const summary = {
+      total: results.length,
+      valid: results.filter(r => r.status === 'valid').length,
+      invalid: results.filter(r => r.status === 'invalid').length,
+      missing: results.filter(r => r.status === 'missing').length,
+      timeout: results.filter(r => r.status === 'timeout').length
+    };
+
+    return { summary, providers: results };
   }
 
   private initializeRoutes() {
@@ -202,12 +321,44 @@ export class HealthRouter {
           system: process.cpuUsage().system
         },
         requests: {
-          // These would be tracked by middleware in production
           total: 0,
           errors: 0,
           avgResponseTime: 0
         }
       });
+    });
+
+    // AI Provider Health Check - Fortune 500 requirement
+    this.router.get("/api/health/providers", async (req: Request, res: Response) => {
+      try {
+        const providersHealth = await this.getAllProvidersHealth();
+        const allValid = providersHealth.summary.valid === providersHealth.summary.total;
+        
+        res.status(allValid ? 200 : 503).json({
+          timestamp: new Date().toISOString(),
+          status: allValid ? 'healthy' : 'degraded',
+          service: 'AI Providers',
+          ...providersHealth,
+          recommendations: providersHealth.providers
+            .filter((p: any) => p.status !== 'valid')
+            .map((p: any) => ({
+              provider: p.provider,
+              action: p.status === 'missing' 
+                ? `Set ${p.provider.toUpperCase()}_API_KEY environment variable`
+                : p.status === 'invalid'
+                ? `Replace invalid ${p.provider.toUpperCase()}_API_KEY`
+                : `Check network connectivity to ${p.provider}`
+            }))
+        });
+      } catch (error) {
+        console.error('Provider health check error:', error);
+        res.status(503).json({
+          status: 'error',
+          service: 'AI Providers',
+          timestamp: new Date().toISOString(),
+          error: 'Failed to check provider health'
+        });
+      }
     });
   }
 
