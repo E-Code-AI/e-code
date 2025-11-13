@@ -76,7 +76,7 @@ const Status = lazy(() => import("@/pages/Status"));
 const Forum = lazy(() => import("@/pages/Forum"));
 const ComparePage = lazy(() => import("@/pages/compare/ComparePage"));
 
-const MobileAdmin = lazy(() => import("@/pages/mobile"));
+const MobileAdmin = lazy(() => import("@/pages/admin/MobileAdminDashboard"));
 const MobileWorkspace = lazy(() => import("@/pages/MobileWorkspace"));
 const AI = lazy(() => import("@/pages/AI"));
 const Press = lazy(() => import("@/pages/Press"));

@@ -117,12 +117,17 @@ export class HealthRouter {
    * Tests API key validity for all 5 major providers
    */
   private async checkProviderHealth(provider: string, apiKey: string | undefined, timeout: number = 5000): Promise<{
-    status: 'valid' | 'invalid' | 'missing' | 'timeout';
+    status: 'healthy' | 'unhealthy' | 'missing' | 'timeout';
     responseTime?: number;
     error?: string;
+    recommendation?: string;
   }> {
     if (!apiKey || apiKey.trim() === '') {
-      return { status: 'missing', error: 'API key not configured' };
+      return { 
+        status: 'missing', 
+        error: 'API key not configured',
+        recommendation: `Set ${provider.toUpperCase()}_API_KEY in environment variables`
+      };
     }
 
     const startTime = Date.now();
@@ -174,13 +179,13 @@ export class HealthRouter {
           break;
         }
         default:
-          return { status: 'invalid', error: 'Unknown provider' };
+          return { status: 'unhealthy', error: 'Unknown provider' };
       }
 
       await Promise.race([testPromise, timeoutPromise]);
       const responseTime = Date.now() - startTime;
       
-      return { status: 'valid', responseTime };
+      return { status: 'healthy', responseTime };
       
     } catch (error: any) {
       const responseTime = Date.now() - startTime;
@@ -190,11 +195,25 @@ export class HealthRouter {
       }
       
       if (error.status === 401 || error.message?.includes('API key') || error.message?.includes('authentication')) {
-        return { status: 'invalid', responseTime, error: 'Invalid API key' };
+        return { 
+          status: 'unhealthy', 
+          responseTime, 
+          error: 'Invalid API key',
+          recommendation: `Verify ${provider.toUpperCase()}_API_KEY is correct`
+        };
+      }
+      
+      if (error.message?.includes('Insufficient credits') || error.message?.includes('quota')) {
+        return { 
+          status: 'unhealthy', 
+          responseTime, 
+          error: error.message,
+          recommendation: `Add credits or check billing for ${provider}`
+        };
       }
       
       return { 
-        status: 'invalid', 
+        status: 'unhealthy', 
         responseTime, 
         error: error.message || 'Provider error' 
       };
@@ -219,8 +238,8 @@ export class HealthRouter {
 
     const summary = {
       total: results.length,
-      valid: results.filter(r => r.status === 'valid').length,
-      invalid: results.filter(r => r.status === 'invalid').length,
+      healthy: results.filter(r => r.status === 'healthy').length,
+      unhealthy: results.filter(r => r.status === 'unhealthy').length,
       missing: results.filter(r => r.status === 'missing').length,
       timeout: results.filter(r => r.status === 'timeout').length
     };
@@ -332,21 +351,21 @@ export class HealthRouter {
     this.router.get("/api/health/providers", async (req: Request, res: Response) => {
       try {
         const providersHealth = await this.getAllProvidersHealth();
-        const allValid = providersHealth.summary.valid === providersHealth.summary.total;
+        const allHealthy = providersHealth.summary.healthy === providersHealth.summary.total;
         
-        res.status(allValid ? 200 : 503).json({
+        res.status(allHealthy ? 200 : 503).json({
           timestamp: new Date().toISOString(),
-          status: allValid ? 'healthy' : 'degraded',
+          status: allHealthy ? 'healthy' : 'degraded',
           service: 'AI Providers',
           ...providersHealth,
           recommendations: providersHealth.providers
-            .filter((p: any) => p.status !== 'valid')
+            .filter((p: any) => p.status !== 'healthy')
             .map((p: any) => ({
               provider: p.provider,
               action: p.status === 'missing' 
                 ? `Set ${p.provider.toUpperCase()}_API_KEY environment variable`
-                : p.status === 'invalid'
-                ? `Replace invalid ${p.provider.toUpperCase()}_API_KEY`
+                : p.status === 'unhealthy'
+                ? `Replace invalid ${p.provider.toUpperCase()}_API_KEY or add credits`
                 : `Check network connectivity to ${p.provider}`
             }))
         });
