@@ -22,7 +22,8 @@ export interface AIModel {
  * Fortune 500-grade model catalog
  */
 export const AI_MODELS: AIModel[] = [
-  // OpenAI Models - REAL models only
+  // OpenAI Models - VERIFIED REAL MODELS ONLY (as of November 2025)
+  // Source: https://platform.openai.com/docs/models
   {
     id: 'gpt-4o',
     name: 'GPT-4o',
