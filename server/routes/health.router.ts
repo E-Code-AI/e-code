@@ -31,7 +31,7 @@ export class HealthRouter {
     return `${seconds}s`;
   }
 
-  private getCorsHealth(): object {
+  private getCorsHealth(): { enabled: boolean; mode: string | undefined; configuredOrigins: number; status: 'configured' | 'misconfigured' } {
     const corsEnabled = process.env.NODE_ENV === 'production' ? 
       (!!process.env.ALLOWED_ORIGINS || !!process.env.FRONTEND_URL) : true;
     
