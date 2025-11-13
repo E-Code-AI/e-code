@@ -74,6 +74,16 @@ The platform utilizes a polyglot backend architecture with Go for container orch
   - **Architecture**: `AIProviderManager` (singleton for model-ID-based routing) and `legacyAIProviderManager` (for backward compatibility). GroqProvider uses OpenAI SDK.
   - **API Endpoints**: `/api/models/health` (provider status), `/api/models` (list available models), `/api/models/preferred` (get/set user's preferred model), `/api/agent/autonomous/build` (build from prompt).
   - **Security**: API keys managed via Replit Secrets.
+  - **User Model Preference System (Nov 13, 2025)**: Production-ready multi-provider AI model selection with user preference persistence and 100% web/mobile parity:
+    - **Architecture**: `useAgentModelPreference` hook (`client/src/hooks/use-agent-model-preference.ts`) with React Query for preference management
+    - **Race Condition Prevention**: Dual-fix strategy - `placeholderData(prev)` keeps cached data during refetches + `isSuccess` guard ensures definitive server response before fallback
+    - **Fallback Strategy**: OpenAI-first fallback only applies when BOTH queries succeed AND user has no saved preference (explicit null check)
+    - **Persistence**: Backend API `/api/models/preferred` (GET/POST) saves model selection to `preferred_ai_model` DB column with per-user isolation
+    - **UI Components**: `CurrentModelChip` displays current model with provider icon, supports desktop dropdown + mobile bottom sheet, visual warning for incompatible features
+    - **Extended Thinking Gating**: Capability-based feature detection disables Extended Thinking toggle when selected model doesn't support it (Claude-only feature)
+    - **Web/Mobile Parity**: ReplitAgentPanelV3 unified component serves both desktop (mode="desktop") and mobile (mode="mobile") with identical feature set
+    - **Legacy Cleanup**: MobileAgentInterface (POST-based) fully retired in favor of SSE-based ReplitAgentPanelV3 for consistent streaming + model selection
+    - **Data Flow**: User selects model → `setPreferredModel()` persists to DB → Hook hydrates from `/api/models/preferred` → Provider routing via `AIProviderManager`
   - **Context Management (Nov 13, 2025)**: Production-ready AI context budgeting system (`server/agent/context-manager.ts`) prevents "too many total text bytes" API errors:
     - **Provider-Specific Budgets**: Ultra-conservative limits with 38-77% safety margins - Anthropic: 10MB bytes AND 50k tokens (dual enforcement), OpenAI/xAI: 30k tokens, Gemini/Groq: 7k tokens
     - **Dual-Limit Protection**: Anthropic enforces BOTH byte AND token limits, dynamically selecting the more restrictive one
@@ -86,7 +96,7 @@ The platform utilizes a polyglot backend architecture with Go for container orch
       - **Dual Notification**: Toast notification (transient alert) + system message in conversation (persistent audit trail)
       - **Graceful Degradation**: Handles optional SSE fields (droppedCount, originalSize, finalSize) to avoid displaying "undefined"
       - **Integration**: Applied to all 3 AI streaming panels (ReplitAgentPanelV3, AIAgentPanel, ReplitAgentPanel) with buffered append strategy for stream persistence
-      - **Mobile Coverage**: Verified mobile components (MobileChatInterface, MobileAgentInterface) use simulated responses, so real SSE warnings only apply to web/desktop IDE panels
+      - **Mobile Coverage**: Mobile agent tab uses ReplitAgentPanelV3 (mode="mobile") with full SSE support; legacy MobileChatInterface uses simulated responses
       - **Deduplication**: Map-based cache prevents repeated identical warnings from spamming users during single response streams
     - **TODO**: Integrate tiktoken/provider-native tokenizers for precise token counting to increase limits to ~70% of actual capacity
 - **Push Notifications**: Firebase Cloud Messaging (FCM), Firebase Admin SDK.
