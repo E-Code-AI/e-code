@@ -37,9 +37,8 @@ RUN npm ci --only=production
 # Copy built application (dist/public contains frontend, dist/index.js is backend)
 COPY --from=builder /app/dist ./dist
 
-# Copy only runtime essentials
+# Copy runtime essentials (theme for UI)
 COPY theme.json ./
-COPY deployment.config.ts ./
 
 # Create logs directory
 RUN mkdir -p logs
