@@ -1,79 +1,147 @@
 # E-Code Platform
 
 ## Overview
-The E-Code Platform is an AI-powered development platform designed to streamline software creation through automated deployment, real-time collaboration, and a comprehensive suite of tools. Its core purpose is to facilitate rapid, enterprise-grade software development with advanced AI capabilities, aiming for a significant market presence. The platform prioritizes performance, security, and scalability, leveraging AI assistance and an architecture optimized for Replit Reserved VM deployment.
+
+E-Code Platform is an enterprise-grade AI-powered development environment that enables autonomous application building through natural language prompts. The platform combines a full-featured cloud IDE with intelligent AI agents capable of generating, editing, and deploying complete applications with minimal human intervention.
+
+**Core Value Proposition:** Transform application ideas into production-ready code in minutes through AI-driven autonomous development, collaborative real-time editing, and one-click deployments.
+
+**Key Capabilities:**
+- AI-powered autonomous code generation and editing
+- Full-featured Monaco-based code editor with real-time collaboration
+- Integrated terminal, file management, and debugging tools
+- Multi-model AI support (GPT-4, Claude 3.5, Gemini Pro, Llama)
+- Enterprise-grade security (CSRF protection, rate limiting, RBAC)
+- Automated deployment pipelines
+- Mobile and tablet responsive design
 
 ## User Preferences
-- **Code Style**: Use TypeScript with strict typing
-- **Error Handling**: Comprehensive error handling with proper logging
-- **Performance**: Prioritize optimization for production deployment
-- **Security**: Implement secure practices and avoid unsafe operations
-- **Documentation**: Maintain clear documentation for deployment and architecture
-- **File Management**: NEVER remove existing pages/files without explicit user request. If files are missing, CREATE them instead of removing imports.
-- **Deployment**: Replit Reserved VM with 4-port configuration for optimal performance
-- **React Best Practices**: ALL React hooks MUST be called before any early returns (conditional rendering) to maintain consistent hook order across renders
-- **Routing Consolidation Complete**: All workspace navigation standardized to `/ide/:id`. Legacy `/editor/:id` route redirects with full backward compatibility. EditorPage.tsx deprecated in favor of IDEPage.tsx.
+
+Preferred communication style: Simple, everyday language.
 
 ## System Architecture
-The platform employs a polyglot backend with Go for container orchestration, Python for AI/ML, and TypeScript for web API, user management, and database operations. It integrates an MCP Standalone Server and an AI Agent System for autonomous code generation, with real-time collaboration via WebSockets and WebRTC. The system features enterprise-grade security, performance monitoring, and a human-in-the-loop approval process for AI actions.
 
-**AI Agent Chat Architecture:**
-- **Structured Message Rendering**: Replit-identical message components with professional-grade UX, supporting various message types (chat, thinking, task, action, system, error, progress, success).
-- **Rich Markdown Formatting**: Full markdown parsing with syntax highlighting, including headers, lists, bold/italic text, inline code, code blocks, tables, and emojis.
-- **Animations & Interactivity**: VibingAnimation for thinking states, collapsible sections, copy-on-hover code buttons, and tool execution badges.
+### Frontend Architecture
 
-**UI/UX Decisions:**
-- Replit-identical IDE interface with a dark theme, centralized design tokens, and consistent spacing.
-- ReplitAgent UI matches Replit's exact interface with a clean header, compact model selector, and extended Agent Tools dropdown.
-- Responsive design optimized for mobile (bottom tab bar, swipe panels), tablet (dual-panel layouts), and desktop (Monaco minimap, breadcrumbs, multi-editor instances, Command Palette).
+**Technology Stack:**
+- React 18 with TypeScript
+- Vite build system with optimized code splitting
+- TanStack Query for server state management
+- Wouter for client-side routing
+- Monaco Editor for code editing
+- Shadcn/UI component library with Radix UI primitives
+- Tailwind CSS for styling
 
-**Technical Implementations:**
-- **Routing**: Unified `/ide/:id` workspace routing with SPA navigation and state persistence.
-- **Device Detection**: Canonical breakpoints for various devices.
-- **Code Splitting**: Optimized bundle splitting using React.lazy().
-- **Performance**: Compression, caching, build optimizations, and service workers.
-- **Security**: CSP headers, input validation, OWASP Top 10, CORS, path sandboxing, and robust authentication.
-- **Deployment**: Dynamic 4-port configuration, optimized for Replit Reserved VM.
+**Key Design Patterns:**
+- Lazy-loaded routes for performance optimization
+- Component-based architecture with separation of concerns
+- Custom hooks for shared logic (authentication, WebSocket connections, mobile gestures)
+- Responsive design with dedicated mobile/tablet views
+- Real-time collaboration using WebSocket providers
 
-**Feature Specifications:**
-- **Workspace Persistence & Responsive Design**: IDEPage implements device-aware rendering and `sessionStorage` persistence for IDE state.
-- **AI Agent System**: Autonomous code generation with real tool execution, extended thinking, and database-backed audit logging. Includes "Build from Prompt" with an autonomous build process, Model Selection API, Extended Thinking Streaming, Conversation Persistence, and Security Hardening. The AI Agent is integrated as an IDE left sidebar panel.
-- **Browser Testing & QA Infrastructure**: Playwright-based testing orchestrator with session recording.
-- **Tools**: Extended set of 35 tools for file operations, commands, web search, browser testing, performance analysis, and accessibility.
-- **Real-time Collaboration**: WebSocket-based editing and WebRTC for communication.
-- **Admin Dashboard**: Comprehensive UI for project and user management.
-- **Template Marketplace**: Allows users to fork and deploy project templates.
-- **Production Hardening**: Redis caching, CDN optimization, multi-tier rate limiting, and security middleware.
-- **Workspace Parity**: Complete IDE feature parity with unified `/ide/:id` route, including integrated panels, real-time WebSocket updates, and functional Monaco Editor, Terminal, and File Tree.
-- **Multi-Tab Editor System**: Maintains independent Monaco editor instances per tab.
-- **Keyboard Utilities & Shortcuts**: Production-ready keyboard shortcut system.
+**Major Frontend Components:**
+- `EditorPage.tsx` - Main IDE workspace with Monaco integration
+- `ProjectPage.tsx` - Project management and navigation
+- `Dashboard.tsx` - User dashboard with AI prompt input ("Vibe Creation Flow")
+- `AIAgent.tsx` / `ReplitAgentV2.tsx` - AI assistant interfaces
+- `MobileIDEView.tsx` / `TabletIDEView.tsx` - Mobile/tablet optimized views
+- Command palette system for keyboard-driven workflows
 
-**System Design Choices:**
-- **Vertical Slice Approach**: End-to-end feature development.
-- **Storage Layer**: `IStorage` interface with `DatabaseStorage` implementation using PostgreSQL and Drizzle ORM.
-- **Type Safety**: Zod, TypeScript, Drizzle ORM.
-- **Real-time Updates**: Hybrid WebSocket + HTTP polling, with SSE for AI token streaming.
-- **Hybrid Security Model**: AI-generated actions require approval; manual operations have immediate validation with audit logging.
-- **Production Compliance**: Fortune 500-ready with PostgreSQL persistence and tamper-proof logging.
+**State Management Strategy:**
+- TanStack Query manages server state with automatic caching and invalidation
+- React Context for global state (auth, theme, collaborative editing)
+- URL-based state for navigation and shareable links
+- Local storage persistence for user preferences
 
-## External Dependencies
-- **AI Integration**:
-  - **Multi-Provider System**: Operational with 5 AI providers (OpenAI, Anthropic, Gemini, xAI, Groq) and 12 production models, managed by `AIProviderManager`.
-  - **User Model Preference System**: `useAgentModelPreference` hook with React Query for managing user's preferred AI model, persisted via `/api/models/preferred` API.
-  - **Extended Thinking Toggle**: First-class control in the ReplitAgentPanelV3 header for enabling/disabling Extended Thinking, with capability gating based on the selected model.
-  - **Context Management**: `server/agent/context-manager.ts` handles context budgeting with provider-specific token and byte limits, intelligent truncation, and client-side warnings via SSE.
-  - **Marketing Demo**: `simulateStreaming` helper for simulated AI responses on the landing page, accompanied by a demo mode banner and a "Try Real AI" CTA.
-- **Push Notifications**: Firebase Cloud Messaging (FCM), Firebase Admin SDK.
-- **Video Conferencing**: Zoom API.
-- **Deployment Platform**: Replit Reserved VM.
-- **Authentication**: Passport.js (GitHub, Google, GitLab, Bitbucket, Discord, Slack, Azure AD).
-- **Real-time Communication**: WebSockets (y-websocket), WebRTC.
-- **Database**: PostgreSQL.
-- **Frontend Libraries**: React.js, Tailwind CSS, shadcn/ui, wouter.
-- **Backend Framework**: Express.js.
-- **ORM**: Drizzle ORM.
-- **Editor**: Monaco Editor.
-- **Charting**: Chart.js.
-- **Containerization**: Docker.
-- **Caching**: Redis/ioredis.
-- **CDN**: Replit's built-in CDN.
+### Backend Architecture
+
+**Technology Stack:**
+- Node.js with Express.js web framework
+- TypeScript for type safety
+- Drizzle ORM for database operations
+- PostgreSQL database (via Neon serverless)
+- Passport.js for authentication
+- WebSocket (ws library) for real-time features
+
+**Architectural Patterns:**
+- RESTful API design with 300+ endpoints across 34 route files
+- Service-oriented architecture with specialized services:
+  - `AgentOrchestrator` - Coordinates AI model interactions
+  - `AutonomousEngineService` - Risk scoring and auto-approval logic
+  - `PlanGeneratorService` - AI-powered task breakdown
+  - `TestingOrchestratorService` - Playwright test orchestration
+  - `FileSystemService` - File operations with security validation
+  - `GitService` - Version control integration
+  - `DeploymentService` - Automated deployment workflows
+
+**Database Schema:**
+- 140+ tables supporting all platform features
+- Key entity relationships:
+  - Users → Projects → Files (hierarchical file system)
+  - AgentSessions → AgentTasks → AgentAuditLogs (AI workflow tracking)
+  - Deployments → DeploymentBuilds (deployment history)
+  - Subscriptions → Usage tracking (billing and quotas)
+
+**Security Architecture:**
+- CSRF token validation on all state-changing operations
+- Custom `apiRequest()` helper replaces raw fetch() calls (109+ endpoints secured)
+- Multi-tier rate limiting (global: 100/min, auth: 10/15min, AI: 10/min)
+- Session-based authentication with HttpOnly cookies
+- Role-based access control (RBAC) with admin middleware
+- Input sanitization and XSS protection middleware
+- Path traversal prevention in file operations
+- bcrypt password hashing (10 rounds)
+
+**Real-Time Services (WebSocket):**
+- Terminal sessions with atomic buffer synchronization
+- Collaborative editing with operational transforms
+- Live presence indicators
+- Build log streaming
+- Test execution updates
+- Security scanning notifications
+- Resource monitoring
+
+### External Dependencies
+
+**AI/ML Services:**
+- OpenAI GPT-4 / GPT-3.5 (via `OPENAI_API_KEY`)
+- Anthropic Claude 3.5 (via `ANTHROPIC_API_KEY`)
+- Google Gemini Pro (via `GOOGLE_AI_API_KEY`)
+- Groq Llama (via `GROQ_API_KEY`)
+- Model Context Protocol (MCP) SDK for tool execution
+
+**Infrastructure Services:**
+- PostgreSQL database (Neon serverless via `DATABASE_URL`)
+- Redis caching layer (optional via `REDIS_URL`)
+- Stripe payment processing (via `STRIPE_SECRET_KEY` and `STRIPE_PUBLISHABLE_KEY`)
+- SendGrid email delivery (via `SENDGRID_API_KEY`)
+- Sentry error monitoring (via `SENTRY_DSN`)
+
+**Development Tools:**
+- GitHub OAuth integration (via `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`)
+- Figma design imports (via `FIGMA_API_KEY`)
+- Playwright browser automation for testing
+- Monaco Editor (Microsoft's VS Code editor component)
+- xterm.js for terminal emulation
+
+**CDN and Asset Delivery:**
+- Configurable CDN support (via `CDN_BASE_URL`)
+- Optimized asset caching with configurable TTLs
+- Production build with Vite creates optimized chunks
+
+**Authentication Providers:**
+- Replit Auth (supports Google, GitHub, Twitter/X, Apple, email/password)
+- Custom email/password with verification flow
+- Session management with secure cookie configuration
+
+**Deployment Targets:**
+- Replit Cloud Run (autoscale deployment target)
+- Docker containerization support
+- PM2 process management for production (cluster mode)
+
+**Notable Integration Patterns:**
+- Fallback mechanisms when API keys unavailable (e.g., Figma service uses demo data)
+- Auto-detection of Replit deployment URLs for CORS configuration
+- Environment-aware configuration (development vs. production behavior)
+- Health check endpoints for deployment verification
+- Graceful degradation when optional services unavailable
