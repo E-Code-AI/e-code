@@ -45,6 +45,7 @@ import { AgentWorkflowSelector } from './AgentWorkflowSelector';
 import { DesignPrototypeViewer } from './DesignPrototypeViewer';
 import { MVPCompletionDialog } from './MVPCompletionDialog';
 import { ModeSelector } from './ModeSelector';
+import { handleSSEWarning, type SSEWarningData } from '@/lib/sse-warning-handler';
 
 interface ToolExecution {
   id: string;
@@ -584,6 +585,23 @@ export function ReplitAgentPanelV3({
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
+              
+              // Handle context truncation warnings
+              if (data.message && data.droppedCount !== undefined) {
+                handleSSEWarning(data as SSEWarningData, {
+                  toast,
+                  addSystemMessage: (content: string) => {
+                    const systemMessage: Message = {
+                      id: `system-${Date.now()}`,
+                      role: 'system',
+                      content,
+                      timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, systemMessage]);
+                  }
+                });
+                continue;
+              }
               
               // Regular content tokens
               if (data.content) {
