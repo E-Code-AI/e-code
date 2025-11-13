@@ -9,7 +9,18 @@ E-Code is a web-based collaborative IDE with AI assistance, built with TypeScrip
 
 **Current Status:** Functional MVP - Web 75-80% | Mobile Web 75-80% | Fortune 500 Ready 60-70% ↑
 
-**Recent Updates (Nov 13, 2025 - Mobile Admin Complete):**
+**Recent Updates (Nov 13, 2025 - AI Agent UX Complete):**
+- ✅ **AI Agent Scroll Fix** - Conversation messages now properly scroll in both web and mobile
+- ✅ **Plan Approval Modal** - New binary approval flow (Approve/Reject) appears immediately after plan generation
+- ✅ **Auto-Execution** - Agent automatically generates plans from initialPrompt on component mount
+- ✅ **Auto-Approve Option** - Users can toggle automatic plan approval in Agent Tools menu (persists in session)
+- ✅ **Race Condition Fixes** - Plan data passed directly to executeBuild, eliminating async state issues
+- ⚠️ **BLOCKING ISSUE: Database Schema Outdated** - `agent_messages` table missing `conversation_id` column, prevents plan saving
+  - **Fix Required:** Stop server → `npm run db:push --force` → Restart server
+  - **Error:** `PostgresError: column "conversation_id" of relation "agent_messages" does not exist`
+  - **Impact:** Plans generate successfully but fail to save to database, blocking approval modal display
+
+**Previous Session (Nov 13, 2025 - Mobile Admin Complete):**
 - ✅ **Mobile Admin Dashboard** (`/mobile-admin`) - Full mobile parity with provider health monitoring
 - ✅ **Responsive AdminLayout** - Hamburger menu, slide-in sidebar, auto-close navigation on mobile
 - ✅ **Provider Health Monitoring** - Real-time status for all 5 AI providers (OpenAI, Anthropic, Gemini, xAI, Groq)
