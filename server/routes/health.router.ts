@@ -348,12 +348,15 @@ export class HealthRouter {
     });
 
     // AI Provider Health Check - Fortune 500 requirement
+    // Always returns HTTP 200 with status in body (degraded/healthy)
+    // Only returns 503 on complete failure to check providers
     this.router.get("/api/health/providers", async (req: Request, res: Response) => {
       try {
         const providersHealth = await this.getAllProvidersHealth();
         const allHealthy = providersHealth.summary.healthy === providersHealth.summary.total;
         
-        res.status(allHealthy ? 200 : 503).json({
+        // Always return 200 - degraded status is informational, not an error
+        res.status(200).json({
           timestamp: new Date().toISOString(),
           status: allHealthy ? 'healthy' : 'degraded',
           service: 'AI Providers',
