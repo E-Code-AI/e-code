@@ -12,6 +12,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
+import { handleSSEWarning, type SSEWarningData } from '@/lib/sse-warning-handler';
 
 interface Message {
   id: string;
@@ -112,6 +113,23 @@ export function AIAgentPanel({ projectId, onClose }: AIAgentPanelProps) {
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
+              
+              // Handle context truncation warnings
+              if (data.message && data.droppedCount !== undefined) {
+                handleSSEWarning(data as SSEWarningData, {
+                  toast,
+                  addSystemMessage: (content: string) => {
+                    const systemMessage: Message = {
+                      id: `system-${Date.now()}`,
+                      role: 'system',
+                      content,
+                      timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, systemMessage]);
+                  }
+                });
+                continue;
+              }
               
               if (data.content) {
                 // Update the assistant message content

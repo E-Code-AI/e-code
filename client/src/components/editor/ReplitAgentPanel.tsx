@@ -11,10 +11,12 @@ import {
   Loader2
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useToast } from '@/hooks/use-toast';
+import { handleSSEWarning, type SSEWarningData } from '@/lib/sse-warning-handler';
 
 interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
   status?: 'sending' | 'sent' | 'error';
@@ -39,6 +41,7 @@ export function ReplitAgentPanel({ projectId, className }: ReplitAgentPanelProps
   const [streamingContent, setStreamingContent] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const { toast } = useToast();
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -97,6 +100,23 @@ export function ReplitAgentPanel({ projectId, className }: ReplitAgentPanelProps
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
+              
+              // Handle context truncation warnings
+              if (data.message && data.droppedCount !== undefined) {
+                handleSSEWarning(data as SSEWarningData, {
+                  toast,
+                  addSystemMessage: (content: string) => {
+                    const systemMessage: Message = {
+                      id: `system-${Date.now()}`,
+                      role: 'system',
+                      content,
+                      timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, systemMessage]);
+                  }
+                });
+                continue;
+              }
               
               if (data.content) {
                 fullContent += data.content;
