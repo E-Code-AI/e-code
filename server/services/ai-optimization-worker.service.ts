@@ -6,6 +6,9 @@
 
 import { aiOptimization } from './ai-optimization';
 import { TaskType } from './ai-optimization/task-classifier.service';
+import { db } from '../db';
+import { agentSessions } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 
 export class AiOptimizationWorker {
   private isRunning = false;
@@ -111,30 +114,80 @@ export class AiOptimizationWorker {
         tokensUsed = 0; // MCP doesn't use tokens!
         success = result.success;
       } else {
-        // Execute via AI provider
-        // Stub: Return placeholder response until AgentOrchestrator integration (Task 3)
-        result = {
-          success: true,
-          output: `[AI Execution Stub] Task queued for ${provider}. Full integration pending in Task 3.`,
-          duration: Date.now() - startTime,
-        };
+        // Execute via AI provider using AgentOrchestrator
+        const { AgentOrchestratorService } = await import('./agent-orchestrator.service');
+        const orchestrator = new AgentOrchestratorService();
         
-        // Estimate tokens (placeholder until real execution)
-        tokensUsed = 150; // Conservative estimate for AI tasks
-        success = true;
+        // Create temporary session for this task
+        const session = await orchestrator.createSession(
+          request.userId!,
+          request.projectId,
+          provider || 'gpt-3.5-turbo'
+        );
+
+        try {
+          // Execute AI request
+          const aiResult = await orchestrator.executeAgent(
+            session.id,
+            [
+              {
+                role: 'user',
+                content: `Execute task: ${request.payload.operation}\n\nParameters: ${JSON.stringify(request.payload.parameters, null, 2)}`,
+              },
+            ],
+            request.userId!
+          );
+
+          result = {
+            success: true,
+            output: aiResult.message,
+            duration: Date.now() - startTime,
+          };
+
+          // Fetch actual token usage from session
+          const updatedSession = await db.select().from(agentSessions).where(eq(agentSessions.id, session.id)).limit(1);
+          tokensUsed = updatedSession[0]?.totalTokensUsed || 0;
+          success = true;
+        } catch (error: any) {
+          result = {
+            success: false,
+            output: error.message,
+            duration: Date.now() - startTime,
+          };
+          tokensUsed = 0;
+          success = false;
+        } finally {
+          // Cleanup temporary session
+          await orchestrator.closeSession(session.id, request.userId!);
+        }
       }
 
-      // Step 4: Record success
-      if (classification.preferredExecutor === 'mcp') {
-        await aiOptimization.circuitBreaker.recordSuccess({
-          provider: 'mcp',
-          responseTime: Date.now() - startTime,
-        });
-      } else if (provider) {
-        await aiOptimization.circuitBreaker.recordSuccess({
-          provider,
-          responseTime: Date.now() - startTime,
-        });
+      // Step 4: Record success OR failure
+      if (success) {
+        if (classification.preferredExecutor === 'mcp') {
+          await aiOptimization.circuitBreaker.recordSuccess({
+            provider: 'mcp',
+            responseTime: Date.now() - startTime,
+          });
+        } else if (provider) {
+          await aiOptimization.circuitBreaker.recordSuccess({
+            provider,
+            responseTime: Date.now() - startTime,
+          });
+        }
+      } else {
+        // Record failure for circuit breaker (MCP + AI)
+        if (classification.preferredExecutor === 'mcp') {
+          await aiOptimization.circuitBreaker.recordFailure({
+            provider: 'mcp',
+            error: result?.output || 'Unknown error',
+          });
+        } else if (provider) {
+          await aiOptimization.circuitBreaker.recordFailure({
+            provider,
+            error: result?.output || 'Unknown error',
+          });
+        }
       }
 
       // Step 5: Update classification with execution result
