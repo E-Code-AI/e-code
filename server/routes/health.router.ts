@@ -151,7 +151,7 @@ export class HealthRouter {
         }
         case 'gemini': {
           const client = new GoogleGenerativeAI(apiKey);
-          const model = client.getGenerativeModel({ model: 'gemini-pro' });
+          const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
           testPromise = model.generateContent('test').then(() => true);
           break;
         }
