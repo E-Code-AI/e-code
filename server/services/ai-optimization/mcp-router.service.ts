@@ -19,6 +19,23 @@ export interface McpExecutionResult {
 }
 
 export class McpRouterService {
+  // SECURITY: Strict allowlist of permitted npm commands (prevents RCE)
+  private static readonly ALLOWED_NPM_COMMANDS = new Set([
+    'npm run build',
+    'npm run dev',
+    'npm run test',
+    'npm run test:unit',
+    'npm run test:e2e',
+    'npm run lint',
+    'npm run format',
+    'npm run typecheck',
+    'npm run db:push',
+    'npm run db:migrate',
+    'npm test',
+    'npx prettier --write .',
+    'npx eslint .',
+  ]);
+
   /**
    * Execute a task using MCP (local execution)
    */
@@ -39,6 +56,16 @@ export class McpRouterService {
           success: false,
           output: '',
           error: `No MCP executor available for task type: ${params.taskType}`,
+          duration: Date.now() - startTime,
+        };
+      }
+
+      // SECURITY: Validate command against allowlist
+      if (!McpRouterService.ALLOWED_NPM_COMMANDS.has(command)) {
+        return {
+          success: false,
+          output: '',
+          error: `Command not in allowlist (security): ${command}`,
           duration: Date.now() - startTime,
         };
       }
@@ -92,11 +119,7 @@ export class McpRouterService {
     operation: string,
     projectPath?: string
   ): string | null {
-    // Handle npm scripts
-    if (operation.startsWith('npm run ')) {
-      return operation;
-    }
-
+    // SECURITY: Never directly use operation string - always map to safe commands
     // Map task types to commands
     switch (taskType) {
       case 'build':

@@ -264,8 +264,8 @@ export class AgentOrchestratorService extends EventEmitter {
         try {
           await db.update(agentSessions)
             .set({
-              totalTokensUsed: session.totalTokensUsed + (completion.usage?.total_tokens || 0),
-              totalOperations: session.totalOperations + 1
+              totalTokensUsed: (session.totalTokensUsed || 0) + (completion.usage?.total_tokens || 0),
+              totalOperations: (session.totalOperations || 0) + 1
             })
             .where(eq(agentSessions.id, sessionId));
         } catch (dbError) {

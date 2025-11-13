@@ -6,7 +6,7 @@
 
 import { db } from "../../db/drizzle";
 import { aiRequestQueue, type InsertAiRequestQueue } from "../../../shared/schema";
-import { eq, and, isNull, desc, asc } from "drizzle-orm";
+import { eq, and, isNull, desc, asc, sql } from "drizzle-orm";
 import { TaskType } from './task-classifier.service';
 
 export type QueuePriority = 'critical' | 'high' | 'normal' | 'low';
@@ -77,48 +77,66 @@ export class PriorityQueueService {
   }
 
   /**
-   * Dequeue next request by priority
+   * Dequeue next request by priority (atomic with PostgreSQL row locks)
+   * SECURITY: Uses CTE with FOR UPDATE SKIP LOCKED to prevent race conditions
    */
   async dequeue(): Promise<QueuedRequest | null> {
-    // Get highest priority pending request
-    const requests = await db
-      .select()
-      .from(aiRequestQueue)
-      .where(eq(aiRequestQueue.status, 'pending'))
-      .orderBy(
-        // Priority order: critical > high > normal > low
-        desc(aiRequestQueue.priority),
-        asc(aiRequestQueue.queuedAt)
+    // ATOMIC: Uses CTE (Common Table Expression) with row locks
+    // FOR UPDATE SKIP LOCKED prevents double-dispatch in concurrent workers
+    const result = await db.execute<{
+      id: string;
+      user_id: string | null;
+      project_id: string | null;
+      priority: string;
+      task_type: string;
+      provider: string | null;
+      status: string;
+      payload: any;
+      queued_at: Date;
+      retry_count: number | null;
+      max_retries: number | null;
+    }>(sql`
+      WITH next_request AS (
+        SELECT id
+        FROM ai_request_queue
+        WHERE status = 'pending'
+        ORDER BY 
+          CASE priority
+            WHEN 'critical' THEN 4
+            WHEN 'high' THEN 3
+            WHEN 'normal' THEN 2
+            WHEN 'low' THEN 1
+            ELSE 0
+          END DESC,
+          queued_at ASC
+        LIMIT 1
+        FOR UPDATE SKIP LOCKED
       )
-      .limit(1);
+      UPDATE ai_request_queue
+      SET status = 'processing', started_at = NOW()
+      FROM next_request
+      WHERE ai_request_queue.id = next_request.id
+      RETURNING ai_request_queue.*
+    `);
 
-    if (requests.length === 0) {
+    if (result.rows.length === 0) {
       return null;
     }
 
-    const request = requests[0];
-
-    // Mark as processing
-    await db
-      .update(aiRequestQueue)
-      .set({
-        status: 'processing',
-        startedAt: new Date(),
-      })
-      .where(eq(aiRequestQueue.id, request.id));
-
+    const request = result.rows[0];
+    
     return {
       id: request.id,
-      userId: request.userId || undefined,
-      projectId: request.projectId || undefined,
-      priority: request.priority,
-      taskType: request.taskType,
+      userId: request.user_id || undefined,
+      projectId: request.project_id || undefined,
+      priority: request.priority as QueuePriority,
+      taskType: request.task_type as TaskType,
       provider: request.provider || undefined,
       status: 'processing' as QueueStatus,
-      payload: request.payload as any,
-      queuedAt: request.queuedAt,
-      retryCount: request.retryCount,
-      maxRetries: request.maxRetries,
+      payload: request.payload,
+      queuedAt: request.queued_at,
+      retryCount: request.retry_count || 0,
+      maxRetries: request.max_retries || 0,
     };
   }
 
@@ -205,6 +223,13 @@ export class PriorityQueueService {
         completedAt: new Date(),
       })
       .where(eq(aiRequestQueue.id, id));
+  }
+
+  /**
+   * Get queue statistics (alias for API compatibility)
+   */
+  async getQueueStats(): Promise<QueueStats> {
+    return this.getStats();
   }
 
   /**
@@ -316,8 +341,8 @@ export class PriorityQueueService {
       status: request.status as QueueStatus,
       payload: request.payload as any,
       queuedAt: request.queuedAt,
-      retryCount: request.retryCount,
-      maxRetries: request.maxRetries,
+      retryCount: request.retryCount || 0,
+      maxRetries: request.maxRetries || 0,
     };
   }
 }
