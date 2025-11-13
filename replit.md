@@ -28,6 +28,32 @@ E-Code is a web-based collaborative IDE with AI assistance, built with TypeScrip
 - **Routing:** `/ide/:id` (legacy `/editor/:id` redirects)
 - **Security:** API keys via Replit Secrets, never commit
 
+## Replit Platform Configuration
+
+### Port Configuration (NORMAL - DO NOT REMOVE)
+
+**External Ports Exposed:** 80, 3000, 3001, 3002, 3003, 4200, 5000, 5173, 6000, 6800, 8000, 8008, 8080, 8081, 8099, 9000
+
+**Why so many ports?**
+- Replit platform **automatically exposes** these ports (documented behavior)
+- See official docs: https://docs.replit.com/hosting/deployments/autoscale-deployments#port-configuration
+- **ONLY PORT 5000 → 80 is actually used** by this application
+- Other ports in `.replit` file are Replit-generated mappings (safe to ignore)
+
+**Active Port Mapping:**
+```
+[[ports]]
+localPort = 5000      # Node.js/Express server
+externalPort = 80     # Public web access
+```
+
+**Configuration File:** `.replit` (lines 14-76 contain all port mappings)
+
+**For Production Deployment:**
+- Replit Cloud Run (Autoscale) supports **single external port only** (port 80)
+- All other port mappings are ignored during deployment
+- Current setup is optimized for Autoscale deployment ✅
+
 ## System Architecture
 
 ### Frontend Architecture
