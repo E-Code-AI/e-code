@@ -949,8 +949,8 @@ export function ReplitAgentPanelV3({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-hidden">
-        <ScrollArea ref={scrollRef} className="h-full px-4 py-3">
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <ScrollArea ref={scrollRef} className="flex-1 px-4 py-3">
           <div className="space-y-4">
           {messages.map((message) => (
             <div
