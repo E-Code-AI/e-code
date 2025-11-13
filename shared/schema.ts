@@ -2587,6 +2587,154 @@ export const paneConfigurations = pgTable('pane_configurations', {
   index('pane_configurations_project_id_idx').on(table.projectId),
 ]);
 
+// ============================================================================
+// AI OPTIMIZATION INFRASTRUCTURE
+// Token tracking, task classification, circuit breaker, priority queue
+// ============================================================================
+
+// Enums for AI optimization
+export const taskTypeEnum = pgEnum('task_type', [
+  'build', 'test', 'format', 'typecheck', 'lint', 'migration',
+  'file_operation', 'plan_generation', 'code_suggestion', 'bug_fix',
+  'refactoring', 'architecture', 'conversation', 'other'
+]);
+
+export const taskCategoryEnum = pgEnum('task_category', [
+  'deterministic', // Can be routed to MCP executors
+  'creative',      // Requires AI provider
+  'hybrid'         // Mix of both
+]);
+
+export const providerStatusEnum = pgEnum('provider_status', [
+  'healthy',       // Provider is working normally
+  'degraded',      // Some issues but still functional
+  'circuit_open',  // Circuit breaker triggered, not accepting requests
+  'unavailable'    // Provider is down or unreachable
+]);
+
+export const queuePriorityEnum = pgEnum('queue_priority', [
+  'critical',  // User-blocking operations
+  'high',      // Interactive operations
+  'normal',    // Background operations
+  'low'        // Batch/analytics operations
+]);
+
+// AI Token Usage - Track token consumption by operation
+export const aiTokenUsage = pgTable('ai_token_usage', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: varchar('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  projectId: varchar('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  sessionId: varchar('session_id'), // Agent session ID
+  taskType: taskTypeEnum('task_type').notNull(),
+  taskCategory: taskCategoryEnum('task_category').notNull(),
+  provider: varchar('provider').notNull(), // 'openai', 'anthropic', 'gemini', 'xai', 'groq', 'mcp'
+  model: varchar('model').notNull(),
+  promptTokens: integer('prompt_tokens').notNull().default(0),
+  completionTokens: integer('completion_tokens').notNull().default(0),
+  totalTokens: integer('total_tokens').notNull().default(0),
+  estimatedCost: decimal('estimated_cost', { precision: 10, scale: 6 }).default('0'),
+  duration: integer('duration'), // Milliseconds
+  success: boolean('success').notNull().default(true),
+  errorMessage: text('error_message'),
+  metadata: jsonb('metadata').$type<{
+    operation?: string;
+    toolsCalled?: string[];
+    cacheHit?: boolean;
+    fromMcp?: boolean;
+  }>(),
+  timestamp: timestamp('timestamp').defaultNow().notNull(),
+}, (table) => [
+  index('ai_token_usage_user_id_idx').on(table.userId),
+  index('ai_token_usage_project_id_idx').on(table.projectId),
+  index('ai_token_usage_task_type_idx').on(table.taskType),
+  index('ai_token_usage_provider_idx').on(table.provider),
+  index('ai_token_usage_timestamp_idx').on(table.timestamp),
+]);
+
+// AI Task Classifications - Learn which tasks are deterministic vs creative
+export const aiTaskClassifications = pgTable('ai_task_classifications', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  taskType: taskTypeEnum('task_type').notNull().unique(),
+  category: taskCategoryEnum('category').notNull(),
+  preferredExecutor: varchar('preferred_executor').notNull(), // 'mcp', 'ai', 'hybrid'
+  successRate: decimal('success_rate', { precision: 5, scale: 2 }).default('0'), // 0-100%
+  avgTokens: integer('avg_tokens').default(0),
+  avgDuration: integer('avg_duration').default(0), // Milliseconds
+  totalExecutions: integer('total_executions').default(0),
+  lastExecuted: timestamp('last_executed'),
+  metadata: jsonb('metadata').$type<{
+    mcpSuccessRate?: number;
+    aiSuccessRate?: number;
+    costSavings?: number;
+  }>(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('ai_task_classifications_category_idx').on(table.category),
+]);
+
+// AI Provider Health - Circuit breaker state and health metrics
+export const aiProviderHealth = pgTable('ai_provider_health', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  provider: varchar('provider').notNull().unique(), // 'openai', 'anthropic', etc.
+  status: providerStatusEnum('status').notNull().default('healthy'),
+  consecutiveFailures: integer('consecutive_failures').default(0),
+  lastFailure: timestamp('last_failure'),
+  lastSuccess: timestamp('last_success'),
+  circuitOpenedAt: timestamp('circuit_opened_at'),
+  nextRetryAt: timestamp('next_retry_at'),
+  totalRequests: integer('total_requests').default(0),
+  failedRequests: integer('failed_requests').default(0),
+  avgResponseTime: integer('avg_response_time').default(0), // Milliseconds
+  metadata: jsonb('metadata').$type<{
+    errorRate?: number;
+    rateLimit?: {
+      remaining?: number;
+      reset?: number;
+    };
+    lastError?: string;
+  }>(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('ai_provider_health_status_idx').on(table.status),
+]);
+
+// AI Request Queue - Priority queue for AI requests with rate limiting
+export const aiRequestQueue = pgTable('ai_request_queue', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: varchar('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  projectId: varchar('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  priority: queuePriorityEnum('priority').notNull().default('normal'),
+  taskType: taskTypeEnum('task_type').notNull(),
+  provider: varchar('provider'), // Assigned provider, null if pending
+  status: varchar('status').notNull().default('pending'), // 'pending', 'processing', 'completed', 'failed', 'cancelled'
+  payload: jsonb('payload').notNull().$type<{
+    operation: string;
+    parameters: Record<string, any>;
+    context?: Record<string, any>;
+  }>(),
+  result: jsonb('result').$type<{
+    output?: any;
+    error?: string;
+    tokensUsed?: number;
+  }>(),
+  queuedAt: timestamp('queued_at').defaultNow().notNull(),
+  startedAt: timestamp('started_at'),
+  completedAt: timestamp('completed_at'),
+  retryCount: integer('retry_count').default(0),
+  maxRetries: integer('max_retries').default(3),
+  metadata: jsonb('metadata').$type<{
+    debounced?: boolean;
+    cacheKey?: string;
+    estimatedTokens?: number;
+  }>(),
+}, (table) => [
+  index('ai_request_queue_user_id_idx').on(table.userId),
+  index('ai_request_queue_priority_idx').on(table.priority),
+  index('ai_request_queue_status_idx').on(table.status),
+  index('ai_request_queue_queued_at_idx').on(table.queuedAt),
+]);
+
 // Export schemas and types for agent tables
 export const insertAgentSessionSchema = createInsertSchema(agentSessions).omit({
   id: true,
@@ -2806,4 +2954,40 @@ export type InsertResourceMetric = z.infer<typeof insertResourceMetricSchema>;
 
 export type PaneConfiguration = typeof paneConfigurations.$inferSelect;
 export type InsertPaneConfiguration = z.infer<typeof insertPaneConfigurationSchema>;
+
+// AI Optimization Infrastructure - Insert schemas and types
+export const insertAiTokenUsageSchema = createInsertSchema(aiTokenUsage).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertAiTaskClassificationSchema = createInsertSchema(aiTaskClassifications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAiProviderHealthSchema = createInsertSchema(aiProviderHealth).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertAiRequestQueueSchema = createInsertSchema(aiRequestQueue).omit({
+  id: true,
+  queuedAt: true,
+  startedAt: true,
+  completedAt: true,
+});
+
+export type AiTokenUsage = typeof aiTokenUsage.$inferSelect;
+export type InsertAiTokenUsage = z.infer<typeof insertAiTokenUsageSchema>;
+
+export type AiTaskClassification = typeof aiTaskClassifications.$inferSelect;
+export type InsertAiTaskClassification = z.infer<typeof insertAiTaskClassificationSchema>;
+
+export type AiProviderHealth = typeof aiProviderHealth.$inferSelect;
+export type InsertAiProviderHealth = z.infer<typeof insertAiProviderHealthSchema>;
+
+export type AiRequestQueue = typeof aiRequestQueue.$inferSelect;
+export type InsertAiRequestQueue = z.infer<typeof insertAiRequestQueueSchema>;
 
