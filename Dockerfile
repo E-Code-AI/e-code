@@ -34,12 +34,10 @@ COPY package*.json ./
 # Install production dependencies only
 RUN npm ci --only=production
 
-# Copy built application
+# Copy built application (dist/public contains frontend, dist/index.js is backend)
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/client/dist ./client/dist
 
-# Copy necessary files
-COPY shared ./shared
+# Copy only runtime essentials
 COPY theme.json ./
 COPY deployment.config.ts ./
 
