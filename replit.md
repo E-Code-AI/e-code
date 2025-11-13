@@ -1,147 +1,86 @@
 # E-Code Platform
 
+**Last Updated:** November 13, 2025  
+**📊 See [DOCUMENTATION_AUDIT.md](./DOCUMENTATION_AUDIT.md) for comprehensive feature status matrix, Fortune 500 readiness assessment, and Replit parity gaps.**
+
 ## Overview
 
-E-Code Platform is an enterprise-grade AI-powered development environment that enables autonomous application building through natural language prompts. The platform combines a full-featured cloud IDE with intelligent AI agents capable of generating, editing, and deploying complete applications with minimal human intervention.
+E-Code is a web-based collaborative IDE with AI assistance, built with TypeScript/Node.js, React, and PostgreSQL. Provides code editing, terminal access, file management, and an autonomous AI agent. Targets rapid prototyping and education, with ongoing work toward enterprise-grade scalability.
 
-**Core Value Proposition:** Transform application ideas into production-ready code in minutes through AI-driven autonomous development, collaborative real-time editing, and one-click deployments.
+**Current Status:** Functional MVP - Web 70-75% | Mobile Web 60-65% | Fortune 500 Ready 50-60%
 
-**Key Capabilities:**
-- AI-powered autonomous code generation and editing
-- Full-featured Monaco-based code editor with real-time collaboration
-- Integrated terminal, file management, and debugging tools
-- Multi-model AI support (GPT-4, Claude 3.5, Gemini Pro, Llama)
-- Enterprise-grade security (CSRF protection, rate limiting, RBAC)
-- Automated deployment pipelines
-- Mobile and tablet responsive design
+**❌ CRITICAL CORRECTION:** Previous documentation falsely claimed "polyglot backend with Go/Python" — Verified reality: 100% TypeScript/Node.js (0 .go/.py files exist)
 
 ## User Preferences
 
-Preferred communication style: Simple, everyday language.
+- **Communication:** Simple, everyday language
+- **Code Style:** TypeScript with strict typing
+- **Database:** NEVER manual SQL migrations - use `npm run db:push` (or `--force`)
+- **Files:** NEVER remove without explicit request
+- **Hooks:** ALL React hooks before early returns
+- **Routing:** `/ide/:id` (legacy `/editor/:id` redirects)
+- **Security:** API keys via Replit Secrets, never commit
 
 ## System Architecture
 
 ### Frontend Architecture
 
-**Technology Stack:**
-- React 18 with TypeScript
-- Vite build system with optimized code splitting
-- TanStack Query for server state management
-- Wouter for client-side routing
-- Monaco Editor for code editing
-- Shadcn/UI component library with Radix UI primitives
-- Tailwind CSS for styling
-
-**Key Design Patterns:**
-- Lazy-loaded routes for performance optimization
-- Component-based architecture with separation of concerns
-- Custom hooks for shared logic (authentication, WebSocket connections, mobile gestures)
-- Responsive design with dedicated mobile/tablet views
-- Real-time collaboration using WebSocket providers
-
-**Major Frontend Components:**
-- `EditorPage.tsx` - Main IDE workspace with Monaco integration
-- `ProjectPage.tsx` - Project management and navigation
-- `Dashboard.tsx` - User dashboard with AI prompt input ("Vibe Creation Flow")
-- `AIAgent.tsx` / `ReplitAgentV2.tsx` - AI assistant interfaces
-- `MobileIDEView.tsx` / `TabletIDEView.tsx` - Mobile/tablet optimized views
-- Command palette system for keyboard-driven workflows
-
-**State Management Strategy:**
-- TanStack Query manages server state with automatic caching and invalidation
-- React Context for global state (auth, theme, collaborative editing)
-- URL-based state for navigation and shareable links
-- Local storage persistence for user preferences
+The frontend is built with React 18 and TypeScript, using Vite for optimized builds. Key technologies include TanStack Query for server state, Wouter for routing, Monaco Editor for code editing, and Shadcn/UI with Tailwind CSS for UI components. It employs a component-based architecture with lazy-loaded routes, custom hooks, and a responsive design supporting dedicated mobile and tablet views. Real-time collaboration is managed via WebSocket providers.
 
 ### Backend Architecture
 
-**Technology Stack:**
-- Node.js with Express.js web framework
-- TypeScript for type safety
-- Drizzle ORM for database operations
-- PostgreSQL database (via Neon serverless)
-- Passport.js for authentication
-- WebSocket (ws library) for real-time features
+The backend is developed with Node.js and Express.js, entirely in TypeScript. It uses Drizzle ORM for PostgreSQL database interactions (hosted on Neon serverless) and Passport.js for authentication. The architecture follows a RESTful API design with a service-oriented approach, including specialized services for AI orchestration (`AgentOrchestrator`), autonomous engine logic (`AutonomousEngineService`), plan generation (`PlanGeneratorService`), testing (`TestingOrchestratorService`), file system operations (`FileSystemService`), Git integration (`GitService`), and deployment (`DeploymentService`). Security features include CSRF protection, input sanitization, multi-tier rate limiting, session-based authentication, RBAC, and bcrypt password hashing. Real-time services for terminal, collaborative editing, and build logs are powered by WebSockets.
 
-**Architectural Patterns:**
-- RESTful API design with 300+ endpoints across 34 route files
-- Service-oriented architecture with specialized services:
-  - `AgentOrchestrator` - Coordinates AI model interactions
-  - `AutonomousEngineService` - Risk scoring and auto-approval logic
-  - `PlanGeneratorService` - AI-powered task breakdown
-  - `TestingOrchestratorService` - Playwright test orchestration
-  - `FileSystemService` - File operations with security validation
-  - `GitService` - Version control integration
-  - `DeploymentService` - Automated deployment workflows
+### Database Schema
 
-**Database Schema:**
-- 140+ tables supporting all platform features
-- Key entity relationships:
-  - Users → Projects → Files (hierarchical file system)
-  - AgentSessions → AgentTasks → AgentAuditLogs (AI workflow tracking)
-  - Deployments → DeploymentBuilds (deployment history)
-  - Subscriptions → Usage tracking (billing and quotas)
+The system utilizes a PostgreSQL database with over 140 tables, supporting features like user management, project and file hierarchies, AI agent session tracking, deployment history, and subscription management.
 
-**Security Architecture:**
-- CSRF token validation on all state-changing operations
-- Custom `apiRequest()` helper replaces raw fetch() calls (109+ endpoints secured)
-- Multi-tier rate limiting (global: 100/min, auth: 10/15min, AI: 10/min)
-- Session-based authentication with HttpOnly cookies
-- Role-based access control (RBAC) with admin middleware
-- Input sanitization and XSS protection middleware
-- Path traversal prevention in file operations
-- bcrypt password hashing (10 rounds)
+### AI Agent System
 
-**Real-Time Services (WebSocket):**
-- Terminal sessions with atomic buffer synchronization
-- Collaborative editing with operational transforms
-- Live presence indicators
-- Build log streaming
-- Test execution updates
-- Security scanning notifications
-- Resource monitoring
+The AI agent system is robust, featuring server-sent event streaming, multi-provider AI model selection (OpenAI, Anthropic, Gemini, xAI, Groq), database-backed conversation history, a tool execution framework, and mobile web parity.
 
-### External Dependencies
+### Core Features
 
-**AI/ML Services:**
-- OpenAI GPT-4 / GPT-3.5 (via `OPENAI_API_KEY`)
-- Anthropic Claude 3.5 (via `ANTHROPIC_API_KEY`)
-- Google Gemini Pro (via `GOOGLE_AI_API_KEY`)
-- Groq Llama (via `GROQ_API_KEY`)
-- Model Context Protocol (MCP) SDK for tool execution
+- **Monaco Code Editor:** Integrated for advanced code editing.
+- **Terminal:** Utilizes xterm.js for interactive terminal access.
+- **File Tree & Management:** Provides comprehensive file system operations.
+- **Real-time Collaboration:** Infrastructure for collaborative editing using Y.js.
+- **Authentication & Security:** Robust authentication with Passport.js supporting multiple OAuth providers and comprehensive security measures.
+- **Container Orchestration:** TypeScript-based container execution and runtime management.
 
-**Infrastructure Services:**
-- PostgreSQL database (Neon serverless via `DATABASE_URL`)
-- Redis caching layer (optional via `REDIS_URL`)
-- Stripe payment processing (via `STRIPE_SECRET_KEY` and `STRIPE_PUBLISHABLE_KEY`)
-- SendGrid email delivery (via `SENDGRID_API_KEY`)
-- Sentry error monitoring (via `SENTRY_DSN`)
+## External Dependencies
 
-**Development Tools:**
-- GitHub OAuth integration (via `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`)
-- Figma design imports (via `FIGMA_API_KEY`)
-- Playwright browser automation for testing
-- Monaco Editor (Microsoft's VS Code editor component)
-- xterm.js for terminal emulation
+### AI/ML Services
 
-**CDN and Asset Delivery:**
-- Configurable CDN support (via `CDN_BASE_URL`)
-- Optimized asset caching with configurable TTLs
-- Production build with Vite creates optimized chunks
+- **OpenAI:** GPT-4 / GPT-3.5
+- **Anthropic:** Claude 3.5
+- **Google:** Gemini Pro
+- **Groq:** Llama
+- **Model Context Protocol (MCP) SDK:** For tool execution.
 
-**Authentication Providers:**
-- Replit Auth (supports Google, GitHub, Twitter/X, Apple, email/password)
-- Custom email/password with verification flow
-- Session management with secure cookie configuration
+### Infrastructure Services
 
-**Deployment Targets:**
-- Replit Cloud Run (autoscale deployment target)
-- Docker containerization support
-- PM2 process management for production (cluster mode)
+- **PostgreSQL:** Neon serverless for database hosting.
+- **Redis:** Optional caching layer.
+- **Stripe:** Payment processing.
+- **SendGrid:** Email delivery.
+- **Sentry:** Error monitoring.
 
-**Notable Integration Patterns:**
-- Fallback mechanisms when API keys unavailable (e.g., Figma service uses demo data)
-- Auto-detection of Replit deployment URLs for CORS configuration
-- Environment-aware configuration (development vs. production behavior)
-- Health check endpoints for deployment verification
-- Graceful degradation when optional services unavailable
+### Development Tools & Integrations
+
+- **GitHub:** OAuth integration.
+- **Figma:** Design imports.
+- **Playwright:** Browser automation for testing.
+- **Monaco Editor:** Microsoft's VS Code editor component.
+- **xterm.js:** Terminal emulation library.
+
+### Authentication Providers
+
+- **Replit Auth:** Supports Google, GitHub, Twitter/X, Apple, email/password.
+- **Custom Email/Password:** With verification flow.
+
+### Deployment Targets
+
+- **Replit Cloud Run:** Autoscale deployment.
+- **Docker:** Containerization support.
+- **PM2:** Process management for production.
