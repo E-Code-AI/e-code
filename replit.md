@@ -81,6 +81,13 @@ The platform utilizes a polyglot backend architecture with Go for container orch
     - **Budget Enforcement**: Throws error if system prompt + current message exceed limits (prevents over-limit requests)
     - **Client Warnings**: SSE events notify users when context truncation occurs with detailed metadata
     - **Full Message Serialization**: JSON.stringify captures all fields (content, tool_calls, metadata) for accurate size calculation
+    - **UI Warning Display (Nov 13, 2025)**: Production-ready dual notification system for context truncation warnings across all AI streaming surfaces (web + mobile):
+      - **Centralized Handler**: `client/src/lib/sse-warning-handler.ts` provides reusable `handleSSEWarning()` with automatic deduplication (5-second window)
+      - **Dual Notification**: Toast notification (transient alert) + system message in conversation (persistent audit trail)
+      - **Graceful Degradation**: Handles optional SSE fields (droppedCount, originalSize, finalSize) to avoid displaying "undefined"
+      - **Integration**: Applied to all 3 AI streaming panels (ReplitAgentPanelV3, AIAgentPanel, ReplitAgentPanel) with buffered append strategy for stream persistence
+      - **Mobile Coverage**: Verified mobile components (MobileChatInterface, MobileAgentInterface) use simulated responses, so real SSE warnings only apply to web/desktop IDE panels
+      - **Deduplication**: Map-based cache prevents repeated identical warnings from spamming users during single response streams
     - **TODO**: Integrate tiktoken/provider-native tokenizers for precise token counting to increase limits to ~70% of actual capacity
 - **Push Notifications**: Firebase Cloud Messaging (FCM), Firebase Admin SDK.
 - **Video Conferencing**: Zoom API.

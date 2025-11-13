@@ -566,6 +566,10 @@ export function ReplitAgentPanelV3({
       let fullContent = '';
       const thinkingSteps: ThinkingStep[] = [];
       const toolExecutions: ToolExecution[] = [];
+      const warningMessages: Message[] = []; // Accumulate warnings during streaming
+      
+      // Add assistant message to state BEFORE streaming to support live tool/thinking updates
+      setMessages(prev => [...prev, assistantMessage]);
       
       while (reader) {
         const { done, value } = await reader.read();
@@ -586,20 +590,19 @@ export function ReplitAgentPanelV3({
             try {
               const data = JSON.parse(line.slice(6));
               
-              // Handle context truncation warnings
-              if (data.message && data.droppedCount !== undefined) {
-                handleSSEWarning(data as SSEWarningData, {
-                  toast,
-                  addSystemMessage: (content: string) => {
-                    const systemMessage: Message = {
-                      id: `system-${Date.now()}`,
-                      role: 'system',
-                      content,
-                      timestamp: new Date()
-                    };
-                    setMessages(prev => [...prev, systemMessage]);
-                  }
-                });
+              // Handle context truncation warnings (check for presence of warning-specific fields)
+              if (data.message && typeof data.message === 'string' && !data.content && !data.step && !data.toolCallId) {
+                const warningResult = handleSSEWarning(data as SSEWarningData, { toast });
+                if (warningResult.shouldShow && warningResult.systemMessageContent) {
+                  // Accumulate warning to be added after streaming completes
+                  const systemMessage: Message = {
+                    id: `system-${Date.now()}`,
+                    role: 'system',
+                    content: warningResult.systemMessageContent,
+                    timestamp: new Date()
+                  };
+                  warningMessages.push(systemMessage);
+                }
                 continue;
               }
               
@@ -689,7 +692,15 @@ export function ReplitAgentPanelV3({
 
       assistantMessage.content = fullContent || "I'll help you with that. Let me analyze your request...";
       assistantMessage.isStreaming = false;
-      setMessages(prev => [...prev, assistantMessage]);
+      // Update existing assistant message and append any accumulated warnings
+      setMessages(prev => [
+        ...prev.map(msg => 
+          msg.id === assistantMessage.id 
+            ? { ...msg, content: assistantMessage.content, isStreaming: false }
+            : msg
+        ),
+        ...warningMessages
+      ]);
       setStreamingContent('');
       setActiveThinking([]);
       

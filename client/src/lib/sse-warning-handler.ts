@@ -6,9 +6,9 @@
 
 export interface SSEWarningData {
   message: string;
-  droppedCount: number;
-  originalSize: number;
-  finalSize: number;
+  droppedCount?: number;
+  originalSize?: number;
+  finalSize?: number;
 }
 
 export interface SSEWarningHandlerOptions {
@@ -17,42 +17,89 @@ export interface SSEWarningHandlerOptions {
     description: string;
     variant?: 'default' | 'destructive';
   }) => void;
-  addSystemMessage: (content: string) => void;
 }
+
+export interface SSEWarningResult {
+  shouldShow: boolean;
+  systemMessageContent?: string;
+}
+
+// De-duplication cache: tracks recently shown warnings by hash
+const recentWarnings = new Map<string, number>();
+const DEDUP_WINDOW_MS = 5000; // Suppress identical warnings within 5 seconds
 
 /**
  * Handles SSE warning events by:
  * 1. Showing a toast notification (transient alert)
- * 2. Adding a system message to the conversation (persistent audit trail)
+ * 2. Returning system message content for the caller to persist
  * 
- * This dual approach ensures users are notified immediately while maintaining
- * a visible history of truncation events in the chat.
+ * This dual approach ensures users are notified immediately while allowing
+ * each component to correctly persist the warning in its message stream.
+ * 
+ * Includes de-duplication to prevent spam from repeated warnings.
+ * 
+ * @returns Object with shouldShow (false if deduplicated) and systemMessageContent
  */
 export function handleSSEWarning(
   data: SSEWarningData,
   options: SSEWarningHandlerOptions
-): void {
-  const { toast, addSystemMessage } = options;
+): SSEWarningResult {
+  const { toast } = options;
+  
+  // De-duplication: create hash from warning data
+  const warningHash = `${data.message}-${data.droppedCount || 0}`;
+  const now = Date.now();
+  const lastShown = recentWarnings.get(warningHash);
+  
+  if (lastShown && (now - lastShown) < DEDUP_WINDOW_MS) {
+    // Skip duplicate warning within time window
+    return { shouldShow: false };
+  }
+  
+  // Update de-dup cache
+  recentWarnings.set(warningHash, now);
+  
+  // Clean up old entries (keep cache small)
+  if (recentWarnings.size > 10) {
+    const entries = Array.from(recentWarnings.entries());
+    entries.sort((a, b) => a[1] - b[1]);
+    entries.slice(0, 5).forEach(([key]) => recentWarnings.delete(key));
+  }
+  
+  // Build toast description with optional fields
+  const droppedText = data.droppedCount !== undefined 
+    ? ` (${data.droppedCount} message${data.droppedCount > 1 ? 's' : ''} removed)`
+    : '';
   
   // Show toast notification for immediate awareness
   toast({
     title: '⚠️ Context Truncated',
-    description: `${data.message} (${data.droppedCount} messages removed)`,
+    description: `${data.message}${droppedText}`,
     variant: 'default'
   });
   
-  // Add system message to conversation for audit trail
+  // Build system message with safe optional field handling
+  const sizeInfo = data.originalSize !== undefined && data.finalSize !== undefined
+    ? `- **Original size**: ${formatBytes(data.originalSize)}
+- **Reduced to**: ${formatBytes(data.finalSize)}
+`
+    : '';
+  
+  const countInfo = data.droppedCount !== undefined
+    ? `- **Removed**: ${data.droppedCount} message${data.droppedCount > 1 ? 's' : ''}\n`
+    : '';
+  
   const systemMessageContent = `⚠️ **Context Truncation Notice**
 
-Due to AI model limits, ${data.droppedCount} older message${data.droppedCount > 1 ? 's were' : ' was'} removed from the conversation history.
+Due to AI model limits, older messages were removed from the conversation history.
 
-- **Original size**: ${formatBytes(data.originalSize)}
-- **Reduced to**: ${formatBytes(data.finalSize)}
-- **Removed**: ${data.droppedCount} message${data.droppedCount > 1 ? 's' : ''}
-
+${sizeInfo}${countInfo}
 Recent messages are preserved. The AI can still access your latest context.`;
   
-  addSystemMessage(systemMessageContent);
+  return {
+    shouldShow: true,
+    systemMessageContent
+  };
 }
 
 /**
