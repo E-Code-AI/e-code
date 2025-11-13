@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-The E-Code Platform is an AI-powered development platform designed to streamline software creation, offering automated deployment, real-time collaboration, and a comprehensive suite of tools. Its core purpose is to facilitate rapid software development with enterprise-grade infrastructure and advanced AI capabilities, targeting enterprise software development and aiming for a significant market presence. The platform emphasizes performance, security, and scalability, leveraging AI assistance and a robust architecture optimized for Replit Reserved VM deployment.
+The E-Code Platform is an AI-powered development platform designed to streamline software creation through automated deployment, real-time collaboration, and a comprehensive suite of tools. Its core purpose is to facilitate rapid, enterprise-grade software development with advanced AI capabilities, aiming for a significant market presence. The platform prioritizes performance, security, and scalability, leveraging AI assistance and an architecture optimized for Replit Reserved VM deployment.
 
 ## User Preferences
 - **Code Style**: Use TypeScript with strict typing
@@ -15,90 +15,54 @@ The E-Code Platform is an AI-powered development platform designed to streamline
 - **Routing Consolidation Complete**: All workspace navigation standardized to `/ide/:id`. Legacy `/editor/:id` route redirects with full backward compatibility. EditorPage.tsx deprecated in favor of IDEPage.tsx.
 
 ## System Architecture
-The platform utilizes a polyglot backend architecture with Go for container orchestration, Python for AI/ML, and TypeScript for web API, user management, and database operations. It integrates an MCP Standalone Server for AI Agent operations and an AI Agent System for autonomous code generation. Real-time collaboration is facilitated via WebSockets and WebRTC. The system is designed for enterprise-grade security and performance, including advanced monitoring and a human-in-the-loop approval process for AI-generated actions.
+The platform employs a polyglot backend with Go for container orchestration, Python for AI/ML, and TypeScript for web API, user management, and database operations. It integrates an MCP Standalone Server and an AI Agent System for autonomous code generation, with real-time collaboration via WebSockets and WebRTC. The system features enterprise-grade security, performance monitoring, and a human-in-the-loop approval process for AI actions.
 
-**AI Agent Chat Architecture (Nov 12, 2025):**
-- **Structured Message Rendering**: 100% Replit-identical message components with professional-grade UX
-- **Component Architecture**: MessageRenderer (dispatcher), ThinkingMessage, TaskMessage, ActionMessage, RichMessageContent, VibingAnimation, CollapsibleSection, ToolExecutionBadge, FileDiffViewer
-- **Adapter Pattern**: convertLegacyMessage() preserves backward compatibility while enabling structured rendering
-- **Message Types**: chat, thinking, task, action, system, error, progress, success
-- **Rich Markdown Formatting**: Full markdown parsing with react-markdown, remark-gfm, syntax highlighting (react-syntax-highlighter with vscDarkPlus theme)
-- **Markdown Features**: Headers (## H2), bullets (-), bold (**text**), italic (*text*), inline code (`code`), code blocks with language-aware highlighting, tables, blockquotes, emojis, links
-- **Animations**: VibingAnimation (3-dot organic bounce with different timings), collapsible sections with smooth transitions, hover states, micro-interactions
-- **Interactive Components**: Copy-on-hover code buttons with feedback, expandable/collapsible sections, tool execution badges with status indicators
-- **Visual Features**: Message separators/breakpoints, status badges, progress bars, collapsible artifacts, syntax-highlighted code blocks, file diff viewer with side-by-side comparison
-- **Theming**: Full dark/light mode support via CSS variables (--ecode-*), vscDarkPlus for code blocks
+**AI Agent Chat Architecture:**
+- **Structured Message Rendering**: Replit-identical message components with professional-grade UX, supporting various message types (chat, thinking, task, action, system, error, progress, success).
+- **Rich Markdown Formatting**: Full markdown parsing with syntax highlighting, including headers, lists, bold/italic text, inline code, code blocks, tables, and emojis.
+- **Animations & Interactivity**: VibingAnimation for thinking states, collapsible sections, copy-on-hover code buttons, and tool execution badges.
 
 **UI/UX Decisions:**
 - Replit-identical IDE interface with a dark theme, centralized design tokens, and consistent spacing.
-- ReplitAgent UI matches Replit's exact interface with a clean header, inline compact model selector, and extended Agent Tools dropdown.
-- Mobile UI features a bottom tab bar, swipe panels, and bottom sheet/full-screen modals.
-- Tablet UI is optimized for dual-panel layouts with device detection, sliding drawer navigation, and touch-optimized controls.
-- Desktop UI includes Monaco minimap, breadcrumbs, multi-editor instances, and Command Palette.
+- ReplitAgent UI matches Replit's exact interface with a clean header, compact model selector, and extended Agent Tools dropdown.
+- Responsive design optimized for mobile (bottom tab bar, swipe panels), tablet (dual-panel layouts), and desktop (Monaco minimap, breadcrumbs, multi-editor instances, Command Palette).
 
 **Technical Implementations:**
-- **Routing**: Unified `/ide/:id` workspace routing with SPA navigation and state persistence for IDE tabs. Legacy `/editor/:id` redirects to `/ide/:id`.
-- **Device Detection**: Canonical breakpoints for mobile, tablet, laptop, and desktop.
-- **Code Splitting**: Optimized bundle splitting using React.lazy() for device-specific UI components.
-- **Performance**: Compression, code splitting, caching, build optimizations, service workers, network/image optimization.
-- **Security**: CSP headers, input validation, OWASP Top 10, production-ready CORS, path sandboxing, admin authorization, and robust authentication.
-- **Deployment**: Dynamic 4-port configuration, non-blocking initialization, optimized for Replit Reserved VM.
+- **Routing**: Unified `/ide/:id` workspace routing with SPA navigation and state persistence.
+- **Device Detection**: Canonical breakpoints for various devices.
+- **Code Splitting**: Optimized bundle splitting using React.lazy().
+- **Performance**: Compression, caching, build optimizations, and service workers.
+- **Security**: CSP headers, input validation, OWASP Top 10, CORS, path sandboxing, and robust authentication.
+- **Deployment**: Dynamic 4-port configuration, optimized for Replit Reserved VM.
 
 **Feature Specifications:**
-- **Workspace Persistence & Responsive Design**: IDEPage implements device-aware rendering with lazy-loaded device-specific views and sessionStorage persistence for IDE state.
-- **AI Agent System**: Autonomous code generation with real tool execution, extended thinking, and database-backed audit logging. Includes "Build from Prompt" with an autonomous build process. Features include Model Selection API, Extended Thinking Streaming, Conversation Persistence, Security Hardening, Autonomous Mode, and Plan Mode.
-  - **Session Persistence**: Per-project AI Agent state persistence using sessionStorage with auto-save and hydration, managed by `useAgentSession` hook.
-  - **Auto-Start Build Flow**: Agent automatically calls `generatePlan()` when `initialPrompt` is provided via query param, displays the plan for approval, then executes the build process.
-  - **AI Agent Location**: The AI Agent exists exclusively as an IDE left sidebar panel; the standalone `/ai-agent` route is now a redirector.
-- **Browser Testing & QA Infrastructure**: Playwright-based testing orchestrator, element selector service, session recording, and admin-only API routes.
-- **Tools**: Extended set of 35 tools including file operations, commands, web search, browser testing, performance analysis, and accessibility checks.
-- **Real-time Collaboration**: WebSocket-based editing and WebRTC for voice/video/screen sharing.
-- **Admin Dashboard**: Comprehensive UI for managing projects and users.
+- **Workspace Persistence & Responsive Design**: IDEPage implements device-aware rendering and `sessionStorage` persistence for IDE state.
+- **AI Agent System**: Autonomous code generation with real tool execution, extended thinking, and database-backed audit logging. Includes "Build from Prompt" with an autonomous build process, Model Selection API, Extended Thinking Streaming, Conversation Persistence, and Security Hardening. The AI Agent is integrated as an IDE left sidebar panel.
+- **Browser Testing & QA Infrastructure**: Playwright-based testing orchestrator with session recording.
+- **Tools**: Extended set of 35 tools for file operations, commands, web search, browser testing, performance analysis, and accessibility.
+- **Real-time Collaboration**: WebSocket-based editing and WebRTC for communication.
+- **Admin Dashboard**: Comprehensive UI for project and user management.
 - **Template Marketplace**: Allows users to fork and deploy project templates.
-- **Production Hardening**: Redis caching, CDN optimization, multi-tier rate limiting, security middleware, DB connection pooling, and performance monitoring.
-- **Workspace Parity**: Complete IDE feature parity with unified `/ide/:id` route, including 18+ integrated panels, real-time WebSocket updates, and functional Mobile Monaco Editor, Terminal, File Tree, and Floating Action Button.
-- **Multi-Tab Editor System**: Maintains independent Monaco editor instances per tab via MultiEditorManager.
-- **Keyboard Utilities & Shortcuts**: Production-ready keyboard shortcut system with `ShortcutHint` and `ShortcutTester`, configurable via User Settings.
+- **Production Hardening**: Redis caching, CDN optimization, multi-tier rate limiting, and security middleware.
+- **Workspace Parity**: Complete IDE feature parity with unified `/ide/:id` route, including integrated panels, real-time WebSocket updates, and functional Monaco Editor, Terminal, and File Tree.
+- **Multi-Tab Editor System**: Maintains independent Monaco editor instances per tab.
+- **Keyboard Utilities & Shortcuts**: Production-ready keyboard shortcut system.
 
 **System Design Choices:**
 - **Vertical Slice Approach**: End-to-end feature development.
 - **Storage Layer**: `IStorage` interface with `DatabaseStorage` implementation using PostgreSQL and Drizzle ORM.
 - **Type Safety**: Zod, TypeScript, Drizzle ORM.
-- **Real-time Updates**: Hybrid WebSocket + HTTP polling, with SSE for AI token streaming and thinking updates.
-- **Hybrid Security Model**: AI-generated actions require approval; manual operations use immediate validation with audit logging. Agent routes split into public and admin-only tiers.
-- **Production Compliance**: Fortune 500-readiness with PostgreSQL persistence, tamper-proof append-only logging, and queryable audit trail for all agent conversations and messages.
+- **Real-time Updates**: Hybrid WebSocket + HTTP polling, with SSE for AI token streaming.
+- **Hybrid Security Model**: AI-generated actions require approval; manual operations have immediate validation with audit logging.
+- **Production Compliance**: Fortune 500-ready with PostgreSQL persistence and tamper-proof logging.
 
 ## External Dependencies
 - **AI Integration**:
-  - **Multi-Provider System**: Fully operational with 5 AI providers and 12 production models (OpenAI, Anthropic, Gemini, xAI, Groq).
-  - **Architecture**: `AIProviderManager` (singleton for model-ID-based routing) and `legacyAIProviderManager` (for backward compatibility). GroqProvider uses OpenAI SDK.
-  - **API Endpoints**: `/api/models/health` (provider status), `/api/models` (list available models), `/api/models/preferred` (get/set user's preferred model), `/api/agent/autonomous/build` (build from prompt).
-  - **Security**: API keys managed via Replit Secrets.
-  - **User Model Preference System (Nov 13, 2025)**: Production-ready multi-provider AI model selection with user preference persistence and 100% web/mobile parity:
-    - **Architecture**: `useAgentModelPreference` hook (`client/src/hooks/use-agent-model-preference.ts`) with React Query for preference management
-    - **Race Condition Prevention**: Dual-fix strategy - `placeholderData(prev)` keeps cached data during refetches + `isSuccess` guard ensures definitive server response before fallback
-    - **Fallback Strategy**: OpenAI-first fallback only applies when BOTH queries succeed AND user has no saved preference (explicit null check)
-    - **Persistence**: Backend API `/api/models/preferred` (GET/POST) saves model selection to `preferred_ai_model` DB column with per-user isolation
-    - **UI Components**: `CurrentModelChip` displays current model with provider icon, supports desktop dropdown + mobile bottom sheet, visual warning for incompatible features
-    - **Extended Thinking Gating**: Capability-based feature detection disables Extended Thinking toggle when selected model doesn't support it (Claude-only feature)
-    - **Web/Mobile Parity**: ReplitAgentPanelV3 unified component serves both desktop (mode="desktop") and mobile (mode="mobile") with identical feature set
-    - **Legacy Cleanup**: MobileAgentInterface (POST-based) fully retired in favor of SSE-based ReplitAgentPanelV3 for consistent streaming + model selection
-    - **Data Flow**: User selects model → `setPreferredModel()` persists to DB → Hook hydrates from `/api/models/preferred` → Provider routing via `AIProviderManager`
-  - **Context Management (Nov 13, 2025)**: Production-ready AI context budgeting system (`server/agent/context-manager.ts`) prevents "too many total text bytes" API errors:
-    - **Provider-Specific Budgets**: Ultra-conservative limits with 38-77% safety margins - Anthropic: 10MB bytes AND 50k tokens (dual enforcement), OpenAI/xAI: 30k tokens, Gemini/Groq: 7k tokens
-    - **Dual-Limit Protection**: Anthropic enforces BOTH byte AND token limits, dynamically selecting the more restrictive one
-    - **Intelligent Truncation**: Sliding window algorithm preserves system prompt + recent messages, drops oldest messages first, keeps tool call chains atomic
-    - **Budget Enforcement**: Throws error if system prompt + current message exceed limits (prevents over-limit requests)
-    - **Client Warnings**: SSE events notify users when context truncation occurs with detailed metadata
-    - **Full Message Serialization**: JSON.stringify captures all fields (content, tool_calls, metadata) for accurate size calculation
-    - **UI Warning Display (Nov 13, 2025)**: Production-ready dual notification system for context truncation warnings across all AI streaming surfaces (web + mobile):
-      - **Centralized Handler**: `client/src/lib/sse-warning-handler.ts` provides reusable `handleSSEWarning()` with automatic deduplication (5-second window)
-      - **Dual Notification**: Toast notification (transient alert) + system message in conversation (persistent audit trail)
-      - **Graceful Degradation**: Handles optional SSE fields (droppedCount, originalSize, finalSize) to avoid displaying "undefined"
-      - **Integration**: Applied to all 3 AI streaming panels (ReplitAgentPanelV3, AIAgentPanel, ReplitAgentPanel) with buffered append strategy for stream persistence
-      - **Mobile Coverage**: Mobile agent tab uses ReplitAgentPanelV3 (mode="mobile") with full SSE support; legacy MobileChatInterface uses simulated responses
-      - **Deduplication**: Map-based cache prevents repeated identical warnings from spamming users during single response streams
-    - **TODO**: Integrate tiktoken/provider-native tokenizers for precise token counting to increase limits to ~70% of actual capacity
+  - **Multi-Provider System**: Operational with 5 AI providers (OpenAI, Anthropic, Gemini, xAI, Groq) and 12 production models, managed by `AIProviderManager`.
+  - **User Model Preference System**: `useAgentModelPreference` hook with React Query for managing user's preferred AI model, persisted via `/api/models/preferred` API.
+  - **Extended Thinking Toggle**: First-class control in the ReplitAgentPanelV3 header for enabling/disabling Extended Thinking, with capability gating based on the selected model.
+  - **Context Management**: `server/agent/context-manager.ts` handles context budgeting with provider-specific token and byte limits, intelligent truncation, and client-side warnings via SSE.
+  - **Marketing Demo**: `simulateStreaming` helper for simulated AI responses on the landing page, accompanied by a demo mode banner and a "Try Real AI" CTA.
 - **Push Notifications**: Firebase Cloud Messaging (FCM), Firebase Admin SDK.
 - **Video Conferencing**: Zoom API.
 - **Deployment Platform**: Replit Reserved VM.
