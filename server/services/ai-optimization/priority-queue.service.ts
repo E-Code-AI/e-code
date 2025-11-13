@@ -4,7 +4,7 @@
  * Ensures critical operations get processed first
  */
 
-import { db } from "../../db/index";
+import { db } from "../../db/drizzle";
 import { aiRequestQueue, type InsertAiRequestQueue } from "../../../shared/schema";
 import { eq, and, isNull, desc, asc } from "drizzle-orm";
 import { TaskType } from './task-classifier.service';

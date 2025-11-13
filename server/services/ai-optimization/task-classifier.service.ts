@@ -4,7 +4,7 @@
  * Learns from execution history to optimize routing
  */
 
-import { db } from "../../db/index";
+import { db } from "../../db/drizzle";
 import {
   aiTaskClassifications,
   type InsertAiTaskClassification,

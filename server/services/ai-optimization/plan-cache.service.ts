@@ -4,7 +4,7 @@
  * Uses Redis with intelligent cache key generation
  */
 
-import { redisCacheService } from '../redis-cache.service';
+import { redisCache as redisCacheService } from '../redis-cache.service';
 import crypto from 'crypto';
 
 export interface CachedPlan {

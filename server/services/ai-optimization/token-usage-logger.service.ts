@@ -3,7 +3,7 @@
  * Tracks AI token consumption by operation type for optimization insights
  */
 
-import { db } from "../../db/index";
+import { db } from "../../db/drizzle";
 import { aiTokenUsage, type InsertAiTokenUsage } from "../../../shared/schema";
 import { eq, and, gte, desc, sql } from "drizzle-orm";
 

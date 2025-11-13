@@ -4,7 +4,7 @@
  * Implements exponential backoff and automatic recovery
  */
 
-import { db } from "../../db/index";
+import { db } from "../../db/drizzle";
 import { aiProviderHealth, type AiProviderHealth } from "../../../shared/schema";
 import { eq } from "drizzle-orm";
 
