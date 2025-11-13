@@ -3,10 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { MessageSquare, Send, Paperclip, Mic, X, Bot, User, Image, FileText, Loader2, Sparkles } from 'lucide-react';
+import { MessageSquare, Send, Paperclip, Mic, X, Bot, User, Image, FileText, Loader2, Sparkles, Info, Zap } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { QUICK_SUGGESTIONS } from '@/constants/brand';
 import { useToast } from '@/hooks/use-toast';
+import { simulateStreaming } from '@/lib/simulate-streaming';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useLocation } from 'wouter';
 
 interface Message {
   id: string;
@@ -31,6 +34,7 @@ interface MobileChatInterfaceProps {
 export function MobileChatInterface({ isOpen, onClose, onStartBuilding }: MobileChatInterfaceProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -70,15 +74,13 @@ export function MobileChatInterface({ isOpen, onClose, onStartBuilding }: Mobile
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
-  const simulateStreaming = async (content: string, onUpdate: (chunk: string) => void) => {
-    const words = content.split(' ');
-    let currentContent = '';
-    
-    for (let i = 0; i < words.length; i++) {
-      currentContent += (i > 0 ? ' ' : '') + words[i];
-      onUpdate(currentContent);
-      await new Promise(resolve => setTimeout(resolve, 75)); // Fixed delay for consistent UX
+  const handleTryRealAI = () => {
+    if (user) {
+      navigate('/projects');
+    } else {
+      navigate('/auth/login');
     }
+    onClose();
   };
 
   const handleSend = async () => {
@@ -211,6 +213,26 @@ Would you like me to start building this for you?`;
             <X className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Demo Mode Banner */}
+        <Alert className="mx-4 mt-3 border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
+          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertDescription className="text-sm text-blue-800 dark:text-blue-300 flex items-center justify-between">
+            <span>
+              <strong>Demo Mode:</strong> Responses are simulated for demonstration.
+            </span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleTryRealAI}
+              className="ml-2 h-7 text-xs border-blue-300 hover:bg-blue-100 dark:border-blue-700 dark:hover:bg-blue-900/30"
+              data-testid="button-try-real-ai"
+            >
+              <Zap className="h-3 w-3 mr-1" />
+              Try Real AI
+            </Button>
+          </AlertDescription>
+        </Alert>
 
         {/* Chat Messages or Initial Interface */}
         <div className="flex-1 flex flex-col">
