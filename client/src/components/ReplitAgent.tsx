@@ -775,6 +775,7 @@ What would you like me to build for you today?`,
   const [extendedThinking, setExtendedThinking] = useState(false);
   const [highPowerMode, setHighPowerMode] = useState(false);
   const [autoCheckpoints, setAutoCheckpoints] = useState(true);
+  const [autoApprovePlans, setAutoApprovePlans] = useState(false);
   const [selectedModel, setSelectedModel] = useState('claude-3-5-sonnet');
   const [thinkingSteps, setThinkingSteps] = useState<Array<{
     id: string;
@@ -837,6 +838,7 @@ What would you like me to build for you today?`,
         if (session.extendedThinking !== undefined) setExtendedThinking(session.extendedThinking);
         if (session.highPowerMode !== undefined) setHighPowerMode(session.highPowerMode);
         if (session.autoCheckpoints !== undefined) setAutoCheckpoints(session.autoCheckpoints);
+        if (session.autoApprovePlans !== undefined) setAutoApprovePlans(session.autoApprovePlans);
         if (session.agentMode) setAutonomousModeEnabled(session.agentMode === 'autonomous');
         
         // Restore pending actions (if any)
@@ -872,13 +874,14 @@ What would you like me to build for you today?`,
         extendedThinking,
         highPowerMode,
         autoCheckpoints,
+        autoApprovePlans,
         agentMode: autonomousModeEnabled ? 'autonomous' as const : 'plan' as const,
       };
       
       updateSettings(settings);
       console.log('[ReplitAgent] Auto-saved settings to session', settings);
     }
-  }, [selectedModel, extendedThinking, highPowerMode, autoCheckpoints, autonomousModeEnabled, updateSettings, sessionLoading]);
+  }, [selectedModel, extendedThinking, highPowerMode, autoCheckpoints, autoApprovePlans, autonomousModeEnabled, updateSettings, sessionLoading]);
 
   useEffect(() => {
     scrollToBottom();
@@ -925,6 +928,7 @@ What would you like me to build for you today?`,
           setExtendedThinking(prefs.extendedThinking || false);
           setHighPowerMode(prefs.highPowerMode || false);
           setAutoCheckpoints(prefs.autoCheckpoints ?? true);
+          setAutoApprovePlans(prefs.autoApprovePlans || false);
           setSelectedModel(prefs.preferredModel || 'claude-3-5-sonnet');
         }
       } catch (error) {
@@ -1646,8 +1650,11 @@ What would you like me to build?`,
   };
 
   // REAL: Execute approved plan via build execution system
-  const executeBuild = async () => {
-    if (!currentPlan || !conversationId || !planId) {
+  const executeBuild = async (planToExecute?: any) => {
+    // Use parameter if provided, otherwise fall back to state
+    const plan = planToExecute || currentPlan;
+    
+    if (!plan || !conversationId || !planId) {
       toast({
         title: 'Cannot execute build',
         description: 'Missing plan or conversation data',
@@ -1659,14 +1666,14 @@ What would you like me to build?`,
     try {
       setIsBuilding(true);
       setBuildProgress(0);
-      addProgressLog('info', '🚀 Starting build execution...');
+      addProgressLog('info', `🚀 Starting build execution... (Plan ID: ${planId})`);
 
       // Call build execution API with full plan payload
       const response = await apiRequest('POST', `/api/agent/build/execute`, {
         projectId,
         conversationId,
         planId,
-        plan: currentPlan, // CRITICAL: Backend requires full plan object
+        plan: plan, // CRITICAL: Backend requires full plan object
       });
 
       if (!response.ok) {
@@ -1845,17 +1852,22 @@ What would you like me to build?`,
 
   // Plan approval handlers for PlanApprovalModal
   const handleApprovePlan = (plan: any) => {
+    // Set currentPlan state for UI sync (modal, approvals tab, progress logs)
+    if (plan) {
+      setCurrentPlan(plan);
+    }
+    
     addProgressLog('success', 'Plan approved - starting execution');
     setShowPlanApproval(false);
     setIsPlanApproved(true);
     setActiveTab('autonomous'); // Switch to autonomous tab to show progress
     
-    // Execute the approved plan
-    executeBuild();
+    // Execute with plan passed directly (no delay needed - avoids state race)
+    executeBuild(plan);
     
     toast({
       title: 'Execution Started',
-      description: `Executing plan with ${plan.tasks?.length || 0} tasks`,
+      description: `Executing plan with ${plan?.tasks?.length || 0} tasks`,
     });
   };
 
@@ -1935,11 +1947,21 @@ What would you like me to build?`,
                 // 🔧 Store plan LOCALLY - React state updates are async!
                 receivedPlanData = event.data;
                 
-                // Update React state and show approval modal
+                // Update React state
                 setCurrentPlan(event.data);
-                setShowPlanApproval(true); // Show modal for user approval
                 
-                addProgressLog('success', `Plan generated with ${event.data.tasks?.length || 0} tasks - awaiting approval`);
+                // Auto-approve if enabled, otherwise show modal
+                if (autoApprovePlans) {
+                  // Auto-approve: skip modal and proceed to execution
+                  addProgressLog('success', `Plan auto-approved with ${event.data.tasks?.length || 0} tasks - starting execution`);
+                  setTimeout(() => {
+                    handleApprovePlan(event.data);
+                  }, 100);
+                } else {
+                  // Show modal for user approval
+                  setShowPlanApproval(true);
+                  addProgressLog('success', `Plan generated with ${event.data.tasks?.length || 0} tasks - awaiting approval`);
+                }
               } else if (event.type === 'saved' && event.data) {
                 // Capture conversationId and planId for memory retention
                 const { conversationId: convId, planId: pId } = event.data;
@@ -2521,6 +2543,21 @@ What would you like me to build?`,
                     setAutoCheckpoints(checked);
                     savePreferences({ autoCheckpoints: checked });
                   }}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-sm">Auto-approve Plans</div>
+                  <div className="text-xs text-muted-foreground">Skip approval modal for faster builds</div>
+                </div>
+                <Switch
+                  checked={autoApprovePlans}
+                  onCheckedChange={(checked) => {
+                    setAutoApprovePlans(checked);
+                    savePreferences({ autoApprovePlans: checked });
+                  }}
+                  data-testid="switch-auto-approve-plans"
                 />
               </div>
             </div>
