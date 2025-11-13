@@ -14,6 +14,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useAgentSession } from '@/../../shared/agent';
 import '@/lib/agentApiClient'; // Initialize web API client
+import { useAgentModelPreference } from '@/hooks/use-agent-model-preference';
+import { CurrentModelChip } from '@/components/ai/CurrentModelChip';
 
 interface MobileAgentInterfaceProps {
   projectId: number;
@@ -28,6 +30,9 @@ export function MobileAgentInterface({ projectId, className }: MobileAgentInterf
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Use model preference hook for AI provider selection
+  const { currentModel, setPreferredModel, availableModels, isLoading: modelsLoading } = useAgentModelPreference();
 
   // Use shared Agent session hook
   const { state, actions } = useAgentSession({
@@ -112,26 +117,39 @@ export function MobileAgentInterface({ projectId, className }: MobileAgentInterf
   return (
     <div className={`flex flex-col h-full bg-gray-950 ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-800">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-            <Bot className="h-4 w-4 text-white" />
+      <div className="flex flex-col gap-2 p-4 border-b border-gray-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
+              <Bot className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <h3 className="text-white font-medium">E-Code Agent</h3>
+              <p className="text-gray-400 text-xs">
+                {isBuilding ? 'Building...' : isLoading ? 'Processing...' : 'Ready to help'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-white font-medium">E-Code Agent</h3>
-            <p className="text-gray-400 text-xs">
-              {isBuilding ? 'Building...' : isLoading ? 'Processing...' : 'Ready to help'}
-            </p>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" className="text-gray-400">
+              <Settings className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" className="text-gray-400">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" className="text-gray-400">
-            <Settings className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" className="text-gray-400">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </div>
+        
+        {/* Model Selector - Mobile Compact Mode */}
+        {!modelsLoading && currentModel && (
+          <CurrentModelChip
+            model={currentModel}
+            availableModels={availableModels}
+            onModelChange={setPreferredModel}
+            variant="compact"
+            data-testid="mobile-agent-model-selector"
+          />
+        )}
       </div>
 
       {/* Messages */}

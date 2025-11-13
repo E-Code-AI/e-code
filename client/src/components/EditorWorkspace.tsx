@@ -4,7 +4,7 @@ import CodeEditor from './CodeEditor';
 import FileExplorer from './FileExplorer';
 import { ReplitFileExplorer } from './editor/ReplitFileExplorer';
 import { ReplitAgent } from './ReplitAgent';
-import { MobileAgentInterface } from './MobileAgentInterface';
+import { ReplitAgentPanelV3 } from './ai/ReplitAgentPanelV3';
 import Terminal from './Terminal';
 import { Ghostwriter } from './Ghostwriter';
 import { CollaborationPanel } from './CollaborationPanel';
@@ -363,7 +363,10 @@ export function EditorWorkspace({
 
           {/* Agent Tab Content */}
           <TabsContent value="agent" className="flex-1 overflow-hidden m-0 border-0 p-0">
-            <MobileAgentInterface projectId={parseInt(project.id)} className="h-full" />
+            <ReplitAgentPanelV3 
+              projectId={parseInt(project.id)} 
+              mode="mobile"
+            />
           </TabsContent>
 
           {/* Files Tab Content */}
