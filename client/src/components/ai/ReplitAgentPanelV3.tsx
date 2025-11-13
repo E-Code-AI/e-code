@@ -41,10 +41,13 @@ import { ToolExecutionList } from './ToolExecutionDisplay';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useWorkflowManager } from '@/hooks/use-workflow-manager';
+import { useAgentModelPreference } from '@/hooks/use-agent-model-preference';
 import { AgentWorkflowSelector } from './AgentWorkflowSelector';
 import { DesignPrototypeViewer } from './DesignPrototypeViewer';
 import { MVPCompletionDialog } from './MVPCompletionDialog';
 import { ModeSelector } from './ModeSelector';
+import { AIModelSelector } from './AIModelSelector';
+import { CurrentModelChip } from './CurrentModelChip';
 import { handleSSEWarning, type SSEWarningData } from '@/lib/sse-warning-handler';
 
 interface ToolExecution {
@@ -120,6 +123,12 @@ export function ReplitAgentPanelV3({
   onMinimize,
   mode = 'desktop'
 }: ReplitAgentPanelV3Props) {
+  // AI Model preference hook
+  const { modelId, provider, supportsExtendedThinking: modelSupportsExtendedThinking, model, setPreferredModel } = useAgentModelPreference();
+  
+  // State for model selector dropdown
+  const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
+  
   // Conversation state
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [agentMode, setAgentMode] = useState<'plan' | 'build'>('build');
@@ -283,13 +292,15 @@ export function ReplitAgentPanelV3({
         // Call the AI streaming API
         (async () => {
           try {
-            const provider = extendedThinkingEnabled ? 'anthropic' : 'openai';
+            // Use selected provider from model preference (fallback to openai)
+            const selectedProvider = provider || 'openai';
             
             const response = await apiRequest('POST', '/api/agent/chat/stream', {
               message: userMessage.content,
               projectId: projectId,
               conversationId: `conv-${Date.now()}`,
-              provider,
+              provider: selectedProvider,
+              modelId: modelId || undefined,
               context: messages.slice(-5).map(m => ({
                 role: m.role,
                 content: m.content
@@ -525,14 +536,15 @@ export function ReplitAgentPanelV3({
     }
 
     try {
-      // Use Anthropic when Extended Thinking is enabled (required for thinking stream)
-      const provider = extendedThinkingEnabled ? 'anthropic' : 'openai';
+      // Use selected provider from model preference (fallback to openai)
+      const selectedProvider = provider || 'openai';
       
       const response = await apiRequest('POST', '/api/agent/chat/stream', {
         message: userMessage.content,
         projectId: projectId,
         conversationId: `conv-${Date.now()}`,
-        provider,
+        provider: selectedProvider,
+        modelId: modelId || undefined,
         context: messages.slice(-5).map(m => ({
           role: m.role,
           content: m.content
@@ -777,6 +789,15 @@ export function ReplitAgentPanelV3({
                 Thinking
               </Badge>
             )}
+            
+            <CurrentModelChip
+              modelName={model?.name}
+              provider={provider || undefined}
+              supportsExtendedThinking={modelSupportsExtendedThinking}
+              extendedThinkingEnabled={capabilities.find(c => c.id === 'extended_thinking')?.enabled}
+              onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
+              data-testid="current-model-chip"
+            />
           </div>
           <div className="flex items-center gap-1">
             {isWorking && (
@@ -798,7 +819,7 @@ export function ReplitAgentPanelV3({
               </TooltipProvider>
             )}
             
-            <DropdownMenu>
+            <DropdownMenu open={isModelSelectorOpen} onOpenChange={setIsModelSelectorOpen}>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -811,22 +832,44 @@ export function ReplitAgentPanelV3({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80">
                 <div className="p-3 space-y-3">
+                  <div className="font-medium text-sm mb-2">AI Model</div>
+                  <AIModelSelector 
+                    variant="inline" 
+                    className="mb-4" 
+                    onModelChange={(newModelId) => setPreferredModel(newModelId)}
+                  />
+                  
                   <div className="font-medium text-sm">Agent Capabilities</div>
                   {capabilities.map(capability => {
                     const Icon = capability.icon;
+                    // Disable Extended Thinking if model doesn't support it
+                    const isDisabled = capability.id === 'extended_thinking' && !modelSupportsExtendedThinking;
+                    
                     return (
                       <div key={capability.id} className="flex items-center justify-between gap-3" data-testid={`capability-${capability.id}`}>
                         <div className="flex items-center gap-2 flex-1">
                           <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" data-testid={`capability-icon-${capability.id}`} />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <Label htmlFor={capability.id} className="text-sm font-medium cursor-pointer" data-testid={`capability-label-${capability.id}`}>
+                              <Label htmlFor={capability.id} className={cn("text-sm font-medium cursor-pointer", isDisabled && "opacity-50")} data-testid={`capability-label-${capability.id}`}>
                                 {capability.label}
                               </Label>
                               {capability.badge && (
                                 <Badge variant="secondary" className="text-xs px-1 py-0" data-testid={`capability-badge-${capability.id}`}>
                                   {capability.badge}
                                 </Badge>
+                              )}
+                              {isDisabled && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <AlertCircle className="h-3.5 w-3.5 text-yellow-500" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      Current model doesn't support Extended Thinking. Select a compatible model (e.g., Claude Sonnet) to enable.
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground mt-0.5" data-testid={`capability-description-${capability.id}`}>
@@ -838,6 +881,7 @@ export function ReplitAgentPanelV3({
                           id={capability.id}
                           checked={capability.enabled}
                           onCheckedChange={() => toggleCapability(capability.id)}
+                          disabled={isDisabled}
                           data-testid={`switch-${capability.id}`}
                         />
                       </div>
