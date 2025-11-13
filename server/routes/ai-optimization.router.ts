@@ -16,9 +16,9 @@ router.use(ensureAuthenticated);
 
 /**
  * POST /api/ai-optimization/queue/enqueue
- * Add a request to the priority queue
+ * Add a request to the priority queue (admin only)
  */
-router.post('/queue/enqueue', async (req, res) => {
+router.post('/queue/enqueue', ensureAdmin, async (req, res) => {
   try {
     const schema = z.object({
       priority: z.enum(['critical', 'high', 'normal', 'low']).default('normal'),
