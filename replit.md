@@ -9,12 +9,20 @@ E-Code is a web-based collaborative IDE with AI assistance, built with TypeScrip
 
 **Current Status:** Functional MVP - Web 75-80% | Mobile Web 75-80% | Fortune 500 Ready 60-70% ↑
 
-**Recent Updates (Nov 13, 2025 - Deployment Optimization Complete):**
+**Recent Updates (Nov 13, 2025 - Deployment & Security Hardening Complete):**
 - ✅ **Docker Image Optimization** - Reduced deployment size by ~30-40% to meet Cloud Run 8GiB limit
   - Moved 13 test packages to devDependencies (Playwright, Jest, Lighthouse ~300MB savings)
   - Fixed Dockerfile multi-stage build (removed non-existent path copies)
   - Production image now only includes runtime essentials (dist/ + theme.json)
   - Expected final image size: <6GB (below 8GB Cloud Run limit)
+- ✅ **Security Vulnerabilities Fixed (3/7)** - Production-critical issues resolved
+  - Fixed: prismjs DOM clobbering vulnerability (upgraded to 1.30.0+)
+  - Fixed: react-syntax-highlighter dependencies updated to secure versions
+  - ⚠️ **Known Dev-Only Risk:** 4 moderate esbuild vulnerabilities in drizzle-kit@0.31.6 nested dependencies
+    - **Scope:** Development server only (GHSA-67mh-4wv8-2f99)
+    - **Production Impact:** NONE - drizzle-kit excluded from production Docker image (devDependencies)
+    - **Mitigation:** Restricted dev server exposure, monitoring drizzle-kit updates for upstream fix
+    - **Severity:** Moderate (not critical), affects localhost dev environment only
 - ✅ **AI Agent UX Complete** - Scroll fixes, plan approval modal, auto-execution, auto-approve working
 - ⚠️ **KNOWN ISSUE: Database Schema Outdated** - `agent_messages` table missing `conversation_id` column
   - **Fix Required:** Stop server → `npm run db:push --force` → Restart server
