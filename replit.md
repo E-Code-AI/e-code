@@ -74,6 +74,14 @@ The platform utilizes a polyglot backend architecture with Go for container orch
   - **Architecture**: `AIProviderManager` (singleton for model-ID-based routing) and `legacyAIProviderManager` (for backward compatibility). GroqProvider uses OpenAI SDK.
   - **API Endpoints**: `/api/models/health` (provider status), `/api/models` (list available models), `/api/models/preferred` (get/set user's preferred model), `/api/agent/autonomous/build` (build from prompt).
   - **Security**: API keys managed via Replit Secrets.
+  - **Context Management (Nov 13, 2025)**: Production-ready AI context budgeting system (`server/agent/context-manager.ts`) prevents "too many total text bytes" API errors:
+    - **Provider-Specific Budgets**: Ultra-conservative limits with 38-77% safety margins - Anthropic: 10MB bytes AND 50k tokens (dual enforcement), OpenAI/xAI: 30k tokens, Gemini/Groq: 7k tokens
+    - **Dual-Limit Protection**: Anthropic enforces BOTH byte AND token limits, dynamically selecting the more restrictive one
+    - **Intelligent Truncation**: Sliding window algorithm preserves system prompt + recent messages, drops oldest messages first, keeps tool call chains atomic
+    - **Budget Enforcement**: Throws error if system prompt + current message exceed limits (prevents over-limit requests)
+    - **Client Warnings**: SSE events notify users when context truncation occurs with detailed metadata
+    - **Full Message Serialization**: JSON.stringify captures all fields (content, tool_calls, metadata) for accurate size calculation
+    - **TODO**: Integrate tiktoken/provider-native tokenizers for precise token counting to increase limits to ~70% of actual capacity
 - **Push Notifications**: Firebase Cloud Messaging (FCM), Firebase Admin SDK.
 - **Video Conferencing**: Zoom API.
 - **Deployment Platform**: Replit Reserved VM.
