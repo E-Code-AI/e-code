@@ -7,6 +7,7 @@ import winston from 'winston';
 import { allTools, toOpenAITools, toAnthropicTools } from '../agent/tool-definitions';
 import { ToolExecutor } from '../agent/tool-executor';
 import { ProjectContextProvider } from '../agent/project-context';
+import { truncateContext } from '../agent/context-manager';
 
 // Create logger instance
 const logger = winston.createLogger({
@@ -121,7 +122,7 @@ You are in BUILD MODE. You can execute actions like creating files, running comm
     const contextPrompt = ProjectContextProvider.formatAsSystemPrompt(projectContext);
     
     // Build messages array with context
-    const messages = [
+    const rawMessages = [
       {
         role: 'system',
         content: systemPrompt || `You are an expert AI coding assistant integrated into the E-Code Platform IDE. 
@@ -135,6 +136,21 @@ You are in BUILD MODE. You can execute actions like creating files, running comm
       ...context,
       { role: 'user', content: message }
     ];
+    
+    // Apply context truncation to prevent exceeding provider limits
+    const truncationResult = truncateContext(rawMessages, provider);
+    const messages = truncationResult.messages;
+    
+    // Warn user if context was truncated
+    if (truncationResult.truncated) {
+      logger.info(`Context truncated for ${provider}: dropped ${truncationResult.droppedCount} messages (${truncationResult.originalSize} → ${truncationResult.finalSize})`);
+      sendSSE(res, 'warning', {
+        message: truncationResult.warning,
+        droppedCount: truncationResult.droppedCount,
+        originalSize: truncationResult.originalSize,
+        finalSize: truncationResult.finalSize
+      });
+    }
     
     // Track usage
     sendSSE(res, 'usage', { 
