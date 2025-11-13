@@ -302,3 +302,15 @@ export {
   requestDebouncer,
   planCache,
 };
+
+// Export all services as single object for convenience
+export const aiOptimization = {
+  tokenUsageLogger,
+  taskClassifier,
+  mcpRouter,
+  circuitBreaker,
+  priorityQueue,
+  requestDebouncer,
+  planCache,
+  optimizer: aiOptimizer,
+};

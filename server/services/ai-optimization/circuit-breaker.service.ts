@@ -90,12 +90,16 @@ export class CircuitBreakerService {
       return;
     }
 
-    const newTotalRequests = health.totalRequests + 1;
+    const totalRequests = health.totalRequests || 0;
+    const avgResponseTime = health.avgResponseTime || 0;
+    const failedRequests = health.failedRequests || 0;
+    
+    const newTotalRequests = totalRequests + 1;
     const newAvgResponseTime = Math.round(
-      (health.avgResponseTime * health.totalRequests + params.responseTime) / newTotalRequests
+      (avgResponseTime * totalRequests + params.responseTime) / newTotalRequests
     );
 
-    const errorRate = health.failedRequests / newTotalRequests;
+    const errorRate = failedRequests / newTotalRequests;
     const newStatus = this.calculateStatus(0, errorRate, newAvgResponseTime);
 
     await db
@@ -130,9 +134,14 @@ export class CircuitBreakerService {
       return;
     }
 
-    const newConsecutiveFailures = health.consecutiveFailures + 1;
-    const newTotalRequests = health.totalRequests + 1;
-    const newFailedRequests = health.failedRequests + 1;
+    const consecutiveFailures = health.consecutiveFailures || 0;
+    const totalRequests = health.totalRequests || 0;
+    const failedRequests = health.failedRequests || 0;
+    const avgResponseTime = health.avgResponseTime || 0;
+    
+    const newConsecutiveFailures = consecutiveFailures + 1;
+    const newTotalRequests = totalRequests + 1;
+    const newFailedRequests = failedRequests + 1;
     const errorRate = newFailedRequests / newTotalRequests;
 
     // Calculate new status
@@ -156,10 +165,10 @@ export class CircuitBreakerService {
     }
 
     // Update average response time if provided
-    let newAvgResponseTime = health.avgResponseTime;
+    let newAvgResponseTime = avgResponseTime;
     if (params.responseTime !== undefined) {
       newAvgResponseTime = Math.round(
-        (health.avgResponseTime * health.totalRequests + params.responseTime) / newTotalRequests
+        (avgResponseTime * totalRequests + params.responseTime) / newTotalRequests
       );
     }
 
@@ -203,7 +212,7 @@ export class CircuitBreakerService {
       canAcceptRequests: canAccept,
       nextRetryAt: health.nextRetryAt || undefined,
       errorRate: metadata.errorRate || 0,
-      avgResponseTime: health.avgResponseTime,
+      avgResponseTime: health.avgResponseTime || 0,
     };
   }
 
@@ -224,7 +233,7 @@ export class CircuitBreakerService {
           canAcceptRequests: canAccept,
           nextRetryAt: health.nextRetryAt || undefined,
           errorRate: metadata.errorRate || 0,
-          avgResponseTime: health.avgResponseTime,
+          avgResponseTime: health.avgResponseTime || 0,
         };
       })
     );

@@ -77,10 +77,12 @@ export class TaskClassifierService {
     // Check if we have learned classification
     const learned = await this.getClassification(taskType);
     
-    if (learned && learned.totalExecutions > 10) {
+    if (learned && (learned.totalExecutions || 0) > 10) {
       // Use learned classification if we have enough data
+      const totalExec = learned.totalExecutions || 0;
+      const successRate = parseFloat(learned.successRate || '0');
       const confidence = Math.min(
-        (learned.successRate / 100) * (learned.totalExecutions / 100),
+        (successRate / 100) * (totalExec / 100),
         0.95
       );
       
@@ -89,7 +91,7 @@ export class TaskClassifierService {
         category: learned.category,
         preferredExecutor: learned.preferredExecutor as ExecutorType,
         confidence,
-        reasoning: `Learned from ${learned.totalExecutions} executions (${learned.successRate}% success)`,
+        reasoning: `Learned from ${totalExec} executions (${successRate}% success)`,
       };
     }
     
@@ -119,17 +121,22 @@ export class TaskClassifierService {
     
     if (existing) {
       // Update existing classification
-      const newTotalExec = existing.totalExecutions + 1;
-      const oldSuccessCount = (existing.totalExecutions * (parseFloat(existing.successRate) / 100));
+      const totalExec = existing.totalExecutions || 0;
+      const successRate = parseFloat(existing.successRate || '0');
+      const avgTokens = existing.avgTokens || 0;
+      const avgDuration = existing.avgDuration || 0;
+      
+      const newTotalExec = totalExec + 1;
+      const oldSuccessCount = (totalExec * (successRate / 100));
       const newSuccessCount = oldSuccessCount + (params.success ? 1 : 0);
       const newSuccessRate = (newSuccessCount / newTotalExec) * 100;
       
       const newAvgTokens = Math.round(
-        (existing.avgTokens * existing.totalExecutions + params.tokensUsed) / newTotalExec
+        (avgTokens * totalExec + params.tokensUsed) / newTotalExec
       );
       
       const newAvgDuration = Math.round(
-        (existing.avgDuration * existing.totalExecutions + params.duration) / newTotalExec
+        (avgDuration * totalExec + params.duration) / newTotalExec
       );
 
       // Update metadata for MCP vs AI comparison
@@ -244,6 +251,14 @@ export class TaskClassifierService {
     if (lower.includes('chat') || lower.includes('conversation')) return 'conversation';
     
     return 'other';
+  }
+
+  /**
+   * Get all classifications (for dashboard/monitoring)
+   */
+  async getAllClassifications() {
+    const all = await db.select().from(aiTaskClassifications);
+    return all;
   }
 }
 

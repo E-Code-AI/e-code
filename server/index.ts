@@ -226,6 +226,15 @@ app.get('/api/cors-health', async (_req, res) => {
     } catch (error) {
       console.error('[WORKING SERVER] Failed to register monitoring routes:', error);
     }
+
+    // Register AI Optimization routes
+    try {
+      const aiOptimizationRouter = (await import('./routes/ai-optimization.router')).default;
+      app.use('/api/ai-optimization', aiOptimizationRouter);
+      console.log('[AI Optimization] Routes registered at /api/ai-optimization');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register AI optimization routes:', error);
+    }
   } catch (error) {
     console.error('[WORKING SERVER] Failed to register routes:', error);
     // Server continues running even if routes fail to load

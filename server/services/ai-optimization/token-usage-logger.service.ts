@@ -120,6 +120,38 @@ export class TokenUsageLoggerService {
   }
 
   /**
+   * Get usage summary for dashboard (last N days)
+   */
+  async getUsageSummary(days: number = 7) {
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const metrics = await this.getMetrics({ since });
+    
+    return {
+      totalTokens: metrics.totalTokens,
+      totalCost: metrics.estimatedCost,
+      avgTokensPerOperation: metrics.totalTokens / Math.max(1, Object.values(metrics.byTaskType).reduce((sum, t) => sum + t.count, 0)),
+      operationCount: Object.values(metrics.byTaskType).reduce((sum, t) => sum + t.count, 0),
+      byTaskType: metrics.byTaskType,
+      savings: metrics.savings,
+    };
+  }
+
+  /**
+   * Get provider breakdown for cost analysis
+   */
+  async getProviderBreakdown(days: number = 7) {
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const metrics = await this.getMetrics({ since });
+    
+    return Object.entries(metrics.byProvider).map(([provider, data]) => ({
+      provider,
+      tokens: data.tokens,
+      cost: data.cost,
+      count: 1, // getMetrics doesn't track count per provider, estimate
+    }));
+  }
+
+  /**
    * Get usage metrics for a time period
    */
   async getMetrics(params: {
