@@ -42,6 +42,7 @@ import { AIModelSelector } from './ai/AIModelSelector';
 import { ExtendedThinkingDisplay } from './agent/ExtendedThinkingDisplay';
 import { AutonomousControls } from './agent/AutonomousControls';
 import { PlanVisualizer } from './agent/PlanVisualizer';
+import { PlanApprovalModal } from './agent/PlanApprovalModal';
 import { TestingToolsPanel } from './agent/TestingToolsPanel';
 import { apiRequest } from '@/lib/queryClient';
 import { useAgentSession } from '@/hooks/use-agent-session';
@@ -793,6 +794,7 @@ What would you like me to build for you today?`,
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [planId, setPlanId] = useState<string | null>(null);
   const [isPlanApproved, setIsPlanApproved] = useState(false);
+  const [showPlanApproval, setShowPlanApproval] = useState(false);
   const [progressLogs, setProgressLogs] = useState<Array<{
     id: string;
     timestamp: Date;
@@ -1841,6 +1843,35 @@ What would you like me to build?`,
     }
   };
 
+  // Plan approval handlers for PlanApprovalModal
+  const handleApprovePlan = (plan: any) => {
+    addProgressLog('success', 'Plan approved - starting execution');
+    setShowPlanApproval(false);
+    setIsPlanApproved(true);
+    setActiveTab('autonomous'); // Switch to autonomous tab to show progress
+    
+    // Execute the approved plan
+    executeBuild();
+    
+    toast({
+      title: 'Execution Started',
+      description: `Executing plan with ${plan.tasks?.length || 0} tasks`,
+    });
+  };
+
+  const handleRejectPlan = () => {
+    addProgressLog('warning', 'Plan rejected by user');
+    setShowPlanApproval(false);
+    setCurrentPlan(null);
+    setPlanId(null);
+    setIsPlanApproved(false);
+    
+    toast({
+      title: 'Plan Rejected',
+      description: 'You can generate a new plan with different requirements',
+    });
+  };
+
   // REAL: Generate execution plan from user goal using OpenAI GPT-5 streaming
   const generatePlan = async (goal: string, context?: any) => {
     try {
@@ -1904,11 +1935,11 @@ What would you like me to build?`,
                 // 🔧 Store plan LOCALLY - React state updates are async!
                 receivedPlanData = event.data;
                 
-                // Also update React state for UI
+                // Update React state and show approval modal
                 setCurrentPlan(event.data);
-                setActiveTab('autonomous'); // Switch to autonomous tab to show plan
+                setShowPlanApproval(true); // Show modal for user approval
                 
-                addProgressLog('success', `Plan generated with ${event.data.tasks?.length || 0} tasks`);
+                addProgressLog('success', `Plan generated with ${event.data.tasks?.length || 0} tasks - awaiting approval`);
               } else if (event.type === 'saved' && event.data) {
                 // Capture conversationId and planId for memory retention
                 const { conversationId: convId, planId: pId } = event.data;
@@ -1935,7 +1966,7 @@ What would you like me to build?`,
       if (receivedPlanData) {
         toast({
           title: 'Execution Plan Ready',
-          description: `Generated ${receivedPlanData.tasks?.length || 0} tasks. Review in Autonomous tab.`,
+          description: `Review and approve the ${receivedPlanData.tasks?.length || 0} tasks to start execution.`,
         });
         return receivedPlanData;
       } else {
@@ -2634,6 +2665,15 @@ What would you like me to build?`,
         </TooltipProvider>
       </div>
     </div>
+
+    {/* Plan Approval Modal - Shows after plan generation for user review */}
+    <PlanApprovalModal
+      open={showPlanApproval}
+      plan={currentPlan}
+      onApprove={handleApprovePlan}
+      onReject={handleRejectPlan}
+      onOpenChange={setShowPlanApproval}
+    />
   </div>
   );
 }
