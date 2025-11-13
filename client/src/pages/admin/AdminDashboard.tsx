@@ -8,7 +8,11 @@ import {
   TrendingUp,
   Package,
   BookOpen,
-  Globe
+  Globe,
+  Activity,
+  CheckCircle,
+  XCircle,
+  AlertCircle
 } from 'lucide-react';
 import { AdminLayout } from './AdminLayout';
 import { apiRequest } from '@/lib/queryClient';
@@ -24,9 +28,22 @@ interface DashboardStats {
   publishedPages: number;
 }
 
+interface ProviderHealth {
+  provider: string;
+  status: 'healthy' | 'unhealthy' | 'timeout';
+  responseTime?: number;
+  error?: string;
+  recommendation?: string;
+}
+
 export function AdminDashboard() {
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['/api/admin/dashboard/stats']
+  });
+
+  const { data: providerHealth, isLoading: isLoadingHealth } = useQuery<{ providers: ProviderHealth[] }>({
+    queryKey: ['/api/health/providers'],
+    refetchInterval: 60000
   });
 
   const statCards = [
@@ -118,6 +135,62 @@ export function AdminDashboard() {
             })}
           </div>
         )}
+
+        {/* AI Provider Health Status */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-white">AI Provider Health</h2>
+            <Activity className="h-5 w-5 text-zinc-400" />
+          </div>
+          <Card className="bg-zinc-800 border-zinc-700">
+            <CardContent className="p-6">
+              {isLoadingHealth ? (
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                      <div className="h-4 bg-zinc-700 rounded w-24 animate-pulse" />
+                      <div className="h-4 bg-zinc-700 rounded w-16 animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {providerHealth?.providers.map((provider) => {
+                    const isHealthy = provider.status === 'healthy';
+                    const isTimeout = provider.status === 'timeout';
+                    const StatusIcon = isHealthy ? CheckCircle : isTimeout ? AlertCircle : XCircle;
+                    const statusColor = isHealthy ? 'text-green-500' : isTimeout ? 'text-yellow-500' : 'text-red-500';
+                    
+                    return (
+                      <div key={provider.provider} className="flex items-center justify-between p-3 bg-zinc-900 rounded-lg border border-zinc-800">
+                        <div className="flex items-center space-x-3">
+                          <StatusIcon className={`h-5 w-5 ${statusColor}`} />
+                          <div>
+                            <p className="text-sm font-medium text-white capitalize">{provider.provider}</p>
+                            {provider.error && (
+                              <p className="text-xs text-zinc-500 mt-0.5">{provider.error}</p>
+                            )}
+                            {provider.recommendation && (
+                              <p className="text-xs text-yellow-400 mt-0.5">{provider.recommendation}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {provider.responseTime !== undefined ? (
+                            <p className="text-sm text-zinc-400">{provider.responseTime}ms</p>
+                          ) : (
+                            <p className="text-sm text-zinc-500">N/A</p>
+                          )}
+                          <p className={`text-xs ${statusColor} capitalize`}>{provider.status}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Recent Activity */}
         <div className="mt-8">
