@@ -2212,8 +2212,8 @@ What would you like me to build?`,
           )}
         </TabsList>
         
-        <TabsContent value="chat" className="flex-1 m-0">
-          <ScrollArea className="h-full">
+        <TabsContent value="chat" className="flex flex-1 flex-col overflow-hidden m-0">
+          <ScrollArea className="flex-1">
             <div className="py-4" role="log" aria-live="polite" aria-relevant="additions">
           {messages.length === 0 ? (
             <div className="px-4 py-8">
@@ -2262,8 +2262,8 @@ What would you like me to build?`,
       </TabsContent>
       
       {/* Approvals Tab - Fortune 500 Security */}
-      <TabsContent value="approvals" className="flex-1 m-0" data-testid="approvals-content">
-        <ScrollArea className="h-full">
+      <TabsContent value="approvals" className="flex flex-1 flex-col overflow-hidden m-0" data-testid="approvals-content">
+        <ScrollArea className="flex-1">
           <div className="p-4">
             <PendingApprovalsPanel 
               projectId={projectId}
@@ -2286,8 +2286,8 @@ What would you like me to build?`,
       </TabsContent>
 
       {/* Autonomous Mode Tab - Phase 1 Feature */}
-      <TabsContent value="autonomous" className="flex-1 m-0" data-testid="autonomous-content">
-        <ScrollArea className="h-full">
+      <TabsContent value="autonomous" className="flex flex-1 flex-col overflow-hidden m-0" data-testid="autonomous-content">
+        <ScrollArea className="flex-1">
           <div className="p-4 space-y-4">
             <AutonomousControls
               sessionId={activeSessionId}
@@ -2352,8 +2352,8 @@ What would you like me to build?`,
       </TabsContent>
 
       {/* Testing Tab - Phase 2 Feature */}
-      <TabsContent value="testing" className="flex-1 m-0" data-testid="testing-content">
-        <div className="h-full p-4">
+      <TabsContent value="testing" className="flex flex-1 flex-col overflow-hidden m-0" data-testid="testing-content">
+        <div className="flex-1 overflow-auto p-4">
           <TestingToolsPanel 
             sessionId={activeSessionId}
             projectId={String(projectId)}
@@ -2363,8 +2363,8 @@ What would you like me to build?`,
 
       {/* Progress Tab */}
       {featureFlags?.aiUx?.progressTab !== false && (
-        <TabsContent value="progress" className="flex-1 m-0">
-          <ScrollArea className="h-full">
+        <TabsContent value="progress" className="flex flex-1 flex-col overflow-hidden m-0">
+          <ScrollArea className="flex-1">
             <div className="p-4">
               {progressLogs.length === 0 ? (
                 <div className="text-center text-[var(--ecode-text-secondary)] py-8">
