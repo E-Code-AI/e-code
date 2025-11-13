@@ -11,6 +11,7 @@ import { FilesRouter } from "./files.router";
 import { UsersRouter } from "./users.router";
 import { HealthRouter } from "./health.router";
 import { ChatGPTRouter } from "./chatgpt.router";
+import { LoadTestingRouter } from "./load-testing.router";
 import agentRouter from "./agent.router";
 import createAgentPreferencesRouter from "./agent-preferences.router";
 import testAgentRouter from "./test-agent";
@@ -51,6 +52,7 @@ export class MainRouter {
   private usersRouter: UsersRouter;
   private healthRouter: HealthRouter;
   private chatgptRouter: ChatGPTRouter;
+  private loadTestingRouter: LoadTestingRouter;
   
   constructor(private storage: IStorage) {
     this.authRouter = new AuthRouter(storage);
@@ -59,6 +61,7 @@ export class MainRouter {
     this.usersRouter = new UsersRouter(storage);
     this.healthRouter = new HealthRouter(storage);
     this.chatgptRouter = new ChatGPTRouter(storage);
+    this.loadTestingRouter = new LoadTestingRouter(storage);
   }
 
   /**
@@ -67,6 +70,9 @@ export class MainRouter {
   registerRoutes(app: Application): void {
     // Health check routes (no auth required)
     app.use(this.healthRouter.getRouter());
+    
+    // Load testing routes (admin only - Fortune 500 requirement)
+    app.use(this.loadTestingRouter.getRouter());
     
     // CSRF token endpoint
     app.get('/api/csrf-token', csrfTokenEndpoint);
