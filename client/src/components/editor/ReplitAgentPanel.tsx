@@ -87,6 +87,10 @@ export function ReplitAgentPanel({ projectId, className }: ReplitAgentPanelProps
       };
 
       let fullContent = '';
+      const warningMessages: Message[] = []; // Accumulate warnings during streaming
+      
+      // Add assistant message to state BEFORE streaming
+      setMessages(prev => [...prev, assistantMessage]);
       
       while (true) {
         const { done, value } = await reader!.read();
@@ -101,20 +105,19 @@ export function ReplitAgentPanel({ projectId, className }: ReplitAgentPanelProps
             try {
               const data = JSON.parse(line.slice(6));
               
-              // Handle context truncation warnings
-              if (data.message && data.droppedCount !== undefined) {
-                handleSSEWarning(data as SSEWarningData, {
-                  toast,
-                  addSystemMessage: (content: string) => {
-                    const systemMessage: Message = {
-                      id: `system-${Date.now()}`,
-                      role: 'system',
-                      content,
-                      timestamp: new Date()
-                    };
-                    setMessages(prev => [...prev, systemMessage]);
-                  }
-                });
+              // Handle context truncation warnings (check for presence of warning-specific fields)
+              if (data.message && typeof data.message === 'string' && !data.content) {
+                const warningResult = handleSSEWarning(data as SSEWarningData, { toast });
+                if (warningResult.shouldShow && warningResult.systemMessageContent) {
+                  // Accumulate warning to be added after streaming completes
+                  const systemMessage: Message = {
+                    id: `system-${Date.now()}`,
+                    role: 'system',
+                    content: warningResult.systemMessageContent,
+                    timestamp: new Date()
+                  };
+                  warningMessages.push(systemMessage);
+                }
                 continue;
               }
               
@@ -129,9 +132,16 @@ export function ReplitAgentPanel({ projectId, className }: ReplitAgentPanelProps
         }
       }
 
-      // Add the complete message
+      // Update existing assistant message and append any accumulated warnings
       assistantMessage.content = fullContent || "I'll help you with that. Let me analyze your request...";
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages(prev => [
+        ...prev.map(msg => 
+          msg.id === assistantMessage.id 
+            ? { ...msg, content: assistantMessage.content }
+            : msg
+        ),
+        ...warningMessages
+      ]);
       setStreamingContent('');
       
     } catch (error) {
