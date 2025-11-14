@@ -324,9 +324,7 @@ const ProjectsPage = () => {
   if (authLoading) {
     return (
       <PageShell>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <ECodeLoading size="lg" text="Loading your projects..." />
-        </div>
+        <ECodeLoading centered size="lg" text="Loading your projects..." />
       </PageShell>
     );
   }

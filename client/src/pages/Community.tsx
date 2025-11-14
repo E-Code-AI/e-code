@@ -466,9 +466,7 @@ export default function Community() {
               
               <TabsContent value={activeCategory} className="mt-6 space-y-4">
                 {postsLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <ECodeLoading size="lg" text="Loading community posts..." />
-                  </div>
+                  <ECodeLoading centered size="lg" text="Loading community posts..." />
                 ) : posts.length === 0 ? (
                   <Card>
                     <CardContent className="text-center py-12">

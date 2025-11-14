@@ -164,11 +164,7 @@ export default function Dashboard() {
   }, [recentProjects, searchQuery]);
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <ECodeLoading size="lg" text="Loading your dashboard..." />
-      </div>
-    );
+    return <ECodeLoading centered size="lg" text="Loading your dashboard..." />;
   }
 
   return (

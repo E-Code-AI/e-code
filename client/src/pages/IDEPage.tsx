@@ -356,7 +356,7 @@ export default function IDEPage() {
         return <ReplitResourcesPanel projectId={projectId} />;
       case 'deployment':
         return (
-          <Suspense fallback={<ECodeLoading size="md" text="Loading deployment..." />}>
+          <Suspense fallback={<ECodeLoading centered size="md" text="Loading deployment..." />}>
             <DeploymentManager projectId={parseInt(projectId, 10)} />
           </Suspense>
         );
@@ -368,7 +368,7 @@ export default function IDEPage() {
         return <DatabaseBrowser projectId={projectId} />;
       case 'package-viewer':
         return (
-          <Suspense fallback={<ECodeLoading size="md" text="Loading package viewer..." />}>
+          <Suspense fallback={<ECodeLoading centered size="md" text="Loading package viewer..." />}>
             <PackageViewer projectId={projectId} />
           </Suspense>
         );
@@ -384,7 +384,7 @@ export default function IDEPage() {
         return <Shell projectId={parseInt(projectId, 10)} />;
       case 'webpreview':
         return (
-          <Suspense fallback={<ECodeLoading size="md" text="Loading web preview..." />}>
+          <Suspense fallback={<ECodeLoading centered size="md" text="Loading web preview..." />}>
             <WebPreview projectId={parseInt(projectId, 10)} />
           </Suspense>
         );

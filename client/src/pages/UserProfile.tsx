@@ -117,8 +117,8 @@ export default function UserProfile() {
             </div>
           </div>
         </header>
-        <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
-          <ECodeLoading size="lg" text="Loading user profile..." />
+        <div className="container mx-auto px-4 py-8">
+          <ECodeLoading centered size="lg" text="Loading user profile..." />
         </div>
       </div>
     );
