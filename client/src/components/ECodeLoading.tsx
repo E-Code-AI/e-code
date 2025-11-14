@@ -5,13 +5,17 @@ interface ECodeLoadingProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   text?: string;
   fullScreen?: boolean;
+  centered?: boolean;
+  containerClassName?: string;
 }
 
 export function ECodeLoading({ 
   className, 
   size = 'md', 
   text = 'Loading...', 
-  fullScreen = false 
+  fullScreen = false,
+  centered = false,
+  containerClassName
 }: ECodeLoadingProps) {
   const sizes = {
     sm: 'h-8 w-8',
@@ -97,6 +101,14 @@ export function ECodeLoading({
   if (fullScreen) {
     return (
       <div className="fixed inset-0 bg-[var(--ecode-background)] z-50 flex items-center justify-center">
+        {loadingContent}
+      </div>
+    );
+  }
+
+  if (centered) {
+    return (
+      <div className={cn('flex items-center justify-center min-h-[60vh] w-full', containerClassName)}>
         {loadingContent}
       </div>
     );
