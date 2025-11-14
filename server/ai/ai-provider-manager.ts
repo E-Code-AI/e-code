@@ -377,15 +377,24 @@ export class AIProviderManager {
   private async *streamOpenAI(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.openaiClient) throw new Error('OpenAI client not initialized');
     
+    // ✅ FIX: OpenAI expects system message in messages array, not as separate parameter
+    let openaiMessages = [...messages];
+    if (options?.system && !messages.find(m => m.role === 'system')) {
+      openaiMessages = [
+        { role: 'system', content: options.system },
+        ...messages
+      ];
+    }
+    
     // OpenAI SDK returns Stream<ChatCompletionChunk> when stream: true
     // TypeScript can't infer the return type, so we need to cast it
     const stream = await this.openaiClient.chat.completions.create({
       model: modelId,
-      messages,
+      messages: openaiMessages,
       stream: true,
       max_tokens: options?.max_tokens || 4000,
       temperature: options?.temperature || 0.7,
-      ...options
+      // ✅ FIX: Don't spread options to avoid passing unsupported parameters like 'system'
     }) as unknown as AsyncIterable<any>;
     
     for await (const chunk of stream) {
