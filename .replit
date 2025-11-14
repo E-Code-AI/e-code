@@ -8,8 +8,24 @@ packages = ["glibcLocales", "go", "google-cloud-sdk", "jq", "libxcrypt", "sptk",
 
 [deployment]
 deploymentTarget = "cloudrun"
-build = ["sh", "-c", "npm install && npx vite build && mkdir -p server/public && cp -r dist/public/* server/public/ 2>/dev/null || true"]
+build = ["sh", "-c", "npm install && npm run build && npm run test:ci && mkdir -p server/public && cp -r dist/public/* server/public/ 2>/dev/null || true"]
 run = ["sh", "-c", "NODE_ENV=production tsx server/index.ts"]
+ignorePorts = false
+
+# Health check configuration for Cloud Run
+[[deployment.healthCheck]]
+path = "/health/liveness"
+initialDelaySeconds = 30
+periodSeconds = 10
+timeoutSeconds = 5
+failureThreshold = 3
+
+[[deployment.healthCheck]]
+path = "/health/readiness"
+initialDelaySeconds = 10
+periodSeconds = 5
+timeoutSeconds = 3
+failureThreshold = 2
 
 [[ports]]
 localPort = 5000
@@ -74,6 +90,11 @@ externalPort = 3000
 [[ports]]
 localPort = 46731
 externalPort = 4200
+
+# Prometheus metrics endpoint (OpenTelemetry)
+[[ports]]
+localPort = 9464
+externalPort = 9464
 
 [workflows]
 runButton = "Project"
