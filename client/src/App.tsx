@@ -287,11 +287,10 @@ function AppContent() {
       addImagePreloadLinks(criticalImages);
     }
     
-    // Prefetch common API endpoints
+    // Prefetch common API endpoints (skip auth endpoint to avoid 401 console noise for anonymous users)
     const commonEndpoints = [
-      '/api/user',
       '/api/projects',
-      '/api/monitoring/health',
+      '/api/monitoring/health/summary', // Use summary endpoint (always 200)
     ];
     prefetchResources(commonEndpoints).catch(console.error);
     

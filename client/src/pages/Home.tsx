@@ -428,7 +428,7 @@ export default function Home() {
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={() => {
           setIsAuthModalOpen(false);
-          queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
           queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
         }}
       />
