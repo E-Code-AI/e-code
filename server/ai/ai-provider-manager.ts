@@ -9,7 +9,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 export interface AIModel {
   id: string;
   name: string;
-  provider: 'openai' | 'anthropic' | 'gemini' | 'xai' | 'groq' | 'perplexity' | 'mixtral' | 'llama' | 'cohere' | 'deepseek' | 'mistral';
+  provider: 'openai' | 'anthropic' | 'gemini' | 'xai' | 'groq' | 'perplexity' | 'mixtral' | 'llama' | 'cohere' | 'deepseek' | 'mistral' | 'moonshot';
   description: string;
   maxTokens: number;
   supportsStreaming: boolean;
@@ -110,6 +110,27 @@ export const AI_MODELS: AIModel[] = [
     costPer1kTokens: 0.000075
   },
   
+  // Moonshot AI Kimi-K2 Models - VERIFIED REAL MODELS (November 2025)
+  // Source: https://platform.moonshot.ai/docs
+  {
+    id: 'kimi-k2',
+    name: 'Kimi K2',
+    provider: 'moonshot',
+    description: '1T param MoE model optimized for agentic tasks - 10-100× cheaper than GPT-4',
+    maxTokens: 128000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0025  // $0.60 input (cache miss), $2.50 output → avg $0.0025
+  },
+  {
+    id: 'kimi-k2-thinking',
+    name: 'Kimi K2 Thinking',
+    provider: 'moonshot',
+    description: 'Kimi K2 with extended reasoning for complex problems',
+    maxTokens: 128000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0025
+  },
+  
   // xAI Models - REAL models only
   {
     id: 'grok-2-1212',
@@ -153,6 +174,7 @@ export class AIProviderManager {
   private anthropicClient?: Anthropic;
   private openaiClient?: OpenAI;
   private geminiClient?: GoogleGenerativeAI;
+  private moonshotClient?: OpenAI;  // Moonshot uses OpenAI-compatible API
   
   constructor() {
     this.initializeProviders();
@@ -168,6 +190,7 @@ export class AIProviderManager {
     console.log('[AI Provider Manager] ANTHROPIC_API_KEY exists:', !!process.env.ANTHROPIC_API_KEY);
     console.log('[AI Provider Manager] GEMINI_API_KEY exists:', !!process.env.GEMINI_API_KEY);
     console.log('[AI Provider Manager] XAI_API_KEY exists:', !!process.env.XAI_API_KEY);
+    console.log('[AI Provider Manager] MOONSHOT_API_KEY exists:', !!process.env.MOONSHOT_API_KEY);
     
     // OpenAI
     if (process.env.OPENAI_API_KEY) {
@@ -215,6 +238,21 @@ export class AIProviderManager {
       }
     } else {
       console.warn('[AI Provider Manager] xAI API key not found in environment');
+    }
+    
+    // Moonshot AI (Kimi-K2) - OpenAI-compatible API
+    if (process.env.MOONSHOT_API_KEY) {
+      try {
+        this.moonshotClient = new OpenAI({
+          apiKey: process.env.MOONSHOT_API_KEY,
+          baseURL: 'https://api.moonshot.ai/v1'
+        });
+        console.log('[AI Provider Manager] ✓ Moonshot AI provider initialized');
+      } catch (error) {
+        console.warn('[AI Provider Manager] Failed to initialize Moonshot AI provider:', error);
+      }
+    } else {
+      console.warn('[AI Provider Manager] Moonshot AI API key not found in environment');
     }
     
     // Groq (Mixtral, Llama)
@@ -337,6 +375,13 @@ export class AIProviderManager {
         console.error(`[AIProviderManager] Gemini streaming failed for ${modelId}:`, error.status, error.message || JSON.stringify(error));
         throw error; // Propagate to outer fallback loop
       }
+    } else if (model.provider === 'moonshot' && this.moonshotClient) {
+      try {
+        yield* this.streamMoonshot(modelId, messages, options);
+      } catch (error: any) {
+        console.error(`[AIProviderManager] Moonshot streaming failed for ${modelId}:`, error.status, error.message || JSON.stringify(error));
+        throw error; // Propagate to outer fallback loop
+      }
     } else {
       // Fallback to non-streaming for providers without native streaming
       const response = await provider.generateChat(messages, { ...options, model: modelId });
@@ -397,6 +442,38 @@ export class AIProviderManager {
       max_tokens: options?.max_tokens || 4000,
       temperature: options?.temperature || 0.7,
       // ✅ FIX: Don't spread options to avoid passing unsupported parameters like 'system'
+    }) as unknown as AsyncIterable<any>;
+    
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) {
+        yield content;
+      }
+    }
+  }
+  
+  /**
+   * Moonshot AI (Kimi-K2) streaming implementation
+   * Uses OpenAI-compatible API at https://api.moonshot.ai/v1
+   */
+  private async *streamMoonshot(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
+    if (!this.moonshotClient) throw new Error('Moonshot AI client not initialized');
+    
+    // Moonshot uses OpenAI-compatible API format
+    let moonshotMessages = [...messages];
+    if (options?.system && !messages.find(m => m.role === 'system')) {
+      moonshotMessages = [
+        { role: 'system', content: options.system },
+        ...messages
+      ];
+    }
+    
+    const stream = await this.moonshotClient.chat.completions.create({
+      model: modelId,
+      messages: moonshotMessages,
+      stream: true,
+      max_tokens: options?.max_tokens || 4000,
+      temperature: options?.temperature || 0.7,
     }) as unknown as AsyncIterable<any>;
     
     for await (const chunk of stream) {
