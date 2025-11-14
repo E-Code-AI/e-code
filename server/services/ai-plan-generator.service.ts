@@ -59,6 +59,90 @@ export class AIPlanGeneratorService {
   }
 
   /**
+   * ✅ 40-YEAR ENGINEERING: Sanitize AI-generated JSON before parsing
+   * 
+   * CRITICAL FIX (Nov 14, 2025): Production logs showed 15 consecutive JSON parse failures
+   * Root cause: HTML entities (&amp;, &gt;, &lt;) and unescaped newlines in AI responses
+   * 
+   * This function:
+   * 1. Decodes HTML entities to their actual characters
+   * 2. Escapes unescaped newlines in JSON string values
+   * 3. Handles edge cases from multiple AI providers (OpenAI, Gemini, xAI, Anthropic)
+   * 
+   * @param jsonString - Raw JSON string from AI provider
+   * @returns Sanitized JSON string ready for JSON.parse()
+   */
+  private sanitizePlanResponse(jsonString: string): string {
+    // ✅ CRITICAL FIX (Nov 14, 2025 - Second Iteration)
+    // Architect found bug: &quot; decoded to " without escaping = invalid JSON
+    // Example broken: { "text": "He said "hello"" } → invalid
+    // Example fixed: { "text": "He said \"hello\"" } → valid
+    
+    // Step 1: Decode HTML entities BUT preserve string boundaries
+    // Strategy: Only decode entities OUTSIDE of JSON string values
+    // This prevents breaking JSON structure with unescaped quotes
+    
+    // First, temporarily replace JSON string values with placeholders
+    const stringPlaceholders: string[] = [];
+    let placeholderIndex = 0;
+    
+    // Extract all JSON string values and replace with placeholders
+    let sanitized = jsonString.replace(/"((?:[^"\\]|\\.)*)"/g, (match) => {
+      const placeholder = `__STRING_PLACEHOLDER_${placeholderIndex}__`;
+      stringPlaceholders[placeholderIndex] = match;
+      placeholderIndex++;
+      return placeholder;
+    });
+    
+    // Step 2: Decode HTML entities in non-string parts (keys, structural elements)
+    const htmlEntities: Record<string, string> = {
+      '&amp;': '&',
+      '&lt;': '<',
+      '&gt;': '>',
+      '&nbsp;': ' '
+      // Note: NOT decoding &quot; and &#39; here to avoid breaking JSON
+    };
+    
+    for (const [entity, char] of Object.entries(htmlEntities)) {
+      sanitized = sanitized.replace(new RegExp(entity, 'g'), char);
+    }
+    
+    // Step 3: Restore string values and fix escaping issues
+    for (let i = 0; i < stringPlaceholders.length; i++) {
+      const placeholder = `__STRING_PLACEHOLDER_${i}__`;
+      let originalString = stringPlaceholders[i];
+      
+      // Extract content between quotes
+      const contentMatch = originalString.match(/^"((?:[^"\\]|\\.)*)"$/);
+      if (contentMatch) {
+        let content = contentMatch[1];
+        
+        // Decode HTML entities in string content and re-escape for JSON
+        content = content
+          .replace(/&quot;/g, '\\"')    // &quot; → \" (JSON-safe escaped quote)
+          .replace(/&#39;/g, "'")        // &#39; → ' (single quote is safe in JSON)
+          .replace(/&#x27;/g, "'")       // &#x27; → ' (single quote is safe in JSON)
+          .replace(/&amp;/g, '&')        // &amp; → & (decoded)
+          .replace(/&lt;/g, '<')         // &lt; → < (decoded)
+          .replace(/&gt;/g, '>')         // &gt; → > (decoded)
+          .replace(/&nbsp;/g, ' ');      // &nbsp; → space (decoded)
+        
+        // Fix unescaped newlines (if any raw newlines slipped through)
+        content = content
+          .replace(/(?<!\\)\n/g, '\\n')  // Raw \n → \\n
+          .replace(/(?<!\\)\r/g, '\\r')  // Raw \r → \\r
+          .replace(/(?<!\\)\t/g, '\\t'); // Raw \t → \\t
+        
+        originalString = `"${content}"`;
+      }
+      
+      sanitized = sanitized.replace(placeholder, originalString);
+    }
+    
+    return sanitized;
+  }
+
+  /**
    * Generate a detailed execution plan from a user's prompt
    * PRODUCTION-READY: Automatic multi-provider fallback (OpenAI → Gemini → xAI → Anthropic)
    * Ensures 99.9% uptime by trying multiple providers in sequence
@@ -153,13 +237,15 @@ Remember:
 4. Order tasks by dependencies
 5. Respond with ONLY valid JSON`;
 
-      // ✅ PRODUCTION FIX: Multi-provider fallback chain
+      // ✅ PRODUCTION FIX: Multi-provider fallback chain with JSON parsing retry
       // Try providers in order: OpenAI → Gemini → xAI → Anthropic
-      let fullResponse = '';
+      // If JSON parsing fails, retry with next provider (critical fix for autonomous IDE)
       let lastError: Error | null = null;
-      let successfulProvider: string | null = null;
+      let successfulPlan: ExecutionPlan | null = null;
 
       for (const modelId of this.PROVIDER_FALLBACK_CHAIN) {
+        let fullResponse = '';
+        
         try {
           logger.info(`[generatePlan] Trying provider: ${modelId}`);
           
@@ -189,13 +275,87 @@ Remember:
             }
           }
 
-          // Success! Break fallback loop
-          successfulProvider = modelId;
-          logger.info(`[generatePlan] ✓ Success with provider: ${modelId}`);
+          logger.info(`[generatePlan] ✓ Received response from ${modelId}, attempting to parse...`);
+
+          // ✅ CRITICAL FIX (Nov 14, 2025): Parse JSON inside provider loop
+          // If parsing fails, continue to next provider instead of bailing
+          // This fixes autonomous IDE workflow blocking on malformed JSON
+          
+          // ✅ ROBUST JSON EXTRACTION (fixes backtick template literal bug)
+          let cleanedResponse = fullResponse.trim();
+          
+          // Remove opening backticks with optional language identifier
+          cleanedResponse = cleanedResponse.replace(/^```(?:json)?\s*/i, '');
+          
+          // Remove closing backticks
+          cleanedResponse = cleanedResponse.replace(/\s*```\s*$/i, '');
+          
+          // ✅ CRITICAL FIX: Extract JSON object/array only (ignore surrounding text)
+          // Claude sometimes adds commentary before/after JSON
+          const jsonMatch = cleanedResponse.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+          if (!jsonMatch) {
+            throw new Error('No JSON object found in response');
+          }
+          
+          let jsonString = jsonMatch[1];
+          
+          // ✅ CRITICAL FIX: Replace JavaScript template literals with escaped strings
+          // Claude sometimes uses `content` instead of "content"
+          // This regex finds backtick-quoted strings and converts them to JSON strings
+          // IMPORTANT: Use [\s\S] to match newlines (. doesn't match \n by default)
+          jsonString = jsonString.replace(/`([\s\S]*?)`/g, (match, content) => {
+            // Escape special JSON characters in the content
+            const escaped = content
+              .replace(/\\/g, '\\\\')   // Escape backslashes FIRST
+              .replace(/"/g, '\\"')     // Escape quotes
+              .replace(/\n/g, '\\n')    // Escape newlines
+              .replace(/\r/g, '\\r')    // Escape carriage returns
+              .replace(/\t/g, '\\t');   // Escape tabs
+            return `"${escaped}"`;
+          });
+          
+          // ✅ CRITICAL FIX (Nov 14, 2025): Sanitize HTML entities and escape newlines
+          // Logs showed 15 consecutive JSON parse failures due to HTML entities (&amp;, &gt;, &lt;)
+          // and unescaped newlines in AI-generated JSON responses
+          jsonString = this.sanitizePlanResponse(jsonString);
+          
+          // Parse JSON
+          const planData = JSON.parse(jsonString);
+          
+          const plan: ExecutionPlan = {
+            id: `plan-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            goal,
+            summary: planData.summary || 'Execution plan generated',
+            totalTasks: planData.tasks?.length || 0,
+            estimatedTime: planData.estimatedTime || 'Unknown',
+            technologies: planData.technologies || [],
+            tasks: (planData.tasks || []).map((task: any, index: number) => ({
+              id: task.id || `task-${index + 1}`,
+              title: task.title || `Task ${index + 1}`,
+              description: task.description || '',
+              type: task.type || 'file_create',
+              estimatedTime: task.estimatedTime || '10 min',
+              dependencies: task.dependencies || [],
+              files: task.files || [],
+              commands: task.commands || [],
+              packages: task.packages || [],
+              priority: task.priority || 'medium'
+            })),
+            riskAssessment: {
+              level: planData.riskAssessment?.level || 'low',
+              factors: planData.riskAssessment?.factors || []
+            },
+            createdAt: new Date()
+          };
+
+          // Success! Store plan and break loop
+          successfulPlan = plan;
+          logger.info(`[generatePlan] ✅ Successfully parsed plan from ${modelId} with ${plan.totalTasks} tasks`);
           break;
 
         } catch (error: any) {
           logger.warn(`[generatePlan] ✗ Provider ${modelId} failed:`, error.message);
+          logger.warn(`[generatePlan] 📄 Response preview:`, fullResponse.substring(0, 300));
           lastError = error;
           
           // Continue to next provider in fallback chain
@@ -203,95 +363,24 @@ Remember:
         }
       }
 
-      // If all providers failed, throw error
-      if (!successfulProvider) {
-        logger.error('[generatePlan] ❌ All providers failed!', lastError);
-        throw lastError || new Error('All AI providers failed');
-      }
-
-      // Parse the complete response
-      try {
-        // ✅ ROBUST JSON EXTRACTION (fixes backtick template literal bug)
-        let cleanedResponse = fullResponse.trim();
-        
-        // Remove opening backticks with optional language identifier
-        cleanedResponse = cleanedResponse.replace(/^```(?:json)?\s*/i, '');
-        
-        // Remove closing backticks
-        cleanedResponse = cleanedResponse.replace(/\s*```\s*$/i, '');
-        
-        // ✅ CRITICAL FIX: Extract JSON object/array only (ignore surrounding text)
-        // Claude sometimes adds commentary before/after JSON
-        const jsonMatch = cleanedResponse.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
-        if (!jsonMatch) {
-          throw new Error('No JSON object found in response');
-        }
-        
-        let jsonString = jsonMatch[1];
-        
-        // ✅ CRITICAL FIX: Replace JavaScript template literals with escaped strings
-        // Claude sometimes uses `content` instead of "content"
-        // This regex finds backtick-quoted strings and converts them to JSON strings
-        // IMPORTANT: Use [\s\S] to match newlines (. doesn't match \n by default)
-        jsonString = jsonString.replace(/`([\s\S]*?)`/g, (match, content) => {
-          // Escape special JSON characters in the content
-          const escaped = content
-            .replace(/\\/g, '\\\\')   // Escape backslashes FIRST
-            .replace(/"/g, '\\"')     // Escape quotes
-            .replace(/\n/g, '\\n')    // Escape newlines
-            .replace(/\r/g, '\\r')    // Escape carriage returns
-            .replace(/\t/g, '\\t');   // Escape tabs
-          return `"${escaped}"`;
-        });
-        
-        // Parse JSON
-        const planData = JSON.parse(jsonString);
-        
-        const plan: ExecutionPlan = {
-          id: `plan-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          goal,
-          summary: planData.summary || 'Execution plan generated',
-          totalTasks: planData.tasks?.length || 0,
-          estimatedTime: planData.estimatedTime || 'Unknown',
-          technologies: planData.technologies || [],
-          tasks: (planData.tasks || []).map((task: any, index: number) => ({
-            id: task.id || `task-${index + 1}`,
-            title: task.title || `Task ${index + 1}`,
-            description: task.description || '',
-            type: task.type || 'file_create',
-            estimatedTime: task.estimatedTime || '10 min',
-            dependencies: task.dependencies || [],
-            files: task.files || [],
-            commands: task.commands || [],
-            packages: task.packages || [],
-            priority: task.priority || 'medium'
-          })),
-          riskAssessment: {
-            level: planData.riskAssessment?.level || 'low',
-            factors: planData.riskAssessment?.factors || []
-          },
-          createdAt: new Date()
-        };
-
-        yield { 
-          type: 'plan', 
-          data: plan 
-        };
-
-      } catch (parseError: any) {
-        console.error('[AIPlanGenerator] ❌ Failed to parse plan JSON:', parseError.message);
-        console.error('[AIPlanGenerator] 📄 Raw response preview:', fullResponse.substring(0, 800));
-        console.error('[AIPlanGenerator] 🔍 Error location:', parseError.stack?.split('\n')[0]);
-        
+      // ✅ CRITICAL CHECK: If all providers failed, yield error
+      if (!successfulPlan) {
+        logger.error('[generatePlan] ❌ All providers failed to generate valid plan!', lastError);
         yield { 
           type: 'error', 
           data: { 
-            message: 'AI response could not be parsed. This usually means the AI generated invalid JSON. Please try again or rephrase your request.',
-            rawResponse: fullResponse.substring(0, 500),
-            errorDetails: parseError.message
+            message: 'All AI providers failed to generate a valid plan. Please try again or rephrase your request.',
+            errorDetails: lastError?.message || 'Unknown error'
           } 
         };
+        return;
       }
+
+      // ✅ SUCCESS: Yield the successfully generated plan
+      yield { 
+        type: 'plan', 
+        data: successfulPlan 
+      };
 
     } catch (error: any) {
       console.error('[AIPlanGenerator] Error generating plan:', error);
