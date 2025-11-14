@@ -11,7 +11,8 @@
  */
 
 import { Request, Response } from 'express';
-import { client as dbClient } from '../db';
+import { db } from '../db';
+import { sql } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('health-checks');
@@ -36,16 +37,16 @@ interface HealthStatus {
 /**
  * Check database connection
  */
-async function checkDatabase(): Promise<{ status: 'up' | 'down'; responseTime: number; message?: string }> {
+async function checkDatabase(): Promise<{ status: 'up' | 'down' | 'degraded'; responseTime: number; message?: string }> {
   const startTime = Date.now();
 
   try {
-    await dbClient.query('SELECT 1 as health');
+    await db.execute(sql`SELECT 1`);
     const responseTime = Date.now() - startTime;
 
     if (responseTime > 1000) {
       return {
-        status: 'degraded' as 'up' | 'down',
+        status: 'degraded',
         responseTime,
         message: 'Database responding slowly'
       };
@@ -68,27 +69,28 @@ async function checkDatabase(): Promise<{ status: 'up' | 'down'; responseTime: n
 /**
  * Check Redis connection
  */
-async function checkRedis(): Promise<{ status: 'up' | 'down'; responseTime: number; message?: string }> {
+async function checkRedis(): Promise<{ status: 'up' | 'down' | 'degraded'; responseTime: number; message?: string }> {
   const startTime = Date.now();
 
   try {
     // Import Redis client dynamically to avoid circular dependencies
-    const { redisClient } = await import('../cache/redis-client');
+    const { redisCache } = await import('../services/redis-cache');
 
-    if (!redisClient || !redisClient.isOpen) {
+    // Check if Redis is connected
+    const isConnected = await redisCache.healthCheck();
+    const responseTime = Date.now() - startTime;
+
+    if (!isConnected) {
       return {
         status: 'down',
-        responseTime: Date.now() - startTime,
+        responseTime,
         message: 'Redis client not connected'
       };
     }
 
-    await redisClient.ping();
-    const responseTime = Date.now() - startTime;
-
     if (responseTime > 500) {
       return {
-        status: 'degraded' as 'up' | 'down',
+        status: 'degraded',
         responseTime,
         message: 'Redis responding slowly'
       };

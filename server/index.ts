@@ -216,6 +216,32 @@ app.get('/api/cors-health', async (_req, res) => {
     // Make session store available globally for WebSocket authentication
     (global as any).sessionStore = sessionStore;
     
+    // Register K8s health check endpoints (Fortune 500 standard)
+    try {
+      const { healthCheckRoutes } = await import('./health/health-checks');
+      app.get('/health/liveness', healthCheckRoutes.liveness);
+      app.get('/health/readiness', healthCheckRoutes.readiness);
+      app.get('/health/deep', healthCheckRoutes.deep);
+      app.get('/health/startup', healthCheckRoutes.startup);
+      console.log('[Fortune 500 Health] K8s endpoints registered: /health/{liveness,readiness,deep,startup}');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register K8s health endpoints:', error);
+    }
+
+    // Register Swagger API documentation (optional, controlled by SWAGGER_ENABLED flag)
+    try {
+      const enableSwagger = process.env.SWAGGER_ENABLED !== 'false'; // Enabled by default
+      if (enableSwagger) {
+        const { setupSwaggerDocs } = await import('./docs/swagger');
+        setupSwaggerDocs(app);
+        console.log('[Fortune 500 Swagger] 📚 API Documentation available at /api/docs');
+      } else {
+        console.log('[Fortune 500 Swagger] API Documentation disabled (SWAGGER_ENABLED=false)');
+      }
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register Swagger docs:', error);
+    }
+
     const mainRouter = new MainRouter(storage);
     mainRouter.registerRoutes(app);
     
