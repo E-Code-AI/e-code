@@ -188,11 +188,7 @@ export default function Dependencies() {
   const vulnerableDependencies = dependencies.filter(dep => dep.vulnerabilities);
 
   if (depsLoading || statsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <ECodeLoading size="lg" text="Loading dependencies..." />
-      </div>
-    );
+    return <ECodeLoading centered size="lg" text="Loading dependencies..." />;
   }
 
   return (

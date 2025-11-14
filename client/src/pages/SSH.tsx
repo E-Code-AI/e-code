@@ -152,11 +152,7 @@ export default function SSH() {
   };
 
   if (keysLoading || sessionsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <ECodeLoading size="lg" text="Loading SSH configuration..." />
-      </div>
-    );
+    return <ECodeLoading centered size="lg" text="Loading SSH configuration..." />;
   }
 
   return (

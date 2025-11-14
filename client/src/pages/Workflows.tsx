@@ -169,11 +169,7 @@ export default function Workflows() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <ECodeLoading size="lg" text="Loading workflows..." />
-      </div>
-    );
+    return <ECodeLoading centered size="lg" text="Loading workflows..." />;
   }
 
   return (

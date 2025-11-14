@@ -214,11 +214,7 @@ export default function ObjectStorage() {
   );
 
   if (statsLoading || itemsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <ECodeLoading size="lg" text="Loading storage..." />
-      </div>
-    );
+    return <ECodeLoading centered size="lg" text="Loading storage..." />;
   }
 
   const usagePercentage = stats ? (stats.usedSize / stats.totalSize) * 100 : 0;
