@@ -138,11 +138,7 @@ export default function SecurityScanner() {
   };
 
   if (scanLoading || metricsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <ECodeLoading size="lg" text="Loading security data..." />
-      </div>
-    );
+    return <ECodeLoading centered size="lg" text="Loading security data..." />;
   }
 
   return (

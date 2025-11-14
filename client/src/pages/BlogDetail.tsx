@@ -28,9 +28,7 @@ export default function BlogDetail() {
   if (isLoading) {
     return (
       <ReplitLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <ECodeLoading size="lg" />
-        </div>
+        <ECodeLoading centered size="lg" />
       </ReplitLayout>
     );
   }

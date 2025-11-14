@@ -111,9 +111,7 @@ export default function Blog() {
 
       {/* Loading State */}
       {isLoading ? (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <ECodeLoading size="lg" />
-        </div>
+        <ECodeLoading centered size="lg" />
       ) : (
         <>
           {/* Featured Post */}
