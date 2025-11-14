@@ -2,7 +2,7 @@
 
 ## Overview
 
-E-Code is a web-based collaborative IDE with AI assistance, built with TypeScript/Node.js, React, and PostgreSQL. It offers code editing, terminal access, file management, and an autonomous AI agent, aiming to facilitate rapid prototyping and education. The platform is currently a functional MVP, with ongoing efforts to achieve enterprise-grade scalability and Fortune 500 readiness. Recent critical fixes include: restored autonomous IDE functionality, enhanced AI provider fallback mechanisms, comprehensive AI optimization infrastructure, production monitoring via Slack, mobile horizontal scroll fixes (Safari-compatible), and loading icon positioning fixes preventing jarring UX jumps.
+E-Code is a web-based collaborative IDE with AI assistance, built with TypeScript/Node.js, React, and PostgreSQL. It offers code editing, terminal access, file management, and an autonomous AI agent, aiming to facilitate rapid prototyping and education. The platform is currently a functional MVP, with ongoing efforts to achieve enterprise-grade scalability and Fortune 500 readiness. Recent critical fixes include: restored autonomous IDE functionality, enhanced AI provider fallback mechanisms, comprehensive AI optimization infrastructure, production monitoring via Slack, mobile horizontal scroll fixes (Safari-compatible), loading icon positioning fixes preventing jarring UX jumps, and **Phase 3.2 completed: K8s health endpoints + Swagger API documentation integration** (November 14, 2025).
 
 ## User Preferences
 
@@ -33,6 +33,18 @@ This includes a Task Classifier Service for ML-based routing to optimize model u
 
 **Health & Monitoring:**
 A Provider Health API (`GET /api/health/providers`) offers real-time status validation for all integrated AI providers, including response times and error messages. Admin Dashboards provide full web and mobile parity with responsive designs for monitoring provider health and system metrics. Load testing infrastructure supports concurrent AI streaming, database performance, and WebSocket limits for pre-production validation.
+
+**K8s Health Endpoints (Phase 3.2 - November 2025):**
+Fortune 500-grade Kubernetes health probes integrated:
+- `/health/liveness` - Process alive check (always 200 OK if responding)
+- `/health/readiness` - Traffic readiness check (200 OK with status in body, checks: database, Redis, memory)
+- `/health/deep` - Comprehensive system check (includes OpenAI, Anthropic, disk space)
+- `/health/startup` - Startup probe (ensures all critical dependencies initialized)
+
+All probes return 200 OK with status encoded in JSON body (prevents unnecessary K8s pod restarts). Health checks include proper 'degraded' state handling for early warning (memory >80%, disk >80%, Redis >500ms response time).
+
+**API Documentation:**
+Swagger/OpenAPI 3.0 documentation available at `/api/docs` (controlled via `SWAGGER_ENABLED` flag, enabled by default). Provides interactive API explorer with request/response schemas for all endpoints.
 
 ### Database Schema
 
