@@ -23,6 +23,7 @@ interface AIModel {
   maxTokens: number;
   supportsStreaming: boolean;
   costPer1kTokens?: number;
+  available?: boolean; // Flag to indicate if provider is configured/initialized
 }
 
 interface AIModelSelectorProps {
@@ -137,15 +138,25 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
                 {availableModels.map((model) => {
                   const ProviderIcon = getProviderIcon(model.provider);
                   const providerColor = getProviderColor(model.provider);
+                  const isAvailable = model.available !== false; // Default to true if not specified
                   return (
-                    <SelectItem key={model.id} value={model.id} data-testid={`select-model-${model.id}`}>
+                    <SelectItem 
+                      key={model.id} 
+                      value={model.id} 
+                      data-testid={`select-model-${model.id}`}
+                      disabled={!isAvailable}
+                      className={!isAvailable ? 'opacity-50 cursor-not-allowed' : ''}
+                    >
                       <div className="flex items-center gap-3 py-1">
                         <div className={`w-2 h-2 rounded-full ${providerColor}`} />
                         <div className="flex-1">
-                          <div className="font-medium">{model.name}</div>
+                          <div className="font-medium">
+                            {model.name}
+                            {!isAvailable && <span className="text-xs text-red-500 ml-2">(Not configured)</span>}
+                          </div>
                           <div className="text-xs text-muted-foreground">{model.description}</div>
                         </div>
-                        {model.supportsStreaming && (
+                        {model.supportsStreaming && isAvailable && (
                           <Badge variant="secondary" className="text-xs">Streaming</Badge>
                         )}
                       </div>
@@ -180,12 +191,22 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
         <SelectContent>
           {availableModels.map((model) => {
             const providerColor = getProviderColor(model.provider);
+            const isAvailable = model.available !== false; // Default to true if not specified
             return (
-              <SelectItem key={model.id} value={model.id} data-testid={`select-model-${model.id}`}>
+              <SelectItem 
+                key={model.id} 
+                value={model.id} 
+                data-testid={`select-model-${model.id}`}
+                disabled={!isAvailable}
+                className={!isAvailable ? 'opacity-50 cursor-not-allowed' : ''}
+              >
                 <div className="flex items-center gap-3 py-1">
                   <div className={`w-2 h-2 rounded-full ${providerColor}`} />
                   <div className="flex-1">
-                    <div className="font-medium">{model.name}</div>
+                    <div className="font-medium">
+                      {model.name}
+                      {!isAvailable && <span className="text-xs text-red-500 ml-2">(Not configured)</span>}
+                    </div>
                     <div className="text-xs text-muted-foreground">{model.description}</div>
                   </div>
                 </div>

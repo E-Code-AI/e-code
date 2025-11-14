@@ -517,6 +517,45 @@ export class GeminiProvider implements AIProvider {
   }
 }
 
+export class MoonshotProvider implements AIProvider {
+  name = 'moonshot';
+  private client: OpenAI;
+  
+  constructor(apiKey: string) {
+    this.client = new OpenAI({ 
+      apiKey,
+      baseURL: 'https://api.moonshot.ai/v1',
+      maxRetries: 3,
+      timeout: 60000,
+    });
+  }
+  
+  async generateChat(messages: any[], options?: any): Promise<string> {
+    const response = await this.client.chat.completions.create({
+      model: options?.model || 'kimi-k2',
+      messages,
+      ...options
+    });
+    
+    return response.choices[0].message.content || '';
+  }
+  
+  async generateCodeWithUnderstanding(messages: any[], codeAnalysis: any, options?: any): Promise<string> {
+    const enhancedMessages = [...messages];
+    if (codeAnalysis) {
+      enhancedMessages.push({
+        role: 'system',
+        content: `Code Analysis: ${JSON.stringify(codeAnalysis, null, 2)}`
+      });
+    }
+    
+    return this.generateChat(enhancedMessages, options);
+  }
+  
+  // Note: Streaming is handled via streamMoonshot() in ai-provider-manager.ts
+  // generateChatStream() is optional in AIProvider interface
+}
+
 export class AIProviderFactory {
   static create(provider: string, apiKey: string): AIProvider {
     switch (provider.toLowerCase()) {
@@ -530,6 +569,8 @@ export class AIProviderFactory {
         return new XAIProvider(apiKey);
       case 'groq':
         return new GroqProvider(apiKey);
+      case 'moonshot':
+        return new MoonshotProvider(apiKey);
       case 'perplexity':
         return new PerplexityProvider(apiKey);
       case 'mixtral':
@@ -548,6 +589,6 @@ export class AIProviderFactory {
   }
   
   static getAvailableProviders(): string[] {
-    return ['openai', 'anthropic', 'gemini', 'xai', 'groq', 'perplexity', 'mixtral', 'llama', 'cohere', 'deepseek', 'mistral'];
+    return ['openai', 'anthropic', 'gemini', 'xai', 'groq', 'moonshot', 'perplexity', 'mixtral', 'llama', 'cohere', 'deepseek', 'mistral'];
   }
 }
