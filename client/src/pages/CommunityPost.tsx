@@ -143,7 +143,15 @@ export default function CommunityPost() {
   };
 
   if (isLoading) {
-    return <ECodeLoading fullViewport size="lg" text="Loading post..." />;
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="relative h-full min-h-[calc(100vh-100px)]">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <ECodeLoading size="lg" text="Loading post..." />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!post) {
