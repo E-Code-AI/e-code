@@ -275,8 +275,13 @@ export default function Shell() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[var(--ecode-background)]">
-        <ECodeLoading centered size="lg" text="Loading Shell..." />
+      <div className="min-h-screen bg-[var(--ecode-background)] flex flex-col">
+        <ReplitHeader />
+        <div className="flex-1 relative">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <ECodeLoading size="lg" text="Loading Shell..." />
+          </div>
+        </div>
       </div>
     );
   }

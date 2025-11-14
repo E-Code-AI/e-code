@@ -169,7 +169,15 @@ export default function Workflows() {
   };
 
   if (isLoading) {
-    return <ECodeLoading centered size="lg" text="Loading workflows..." />;
+    return (
+      <div className="container mx-auto p-6 max-w-7xl">
+        <div className="relative h-full min-h-[calc(100vh-200px)]">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <ECodeLoading size="lg" text="Loading workflows..." />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

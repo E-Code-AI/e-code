@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { ECodeLoading } from "@/components/ECodeLoading";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ReplitLayout } from "@/components/layout/ReplitLayout";
+import { ReplitLayout, ReplitLayoutLoading } from "@/components/layout/ReplitLayout";
 
 export default function BlogDetail() {
   const params = useParams() as { slug: string };
@@ -26,11 +26,7 @@ export default function BlogDetail() {
   });
 
   if (isLoading) {
-    return (
-      <ReplitLayout>
-        <ECodeLoading centered size="lg" />
-      </ReplitLayout>
-    );
+    return <ReplitLayoutLoading text="Loading post..." size="lg" />;
   }
 
   if (error || !post) {

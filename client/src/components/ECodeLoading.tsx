@@ -6,6 +6,7 @@ interface ECodeLoadingProps {
   text?: string;
   fullScreen?: boolean;
   centered?: boolean;
+  fullViewport?: boolean;
   containerClassName?: string;
 }
 
@@ -15,6 +16,7 @@ export function ECodeLoading({
   text = 'Loading...', 
   fullScreen = false,
   centered = false,
+  fullViewport = false,
   containerClassName
 }: ECodeLoadingProps) {
   const sizes = {
@@ -106,9 +108,17 @@ export function ECodeLoading({
     );
   }
 
+  if (fullViewport) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
+        <div className="pointer-events-auto">{loadingContent}</div>
+      </div>
+    );
+  }
+
   if (centered) {
     return (
-      <div className={cn('flex items-center justify-center min-h-[60vh] w-full', containerClassName)}>
+      <div className={cn('flex items-center justify-center min-h-screen w-full', containerClassName)}>
         {loadingContent}
       </div>
     );

@@ -164,7 +164,17 @@ export default function Dashboard() {
   }, [recentProjects, searchQuery]);
 
   if (isLoading) {
-    return <ECodeLoading centered size="lg" text="Loading your dashboard..." />;
+    return (
+      <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="relative h-full min-h-[calc(100vh-200px)]">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <ECodeLoading size="lg" text="Loading your dashboard..." />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

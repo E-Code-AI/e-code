@@ -68,7 +68,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ECodeLoading, ECodeSpinner } from '@/components/ECodeLoading';
-import { PageShell, PageHeader } from '@/components/layout/PageShell';
+import { PageShell, PageHeader, PageShellLoading } from '@/components/layout/PageShell';
 import { 
   Code, Code2, Plus, Trash2, Edit, ExternalLink, Clock, Eye, EyeOff, Settings,
   Search, Grid3X3, List, Filter, ChevronDown, ArrowUpDown, Pin, GitFork, Heart,
@@ -322,11 +322,7 @@ const ProjectsPage = () => {
   };
 
   if (authLoading) {
-    return (
-      <PageShell>
-        <ECodeLoading centered size="lg" text="Loading your projects..." />
-      </PageShell>
-    );
+    return <PageShellLoading text="Loading your projects..." size="lg" />;
   }
 
   if (!user) {
