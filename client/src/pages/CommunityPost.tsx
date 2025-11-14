@@ -144,8 +144,8 @@ export default function CommunityPost() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <ECodeLoading size="lg" text="Loading post..." />
+      <div className="min-h-screen bg-background">
+        <ECodeLoading centered size="lg" text="Loading post..." />
       </div>
     );
   }

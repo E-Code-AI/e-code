@@ -264,9 +264,7 @@ export default function Home() {
         <ScrollArea className="flex-1">
           <div className="p-4">
             {isLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <ECodeLoading size="lg" text="Loading projects..." />
-              </div>
+              <ECodeLoading centered size="lg" text="Loading projects..." />
             ) : sortedProjects && sortedProjects.length > 0 ? (
               displayMode === "grid" ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
