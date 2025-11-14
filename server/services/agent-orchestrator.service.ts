@@ -12,8 +12,12 @@ import { agentFileOperations } from './agent-file-operations.service';
 import { agentCommandExecution } from './agent-command-execution.service';
 import { agentToolFramework } from './agent-tool-framework.service';
 import { agentWorkflowEngine } from './agent-workflow-engine.service';
+import { aiOptimization } from './ai-optimization';
+import { createLogger } from '../utils/logger';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+
+const logger = createLogger('AgentOrchestrator');
 
 // Agent capability definitions for OpenAI function calling
 const AGENT_FUNCTIONS = [
@@ -523,64 +527,141 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
   ): AsyncGenerator<any> {
     const session = await this.validateSession(sessionId);
 
-    // Create streaming completion
-    const stream = await this.openai.chat.completions.create({
-      model: session.model,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an autonomous AI agent with full app-building capabilities.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      functions: AGENT_FUNCTIONS,
-      function_call: 'auto',
-      stream: true
+    // ✅ AI OPTIMIZATION INTEGRATION: Classify task type (40-year engineering: correct signature)
+    const taskClassification = await aiOptimization.taskClassifier.classify({
+      operation: prompt,
+      context: {
+        projectId: session.projectId || '',
+        userId,
+        sessionId
+      }
     });
+    logger.info(`[streamAgentExecution] ✓ Task classified - Type: ${taskClassification.taskType}, Category: ${taskClassification.category}, Executor: ${taskClassification.preferredExecutor}, Confidence: ${taskClassification.confidence}`);
 
+    // ✅ AI OPTIMIZATION INTEGRATION: Determine provider with null safety (40-year engineering: prevent undefined crashes)
+    let provider = 'openai'; // Safe default
+    if (session.model && typeof session.model === 'string') {
+      if (session.model.includes('gpt') || session.model.includes('o1')) {
+        provider = 'openai';
+      } else if (session.model.includes('claude')) {
+        provider = 'anthropic';
+      } else if (session.model.includes('gemini')) {
+        provider = 'google';
+      } else if (session.model.includes('grok')) {
+        provider = 'xai';
+      }
+    }
+    logger.info(`[streamAgentExecution] ✓ Provider determined: ${provider} (model: ${session.model || 'default'})`);
+
+    // ✅ AI OPTIMIZATION INTEGRATION: Check circuit breaker before execution
+    const providerStatus = await aiOptimization.circuitBreaker.getStatus(provider);
+    
+    if (providerStatus && providerStatus.status === 'circuit_open') {
+      logger.warn(`[streamAgentExecution] ⚠️  Circuit OPEN for ${provider}, execution blocked until ${providerStatus.nextRetryAt}`);
+      throw new Error(`Provider ${provider} is currently unavailable (circuit breaker open). Retry at: ${providerStatus.nextRetryAt}`);
+    }
+    
+    if (providerStatus && !providerStatus.canAcceptRequests) {
+      logger.warn(`[streamAgentExecution] ⚠️  Provider ${provider} cannot accept requests (status: ${providerStatus.status})`);
+      throw new Error(`Provider ${provider} is currently unavailable (status: ${providerStatus.status})`);
+    }
+    
+    logger.info(`[streamAgentExecution] ✓ Circuit breaker check passed - Provider ${provider} is ${providerStatus?.status || 'healthy'}`);
+
+    // ✅ 40-YEAR ENGINEERING: Outer try/catch wraps EVERYTHING (including stream creation)
+    // This ensures recordFailure is called for ALL types of provider failures:
+    // - Network errors
+    // - Quota exceeded  
+    // - Provider outages
+    // - Invalid API keys
+    // - Rate limits
+    const startTime = Date.now();
+    let totalTokens = 0;
     let functionCallBuffer = '';
     let currentFunction: any = null;
 
-    for await (const chunk of stream) {
-      const delta = chunk.choices[0].delta;
+    try {
+      // Create streaming completion (INSIDE try/catch to catch provider failures)
+      const stream = await this.openai.chat.completions.create({
+        model: session.model,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an autonomous AI agent with full app-building capabilities.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        functions: AGENT_FUNCTIONS,
+        function_call: 'auto',
+        stream: true
+      });
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0].delta;
 
-      if (delta.content) {
-        yield {
-          type: 'content',
-          content: delta.content
-        };
-      }
-
-      if (delta.function_call) {
-        if (delta.function_call.name) {
-          currentFunction = {
-            name: delta.function_call.name,
-            arguments: ''
+        if (delta.content) {
+          yield {
+            type: 'content',
+            content: delta.content
           };
         }
-        if (delta.function_call.arguments) {
-          currentFunction.arguments += delta.function_call.arguments;
+
+        if (delta.function_call) {
+          if (delta.function_call.name) {
+            currentFunction = {
+              name: delta.function_call.name,
+              arguments: ''
+            };
+          }
+          if (delta.function_call.arguments) {
+            currentFunction.arguments += delta.function_call.arguments;
+          }
+        }
+
+        // Track tokens from usage data if available
+        if (chunk.usage) {
+          totalTokens = chunk.usage.total_tokens;
+        }
+
+        // When function call is complete
+        if (chunk.choices[0].finish_reason === 'function_call' && currentFunction) {
+          const result = await this.executeFunctionCall(
+            currentFunction.name,
+            JSON.parse(currentFunction.arguments),
+            session,
+            userId
+          );
+
+          yield {
+            type: 'function_result',
+            name: currentFunction.name,
+            result
+          };
         }
       }
 
-      // When function call is complete
-      if (chunk.choices[0].finish_reason === 'function_call' && currentFunction) {
-        const result = await this.executeFunctionCall(
-          currentFunction.name,
-          JSON.parse(currentFunction.arguments),
-          session,
-          userId
-        );
+      // ✅ AI OPTIMIZATION INTEGRATION: Record success metrics
+      const responseTime = Date.now() - startTime;
+      await aiOptimization.circuitBreaker.recordSuccess({
+        provider,
+        responseTime
+      });
+      
+      logger.info(`[streamAgentExecution] ✅ Success - Provider: ${provider}, Response time: ${responseTime}ms, Tokens: ${totalTokens}, Task type: ${taskClassification.taskType}`);
 
-        yield {
-          type: 'function_result',
-          name: currentFunction.name,
-          result
-        };
-      }
+    } catch (error: any) {
+      // ✅ AI OPTIMIZATION INTEGRATION: Record failure
+      const responseTime = Date.now() - startTime;
+      await aiOptimization.circuitBreaker.recordFailure({
+        provider,
+        error: error.message,
+        responseTime
+      });
+      
+      logger.error(`[streamAgentExecution] ❌ Failure - Provider: ${provider}, Error: ${error.message}, Response time: ${responseTime}ms`);
+      throw error;
     }
   }
 

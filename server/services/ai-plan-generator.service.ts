@@ -164,6 +164,8 @@ Remember:
           logger.info(`[generatePlan] Trying provider: ${modelId}`);
           
           // Stream response using AI Provider Manager
+          // ✅ CRITICAL FIX: Increased max_tokens to prevent JSON truncation
+          // Complex plans with multiple files can easily exceed 8192 tokens
           const stream = await aiProviderManager.streamChat(
             modelId,
             [
@@ -171,7 +173,7 @@ Remember:
             ],
             {
               system: systemPrompt,
-              max_tokens: 8192,
+              max_tokens: 16384,  // ✅ DOUBLED: Prevents JSON being cut mid-generation
               temperature: 0.7,
             }
           );
