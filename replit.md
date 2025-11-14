@@ -37,11 +37,11 @@ A Provider Health API (`GET /api/health/providers`) offers real-time status vali
 **K8s Health Endpoints (Phase 3.2 - November 2025):**
 Fortune 500-grade Kubernetes health probes integrated:
 - `/health/liveness` - Process alive check (always 200 OK if responding)
-- `/health/readiness` - Traffic readiness check (200 OK with status in body, checks: database, Redis, memory)
-- `/health/deep` - Comprehensive system check (includes OpenAI, Anthropic, disk space)
+- `/health/readiness` - Traffic readiness check (**200 when ready, 503 when not ready** - enables K8s traffic shedding for unhealthy pods)
+- `/health/deep` - Comprehensive system check (503 when unhealthy, includes OpenAI, Anthropic, disk space)
 - `/health/startup` - Startup probe (ensures all critical dependencies initialized)
 
-All probes return 200 OK with status encoded in JSON body (prevents unnecessary K8s pod restarts). Health checks include proper 'degraded' state handling for early warning (memory >80%, disk >80%, Redis >500ms response time).
+Critical behavior: Readiness returns HTTP 503 when any critical dependency (database, Redis, memory) is down, allowing Kubernetes to remove the pod from the load balancer. Liveness always returns 200 if process is alive (prevents unnecessary pod restarts). Health checks include proper 'degraded' state handling for early warning (memory >80%, disk >80%, Redis >500ms response time).
 
 **API Documentation:**
 Swagger/OpenAPI 3.0 documentation available at `/api/docs` (controlled via `SWAGGER_ENABLED` flag, enabled by default). Provides interactive API explorer with request/response schemas for all endpoints.
