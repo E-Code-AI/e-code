@@ -324,9 +324,19 @@ export class AIProviderManager {
         throw error; // Propagate to outer fallback loop
       }
     } else if (model.provider === 'openai' && this.openaiClient) {
-      yield* this.streamOpenAI(modelId, messages, options);
+      try {
+        yield* this.streamOpenAI(modelId, messages, options);
+      } catch (error: any) {
+        console.error(`[AIProviderManager] OpenAI streaming failed for ${modelId}:`, error.status, error.message || JSON.stringify(error));
+        throw error; // Propagate to outer fallback loop
+      }
     } else if (model.provider === 'gemini' && this.geminiClient) {
-      yield* this.streamGemini(modelId, messages, options);
+      try {
+        yield* this.streamGemini(modelId, messages, options);
+      } catch (error: any) {
+        console.error(`[AIProviderManager] Gemini streaming failed for ${modelId}:`, error.status, error.message || JSON.stringify(error));
+        throw error; // Propagate to outer fallback loop
+      }
     } else {
       // Fallback to non-streaming for providers without native streaming
       const response = await provider.generateChat(messages, { ...options, model: modelId });

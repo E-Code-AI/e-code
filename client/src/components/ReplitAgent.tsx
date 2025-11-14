@@ -1891,8 +1891,8 @@ What would you like me to build?`,
       addProgressLog('info', `Generating execution plan for: ${goal}`);
       
       // REAL AI-POWERED PLAN GENERATION via Server-Sent Events
-      // Connect to streaming endpoint for real-time plan generation from OpenAI GPT-5
-      const response = await fetch('/api/agent/stream', {
+      // Connect to streaming endpoint for real-time plan generation using multi-provider AI
+      const response = await fetch('/api/agent/plan/stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

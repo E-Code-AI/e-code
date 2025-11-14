@@ -47,9 +47,10 @@ export class AIPlanGeneratorService {
   private storage: IStorage;
   
   // Provider fallback chain: Try providers in order of reliability
+  // ✅ CRITICAL FIX: Use valid model IDs from AI_MODELS (gemini-1.5-flash, not gemini-2.0-flash)
   private readonly PROVIDER_FALLBACK_CHAIN = [
     'gpt-4o',              // OpenAI GPT-4 Omni (most reliable)
-    'gemini-2.0-flash',    // Google Gemini 2.0 Flash (fast + reliable)
+    'gemini-1.5-flash',    // Google Gemini 1.5 Flash (fast + reliable, REAL model ID)
     'grok-2-1212',         // xAI Grok (alternative)
     'claude-3-5-haiku-20241022'  // Anthropic Claude (fallback if others fail)
   ];
