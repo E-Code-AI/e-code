@@ -44,6 +44,7 @@ import agentWorkflowRouter from "./agent-workflow.router";
 import createAgentPlanRouter from "./agent-plan.router";
 import createAgentBuildRouter from "./agent-build.router";
 import aiModelsRouter from "./ai-models.router";
+import featureFlagsRouter from "./feature-flags.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -158,6 +159,9 @@ export class MainRouter {
     
     // AI Models Selection routes
     app.use('/api/models', aiModelsRouter);
+    
+    // Feature Flags routes (runtime toggles for experimental features)
+    app.use(featureFlagsRouter);
     
     // AI Streaming routes (Agent chat with SSE)
     app.use(aiStreamingRouter);
