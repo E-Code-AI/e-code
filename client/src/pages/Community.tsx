@@ -439,7 +439,7 @@ export default function Community() {
           <div className="xl:col-span-3 space-y-4 sm:space-y-6">
             {/* Category Tabs */}
             <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-              <ScrollArea className="w-full -mx-3 sm:-mx-0 px-3 sm:px-0">
+              <ScrollArea className="w-full max-w-full overflow-x-auto">
                 <TabsList className="inline-flex h-auto p-1 bg-muted rounded-lg">
                   <div className="flex space-x-1">
                     {categoriesWithAll.map(category => {
