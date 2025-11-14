@@ -14,6 +14,7 @@ export interface AIModel {
   maxTokens: number;
   supportsStreaming: boolean;
   costPer1kTokens?: number;
+  available?: boolean; // Flag to indicate if provider is configured/initialized
 }
 
 /**
@@ -130,6 +131,15 @@ export const AI_MODELS: AIModel[] = [
     supportsStreaming: true,
     costPer1kTokens: 0.0025
   },
+  {
+    id: 'kimi-k2-turbo',
+    name: 'Kimi K2 Turbo',
+    provider: 'moonshot',
+    description: 'Fastest Kimi K2 variant for low-latency tasks',
+    maxTokens: 128000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0006  // Ultra-low cost for turbo variant
+  },
   
   // xAI Models - REAL models only
   {
@@ -243,6 +253,10 @@ export class AIProviderManager {
     // Moonshot AI (Kimi-K2) - OpenAI-compatible API
     if (process.env.MOONSHOT_API_KEY) {
       try {
+        // Use AIProviderFactory to create proper provider with generateChat support
+        this.providers.set('moonshot', AIProviderFactory.create('moonshot', process.env.MOONSHOT_API_KEY));
+        
+        // Also keep direct OpenAI client for advanced streaming features
         this.moonshotClient = new OpenAI({
           apiKey: process.env.MOONSHOT_API_KEY,
           baseURL: 'https://api.moonshot.ai/v1'
@@ -293,7 +307,12 @@ export class AIProviderManager {
    * Get available models based on initialized providers
    */
   getAvailableModels(): AIModel[] {
-    return AI_MODELS.filter(model => this.providers.has(model.provider));
+    // Return all configured models with availability flag
+    // This allows frontend to show unavailable models (grayed out) to encourage configuration
+    return AI_MODELS.map(model => ({
+      ...model,
+      available: this.providers.has(model.provider)
+    }));
   }
   
   /**
