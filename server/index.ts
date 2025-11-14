@@ -232,6 +232,10 @@ app.get('/api/cors-health', async (_req, res) => {
       const aiOptimizationRouter = (await import('./routes/ai-optimization.router')).default;
       app.use('/api/ai-optimization', aiOptimizationRouter);
       console.log('[AI Optimization] Routes registered at /api/ai-optimization');
+      
+      const slackConfigRouter = (await import('./routes/slack-config.router')).default;
+      app.use('/api/slack-config', slackConfigRouter);
+      console.log('[Slack Config] Routes registered at /api/slack-config');
     } catch (error) {
       console.error('[WORKING SERVER] Failed to register AI optimization routes:', error);
     }
