@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { ECodeLoading } from "@/components/ECodeLoading";
 
 interface PageShellProps {
   children: ReactNode;
@@ -121,5 +122,22 @@ export function PageHeader({
         {children && <div className="w-full">{children}</div>}
       </div>
     </section>
+  );
+}
+
+interface PageShellLoadingProps {
+  text?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+}
+
+export function PageShellLoading({ text = "Loading...", size = "lg" }: PageShellLoadingProps) {
+  return (
+    <PageShell>
+      <div className="relative h-full min-h-[calc(100vh-200px)]">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <ECodeLoading size={size} text={text} />
+        </div>
+      </div>
+    </PageShell>
   );
 }

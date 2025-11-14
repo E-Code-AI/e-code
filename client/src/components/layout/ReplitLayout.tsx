@@ -9,6 +9,7 @@ import { PullToRefresh } from "@/components/ui/mobile-gestures";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { ECodeLoading } from "@/components/ECodeLoading";
 
 interface ReplitLayoutProps {
   children: ReactNode;
@@ -203,6 +204,49 @@ export function ReplitLayout({
         onClose={() => setShowCreateModal(false)}
         onCreate={handleCreateProject}
       />
+    </div>
+  );
+}
+
+interface ReplitLayoutLoadingProps {
+  text?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  showSidebar?: boolean;
+  projectId?: number;
+}
+
+export function ReplitLayoutLoading({ 
+  text = "Loading...", 
+  size = "lg",
+  showSidebar = true,
+  projectId 
+}: ReplitLayoutLoadingProps) {
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  
+  return (
+    <div className="h-screen flex flex-col bg-[var(--ecode-background)] overflow-hidden">
+      <ReplitHeader />
+      
+      <div className="flex flex-1 overflow-hidden">
+        {showSidebar && !isMobile && (
+          <div className="hidden md:block">
+            <ReplitSidebar projectId={projectId} />
+          </div>
+        )}
+        
+        <main className={cn(
+          "flex-1 flex flex-col overflow-auto",
+          isMobile && "pb-14"
+        )}>
+          <div className="relative h-full min-h-[calc(100vh-64px)]">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <ECodeLoading size={size} text={text} />
+            </div>
+          </div>
+        </main>
+      </div>
+      
+      {isMobile && <MobileNavigation onCreateClick={() => {}} />}
     </div>
   );
 }
