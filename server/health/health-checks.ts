@@ -188,7 +188,7 @@ async function checkAnthropic(): Promise<{ status: 'up' | 'down'; responseTime: 
 /**
  * Check disk space
  */
-async function checkDiskSpace(): Promise<{ status: 'up' | 'down'; message?: string; details?: any }> {
+async function checkDiskSpace(): Promise<{ status: 'up' | 'down' | 'degraded'; message?: string; details?: any }> {
   try {
     const { execSync } = require('child_process');
     const output = execSync('df -h / | tail -1').toString();
@@ -205,7 +205,7 @@ async function checkDiskSpace(): Promise<{ status: 'up' | 'down'; message?: stri
 
     if (used > 80) {
       return {
-        status: 'degraded' as 'up' | 'down',
+        status: 'degraded',
         message: `Disk usage warning: ${used}%`,
         details: { used: `${used}%` }
       };
@@ -227,7 +227,7 @@ async function checkDiskSpace(): Promise<{ status: 'up' | 'down'; message?: stri
 /**
  * Check memory usage
  */
-function checkMemory(): { status: 'up' | 'down'; message?: string; details?: any } {
+function checkMemory(): { status: 'up' | 'down' | 'degraded'; message?: string; details?: any } {
   const totalMemory = process.memoryUsage();
   const usedMemory = totalMemory.heapUsed;
   const totalHeap = totalMemory.heapTotal;
@@ -247,7 +247,7 @@ function checkMemory(): { status: 'up' | 'down'; message?: string; details?: any
 
   if (usagePercent > 80) {
     return {
-      status: 'degraded' as 'up' | 'down',
+      status: 'degraded',
       message: `Memory usage warning: ${usagePercent.toFixed(2)}%`,
       details: {
         used: `${(usedMemory / 1024 / 1024).toFixed(2)} MB`,
@@ -346,7 +346,8 @@ export async function readinessProbe(req: Request, res: Response): Promise<void>
         checks: health.checks
       });
     } else {
-      res.status(503).json({
+      // Always return 200 OK, embed readiness state in body (K8s best practice)
+      res.status(200).json({
         status: 'not ready',
         message: 'Application is not ready to serve traffic',
         timestamp: health.timestamp,
@@ -356,7 +357,8 @@ export async function readinessProbe(req: Request, res: Response): Promise<void>
     }
   } catch (error: any) {
     logger.error('Readiness probe failed', { error: error.message });
-    res.status(503).json({
+    // Return 200 with error state in body (prevents unnecessary K8s pod restarts)
+    res.status(200).json({
       status: 'error',
       message: 'Failed to perform readiness check',
       error: error.message
