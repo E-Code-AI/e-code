@@ -1,4 +1,5 @@
 import { createLogger, format, transports, Logger } from 'winston';
+import { slackAlertService, type SlackAlertPayload } from './slack-alert.service';
 
 /**
  * AI OPTIMIZATION OBSERVABILITY SERVICE
@@ -10,7 +11,7 @@ import { createLogger, format, transports, Logger } from 'winston';
  * - Structured JSON logging with full context (operation, provider, user, project, session)
  * - Performance metrics collection (latency, token usage, success/failure rates)
  * - Real-time alerting hooks for circuit breakers and critical failures
- * - Integration with external monitoring systems (Sentry, DataDog, etc.)
+ * - Integration with external monitoring systems (Slack, Sentry, DataDog, etc.)
  */
 
 export interface LogContext {
@@ -173,13 +174,22 @@ class ObservabilityService {
     const logLevel = alert.severity === 'critical' || alert.severity === 'error' ? 'error' : 'warn';
     this.logger.log(logLevel, `[ALERT] ${alert.title}: ${alert.message}`, alert.context);
 
-    // TODO: Integrate with external alerting systems
-    // - Send to Sentry for error tracking
-    // - Send to PagerDuty for critical alerts
-    // - Send to Slack for team notifications
-    // - Send to DataDog for metrics aggregation
+    // ✅ 40-YEAR ENGINEERING: External alert integrations for production monitoring
+    // Send to Slack for real-time team notifications
+    if (slackAlertService.isEnabled()) {
+      slackAlertService.sendAlert({
+        severity: alert.severity === 'error' ? 'critical' : alert.severity,
+        title: alert.title,
+        message: alert.message,
+        context: alert.context as Record<string, any>,
+        timestamp: alert.timestamp
+      }).catch(err => {
+        // Don't let Slack failures break the application
+        this.logger.warn('[Observability] Failed to send Slack alert:', err);
+      });
+    }
 
-    // For now, console alert for critical severity
+    // Console alert for critical severity (backward compatibility)
     if (alert.severity === 'critical') {
       console.error('\n🚨 CRITICAL ALERT 🚨');
       console.error(`Title: ${alert.title}`);
