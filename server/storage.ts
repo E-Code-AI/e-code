@@ -4850,11 +4850,15 @@ try {
     };
   } else {
     // Create a native pg pool for session store
+    // ✅ PRODUCTION FIX: Increased timeouts and pool size to prevent connection storms
     const pgPool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      max: 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
+      max: 20, // Aligned with main pool (db.ts) for consistency
+      min: 2, // Keep some connections warm
+      idleTimeoutMillis: 60000, // 60s - allow longer idle time
+      connectionTimeoutMillis: 60000, // 60s - critical fix for table creation timeouts
+      maxUses: 7500, // Recycle connections after 7500 uses (Neon best practice)
+      allowExitOnIdle: false // Prevent pool shutdown on idle
     });
 
     const pgStore = connectPg(session);
