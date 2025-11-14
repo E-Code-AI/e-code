@@ -225,7 +225,7 @@ export default function Account() {
       <div className="space-y-6">
 
       <Tabs defaultValue="profile" className="space-y-4">
-        <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
+        <div className="overflow-x-auto max-w-full">
           <TabsList className="inline-flex h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground w-max min-w-full md:w-full">
             <TabsTrigger value="profile" className="whitespace-nowrap">Profile</TabsTrigger>
             <TabsTrigger value="account" className="whitespace-nowrap">Account</TabsTrigger>
