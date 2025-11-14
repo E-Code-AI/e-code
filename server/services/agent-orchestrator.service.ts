@@ -13,6 +13,7 @@ import { agentCommandExecution } from './agent-command-execution.service';
 import { agentToolFramework } from './agent-tool-framework.service';
 import { agentWorkflowEngine } from './agent-workflow-engine.service';
 import { aiOptimization } from './ai-optimization';
+import { observability } from './ai-optimization/observability.service';
 import { createLogger } from '../utils/logger';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -537,6 +538,18 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       }
     });
     logger.info(`[streamAgentExecution] ✓ Task classified - Type: ${taskClassification.taskType}, Category: ${taskClassification.category}, Executor: ${taskClassification.preferredExecutor}, Confidence: ${taskClassification.confidence}`);
+    
+    // ✅ OBSERVABILITY: Log task classification with structured context
+    observability.info('AI task classified', {
+      operation: 'task_classification',
+      taskType: taskClassification.taskType,
+      category: taskClassification.category,
+      preferredExecutor: taskClassification.preferredExecutor,
+      confidence: taskClassification.confidence,
+      userId,
+      projectId: session.projectId,
+      sessionId
+    });
 
     // ✅ AI OPTIMIZATION INTEGRATION: Determine provider with null safety (40-year engineering: prevent undefined crashes)
     let provider = 'openai'; // Safe default
@@ -552,17 +565,63 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       }
     }
     logger.info(`[streamAgentExecution] ✓ Provider determined: ${provider} (model: ${session.model || 'default'})`);
+    
+    // ✅ OBSERVABILITY: Log provider selection with context
+    observability.info('AI provider selected', {
+      operation: 'provider_selection',
+      provider,
+      model: session.model || 'default',
+      userId,
+      projectId: session.projectId,
+      sessionId
+    });
 
     // ✅ AI OPTIMIZATION INTEGRATION: Check circuit breaker before execution
     const providerStatus = await aiOptimization.circuitBreaker.getStatus(provider);
     
     if (providerStatus && providerStatus.status === 'circuit_open') {
       logger.warn(`[streamAgentExecution] ⚠️  Circuit OPEN for ${provider}, execution blocked until ${providerStatus.nextRetryAt}`);
+      
+      // ✅ 40-YEAR ENGINEERING: Alert on circuit breaker trips (architect feedback)
+      observability.alert({
+        severity: 'critical',
+        title: `Circuit Breaker OPEN for ${provider}`,
+        message: `Provider ${provider} circuit breaker is OPEN. All requests blocked until ${providerStatus.nextRetryAt}`,
+        context: {
+          operation: 'circuit_breaker_check',
+          provider,
+          model: session.model,
+          userId,
+          projectId: session.projectId,
+          sessionId,
+          nextRetryAt: providerStatus.nextRetryAt
+        },
+        timestamp: new Date()
+      });
+      
       throw new Error(`Provider ${provider} is currently unavailable (circuit breaker open). Retry at: ${providerStatus.nextRetryAt}`);
     }
     
     if (providerStatus && !providerStatus.canAcceptRequests) {
       logger.warn(`[streamAgentExecution] ⚠️  Provider ${provider} cannot accept requests (status: ${providerStatus.status})`);
+      
+      // ✅ 40-YEAR ENGINEERING: Alert on provider rejection (architect feedback)
+      observability.alert({
+        severity: 'warning',
+        title: `Provider ${provider} Cannot Accept Requests`,
+        message: `Provider ${provider} is rejecting requests (status: ${providerStatus.status})`,
+        context: {
+          operation: 'provider_rejection',
+          provider,
+          model: session.model,
+          userId,
+          projectId: session.projectId,
+          sessionId,
+          providerStatus: providerStatus.status
+        },
+        timestamp: new Date()
+      });
+      
       throw new Error(`Provider ${provider} is currently unavailable (status: ${providerStatus.status})`);
     }
     
@@ -650,6 +709,25 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       });
       
       logger.info(`[streamAgentExecution] ✅ Success - Provider: ${provider}, Response time: ${responseTime}ms, Tokens: ${totalTokens}, Task type: ${taskClassification.taskType}`);
+      
+      // ✅ OBSERVABILITY: Record successful AI request metric
+      observability.recordMetric({
+        type: 'ai_request',
+        provider,
+        latencyMs: responseTime,
+        success: true,
+        context: {
+          operation: 'streaming_agent_execution',
+          provider,
+          model: session.model,
+          userId,
+          projectId: session.projectId,
+          sessionId,
+          taskType: taskClassification.taskType,
+          latencyMs: responseTime,
+          tokenCount: totalTokens
+        }
+      });
 
     } catch (error: any) {
       // ✅ AI OPTIMIZATION INTEGRATION: Record failure
@@ -661,6 +739,44 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       });
       
       logger.error(`[streamAgentExecution] ❌ Failure - Provider: ${provider}, Error: ${error.message}, Response time: ${responseTime}ms`);
+      
+      // ✅ OBSERVABILITY: Record failed AI request metric + alert
+      observability.recordMetric({
+        type: 'ai_request',
+        provider,
+        latencyMs: responseTime,
+        success: false,
+        error: error.message,
+        context: {
+          operation: 'streaming_agent_execution',
+          provider,
+          model: session.model,
+          userId,
+          projectId: session.projectId,
+          sessionId,
+          taskType: taskClassification.taskType,
+          latencyMs: responseTime,
+          error: error.message
+        }
+      });
+      
+      // ✅ OBSERVABILITY: Alert on critical AI failures
+      observability.alert({
+        severity: 'error',
+        title: 'AI Stream Execution Failed',
+        message: `Provider ${provider} failed: ${error.message}`,
+        context: {
+          operation: 'streaming_agent_execution',
+          provider,
+          model: session.model,
+          userId,
+          projectId: session.projectId,
+          sessionId,
+          error: error.message
+        },
+        timestamp: new Date()
+      });
+      
       throw error;
     }
   }
