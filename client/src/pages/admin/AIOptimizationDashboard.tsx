@@ -1,5 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { 
   Zap,
   Clock,
@@ -10,9 +14,12 @@ import {
   TrendingUp,
   Activity,
   Cpu,
-  DollarSign
+  DollarSign,
+  Send,
+  Settings
 } from 'lucide-react';
 import { AdminLayout } from './AdminLayout';
+import { useState } from 'react';
 
 interface QueueStats {
   pending: number;
@@ -58,11 +65,90 @@ interface DashboardData {
   taskClassifications: TaskClassificationStats[];
 }
 
+interface SlackConfig {
+  configured: boolean;
+  enabled: boolean;
+  webhookUrl: string | null;
+}
+
 export default function AIOptimizationDashboard() {
+  const { toast } = useToast();
+  const [webhookUrl, setWebhookUrl] = useState('');
+
   const { data, isLoading } = useQuery<DashboardData>({
     queryKey: ['/api/ai-optimization/dashboard'],
     refetchInterval: 30000
   });
+
+  const { data: slackConfig, isLoading: isSlackLoading } = useQuery<SlackConfig>({
+    queryKey: ['/api/slack-config'],
+    refetchInterval: 60000
+  });
+
+  const updateWebhookMutation = useMutation({
+    mutationFn: async (url: string | null) => {
+      return apiRequest('/api/slack-config', {
+        method: 'PUT',
+        body: JSON.stringify({ webhookUrl: url })
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/slack-config'] });
+      toast({
+        title: 'Success',
+        description: 'Slack webhook URL updated successfully',
+      });
+      setWebhookUrl('');
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update webhook URL',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const testWebhookMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('/api/slack-config/test', {
+        method: 'POST'
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Test alert sent to Slack successfully!',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to send test alert',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleUpdateWebhook = () => {
+    if (!webhookUrl.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a webhook URL',
+        variant: 'destructive',
+      });
+      return;
+    }
+    updateWebhookMutation.mutate(webhookUrl);
+  };
+
+  const handleRemoveWebhook = () => {
+    updateWebhookMutation.mutate(null);
+  };
+
+  const handleTestWebhook = () => {
+    testWebhookMutation.mutate();
+  };
 
   const queueStatCards = [
     {
@@ -360,6 +446,112 @@ export default function AIOptimizationDashboard() {
               </CardContent>
             </Card>
           )}
+        </div>
+
+        {/* Slack Alert Configuration */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2" data-testid="heading-slack-config">
+            <Settings className="h-5 w-5" />
+            Slack Alert Configuration
+          </h2>
+          <Card className="bg-zinc-800 border-zinc-700">
+            <CardHeader>
+              <CardTitle className="text-zinc-300 text-base">Real-time External Alerts</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isSlackLoading ? (
+                <div className="space-y-3">
+                  <div className="h-4 bg-zinc-700 rounded w-48 animate-pulse" />
+                  <div className="h-10 bg-zinc-700 rounded animate-pulse" />
+                  <div className="h-10 bg-zinc-700 rounded w-32 animate-pulse" />
+                </div>
+              ) : (
+                <>
+                  {/* Status Indicator */}
+                  <div className="flex items-center gap-3 p-3 bg-zinc-900 rounded-lg" data-testid="container-slack-status">
+                    {slackConfig?.enabled ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <div>
+                          <p className="text-sm font-medium text-white" data-testid="text-slack-status">Slack alerts enabled</p>
+                          <p className="text-xs text-zinc-400">Webhook URL: {slackConfig.webhookUrl || 'Not set'}</p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-5 w-5 text-zinc-500" />
+                        <div>
+                          <p className="text-sm font-medium text-white" data-testid="text-slack-status">Slack alerts disabled</p>
+                          <p className="text-xs text-zinc-400">Configure a webhook URL to enable alerts</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Webhook URL Input */}
+                  <div className="space-y-2">
+                    <label className="text-sm text-zinc-300 font-medium">
+                      Webhook URL
+                    </label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="url"
+                        placeholder="https://hooks.slack.com/services/..."
+                        value={webhookUrl}
+                        onChange={(e) => setWebhookUrl(e.target.value)}
+                        className="flex-1 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500"
+                        data-testid="input-slack-webhook"
+                      />
+                      <Button
+                        onClick={handleUpdateWebhook}
+                        disabled={updateWebhookMutation.isPending}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        data-testid="button-update-webhook"
+                      >
+                        {updateWebhookMutation.isPending ? 'Updating...' : 'Update'}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-zinc-500">
+                      Get your webhook URL from{' '}
+                      <a
+                        href="https://api.slack.com/messaging/webhooks"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:underline"
+                      >
+                        Slack Incoming Webhooks
+                      </a>
+                    </p>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleTestWebhook}
+                      disabled={!slackConfig?.enabled || testWebhookMutation.isPending}
+                      variant="outline"
+                      className="bg-zinc-900 border-zinc-700 text-white hover:bg-zinc-800"
+                      data-testid="button-test-webhook"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      {testWebhookMutation.isPending ? 'Testing...' : 'Send Test Alert'}
+                    </Button>
+                    {slackConfig?.configured && (
+                      <Button
+                        onClick={handleRemoveWebhook}
+                        disabled={updateWebhookMutation.isPending}
+                        variant="outline"
+                        className="bg-zinc-900 border-zinc-700 text-red-400 hover:bg-zinc-800 hover:text-red-300"
+                        data-testid="button-remove-webhook"
+                      >
+                        {updateWebhookMutation.isPending ? 'Removing...' : 'Remove Webhook'}
+                      </Button>
+                    )}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </AdminLayout>
