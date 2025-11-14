@@ -244,7 +244,6 @@ export function MobileMoreMenu({
             animate={{ y: dragOffset }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 500 }}
-            style={{ transform: `translateY(${dragOffset}px)` }}
             data-testid="mobile-more-menu-sheet"
           >
             {/* Drag Handle */}
@@ -273,8 +272,8 @@ export function MobileMoreMenu({
             </div>
 
             {/* Menu Content */}
-            <ScrollArea className="flex-1 mobile-hide-scrollbar">
-              <div className="p-4 space-y-6">
+            <ScrollArea className="flex-1 overflow-y-auto mobile-hide-scrollbar" style={{ maxHeight: 'calc(85vh - 120px)' }}>
+              <div className="p-4 space-y-6 pb-safe">
                 {menuSections.map((section, sectionIndex) => (
                   <div key={section.title} data-testid={`mobile-more-menu-section-${section.title.toLowerCase()}`}>
                     {/* Section Header */}
