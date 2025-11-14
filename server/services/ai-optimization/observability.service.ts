@@ -175,19 +175,21 @@ class ObservabilityService {
     this.logger.log(logLevel, `[ALERT] ${alert.title}: ${alert.message}`, alert.context);
 
     // ✅ 40-YEAR ENGINEERING: External alert integrations for production monitoring
-    // Send to Slack for real-time team notifications
-    if (slackAlertService.isEnabled()) {
-      slackAlertService.sendAlert({
-        severity: alert.severity === 'error' ? 'critical' : alert.severity,
-        title: alert.title,
-        message: alert.message,
-        context: alert.context as Record<string, any>,
-        timestamp: alert.timestamp
-      }).catch(err => {
-        // Don't let Slack failures break the application
-        this.logger.warn('[Observability] Failed to send Slack alert:', err);
-      });
-    }
+    // Send to Slack for real-time team notifications (async, non-blocking)
+    slackAlertService.isEnabled().then(enabled => {
+      if (enabled) {
+        slackAlertService.sendAlert({
+          severity: alert.severity === 'error' ? 'critical' : alert.severity,
+          title: alert.title,
+          message: alert.message,
+          context: alert.context as Record<string, any>,
+          timestamp: alert.timestamp
+        }).catch(err => {
+          // Don't let Slack failures break the application
+          this.logger.warn('[Observability] Failed to send Slack alert:', err);
+        });
+      }
+    });
 
     // Console alert for critical severity (backward compatibility)
     if (alert.severity === 'critical') {
