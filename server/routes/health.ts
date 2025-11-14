@@ -346,13 +346,34 @@ export function setupHealthRoutes(app: Express) {
   
   // Liveness probe - simple check to ensure process is alive
   app.get('/alive', (req: Request, res: Response) => {
-    res.status(200).json({ 
+    res.status(200).json({
       alive: true,
       pid: process.pid,
       timestamp: new Date(),
     });
   });
-  
+
+  // Replit-compatible health check endpoints
+  app.get('/health/liveness', (req: Request, res: Response) => {
+    res.status(200).json({
+      status: 'ok',
+      alive: true,
+      pid: process.pid,
+      uptime: process.uptime(),
+      timestamp: new Date(),
+    });
+  });
+
+  app.get('/health/readiness', async (req: Request, res: Response) => {
+    const ready = await checkReadiness();
+
+    res.status(ready ? 200 : 503).json({
+      status: ready ? 'ok' : 'not_ready',
+      ready,
+      timestamp: new Date(),
+    });
+  });
+
   // Metrics endpoint - for monitoring systems
   app.get('/metrics', async (req: Request, res: Response) => {
     const memUsage = process.memoryUsage();
