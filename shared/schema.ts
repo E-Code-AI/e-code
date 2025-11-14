@@ -2735,6 +2735,19 @@ export const aiRequestQueue = pgTable('ai_request_queue', {
   index('ai_request_queue_queued_at_idx').on(table.queuedAt),
 ]);
 
+// System Settings - Global configuration for features like Slack webhooks, alerts, etc.
+export const systemSettings = pgTable('system_settings', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  key: varchar('key').notNull().unique(), // 'slack_webhook_url', 'pagerduty_token', etc.
+  value: jsonb('value'), // Flexible storage for any configuration value
+  description: text('description'), // Human-readable description
+  encrypted: boolean('encrypted').default(false), // Whether value is encrypted
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('system_settings_key_idx').on(table.key),
+]);
+
 // Export schemas and types for agent tables
 export const insertAgentSessionSchema = createInsertSchema(agentSessions).omit({
   id: true,
@@ -2990,4 +3003,13 @@ export type InsertAiProviderHealth = z.infer<typeof insertAiProviderHealthSchema
 
 export type AiRequestQueue = typeof aiRequestQueue.$inferSelect;
 export type InsertAiRequestQueue = z.infer<typeof insertAiRequestQueueSchema>;
+
+export const insertSystemSettingSchema = createInsertSchema(systemSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type SystemSetting = typeof systemSettings.$inferSelect;
+export type InsertSystemSetting = z.infer<typeof insertSystemSettingSchema>;
 
