@@ -15,8 +15,12 @@ import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { resourceFromAttributes } from '@opentelemetry/resources';
+import { 
+  ATTR_SERVICE_NAME, 
+  ATTR_SERVICE_VERSION, 
+  SEMRESATTRS_DEPLOYMENT_ENVIRONMENT 
+} from '@opentelemetry/semantic-conventions';
 import { metrics, trace, Span, SpanStatusCode } from '@opentelemetry/api';
 import { createLogger } from '../utils/logger';
 
@@ -49,11 +53,11 @@ export function initializeOpenTelemetry(): void {
       url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318/v1/traces'
     });
 
-    // Resource attributes
-    const resource = new Resource({
-      [SemanticResourceAttributes.SERVICE_NAME]: 'e-code-platform',
-      [SemanticResourceAttributes.SERVICE_VERSION]: process.env.npm_package_version || '1.0.0',
-      [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV || 'development',
+    // Resource attributes (2024 Best Practice: resourceFromAttributes)
+    const resource = resourceFromAttributes({
+      [ATTR_SERVICE_NAME]: 'e-code-platform',
+      [ATTR_SERVICE_VERSION]: process.env.npm_package_version || '1.0.0',
+      [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV || 'development',
       'service.namespace': 'e-code',
       'service.instance.id': process.env.HOSTNAME || process.pid.toString()
     });
@@ -417,9 +421,12 @@ export function tracingMiddleware() {
   };
 }
 
-// Initialize on module load (production only)
-if (process.env.NODE_ENV === 'production' || process.env.ENABLE_TELEMETRY === 'true') {
+// Initialize on module load (disabled by default)
+// Set OTEL_ENABLED=true to enable OpenTelemetry
+if (process.env.OTEL_ENABLED === 'true') {
   initializeOpenTelemetry();
+} else {
+  logger.info('OpenTelemetry disabled (set OTEL_ENABLED=true to enable)');
 }
 
 export default {
