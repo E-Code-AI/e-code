@@ -37,6 +37,7 @@ const getProviderIcon = (provider: string) => {
     anthropic: Lightbulb,
     gemini: Sparkles,
     xai: Zap,
+    moonshot: Sparkles,  // Kimi-K2 (Moonshot AI)
     default: Cpu
   };
   return icons[provider] || icons.default;
@@ -48,6 +49,7 @@ const getProviderColor = (provider: string) => {
     anthropic: 'bg-orange-500',
     gemini: 'bg-blue-500',
     xai: 'bg-purple-500',
+    moonshot: 'bg-cyan-500',  // Kimi-K2 (Moonshot AI) - Cyan for cost savings theme
     default: 'bg-gray-500'
   };
   return colors[provider] || colors.default;
@@ -108,7 +110,7 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
       <Card className="border-yellow-500/20 bg-yellow-500/5">
         <CardContent className="p-4">
           <p className="text-sm text-yellow-600 dark:text-yellow-500">
-            No AI providers configured. Please set OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY.
+            No AI providers configured. Please set OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, XAI_API_KEY, or MOONSHOT_API_KEY.
           </p>
         </CardContent>
       </Card>
