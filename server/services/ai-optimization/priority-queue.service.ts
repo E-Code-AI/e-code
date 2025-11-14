@@ -146,7 +146,7 @@ export class PriorityQueueService {
   async complete(params: {
     id: string;
     result: {
-      output: any;
+      output?: any;
       tokensUsed?: number;
     };
   }): Promise<void> {

@@ -95,7 +95,7 @@ router.post('/queue/complete', ensureAdmin, async (req, res) => {
     const schema = z.object({
       id: z.string(),
       result: z.object({
-        output: z.any(),
+        output: z.any().optional(),
         tokensUsed: z.number().optional(),
       }),
     });
@@ -264,10 +264,10 @@ router.get('/dashboard', ensureAdmin, async (req, res) => {
     ]);
 
     res.json({
-      queue: queueStats,
-      circuitBreaker: circuitBreakerStatus,
+      queueStats,
+      circuitBreakers: circuitBreakerStatus,
       tokenUsage: tokenUsageSummary,
-      classifications: classificationStats,
+      taskClassifications: classificationStats,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
