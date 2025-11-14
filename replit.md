@@ -2,7 +2,7 @@
 
 ## Overview
 
-E-Code is a web-based collaborative IDE with AI assistance, built with TypeScript/Node.js, React, and PostgreSQL. It offers code editing, terminal access, file management, and an autonomous AI agent, aiming to facilitate rapid prototyping and education. The platform is currently a functional MVP, with ongoing efforts to achieve enterprise-grade scalability and Fortune 500 readiness. Recent critical fixes have restored autonomous IDE functionality and enhanced AI provider fallback mechanisms, alongside the integration of a comprehensive AI optimization infrastructure and production monitoring via Slack.
+E-Code is a web-based collaborative IDE with AI assistance, built with TypeScript/Node.js, React, and PostgreSQL. It offers code editing, terminal access, file management, and an autonomous AI agent, aiming to facilitate rapid prototyping and education. The platform is currently a functional MVP, with ongoing efforts to achieve enterprise-grade scalability and Fortune 500 readiness. Recent critical fixes include: restored autonomous IDE functionality, enhanced AI provider fallback mechanisms, comprehensive AI optimization infrastructure, production monitoring via Slack, mobile horizontal scroll fixes (Safari-compatible), and loading icon positioning fixes preventing jarring UX jumps.
 
 ## User Preferences
 
@@ -19,6 +19,10 @@ E-Code is a web-based collaborative IDE with AI assistance, built with TypeScrip
 ### Frontend Architecture
 
 The frontend uses React 18 and TypeScript with Vite for builds. It features TanStack Query for server state, Wouter for routing, Monaco Editor for code editing, and Shadcn/UI with Tailwind CSS for components. The architecture is component-based with lazy-loaded routes, custom hooks, responsive design (including dedicated mobile/tablet views), and WebSocket support for real-time collaboration.
+
+**UX Enhancements:**
+- **Loading States:** Layout-aware loading helpers (`PageShellLoading`, `ReplitLayoutLoading`) ensure loading icons appear immediately centered without position jumps. All loading states follow the pattern: relative container with deterministic height + absolute inset-0 centering.
+- **Mobile Optimization:** Progressive enhancement for horizontal scroll prevention (overflow-x:hidden fallback + @supports for clip), Safari-compatible solutions, enhanced ScrollToTop with iOS support.
 
 ### Backend Architecture
 
