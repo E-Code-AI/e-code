@@ -313,23 +313,15 @@ export class AIProviderManager {
     }
     
     // Use native streaming for providers that support it
+    // ✅ CRITICAL FIX: Removed internal Anthropic→GPT fallback that was breaking external fallback chain
+    // Now errors propagate cleanly to ai-plan-generator.service.ts which handles full fallback logic
     if (model.provider === 'anthropic' && this.anthropicClient) {
+      // Log provider errors for debugging but let them propagate
       try {
         yield* this.streamAnthropic(modelId, messages, options);
       } catch (error: any) {
-        // Fallback to GPT-4o if Anthropic fails (404, rate limit, etc.)
-        const fallbackModelId = 'gpt-4o';
-        console.error(`[AIProviderManager] Anthropic streaming failed for ${modelId}:`, error.message);
-        console.log(`[AIProviderManager] Falling back to ${fallbackModelId}`);
-        
-        // Verify fallback model exists
-        const fallbackModel = this.getModel(fallbackModelId);
-        if (fallbackModel && this.openaiClient) {
-          yield* this.streamOpenAI(fallbackModelId, messages, options);
-        } else {
-          // If fallback also fails, throw original error
-          throw error;
-        }
+        console.error(`[AIProviderManager] Anthropic streaming failed for ${modelId}:`, error.status, error.message || JSON.stringify(error));
+        throw error; // Propagate to outer fallback loop
       }
     } else if (model.provider === 'openai' && this.openaiClient) {
       yield* this.streamOpenAI(modelId, messages, options);
