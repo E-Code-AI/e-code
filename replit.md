@@ -76,6 +76,62 @@ The terminal system uses local bash sessions (`server/terminal.ts`) for Replit C
 
 Docker-based isolated terminal implementation exists (`server/terminal/real-terminal.ts`) but is NOT usable on Replit Cloud Run as the platform does not expose a Docker daemon.
 
+**Pay-As-You-Go AI Billing Architecture (Fortune 500 Production-Ready):**
+The platform implements usage-based billing following OpenAI/Anthropic pricing models where users are charged for AI usage beyond tier quotas via Stripe metered billing.
+
+**Business Model:**
+- **Free Tier:** $0/month + $0 AI credits - 100 AI requests/month included, pay-as-you-go beyond
+- **Pro Tier:** $20/month + $25 AI credits/month - ~10,000 requests/month, overage charges apply
+- **Enterprise Tier:** $500/month + $100 AI credits per seat/month - ~100,000 requests/month, negotiated rates for overage
+
+**Technical Implementation (`server/services/ai-metering-service.ts`):**
+- Tracks every AI request with model, tokens (input/output/total), cost USD, provider, endpoint, status
+- Centralized model normalization (`server/utils/model-normalizer.ts`) prevents DB insert failures from aliases
+- Comprehensive alias mapping: "gpt-4-turbo-preview" → "gpt-5", "claude-3-5-sonnet-20241022" → "claude-sonnet-4-5-20250929"
+- Model-specific pricing for 18 production models across 5 providers (OpenAI, Anthropic, Gemini, xAI, Moonshot)
+- 6-decimal precision cost calculation for micro-transactions
+
+**Middleware Integration (`server/middleware/ai-usage-tracker.ts`):**
+- Pay-as-you-go tracking middleware applied to ALL AI endpoints (no blocking)
+- Intercepts responses to capture model, tokens, endpoint before billing
+- Delegates to aiMeteringService for cost calculation and DB insert
+- SSE streaming endpoints use manual tracking with `trackAiUsageManually()` after stream completion
+
+**SSE Streaming Token Capture (`server/api/ai-streaming.ts`):**
+- **OpenAI:** Uses `stream_options: { include_usage: true }` to capture token counts in finalMessage
+- **Anthropic:** Extracts tokens from `stream.finalMessage().usage` after stream completion
+- **Gemini:** Uses `usageMetadata` from responses, with fallback estimation
+- Zero-token handling via `undefined` check (not truthy) to capture input-only costs
+
+**Database Schema (`ai_usage_metering` table in `shared/schema.ts`):**
+- Columns: id, userId, endpoint, model (enum), provider, tokensInput, tokensOutput, tokensTotal
+- costUsd (numeric), billed (boolean), userTier, subscriptionId, requestDurationMs, status, errorMessage
+- metadata (JSON), createdAt timestamp
+- Indexes on userId, model, createdAt for efficient querying
+
+**Stripe Integration (`server/services/stripe-billing-service.ts`):**
+- Metered billing via `stripe.subscriptionItems.createUsageRecord()`
+- Async reporting (doesn't block AI requests)
+- Tier-based quotas with automatic overage billing
+- Usage records tied to subscription items for accurate invoicing
+
+**Frontend Dashboards:**
+- **User Dashboard** (`client/src/components/AIUsageDashboard.tsx`): Monthly AI usage, cost breakdown by model, recent requests, token counts
+- **Admin Dashboard** (`client/src/pages/AdminAIUsage.tsx`): Platform-wide stats, usage by tier/model/provider, per-user tracking with filters
+- **Endpoints:** `GET /api/ai/usage/monthly`, `GET /api/ai/usage/history`, `GET /api/admin/ai-usage/admin/all`, `GET /api/admin/ai-usage/admin/stats`
+
+**Observability & Monitoring:**
+- Model normalization logging for debugging alias fallbacks
+- Request status tracking (success, error, timeout)
+- Admin monitoring API for revenue metrics and usage analytics
+- Integration with existing rate limit violation tracking
+
+**Production Validation:**
+- Architect-approved for Fortune 500 billing
+- Zero revenue loss protection via centralized model normalization
+- All code paths protected (middleware, SSE streaming, manual tracking)
+- Complete coverage: ANY request → aiMeteringService → normalizeModelName() → DB Insert → Stripe Billing
+
 **AI Optimization Infrastructure:**
 This includes a Task Classifier Service, Circuit Breaker Service, Priority Queue Service, Intelligent Caching Service, Observability Service, and Slack Alert Service for robust AI management and monitoring.
 

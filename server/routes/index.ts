@@ -48,6 +48,7 @@ import aiModelsRouter from "./ai-models.router";
 import featureFlagsRouter from "./feature-flags.router";
 import workspaceBootstrapRouter from "./workspace-bootstrap.router";
 import adminMonitoringRouter from "./admin-monitoring.router";
+import aiUsageRouter from "./ai-usage.router";
 import { tierRateLimiters } from "../middleware/tier-rate-limiter";
 import { aiUsageTracker } from "../middleware/ai-usage-tracker";
 
@@ -174,6 +175,10 @@ export class MainRouter {
     
     // AI routes (REST endpoints for chat, completions, etc.)
     app.use('/api', aiRouter);
+    
+    // AI Usage Metering routes (Pay-As-You-Go billing endpoints)
+    app.use('/api/ai/usage', aiUsageRouter);
+    app.use('/api/admin/ai-usage', aiUsageRouter);
     
     // AI Models Selection routes
     app.use('/api/models', aiModelsRouter);

@@ -55,6 +55,7 @@ const CommunityPost = lazy(() => import("@/pages/CommunityPost"));
 const SearchPage = lazy(() => import("@/pages/SearchPage"));
 const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
 const AdminUsage = lazy(() => import("@/pages/AdminUsage"));
+const AdminAIUsage = lazy(() => import("@/pages/AdminAIUsage"));
 const AdminBilling = lazy(() => import("@/pages/AdminBilling"));
 const AdminAIModels = lazy(() => import("@/pages/admin/AIModels"));
 const AdminFormRequests = lazy(() => import("@/pages/admin/FormRequests"));
@@ -868,6 +869,11 @@ function AppContent() {
           <ProtectedRoute path="/admin/usage" component={() => (
             <ReplitLayout showSidebar={false}>
               <AdminUsage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/admin/ai-usage" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <AdminAIUsage />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/admin/requests" component={() => (
