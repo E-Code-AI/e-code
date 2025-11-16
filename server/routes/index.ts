@@ -167,10 +167,11 @@ export class MainRouter {
     app.use('/api/admin/monitoring', adminMonitoringRouter);
     
     // Fortune 500 AI Rate Limiter - Apply to AI routes
+    // CRITICAL: Apply BEFORE mounting routers to ensure all AI endpoints are protected
     app.use('/api/ai', tierRateLimiters.ai);
     app.use('/api/models', tierRateLimiters.ai);
     
-    // AI routes
+    // AI routes (REST endpoints for chat, completions, etc.)
     app.use('/api', aiRouter);
     
     // AI Models Selection routes
@@ -179,12 +180,8 @@ export class MainRouter {
     // Feature Flags routes (runtime toggles for experimental features)
     app.use(featureFlagsRouter);
     
-    // Fortune 500 AI Rate Limiter - Apply to AI Streaming routes
-    // CRITICAL: Streaming endpoints are high-cost and must be rate limited
-    app.use('/api/ai', tierRateLimiters.ai);
-    app.use('/api/agent/stream', tierRateLimiters.ai);
-    
     // AI Streaming routes (Agent chat with SSE)
+    // NOTE: Tier limiter is applied INSIDE aiStreamingRouter to avoid affecting other routes
     app.use(aiStreamingRouter);
     
     // Voice/Video WebRTC routes
