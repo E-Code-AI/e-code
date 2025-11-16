@@ -30,16 +30,28 @@ export const reviewStatusEnum = pgEnum('review_status', ['pending', 'approved', 
 export const mentorshipStatusEnum = pgEnum('mentorship_status', ['active', 'completed', 'cancelled']);
 export const challengeStatusEnum = pgEnum('challenge_status', ['draft', 'published', 'archived']);
 export const submissionStatusEnum = pgEnum('submission_status', ['pending', 'accepted', 'rejected']);
+// AI Models - Latest November 2025
 export const aiModelEnum = pgEnum('ai_model', [
-  'gpt-4',
-  'gpt-4-turbo',
-  'gpt-5',
-  'claude-3-opus',
-  'claude-3-sonnet',
-  'claude-3-5-sonnet',
-  'claude-3-haiku',
-  'gemini-pro',
-  'gemini-ultra'
+  // OpenAI (Nov 2025)
+  'gpt-5.1',
+  'gpt-5.1-thinking',
+  'gpt-4.1',
+  'gpt-4o',
+  'o4-mini',
+  // Anthropic (Sept-Oct 2025)
+  'claude-sonnet-4-5-20250929',
+  'claude-opus-4-1-20250805',
+  'claude-haiku-4-5-20251015',
+  // Google Gemini (Nov 2025)
+  'gemini-2.5-pro',
+  'gemini-2.5-flash',
+  // xAI (July-Sept 2025)
+  'grok-4',
+  'grok-4-fast',
+  // Moonshot AI (Nov 2025)
+  'kimi-k2',
+  'kimi-k2-thinking',
+  'kimi-k2-turbo'
 ]);
 export const agentModeEnum = pgEnum('agent_mode', ['plan', 'build']);
 export const buildExecutionStatusEnum = pgEnum('build_execution_status', ['pending', 'running', 'completed', 'failed', 'cancelled']);
@@ -1453,15 +1465,26 @@ export type InsertAgentMessage = z.infer<typeof insertAgentMessageSchema>;
 
 // AI Model Enum Values
 export const AI_MODELS = [
-  'gpt-4',
-  'gpt-4-turbo',
-  'gpt-5',
-  'claude-3-opus',
-  'claude-3-sonnet',
-  'claude-3-5-sonnet',
-  'claude-3-haiku',
-  'gemini-pro',
-  'gemini-ultra'
+  // OpenAI (Nov 2025)
+  'gpt-5.1',
+  'gpt-5.1-thinking',
+  'gpt-4.1',
+  'gpt-4o',
+  'o4-mini',
+  // Anthropic (Sept-Oct 2025)
+  'claude-sonnet-4-5-20250929',
+  'claude-opus-4-1-20250805',
+  'claude-haiku-4-5-20251015',
+  // Google Gemini (Nov 2025)
+  'gemini-2.5-pro',
+  'gemini-2.5-flash',
+  // xAI (July-Sept 2025)
+  'grok-4',
+  'grok-4-fast',
+  // Moonshot AI (Nov 2025)
+  'kimi-k2',
+  'kimi-k2-thinking',
+  'kimi-k2-turbo'
 ] as const;
 export type AiModel = typeof AI_MODELS[number];
 
