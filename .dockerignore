@@ -66,6 +66,13 @@ mobile/
 android/
 ios/
 
+# Development-only directories (CRITICAL - save >2GB)
+dokploy/
+sdk/
+vscode-extension/
+cli/
+github-copilot-extension/
+
 # Source maps (remove to save space)
 **/*.map
 dist/public/*.map
