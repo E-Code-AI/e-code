@@ -7,6 +7,31 @@
 
 ---
 
+## ⚠️ **DEPLOYMENT CONTEXT - READ THIS FIRST**
+
+> **This Docker optimization work is COMPLETE but NOT CURRENTLY USED.**
+> 
+> **Current Deployment:** Replit "Publish" button (Autoscale) ✅
+> - Simple deployment: Click "Publish" → Select "Autoscale" → Done
+> - No Docker build/deployment needed for current production
+> - Replit manages all infrastructure, scaling, health checks
+> 
+> **This Docker Configuration:**
+> - ✅ COMPLETE and ready for use
+> - ✅ PRESERVED for future external deployment
+> - ✅ Optimized to <2 GiB image size
+> - ⚠️ NOT used in current Replit deployment
+> 
+> **When This Docker Work Becomes Active:**
+> - Migrating to AWS, GCP, Azure, or self-hosted
+> - Deploying to Kubernetes clusters
+> - Setting up CI/CD outside Replit
+> - Cost optimization at Fortune 500 scale
+> 
+> **Summary:** Docker config is ready for FUTURE use, Replit Publish for NOW.
+
+---
+
 ## Executive Summary
 
 ✅ **Status:** OPTIMIZATION COMPLETE - Ready for Testing  

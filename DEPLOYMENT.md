@@ -7,6 +7,30 @@
 
 ---
 
+## ⚠️ **IMPORTANT - CURRENT DEPLOYMENT STATUS**
+
+> **This Docker deployment runbook is currently NOT USED.**
+> 
+> **Current Deployment Method:** Replit's built-in "Publish" button ✅
+> - Click "Publish" in Replit → Select "Autoscale" → Done
+> - No Docker needed for current deployment
+> - Replit handles all infrastructure automatically
+> 
+> **This Documentation Is:**
+> - ✅ PRESERVED for future external deployment (K8s, AWS, GCP, Azure)
+> - ✅ READY to use when migrating off Replit
+> - ⚠️ NOT NEEDED for current Replit deployment
+> 
+> **Use This Runbook When:**
+> - Deploying to external infrastructure (not Replit)
+> - Setting up CI/CD pipelines outside Replit
+> - Migrating to Kubernetes/cloud platforms
+> - Testing Docker builds locally
+> 
+> **For Current Deployment:** Just click "Publish" button in Replit interface.
+
+---
+
 ## Table of Contents
 
 1. [Pre-Deployment Checklist](#pre-deployment-checklist)

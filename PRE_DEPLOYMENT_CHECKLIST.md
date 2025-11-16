@@ -6,6 +6,29 @@
 
 ---
 
+## ⚠️ **DEPLOYMENT METHOD CONTEXT**
+
+> **This checklist is for DOCKER deployment (not currently used).**
+> 
+> **Current Deployment:** Replit "Publish" button ✅
+> - No checklist needed - just click "Publish" in Replit
+> - Replit handles everything automatically
+> 
+> **This Checklist Is For:**
+> - Future Docker deployment (K8s, AWS, GCP, Azure)
+> - External infrastructure migration
+> - CI/CD pipeline setup outside Replit
+> 
+> **For Current Replit Deployment:**
+> 1. Click "Publish" button
+> 2. Select "Autoscale"
+> 3. Configure environment secrets
+> 4. Done! ✅
+> 
+> **Use This Checklist When:** Deploying via Docker to external infrastructure.
+
+---
+
 ## ✅ Critical Actions Required BEFORE Docker Build
 
 ### 1. Generate package-lock.json (REQUIRED)
