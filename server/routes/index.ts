@@ -49,6 +49,7 @@ import featureFlagsRouter from "./feature-flags.router";
 import workspaceBootstrapRouter from "./workspace-bootstrap.router";
 import adminMonitoringRouter from "./admin-monitoring.router";
 import { tierRateLimiters } from "../middleware/tier-rate-limiter";
+import { aiUsageTracker } from "../middleware/ai-usage-tracker";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -103,10 +104,10 @@ export class MainRouter {
     // ChatGPT admin routes
     app.use(this.chatgptRouter.getRouter());
     
-    // Fortune 500 AI Rate Limiter - Apply to all AI/Agent routes
-    // Free: 10/min, Pro: 100/min, Enterprise: 1000/min (10x in dev)
-    app.use('/api/agent', tierRateLimiters.ai);
-    app.use('/api/admin/agent', tierRateLimiters.ai);
+    // AI Usage Tracking (Pay-As-You-Go) - Track all AI/Agent requests for billing
+    // No blocking - users pay for what they use via Stripe metered billing
+    app.use('/api/agent', aiUsageTracker);
+    app.use('/api/admin/agent', aiUsageTracker);
     
     // Agent preferences routes (authenticated users) - user-facing preferences
     app.use('/api/agent', createAgentPreferencesRouter(this.storage));
@@ -166,10 +167,10 @@ export class MainRouter {
     // Admin Monitoring routes (Fortune 500 Rate Limit Dashboard)
     app.use('/api/admin/monitoring', adminMonitoringRouter);
     
-    // Fortune 500 AI Rate Limiter - Apply to AI routes
-    // CRITICAL: Apply BEFORE mounting routers to ensure all AI endpoints are protected
-    app.use('/api/ai', tierRateLimiters.ai);
-    app.use('/api/models', tierRateLimiters.ai);
+    // AI Usage Tracking (Pay-As-You-Go) - Track AI routes for billing
+    // CRITICAL: Apply BEFORE mounting routers to ensure all AI endpoints are tracked
+    app.use('/api/ai', aiUsageTracker);
+    app.use('/api/models', aiUsageTracker);
     
     // AI routes (REST endpoints for chat, completions, etc.)
     app.use('/api', aiRouter);
