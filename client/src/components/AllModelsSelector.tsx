@@ -44,32 +44,130 @@ export function AllModelsSelector() {
     retry: false
   });
 
-  // Combine all models
+  // Combine all models - LATEST NOVEMBER 2025
   const allModels = [
     ...(openaiModels?.models || []),
     ...(opensourceData?.models || []),
-    // Add Claude models
+    
+    // OpenAI - Latest Models (Nov 12-14, 2025)
     {
-      id: 'claude-3-5-sonnet-20241022',
-      name: 'Claude 3.5 Sonnet',
-      description: 'Most intelligent model with advanced reasoning and coding',
+      id: 'gpt-5.1',
+      name: 'GPT-5.1 Instant',
+      description: 'Latest flagship - warmer, more intelligent with adaptive reasoning (Nov 12, 2025)',
+      provider: 'OpenAI',
+      contextWindow: 400000,
+      capabilities: ['Chat', 'Code', 'Reasoning', 'Tools'],
+      pricing: { input: 8, output: 24, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gpt-5.1-thinking',
+      name: 'GPT-5.1 Thinking',
+      description: 'Extended reasoning - 50% faster than GPT-5 with fewer tokens (Nov 12, 2025)',
+      provider: 'OpenAI',
+      contextWindow: 400000,
+      capabilities: ['Chat', 'Code', 'Deep Reasoning', 'Math'],
+      pricing: { input: 12, output: 36, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gpt-4.1',
+      name: 'GPT-4.1',
+      description: 'Smartest non-reasoning multimodal LLM - Swiss Army knife',
+      provider: 'OpenAI',
+      contextWindow: 128000,
+      capabilities: ['Chat', 'Code', 'Vision', 'Tools'],
+      pricing: { input: 6, output: 18, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'o4-mini',
+      name: 'o4 Mini',
+      description: 'Budget-friendly reasoning for math, coding, visual tasks',
+      provider: 'OpenAI',
+      contextWindow: 128000,
+      capabilities: ['Reasoning', 'Code', 'Math', 'Vision'],
+      pricing: { input: 2, output: 6, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    
+    // Anthropic - Latest Models (Sept-Oct 2025)
+    {
+      id: 'claude-sonnet-4-5-20250929',
+      name: 'Claude Sonnet 4.5',
+      description: 'Best coding model in the world - strongest at agents & computer use (Sept 29, 2025)',
       provider: 'Anthropic',
       contextWindow: 200000,
-      capabilities: ['Chat', 'Code', 'Analysis', 'Vision'],
+      capabilities: ['Chat', 'Code', 'Agents', 'Computer Use'],
       pricing: { input: 3, output: 15, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
-      id: 'claude-3-5-sonnet-20241022-legacy',
-      name: 'Claude 3 Opus',
-      description: 'Powerful model for complex tasks',
+      id: 'claude-opus-4-1-20250805',
+      name: 'Claude Opus 4.1',
+      description: 'Upgraded for agentic tasks - 74.5% on SWE-bench (Aug 5, 2025)',
       provider: 'Anthropic',
       contextWindow: 200000,
-      capabilities: ['Chat', 'Code', 'Analysis'],
+      capabilities: ['Chat', 'Code', 'Debugging', 'Agents'],
       pricing: { input: 15, output: 75, currency: 'USD', unit: '1M tokens' },
       available: true
     },
-    // Add Moonshot AI Kimi-K2 models (10-100× cheaper than GPT-4)
+    {
+      id: 'claude-haiku-4-5-20251015',
+      name: 'Claude Haiku 4.5',
+      description: 'Fastest - matches Sonnet 4 on coding at 1/3 cost (Oct 15, 2025)',
+      provider: 'Anthropic',
+      contextWindow: 200000,
+      capabilities: ['Chat', 'Code', 'Fast Response'],
+      pricing: { input: 1, output: 5, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    
+    // Google Gemini - Latest Models (Nov 2025)
+    {
+      id: 'gemini-2.5-pro',
+      name: 'Gemini 2.5 Pro',
+      description: 'Stable with adaptive thinking - 2M token context coming soon (Nov 2025)',
+      provider: 'Google',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Code', 'Adaptive Thinking', 'Multimodal'],
+      pricing: { input: 1.25, output: 5, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gemini-2.5-flash',
+      name: 'Gemini 2.5 Flash',
+      description: 'Hybrid reasoning - thinks before it speaks with low latency (Nov 2025)',
+      provider: 'Google',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Code', 'Fast Reasoning', 'Audio'],
+      pricing: { input: 0.075, output: 0.3, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    
+    // xAI - Latest Models (July-Sept 2025)
+    {
+      id: 'grok-4',
+      name: 'Grok 4',
+      description: 'Current flagship - post-graduate reasoning with 256K context (July 2025)',
+      provider: 'xAI',
+      contextWindow: 256000,
+      capabilities: ['Chat', 'Code', 'Reasoning', 'Live Search'],
+      pricing: { input: 2, output: 6, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'grok-4-fast',
+      name: 'Grok 4 Fast',
+      description: 'Enterprise - 40% fewer tokens, 2M context, 64× cheaper than o3 (Sept 2025)',
+      provider: 'xAI',
+      contextWindow: 2000000,
+      capabilities: ['Chat', 'Code', 'Fast Response', 'Enterprise'],
+      pricing: { input: 0.5, output: 1.5, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    
+    // Moonshot AI Kimi-K2 models (10-100× cheaper than GPT-4)
     {
       id: 'kimi-k2',
       name: 'Kimi K2',
@@ -119,7 +217,7 @@ export function AllModelsSelector() {
       let endpoint = '';
       let payload = {};
       
-      if (selectedModel.includes('gpt') || selectedModel.includes('o1')) {
+      if (selectedModel.includes('gpt') || selectedModel.includes('o1') || selectedModel.includes('o4')) {
         endpoint = '/api/openai/generate';
         payload = {
           model: selectedModel,
@@ -137,6 +235,24 @@ export function AllModelsSelector() {
         };
       } else if (selectedModel.includes('kimi')) {
         // Moonshot AI Kimi models
+        endpoint = '/api/ai/generate';
+        payload = {
+          model: selectedModel,
+          prompt: testPrompt,
+          temperature: 0.7,
+          max_tokens: 500
+        };
+      } else if (selectedModel.includes('gemini')) {
+        // Google Gemini models
+        endpoint = '/api/ai/generate';
+        payload = {
+          model: selectedModel,
+          prompt: testPrompt,
+          temperature: 0.7,
+          max_tokens: 500
+        };
+      } else if (selectedModel.includes('grok')) {
+        // xAI Grok models
         endpoint = '/api/ai/generate';
         payload = {
           model: selectedModel,
