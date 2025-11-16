@@ -48,6 +48,7 @@ import aiModelsRouter from "./ai-models.router";
 import featureFlagsRouter from "./feature-flags.router";
 import workspaceBootstrapRouter from "./workspace-bootstrap.router";
 import adminMonitoringRouter from "./admin-monitoring.router";
+import { tierRateLimiters } from "../middleware/tier-rate-limiter";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -101,6 +102,11 @@ export class MainRouter {
     
     // ChatGPT admin routes
     app.use(this.chatgptRouter.getRouter());
+    
+    // Fortune 500 AI Rate Limiter - Apply to all AI/Agent routes
+    // Free: 10/min, Pro: 100/min, Enterprise: 1000/min (10x in dev)
+    app.use('/api/agent', tierRateLimiters.ai);
+    app.use('/api/admin/agent', tierRateLimiters.ai);
     
     // Agent preferences routes (authenticated users) - user-facing preferences
     app.use('/api/agent', createAgentPreferencesRouter(this.storage));
@@ -160,6 +166,10 @@ export class MainRouter {
     // Admin Monitoring routes (Fortune 500 Rate Limit Dashboard)
     app.use('/api/admin/monitoring', adminMonitoringRouter);
     
+    // Fortune 500 AI Rate Limiter - Apply to AI routes
+    app.use('/api/ai', tierRateLimiters.ai);
+    app.use('/api/models', tierRateLimiters.ai);
+    
     // AI routes
     app.use('/api', aiRouter);
     
@@ -168,6 +178,11 @@ export class MainRouter {
     
     // Feature Flags routes (runtime toggles for experimental features)
     app.use(featureFlagsRouter);
+    
+    // Fortune 500 AI Rate Limiter - Apply to AI Streaming routes
+    // CRITICAL: Streaming endpoints are high-cost and must be rate limited
+    app.use('/api/ai', tierRateLimiters.ai);
+    app.use('/api/agent/stream', tierRateLimiters.ai);
     
     // AI Streaming routes (Agent chat with SSE)
     app.use(aiStreamingRouter);
