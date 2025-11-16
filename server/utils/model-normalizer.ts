@@ -5,6 +5,10 @@
  * CRITICAL: Prevents DB insert failures that cause revenue loss
  */
 
+import { createLogger } from './logger';
+
+const logger = createLogger('model-normalizer');
+
 // Comprehensive model mapping: alias → official enum value
 const MODEL_NORMALIZATION_MAP: Record<string, string> = {
   // OpenAI aliases & legacy names
@@ -45,12 +49,19 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
  * @returns Valid aiModelEnum value guaranteed to pass DB insert
  */
 export function normalizeModelName(modelName: string | undefined, provider: string): string {
-  // Step 1: Try exact match in normalization map
-  if (modelName && MODEL_NORMALIZATION_MAP[modelName]) {
-    return MODEL_NORMALIZATION_MAP[modelName];
+  // Step 1: Handle undefined/null model names
+  if (!modelName) {
+    logger.warn(`⚠️ Model name is undefined/null, using provider default for ${provider}`);
   }
   
-  // Step 2: Try exact match (already valid enum value)
+  // Step 2: Try exact match in normalization map (aliases)
+  if (modelName && MODEL_NORMALIZATION_MAP[modelName]) {
+    const normalized = MODEL_NORMALIZATION_MAP[modelName];
+    logger.debug(`Model alias normalized: "${modelName}" → "${normalized}"`);
+    return normalized;
+  }
+  
+  // Step 3: Try exact match (already valid enum value)
   const validEnumValues = [
     'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4o', 'o3', 'o4-mini',
     'claude-sonnet-4-5-20250929', 'claude-opus-4-1-20250805', 'claude-haiku-4-5-20251015',
@@ -63,7 +74,14 @@ export function normalizeModelName(modelName: string | undefined, provider: stri
     return modelName;
   }
   
-  // Step 3: Provider-specific fallback defaults
+  // Step 4: ⚠️ CRITICAL - Unknown model detected! Log for monitoring
+  if (modelName) {
+    logger.warn(`⚠️ UNKNOWN MODEL DETECTED: "${modelName}" (provider: ${provider}) - Using fallback pricing!`);
+    logger.warn(`ACTION REQUIRED: Add "${modelName}" to MODEL_NORMALIZATION_MAP in server/utils/model-normalizer.ts`);
+    // TODO: Send to Slack/Sentry for immediate alerting
+  }
+  
+  // Step 5: Provider-specific fallback defaults
   const providerDefaults: Record<string, string> = {
     'openai': 'gpt-4o',
     'anthropic': 'claude-sonnet-4-5-20250929',
@@ -75,9 +93,12 @@ export function normalizeModelName(modelName: string | undefined, provider: stri
   
   const normalizedProvider = provider.toLowerCase();
   if (providerDefaults[normalizedProvider]) {
-    return providerDefaults[normalizedProvider];
+    const fallback = providerDefaults[normalizedProvider];
+    logger.info(`Using provider fallback: ${provider} → ${fallback}`);
+    return fallback;
   }
   
-  // Step 4: Ultimate fallback (OpenAI GPT-4o - most common)
+  // Step 6: Ultimate fallback (OpenAI GPT-4o - most common)
+  logger.warn(`⚠️ Unknown provider "${provider}", using ultimate fallback: gpt-4o`);
   return 'gpt-4o';
 }

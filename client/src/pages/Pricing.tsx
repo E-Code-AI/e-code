@@ -64,7 +64,7 @@ export default function Pricing() {
 
   const tiers: PricingTier[] = [
     {
-      name: 'Starter',
+      name: 'Free',
       description: 'Perfect for learning and personal projects',
       monthlyPrice: 0,
       yearlyPrice: 0,
@@ -80,21 +80,21 @@ export default function Pricing() {
         { text: 'Basic templates', included: true },
         { text: 'GitHub integration', included: true },
         { text: 'SSL certificates', included: true },
-        { text: 'AI assistance (100 requests/month)', included: true },
+        { text: '$0 monthly AI credits', included: true, tooltip: '100 AI requests/month included - Pay only for what you use beyond that' },
+        { text: 'Pay-as-you-go AI pricing', included: true, highlight: true },
         { text: 'Private projects', included: false },
         { text: 'Custom domains', included: false },
         { text: 'Team collaboration', included: false },
-        { text: 'Priority support', included: false },
-        { text: 'Advanced AI features', included: false }
+        { text: 'Priority support', included: false }
       ],
       cta: 'Start Free',
       ctaVariant: 'outline'
     },
     {
-      name: 'Professional',
+      name: 'Pro',
       description: 'For professional developers and small teams',
-      monthlyPrice: 29,
-      yearlyPrice: 25,
+      monthlyPrice: 20,
+      yearlyPrice: 20,
       popular: true,
       icon: <Star className="h-6 w-6" />,
       gradient: 'from-violet-600 to-fuchsia-600',
@@ -108,11 +108,12 @@ export default function Pricing() {
         { text: 'All premium templates', included: true },
         { text: 'Custom domains (5 included)', included: true, highlight: true },
         { text: 'Team collaboration (5 members)', included: true },
+        { text: '$25/month AI credits', included: true, highlight: true, tooltip: 'Monthly credits for AI, deployments, storage, databases' },
+        { text: 'Pay-as-you-go beyond credits', included: true, tooltip: 'Only pay for AI usage beyond your monthly credit allowance' },
         { text: 'AI Agent - Unlimited apps', included: true, highlight: true, tooltip: 'Build unlimited apps with our AI Agent' },
         { text: 'Advanced AI code completion', included: true },
         { text: 'Automated deployments', included: true },
         { text: 'Database hosting', included: true },
-        { text: 'Edge deployment', included: true },
         { text: 'Analytics dashboard', included: true }
       ],
       cta: 'Start Pro Trial',
@@ -147,6 +148,35 @@ export default function Pricing() {
     },
     {
       name: 'Enterprise',
+      description: 'For large teams and Fortune 500 companies',
+      monthlyPrice: 500,
+      yearlyPrice: 500,
+      enterprise: true,
+      icon: <Building2 className="h-6 w-6" />,
+      gradient: 'from-amber-600 to-orange-600',
+      features: [
+        { text: 'Custom vCPUs + RAM', included: true, highlight: true },
+        { text: 'Unlimited storage', included: true, highlight: true },
+        { text: 'Unlimited bandwidth', included: true },
+        { text: 'Unlimited projects & teams', included: true, highlight: true },
+        { text: 'Dedicated account manager', included: true, highlight: true },
+        { text: '99.9% SLA guarantee', included: true },
+        { text: 'Custom domain (unlimited)', included: true },
+        { text: 'Advanced security & compliance', included: true },
+        { text: 'SSO/SAML authentication', included: true, highlight: true },
+        { text: 'Audit logs & monitoring', included: true },
+        { text: 'Private cloud deployment', included: true },
+        { text: '$100/month AI credits per seat', included: true, highlight: true, tooltip: 'Enterprise-grade AI credits pool for your organization' },
+        { text: 'Volume discounts on overage', included: true, tooltip: 'Negotiated rates for AI usage beyond monthly credits' },
+        { text: 'Custom AI model training', included: true, highlight: true },
+        { text: 'White-label options', included: true },
+        { text: 'API access & custom integrations', included: true }
+      ],
+      cta: 'Contact Sales',
+      ctaVariant: 'default'
+    },
+    {
+      name: 'Enterprise-Legacy',
       description: 'Custom solutions for large organizations',
       monthlyPrice: -1,
       yearlyPrice: -1,

@@ -247,6 +247,39 @@ You are in BUILD MODE. You can execute actions like creating files, running comm
   } catch (error: any) {
     logger.error('Streaming chat error:', error);
     
+    // ✅ CRITICAL: Track failed AI requests for billing (error = still costs money!)
+    if (userId) {
+      try {
+        const user = (req as any).user;
+        const requestDurationMs = Date.now() - requestStartTime;
+        const normalizedModel = normalizeModelName(model, provider);
+        const { trackAiUsageManually } = await import('../middleware/ai-usage-tracker');
+        
+        await trackAiUsageManually({
+          userId,
+          endpoint: req.path,
+          model: normalizedModel,
+          provider,
+          tokensInput: tokensInput || 0, // Fallback to 0 if error before streaming
+          tokensOutput: 0,
+          userTier: user?.subscriptionTier || 'free',
+          subscriptionId: user?.stripeSubscriptionId,
+          requestDurationMs,
+          status: 'error',
+          errorMessage: error.message || 'Unknown streaming error',
+          metadata: {
+            conversationId,
+            projectId,
+            agentMode: agentMode || 'build',
+            originalModel: model,
+            errorCode: error.code || 'STREAM_ERROR',
+          },
+        });
+      } catch (trackingError) {
+        logger.error('Failed to track error AI usage', { trackingError, originalError: error });
+      }
+    }
+    
     // Send error event
     sendSSE(res, 'error', {
       message: error.message || 'An error occurred during streaming',
