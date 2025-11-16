@@ -30,6 +30,7 @@ export const reviewStatusEnum = pgEnum('review_status', ['pending', 'approved', 
 export const mentorshipStatusEnum = pgEnum('mentorship_status', ['active', 'completed', 'cancelled']);
 export const challengeStatusEnum = pgEnum('challenge_status', ['draft', 'published', 'archived']);
 export const submissionStatusEnum = pgEnum('submission_status', ['pending', 'accepted', 'rejected']);
+export const subscriptionTierEnum = pgEnum('subscription_tier', ['free', 'pro', 'enterprise']);
 // AI Models - VRAIS modèles November 2025
 export const aiModelEnum = pgEnum('ai_model', [
   // OpenAI (vrais selon platform.openai.com/docs/models)
@@ -95,6 +96,7 @@ export const users = pgTable("users", {
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   stripePriceId: varchar("stripe_price_id"),
   subscriptionStatus: varchar("subscription_status"),
+  subscriptionTier: subscriptionTierEnum("subscription_tier").default('free'),
   subscriptionCurrentPeriodEnd: timestamp("subscription_current_period_end"),
   // Security fields
   twoFactorEnabled: boolean("two_factor_enabled").default(false),
@@ -3041,4 +3043,28 @@ export const insertSystemSettingSchema = createInsertSchema(systemSettings).omit
 
 export type SystemSetting = typeof systemSettings.$inferSelect;
 export type InsertSystemSetting = z.infer<typeof insertSystemSettingSchema>;
+
+// Rate Limit Violations Tracking (Fortune 500 Monitoring)
+export const rateLimitViolations = pgTable("rate_limit_violations", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'set null' }),
+  ip: varchar("ip").notNull(),
+  endpoint: text("endpoint").notNull(),
+  method: varchar("method", { length: 10 }).notNull(),
+  userTier: subscriptionTierEnum("user_tier"),
+  limitType: varchar("limit_type").notNull(), // 'api', 'ai', 'auth', etc.
+  attemptedRequests: integer("attempted_requests").notNull(),
+  allowedLimit: integer("allowed_limit").notNull(),
+  blockedAt: timestamp("blocked_at").defaultNow(),
+  userAgent: text("user_agent"),
+  metadata: jsonb("metadata").$type<Record<string, any>>(),
+});
+
+export const insertRateLimitViolationSchema = createInsertSchema(rateLimitViolations).omit({
+  id: true,
+  blockedAt: true,
+});
+
+export type RateLimitViolation = typeof rateLimitViolations.$inferSelect;
+export type InsertRateLimitViolation = z.infer<typeof insertRateLimitViolationSchema>;
 
