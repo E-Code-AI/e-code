@@ -21,6 +21,9 @@ The frontend uses React 18 and TypeScript with Vite, featuring TanStack Query fo
 ### Backend Architecture
 The backend is built with Node.js and Express.js in TypeScript, utilizing Drizzle ORM for PostgreSQL and Passport.js for authentication. It follows a RESTful API design with a service-oriented approach, including specialized services for AI orchestration, autonomous engine logic, file system operations, and Git integration. Security features include CSRF protection, input sanitization, multi-tier rate limiting, and session-based authentication. Real-time services for terminal, collaborative editing, and build logs are powered by WebSockets.
 
+**Terminal Architecture:**
+Current implementation uses local bash terminal sessions (`server/terminal.ts`) for Replit Cloud Run compatibility. Each terminal WebSocket connection spawns a bash process with project-specific working directory. Docker-based isolated terminal implementation exists (`server/terminal/real-terminal.ts`) but is NOT usable on Replit Cloud Run as the platform does not expose a Docker daemon. For true workspace isolation in production, an alternative approach is needed (e.g., Replit's native workspace API, VM pools, or external container orchestration service).
+
 **AI Optimization Infrastructure:**
 This includes a Task Classifier Service, Circuit Breaker Service, Priority Queue Service, Intelligent Caching Service, Observability Service, and Slack Alert Service for robust AI management and monitoring.
 

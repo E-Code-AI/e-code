@@ -124,8 +124,12 @@ app.get('/api/cors-health', async (_req, res) => {
 
   try {
     // Setup Terminal WebSocket server for real-time terminal/console streaming
+    // NOTE: Docker-based terminal (server/terminal/real-terminal.ts) exists but NOT usable on Replit Cloud Run
+    // Replit Cloud Run does not expose Docker daemon, so containers cannot be created
+    // Using local bash terminal for Replit deployment
     const { setupTerminalWebsocket } = await import("./terminal");
     setupTerminalWebsocket(httpServer);
+    console.log('[Terminal] Using local bash terminal (Replit Cloud Run compatible)');
   } catch (error) {
     console.error('[WORKING SERVER] Failed to setup terminal WebSocket:', error);
   }
