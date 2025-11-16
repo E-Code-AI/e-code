@@ -78,6 +78,133 @@ A centralized model catalog (`shared/aiModels.ts`) contains metadata for 18 prod
 -   **Custom Email/Password**
 
 ### Deployment Targets
--   **Replit Cloud Run**
--   **Docker**
--   **PM2**
+-   **Replit Cloud Run** (CURRENTLY USED - Default)
+-   **Docker** (Available for future external deployment)
+-   **PM2** (Process management)
+
+---
+
+## 🚀 Current Deployment Strategy (November 16, 2025)
+
+### ✅ **ACTIVE DEPLOYMENT: Replit Publish Button**
+
+**Current Method:**
+- Using Replit's built-in "Publish" button for all deployments
+- Type: **Autoscale** (recommended for production traffic)
+- Replit handles ALL infrastructure automatically:
+  - Environment configuration
+  - Package installation
+  - Scaling
+  - Health checks
+  - Monitoring
+  - Load balancing
+
+**How to Deploy:**
+1. Click "Publish" button in Replit interface
+2. Configure environment secrets (DATABASE_URL, API keys)
+3. Select "Autoscale" deployment type
+4. Wait 30-60 seconds for deployment
+5. Application is live on Replit infrastructure
+
+**Why This Method:**
+- ✅ Zero DevOps overhead
+- ✅ Automatic scaling and optimization
+- ✅ Integrated monitoring and health checks
+- ✅ Fast deployment (<1 minute)
+- ✅ No Docker/Kubernetes knowledge required
+
+---
+
+### 📦 **DOCKER CONFIGURATION: Preserved for Future Use**
+
+**Status:** ⚠️ **NOT CURRENTLY USED - KEPT FOR FUTURE MIGRATION**
+
+**Docker Files Present (DO NOT DELETE):**
+- `Dockerfile` - Optimized multi-stage build (<2 GiB target)
+- `.dockerignore` - Excludes dev directories (saves ~2-3 GB)
+- `DEPLOYMENT.md` (579 lines) - Complete Docker deployment runbook
+- `PRE_DEPLOYMENT_CHECKLIST.md` - Docker deployment validation
+- `DOCKER_OPTIMIZATION_AUDIT.md` - Technical audit of optimizations
+- `EXECUTIVE_SUMMARY.md` - Executive overview
+
+**Docker Optimizations Implemented:**
+1. Multi-stage Alpine Linux build
+2. NODE_OPTIONS=--max-old-space-size=4096 (prevents heap overflow)
+3. Dev directory exclusions (dokploy/, sdk/, cli/, vscode-extension/, github-copilot-extension/)
+4. Reproducible builds (npm ci + package-lock.json)
+5. Production-only dependencies in runtime stage
+6. Kubernetes-ready health probes
+
+**Expected Docker Image Size:** 1.5-1.8 GiB (vs >8 GiB unoptimized)
+
+**When to Use Docker Configuration:**
+- 🏢 Migrating to external infrastructure (AWS, GCP, Azure)
+- 🔧 Deploying to Kubernetes clusters
+- 💰 Cost optimization at Fortune 500 scale
+- 🔒 Compliance requirements (dedicated infrastructure)
+- 🌍 Multi-cloud or hybrid deployment
+- 🚀 CI/CD pipeline integration (external to Replit)
+
+**Docker Quick Start (when needed):**
+```bash
+# 1. Generate lockfile (required once)
+npm install --package-lock-only
+
+# 2. Build Docker image
+docker build --no-cache -t e-code-platform:v1 .
+
+# 3. Verify size (<2 GiB)
+docker images e-code-platform:v1
+
+# 4. Test locally
+docker run -d -p 5000:5000 --env-file .env e-code-platform:v1
+
+# 5. See DEPLOYMENT.md for full production deployment
+```
+
+---
+
+## 📝 **Important Notes for Future AI Agents / Developers**
+
+### **CRITICAL CONTEXT - READ THIS FIRST:**
+
+1. **Current Deployment = Replit Publish Button** ✅
+   - We use Replit's infrastructure for now
+   - Simple, fast, no Docker needed
+   - Click "Publish" → Select "Autoscale" → Done
+
+2. **Docker Configuration = Future Insurance** 📦
+   - All Docker files are READY but NOT USED currently
+   - DO NOT DELETE Docker files - they're for future portability
+   - DO NOT try to use Docker unless explicitly migrating off Replit
+
+3. **When to Switch to Docker:**
+   - Only when migrating to external infrastructure
+   - Only when Replit Publish no longer meets requirements
+   - Only when explicitly decided by senior engineer
+
+4. **If Confused:**
+   - Default to Replit Publish button for deployment
+   - Docker is backup plan, not current plan
+   - See DEPLOYMENT.md only if deploying externally
+
+**Summary:** 
+- **NOW:** Replit Publish button 🟢
+- **LATER:** Docker configuration 🔵 (ready when needed)
+- **Never:** Delete Docker files 🔴
+
+---
+
+## 🔗 Additional Documentation References
+
+**Deployment Documentation:**
+- `DEPLOYMENT.md` - Docker deployment runbook (for future external deployment)
+- `PRE_DEPLOYMENT_CHECKLIST.md` - Docker validation steps
+- `DOCKER_OPTIMIZATION_AUDIT.md` - Technical optimization details
+- `EXECUTIVE_SUMMARY.md` - Executive overview of Docker optimizations
+
+**When to Read These:**
+- Planning migration off Replit
+- Deploying to Kubernetes/cloud
+- Understanding infrastructure options
+- Compliance/audit requirements
