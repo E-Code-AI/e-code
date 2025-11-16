@@ -85,7 +85,12 @@ export function aiUsageTracker(req: Request, res: Response, next: NextFunction) 
  * Extract provider from model name
  */
 function extractProvider(model: string | undefined): string {
-  if (!model) return 'unknown';
+  // CRITICAL FIX: Validate model is a string before calling .startsWith()
+  // Bug: body.model could be an object/number, causing "TypeError: model.startsWith is not a function"
+  if (!model || typeof model !== 'string') {
+    logger.debug(`Invalid model type (expected string, got ${typeof model}):`, model);
+    return 'unknown';
+  }
   
   if (model.startsWith('gpt-') || model.startsWith('o3') || model.startsWith('o4')) return 'openai';
   if (model.startsWith('claude-')) return 'anthropic';
