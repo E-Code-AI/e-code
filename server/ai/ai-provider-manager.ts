@@ -23,52 +23,78 @@ export interface AIModel {
  * Fortune 500-grade model catalog
  */
 export const AI_MODELS: AIModel[] = [
-  // OpenAI Models - LATEST NOVEMBER 2025 (Released Nov 12-14, 2025)
-  // Source: https://platform.openai.com/docs/models
+  // OpenAI Models - VRAIS modèles selon https://platform.openai.com/docs/models
   {
     id: 'gpt-5.1',
-    name: 'GPT-5.1 Instant',
+    name: 'GPT-5.1',
     provider: 'openai',
-    description: 'Latest flagship - warmer, more intelligent with adaptive reasoning (Nov 12, 2025)',
+    description: 'Current flagship - adaptive reasoning with apply_patch & shell tools (Nov 12, 2025)',
     maxTokens: 400000,
     supportsStreaming: true,
-    costPer1kTokens: 0.008
+    costPer1kTokens: 0.005
   },
   {
-    id: 'gpt-5.1-thinking',
-    name: 'GPT-5.1 Thinking',
+    id: 'gpt-5',
+    name: 'GPT-5',
     provider: 'openai',
-    description: 'Extended reasoning for complex problems - 50% faster than GPT-5 (Nov 12, 2025)',
+    description: 'Previous flagship - legacy but available (Aug 2025)',
     maxTokens: 400000,
     supportsStreaming: true,
-    costPer1kTokens: 0.012
+    costPer1kTokens: 0.005
+  },
+  {
+    id: 'gpt-5-mini',
+    name: 'GPT-5 Mini',
+    provider: 'openai',
+    description: 'Cost-optimized reasoning - balances speed, cost, capability',
+    maxTokens: 400000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.001
+  },
+  {
+    id: 'gpt-5-nano',
+    name: 'GPT-5 Nano',
+    provider: 'openai',
+    description: 'High-throughput for simple tasks - most affordable',
+    maxTokens: 400000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0005
   },
   {
     id: 'gpt-4.1',
     name: 'GPT-4.1',
     provider: 'openai',
-    description: 'Smartest non-reasoning multimodal LLM - Swiss Army knife for all tasks',
-    maxTokens: 128000,
+    description: 'Non-reasoning multimodal LLM - 1M context window',
+    maxTokens: 1000000,
     supportsStreaming: true,
-    costPer1kTokens: 0.006
+    costPer1kTokens: 0.0025
   },
   {
     id: 'gpt-4o',
     name: 'GPT-4o',
     provider: 'openai',
-    description: 'Multimodal model with vision - updated to June 2024 knowledge',
+    description: 'Multimodal flagship - text, vision, audio',
     maxTokens: 128000,
     supportsStreaming: true,
-    costPer1kTokens: 0.005
+    costPer1kTokens: 0.0025
+  },
+  {
+    id: 'o3',
+    name: 'o3',
+    provider: 'openai',
+    description: 'Advanced reasoning for complex problem solving',
+    maxTokens: 128000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.015
   },
   {
     id: 'o4-mini',
     name: 'o4 Mini',
     provider: 'openai',
-    description: 'Budget-friendly reasoning model for math, coding, visual tasks',
+    description: 'Budget-friendly reasoning for STEM tasks',
     maxTokens: 128000,
     supportsStreaming: true,
-    costPer1kTokens: 0.002
+    costPer1kTokens: 0.003
   },
   
   // Anthropic Models - LATEST NOVEMBER 2025
