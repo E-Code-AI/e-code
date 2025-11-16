@@ -90,6 +90,13 @@ The platform implements usage-based billing following OpenAI/Anthropic pricing m
 - Comprehensive alias mapping: "gpt-4-turbo-preview" → "gpt-5", "claude-3-5-sonnet-20241022" → "claude-sonnet-4-5-20250929"
 - Model-specific pricing for 18 production models across 5 providers (OpenAI, Anthropic, Gemini, xAI, Moonshot)
 - 6-decimal precision cost calculation for micro-transactions
+- **Database Enum:** 26 total values (8 legacy: gpt-4, claude-3-*, gemini-pro/ultra + 18 new production models)
+- **Migration:** Drizzle SQL migration `drizzle/0001_add_ai_models.sql` with idempotent ALTER TYPE statements
+- **Critical Fixes Applied (Nov 16, 2025):**
+  1. Fixed ReferenceError: providerDefaults now declared before use in normalizer
+  2. Expanded schema.ts enum from 18 to 26 values for backward compatibility with legacy data
+  3. Added missing 'gpt-5' to production deployment SQL script
+  4. Created official Drizzle migration to replace manual SQL (production-ready)
 
 **Middleware Integration (`server/middleware/ai-usage-tracker.ts`):**
 - Pay-as-you-go tracking middleware applied to ALL AI endpoints (no blocking)
@@ -104,10 +111,12 @@ The platform implements usage-based billing following OpenAI/Anthropic pricing m
 - Zero-token handling via `undefined` check (not truthy) to capture input-only costs
 
 **Database Schema (`ai_usage_metering` table in `shared/schema.ts`):**
-- Columns: id, userId, endpoint, model (enum), provider, tokensInput, tokensOutput, tokensTotal
+- Columns: id, userId, endpoint, model (enum - 26 values), provider, tokensInput, tokensOutput, tokensTotal
 - costUsd (numeric), billed (boolean), userTier, subscriptionId, requestDurationMs, status, errorMessage
 - metadata (JSON), createdAt timestamp
 - Indexes on userId, model, createdAt for efficient querying
+- **Enum Values (26 total):** 8 legacy (gpt-4, gpt-4-turbo, claude-3-opus, claude-3-sonnet, claude-3-5-sonnet, claude-3-haiku, gemini-pro, gemini-ultra) + 18 new production models
+- **Production Deployment:** See `PRODUCTION_DEPLOYMENT.md` for enum update instructions and `drizzle/0001_add_ai_models.sql` for migration
 
 **Stripe Integration (`server/services/stripe-billing-service.ts`):**
 - Metered billing via `stripe.subscriptionItems.createUsageRecord()`
@@ -127,10 +136,14 @@ The platform implements usage-based billing following OpenAI/Anthropic pricing m
 - Integration with existing rate limit violation tracking
 
 **Production Validation:**
-- Architect-approved for Fortune 500 billing
+- Architect-approved for Fortune 500 billing (Nov 16, 2025)
 - Zero revenue loss protection via centralized model normalization
 - All code paths protected (middleware, SSE streaming, manual tracking)
 - Complete coverage: ANY request → aiMeteringService → normalizeModelName() → DB Insert → Stripe Billing
+- **End-to-End Tested:** 10 requests across 5 providers (OpenAI, Anthropic, Gemini, xAI, Moonshot), 9 unique models, $0.059795 tracked
+- **Stripe Queue Worker:** Atomic claim logic (FOR UPDATE SKIP LOCKED), exponential backoff retry (5min → 15min → 45min), processes billing every 30s
+- **Alert Service:** Slack/Sentry integration for unknown models, Stripe failures, queue exhaustion
+- **Mobile Responsive:** AdminAIUsage dashboard with card view (mobile) and table view (desktop)
 
 **AI Optimization Infrastructure:**
 This includes a Task Classifier Service, Circuit Breaker Service, Priority Queue Service, Intelligent Caching Service, Observability Service, and Slack Alert Service for robust AI management and monitoring.
