@@ -158,16 +158,18 @@ Centralized model catalog in `shared/aiModels.ts` with complete metadata for 18 
 - No package.json mutation (previous optimize-package.js approach removed for safety)
 - Relies on `.dockerignore` to exclude large dev directories (~2-3 GB)
 - Multi-stage build separates build deps from runtime deps
-- Runtime stage uses `npm install --only=production` for minimal footprint
+- Runtime stage uses `npm ci --only=production` for minimal footprint
+- **Reproducible builds:** package-lock.json included for Fortune 500-grade determinism
 
 **Estimated Savings:** ~2-3 GB from directory exclusions + ~200-500 MB from production-only node_modules
 
 ### 3. Multi-Stage Build Optimization
-- **Builder stage:** Installs ALL dependencies, builds application (Vite + esbuild)
-- **Runtime stage:** Minimal alpine image with ONLY production dependencies and built artifacts
+- **Builder stage:** `npm ci` installs ALL dependencies from package-lock.json, builds application (Vite + esbuild)
+- **Runtime stage:** Minimal alpine image with `npm ci --only=production` for exact production dependencies
 - npm cache cleaned after each install (`npm cache clean --force`)
 - Selective source copying (only `client/`, `server/`, `shared/`, `types/`)
 - .dockerignore ensures large dev directories never enter the build context
+- **Determinism:** Using `npm ci` instead of `npm install` guarantees identical builds across environments
 
 ### 4. TypeScript Compilation
 - Excluded from compilation: `mobile/`, `dokploy/`, `sdk/`, `cli/`, `vscode-extension/`, `github-copilot-extension/`, `.cache/`, `coverage/`, `test/**`, `tests/**`
