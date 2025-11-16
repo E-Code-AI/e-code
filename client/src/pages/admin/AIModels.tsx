@@ -17,9 +17,9 @@ export default function AIModels() {
   });
 
   // Calculate totals
-  const totalModels = 2 + 4 + 9; // Anthropic + OpenAI + Open-source
-  const activeModels = 15; // All models are active
-  const providers = 7; // OpenAI, Anthropic, Together, Replicate, Hugging Face, Groq, Anyscale
+  const totalModels = 2 + 4 + 9 + 3; // Anthropic + OpenAI + Open-source + Moonshot
+  const activeModels = 18; // All models are active
+  const providers = 8; // OpenAI, Anthropic, Together, Replicate, Hugging Face, Groq, Anyscale, Moonshot
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -135,6 +135,11 @@ export default function AIModels() {
                   <CheckCircle className="h-4 w-4 text-green-500" />
                   <span className="text-sm font-medium">Anyscale</span>
                   <Badge variant="outline" className="ml-auto">1 model</Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span className="text-sm font-medium">Moonshot AI</span>
+                  <Badge variant="outline" className="ml-auto">3 models</Badge>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
