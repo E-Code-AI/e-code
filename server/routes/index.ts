@@ -30,6 +30,7 @@ import aiStreamingRouter from "../api/ai-streaming";
 import voiceVideoRouter from "./voice-video.router";
 import dataProvisioningRouter from "./data-provisioning.router";
 import terminalRouter from "./terminal.router";
+import terminalMetricsRouter from "./terminal-metrics.router";
 import runtimeRouter from "./runtime.router";
 import packagesRouter from "./packages.router";
 import { createWorkspaceRoutes } from "./workspace";
@@ -175,6 +176,9 @@ export class MainRouter {
     
     // Terminal routes (logs and console output)
     app.use(terminalRouter);
+    
+    // Terminal metrics routes (Fortune 500 scalability monitoring)
+    app.use('/api/terminal', terminalMetricsRouter);
     
     // Runtime routes (start, stop, execute, logs)
     app.use(runtimeRouter);
