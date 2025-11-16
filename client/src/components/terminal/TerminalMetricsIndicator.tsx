@@ -9,7 +9,7 @@ import { Activity, AlertTriangle, CheckCircle2, XCircle, TrendingUp, TrendingDow
 import { useTerminalHealth, useTerminalMetrics } from '@/hooks/use-terminal-metrics';
 import { cn } from '@/lib/utils';
 
-interface TerminalMetricsIndicatorProps {
+interface TerminalMetricsIndicatorProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
   showDetailed?: boolean;
   compact?: boolean;
@@ -18,7 +18,8 @@ interface TerminalMetricsIndicatorProps {
 export function TerminalMetricsIndicator({
   className,
   showDetailed = false,
-  compact = false
+  compact = false,
+  ...rest
 }: TerminalMetricsIndicatorProps) {
   const { data: healthData, isLoading: healthLoading } = useTerminalHealth({
     refetchInterval: 10000
@@ -82,7 +83,7 @@ export function TerminalMetricsIndicator({
                 getHealthColor(),
                 className
               )}
-              data-testid="terminal-metrics-indicator-compact"
+              {...rest}
             >
               {getHealthIcon()}
               <span className={getCapacityColor()} data-testid="text-capacity">
@@ -118,7 +119,7 @@ export function TerminalMetricsIndicator({
         'flex items-center gap-3 rounded-lg border p-3 bg-card',
         className
       )}
-      data-testid="terminal-metrics-indicator-detailed"
+      {...rest}
     >
       {/* Health Status */}
       <div className="flex items-center gap-2">

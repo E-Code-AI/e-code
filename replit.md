@@ -52,6 +52,14 @@ The terminal system uses local bash sessions (`server/terminal.ts`) for Replit C
 - Per-session metrics (age, commands executed/queued/failed)
 - K8s-ready liveness/readiness probes
 
+**Frontend Terminal Metrics Integration:**
+- React hook `useTerminalMetrics` and `useTerminalHealth` for real-time metrics polling (5s/10s intervals)
+- `TerminalMetricsIndicator` component with compact (badge) and detailed (panel) modes
+- Integrated into all terminal variants: `ReplitTerminalPanel`, `Terminal`, `MobileTerminal`, `ReplitTerminal`
+- Visual health indicators: Green (healthy), Yellow (degraded), Red (unhealthy), Gray (unknown/loading)
+- Tooltip displays capacity, utilization %, and backpressure status
+- Production-ready TypeScript with full HTML attributes support (`data-testid` for e2e testing)
+
 Docker-based isolated terminal implementation exists (`server/terminal/real-terminal.ts`) but is NOT usable on Replit Cloud Run as the platform does not expose a Docker daemon.
 
 **AI Optimization Infrastructure:**
