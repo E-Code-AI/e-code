@@ -10,9 +10,10 @@
  */
 
 import { db } from '../db';
-import { aiUsageMetering } from '@shared/schema';
+import { aiUsageMetering, aiStripeUsageQueue } from '@shared/schema';
 import { createLogger } from '../utils/logger';
 import { normalizeModelName } from '../utils/model-normalizer';
+import { AlertService } from './alert-service';
 import Stripe from 'stripe';
 
 const logger = createLogger('ai-metering');
@@ -130,9 +131,9 @@ export class AiMeteringService {
 
       logger.info(`Tracked AI usage: user=${params.userId}, model=${params.model}, tokens=${tokensTotal}, cost=$${costUsd.toFixed(6)}`);
 
-      // Report to Stripe metered billing (async, don't block)
-      this.reportToStripe(params.userId, params.subscriptionId, costUsd, record.id).catch((error) => {
-        logger.error('Failed to report to Stripe', { error, meteringId: record.id });
+      // ✅ Enqueue for Stripe billing with retry logic (async, don't block)
+      this.enqueueStripeUsage(params.userId, params.subscriptionId, costUsd, record.id).catch((error) => {
+        logger.error('Failed to enqueue Stripe usage', { error, meteringId: record.id });
       });
 
       return record.id;
@@ -143,10 +144,60 @@ export class AiMeteringService {
   }
 
   /**
-   * Report usage to Stripe metered billing
-   * Creates a usage record on the customer's subscription
+   * ✅ NEW: Enqueue Stripe usage for retry queue processing
+   * Replaces direct Stripe API calls to ensure zero revenue loss
    */
-  private async reportToStripe(
+  private async enqueueStripeUsage(
+    userId: string,
+    subscriptionId: string | undefined,
+    costUsd: number,
+    meteringId: number
+  ): Promise<void> {
+    // ✅ SHORT-CIRCUIT: Skip if no Stripe key (config not ready)
+    if (!process.env.STRIPE_SECRET_KEY) {
+      logger.debug('Stripe API key not configured - skipping queue (non-critical)');
+      return;
+    }
+
+    if (!subscriptionId) {
+      logger.debug('No subscription ID - skipping Stripe queue');
+      return;
+    }
+
+    try {
+      // Calculate initial retry time (5 minutes from now)
+      const nextRetry = new Date();
+      nextRetry.setMinutes(nextRetry.getMinutes() + 5);
+
+      await db.insert(aiStripeUsageQueue).values({
+        meteringId,
+        userId,
+        subscriptionId,
+        costUsd: costUsd.toFixed(6),
+        attempts: 0,
+        maxAttempts: 3,
+        nextRetryAt: nextRetry,
+        status: 'pending',
+      });
+
+      logger.info(`✅ Enqueued Stripe usage for metering ${meteringId}`, {
+        userId,
+        costUsd: costUsd.toFixed(6),
+        nextRetry: nextRetry.toISOString(),
+      });
+    } catch (error) {
+      logger.error('Failed to enqueue Stripe usage', { error, meteringId });
+      // ✅ Send alert for billing queue failure
+      AlertService.stripeBillingFailed(userId, meteringId, error instanceof Error ? error.message : 'Unknown error');
+      throw error;
+    }
+  }
+
+  /**
+   * DEPRECATED: Old direct Stripe API call (kept for reference)
+   * Now replaced by enqueueStripeUsage + worker processing
+   */
+  private async reportToStripe_DEPRECATED(
     userId: string,
     subscriptionId: string | undefined,
     costUsd: number,
