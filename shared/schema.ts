@@ -31,9 +31,19 @@ export const mentorshipStatusEnum = pgEnum('mentorship_status', ['active', 'comp
 export const challengeStatusEnum = pgEnum('challenge_status', ['draft', 'published', 'archived']);
 export const submissionStatusEnum = pgEnum('submission_status', ['pending', 'accepted', 'rejected']);
 export const subscriptionTierEnum = pgEnum('subscription_tier', ['free', 'pro', 'enterprise']);
-// AI Models - VRAIS modèles November 2025
+// AI Models - Production enum (26 values: legacy + new)
 export const aiModelEnum = pgEnum('ai_model', [
-  // OpenAI (vrais selon platform.openai.com/docs/models)
+  // Legacy models (kept for backward compatibility)
+  'gpt-4',
+  'gpt-4-turbo',
+  'claude-3-opus',
+  'claude-3-sonnet',
+  'claude-3-5-sonnet',
+  'claude-3-haiku',
+  'gemini-pro',
+  'gemini-ultra',
+  
+  // OpenAI (November 2025)
   'gpt-5.1',
   'gpt-5',
   'gpt-5-mini',
@@ -42,16 +52,20 @@ export const aiModelEnum = pgEnum('ai_model', [
   'gpt-4o',
   'o3',
   'o4-mini',
+  
   // Anthropic (Sept-Oct 2025)
   'claude-sonnet-4-5-20250929',
   'claude-opus-4-1-20250805',
   'claude-haiku-4-5-20251015',
+  
   // Google Gemini (Nov 2025)
   'gemini-2.5-pro',
   'gemini-2.5-flash',
+  
   // xAI (July-Sept 2025)
   'grok-4',
   'grok-4-fast',
+  
   // Moonshot AI (Nov 2025)
   'kimi-k2',
   'kimi-k2-thinking',

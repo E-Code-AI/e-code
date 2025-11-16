@@ -62,8 +62,23 @@ export function normalizeModelName(modelName: string | undefined, provider: stri
     return normalized;
   }
   
-  // Step 3: Try exact match (already valid enum value)
+  // Step 3: Provider-specific fallback defaults (MUST be defined BEFORE use)
+  const providerDefaults: Record<string, string> = {
+    'openai': 'gpt-4o',
+    'anthropic': 'claude-sonnet-4-5-20250929',
+    'gemini': 'gemini-2.5-flash',
+    'google': 'gemini-2.5-flash',
+    'xai': 'grok-4-fast',
+    'moonshot': 'kimi-k2-turbo',
+  };
+  
+  // Step 4: Try exact match (already valid enum value - 26 total values)
   const validEnumValues = [
+    // Legacy models
+    'gpt-4', 'gpt-4-turbo',
+    'claude-3-opus', 'claude-3-sonnet', 'claude-3-5-sonnet', 'claude-3-haiku',
+    'gemini-pro', 'gemini-ultra',
+    // New models
     'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4o', 'o3', 'o4-mini',
     'claude-sonnet-4-5-20250929', 'claude-opus-4-1-20250805', 'claude-haiku-4-5-20251015',
     'gemini-2.5-pro', 'gemini-2.5-flash',
@@ -75,7 +90,7 @@ export function normalizeModelName(modelName: string | undefined, provider: stri
     return modelName;
   }
   
-  // Step 4: ⚠️ CRITICAL - Unknown model detected! Log + Alert for monitoring
+  // Step 5: ⚠️ CRITICAL - Unknown model detected! Log + Alert for monitoring
   if (modelName) {
     logger.warn(`⚠️ UNKNOWN MODEL DETECTED: "${modelName}" (provider: ${provider}) - Using fallback pricing!`);
     logger.warn(`ACTION REQUIRED: Add "${modelName}" to MODEL_NORMALIZATION_MAP in server/utils/model-normalizer.ts`);
@@ -87,15 +102,7 @@ export function normalizeModelName(modelName: string | undefined, provider: stri
     });
   }
   
-  // Step 5: Provider-specific fallback defaults
-  const providerDefaults: Record<string, string> = {
-    'openai': 'gpt-4o',
-    'anthropic': 'claude-sonnet-4-5-20250929',
-    'gemini': 'gemini-2.5-flash',
-    'google': 'gemini-2.5-flash',
-    'xai': 'grok-4-fast',
-    'moonshot': 'kimi-k2-turbo',
-  };
+  // Step 6: Apply provider fallback
   
   const normalizedProvider = provider.toLowerCase();
   if (providerDefaults[normalizedProvider]) {
