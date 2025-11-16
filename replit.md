@@ -2,7 +2,16 @@
 
 ## Overview
 
-E-Code is a web-based collaborative IDE with AI assistance, built with TypeScript/Node.js, React, and PostgreSQL. It offers code editing, terminal access, file management, and an autonomous AI agent, aiming to facilitate rapid prototyping and education. The platform is currently a functional MVP, with ongoing efforts to achieve enterprise-grade scalability and Fortune 500 readiness. Recent critical fixes include: restored autonomous IDE functionality, enhanced AI provider fallback mechanisms, comprehensive AI optimization infrastructure, production monitoring via Slack, mobile horizontal scroll fixes (Safari-compatible), loading icon positioning fixes preventing jarring UX jumps, **Phase 3.2 completed: K8s health endpoints + Swagger API documentation integration**, **CRITICAL AI Agent auto-start fix** (November 14, 2025): removed broken internal Anthropic→GPT fallback in ai-provider-manager.ts, fixed frontend endpoints (/api/agent/plan/stream), corrected invalid Gemini model ID (gemini-1.5-flash), ensuring proper multi-provider fallback chain, and **Kimi-K2 (Moonshot AI) Full Integration** (November 14, 2025): added 3 production-ready models (kimi-k2, kimi-k2-thinking, kimi-k2-turbo) with 10-100× cost savings vs GPT-4, created MoonshotProvider with OpenAI-compatible API, fixed critical 404 cascade (missing /api/feature-flags endpoint), implemented model availability system showing unconfigured providers as disabled in UI, validated fallback chain: gpt-4o → kimi-k2 → gemini-1.5-flash → grok-2-1212 → claude-3-5-haiku.
+E-Code is a web-based collaborative IDE with AI assistance, built with TypeScript/Node.js, React, and PostgreSQL. It offers code editing, terminal access, file management, and an autonomous AI agent, aiming to facilitate rapid prototyping and education. The platform is currently a functional MVP, with ongoing efforts to achieve enterprise-grade scalability and Fortune 500 readiness. Recent critical fixes include: restored autonomous IDE functionality, enhanced AI provider fallback mechanisms, comprehensive AI optimization infrastructure, production monitoring via Slack, mobile horizontal scroll fixes (Safari-compatible), loading icon positioning fixes preventing jarring UX jumps, **Phase 3.2 completed: K8s health endpoints + Swagger API documentation integration**, **CRITICAL AI Agent auto-start fix** (November 14, 2025): removed broken internal Anthropic→GPT fallback in ai-provider-manager.ts, fixed frontend endpoints (/api/agent/plan/stream), corrected invalid Gemini model ID (gemini-1.5-flash), ensuring proper multi-provider fallback chain, and **Kimi-K2 (Moonshot AI) Full Integration** (November 14, 2025): added 3 production-ready models (kimi-k2, kimi-k2-thinking, kimi-k2-turbo) with 10-100× cost savings vs GPT-4, created MoonshotProvider with OpenAI-compatible API, fixed critical 404 cascade (missing /api/feature-flags endpoint), implemented model availability system showing unconfigured providers as disabled in UI.
+
+**CRITICAL AI Model Registry Correction (November 16, 2025):** 
+Replaced ALL incorrect/legacy model references with official current models verified from provider documentation (platform.openai.com/docs/models, docs.anthropic.com, etc). Created centralized registry `shared/aiModels.ts` as single source of truth for all model metadata (18 models total across 5 providers). Key changes:
+- OpenAI: Now using REAL models: gpt-5.1, gpt-5, gpt-5-mini, gpt-5-nano, gpt-4.1, gpt-4o, o3, o4-mini (removed fake gpt-5.1-thinking)
+- Anthropic: claude-sonnet-4-5, claude-opus-4-1, claude-haiku-4-5
+- Gemini: gemini-2.5-pro, gemini-2.5-flash
+- xAI: grok-4, grok-4-fast
+- Moonshot: kimi-k2, kimi-k2-thinking, kimi-k2-turbo
+All UIs now display 4 key capabilities: Extended Thinking, MCP Tool Use, Context Window (up to 1M tokens for gpt-4.1), Code Generation optimization. Schema synchronized across shared/schema.ts, server/ai/ai-provider-manager.ts, and frontend components.
 
 ## User Preferences
 
@@ -52,7 +61,29 @@ The system uses a PostgreSQL database with over 140 tables for user management, 
 
 ### AI Agent System
 
-The AI agent system features server-sent event streaming, multi-provider AI model selection (OpenAI, Anthropic, Gemini, xAI, Groq), database-backed conversation history, and a robust tool execution framework. It is fully integrated with the AI Optimization Infrastructure for intelligent task classification, circuit breaker checks, and comprehensive logging/alerting for every streaming request.
+The AI agent system features server-sent event streaming, multi-provider AI model selection (OpenAI, Anthropic, Gemini, xAI, Moonshot AI, Groq), database-backed conversation history, and a robust tool execution framework. It is fully integrated with the AI Optimization Infrastructure for intelligent task classification, circuit breaker checks, and comprehensive logging/alerting for every streaming request.
+
+**AI Model Registry (November 16, 2025):**
+Centralized model catalog in `shared/aiModels.ts` with complete metadata for 18 production models across 5 providers. Each model includes:
+- Provider & model ID (official API names verified from docs)
+- Capabilities: Extended Thinking/reasoning, MCP Tool Use, Context Window (128K-1M tokens), Code Generation optimization
+- Pricing per 1M tokens (input/output)
+- Release dates and availability status
+
+**Current Model Inventory:**
+- **OpenAI (8 models):** gpt-5.1 (flagship Nov 2025), gpt-5 (legacy Aug 2025), gpt-5-mini/nano (cost-optimized), gpt-4.1 (1M context), gpt-4o (multimodal), o3 (advanced reasoning), o4-mini (budget reasoning)
+- **Anthropic (3 models):** claude-sonnet-4-5, claude-opus-4-1, claude-haiku-4-5
+- **Google Gemini (2 models):** gemini-2.5-pro, gemini-2.5-flash (most economical at $0.075/1M)
+- **xAI (2 models):** grok-4, grok-4-fast
+- **Moonshot AI (3 models):** kimi-k2, kimi-k2-thinking, kimi-k2-turbo (10-100× cheaper than GPT-4)
+
+**Provider Status (as of Nov 16, 2025):**
+- ✅ OpenAI: Healthy (OPENAI_API_KEY configured)
+- ✅ Google Gemini: Healthy (GEMINI_API_KEY configured)
+- ✅ Moonshot AI: Healthy (MOONSHOT_API_KEY configured, 358ms avg response)
+- ❌ Anthropic: No credits (ANTHROPIC_API_KEY present but account depleted)
+- ❌ xAI: Missing API key (XAI_API_KEY not configured)
+- ❌ Groq: Missing API key (GROQ_API_KEY not configured)
 
 ### Core Features
 
@@ -67,10 +98,12 @@ The AI agent system features server-sent event streaming, multi-provider AI mode
 
 ### AI/ML Services
 
--   **OpenAI:** GPT-4 / GPT-3.5
--   **Anthropic:** Claude 3.5
--   **Google:** Gemini Pro
--   **Groq:** Llama
+-   **OpenAI:** GPT-5.1, GPT-5, GPT-4.1, GPT-4o, o3, o4-mini (8 models total)
+-   **Anthropic:** Claude Sonnet 4.5, Opus 4.1, Haiku 4.5 (3 models)
+-   **Google Gemini:** Gemini 2.5 Pro/Flash (2 models, Flash = most economical)
+-   **Moonshot AI:** Kimi K2 series (3 models, 10-100× cheaper than GPT-4)
+-   **xAI:** Grok 4 / Grok 4 Fast (2 models)
+-   **Groq:** Open-source models (free tier, requires API key)
 -   **Model Context Protocol (MCP) SDK:** For tool execution.
 
 ### Infrastructure Services
