@@ -151,22 +151,23 @@ Centralized model catalog in `shared/aiModels.ts` with complete metadata for 18 
 
 ### 2. Image Size Reduction (>8GiB → <2GiB)
 **Key Files:**
-- `optimize-package.js` - Removes 20+ dev-only packages before Docker npm install
-- `.dockerignore` - Excludes 5 dev-only directories: `dokploy/`, `sdk/`, `cli/`, `vscode-extension/`, `github-copilot-extension/`
+- `.dockerignore` - Excludes 5 dev-only directories: `dokploy/`, `sdk/`, `cli/`, `vscode-extension/`, `github-copilot-extension/` (~2-3 GB)
 - `tsconfig.json` - Excludes dev directories from TypeScript compilation
 
-**Packages Removed During Build:**
-- Test frameworks: `@faker-js/faker`, `lighthouse` (12.8.2)
-- Type definitions: `@types/archiver`, `@types/cheerio`, `@types/dockerode`, `@types/google-cloud__storage`, `@types/memoizee`, `@types/nodemailer`, `@types/pg`, `@types/react-syntax-highlighter`, `@types/redis`, `@types/simple-peer`, `@types/swagger-jsdoc`, `@types/swagger-ui-express`, `@types/tar`, `@types/uuid`
-- Build tools: `monaco-editor-webpack-plugin`, `@rollup/plugin-terser`, `rollup-plugin-visualizer`, `vite-plugin-compression`, `vite-plugin-monaco-editor`
+**Strategy:**
+- No package.json mutation (previous optimize-package.js approach removed for safety)
+- Relies on `.dockerignore` to exclude large dev directories (~2-3 GB)
+- Multi-stage build separates build deps from runtime deps
+- Runtime stage uses `npm install --only=production` for minimal footprint
 
-**Estimated Savings:** ~300-400MB from package removal + ~2-3GB from directory exclusions
+**Estimated Savings:** ~2-3 GB from directory exclusions + ~200-500 MB from production-only node_modules
 
 ### 3. Multi-Stage Build Optimization
-- **Builder stage:** Installs dependencies, runs optimize-package.js, builds application
-- **Runtime stage:** Minimal alpine image with only production dependencies and built artifacts
+- **Builder stage:** Installs ALL dependencies, builds application (Vite + esbuild)
+- **Runtime stage:** Minimal alpine image with ONLY production dependencies and built artifacts
 - npm cache cleaned after each install (`npm cache clean --force`)
 - Selective source copying (only `client/`, `server/`, `shared/`, `types/`)
+- .dockerignore ensures large dev directories never enter the build context
 
 ### 4. TypeScript Compilation
 - Excluded from compilation: `mobile/`, `dokploy/`, `sdk/`, `cli/`, `vscode-extension/`, `github-copilot-extension/`, `.cache/`, `coverage/`, `test/**`, `tests/**`

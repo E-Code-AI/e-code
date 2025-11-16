@@ -12,17 +12,14 @@ RUN apk add --no-cache python3 make g++ git
 
 WORKDIR /app
 
-# Copy package files and optimizer script
+# Copy package files
 COPY package*.json ./
-COPY optimize-package.js ./
 COPY tsconfig.json ./
 COPY drizzle.config.ts ./
 
-# Optimize package.json by removing dev-only packages BEFORE npm install
-RUN node optimize-package.js
-
-# Install ONLY production dependencies + minimal devDependencies needed for build
-RUN npm ci --omit=optional && \
+# Install ALL dependencies (build + runtime)
+# Using npm install for flexibility, npm ci would also work here
+RUN npm install --omit=optional && \
     npm cache clean --force && \
     rm -rf ~/.npm /tmp/*
 
@@ -49,11 +46,11 @@ RUN apk add --no-cache git && \
 
 WORKDIR /app
 
-# Copy optimized package files from builder
+# Copy package files from builder
 COPY --from=builder /app/package*.json ./
 
-# Install ONLY production dependencies
-RUN npm ci --only=production --omit=optional --omit=dev && \
+# Install ONLY production dependencies (this is the key size optimization)
+RUN npm install --only=production --omit=optional --omit=dev && \
     npm cache clean --force && \
     rm -rf ~/.npm /tmp/* /root/.npm
 
