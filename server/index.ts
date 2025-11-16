@@ -342,6 +342,15 @@ app.get('/api/cors-health', async (_req, res) => {
     console.warn('[WORKING SERVER] Database initialization failed (non-critical):', error.message);
   }
 
+  // ✅ Initialize Stripe Usage Worker (background queue processor)
+  try {
+    const { startStripeUsageWorker } = await import('./workflows/stripe-usage-worker');
+    startStripeUsageWorker();
+    console.log('✅ Stripe Usage Worker started - processing billing queue every 30s');
+  } catch (error) {
+    console.warn('[WORKING SERVER] Stripe worker initialization failed (non-critical):', error.message);
+  }
+
   // NOW start listening - ONLY after all middleware and routes are registered
   // This prevents the race condition where requests arrive before Vite middleware is ready
   httpServer.listen(port, "0.0.0.0", () => {

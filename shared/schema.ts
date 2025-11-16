@@ -3118,3 +3118,35 @@ export const insertAiUsageMeteringSchema = createInsertSchema(aiUsageMetering).o
 export type AiUsageMetering = typeof aiUsageMetering.$inferSelect;
 export type InsertAiUsageMetering = z.infer<typeof insertAiUsageMeteringSchema>;
 
+/**
+ * Stripe Usage Queue - Retry Queue for Failed Stripe Billing
+ * Ensures zero revenue loss via exponential backoff retry logic
+ */
+export const aiStripeUsageQueue = pgTable("ai_stripe_usage_queue", {
+  id: serial("id").primaryKey(),
+  meteringId: integer("metering_id").notNull(), // Reference to ai_usage_metering.id
+  userId: varchar("user_id").notNull(),
+  subscriptionId: varchar("subscription_id"),
+  costUsd: decimal("cost_usd", { precision: 10, scale: 6 }).notNull(),
+  attempts: integer("attempts").default(0).notNull(),
+  maxAttempts: integer("max_attempts").default(3).notNull(),
+  lastError: text("last_error"),
+  nextRetryAt: timestamp("next_retry_at").notNull(),
+  status: varchar("status", { length: 20 }).default('pending').notNull(), // pending, processing, completed, failed
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  statusIdx: index("ai_stripe_queue_status_idx").on(table.status),
+  nextRetryIdx: index("ai_stripe_queue_next_retry_idx").on(table.nextRetryAt),
+  meteringIdIdx: index("ai_stripe_queue_metering_id_idx").on(table.meteringId),
+}));
+
+export const insertAiStripeUsageQueueSchema = createInsertSchema(aiStripeUsageQueue).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type AiStripeUsageQueue = typeof aiStripeUsageQueue.$inferSelect;
+export type InsertAiStripeUsageQueue = z.infer<typeof insertAiStripeUsageQueueSchema>;
+

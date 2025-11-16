@@ -6,6 +6,7 @@
  */
 
 import { createLogger } from './logger';
+import { AlertService } from '../services/alert-service';
 
 const logger = createLogger('model-normalizer');
 
@@ -74,11 +75,16 @@ export function normalizeModelName(modelName: string | undefined, provider: stri
     return modelName;
   }
   
-  // Step 4: ⚠️ CRITICAL - Unknown model detected! Log for monitoring
+  // Step 4: ⚠️ CRITICAL - Unknown model detected! Log + Alert for monitoring
   if (modelName) {
     logger.warn(`⚠️ UNKNOWN MODEL DETECTED: "${modelName}" (provider: ${provider}) - Using fallback pricing!`);
     logger.warn(`ACTION REQUIRED: Add "${modelName}" to MODEL_NORMALIZATION_MAP in server/utils/model-normalizer.ts`);
-    // TODO: Send to Slack/Sentry for immediate alerting
+    
+    // ✅ Send automated alert to Slack/Sentry
+    const fallback = providerDefaults[provider.toLowerCase()] || 'gpt-4o';
+    AlertService.unknownModel(modelName, provider, fallback).catch((error) => {
+      logger.error('Failed to send unknown model alert', { error });
+    });
   }
   
   // Step 5: Provider-specific fallback defaults

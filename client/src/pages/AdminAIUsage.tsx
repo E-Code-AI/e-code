@@ -296,7 +296,8 @@ export default function AdminAIUsage() {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -350,6 +351,59 @@ export default function AdminAIUsage() {
                     )}
                   </TableBody>
                 </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-4">
+                {usageData?.usage && usageData.usage.length > 0 ? (
+                  usageData.usage.map((record) => (
+                    <Card key={record.id} data-testid={`card-record-${record.id}`}>
+                      <CardContent className="pt-6 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="font-medium">{record.username || 'Unknown'}</div>
+                            <div className="text-xs text-muted-foreground font-mono">{record.userId.slice(0, 12)}...</div>
+                          </div>
+                          <Badge variant="outline">{record.userTier}</Badge>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Model:</span>
+                            <div className="font-mono text-xs mt-1">{record.model}</div>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Provider:</span>
+                            <div className="mt-1"><Badge variant="secondary">{record.provider}</Badge></div>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Tokens:</span>
+                            <div className="font-medium mt-1">{record.tokensTotal.toLocaleString()}</div>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Cost:</span>
+                            <div className="font-medium text-green-600 mt-1">${parseFloat(record.costUsd).toFixed(4)}</div>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Status:</span>
+                            <div className="mt-1">
+                              <Badge variant={record.status === 'success' ? 'default' : 'destructive'}>
+                                {record.status}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Time:</span>
+                            <div className="text-xs mt-1">{format(new Date(record.createdAt), 'MMM d, HH:mm')}</div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No usage records found
+                  </div>
+                )}
               </div>
 
               {/* Pagination */}
