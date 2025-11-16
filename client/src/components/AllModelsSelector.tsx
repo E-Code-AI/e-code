@@ -68,6 +68,37 @@ export function AllModelsSelector() {
       capabilities: ['Chat', 'Code', 'Analysis'],
       pricing: { input: 15, output: 75, currency: 'USD', unit: '1M tokens' },
       available: true
+    },
+    // Add Moonshot AI Kimi-K2 models (10-100× cheaper than GPT-4)
+    {
+      id: 'kimi-k2',
+      name: 'Kimi K2',
+      description: 'Cost-effective model with excellent agentic capabilities - 10× cheaper than GPT-4',
+      provider: 'Moonshot AI',
+      contextWindow: 128000,
+      capabilities: ['Chat', 'Code', 'Analysis', 'Agents'],
+      pricing: { input: 0.60, output: 2.50, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'kimi-k2-thinking',
+      name: 'Kimi K2 Thinking',
+      description: 'Enhanced reasoning and complex problem-solving capabilities',
+      provider: 'Moonshot AI',
+      contextWindow: 128000,
+      capabilities: ['Chat', 'Code', 'Reasoning', 'Analysis'],
+      pricing: { input: 0.80, output: 3.00, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'kimi-k2-turbo',
+      name: 'Kimi K2 Turbo',
+      description: 'Fastest Kimi model for low-latency applications - 100× cheaper than GPT-4',
+      provider: 'Moonshot AI',
+      contextWindow: 128000,
+      capabilities: ['Chat', 'Code', 'Fast Response'],
+      pricing: { input: 0.30, output: 1.00, currency: 'USD', unit: '1M tokens' },
+      available: true
     }
   ];
 
@@ -97,6 +128,15 @@ export function AllModelsSelector() {
           max_tokens: 500
         };
       } else if (selectedModel.includes('claude')) {
+        endpoint = '/api/ai/generate';
+        payload = {
+          model: selectedModel,
+          prompt: testPrompt,
+          temperature: 0.7,
+          max_tokens: 500
+        };
+      } else if (selectedModel.includes('kimi')) {
+        // Moonshot AI Kimi models
         endpoint = '/api/ai/generate';
         payload = {
           model: selectedModel,
