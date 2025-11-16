@@ -1,0 +1,302 @@
+/**
+ * Redis Session Manager - Fortune 500 Session Persistence
+ * Externalizes terminal session state to Redis for fault tolerance and horizontal scaling
+ */
+
+import Redis from 'ioredis';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('redis-session');
+
+// Session data structure
+export interface TerminalSession {
+  sessionId: string;
+  projectId: string;
+  commandHistory: string[];
+  currentDirectory: string;
+  columns?: number;
+  rows?: number;
+  createdAt: number;
+  lastActivity: number;
+}
+
+// Session TTL: 24 hours
+const SESSION_TTL_SECONDS = 24 * 60 * 60;
+
+export class RedisSessionManager {
+  private redis: Redis | null = null;
+  private isConnected: boolean = false;
+
+  constructor() {
+    this.initialize();
+  }
+
+  /**
+   * Initialize Redis connection
+   */
+  private async initialize(): Promise<void> {
+    try {
+      const redisUrl = process.env.REDIS_URL;
+
+      if (!redisUrl) {
+        logger.warn('REDIS_URL not configured - session persistence disabled (sessions will be lost on restart)');
+        return;
+      }
+
+      logger.info('Connecting to Redis for session persistence...');
+
+      this.redis = new Redis(redisUrl, {
+        maxRetriesPerRequest: 3,
+        enableReadyCheck: true,
+        retryStrategy: (times) => {
+          if (times > 3) {
+            logger.error('Redis connection failed after 3 retries');
+            return null; // Stop retrying
+          }
+          const delay = Math.min(times * 200, 1000);
+          return delay;
+        },
+        reconnectOnError: (err) => {
+          logger.error(`Redis error: ${err.message}`);
+          return true; // Always reconnect
+        }
+      });
+
+      this.redis.on('connect', () => {
+        logger.info('✓ Redis connected successfully');
+        this.isConnected = true;
+      });
+
+      this.redis.on('error', (err) => {
+        logger.error(`Redis error: ${err.message}`);
+        this.isConnected = false;
+      });
+
+      this.redis.on('close', () => {
+        logger.warn('Redis connection closed');
+        this.isConnected = false;
+      });
+
+      // Test connection
+      await this.redis.ping();
+      logger.info('Redis connection verified');
+
+    } catch (error) {
+      logger.error(`Failed to initialize Redis: ${error}`);
+      this.redis = null;
+      this.isConnected = false;
+    }
+  }
+
+  /**
+   * Check if Redis is available
+   */
+  isAvailable(): boolean {
+    return this.isConnected && this.redis !== null;
+  }
+
+  /**
+   * Get session key for Redis
+   */
+  private getSessionKey(sessionId: string): string {
+    return `terminal:session:${sessionId}`;
+  }
+
+  /**
+   * Save session to Redis
+   */
+  async saveSession(session: TerminalSession): Promise<boolean> {
+    if (!this.isAvailable()) {
+      logger.debug('Redis not available - session not persisted');
+      return false;
+    }
+
+    try {
+      const key = this.getSessionKey(session.sessionId);
+      const data = JSON.stringify(session);
+
+      await this.redis!.setex(key, SESSION_TTL_SECONDS, data);
+
+      logger.debug(`Session saved: ${session.sessionId}`);
+      return true;
+
+    } catch (error) {
+      logger.error(`Failed to save session ${session.sessionId}: ${error}`);
+      return false;
+    }
+  }
+
+  /**
+   * Get session from Redis
+   */
+  async getSession(sessionId: string): Promise<TerminalSession | null> {
+    if (!this.isAvailable()) {
+      return null;
+    }
+
+    try {
+      const key = this.getSessionKey(sessionId);
+      const data = await this.redis!.get(key);
+
+      if (!data) {
+        return null;
+      }
+
+      const session = JSON.parse(data) as TerminalSession;
+      logger.debug(`Session retrieved: ${sessionId}`);
+
+      return session;
+
+    } catch (error) {
+      logger.error(`Failed to get session ${sessionId}: ${error}`);
+      return null;
+    }
+  }
+
+  /**
+   * Delete session from Redis
+   */
+  async deleteSession(sessionId: string): Promise<boolean> {
+    if (!this.isAvailable()) {
+      return false;
+    }
+
+    try {
+      const key = this.getSessionKey(sessionId);
+      await this.redis!.del(key);
+
+      logger.debug(`Session deleted: ${sessionId}`);
+      return true;
+
+    } catch (error) {
+      logger.error(`Failed to delete session ${sessionId}: ${error}`);
+      return false;
+    }
+  }
+
+  /**
+   * Update session last activity timestamp
+   */
+  async touchSession(sessionId: string): Promise<boolean> {
+    if (!this.isAvailable()) {
+      return false;
+    }
+
+    try {
+      const session = await this.getSession(sessionId);
+      if (!session) {
+        return false;
+      }
+
+      session.lastActivity = Date.now();
+      return await this.saveSession(session);
+
+    } catch (error) {
+      logger.error(`Failed to touch session ${sessionId}: ${error}`);
+      return false;
+    }
+  }
+
+  /**
+   * Get all active sessions
+   */
+  async getAllSessions(): Promise<TerminalSession[]> {
+    if (!this.isAvailable()) {
+      return [];
+    }
+
+    try {
+      const pattern = this.getSessionKey('*');
+      const keys = await this.redis!.keys(pattern);
+
+      if (keys.length === 0) {
+        return [];
+      }
+
+      const sessions: TerminalSession[] = [];
+
+      for (const key of keys) {
+        const data = await this.redis!.get(key);
+        if (data) {
+          sessions.push(JSON.parse(data));
+        }
+      }
+
+      return sessions;
+
+    } catch (error) {
+      logger.error(`Failed to get all sessions: ${error}`);
+      return [];
+    }
+  }
+
+  /**
+   * Get session count
+   */
+  async getSessionCount(): Promise<number> {
+    if (!this.isAvailable()) {
+      return 0;
+    }
+
+    try {
+      const pattern = this.getSessionKey('*');
+      const keys = await this.redis!.keys(pattern);
+      return keys.length;
+
+    } catch (error) {
+      logger.error(`Failed to get session count: ${error}`);
+      return 0;
+    }
+  }
+
+  /**
+   * Clear all sessions (admin/testing only)
+   */
+  async clearAllSessions(): Promise<boolean> {
+    if (!this.isAvailable()) {
+      return false;
+    }
+
+    try {
+      const pattern = this.getSessionKey('*');
+      const keys = await this.redis!.keys(pattern);
+
+      if (keys.length > 0) {
+        await this.redis!.del(...keys);
+        logger.info(`Cleared ${keys.length} sessions`);
+      }
+
+      return true;
+
+    } catch (error) {
+      logger.error(`Failed to clear sessions: ${error}`);
+      return false;
+    }
+  }
+
+  /**
+   * Disconnect from Redis
+   */
+  async disconnect(): Promise<void> {
+    if (this.redis) {
+      await this.redis.quit();
+      this.redis = null;
+      this.isConnected = false;
+      logger.info('Redis disconnected');
+    }
+  }
+}
+
+// Singleton instance
+export const redisSessionManager = new RedisSessionManager();
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  logger.info('SIGTERM received - disconnecting Redis');
+  await redisSessionManager.disconnect();
+});
+
+process.on('SIGINT', async () => {
+  logger.info('SIGINT received - disconnecting Redis');
+  await redisSessionManager.disconnect();
+});

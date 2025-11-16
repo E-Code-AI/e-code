@@ -8,6 +8,7 @@ import { File } from '@shared/schema';
 import readline from 'readline';
 import { createLogger } from './utils/logger';
 import { ContainerExecutor } from './execution/container-executor';
+import { terminalScalabilityManager } from './terminal/scalability-manager';
 
 // Create a logger for the terminal module
 const logger = createLogger('terminal');
@@ -52,10 +53,23 @@ export function setupTerminalWebsocket(server: Server) {
 
       logger.info(`Terminal connection established for project ${projectId}`);
 
-      // Create terminal session if it doesn't exist
+      // FORTUNE 500 SCALABILITY: Check if we can create a new session
       if (!terminalSessions.has(projectId)) {
+        const sessionId = `terminal-${projectId}-${Date.now()}`;
+        
+        // Register with scalability manager
+        if (!terminalScalabilityManager.registerSession(sessionId)) {
+          ws.close(1008, 'Server at capacity - maximum terminal sessions reached. Please try again later.');
+          return;
+        }
+
+        // Check backpressure
+        if (terminalScalabilityManager.isUnderBackpressure()) {
+          logger.warn(`System under backpressure - ${terminalScalabilityManager.getMetrics().utilizationPercent.toFixed(1)}% capacity`);
+        }
+
         terminalSessions.set(projectId, {
-          sessionId: `terminal-${projectId}-${Date.now()}`,
+          sessionId,
           clients: new Set(),
           commandHistory: [],
           autocompleteSuggestions: [
@@ -220,9 +234,13 @@ export function setupTerminalWebsocket(server: Server) {
         if (session) {
           session.clients.delete(ws);
           
-          // Clean up session if no clients left
+          // FORTUNE 500 SCALABILITY: Clean up session if no clients left
           if (session.clients.size === 0) {
             logger.info(`No clients left for project ${projectId}, cleaning up session`);
+            
+            // Unregister from scalability manager
+            terminalScalabilityManager.unregisterSession(session.sessionId);
+            
             terminalSessions.delete(projectId);
           }
         }
