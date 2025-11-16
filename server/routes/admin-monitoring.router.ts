@@ -7,13 +7,14 @@ import { Router } from 'express';
 import { db } from '../db';
 import { rateLimitViolations, users } from '@shared/schema';
 import { desc, eq, and, gte, sql } from 'drizzle-orm';
-import { requireAuth, requireAdmin } from '../middleware/auth';
+import { ensureAuthenticated } from '../middleware/auth';
+import { ensureAdmin } from '../middleware/admin-auth';
 
 const router = Router();
 
 // All routes require admin access
-router.use(requireAuth);
-router.use(requireAdmin);
+router.use(ensureAuthenticated);
+router.use(ensureAdmin);
 
 /**
  * GET /api/admin/monitoring/rate-limit-violations
@@ -197,15 +198,20 @@ router.get('/system-health', async (req, res) => {
       .from(rateLimitViolations)
       .where(gte(rateLimitViolations.blockedAt, oneHourAgo));
 
-    // Terminal metrics (from terminal-metrics router)
+    // Terminal health metrics (direct import from service)
     let terminalHealth = null;
     try {
-      const terminalHealthResponse = await fetch('http://localhost:5000/api/terminal/health');
-      if (terminalHealthResponse.ok) {
-        terminalHealth = await terminalHealthResponse.json();
-      }
+      const { getTerminalHealthMetrics } = await import('../terminal/scalability-manager');
+      const metrics = getTerminalHealthMetrics();
+      terminalHealth = {
+        status: metrics.health.status,
+        activeSessions: metrics.capacity.current,
+        maxSessions: metrics.capacity.max,
+        utilizationPercent: metrics.capacity.utilizationPercent,
+        underBackpressure: metrics.health.underBackpressure,
+      };
     } catch (error) {
-      console.error('Failed to fetch terminal health:', error);
+      console.error('Failed to get terminal health:', error);
     }
 
     res.json({
