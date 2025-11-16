@@ -37,29 +37,30 @@ export interface AIModel {
  */
 export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
   // ========================================
-  // OpenAI Models (Nov 12-14, 2025)
+  // OpenAI Models (VRAIS modèles Nov 2025)
+  // Source: https://platform.openai.com/docs/models
   // ========================================
   'gpt-5.1': {
     id: 'gpt-5.1',
-    name: 'GPT-5.1 Instant',
+    name: 'GPT-5.1',
     provider: 'openai',
-    description: 'Latest flagship - warmer, more intelligent with adaptive reasoning',
+    description: 'Current flagship - warmer, more intelligent with adaptive reasoning (Nov 12, 2025)',
     capabilities: {
-      extendedThinking: true,
-      toolUse: true,
+      extendedThinking: true,  // reasoning.effort: none/minimal/medium/high
+      toolUse: true,           // apply_patch, shell tools
       contextWindow: 400000,
       codeGeneration: true,
       multimodal: true
     },
-    pricing: { input: 8, output: 24 },
+    pricing: { input: 5, output: 15 },  // Prix approximatifs
     releaseDate: '2025-11-12',
     available: true
   },
-  'gpt-5.1-thinking': {
-    id: 'gpt-5.1-thinking',
-    name: 'GPT-5.1 Thinking',
+  'gpt-5': {
+    id: 'gpt-5',
+    name: 'GPT-5',
     provider: 'openai',
-    description: 'Extended reasoning for complex problems - 50% faster than GPT-5',
+    description: 'Previous flagship - still available as legacy model (Aug 2025)',
     capabilities: {
       extendedThinking: true,
       toolUse: true,
@@ -67,8 +68,40 @@ export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
       codeGeneration: true,
       multimodal: true
     },
-    pricing: { input: 12, output: 36 },
-    releaseDate: '2025-11-12',
+    pricing: { input: 5, output: 15 },
+    releaseDate: '2025-08-07',
+    available: true
+  },
+  'gpt-5-mini': {
+    id: 'gpt-5-mini',
+    name: 'GPT-5 Mini',
+    provider: 'openai',
+    description: 'Cost-optimized reasoning - balances speed, cost, and capability',
+    capabilities: {
+      extendedThinking: true,
+      toolUse: true,
+      contextWindow: 400000,
+      codeGeneration: true,
+      multimodal: true
+    },
+    pricing: { input: 1, output: 3 },  // Estimation
+    releaseDate: '2025-08-07',
+    available: true
+  },
+  'gpt-5-nano': {
+    id: 'gpt-5-nano',
+    name: 'GPT-5 Nano',
+    provider: 'openai',
+    description: 'High-throughput - simple instruction-following and classification',
+    capabilities: {
+      extendedThinking: false,
+      toolUse: true,
+      contextWindow: 400000,
+      codeGeneration: true,
+      multimodal: false
+    },
+    pricing: { input: 0.5, output: 1.5 },  // Très économique
+    releaseDate: '2025-08-07',
     available: true
   },
   'gpt-4.1': {
@@ -79,19 +112,19 @@ export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
     capabilities: {
       extendedThinking: false,
       toolUse: true,
-      contextWindow: 128000,
+      contextWindow: 1000000,  // 1M context
       codeGeneration: true,
       multimodal: true
     },
-    pricing: { input: 6, output: 18 },
-    releaseDate: '2025-10-01',
+    pricing: { input: 2.5, output: 10 },
+    releaseDate: '2025-04-14',
     available: true
   },
   'gpt-4o': {
     id: 'gpt-4o',
     name: 'GPT-4o',
     provider: 'openai',
-    description: 'Multimodal model with vision - updated to June 2024 knowledge',
+    description: 'Multimodal flagship - text, vision, audio',
     capabilities: {
       extendedThinking: false,
       toolUse: true,
@@ -99,24 +132,40 @@ export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
       codeGeneration: true,
       multimodal: true
     },
-    pricing: { input: 5, output: 15 },
-    releaseDate: '2025-09-01',
+    pricing: { input: 2.5, output: 10 },
+    releaseDate: '2024-08-06',
+    available: true
+  },
+  'o3': {
+    id: 'o3',
+    name: 'o3',
+    provider: 'openai',
+    description: 'Advanced reasoning model - complex problem solving',
+    capabilities: {
+      extendedThinking: true,
+      toolUse: true,
+      contextWindow: 128000,
+      codeGeneration: true,
+      multimodal: false
+    },
+    pricing: { input: 15, output: 60 },  // Reasoning premium
+    releaseDate: '2025-04-16',
     available: true
   },
   'o4-mini': {
     id: 'o4-mini',
     name: 'o4 Mini',
     provider: 'openai',
-    description: 'Budget-friendly reasoning for math, coding, visual tasks',
+    description: 'Budget-friendly reasoning for STEM tasks',
     capabilities: {
       extendedThinking: true,
       toolUse: true,
       contextWindow: 128000,
       codeGeneration: true,
-      multimodal: true
+      multimodal: false
     },
-    pricing: { input: 2, output: 6 },
-    releaseDate: '2025-10-15',
+    pricing: { input: 3, output: 12 },
+    releaseDate: '2025-04-16',
     available: true
   },
 

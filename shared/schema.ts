@@ -30,13 +30,16 @@ export const reviewStatusEnum = pgEnum('review_status', ['pending', 'approved', 
 export const mentorshipStatusEnum = pgEnum('mentorship_status', ['active', 'completed', 'cancelled']);
 export const challengeStatusEnum = pgEnum('challenge_status', ['draft', 'published', 'archived']);
 export const submissionStatusEnum = pgEnum('submission_status', ['pending', 'accepted', 'rejected']);
-// AI Models - Latest November 2025
+// AI Models - VRAIS modèles November 2025
 export const aiModelEnum = pgEnum('ai_model', [
-  // OpenAI (Nov 2025)
+  // OpenAI (vrais selon platform.openai.com/docs/models)
   'gpt-5.1',
-  'gpt-5.1-thinking',
+  'gpt-5',
+  'gpt-5-mini',
+  'gpt-5-nano',
   'gpt-4.1',
   'gpt-4o',
+  'o3',
   'o4-mini',
   // Anthropic (Sept-Oct 2025)
   'claude-sonnet-4-5-20250929',
@@ -1463,13 +1466,16 @@ export type InsertPromptTemplateRating = z.infer<typeof insertPromptTemplateRati
 export type AgentMessage = typeof agentMessages.$inferSelect;
 export type InsertAgentMessage = z.infer<typeof insertAgentMessageSchema>;
 
-// AI Model Enum Values
+// AI Model Enum Values - VRAIS modèles
 export const AI_MODELS = [
-  // OpenAI (Nov 2025)
+  // OpenAI (vrais selon platform.openai.com/docs/models)
   'gpt-5.1',
-  'gpt-5.1-thinking',
+  'gpt-5',
+  'gpt-5-mini',
+  'gpt-5-nano',
   'gpt-4.1',
   'gpt-4o',
+  'o3',
   'o4-mini',
   // Anthropic (Sept-Oct 2025)
   'claude-sonnet-4-5-20250929',
