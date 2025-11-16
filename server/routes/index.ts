@@ -47,6 +47,7 @@ import createAgentBuildRouter from "./agent-build.router";
 import aiModelsRouter from "./ai-models.router";
 import featureFlagsRouter from "./feature-flags.router";
 import workspaceBootstrapRouter from "./workspace-bootstrap.router";
+import adminMonitoringRouter from "./admin-monitoring.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -155,6 +156,9 @@ export class MainRouter {
     
     // Admin routes
     app.use('/api/admin', adminRouter);
+    
+    // Admin Monitoring routes (Fortune 500 Rate Limit Dashboard)
+    app.use('/api/admin/monitoring', adminMonitoringRouter);
     
     // AI routes
     app.use('/api', aiRouter);

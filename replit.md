@@ -12,6 +12,7 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 - **Routing:** `/ide/:id` (legacy `/editor/:id` redirects)
 - **Security:** API keys via Replit Secrets, never commit
 - **Docker Build:** Optimized for <2GiB images
+- **Rate Limiting:** Tier-based (Free: 100/min, Pro: 1000/min, Enterprise: 10000/min)
 
 ## System Architecture
 
@@ -19,7 +20,20 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 The frontend uses React 18 and TypeScript with Vite, featuring TanStack Query for server state, Wouter for routing, Monaco Editor for code editing, and Shadcn/UI with Tailwind CSS for components. It supports real-time collaboration via WebSockets, responsive design for various devices, and UX enhancements like layout-aware loading states.
 
 ### Backend Architecture
-The backend is built with Node.js and Express.js in TypeScript, utilizing Drizzle ORM for PostgreSQL and Passport.js for authentication. It follows a RESTful API design with a service-oriented approach, including specialized services for AI orchestration, autonomous engine logic, file system operations, and Git integration. Security features include CSRF protection, input sanitization, multi-tier rate limiting, and session-based authentication. Real-time services for terminal, collaborative editing, and build logs are powered by WebSockets.
+The backend is built with Node.js and Express.js in TypeScript, utilizing Drizzle ORM for PostgreSQL and Passport.js for authentication. It follows a RESTful API design with a service-oriented approach, including specialized services for AI orchestration, autonomous engine logic, file system operations, and Git integration. Security features include CSRF protection, input sanitization, Fortune 500 tier-based rate limiting, and session-based authentication. Real-time services for terminal, collaborative editing, and build logs are powered by WebSockets.
+
+**Fortune 500 Rate Limiting Architecture:**
+- **Tier-Based Limits** (`server/middleware/tier-rate-limiter.ts`):
+  - Free: 100 req/min (API), 10 req/min (AI), 5 req/15min (Auth)
+  - Pro: 1,000 req/min (API), 100 req/min (AI), 20 req/15min (Auth) - 10x multiplier
+  - Enterprise: 10,000 req/min (API), 1,000 req/min (AI), 100 req/15min (Auth) - 100x multiplier
+  - Development: 10x multiplier on all limits to prevent blocking during testing
+- **Violation Tracking** (`rate_limit_violations` table): Logs all rate limit violations with user, IP, endpoint, tier, and metadata for security auditing
+- **Admin Monitoring API** (`/api/admin/monitoring/*`):
+  - `/rate-limit-violations` - Paginated violation history with filtering
+  - `/rate-limit-stats` - Aggregated statistics (by tier, type, endpoint, user, hourly trends)
+  - `/system-health` - Overall system health with terminal metrics integration
+  - `/rate-limit-violations/cleanup` - Cleanup old violation records
 
 **Terminal Architecture (Fortune 500 Production-Grade):**
 The terminal system uses local bash sessions (`server/terminal.ts`) for Replit Cloud Run compatibility, enhanced with enterprise-grade scalability, persistence, and monitoring infrastructure:
