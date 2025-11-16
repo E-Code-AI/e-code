@@ -3068,3 +3068,53 @@ export const insertRateLimitViolationSchema = createInsertSchema(rateLimitViolat
 export type RateLimitViolation = typeof rateLimitViolations.$inferSelect;
 export type InsertRateLimitViolation = z.infer<typeof insertRateLimitViolationSchema>;
 
+// AI Usage Metering (Pay-As-You-Go Billing)
+// Tracks every AI request for Stripe metered billing
+export const aiUsageMetering = pgTable("ai_usage_metering", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  
+  // Request details
+  endpoint: varchar("endpoint").notNull(), // '/api/agent/chat/stream', '/api/ai/completions'
+  model: aiModelEnum("model").notNull(), // 'gpt-4', 'claude-sonnet-4-5', etc.
+  provider: varchar("provider").notNull(), // 'openai', 'anthropic', 'gemini'
+  
+  // Token usage
+  tokensInput: integer("tokens_input").notNull(),
+  tokensOutput: integer("tokens_output").notNull(),
+  tokensTotal: integer("tokens_total").notNull(),
+  
+  // Cost calculation (USD)
+  costUsd: decimal("cost_usd", { precision: 10, scale: 6 }).notNull(), // e.g., 0.002150
+  
+  // Billing tracking
+  billed: boolean("billed").default(false).notNull(),
+  billedAt: timestamp("billed_at"),
+  stripeUsageRecordId: varchar("stripe_usage_record_id"), // Stripe metered billing record ID
+  
+  // Subscription context
+  userTier: subscriptionTierEnum("user_tier").notNull(),
+  subscriptionId: varchar("subscription_id"), // Stripe subscription ID
+  
+  // Metadata
+  requestDurationMs: integer("request_duration_ms"),
+  status: varchar("status").notNull(), // 'success', 'error', 'timeout'
+  errorMessage: text("error_message"),
+  metadata: jsonb("metadata").$type<Record<string, any>>(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("ai_usage_metering_user_id_idx").on(table.userId),
+  billedIdx: index("ai_usage_metering_billed_idx").on(table.billed),
+  createdAtIdx: index("ai_usage_metering_created_at_idx").on(table.createdAt),
+  userTierIdx: index("ai_usage_metering_user_tier_idx").on(table.userTier),
+}));
+
+export const insertAiUsageMeteringSchema = createInsertSchema(aiUsageMetering).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type AiUsageMetering = typeof aiUsageMetering.$inferSelect;
+export type InsertAiUsageMetering = z.infer<typeof insertAiUsageMeteringSchema>;
+
