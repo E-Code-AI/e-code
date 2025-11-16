@@ -15,6 +15,7 @@ const BACKPRESSURE_THRESHOLD = 0.8; // Start backpressure at 80% capacity
 
 interface QueuedCommand {
   command: string;
+  executor: () => Promise<void>;
   timestamp: number;
   resolve: (value: any) => void;
   reject: (error: Error) => void;
@@ -131,6 +132,7 @@ export class TerminalScalabilityManager {
     return new Promise((resolve, reject) => {
       const queuedCommand: QueuedCommand = {
         command,
+        executor,
         timestamp: Date.now(),
         resolve,
         reject
@@ -139,14 +141,14 @@ export class TerminalScalabilityManager {
       queue.push(queuedCommand);
 
       // Process queue if not already processing
-      this.processQueue(sessionId, executor);
+      this.processQueue(sessionId);
     });
   }
 
   /**
    * Process queued commands one at a time (prevents concurrent execution within session)
    */
-  private async processQueue(sessionId: string, executor: () => Promise<void>): Promise<void> {
+  private async processQueue(sessionId: string): Promise<void> {
     // Check if already processing
     if (this.processingQueues.get(sessionId)) {
       return; // Queue is already being processed
@@ -173,8 +175,8 @@ export class TerminalScalabilityManager {
             throw new Error(`Command timeout after ${age}ms`);
           }
 
-          // Execute command
-          await executor();
+          // Execute command with its own executor
+          await queuedCommand.executor();
 
           // Update metrics
           metrics.commandsExecuted++;
