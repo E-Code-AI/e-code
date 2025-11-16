@@ -74,39 +74,58 @@ export default function Home() {
         setIsAuthModalOpen(true);
         throw new Error("Please log in to create projects");
       }
-      const project = await apiRequest('POST', '/api/projects', { name });
-      return project;
+      
+      // Determine if this is an AI prompt (longer descriptions suggest AI generation)
+      const isAIPrompt = name.length > 20 || searchQuery.trim().length > 20;
+      const promptToUse = searchQuery.trim() || name;
+      
+      // Use workspace bootstrap endpoint for AI prompts (Fortune 500-grade orchestration)
+      if (isAIPrompt) {
+        const response = await apiRequest('POST', '/api/workspace/bootstrap', {
+          prompt: promptToUse,
+          options: {
+            language: 'typescript',
+            framework: 'react',
+            autoStart: true,
+            visibility: 'private'
+          }
+        });
+        return response;
+      } else {
+        // Simple project creation (no AI agent)
+        const project = await apiRequest('POST', '/api/projects', { name });
+        return { projectId: project.id, projectSlug: project.slug, isSimple: true, project };
+      }
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       setIsCreateModalOpen(false);
       
-      // Si c'est un prompt AI (description longue), ouvrir avec l'agent activé
       const isAIPrompt = variables.length > 20 || searchQuery.trim().length > 20;
       const promptToUse = searchQuery.trim() || variables;
       
-      // Stocker le prompt pour l'agent
-      if (isAIPrompt) {
-        window.sessionStorage.setItem(`agent-prompt-${data.id}`, promptToUse);
+      // Handle redirect based on response type
+      if (data.bootstrapToken) {
+        // AI-powered workspace (with auto-start agent)
+        // Redirect to IDE with bootstrap token
+        window.location.href = `/ide/${data.projectId}?bootstrap=${data.bootstrapToken}`;
+        
+        toast({
+          title: "Building your app with AI...",
+          description: "The AI agent is generating your application in real-time.",
+        });
+      } else {
+        // Simple project creation
+        const projectUrl = getProjectUrl(data.project, user?.username);
+        window.location.href = projectUrl;
+        
+        toast({
+          title: "Project created!",
+          description: `${data.project.name} has been created successfully.`,
+        });
       }
       
-      // Add a small delay to ensure project is fully created and indexed
-      setTimeout(() => {
-        const projectUrl = getProjectUrl(data, user?.username);
-        const urlWithAgent = isAIPrompt 
-          ? `${projectUrl}?agent=true&prompt=${encodeURIComponent(promptToUse)}`
-          : projectUrl;
-        window.location.href = urlWithAgent;
-      }, 500);
-      
-      toast({
-        title: isAIPrompt ? "Building your app with AI..." : "Project created!",
-        description: isAIPrompt 
-          ? "L'agent AI va générer votre application automatiquement."
-          : `${data.name} has been created successfully.`,
-      });
-      
-      // Réinitialiser le champ de recherche
+      // Clear search query
       setSearchQuery('');
     },
     onError: (error) => {
