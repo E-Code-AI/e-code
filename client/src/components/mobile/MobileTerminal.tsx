@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useTerminalHistoryPersistence } from '@/hooks/use-mobile-persistence';
+import { TerminalMetricsIndicator } from '@/components/terminal/TerminalMetricsIndicator';
 import 'xterm/css/xterm.css';
 
 interface MobileTerminalProps {
@@ -489,11 +490,18 @@ export function MobileTerminal({
               Clear
             </Button>
 
+            <div className="w-px h-6 bg-[#3e3e42]" />
+
+            {/* Fortune 500 Terminal Metrics */}
+            <div className="ml-auto mr-2">
+              <TerminalMetricsIndicator compact data-testid="mobile-terminal-metrics-compact" />
+            </div>
+
             {/* Hide toolbar */}
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-[#3e3e42] active:scale-95 touch-manipulation ml-auto"
+              className="h-8 w-8 p-0 hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
               onClick={() => setShowKeyboard(false)}
               data-testid="mobile-terminal-hide-toolbar"
             >
