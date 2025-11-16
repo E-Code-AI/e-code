@@ -20,6 +20,7 @@ import { createServer } from "http";
 import { configureCors } from "./middleware/cors-config";
 import { securityMiddleware } from "./middleware/security";
 import { legacyRateLimiters, dynamicRateLimiter, logRateLimitViolations } from './middleware/rate-limiter';
+import { tierRateLimiters } from './middleware/tier-rate-limiter';
 import { monitoringMiddleware } from './services/monitoring.service';
 import { sanitizeInput } from './middleware/input-validation';
 
@@ -46,14 +47,14 @@ app.use(monitoringMiddleware);
 app.use(sanitizeInput);
 
 // Apply global rate limiting for DDoS protection
-// This catches ALL requests before they hit specific routes
 // Log all rate limit violations for security monitoring
 app.use(logRateLimitViolations);
 
-// Global API rate limiter - 100 req/min per IP
-app.use('/api', legacyRateLimiters.api);
+// Fortune 500 Tier-Based Rate Limiter - Intelligent limits per user subscription
+// Free: 100/min, Pro: 1000/min, Enterprise: 10000/min (10x multiplier in dev)
+app.use('/api', tierRateLimiters.api);
 
-// Dynamic rate limiting based on endpoint sensitivity
+// Legacy dynamic rate limiting (kept for backward compatibility)
 app.use(dynamicRateLimiter);
 
 // Cloud Run provides PORT environment variable, fallback to 5000 for development
