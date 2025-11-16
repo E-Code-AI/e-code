@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { ensureAuthenticated } from '../middleware/auth';
+import { tierRateLimiters } from '../middleware/tier-rate-limiter';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -21,6 +22,11 @@ const logger = winston.createLogger({
 });
 
 const router = Router();
+
+// Fortune 500 AI Rate Limiter - Apply to ALL streaming endpoints in this router
+// Free: 10/min, Pro: 100/min, Enterprise: 1000/min (x10 in dev)
+// CRITICAL: Streaming is high-cost and MUST be strictly limited
+router.use(tierRateLimiters.ai);
 
 // Helper to set SSE headers
 const setupSSE = (res: any) => {
