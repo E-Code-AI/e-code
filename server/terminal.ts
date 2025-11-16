@@ -57,7 +57,8 @@ export function setupTerminalWebsocket(server: Server) {
 
       // FORTUNE 500 SCALABILITY + PERSISTENCE: Check if we can create a new session
       if (!terminalSessions.has(projectId)) {
-        const sessionId = `terminal-${projectId}-${Date.now()}`;
+        // Use stable sessionId for Redis persistence (not timestamp-based)
+        const sessionId = `terminal-${projectId}`;
         
         // Try to restore session from Redis first
         const existingSession = await redisSessionManager.getSession(sessionId);
@@ -185,8 +186,18 @@ export function setupTerminalWebsocket(server: Server) {
                     }
                   }
                   
-                  // Execute the command
-                  await executeCommand(projectId, command);
+                  // FORTUNE 500 SCALABILITY: Queue command execution via scalability manager
+                  await terminalScalabilityManager.queueCommand(
+                    terminalSession.sessionId,
+                    command,
+                    async () => executeCommand(projectId, command)
+                  );
+                  
+                  // Persist session activity to Redis
+                  const session = terminalSessions.get(projectId);
+                  if (session) {
+                    await redisSessionManager.touchSession(session.sessionId);
+                  }
                 } else {
                   // Empty command, just show prompt
                   broadcast(projectId, JSON.stringify({
