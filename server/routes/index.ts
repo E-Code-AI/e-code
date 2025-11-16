@@ -45,6 +45,7 @@ import createAgentPlanRouter from "./agent-plan.router";
 import createAgentBuildRouter from "./agent-build.router";
 import aiModelsRouter from "./ai-models.router";
 import featureFlagsRouter from "./feature-flags.router";
+import workspaceBootstrapRouter from "./workspace-bootstrap.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -183,6 +184,9 @@ export class MainRouter {
     
     // Workspace routes (LSP, builds, tests, security, resources)
     app.use('/api/workspace', createWorkspaceRoutes(this.storage));
+    
+    // Workspace Bootstrap routes (Fortune 500-grade orchestration)
+    app.use('/api/workspace', workspaceBootstrapRouter);
     
     // Mobile app routes
     app.use(mobileRouter);
