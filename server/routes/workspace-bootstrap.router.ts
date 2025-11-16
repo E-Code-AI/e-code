@@ -116,7 +116,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     
     logger.info(`[Bootstrap] Agent session created: ${session.id}`, { sessionId: session.id });
     
-    // 4. Generate execution plan (asynchronously)
+    // 4. Generate execution plan (SYNCHRONOUSLY - critical for autonomous execution)
     // Store the prompt in session context for plan generation
     const planContext = {
       projectType: 'web-app',
@@ -127,58 +127,32 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
       prompt: prompt
     };
     
-    // Generate plan asynchronously (don't await - happens in background)
-    planGenerator.generatePlan(prompt, planContext)
-      .then(plan => {
-        logger.info(`[Bootstrap] Plan generated: ${plan.id}`, { planId: plan.id, tasks: plan.tasks.length });
-      })
-      .catch(error => {
-        logger.error('[Bootstrap] Plan generation failed:', error);
-      });
+    logger.info(`[Bootstrap] Generating plan for prompt: "${prompt.substring(0, 50)}..."`);
+    const plan = await planGenerator.generatePlan(prompt, planContext);
+    logger.info(`[Bootstrap] Plan generated: ${plan.id}`, { 
+      planId: plan.id, 
+      tasks: plan.tasks.length,
+      estimatedMinutes: plan.totalEstimatedMinutes 
+    });
     
-    // 5. Initialize workspace container (if autoStart enabled)
+    // 5. Execute autonomous plan (if autoStart enabled)
+    // This is where the magic happens - the AI agent autonomously builds the project
     if (options.autoStart) {
-      // Create initial workflow with bootstrap tasks
-      const initialWorkflow = await agentWorkflowEngine.executeWorkflow(
-        session.id,
-        'Bootstrap Workspace',
-        'Initialize project structure and dependencies',
-        [
-          {
-            id: 'setup-1',
-            name: 'Initialize project directory',
-            type: 'file_operation',
-            config: {
-              action: 'create_directory',
-              path: `projects/${project.id}`
-            }
-          },
-          {
-            id: 'setup-2',
-            name: 'Create package.json',
-            type: 'file_operation',
-            config: {
-              action: 'create_file',
-              path: `projects/${project.id}/package.json`,
-              content: JSON.stringify({
-                name: slug,
-                version: '1.0.0',
-                description: prompt,
-                scripts: {
-                  dev: 'vite',
-                  build: 'vite build',
-                  preview: 'vite preview'
-                },
-                dependencies: {}
-              }, null, 2)
-            },
-            dependencies: ['setup-1']
-          }
-        ],
-        String(userId)
-      );
+      logger.info(`[Bootstrap] Starting autonomous plan execution for ${plan.tasks.length} tasks`);
       
-      logger.info(`[Bootstrap] Initial workflow created: ${initialWorkflow.id}`);
+      // Execute the plan asynchronously (don't await - return bootstrap token immediately)
+      // The client will connect via WebSocket to receive real-time progress updates
+      agentOrchestrator.executeAutonomousPlan(
+        session.id,
+        plan,
+        String(project.id),
+        String(userId)
+      ).catch(error => {
+        logger.error(`[Bootstrap] Autonomous plan execution failed:`, error);
+        // Error will be sent to client via WebSocket
+      });
+      
+      logger.info(`[Bootstrap] Autonomous execution started in background`);
     }
     
     // 6. Setup WebSocket streaming
