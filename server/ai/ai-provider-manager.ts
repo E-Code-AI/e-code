@@ -23,89 +23,100 @@ export interface AIModel {
  * Fortune 500-grade model catalog
  */
 export const AI_MODELS: AIModel[] = [
-  // OpenAI Models - VERIFIED REAL MODELS ONLY (as of November 2025)
+  // OpenAI Models - LATEST NOVEMBER 2025 (Released Nov 12-14, 2025)
   // Source: https://platform.openai.com/docs/models
+  {
+    id: 'gpt-5.1',
+    name: 'GPT-5.1 Instant',
+    provider: 'openai',
+    description: 'Latest flagship - warmer, more intelligent with adaptive reasoning (Nov 12, 2025)',
+    maxTokens: 400000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.008
+  },
+  {
+    id: 'gpt-5.1-thinking',
+    name: 'GPT-5.1 Thinking',
+    provider: 'openai',
+    description: 'Extended reasoning for complex problems - 50% faster than GPT-5 (Nov 12, 2025)',
+    maxTokens: 400000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.012
+  },
+  {
+    id: 'gpt-4.1',
+    name: 'GPT-4.1',
+    provider: 'openai',
+    description: 'Smartest non-reasoning multimodal LLM - Swiss Army knife for all tasks',
+    maxTokens: 128000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.006
+  },
   {
     id: 'gpt-4o',
     name: 'GPT-4o',
     provider: 'openai',
-    description: 'Latest multimodal GPT-4 optimized model',
+    description: 'Multimodal model with vision - updated to June 2024 knowledge',
     maxTokens: 128000,
     supportsStreaming: true,
     costPer1kTokens: 0.005
   },
   {
-    id: 'gpt-4o-mini',
-    name: 'GPT-4o Mini',
+    id: 'o4-mini',
+    name: 'o4 Mini',
     provider: 'openai',
-    description: 'Compact GPT-4o for cost-effective tasks',
+    description: 'Budget-friendly reasoning model for math, coding, visual tasks',
     maxTokens: 128000,
     supportsStreaming: true,
-    costPer1kTokens: 0.00015
-  },
-  {
-    id: 'gpt-4-turbo',
-    name: 'GPT-4 Turbo',
-    provider: 'openai',
-    description: 'Enhanced GPT-4 with 128K context window',
-    maxTokens: 128000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.01
-  },
-  {
-    id: 'gpt-4',
-    name: 'GPT-4',
-    provider: 'openai',
-    description: 'Standard GPT-4 model',
-    maxTokens: 8192,
-    supportsStreaming: true,
-    costPer1kTokens: 0.03
+    costPer1kTokens: 0.002
   },
   
-  // Anthropic Models - REAL models only
+  // Anthropic Models - LATEST NOVEMBER 2025
+  // Source: https://docs.claude.com/en/docs/about-claude/models
   {
-    id: 'claude-3-5-sonnet-20241022',
-    name: 'Claude 3.5 Sonnet',
+    id: 'claude-sonnet-4-5-20250929',
+    name: 'Claude Sonnet 4.5',
     provider: 'anthropic',
-    description: 'Latest Claude model - balanced performance',
+    description: 'Best coding model in the world - strongest at agents & computer use (Sept 29, 2025)',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.003
   },
   {
-    id: 'claude-3-5-haiku-20241022',
-    name: 'Claude 3.5 Haiku',
+    id: 'claude-opus-4-1-20250805',
+    name: 'Claude Opus 4.1',
     provider: 'anthropic',
-    description: 'Fast Claude model for simple tasks - validated working',
-    maxTokens: 200000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.001
-  },
-  {
-    id: 'claude-3-opus-20240229',
-    name: 'Claude 3 Opus',
-    provider: 'anthropic',
-    description: 'Most capable Claude 3 model for complex reasoning',
+    description: 'Upgraded for agentic tasks & real-world coding - 74.5% on SWE-bench (Aug 5, 2025)',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.015
   },
-  
-  // Google Gemini Models - REAL models only
   {
-    id: 'gemini-1.5-pro',
-    name: 'Gemini 1.5 Pro',
+    id: 'claude-haiku-4-5-20251015',
+    name: 'Claude Haiku 4.5',
+    provider: 'anthropic',
+    description: 'Fastest model - matches Sonnet 4 on coding at 1/3 the cost (Oct 15, 2025)',
+    maxTokens: 200000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.001
+  },
+  
+  // Google Gemini Models - LATEST NOVEMBER 2025
+  // Source: https://ai.google.dev/gemini-api/docs/models
+  {
+    id: 'gemini-2.5-pro',
+    name: 'Gemini 2.5 Pro',
     provider: 'gemini',
-    description: 'Advanced Gemini model with 1M context window',
+    description: 'Stable release with adaptive thinking - 2M token context coming soon (Nov 2025)',
     maxTokens: 1000000,
     supportsStreaming: true,
     costPer1kTokens: 0.00125
   },
   {
-    id: 'gemini-1.5-flash',
-    name: 'Gemini 1.5 Flash',
+    id: 'gemini-2.5-flash',
+    name: 'Gemini 2.5 Flash',
     provider: 'gemini',
-    description: 'Fast multimodal model for general use',
+    description: 'Hybrid reasoning - thinks before it speaks with low latency (Nov 2025)',
     maxTokens: 1000000,
     supportsStreaming: true,
     costPer1kTokens: 0.000075
@@ -141,15 +152,25 @@ export const AI_MODELS: AIModel[] = [
     costPer1kTokens: 0.0006  // Ultra-low cost for turbo variant
   },
   
-  // xAI Models - REAL models only
+  // xAI Models - LATEST NOVEMBER 2025
+  // Source: https://x.ai/ and https://docs.x.ai/
   {
-    id: 'grok-2-1212',
-    name: 'Grok 2',
+    id: 'grok-4',
+    name: 'Grok 4',
     provider: 'xai',
-    description: 'xAI flagship model with real-time knowledge',
-    maxTokens: 32000,
+    description: 'Current flagship - post-graduate reasoning with 256K context (July 2025)',
+    maxTokens: 256000,
     supportsStreaming: true,
     costPer1kTokens: 0.002
+  },
+  {
+    id: 'grok-4-fast',
+    name: 'Grok 4 Fast',
+    provider: 'xai',
+    description: 'Enterprise model - 40% fewer tokens, 2M context, 64× cheaper than o3 (Sept 2025)',
+    maxTokens: 2000000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0005
   },
   
   // Groq Models - REAL models only
