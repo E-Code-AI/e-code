@@ -12,6 +12,7 @@
 import { db } from '../db';
 import { aiUsageMetering } from '@shared/schema';
 import { createLogger } from '../utils/logger';
+import { normalizeModelName } from '../utils/model-normalizer';
 import Stripe from 'stripe';
 
 const logger = createLogger('ai-metering');
@@ -97,14 +98,22 @@ export class AiMeteringService {
    */
   async trackUsage(params: TrackUsageParams): Promise<number> {
     try {
+      // ✅ CRITICAL: Normalize model to prevent DB insert failures
+      const originalModel = params.model;
+      const normalizedModel = normalizeModelName(params.model, params.provider);
+      
+      if (originalModel !== normalizedModel) {
+        logger.debug(`Model normalized: "${originalModel}" → "${normalizedModel}"`);
+      }
+      
       const tokensTotal = params.tokensInput + params.tokensOutput;
-      const costUsd = this.calculateCost(params.model, params.tokensInput, params.tokensOutput);
+      const costUsd = this.calculateCost(normalizedModel, params.tokensInput, params.tokensOutput);
 
       // Insert into metering table
       const [record] = await db.insert(aiUsageMetering).values({
         userId: params.userId,
         endpoint: params.endpoint,
-        model: params.model as any, // Type assertion needed for enum
+        model: normalizedModel as any, // Now guaranteed to be valid enum
         provider: params.provider,
         tokensInput: params.tokensInput,
         tokensOutput: params.tokensOutput,

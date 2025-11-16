@@ -1,9 +1,14 @@
 /**
  * Tier-Based Rate Limiting Middleware (Fortune 500)
  * Implements intelligent rate limiting based on user subscription tier
- * - Free: 100 req/min (API), 10 req/min (AI)
- * - Pro: 1000 req/min (API), 100 req/min (AI)
- * - Enterprise: 10000 req/min (API), 1000 req/min (AI)
+ * 
+ * API & AUTH LIMITS (Hard blocking):
+ * - Free: 100 req/min (API), 5 req/15min (AUTH)
+ * - Pro: 1000 req/min (API), 20 req/15min (AUTH)
+ * - Enterprise: 10000 req/min (API), 100 req/15min (AUTH)
+ * 
+ * AI USAGE: Pay-as-you-go model (NO BLOCKING)
+ * - See ai-usage-tracker.ts for AI metering
  */
 
 import { Request, Response, NextFunction } from 'express';
@@ -15,28 +20,25 @@ import { createLogger } from '../utils/logger';
 const logger = createLogger('tier-rate-limiter');
 
 type SubscriptionTier = 'free' | 'pro' | 'enterprise';
-type LimitType = 'api' | 'ai' | 'auth';
+type LimitType = 'api' | 'auth'; // AI removed - now pay-as-you-go (see ai-usage-tracker.ts)
 
 interface TierLimits {
   points: number;
   duration: number;
 }
 
-// Fortune 500 Rate Limits per Tier
+// Fortune 500 Rate Limits per Tier (API & AUTH only - AI is pay-as-you-go)
 const TIER_LIMITS: Record<SubscriptionTier, Record<LimitType, TierLimits>> = {
   free: {
     api: { points: 100, duration: 60 },      // 100 req/min
-    ai: { points: 10, duration: 60 },        // 10 req/min
     auth: { points: 5, duration: 900 },      // 5 req/15min
   },
   pro: {
     api: { points: 1000, duration: 60 },     // 1000 req/min (10x)
-    ai: { points: 100, duration: 60 },       // 100 req/min (10x)
     auth: { points: 20, duration: 900 },     // 20 req/15min (4x)
   },
   enterprise: {
     api: { points: 10000, duration: 60 },    // 10000 req/min (100x)
-    ai: { points: 1000, duration: 60 },      // 1000 req/min (100x)
     auth: { points: 100, duration: 900 },    // 100 req/15min (20x)
   },
 };
@@ -160,8 +162,8 @@ export function createTierRateLimitMiddleware(limitType: LimitType) {
 }
 
 // Export specific middleware for different endpoint types
+// Note: AI endpoints now use pay-as-you-go tracking (see ai-usage-tracker.ts)
 export const tierRateLimiters = {
   api: createTierRateLimitMiddleware('api'),
-  ai: createTierRateLimitMiddleware('ai'),
   auth: createTierRateLimitMiddleware('auth'),
 };
