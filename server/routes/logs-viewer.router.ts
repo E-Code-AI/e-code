@@ -10,7 +10,8 @@ const logger = createLogger('logs-viewer');
 
 const logsQuerySchema = z.object({
   deploymentId: z.string().optional(),
-  projectId: z.number().optional(),
+  projectId: z.string().optional(),
+  buildId: z.string().optional(),
   level: z.enum(['info', 'warn', 'error', 'debug', 'all']).optional().default('all'),
   search: z.string().optional(),
   startDate: z.string().optional(),
@@ -21,7 +22,8 @@ const logsQuerySchema = z.object({
 
 const exportLogsSchema = z.object({
   deploymentId: z.string().optional(),
-  projectId: z.number().optional(),
+  projectId: z.string().optional(),
+  buildId: z.string().optional(),
   format: z.enum(['json', 'csv', 'txt']).default('json'),
   level: z.enum(['info', 'warn', 'error', 'debug', 'all']).optional().default('all'),
   startDate: z.string().optional(),
@@ -33,7 +35,8 @@ interface LogEntry {
   level: 'info' | 'warn' | 'error' | 'debug';
   message: string;
   deploymentId?: string;
-  projectId?: number;
+  buildId?: string;
+  projectId?: string;
   metadata?: Record<string, any>;
 }
 
@@ -46,6 +49,7 @@ router.get('/', async (req, res) => {
     const {
       deploymentId,
       projectId,
+      buildId,
       level,
       search,
       startDate,
@@ -56,67 +60,62 @@ router.get('/', async (req, res) => {
 
     let logs: LogEntry[] = [];
 
-    // Fetch from multiple sources with fallbacks
-    if (deploymentId) {
-      // Primary: Get from build logs table
+    // Fetch from build logs table
+    if (buildId) {
+      // Query by buildId directly
       const buildLogsRecords = await db.query.buildLogs.findMany({
-        where: eq(buildLogs.deploymentId, deploymentId),
+        where: eq(buildLogs.buildId, buildId),
         orderBy: [desc(buildLogs.timestamp)],
         limit: 1000
       });
 
       logs = buildLogsRecords.map(log => ({
         timestamp: log.timestamp.toISOString(),
-        level: inferLogLevel(log.message),
+        level: log.level as 'info' | 'warn' | 'error' | 'debug',
         message: log.message,
-        deploymentId: log.deploymentId,
-        metadata: { stage: log.stage, step: log.step }
+        buildId: log.buildId,
+        projectId: log.projectId,
+        metadata: { source: log.source, logType: log.logType, ...log.metadata }
       }));
-
-      // Fallback: Get from deployment record if no build logs
-      if (logs.length === 0) {
-        const deployment = await db.query.deployments.findFirst({
-          where: eq(deployments.id, deploymentId)
-        });
-
-        if (deployment?.deploymentLog) {
-          logs = parseDeploymentLogs(deployment.deploymentLog, deploymentId);
-        }
-      }
     } else if (projectId) {
-      // Get logs from build logs table for all project deployments
-      const projectDeployments = await db.query.deployments.findMany({
-        where: eq(deployments.projectId, projectId),
-        orderBy: [desc(deployments.createdAt)],
-        limit: 10
+      // Get logs from build logs table for project
+      const buildLogsRecords = await db.query.buildLogs.findMany({
+        where: eq(buildLogs.projectId, projectId),
+        orderBy: [desc(buildLogs.timestamp)],
+        limit: 1000
       });
 
-      const deploymentIds = projectDeployments.map(d => d.id);
-      
-      if (deploymentIds.length > 0) {
-        const buildLogsRecords = await db.select()
-          .from(buildLogs)
-          .where(inArray(buildLogs.deploymentId, deploymentIds))
-          .orderBy(desc(buildLogs.timestamp))
-          .limit(1000);
+      logs = buildLogsRecords.map(log => ({
+        timestamp: log.timestamp.toISOString(),
+        level: log.level as 'info' | 'warn' | 'error' | 'debug',
+        message: log.message,
+        buildId: log.buildId,
+        projectId: log.projectId,
+        metadata: { source: log.source, logType: log.logType, ...log.metadata }
+      }));
 
-        logs = buildLogsRecords.map(log => ({
-          timestamp: log.timestamp.toISOString(),
-          level: inferLogLevel(log.message),
-          message: log.message,
-          deploymentId: log.deploymentId,
-          projectId,
-          metadata: { stage: log.stage, step: log.step }
-        }));
-      }
+      // Fallback: Get from deployment records if no build logs
+      if (logs.length === 0 && deploymentId) {
+        const deployment = await db.query.deployments.findFirst({
+          where: eq(deployments.deploymentId, deploymentId)
+        });
 
-      // Fallback: Get from deployment records
-      if (logs.length === 0) {
-        for (const deployment of projectDeployments) {
-          if (deployment.deploymentLog) {
-            logs.push(...parseDeploymentLogs(deployment.deploymentLog, deployment.id, projectId));
-          }
+        if (deployment?.deploymentLogs) {
+          logs = parseDeploymentLogs(deployment.deploymentLogs, deploymentId, projectId);
+        } else if (deployment?.buildLogs) {
+          logs = parseDeploymentLogs(deployment.buildLogs, deploymentId, projectId);
         }
+      }
+    } else if (deploymentId) {
+      // Fallback: Get from deployment record
+      const deployment = await db.query.deployments.findFirst({
+        where: eq(deployments.deploymentId, deploymentId)
+      });
+
+      if (deployment?.deploymentLogs) {
+        logs = parseDeploymentLogs(deployment.deploymentLogs, deploymentId, deployment.projectId);
+      } else if (deployment?.buildLogs) {
+        logs = parseDeploymentLogs(deployment.buildLogs, deploymentId, deployment.projectId);
       }
     }
 
@@ -170,6 +169,7 @@ router.post('/export', async (req, res) => {
     const {
       deploymentId,
       projectId,
+      buildId,
       format,
       level,
       startDate,
@@ -179,24 +179,41 @@ router.post('/export', async (req, res) => {
     // Get logs
     let logs: LogEntry[] = [];
 
-    if (deploymentId) {
-      const deployment = await db.query.deployments.findFirst({
-        where: eq(deployments.id, deploymentId)
+    if (buildId) {
+      const buildLogsRecords = await db.query.buildLogs.findMany({
+        where: eq(buildLogs.buildId, buildId),
+        orderBy: [desc(buildLogs.timestamp)]
       });
 
-      if (deployment && deployment.deploymentLog) {
-        logs = parseDeploymentLogs(deployment.deploymentLog, deploymentId);
-      }
+      logs = buildLogsRecords.map(log => ({
+        timestamp: log.timestamp.toISOString(),
+        level: log.level as 'info' | 'warn' | 'error' | 'debug',
+        message: log.message,
+        buildId: log.buildId,
+        projectId: log.projectId,
+        metadata: { source: log.source, logType: log.logType }
+      }));
     } else if (projectId) {
-      const projectDeployments = await db.query.deployments.findMany({
-        where: eq(deployments.projectId, projectId),
-        orderBy: [desc(deployments.createdAt)]
+      const buildLogsRecords = await db.query.buildLogs.findMany({
+        where: eq(buildLogs.projectId, projectId),
+        orderBy: [desc(buildLogs.timestamp)]
       });
 
-      for (const deployment of projectDeployments) {
-        if (deployment.deploymentLog) {
-          logs.push(...parseDeploymentLogs(deployment.deploymentLog, deployment.id, projectId));
-        }
+      logs = buildLogsRecords.map(log => ({
+        timestamp: log.timestamp.toISOString(),
+        level: log.level as 'info' | 'warn' | 'error' | 'debug',
+        message: log.message,
+        buildId: log.buildId,
+        projectId: log.projectId,
+        metadata: { source: log.source, logType: log.logType }
+      }));
+    } else if (deploymentId) {
+      const deployment = await db.query.deployments.findFirst({
+        where: eq(deployments.deploymentId, deploymentId)
+      });
+
+      if (deployment?.deploymentLogs) {
+        logs = parseDeploymentLogs(deployment.deploymentLogs, deploymentId, deployment.projectId);
       }
     }
 
@@ -256,28 +273,42 @@ router.post('/export', async (req, res) => {
  */
 router.get('/stats', async (req, res) => {
   try {
-    const { deploymentId, projectId } = req.query;
+    const { deploymentId, projectId, buildId } = req.query;
 
     let logs: LogEntry[] = [];
 
-    if (deploymentId) {
-      const deployment = await db.query.deployments.findFirst({
-        where: eq(deployments.id, deploymentId as string)
+    if (buildId) {
+      const buildLogsRecords = await db.query.buildLogs.findMany({
+        where: eq(buildLogs.buildId, buildId as string)
       });
 
-      if (deployment && deployment.deploymentLog) {
-        logs = parseDeploymentLogs(deployment.deploymentLog, deploymentId as string);
-      }
+      logs = buildLogsRecords.map(log => ({
+        timestamp: log.timestamp.toISOString(),
+        level: log.level as 'info' | 'warn' | 'error' | 'debug',
+        message: log.message,
+        buildId: log.buildId,
+        projectId: log.projectId
+      }));
     } else if (projectId) {
-      const projectDeployments = await db.query.deployments.findMany({
-        where: eq(deployments.projectId, Number(projectId)),
-        orderBy: [desc(deployments.createdAt)]
+      const buildLogsRecords = await db.query.buildLogs.findMany({
+        where: eq(buildLogs.projectId, projectId as string),
+        orderBy: [desc(buildLogs.timestamp)]
       });
 
-      for (const deployment of projectDeployments) {
-        if (deployment.deploymentLog) {
-          logs.push(...parseDeploymentLogs(deployment.deploymentLog, deployment.id, Number(projectId)));
-        }
+      logs = buildLogsRecords.map(log => ({
+        timestamp: log.timestamp.toISOString(),
+        level: log.level as 'info' | 'warn' | 'error' | 'debug',
+        message: log.message,
+        buildId: log.buildId,
+        projectId: log.projectId
+      }));
+    } else if (deploymentId) {
+      const deployment = await db.query.deployments.findFirst({
+        where: eq(deployments.deploymentId, deploymentId as string)
+      });
+
+      if (deployment?.deploymentLogs) {
+        logs = parseDeploymentLogs(deployment.deploymentLogs, deploymentId as string, deployment.projectId);
       }
     }
 
@@ -321,15 +352,32 @@ function inferLogLevel(message: string): 'info' | 'warn' | 'error' | 'debug' {
 
 /**
  * Helper: Parse deployment logs (fallback)
+ * Handles both JSON arrays and plain text logs
  */
-function parseDeploymentLogs(logMessages: string[], deploymentId: string, projectId?: number): LogEntry[] {
-  return logMessages.map((message, index) => ({
-    timestamp: new Date(Date.now() - (logMessages.length - index) * 1000).toISOString(),
-    level: inferLogLevel(message),
-    message,
-    deploymentId,
-    projectId
-  }));
+function parseDeploymentLogs(logData: string | string[], deploymentId: string, projectId?: string): LogEntry[] {
+  try {
+    // If it's already an array, use it directly
+    const logMessages = Array.isArray(logData) ? logData : JSON.parse(logData);
+    
+    return logMessages.map((message, index) => ({
+      timestamp: new Date(Date.now() - (logMessages.length - index) * 1000).toISOString(),
+      level: inferLogLevel(message),
+      message,
+      deploymentId,
+      projectId
+    }));
+  } catch (error) {
+    // Fallback: treat as plain text, split by newlines
+    const lines = typeof logData === 'string' ? logData.split('\n') : [String(logData)];
+    
+    return lines.filter(line => line.trim()).map((message, index) => ({
+      timestamp: new Date(Date.now() - (lines.length - index) * 1000).toISOString(),
+      level: inferLogLevel(message),
+      message,
+      deploymentId,
+      projectId
+    }));
+  }
 }
 
 /**

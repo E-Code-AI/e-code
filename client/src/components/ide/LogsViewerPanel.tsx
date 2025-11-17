@@ -14,27 +14,30 @@ interface LogEntry {
   level: 'info' | 'warn' | 'error' | 'debug';
   message: string;
   deploymentId?: string;
-  projectId?: number;
+  buildId?: string;
+  projectId?: string;
   metadata?: Record<string, any>;
 }
 
 interface LogsViewerPanelProps {
   deploymentId?: string;
-  projectId?: number;
+  buildId?: string;
+  projectId?: string;
 }
 
-export function LogsViewerPanel({ deploymentId, projectId }: LogsViewerPanelProps) {
+export function LogsViewerPanel({ deploymentId, buildId, projectId }: LogsViewerPanelProps) {
   const [search, setSearch] = useState('');
   const [level, setLevel] = useState<'all' | 'info' | 'warn' | 'error' | 'debug'>('all');
   const [autoRefresh, setAutoRefresh] = useState(false);
   const { toast } = useToast();
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['/api/logs', { deploymentId, projectId, level, search }],
+    queryKey: ['/api/logs', { deploymentId, buildId, projectId, level, search }],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (deploymentId) params.append('deploymentId', deploymentId);
-      if (projectId) params.append('projectId', projectId.toString());
+      if (buildId) params.append('buildId', buildId);
+      if (projectId) params.append('projectId', projectId);
       if (level !== 'all') params.append('level', level);
       if (search) params.append('search', search);
       
@@ -52,6 +55,7 @@ export function LogsViewerPanel({ deploymentId, projectId }: LogsViewerPanelProp
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           deploymentId,
+          buildId,
           projectId,
           format,
           level: level !== 'all' ? level : undefined

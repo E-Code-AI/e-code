@@ -21,7 +21,7 @@ interface SearchResult {
 }
 
 interface GlobalSearchPanelProps {
-  projectId: number;
+  projectId: string;
   onFileSelect?: (filePath: string, line?: number) => void;
 }
 
@@ -56,17 +56,14 @@ export function GlobalSearchPanel({ projectId, onFileSelect }: GlobalSearchPanel
         results: SearchResult[];
         totalFiles: number;
         totalMatches: number;
-      }>('/api/search/global', {
-        method: 'POST',
-        body: JSON.stringify({
-          query,
-          projectId,
-          caseSensitive,
-          wholeWord,
-          useRegex,
-          filePattern: filePattern || undefined,
-          excludePattern: excludePattern || undefined
-        })
+      }>('POST', '/api/search/global', {
+        query,
+        projectId,
+        caseSensitive,
+        wholeWord,
+        useRegex,
+        filePattern: filePattern || undefined,
+        excludePattern: excludePattern || undefined
       });
 
       setResults(response.results);
@@ -101,18 +98,15 @@ export function GlobalSearchPanel({ projectId, onFileSelect }: GlobalSearchPanel
         results: Array<{ filePath: string; replacements: number; success: boolean }>;
         totalFiles: number;
         totalReplacements: number;
-      }>('/api/search/replace', {
-        method: 'POST',
-        body: JSON.stringify({
-          query,
-          replacement,
-          projectId,
-          caseSensitive,
-          wholeWord,
-          useRegex,
-          filePattern: filePattern || undefined,
-          excludePattern: excludePattern || undefined
-        })
+      }>('POST', '/api/search/replace', {
+        query,
+        replacement,
+        projectId,
+        caseSensitive,
+        wholeWord,
+        useRegex,
+        filePattern: filePattern || undefined,
+        excludePattern: excludePattern || undefined
       });
 
       toast({
