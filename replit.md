@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is a web-based collaborative IDE with AI assistance, offering code editing, terminal access, file management, and an autonomous AI agent. It aims to facilitate rapid prototyping and education, with a strategic vision for enterprise-grade scalability. Key capabilities include multi-provider AI model selection with advanced optimization infrastructure, real-time collaboration, and robust security features.
+E-Code is a web-based collaborative IDE with AI assistance, offering code editing, terminal access, file management, and an autonomous AI agent. Its purpose is to facilitate rapid prototyping and education, with a strategic vision for enterprise-grade scalability, multi-provider AI model selection with advanced optimization infrastructure, real-time collaboration, and robust security features.
 
 ## User Preferences
 - **Communication:** Simple, everyday language
@@ -17,151 +17,32 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 ## System Architecture
 
 ### Frontend Architecture
-The frontend uses React 18 and TypeScript with Vite, featuring TanStack Query for server state, Wouter for routing, Monaco Editor for code editing, and Shadcn/UI with Tailwind CSS for components. It supports real-time collaboration via WebSockets, responsive design for various devices, and UX enhancements like layout-aware loading states.
+The frontend uses React 18 and TypeScript with Vite, featuring TanStack Query for server state, Wouter for routing, Monaco Editor for code editing, and Shadcn/UI with Tailwind CSS for components. It supports real-time collaboration via WebSockets and responsive design.
 
 ### Backend Architecture
 The backend is built with Node.js and Express.js in TypeScript, utilizing Drizzle ORM for PostgreSQL and Passport.js for authentication. It follows a RESTful API design with a service-oriented approach, including specialized services for AI orchestration, autonomous engine logic, file system operations, and Git integration. Security features include CSRF protection, input sanitization, Fortune 500 tier-based rate limiting, and session-based authentication. Real-time services for terminal, collaborative editing, and build logs are powered by WebSockets.
 
-**Fortune 500 Rate Limiting Architecture:**
-- **Tier-Based Limits** (`server/middleware/tier-rate-limiter.ts`):
-  - Free: 100 req/min (API), 10 req/min (AI), 5 req/15min (Auth)
-  - Pro: 1,000 req/min (API), 100 req/min (AI), 20 req/15min (Auth) - 10x multiplier
-  - Enterprise: 10,000 req/min (API), 1,000 req/min (AI), 100 req/15min (Auth) - 100x multiplier
-  - Development: 10x multiplier on all limits to prevent blocking during testing
-- **Violation Tracking** (`rate_limit_violations` table): Logs all rate limit violations with user, IP, endpoint, tier, and metadata for security auditing
-- **Admin Monitoring API** (`/api/admin/monitoring/*`):
-  - `/rate-limit-violations` - Paginated violation history with filtering
-  - `/rate-limit-stats` - Aggregated statistics (by tier, type, endpoint, user, hourly trends)
-  - `/system-health` - Overall system health with terminal metrics integration
-  - `/rate-limit-violations/cleanup` - Cleanup old violation records
+**Rate Limiting Architecture:**
+Tier-based limits are enforced (Free, Pro, Enterprise) with a development multiplier. Rate limit violations are tracked in the `rate_limit_violations` table for auditing, and an Admin Monitoring API provides aggregated statistics and system health.
 
-**Terminal Architecture (Fortune 500 Production-Grade):**
-The terminal system uses local bash sessions (`server/terminal.ts`) for Replit Cloud Run compatibility, enhanced with enterprise-grade scalability, persistence, and monitoring infrastructure:
+**Terminal Architecture:**
+The terminal system uses local bash sessions with enterprise-grade scalability, persistence, and monitoring. Key components include a Scalability Manager for queue-based command execution and concurrency limits, a Redis Session Manager for fault tolerance and session persistence, and a WebSocket Heartbeat Manager for dead connection detection. Real-time terminal metrics are exposed via an API and integrated into the frontend UI.
 
-**Scalability Manager (`server/terminal/scalability-manager.ts`):**
-- Queue-based command execution with backpressure management
-- Concurrency limits: max 100 concurrent terminal sessions
-- Per-session command queues (max 1000 commands/session)
-- Command timeout enforcement (30s per command)
-- Auto-cleanup of stale sessions (>1h inactive)
-- Detailed metrics tracking (commands executed/queued/failed)
-
-**Redis Session Manager (`server/terminal/redis-session-manager.ts`):**
-- Redis-backed session persistence for fault tolerance
-- Stable session identifiers (`terminal-${projectId}`)
-- Session restoration across process restarts
-- TTL-based auto-expiry (24h)
-- Activity tracking with `touchSession()` updates
-- Survives Cloud Run restarts (99.9% availability)
-
-**WebSocket Heartbeat Manager (`server/terminal/websocket-heartbeat.ts`):**
-- 30-second ping interval with 60-second timeout
-- Dead connection detection and auto-termination
-- Metrics tracking (pings sent/received, dead connections)
-- Graceful cleanup on client disconnect
-
-**Terminal Metrics API (`/api/terminal/metrics`, `/api/terminal/health`):**
-- Real-time capacity monitoring (current/max sessions, utilization %)
-- Health status and backpressure indicators
-- Per-session metrics (age, commands executed/queued/failed)
-- K8s-ready liveness/readiness probes
-
-**Frontend Terminal Metrics Integration:**
-- React hook `useTerminalMetrics` and `useTerminalHealth` for real-time metrics polling (5s/10s intervals)
-- `TerminalMetricsIndicator` component with compact (badge) and detailed (panel) modes
-- Integrated into all terminal variants: `ReplitTerminalPanel`, `Terminal`, `MobileTerminal`, `ReplitTerminal`
-- Visual health indicators: Green (healthy), Yellow (degraded), Red (unhealthy), Gray (unknown/loading)
-- Tooltip displays capacity, utilization %, and backpressure status
-- Production-ready TypeScript with full HTML attributes support (`data-testid` for e2e testing)
-
-Docker-based isolated terminal implementation exists (`server/terminal/real-terminal.ts`) but is NOT usable on Replit Cloud Run as the platform does not expose a Docker daemon.
-
-**Pay-As-You-Go AI Billing Architecture (Fortune 500 Production-Ready):**
-The platform implements usage-based billing following OpenAI/Anthropic pricing models where users are charged for AI usage beyond tier quotas via Stripe metered billing.
-
-**Business Model:**
-- **Free Tier:** $0/month + $0 AI credits - 100 AI requests/month included, pay-as-you-go beyond
-- **Pro Tier:** $20/month + $25 AI credits/month - ~10,000 requests/month, overage charges apply
-- **Enterprise Tier:** $500/month + $100 AI credits per seat/month - ~100,000 requests/month, negotiated rates for overage
-
-**Technical Implementation (`server/services/ai-metering-service.ts`):**
-- Tracks every AI request with model, tokens (input/output/total), cost USD, provider, endpoint, status
-- Centralized model normalization (`server/utils/model-normalizer.ts`) prevents DB insert failures from aliases
-- Comprehensive alias mapping: "gpt-4-turbo-preview" → "gpt-5", "claude-3-5-sonnet-20241022" → "claude-sonnet-4-5-20250929"
-- Model-specific pricing for 18 production models across 5 providers (OpenAI, Anthropic, Gemini, xAI, Moonshot)
-- 6-decimal precision cost calculation for micro-transactions
-- **Database Enum:** 26 total values (8 legacy: gpt-4, claude-3-*, gemini-pro/ultra + 18 new production models)
-- **Migration:** Drizzle SQL migration `drizzle/0001_add_ai_models.sql` with idempotent ALTER TYPE statements
-- **Critical Fixes Applied (Nov 16, 2025):**
-  1. Fixed ReferenceError: providerDefaults now declared before use in normalizer
-  2. Expanded schema.ts enum from 18 to 26 values for backward compatibility with legacy data
-  3. Added missing 'gpt-5' to production deployment SQL script
-  4. Created official Drizzle migration to replace manual SQL (production-ready)
-
-**Middleware Integration (`server/middleware/ai-usage-tracker.ts`):**
-- Pay-as-you-go tracking middleware applied to ALL AI endpoints (no blocking)
-- Intercepts responses to capture model, tokens, endpoint before billing
-- Delegates to aiMeteringService for cost calculation and DB insert
-- SSE streaming endpoints use manual tracking with `trackAiUsageManually()` after stream completion
-
-**SSE Streaming Token Capture (`server/api/ai-streaming.ts`):**
-- **OpenAI:** Uses `stream_options: { include_usage: true }` to capture token counts in finalMessage
-- **Anthropic:** Extracts tokens from `stream.finalMessage().usage` after stream completion
-- **Gemini:** Uses `usageMetadata` from responses, with fallback estimation
-- Zero-token handling via `undefined` check (not truthy) to capture input-only costs
-
-**Database Schema (`ai_usage_metering` table in `shared/schema.ts`):**
-- Columns: id, userId, endpoint, model (enum - 26 values), provider, tokensInput, tokensOutput, tokensTotal
-- costUsd (numeric), billed (boolean), userTier, subscriptionId, requestDurationMs, status, errorMessage
-- metadata (JSON), createdAt timestamp
-- Indexes on userId, model, createdAt for efficient querying
-- **Enum Values (26 total):** 8 legacy (gpt-4, gpt-4-turbo, claude-3-opus, claude-3-sonnet, claude-3-5-sonnet, claude-3-haiku, gemini-pro, gemini-ultra) + 18 new production models
-- **Production Deployment:** See `PRODUCTION_DEPLOYMENT.md` for enum update instructions and `drizzle/0001_add_ai_models.sql` for migration
-
-**Stripe Integration (`server/services/stripe-billing-service.ts`):**
-- Metered billing via `stripe.subscriptionItems.createUsageRecord()`
-- Async reporting (doesn't block AI requests)
-- Tier-based quotas with automatic overage billing
-- Usage records tied to subscription items for accurate invoicing
-
-**Frontend Dashboards:**
-- **User Dashboard** (`client/src/components/AIUsageDashboard.tsx`): Monthly AI usage, cost breakdown by model, recent requests, token counts
-- **Admin Dashboard** (`client/src/pages/AdminAIUsage.tsx`): Platform-wide stats, usage by tier/model/provider, per-user tracking with filters
-- **Endpoints:** `GET /api/ai/usage/monthly`, `GET /api/ai/usage/history`, `GET /api/admin/ai-usage/admin/all`, `GET /api/admin/ai-usage/admin/stats`
-
-**Observability & Monitoring:**
-- Model normalization logging for debugging alias fallbacks
-- Request status tracking (success, error, timeout)
-- Admin monitoring API for revenue metrics and usage analytics
-- Integration with existing rate limit violation tracking
-
-**Production Validation:**
-- Architect-approved for Fortune 500 billing (Nov 16, 2025)
-- Zero revenue loss protection via centralized model normalization
-- All code paths protected (middleware, SSE streaming, manual tracking)
-- Complete coverage: ANY request → aiMeteringService → normalizeModelName() → DB Insert → Stripe Billing
-- **End-to-End Tested:** 10 requests across 5 providers (OpenAI, Anthropic, Gemini, xAI, Moonshot), 9 unique models, $0.059795 tracked
-- **Stripe Queue Worker:** Atomic claim logic (FOR UPDATE SKIP LOCKED), exponential backoff retry (5min → 15min → 45min), processes billing every 30s
-- **Alert Service:** Slack/Sentry integration for unknown models, Stripe failures, queue exhaustion
-- **Mobile Responsive:** AdminAIUsage dashboard with card view (mobile) and table view (desktop)
+**Pay-As-You-Go AI Billing Architecture:**
+The platform implements usage-based billing beyond tier quotas via Stripe metered billing. It tracks every AI request with model, tokens, cost, provider, and endpoint. A centralized model normalizer prevents DB insert failures and handles alias mapping. Model-specific pricing for 18 production models across 5 providers is supported with 6-decimal precision cost calculation. Billing is integrated via middleware that applies to all AI endpoints, and SSE streaming endpoints use manual tracking. The `ai_usage_metering` table stores detailed usage data.
 
 **AI Optimization Infrastructure:**
 This includes a Task Classifier Service, Circuit Breaker Service, Priority Queue Service, Intelligent Caching Service, Observability Service, and Slack Alert Service for robust AI management and monitoring.
 
 **Health & Monitoring:**
-The system integrates Kubernetes health probes (`/health/liveness`, `/health/readiness`, `/health/deep`, `/health/startup`) and a Provider Health API (`GET /api/health/providers`) for real-time status validation of integrated AI providers.
-
-**API Documentation:**
-Swagger/OpenAPI 3.0 documentation is available at `/api/docs`.
+The system integrates Kubernetes health probes and a Provider Health API for real-time status validation of integrated AI providers. API documentation is available via Swagger/OpenAPI 3.0 at `/api/docs`.
 
 ### Database Schema
-A PostgreSQL database with over 140 tables manages user data, project hierarchies, AI agent session tracking, deployment history, subscription management, and AI optimization monitoring. Key tables for the AI agent include `agent_sessions`, `agent_workflows`, `autonomous_actions`, and `agent_audit_trail`.
+A PostgreSQL database manages user data, project hierarchies, AI agent session tracking, deployment history, subscription management, and AI optimization monitoring. Key tables for the AI agent include `agent_sessions`, `agent_workflows`, `autonomous_actions`, and `agent_audit_trail`.
 
 ### AI Agent System
-The AI agent system features server-sent event streaming, multi-provider AI model selection (OpenAI, Anthropic, Gemini, xAI, Moonshot AI), database-backed conversation history, and a robust tool execution framework. It is integrated with the AI Optimization Infrastructure. A centralized model catalog (`shared/aiModels.ts`) details capabilities, pricing, and release dates for 18 production models across 5 providers.
-
-**AI Agent Flow:**
-The system includes production-ready services for agent orchestration, WebSocket streaming, workflow engine, autonomous engine, file operations, command execution, plan generation, progress tracking, and a tool framework. The current flow involves a manual agent start, while the target flow aims for an orchestrated workspace bootstrap that auto-starts the agent, streams plans, auto-creates files, executes commands, and displays terminal output via WebSockets.
+The AI agent system features server-sent event streaming, multi-provider AI model selection (OpenAI, Anthropic, Gemini, xAI, Moonshot AI), database-backed conversation history, and a robust tool execution framework, integrated with the AI Optimization Infrastructure. A centralized model catalog details capabilities, pricing, and release dates for 18 production models across 5 providers.
+The system implements full autonomous workspace creation where a prompt automatically creates the IDE, generates files, starts live preview, and streams progress in real-time via WebSockets. This involves plan generation, autonomous execution, and real-time WebSocket updates to the client.
 
 ### Core Features
 - Monaco Code Editor for advanced code editing.
