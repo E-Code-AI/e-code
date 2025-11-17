@@ -47,10 +47,10 @@ export class AIPlanGeneratorService {
   private storage: IStorage;
   
   // Provider fallback chain: Try providers in order of reliability
-  // ✅ CRITICAL FIX: Use valid model IDs from AI_MODELS (gemini-1.5-flash, not gemini-2.0-flash)
+  // ✅ GPT-5.1 UPGRADE (Nov 17, 2025): Adaptive reasoning with reasoning_effort='none' for fast plan generation
   // ✅ KIMI-K2 INTEGRATION (Nov 14, 2025): Added Moonshot AI for cost savings & performance
   private readonly PROVIDER_FALLBACK_CHAIN = [
-    'gpt-4o',              // OpenAI GPT-4 Omni (most reliable)
+    'gpt-5.1',             // OpenAI GPT-5.1 with adaptive reasoning (Nov 2025 flagship)
     'kimi-k2',             // Moonshot AI Kimi-K2 (10-100× cheaper, optimized for agentic tasks)
     'gemini-1.5-flash',    // Google Gemini 1.5 Flash (fast + reliable, REAL model ID)
     'grok-2-1212',         // xAI Grok (alternative)
@@ -255,6 +255,7 @@ Remember:
           // Stream response using AI Provider Manager
           // ✅ CRITICAL FIX: Increased max_tokens to prevent JSON truncation
           // Complex plans with multiple files can easily exceed 8192 tokens
+          // ✅ GPT-5.1 UPGRADE (Nov 17, 2025): Use reasoning_effort='none' for fast plan generation
           const stream = await aiProviderManager.streamChat(
             modelId,
             [
@@ -264,6 +265,7 @@ Remember:
               system: systemPrompt,
               max_tokens: 16384,  // ✅ DOUBLED: Prevents JSON being cut mid-generation
               temperature: 0.7,
+              reasoning_effort: 'none', // ✅ GPT-5.1: Fast non-reasoning mode for low-latency responses
             }
           );
 
