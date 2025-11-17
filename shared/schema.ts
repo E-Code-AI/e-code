@@ -1085,12 +1085,12 @@ export const secrets = pgTable('secrets', {
 
 // Environment Variables
 export const environmentVariables = pgTable('environment_variables', {
-  id: serial('id').primaryKey(),
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
   projectId: varchar('project_id').notNull().references(() => projects.id),
   key: varchar('key').notNull(),
   value: text('value').notNull(),
   environment: varchar('environment').notNull().default('development'), // development, staging, production
-  isSecret: boolean('is_secret').default(false),
+  isSecret: boolean('is_secret').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => [
