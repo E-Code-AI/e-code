@@ -83,17 +83,32 @@ export function AutonomousWorkspaceViewer({
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
 
-  // Decode bootstrap token to extract session info
+  // Decode bootstrap token to extract session info (base64url-safe)
   const decodeToken = (token: string) => {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        throw new Error('Invalid JWT format');
+      }
+      
+      // Base64url decode: replace URL-safe chars and add padding
+      let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const pad = base64.length % 4;
+      if (pad) {
+        if (pad === 1) {
+          throw new Error('Invalid base64url string');
+        }
+        base64 += new Array(5 - pad).join('=');
+      }
+      
+      const payload = JSON.parse(atob(base64));
       return {
         projectId: payload.projectId,
         sessionId: payload.sessionId,
         userId: payload.userId
       };
     } catch (e) {
-      console.error('Failed to decode bootstrap token:', e);
+      console.error('Failed to decode bootstrap token:', e, 'Token preview:', token.substring(0, 20) + '...');
       return null;
     }
   };
