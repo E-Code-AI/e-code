@@ -32,6 +32,7 @@ import { QuickFileSearch } from '@/components/ide/QuickFileSearch';
 import { KeyboardShortcutsOverlay } from '@/components/ide/KeyboardShortcutsOverlay';
 import { AgentActionsPanel } from '@/components/ide/AgentActionsPanel';
 import { ReplitAgent } from '@/components/ReplitAgent';
+import { AutonomousWorkspaceViewer } from '@/components/ide/AutonomousWorkspaceViewer';
 import { ReplitFileExplorer } from '@/components/editor/ReplitFileExplorer';
 import { ReplitMonacoEditor } from '@/components/editor/ReplitMonacoEditor';
 import { ResponsiveWebPreview } from '@/components/editor/ResponsiveWebPreview';
@@ -125,6 +126,9 @@ export default function IDEPage() {
   const promptParam = searchParams.get('prompt'); // Already decoded by URLSearchParams.get
   const autoStartAgent = searchParams.get('agent') === 'true' || panelParam === 'agent';
   
+  // NEW: Autonomous workspace creation - detect ?bootstrap=token
+  const bootstrapToken = searchParams.get('bootstrap');
+  
   // NEW: Support ?prompt=... query param for direct agent invocation
   const storedPrompt = projectId ? sessionStorage.getItem(`agent-prompt-${projectId}`) : null;
   const agentInitialPrompt = promptParam || (autoStartAgent && storedPrompt ? storedPrompt : null);
@@ -141,6 +145,31 @@ export default function IDEPage() {
       window.history.replaceState({}, '', url);
     }
   }, [promptParam, projectId]);
+  
+  // Handle autonomous workspace viewer completion
+  const handleWorkspaceComplete = () => {
+    // Remove bootstrap token from URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('bootstrap');
+    window.history.replaceState({}, '', url);
+    
+    // Refresh project data
+    queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+    
+    toast({
+      title: "Workspace Ready!",
+      description: "Your AI-powered workspace has been created successfully.",
+    });
+  };
+  
+  const handleWorkspaceError = (error: string) => {
+    toast({
+      title: "Workspace Creation Failed",
+      description: error,
+      variant: "destructive",
+    });
+  };
   
   // Load persisted state on mount with validation
   const persistedState = loadPersistedState(projectId);
@@ -658,6 +687,14 @@ export default function IDEPage() {
       {/* Keyboard Utilities */}
       {enableShortcutHint && <ShortcutHint />}
       {enableShortcutTester && <ShortcutTester />}
+      
+      {/* Autonomous Workspace Creation Viewer */}
+      <AutonomousWorkspaceViewer
+        bootstrapToken={bootstrapToken}
+        projectId={projectId}
+        onComplete={handleWorkspaceComplete}
+        onError={handleWorkspaceError}
+      />
     </div>
   );
 }
