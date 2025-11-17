@@ -109,10 +109,14 @@
               // In development, use MockWebSocket for non-Vite connections
               // CRITICAL: Allow /ws/agent for autonomous workspace creation
               const isAgentWebSocket = url.includes('/ws/agent') || url.includes('/api/terminal/ws');
+              console.log('[WebSocket] Connection attempt:', url, 'isAgent:', isAgentWebSocket, 'isDev:', isDevelopment);
+              
               if (isDevelopment && !url.includes('/@vite') && !url.includes('__vite') && !isAgentWebSocket) {
                 console.log('[WebSocket] Suppressed connection in development:', url);
                 return new MockWebSocket(url, protocols);
               }
+              
+              console.log('[WebSocket] Allowing real connection:', url);
             }
             
             // Create real WebSocket for production or Vite HMR

@@ -39,38 +39,49 @@ class AgentWebSocketService {
   initialize(server: Server) {
     this.wss = new WebSocketServer({ server, path: '/ws/agent' });
     
+    logger.info('[Agent WebSocket] Service initialized at /ws/agent');
+    
     this.wss.on('connection', (ws, req) => {
+      logger.info(`[Agent WebSocket] New connection attempt from ${req.socket.remoteAddress} - URL: ${req.url}`);
+      
       const url = new URL(req.url!, `http://${req.headers.host}`);
       const projectId = url.searchParams.get('projectId');
       const sessionId = url.searchParams.get('sessionId');
       
+      logger.info(`[Agent WebSocket] Parsed params - projectId: ${projectId}, sessionId: ${sessionId}`);
+      
       if (!projectId || !sessionId) {
+        logger.warn(`[Agent WebSocket] Rejecting connection - missing params (projectId: ${projectId}, sessionId: ${sessionId})`);
         ws.close(1008, 'Missing projectId or sessionId');
         return;
       }
       
       const connectionKey = `${projectId}-${sessionId}`;
       this.connections.set(connectionKey, ws);
-      logger.info(`Agent WebSocket connected: ${connectionKey}`);
+      logger.info(`[Agent WebSocket] ✅ Connection established: ${connectionKey}`);
       
       ws.on('error', (error) => {
-        logger.error(`WebSocket error for ${connectionKey}: ${error.message}`);
+        logger.error(`[Agent WebSocket] WebSocket error for ${connectionKey}: ${error.message}`);
       });
       
-      ws.on('close', () => {
+      ws.on('close', (code, reason) => {
         this.connections.delete(connectionKey);
-        logger.info(`Agent WebSocket disconnected: ${connectionKey}`);
+        logger.info(`[Agent WebSocket] Connection closed: ${connectionKey} (code: ${code}, reason: ${reason})`);
       });
       
       // Send initial connection confirmation
-      ws.send(JSON.stringify({
+      const confirmationMsg = JSON.stringify({
         type: 'connected',
         projectId,
         sessionId
-      }));
+      });
+      ws.send(confirmationMsg);
+      logger.info(`[Agent WebSocket] Sent confirmation to ${connectionKey}`);
     });
     
-    logger.info('Agent WebSocket service initialized');
+    this.wss.on('error', (error) => {
+      logger.error(`[Agent WebSocket] Server error: ${error.message}`);
+    });
   }
   
   sendProgress(update: AgentProgressUpdate) {
