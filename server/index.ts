@@ -218,6 +218,18 @@ app.get('/api/cors-health', async (_req, res) => {
       console.error('[WORKING SERVER] Failed to setup Resources WebSocket:', error);
     }
     
+    // Setup Agent WebSocket server for autonomous workspace creation progress
+    try {
+      const { agentWebSocketService } = await import("./services/agent-websocket-service");
+      agentWebSocketService.initialize(httpServer);
+      
+      // Make agent websocket service available globally for routes
+      (global as any).agentWebSocketService = agentWebSocketService;
+      console.log('[Agent WebSocket] Service initialized at /ws/agent');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to setup Agent WebSocket:', error);
+    }
+    
     // Make session store available globally for WebSocket authentication
     (global as any).sessionStore = sessionStore;
     
