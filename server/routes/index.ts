@@ -51,6 +51,9 @@ import adminMonitoringRouter from "./admin-monitoring.router";
 import aiUsageRouter from "./ai-usage.router";
 import { tierRateLimiters } from "../middleware/tier-rate-limiter";
 import { aiUsageTracker } from "../middleware/ai-usage-tracker";
+import globalSearchRouter from "./global-search.router";
+import logsViewerRouter from "./logs-viewer.router";
+import envVarsRouter from "./env-vars.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -222,6 +225,15 @@ export class MainRouter {
     
     // Debug routes
     app.use('/api/debug', debugRouter);
+    
+    // Global Search routes (Priorité 1 - Core IDE)
+    app.use('/api/search', globalSearchRouter);
+    
+    // Logs Viewer routes (Priorité 1 - Core IDE)
+    app.use('/api/logs', logsViewerRouter);
+    
+    // Environment Variables routes (Priorité 1 - Core IDE)
+    app.use('/api/env-vars', envVarsRouter);
   }
   
   /**

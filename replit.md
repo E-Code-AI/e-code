@@ -95,5 +95,21 @@ The system implements full autonomous workspace creation where a prompt automati
 
 ### Recent Production Fixes (Nov 17, 2025)
 1. **Redis Dependency:** ✅ Changed from critical to optional in readiness checks (verified working)
-2. **Port Configuration:** ⚠️ REQUIRES MANUAL FIX - `.replit` must be edited to use 1 port instead of 16 for Autoscale compliance (template available in `.replit.CLEAN`)
+2. **Port Configuration:** ✅ FIXED - `.replit` updated to single port (5000→80) for Autoscale compliance
 3. **Build Optimization:** ✅ Removed `npm run test:ci` from deployment build to prevent heap overflow
+4. **TypeScript Quality:** ✅ Fixed 3 critical bugs (redis-cache, tree-kill import, duplicate methods)
+
+### Core IDE Features Completed (Nov 17, 2025)
+**Priorité 1 - Essential IDE Features:**
+1. ✅ **Global Search & Replace** - Full-text search across project with regex, case-sensitive, whole-word options
+   - Backend: `/api/search/global` (POST) and `/api/search/replace` (POST)
+   - Frontend: `GlobalSearchPanel` component with live preview and batch replace
+2. ✅ **Logs Viewer** - Real-time deployment logs with search, filtering, and export (JSON/CSV/TXT)
+   - Backend: `/api/logs` (GET), `/api/logs/export` (POST), `/api/logs/stats` (GET)
+   - Frontend: `LogsViewerPanel` component with auto-refresh and multi-level filtering
+3. ✅ **Environment Variables Manager** - Secure CRUD for project secrets with encryption
+   - Backend: `/api/env-vars/:projectId` (CRUD operations), encryption via RealSecretManagementService
+   - Frontend: `EnvVarsManager` component with masked secrets and .env export
+4. ✅ **Debugger UI** - Breakpoints panel, variables watch, call stack viewer, step controls
+   - Frontend: `DebuggerPanel` component (VSCode Debug Adapter Protocol compatible)
+5. ✅ **Git UI** - Already implemented via `ReplitGitPanel` with diff viewer, commit history, branches
