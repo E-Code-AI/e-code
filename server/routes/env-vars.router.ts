@@ -116,18 +116,47 @@ router.patch('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Environment variable not found' });
     }
 
-    // Encrypt new value if provided and isSecret is true
+    // Preserve existing isSecret flag if not explicitly changed
+    const isSecretFlag = updates.isSecret ?? envVar.isSecret;
+    
+    // Determine final value to store
     let valueToStore = updates.value;
-    if (valueToStore && (updates.isSecret ?? envVar.isSecret)) {
-      const encrypted = (secretService as any).encrypt(valueToStore);
+    const valueProvided = updates.value !== undefined;
+    
+    // Handle downgrade: secret → plaintext (no new value)
+    if (envVar.isSecret && updates.isSecret === false && !valueProvided) {
+      // Downgrading secret to plaintext without new value: decrypt existing
+      try {
+        const encryptedData = JSON.parse(envVar.value);
+        valueToStore = (secretService as any).decrypt(encryptedData);
+        logger.info(`Downgraded secret to plaintext: ${envVar.key}`);
+      } catch (error) {
+        logger.error(`Failed to decrypt for downgrade ${envVar.key}:`, error);
+        return res.status(500).json({ error: 'Failed to downgrade secret (decryption failed)' });
+      }
+    }
+    // Handle upgrade: plaintext → secret (no new value)
+    else if (!envVar.isSecret && updates.isSecret === true && !valueProvided) {
+      // Upgrading plaintext to secret without new value: encrypt existing
+      const encrypted = (secretService as any).encrypt(envVar.value);
       valueToStore = JSON.stringify(encrypted);
-      logger.info(`Encrypted updated secret: ${envVar.key}`);
+      logger.info(`Upgraded plaintext to secret (encrypted existing): ${envVar.key}`);
+    }
+    // Handle new value with encryption if isSecret is true (includes empty strings)
+    else if (valueProvided && isSecretFlag) {
+      const encrypted = (secretService as any).encrypt(valueToStore!);
+      valueToStore = JSON.stringify(encrypted);
+      logger.info(`Encrypted new value: ${envVar.key} (${valueToStore!.length === 0 ? 'empty string' : 'provided'})`);
+    }
+    // Handle no-value update: preserve existing (only if no state transition)
+    else if (!valueProvided) {
+      valueToStore = envVar.value;
     }
 
     const [updated] = await db.update(environmentVariables)
       .set({
         value: valueToStore,
-        isSecret: updates.isSecret,
+        isSecret: isSecretFlag,
         updatedAt: new Date()
       })
       .where(eq(environmentVariables.id, id))
