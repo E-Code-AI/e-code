@@ -1,0 +1,236 @@
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card } from '@/components/ui/card';
+import { FileText, Download, Search, Filter, AlertCircle, Info, AlertTriangle, Bug, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
+import { Badge } from '@/components/ui/badge';
+
+interface LogEntry {
+  timestamp: string;
+  level: 'info' | 'warn' | 'error' | 'debug';
+  message: string;
+  deploymentId?: string;
+  projectId?: number;
+  metadata?: Record<string, any>;
+}
+
+interface LogsViewerPanelProps {
+  deploymentId?: string;
+  projectId?: number;
+}
+
+export function LogsViewerPanel({ deploymentId, projectId }: LogsViewerPanelProps) {
+  const [search, setSearch] = useState('');
+  const [level, setLevel] = useState<'all' | 'info' | 'warn' | 'error' | 'debug'>('all');
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const { toast } = useToast();
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['/api/logs', { deploymentId, projectId, level, search }],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (deploymentId) params.append('deploymentId', deploymentId);
+      if (projectId) params.append('projectId', projectId.toString());
+      if (level !== 'all') params.append('level', level);
+      if (search) params.append('search', search);
+      
+      const response = await fetch(`/api/logs?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch logs');
+      return response.json();
+    },
+    refetchInterval: autoRefresh ? 5000 : false
+  });
+
+  const handleExport = async (format: 'json' | 'csv' | 'txt') => {
+    try {
+      const response = await fetch('/api/logs/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deploymentId,
+          projectId,
+          format,
+          level: level !== 'all' ? level : undefined
+        })
+      });
+
+      if (!response.ok) throw new Error('Export failed');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `logs-${Date.now()}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export successful",
+        description: `Logs exported as ${format.toUpperCase()}`
+      });
+    } catch (error: any) {
+      toast({
+        title: "Export failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getLevelIcon = (level: string) => {
+    switch (level) {
+      case 'error':
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      case 'warn':
+        return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+      case 'debug':
+        return <Bug className="h-4 w-4 text-purple-500" />;
+      default:
+        return <Info className="h-4 w-4 text-blue-500" />;
+    }
+  };
+
+  const getLevelBadge = (level: string) => {
+    const variants: Record<string, "default" | "destructive" | "secondary" | "outline"> = {
+      error: 'destructive',
+      warn: 'default',
+      info: 'secondary',
+      debug: 'outline'
+    };
+    return <Badge variant={variants[level] || 'secondary'}>{level.toUpperCase()}</Badge>;
+  };
+
+  const logs = data?.logs || [];
+
+  return (
+    <div className="flex flex-col h-full bg-background" data-testid="logs-viewer-panel">
+      {/* Header */}
+      <div className="p-4 border-b space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Deployment Logs
+          </h3>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('json')}
+              data-testid="button-export-json"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              JSON
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('csv')}
+              data-testid="button-export-csv"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              CSV
+            </Button>
+          </div>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="flex gap-2">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search logs..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+              data-testid="input-search-logs"
+            />
+          </div>
+          <Select value={level} onValueChange={(v: any) => setLevel(v)}>
+            <SelectTrigger className="w-32" data-testid="select-log-level">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Levels</SelectItem>
+              <SelectItem value="info">Info</SelectItem>
+              <SelectItem value="warn">Warning</SelectItem>
+              <SelectItem value="error">Error</SelectItem>
+              <SelectItem value="debug">Debug</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant={autoRefresh ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setAutoRefresh(!autoRefresh)}
+            data-testid="button-auto-refresh"
+          >
+            {autoRefresh ? 'Live' : 'Paused'}
+          </Button>
+        </div>
+
+        {/* Stats */}
+        {data && (
+          <div className="flex gap-4 text-xs text-muted-foreground">
+            <span>Total: {data.pagination.total}</span>
+            <span>Showing: {logs.length}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Logs List */}
+      <div className="flex-1 overflow-auto">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : logs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+            <FileText className="h-12 w-12 mb-4 opacity-20" />
+            <p className="text-sm">No logs found</p>
+          </div>
+        ) : (
+          <div className="p-2 space-y-1 font-mono text-xs" data-testid="logs-list">
+            {logs.map((log: LogEntry, index: number) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: index * 0.02 }}
+              >
+                <Card className="p-3 hover:bg-accent transition-colors">
+                  <div className="flex items-start gap-3">
+                    {getLevelIcon(log.level)}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        {getLevelBadge(log.level)}
+                        <span className="text-muted-foreground">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="break-words">{log.message}</p>
+                      {log.metadata && Object.keys(log.metadata).length > 0 && (
+                        <details className="mt-2">
+                          <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                            Metadata
+                          </summary>
+                          <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-auto">
+                            {JSON.stringify(log.metadata, null, 2)}
+                          </pre>
+                        </details>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
