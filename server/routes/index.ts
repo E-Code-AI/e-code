@@ -120,8 +120,8 @@ export class MainRouter {
     app.use('/api/admin/agent', agentRouter);
     
     // Agent plan routes (REAL AI-powered plan generation with streaming) - authenticated users
-    // Mounted at /api/agent to avoid conflicts with legacy endpoints
-    app.use('/api/agent', createAgentPlanRouter(this.storage));
+    // Mounted at /api/agent/plan for consistency with other agent routes
+    app.use('/api/agent/plan', createAgentPlanRouter(this.storage));
     
     // Agent build routes (build execution with SSE progress streaming) - authenticated users
     app.use('/api/agent/build', createAgentBuildRouter(this.storage));
