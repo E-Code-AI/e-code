@@ -40,33 +40,24 @@ export class RealSecretManagementService {
   private nextSecretId = 1;
 
   constructor() {
-    // CRITICAL: Require stable encryption key to prevent data loss on restart
-    const keyString = process.env.SECRET_ENCRYPTION_KEY;
+    // CRITICAL: Use existing ENCRYPTION_KEY for consistency with other services
+    const keyString = process.env.ENCRYPTION_KEY;
     
     if (!keyString) {
       const errorMsg = 
-        '🚨 CRITICAL: SECRET_ENCRYPTION_KEY environment variable is required!\n' +
-        'Generate a secure 64-char hex key: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"\n' +
-        'Add it to your Replit Secrets as SECRET_ENCRYPTION_KEY\n' +
+        '🚨 CRITICAL: ENCRYPTION_KEY environment variable is required!\n' +
+        'This key is used across all encryption services (2FA, secrets, etc.)\n' +
         'Without this, encrypted secrets will be lost on every restart!';
       
       logger.error(errorMsg);
-      throw new Error('SECRET_ENCRYPTION_KEY is required for RealSecretManagementService');
+      throw new Error('ENCRYPTION_KEY is required for RealSecretManagementService');
     }
     
-    // Validate key length (must be 32 bytes = 64 hex chars)
-    if (keyString.length !== 64) {
-      const errorMsg = 
-        `🚨 CRITICAL: SECRET_ENCRYPTION_KEY must be 64 hex characters (32 bytes), got ${keyString.length}\n` +
-        'Generate a valid key: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"';
-      
-      logger.error(errorMsg);
-      throw new Error('SECRET_ENCRYPTION_KEY has invalid length');
-    }
+    // Derive 32-byte key from ENCRYPTION_KEY (supports any length)
+    // Use SHA-256 hash to ensure consistent 32-byte output for AES-256
+    this.encryptionKey = crypto.createHash('sha256').update(keyString).digest();
     
-    this.encryptionKey = Buffer.from(keyString, 'hex');
-    
-    logger.info('✅ Real Secret Management Service initialized with AES-256-GCM encryption (stable key)');
+    logger.info('✅ Real Secret Management Service initialized with AES-256-GCM encryption (using ENCRYPTION_KEY)');
   }
 
   private encrypt(text: string): EncryptedData {
