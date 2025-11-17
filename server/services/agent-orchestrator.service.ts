@@ -532,7 +532,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
     const taskClassification = await aiOptimization.taskClassifier.classify({
       operation: prompt,
       context: {
-        projectId: session.projectId || '',
+        projectId: session.projectId ?? '',
         userId,
         sessionId
       }
@@ -547,7 +547,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       preferredExecutor: taskClassification.preferredExecutor,
       confidence: taskClassification.confidence,
       userId,
-      projectId: session.projectId,
+      projectId: session.projectId ?? undefined,
       sessionId
     });
 
@@ -572,7 +572,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       provider,
       model: session.model || 'default',
       userId,
-      projectId: session.projectId,
+      projectId: session.projectId ?? undefined,
       sessionId
     });
 
@@ -592,7 +592,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           provider,
           model: session.model,
           userId,
-          projectId: session.projectId,
+          projectId: session.projectId ?? undefined,
           sessionId,
           nextRetryAt: providerStatus.nextRetryAt
         },
@@ -615,7 +615,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           provider,
           model: session.model,
           userId,
-          projectId: session.projectId,
+          projectId: session.projectId ?? undefined,
           sessionId,
           providerStatus: providerStatus.status
         },
