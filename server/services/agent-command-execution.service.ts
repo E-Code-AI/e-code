@@ -11,7 +11,7 @@ import {
   type AgentSession
 } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
-import * as kill from 'tree-kill';
+import kill from 'tree-kill';
 
 // Command execution event for real-time streaming
 export interface CommandExecutionEvent {

@@ -577,10 +577,6 @@ export class DeploymentManager {
     });
   }
 
-  async getDeployment(deploymentId: string): Promise<DeploymentStatus | null> {
-    return this.deployments.get(deploymentId) || null;
-  }
-
   async listDeployments(projectId: string | number): Promise<DeploymentStatus[]> {
     // CRITICAL FIX: Filter by deployment.projectId, not by checking if UUID includes projectId
     const projectIdStr = typeof projectId === 'number' ? projectId.toString() : projectId;
