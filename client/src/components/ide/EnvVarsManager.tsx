@@ -13,7 +13,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Badge } from '@/components/ui/badge';
 
 interface EnvVar {
-  id: number;
+  id: string;  // UUID string from backend
   projectId: string;
   key: string;
   value: string;
@@ -28,13 +28,13 @@ interface EnvVarsManagerProps {
 
 export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [newVar, setNewVar] = useState({
     key: '',
     value: '',
     isSecret: false
   });
-  const [revealedSecrets, setRevealedSecrets] = useState<Set<number>>(new Set());
+  const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   const { data, isLoading } = useQuery({
@@ -65,7 +65,7 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...data }: { id: number; value?: string; isSecret?: boolean }) =>
+    mutationFn: async ({ id, ...data }: { id: string; value?: string; isSecret?: boolean }) =>
       apiRequest('PATCH', `/api/env-vars/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/env-vars', projectId] });
@@ -82,7 +82,7 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: number) =>
+    mutationFn: async (id: string) =>
       apiRequest('DELETE', `/api/env-vars/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/env-vars', projectId] });
@@ -97,7 +97,7 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
     }
   });
 
-  const revealSecret = async (id: number) => {
+  const revealSecret = async (id: string) => {
     try {
       const response = await apiRequest<{ value: string; expiresIn: number; warning: string }>(
         'POST',
@@ -191,9 +191,13 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
                   <Label htmlFor="key">Key</Label>
                   <Input
                     id="key"
+                    name="key"
                     placeholder="API_KEY"
                     value={newVar.key}
-                    onChange={(e) => setNewVar({ ...newVar, key: e.target.value.toUpperCase() })}
+                    onChange={(e) => {
+                      const value = e.target.value.toUpperCase();
+                      setNewVar(prev => ({ ...prev, key: value }));
+                    }}
                     data-testid="input-env-key"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
@@ -204,9 +208,13 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
                   <Label htmlFor="value">Value</Label>
                   <Textarea
                     id="value"
+                    name="value"
                     placeholder="your-value-here"
                     value={newVar.value}
-                    onChange={(e) => setNewVar({ ...newVar, value: e.target.value })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setNewVar(prev => ({ ...prev, value }));
+                    }}
                     data-testid="input-env-value"
                   />
                 </div>

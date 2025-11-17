@@ -105,7 +105,7 @@ router.post('/', async (req, res) => {
  */
 router.patch('/:id', async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = req.params.id;  // UUID string, not integer
     const updates = updateEnvVarSchema.parse(req.body);
 
     const envVar = await db.query.environmentVariables.findFirst({
@@ -184,7 +184,7 @@ router.patch('/:id', async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = req.params.id;  // UUID string, not integer
 
     const envVar = await db.query.environmentVariables.findFirst({
       where: eq(environmentVariables.id, id)
@@ -212,7 +212,7 @@ router.delete('/:id', async (req, res) => {
  */
 router.post('/:id/reveal', async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = req.params.id;  // UUID string, not integer
 
     // Check if user is authenticated (add proper auth middleware in production)
     if (!req.user) {
