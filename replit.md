@@ -70,3 +70,78 @@ The AI agent system features server-sent event streaming, multi-provider AI mode
 ### Authentication Providers
 - **Replit Auth:** Google, GitHub, Twitter/X, Apple, email/password
 - **Custom Email/Password**
+
+---
+
+## Autonomous Workspace Creation (Nov 17, 2025)
+
+### Overview
+**Production-grade autonomous AI-powered workspace generation from natural language prompts**
+
+Complete end-to-end flow where users describe their application in natural language, and the AI agent autonomously creates a fully functional workspace with files, dependencies, and live preview—all streamed in real-time via WebSocket.
+
+### Backend API
+**POST /api/workspace/bootstrap** - Orchestrate autonomous workspace creation
+- Request: `{ prompt: string, options: { language?, framework?, autoStart?, visibility? } }`
+- Response: `{ success: true, projectId, sessionId, bootstrapToken (JWT), workspaceUrl, status: 'ready' }`
+- Flow: Creates project → Generates AI plan → Starts autonomous agent → Returns bootstrap token
+
+**WebSocket /ws/agent?projectId=X&sessionId=Y** - Real-time progress updates
+- Messages: task_start, task_progress, task_complete, file_created, build_log, error, complete
+- Auto-reconnects with exponential backoff (max 5 attempts)
+
+### Frontend Components
+1. **Home.tsx** (already existed) - AI prompt input, model selector, bootstrap API integration (lines 79-116)
+2. **AutonomousWorkspaceViewer.tsx** (NEW) - WebSocket progress viewer with base64url-safe JWT decoding, reconnection logic, real-time progress visualization
+3. **IDEPage.tsx** (modified) - Bootstrap detection (line 133), completion handlers (lines 152-175), viewer rendering (lines 695-700)
+
+### User Flow
+```
+User enters prompt → POST /api/workspace/bootstrap → Backend creates project + AI plan
+→ Returns bootstrapToken → Redirect to /ide/:id?bootstrap=token → AutonomousWorkspaceViewer
+→ WebSocket connection → Real-time progress stream → Auto-close on completion → IDE ready
+```
+
+### Implementation Status
+- ✅ Backend infrastructure (95% pre-existing, 5% LSP bug fixes)
+- ✅ WebSocket viewer component (100% new, architect-approved)
+- ✅ JWT base64url decoding fix (critical bug fix)
+- ✅ IDEPage bootstrap integration
+- ✅ Code review complete (3 comprehensive architect reviews)
+- ⚠️ E2E test blocked by authentication
+- ⚠️ Manual QA pending (requires authenticated session)
+- ⚠️ Production testing not started
+
+### Remaining Work
+**Testing & QA:**
+- WebSocket reconnection unverified in real network conditions
+- AI agent autonomous execution untested with real user prompts
+- Bootstrap token expiration handling not validated
+- Error recovery paths (API failures, timeouts) not exercised
+
+**Optimizations Pending:**
+- Reconnect timer cleanup on manual dialog close
+- Telemetry instrumentation for production monitoring
+- Authenticated E2E test suite
+
+### Files Modified/Created
+```
+client/src/components/ide/AutonomousWorkspaceViewer.tsx (NEW, 468 lines)
+client/src/pages/IDEPage.tsx (MODIFIED: +bootstrap detection)
+client/src/pages/Home.tsx (bootstrap integration already existed)
+server/routes/workspace-bootstrap.router.ts (LSP fixes only)
+server/services/agent-orchestrator.service.ts (LSP fixes only)
+```
+
+### Manual Testing Procedure
+1. Log in with valid credentials
+2. Navigate to Home page (/)
+3. Enter test prompt: "Build a simple todo list app"
+4. Click "Build" button → **Expected:** Redirect to /ide/:id?bootstrap=token
+5. Verify AutonomousWorkspaceViewer dialog appears → **Expected:** "Building Your Workspace with AI..."
+6. Monitor connection status → **Expected:** Green "Connected" indicator
+7. Watch task list and activity logs → **Expected:** Tasks appear, logs update in real-time
+8. Wait for completion (30-120s) → **Expected:** "Workspace Ready!" message
+9. Verify auto-close → **Expected:** Dialog closes, IDE loads with generated files
+
+**Current Test Results:** Manual testing not yet performed (requires authenticated user session)
