@@ -51,6 +51,11 @@ import { ReplitResourcesPanel } from '@/components/editor/ReplitResourcesPanel';
 import { ReplitSecurityPanel } from '@/components/editor/ReplitSecurityPanel';
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 
+// Priority 1 IDE Features (Production-ready)
+import { EnvVarsManager } from '@/components/ide/EnvVarsManager';
+import { GlobalSearchPanel } from '@/components/ide/GlobalSearchPanel';
+import { LogsViewerPanel } from '@/components/ide/LogsViewerPanel';
+
 // Additional missing components from EditorPage
 import { CommandPalette } from '@/components/editor/CommandPalette';
 import { GlobalSearch } from '@/components/GlobalSearch';
@@ -238,6 +243,10 @@ export default function IDEPage() {
     { id: 'test-runner', label: 'Test Runner', icon: '🧪' },
     { id: 'shell', label: 'Shell', icon: '⌨️' },
     { id: 'webpreview', label: 'Web Preview', icon: '🌐' },
+    // Priority 1 Production-Ready Features
+    { id: 'env-vars', label: 'Env Vars Manager', icon: '🔐' },
+    { id: 'global-search', label: 'Global Search', icon: '🔎' },
+    { id: 'logs', label: 'Logs Viewer', icon: '📋' },
   ];
 
   // Handlers
@@ -388,6 +397,13 @@ export default function IDEPage() {
             <WebPreview projectId={parseInt(projectId, 10)} />
           </Suspense>
         );
+      // Priority 1 Production-Ready Features
+      case 'env-vars':
+        return <EnvVarsManager projectId={projectId} />;
+      case 'global-search':
+        return <GlobalSearchPanel projectId={projectId} />;
+      case 'logs':
+        return <LogsViewerPanel projectId={projectId} />;
       default:
         if (activeTab.startsWith('file:') && selectedFileId) {
           return (

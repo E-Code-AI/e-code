@@ -354,18 +354,43 @@ function inferLogLevel(message: string): 'info' | 'warn' | 'error' | 'debug' {
  * Helper: Parse deployment logs (fallback)
  * Handles both JSON arrays and plain text logs
  */
-function parseDeploymentLogs(logData: string | string[], deploymentId: string, projectId?: string): LogEntry[] {
+function parseDeploymentLogs(logData: string | string[] | any, deploymentId: string, projectId?: string): LogEntry[] {
   try {
-    // If it's already an array, use it directly
+    // Parse JSON if it's a string
     const logMessages = Array.isArray(logData) ? logData : JSON.parse(logData);
     
-    return logMessages.map((message, index) => ({
-      timestamp: new Date(Date.now() - (logMessages.length - index) * 1000).toISOString(),
-      level: inferLogLevel(message),
-      message,
-      deploymentId,
-      projectId
-    }));
+    return logMessages.map((entry: any, index: number) => {
+      // Handle both string messages and structured log objects
+      if (typeof entry === 'string') {
+        return {
+          timestamp: new Date(Date.now() - (logMessages.length - index) * 1000).toISOString(),
+          level: inferLogLevel(entry),
+          message: entry,
+          deploymentId,
+          projectId
+        };
+      } else if (typeof entry === 'object' && entry !== null) {
+        // Handle structured log objects {timestamp, level, message, ...}
+        return {
+          timestamp: entry.timestamp || new Date(Date.now() - (logMessages.length - index) * 1000).toISOString(),
+          level: (entry.level as any) || inferLogLevel(entry.message || JSON.stringify(entry)),
+          message: entry.message || JSON.stringify(entry),
+          deploymentId,
+          projectId,
+          metadata: entry.metadata || entry
+        };
+      } else {
+        // Fallback: convert to string
+        const messageStr = String(entry);
+        return {
+          timestamp: new Date(Date.now() - (logMessages.length - index) * 1000).toISOString(),
+          level: inferLogLevel(messageStr),
+          message: messageStr,
+          deploymentId,
+          projectId
+        };
+      }
+    });
   } catch (error) {
     // Fallback: treat as plain text, split by newlines
     const lines = typeof logData === 'string' ? logData.split('\n') : [String(logData)];
