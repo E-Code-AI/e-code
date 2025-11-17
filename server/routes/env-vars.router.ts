@@ -68,11 +68,18 @@ router.post('/', async (req, res) => {
       return res.status(409).json({ error: 'Environment variable already exists' });
     }
 
-    // Store value (encryption handled by RealSecretManagementService automatically)
+    // Encrypt value if it's marked as secret
+    let valueToStore = data.value;
+    if (data.isSecret) {
+      const encrypted = (secretService as any).encrypt(data.value);
+      valueToStore = JSON.stringify(encrypted);
+      logger.info(`Encrypted secret: ${data.key}`);
+    }
+
     const [envVar] = await db.insert(environmentVariables).values({
       projectId: data.projectId,
       key: data.key,
-      value: data.value,
+      value: valueToStore,
       isSecret: data.isSecret
     }).returning();
 
@@ -109,9 +116,17 @@ router.patch('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Environment variable not found' });
     }
 
+    // Encrypt new value if provided and isSecret is true
+    let valueToStore = updates.value;
+    if (valueToStore && (updates.isSecret ?? envVar.isSecret)) {
+      const encrypted = (secretService as any).encrypt(valueToStore);
+      valueToStore = JSON.stringify(encrypted);
+      logger.info(`Encrypted updated secret: ${envVar.key}`);
+    }
+
     const [updated] = await db.update(environmentVariables)
       .set({
-        value: updates.value,
+        value: valueToStore,
         isSecret: updates.isSecret,
         updatedAt: new Date()
       })
@@ -164,7 +179,7 @@ router.delete('/:id', async (req, res) => {
  * Reveal secret value (temporary, requires authentication)
  * POST /api/env-vars/:id/reveal
  * 
- * Security: Generates time-limited reveal token, logs audit trail
+ * Security: Decrypts AES-256 encrypted value, generates time-limited reveal token, logs audit trail
  */
 router.post('/:id/reveal', async (req, res) => {
   try {
@@ -183,6 +198,19 @@ router.post('/:id/reveal', async (req, res) => {
       return res.status(404).json({ error: 'Environment variable not found' });
     }
 
+    // Decrypt value if it's a secret
+    let value = envVar.value;
+    if (envVar.isSecret) {
+      try {
+        const encryptedData = JSON.parse(envVar.value);
+        value = (secretService as any).decrypt(encryptedData);
+        logger.info(`Decrypted secret for reveal: ${envVar.key}`);
+      } catch (error) {
+        logger.error(`Failed to decrypt secret ${envVar.key}:`, error);
+        return res.status(500).json({ error: 'Failed to decrypt secret value' });
+      }
+    }
+
     // Audit log for security
     logger.warn('Secret revealed', {
       userId: req.user.id,
@@ -192,14 +220,11 @@ router.post('/:id/reveal', async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    // Return value directly (no decryption needed - stored in plain text for now)
-    const value = envVar.value;
-
     // Return with expiry warning
     res.json({ 
       value,
-      expiresIn: 300, // 5 minutes
-      warning: 'This value will only be shown once. Copy it now.'
+      expiresIn: 60, // 1 minute (reduced for security)
+      warning: 'This encrypted value will only be shown once. Copy it now.'
     });
   } catch (error: any) {
     logger.error('Failed to reveal secret:', error);
