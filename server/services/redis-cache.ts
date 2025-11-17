@@ -16,7 +16,6 @@ export class RedisCache {
   private client: Redis | null = null;
   private isConnected = false;
   private defaultTTL = 3600; // 1 hour default
-  private initializing = false;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private static hasLoggedMissingConfig = false;
   private initializing: Promise<void> | null = null;
@@ -42,13 +41,7 @@ export class RedisCache {
     this.redisUrl = configuredUrl;
   }
 
-  private async initialize() {
-    if (this.initializing) {
-      return;
-    }
-
-    this.initializing = true;
-
+  private async initializeInternal() {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
@@ -90,8 +83,6 @@ export class RedisCache {
       this.client = null;
 
       this.scheduleReconnect();
-    } finally {
-      this.initializing = false;
     }
   }
 
