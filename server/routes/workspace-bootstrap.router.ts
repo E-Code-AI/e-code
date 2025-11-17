@@ -82,7 +82,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     // 1. Validate request
     const { prompt, options } = bootstrapRequestSchema.parse(req.body);
     const userId = (req.user as User).id;
-    const username = (req.user as User).username;
+    const username = (req.user as User).username || '';
     
     logger.info(`[Bootstrap] Starting workspace creation for user ${userId}`, { prompt, options });
     
@@ -98,10 +98,9 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
         name: projectName,
         description: prompt,
         slug,
-        ownerId: userId,
+        ownerId: String(userId),
         language: options.language || 'typescript',
-        visibility: options.visibility || 'private',
-        template: 'blank'
+        visibility: options.visibility || 'private'
       })
       .returning();
     
@@ -165,7 +164,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
       projectId: String(project.id),
       conversationId: session.id, // Use session ID as conversation ID initially
       sessionId: session.id,
-      userId,
+      userId: Number(userId),
       timestamp: Date.now()
     });
     
