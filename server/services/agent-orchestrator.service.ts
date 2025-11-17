@@ -203,7 +203,7 @@ export class AgentOrchestratorService extends EventEmitter {
   async createSession(
     userId: string,
     projectId?: string,
-    model: string = 'gpt-5'
+    model: string = 'gpt-5.1'
   ): Promise<AgentSession> {
     const sessionToken = this.generateSessionToken();
     const workingDirectory = projectId ? 
@@ -246,20 +246,20 @@ export class AgentOrchestratorService extends EventEmitter {
       // Add system prompt with capabilities
       const systemMessage: AgentMessage = {
         role: 'system',
-        content: `You are GPT-5, an advanced AI assistant running on the E-Code Platform. You are capable of helping users with programming, architecture design, and building applications. Respond helpfully and concisely.`
+        content: `You are GPT-5.1, an advanced AI assistant running on the E-Code Platform with adaptive reasoning. You are capable of helping users with programming, architecture design, and building applications. Respond helpfully and concisely.`
       };
 
       const allMessages = [systemMessage, ...messages];
 
       try {
         const completion = await this.openai.chat.completions.create({
-          model: 'gpt-5',  // Use GPT-5 from Replit AI Integrations
+          model: 'gpt-5.1',  // ✅ GPT-5.1 UPGRADE (Nov 17, 2025): Latest flagship with adaptive reasoning
           messages: allMessages.map(m => ({
             role: m.role as any,
             content: m.content || ''
           })),
-          max_completion_tokens: 500  // GPT-5 requires max_completion_tokens, not max_tokens
-          // Removed temperature as it may not be supported
+          max_completion_tokens: 500,  // GPT-5.1 requires max_completion_tokens, not max_tokens
+          reasoning_effort: 'medium' as any  // ✅ Use medium reasoning for complex agent tasks
         });
 
         const response = completion.choices[0].message;

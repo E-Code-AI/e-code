@@ -387,7 +387,7 @@ export class AIProviderManager {
   async *streamChat(
     modelId: string,
     messages: any[],
-    options?: { system?: string; max_tokens?: number; temperature?: number }
+    options?: { system?: string; max_tokens?: number; temperature?: number; reasoning_effort?: 'none' | 'low' | 'medium' | 'high' }
   ): AsyncGenerator<string> {
     // Add system message to messages array if provided
     const messagesWithSystem = options?.system 
@@ -499,16 +499,22 @@ export class AIProviderManager {
       ];
     }
     
-    // OpenAI SDK returns Stream<ChatCompletionChunk> when stream: true
-    // TypeScript can't infer the return type, so we need to cast it
-    const stream = await this.openaiClient.chat.completions.create({
+    // ✅ GPT-5.1 UPGRADE: Support reasoning_effort for adaptive reasoning (Nov 17, 2025)
+    const completionParams: any = {
       model: modelId,
       messages: openaiMessages,
       stream: true,
       max_tokens: options?.max_tokens || 4000,
       temperature: options?.temperature || 0.7,
-      // ✅ FIX: Don't spread options to avoid passing unsupported parameters like 'system'
-    }) as unknown as AsyncIterable<any>;
+    };
+
+    if (options?.reasoning_effort && modelId.startsWith('gpt-5')) {
+      completionParams.reasoning_effort = options.reasoning_effort;
+    }
+
+    // OpenAI SDK returns Stream<ChatCompletionChunk> when stream: true
+    // TypeScript can't infer the return type, so we need to cast it
+    const stream = await this.openaiClient.chat.completions.create(completionParams) as unknown as AsyncIterable<any>;
     
     for await (const chunk of stream) {
       const content = chunk.choices?.[0]?.delta?.content;

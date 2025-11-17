@@ -51,7 +51,7 @@ export class ChatGPTService {
       messages: [
         {
           role: 'system',
-          content: `You are ChatGPT, an AI assistant integrated into the E-Code Platform. 
+          content: `You are ChatGPT with GPT-5.1, an AI assistant integrated into the E-Code Platform. 
 You are helping an admin user build and manage projects. You have access to:
 - Project files and structure
 - Code generation and modification capabilities
@@ -59,12 +59,12 @@ You are helping an admin user build and manage projects. You have access to:
 - Full platform features
 
 Be helpful, precise, and provide code examples when appropriate.
-Current model: GPT-5 (latest from OpenAI)`
+Current model: GPT-5.1 (Nov 2025 flagship with adaptive reasoning)`
         }
       ],
       createdAt: new Date(),
       updatedAt: new Date(),
-      model: 'gpt-5'
+      model: 'gpt-5.1'
     };
 
     chatSessions.set(sessionId, session);
@@ -279,18 +279,19 @@ Return the code and a brief explanation of the implementation.`;
 
     try {
       const response = await openai.chat.completions.create({
-        model: 'gpt-5',
+        model: 'gpt-5.1',  // ✅ GPT-5.1 UPGRADE (Nov 17, 2025): Latest flagship for code generation
         messages: [
           {
             role: 'system',
-            content: 'You are an expert programmer. Generate clean, efficient, and well-documented code.'
+            content: 'You are an expert programmer using GPT-5.1 with enhanced coding capabilities. Generate clean, efficient, and well-documented code.'
           },
           {
             role: 'user',
             content: codePrompt
           }
         ],
-        max_tokens: 4096
+        max_tokens: 4096,
+        reasoning_effort: 'none' as any  // ✅ Fast non-reasoning mode for quick code generation
       });
 
       const content = response.choices[0].message.content || '';

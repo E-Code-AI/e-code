@@ -24,6 +24,40 @@ export interface OpenAIModelConfig {
 
 // Complete list of OpenAI models with configurations
 export const OPENAI_MODELS: Record<string, OpenAIModelConfig> = {
+  // GPT-5.x models (Nov 2025) - Latest flagship with adaptive reasoning
+  'gpt-5.1': {
+    id: 'gpt-5.1',
+    name: 'GPT-5.1',
+    contextWindow: 400000,
+    maxOutput: 16384,
+    capabilities: ['chat', 'vision', 'function_calling', 'json_mode', 'structured_outputs', 'adaptive_reasoning', 'apply_patch', 'shell'],
+    pricing: { input: 0.015, output: 0.06 }
+  },
+  'gpt-5': {
+    id: 'gpt-5',
+    name: 'GPT-5',
+    contextWindow: 400000,
+    maxOutput: 16384,
+    capabilities: ['chat', 'vision', 'function_calling', 'json_mode', 'structured_outputs', 'reasoning'],
+    pricing: { input: 0.01, output: 0.04 }
+  },
+  'gpt-5-mini': {
+    id: 'gpt-5-mini',
+    name: 'GPT-5 Mini',
+    contextWindow: 400000,
+    maxOutput: 16384,
+    capabilities: ['chat', 'function_calling', 'json_mode', 'structured_outputs', 'reasoning'],
+    pricing: { input: 0.0003, output: 0.0012 }
+  },
+  'gpt-5-nano': {
+    id: 'gpt-5-nano',
+    name: 'GPT-5 Nano',
+    contextWindow: 400000,
+    maxOutput: 16384,
+    capabilities: ['chat', 'function_calling', 'json_mode', 'structured_outputs'],
+    pricing: { input: 0.00015, output: 0.0006 }
+  },
+  // GPT-4.x models
   'gpt-4-turbo-preview': {
     id: 'gpt-4-turbo-preview',
     name: 'GPT-4 Turbo Preview (Latest)',
@@ -78,12 +112,13 @@ export interface OpenAIOptions {
   seed?: number;
   logprobs?: boolean;
   topLogprobs?: number;
+  reasoningEffort?: 'none' | 'low' | 'medium' | 'high';
 }
 
 export class EnhancedOpenAIProvider implements AIProvider {
   name = 'OpenAI Enhanced';
   private client: OpenAI;
-  private defaultModel = 'gpt-4-turbo-preview';
+  private defaultModel = 'gpt-5.1';
   
   constructor(apiKey?: string) {
     this.client = new OpenAI({
@@ -114,7 +149,7 @@ export class EnhancedOpenAIProvider implements AIProvider {
     }
     
     try {
-      const completion = await this.client.chat.completions.create({
+      const completionParams: any = {
         model,
         messages: [
           { role: 'system', content: systemPrompt },
@@ -129,7 +164,13 @@ export class EnhancedOpenAIProvider implements AIProvider {
         seed: options?.seed,
         logprobs: options?.logprobs,
         top_logprobs: options?.topLogprobs,
-      });
+      };
+
+      if (options?.reasoningEffort && model.startsWith('gpt-5')) {
+        completionParams.reasoning_effort = options.reasoningEffort;
+      }
+
+      const completion = await this.client.chat.completions.create(completionParams);
       
       const result = completion.choices[0].message.content?.trim() || '';
       
