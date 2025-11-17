@@ -47,9 +47,12 @@ export class AIPlanGeneratorService {
   private storage: IStorage;
   
   // Provider fallback chain: Try providers in order of reliability
+  // ✅ CRITICAL FIX: Use valid model IDs from AI_MODELS (gemini-1.5-flash, not gemini-2.0-flash)
+  // ✅ KIMI-K2 INTEGRATION (Nov 14, 2025): Added Moonshot AI for cost savings & performance
   private readonly PROVIDER_FALLBACK_CHAIN = [
     'gpt-4o',              // OpenAI GPT-4 Omni (most reliable)
-    'gemini-2.0-flash',    // Google Gemini 2.0 Flash (fast + reliable)
+    'kimi-k2',             // Moonshot AI Kimi-K2 (10-100× cheaper, optimized for agentic tasks)
+    'gemini-1.5-flash',    // Google Gemini 1.5 Flash (fast + reliable, REAL model ID)
     'grok-2-1212',         // xAI Grok (alternative)
     'claude-3-5-haiku-20241022'  // Anthropic Claude (fallback if others fail)
   ];

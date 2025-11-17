@@ -1,11 +1,9 @@
 # E-Code Platform
 
 ## Overview
-
-E-Code is a web-based collaborative IDE with AI assistance, built with TypeScript/Node.js, React, and PostgreSQL. It offers code editing, terminal access, file management, and an autonomous AI agent, aiming to facilitate rapid prototyping and education. The platform is currently a functional MVP, with ongoing efforts to achieve enterprise-grade scalability and Fortune 500 readiness. Recent critical fixes include: restored autonomous IDE functionality, enhanced AI provider fallback mechanisms, comprehensive AI optimization infrastructure, production monitoring via Slack, mobile horizontal scroll fixes (Safari-compatible), loading icon positioning fixes preventing jarring UX jumps, and **Phase 3.2 completed: K8s health endpoints + Swagger API documentation integration** (November 14, 2025).
+E-Code is a web-based collaborative IDE with AI assistance, offering code editing, terminal access, file management, and an autonomous AI agent. Its purpose is to facilitate rapid prototyping and education, with a strategic vision for enterprise-grade scalability, multi-provider AI model selection with advanced optimization infrastructure, real-time collaboration, and robust security features.
 
 ## User Preferences
-
 - **Communication:** Simple, everyday language
 - **Code Style:** TypeScript with strict typing
 - **Database:** NEVER manual SQL migrations - use `npm run db:push` (or `--force`)
@@ -13,90 +11,89 @@ E-Code is a web-based collaborative IDE with AI assistance, built with TypeScrip
 - **Hooks:** ALL React hooks before early returns
 - **Routing:** `/ide/:id` (legacy `/editor/:id` redirects)
 - **Security:** API keys via Replit Secrets, never commit
+- **Docker Build:** Optimized for <2GiB images
+- **Rate Limiting:** Tier-based (Free: 100/min, Pro: 1000/min, Enterprise: 10000/min)
 
 ## System Architecture
 
 ### Frontend Architecture
-
-The frontend uses React 18 and TypeScript with Vite for builds. It features TanStack Query for server state, Wouter for routing, Monaco Editor for code editing, and Shadcn/UI with Tailwind CSS for components. The architecture is component-based with lazy-loaded routes, custom hooks, responsive design (including dedicated mobile/tablet views), and WebSocket support for real-time collaboration.
-
-**UX Enhancements:**
-- **Loading States:** Layout-aware loading helpers (`PageShellLoading`, `ReplitLayoutLoading`) ensure loading icons appear immediately centered without position jumps. All loading states follow the pattern: relative container with deterministic height + absolute inset-0 centering.
-- **Mobile Optimization:** Progressive enhancement for horizontal scroll prevention (overflow-x:hidden fallback + @supports for clip), Safari-compatible solutions, enhanced ScrollToTop with iOS support.
+The frontend uses React 18 and TypeScript with Vite, featuring TanStack Query for server state, Wouter for routing, Monaco Editor for code editing, and Shadcn/UI with Tailwind CSS for components. It supports real-time collaboration via WebSockets and responsive design.
 
 ### Backend Architecture
+The backend is built with Node.js and Express.js in TypeScript, utilizing Drizzle ORM for PostgreSQL and Passport.js for authentication. It follows a RESTful API design with a service-oriented approach, including specialized services for AI orchestration, autonomous engine logic, file system operations, and Git integration. Security features include CSRF protection, input sanitization, Fortune 500 tier-based rate limiting, and session-based authentication. Real-time services for terminal, collaborative editing, and build logs are powered by WebSockets.
 
-The backend is built with Node.js and Express.js in TypeScript, utilizing Drizzle ORM for PostgreSQL (Neon serverless) and Passport.js for authentication. It follows a RESTful API design with a service-oriented approach, including specialized services for AI orchestration, autonomous engine logic, plan generation, testing, load testing, file system operations, Git integration, and deployment. Security features include CSRF protection, input sanitization, multi-tier rate limiting, session-based authentication, RBAC, and bcrypt password hashing. Real-time services for terminal, collaborative editing, and build logs are powered by WebSockets.
+**Rate Limiting Architecture:**
+Tier-based limits are enforced (Free, Pro, Enterprise) with a development multiplier. Rate limit violations are tracked in the `rate_limit_violations` table for auditing, and an Admin Monitoring API provides aggregated statistics and system health.
+
+**Terminal Architecture:**
+The terminal system uses local bash sessions with enterprise-grade scalability, persistence, and monitoring. Key components include a Scalability Manager for queue-based command execution and concurrency limits, a Redis Session Manager for fault tolerance and session persistence, and a WebSocket Heartbeat Manager for dead connection detection. Real-time terminal metrics are exposed via an API and integrated into the frontend UI.
+
+**Pay-As-You-Go AI Billing Architecture:**
+The platform implements usage-based billing beyond tier quotas via Stripe metered billing. It tracks every AI request with model, tokens, cost, provider, and endpoint. A centralized model normalizer prevents DB insert failures and handles alias mapping. Model-specific pricing for 18 production models across 5 providers is supported with 6-decimal precision cost calculation. Billing is integrated via middleware that applies to all AI endpoints, and SSE streaming endpoints use manual tracking. The `ai_usage_metering` table stores detailed usage data.
 
 **AI Optimization Infrastructure:**
-This includes a Task Classifier Service for ML-based routing to optimize model usage and cost, a Circuit Breaker Service for fault tolerance across multiple AI providers, a Priority Queue Service for SLA-based request prioritization, an Intelligent Caching Service for semantic deduplication of AI responses, and an Observability Service for production monitoring, structured logging, and metrics. A Slack Alert Service provides real-time notifications for critical system events. All optimization endpoints are secured with admin-only access controls.
+This includes a Task Classifier Service, Circuit Breaker Service, Priority Queue Service, Intelligent Caching Service, Observability Service, and Slack Alert Service for robust AI management and monitoring.
 
 **Health & Monitoring:**
-A Provider Health API (`GET /api/health/providers`) offers real-time status validation for all integrated AI providers, including response times and error messages. Admin Dashboards provide full web and mobile parity with responsive designs for monitoring provider health and system metrics. Load testing infrastructure supports concurrent AI streaming, database performance, and WebSocket limits for pre-production validation.
-
-**K8s Health Endpoints (Phase 3.2 - November 2025):**
-Fortune 500-grade Kubernetes health probes integrated:
-- `/health/liveness` - Process alive check (always 200 OK if responding)
-- `/health/readiness` - Traffic readiness check (200 OK with status in body, checks: database, Redis, memory)
-- `/health/deep` - Comprehensive system check (includes OpenAI, Anthropic, disk space)
-- `/health/startup` - Startup probe (ensures all critical dependencies initialized)
-
-All probes return 200 OK with status encoded in JSON body (prevents unnecessary K8s pod restarts). Health checks include proper 'degraded' state handling for early warning (memory >80%, disk >80%, Redis >500ms response time).
-
-**API Documentation:**
-Swagger/OpenAPI 3.0 documentation available at `/api/docs` (controlled via `SWAGGER_ENABLED` flag, enabled by default). Provides interactive API explorer with request/response schemas for all endpoints.
+The system integrates Kubernetes health probes and a Provider Health API for real-time status validation of integrated AI providers. API documentation is available via Swagger/OpenAPI 3.0 at `/api/docs`.
 
 ### Database Schema
-
-The system uses a PostgreSQL database with over 140 tables for user management, project and file hierarchies, AI agent session tracking, deployment history, subscription management, and AI optimization monitoring. Recent additions include the `slack_config` table for storing Slack webhook configurations for production alerts.
+A PostgreSQL database manages user data, project hierarchies, AI agent session tracking, deployment history, subscription management, and AI optimization monitoring. Key tables for the AI agent include `agent_sessions`, `agent_workflows`, `autonomous_actions`, and `agent_audit_trail`.
 
 ### AI Agent System
-
-The AI agent system features server-sent event streaming, multi-provider AI model selection (OpenAI, Anthropic, Gemini, xAI, Groq), database-backed conversation history, and a robust tool execution framework. It is fully integrated with the AI Optimization Infrastructure for intelligent task classification, circuit breaker checks, and comprehensive logging/alerting for every streaming request.
+The AI agent system features server-sent event streaming, multi-provider AI model selection (OpenAI, Anthropic, Gemini, xAI, Moonshot AI), database-backed conversation history, and a robust tool execution framework, integrated with the AI Optimization Infrastructure. A centralized model catalog details capabilities, pricing, and release dates for 18 production models across 5 providers.
+The system implements full autonomous workspace creation where a prompt automatically creates the IDE, generates files, starts live preview, and streams progress in real-time via WebSockets. This involves plan generation, autonomous execution, and real-time WebSocket updates to the client.
 
 ### Core Features
-
--   **Monaco Code Editor:** Advanced code editing.
--   **Terminal:** Interactive access via xterm.js.
--   **File Tree & Management:** Comprehensive file system operations.
--   **Real-time Collaboration:** Powered by Y.js.
--   **Authentication & Security:** Robust authentication with Passport.js and comprehensive security measures.
--   **Container Orchestration:** TypeScript-based container execution and runtime management.
+- Monaco Code Editor for advanced code editing.
+- Interactive Terminal via xterm.js.
+- Comprehensive File Tree & Management.
+- Real-time Collaboration powered by Y.js.
+- Robust Authentication & Security with Passport.js.
+- TypeScript-based Container Orchestration for runtime management.
 
 ## External Dependencies
 
 ### AI/ML Services
-
--   **OpenAI:** GPT-4 / GPT-3.5
--   **Anthropic:** Claude 3.5
--   **Google:** Gemini Pro
--   **Groq:** Llama
--   **Model Context Protocol (MCP) SDK:** For tool execution.
+- **OpenAI:** GPT-5.1, GPT-5, GPT-5-mini, GPT-5-nano, GPT-4.1, GPT-4o, o3, o4-mini
+- **Anthropic:** Claude Sonnet 4.5, Opus 4.1, Haiku 4.5
+- **Google Gemini:** Gemini 2.5 Pro, Gemini 2.5 Flash
+- **Moonshot AI:** Kimi K2, Kimi K2 Thinking, Kimi K2 Turbo
+- **xAI:** Grok 4, Grok 4 Fast
+- **Groq:** Open-source models
+- **Model Context Protocol (MCP) SDK**
 
 ### Infrastructure Services
-
--   **PostgreSQL:** Neon serverless.
--   **Redis:** Optional caching.
--   **Stripe:** Payment processing.
--   **SendGrid:** Email delivery.
--   **Sentry:** Error monitoring.
--   **Slack:** Production monitoring alerts.
+- **PostgreSQL:** Neon serverless (required - critical dependency)
+- **Redis:** Optional caching layer (non-critical - graceful degradation)
+- **Stripe:** Payment processing
+- **SendGrid:** Email delivery
+- **Sentry:** Error monitoring
+- **Slack:** Production monitoring alerts
 
 ### Development Tools & Integrations
-
--   **GitHub:** OAuth integration.
--   **Figma:** Design imports.
--   **Playwright:** Browser automation for testing.
--   **Monaco Editor:** Microsoft's VS Code editor component.
--   **xterm.js:** Terminal emulation library.
+- **GitHub:** OAuth integration
+- **Figma:** Design imports
+- **Playwright:** Browser automation for testing
+- **Monaco Editor:** Microsoft's VS Code editor component
+- **xterm.js:** Terminal emulation library
 
 ### Authentication Providers
+- **Replit Auth:** Google, GitHub, Twitter/X, Apple, email/password
+- **Custom Email/Password**
 
--   **Replit Auth:** Google, GitHub, Twitter/X, Apple, email/password.
--   **Custom Email/Password:** With verification.
+### Deployment Strategy
+- **Current (Nov 2025):** Replit Autoscale Deployment (Cloud Run)
+  - Native Replit publishing via `.replit` configuration
+  - Single port (5000 → 80) for Autoscale compatibility
+  - Optimized build without typecheck to prevent memory exhaustion
+  - Health checks: `/health/liveness` and `/health/readiness`
+- **Future:** Docker containerization for external hosting
+  - Dockerfile available for non-Replit deployments
+  - Target: <2GiB image size optimization
+  - Multi-stage builds for production efficiency
 
-### Deployment Targets
-
--   **Replit Cloud Run:** Autoscale deployment.
--   **Docker:** Containerization support.
--   **PM2:** Process management.
+### Recent Production Fixes (Nov 17, 2025)
+1. **Redis Dependency:** ✅ Changed from critical to optional in readiness checks (verified working)
+2. **Port Configuration:** ⚠️ REQUIRES MANUAL FIX - `.replit` must be edited to use 1 port instead of 16 for Autoscale compliance (template available in `.replit.CLEAN`)
+3. **Build Optimization:** ✅ Removed `npm run test:ci` from deployment build to prevent heap overflow

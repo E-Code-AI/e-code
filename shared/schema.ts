@@ -30,16 +30,46 @@ export const reviewStatusEnum = pgEnum('review_status', ['pending', 'approved', 
 export const mentorshipStatusEnum = pgEnum('mentorship_status', ['active', 'completed', 'cancelled']);
 export const challengeStatusEnum = pgEnum('challenge_status', ['draft', 'published', 'archived']);
 export const submissionStatusEnum = pgEnum('submission_status', ['pending', 'accepted', 'rejected']);
+export const subscriptionTierEnum = pgEnum('subscription_tier', ['free', 'pro', 'enterprise']);
+// AI Models - Production enum (26 values: legacy + new)
 export const aiModelEnum = pgEnum('ai_model', [
+  // Legacy models (kept for backward compatibility)
   'gpt-4',
   'gpt-4-turbo',
-  'gpt-5',
   'claude-3-opus',
   'claude-3-sonnet',
   'claude-3-5-sonnet',
   'claude-3-haiku',
   'gemini-pro',
-  'gemini-ultra'
+  'gemini-ultra',
+  
+  // OpenAI (November 2025)
+  'gpt-5.1',
+  'gpt-5',
+  'gpt-5-mini',
+  'gpt-5-nano',
+  'gpt-4.1',
+  'gpt-4o',
+  'o3',
+  'o4-mini',
+  
+  // Anthropic (Sept-Oct 2025)
+  'claude-sonnet-4-5-20250929',
+  'claude-opus-4-1-20250805',
+  'claude-haiku-4-5-20251015',
+  
+  // Google Gemini (Nov 2025)
+  'gemini-2.5-pro',
+  'gemini-2.5-flash',
+  
+  // xAI (July-Sept 2025)
+  'grok-4',
+  'grok-4-fast',
+  
+  // Moonshot AI (Nov 2025)
+  'kimi-k2',
+  'kimi-k2-thinking',
+  'kimi-k2-turbo'
 ]);
 export const agentModeEnum = pgEnum('agent_mode', ['plan', 'build']);
 export const buildExecutionStatusEnum = pgEnum('build_execution_status', ['pending', 'running', 'completed', 'failed', 'cancelled']);
@@ -80,6 +110,7 @@ export const users = pgTable("users", {
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   stripePriceId: varchar("stripe_price_id"),
   subscriptionStatus: varchar("subscription_status"),
+  subscriptionTier: subscriptionTierEnum("subscription_tier").default('free'),
   subscriptionCurrentPeriodEnd: timestamp("subscription_current_period_end"),
   // Security fields
   twoFactorEnabled: boolean("two_factor_enabled").default(false),
@@ -1451,17 +1482,31 @@ export type InsertPromptTemplateRating = z.infer<typeof insertPromptTemplateRati
 export type AgentMessage = typeof agentMessages.$inferSelect;
 export type InsertAgentMessage = z.infer<typeof insertAgentMessageSchema>;
 
-// AI Model Enum Values
+// AI Model Enum Values - VRAIS modèles
 export const AI_MODELS = [
-  'gpt-4',
-  'gpt-4-turbo',
+  // OpenAI (vrais selon platform.openai.com/docs/models)
+  'gpt-5.1',
   'gpt-5',
-  'claude-3-opus',
-  'claude-3-sonnet',
-  'claude-3-5-sonnet',
-  'claude-3-haiku',
-  'gemini-pro',
-  'gemini-ultra'
+  'gpt-5-mini',
+  'gpt-5-nano',
+  'gpt-4.1',
+  'gpt-4o',
+  'o3',
+  'o4-mini',
+  // Anthropic (Sept-Oct 2025)
+  'claude-sonnet-4-5-20250929',
+  'claude-opus-4-1-20250805',
+  'claude-haiku-4-5-20251015',
+  // Google Gemini (Nov 2025)
+  'gemini-2.5-pro',
+  'gemini-2.5-flash',
+  // xAI (July-Sept 2025)
+  'grok-4',
+  'grok-4-fast',
+  // Moonshot AI (Nov 2025)
+  'kimi-k2',
+  'kimi-k2-thinking',
+  'kimi-k2-turbo'
 ] as const;
 export type AiModel = typeof AI_MODELS[number];
 
@@ -3012,4 +3057,110 @@ export const insertSystemSettingSchema = createInsertSchema(systemSettings).omit
 
 export type SystemSetting = typeof systemSettings.$inferSelect;
 export type InsertSystemSetting = z.infer<typeof insertSystemSettingSchema>;
+
+// Rate Limit Violations Tracking (Fortune 500 Monitoring)
+export const rateLimitViolations = pgTable("rate_limit_violations", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'set null' }),
+  ip: varchar("ip").notNull(),
+  endpoint: text("endpoint").notNull(),
+  method: varchar("method", { length: 10 }).notNull(),
+  userTier: subscriptionTierEnum("user_tier"),
+  limitType: varchar("limit_type").notNull(), // 'api', 'ai', 'auth', etc.
+  attemptedRequests: integer("attempted_requests").notNull(),
+  allowedLimit: integer("allowed_limit").notNull(),
+  blockedAt: timestamp("blocked_at").defaultNow(),
+  userAgent: text("user_agent"),
+  metadata: jsonb("metadata").$type<Record<string, any>>(),
+});
+
+export const insertRateLimitViolationSchema = createInsertSchema(rateLimitViolations).omit({
+  id: true,
+  blockedAt: true,
+});
+
+export type RateLimitViolation = typeof rateLimitViolations.$inferSelect;
+export type InsertRateLimitViolation = z.infer<typeof insertRateLimitViolationSchema>;
+
+// AI Usage Metering (Pay-As-You-Go Billing)
+// Tracks every AI request for Stripe metered billing
+export const aiUsageMetering = pgTable("ai_usage_metering", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  
+  // Request details
+  endpoint: varchar("endpoint").notNull(), // '/api/agent/chat/stream', '/api/ai/completions'
+  model: aiModelEnum("model").notNull(), // 'gpt-4', 'claude-sonnet-4-5', etc.
+  provider: varchar("provider").notNull(), // 'openai', 'anthropic', 'gemini'
+  
+  // Token usage
+  tokensInput: integer("tokens_input").notNull(),
+  tokensOutput: integer("tokens_output").notNull(),
+  tokensTotal: integer("tokens_total").notNull(),
+  
+  // Cost calculation (USD)
+  costUsd: decimal("cost_usd", { precision: 10, scale: 6 }).notNull(), // e.g., 0.002150
+  
+  // Billing tracking
+  billed: boolean("billed").default(false).notNull(),
+  billedAt: timestamp("billed_at"),
+  stripeUsageRecordId: varchar("stripe_usage_record_id"), // Stripe metered billing record ID
+  
+  // Subscription context
+  userTier: subscriptionTierEnum("user_tier").notNull(),
+  subscriptionId: varchar("subscription_id"), // Stripe subscription ID
+  
+  // Metadata
+  requestDurationMs: integer("request_duration_ms"),
+  status: varchar("status").notNull(), // 'success', 'error', 'timeout'
+  errorMessage: text("error_message"),
+  metadata: jsonb("metadata").$type<Record<string, any>>(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("ai_usage_metering_user_id_idx").on(table.userId),
+  billedIdx: index("ai_usage_metering_billed_idx").on(table.billed),
+  createdAtIdx: index("ai_usage_metering_created_at_idx").on(table.createdAt),
+  userTierIdx: index("ai_usage_metering_user_tier_idx").on(table.userTier),
+}));
+
+export const insertAiUsageMeteringSchema = createInsertSchema(aiUsageMetering).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type AiUsageMetering = typeof aiUsageMetering.$inferSelect;
+export type InsertAiUsageMetering = z.infer<typeof insertAiUsageMeteringSchema>;
+
+/**
+ * Stripe Usage Queue - Retry Queue for Failed Stripe Billing
+ * Ensures zero revenue loss via exponential backoff retry logic
+ */
+export const aiStripeUsageQueue = pgTable("ai_stripe_usage_queue", {
+  id: serial("id").primaryKey(),
+  meteringId: integer("metering_id").notNull(), // Reference to ai_usage_metering.id
+  userId: varchar("user_id").notNull(),
+  subscriptionId: varchar("subscription_id"),
+  costUsd: decimal("cost_usd", { precision: 10, scale: 6 }).notNull(),
+  attempts: integer("attempts").default(0).notNull(),
+  maxAttempts: integer("max_attempts").default(3).notNull(),
+  lastError: text("last_error"),
+  nextRetryAt: timestamp("next_retry_at").notNull(),
+  status: varchar("status", { length: 20 }).default('pending').notNull(), // pending, processing, completed, failed
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  statusIdx: index("ai_stripe_queue_status_idx").on(table.status),
+  nextRetryIdx: index("ai_stripe_queue_next_retry_idx").on(table.nextRetryAt),
+  meteringIdIdx: index("ai_stripe_queue_metering_id_idx").on(table.meteringId),
+}));
+
+export const insertAiStripeUsageQueueSchema = createInsertSchema(aiStripeUsageQueue).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type AiStripeUsageQueue = typeof aiStripeUsageQueue.$inferSelect;
+export type InsertAiStripeUsageQueue = z.infer<typeof insertAiStripeUsageQueueSchema>;
 

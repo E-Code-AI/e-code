@@ -145,13 +145,15 @@ export const getQueryFn: <T>(options: {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
+      queryFn: getQueryFn({ on401: "returnNull" }), // Graceful 401 handling - return null for unauth
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 minutes - data considered fresh
       gcTime: 10 * 60 * 1000, // 10 minutes - data kept in cache (renamed from cacheTime in v5)
       retry: (failureCount, error: any) => {
-        // Only retry on network errors, not on 4xx errors
+        // Don't retry on 401 Unauthorized - let error handler deal with it
+        if (error?.message?.includes('401')) return false;
+        // Only retry on network errors, not on other 4xx errors
         if (error?.status >= 400 && error?.status < 500) return false;
         return failureCount < 3; // Retry up to 3 times with exponential backoff
       },
@@ -159,11 +161,21 @@ export const queryClient = new QueryClient({
     },
     mutations: {
       retry: (failureCount, error: any) => {
-        // Only retry on network errors, not on 4xx errors
+        // Don't retry on 401 Unauthorized
+        if (error?.message?.includes('401')) return false;
+        // Only retry on network errors, not on other 4xx errors
         if (error?.status >= 400 && error?.status < 500) return false;
         return failureCount < 3; // Retry up to 3 times with exponential backoff
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      onError: (error: any) => {
+        // Global error handler for 401 - graceful degradation
+        if (error?.message?.includes('401')) {
+          console.info('[Auth] Unauthenticated request - user not logged in');
+          // Frontend components should handle this gracefully with fallback UI
+          // We don't throw/toast here to avoid noise for intentional anonymous access
+        }
+      }
     },
   },
 });

@@ -16,7 +16,7 @@ export function AuthenticationDemo() {
 
   // Check current user status
   const { data: currentUser, refetch: refetchUser } = useQuery({
-    queryKey: ['/api/user'],
+    queryKey: ['/api/auth/user'],
     retry: false
   });
 

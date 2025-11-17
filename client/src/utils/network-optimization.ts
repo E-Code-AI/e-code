@@ -221,7 +221,7 @@ class NetworkOptimizer {
       
       if (!response.ok) {
         // For 401 errors on auth endpoints, return null instead of throwing
-        if (response.status === 401 && config.url.includes('/api/user')) {
+        if (response.status === 401 && (config.url.includes('/api/auth/user') || config.url.includes('/api/user'))) {
           return null as any;
         }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);

@@ -80,6 +80,14 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
   const [queueItems, setQueueItems] = useState<string[]>([]);
   const [projectInfo, setProjectInfo] = useState<any>(null);
   
+  // NEW: WebSocket integration for Fortune 500 AI Agent Flow
+  const [agentWebSocket, setAgentWebSocket] = useState<WebSocket | null>(null);
+  const [agentSessionInfo, setAgentSessionInfo] = useState<{
+    sessionId: string;
+    conversationId: string;
+    websocketUrl: string;
+  } | null>(null);
+  
   // Fetch project details
   useEffect(() => {
     const fetchProjectInfo = async () => {
@@ -95,6 +103,143 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
       fetchProjectInfo();
     }
   }, [projectId]);
+  
+  // NEW: Connect to WebSocket for Fortune 500 AI Agent Flow
+  useEffect(() => {
+    // Check if we have an agent session from workspace bootstrap
+    const sessionInfoStr = window.sessionStorage.getItem(`agent-session-${projectId}`);
+    
+    if (sessionInfoStr) {
+      try {
+        const sessionInfo = JSON.parse(sessionInfoStr);
+        setAgentSessionInfo(sessionInfo);
+        
+        console.log('[Agent WebSocket] Connecting to:', sessionInfo.websocketUrl);
+        
+        const ws = new WebSocket(sessionInfo.websocketUrl);
+        
+        ws.onopen = () => {
+          console.log('[Agent WebSocket] Connected successfully');
+          setIsConnected(true);
+          setIsBuilding(true);  // FIX: Start building UI state
+          setBuildProgress(0);
+          
+          // Add system message indicating agent is working
+          setMessages(prev => [...prev, {
+            id: `ws-connected-${Date.now()}`,
+            role: 'system',
+            content: '🤖 AI Agent connected and ready to build your application...',
+            timestamp: new Date()
+          }]);
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            console.log('[Agent WebSocket] Received:', message);
+            
+            // Handle different message types
+            switch (message.type) {
+              case 'connected':
+                console.log('[Agent WebSocket] Connection confirmed');
+                break;
+                
+              case 'step':
+                // FIX: Re-enter build mode for subsequent builds
+                setIsBuilding(prevBuilding => {
+                  if (!prevBuilding) {
+                    // New build starting, reset progress
+                    setBuildProgress(0);
+                    return true;
+                  }
+                  return prevBuilding;
+                });
+                
+                // Add step as a system message
+                const stepMessage: Message = {
+                  id: `step-${Date.now()}-${message.data.step?.id}`,
+                  role: 'system',
+                  content: `${message.data.step?.icon || '📋'} ${message.data.step?.title || 'Processing...'}`,
+                  timestamp: new Date(),
+                  metadata: {
+                    ...message.data.step
+                  }
+                };
+                setMessages(prev => [...prev, stepMessage]);
+                setBuildProgress(prev => Math.min(prev + 10, 90));
+                break;
+                
+              case 'summary':
+                // Add summary as assistant message
+                const summaryMessage: Message = {
+                  id: `summary-${Date.now()}`,
+                  role: 'assistant',
+                  content: `✅ **Build Complete!**\n\n${message.data.summary?.workDone || 0} tasks completed in ${message.data.summary?.timeWorked || '0s'}`,
+                  timestamp: new Date()
+                };
+                setMessages(prev => [...prev, summaryMessage]);
+                setBuildProgress(100);
+                setIsBuilding(false);
+                break;
+                
+              case 'error':
+                const errorMessage: Message = {
+                  id: `error-${Date.now()}`,
+                  role: 'assistant',
+                  content: `❌ Error: ${message.data.error}`,
+                  timestamp: new Date()
+                };
+                setMessages(prev => [...prev, errorMessage]);
+                setIsBuilding(false);
+                toast({
+                  title: "Agent Error",
+                  description: message.data.error || "An error occurred",
+                  variant: "destructive"
+                });
+                break;
+                
+              case 'complete':
+                setBuildProgress(100);
+                setIsBuilding(false);
+                break;
+            }
+          } catch (error) {
+            console.error('[Agent WebSocket] Failed to parse message:', error);
+          }
+        };
+        
+        ws.onerror = (error) => {
+          console.error('[Agent WebSocket] Error:', error);
+          setIsConnected(false);
+          setIsBuilding(false);  // FIX: Exit build state on error
+          setBuildProgress(0);
+          toast({
+            title: "Connection Error",
+            description: "Lost connection to AI Agent. Reconnecting...",
+            variant: "destructive"
+          });
+        };
+        
+        ws.onclose = () => {
+          console.log('[Agent WebSocket] Disconnected');
+          setIsConnected(false);
+          setIsBuilding(false);  // FIX: Exit build state on disconnect
+          setBuildProgress(0);
+        };
+        
+        setAgentWebSocket(ws);
+        
+        // Cleanup on unmount
+        return () => {
+          console.log('[Agent WebSocket] Closing connection');
+          ws.close();
+          setAgentWebSocket(null);  // FIX: Prevent stale references
+        };
+      } catch (error) {
+        console.error('[Agent WebSocket] Failed to parse session info:', error);
+      }
+    }
+  }, [projectId, toast]);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);

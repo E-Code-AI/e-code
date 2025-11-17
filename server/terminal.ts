@@ -8,6 +8,9 @@ import { File } from '@shared/schema';
 import readline from 'readline';
 import { createLogger } from './utils/logger';
 import { ContainerExecutor } from './execution/container-executor';
+import { terminalScalabilityManager } from './terminal/scalability-manager';
+import { websocketHeartbeatManager } from './terminal/websocket-heartbeat';
+import { redisSessionManager, TerminalSession as RedisTerminalSession } from './terminal/redis-session-manager';
 
 // Create a logger for the terminal module
 const logger = createLogger('terminal');
@@ -52,24 +55,62 @@ export function setupTerminalWebsocket(server: Server) {
 
       logger.info(`Terminal connection established for project ${projectId}`);
 
-      // Create terminal session if it doesn't exist
+      // FORTUNE 500 SCALABILITY + PERSISTENCE: Check if we can create a new session
       if (!terminalSessions.has(projectId)) {
-        terminalSessions.set(projectId, {
-          sessionId: `terminal-${projectId}-${Date.now()}`,
+        // Use stable sessionId for Redis persistence (not timestamp-based)
+        const sessionId = `terminal-${projectId}`;
+        
+        // Try to restore session from Redis first
+        const existingSession = await redisSessionManager.getSession(sessionId);
+        
+        if (existingSession) {
+          logger.info(`Restored session from Redis: ${sessionId}`);
+        }
+        
+        // Register with scalability manager
+        if (!terminalScalabilityManager.registerSession(sessionId)) {
+          ws.close(1008, 'Server at capacity - maximum terminal sessions reached. Please try again later.');
+          return;
+        }
+
+        // Check backpressure
+        if (terminalScalabilityManager.isUnderBackpressure()) {
+          logger.warn(`System under backpressure - ${terminalScalabilityManager.getMetrics().utilizationPercent.toFixed(1)}% capacity`);
+        }
+
+        const newSession = {
+          sessionId,
           clients: new Set(),
-          commandHistory: [],
+          commandHistory: existingSession?.commandHistory || [],
           autocompleteSuggestions: [
             'ls', 'cd', 'mkdir', 'touch', 'cat', 'grep', 'find', 'echo',
             'npm', 'node', 'python', 'python3', 'git', 'curl', 'wget',
             'yarn', 'clear', 'exit', 'kill', 'ps', 'cp', 'mv', 'rm'
           ],
-          currentDirectory: `/project/${projectId}`,
+          currentDirectory: existingSession?.currentDirectory || `/project/${projectId}`,
           outputBuffer: ''
+        };
+
+        terminalSessions.set(projectId, newSession);
+        
+        // Persist to Redis
+        await redisSessionManager.saveSession({
+          sessionId,
+          projectId,
+          commandHistory: newSession.commandHistory,
+          currentDirectory: newSession.currentDirectory,
+          columns: existingSession?.columns,
+          rows: existingSession?.rows,
+          createdAt: existingSession?.createdAt || Date.now(),
+          lastActivity: Date.now()
         });
       }
 
       const terminalSession = terminalSessions.get(projectId)!;
       terminalSession.clients.add(ws);
+      
+      // FORTUNE 500 MONITORING: Register for heartbeat monitoring
+      websocketHeartbeatManager.registerClient(ws, terminalSession.sessionId);
       
       // Send welcome message
       ws.send(JSON.stringify({
@@ -145,8 +186,18 @@ export function setupTerminalWebsocket(server: Server) {
                     }
                   }
                   
-                  // Execute the command
-                  await executeCommand(projectId, command);
+                  // FORTUNE 500 SCALABILITY: Queue command execution via scalability manager
+                  await terminalScalabilityManager.queueCommand(
+                    terminalSession.sessionId,
+                    command,
+                    async () => executeCommand(projectId, command)
+                  );
+                  
+                  // Persist session activity to Redis
+                  const session = terminalSessions.get(projectId);
+                  if (session) {
+                    await redisSessionManager.touchSession(session.sessionId);
+                  }
                 } else {
                   // Empty command, just show prompt
                   broadcast(projectId, JSON.stringify({
@@ -213,16 +264,26 @@ export function setupTerminalWebsocket(server: Server) {
       });
       
       // Handle client disconnect
-      ws.on('close', () => {
+      ws.on('close', async () => {
         logger.info(`Terminal client disconnected for project ${projectId}`);
         
         const session = terminalSessions.get(projectId);
         if (session) {
           session.clients.delete(ws);
           
-          // Clean up session if no clients left
+          // FORTUNE 500 SCALABILITY + PERSISTENCE: Clean up session if no clients left
           if (session.clients.size === 0) {
             logger.info(`No clients left for project ${projectId}, cleaning up session`);
+            
+            // Unregister from scalability manager
+            terminalScalabilityManager.unregisterSession(session.sessionId);
+            
+            // Unregister from heartbeat manager
+            websocketHeartbeatManager.unregisterClient(ws);
+            
+            // Delete from Redis (session ended)
+            await redisSessionManager.deleteSession(session.sessionId);
+            
             terminalSessions.delete(projectId);
           }
         }

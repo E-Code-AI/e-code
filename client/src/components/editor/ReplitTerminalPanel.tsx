@@ -15,6 +15,7 @@ import {
   Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { TerminalMetricsIndicator } from '@/components/terminal/TerminalMetricsIndicator';
 
 interface ReplitTerminalPanelProps {
   projectId?: string;
@@ -198,6 +199,8 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
         <div className="flex items-center gap-2">
           <Terminal className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm text-muted-foreground">Shell</span>
+          {/* Fortune 500 Terminal Metrics */}
+          <TerminalMetricsIndicator compact data-testid="replit-terminal-panel-metrics" />
         </div>
 
         <div className="flex items-center gap-1">

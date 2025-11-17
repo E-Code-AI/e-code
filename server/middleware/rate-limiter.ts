@@ -156,10 +156,10 @@ export const legacyRateLimiters = {
   }),
 
   // Standard API rate limit
-  // Test: 5000 requests/min | Prod: 100 requests/min
+  // Test: 5000 requests/min | Dev: 5000 requests/min | Prod: 100 requests/min
   api: rateLimit({
     windowMs: 1 * 60 * 1000,
-    max: isTestEnv() ? 5000 : 100,
+    max: (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development') ? 5000 : 100,
     message: 'API rate limit exceeded, please slow down',
     standardHeaders: true,
     legacyHeaders: false,

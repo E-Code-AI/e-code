@@ -20,6 +20,7 @@ import { createServer } from "http";
 import { configureCors } from "./middleware/cors-config";
 import { securityMiddleware } from "./middleware/security";
 import { legacyRateLimiters, dynamicRateLimiter, logRateLimitViolations } from './middleware/rate-limiter';
+import { tierRateLimiters } from './middleware/tier-rate-limiter';
 import { monitoringMiddleware } from './services/monitoring.service';
 import { sanitizeInput } from './middleware/input-validation';
 
@@ -46,14 +47,14 @@ app.use(monitoringMiddleware);
 app.use(sanitizeInput);
 
 // Apply global rate limiting for DDoS protection
-// This catches ALL requests before they hit specific routes
 // Log all rate limit violations for security monitoring
 app.use(logRateLimitViolations);
 
-// Global API rate limiter - 100 req/min per IP
-app.use('/api', legacyRateLimiters.api);
+// Fortune 500 Tier-Based Rate Limiter - Intelligent limits per user subscription
+// Free: 100/min, Pro: 1000/min, Enterprise: 10000/min (10x multiplier in dev)
+app.use('/api', tierRateLimiters.api);
 
-// Dynamic rate limiting based on endpoint sensitivity
+// Legacy dynamic rate limiting (kept for backward compatibility)
 app.use(dynamicRateLimiter);
 
 // Cloud Run provides PORT environment variable, fallback to 5000 for development
@@ -124,8 +125,12 @@ app.get('/api/cors-health', async (_req, res) => {
 
   try {
     // Setup Terminal WebSocket server for real-time terminal/console streaming
+    // NOTE: Docker-based terminal (server/terminal/real-terminal.ts) exists but NOT usable on Replit Cloud Run
+    // Replit Cloud Run does not expose Docker daemon, so containers cannot be created
+    // Using local bash terminal for Replit deployment
     const { setupTerminalWebsocket } = await import("./terminal");
     setupTerminalWebsocket(httpServer);
+    console.log('[Terminal] Using local bash terminal (Replit Cloud Run compatible)');
   } catch (error) {
     console.error('[WORKING SERVER] Failed to setup terminal WebSocket:', error);
   }
@@ -335,6 +340,15 @@ app.get('/api/cors-health', async (_req, res) => {
     await initializeDatabase();
   } catch (error) {
     console.warn('[WORKING SERVER] Database initialization failed (non-critical):', error.message);
+  }
+
+  // ✅ Initialize Stripe Usage Worker (background queue processor)
+  try {
+    const { startStripeUsageWorker } = await import('./workflows/stripe-usage-worker');
+    startStripeUsageWorker();
+    console.log('✅ Stripe Usage Worker started - processing billing queue every 30s');
+  } catch (error) {
+    console.warn('[WORKING SERVER] Stripe worker initialization failed (non-critical):', error.message);
   }
 
   // NOW start listening - ONLY after all middleware and routes are registered

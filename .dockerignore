@@ -2,7 +2,8 @@
 node_modules/
 npm-debug.log*
 yarn-error.log*
-package-lock.json
+# Keep package-lock.json for reproducible builds (Fortune 500 requirement)
+# package-lock.json  
 yarn.lock
 pnpm-lock.yaml
 
@@ -65,6 +66,13 @@ vite.config.ts.timestamp*
 mobile/
 android/
 ios/
+
+# Development-only directories (CRITICAL - save >2GB)
+dokploy/
+sdk/
+vscode-extension/
+cli/
+github-copilot-extension/
 
 # Source maps (remove to save space)
 **/*.map

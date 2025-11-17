@@ -332,7 +332,8 @@ export async function readinessProbe(req: Request, res: Response): Promise<void>
     const health = await performHealthChecks(false);
 
     // Ready only if all critical checks pass
-    const criticalChecks = ['database', 'redis'];
+    // Redis is optional caching layer - not critical for serving traffic
+    const criticalChecks = ['database'];
     const isReady = criticalChecks.every(
       key => health.checks[key]?.status === 'up' || health.checks[key]?.status === 'degraded'
     );
@@ -346,8 +347,8 @@ export async function readinessProbe(req: Request, res: Response): Promise<void>
         checks: health.checks
       });
     } else {
-      // Always return 200 OK, embed readiness state in body (K8s best practice)
-      res.status(200).json({
+      // Return 503 when not ready so K8s can remove pod from load balancer (Fortune 500 production requirement)
+      res.status(503).json({
         status: 'not ready',
         message: 'Application is not ready to serve traffic',
         timestamp: health.timestamp,
@@ -357,8 +358,8 @@ export async function readinessProbe(req: Request, res: Response): Promise<void>
     }
   } catch (error: any) {
     logger.error('Readiness probe failed', { error: error.message });
-    // Return 200 with error state in body (prevents unnecessary K8s pod restarts)
-    res.status(200).json({
+    // Return 503 on error to prevent K8s from routing traffic to unhealthy pod
+    res.status(503).json({
       status: 'error',
       message: 'Failed to perform readiness check',
       error: error.message

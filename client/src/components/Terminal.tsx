@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { TerminalMetricsIndicator } from '@/components/terminal/TerminalMetricsIndicator';
 
 interface TerminalProps {
   project?: {
@@ -527,7 +528,10 @@ const Terminal: React.FC<TerminalProps> = ({
               <TabsTrigger value="term1" className="data-[state=active]:bg-slate-700">Terminal</TabsTrigger>
             </TabsList>
             
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-2">
+              {/* Fortune 500 Terminal Metrics */}
+              <TerminalMetricsIndicator compact data-testid="terminal-metrics-compact" />
+              
               {/* Terminal Options Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

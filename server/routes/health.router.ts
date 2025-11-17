@@ -169,6 +169,15 @@ export class HealthRouter {
           testPromise = client.models.list().then(res => res.data.length > 0);
           break;
         }
+        case 'moonshot': {
+          const client = new OpenAI({ 
+            apiKey, 
+            baseURL: 'https://api.moonshot.ai/v1',
+            timeout: timeout - 500 
+          });
+          testPromise = client.models.list().then(res => res.data.length > 0);
+          break;
+        }
         case 'groq': {
           const client = new OpenAI({ 
             apiKey, 
@@ -226,6 +235,7 @@ export class HealthRouter {
       { name: 'anthropic', key: process.env.ANTHROPIC_API_KEY },
       { name: 'gemini', key: process.env.GEMINI_API_KEY },
       { name: 'xai', key: process.env.XAI_API_KEY },
+      { name: 'moonshot', key: process.env.MOONSHOT_API_KEY },
       { name: 'groq', key: process.env.GROQ_API_KEY }
     ];
 

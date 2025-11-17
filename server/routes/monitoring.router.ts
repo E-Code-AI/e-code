@@ -42,6 +42,7 @@ router.get('/api/monitoring/metrics/:name/history', async (req: Request, res: Re
 
 /**
  * Get system health check
+ * Returns 503 if unhealthy (for K8s readiness probes)
  */
 router.get('/api/monitoring/health', async (req: Request, res: Response) => {
   try {
@@ -54,6 +55,33 @@ router.get('/api/monitoring/health', async (req: Request, res: Response) => {
     res.status(500).json({ 
       status: 'error',
       message: 'Health check failed' 
+    });
+  }
+});
+
+/**
+ * Get system health summary
+ * ALWAYS returns 200 with status field for frontend consumption
+ * Frontend can display degraded state without throwing errors
+ */
+router.get('/api/monitoring/health/summary', async (req: Request, res: Response) => {
+  try {
+    const health = monitoringService.getHealthCheck();
+    
+    // Always return 200, include status in response body
+    res.status(200).json({
+      ...health,
+      ok: health.status === 'healthy',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error checking system health:', error);
+    // Even on error, return 200 with degraded status
+    res.status(200).json({ 
+      status: 'degraded',
+      ok: false,
+      message: 'Health check partially failed',
+      timestamp: new Date().toISOString()
     });
   }
 });

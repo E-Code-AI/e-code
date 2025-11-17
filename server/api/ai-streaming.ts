@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { ensureAuthenticated } from '../middleware/auth';
+import { aiUsageTracker } from '../middleware/ai-usage-tracker';
+import { normalizeModelName } from '../utils/model-normalizer';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -21,6 +23,11 @@ const logger = winston.createLogger({
 });
 
 const router = Router();
+
+// AI Usage Tracking (Pay-As-You-Go) - Track ALL streaming endpoints for billing
+// No blocking - users pay for what they use via Stripe metered billing
+// CRITICAL: Streaming is high-cost and MUST be accurately tracked
+router.use(aiUsageTracker);
 
 // Helper to set SSE headers
 const setupSSE = (res: any) => {
@@ -152,52 +159,126 @@ You are in BUILD MODE. You can execute actions like creating files, running comm
       });
     }
     
-    // Track usage
+    // Track usage (send normalized model to prevent client-side 'default' bugs)
+    const normalizedModelForEvent = normalizeModelName(model, provider);
     sendSSE(res, 'usage', { 
       provider, 
-      model: model || 'default',
+      model: normalizedModelForEvent,
       tokens: 0 
     });
     
     let fullResponse = '';
-    let tokenCount = 0;
+    let tokensInput = 0;
+    let tokensOutput = 0;
+    const requestStartTime = Date.now();
     
-    // Stream based on provider (using enforcedTools to respect Plan Mode)
+    // ✅ Stream based on provider and CAPTURE token usage for billing
+    let usage: { tokensInput: number; tokensOutput: number } | undefined;
     switch (provider) {
       case 'openai':
-        await streamOpenAI(res, messages, { model, temperature, maxTokens, tools: enforcedTools });
+        usage = await streamOpenAI(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId });
         break;
         
       case 'anthropic':
-        await streamAnthropic(res, messages, { 
+        usage = await streamAnthropic(res, messages, { 
           model, 
           temperature, 
           maxTokens,
           tools: enforcedTools,
+          projectId,
           extendedThinking: capabilities.extendedThinking || false
         });
         break;
         
       case 'gemini':
-        await streamGemini(res, messages, { model, temperature, maxTokens, tools: enforcedTools });
+        usage = await streamGemini(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId });
         break;
         
       default:
         // Fallback to OpenAI
-        await streamOpenAI(res, messages, { model, temperature, maxTokens, tools: enforcedTools });
+        usage = await streamOpenAI(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId });
+    }
+    
+    // ✅ CRITICAL: Track AI usage for billing (Pay-As-You-Go)
+    if (usage && userId) {
+      const user = (req as any).user;
+      const requestDurationMs = Date.now() - requestStartTime;
+      
+      // ✅ CRITICAL: Normalize model name to prevent DB insert failures
+      const normalizedModel = normalizeModelName(model, provider);
+      
+      // Import trackAiUsageManually for SSE tracking
+      const { trackAiUsageManually } = await import('../middleware/ai-usage-tracker');
+      
+      await trackAiUsageManually({
+        userId,
+        endpoint: req.path,
+        model: normalizedModel,
+        provider,
+        tokensInput: usage.tokensInput,
+        tokensOutput: usage.tokensOutput,
+        userTier: user?.subscriptionTier || 'free',
+        subscriptionId: user?.stripeSubscriptionId,
+        requestDurationMs,
+        status: 'success',
+        metadata: {
+          conversationId,
+          projectId,
+          agentMode: agentMode || 'build',
+          originalModel: model, // Keep original for debugging
+        },
+      });
+      
+      tokensInput = usage.tokensInput;
+      tokensOutput = usage.tokensOutput;
     }
     
     // Send completion event
     sendSSE(res, 'done', { 
       conversationId,
       projectId,
-      totalTokens: tokenCount 
+      totalTokens: tokensInput + tokensOutput,
+      tokensInput,
+      tokensOutput
     });
     
     res.end();
     
   } catch (error: any) {
     logger.error('Streaming chat error:', error);
+    
+    // ✅ CRITICAL: Track failed AI requests for billing (error = still costs money!)
+    if (userId) {
+      try {
+        const user = (req as any).user;
+        const requestDurationMs = Date.now() - requestStartTime;
+        const normalizedModel = normalizeModelName(model, provider);
+        const { trackAiUsageManually } = await import('../middleware/ai-usage-tracker');
+        
+        await trackAiUsageManually({
+          userId,
+          endpoint: req.path,
+          model: normalizedModel,
+          provider,
+          tokensInput: tokensInput || 0, // Fallback to 0 if error before streaming
+          tokensOutput: 0,
+          userTier: user?.subscriptionTier || 'free',
+          subscriptionId: user?.stripeSubscriptionId,
+          requestDurationMs,
+          status: 'error',
+          errorMessage: error.message || 'Unknown streaming error',
+          metadata: {
+            conversationId,
+            projectId,
+            agentMode: agentMode || 'build',
+            originalModel: model,
+            errorCode: error.code || 'STREAM_ERROR',
+          },
+        });
+      } catch (trackingError) {
+        logger.error('Failed to track error AI usage', { trackingError, originalError: error });
+      }
+    }
     
     // Send error event
     sendSSE(res, 'error', {
@@ -237,15 +318,24 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
     temperature: options.temperature,
     max_tokens: options.maxTokens,
     stream: true,
+    stream_options: { include_usage: true }, // ✅ CRITICAL: Include token usage in streaming
     tools: tools.length > 0 ? tools : undefined
   });
   
   let fullContent = '';
   let toolCalls: any[] = [];
   let currentToolCall: any = null;
+  let tokensInput = 0;
+  let tokensOutput = 0;
   
   for await (const chunk of stream) {
     const delta = chunk.choices[0]?.delta;
+    
+    // ✅ Capture token usage from final chunk
+    if (chunk.usage) {
+      tokensInput = chunk.usage.prompt_tokens || 0;
+      tokensOutput = chunk.usage.completion_tokens || 0;
+    }
     
     if (delta?.content) {
       fullContent += delta.content;
@@ -322,6 +412,9 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
     tool_results: toolResults,
     model: options.model || 'gpt-4-turbo-preview'
   });
+  
+  // ✅ Return token usage for billing
+  return { tokensInput, tokensOutput };
 }
 
 /**
@@ -349,13 +442,13 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
   const requestedTools = options.tools !== undefined ? options.tools : allTools;
   const tools = toAnthropicTools(requestedTools);
   
-  const stream = await anthropic.messages.create({
+  // ✅ Use .stream() helper to get finalMessage() with usage
+  const stream = anthropic.messages.stream({
     model: options.model || 'claude-3-5-sonnet-20241022',
     messages: userMessages,
     system: systemMessage?.content,
     max_tokens: options.maxTokens,
     temperature: options.temperature,
-    stream: true,
     tools: tools.length > 0 ? tools : undefined,
     thinking: options.extendedThinking ? {
       type: 'enabled',
@@ -369,6 +462,7 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
   let toolCalls: any[] = [];
   let currentToolUse: any = null;
   
+  // ✅ Process stream events
   for await (const event of stream) {
     // Handle thinking blocks (extended thinking)
     if (event.type === 'content_block_start' && (event as any).content_block?.type === 'thinking') {
@@ -480,6 +574,14 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
     model: options.model || 'claude-3-5-sonnet-20241022',
     thinking: thinkingContent
   });
+  
+  // ✅ Get token usage from finalMessage AFTER stream completes
+  const finalMessage = await stream.finalMessage();
+  const tokensInput = finalMessage.usage.input_tokens || 0;
+  const tokensOutput = finalMessage.usage.output_tokens || 0;
+  
+  // ✅ Return token usage for billing
+  return { tokensInput, tokensOutput };
 }
 
 /**
@@ -512,6 +614,8 @@ async function streamGemini(res: any, messages: any[], options: any) {
   const result = await chat.sendMessageStream(messages[messages.length - 1].content);
   
   let fullContent = '';
+  let tokensInput = 0;
+  let tokensOutput = 0;
   
   for await (const chunk of result.stream) {
     const text = chunk.text();
@@ -519,6 +623,20 @@ async function streamGemini(res: any, messages: any[], options: any) {
       fullContent += text;
       sendSSE(res, 'token', { content: text });
     }
+    
+    // ✅ Capture token usage if available
+    const usageMetadata = (chunk as any).usageMetadata;
+    if (usageMetadata) {
+      tokensInput = usageMetadata.promptTokenCount || 0;
+      tokensOutput = usageMetadata.candidatesTokenCount || 0;
+    }
+  }
+  
+  // Fallback: Estimate tokens if not provided (1 token ≈ 4 chars)
+  if (tokensInput === 0 && tokensOutput === 0) {
+    const inputChars = messages.reduce((sum, m) => sum + m.content.length, 0);
+    tokensInput = Math.ceil(inputChars / 4);
+    tokensOutput = Math.ceil(fullContent.length / 4);
   }
   
   // Send final message
@@ -526,6 +644,9 @@ async function streamGemini(res: any, messages: any[], options: any) {
     content: fullContent,
     model: options.model || 'gemini-pro'
   });
+  
+  // ✅ Return token usage for billing
+  return { tokensInput, tokensOutput };
 }
 
 /**

@@ -9,11 +9,12 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 export interface AIModel {
   id: string;
   name: string;
-  provider: 'openai' | 'anthropic' | 'gemini' | 'xai' | 'groq' | 'perplexity' | 'mixtral' | 'llama' | 'cohere' | 'deepseek' | 'mistral';
+  provider: 'openai' | 'anthropic' | 'gemini' | 'xai' | 'groq' | 'perplexity' | 'mixtral' | 'llama' | 'cohere' | 'deepseek' | 'mistral' | 'moonshot';
   description: string;
   maxTokens: number;
   supportsStreaming: boolean;
   costPer1kTokens?: number;
+  available?: boolean; // Flag to indicate if provider is configured/initialized
 }
 
 /**
@@ -22,103 +23,180 @@ export interface AIModel {
  * Fortune 500-grade model catalog
  */
 export const AI_MODELS: AIModel[] = [
-  // OpenAI Models - VERIFIED REAL MODELS ONLY (as of November 2025)
-  // Source: https://platform.openai.com/docs/models
+  // OpenAI Models - VRAIS modèles selon https://platform.openai.com/docs/models
   {
-    id: 'gpt-4o',
-    name: 'GPT-4o',
+    id: 'gpt-5.1',
+    name: 'GPT-5.1',
     provider: 'openai',
-    description: 'Latest multimodal GPT-4 optimized model',
-    maxTokens: 128000,
+    description: 'Current flagship - adaptive reasoning with apply_patch & shell tools (Nov 12, 2025)',
+    maxTokens: 400000,
     supportsStreaming: true,
     costPer1kTokens: 0.005
   },
   {
-    id: 'gpt-4o-mini',
-    name: 'GPT-4o Mini',
+    id: 'gpt-5',
+    name: 'GPT-5',
     provider: 'openai',
-    description: 'Compact GPT-4o for cost-effective tasks',
-    maxTokens: 128000,
+    description: 'Previous flagship - legacy but available (Aug 2025)',
+    maxTokens: 400000,
     supportsStreaming: true,
-    costPer1kTokens: 0.00015
+    costPer1kTokens: 0.005
   },
   {
-    id: 'gpt-4-turbo',
-    name: 'GPT-4 Turbo',
+    id: 'gpt-5-mini',
+    name: 'GPT-5 Mini',
     provider: 'openai',
-    description: 'Enhanced GPT-4 with 128K context window',
-    maxTokens: 128000,
+    description: 'Cost-optimized reasoning - balances speed, cost, capability',
+    maxTokens: 400000,
     supportsStreaming: true,
-    costPer1kTokens: 0.01
+    costPer1kTokens: 0.001
   },
   {
-    id: 'gpt-4',
-    name: 'GPT-4',
+    id: 'gpt-5-nano',
+    name: 'GPT-5 Nano',
     provider: 'openai',
-    description: 'Standard GPT-4 model',
-    maxTokens: 8192,
+    description: 'High-throughput for simple tasks - most affordable',
+    maxTokens: 400000,
     supportsStreaming: true,
-    costPer1kTokens: 0.03
+    costPer1kTokens: 0.0005
+  },
+  {
+    id: 'gpt-4.1',
+    name: 'GPT-4.1',
+    provider: 'openai',
+    description: 'Non-reasoning multimodal LLM - 1M context window',
+    maxTokens: 1000000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0025
+  },
+  {
+    id: 'gpt-4o',
+    name: 'GPT-4o',
+    provider: 'openai',
+    description: 'Multimodal flagship - text, vision, audio',
+    maxTokens: 128000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0025
+  },
+  {
+    id: 'o3',
+    name: 'o3',
+    provider: 'openai',
+    description: 'Advanced reasoning for complex problem solving',
+    maxTokens: 128000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.015
+  },
+  {
+    id: 'o4-mini',
+    name: 'o4 Mini',
+    provider: 'openai',
+    description: 'Budget-friendly reasoning for STEM tasks',
+    maxTokens: 128000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.003
   },
   
-  // Anthropic Models - REAL models only
+  // Anthropic Models - LATEST NOVEMBER 2025
+  // Source: https://docs.claude.com/en/docs/about-claude/models
   {
-    id: 'claude-3-5-sonnet-20241022',
-    name: 'Claude 3.5 Sonnet',
+    id: 'claude-sonnet-4-5-20250929',
+    name: 'Claude Sonnet 4.5',
     provider: 'anthropic',
-    description: 'Latest Claude model - balanced performance',
+    description: 'Best coding model in the world - strongest at agents & computer use (Sept 29, 2025)',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.003
   },
   {
-    id: 'claude-3-5-haiku-20241022',
-    name: 'Claude 3.5 Haiku',
+    id: 'claude-opus-4-1-20250805',
+    name: 'Claude Opus 4.1',
     provider: 'anthropic',
-    description: 'Fast Claude model for simple tasks - validated working',
-    maxTokens: 200000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.001
-  },
-  {
-    id: 'claude-3-opus-20240229',
-    name: 'Claude 3 Opus',
-    provider: 'anthropic',
-    description: 'Most capable Claude 3 model for complex reasoning',
+    description: 'Upgraded for agentic tasks & real-world coding - 74.5% on SWE-bench (Aug 5, 2025)',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.015
   },
-  
-  // Google Gemini Models - REAL models only
   {
-    id: 'gemini-1.5-pro',
-    name: 'Gemini 1.5 Pro',
+    id: 'claude-haiku-4-5-20251015',
+    name: 'Claude Haiku 4.5',
+    provider: 'anthropic',
+    description: 'Fastest model - matches Sonnet 4 on coding at 1/3 the cost (Oct 15, 2025)',
+    maxTokens: 200000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.001
+  },
+  
+  // Google Gemini Models - LATEST NOVEMBER 2025
+  // Source: https://ai.google.dev/gemini-api/docs/models
+  {
+    id: 'gemini-2.5-pro',
+    name: 'Gemini 2.5 Pro',
     provider: 'gemini',
-    description: 'Advanced Gemini model with 1M context window',
+    description: 'Stable release with adaptive thinking - 2M token context coming soon (Nov 2025)',
     maxTokens: 1000000,
     supportsStreaming: true,
     costPer1kTokens: 0.00125
   },
   {
-    id: 'gemini-1.5-flash',
-    name: 'Gemini 1.5 Flash',
+    id: 'gemini-2.5-flash',
+    name: 'Gemini 2.5 Flash',
     provider: 'gemini',
-    description: 'Fast multimodal model for general use',
+    description: 'Hybrid reasoning - thinks before it speaks with low latency (Nov 2025)',
     maxTokens: 1000000,
     supportsStreaming: true,
     costPer1kTokens: 0.000075
   },
   
-  // xAI Models - REAL models only
+  // Moonshot AI Kimi-K2 Models - VERIFIED REAL MODELS (November 2025)
+  // Source: https://platform.moonshot.ai/docs
   {
-    id: 'grok-2-1212',
-    name: 'Grok 2',
+    id: 'kimi-k2',
+    name: 'Kimi K2',
+    provider: 'moonshot',
+    description: '1T param MoE model optimized for agentic tasks - 10-100× cheaper than GPT-4',
+    maxTokens: 128000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0025  // $0.60 input (cache miss), $2.50 output → avg $0.0025
+  },
+  {
+    id: 'kimi-k2-thinking',
+    name: 'Kimi K2 Thinking',
+    provider: 'moonshot',
+    description: 'Kimi K2 with extended reasoning for complex problems',
+    maxTokens: 128000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0025
+  },
+  {
+    id: 'kimi-k2-turbo',
+    name: 'Kimi K2 Turbo',
+    provider: 'moonshot',
+    description: 'Fastest Kimi K2 variant for low-latency tasks',
+    maxTokens: 128000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0006  // Ultra-low cost for turbo variant
+  },
+  
+  // xAI Models - LATEST NOVEMBER 2025
+  // Source: https://x.ai/ and https://docs.x.ai/
+  {
+    id: 'grok-4',
+    name: 'Grok 4',
     provider: 'xai',
-    description: 'xAI flagship model with real-time knowledge',
-    maxTokens: 32000,
+    description: 'Current flagship - post-graduate reasoning with 256K context (July 2025)',
+    maxTokens: 256000,
     supportsStreaming: true,
     costPer1kTokens: 0.002
+  },
+  {
+    id: 'grok-4-fast',
+    name: 'Grok 4 Fast',
+    provider: 'xai',
+    description: 'Enterprise model - 40% fewer tokens, 2M context, 64× cheaper than o3 (Sept 2025)',
+    maxTokens: 2000000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0005
   },
   
   // Groq Models - REAL models only
@@ -153,6 +231,7 @@ export class AIProviderManager {
   private anthropicClient?: Anthropic;
   private openaiClient?: OpenAI;
   private geminiClient?: GoogleGenerativeAI;
+  private moonshotClient?: OpenAI;  // Moonshot uses OpenAI-compatible API
   
   constructor() {
     this.initializeProviders();
@@ -168,6 +247,7 @@ export class AIProviderManager {
     console.log('[AI Provider Manager] ANTHROPIC_API_KEY exists:', !!process.env.ANTHROPIC_API_KEY);
     console.log('[AI Provider Manager] GEMINI_API_KEY exists:', !!process.env.GEMINI_API_KEY);
     console.log('[AI Provider Manager] XAI_API_KEY exists:', !!process.env.XAI_API_KEY);
+    console.log('[AI Provider Manager] MOONSHOT_API_KEY exists:', !!process.env.MOONSHOT_API_KEY);
     
     // OpenAI
     if (process.env.OPENAI_API_KEY) {
@@ -217,6 +297,25 @@ export class AIProviderManager {
       console.warn('[AI Provider Manager] xAI API key not found in environment');
     }
     
+    // Moonshot AI (Kimi-K2) - OpenAI-compatible API
+    if (process.env.MOONSHOT_API_KEY) {
+      try {
+        // Use AIProviderFactory to create proper provider with generateChat support
+        this.providers.set('moonshot', AIProviderFactory.create('moonshot', process.env.MOONSHOT_API_KEY));
+        
+        // Also keep direct OpenAI client for advanced streaming features
+        this.moonshotClient = new OpenAI({
+          apiKey: process.env.MOONSHOT_API_KEY,
+          baseURL: 'https://api.moonshot.ai/v1'
+        });
+        console.log('[AI Provider Manager] ✓ Moonshot AI provider initialized');
+      } catch (error) {
+        console.warn('[AI Provider Manager] Failed to initialize Moonshot AI provider:', error);
+      }
+    } else {
+      console.warn('[AI Provider Manager] Moonshot AI API key not found in environment');
+    }
+    
     // Groq (Mixtral, Llama)
     if (process.env.GROQ_API_KEY) {
       try {
@@ -255,7 +354,12 @@ export class AIProviderManager {
    * Get available models based on initialized providers
    */
   getAvailableModels(): AIModel[] {
-    return AI_MODELS.filter(model => this.providers.has(model.provider));
+    // Return all configured models with availability flag
+    // This allows frontend to show unavailable models (grayed out) to encourage configuration
+    return AI_MODELS.map(model => ({
+      ...model,
+      available: this.providers.has(model.provider)
+    }));
   }
   
   /**
@@ -313,28 +417,37 @@ export class AIProviderManager {
     }
     
     // Use native streaming for providers that support it
+    // ✅ CRITICAL FIX: Removed internal Anthropic→GPT fallback that was breaking external fallback chain
+    // Now errors propagate cleanly to ai-plan-generator.service.ts which handles full fallback logic
     if (model.provider === 'anthropic' && this.anthropicClient) {
+      // Log provider errors for debugging but let them propagate
       try {
         yield* this.streamAnthropic(modelId, messages, options);
       } catch (error: any) {
-        // Fallback to GPT-4o if Anthropic fails (404, rate limit, etc.)
-        const fallbackModelId = 'gpt-4o';
-        console.error(`[AIProviderManager] Anthropic streaming failed for ${modelId}:`, error.message);
-        console.log(`[AIProviderManager] Falling back to ${fallbackModelId}`);
-        
-        // Verify fallback model exists
-        const fallbackModel = this.getModel(fallbackModelId);
-        if (fallbackModel && this.openaiClient) {
-          yield* this.streamOpenAI(fallbackModelId, messages, options);
-        } else {
-          // If fallback also fails, throw original error
-          throw error;
-        }
+        console.error(`[AIProviderManager] Anthropic streaming failed for ${modelId}:`, error.status, error.message || JSON.stringify(error));
+        throw error; // Propagate to outer fallback loop
       }
     } else if (model.provider === 'openai' && this.openaiClient) {
-      yield* this.streamOpenAI(modelId, messages, options);
+      try {
+        yield* this.streamOpenAI(modelId, messages, options);
+      } catch (error: any) {
+        console.error(`[AIProviderManager] OpenAI streaming failed for ${modelId}:`, error.status, error.message || JSON.stringify(error));
+        throw error; // Propagate to outer fallback loop
+      }
     } else if (model.provider === 'gemini' && this.geminiClient) {
-      yield* this.streamGemini(modelId, messages, options);
+      try {
+        yield* this.streamGemini(modelId, messages, options);
+      } catch (error: any) {
+        console.error(`[AIProviderManager] Gemini streaming failed for ${modelId}:`, error.status, error.message || JSON.stringify(error));
+        throw error; // Propagate to outer fallback loop
+      }
+    } else if (model.provider === 'moonshot' && this.moonshotClient) {
+      try {
+        yield* this.streamMoonshot(modelId, messages, options);
+      } catch (error: any) {
+        console.error(`[AIProviderManager] Moonshot streaming failed for ${modelId}:`, error.status, error.message || JSON.stringify(error));
+        throw error; // Propagate to outer fallback loop
+      }
     } else {
       // Fallback to non-streaming for providers without native streaming
       const response = await provider.generateChat(messages, { ...options, model: modelId });
@@ -395,6 +508,38 @@ export class AIProviderManager {
       max_tokens: options?.max_tokens || 4000,
       temperature: options?.temperature || 0.7,
       // ✅ FIX: Don't spread options to avoid passing unsupported parameters like 'system'
+    }) as unknown as AsyncIterable<any>;
+    
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) {
+        yield content;
+      }
+    }
+  }
+  
+  /**
+   * Moonshot AI (Kimi-K2) streaming implementation
+   * Uses OpenAI-compatible API at https://api.moonshot.ai/v1
+   */
+  private async *streamMoonshot(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
+    if (!this.moonshotClient) throw new Error('Moonshot AI client not initialized');
+    
+    // Moonshot uses OpenAI-compatible API format
+    let moonshotMessages = [...messages];
+    if (options?.system && !messages.find(m => m.role === 'system')) {
+      moonshotMessages = [
+        { role: 'system', content: options.system },
+        ...messages
+      ];
+    }
+    
+    const stream = await this.moonshotClient.chat.completions.create({
+      model: modelId,
+      messages: moonshotMessages,
+      stream: true,
+      max_tokens: options?.max_tokens || 4000,
+      temperature: options?.temperature || 0.7,
     }) as unknown as AsyncIterable<any>;
     
     for await (const chunk of stream) {

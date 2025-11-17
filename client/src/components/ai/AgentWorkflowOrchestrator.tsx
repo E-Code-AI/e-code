@@ -58,9 +58,9 @@ export function AgentWorkflowOrchestrator({
     setIsProcessing(true);
     try {
       // REAL AI-POWERED PLAN GENERATION via Server-Sent Events
-      // Connect to streaming endpoint for real-time plan generation from OpenAI GPT-5
-      // FIXED: Correct route is /api/agent/stream (not /plan/stream)
-      const response = await fetch('/api/agent/stream', {
+      // Connect to streaming endpoint for real-time plan generation using multi-provider AI
+      // ✅ CRITICAL FIX: Correct route is /api/agent/plan/stream (was incorrectly /api/agent/stream)
+      const response = await fetch('/api/agent/plan/stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

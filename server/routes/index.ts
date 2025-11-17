@@ -30,6 +30,7 @@ import aiStreamingRouter from "../api/ai-streaming";
 import voiceVideoRouter from "./voice-video.router";
 import dataProvisioningRouter from "./data-provisioning.router";
 import terminalRouter from "./terminal.router";
+import terminalMetricsRouter from "./terminal-metrics.router";
 import runtimeRouter from "./runtime.router";
 import packagesRouter from "./packages.router";
 import { createWorkspaceRoutes } from "./workspace";
@@ -44,6 +45,12 @@ import agentWorkflowRouter from "./agent-workflow.router";
 import createAgentPlanRouter from "./agent-plan.router";
 import createAgentBuildRouter from "./agent-build.router";
 import aiModelsRouter from "./ai-models.router";
+import featureFlagsRouter from "./feature-flags.router";
+import workspaceBootstrapRouter from "./workspace-bootstrap.router";
+import adminMonitoringRouter from "./admin-monitoring.router";
+import aiUsageRouter from "./ai-usage.router";
+import { tierRateLimiters } from "../middleware/tier-rate-limiter";
+import { aiUsageTracker } from "../middleware/ai-usage-tracker";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -97,6 +104,11 @@ export class MainRouter {
     
     // ChatGPT admin routes
     app.use(this.chatgptRouter.getRouter());
+    
+    // AI Usage Tracking (Pay-As-You-Go) - Track all AI/Agent requests for billing
+    // No blocking - users pay for what they use via Stripe metered billing
+    app.use('/api/agent', aiUsageTracker);
+    app.use('/api/admin/agent', aiUsageTracker);
     
     // Agent preferences routes (authenticated users) - user-facing preferences
     app.use('/api/agent', createAgentPreferencesRouter(this.storage));
@@ -153,13 +165,29 @@ export class MainRouter {
     // Admin routes
     app.use('/api/admin', adminRouter);
     
-    // AI routes
+    // Admin Monitoring routes (Fortune 500 Rate Limit Dashboard)
+    app.use('/api/admin/monitoring', adminMonitoringRouter);
+    
+    // AI Usage Tracking (Pay-As-You-Go) - Track AI routes for billing
+    // CRITICAL: Apply BEFORE mounting routers to ensure all AI endpoints are tracked
+    app.use('/api/ai', aiUsageTracker);
+    app.use('/api/models', aiUsageTracker);
+    
+    // AI routes (REST endpoints for chat, completions, etc.)
     app.use('/api', aiRouter);
+    
+    // AI Usage Metering routes (Pay-As-You-Go billing endpoints)
+    app.use('/api/ai/usage', aiUsageRouter);
+    app.use('/api/admin/ai-usage', aiUsageRouter);
     
     // AI Models Selection routes
     app.use('/api/models', aiModelsRouter);
     
+    // Feature Flags routes (runtime toggles for experimental features)
+    app.use(featureFlagsRouter);
+    
     // AI Streaming routes (Agent chat with SSE)
+    // NOTE: Tier limiter is applied INSIDE aiStreamingRouter to avoid affecting other routes
     app.use(aiStreamingRouter);
     
     // Voice/Video WebRTC routes
@@ -171,6 +199,9 @@ export class MainRouter {
     // Terminal routes (logs and console output)
     app.use(terminalRouter);
     
+    // Terminal metrics routes (Fortune 500 scalability monitoring)
+    app.use('/api/terminal', terminalMetricsRouter);
+    
     // Runtime routes (start, stop, execute, logs)
     app.use(runtimeRouter);
     
@@ -179,6 +210,9 @@ export class MainRouter {
     
     // Workspace routes (LSP, builds, tests, security, resources)
     app.use('/api/workspace', createWorkspaceRoutes(this.storage));
+    
+    // Workspace Bootstrap routes (Fortune 500-grade orchestration)
+    app.use('/api/workspace', workspaceBootstrapRouter);
     
     // Mobile app routes
     app.use(mobileRouter);
