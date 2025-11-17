@@ -332,7 +332,8 @@ export async function readinessProbe(req: Request, res: Response): Promise<void>
     const health = await performHealthChecks(false);
 
     // Ready only if all critical checks pass
-    const criticalChecks = ['database', 'redis'];
+    // Redis is optional caching layer - not critical for serving traffic
+    const criticalChecks = ['database'];
     const isReady = criticalChecks.every(
       key => health.checks[key]?.status === 'up' || health.checks[key]?.status === 'degraded'
     );
