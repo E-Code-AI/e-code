@@ -172,3 +172,59 @@ server/services/agent-orchestrator.service.ts (LSP fixes only)
 9. Verify auto-close → **Expected:** Dialog closes, IDE loads with generated files
 
 **Current Test Results:** Manual testing not yet performed (requires authenticated user session)
+
+---
+
+## Authentication Fix for E2E Testing (Nov 17, 2025)
+
+### Problem
+E2E testing was blocked because automated tests couldn't authenticate (401 errors with both manual credentials and Quick Login button).
+
+### Solution Implemented
+**Automatic Test User Seeding on Server Startup**
+
+**Changes Made:**
+1. Added `seedDatabase()` call in `server/index.ts` (lines 360-367)
+2. Runs after database initialization on every server startup
+3. Creates test user if it doesn't exist:
+   - Email: `testuser@test.com`
+   - Password: `testpass123`
+   - Username: `testuser`
+   - Email verified: `true`
+
+**Code Location:**
+```typescript
+// server/index.ts (lines 360-367)
+try {
+  const { seedDatabase } = await import("./db-seed");
+  await seedDatabase();
+  console.log('✅ Test user seeded (testuser@test.com / testpass123)');
+} catch (error) {
+  console.warn('[WORKING SERVER] Database seeding failed (non-critical):', error.message);
+}
+```
+
+**Test Results:**
+- ✅ E2E authentication test PASSED (Nov 17, 2025)
+- ✅ Login succeeds with testuser@test.com / testpass123
+- ✅ User redirected to /dashboard successfully
+- ✅ Quick Login button in Login.tsx matches these credentials
+
+### Current Blocker: AI Provider Quota Errors
+**Status:** Authentication is fixed, but autonomous workspace flow blocked by AI provider quota limits
+
+**Error Logs:**
+```
+[AIProviderManager] OpenAI streaming failed for gpt-4o: 429 You exceeded your current quota
+[AIProviderManager] Moonshot streaming failed for kimi-k2: 429 Your account is suspended
+```
+
+**Impact:**
+- Cannot test full autonomous workspace creation flow
+- Cannot verify WebSocket connection end-to-end
+- Autonomous agent plan generation fails before WebSocket connection
+
+**Next Steps:**
+1. Wait for AI provider quota reset, OR
+2. Use alternative AI provider (Anthropic, xAI, Gemini), OR
+3. Create mock AI provider for testing WebSocket flow independently
