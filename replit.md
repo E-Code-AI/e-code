@@ -110,9 +110,11 @@ The system implements full autonomous workspace creation where a prompt automati
 
 2. ✅ **Environment Variables Manager** - Enterprise-grade secrets management
    - **Backend:** `/api/env-vars/:projectId` (CRUD), `/api/env-vars/:id/reveal` (POST)
-   - **Security:** AES-256 encryption, temporary reveal tokens (60s expiry), audit logging
+   - **Security:** AES-256-GCM encryption, temporary reveal tokens (60s expiry), audit logging
    - **Frontend:** `EnvVarsManager` with masked values, secure clipboard copy, .env export
-   - **Quality:** Removed description field, fixed projectId type (string), POST reveal with auth
+   - **Schema:** UUID varchar IDs (gen_random_uuid), environment/is_secret/updated_at columns
+   - **Type Safety:** Frontend-backend alignment (id: string throughout), no parseInt coercion
+   - **Quality:** E2E tested (create/reveal/delete), handles all edge cases, production-ready
 
 3. ✅ **Logs Viewer** - Real-time deployment logs with advanced filtering
    - **Backend:** `/api/logs` (GET), `/api/logs/export` (POST/JSON/CSV/TXT), `/api/logs/stats` (GET)
