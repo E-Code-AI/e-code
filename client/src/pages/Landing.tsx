@@ -75,7 +75,7 @@ export default function Landing() {
 
   // Fetch real templates from database
   const { data: templates = [], isLoading: templatesLoading } = useQuery<any[]>({
-    queryKey: ['/api/templates'],
+    queryKey: ['/api/marketplace/templates'],
     enabled: true
   });
 

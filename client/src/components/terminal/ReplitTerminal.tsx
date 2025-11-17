@@ -34,6 +34,7 @@ import {
   Zap,
   Clock,
 } from "lucide-react";
+import { TerminalMetricsIndicator } from "./TerminalMetricsIndicator";
 import "xterm/css/xterm.css";
 
 interface TerminalSession {
@@ -484,6 +485,9 @@ export function ReplitTerminal({
                 </>
               )}
             </Badge>
+
+            {/* Fortune 500 Terminal Metrics */}
+            <TerminalMetricsIndicator compact data-testid="replit-terminal-metrics-compact" />
           </div>
 
           <div className="flex items-center space-x-1">

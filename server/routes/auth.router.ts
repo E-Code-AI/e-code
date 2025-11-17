@@ -14,6 +14,7 @@ import { db } from "../db";
 import { eq, and, gte } from "drizzle-orm";
 import { sessionManager } from "../auth/session-manager";
 import { createLogger } from "../utils/logger";
+import { tierRateLimiters } from "../middleware/tier-rate-limiter";
 
 const logger = createLogger('auth-router');
 
@@ -77,6 +78,17 @@ export class AuthRouter {
   };
 
   private initializeRoutes() {
+    // Fortune 500 Auth Rate Limiter - Apply to all auth routes
+    // Free: 5/15min, Pro: 20/15min, Enterprise: 100/15min (10x in dev)
+    this.router.use('/api/register', tierRateLimiters.auth);
+    this.router.use('/api/login', tierRateLimiters.auth);
+    this.router.use('/api/logout', tierRateLimiters.auth);
+    this.router.use('/api/auth', tierRateLimiters.auth);
+    this.router.use('/api/verify-email', tierRateLimiters.auth);
+    this.router.use('/api/resend-verification', tierRateLimiters.auth);
+    this.router.use('/api/forgot-password', tierRateLimiters.auth);
+    this.router.use('/api/reset-password', tierRateLimiters.auth);
+    
     // Get current user (sanitized - no sensitive fields)
     this.router.get("/api/me", this.ensureAuthenticated, (req: Request, res: Response) => {
       const user = req.user;

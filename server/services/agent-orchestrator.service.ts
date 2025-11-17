@@ -932,6 +932,175 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       details: { description: details, timestamp: new Date().toISOString() }
     });
   }
+
+  /**
+   * Execute Autonomous Plan (Replit-like AI Agent Flow)
+   * 
+   * Converts ExecutionPlan tasks into workflow steps and executes them autonomously
+   * with real-time WebSocket streaming. This enables the "Replit experience" where
+   * the AI agent generates files, installs dependencies, and starts the dev server
+   * automatically.
+   * 
+   * @param sessionId - Agent session ID
+   * @param plan - Execution plan from plan generator
+   * @param projectId - Project ID for WebSocket updates
+   * @param userId - User ID for audit trail
+   */
+  async executeAutonomousPlan(
+    sessionId: string,
+    plan: any, // ExecutionPlan type from plan-generator
+    projectId: string,
+    userId: string
+  ): Promise<void> {
+    try {
+      logger.info(`[Execute Plan] Starting autonomous execution for session ${sessionId}`, {
+        planId: plan.id,
+        taskCount: plan.tasks.length
+      });
+
+      // Import WebSocket service (dynamic to avoid circular dependency)
+      const { agentWebSocketService } = await import('./agent-websocket-service');
+
+      // Convert plan tasks to workflow steps
+      const workflowSteps = plan.tasks.map((task: any) => ({
+        id: task.id,
+        name: task.title,
+        type: this.mapTaskTypeToWorkflowType(task.type),
+        config: this.buildStepConfig(task),
+        dependencies: task.dependencies || []
+      }));
+
+      logger.info(`[Execute Plan] Converted ${workflowSteps.length} tasks to workflow steps`);
+
+      // Define scoped event handlers (captured in closure for cleanup)
+      const handleStepStart = (event: any) => {
+        agentWebSocketService.sendStepUpdate(parseInt(projectId), sessionId, {
+          id: event.stepId,
+          type: 'in_progress',
+          title: event.stepName || 'Processing...',
+          icon: 'spinner',
+          expandable: true,
+          details: [`Executing step: ${event.stepName}`],
+          progress: event.progress || 0
+        });
+      };
+
+      const handleStepComplete = (event: any) => {
+        agentWebSocketService.sendStepUpdate(parseInt(projectId), sessionId, {
+          id: event.stepId,
+          type: 'complete',
+          title: event.stepName || 'Completed',
+          icon: 'check',
+          expandable: true,
+          details: [`Successfully completed: ${event.stepName}`],
+          progress: event.progress || 100
+        });
+      };
+
+      const handleStepFailed = (event: any) => {
+        agentWebSocketService.sendError(parseInt(projectId), sessionId, 
+          `Step failed: ${event.stepName} - ${event.error}`
+        );
+      };
+
+      // Register listeners with cleanup guarantee
+      agentWorkflowEngine.on('step_start', handleStepStart);
+      agentWorkflowEngine.on('step_complete', handleStepComplete);
+      agentWorkflowEngine.on('step_failed', handleStepFailed);
+
+      try {
+        // Execute the workflow
+        const workflow = await agentWorkflowEngine.executeWorkflow(
+          sessionId,
+          `Build: ${plan.goal}`,
+          `Autonomous execution of ${plan.tasks.length} tasks`,
+          workflowSteps,
+          userId
+        );
+
+        logger.info(`[Execute Plan] Workflow ${workflow.id} execution completed`, {
+          status: workflow.status,
+          progress: workflow.progress
+        });
+
+        // Send completion notification
+        agentWebSocketService.sendComplete(parseInt(projectId), sessionId);
+
+        // Create audit entry
+        await this.createAuditEntry(
+          sessionId,
+          userId,
+          'plan_executed',
+          `Executed plan ${plan.id} with ${plan.tasks.length} tasks`
+        );
+        
+      } finally {
+        // CRITICAL: Remove event listeners to prevent memory leaks
+        agentWorkflowEngine.removeListener('step_start', handleStepStart);
+        agentWorkflowEngine.removeListener('step_complete', handleStepComplete);
+        agentWorkflowEngine.removeListener('step_failed', handleStepFailed);
+        
+        logger.info(`[Execute Plan] Event listeners cleaned up for session ${sessionId}`);
+      }
+
+    } catch (error: any) {
+      logger.error(`[Execute Plan] Failed to execute plan:`, error);
+      
+      // Send error via WebSocket
+      const { agentWebSocketService } = await import('./agent-websocket-service');
+      agentWebSocketService.sendError(parseInt(projectId), sessionId, 
+        `Plan execution failed: ${error.message}`
+      );
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Map plan task type to workflow step type
+   */
+  private mapTaskTypeToWorkflowType(taskType: string): any {
+    const mapping: Record<string, string> = {
+      'file_operation': 'file_operation',
+      'command': 'command',
+      'database': 'database',
+      'configuration': 'file_operation',
+      'testing': 'command',
+      'deployment': 'command'
+    };
+    return mapping[taskType] || 'file_operation';
+  }
+
+  /**
+   * Build workflow step config from plan task
+   */
+  private buildStepConfig(task: any): any {
+    // Extract action details from task description
+    const config: any = {
+      description: task.description
+    };
+
+    // For file operations, try to infer file path and content
+    if (task.type === 'file_operation') {
+      // Simple heuristic: if title mentions a file, use it
+      const fileMatch = task.title.match(/(?:create|write|update|modify)\s+(.+\.[a-z]+)/i);
+      if (fileMatch) {
+        config.action = 'create_file';
+        config.path = fileMatch[1];
+        config.content = `// Generated by AI Agent\n// TODO: Implement ${task.title}\n`;
+      }
+    }
+
+    // For commands, try to infer command from title
+    if (task.type === 'command' || task.type === 'testing') {
+      const cmdMatch = task.title.match(/run\s+(.+)/i) || task.title.match(/install\s+(.+)/i);
+      if (cmdMatch) {
+        config.command = cmdMatch[1];
+      }
+    }
+
+    return config;
+  }
 }
 
 // Export singleton instance

@@ -83,46 +83,91 @@ export default function Editor(props: EditorProps = {}) {
     enabled: !!resolvedProjectId && !!user,
   });
 
-  // Check for agent auto-start from URL params or sessionStorage (Vibe flow)
+  // Check for workspace bootstrap token (Fortune 500-grade orchestration)
   useEffect(() => {
     if (!hasStartedAgent.current && user && resolvedProjectId) {
       const urlParams = new URLSearchParams(window.location.search);
-      const isAgent = urlParams.get('agent') === 'true';
-      const promptFromUrl = urlParams.get('prompt');
+      const bootstrapToken = urlParams.get('bootstrap');
       
-      // Check sessionStorage for prompt from Dashboard/Workflow (Vibe creation flow)
-      const promptFromSession = window.sessionStorage.getItem(`agent-prompt-${resolvedProjectId}`);
-      
-      // Determine initial prompt source and handle encoding correctly
-      let initialPrompt: string | null = null;
-      if (promptFromUrl) {
-        // URL params are percent-encoded, must decode
+      // NEW FLOW: Bootstrap token from workspace orchestration
+      if (bootstrapToken) {
         try {
-          initialPrompt = decodeURIComponent(promptFromUrl);
-        } catch (e) {
-          console.error('Failed to decode URL prompt:', e);
-          initialPrompt = promptFromUrl; // Fallback to raw value
+          // Parse JWT token (client-side, payload is not encrypted)
+          const tokenParts = bootstrapToken.split('.');
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(atob(tokenParts[1]));
+            const { projectId, sessionId, conversationId } = payload;
+            
+            // Subscribe to WebSocket for real-time agent progress
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${projectId}&sessionId=${sessionId}`;
+            
+            console.log('[Workspace Bootstrap] Connecting to WebSocket:', wsUrl);
+            
+            // Store session info for agent panel
+            window.sessionStorage.setItem(`agent-session-${resolvedProjectId}`, JSON.stringify({
+              sessionId,
+              conversationId,
+              websocketUrl: wsUrl
+            }));
+            
+            // Auto-open agent panel
+            setActiveRightPanel('agent');
+            setRightPanelOpen(true);
+            setInitialAgentPrompt('AI Agent is building your application...');
+            hasStartedAgent.current = true;
+            
+            // Clean up URL
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, '', cleanUrl);
+          }
+        } catch (error) {
+          console.error('[Workspace Bootstrap] Failed to parse bootstrap token:', error);
+          toast({
+            title: "Bootstrap Error",
+            description: "Failed to initialize AI agent workspace.",
+            variant: "destructive"
+          });
         }
-      } else if (promptFromSession) {
-        // SessionStorage values are NOT encoded, use directly
-        initialPrompt = promptFromSession;
-      }
-      
-      if (isAgent && initialPrompt) {
-        // Open the agent panel
-        setActiveRightPanel('agent');
-        setRightPanelOpen(true);
-        setInitialAgentPrompt(initialPrompt);
-        hasStartedAgent.current = true;
+      } else {
+        // LEGACY FLOW: Check for agent auto-start from URL params or sessionStorage (Vibe flow)
+        const isAgent = urlParams.get('agent') === 'true';
+        const promptFromUrl = urlParams.get('prompt');
         
-        // Clean up sessionStorage to prevent re-trigger
-        if (promptFromSession) {
-          window.sessionStorage.removeItem(`agent-prompt-${resolvedProjectId}`);
+        // Check sessionStorage for prompt from Dashboard/Workflow (Vibe creation flow)
+        const promptFromSession = window.sessionStorage.getItem(`agent-prompt-${resolvedProjectId}`);
+        
+        // Determine initial prompt source and handle encoding correctly
+        let initialPrompt: string | null = null;
+        if (promptFromUrl) {
+          // URL params are percent-encoded, must decode
+          try {
+            initialPrompt = decodeURIComponent(promptFromUrl);
+          } catch (e) {
+            console.error('Failed to decode URL prompt:', e);
+            initialPrompt = promptFromUrl; // Fallback to raw value
+          }
+        } else if (promptFromSession) {
+          // SessionStorage values are NOT encoded, use directly
+          initialPrompt = promptFromSession;
         }
         
-        // Clean up the URL to remove the query parameters
-        const cleanUrl = window.location.pathname;
-        window.history.replaceState({}, '', cleanUrl);
+        if (isAgent && initialPrompt) {
+          // Open the agent panel
+          setActiveRightPanel('agent');
+          setRightPanelOpen(true);
+          setInitialAgentPrompt(initialPrompt);
+          hasStartedAgent.current = true;
+          
+          // Clean up sessionStorage to prevent re-trigger
+          if (promptFromSession) {
+            window.sessionStorage.removeItem(`agent-prompt-${resolvedProjectId}`);
+          }
+          
+          // Clean up the URL to remove the query parameters
+          const cleanUrl = window.location.pathname;
+          window.history.replaceState({}, '', cleanUrl);
+        }
       }
     }
   }, [user, resolvedProjectId]);

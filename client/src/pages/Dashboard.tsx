@@ -104,19 +104,20 @@ export default function Dashboard() {
     setIsCreating(true);
 
     try {
-      // Create project with CSRF protection via apiRequest
-      const project = await apiRequest('POST', '/api/projects', {
-        name: aiPrompt,
-        description: aiPrompt,
-        language: 'javascript',
-        visibility: 'private'
+      // Use Fortune 500-grade workspace bootstrap endpoint
+      // This orchestrates project creation + agent session + auto-start workflow
+      const response = await apiRequest('POST', '/api/workspace/bootstrap', {
+        prompt: aiPrompt,
+        options: {
+          language: 'typescript',
+          framework: 'react',
+          autoStart: true,
+          visibility: 'private'
+        }
       }) as any;
 
-      // 🚀 REPLIT FLOW: Redirect to IDE with AI Agent panel (auto-start build)
-      const params = new URLSearchParams();
-      params.set('panel', 'agent');
-      params.set('prompt', aiPrompt);
-      navigate(`/ide/${project.id}?${params.toString()}`);
+      // Redirect to IDE with bootstrap token (agent auto-starts via WebSocket)
+      navigate(`/ide/${response.projectId}?bootstrap=${response.bootstrapToken}`);
     } catch (error) {
       console.error('Failed to create project:', error);
       toast({
