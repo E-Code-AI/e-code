@@ -294,27 +294,27 @@ export function AutonomousWorkspaceViewer({
       setIsOpen(open);
       if (!open) handleClose();
     }}>
-      <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col" data-testid="autonomous-workspace-viewer">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-[95vw] sm:max-w-2xl lg:max-w-3xl max-h-[90vh] sm:max-h-[85vh] flex flex-col p-4 sm:p-6" data-testid="autonomous-workspace-viewer">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             {isComplete ? (
               <>
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                <span>Workspace Ready!</span>
+                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0" />
+                <span className="truncate">Workspace Ready!</span>
               </>
             ) : errorMessage ? (
               <>
-                <XCircle className="h-5 w-5 text-destructive" />
-                <span>Workspace Creation Failed</span>
+                <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-destructive flex-shrink-0" />
+                <span className="truncate">Workspace Creation Failed</span>
               </>
             ) : (
               <>
-                <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-                <span>Building Your Workspace with AI...</span>
+                <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary animate-pulse flex-shrink-0" />
+                <span className="truncate">Building Your Workspace with AI...</span>
               </>
             )}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs sm:text-sm">
             {isComplete 
               ? 'Your AI-powered workspace has been created successfully!'
               : errorMessage
@@ -325,15 +325,15 @@ export function AutonomousWorkspaceViewer({
         </DialogHeader>
 
         {/* Connection Status */}
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-xs sm:text-sm">
           <div className={cn(
-            "h-2 w-2 rounded-full",
+            "h-2 w-2 rounded-full flex-shrink-0",
             connectionStatus === 'connected' && "bg-green-500 animate-pulse",
             connectionStatus === 'connecting' && "bg-yellow-500 animate-pulse",
             connectionStatus === 'error' && "bg-red-500",
             connectionStatus === 'closed' && "bg-gray-400"
           )} />
-          <span className="text-muted-foreground">
+          <span className="text-muted-foreground truncate">
             {connectionStatus === 'connected' && 'Connected'}
             {connectionStatus === 'connecting' && 'Connecting...'}
             {connectionStatus === 'error' && 'Connection Error'}
@@ -343,32 +343,32 @@ export function AutonomousWorkspaceViewer({
 
         {/* Overall Progress */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">{currentTask}</span>
-            <span className="text-muted-foreground">{Math.round(overallProgress)}%</span>
+          <div className="flex items-center justify-between text-xs sm:text-sm gap-2">
+            <span className="font-medium truncate flex-1 min-w-0">{currentTask}</span>
+            <span className="text-muted-foreground flex-shrink-0">{Math.round(overallProgress)}%</span>
           </div>
           <Progress value={overallProgress} className="h-2" data-testid="overall-progress" />
         </div>
 
         {/* Tasks List */}
         {tasks.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Tasks</h4>
-            <ScrollArea className="h-32 border rounded-md p-2">
+          <div className="space-y-2 min-h-0">
+            <h4 className="text-xs sm:text-sm font-medium">Tasks</h4>
+            <ScrollArea className="h-24 sm:h-32 md:h-36 border rounded-md p-2">
               {tasks.map((task) => (
-                <div key={task.id} className="flex items-center gap-2 py-1 text-sm" data-testid={`task-${task.id}`}>
+                <div key={task.id} className="flex items-center gap-2 py-1 text-xs sm:text-sm" data-testid={`task-${task.id}`}>
                   {task.status === 'completed' ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
                   ) : task.status === 'error' ? (
-                    <XCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+                    <XCircle className="h-3 w-3 sm:h-4 sm:w-4 text-destructive flex-shrink-0" />
                   ) : task.status === 'in_progress' ? (
-                    <Loader2 className="h-4 w-4 text-primary animate-spin flex-shrink-0" />
+                    <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 text-primary animate-spin flex-shrink-0" />
                   ) : (
-                    <div className="h-4 w-4 rounded-full border-2 border-muted flex-shrink-0" />
+                    <div className="h-3 w-3 sm:h-4 sm:w-4 rounded-full border-2 border-muted flex-shrink-0" />
                   )}
-                  <span className="flex-1 truncate">{task.name}</span>
+                  <span className="flex-1 truncate min-w-0">{task.name}</span>
                   {task.progress !== undefined && task.status === 'in_progress' && (
-                    <span className="text-xs text-muted-foreground">{task.progress}%</span>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">{task.progress}%</span>
                   )}
                 </div>
               ))}
@@ -377,10 +377,10 @@ export function AutonomousWorkspaceViewer({
         )}
 
         {/* Logs */}
-        <div className="flex-1 space-y-2">
-          <h4 className="text-sm font-medium">Activity Log</h4>
-          <ScrollArea className="h-48 border rounded-md bg-muted/30 font-mono text-xs" data-testid="activity-logs">
-            <div className="p-3 space-y-1">
+        <div className="flex-1 space-y-2 min-h-0 overflow-hidden">
+          <h4 className="text-xs sm:text-sm font-medium">Activity Log</h4>
+          <ScrollArea className="h-32 sm:h-40 md:h-48 border rounded-md bg-muted/30 font-mono text-[10px] sm:text-xs" data-testid="activity-logs">
+            <div className="p-2 sm:p-3 space-y-1">
               {logs.map((log, index) => (
                 <div key={index} className="text-muted-foreground whitespace-pre-wrap break-all">
                   {log}
@@ -393,7 +393,7 @@ export function AutonomousWorkspaceViewer({
 
         {/* Error Message */}
         {errorMessage && (
-          <div className="rounded-md bg-destructive/10 border border-destructive p-3 text-sm text-destructive">
+          <div className="rounded-md bg-destructive/10 border border-destructive p-2 sm:p-3 text-xs sm:text-sm text-destructive">
             {errorMessage}
           </div>
         )}
@@ -401,17 +401,18 @@ export function AutonomousWorkspaceViewer({
         {/* Action Buttons */}
         <div className="flex justify-end gap-2">
           {isComplete ? (
-            <Button onClick={handleClose} data-testid="button-close">
-              <Rocket className="h-4 w-4 mr-2" />
-              Open Workspace
+            <Button onClick={handleClose} className="text-xs sm:text-sm" data-testid="button-close">
+              <Rocket className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Open Workspace</span>
+              <span className="sm:hidden">Open</span>
             </Button>
           ) : errorMessage ? (
-            <Button variant="outline" onClick={handleClose} data-testid="button-close-error">
+            <Button variant="outline" onClick={handleClose} className="text-xs sm:text-sm" data-testid="button-close-error">
               Close
             </Button>
           ) : (
-            <Button variant="outline" disabled data-testid="button-cancel">
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <Button variant="outline" disabled className="text-xs sm:text-sm" data-testid="button-cancel">
+              <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
               Building...
             </Button>
           )}
