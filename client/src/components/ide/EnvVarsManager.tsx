@@ -14,17 +14,16 @@ import { Badge } from '@/components/ui/badge';
 
 interface EnvVar {
   id: number;
-  projectId: number;
+  projectId: string;
   key: string;
   value: string;
   isSecret: boolean;
-  description: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
 interface EnvVarsManagerProps {
-  projectId: number;
+  projectId: string;
 }
 
 export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
@@ -33,8 +32,7 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
   const [newVar, setNewVar] = useState({
     key: '',
     value: '',
-    isSecret: false,
-    description: ''
+    isSecret: false
   });
   const [revealedSecrets, setRevealedSecrets] = useState<Set<number>>(new Set());
   const { toast } = useToast();
@@ -49,15 +47,12 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: typeof newVar & { projectId: number }) =>
-      apiRequest('/api/env-vars', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      }),
+    mutationFn: async (data: typeof newVar & { projectId: string }) =>
+      apiRequest('POST', '/api/env-vars', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/env-vars', projectId] });
       setIsAddDialogOpen(false);
-      setNewVar({ key: '', value: '', isSecret: false, description: '' });
+      setNewVar({ key: '', value: '', isSecret: false });
       toast({ title: "Environment variable created" });
     },
     onError: (error: any) => {
@@ -70,11 +65,8 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...data }: { id: number; value?: string; description?: string; isSecret?: boolean }) =>
-      apiRequest(`/api/env-vars/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data)
-      }),
+    mutationFn: async ({ id, ...data }: { id: number; value?: string; isSecret?: boolean }) =>
+      apiRequest('PATCH', `/api/env-vars/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/env-vars', projectId] });
       setEditingId(null);
@@ -91,7 +83,7 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) =>
-      apiRequest(`/api/env-vars/${id}`, { method: 'DELETE' }),
+      apiRequest('DELETE', `/api/env-vars/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/env-vars', projectId] });
       toast({ title: "Environment variable deleted" });
@@ -107,26 +99,31 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
 
   const revealSecret = async (id: number) => {
     try {
-      const response = await fetch(`/api/env-vars/${id}/reveal`);
-      if (!response.ok) throw new Error('Failed to reveal secret');
-      const data = await response.json();
+      const response = await apiRequest<{ value: string; expiresIn: number; warning: string }>(
+        'POST',
+        `/api/env-vars/${id}/reveal`
+      );
       
-      // Temporarily show the value
-      setRevealedSecrets(prev => new Set([...prev, id]));
+      // Copy to clipboard for security
+      await navigator.clipboard.writeText(response.value);
+      
       toast({
-        title: "Secret revealed",
-        description: data.value,
-        duration: 5000
+        title: "Secret copied to clipboard",
+        description: `${response.warning} Value: ${response.value}`,
+        duration: 10000
       });
 
-      // Hide after 10 seconds
+      // Temporarily show masked value with reveal indicator
+      setRevealedSecrets(prev => new Set([...prev, id]));
+
+      // Auto-hide after expiry time
       setTimeout(() => {
         setRevealedSecrets(prev => {
           const next = new Set(prev);
           next.delete(id);
           return next;
         });
-      }, 10000);
+      }, response.expiresIn * 1000);
     } catch (error: any) {
       toast({
         title: "Failed to reveal secret",
@@ -213,16 +210,6 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
                     data-testid="input-env-value"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="description">Description (optional)</Label>
-                  <Input
-                    id="description"
-                    placeholder="What this variable is for..."
-                    value={newVar.description}
-                    onChange={(e) => setNewVar({ ...newVar, description: e.target.value })}
-                    data-testid="input-env-description"
-                  />
-                </div>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox
                     checked={newVar.isSecret}
@@ -288,10 +275,7 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
                       </Button>
                     )}
                   </div>
-                  {envVar.description && (
-                    <p className="text-xs text-muted-foreground mt-2">{envVar.description}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-2">
                     Updated: {new Date(envVar.updatedAt).toLocaleString()}
                   </p>
                 </div>

@@ -10,7 +10,7 @@ const logger = createLogger('global-search');
 
 const searchSchema = z.object({
   query: z.string().min(1).max(500),
-  projectId: z.number(),
+  projectId: z.string(),
   caseSensitive: z.boolean().optional().default(false),
   wholeWord: z.boolean().optional().default(false),
   useRegex: z.boolean().optional().default(false),
@@ -21,7 +21,7 @@ const searchSchema = z.object({
 const replaceSchema = z.object({
   query: z.string().min(1).max(500),
   replacement: z.string().max(500),
-  projectId: z.number(),
+  projectId: z.string(),
   caseSensitive: z.boolean().optional().default(false),
   wholeWord: z.boolean().optional().default(false),
   useRegex: z.boolean().optional().default(false),
@@ -86,6 +86,9 @@ router.post('/global', async (req, res) => {
         if (!matchesPattern) continue;
       }
 
+      // Skip directories and binary files
+      if (file.isDirectory) continue;
+      
       // Search in file content
       const content = file.content || '';
       const matches = searchInContent(content, query, {
@@ -148,7 +151,9 @@ router.post('/replace', async (req, res) => {
 
     for (const file of files) {
       try {
-        // Skip excluded files
+        // Skip directories and excluded files
+        if (file.isDirectory) continue;
+        
         if (excludePatterns.some(pattern => file.path.includes(pattern))) {
           continue;
         }
@@ -171,7 +176,7 @@ router.post('/replace', async (req, res) => {
         });
 
         if (count > 0) {
-          // Update file
+          // Update file through storage interface (not direct fs)
           await storage.updateFile(file.id, { content: newContent });
           
           results.push({
@@ -181,6 +186,7 @@ router.post('/replace', async (req, res) => {
           });
         }
       } catch (error: any) {
+        logger.error(`Replace failed for ${file.path}:`, error);
         results.push({
           filePath: file.path,
           replacements: 0,

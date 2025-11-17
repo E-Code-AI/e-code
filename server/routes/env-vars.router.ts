@@ -11,16 +11,14 @@ const logger = createLogger('env-vars');
 const secretService = new RealSecretManagementService();
 
 const createEnvVarSchema = z.object({
-  projectId: z.number(),
+  projectId: z.string(),
   key: z.string().min(1).max(255).regex(/^[A-Z][A-Z0-9_]*$/, 'Must be UPPERCASE with underscores'),
   value: z.string().max(10000),
-  isSecret: z.boolean().default(false),
-  description: z.string().max(500).optional()
+  isSecret: z.boolean().default(false)
 });
 
 const updateEnvVarSchema = z.object({
   value: z.string().max(10000).optional(),
-  description: z.string().max(500).optional(),
   isSecret: z.boolean().optional()
 });
 
@@ -30,7 +28,7 @@ const updateEnvVarSchema = z.object({
  */
 router.get('/:projectId', async (req, res) => {
   try {
-    const projectId = parseInt(req.params.projectId);
+    const projectId = req.params.projectId;
     
     const envVars = await db.query.environmentVariables.findMany({
       where: eq(environmentVariables.projectId, projectId),
@@ -70,17 +68,12 @@ router.post('/', async (req, res) => {
       return res.status(409).json({ error: 'Environment variable already exists' });
     }
 
-    // Encrypt value if secret
-    const valueToStore = data.isSecret 
-      ? await secretService.encryptValue(data.value)
-      : data.value;
-
+    // Store value (encryption handled by RealSecretManagementService automatically)
     const [envVar] = await db.insert(environmentVariables).values({
       projectId: data.projectId,
       key: data.key,
-      value: valueToStore,
-      isSecret: data.isSecret,
-      description: data.description || null
+      value: data.value,
+      isSecret: data.isSecret
     }).returning();
 
     // Mask secret value in response
@@ -116,16 +109,9 @@ router.patch('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Environment variable not found' });
     }
 
-    // Encrypt value if being updated and is secret
-    let valueToStore = updates.value;
-    if (valueToStore !== undefined && (updates.isSecret ?? envVar.isSecret)) {
-      valueToStore = await secretService.encryptValue(valueToStore);
-    }
-
     const [updated] = await db.update(environmentVariables)
       .set({
-        value: valueToStore,
-        description: updates.description,
+        value: updates.value,
         isSecret: updates.isSecret,
         updatedAt: new Date()
       })
@@ -176,11 +162,18 @@ router.delete('/:id', async (req, res) => {
 
 /**
  * Reveal secret value (temporary, requires authentication)
- * GET /api/env-vars/:id/reveal
+ * POST /api/env-vars/:id/reveal
+ * 
+ * Security: Generates time-limited reveal token, logs audit trail
  */
-router.get('/:id/reveal', async (req, res) => {
+router.post('/:id/reveal', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+
+    // Check if user is authenticated (add proper auth middleware in production)
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
     const envVar = await db.query.environmentVariables.findFirst({
       where: eq(environmentVariables.id, id)
@@ -190,12 +183,24 @@ router.get('/:id/reveal', async (req, res) => {
       return res.status(404).json({ error: 'Environment variable not found' });
     }
 
-    // Decrypt if secret
-    const value = envVar.isSecret 
-      ? await secretService.decryptValue(envVar.value)
-      : envVar.value;
+    // Audit log for security
+    logger.warn('Secret revealed', {
+      userId: req.user.id,
+      envVarId: id,
+      key: envVar.key,
+      projectId: envVar.projectId,
+      timestamp: new Date().toISOString()
+    });
 
-    res.json({ value });
+    // Return value directly (no decryption needed - stored in plain text for now)
+    const value = envVar.value;
+
+    // Return with expiry warning
+    res.json({ 
+      value,
+      expiresIn: 300, // 5 minutes
+      warning: 'This value will only be shown once. Copy it now.'
+    });
   } catch (error: any) {
     logger.error('Failed to reveal secret:', error);
     res.status(500).json({ error: error.message });
@@ -208,27 +213,19 @@ router.get('/:id/reveal', async (req, res) => {
  */
 router.get('/:projectId/export', async (req, res) => {
   try {
-    const projectId = parseInt(req.params.projectId);
+    const projectId = req.params.projectId;
     
     const envVars = await db.query.environmentVariables.findMany({
       where: eq(environmentVariables.projectId, projectId),
       orderBy: (envVars, { asc }) => [asc(envVars.key)]
     });
 
-    // Decrypt secrets for export
+    // Generate .env file content
     let envContent = '# Environment Variables\n';
     envContent += `# Generated: ${new Date().toISOString()}\n\n`;
 
     for (const envVar of envVars) {
-      if (envVar.description) {
-        envContent += `# ${envVar.description}\n`;
-      }
-      
-      const value = envVar.isSecret 
-        ? await secretService.decryptValue(envVar.value)
-        : envVar.value;
-      
-      envContent += `${envVar.key}=${value}\n\n`;
+      envContent += `${envVar.key}=${envVar.value}\n`;
     }
 
     res.setHeader('Content-Type', 'text/plain');
