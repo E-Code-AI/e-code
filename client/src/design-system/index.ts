@@ -103,6 +103,32 @@ export type {
   CommandPaletteProps,
 } from './components/CommandPalette';
 
+// Search & Replace
+export { SearchReplace } from './components/SearchReplace';
+export type {
+  SearchReplaceProps,
+  SearchOptions,
+  SearchResult,
+} from './components/SearchReplace';
+
+// File Upload
+export { FileUpload } from './components/FileUpload';
+export type {
+  FileUploadProps,
+  UploadingFile,
+} from './components/FileUpload';
+
+// Keyboard Shortcuts
+export {
+  KeyboardShortcuts,
+  useKeyboardShortcuts,
+  defaultIDEShortcuts,
+} from './components/KeyboardShortcuts';
+export type {
+  Shortcut,
+  KeyboardShortcutsProps,
+} from './components/KeyboardShortcuts';
+
 // Status Bar
 export {
   StatusBar,
@@ -310,6 +336,10 @@ export default {
   StatusBar,
   Settings,
   SplitView,
+  SearchReplace,
+  FileUpload,
+  KeyboardShortcuts,
+  useKeyboardShortcuts,
   applyDesignTokens,
   isIOS,
   isAndroid,
