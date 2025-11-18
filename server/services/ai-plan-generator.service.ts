@@ -260,6 +260,7 @@ Remember:
           // Gemini rejects long system instructions, use condensed version
           const isGemini = modelId.includes('gemini');
           const systemPrompt = isGemini ? systemPromptCondensed : systemPromptFull;
+          logger.info(`[generatePlan] Using ${isGemini ? 'CONDENSED' : 'FULL'} prompt for ${modelId} (${systemPrompt.length} chars)`);
           
           // Stream response using AI Provider Manager
           // ✅ CRITICAL FIX: Increased max_tokens to prevent JSON truncation
@@ -368,8 +369,19 @@ Remember:
           break;
 
         } catch (error: any) {
-          logger.warn(`[generatePlan] ✗ Provider ${modelId} failed:`, error.message);
-          logger.warn(`[generatePlan] 📄 Response preview:`, fullResponse.substring(0, 300));
+          logger.error(`[generatePlan] ❌ Provider ${modelId} FAILED:`, {
+            message: error.message,
+            name: error.name,
+            statusCode: error.statusCode || error.status || error.code,
+            errorType: error.constructor?.name,
+            responsePreview: fullResponse.substring(0, 300)
+          });
+          
+          // Log full error for Gemini to debug systemInstruction issues
+          if (modelId.includes('gemini')) {
+            logger.error(`[generatePlan] 🔍 Gemini detailed error:`, error);
+          }
+          
           lastError = error;
           
           // Continue to next provider in fallback chain
