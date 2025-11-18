@@ -1,0 +1,73 @@
+~/workspace$ git merge origin/claude/mobile-ide-design-013dabHxvuaU5xy1Nv7LQxzh --no-ff -m "feat: Merge Apple-quality mobile design system"
+Can't find lefthook in PATH
+Merge made by the 'ort' strategy.
+ DESIGN_SYSTEM_IMPROVEMENTS.md                          | 413 ++++++++++++++++++++++++++++
+ client/src/design-system/README.md                     | 560 ++++++++++++++++++++++++++++++++++++++
+ client/src/design-system/components/CommandPalette.tsx | 581 +++++++++++++++++++++++++++++++++++++++
+ client/src/design-system/components/ContextMenu.tsx    | 460 +++++++++++++++++++++++++++++++
+ client/src/design-system/components/EmptyState.tsx     | 370 +++++++++++++++++++++++++
+ client/src/design-system/components/Onboarding.tsx     | 526 ++++++++++++++++++++++++++++++++++++
+ client/src/design-system/components/Settings.tsx       | 594 ++++++++++++++++++++++++++++++++++++++++
+ client/src/design-system/components/Skeleton.tsx       | 586 ++++++++++++++++++++++++++++++++++++++++
+ client/src/design-system/components/SplitView.tsx      | 462 +++++++++++++++++++++++++++++++
+ client/src/design-system/components/StatusBar.tsx      | 429 +++++++++++++++++++++++++++++
+ client/src/design-system/components/Toast.tsx          | 384 ++++++++++++++++++++++++++
+ client/src/design-system/hooks/useDesignSystem.ts      | 148 ++++++++++
+ client/src/design-system/hooks/useGestures.ts          | 459 +++++++++++++++++++++++++++++++
+ client/src/design-system/index.ts                      | 323 ++++++++++++++++++++++
+ client/src/design-system/tokens.ts                     | 601 +++++++++++++++++++++++++++++++++++++++++
+ 15 files changed, 6896 insertions(+)
+ create mode 100644 DESIGN_SYSTEM_IMPROVEMENTS.md
+ create mode 100644 client/src/design-system/README.md
+ create mode 100644 client/src/design-system/components/CommandPalette.tsx
+ create mode 100644 client/src/design-system/components/ContextMenu.tsx
+ create mode 100644 client/src/design-system/components/EmptyState.tsx
+ create mode 100644 client/src/design-system/components/Onboarding.tsx
+ create mode 100644 client/src/design-system/components/Settings.tsx
+ create mode 100644 client/src/design-system/components/Skeleton.tsx
+ create mode 100644 client/src/design-system/components/SplitView.tsx
+ create mode 100644 client/src/design-system/components/StatusBar.tsx
+ create mode 100644 client/src/design-system/components/Toast.tsx
+ create mode 100644 client/src/design-system/hooks/useDesignSystem.ts
+ create mode 100644 client/src/design-system/hooks/useGestures.ts
+ create mode 100644 client/src/design-system/index.ts
+ create mode 100644 client/src/design-system/tokens.ts
+~/workspace$ git branch -d claude/platform-audit-review-01MXCfFpy2w8JzRXUgopCGUb
+Deleted branch claude/platform-audit-review-01MXCfFpy2w8JzRXUgopCGUb (was ccf92d7b).
+~/workspace$ git push origin --delete claude/complete-design-elements-01Fwv6os6wLVysqsJUKU5SQN
+git push origin --delete claude/mobile-ide-design-013dabHxvuaU5xy1Nv7LQxzh
+git push origin --delete claude/platform-audit-review-01MXCfFpy2w8JzRXUgopCGUb
+remote: 
+remote: GitHub found 3 vulnerabilities on E-Code-AI/e-code's default branch (1 high, 2 moderate). To find out more, visit:
+remote:      https://github.com/E-Code-AI/e-code/security/dependabot
+remote: 
+To https://github.com/E-Code-AI/e-code.git
+ - [deleted]           claude/complete-design-elements-01Fwv6os6wLVysqsJUKU5SQN
+remote: 
+remote: GitHub found 3 vulnerabilities on E-Code-AI/e-code's default branch (1 high, 2 moderate). To find out more, visit:
+remote:      https://github.com/E-Code-AI/e-code/security/dependabot
+remote: 
+To https://github.com/E-Code-AI/e-code.git
+ - [deleted]           claude/mobile-ide-design-013dabHxvuaU5xy1Nv7LQxzh
+remote: 
+remote: GitHub found 3 vulnerabilities on E-Code-AI/e-code's default branch (1 high, 2 moderate). To find out more, visit:
+remote:      https://github.com/E-Code-AI/e-code/security/dependabot
+remote: 
+To https://github.com/E-Code-AI/e-code.git
+ - [deleted]           claude/platform-audit-review-01MXCfFpy2w8JzRXUgopCGUb
+~/workspace$ 
+~/workspace$ git push origin main
+Enumerating objects: 51, done.
+Counting objects: 100% (51/51), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (41/41), done.
+Writing objects: 100% (41/41), 59.25 KiB | 9.87 MiB/s, done.
+Total 41 (delta 18), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (18/18), completed with 10 local objects.
+remote: 
+remote: GitHub found 3 vulnerabilities on E-Code-AI/e-code's default branch (1 high, 2 moderate). To find out more, visit:
+remote:      https://github.com/E-Code-AI/e-code/security/dependabot
+remote: 
+To https://github.com/E-Code-AI/e-code.git
+   2faa2144..66e5aec1  main -> main
+~/workspace$
