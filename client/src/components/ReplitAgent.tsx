@@ -54,6 +54,7 @@ interface ReplitAgentProps {
   selectedCode?: string;
   className?: string;
   initialPrompt?: string | null;
+  websocket?: WebSocket | null; // NEW: Accept external WebSocket from Editor.tsx
   onBuildComplete?: () => void; // Callback when build execution completes (Task 12)
 }
 
@@ -732,10 +733,12 @@ const QUICK_ACTIONS = [
   { id: 'generate', label: 'Generate', icon: Code }
 ];
 
-export function ReplitAgent({ projectId, selectedFile, selectedCode, className, initialPrompt, onBuildComplete }: ReplitAgentProps) {
+export function ReplitAgent({ projectId, selectedFile, selectedCode, className, initialPrompt, websocket, onBuildComplete }: ReplitAgentProps) {
   // NEW: Load persisted session for this project
   const { session, isLoading: sessionLoading, saveSession, updateMessages, updateSettings } = useAgentSession(projectId);
   const hasHydrated = useRef(false);
+  const hasAutoStarted = useRef(false); // Track if we've auto-started from initialPrompt
+  const externalWebSocket = useRef<WebSocket | null>(websocket || null); // Store external WebSocket
   
   // State with default values (hydrated from session in useEffect below)
   const [messages, setMessages] = useState<Message[]>([
@@ -894,9 +897,10 @@ What would you like me to build for you today?`,
   // Handle initial prompt if provided (NEW: Auto-start BUILD flow instead of chat)
   useEffect(() => {
     // Wait for session to finish loading before auto-starting build
-    if (!sessionLoading && initialPrompt && messages.length === 1) {
+    if (!sessionLoading && initialPrompt && messages.length === 1 && !hasAutoStarted.current) {
       // Only auto-start if we haven't already hydrated a stored conversation
       if (!session?.messages?.length) {
+        hasAutoStarted.current = true;
         setTimeout(async () => {
           // 🚀 AUTO-START BUILD FLOW (like Replit)
           // Generate plan instead of sending chat message
@@ -906,6 +910,113 @@ What would you like me to build for you today?`,
       }
     }
   }, [sessionLoading, initialPrompt, projectId, messages.length, session?.messages]);
+
+  // NEW: Handle external WebSocket from workspace bootstrap (Task 5, 6, 7)
+  useEffect(() => {
+    if (websocket && websocket.readyState === WebSocket.OPEN) {
+      console.log('[ReplitAgent] External WebSocket provided and connected');
+      externalWebSocket.current = websocket;
+
+      // Listen for agent messages from workspace bootstrap
+      const handleWebSocketMessage = (event: MessageEvent) => {
+        try {
+          const message = JSON.parse(event.data);
+          console.log('[ReplitAgent] WebSocket message received:', message);
+
+          // Handle different message types from autonomous agent
+          switch (message.type) {
+            case 'plan_started':
+              addProgressLog('info', `📋 Plan started: ${message.totalTasks} tasks to execute`);
+              setIsBuilding(true);
+              setBuildProgress(0);
+              break;
+
+            case 'task_started':
+              addProgressLog('info', `⚙️ Task ${message.taskIndex + 1}: ${message.task.description || message.task.type}`);
+              setCurrentTask(message.task.description || message.task.type);
+              break;
+
+            case 'task_completed':
+              const progress = ((message.taskIndex + 1) / (message.totalTasks || 1)) * 100;
+              setBuildProgress(progress);
+              addProgressLog('success', `✅ Task ${message.taskIndex + 1} completed`);
+              break;
+
+            case 'file_created':
+              addProgressLog('success', `📄 Created file: ${message.filePath}`);
+              break;
+
+            case 'command_output':
+              addProgressLog('info', `🖥️ ${message.stream}: ${message.data.trim()}`);
+              break;
+
+            case 'plan_completed':
+              setIsBuilding(false);
+              setBuildProgress(100);
+              addProgressLog('success', '🎉 Build completed successfully!');
+              toast({
+                title: "Build Complete",
+                description: "Your application is ready!",
+              });
+              if (onBuildComplete) {
+                onBuildComplete();
+              }
+              break;
+
+            case 'plan_failed':
+              setIsBuilding(false);
+              addProgressLog('error', `❌ Build failed: ${message.error}`);
+              toast({
+                title: "Build Failed",
+                description: message.error,
+                variant: "destructive",
+              });
+              break;
+
+            case 'agent_message':
+              // Add agent message to chat
+              const newMessage: Message = {
+                id: `agent-${Date.now()}`,
+                role: 'assistant',
+                content: message.content,
+                timestamp: new Date(),
+                type: message.messageType || 'explanation',
+              };
+              setMessages(prev => [...prev, newMessage]);
+              break;
+
+            default:
+              console.log('[ReplitAgent] Unknown message type:', message.type);
+          }
+        } catch (error) {
+          console.error('[ReplitAgent] Error handling WebSocket message:', error);
+        }
+      };
+
+      websocket.addEventListener('message', handleWebSocketMessage);
+
+      // Cleanup listener when component unmounts or websocket changes
+      return () => {
+        websocket.removeEventListener('message', handleWebSocketMessage);
+      };
+    } else if (websocket && websocket.readyState === WebSocket.CONNECTING) {
+      console.log('[ReplitAgent] External WebSocket connecting, waiting...');
+
+      const handleOpen = () => {
+        console.log('[ReplitAgent] External WebSocket connected');
+        toast({
+          title: "Agent Connected",
+          description: "AI agent is building your project",
+        });
+      };
+
+      websocket.addEventListener('open', handleOpen);
+
+      return () => {
+        websocket.removeEventListener('open', handleOpen);
+      };
+    }
+  }, [websocket, onBuildComplete, toast]);
 
   // Load feature flags and user preferences
   useEffect(() => {
