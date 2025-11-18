@@ -3,6 +3,11 @@
 ## Overview
 E-Code is a web-based collaborative IDE with AI assistance, offering code editing, terminal access, file management, and an autonomous AI agent. Its primary purpose is to facilitate rapid prototyping and education. The platform aims for enterprise-grade scalability, multi-provider AI model selection, real-time collaboration, robust security, and the ambition to provide autonomous workspace creation from a natural language prompt to a live preview, streaming progress in real-time.
 
+## Recent Fixes (November 18, 2025)
+- **✅ FIXED: Workspace Bootstrap Model Selection** - Now respects user's preferredAiModel with validation against available providers. Falls back to first available model (Gemini 2.5 Flash) instead of hardcoding gpt-4o.
+- **✅ FIXED: Runtime "Invalid Project ID" Bug** - Runtime router now handles UUID project IDs instead of failing with parseInt(). Resolves "invalid project ID" error when clicking Start button in IDE.
+- **⚠️ PARTIAL: UUID Migration** - Database uses UUID (varchar) for project IDs but some services still expect number: preview-service.ts, terminal.ts, logs attachToProjectLogs(). These need refactoring to fully support UUIDs.
+
 ## User Preferences
 - **Communication:** Simple, everyday language
 - **Code Style:** TypeScript with strict typing
