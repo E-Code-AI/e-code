@@ -972,8 +972,21 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
 
       logger.info(`[Execute Plan] Converted ${workflowSteps.length} tasks to workflow steps`);
 
+      // Broadcast plan started (NEW: using frontend-compatible broadcast methods)
+      agentWebSocketService.broadcastPlanStarted(projectId, sessionId, plan.tasks.length);
+
       // Define scoped event handlers (captured in closure for cleanup)
+      let currentTaskIndex = 0;
+
       const handleStepStart = (event: any) => {
+        // NEW: Broadcast task started with index and task details
+        agentWebSocketService.broadcastTaskStarted(projectId, sessionId, currentTaskIndex, {
+          type: event.stepType || 'unknown',
+          description: event.stepName || 'Processing...',
+          id: event.stepId
+        });
+
+        // Legacy: Also send step update for backward compatibility
         agentWebSocketService.sendStepUpdate(parseInt(projectId), sessionId, {
           id: event.stepId,
           type: 'in_progress',
@@ -986,6 +999,18 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       };
 
       const handleStepComplete = (event: any) => {
+        // NEW: Broadcast task completed
+        agentWebSocketService.broadcastTaskCompleted(
+          projectId,
+          sessionId,
+          currentTaskIndex,
+          plan.tasks.length,
+          { success: true, stepId: event.stepId }
+        );
+
+        currentTaskIndex++;
+
+        // Legacy: Also send step update for backward compatibility
         agentWebSocketService.sendStepUpdate(parseInt(projectId), sessionId, {
           id: event.stepId,
           type: 'complete',
@@ -998,7 +1023,15 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       };
 
       const handleStepFailed = (event: any) => {
-        agentWebSocketService.sendError(parseInt(projectId), sessionId, 
+        // NEW: Broadcast plan failed
+        agentWebSocketService.broadcastPlanFailed(
+          projectId,
+          sessionId,
+          `Step failed: ${event.stepName} - ${event.error}`
+        );
+
+        // Legacy: Also send error for backward compatibility
+        agentWebSocketService.sendError(parseInt(projectId), sessionId,
           `Step failed: ${event.stepName} - ${event.error}`
         );
       };
@@ -1023,7 +1056,10 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           progress: workflow.progress
         });
 
-        // Send completion notification
+        // NEW: Broadcast plan completed (frontend-compatible)
+        agentWebSocketService.broadcastPlanCompleted(projectId, sessionId, true);
+
+        // Legacy: Also send completion for backward compatibility
         agentWebSocketService.sendComplete(parseInt(projectId), sessionId);
 
         // Create audit entry
