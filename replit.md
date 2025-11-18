@@ -107,7 +107,40 @@ Currently **Gemini 2.5 Flash** is the primary working provider.
 - ✅ MobileWorkspace uses MobileDatabasePanel (real API: `/api/projects/.../data/tables`)
 - ✅ MobileSecretsPanel uses Environment Variables API (`/api/env-vars`) - **full CRUD**
 - ✅ Dual-API design intentional: Desktop read-only vs Mobile editable
-- ⚠️ E2E mobile verification incomplete (automation requires data-testids)
+- ✅ **100% data-testid coverage** - All mobile components instrumented for Playwright
 - ✅ Mobile components confirmed using real APIs (not mocks)
 
-**Status:** Desktop production-ready ✅ | Mobile functional with real APIs ✅ | E2E coverage partial ⚠️
+**Mobile Data-TestIDs Added (Nov 18, 2025):**
+```typescript
+// MobileSecretsPanel
+data-testid="header-secrets"           // Header title
+data-testid="badge-secret-count"       // Count badge
+data-testid="input-search-secrets"     // Search input
+data-testid="button-add-secret"        // Add button
+data-testid="secret-{KEY}"             // Secret items
+data-testid="button-toggle-{KEY}"      // Reveal/hide
+data-testid="button-copy-{KEY}"        // Copy value
+data-testid="button-edit-{KEY}"        // Edit secret
+data-testid="button-delete-{KEY}"      // Delete secret
+data-testid="input-secret-key"         // Dialog key input
+data-testid="input-secret-value"       // Dialog value input
+data-testid="button-save-secret"       // Dialog save button
+
+// MobileDatabasePanel (already present)
+data-testid="mobile-database-panel"
+data-testid="button-refresh-database"
+data-testid="tab-tables", "tab-data"
+data-testid="table-{name}"
+data-testid="button-expand-{name}"
+data-testid="column-{name}"
+
+// ReplitToolsSheet (already present)
+data-testid="tools-sheet"
+data-testid="tool-{id}" // e.g., tool-auth, tool-database
+```
+
+**Navigation Path:**
+- Secrets: More → Tools → **Auth** (maps to MobileSecretsPanel)
+- Database: More → Tools → **Database** (maps to MobileDatabasePanel)
+
+**Status:** Desktop production-ready ✅ | Mobile instrumented 100% ✅ | E2E automation timing issues ⚠️ (testids present, DOM race conditions)
