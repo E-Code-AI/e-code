@@ -25,7 +25,7 @@ import { db } from '../db';
 import { projects, agentSessions, insertProjectSchema, type User } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { agentOrchestrator } from '../services/agent-orchestrator.service';
-import { planGenerator } from '../services/agent-plan-generator.service';
+import { aiPlanGenerator } from '../services/ai-plan-generator.service'; // ✅ FIX: Use AI service with Gemini fallback
 import { agentWorkflowEngine } from '../services/agent-workflow-engine.service';
 import { agentWebSocketService } from '../services/agent-websocket-service';
 import { createLogger } from '../utils/logger';
@@ -127,11 +127,32 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     };
     
     logger.info(`[Bootstrap] Generating plan for prompt: "${prompt.substring(0, 50)}..."`);
-    const plan = await planGenerator.generatePlan(prompt, planContext);
+    
+    // ✅ FIX: Consume async generator to get plan (uses Gemini fallback chain)
+    let plan: any = null;
+    for await (const event of aiPlanGenerator.generatePlan(String(userId), String(project.id), prompt, {
+      projectType: planContext.projectType,
+      existingFiles: planContext.existingFiles,
+      technologies: planContext.technologies,
+      constraints: planContext.constraints
+    })) {
+      if (event.type === 'plan') {
+        plan = event.data;
+        break; // Got the plan, exit loop
+      } else if (event.type === 'error') {
+        throw new Error(event.data.message || 'Plan generation failed');
+      }
+      // Ignore 'chunk' events (streaming output)
+    }
+    
+    if (!plan) {
+      throw new Error('No plan received from AI service');
+    }
+    
     logger.info(`[Bootstrap] Plan generated: ${plan.id}`, { 
       planId: plan.id, 
-      tasks: plan.tasks.length,
-      estimatedMinutes: plan.totalEstimatedMinutes 
+      tasks: plan.tasks?.length || 0,
+      estimatedTime: plan.estimatedTime
     });
     
     // 5. Execute autonomous plan (if autoStart enabled)
