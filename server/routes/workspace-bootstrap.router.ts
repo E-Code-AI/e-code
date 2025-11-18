@@ -22,12 +22,13 @@ import { z } from 'zod';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
 import { db } from '../db';
-import { projects, agentSessions, insertProjectSchema, type User } from '@shared/schema';
+import { projects, agentSessions, users, insertProjectSchema, type User } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { agentOrchestrator } from '../services/agent-orchestrator.service';
 import { aiPlanGenerator } from '../services/ai-plan-generator.service'; // ✅ FIX: Use AI service with Gemini fallback
 import { agentWorkflowEngine } from '../services/agent-workflow-engine.service';
 import { agentWebSocketService } from '../services/agent-websocket-service';
+import { aiProviderManager } from '../ai/ai-provider-manager';
 import { createLogger } from '../utils/logger';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
@@ -106,16 +107,36 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     
     logger.info(`[Bootstrap] Project created: ${project.id}`, { projectId: project.id, slug });
     
-    // 3. Create agent session
+    // 3. Get user's preferred AI model or use first available model
+    const [userData] = await db.select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    
+    let modelId = userData?.preferredAiModel || null;
+    
+    // If user has no preference or preferred model is unavailable, use first available model
+    if (!modelId) {
+      const availableModels = aiProviderManager.getAvailableModels();
+      if (availableModels.length === 0) {
+        throw new Error('No AI models available. Please configure at least one provider (OpenAI, Anthropic, Gemini, xAI, or Moonshot).');
+      }
+      modelId = availableModels[0].id;
+      logger.info(`[Bootstrap] No preferred model, using first available: ${modelId}`);
+    } else {
+      logger.info(`[Bootstrap] Using user's preferred model: ${modelId}`);
+    }
+    
+    // 4. Create agent session
     const session = await agentOrchestrator.createSession(
       String(userId),
       String(project.id),
-      'gpt-4o' // Use GPT-4o by default (gpt-5 not in production yet)
+      modelId
     );
     
-    logger.info(`[Bootstrap] Agent session created: ${session.id}`, { sessionId: session.id });
+    logger.info(`[Bootstrap] Agent session created: ${session.id}`, { sessionId: session.id, modelId });
     
-    // 4. Generate execution plan (SYNCHRONOUSLY - critical for autonomous execution)
+    // 5. Generate execution plan (SYNCHRONOUSLY - critical for autonomous execution)
     // Store the prompt in session context for plan generation
     const planContext = {
       projectType: 'web-app',
@@ -155,7 +176,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
       estimatedTime: plan.estimatedTime
     });
     
-    // 5. Execute autonomous plan (if autoStart enabled)
+    // 6. Execute autonomous plan (if autoStart enabled)
     // This is where the magic happens - the AI agent autonomously builds the project
     if (options.autoStart) {
       logger.info(`[Bootstrap] Starting autonomous plan execution for ${plan.tasks.length} tasks`);
@@ -175,12 +196,12 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
       logger.info(`[Bootstrap] Autonomous execution started in background`);
     }
     
-    // 6. Setup WebSocket streaming
+    // 7. Setup WebSocket streaming
     // WebSocket service is already initialized on server startup
     // Client will connect to: ws://host/ws/agent?projectId=X&sessionId=Y
     const workspaceUrl = `${getWebSocketBaseUrl(req)}/ws/agent?projectId=${project.id}&sessionId=${session.id}`;
     
-    // 7. Generate bootstrap token (JWT)
+    // 8. Generate bootstrap token (JWT)
     const bootstrapToken = generateBootstrapToken({
       projectId: String(project.id),
       conversationId: session.id, // Use session ID as conversation ID initially
@@ -189,17 +210,18 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
       timestamp: Date.now()
     });
     
-    // 8. Send initial WebSocket message (connection ready notification)
+    // 9. Send initial WebSocket message (connection ready notification)
     // Note: Client hasn't connected yet, but we prepare the channel
     
     const elapsed = Date.now() - startTime;
     logger.info(`[Bootstrap] Workspace ready in ${elapsed}ms`, {
       projectId: project.id,
       sessionId: session.id,
+      modelId,
       elapsed
     });
     
-    // 9. Return bootstrap response
+    // 10. Return bootstrap response
     res.json({
       success: true,
       projectId: project.id,
