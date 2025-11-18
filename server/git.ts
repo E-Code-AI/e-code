@@ -52,14 +52,14 @@ async function initializeWorkspace(projectId: string, workspaceDir: string): Pro
     const files = await storage.getFilesByProject(projectId);
     
     // Process folders first to create directory structure
-    const folders = files.filter(file => file.isFolder);
+    const folders = files.filter(file => file.isDirectory);
     for (const folder of folders) {
       const folderPath = path.join(workspaceDir, folder.name);
       await fs.promises.mkdir(folderPath, { recursive: true });
     }
     
     // Process files
-    const nonFolders = files.filter(file => !file.isFolder);
+    const nonFolders = files.filter(file => !file.isDirectory);
     for (const file of nonFolders) {
       const filePath = path.join(workspaceDir, file.name);
       await fs.promises.writeFile(filePath, file.content || '', 'utf8');
@@ -424,7 +424,7 @@ export async function push(
     const workspaceDir = await getProjectWorkspace(projectId);
     
     // Prepare env with credentials if provided
-    let env: NodeJS.ProcessEnv = {};
+    let env: Record<string, string> = {};
     if (credentials) {
       env.GIT_ASKPASS = 'echo';
       env.GIT_USERNAME = credentials.username;
@@ -477,7 +477,7 @@ export async function pull(
     const workspaceDir = await getProjectWorkspace(projectId);
     
     // Prepare env with credentials if provided
-    let env: NodeJS.ProcessEnv = {};
+    let env: Record<string, string> = {};
     if (credentials) {
       env.GIT_ASKPASS = 'echo';
       env.GIT_USERNAME = credentials.username;
@@ -591,9 +591,9 @@ async function syncWorkspaceToProject(projectId: string, workspaceDir: string): 
           await storage.createFile({
             name: relativePath,
             content: '',
-            isFolder: true,
+            isDirectory: true,
             projectId,
-            parentId: null
+            path: relativePath
           });
           
           // Recursively process subdirectories
@@ -614,9 +614,9 @@ async function syncWorkspaceToProject(projectId: string, workspaceDir: string): 
       await storage.createFile({
         name: filePath,
         content,
-        isFolder: false,
+        isDirectory: false,
         projectId,
-        parentId: null
+        path: filePath
       });
     }
   } catch (error) {
