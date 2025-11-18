@@ -7,8 +7,19 @@ import { MobileFileExplorer } from '@/components/mobile/MobileFileExplorer';
 import { LazyMobileCodeEditor } from '@/components/mobile/LazyMobileCodeEditor';
 import { MobileTerminal } from '@/components/mobile/MobileTerminal';
 import { MobilePreviewPanel } from '@/components/mobile/MobilePreviewPanel';
+import { MobileDatabasePanel } from '@/components/mobile/MobileDatabasePanel';
+import { MobileSecretsPanel } from '@/components/mobile/MobileSecretsPanel';
+import { MobilePackagesPanel } from '@/components/mobile/MobilePackagesPanel';
+import { MobileGitPanel } from '@/components/mobile/MobileGitPanel';
+import { MobileDebugPanel } from '@/components/mobile/MobileDebugPanel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { 
   ArrowLeft, 
   RefreshCw, 
@@ -43,18 +54,20 @@ export default function MobileWorkspace() {
   const [agentInput, setAgentInput] = useState('');
   const [isFilesOpen, setIsFilesOpen] = useState(false);
   const [selectedFileId, setSelectedFileId] = useState<number | undefined>();
+  const [activeTool, setActiveTool] = useState<string | null>(null);
 
   const handleTabChange = (tabId: MobileTab) => {
     if (tabId === 'files') {
       setIsFilesOpen(true);
     } else {
       setActiveTab(tabId);
+      setActiveTool(null);
     }
   };
 
   const handleToolSelect = (toolId: string) => {
-    // Tool selection handled by parent component or global state
-    // Mobile workspace can implement custom tool handling as needed
+    setActiveTool(toolId);
+    setToolsSheetOpen(false);
   };
   
   const handleFileSelect = (file: any) => {
@@ -276,6 +289,27 @@ export default function MobileWorkspace() {
         onOpenChange={setToolsSheetOpen}
         onToolSelect={handleToolSelect}
       />
+
+      {/* Tool Panels */}
+      <Sheet open={!!activeTool} onOpenChange={(open) => !open && setActiveTool(null)}>
+        <SheetContent side="bottom" className="h-[90vh] p-0">
+          <SheetHeader className="px-4 py-3 border-b">
+            <SheetTitle className="capitalize">{activeTool}</SheetTitle>
+          </SheetHeader>
+          {activeTool === 'database' && <MobileDatabasePanel projectId={projectId} />}
+          {activeTool === 'auth' && <MobileSecretsPanel projectId={projectId} />}
+          {activeTool === 'integrations' && <MobilePackagesPanel projectId={projectId} />}
+          {activeTool === 'git' && <MobileGitPanel projectId={projectId} />}
+          {activeTool === 'developer' && <MobileDebugPanel projectId={projectId} />}
+          {!['database', 'auth', 'integrations', 'git', 'developer'].includes(activeTool || '') && (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-muted-foreground text-sm">
+                {activeTool} panel - Coming soon
+              </p>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
