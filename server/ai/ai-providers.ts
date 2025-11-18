@@ -454,19 +454,25 @@ export class GeminiProvider implements AIProvider {
   }
   
   async generateChat(messages: any[], options?: any): Promise<string> {
-    const model = this.client.getGenerativeModel({ 
-      model: options?.model || 'gemini-2.5-flash'
-    });
-    
-    const systemMessage = messages.find(m => m.role === 'system')?.content || '';
+    const systemMessage = messages.find(m => m.role === 'system')?.content;
     const chatMessages = messages.filter(m => m.role !== 'system');
+    
+    // ✅ GEMINI FIX: Pass systemInstruction in getGenerativeModel() config
+    // Gemini API accepts systemInstruction as a plain string (SDK handles conversion)
+    // Only pass systemInstruction if we have a non-empty message
+    const modelConfig: any = {
+      model: options?.model || 'gemini-2.5-flash'
+    };
+    if (systemMessage && systemMessage.trim()) {
+      modelConfig.systemInstruction = systemMessage;
+    }
+    const model = this.client.getGenerativeModel(modelConfig);
     
     const chat = model.startChat({
       history: chatMessages.slice(0, -1).map(m => ({
         role: m.role === 'user' ? 'user' : 'model',
         parts: [{ text: m.content }]
-      })),
-      systemInstruction: systemMessage,
+      }))
     });
     
     const lastMessage = chatMessages[chatMessages.length - 1]?.content || '';
@@ -476,19 +482,25 @@ export class GeminiProvider implements AIProvider {
   }
   
   async *generateChatStream(messages: any[], options?: any): AsyncGenerator<string> {
-    const model = this.client.getGenerativeModel({ 
-      model: options?.model || 'gemini-2.5-flash'
-    });
-    
-    const systemMessage = messages.find(m => m.role === 'system')?.content || '';
+    const systemMessage = messages.find(m => m.role === 'system')?.content;
     const chatMessages = messages.filter(m => m.role !== 'system');
+    
+    // ✅ GEMINI FIX: Pass systemInstruction in getGenerativeModel() config
+    // Gemini API accepts systemInstruction as a plain string (SDK handles conversion)
+    // Only pass systemInstruction if we have a non-empty message
+    const modelConfig: any = {
+      model: options?.model || 'gemini-2.5-flash'
+    };
+    if (systemMessage && systemMessage.trim()) {
+      modelConfig.systemInstruction = systemMessage;
+    }
+    const model = this.client.getGenerativeModel(modelConfig);
     
     const chat = model.startChat({
       history: chatMessages.slice(0, -1).map(m => ({
         role: m.role === 'user' ? 'user' : 'model',
         parts: [{ text: m.content }]
-      })),
-      systemInstruction: systemMessage,
+      }))
     });
     
     const lastMessage = chatMessages[chatMessages.length - 1]?.content || '';
