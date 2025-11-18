@@ -14,7 +14,7 @@ import { promisify } from 'util';
 
 const logger = createLogger('health-checks');
 const fsPromises = {
-  statfs: promisify(fs.statfs || ((path, cb) => cb(new Error('statfs not available'), null))),
+  statfs: promisify(fs.statfs || ((path: string, cb: (err: Error | null, stats: any) => void) => cb(new Error('statfs not available'), null))),
 };
 
 interface HealthCheck {
@@ -83,7 +83,7 @@ async function checkRedis(): Promise<HealthCheck> {
       return {
         status: 'healthy',
         message: 'Redis connection healthy',
-        details: await redisCache.getStats(),
+        details: { testKey, testValue, retrieved },
         responseTime: Date.now() - startTime,
       };
     } else {
@@ -152,7 +152,12 @@ async function checkDisk(): Promise<HealthCheck> {
     
     // This is a simplified check - in production, you might want to use a library
     // like 'diskusage' for more accurate results
-    const getDiskUsage = async () => {
+    const getDiskUsage = async (): Promise<{
+      total: string;
+      free: string;
+      used: string;
+      percentage: string;
+    }> => {
       return new Promise((resolve) => {
         // Fallback to basic info if statfs is not available
         const totalSpace = 100 * 1024 * 1024 * 1024; // 100GB assumed
@@ -450,7 +455,16 @@ nodejs_process_info{version="${process.version}",pid="${process.pid}"} 1
       }
 
       // Get metrics from OpenTelemetry Prometheus exporter
-      const { resourceMetrics } = await exporter['_metricReader'].collect();
+      // Note: Accessing internal _metricReader - this is safe for our use case
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const metricReader = (exporter as any)._metricReader;
+      if (!metricReader) {
+        res.set('Content-Type', 'text/plain; version=0.0.4');
+        return res.send('# No metrics available\n');
+      }
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { resourceMetrics } = await metricReader.collect();
 
       // Convert to Prometheus format
       let prometheusOutput = '';
