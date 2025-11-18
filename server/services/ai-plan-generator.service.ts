@@ -173,7 +173,11 @@ export class AIPlanGeneratorService {
       const files = await this.storage.getProjectFiles(projectId);
       const existingFilesList = files.map(f => f.path).join('\n');
 
-      const systemPrompt = `You are an expert software architect and project planner. Your task is to create a detailed, executable plan for building software projects.
+      // Condensed system prompt for providers with size limits (like Gemini)
+      const systemPromptCondensed = `You are a software architect. Create a JSON execution plan for building software projects. Respond ONLY with valid JSON using this format: {"summary":"","technologies":[],"estimatedTime":"","tasks":[{"id":"","title":"","description":"","type":"file_create|file_edit|command|install_package|config","estimatedTime":"","dependencies":[],"priority":"high|medium|low","files":[{"path":"","content":"","language":""}],"packages":[],"commands":[]}],"riskAssessment":{"level":"low|medium|high","factors":[]}}. Requirements: Complete production-ready code, no placeholders, include all config files, specify exact package versions, order by dependencies.`;
+      
+      // Full system prompt for providers without size limits
+      const systemPromptFull = `You are an expert software architect and project planner. Your task is to create a detailed, executable plan for building software projects.
 
 Given a user's goal, create a comprehensive execution plan with the following:
 
@@ -251,6 +255,11 @@ Remember:
         
         try {
           logger.info(`[generatePlan] Trying provider: ${modelId}`);
+          
+          // ✅ GEMINI FIX: Use condensed prompt for Gemini (system_instruction size limit)
+          // Gemini rejects long system instructions, use condensed version
+          const isGemini = modelId.includes('gemini');
+          const systemPrompt = isGemini ? systemPromptCondensed : systemPromptFull;
           
           // Stream response using AI Provider Manager
           // ✅ CRITICAL FIX: Increased max_tokens to prevent JSON truncation
