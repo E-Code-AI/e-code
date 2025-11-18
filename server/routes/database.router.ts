@@ -2,16 +2,20 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { db, pool } from '../db';
 import * as schema from '@shared/schema';
-import { ensureAuthenticated } from '../middleware/auth';
+import { ensureAdmin } from '../middleware/admin-auth';
 import { eq, sql } from 'drizzle-orm';
 
 const databaseRouter = Router();
 
 /**
- * Database API Router
- * Fortune 500 production-ready endpoints for database inspection and queries
+ * Admin Database API Router
  * 
- * Security: Read-only operations, authenticated users, project-scoped
+ * ⚠️ ADMIN-ONLY ACCESS - System-wide database inspector
+ * 
+ * Security: Admin-only, read-only operations, full database access
+ * Use Case: Database administration, system monitoring, troubleshooting
+ * 
+ * Note: Regular users should use /api/projects/:projectId/data for project-scoped data
  */
 
 interface TableInfo {
@@ -36,12 +40,12 @@ interface QueryResult {
 }
 
 /**
- * GET /api/database/:projectId/tables
+ * GET /api/admin/database/tables
  * Liste toutes les tables disponibles avec leurs métadonnées
+ * ⚠️ ADMIN-ONLY
  */
-databaseRouter.get('/tables/:projectId', ensureAuthenticated, async (req: Request, res: Response) => {
+databaseRouter.get('/tables', ensureAdmin, async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
     const startTime = Date.now();
 
     // Query PostgreSQL system tables to get all user tables
@@ -109,12 +113,13 @@ databaseRouter.get('/tables/:projectId', ensureAuthenticated, async (req: Reques
 });
 
 /**
- * GET /api/database/:projectId/table/:tableName/schema
+ * GET /api/admin/database/table/:tableName/schema
  * Retourne le schéma détaillé d'une table
+ * ⚠️ ADMIN-ONLY
  */
-databaseRouter.get('/table/:projectId/:tableName/schema', ensureAuthenticated, async (req: Request, res: Response) => {
+databaseRouter.get('/table/:tableName/schema', ensureAdmin, async (req: Request, res: Response) => {
   try {
-    const { projectId, tableName } = req.params;
+    const { tableName } = req.params;
 
     // Security: Validate table name to prevent SQL injection
     if (!/^[a-z_][a-z0-9_]*$/i.test(tableName)) {
@@ -173,7 +178,7 @@ databaseRouter.get('/table/:projectId/:tableName/schema', ensureAuthenticated, a
 });
 
 /**
- * POST /api/database/:projectId/query
+ * POST /api/admin/database/query
  * ⚠️ DISABLED FOR SECURITY
  * 
  * Reason: User-supplied SQL queries cannot be safely executed without proper
@@ -189,7 +194,7 @@ databaseRouter.get('/table/:projectId/:tableName/schema', ensureAuthenticated, a
  * - Read-only database connection
  * - Project-scoped access control
  */
-databaseRouter.post('/query/:projectId', ensureAuthenticated, async (req: Request, res: Response) => {
+databaseRouter.post('/query', ensureAdmin, async (req: Request, res: Response) => {
   return res.status(501).json({ 
     error: 'Custom SQL queries disabled for security',
     message: 'Use GET /api/database/table/:tableName/data for safe data access',
@@ -198,12 +203,13 @@ databaseRouter.post('/query/:projectId', ensureAuthenticated, async (req: Reques
 });
 
 /**
- * GET /api/database/:projectId/table/:tableName/data
+ * GET /api/admin/database/table/:tableName/data
  * Retourne les données d'une table avec pagination
+ * ⚠️ ADMIN-ONLY
  */
-databaseRouter.get('/table/:projectId/:tableName/data', ensureAuthenticated, async (req: Request, res: Response) => {
+databaseRouter.get('/table/:tableName/data', ensureAdmin, async (req: Request, res: Response) => {
   try {
-    const { projectId, tableName } = req.params;
+    const { tableName } = req.params;
     const page = parseInt(req.query.page as string) || 1;
     const limit = Math.min(parseInt(req.query.limit as string) || 100, 1000);
     const offset = (page - 1) * limit;
@@ -252,12 +258,12 @@ databaseRouter.get('/table/:projectId/:tableName/data', ensureAuthenticated, asy
 });
 
 /**
- * GET /api/database/:projectId/stats
+ * GET /api/admin/database/stats
  * Retourne les statistiques globales de la base de données
+ * ⚠️ ADMIN-ONLY
  */
-databaseRouter.get('/stats/:projectId', ensureAuthenticated, async (req: Request, res: Response) => {
+databaseRouter.get('/stats', ensureAdmin, async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
     const startTime = Date.now();
 
     // Get database size
