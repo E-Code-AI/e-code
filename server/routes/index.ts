@@ -39,6 +39,7 @@ import { setupAuthBypass } from "../dev-auth-bypass";
 import { csrfTokenEndpoint } from "../middleware/csrf";
 import { GitRouter } from "./git.router";
 import debugRouter from "./debug.router";
+import databaseRouter from "./database.router";
 import agentAutonomousRouter from "./agent-autonomous.router";
 import agentTestingRouter from "./agent-testing.router";
 import agentWorkflowRouter from "./agent-workflow.router";
@@ -225,6 +226,9 @@ export class MainRouter {
     
     // Debug routes
     app.use('/api/debug', debugRouter);
+    
+    // Database routes (Priorité 1 - Core IDE)
+    app.use('/api/database', databaseRouter);
     
     // Global Search routes (Priorité 1 - Core IDE)
     app.use('/api/search', globalSearchRouter);

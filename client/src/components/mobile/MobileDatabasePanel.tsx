@@ -1,9 +1,12 @@
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import {
   Database,
   Play,
@@ -13,24 +16,37 @@ import {
   CheckCircle,
   AlertCircle,
   Copy,
-  Settings
+  Settings,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+
+interface TableColumn {
+  name: string;
+  type: string;
+  nullable: boolean;
+  defaultValue?: string;
+}
 
 interface TableInfo {
   name: string;
   rowCount: number;
-  columns: Array<{
+  columns: TableColumn[];
+}
+
+interface TablesResponse {
+  tables: TableInfo[];
+  executionTime: number;
+  timestamp: string;
+}
+
+interface QueryResult {
+  rows: any[];
+  rowCount: number;
+  executionTime: number;
+  fields: Array<{
     name: string;
-    type: string;
-    nullable: boolean;
+    dataTypeID: number;
   }>;
 }
 
@@ -42,38 +58,48 @@ interface MobileDatabasePanelProps {
 export function MobileDatabasePanel({ projectId, className }: MobileDatabasePanelProps) {
   const [selectedTable, setSelectedTable] = useState<string>('users');
   const [query, setQuery] = useState('SELECT * FROM users LIMIT 100;');
-  const [isConnected, setIsConnected] = useState(true);
   const [activeTab, setActiveTab] = useState<'tables' | 'query' | 'results'>('tables');
   const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set(['users']));
+  const [queryResults, setQueryResults] = useState<QueryResult | null>(null);
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const tables: TableInfo[] = [
-    {
-      name: 'users',
-      rowCount: 1234,
-      columns: [
-        { name: 'id', type: 'INTEGER', nullable: false },
-        { name: 'email', type: 'VARCHAR(255)', nullable: false },
-        { name: 'name', type: 'VARCHAR(100)', nullable: true },
-        { name: 'created_at', type: 'TIMESTAMP', nullable: false }
-      ]
+  // Fetch tables list
+  const { data: tablesData, isLoading: tablesLoading, error: tablesError, refetch: refetchTables } = useQuery<TablesResponse>({
+    queryKey: ['/api/database', projectId, 'tables'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/database/tables/${projectId}`);
+      return response;
     },
-    {
-      name: 'posts',
-      rowCount: 5678,
-      columns: [
-        { name: 'id', type: 'INTEGER', nullable: false },
-        { name: 'user_id', type: 'INTEGER', nullable: false },
-        { name: 'title', type: 'VARCHAR(255)', nullable: false },
-        { name: 'content', type: 'TEXT', nullable: true }
-      ]
-    }
-  ];
+    staleTime: 30000 // Cache for 30 seconds
+  });
 
-  const queryResults = [
-    { id: 1, email: 'user1@example.com', name: 'John Doe', created_at: '2024-01-15' },
-    { id: 2, email: 'user2@example.com', name: 'Jane Smith', created_at: '2024-01-16' },
-    { id: 3, email: 'user3@example.com', name: 'Bob Johnson', created_at: '2024-01-17' }
-  ];
+  // Execute query mutation
+  const queryMutation = useMutation({
+    mutationFn: async (sqlQuery: string) => {
+      const response = await apiRequest('POST', `/api/database/query/${projectId}`, {
+        query: sqlQuery,
+        limit: 100
+      });
+      return response as QueryResult;
+    },
+    onSuccess: (data) => {
+      setQueryResults(data);
+      setActiveTab('results');
+      toast({
+        title: "Query executed successfully",
+        description: `${data.rowCount} rows returned in ${data.executionTime}ms`
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Query execution failed",
+        description: error.message || 'Failed to execute query',
+        variant: "destructive"
+      });
+    }
+  });
 
   const toggleTableExpansion = (tableName: string) => {
     const newExpanded = new Set(expandedTables);
@@ -86,8 +112,27 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
   };
 
   const runQuery = () => {
-    setActiveTab('results');
+    if (!query.trim()) {
+      toast({
+        title: "Query required",
+        description: "Please enter a SQL query",
+        variant: "destructive"
+      });
+      return;
+    }
+    queryMutation.mutate(query);
   };
+
+  const handleRefresh = () => {
+    refetchTables();
+    toast({
+      title: "Refreshing",
+      description: "Fetching latest database tables..."
+    });
+  };
+
+  const tables = tablesData?.tables || [];
+  const isConnected = !tablesError;
 
   return (
     <div className={cn("h-full flex flex-col bg-background", className)}>
@@ -143,7 +188,35 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
       <ScrollArea className="flex-1">
         {activeTab === 'tables' && (
           <div className="p-4 space-y-2">
-            {tables.map((table) => (
+            {tablesLoading && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <span className="ml-2 text-sm text-muted-foreground">Loading tables...</span>
+              </div>
+            )}
+
+            {tablesError && (
+              <div className="flex flex-col items-center justify-center py-8 gap-2">
+                <AlertCircle className="h-8 w-8 text-destructive" />
+                <p className="text-sm text-destructive text-center">
+                  Failed to load tables: {(tablesError as any)?.message || 'Unknown error'}
+                </p>
+                <Button size="sm" onClick={handleRefresh} variant="outline">
+                  Try Again
+                </Button>
+              </div>
+            )}
+
+            {!tablesLoading && !tablesError && tables.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-8 gap-2">
+                <Database className="h-8 w-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground text-center">
+                  No tables found in database
+                </p>
+              </div>
+            )}
+
+            {!tablesLoading && !tablesError && tables.map((table) => (
               <div key={table.name} className="border border-border rounded-lg overflow-hidden">
                 <button
                   onClick={() => toggleTableExpansion(table.name)}
@@ -165,7 +238,12 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
                   <div className="p-3 bg-muted/30 space-y-1 text-xs">
                     {table.columns.map((col) => (
                       <div key={col.name} className="flex items-center justify-between">
-                        <span className="font-mono">{col.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono">{col.name}</span>
+                          {!col.nullable && (
+                            <Badge variant="outline" className="text-[10px] px-1 py-0">NOT NULL</Badge>
+                          )}
+                        </div>
                         <span className="text-muted-foreground">{col.type}</span>
                       </div>
                     ))}
@@ -183,47 +261,91 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
               <Textarea
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="SELECT * FROM users;"
+                placeholder="SELECT * FROM users LIMIT 100;"
                 className="font-mono text-sm min-h-[120px]"
                 data-testid="input-sql-query"
+                disabled={queryMutation.isPending}
               />
             </div>
             <Button 
               onClick={runQuery} 
               className="w-full"
               data-testid="button-run-query"
+              disabled={queryMutation.isPending || !query.trim()}
             >
-              <Play className="h-4 w-4 mr-2" />
-              Run Query
+              {queryMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Executing...
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4 mr-2" />
+                  Run Query
+                </>
+              )}
             </Button>
+            
+            {queryMutation.isPending && (
+              <p className="text-xs text-muted-foreground text-center">
+                Please wait while query executes...
+              </p>
+            )}
           </div>
         )}
 
         {activeTab === 'results' && (
           <div className="p-4">
-            <div className="border border-border rounded-lg overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted">
-                  <tr>
-                    {Object.keys(queryResults[0] || {}).map((key) => (
-                      <th key={key} className="text-left px-3 py-2 font-medium">{key}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {queryResults.map((row, idx) => (
-                    <tr key={idx} className="border-t border-border">
-                      {Object.values(row).map((val, i) => (
-                        <td key={i} className="px-3 py-2 text-muted-foreground">{val}</td>
+            {!queryResults && (
+              <div className="flex flex-col items-center justify-center py-8 gap-2">
+                <Database className="h-8 w-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground text-center">
+                  No query results yet. Run a query to see results.
+                </p>
+              </div>
+            )}
+
+            {queryResults && queryResults.rows.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-8 gap-2">
+                <CheckCircle className="h-8 w-8 text-green-500" />
+                <p className="text-sm text-muted-foreground text-center">
+                  Query executed successfully but returned no rows
+                </p>
+              </div>
+            )}
+
+            {queryResults && queryResults.rows.length > 0 && (
+              <>
+                <div className="border border-border rounded-lg overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted">
+                      <tr>
+                        {Object.keys(queryResults.rows[0] || {}).map((key) => (
+                          <th key={key} className="text-left px-3 py-2 font-medium whitespace-nowrap">{key}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {queryResults.rows.map((row, idx) => (
+                        <tr key={idx} className="border-t border-border">
+                          {Object.values(row).map((val, i) => (
+                            <td key={i} className="px-3 py-2 text-muted-foreground whitespace-nowrap">
+                              {val === null ? <span className="text-muted-foreground italic">null</span> : String(val)}
+                            </td>
+                          ))}
+                        </tr>
                       ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-3 text-xs text-muted-foreground text-center">
-              {queryResults.length} rows returned
-            </div>
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-3 text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between">
+                    <span>{queryResults.rowCount} rows returned</span>
+                    <span>{queryResults.executionTime}ms</span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
       </ScrollArea>
@@ -243,9 +365,15 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
           variant="outline" 
           size="sm"
           className="flex-1"
+          onClick={handleRefresh}
+          disabled={tablesLoading}
           data-testid="button-refresh-tables"
         >
-          <RefreshCw className="h-4 w-4 mr-2" />
+          {tablesLoading ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4 mr-2" />
+          )}
           Refresh
         </Button>
       </div>
