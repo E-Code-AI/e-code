@@ -55,6 +55,7 @@ import { aiUsageTracker } from "../middleware/ai-usage-tracker";
 import globalSearchRouter from "./global-search.router";
 import logsViewerRouter from "./logs-viewer.router";
 import envVarsRouter from "./env-vars.router";
+import projectDataRouter from "./project-data.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -227,8 +228,11 @@ export class MainRouter {
     // Debug routes
     app.use('/api/debug', debugRouter);
     
-    // Database routes (Priorité 1 - Core IDE)
-    app.use('/api/database', databaseRouter);
+    // Database routes (Admin-Only - System-wide DB inspector)
+    app.use('/api/admin/database', databaseRouter);
+    
+    // Project Data routes (Project-scoped data for regular users)
+    app.use('/api/projects', projectDataRouter);
     
     // Global Search routes (Priorité 1 - Core IDE)
     app.use('/api/search', globalSearchRouter);
