@@ -477,12 +477,12 @@ export class AIProviderManager {
   }
   
   /**
-   * OpenAI streaming implementation
+   * OpenAI streaming implementation with robust error handling
+   * ✅ ROBUST PARSING: Handle stream errors and JSON parsing failures
    */
   private async *streamOpenAI(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.openaiClient) throw new Error('OpenAI client not initialized');
     
-    // ✅ FIX: OpenAI expects system message in messages array, not as separate parameter
     let openaiMessages = [...messages];
     if (options?.system && !messages.find(m => m.role === 'system')) {
       openaiMessages = [
@@ -491,7 +491,6 @@ export class AIProviderManager {
       ];
     }
     
-    // ✅ GPT-5.1 UPGRADE: Support reasoning_effort for adaptive reasoning (Nov 17, 2025)
     const completionParams: any = {
       model: modelId,
       messages: openaiMessages,
@@ -504,26 +503,39 @@ export class AIProviderManager {
       completionParams.reasoning_effort = options.reasoning_effort;
     }
 
-    // OpenAI SDK returns Stream<ChatCompletionChunk> when stream: true
-    // TypeScript can't infer the return type, so we need to cast it
-    const stream = await this.openaiClient.chat.completions.create(completionParams) as unknown as AsyncIterable<any>;
-    
-    for await (const chunk of stream) {
-      const content = chunk.choices?.[0]?.delta?.content;
-      if (content) {
-        yield content;
+    try {
+      const stream = await this.openaiClient.chat.completions.create(completionParams) as unknown as AsyncIterable<any>;
+      
+      let buffer = '';
+      for await (const chunk of stream) {
+        try {
+          const content = chunk.choices?.[0]?.delta?.content;
+          if (content) {
+            buffer += content;
+            yield content;
+          }
+        } catch (chunkError: any) {
+          console.warn(`[OpenAI] Chunk parsing error: ${chunkError.message}`);
+          continue;
+        }
       }
+      
+      if (!buffer) {
+        throw new Error('OpenAI stream produced no content');
+      }
+    } catch (error: any) {
+      console.error(`[OpenAI] Stream error: ${error.message}`);
+      throw error;
     }
   }
   
   /**
-   * Moonshot AI (Kimi-K2) streaming implementation
-   * Uses OpenAI-compatible API at https://api.moonshot.ai/v1
+   * Moonshot AI (Kimi-K2) streaming implementation with robust error handling
+   * ✅ ROBUST PARSING: Handle stream errors and JSON parsing failures
    */
   private async *streamMoonshot(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.moonshotClient) throw new Error('Moonshot AI client not initialized');
     
-    // Moonshot uses OpenAI-compatible API format
     let moonshotMessages = [...messages];
     if (options?.system && !messages.find(m => m.role === 'system')) {
       moonshotMessages = [
@@ -532,26 +544,42 @@ export class AIProviderManager {
       ];
     }
     
-    const stream = await this.moonshotClient.chat.completions.create({
-      model: modelId,
-      messages: moonshotMessages,
-      stream: true,
-      max_tokens: options?.max_tokens || 4000,
-      temperature: options?.temperature || 0.7,
-    }) as unknown as AsyncIterable<any>;
-    
-    for await (const chunk of stream) {
-      const content = chunk.choices?.[0]?.delta?.content;
-      if (content) {
-        yield content;
+    try {
+      const stream = await this.moonshotClient.chat.completions.create({
+        model: modelId,
+        messages: moonshotMessages,
+        stream: true,
+        max_tokens: options?.max_tokens || 4000,
+        temperature: options?.temperature || 0.7,
+      }) as unknown as AsyncIterable<any>;
+      
+      let buffer = '';
+      for await (const chunk of stream) {
+        try {
+          const content = chunk.choices?.[0]?.delta?.content;
+          if (content) {
+            buffer += content;
+            yield content;
+          }
+        } catch (chunkError: any) {
+          console.warn(`[Moonshot] Chunk parsing error: ${chunkError.message}`);
+          continue;
+        }
       }
+      
+      if (!buffer) {
+        throw new Error('Moonshot stream produced no content');
+      }
+    } catch (error: any) {
+      console.error(`[Moonshot] Stream error: ${error.message}`);
+      throw error;
     }
   }
   
   /**
-   * Gemini streaming implementation
+   * Gemini streaming implementation with robust error handling
    * ✅ NEW APPROACH: Add system message as first chat message instead of systemInstruction
-   * Gemini SDK has issues with systemInstruction format - safer to include in history
+   * ✅ ROBUST PARSING: Handle stream errors, JSON parsing, and fallback mechanisms
    */
   private async *streamGemini(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.geminiClient) throw new Error('Gemini client not initialized');
@@ -560,7 +588,13 @@ export class AIProviderManager {
     const chatMessages = messages.filter(m => m.role !== 'system');
     
     // Create model WITHOUT systemInstruction to avoid SDK issues
-    const model = this.geminiClient.getGenerativeModel({ model: modelId });
+    const model = this.geminiClient.getGenerativeModel({ 
+      model: modelId,
+      generationConfig: {
+        temperature: options?.temperature || 0.7,
+        maxOutputTokens: options?.max_tokens || 8192,
+      }
+    });
     
     // Build history: prepend system message as model response if present
     const history = chatMessages.slice(0, -1).map(m => ({
@@ -574,20 +608,43 @@ export class AIProviderManager {
         role: 'model' as const,
         parts: [{ text: `System context: ${systemMessage}` }]
       });
-      // Add user acknowledgment to maintain conversation flow
       history.unshift({
         role: 'user' as const,
-        parts: [{ text: 'Please follow the system instructions provided.' }]
+        parts: [{ text: 'Understood. I will follow the system instructions.' }]
       });
     }
     
     const chat = model.startChat({ history });
-    
     const lastMessage = chatMessages[chatMessages.length - 1]?.content || '';
-    const result = await chat.sendMessageStream(lastMessage);
     
-    for await (const chunk of result.stream) {
-      yield chunk.text();
+    try {
+      const result = await chat.sendMessageStream(lastMessage);
+      
+      // ✅ ROBUST PARSING: Accumulate chunks and handle errors gracefully
+      let buffer = '';
+      for await (const chunk of result.stream) {
+        try {
+          const text = chunk.text();
+          if (text) {
+            buffer += text;
+            yield text;
+          }
+        } catch (chunkError: any) {
+          console.warn(`[Gemini] Chunk parsing error: ${chunkError.message}`);
+          // Continue to next chunk instead of failing completely
+          continue;
+        }
+      }
+      
+      // If we got nothing, try to get the full response as fallback
+      if (!buffer) {
+        const response = await result.response;
+        const fullText = response.text();
+        if (fullText) yield fullText;
+      }
+    } catch (error: any) {
+      console.error(`[Gemini] Stream error: ${error.message}`);
+      throw new Error(`Gemini streaming failed: ${error.message}`);
     }
   }
   
