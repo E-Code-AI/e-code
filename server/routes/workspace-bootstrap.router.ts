@@ -115,16 +115,25 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     
     let modelId = userData?.preferredAiModel || null;
     
-    // If user has no preference or preferred model is unavailable, use first available model
-    if (!modelId) {
-      const availableModels = aiProviderManager.getAvailableModels();
-      if (availableModels.length === 0) {
-        throw new Error('No AI models available. Please configure at least one provider (OpenAI, Anthropic, Gemini, xAI, or Moonshot).');
+    // Get available models first for validation
+    const availableModels = aiProviderManager.getAvailableModels();
+    if (availableModels.length === 0) {
+      throw new Error('No AI models available. Please configure at least one provider (OpenAI, Anthropic, Gemini, xAI, or Moonshot).');
+    }
+    
+    // If user has a preference, validate it's actually available
+    if (modelId) {
+      const isAvailable = availableModels.some(model => model.id === modelId);
+      if (!isAvailable) {
+        logger.warn(`[Bootstrap] Preferred model ${modelId} not available, falling back to first available`);
+        modelId = availableModels[0].id;
+      } else {
+        logger.info(`[Bootstrap] Using user's preferred model: ${modelId}`);
       }
+    } else {
+      // No preference, use first available
       modelId = availableModels[0].id;
       logger.info(`[Bootstrap] No preferred model, using first available: ${modelId}`);
-    } else {
-      logger.info(`[Bootstrap] Using user's preferred model: ${modelId}`);
     }
     
     // 4. Create agent session

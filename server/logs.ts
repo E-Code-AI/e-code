@@ -23,7 +23,7 @@ export function setupLogsWebsocket(server: Server) {
     
     // Attach to project logs
     const detachLogs = attachToProjectLogs(
-      parseInt(projectId),
+      projectId,
       // On stdout
       (data) => {
         if (ws.readyState === WebSocket.OPEN) {
@@ -53,7 +53,7 @@ export function setupLogsWebsocket(server: Server) {
     // Send initial connection message
     ws.send(JSON.stringify({
       type: 'connected',
-      projectId: parseInt(projectId)
+      projectId: projectId
     }));
   });
   

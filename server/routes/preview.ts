@@ -9,9 +9,9 @@ const ensureProjectAccess = async (req: any, res: any, next: any) => {
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-  const projectId = parseInt(req.params.projectId || req.params.id);
+  const projectId = req.params.projectId || req.params.id;
   
-  if (isNaN(projectId)) {
+  if (!projectId || (typeof projectId === 'string' && projectId.trim().length === 0)) {
     return res.status(400).json({ message: "Invalid project ID" });
   }
   
@@ -49,9 +49,9 @@ router.get('/url', ensureAuthenticated, async (req, res) => {
       return res.status(400).json({ error: 'Project ID is required' });
     }
     
-    const projectId = parseInt(projectIdParam as string);
+    const projectId = projectIdParam as string;
     
-    if (isNaN(projectId)) {
+    if (!projectId || (typeof projectId === 'string' && projectId.trim().length === 0)) {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
     
@@ -139,7 +139,7 @@ router.get('/url', ensureAuthenticated, async (req, res) => {
 // Note: This route handles /api/preview/projects/:id/preview/:filepath
 router.get('/projects/:id/preview/:filepath(*)', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
-    const projectId = parseInt(req.params.id);
+    const projectId = req.params.id;
     const filepath = req.params.filepath || 'index.html';
     
     // Get all project files
@@ -221,7 +221,7 @@ router.get('/projects/:id/preview/:filepath(*)', ensureAuthenticated, ensureProj
 // Note: This route handles /api/preview/projects/:id/preview-url
 router.get('/projects/:id/preview-url', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
-    const projectId = parseInt(req.params.id);
+    const projectId = req.params.id;
     const { port } = req.query;
     const project = await storage.getProject(projectId);
     
@@ -278,7 +278,7 @@ router.get('/projects/:id/preview-url', ensureAuthenticated, ensureProjectAccess
 // Note: This route handles /api/preview/projects/:id/preview/start
 router.post('/projects/:id/preview/start', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
-    const projectId = parseInt(req.params.id);
+    const projectId = req.params.id;
     const { runId } = req.body;
     
     const { previewService } = await import('../preview/preview-service');
@@ -305,7 +305,7 @@ router.post('/projects/:id/preview/start', ensureAuthenticated, ensureProjectAcc
 // Note: This route handles /api/preview/projects/:id/preview/stop
 router.post('/projects/:id/preview/stop', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
-    const projectId = parseInt(req.params.id);
+    const projectId = req.params.id;
     
     const { previewService } = await import('../preview/preview-service');
     await previewService.stopPreview(projectId);
@@ -321,7 +321,7 @@ router.post('/projects/:id/preview/stop', ensureAuthenticated, ensureProjectAcce
 // Note: This route handles /api/preview/projects/:id/preview/switch-port
 router.post('/projects/:id/preview/switch-port', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
-    const projectId = parseInt(req.params.id);
+    const projectId = req.params.id;
     const { port } = req.body;
     
     if (!port || typeof port !== 'number') {
@@ -350,7 +350,7 @@ router.post('/projects/:id/preview/switch-port', ensureAuthenticated, ensureProj
 // Note: This route handles /api/preview/projects/:id/preview/status
 router.get('/projects/:id/preview/status', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
-    const projectId = parseInt(req.params.id);
+    const projectId = req.params.id;
     
     const { previewService } = await import('../preview/preview-service');
     const preview = previewService.getPreview(projectId);
