@@ -131,6 +131,98 @@ class AgentWebSocketService {
       data: { complete: true }
     });
   }
+
+  // NEW: Generic broadcast method for autonomous agent events
+  broadcast(message: any, projectId: string | number) {
+    const sessionId = message.sessionId || 'default';
+    const connectionKey = `${projectId}-${sessionId}`;
+    const ws = this.connections.get(connectionKey);
+
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(message));
+      logger.debug(`Broadcasted ${message.type} to ${connectionKey}`);
+    } else {
+      logger.warn(`Cannot broadcast ${message.type}: No active connection for ${connectionKey}`);
+    }
+  }
+
+  // NEW: Convenience methods for plan execution events (matches frontend expectations)
+  broadcastPlanStarted(projectId: string | number, sessionId: string, totalTasks: number) {
+    this.broadcast({
+      type: 'plan_started',
+      projectId,
+      sessionId,
+      totalTasks
+    }, projectId);
+  }
+
+  broadcastTaskStarted(projectId: string | number, sessionId: string, taskIndex: number, task: any) {
+    this.broadcast({
+      type: 'task_started',
+      projectId,
+      sessionId,
+      taskIndex,
+      task
+    }, projectId);
+  }
+
+  broadcastTaskCompleted(projectId: string | number, sessionId: string, taskIndex: number, totalTasks: number, result: any) {
+    this.broadcast({
+      type: 'task_completed',
+      projectId,
+      sessionId,
+      taskIndex,
+      totalTasks,
+      result
+    }, projectId);
+  }
+
+  broadcastFileCreated(projectId: string | number, sessionId: string, filePath: string) {
+    this.broadcast({
+      type: 'file_created',
+      projectId,
+      sessionId,
+      filePath
+    }, projectId);
+  }
+
+  broadcastCommandOutput(projectId: string | number, sessionId: string, stream: 'stdout' | 'stderr', data: string) {
+    this.broadcast({
+      type: 'command_output',
+      projectId,
+      sessionId,
+      stream,
+      data
+    }, projectId);
+  }
+
+  broadcastPlanCompleted(projectId: string | number, sessionId: string, success: boolean) {
+    this.broadcast({
+      type: 'plan_completed',
+      projectId,
+      sessionId,
+      success
+    }, projectId);
+  }
+
+  broadcastPlanFailed(projectId: string | number, sessionId: string, error: string) {
+    this.broadcast({
+      type: 'plan_failed',
+      projectId,
+      sessionId,
+      error
+    }, projectId);
+  }
+
+  broadcastAgentMessage(projectId: string | number, sessionId: string, content: string, messageType?: string) {
+    this.broadcast({
+      type: 'agent_message',
+      projectId,
+      sessionId,
+      content,
+      messageType
+    }, projectId);
+  }
 }
 
 export const agentWebSocketService = new AgentWebSocketService();
