@@ -241,9 +241,9 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Secrets</h3>
+            <h3 className="font-semibold" data-testid="header-secrets">Secrets</h3>
           </div>
-          <Badge variant="secondary" className="text-xs">
+          <Badge variant="secondary" className="text-xs" data-testid="badge-secret-count">
             {secrets.length} secrets
           </Badge>
         </div>
