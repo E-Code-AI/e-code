@@ -60,15 +60,7 @@ export const AI_MODELS: AIModel[] = [
     supportsStreaming: true,
     costPer1kTokens: 0.0005
   },
-  {
-    id: 'gpt-4.1',
-    name: 'GPT-4.1',
-    provider: 'openai',
-    description: 'Non-reasoning multimodal LLM - 1M context window',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0025
-  },
+  // ✅ GPT-4.1 REMOVED (Nov 17, 2025): Deprecated in favor of GPT-5.1
   {
     id: 'gpt-4o',
     name: 'GPT-4o',

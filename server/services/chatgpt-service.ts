@@ -133,7 +133,8 @@ Current model: GPT-5.1 (Nov 2025 flagship with adaptive reasoning)`
         model: session.model,
         messages: apiMessages as any,
         max_tokens: 4096,
-        temperature: 0.7
+        temperature: 0.7,
+        reasoning_effort: 'none' as any  // ✅ GPT-5.1: Fast non-reasoning mode for chat
       });
 
       // Add assistant response
@@ -373,7 +374,8 @@ Return the code and a brief explanation of the implementation.`;
         messages: apiMessages as any,
         max_tokens: 4096,
         temperature: 0.7,
-        stream: true
+        stream: true,
+        reasoning_effort: 'none' as any  // ✅ GPT-5.1: Fast non-reasoning mode for streaming chat
       });
 
       let fullResponse = '';

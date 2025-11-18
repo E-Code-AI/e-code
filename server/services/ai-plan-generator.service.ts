@@ -52,9 +52,9 @@ export class AIPlanGeneratorService {
   private readonly PROVIDER_FALLBACK_CHAIN = [
     'gpt-5.1',             // OpenAI GPT-5.1 with adaptive reasoning (Nov 2025 flagship)
     'kimi-k2',             // Moonshot AI Kimi-K2 (10-100× cheaper, optimized for agentic tasks)
-    'gemini-1.5-flash',    // Google Gemini 1.5 Flash (fast + reliable, REAL model ID)
-    'grok-2-1212',         // xAI Grok (alternative)
-    'claude-3-5-haiku-20241022'  // Anthropic Claude (fallback if others fail)
+    'gemini-2.5-flash',    // ✅ FIXED: Google Gemini 2.5 Flash (was gemini-1.5-flash, now correct model ID)
+    'grok-4-fast',         // xAI Grok 4 Fast (correct model ID, was grok-2-1212)
+    'claude-haiku-4-5-20251015'  // Anthropic Claude Haiku 4.5 (updated to latest model)
   ];
 
   constructor(storage: IStorage) {
