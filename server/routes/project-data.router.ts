@@ -61,6 +61,12 @@ const ensureProjectAccess = async (req: Request, res: Response, next: NextFuncti
       return next();
     }
 
+    // Check if user is admin - admins have access to all projects
+    const user = await storage.getUser(userId);
+    if (user && user.isAdmin) {
+      return next();
+    }
+
     // Public projects: Deny access to sensitive data (secrets, deployments)
     // Users can only view public project data through Files API
     if (project.visibility === 'public') {
@@ -184,8 +190,10 @@ projectDataRouter.get('/:projectId/data/:tableName/schema', ensureAuthenticated,
         columns: [
           { name: 'id', type: 'integer', nullable: false, isPrimaryKey: true },
           { name: 'key', type: 'varchar', nullable: false },
+          { name: 'description', type: 'text', nullable: true },
           { name: 'value', type: 'text', nullable: false },
-          { name: 'createdAt', type: 'timestamp', nullable: false }
+          { name: 'createdAt', type: 'timestamp', nullable: false },
+          { name: 'updatedAt', type: 'timestamp', nullable: false }
         ]
       }
     };
@@ -251,8 +259,10 @@ projectDataRouter.get('/:projectId/data/:tableName/data', ensureAuthenticated, e
         rows = secrets.slice(offset, offset + limit).map((secret: any) => ({
           id: secret.id,
           key: secret.key,
+          description: secret.description,
           value: '***ENCRYPTED***', // Never expose secret values
-          createdAt: secret.createdAt
+          createdAt: secret.created_at || secret.createdAt,
+          updatedAt: secret.updated_at || secret.updatedAt
         }));
         break;
       }

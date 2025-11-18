@@ -38,9 +38,9 @@ import { ReplitMonacoEditor } from '@/components/editor/ReplitMonacoEditor';
 import { ResponsiveWebPreview } from '@/components/editor/ResponsiveWebPreview';
 import { ReplitConsole } from '@/components/editor/ReplitConsole';
 import { ReplitGitPanel } from '@/components/editor/ReplitGitPanel';
-import { ReplitDatabasePanel } from '@/components/editor/ReplitDatabasePanel';
+import { DatabasePanel } from '@/components/ide/DatabasePanel';
 import { ReplitTerminalPanel } from '@/components/editor/ReplitTerminalPanel';
-import { ReplitSecretsPanel } from '@/components/editor/ReplitSecretsPanel';
+import { SecretsPanel } from '@/components/ide/SecretsPanel';
 import { ReplitPackagesPanel } from '@/components/editor/ReplitPackagesPanel';
 import { ReplitTestingPanel } from '@/components/editor/ReplitTestingPanel';
 import { ReplitProblemsPanel } from '@/components/editor/ReplitProblemsPanel';
@@ -372,9 +372,9 @@ export default function IDEPage() {
       case 'git':
         return <ReplitGitPanel projectId={projectId} />;
       case 'database':
-        return <ReplitDatabasePanel projectId={projectId} />;
+        return <DatabasePanel projectId={projectId} />;
       case 'secrets':
-        return <ReplitSecretsPanel projectId={projectId} />;
+        return <SecretsPanel projectId={projectId} />;
       case 'packages':
         return <ReplitPackagesPanel projectId={projectId} />;
       case 'testing':
