@@ -12,7 +12,7 @@ import {
   type SearchOptions,
   type SearchResult,
 } from '@/design-system';
-import type * as monaco from 'monaco-editor';
+import * as monaco from 'monaco-editor';
 
 interface EnhancedMobileCodeEditorProps {
   fileId?: number;
