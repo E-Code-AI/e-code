@@ -101,4 +101,13 @@ Currently **Gemini 2.5 Flash** is the primary working provider.
 **Architect Review:**
 - ✅ **PASS:** Schema aligned, API response correct, frontend can safely consume description/updatedAt
 - ✅ Security: none observed
-- ✅ Production-ready: all alignment issues resolved
+- ✅ Production-ready: all alignment issues resolved (desktop)
+
+**Mobile/Responsive Architecture:**
+- ✅ MobileWorkspace uses MobileDatabasePanel (real API: `/api/projects/.../data/tables`)
+- ✅ MobileSecretsPanel uses Environment Variables API (`/api/env-vars`) - **full CRUD**
+- ✅ Dual-API design intentional: Desktop read-only vs Mobile editable
+- ⚠️ E2E mobile verification incomplete (automation requires data-testids)
+- ✅ Mobile components confirmed using real APIs (not mocks)
+
+**Status:** Desktop production-ready ✅ | Mobile functional with real APIs ✅ | E2E coverage partial ⚠️
