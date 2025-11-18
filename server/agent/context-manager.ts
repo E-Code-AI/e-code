@@ -43,11 +43,13 @@ export interface TruncationResult {
  * These limits ensure we NEVER exceed provider limits even with worst-case input:
  * - Anthropic: 10MB (38% margin below 16MB byte limit)
  * - OpenAI: 30k tokens (77% margin below 128k - accounts for 4× underestimation)
- * - Gemini: 7k tokens (77% margin below 30k)
+ * - Gemini 2.5 Flash: 200k tokens (80% margin below 250k free tier limit, 1M actual limit)
  * - xAI/Groq: Similar worst-case margins
  * 
  * TODO: Integrate tiktoken or provider-native tokenizers for accurate counts
  * and increase limits to ~70% of actual capacity once precise counting is available.
+ * 
+ * Updated Nov 18, 2025: Gemini 2.5 Flash has 1M context window (250K/min free tier)
  */
 const PROVIDER_BUDGETS: Record<string, ContextBudget> = {
   anthropic: {
@@ -64,7 +66,7 @@ const PROVIDER_BUDGETS: Record<string, ContextBudget> = {
     historyAllocation: 0.60
   },
   gemini: {
-    maxTokens: 7_000, // Ultra-conservative for Gemini Pro (30k context)
+    maxTokens: 200_000, // ✅ FIX (Nov 18, 2025): Gemini 2.5 Flash has 1M context (250K/min free tier)
     systemAllocation: 0.30,
     contextAllocation: 0.20,
     historyAllocation: 0.50
