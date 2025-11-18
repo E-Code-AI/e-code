@@ -74,18 +74,34 @@ gh workflow run replit-deployment.yml
 
 ### 📊 Accéder aux Métriques
 
-**Port** : `9464`
-**Endpoint** : `/metrics`
+**IMPORTANT** : Configuration différente selon l'environnement
+
+#### Production (Replit Cloud Run) - Port 5000 uniquement
 
 ```bash
-# En développement local
-http://localhost:9464/metrics
-
-# Sur Replit (remplacez par votre URL)
+# Métriques JSON (custom format)
 https://votre-app.replit.app/metrics
+
+# Métriques Prometheus (format standard)
+https://votre-app.replit.app/metrics/prometheus
 ```
 
-### 📈 Métriques Disponibles
+**Note** : Replit Cloud Run n'expose que le port 5000 (externalPort 80). Le port 9464 n'est **PAS accessible** en production.
+
+#### Développement Local - Deux ports disponibles
+
+```bash
+# Option 1 : Port 5000 (même endpoints que production)
+http://localhost:5000/metrics              # JSON
+http://localhost:5000/metrics/prometheus   # Prometheus
+
+# Option 2 : Port 9464 (dev-only, OpenTelemetry direct)
+http://localhost:9464/metrics              # Prometheus
+```
+
+### 📈 Formats de Métriques
+
+#### Format JSON (endpoint `/metrics`)
 
 ```json
 {
@@ -108,8 +124,37 @@ https://votre-app.replit.app/metrics
     "loadAverage": [0.5, 0.7, 0.9],
     "freeMemory": 1234567890,
     "totalMemory": 8589934592
+  },
+  "database": {
+    "poolSize": 10,
+    "idleConnections": 5,
+    "activeConnections": 5
   }
 }
+```
+
+#### Format Prometheus (endpoint `/metrics/prometheus`)
+
+```prometheus
+# HELP nodejs_memory_usage_bytes Memory usage in bytes
+# TYPE nodejs_memory_usage_bytes gauge
+nodejs_memory_usage_bytes{type="rss"} 123456789
+nodejs_memory_usage_bytes{type="heapTotal"} 45678901
+nodejs_memory_usage_bytes{type="heapUsed"} 23456789
+nodejs_memory_usage_bytes{type="external"} 1234567
+
+# HELP nodejs_process_uptime_seconds Process uptime in seconds
+# TYPE nodejs_process_uptime_seconds gauge
+nodejs_process_uptime_seconds 3600
+
+# HELP http_requests_total Total number of HTTP requests
+# TYPE http_requests_total counter
+http_requests_total{method="GET",path="/api/projects",status_code="200"} 1524
+
+# HELP http_request_duration_ms HTTP request duration in milliseconds
+# TYPE http_request_duration_ms histogram
+http_request_duration_ms_bucket{method="GET",path="/api/projects",le="50"} 1203
+http_request_duration_ms_bucket{method="GET",path="/api/projects",le="100"} 1482
 ```
 
 ### 📊 Intégration Grafana
@@ -119,27 +164,51 @@ Pour visualiser dans Grafana :
 1. **Ajouter Data Source** :
    ```
    Type: Prometheus
-   URL: https://votre-app.replit.app:9464
+   URL: https://votre-app.replit.app/metrics/prometheus
+
+   Note: Utilisez /metrics/prometheus (port 5000), PAS le port 9464
+         Le port 9464 n'est accessible qu'en développement local
    ```
 
-2. **Dashboard recommandé** :
+2. **Configuration Headers** (si authentification requise) :
+   ```
+   Authorization: Bearer YOUR_TOKEN
+   ```
+
+3. **Dashboard recommandé** :
    - Node.js Application Dashboard (ID: 11159)
    - Express.js Monitoring (ID: 14282)
 
-3. **Requêtes PromQL utiles** :
+4. **Requêtes PromQL utiles** :
    ```promql
    # CPU Usage
    rate(process_cpu_user_seconds_total[5m])
 
    # Memory Usage
-   process_resident_memory_bytes
+   nodejs_memory_usage_bytes{type="heapUsed"}
 
    # Request Rate
    rate(http_requests_total[5m])
 
    # Error Rate
-   rate(http_errors_total[5m])
+   rate(http_errors_total[5m]) / rate(http_requests_total[5m])
+
+   # AI Token Usage
+   increase(ai_tokens_used_total[1h])
+
+   # Database Query Duration (95th percentile)
+   histogram_quantile(0.95, rate(db_query_duration_ms_bucket[5m]))
    ```
+
+### 🔍 Différences Dev vs Production
+
+| Aspect | Développement Local | Production Replit |
+|--------|---------------------|-------------------|
+| **Ports exposés** | 5000 + 9464 | 5000 uniquement |
+| **Endpoint JSON** | http://localhost:5000/metrics | https://app.replit.app/metrics |
+| **Endpoint Prometheus** | http://localhost:5000/metrics/prometheus<br>http://localhost:9464/metrics | https://app.replit.app/metrics/prometheus |
+| **OpenTelemetry** | Port 9464 actif | Port 9464 interne seulement |
+| **Grafana URL** | http://localhost:5000/metrics/prometheus | https://app.replit.app/metrics/prometheus |
 
 ---
 

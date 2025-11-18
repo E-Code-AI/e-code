@@ -32,6 +32,19 @@ const logger = createLogger('opentelemetry');
 let sdk: NodeSDK | null = null;
 
 /**
+ * Prometheus exporter instance (exported for use in routes)
+ */
+let prometheusExporter: PrometheusExporter | null = null;
+
+/**
+ * Get Prometheus exporter instance
+ * @returns PrometheusExporter instance or null if not initialized
+ */
+export function getPrometheusExporter(): PrometheusExporter | null {
+  return prometheusExporter;
+}
+
+/**
  * Initialize OpenTelemetry SDK
  */
 export function initializeOpenTelemetry(): void {
@@ -43,7 +56,15 @@ export function initializeOpenTelemetry(): void {
     }
 
     // Prometheus exporter for metrics
-    const prometheusExporter = new PrometheusExporter({
+    //
+    // IMPORTANT: Port 9464 is DEV-ONLY (local development)
+    // In production (Replit Cloud Run), only port 5000 is exposed.
+    // Use /metrics/prometheus endpoint on port 5000 for production metrics.
+    //
+    // Development:  http://localhost:9464/metrics (Prometheus format)
+    // Production:   https://your-app.replit.app/metrics/prometheus (Prometheus format)
+    //               https://your-app.replit.app/metrics (JSON format)
+    prometheusExporter = new PrometheusExporter({
       port: parseInt(process.env.PROMETHEUS_PORT || '9464'),
       endpoint: '/metrics'
     });
@@ -434,6 +455,7 @@ export default {
   shutdownOpenTelemetry,
   getTracer,
   getMeter,
+  getPrometheusExporter,
   createCustomMetrics,
   withSpan,
   recordAIMetrics,

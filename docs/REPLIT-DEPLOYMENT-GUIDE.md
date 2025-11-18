@@ -418,20 +418,43 @@ done
 
 ### 2. Prometheus Metrics
 
-E-Code exposes Prometheus metrics at `/metrics` (port 9464).
+E-Code exposes metrics in two formats:
+
+**Production (Replit Cloud Run)** - Port 5000 only:
+- `/metrics` - JSON format (custom)
+- `/metrics/prometheus` - Prometheus format (standard)
+
+**Development (Local)** - Two ports available:
+- Port 5000: `/metrics` (JSON) and `/metrics/prometheus` (Prometheus)
+- Port 9464: `/metrics` (Prometheus, dev-only)
+
+**IMPORTANT**: Replit Cloud Run only exposes port 5000 (externalPort 80).
+Port 9464 is for local development only and is NOT accessible in production.
 
 ```bash
-# Access metrics
+# Access metrics - JSON format
 curl https://e-code.replit.app/metrics
 
-# Sample metrics:
-# http_requests_total{method="GET",route="/api/projects",status="200"} 1523
-# http_request_duration_ms_bucket{le="100"} 450
-# http_request_duration_ms_bucket{le="500"} 890
-# ai_request_duration_seconds_sum{provider="anthropic",model="claude-3-5-sonnet"} 45.2
-# database_connections_active 5
-# cache_hits_total 1234
-# cache_misses_total 56
+# Access metrics - Prometheus format
+curl https://e-code.replit.app/metrics/prometheus
+
+# Sample Prometheus metrics:
+# HELP http_requests_total Total number of HTTP requests
+# TYPE http_requests_total counter
+# http_requests_total{method="GET",path="/api/projects",status_code="200"} 1523
+
+# HELP http_request_duration_ms HTTP request duration in milliseconds
+# TYPE http_request_duration_ms histogram
+# http_request_duration_ms_bucket{method="GET",path="/api/projects",le="100"} 450
+# http_request_duration_ms_bucket{method="GET",path="/api/projects",le="500"} 890
+
+# HELP ai_tokens_used_total Total number of AI tokens used
+# TYPE ai_tokens_used_total counter
+# ai_tokens_used_total{provider="anthropic",model="claude-3-5-sonnet"} 45234
+
+# HELP db_queries_total Total number of database queries
+# TYPE db_queries_total counter
+# db_queries_total{operation="SELECT",table="projects"} 1234
 ```
 
 #### Configure Grafana (Optional)
@@ -443,7 +466,9 @@ datasources:
   - name: E-Code Metrics
     type: prometheus
     access: proxy
-    url: https://e-code.replit.app:9464
+    url: https://e-code.replit.app/metrics/prometheus
+    # IMPORTANT: Use /metrics/prometheus endpoint on port 5000
+    # Port 9464 is NOT exposed in Replit Cloud Run production
     isDefault: true
 ```
 

@@ -20,16 +20,28 @@ Votre plateforme E-Code est maintenant **100% Fortune 500 Production-Ready** !
 
 ### 📈 Prometheus (Métriques)
 
-**Port** : `9464`
-**Endpoint** : `/metrics`
+**Production (Replit Cloud Run)** - Port 5000 uniquement :
 
 ```bash
-# Local
-http://localhost:9464/metrics
-
-# Replit
+# Métriques JSON (format personnalisé)
 https://votre-app.replit.app/metrics
+
+# Métriques Prometheus (format standard)
+https://votre-app.replit.app/metrics/prometheus
 ```
+
+**Développement Local** - Deux options :
+
+```bash
+# Port 5000 (identique à production)
+http://localhost:5000/metrics
+http://localhost:5000/metrics/prometheus
+
+# Port 9464 (dev-only, OpenTelemetry direct)
+http://localhost:9464/metrics
+```
+
+**IMPORTANT** : Port 9464 est **dev-only**. Replit Cloud Run n'expose que le port 5000.
 
 **Visualiser avec** :
 - Grafana Dashboard (Node.js Application - ID: 11159)
@@ -386,8 +398,17 @@ npm install
 ### Les métriques ne s'affichent pas
 
 ```bash
+# Vérifier endpoint JSON
+curl http://localhost:5000/metrics
+
+# Vérifier endpoint Prometheus
+curl http://localhost:5000/metrics/prometheus
+
+# Vérifier les logs
+grep "prometheus\|metrics" logs/application.log
+
+# Note: Port 9464 est dev-only (local uniquement)
 curl http://localhost:9464/metrics
-grep "prometheus" logs/application.log
 ```
 
 ### Plus d'aide ?

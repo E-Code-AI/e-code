@@ -7,6 +7,7 @@ import { Express, Request, Response } from 'express';
 import { createLogger } from '../utils/logger';
 import { dbPool } from '../db/index';
 import { RedisCache } from '../services/redis-cache';
+import { getPrometheusExporter } from '../observability/opentelemetry';
 import os from 'os';
 import fs from 'fs';
 import { promisify } from 'util';
@@ -374,11 +375,13 @@ export function setupHealthRoutes(app: Express) {
     });
   });
 
-  // Metrics endpoint - for monitoring systems
+  // Metrics endpoint - JSON format (custom)
+  // Production: https://your-app.replit.app/metrics
+  // Development: http://localhost:5000/metrics
   app.get('/metrics', async (req: Request, res: Response) => {
     const memUsage = process.memoryUsage();
     const cpuUsage = process.cpuUsage();
-    
+
     const metrics = {
       process: {
         uptime: process.uptime(),
@@ -406,9 +409,107 @@ export function setupHealthRoutes(app: Express) {
       database: dbPool.getMetrics(),
       timestamp: new Date(),
     };
-    
+
     res.json(metrics);
   });
-  
+
+  // Prometheus metrics endpoint - Prometheus format
+  // Production: https://your-app.replit.app/metrics/prometheus
+  // Development: http://localhost:5000/metrics/prometheus (also available on :9464/metrics)
+  //
+  // IMPORTANT: This endpoint exposes the same OpenTelemetry metrics as port 9464,
+  // but on port 5000 which is the only port exposed in Replit Cloud Run production.
+  app.get('/metrics/prometheus', async (req: Request, res: Response) => {
+    try {
+      const exporter = getPrometheusExporter();
+
+      if (!exporter) {
+        // OpenTelemetry not enabled, return basic metrics in Prometheus format
+        const memUsage = process.memoryUsage();
+        const uptime = process.uptime();
+
+        const prometheusMetrics = `
+# HELP nodejs_memory_usage_bytes Memory usage in bytes
+# TYPE nodejs_memory_usage_bytes gauge
+nodejs_memory_usage_bytes{type="rss"} ${memUsage.rss}
+nodejs_memory_usage_bytes{type="heapTotal"} ${memUsage.heapTotal}
+nodejs_memory_usage_bytes{type="heapUsed"} ${memUsage.heapUsed}
+nodejs_memory_usage_bytes{type="external"} ${memUsage.external}
+
+# HELP nodejs_process_uptime_seconds Process uptime in seconds
+# TYPE nodejs_process_uptime_seconds gauge
+nodejs_process_uptime_seconds ${uptime}
+
+# HELP nodejs_process_info Process information
+# TYPE nodejs_process_info gauge
+nodejs_process_info{version="${process.version}",pid="${process.pid}"} 1
+`.trim();
+
+        res.set('Content-Type', 'text/plain; version=0.0.4');
+        return res.send(prometheusMetrics);
+      }
+
+      // Get metrics from OpenTelemetry Prometheus exporter
+      const { resourceMetrics } = await exporter['_metricReader'].collect();
+
+      // Convert to Prometheus format
+      let prometheusOutput = '';
+
+      if (resourceMetrics && resourceMetrics.scopeMetrics) {
+        for (const scopeMetric of resourceMetrics.scopeMetrics) {
+          for (const metric of scopeMetric.metrics) {
+            const metricName = metric.descriptor.name;
+            const metricType = metric.descriptor.type;
+            const metricDescription = metric.descriptor.description || '';
+
+            // Add HELP and TYPE comments
+            prometheusOutput += `# HELP ${metricName} ${metricDescription}\n`;
+            prometheusOutput += `# TYPE ${metricName} ${metricType}\n`;
+
+            // Add metric values
+            for (const dataPoint of metric.dataPoints) {
+              const labels = dataPoint.attributes
+                ? Object.entries(dataPoint.attributes)
+                    .map(([k, v]) => `${k}="${v}"`)
+                    .join(',')
+                : '';
+
+              const value = dataPoint.value;
+              prometheusOutput += `${metricName}${labels ? `{${labels}}` : ''} ${value}\n`;
+            }
+
+            prometheusOutput += '\n';
+          }
+        }
+      }
+
+      res.set('Content-Type', 'text/plain; version=0.0.4');
+      res.send(prometheusOutput);
+    } catch (error: any) {
+      logger.error('Error exporting Prometheus metrics:', error);
+
+      // Fallback to basic metrics on error
+      const memUsage = process.memoryUsage();
+      const uptime = process.uptime();
+
+      const prometheusMetrics = `
+# HELP nodejs_memory_usage_bytes Memory usage in bytes
+# TYPE nodejs_memory_usage_bytes gauge
+nodejs_memory_usage_bytes{type="rss"} ${memUsage.rss}
+nodejs_memory_usage_bytes{type="heapTotal"} ${memUsage.heapTotal}
+nodejs_memory_usage_bytes{type="heapUsed"} ${memUsage.heapUsed}
+
+# HELP nodejs_process_uptime_seconds Process uptime in seconds
+# TYPE nodejs_process_uptime_seconds gauge
+nodejs_process_uptime_seconds ${uptime}
+
+# Note: Full OpenTelemetry metrics unavailable due to error
+`.trim();
+
+      res.set('Content-Type', 'text/plain; version=0.0.4');
+      res.send(prometheusMetrics);
+    }
+  });
+
   logger.info('Health check routes initialized');
 }
