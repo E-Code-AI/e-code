@@ -26,7 +26,7 @@ export interface SSHKey {
 export interface SSHSession {
   id: string;
   userId: number;
-  projectId: number;
+  projectId: string;
   keyId: string;
   status: 'connecting' | 'connected' | 'disconnected' | 'error';
   startedAt: Date;
@@ -226,7 +226,7 @@ export class SSHManager {
   // Create SSH session
   async createSSHSession(
     userId: number, 
-    projectId: number, 
+    projectId: string, 
     keyId: string, 
     clientInfo: SSHSession['clientInfo']
   ): Promise<string> {
@@ -341,7 +341,7 @@ export class SSHManager {
       });
       
       // Set up environment variables for the session
-      process.env.E_CODE_PROJECT_ID = session.projectId.toString();
+      process.env.E_CODE_PROJECT_ID = session.projectId;
       process.env.HOME = projectPath;
       
       // Mark session as ready
@@ -406,7 +406,7 @@ export class SSHManager {
   }
 
   // Get SSH configuration for project
-  getSSHConfig(projectId: number): SSHConfig {
+  getSSHConfig(projectId: string): SSHConfig {
     return {
       host: 'ssh.e-code.app',
       port: 22,
@@ -417,13 +417,13 @@ export class SSHManager {
         'HOME': `/projects/${projectId}`,
         'PATH': '/usr/local/bin:/usr/bin:/bin',
         'TERM': 'xterm-256color',
-        'E_CODE_PROJECT_ID': projectId.toString()
+        'E_CODE_PROJECT_ID': projectId
       }
     };
   }
 
   // Generate SSH connection command
-  generateSSHCommand(projectId: number, keyId: string): string {
+  generateSSHCommand(projectId: string, keyId: string): string {
     const config = this.getSSHConfig(projectId);
     const keyPath = path.join(this.sshKeysDir, keyId);
     
@@ -431,7 +431,7 @@ export class SSHManager {
   }
 
   // Get SSH connection instructions
-  getSSHInstructions(projectId: number, keyId: string): {
+  getSSHInstructions(projectId: string, keyId: string): {
     command: string;
     steps: string[];
     troubleshooting: string[];

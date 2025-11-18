@@ -11,7 +11,7 @@ import fetch from 'node-fetch';
 const logger = createLogger('preview-service');
 
 interface PreviewInstance {
-  projectId: number;
+  projectId: string;
   runId: string;
   ports: number[];  // Support multiple ports
   primaryPort: number;
@@ -31,7 +31,7 @@ interface PreviewInstance {
 }
 
 export class PreviewService {
-  private previews: Map<number, PreviewInstance> = new Map();
+  private previews: Map<string, PreviewInstance> = new Map();
   private basePort = 8000;
   private healthCheckInterval: NodeJS.Timeout;
 
@@ -39,11 +39,21 @@ export class PreviewService {
     this.startHealthChecks();
   }
 
+  private hashProjectId(projectId: string): number {
+    let hash = 0;
+    for (let i = 0; i < projectId.length; i++) {
+      const char = projectId.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash) % 10000;
+  }
+
   // Register preview routes on the main Express app
   registerRoutes(app: express.Application) {
     // Multi-port proxy requests to preview instances
     app.use('/preview/:projectId/:port/*', async (req, res, next) => {
-      const projectId = parseInt(req.params.projectId);
+      const projectId = req.params.projectId;
       const port = parseInt(req.params.port);
       const preview = this.previews.get(projectId);
       
@@ -80,7 +90,7 @@ export class PreviewService {
 
     // Default port proxy (backwards compatibility)
     app.use('/preview/:projectId/*', async (req, res, next) => {
-      const projectId = parseInt(req.params.projectId);
+      const projectId = req.params.projectId;
       const preview = this.previews.get(projectId);
       
       if (!preview || preview.status !== 'running') {
@@ -105,11 +115,11 @@ export class PreviewService {
     });
   }
 
-  async startPreview(projectId: number, runId?: string): Promise<PreviewInstance> {
+  async startPreview(projectId: string, runId?: string): Promise<PreviewInstance> {
     // Stop existing preview if running
     await this.stopPreview(projectId);
     
-    const basePort = this.basePort + projectId;
+    const basePort = this.basePort + this.hashProjectId(projectId);
     const preview: PreviewInstance = {
       projectId,
       runId: runId || `run-${projectId}-${Date.now()}`,
@@ -131,7 +141,7 @@ export class PreviewService {
     
     try {
       // Create temporary directory for preview
-      const previewPath = path.join(process.cwd(), 'previews', projectId.toString());
+      const previewPath = path.join(process.cwd(), 'previews', projectId);
       await fs.mkdir(previewPath, { recursive: true });
       
       // Load project files from database
@@ -203,7 +213,7 @@ export class PreviewService {
     return preview;
   }
 
-  async stopPreview(projectId: number): Promise<void> {
+  async stopPreview(projectId: string): Promise<void> {
     const preview = this.previews.get(projectId);
     if (preview) {
       // Stop all processes
@@ -220,11 +230,11 @@ export class PreviewService {
     this.previews.delete(projectId);
   }
 
-  getPreview(projectId: number): PreviewInstance | undefined {
+  getPreview(projectId: string): PreviewInstance | undefined {
     return this.previews.get(projectId);
   }
 
-  getPreviewUrl(projectId: number, port?: number): string {
+  getPreviewUrl(projectId: string, port?: number): string {
     const preview = this.previews.get(projectId);
     if (!preview) return '';
     
@@ -234,17 +244,17 @@ export class PreviewService {
     return preview.url || '';
   }
 
-  getPreviewPorts(projectId: number): number[] {
+  getPreviewPorts(projectId: string): number[] {
     const preview = this.previews.get(projectId);
     return preview?.ports || [];
   }
 
-  getPreviewServices(projectId: number) {
+  getPreviewServices(projectId: string) {
     const preview = this.previews.get(projectId);
     return preview?.exposedServices || [];
   }
 
-  async switchPort(projectId: number, port: number): Promise<boolean> {
+  async switchPort(projectId: string, port: number): Promise<boolean> {
     const preview = this.previews.get(projectId);
     if (!preview || !preview.ports.includes(port)) {
       return false;

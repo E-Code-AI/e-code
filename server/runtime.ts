@@ -14,7 +14,7 @@ import { log } from './vite';
 import { WebSocket } from 'ws';
 
 // Map of active project processes
-const activeProjects = new Map<number, {
+const activeProjects = new Map<string, {
   process: ChildProcess;
   logs: string[];
   status: 'starting' | 'running' | 'stopped' | 'error';
@@ -27,7 +27,7 @@ const activeProjects = new Map<number, {
 /**
  * Start a project's runtime
  */
-export async function startProject(projectId: number): Promise<{
+export async function startProject(projectId: string): Promise<{
   success: boolean;
   url?: string;
   error?: string;
@@ -160,7 +160,7 @@ export async function startProject(projectId: number): Promise<{
 /**
  * Stop a project's runtime
  */
-export async function stopProject(projectId: number): Promise<{
+export async function stopProject(projectId: string): Promise<{
   success: boolean;
   error?: string;
 }> {
@@ -204,7 +204,7 @@ export async function stopProject(projectId: number): Promise<{
 /**
  * Get the status of a project's runtime
  */
-export function getProjectStatus(projectId: number): {
+export function getProjectStatus(projectId: string): {
   isRunning: boolean;
   status: 'starting' | 'running' | 'stopped' | 'error' | 'unknown';
   logs: string[];
@@ -232,7 +232,7 @@ export function getProjectStatus(projectId: number): {
  * Attach to project logs stream
  */
 export function attachToProjectLogs(
-  projectId: number,
+  projectId: string,
   client: WebSocket,
   sendMessage: (message: string) => void
 ): void {
@@ -265,7 +265,7 @@ export function attachToProjectLogs(
 /**
  * Broadcast log messages to all connected clients
  */
-function broadcastLogsToClients(projectId: number, message: string): void {
+function broadcastLogsToClients(projectId: string, message: string): void {
   if (!activeProjects.has(projectId)) return;
   
   const projectData = activeProjects.get(projectId)!;
@@ -339,7 +339,7 @@ export function getDefaultProjectFiles(language: Language): { name: string, cont
 /**
  * Execute a command in a project runtime
  */
-export async function executeProjectCommand(projectId: number, command: string): Promise<{
+export async function executeProjectCommand(projectId: string, command: string): Promise<{
   success: boolean;
   output: string;
 }> {

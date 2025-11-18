@@ -33,7 +33,7 @@ interface RepoStatus {
 }
 
 // Create project workspace directory
-async function getProjectWorkspace(projectId: number): Promise<string> {
+async function getProjectWorkspace(projectId: string): Promise<string> {
   const workspaceDir = path.join(os.tmpdir(), `plot-workspace-${projectId}`);
   
   try {
@@ -46,7 +46,7 @@ async function getProjectWorkspace(projectId: number): Promise<string> {
 }
 
 // Initialize project files in workspace
-async function initializeWorkspace(projectId: number, workspaceDir: string): Promise<void> {
+async function initializeWorkspace(projectId: string, workspaceDir: string): Promise<void> {
   try {
     // Get all project files
     const files = await storage.getFilesByProject(projectId);
@@ -110,7 +110,7 @@ async function execGit(
 }
 
 // Initialize a Git repository in the project workspace
-export async function initRepo(projectId: number): Promise<GitResult> {
+export async function initRepo(projectId: string): Promise<GitResult> {
   try {
     // Get project
     const project = await storage.getProject(projectId);
@@ -160,7 +160,7 @@ export async function initRepo(projectId: number): Promise<GitResult> {
 }
 
 // Check if the project is a Git repository
-export async function isGitRepo(projectId: number): Promise<GitResult> {
+export async function isGitRepo(projectId: string): Promise<GitResult> {
   try {
     // Get workspace
     const workspaceDir = await getProjectWorkspace(projectId);
@@ -190,7 +190,7 @@ export async function isGitRepo(projectId: number): Promise<GitResult> {
 }
 
 // Get repository status (current branch, changes, etc.)
-export async function getRepoStatus(projectId: number): Promise<GitResult> {
+export async function getRepoStatus(projectId: string): Promise<GitResult> {
   try {
     // Check if repo
     const isRepo = await isGitRepo(projectId);
@@ -274,7 +274,7 @@ export async function getRepoStatus(projectId: number): Promise<GitResult> {
 
 // Add files to staging area
 export async function addFiles(
-  projectId: number, 
+  projectId: string, 
   files: string[]
 ): Promise<GitResult> {
   try {
@@ -312,7 +312,7 @@ export async function addFiles(
 
 // Commit changes
 export async function commit(
-  projectId: number, 
+  projectId: string, 
   message: string,
   author?: { name: string; email: string }
 ): Promise<GitResult> {
@@ -366,7 +366,7 @@ export async function commit(
 
 // Add remote repository
 export async function addRemote(
-  projectId: number, 
+  projectId: string, 
   name: string, 
   url: string
 ): Promise<GitResult> {
@@ -405,7 +405,7 @@ export async function addRemote(
 
 // Push to remote repository
 export async function push(
-  projectId: number, 
+  projectId: string, 
   remote: string = 'origin', 
   branch: string = 'main',
   credentials?: { username: string; password: string }
@@ -458,7 +458,7 @@ export async function push(
 
 // Pull from remote repository
 export async function pull(
-  projectId: number, 
+  projectId: string, 
   remote: string = 'origin', 
   branch: string = 'main',
   credentials?: { username: string; password: string }
@@ -513,7 +513,7 @@ export async function pull(
 
 // Clone a repository into a project
 export async function cloneRepo(
-  projectId: number,
+  projectId: string,
   url: string,
   credentials?: { username: string; password: string }
 ): Promise<GitResult> {
@@ -564,7 +564,7 @@ export async function cloneRepo(
 }
 
 // Sync workspace files to project
-async function syncWorkspaceToProject(projectId: number, workspaceDir: string): Promise<void> {
+async function syncWorkspaceToProject(projectId: string, workspaceDir: string): Promise<void> {
   try {
     // Get existing project files
     const existingFiles = await storage.getFilesByProject(projectId);
@@ -642,7 +642,7 @@ function mapStatus(code: string): string {
 
 // Get commit history
 export async function getCommitHistory(
-  projectId: number, 
+  projectId: string, 
   limit: number = 20
 ): Promise<GitResult> {
   try {
