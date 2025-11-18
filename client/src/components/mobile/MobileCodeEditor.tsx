@@ -17,6 +17,7 @@ import { usePinchZoom } from '@/hooks/use-pinch-zoom';
 import { useSmoothScroll } from '@/hooks/use-smooth-scroll';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { getIPadProMonacoConfig, detectIPadPro } from '@/utils/ipad-pro-optimization';
+import { registerMonacoEnhancements, MonacoFeaturesEnhancement } from '@/lib/monaco-features-enhancement';
 
 interface CompletionItem {
   label: string;
@@ -47,6 +48,7 @@ export function MobileCodeEditor({
 }: MobileCodeEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const monacoEnhancementsRef = useRef<MonacoFeaturesEnhancement | null>(null);
   const [showKeyboardToolbar, setShowKeyboardToolbar] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
@@ -183,7 +185,19 @@ export function MobileCodeEditor({
     // Create editor instance
     const editor = monaco.editor.create(editorRef.current, getMobileEditorConfig());
     editorInstanceRef.current = editor;
-    
+
+    // Register Monaco advanced features (navigation, refactoring work great on mobile/tablet with external keyboard)
+    // Multi-cursor and keyboard shortcuts are less useful on touch, but providers still add value
+    monacoEnhancementsRef.current = registerMonacoEnhancements(editor, {
+      enableMultiCursor: isTablet, // Only enable on tablet (likely has keyboard)
+      enableCodeActions: true, // Refactoring/quick fix always useful
+      enableNavigation: true, // Go to definition, find references always useful
+      enableRefactoring: true, // Rename, format always useful
+      enableAdvancedSearch: true, // Search with regex always useful
+      enableIntelliSense: true, // Parameter hints always useful
+      projectId,
+    });
+
     // Restore scroll position
     if (scroll.line > 1 || scroll.column > 1) {
       editor.revealLineInCenter(scroll.line);
@@ -268,6 +282,10 @@ export function MobileCodeEditor({
 
     // Cleanup
     return () => {
+      // Clean up Monaco enhancements
+      monacoEnhancementsRef.current?.dispose();
+      monacoEnhancementsRef.current = null;
+
       editor.dispose();
       if (editorRef.current) {
         editorRef.current.removeEventListener('touchstart', handleTouchStart);
