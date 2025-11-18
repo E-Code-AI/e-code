@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 import {
   Bug,
   Play,
@@ -15,15 +17,19 @@ import {
   ChevronDown,
   Plus,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 interface Breakpoint {
   id: string;
   file: string;
   line: number;
+  condition?: string;
   isEnabled: boolean;
+  hitCount: number;
 }
 
 interface Variable {
@@ -33,55 +39,149 @@ interface Variable {
   children?: Variable[];
 }
 
+interface DebugSession {
+  projectId: string;
+  isRunning: boolean;
+  isPaused: boolean;
+  breakpoints: Breakpoint[];
+  variables: Variable[];
+  callStack: any[];
+  watchExpressions: string[];
+  currentFile?: string;
+  currentLine?: number;
+}
+
 interface MobileDebugPanelProps {
   projectId: string;
   className?: string;
 }
 
 export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps) {
-  const [isRunning, setIsRunning] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   const [activeTab, setActiveTab] = useState<'breakpoints' | 'variables'>('breakpoints');
   const [expandedVariables, setExpandedVariables] = useState<Set<string>>(new Set());
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const [breakpoints, setBreakpoints] = useState<Breakpoint[]>([
-    { id: '1', file: 'src/App.tsx', line: 42, isEnabled: true },
-    { id: '2', file: 'src/utils/api.ts', line: 18, isEnabled: false }
-  ]);
+  // Fetch debug session
+  const { data: session, isLoading, refetch } = useQuery<DebugSession>({
+    queryKey: ['/api/debug/session', projectId],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/debug/session/${projectId}`);
+      return response;
+    },
+    refetchInterval: (query) => {
+      const data = query.state.data as DebugSession | undefined;
+      return data?.isRunning ? 1000 : false; // Poll every second when running
+    }
+  });
 
-  const variables: Variable[] = [
-    { name: 'user', value: { id: 1, name: 'John Doe' }, type: 'object' },
-    { name: 'count', value: 42, type: 'number' },
-    { name: 'isActive', value: true, type: 'boolean' },
-    { name: 'items', value: [1, 2, 3], type: 'array' }
-  ];
+  // Start debugging
+  const startMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', `/api/debug/start/${projectId}`, {});
+    },
+    onSuccess: () => {
+      refetch();
+      toast({
+        title: "Debug session started",
+        description: "You can now set breakpoints and inspect variables"
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to start debugging",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Stop debugging
+  const stopMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', `/api/debug/stop/${projectId}`, {});
+    },
+    onSuccess: () => {
+      refetch();
+      toast({
+        title: "Debug session stopped"
+      });
+    }
+  });
+
+  // Pause execution
+  const pauseMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', `/api/debug/pause/${projectId}`, {});
+    },
+    onSuccess: () => {
+      refetch();
+      toast({
+        title: "Paused at breakpoint",
+        description: "Execution paused, inspect variables"
+      });
+    }
+  });
+
+  // Continue execution
+  const continueMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', `/api/debug/continue/${projectId}`, {});
+    },
+    onSuccess: () => {
+      refetch();
+      toast({
+        title: "Resumed execution"
+      });
+    }
+  });
+
+  // Toggle breakpoint enable/disable
+  const toggleEnableMutation = useMutation({
+    mutationFn: async (breakpointId: string) => {
+      return await apiRequest('POST', `/api/debug/breakpoint/enable/${projectId}/${breakpointId}`, {});
+    },
+    onSuccess: () => {
+      refetch();
+    }
+  });
+
+  // Delete breakpoint
+  const deleteMutation = useMutation({
+    mutationFn: async (breakpointId: string) => {
+      return await apiRequest('DELETE', `/api/debug/breakpoint/${projectId}/${breakpointId}`, {});
+    },
+    onSuccess: () => {
+      refetch();
+      toast({
+        title: "Breakpoint removed"
+      });
+    }
+  });
 
   const handleStart = () => {
-    setIsRunning(true);
-    setIsPaused(false);
+    startMutation.mutate(undefined as any);
   };
 
   const handlePause = () => {
-    setIsPaused(true);
+    pauseMutation.mutate(undefined as any);
   };
 
   const handleContinue = () => {
-    setIsPaused(false);
+    continueMutation.mutate(undefined as any);
   };
 
   const handleStop = () => {
-    setIsRunning(false);
-    setIsPaused(false);
+    stopMutation.mutate(undefined as any);
   };
 
   const toggleBreakpoint = (id: string) => {
-    setBreakpoints(breakpoints.map(bp => 
-      bp.id === id ? { ...bp, isEnabled: !bp.isEnabled } : bp
-    ));
+    toggleEnableMutation.mutate(id);
   };
 
   const deleteBreakpoint = (id: string) => {
-    setBreakpoints(breakpoints.filter(bp => bp.id !== id));
+    deleteMutation.mutate(id);
   };
 
   const toggleVariable = (name: string) => {
@@ -104,6 +204,11 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
     return JSON.stringify(value);
   };
 
+  const breakpoints = session?.breakpoints || [];
+  const variables = session?.variables || [];
+  const isRunning = session?.isRunning || false;
+  const isPaused = session?.isPaused || false;
+
   return (
     <div className={cn("h-full flex flex-col bg-background", className)}>
       {/* Header */}
@@ -113,7 +218,10 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
             <Bug className="h-5 w-5 text-primary" />
             <h3 className="font-semibold">Debugger</h3>
           </div>
-          {isRunning && (
+          {isLoading && (
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          )}
+          {!isLoading && isRunning && (
             <Badge variant={isPaused ? "secondary" : "default"} className="text-xs">
               {isPaused ? 'Paused' : 'Running'}
             </Badge>
@@ -127,9 +235,14 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
               size="sm" 
               className="flex-1"
               onClick={handleStart}
+              disabled={startMutation.isPending || isLoading}
               data-testid="button-debug-start"
             >
-              <Play className="h-4 w-4 mr-2" />
+              {startMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Play className="h-4 w-4 mr-2" />
+              )}
               Start
             </Button>
           ) : (
@@ -140,9 +253,14 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                   variant="outline" 
                   className="flex-1"
                   onClick={handleContinue}
+                  disabled={continueMutation.isPending}
                   data-testid="button-debug-continue"
                 >
-                  <Play className="h-4 w-4 mr-2" />
+                  {continueMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Play className="h-4 w-4 mr-2" />
+                  )}
                   Continue
                 </Button>
               ) : (
@@ -151,9 +269,14 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                   variant="outline" 
                   className="flex-1"
                   onClick={handlePause}
+                  disabled={pauseMutation.isPending}
                   data-testid="button-debug-pause"
                 >
-                  <Pause className="h-4 w-4 mr-2" />
+                  {pauseMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Pause className="h-4 w-4 mr-2" />
+                  )}
                   Pause
                 </Button>
               )}
@@ -161,9 +284,14 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                 size="sm" 
                 variant="outline"
                 onClick={handleStop}
+                disabled={stopMutation.isPending}
                 data-testid="button-debug-stop"
               >
-                <Square className="h-4 w-4" />
+                {stopMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Square className="h-4 w-4" />
+                )}
               </Button>
             </>
           )}
@@ -185,7 +313,7 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
             data-testid={`tab-${tab}`}
           >
             {tab}
-            {tab === 'breakpoints' && (
+            {tab === 'breakpoints' && breakpoints.length > 0 && (
               <Badge variant="secondary" className="ml-2 text-xs">
                 {breakpoints.length}
               </Badge>
@@ -198,7 +326,13 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
       <ScrollArea className="flex-1">
         {activeTab === 'breakpoints' && (
           <div className="p-4 space-y-2">
-            {breakpoints.map((bp) => (
+            {isLoading && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            )}
+
+            {!isLoading && breakpoints.map((bp) => (
               <div 
                 key={bp.id}
                 className={cn(
@@ -213,6 +347,7 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                   <button
                     onClick={() => toggleBreakpoint(bp.id)}
                     className="flex-shrink-0"
+                    disabled={toggleEnableMutation.isPending}
                     data-testid={`button-toggle-breakpoint-${bp.id}`}
                   >
                     <Circle 
@@ -226,7 +361,10 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                   </button>
                   <div className="min-w-0">
                     <div className="text-sm font-mono truncate">{bp.file}</div>
-                    <div className="text-xs text-muted-foreground">Line {bp.line}</div>
+                    <div className="text-xs text-muted-foreground">
+                      Line {bp.line}
+                      {bp.hitCount > 0 && ` • Hit ${bp.hitCount}×`}
+                    </div>
                   </div>
                 </div>
                 <Button
@@ -234,6 +372,7 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                   size="icon"
                   className="h-7 w-7 flex-shrink-0"
                   onClick={() => deleteBreakpoint(bp.id)}
+                  disabled={deleteMutation.isPending}
                   data-testid={`button-delete-breakpoint-${bp.id}`}
                 >
                   <Trash2 className="h-3 w-3" />
@@ -241,10 +380,11 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
               </div>
             ))}
 
-            {breakpoints.length === 0 && (
+            {!isLoading && breakpoints.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 <AlertCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p>No breakpoints set</p>
+                <p className="text-xs mt-1">Click + to add a breakpoint</p>
               </div>
             )}
           </div>
@@ -255,51 +395,83 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
             {!isRunning || !isPaused ? (
               <div className="text-center py-12 text-muted-foreground">
                 <Bug className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>Start debugging to see variables</p>
+                <p>Start debugging and pause to see variables</p>
               </div>
             ) : (
-              variables.map((variable) => (
-                <div key={variable.name}>
-                  <button
-                    onClick={() => toggleVariable(variable.name)}
-                    className="w-full flex items-center gap-2 p-2 hover:bg-muted rounded-lg text-left"
-                    data-testid={`variable-${variable.name}`}
-                  >
-                    {variable.type === 'object' || variable.type === 'array' ? (
-                      expandedVariables.has(variable.name) ? (
-                        <ChevronDown className="h-4 w-4 flex-shrink-0" />
+              <>
+                {isLoading && (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                )}
+                
+                {!isLoading && variables.length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <AlertCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>No variables in current scope</p>
+                  </div>
+                )}
+
+                {!isLoading && variables.map((variable) => (
+                  <div key={variable.name}>
+                    <button
+                      onClick={() => toggleVariable(variable.name)}
+                      className="w-full flex items-center gap-2 p-2 hover:bg-muted rounded-lg text-left"
+                      data-testid={`variable-${variable.name}`}
+                    >
+                      {variable.type === 'object' || variable.type === 'array' ? (
+                        expandedVariables.has(variable.name) ? (
+                          <ChevronDown className="h-4 w-4 flex-shrink-0" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                        )
                       ) : (
-                        <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                      )
-                    ) : (
-                      <div className="w-4" />
-                    )}
-                    <span className="font-mono text-sm flex-1">{variable.name}:</span>
-                    <span className="text-sm text-muted-foreground">
-                      {renderValue(variable.value)}
-                    </span>
-                    <Badge variant="outline" className="text-xs">
-                      {variable.type}
-                    </Badge>
-                  </button>
-                  
-                  {expandedVariables.has(variable.name) && (
-                    <div className="ml-6 pl-3 border-l-2 border-border space-y-1 mt-1">
-                      {typeof variable.value === 'object' && variable.value !== null && (
-                        Object.entries(variable.value).map(([key, val]) => (
+                        <div className="w-4" />
+                      )}
+                      <span className="font-mono text-sm flex-1">{variable.name}:</span>
+                      <span className="text-sm text-muted-foreground">
+                        {renderValue(variable.value)}
+                      </span>
+                      <Badge variant="outline" className="text-xs">
+                        {variable.type}
+                      </Badge>
+                    </button>
+                    
+                    {expandedVariables.has(variable.name) && variable.children && (
+                      <div className="ml-6 pl-3 border-l-2 border-border space-y-1 mt-1">
+                        {variable.children.map((child) => (
                           <div 
-                            key={key}
+                            key={child.name}
                             className="flex items-center gap-2 p-2 text-sm font-mono"
                           >
-                            <span className="text-muted-foreground">{key}:</span>
-                            <span>{JSON.stringify(val)}</span>
+                            <span className="text-muted-foreground">{child.name}:</span>
+                            <span>{JSON.stringify(child.value)}</span>
+                            <Badge variant="outline" className="text-xs ml-auto">
+                              {child.type}
+                            </Badge>
                           </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))
+                        ))}
+                      </div>
+                    )}
+                    
+                    {expandedVariables.has(variable.name) && !variable.children && (
+                      <div className="ml-6 pl-3 border-l-2 border-border space-y-1 mt-1">
+                        {typeof variable.value === 'object' && variable.value !== null && (
+                          Object.entries(variable.value).map(([key, val]) => (
+                            <div 
+                              key={key}
+                              className="flex items-center gap-2 p-2 text-sm font-mono"
+                            >
+                              <span className="text-muted-foreground">{key}:</span>
+                              <span>{JSON.stringify(val)}</span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </>
             )}
           </div>
         )}
@@ -313,10 +485,14 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
             size="sm" 
             className="w-full"
             data-testid="button-add-breakpoint"
+            disabled
           >
             <Plus className="h-4 w-4 mr-2" />
             Add Breakpoint
           </Button>
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            Click line numbers in code editor to add breakpoints
+          </p>
         </div>
       )}
     </div>
