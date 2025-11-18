@@ -457,14 +457,16 @@ export class GeminiProvider implements AIProvider {
     const systemMessage = messages.find(m => m.role === 'system')?.content;
     const chatMessages = messages.filter(m => m.role !== 'system');
     
-    // ✅ GEMINI FIX: Pass systemInstruction in getGenerativeModel() config
-    // Gemini API accepts systemInstruction as a plain string (SDK handles conversion)
-    // Only pass systemInstruction if we have a non-empty message
+    // ✅ GEMINI FIX: systemInstruction MUST be Content object, not string
+    // SDK does NOT auto-convert strings - must pass { parts: [{ text: '...' }] }
+    // Reference: https://ai.google.dev/gemini-api/docs/system-instructions
     const modelConfig: any = {
       model: options?.model || 'gemini-2.5-flash'
     };
     if (systemMessage && systemMessage.trim()) {
-      modelConfig.systemInstruction = systemMessage;
+      modelConfig.systemInstruction = {
+        parts: [{ text: systemMessage }]
+      };
     }
     const model = this.client.getGenerativeModel(modelConfig);
     
@@ -485,14 +487,16 @@ export class GeminiProvider implements AIProvider {
     const systemMessage = messages.find(m => m.role === 'system')?.content;
     const chatMessages = messages.filter(m => m.role !== 'system');
     
-    // ✅ GEMINI FIX: Pass systemInstruction in getGenerativeModel() config
-    // Gemini API accepts systemInstruction as a plain string (SDK handles conversion)
-    // Only pass systemInstruction if we have a non-empty message
+    // ✅ GEMINI FIX: systemInstruction MUST be Content object, not string
+    // SDK does NOT auto-convert strings - must pass { parts: [{ text: '...' }] }
+    // Reference: https://ai.google.dev/gemini-api/docs/system-instructions
     const modelConfig: any = {
       model: options?.model || 'gemini-2.5-flash'
     };
     if (systemMessage && systemMessage.trim()) {
-      modelConfig.systemInstruction = systemMessage;
+      modelConfig.systemInstruction = {
+        parts: [{ text: systemMessage }]
+      };
     }
     const model = this.client.getGenerativeModel(modelConfig);
     

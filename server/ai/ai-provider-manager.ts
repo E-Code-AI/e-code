@@ -550,22 +550,38 @@ export class AIProviderManager {
   
   /**
    * Gemini streaming implementation
+   * ✅ NEW APPROACH: Add system message as first chat message instead of systemInstruction
+   * Gemini SDK has issues with systemInstruction format - safer to include in history
    */
   private async *streamGemini(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.geminiClient) throw new Error('Gemini client not initialized');
     
-    const model = this.geminiClient.getGenerativeModel({ model: modelId });
-    
-    const systemMessage = messages.find(m => m.role === 'system')?.content || '';
+    const systemMessage = messages.find(m => m.role === 'system')?.content;
     const chatMessages = messages.filter(m => m.role !== 'system');
     
-    const chat = model.startChat({
-      history: chatMessages.slice(0, -1).map(m => ({
-        role: m.role === 'user' ? 'user' as const : 'model' as const,
-        parts: [{ text: m.content }]
-      })),
-      systemInstruction: systemMessage,
-    });
+    // Create model WITHOUT systemInstruction to avoid SDK issues
+    const model = this.geminiClient.getGenerativeModel({ model: modelId });
+    
+    // Build history: prepend system message as model response if present
+    const history = chatMessages.slice(0, -1).map(m => ({
+      role: m.role === 'user' ? 'user' as const : 'model' as const,
+      parts: [{ text: m.content }]
+    }));
+    
+    // WORKAROUND: Add system message as first model message in history
+    if (systemMessage && systemMessage.trim()) {
+      history.unshift({
+        role: 'model' as const,
+        parts: [{ text: `System context: ${systemMessage}` }]
+      });
+      // Add user acknowledgment to maintain conversation flow
+      history.unshift({
+        role: 'user' as const,
+        parts: [{ text: 'Please follow the system instructions provided.' }]
+      });
+    }
+    
+    const chat = model.startChat({ history });
     
     const lastMessage = chatMessages[chatMessages.length - 1]?.content || '';
     const result = await chat.sendMessageStream(lastMessage);
