@@ -401,7 +401,7 @@ function AppContent() {
           <Route path="/solutions/internal-ai-builder" component={InternalAIBuilder} />
 
           <Route path="/mobile" component={MobileAdmin} />
-          <Route path="/mobile-workspace" component={MobileWorkspace} />
+          <Route path="/mobile-workspace/:projectId" component={MobileWorkspace} />
           <Route path="/ai" component={AI} />
           <Route path="/ai-documentation" component={AIDocumentation} />
           {/* AI Agent Routes - Real Implementation */}

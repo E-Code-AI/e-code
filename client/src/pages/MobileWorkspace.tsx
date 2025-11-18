@@ -1,6 +1,12 @@
 import { useState } from 'react';
+import { useParams } from 'wouter';
+import { apiRequest } from '@/lib/queryClient';
 import { ReplitBottomTabs } from '@/components/mobile/ReplitBottomTabs';
 import { ReplitToolsSheet } from '@/components/mobile/ReplitToolsSheet';
+import { MobileFileExplorer } from '@/components/mobile/MobileFileExplorer';
+import { LazyMobileCodeEditor } from '@/components/mobile/LazyMobileCodeEditor';
+import { MobileTerminal } from '@/components/mobile/MobileTerminal';
+import { MobilePreviewPanel } from '@/components/mobile/MobilePreviewPanel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -19,61 +25,77 @@ import { cn } from '@/lib/utils';
 type MobileTab = 'files' | 'code' | 'terminal' | 'preview' | 'more';
 
 export default function MobileWorkspace() {
+  const params = useParams();
+  const projectId = (params.projectId || params.id) as string;
+  
+  // Guard: projectId required
+  if (!projectId) {
+    return (
+      <div className="h-screen flex items-center justify-center p-6">
+        <p className="text-muted-foreground">Project ID required. Navigate from dashboard.</p>
+      </div>
+    );
+  }
+  
   const [activeTab, setActiveTab] = useState<MobileTab>('preview');
   const [toolsSheetOpen, setToolsSheetOpen] = useState(false);
   const [agentStatus, setAgentStatus] = useState<'idle' | 'working' | 'done'>('working');
   const [agentInput, setAgentInput] = useState('');
+  const [isFilesOpen, setIsFilesOpen] = useState(false);
+  const [selectedFileId, setSelectedFileId] = useState<number | undefined>();
 
   const handleTabChange = (tabId: MobileTab) => {
-    setActiveTab(tabId);
+    if (tabId === 'files') {
+      setIsFilesOpen(true);
+    } else {
+      setActiveTab(tabId);
+    }
   };
 
   const handleToolSelect = (toolId: string) => {
     // Tool selection handled by parent component or global state
     // Mobile workspace can implement custom tool handling as needed
   };
+  
+  const handleFileSelect = (file: any) => {
+    setSelectedFileId(file.id);
+    setIsFilesOpen(false);
+    setActiveTab('code');
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'files':
-        return (
-          <div className="flex-1 flex items-center justify-center p-6">
-            <p className="text-sm text-muted-foreground">Files panel - Coming soon</p>
-          </div>
-        );
+        return null; // Files modal handles this
       
       case 'code':
         return (
-          <div className="flex-1 flex items-center justify-center p-6">
-            <p className="text-sm text-muted-foreground">Code editor - Coming soon</p>
-          </div>
+          <LazyMobileCodeEditor 
+            fileId={selectedFileId}
+            projectId={projectId}
+            onSave={async (content: string) => {
+              if (!selectedFileId) return;
+              await apiRequest('PUT', `/api/projects/${projectId}/files/${selectedFileId}`, { content });
+            }}
+            className="h-full"
+          />
         );
       
       case 'terminal':
         return (
-          <div className="flex-1 flex items-center justify-center p-6">
-            <p className="text-sm text-muted-foreground">Terminal - Coming soon</p>
-          </div>
+          <MobileTerminal 
+            projectId={projectId}
+            sessionId={`mobile-${projectId}`}
+            className="h-full"
+          />
         );
       
       case 'preview':
         return (
-          <div className="flex-1 flex flex-col items-center justify-center p-6 bg-muted/30">
-            <div className="w-full max-w-md space-y-4">
-              <div className="aspect-[9/16] bg-background border-2 border-border rounded-lg flex items-center justify-center">
-                <p className="text-sm text-muted-foreground">Preview loading...</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="flex-1">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh
-                </Button>
-                <Button variant="outline" size="sm" className="flex-1">
-                  Open in browser
-                </Button>
-              </div>
-            </div>
-          </div>
+          <MobilePreviewPanel 
+            projectId={projectId}
+            className="h-full"
+          />
         );
       
       case 'more':
@@ -237,6 +259,15 @@ export default function MobileWorkspace() {
       <ReplitBottomTabs
         activeTab={activeTab}
         onTabChange={(tab) => handleTabChange(tab as MobileTab)}
+      />
+
+      {/* File Explorer Modal */}
+      <MobileFileExplorer 
+        isOpen={isFilesOpen}
+        onClose={() => setIsFilesOpen(false)}
+        projectId={projectId}
+        onFileSelect={handleFileSelect}
+        currentFileId={selectedFileId}
       />
 
       {/* Tools Sheet */}
