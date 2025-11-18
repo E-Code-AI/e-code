@@ -1,68 +1,60 @@
-version: '3.8'
+version: '3.9'
 
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: e-code-app
+    restart: unless-stopped
     ports:
-      - "80:5000"  # Map external port 80 to internal port 5000
+      - "3000:3000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
-      - SESSION_SECRET=${SESSION_SECRET}
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=${REDIS_URL}
     depends_on:
       - postgres
       - redis
-    restart: unless-stopped
-    volumes:
-      - ./logs:/app/logs
-      - ./uploads:/app/uploads
     networks:
-      - ecode-network
+      - e-code-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   postgres:
     image: postgres:15-alpine
-    environment:
-      - POSTGRES_DB=${PGDATABASE}
-      - POSTGRES_USER=${PGUSER}
-      - POSTGRES_PASSWORD=${PGPASSWORD}
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
+    container_name: e-code-postgres
+    restart: unless-stopped
     ports:
       - "5432:5432"
-    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=ecode
+      - POSTGRES_USER=ecode
+      - POSTGRES_PASSWORD=ecode_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
-      - ecode-network
+      - e-code-network
 
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes
-    volumes:
-      - redis-data:/data
+    container_name: e-code-redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
-    restart: unless-stopped
-    networks:
-      - ecode-network
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "8080:80"  # Changed to avoid conflict with app on port 80
-      - "443:443"
+    command: redis-server --appendonly yes
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - app
-    restart: unless-stopped
+      - redis_data:/data
     networks:
-      - ecode-network
-
-volumes:
-  postgres-data:
-  redis-data:
+      - e-code-network
 
 networks:
-  ecode-network:
+  e-code-network:
     driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
