@@ -30,11 +30,30 @@ export async function seedDatabase() {
       emailVerified: true
     });
 
-    // Also update admin user if exists to have email verified for development
-    const adminUser = await storage.getUserByUsername("admin");
-    if (adminUser && !adminUser.emailVerified) {
+    // Create admin user for E2E testing if it doesn't exist
+    const existingAdmin = await storage.getUserByUsername("admin");
+    if (!existingAdmin) {
+      const adminPassword = process.env.ADMIN_USER_PASSWORD || "adminpass123";
+      const adminHashedPassword = await hashPassword(adminPassword);
+      const adminUser = await storage.createUser({
+        username: "admin",
+        passwordHash: adminHashedPassword,
+        email: "admin@test.com",
+        displayName: "Admin User",
+      });
+      
+      // Update to mark as admin and email verified
       await storage.updateUser(adminUser.id, {
+        isAdmin: true,
         emailVerified: true
+      });
+      
+      console.log('✅ Admin user seeded (admin@test.com / adminpass123)');
+    } else if (!existingAdmin.emailVerified) {
+      // Update existing admin to have email verified for development
+      await storage.updateUser(existingAdmin.id, {
+        emailVerified: true,
+        isAdmin: true // Ensure admin flag is set
       });
     }
     
