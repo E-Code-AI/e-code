@@ -22,9 +22,10 @@ const router = Router();
  */
 async function ensureProjectAccess(req: any, res: any, next: any) {
   try {
-    const projectId = parseInt(req.params.id || req.params.projectId);
+    const projectId = req.params.id || req.params.projectId;
     
-    if (isNaN(projectId)) {
+    // Validate project ID format (UUID or numeric)
+    if (!projectId || (typeof projectId === 'string' && projectId.trim().length === 0)) {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
     
