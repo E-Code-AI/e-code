@@ -77,8 +77,10 @@ const WebPreview = lazy(() => import('@/components/WebPreview').then(module => (
 const PackageViewer = lazy(() => import('@/components/PackageViewer').then(module => ({ default: module.PackageViewer })));
 
 // Device-specific views (lazy loaded)
-const LazyTabletIDEView = lazy(() => import('@/components/tablet/LazyTabletIDEView').then(m => ({ default: m.LazyTabletIDEView })));
-const MobileIDEView = lazy(() => import('@/components/mobile/MobileIDEView').then(m => ({ default: m.MobileIDEView })));
+// Import from index for tablet (has default export, avoids double-lazy-loading)
+const LazyTabletIDEView = lazy(() => import('@/components/tablet'));
+// Import from index for mobile (will add default export)
+const MobileIDEView = lazy(() => import('@/components/mobile'));
 
 interface Tab {
   id: string;

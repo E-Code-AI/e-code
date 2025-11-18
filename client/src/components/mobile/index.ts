@@ -8,3 +8,6 @@ export { MobilePreviewPanel } from './MobilePreviewPanel';
 export { MobileMoreMenu } from './MobileMoreMenu';
 export { MobileIDEView } from './MobileIDEView';
 export { MobileFAB } from './MobileFAB';
+
+// Re-export MobileIDEView as default for lazy loading
+export { MobileIDEView as default } from './MobileIDEView';
