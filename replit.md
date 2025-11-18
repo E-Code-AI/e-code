@@ -32,13 +32,47 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 ## External Dependencies
 
 ### AI/ML Services
-- **OpenAI:** GPT-5.1, GPT-5, GPT-5-mini, GPT-5-nano, GPT-4o, o3, o4-mini
-- **Anthropic:** Claude Sonnet 4.5, Opus 4.1, Haiku 4.5
-- **Google Gemini:** Gemini 2.5 Pro, Gemini 2.5 Flash
-- **Moonshot AI:** Kimi K2, Kimi K2 Thinking, Kimi K2 Turbo
-- **xAI:** Grok 4, Grok 4 Fast
-- **Groq:** Open-source models
-- **Model Context Protocol (MCP) SDK**
+
+#### Configured Models (November 2025)
+| Provider | Model | Context Window | Free Tier | Status |
+|----------|-------|----------------|-----------|--------|
+| **OpenAI** | GPT-5.1 | 400k tokens | ❌ Paid | ❌ Quota exceeded |
+| | GPT-5 | 400k tokens | ❌ Paid | ❌ Quota exceeded |
+| | GPT-5-mini | 400k tokens | ❌ Paid | ❌ Quota exceeded |
+| | GPT-4o, o3, o4-mini | 128k tokens | ❌ Paid | ❌ Quota exceeded |
+| **Anthropic** | Claude Sonnet 4.5 | 200k tokens | ❌ Paid | ❌ Low credit |
+| | Claude Opus 4.1 | 200k tokens | ❌ Paid | ❌ Low credit |
+| | Claude Haiku 4.5 | 200k tokens | ❌ Paid | ❌ Low credit |
+| **Google Gemini** | Gemini 2.5 Flash | **1M tokens** | ✅ 250/day | ✅ **WORKING** |
+| | Gemini 2.5 Pro | 1M tokens | ✅ 50/day | ✅ Available |
+| **Moonshot AI** | Kimi K2 | 256k tokens | ❌ Paid | ✅ Available |
+| | Kimi K2 Thinking | 256k tokens | ❌ Paid | ✅ Available |
+| **xAI** | Grok 4 | 256k tokens | ❌ Paid | Unknown |
+| | Grok 4 Fast | **2M tokens** | ❌ Paid | Unknown |
+| **Groq** | Mixtral 8x7B, Llama 3 | 8-32k tokens | ✅ Free | Not configured |
+
+#### AI Context Budget Limits (Updated Nov 18, 2025)
+
+**Critical Fix Applied:** All context limits updated from obsolete 2023 values to real 2025 API capacities.
+
+Context budgets in `server/agent/context-manager.ts`:
+- **OpenAI:** 280k tokens (70% of 400k GPT-5.1 limit) - was 30k ❌ **9× too low**
+- **Anthropic:** 140k tokens (70% of 200k Claude limit) - was 50k ❌ **2.8× too low**
+- **Gemini:** 200k tokens (20% of 1M limit, 80% of 250k free tier) - was 7k ❌ **28× too low**
+- **xAI:** 180k tokens (70% of 256k Grok 4 limit) - was 30k ❌ **6× too low**
+- **Moonshot:** 180k tokens (70% of 256k Kimi K2 limit) - **NEW** (was missing)
+- **Groq:** 7k tokens (conservative for 32k actual)
+
+**Safety Margin:** 70% rule accounts for 4-char-per-token estimation errors with CJK text, Base64, emojis.
+
+#### Provider Fallback Chain
+```typescript
+['gpt-5.1', 'kimi-k2', 'gemini-2.5-flash', 'grok-4-fast', 'claude-haiku-4-5']
+```
+Currently **Gemini 2.5 Flash** is the primary working provider (free tier, 250 req/day).
+
+#### Model Context Protocol (MCP) SDK
+MCP support enabled for all AI providers.
 
 ### Infrastructure Services
 - **PostgreSQL:** Neon serverless

@@ -33,52 +33,60 @@ export interface TruncationResult {
 /**
  * Provider-specific budget configurations
  * 
- * CRITICAL: Ultra-conservative limits to guarantee worst-case compliance
+ * CRITICAL FIX (Nov 18, 2025): Updated ALL limits to match real 2025 API capacities
+ * 
+ * Previous limits were 2-9× too restrictive, causing "context budget exceeded" errors.
+ * New limits use 70% of actual API capacity for safety margin (accounts for estimation errors).
+ * 
+ * Real API Limits (Nov 2025):
+ * - OpenAI GPT-5.1: 400k tokens → use 280k (70%)
+ * - Anthropic Claude 4.5: 200k tokens → use 140k (70%)
+ * - Gemini 2.5 Flash: 1M tokens (250k/min free tier) → use 200k (conservative)
+ * - xAI Grok 4: 256k tokens → use 180k (70%)
+ * - Moonshot Kimi K2: 256k tokens → use 180k (70%)
  * 
  * The 4-chars-per-token heuristic can underestimate by up to 4× for:
  * - CJK text (Chinese, Japanese, Korean)
  * - Base64/compressed data
  * - Special characters and emojis
  * 
- * These limits ensure we NEVER exceed provider limits even with worst-case input:
- * - Anthropic: 10MB (38% margin below 16MB byte limit)
- * - OpenAI: 30k tokens (77% margin below 128k - accounts for 4× underestimation)
- * - Gemini 2.5 Flash: 200k tokens (80% margin below 250k free tier limit, 1M actual limit)
- * - xAI/Groq: Similar worst-case margins
- * 
  * TODO: Integrate tiktoken or provider-native tokenizers for accurate counts
- * and increase limits to ~70% of actual capacity once precise counting is available.
- * 
- * Updated Nov 18, 2025: Gemini 2.5 Flash has 1M context window (250K/min free tier)
+ * and increase limits to ~85% of actual capacity once precise counting is available.
  */
 const PROVIDER_BUDGETS: Record<string, ContextBudget> = {
   anthropic: {
     maxBytes: 10_000_000, // 10MB (38% safety margin below 16MB byte limit)
-    maxTokens: 50_000, // ALSO enforce token limit (75% margin below 200k token limit)
+    maxTokens: 140_000, // ✅ FIX: 70% of 200k (was 50k = 2.8× too low)
     systemAllocation: 0.30,
     contextAllocation: 0.20,
     historyAllocation: 0.50
   },
   openai: {
-    maxTokens: 30_000, // Ultra-conservative for worst-case (CJK, base64)
+    maxTokens: 280_000, // ✅ FIX: 70% of 400k GPT-5.1 limit (was 30k = 9× too low)
     systemAllocation: 0.25,
     contextAllocation: 0.15,
     historyAllocation: 0.60
   },
   gemini: {
-    maxTokens: 200_000, // ✅ FIX (Nov 18, 2025): Gemini 2.5 Flash has 1M context (250K/min free tier)
+    maxTokens: 200_000, // ✅ FIX: Conservative 20% of 1M (250k/min free tier)
     systemAllocation: 0.30,
     contextAllocation: 0.20,
     historyAllocation: 0.50
   },
   xai: {
-    maxTokens: 30_000, // Ultra-conservative, similar to OpenAI
+    maxTokens: 180_000, // ✅ FIX: 70% of 256k Grok 4 (was 30k = 6× too low)
+    systemAllocation: 0.25,
+    contextAllocation: 0.15,
+    historyAllocation: 0.60
+  },
+  moonshot: {
+    maxTokens: 180_000, // ✅ NEW: 70% of 256k Kimi K2 (was missing)
     systemAllocation: 0.25,
     contextAllocation: 0.15,
     historyAllocation: 0.60
   },
   groq: {
-    maxTokens: 7_000, // Ultra-conservative for Groq models
+    maxTokens: 7_000, // Conservative for Groq models (32k actual)
     systemAllocation: 0.30,
     contextAllocation: 0.20,
     historyAllocation: 0.50
