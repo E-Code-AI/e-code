@@ -147,7 +147,7 @@ export const AI_MODELS: AIModel[] = [
     name: 'Kimi K2',
     provider: 'moonshot',
     description: '1T param MoE model optimized for agentic tasks - 10-100× cheaper than GPT-4',
-    maxTokens: 128000,
+    maxTokens: 256000, // ✅ FIX (Nov 18, 2025): Updated from 128k → 256k (Sept 2025 upgrade)
     supportsStreaming: true,
     costPer1kTokens: 0.0025  // $0.60 input (cache miss), $2.50 output → avg $0.0025
   },
@@ -156,7 +156,7 @@ export const AI_MODELS: AIModel[] = [
     name: 'Kimi K2 Thinking',
     provider: 'moonshot',
     description: 'Kimi K2 with extended reasoning for complex problems',
-    maxTokens: 128000,
+    maxTokens: 256000, // ✅ FIX (Nov 18, 2025): Updated from 128k → 256k (Sept 2025 upgrade)
     supportsStreaming: true,
     costPer1kTokens: 0.0025
   },
@@ -165,7 +165,7 @@ export const AI_MODELS: AIModel[] = [
     name: 'Kimi K2 Turbo',
     provider: 'moonshot',
     description: 'Fastest Kimi K2 variant for low-latency tasks',
-    maxTokens: 128000,
+    maxTokens: 256000, // ✅ FIX (Nov 18, 2025): Updated from 128k → 256k (Sept 2025 upgrade)
     supportsStreaming: true,
     costPer1kTokens: 0.0006  // Ultra-low cost for turbo variant
   },
