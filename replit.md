@@ -6,7 +6,13 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 ## Recent Fixes (November 18, 2025)
 - **✅ FIXED: Workspace Bootstrap Model Selection** - Now respects user's preferredAiModel with validation against available providers. Falls back to first available model (Gemini 2.5 Flash) instead of hardcoding gpt-4o.
 - **✅ FIXED: Runtime "Invalid Project ID" Bug** - Runtime router now handles UUID project IDs instead of failing with parseInt(). Resolves "invalid project ID" error when clicking Start button in IDE.
-- **⚠️ PARTIAL: UUID Migration** - Database uses UUID (varchar) for project IDs but some services still expect number: preview-service.ts, terminal.ts, logs attachToProjectLogs(). These need refactoring to fully support UUIDs.
+- **✅ COMPLETE: UUID Migration** - All services migrated from `number` to `string` (UUID):
+  - ✅ Preview Service (preview-service.ts): Map<string>, removed parseInt()
+  - ✅ Runtime/Logs (runtime.ts): activeProjects Map<string>, attachToProjectLogs()
+  - ✅ Git Service (git.ts): All 13 functions accept projectId: string
+  - ✅ SSH Manager (ssh-manager.ts): SSHSession interface, all methods
+  - ✅ Storage: getFilesByProject() alias added for compatibility
+  - Terminal service already UUID-compatible (no migration needed)
 
 ## User Preferences
 - **Communication:** Simple, everyday language
