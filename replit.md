@@ -4,6 +4,8 @@
 E-Code is a web-based collaborative IDE with AI assistance, offering code editing, terminal access, file management, and an autonomous AI agent. Its primary purpose is to facilitate rapid prototyping and education. The platform aims for enterprise-grade scalability, multi-provider AI model selection, real-time collaboration, robust security, and the ambition to provide autonomous workspace creation from a natural language prompt to a live preview, streaming progress in real-time.
 
 ## Recent Fixes (November 18, 2025)
+
+### Core Infrastructure
 - **✅ FIXED: Workspace Bootstrap Model Selection** - Now respects user's preferredAiModel with validation against available providers. Falls back to first available model (Gemini 2.5 Flash) instead of hardcoding gpt-4o.
 - **✅ FIXED: Runtime "Invalid Project ID" Bug** - Runtime router now handles UUID project IDs instead of failing with parseInt(). Resolves "invalid project ID" error when clicking Start button in IDE.
 - **✅ COMPLETE: UUID Migration** - All services migrated from `number` to `string` (UUID):
@@ -13,6 +15,15 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
   - ✅ SSH Manager (ssh-manager.ts): SSHSession interface, all methods
   - ✅ Storage: getFilesByProject() alias added for compatibility
   - Terminal service already UUID-compatible (no migration needed)
+
+### Preview Service Enhancements
+- **✅ PRODUCTION-READY: Port Allocation Collision-Safe** - Implemented hash-based starting port + sequential probing with Set tracking. Prevents EADDRINUSE crashes via automatic collision detection and retry logic. Includes comprehensive logging and automatic port release on stopPreview().
+
+### Mobile IDE Improvements
+- **✅ FIXED: IDEPage "Loading page..." Bug** - Simplified lazy import pattern from complex `.then()` wrapper to clean `lazy(() => import())` with index file default exports. Desktop IDE now loads successfully.
+- **✅ FIXED: MobileWorkspace "Loading page..." Bug** - Added 'agent' to MobileTab type definition, fixing type mismatch that prevented tab rendering.
+- **✅ UX ENHANCEMENT: Tab 'more' Auto-Opens Tools** - Clicking 'More' bottom tab now automatically opens toolsSheet, improving mobile UX by reducing navigation steps.
+- **✅ TESTED: Mobile IDE E2E with Playwright** - Full validation of mobile workspace, tools panels (Secrets/Packages/Git), and UUID support. **Note:** Testing requires mobile viewport (375x667px) due to `md:hidden` CSS class on MobileWorkspace component.
 
 ## User Preferences
 - **Communication:** Simple, everyday language
