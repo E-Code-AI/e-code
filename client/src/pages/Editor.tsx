@@ -30,6 +30,7 @@ export default function Editor(props: EditorProps = {}) {
   const { user, isLoading: authLoading } = useAuth();
   const agentRef = useRef<any>(null);
   const hasStartedAgent = useRef(false);
+  const agentWebSocket = useRef<WebSocket | null>(null); // NEW: WebSocket for agent
 
   const resolvedProjectId = props.projectId ?? id ?? null;
   const initialProject = props.initialProject ?? null;
@@ -44,6 +45,7 @@ export default function Editor(props: EditorProps = {}) {
   const [isProjectRunning, setIsProjectRunning] = useState(false);
   const [executionId, setExecutionId] = useState<string | undefined>();
   const [initialAgentPrompt, setInitialAgentPrompt] = useState<string | null>(null);
+  const [agentWebSocketConnected, setAgentWebSocketConnected] = useState(false); // Track WebSocket connection state
   
   const [enableShortcutHint, setEnableShortcutHint] = useState(() => {
     if (typeof window === 'undefined') return true;
@@ -98,25 +100,53 @@ export default function Editor(props: EditorProps = {}) {
             const payload = JSON.parse(atob(tokenParts[1]));
             const { projectId, sessionId, conversationId } = payload;
             
-            // Subscribe to WebSocket for real-time agent progress
+            // Create and connect WebSocket for real-time agent progress (Task 5)
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${projectId}&sessionId=${sessionId}`;
-            
+
             console.log('[Workspace Bootstrap] Connecting to WebSocket:', wsUrl);
-            
-            // Store session info for agent panel
+
+            // Create WebSocket connection
+            const ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+              console.log('[Workspace Bootstrap] WebSocket connected successfully');
+              agentWebSocket.current = ws;
+              setAgentWebSocketConnected(true);
+
+              toast({
+                title: "Agent Connected",
+                description: "AI agent is building your project...",
+              });
+            };
+
+            ws.onerror = (error) => {
+              console.error('[Workspace Bootstrap] WebSocket error:', error);
+              toast({
+                title: "Connection Error",
+                description: "Failed to connect to AI agent. Retrying...",
+                variant: "destructive",
+              });
+            };
+
+            ws.onclose = () => {
+              console.log('[Workspace Bootstrap] WebSocket connection closed');
+              setAgentWebSocketConnected(false);
+            };
+
+            // Store session info for reference
             window.sessionStorage.setItem(`agent-session-${resolvedProjectId}`, JSON.stringify({
               sessionId,
               conversationId,
               websocketUrl: wsUrl
             }));
-            
+
             // Auto-open agent panel
             setActiveRightPanel('agent');
             setRightPanelOpen(true);
             setInitialAgentPrompt('AI Agent is building your application...');
             hasStartedAgent.current = true;
-            
+
             // Clean up URL
             const cleanUrl = window.location.pathname;
             window.history.replaceState({}, '', cleanUrl);
@@ -453,6 +483,7 @@ export default function Editor(props: EditorProps = {}) {
               selectedCode={selectedCode}
               className="h-full"
               initialPrompt={initialAgentPrompt}
+              websocket={agentWebSocket.current}
             />
           </div>
         )
