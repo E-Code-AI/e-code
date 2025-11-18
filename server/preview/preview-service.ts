@@ -34,6 +34,7 @@ export class PreviewService {
   private previews: Map<string, PreviewInstance> = new Map();
   private basePort = 8000;
   private healthCheckInterval: NodeJS.Timeout;
+  private allocatedPorts: Set<number> = new Set();
 
   constructor() {
     this.startHealthChecks();
@@ -47,6 +48,31 @@ export class PreviewService {
       hash = hash & hash;
     }
     return Math.abs(hash) % 10000;
+  }
+
+  private allocatePort(projectId: string): number {
+    // Start from hash to maintain some consistency
+    const hash = this.hashProjectId(projectId);
+    const originalPort = this.basePort + (hash % 10000);
+    let port = originalPort;
+    
+    // Probe for next available port if collision
+    while (this.allocatedPorts.has(port)) {
+      port++;
+      if (port >= this.basePort + 10000) {
+        port = this.basePort; // Wrap around
+      }
+    }
+    
+    this.allocatedPorts.add(port);
+    
+    // Log port allocation
+    if (port !== originalPort) {
+      logger.warn(`Port ${originalPort} collision, using ${port} for project ${projectId}`);
+    }
+    logger.info(`Allocated port ${port} for project ${projectId}`);
+    
+    return port;
   }
 
   // Register preview routes on the main Express app
@@ -119,12 +145,12 @@ export class PreviewService {
     // Stop existing preview if running
     await this.stopPreview(projectId);
     
-    const basePort = this.basePort + this.hashProjectId(projectId);
+    const port = this.allocatePort(projectId);
     const preview: PreviewInstance = {
       projectId,
       runId: runId || `run-${projectId}-${Date.now()}`,
       ports: [],
-      primaryPort: basePort,
+      primaryPort: port,
       processes: new Map(),
       url: `/preview/${projectId}/`,
       status: 'starting',
@@ -137,7 +163,7 @@ export class PreviewService {
     this.previews.set(projectId, preview);
     
     // Emit WebSocket event for preview start
-    previewEvents.emit('preview:start', { projectId, runId: preview.runId, port: basePort });
+    previewEvents.emit('preview:start', { projectId, runId: preview.runId, port });
     
     try {
       // Create temporary directory for preview
@@ -224,6 +250,17 @@ export class PreviewService {
         }
       }
       preview.status = 'stopped';
+      
+      // Release allocated ports
+      if (preview.primaryPort) {
+        this.allocatedPorts.delete(preview.primaryPort);
+        logger.info(`Released port ${preview.primaryPort} for project ${projectId}`);
+      }
+      preview.ports.forEach(p => {
+        this.allocatedPorts.delete(p);
+        logger.info(`Released port ${p} for project ${projectId}`);
+      });
+      
       // Emit stop event for WebSocket
       previewEvents.emit('preview:stop', { projectId, runId: preview.runId });
     }
