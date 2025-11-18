@@ -33,11 +33,16 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type MobileTab = 'files' | 'code' | 'terminal' | 'preview' | 'more';
+type MobileTab = 'agent' | 'files' | 'code' | 'terminal' | 'preview' | 'more';
 
 export default function MobileWorkspace() {
+  console.log('🔵 MobileWorkspace component loaded');
+  
   const params = useParams();
   const projectId = (params.projectId || params.id) as string;
+  
+  console.log('🔵 MobileWorkspace params:', params);
+  console.log('🔵 MobileWorkspace projectId:', projectId);
   
   // Guard: projectId required
   if (!projectId) {
@@ -59,6 +64,10 @@ export default function MobileWorkspace() {
   const handleTabChange = (tabId: MobileTab) => {
     if (tabId === 'files') {
       setIsFilesOpen(true);
+    } else if (tabId === 'more') {
+      setActiveTab(tabId);
+      setActiveTool(null);
+      setToolsSheetOpen(true); // Auto-open tools when 'more' tab is clicked
     } else {
       setActiveTab(tabId);
       setActiveTool(null);
@@ -78,39 +87,7 @@ export default function MobileWorkspace() {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'files':
-        return null; // Files modal handles this
-      
-      case 'code':
-        return (
-          <LazyMobileCodeEditor 
-            fileId={selectedFileId}
-            projectId={projectId}
-            onSave={async (content: string) => {
-              if (!selectedFileId) return;
-              await apiRequest('PUT', `/api/projects/${projectId}/files/${selectedFileId}`, { content });
-            }}
-            className="h-full"
-          />
-        );
-      
-      case 'terminal':
-        return (
-          <MobileTerminal 
-            projectId={projectId}
-            sessionId={`mobile-${projectId}`}
-            className="h-full"
-          />
-        );
-      
-      case 'preview':
-        return (
-          <MobilePreviewPanel 
-            projectId={projectId}
-            className="h-full"
-          />
-        );
-      
+      case 'agent':
       case 'more':
         return (
           <div className="flex-1 flex flex-col bg-background">
@@ -210,7 +187,39 @@ export default function MobileWorkspace() {
             </div>
           </div>
         );
-
+      
+      case 'files':
+        return null; // Files modal handles this
+      
+      case 'code':
+        return (
+          <LazyMobileCodeEditor 
+            fileId={selectedFileId}
+            projectId={projectId}
+            onSave={async (content: string) => {
+              if (!selectedFileId) return;
+              await apiRequest('PUT', `/api/projects/${projectId}/files/${selectedFileId}`, { content });
+            }}
+            className="h-full"
+          />
+        );
+      
+      case 'terminal':
+        return (
+          <MobileTerminal 
+            projectId={projectId}
+            sessionId={`mobile-${projectId}`}
+            className="h-full"
+          />
+        );
+      
+      case 'preview':
+        return (
+          <MobilePreviewPanel 
+            projectId={projectId}
+            className="h-full"
+          />
+        );
 
       default:
         return (
