@@ -3,6 +3,48 @@
 ## Overview
 E-Code is a web-based collaborative IDE with AI assistance, offering code editing, terminal access, file management, and an autonomous AI agent. Its primary purpose is to facilitate rapid prototyping and education, aiming for enterprise-grade scalability, multi-provider AI model selection, real-time collaboration, robust security, and the ambition to provide autonomous workspace creation from a natural language prompt to a live preview, streaming progress in real-time.
 
+## Production Readiness Status (November 19, 2025)
+
+### ✅ Completed & Verified
+- **Mobile IDE:** Full feature parity with desktop, E2E tested, Apple-quality design system
+- **AI Provider Robustness:** Robust streaming with try-catch, buffer validation, chunk-level parsing for OpenAI, Anthropic, Gemini, Moonshot
+- **Security Basics:** CSRF protection on mutating endpoints, session-based auth, auth bypass protected by NODE_ENV guard
+- **Database:** PostgreSQL with Drizzle ORM, proper foreign keys, no manual migrations
+
+### ⚠️ Fortune 500 Gaps Identified (Defer to Future Sprint)
+**Priority 1 - Security:**
+1. **API Rate Limiting** - Tier-based limiters exist but not applied to all API routes. Auth routes protected. Requires router-level implementation: `app.use('/api/projects', tierRateLimiters.api, projectsRouter.getRouter())`
+   - Status: Auth routes protected (100/1000/10000 req/min), API routes unprotected
+   - Risk: Potential DoS on unprotected endpoints
+   - Solution: Apply `tierRateLimiters.api` when mounting each router
+
+**Priority 2 - AI Resilience:**
+2. **Circuit Breakers/Failover** - No retry/back-off/provider failover for 99.9% uptime claim
+   - Status: Providers throw directly on outage, no circuit breaker pattern
+   - Risk: Cannot guarantee 99.9% uptime
+   - Solution: Implement circuit breaker pattern, retry logic, fallback chain orchestration
+
+3. **Streaming Defensive Limits** - No size/timeout caps on provider streaming
+   - Status: Trusts provider chunk boundaries without validation
+   - Risk: Potential memory exhaustion or infinite streams
+   - Solution: Add max stream size (10MB), timeout (60s), chunk validation
+
+**Priority 3 - Operations:**
+4. **OpenTelemetry Brittleness** - Using private `_metricReader` property
+   - Status: `/metrics/prometheus` endpoint may fail on library updates
+   - Risk: Monitoring failures in production
+   - Solution: Migrate to stable OpenTelemetry SDK APIs
+
+5. **API Versioning** - All routes under `/api/*` without version prefix
+   - Status: No versioning strategy for backward compatibility
+   - Risk: Breaking changes disrupt existing clients
+   - Solution: Implement `/api/v1/*` prefix, version negotiation header
+
+6. **Docker Optimization** - Images likely >2GiB
+   - Status: Multi-stage build without node_modules slimming
+   - Risk: Slow deployments, higher costs
+   - Solution: Implement production dependencies only, Alpine base image
+
 ## User Preferences
 - **Communication:** Simple, everyday language
 - **Code Style:** TypeScript with strict typing
