@@ -454,51 +454,54 @@ nodejs_process_info{version="${process.version}",pid="${process.pid}"} 1
         return res.send(prometheusMetrics);
       }
 
-      // Get metrics from OpenTelemetry Prometheus exporter
-      // Note: Accessing internal _metricReader - this is safe for our use case
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const metricReader = (exporter as any)._metricReader;
-      if (!metricReader) {
-        res.set('Content-Type', 'text/plain; version=0.0.4');
-        return res.send('# No metrics available\n');
-      }
-      
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { resourceMetrics } = await metricReader.collect();
-
-      // Convert to Prometheus format
-      let prometheusOutput = '';
-
-      if (resourceMetrics && resourceMetrics.scopeMetrics) {
-        for (const scopeMetric of resourceMetrics.scopeMetrics) {
-          for (const metric of scopeMetric.metrics) {
-            const metricName = metric.descriptor.name;
-            const metricType = metric.descriptor.type;
-            const metricDescription = metric.descriptor.description || '';
-
-            // Add HELP and TYPE comments
-            prometheusOutput += `# HELP ${metricName} ${metricDescription}\n`;
-            prometheusOutput += `# TYPE ${metricName} ${metricType}\n`;
-
-            // Add metric values
-            for (const dataPoint of metric.dataPoints) {
-              const labels = dataPoint.attributes
-                ? Object.entries(dataPoint.attributes)
-                    .map(([k, v]) => `${k}="${v}"`)
-                    .join(',')
-                : '';
-
-              const value = dataPoint.value;
-              prometheusOutput += `${metricName}${labels ? `{${labels}}` : ''} ${value}\n`;
-            }
-
-            prometheusOutput += '\n';
+      // Get metrics from OpenTelemetry Prometheus exporter using stable public API
+      // ✅ FORTUNE 500 FIX: Use PrometheusExporter.getMetricsRequestHandler() instead of private _metricReader
+      try {
+        // PrometheusExporter exposes metrics via getMetricsRequestHandler() - stable public API
+        const metricsHandler = exporter.getMetricsRequestHandler();
+        
+        // The handler is an Express middleware, but we can call it directly
+        // Create a mock response to capture the metrics output
+        let metricsOutput = '';
+        const mockRes: any = {
+          setHeader: () => mockRes,
+          end: (data: string) => {
+            metricsOutput = data;
           }
-        }
-      }
+        };
+        
+        await new Promise((resolve, reject) => {
+          metricsHandler(req, mockRes, (err?: any) => {
+            if (err) reject(err);
+            else resolve(undefined);
+          });
+        });
+        
+        res.set('Content-Type', 'text/plain; version=0.0.4');
+        res.send(metricsOutput || '# No metrics available\n');
+      } catch (metricsError: any) {
+        logger.warn('Failed to get metrics from PrometheusExporter handler, using fallback', metricsError);
+        
+        // Fallback: return basic Node.js metrics
+        const memUsage = process.memoryUsage();
+        const uptime = process.uptime();
+        
+        const fallbackMetrics = `
+# HELP nodejs_memory_usage_bytes Memory usage in bytes
+# TYPE nodejs_memory_usage_bytes gauge
+nodejs_memory_usage_bytes{type="rss"} ${memUsage.rss}
+nodejs_memory_usage_bytes{type="heapTotal"} ${memUsage.heapTotal}
+nodejs_memory_usage_bytes{type="heapUsed"} ${memUsage.heapUsed}
+nodejs_memory_usage_bytes{type="external"} ${memUsage.external}
 
-      res.set('Content-Type', 'text/plain; version=0.0.4');
-      res.send(prometheusOutput);
+# HELP nodejs_process_uptime_seconds Process uptime in seconds
+# TYPE nodejs_process_uptime_seconds gauge
+nodejs_process_uptime_seconds ${uptime}
+`.trim();
+        
+        res.set('Content-Type', 'text/plain; version=0.0.4');
+        res.send(fallbackMetrics);
+      }
     } catch (error: any) {
       logger.error('Error exporting Prometheus metrics:', error);
 

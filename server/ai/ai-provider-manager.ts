@@ -2,6 +2,8 @@ import { AIProviderFactory, type AIProvider } from './ai-providers';
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { CircuitBreaker, RetryExecutor, isRetryableError } from './circuit-breaker';
+import { createStreamLimiter } from './stream-limiter';
 
 /**
  * Model configuration with provider metadata
@@ -218,6 +220,18 @@ export const AI_MODELS: AIModel[] = [
  * Centralized AI Provider Manager
  * Handles multi-provider model selection with Fortune 500-grade error handling
  */
+/**
+ * Provider fallback chain for 99.9% uptime (Fortune 500 requirement)
+ * Ordered by reliability, cost, and speed
+ */
+const PROVIDER_FALLBACK_CHAIN = [
+  'gpt-5.1',           // OpenAI flagship
+  'kimi-k2',           // Moonshot fast model
+  'gemini-2.5-flash',  // Google free tier (250/day limit)
+  'grok-4-fast',       // xAI fast model
+  'claude-haiku-4-5-20251015'  // Anthropic fastest
+];
+
 export class AIProviderManager {
   private providers: Map<string, AIProvider> = new Map();
   private anthropicClient?: Anthropic;
@@ -225,8 +239,45 @@ export class AIProviderManager {
   private geminiClient?: GoogleGenerativeAI;
   private moonshotClient?: OpenAI;  // Moonshot uses OpenAI-compatible API
   
+  // Circuit breakers for each provider (Fortune 500 resilience)
+  private circuitBreakers: Map<string, CircuitBreaker> = new Map();
+  private retryExecutor: RetryExecutor;
+  private streamLimiter = createStreamLimiter('AIProviderManager', {
+    maxSizeBytes: 10 * 1024 * 1024, // 10MB
+    timeoutMs: 60000, // 60 seconds
+    maxChunkSizeBytes: 100 * 1024, // 100KB per chunk
+    debug: process.env.NODE_ENV === 'development'
+  });
+  
   constructor() {
     this.initializeProviders();
+    this.initializeCircuitBreakers();
+    this.retryExecutor = new RetryExecutor({
+      maxRetries: 2,
+      initialDelay: 1000,
+      maxDelay: 10000,
+      backoffMultiplier: 2,
+      useJitter: true
+    });
+  }
+  
+  /**
+   * Initialize circuit breakers for all providers
+   */
+  private initializeCircuitBreakers() {
+    const providerNames = ['openai', 'anthropic', 'gemini', 'moonshot', 'xai'];
+    
+    for (const provider of providerNames) {
+      this.circuitBreakers.set(provider, new CircuitBreaker(provider, {
+        failureThreshold: 5,
+        resetTimeout: 30000,  // 30 seconds
+        windowSize: 60000,    // 1 minute
+        successThreshold: 3,
+        debug: process.env.NODE_ENV === 'development'
+      }));
+    }
+    
+    console.log('[AI Provider Manager] ✓ Circuit breakers initialized for all providers');
   }
   
   /**
@@ -376,17 +427,121 @@ export class AIProviderManager {
    * @param messages Array of chat messages with role and content
    * @param options Additional options like system prompt, max_tokens, temperature
    */
+  /**
+   * Stream chat with automatic failover (Fortune 500 - 99.9% uptime)
+   * Tries fallback chain if primary model fails
+   * ✅ FORTUNE 500 FIX: Skip providers with OPEN circuit breakers
+   */
+  async *streamChatWithFallback(
+    modelId: string,
+    messages: any[],
+    options?: { system?: string; max_tokens?: number; temperature?: number; reasoning_effort?: 'none' | 'low' | 'medium' | 'high' }
+  ): AsyncGenerator<string> {
+    const messagesWithSystem = options?.system 
+      ? [{ role: 'system', content: options.system }, ...messages]
+      : messages;
+    
+    // Try primary model first
+    try {
+      yield* this.generateChatStreamWithRetry(modelId, messagesWithSystem, options);
+      return;
+    } catch (primaryError: any) {
+      console.log(`[AIProviderManager] Primary model ${modelId} failed, trying fallback chain...`);
+      
+      // Try fallback chain (skip models from providers with OPEN circuit breakers)
+      const triedProviders = new Set<string>();
+      
+      for (const fallbackModelId of PROVIDER_FALLBACK_CHAIN) {
+        if (fallbackModelId === modelId) continue; // Skip primary model
+        
+        const fallbackModel = this.getModel(fallbackModelId);
+        if (!fallbackModel || !this.providers.has(fallbackModel.provider)) {
+          continue; // Provider not configured
+        }
+        
+        // ✅ FORTUNE 500 FIX: Skip if we already tried this provider and it failed
+        // This prevents hammering the same failed provider with different models
+        if (triedProviders.has(fallbackModel.provider)) {
+          console.log(`[AIProviderManager] Skipping ${fallbackModelId} - provider ${fallbackModel.provider} already failed`);
+          continue;
+        }
+        
+        // ✅ FORTUNE 500 FIX: Check circuit breaker state before attempting
+        const circuitBreaker = this.circuitBreakers.get(fallbackModel.provider);
+        if (circuitBreaker) {
+          const status = circuitBreaker.getStatus();
+          if (status.state === 'OPEN') {
+            console.log(`[AIProviderManager] Skipping ${fallbackModelId} - circuit breaker OPEN for ${fallbackModel.provider}`);
+            triedProviders.add(fallbackModel.provider);
+            continue;
+          }
+        }
+        
+        try {
+          console.log(`[AIProviderManager] Trying fallback: ${fallbackModelId} (provider: ${fallbackModel.provider})`);
+          triedProviders.add(fallbackModel.provider);
+          yield* this.generateChatStreamWithRetry(fallbackModelId, messagesWithSystem, options);
+          console.log(`[AIProviderManager] ✓ Fallback successful: ${fallbackModelId}`);
+          return;
+        } catch (fallbackError: any) {
+          console.log(`[AIProviderManager] Fallback ${fallbackModelId} failed:`, fallbackError.message);
+          continue;
+        }
+      }
+      
+      // All providers failed
+      throw new Error(`All AI providers failed. Last error: ${primaryError.message}`);
+    }
+  }
+  
+  /**
+   * Stream chat with retry logic and circuit breaker
+   * ✅ FORTUNE 500 FIX: Correct layering order
+   * 1. Circuit breaker (check if provider is healthy FIRST)
+   * 2. Retry logic (only retry if circuit allows)
+   * 3. Stream limits (protect against unbounded streams)
+   */
+  private async *generateChatStreamWithRetry(
+    modelId: string,
+    messages: any[],
+    options?: any
+  ): AsyncGenerator<string> {
+    const model = this.getModel(modelId);
+    if (!model) {
+      throw new Error(`Model not found: ${modelId}`);
+    }
+    
+    const circuitBreaker = this.circuitBreakers.get(model.provider);
+    if (!circuitBreaker) {
+      throw new Error(`Circuit breaker not found for provider: ${model.provider}`);
+    }
+    
+    // ✅ CORRECT ORDER: Circuit Breaker → Retry → Stream Limits
+    // Circuit breaker wraps EVERYTHING - if circuit is OPEN, reject immediately
+    yield* circuitBreaker.executeStream(
+      async function* (this: AIProviderManager) {
+        // Retry executor INSIDE circuit breaker - only retries if circuit allows
+        yield* this.retryExecutor.executeStream(
+          async function* (this: AIProviderManager) {
+            // Stream limiter protects individual call attempts
+            yield* this.streamLimiter.limitStream(
+              this.generateChatStream(modelId, messages, options)
+            );
+          }.bind(this),
+          isRetryableError
+        );
+      }.bind(this)
+    );
+  }
+
   async *streamChat(
     modelId: string,
     messages: any[],
     options?: { system?: string; max_tokens?: number; temperature?: number; reasoning_effort?: 'none' | 'low' | 'medium' | 'high' }
   ): AsyncGenerator<string> {
-    // Add system message to messages array if provided
-    const messagesWithSystem = options?.system 
-      ? [{ role: 'system', content: options.system }, ...messages]
-      : messages;
-    
-    yield* this.generateChatStream(modelId, messagesWithSystem, options);
+    // ✅ FORTUNE 500 FIX: Use streamChatWithFallback by default for 99.9% uptime
+    // This enables: circuit breakers, retry logic, provider fallback, streaming limits
+    yield* this.streamChatWithFallback(modelId, messages, options);
   }
   
   /**
@@ -448,7 +603,8 @@ export class AIProviderManager {
   }
   
   /**
-   * Anthropic streaming implementation
+   * Anthropic streaming implementation with robust error handling
+   * ✅ ROBUST PARSING: Handle stream errors and JSON parsing failures
    */
   private async *streamAnthropic(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.anthropicClient) throw new Error('Anthropic client not initialized');
@@ -460,19 +616,38 @@ export class AIProviderManager {
     
     const systemMessage = messages.find(m => m.role === 'system')?.content;
     
-    const stream = await this.anthropicClient.messages.create({
-      model: modelId,
-      messages: anthropicMessages,
-      system: systemMessage,
-      max_tokens: options?.max_tokens || 4000,
-      temperature: options?.temperature || 0.7,
-      stream: true,
-    });
-    
-    for await (const chunk of stream) {
-      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-        yield chunk.delta.text;
+    try {
+      const stream = await this.anthropicClient.messages.create({
+        model: modelId,
+        messages: anthropicMessages,
+        system: systemMessage,
+        max_tokens: options?.max_tokens || 4000,
+        temperature: options?.temperature || 0.7,
+        stream: true,
+      });
+      
+      let buffer = '';
+      for await (const chunk of stream) {
+        try {
+          if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+            const text = chunk.delta.text;
+            if (text) {
+              buffer += text;
+              yield text;
+            }
+          }
+        } catch (chunkError: any) {
+          console.warn(`[Anthropic] Chunk parsing error: ${chunkError.message}`);
+          continue;
+        }
       }
+      
+      if (!buffer) {
+        throw new Error('Anthropic stream produced no content');
+      }
+    } catch (error: any) {
+      console.error(`[Anthropic] Stream error: ${error.message}`);
+      throw error;
     }
   }
   

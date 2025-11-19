@@ -451,25 +451,8 @@ export default function IDEPage() {
     }
   };
   
-  // Device-aware rendering: Route to optimized views for mobile/tablet
-  // This preserves gesture-optimized UX without rebuilding responsive logic
-  if (deviceType === 'mobile') {
-    return (
-      <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading mobile workspace..." />}>
-        <MobileIDEView projectId={projectId} />
-      </Suspense>
-    );
-  }
-  
-  if (deviceType === 'tablet') {
-    return (
-      <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading tablet workspace..." />}>
-        <LazyTabletIDEView projectId={projectId} />
-      </Suspense>
-    );
-  }
-  
-  // Desktop view continues below with 3-panel layout
+  // ✅ CRITICAL FIX: Load project FIRST before device-specific rendering
+  // This ensures mobile/tablet views receive the real project UUID, not the URL slug
   if (isLoadingProject) {
     return <ECodeLoading fullScreen size="lg" text="Loading workspace..." />;
   }
@@ -484,6 +467,27 @@ export default function IDEPage() {
           </Button>
         </div>
       </div>
+    );
+  }
+  
+  // ✅ Device-aware rendering: Route to optimized views for mobile/tablet
+  // Use project.id (UUID) with fallback to projectId (URL param, which backend normalizes to UUID)
+  // Optional chaining defends against guard regressions
+  const normalizedProjectId = project?.id ?? projectId;
+  
+  if (deviceType === 'mobile') {
+    return (
+      <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading mobile workspace..." />}>
+        <MobileIDEView projectId={normalizedProjectId} />
+      </Suspense>
+    );
+  }
+  
+  if (deviceType === 'tablet') {
+    return (
+      <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading tablet workspace..." />}>
+        <LazyTabletIDEView projectId={normalizedProjectId} />
+      </Suspense>
     );
   }
   
