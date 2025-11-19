@@ -62,13 +62,26 @@ export function apiVersionMiddleware(req: Request, res: Response, next: NextFunc
 /**
  * Middleware to reject unsupported API versions
  */
+/**
+ * Middleware to reject unsupported API versions
+ * ✅ FORTUNE 500 FIX: Complete edge case validation
+ */
 export function rejectUnsupportedVersions(req: Request, res: Response, next: NextFunction) {
   // ✅ FORTUNE 500 FIX: Use originalUrl which includes full path with /api prefix
-  const fullPath = req.originalUrl || req.path;
+  const fullPath = (req.originalUrl || req.path).split('?')[0]; // Remove query string
   
-  const pathMatch = fullPath.match(/^\/api\/(v\d+)\//);
+  // ✅ FIX: Handle /api root requests (no version specified)
+  // These are allowed and default to current version
+  if (fullPath === '/api' || fullPath === '/api/') {
+    return next();
+  }
+  
+  // ✅ FIX: Extract version from URL path
+  const pathMatch = fullPath.match(/^\/api\/(v\d+)(\/|$)/);
   if (pathMatch) {
     const requestedVersion = pathMatch[1] as ApiVersion;
+    
+    // ✅ FIX: Reject unsupported versions (including /api/v9, /api/v2, etc.)
     if (!SUPPORTED_VERSIONS.includes(requestedVersion)) {
       return res.status(400).json({
         error: 'Unsupported API version',
@@ -76,6 +89,20 @@ export function rejectUnsupportedVersions(req: Request, res: Response, next: Nex
         supportedVersions: SUPPORTED_VERSIONS,
         currentVersion: CURRENT_API_VERSION,
         message: `API version ${requestedVersion} is not supported. Please use one of: ${SUPPORTED_VERSIONS.join(', ')}`
+      });
+    }
+  }
+  
+  // ✅ FIX: For non-versioned routes, check Accept-Version header
+  if (!pathMatch) {
+    const headerVersion = req.headers['accept-version'] as string;
+    if (headerVersion && !SUPPORTED_VERSIONS.includes(headerVersion as ApiVersion)) {
+      return res.status(400).json({
+        error: 'Unsupported API version in Accept-Version header',
+        requestedVersion: headerVersion,
+        supportedVersions: SUPPORTED_VERSIONS,
+        currentVersion: CURRENT_API_VERSION,
+        message: `API version ${headerVersion} is not supported. Please use one of: ${SUPPORTED_VERSIONS.join(', ')}`
       });
     }
   }

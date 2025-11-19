@@ -153,7 +153,7 @@ export class StreamLimiter {
     } finally {
       // Clean up iterator
       if (typeof iterator.return === 'function') {
-        await iterator.return();
+        await iterator.return(undefined);
       }
     }
   }
