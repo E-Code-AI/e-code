@@ -4,6 +4,7 @@ import type * as Monaco from 'monaco-editor';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { registerMonacoEnhancements, MonacoFeaturesEnhancement } from '@/lib/monaco-features-enhancement';
 
 interface EditorInstance {
   fileId: number;
@@ -12,6 +13,7 @@ interface EditorInstance {
   editor: Monaco.editor.IStandaloneCodeEditor | null;
   viewState: Monaco.editor.ICodeEditorViewState | null;
   content: string;
+  enhancements: MonacoFeaturesEnhancement | null;
 }
 
 interface MultiEditorManagerProps {
@@ -104,6 +106,17 @@ export function MultiEditorManager({
         onContentChange(tab.fileId, content);
       });
 
+      // Register Monaco advanced features
+      const enhancements = registerMonacoEnhancements(editor, {
+        enableMultiCursor: true,
+        enableCodeActions: true,
+        enableNavigation: true,
+        enableRefactoring: true,
+        enableAdvancedSearch: true,
+        enableIntelliSense: true,
+        projectId: tab.fileId, // Use fileId as project context
+      });
+
       const instance: EditorInstance = {
         fileId: tab.fileId,
         fileName: tab.fileName,
@@ -111,6 +124,7 @@ export function MultiEditorManager({
         editor,
         viewState: null,
         content: tab.content,
+        enhancements,
       };
 
       editorInstancesRef.current.set(tab.fileId, instance);
@@ -178,6 +192,10 @@ export function MultiEditorManager({
           instance.editor.dispose();
           container.remove();
         }
+        // Clean up Monaco enhancements
+        if (instance.enhancements) {
+          instance.enhancements.dispose();
+        }
         editorInstancesRef.current.delete(fileId);
       }
     });
@@ -210,6 +228,10 @@ export function MultiEditorManager({
       editorInstancesRef.current.forEach(instance => {
         if (instance.editor) {
           instance.editor.dispose();
+        }
+        // Clean up Monaco enhancements
+        if (instance.enhancements) {
+          instance.enhancements.dispose();
         }
       });
       editorInstancesRef.current.clear();

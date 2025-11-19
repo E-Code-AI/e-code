@@ -39,6 +39,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { registerAICodeCompletion, checkAICompletionAvailability } from "@/lib/ai-code-completion";
+import { registerMonacoEnhancements, MonacoFeaturesEnhancement } from "@/lib/monaco-features-enhancement";
 import { CollaborativeProvider } from "./CollaborativeProvider";
 import { CollaboratorPresence } from "./CollaboratorPresence";
 import AICodeReview from "./AICodeReview";
@@ -99,6 +100,7 @@ export function ReplitMonacoEditor({
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [aiCompletionsEnabled, setAiCompletionsEnabled] = useState(true);
   const aiCompletionDisposables = useRef<monaco.IDisposable[]>([]);
+  const monacoEnhancementsRef = useRef<MonacoFeaturesEnhancement | null>(null);
   const [showCodeReview, setShowCodeReview] = useState(false);
   const [showCodeReviewPanel, setShowCodeReviewPanel] = useState(false);
   const [codeReviewIssues, setCodeReviewIssues] = useState<any[]>([]);
@@ -267,7 +269,7 @@ export function ReplitMonacoEditor({
             `Project ${projectId}`
           );
           aiCompletionDisposables.current = disposables;
-          
+
           toast({
             title: "AI Code Completion",
             description: "Intelligent code suggestions enabled - powered by Claude",
@@ -278,6 +280,17 @@ export function ReplitMonacoEditor({
         console.error('Failed to initialize AI completions:', err);
       });
     }
+
+    // Register Monaco advanced features (multi-cursor, refactoring, navigation, etc.)
+    monacoEnhancementsRef.current = registerMonacoEnhancements(editor, {
+      enableMultiCursor: true,
+      enableCodeActions: true,
+      enableNavigation: true,
+      enableRefactoring: true,
+      enableAdvancedSearch: true,
+      enableIntelliSense: true,
+      projectId,
+    });
 
     // Gestion des changements
     const onContentChange = editor.onDidChangeModelContent(() => {
@@ -304,6 +317,9 @@ export function ReplitMonacoEditor({
       // Clean up AI completion disposables
       aiCompletionDisposables.current.forEach(d => d.dispose());
       aiCompletionDisposables.current = [];
+      // Clean up Monaco enhancements
+      monacoEnhancementsRef.current?.dispose();
+      monacoEnhancementsRef.current = null;
     };
   }, [file, theme, aiCompletionsEnabled, projectId, toast]);
 
