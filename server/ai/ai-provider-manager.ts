@@ -448,7 +448,8 @@ export class AIProviderManager {
   }
   
   /**
-   * Anthropic streaming implementation
+   * Anthropic streaming implementation with robust error handling
+   * ✅ ROBUST PARSING: Handle stream errors and JSON parsing failures
    */
   private async *streamAnthropic(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.anthropicClient) throw new Error('Anthropic client not initialized');
@@ -460,19 +461,38 @@ export class AIProviderManager {
     
     const systemMessage = messages.find(m => m.role === 'system')?.content;
     
-    const stream = await this.anthropicClient.messages.create({
-      model: modelId,
-      messages: anthropicMessages,
-      system: systemMessage,
-      max_tokens: options?.max_tokens || 4000,
-      temperature: options?.temperature || 0.7,
-      stream: true,
-    });
-    
-    for await (const chunk of stream) {
-      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-        yield chunk.delta.text;
+    try {
+      const stream = await this.anthropicClient.messages.create({
+        model: modelId,
+        messages: anthropicMessages,
+        system: systemMessage,
+        max_tokens: options?.max_tokens || 4000,
+        temperature: options?.temperature || 0.7,
+        stream: true,
+      });
+      
+      let buffer = '';
+      for await (const chunk of stream) {
+        try {
+          if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+            const text = chunk.delta.text;
+            if (text) {
+              buffer += text;
+              yield text;
+            }
+          }
+        } catch (chunkError: any) {
+          console.warn(`[Anthropic] Chunk parsing error: ${chunkError.message}`);
+          continue;
+        }
       }
+      
+      if (!buffer) {
+        throw new Error('Anthropic stream produced no content');
+      }
+    } catch (error: any) {
+      console.error(`[Anthropic] Stream error: ${error.message}`);
+      throw error;
     }
   }
   
