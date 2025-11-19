@@ -297,9 +297,9 @@ Time: 2025-11-17 12:34:56
 ./test-fortune500-endpoints.sh
 
 # Ou manuellement
-curl http://localhost:5000/health
-curl http://localhost:5000/metrics
-curl http://localhost:5000/api/docs
+curl http://localhost:3000/health
+curl http://localhost:3000/metrics
+curl http://localhost:3000/api/docs
 ```
 
 ### 2. Lancer les tests
