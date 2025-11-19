@@ -165,7 +165,8 @@ export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming'
       // Set rate limit headers
       const rateLimiterRes = await limiter.get(key);
       if (rateLimiterRes) {
-        const limits = TIER_LIMITS[tier][limitType];
+        // ✅ TYPE SAFETY: limitType is guaranteed to be 'api' or 'auth' here (streaming returned early)
+        const limits = TIER_LIMITS[tier][limitType as LimitType];
         res.setHeader('X-RateLimit-Limit', limits.points * DEV_MULTIPLIER);
         res.setHeader('X-RateLimit-Remaining', rateLimiterRes.remainingPoints || 0);
         res.setHeader('X-RateLimit-Reset', new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString());
@@ -176,7 +177,8 @@ export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming'
     } catch (rejRes: any) {
       const user = req.user as any;
       const tier: SubscriptionTier = user?.subscriptionTier || 'free';
-      const limits = TIER_LIMITS[tier][limitType];
+      // ✅ TYPE SAFETY: limitType is guaranteed to be 'api' or 'auth' here (streaming returned early)
+      const limits = TIER_LIMITS[tier][limitType as LimitType];
       const retryAfter = Math.round(rejRes.msBeforeNext / 1000) || 60;
       
       logger.warn('Rate limit exceeded', {
