@@ -365,7 +365,7 @@ class AnalyticsManager {
    * Generate session ID
    */
   private generateSessionId(): string {
-    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `session_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   }
 
   /**
@@ -412,7 +412,7 @@ export const analytics = new AnalyticsManager({
 export function usePageView(page: string, metadata?: Record<string, any>) {
   useEffect(() => {
     analytics.trackPageView(page, metadata);
-  }, [page, metadata]);
+  }, [page, JSON.stringify(metadata)]);
 }
 
 /**
