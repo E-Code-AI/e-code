@@ -48,7 +48,7 @@ export function renderWithProviders(
     wrapper: ({ children }) => (
       <TestProviders projectId={projectId}>{children}</TestProviders>
     ),
-    ...renderOptions,
+    ...renderOptions
   });
 }
 
