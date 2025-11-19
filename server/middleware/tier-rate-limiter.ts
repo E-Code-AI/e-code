@@ -20,7 +20,7 @@ import { createLogger } from '../utils/logger';
 const logger = createLogger('tier-rate-limiter');
 
 type SubscriptionTier = 'free' | 'pro' | 'enterprise';
-type LimitType = 'api' | 'auth'; // AI removed - now pay-as-you-go (see ai-usage-tracker.ts)
+type LimitType = 'api' | 'auth'; // Streaming handled separately
 
 interface TierLimits {
   points: number;
@@ -41,6 +41,13 @@ const TIER_LIMITS: Record<SubscriptionTier, Record<LimitType, TierLimits>> = {
     api: { points: 10000, duration: 60 },    // 10000 req/min (100x)
     auth: { points: 100, duration: 900 },    // 100 req/15min (20x)
   },
+};
+
+// ✅ FORTUNE 500 FIX: Separate streaming limits (different structure than API/auth)
+const STREAMING_LIMITS: Record<SubscriptionTier, TierLimits> = {
+  free: { points: 10, duration: 900 },        // 10 streams per 15min
+  pro: { points: 100, duration: 3600 },       // 100 streams per hour
+  enterprise: { points: 1000, duration: 3600 }, // 1000 streams per hour
 };
 
 // Development mode: 10x multiplier for all tiers
@@ -66,7 +73,7 @@ function getRateLimiter(tier: SubscriptionTier, limitType: LimitType): RateLimit
   return rateLimiters.get(key)!;
 }
 
-async function logViolation(req: Request, tier: SubscriptionTier, limitType: LimitType, attempted: number, allowed: number) {
+async function logViolation(req: Request, tier: SubscriptionTier, limitType: LimitType | 'streaming', attempted: number, allowed: number) {
   try {
     await db.insert(rateLimitViolations).values({
       userId: (req.user as any)?.id || null,
@@ -89,7 +96,7 @@ async function logViolation(req: Request, tier: SubscriptionTier, limitType: Lim
   }
 }
 
-export function createTierRateLimitMiddleware(limitType: LimitType) {
+export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming') {
   return async (req: Request, res: Response, next: NextFunction) => {
     // Skip rate limiting in test mode (unless explicitly enabled)
     if (process.env.NODE_ENV === 'test' && process.env.ENABLE_RATE_LIMITING !== 'true') {
@@ -107,6 +114,47 @@ export function createTierRateLimitMiddleware(limitType: LimitType) {
       const user = req.user as any;
       const tier: SubscriptionTier = user?.subscriptionTier || 'free';
       
+      // ✅ FORTUNE 500 FIX: Handle streaming separately (different limit structure)
+      if (limitType === 'streaming') {
+        const limits = STREAMING_LIMITS[tier];
+        const key = `${tier}_streaming`;
+        
+        let limiter = rateLimiters.get(key);
+        if (!limiter) {
+          limiter = new RateLimiterMemory({
+            keyPrefix: `rl_tier_${key}`,
+            points: limits.points * DEV_MULTIPLIER,
+            duration: limits.duration,
+            blockDuration: process.env.NODE_ENV === 'development' ? 1 : limits.duration,
+          });
+          rateLimiters.set(key, limiter);
+        }
+        
+        const userId = user?.id || req.ip || 'anonymous';
+        try {
+          await limiter.consume(userId, 1);
+          return next();
+        } catch (error: any) {
+          logger.warn('Streaming rate limit exceeded', { userId, tier, limitType });
+          await logViolation(req, tier, 'streaming', error.consumedPoints || 1, limits.points);
+          return res.status(429).json({
+            error: 'Too many streaming requests',
+            message: `${tier === 'free' ? 'Free' : tier === 'pro' ? 'Pro' : 'Enterprise'} tier: Maximum ${limits.points} concurrent AI streams per ${limits.duration / 60} minutes. ${tier === 'free' ? 'Upgrade to Pro for higher limits.' : ''}`,
+            retryAfter: Math.ceil(error.msBeforeNext / 1000),
+            tier,
+            limit: limits.points,
+            window: `${limits.duration / 60} minutes`
+          });
+        }
+      }
+      
+      // ✅ CRITICAL FIX: Only handle API/auth after this point (streaming already returned)
+      if (limitType !== 'api' && limitType !== 'auth') {
+        // Should not reach here - streaming handled above
+        logger.error('Invalid limitType', { limitType });
+        return next();
+      }
+      
       // Get appropriate rate limiter for this tier/type
       const limiter = getRateLimiter(tier, limitType);
       const key = user?.id || req.ip || 'anonymous';
@@ -117,7 +165,8 @@ export function createTierRateLimitMiddleware(limitType: LimitType) {
       // Set rate limit headers
       const rateLimiterRes = await limiter.get(key);
       if (rateLimiterRes) {
-        const limits = TIER_LIMITS[tier][limitType];
+        // ✅ TYPE SAFETY: limitType is guaranteed to be 'api' or 'auth' here (streaming returned early)
+        const limits = TIER_LIMITS[tier][limitType as LimitType];
         res.setHeader('X-RateLimit-Limit', limits.points * DEV_MULTIPLIER);
         res.setHeader('X-RateLimit-Remaining', rateLimiterRes.remainingPoints || 0);
         res.setHeader('X-RateLimit-Reset', new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString());
@@ -128,7 +177,8 @@ export function createTierRateLimitMiddleware(limitType: LimitType) {
     } catch (rejRes: any) {
       const user = req.user as any;
       const tier: SubscriptionTier = user?.subscriptionTier || 'free';
-      const limits = TIER_LIMITS[tier][limitType];
+      // ✅ TYPE SAFETY: limitType is guaranteed to be 'api' or 'auth' here (streaming returned early)
+      const limits = TIER_LIMITS[tier][limitType as LimitType];
       const retryAfter = Math.round(rejRes.msBeforeNext / 1000) || 60;
       
       logger.warn('Rate limit exceeded', {
@@ -166,4 +216,7 @@ export function createTierRateLimitMiddleware(limitType: LimitType) {
 export const tierRateLimiters = {
   api: createTierRateLimitMiddleware('api'),
   auth: createTierRateLimitMiddleware('auth'),
+  // ✅ FORTUNE 500 FIX: Streaming endpoints use tuned limits
+  // Free: 10/15min, Pro: 100/hr, Enterprise: 1000/hr
+  streaming: createTierRateLimitMiddleware('streaming')
 };
