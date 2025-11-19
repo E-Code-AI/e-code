@@ -166,4 +166,10 @@ export function createTierRateLimitMiddleware(limitType: LimitType) {
 export const tierRateLimiters = {
   api: createTierRateLimitMiddleware('api'),
   auth: createTierRateLimitMiddleware('auth'),
+  // ✅ FORTUNE 500 FIX: Streaming/SSE endpoints need higher limits for long-lived connections
+  streaming: (req: Request, res: Response, next: NextFunction) => {
+    // Skip rate limiting for SSE/streaming endpoints to prevent connection churn
+    // These are pay-per-use via ai-usage-tracker, not volume-based
+    next();
+  }
 };

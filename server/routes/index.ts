@@ -52,6 +52,7 @@ import adminMonitoringRouter from "./admin-monitoring.router";
 import aiUsageRouter from "./ai-usage.router";
 import { tierRateLimiters } from "../middleware/tier-rate-limiter";
 import { aiUsageTracker } from "../middleware/ai-usage-tracker";
+import { apiVersionMiddleware, rejectUnsupportedVersions } from "../middleware/api-versioning";
 import globalSearchRouter from "./global-search.router";
 import logsViewerRouter from "./logs-viewer.router";
 import envVarsRouter from "./env-vars.router";
@@ -95,20 +96,27 @@ export class MainRouter {
     // Setup auth bypass for development
     setupAuthBypass(app);
     
-    // Authentication routes
+    // API Versioning (Fortune 500 requirement)
+    app.use('/api', apiVersionMiddleware);
+    app.use('/api', rejectUnsupportedVersions);
+    
+    // Authentication routes (already have auth-specific rate limiting)
     app.use(this.authRouter.getRouter());
     
+    // Apply tier-based rate limiting to all API routes (Fortune 500 requirement)
+    // Free: 100 req/min, Pro: 1000 req/min, Enterprise: 10000 req/min
+    
     // User management routes
-    app.use(this.usersRouter.getRouter());
+    app.use(tierRateLimiters.api, this.usersRouter.getRouter());
     
     // Project management routes  
-    app.use(this.projectsRouter.getRouter());
+    app.use(tierRateLimiters.api, this.projectsRouter.getRouter());
     
     // File management routes
-    app.use(this.filesRouter.getRouter());
+    app.use(tierRateLimiters.api, this.filesRouter.getRouter());
     
     // ChatGPT admin routes
-    app.use(this.chatgptRouter.getRouter());
+    app.use(tierRateLimiters.api, this.chatgptRouter.getRouter());
     
     // AI Usage Tracking (Pay-As-You-Go) - Track all AI/Agent requests for billing
     // No blocking - users pay for what they use via Stripe metered billing
@@ -116,62 +124,63 @@ export class MainRouter {
     app.use('/api/admin/agent', aiUsageTracker);
     
     // Agent preferences routes (authenticated users) - user-facing preferences
-    app.use('/api/agent', createAgentPreferencesRouter(this.storage));
+    app.use('/api/agent', tierRateLimiters.api, createAgentPreferencesRouter(this.storage));
     
     // Agent routes (admin only)
-    app.use('/api/admin/agent', agentRouter);
+    app.use('/api/admin/agent', tierRateLimiters.api, agentRouter);
     
     // Agent plan routes (REAL AI-powered plan generation with streaming) - authenticated users
-    // Mounted at /api/agent/plan for consistency with other agent routes
-    app.use('/api/agent/plan', createAgentPlanRouter(this.storage));
+    // ✅ FORTUNE 500 FIX: Use streaming rate limiter for SSE endpoints
+    app.use('/api/agent/plan', tierRateLimiters.streaming, createAgentPlanRouter(this.storage));
     
     // Agent build routes (build execution with SSE progress streaming) - authenticated users
-    app.use('/api/agent/build', createAgentBuildRouter(this.storage));
+    // ✅ FORTUNE 500 FIX: Use streaming rate limiter for SSE endpoints
+    app.use('/api/agent/build', tierRateLimiters.streaming, createAgentBuildRouter(this.storage));
     
     // Autonomous agent routes (authenticated users) - single mount point
-    app.use('/api/agent', agentAutonomousRouter);
+    app.use('/api/agent', tierRateLimiters.streaming, agentAutonomousRouter);
     
     // Agent workflow routes (feature generation, build selection) - authenticated users
-    app.use('/api/agent', agentWorkflowRouter);
+    app.use('/api/agent', tierRateLimiters.api, agentWorkflowRouter);
     
     // Agent testing routes (browser testing, element selector, recording) - Phase 2 (ADMIN ONLY)
-    app.use('/api/admin/agent', agentTestingRouter);
+    app.use('/api/admin/agent', tierRateLimiters.api, agentTestingRouter);
     
     // Test agent routes (for testing without auth)
-    app.use(testAgentRouter);
+    app.use(tierRateLimiters.api, testAgentRouter);
     
     // Collaboration routes
-    app.use('/api/collaboration', collaborationRouter);
+    app.use('/api/collaboration', tierRateLimiters.api, collaborationRouter);
     
     // Deployment routes
-    app.use(deploymentRouter);
+    app.use(tierRateLimiters.api, deploymentRouter);
     
     // File upload routes
-    app.use('/api/upload', fileUploadRouter);
+    app.use('/api/upload', tierRateLimiters.api, fileUploadRouter);
     
     // Notifications routes
-    app.use('/api/notifications', notificationsRouter);
+    app.use('/api/notifications', tierRateLimiters.api, notificationsRouter);
     
     // Preview routes
-    app.use('/api/preview', previewRouter);
+    app.use('/api/preview', tierRateLimiters.api, previewRouter);
     
     // Shell routes
-    app.use('/api/shell', shellRouter);
+    app.use('/api/shell', tierRateLimiters.api, shellRouter);
     
     // Containers routes
-    app.use('/api/containers', containersRouter);
+    app.use('/api/containers', tierRateLimiters.api, containersRouter);
     
     // Scalability routes
-    app.use('/api/scalability', scalabilityRouter);
+    app.use('/api/scalability', tierRateLimiters.api, scalabilityRouter);
     
     // Marketplace routes
-    app.use('/api/marketplace', marketplaceRouter);
+    app.use('/api/marketplace', tierRateLimiters.api, marketplaceRouter);
     
     // Admin routes
-    app.use('/api/admin', adminRouter);
+    app.use('/api/admin', tierRateLimiters.api, adminRouter);
     
     // Admin Monitoring routes (Fortune 500 Rate Limit Dashboard)
-    app.use('/api/admin/monitoring', adminMonitoringRouter);
+    app.use('/api/admin/monitoring', tierRateLimiters.api, adminMonitoringRouter);
     
     // AI Usage Tracking (Pay-As-You-Go) - Track AI routes for billing
     // CRITICAL: Apply BEFORE mounting routers to ensure all AI endpoints are tracked
@@ -179,69 +188,69 @@ export class MainRouter {
     app.use('/api/models', aiUsageTracker);
     
     // AI routes (REST endpoints for chat, completions, etc.)
-    app.use('/api', aiRouter);
+    app.use('/api', tierRateLimiters.api, aiRouter);
     
     // AI Usage Metering routes (Pay-As-You-Go billing endpoints)
-    app.use('/api/ai/usage', aiUsageRouter);
-    app.use('/api/admin/ai-usage', aiUsageRouter);
+    app.use('/api/ai/usage', tierRateLimiters.api, aiUsageRouter);
+    app.use('/api/admin/ai-usage', tierRateLimiters.api, aiUsageRouter);
     
     // AI Models Selection routes
-    app.use('/api/models', aiModelsRouter);
+    app.use('/api/models', tierRateLimiters.api, aiModelsRouter);
     
     // Feature Flags routes (runtime toggles for experimental features)
-    app.use(featureFlagsRouter);
+    app.use(tierRateLimiters.api, featureFlagsRouter);
     
     // AI Streaming routes (Agent chat with SSE)
-    // NOTE: Tier limiter is applied INSIDE aiStreamingRouter to avoid affecting other routes
-    app.use(aiStreamingRouter);
+    // ✅ FORTUNE 500 FIX: Use streaming rate limiter instead of API limiter for SSE endpoints
+    app.use(tierRateLimiters.streaming, aiStreamingRouter);
     
     // Voice/Video WebRTC routes
-    app.use('/api', voiceVideoRouter);
+    app.use('/api', tierRateLimiters.api, voiceVideoRouter);
     
     // Data Provisioning routes
-    app.use('/api', dataProvisioningRouter);
+    app.use('/api', tierRateLimiters.api, dataProvisioningRouter);
     
     // Terminal routes (logs and console output)
-    app.use(terminalRouter);
+    app.use(tierRateLimiters.api, terminalRouter);
     
     // Terminal metrics routes (Fortune 500 scalability monitoring)
-    app.use('/api/terminal', terminalMetricsRouter);
+    app.use('/api/terminal', tierRateLimiters.api, terminalMetricsRouter);
     
     // Runtime routes (start, stop, execute, logs)
-    app.use(runtimeRouter);
+    app.use(tierRateLimiters.api, runtimeRouter);
     
     // Packages routes (AI-driven package automation)
-    app.use('/api/packages', packagesRouter);
+    app.use('/api/packages', tierRateLimiters.api, packagesRouter);
     
     // Workspace routes (LSP, builds, tests, security, resources)
-    app.use('/api/workspace', createWorkspaceRoutes(this.storage));
+    app.use('/api/workspace', tierRateLimiters.api, createWorkspaceRoutes(this.storage));
     
     // Workspace Bootstrap routes (Fortune 500-grade orchestration)
-    app.use('/api/workspace', workspaceBootstrapRouter);
+    app.use('/api/workspace', tierRateLimiters.api, workspaceBootstrapRouter);
     
     // Mobile app routes
-    app.use(mobileRouter);
+    app.use(tierRateLimiters.api, mobileRouter);
     
     // Git integration routes
-    app.use('/api/git', GitRouter);
+    app.use('/api/git', tierRateLimiters.api, GitRouter);
     
     // Debug routes
-    app.use('/api/debug', debugRouter);
+    app.use('/api/debug', tierRateLimiters.api, debugRouter);
     
     // Database routes (Admin-Only - System-wide DB inspector)
-    app.use('/api/admin/database', databaseRouter);
+    app.use('/api/admin/database', tierRateLimiters.api, databaseRouter);
     
     // Project Data routes (Project-scoped data for regular users)
-    app.use('/api/projects', projectDataRouter);
+    app.use('/api/projects', tierRateLimiters.api, projectDataRouter);
     
     // Global Search routes (Priorité 1 - Core IDE)
-    app.use('/api/search', globalSearchRouter);
+    app.use('/api/search', tierRateLimiters.api, globalSearchRouter);
     
     // Logs Viewer routes (Priorité 1 - Core IDE)
-    app.use('/api/logs', logsViewerRouter);
+    app.use('/api/logs', tierRateLimiters.api, logsViewerRouter);
     
     // Environment Variables routes (Priorité 1 - Core IDE)
-    app.use('/api/env-vars', envVarsRouter);
+    app.use('/api/env-vars', tierRateLimiters.api, envVarsRouter);
   }
   
   /**

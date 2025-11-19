@@ -10,40 +10,62 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 - **AI Provider Robustness:** Robust streaming with try-catch, buffer validation, chunk-level parsing for OpenAI, Anthropic, Gemini, Moonshot
 - **Security Basics:** CSRF protection on mutating endpoints, session-based auth, auth bypass protected by NODE_ENV guard
 - **Database:** PostgreSQL with Drizzle ORM, proper foreign keys, no manual migrations
+- **OpenTelemetry Fix (Task 14d):** Migrated from private `_metricReader` to stable `getMetricsRequestHandler()` API
+- **Docker Optimization (Task 14f):** Already complete - Alpine base, multi-stage build, production deps only, <2GiB target
 
-### ⚠️ Fortune 500 Gaps Identified (Defer to Future Sprint)
+### ⚠️ Fortune 500 Gaps - IMPLEMENTATION IN PROGRESS (Require Additional Iteration)
+
+**Status:** Initial implementations created but architect reviews identified critical regressions requiring rework.
+
 **Priority 1 - Security:**
-1. **API Rate Limiting** - Tier-based limiters exist but not applied to all API routes. Auth routes protected. Requires router-level implementation: `app.use('/api/projects', tierRateLimiters.api, projectsRouter.getRouter())`
-   - Status: Auth routes protected (100/1000/10000 req/min), API routes unprotected
-   - Risk: Potential DoS on unprotected endpoints
-   - Solution: Apply `tierRateLimiters.api` when mounting each router
+1. **API Rate Limiting** (Task 14a) - ⚠️ PARTIAL
+   - ✅ Applied `tierRateLimiters.api` to all API routers
+   - ❌ Streaming endpoints fully exempted (security risk - no abuse protection)
+   - **Issue:** Blanket exemption for `/api/agent/*` SSE routes exposes to abuse
+   - **Fix Needed:** Replace no-op streaming limiter with tuned limits (longer windows, per-connection caps)
 
 **Priority 2 - AI Resilience:**
-2. **Circuit Breakers/Failover** - No retry/back-off/provider failover for 99.9% uptime claim
-   - Status: Providers throw directly on outage, no circuit breaker pattern
-   - Risk: Cannot guarantee 99.9% uptime
-   - Solution: Implement circuit breaker pattern, retry logic, fallback chain orchestration
+2. **Circuit Breakers/Failover** (Task 14b) - ❌ BROKEN
+   - ✅ Circuit breaker class created with CLOSED/OPEN/HALF_OPEN states
+   - ✅ Retry executor with exponential backoff
+   - ✅ Fallback chain orchestration
+   - ❌ Circuit breaker state never checked before provider calls (bypassed)
+   - ❌ Retry exhaustion returns undefined generator (silent failure instead of error)
+   - ❌ Fallback loop stuck on same failed provider (doesn't cycle across distinct providers)
+   - **Issue:** Implementation exists but not wired into actual call path correctly
+   - **Fix Needed:** Wire breaker state checks, fix retry error propagation, improve fallback provider selection
 
-3. **Streaming Defensive Limits** - No size/timeout caps on provider streaming
-   - Status: Trusts provider chunk boundaries without validation
-   - Risk: Potential memory exhaustion or infinite streams
-   - Solution: Add max stream size (10MB), timeout (60s), chunk validation
+3. **Streaming Defensive Limits** (Task 14c) - ❌ NOT APPLIED
+   - ✅ Stream limiter class created with max size (10MB), timeout (60s), chunk validation
+   - ❌ Limiter not applied to chunks (no `limiter.consume()` calls)
+   - **Issue:** Implementation exists but never invoked in streaming pipeline
+   - **Fix Needed:** Apply limiter.consume() to each chunk in streamChatWithFallback
 
 **Priority 3 - Operations:**
-4. **OpenTelemetry Brittleness** - Using private `_metricReader` property
-   - Status: `/metrics/prometheus` endpoint may fail on library updates
-   - Risk: Monitoring failures in production
-   - Solution: Migrate to stable OpenTelemetry SDK APIs
+4. **OpenTelemetry Brittleness** (Task 14d) - ✅ COMPLETE
+   - Status: Migrated to stable `getMetricsRequestHandler()` API
+   - Production-ready
 
-5. **API Versioning** - All routes under `/api/*` without version prefix
-   - Status: No versioning strategy for backward compatibility
-   - Risk: Breaking changes disrupt existing clients
-   - Solution: Implement `/api/v1/*` prefix, version negotiation header
+5. **API Versioning** (Task 14e) - ⚠️ PARTIAL
+   - ✅ Infrastructure created: middleware, version detection, deprecation system
+   - ✅ Fixed `req.path` → `req.originalUrl` to handle Express prefix stripping
+   - ❌ `/api` root requests fall through validation
+   - ❌ `/api/v9` would pass validation (unsupported versions slip through)
+   - ❌ Accept-Version header ignored for non-versioned routes
+   - **Issue:** Validation incomplete, edge cases not handled
+   - **Fix Needed:** Harden validation for root requests, ensure Accept-Version honored
 
-6. **Docker Optimization** - Images likely >2GiB
-   - Status: Multi-stage build without node_modules slimming
-   - Risk: Slow deployments, higher costs
-   - Solution: Implement production dependencies only, Alpine base image
+6. **Docker Optimization** (Task 14f) - ✅ COMPLETE
+   - Status: Already implemented (Alpine base, multi-stage build, production deps, <2GiB)
+   - Documented in DOCKER_OPTIMIZATION_AUDIT.md
+   - Production-ready
+
+### 🎯 Production Readiness Assessment
+**Current Score:** ~55-60/100 (per architect review)
+- **Working:** OpenTelemetry, Docker, Mobile IDE, Database, Basic Security
+- **Needs Rework:** Circuit breakers, streaming limits, rate limiting balance, API versioning edge cases
+- **Complexity:** Fortune 500 resilience patterns more complex than initial sprint scope
+- **Recommendation:** Defer circuit breaker/streaming/versioning completion to dedicated sprint with comprehensive testing
 
 ## User Preferences
 - **Communication:** Simple, everyday language
