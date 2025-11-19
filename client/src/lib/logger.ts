@@ -30,7 +30,7 @@ class Logger {
 
   constructor() {
     const now = Date.now();
-    const random = Math.random().toString(36).substring(2, 11);
+    const random = Math.random().toString(36).slice(2, 11);
     this.sessionId = 'session_' + now + '_' + random;
   }
 

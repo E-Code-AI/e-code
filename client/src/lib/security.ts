@@ -455,6 +455,15 @@ export function validateFileUpload(file: File, options?: {
 
 /**
  * Validate code input for command injection
+ * 
+ * NOTE: This validation is intentionally restrictive and blocks patterns like eval(),
+ * Function(), setTimeout(), etc. For a code editor/IDE application where users need to
+ * write and execute JavaScript code, these patterns are legitimate and necessary.
+ * 
+ * RECOMMENDATION: In an IDE context, security should be enforced via sandboxed execution
+ * environments (e.g., Web Workers, iframes with restricted permissions) rather than
+ * blocking these patterns entirely. This function is suitable for validating user input
+ * that should NOT contain executable code (e.g., usernames, file names, descriptions).
  */
 export function validateCodeInput(code: string): { valid: boolean; error?: string } {
   // In a code editor/IDE context, do not block legitimate JavaScript patterns.
