@@ -3,8 +3,10 @@
  * Fortune 500-grade offline support and caching
  */
 
-const CACHE_NAME = 'e-code-v1';
-const RUNTIME_CACHE = 'e-code-runtime';
+// Use a build-time constant for versioning; replace __APP_VERSION__ at build time
+const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
+const CACHE_NAME = 'e-code-v-' + APP_VERSION;
+const RUNTIME_CACHE = 'e-code-runtime-v-' + APP_VERSION;
 
 // Files to cache on install
 const PRECACHE_URLS = [
