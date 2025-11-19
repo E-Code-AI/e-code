@@ -281,14 +281,6 @@ export async function measureRenderTime(
 
 /**
  * Check for memory leaks
- * 
- * REQUIREMENTS:
- * - Browser: Chrome/Chromium only (uses non-standard performance.memory API)
- * - Node.js: Requires --expose-gc flag to access global.gc
- *   Example: node --expose-gc test-runner.js
- * 
- * The performance.memory API is a non-standard Chrome-only feature that provides
- * memory usage information. This function gracefully degrades if the API is unavailable.
  */
 export async function checkMemoryLeaks(
   setupFn: () => void,
