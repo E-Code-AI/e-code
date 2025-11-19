@@ -18,6 +18,7 @@ import { useSmoothScroll } from '@/hooks/use-smooth-scroll';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { getIPadProMonacoConfig, detectIPadPro } from '@/utils/ipad-pro-optimization';
 import { registerMonacoEnhancements, MonacoFeaturesEnhancement } from '@/lib/monaco-features-enhancement';
+import { MobileCodeActions } from './MobileCodeActions';
 
 interface CompletionItem {
   label: string;
@@ -727,6 +728,9 @@ export function MobileCodeEditor({
           </>
         )}
       </AnimatePresence>
+
+      {/* Mobile Code Actions - Touch-optimized quick access to Monaco features */}
+      {!readOnly && <MobileCodeActions editor={editorInstanceRef.current} />}
     </div>
   );
 }
