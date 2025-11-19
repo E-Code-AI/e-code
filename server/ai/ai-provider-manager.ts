@@ -430,6 +430,7 @@ export class AIProviderManager {
   /**
    * Stream chat with automatic failover (Fortune 500 - 99.9% uptime)
    * Tries fallback chain if primary model fails
+   * ✅ FORTUNE 500 FIX: Skip providers with OPEN circuit breakers
    */
   async *streamChatWithFallback(
     modelId: string,
@@ -447,7 +448,9 @@ export class AIProviderManager {
     } catch (primaryError: any) {
       console.log(`[AIProviderManager] Primary model ${modelId} failed, trying fallback chain...`);
       
-      // Try fallback chain
+      // Try fallback chain (skip models from providers with OPEN circuit breakers)
+      const triedProviders = new Set<string>();
+      
       for (const fallbackModelId of PROVIDER_FALLBACK_CHAIN) {
         if (fallbackModelId === modelId) continue; // Skip primary model
         
@@ -456,8 +459,27 @@ export class AIProviderManager {
           continue; // Provider not configured
         }
         
+        // ✅ FORTUNE 500 FIX: Skip if we already tried this provider and it failed
+        // This prevents hammering the same failed provider with different models
+        if (triedProviders.has(fallbackModel.provider)) {
+          console.log(`[AIProviderManager] Skipping ${fallbackModelId} - provider ${fallbackModel.provider} already failed`);
+          continue;
+        }
+        
+        // ✅ FORTUNE 500 FIX: Check circuit breaker state before attempting
+        const circuitBreaker = this.circuitBreakers.get(fallbackModel.provider);
+        if (circuitBreaker) {
+          const status = circuitBreaker.getStatus();
+          if (status.state === 'OPEN') {
+            console.log(`[AIProviderManager] Skipping ${fallbackModelId} - circuit breaker OPEN for ${fallbackModel.provider}`);
+            triedProviders.add(fallbackModel.provider);
+            continue;
+          }
+        }
+        
         try {
-          console.log(`[AIProviderManager] Trying fallback: ${fallbackModelId}`);
+          console.log(`[AIProviderManager] Trying fallback: ${fallbackModelId} (provider: ${fallbackModel.provider})`);
+          triedProviders.add(fallbackModel.provider);
           yield* this.generateChatStreamWithRetry(fallbackModelId, messagesWithSystem, options);
           console.log(`[AIProviderManager] ✓ Fallback successful: ${fallbackModelId}`);
           return;
@@ -474,6 +496,10 @@ export class AIProviderManager {
   
   /**
    * Stream chat with retry logic and circuit breaker
+   * ✅ FORTUNE 500 FIX: Correct layering order
+   * 1. Circuit breaker (check if provider is healthy FIRST)
+   * 2. Retry logic (only retry if circuit allows)
+   * 3. Stream limits (protect against unbounded streams)
    */
   private async *generateChatStreamWithRetry(
     modelId: string,
@@ -490,18 +516,21 @@ export class AIProviderManager {
       throw new Error(`Circuit breaker not found for provider: ${model.provider}`);
     }
     
-    // Execute with circuit breaker, retry, and stream limits (Fortune 500 protection)
-    yield* this.streamLimiter.limitStream(
-      circuitBreaker.executeStream(
-        async function* (this: AIProviderManager) {
-          yield* this.retryExecutor.executeStream(
-            async function* (this: AIProviderManager) {
-              yield* this.generateChatStream(modelId, messages, options);
-            }.bind(this),
-            isRetryableError
-          );
-        }.bind(this)
-      )
+    // ✅ CORRECT ORDER: Circuit Breaker → Retry → Stream Limits
+    // Circuit breaker wraps EVERYTHING - if circuit is OPEN, reject immediately
+    yield* circuitBreaker.executeStream(
+      async function* (this: AIProviderManager) {
+        // Retry executor INSIDE circuit breaker - only retries if circuit allows
+        yield* this.retryExecutor.executeStream(
+          async function* (this: AIProviderManager) {
+            // Stream limiter protects individual call attempts
+            yield* this.streamLimiter.limitStream(
+              this.generateChatStream(modelId, messages, options)
+            );
+          }.bind(this),
+          isRetryableError
+        );
+      }.bind(this)
     );
   }
 
