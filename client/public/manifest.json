@@ -1,22 +1,143 @@
 {
-  "name": "E-Code Platform",
+  "name": "E-Code - Enterprise Code Editor",
   "short_name": "E-Code",
-  "description": "AI-powered development platform",
-  "theme_color": "#F26207",
-  "background_color": "#0A0A0A",
-  "display": "standalone",
-  "scope": "/",
+  "description": "Fortune 500-grade mobile IDE with Apple-quality design",
   "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#007AFF",
   "orientation": "any",
+  "categories": ["development", "productivity", "utilities"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "scope": "/",
   "icons": [
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
-  "categories": ["developer", "productivity"],
-  "edge_side_panel": {
-    "preferred_width": 412
-  }
+  "shortcuts": [
+    {
+      "name": "New Project",
+      "short_name": "New",
+      "description": "Create a new project",
+      "url": "/new",
+      "icons": [
+        {
+          "src": "/icons/new-project.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Open Recent",
+      "short_name": "Recent",
+      "description": "Open recent projects",
+      "url": "/recent",
+      "icons": [
+        {
+          "src": "/icons/recent.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-1.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "platform": "narrow",
+      "label": "Mobile IDE view"
+    },
+    {
+      "src": "/screenshots/tablet-1.png",
+      "sizes": "1536x2048",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Tablet IDE view"
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "file",
+          "accept": ["text/*", "application/json", "application/javascript"]
+        }
+      ]
+    }
+  },
+  "file_handlers": [
+    {
+      "action": "/open",
+      "accept": {
+        "text/*": [".txt", ".md", ".js", ".ts", ".jsx", ".tsx", ".css", ".html", ".json"],
+        "application/javascript": [".js", ".jsx"],
+        "application/typescript": [".ts", ".tsx"],
+        "application/json": [".json"]
+      }
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+ecode",
+      "url": "/open?url=%s"
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
+  "handle_links": "preferred"
 }

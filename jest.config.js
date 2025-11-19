@@ -1,45 +1,29 @@
-/** @type {import('jest').Config} */
 module.exports = {
   preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/test', '<rootDir>/server'],
-  testMatch: [
-    '**/__tests__/**/*.ts',
-    '**/?(*.)+(spec|test).ts'
-  ],
-  collectCoverageFrom: [
-    'server/**/*.ts',
-    'shared/**/*.ts',
-    '!server/**/*.d.ts',
-    '!server/**/index.ts',
-    '!server/config/**',
-    '!server/db/migrations/**'
-  ],
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
-  coverageThreshold: {
-    global: {
-      branches: 60,
-      functions: 60,
-      lines: 60,
-      statements: 60
-    }
-  },
+  testEnvironment: 'jsdom',
+  roots: ['<rootDir>/client/src', '<rootDir>/server/src'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  modulePaths: ['<rootDir>'],
   moduleNameMapper: {
-    '^@shared/(.*)$': '<rootDir>/shared/$1',
-    '^@/(.*)$': '<rootDir>/server/$1'
+    '^@/(.*)$': '<rootDir>/client/src/$1',
+    '^@server/(.*)$': '<rootDir>/server/src/$1',
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
   },
-  setupFilesAfterEnv: ['<rootDir>/test/setup/jest-setup.ts'],
-  testTimeout: 30000,
-  verbose: true,
-  maxWorkers: '50%',
-  transform: {
-    '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: {
-        module: 'commonjs',
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true
-      }
-    }]
-  }
+  collectCoverageFrom: [
+    'client/src/**/*.{js,jsx,ts,tsx}',
+    'server/src/**/*.{js,ts}',
+    '!**/*.d.ts',
+    '!**/node_modules/**',
+    '!**/.next/**',
+    '!**/dist/**',
+  ],
+  coverageThresholds: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
+  testTimeout: 10000,
 };
