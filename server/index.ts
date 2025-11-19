@@ -57,7 +57,7 @@ app.use('/api', tierRateLimiters.api);
 // Legacy dynamic rate limiting (kept for backward compatibility)
 app.use(dynamicRateLimiter);
 
-// Cloud Run provides PORT environment variable, fallback to 5000 for development
+// PORT is set by Docker (3000) or Cloud Run, fallback to 5000 for local development
 const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
 
 // Create HTTP server (but don't listen yet - wait until after all middleware is registered)
