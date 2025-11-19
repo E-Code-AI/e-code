@@ -149,7 +149,7 @@ trivy image e-code-platform:latest
 # Run container
 docker run -d \
   --name e-code-test \
-  -p 5000:5000 \
+  -p 3000:3000 \
   -e DATABASE_URL="postgresql://user:pass@host:5432/db" \
   -e OPENAI_API_KEY="sk-..." \
   -e GEMINI_API_KEY="..." \
@@ -160,8 +160,8 @@ docker run -d \
 sleep 40
 
 # Test health endpoint
-curl -f http://localhost:5000/health/liveness || echo "❌ Health check failed"
-curl -f http://localhost:5000/health/readiness || echo "❌ Readiness check failed"
+curl -f http://localhost:3000/health/liveness || echo "❌ Health check failed"
+curl -f http://localhost:3000/health/readiness || echo "❌ Readiness check failed"
 
 # Check logs
 docker logs e-code-test
@@ -173,17 +173,17 @@ docker stop e-code-test && docker rm e-code-test
 #### Full Test Suite
 ```bash
 # Test all health endpoints
-curl http://localhost:5000/health/liveness    # Should return 200 (always)
-curl http://localhost:5000/health/readiness   # Should return 200 when ready
-curl http://localhost:5000/health/startup     # Should return 200 after init
-curl http://localhost:5000/health/deep        # Should return 200 when all deps healthy
+curl http://localhost:3000/health/liveness    # Should return 200 (always)
+curl http://localhost:3000/health/readiness   # Should return 200 when ready
+curl http://localhost:3000/health/startup     # Should return 200 after init
+curl http://localhost:3000/health/deep        # Should return 200 when all deps healthy
 
 # Test API endpoints
-curl http://localhost:5000/api/monitoring/health
-curl http://localhost:5000/api/docs  # Swagger UI (if SWAGGER_ENABLED=true)
+curl http://localhost:3000/api/monitoring/health
+curl http://localhost:3000/api/docs  # Swagger UI (if SWAGGER_ENABLED=true)
 
 # Test AI provider status
-curl http://localhost:5000/api/health/providers
+curl http://localhost:3000/api/health/providers
 ```
 
 ### 🔍 Performance Testing
@@ -411,7 +411,7 @@ docker stop e-code-platform
 # Start previous version
 docker run -d \
   --name e-code-platform \
-  -p 5000:5000 \
+  -p 3000:3000 \
   --env-file .env.production \
   your-registry.io/e-code-platform:v0.9.0  # Previous stable version
 ```
@@ -494,7 +494,7 @@ Error: Cannot find module 'express'
 
 **Symptoms:**
 ```bash
-curl http://localhost:5000/health/readiness
+curl http://localhost:3000/health/readiness
 # HTTP 503 Service Unavailable
 ```
 
@@ -525,7 +525,7 @@ OpenAI API Error: 401 Unauthorized
    ```
 2. Check provider health:
    ```bash
-   curl http://localhost:5000/api/health/providers
+   curl http://localhost:3000/api/health/providers
    ```
 3. Common fixes:
    - OpenAI: Verify `OPENAI_API_KEY` starts with `sk-`
