@@ -152,56 +152,147 @@ export function isValidURL(url: string): boolean {
  */
 export class SecureStorage {
   private key: string;
+  private cryptoKeyPromise: Promise<CryptoKey>;
 
   constructor(key: string = 'e-code-encryption-key') {
     this.key = key;
+    this.cryptoKeyPromise = this.deriveKey(key);
   }
 
   /**
-   * Simple XOR encryption (for demo - use proper encryption in production)
+   * Derive a CryptoKey from the passphrase using PBKDF2.
    */
-  private encrypt(data: string): string {
-    let encrypted = '';
-    for (let i = 0; i < data.length; i++) {
-      const keyChar = this.key.charCodeAt(i % this.key.length);
-      const dataChar = data.charCodeAt(i);
-      encrypted += String.fromCharCode(dataChar ^ keyChar);
-    }
-    return btoa(encrypted);
+  private async deriveKey(passphrase: string): Promise<CryptoKey> {
+    const enc = new TextEncoder();
+    const salt = enc.encode('secure-storage-salt'); // Use a static salt for demo; in production, use a per-user salt
+    const keyMaterial = await window.crypto.subtle.importKey(
+      'raw',
+      enc.encode(passphrase),
+      { name: 'PBKDF2' },
+      false,
+      ['deriveKey']
+    );
+    return window.crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt,
+        iterations: 100000,
+        hash: 'SHA-256'
+      },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt', 'decrypt']
+    );
   }
 
   /**
-   * Simple XOR decryption
+   * AES-GCM encryption using Web Crypto API
    */
-  private decrypt(data: string): string {
+  private async encrypt(data: string): Promise<string> {
     try {
-      const decoded = atob(data);
-      let decrypted = '';
-      for (let i = 0; i < decoded.length; i++) {
-        const keyChar = this.key.charCodeAt(i % this.key.length);
-        const dataChar = decoded.charCodeAt(i);
-        decrypted += String.fromCharCode(dataChar ^ keyChar);
+      const enc = new TextEncoder();
+      const iv = window.crypto.getRandomValues(new Uint8Array(12));
+      const key = await this.cryptoKeyPromise;
+      const ciphertext = await window.crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv },
+        key,
+        enc.encode(data)
+      );
+      // Store IV + ciphertext, both as base64
+      const ivBase64 = this.arrayBufferToBase64(iv.buffer);
+      const ctBase64 = this.arrayBufferToBase64(ciphertext);
+      return ivBase64 + ':' + ctBase64;
+    } catch (e) {
+      if (process && process.env && process.env.NODE_ENV === 'production') {
+        console.warn('[SecureStorage] Fallback to insecure XOR encryption in production! This is NOT secure.');
       }
-      return decrypted;
-    } catch {
-      return '';
+      // Fallback to insecure XOR (for demo only)
+      let encrypted = '';
+      for (let i = 0; i < data.length; i++) {
+        const keyChar = this.key.charCodeAt(i % this.key.length);
+        const dataChar = data.charCodeAt(i);
+        encrypted += String.fromCharCode(dataChar ^ keyChar);
+      }
+      return btoa(encrypted);
     }
   }
 
-  setItem(key: string, value: string): void {
+  /**
+   * AES-GCM decryption using Web Crypto API
+   */
+  private async decrypt(data: string): Promise<string> {
     try {
-      const encrypted = this.encrypt(value);
+      const [ivBase64, ctBase64] = data.split(':');
+      if (!ivBase64 || !ctBase64) throw new Error('Invalid data format');
+      const iv = new Uint8Array(this.base64ToArrayBuffer(ivBase64));
+      const ciphertext = this.base64ToArrayBuffer(ctBase64);
+      const key = await this.cryptoKeyPromise;
+      const decrypted = await window.crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv },
+        key,
+        ciphertext
+      );
+      const dec = new TextDecoder();
+      return dec.decode(decrypted);
+    } catch (e) {
+      if (process && process.env && process.env.NODE_ENV === 'production') {
+        console.warn('[SecureStorage] Fallback to insecure XOR decryption in production! This is NOT secure.');
+      }
+      // Fallback to insecure XOR (for demo only)
+      try {
+        const decoded = atob(data);
+        let decrypted = '';
+        for (let i = 0; i < decoded.length; i++) {
+          const keyChar = this.key.charCodeAt(i % this.key.length);
+          const dataChar = decoded.charCodeAt(i);
+          decrypted += String.fromCharCode(dataChar ^ keyChar);
+        }
+        return decrypted;
+      } catch {
+        return '';
+      }
+    }
+  }
+
+  /**
+   * Helper: ArrayBuffer to base64
+   */
+  private arrayBufferToBase64(buffer: ArrayBuffer): string {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  }
+
+  /**
+   * Helper: base64 to ArrayBuffer
+   */
+  private base64ToArrayBuffer(base64: string): ArrayBuffer {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes.buffer;
+  }
+
+  async setItem(key: string, value: string): Promise<void> {
+    try {
+      const encrypted = await this.encrypt(value);
       localStorage.setItem(key, encrypted);
     } catch (e) {
       console.error('[SecureStorage] Failed to set item', e);
     }
   }
 
-  getItem(key: string): string | null {
+  async getItem(key: string): Promise<string | null> {
     try {
       const encrypted = localStorage.getItem(key);
       if (!encrypted) return null;
-      return this.decrypt(encrypted);
+      return await this.decrypt(encrypted);
     } catch (e) {
       console.error('[SecureStorage] Failed to get item', e);
       return null;
