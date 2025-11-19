@@ -471,11 +471,14 @@ export default function IDEPage() {
   }
   
   // ✅ Device-aware rendering: Route to optimized views for mobile/tablet
-  // NOW uses project.id (real UUID) instead of projectId (URL slug)
+  // Use project.id (UUID) with fallback to projectId (URL param, which backend normalizes to UUID)
+  // Optional chaining defends against guard regressions
+  const normalizedProjectId = project?.id ?? projectId;
+  
   if (deviceType === 'mobile') {
     return (
       <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading mobile workspace..." />}>
-        <MobileIDEView projectId={project.id} />
+        <MobileIDEView projectId={normalizedProjectId} />
       </Suspense>
     );
   }
@@ -483,7 +486,7 @@ export default function IDEPage() {
   if (deviceType === 'tablet') {
     return (
       <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading tablet workspace..." />}>
-        <LazyTabletIDEView projectId={project.id} />
+        <LazyTabletIDEView projectId={normalizedProjectId} />
       </Suspense>
     );
   }

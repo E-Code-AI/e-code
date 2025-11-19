@@ -268,15 +268,26 @@ export function MobileFileExplorer({
   
   // Create file/folder mutation
   const createMutation = useMutation({
-    mutationFn: async (data: { name: string; isFolder: boolean; parentId: number | null }) =>
-      apiRequest('POST', `/api/files/${projectId}`, data),
-    onSuccess: () => {
+    mutationFn: async (data: { name: string; isFolder: boolean; parentId: number | null }) => {
+      if (import.meta.env.DEV) {
+        console.log('[MobileFileExplorer] Creating file:', { projectId, data });
+      }
+      return apiRequest('POST', `/api/files/${projectId}`, data);
+    },
+    onSuccess: (result) => {
+      if (import.meta.env.DEV) {
+        console.log('[MobileFileExplorer] File created successfully:', result);
+      }
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       toast({ title: 'Success', description: `${newItemDialog?.type === 'folder' ? 'Folder' : 'File'} created` });
       setNewItemDialog(null);
     },
-    onError: () => {
-      toast({ title: 'Error', description: 'Failed to create item', variant: 'destructive' });
+    onError: (error: any) => {
+      if (import.meta.env.DEV) {
+        console.error('[MobileFileExplorer] Failed to create file:', error);
+      }
+      const errorMessage = error?.message || error?.toString() || 'Failed to create item';
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     },
   });
   
