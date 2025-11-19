@@ -247,7 +247,7 @@ export function MobileFileExplorer({
   
   // Fetch files from backend
   const { data: files = [], isLoading, refetch } = useQuery<FileItem[]>({
-    queryKey: [`/api/files/${projectId}`],
+    queryKey: [`/api/projects/${projectId}/files`],
     enabled: !!projectId && isOpen,
   });
   
@@ -269,9 +269,9 @@ export function MobileFileExplorer({
   // Create file/folder mutation
   const createMutation = useMutation({
     mutationFn: async (data: { name: string; isFolder: boolean; parentId: number | null }) =>
-      apiRequest('POST', `/api/files`, { ...data, projectId }),
+      apiRequest('POST', `/api/files/${projectId}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       toast({ title: 'Success', description: `${newItemDialog?.type === 'folder' ? 'Folder' : 'File'} created` });
       setNewItemDialog(null);
     },
@@ -285,7 +285,7 @@ export function MobileFileExplorer({
     mutationFn: async ({ id, name }: { id: number; name: string }) =>
       apiRequest('PATCH', `/api/files/${id}`, { name }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       toast({ title: 'Success', description: 'File renamed' });
       setRenameDialog(null);
     },
@@ -299,7 +299,7 @@ export function MobileFileExplorer({
     mutationFn: async (id: number) =>
       apiRequest('DELETE', `/api/files/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       toast({ title: 'Success', description: 'File deleted' });
       setDeleteConfirm(null);
       setShowContextMenu(false);
@@ -312,15 +312,14 @@ export function MobileFileExplorer({
   // Duplicate mutation
   const duplicateMutation = useMutation({
     mutationFn: async (file: FileItem) =>
-      apiRequest('POST', `/api/files`, {
-        projectId,
+      apiRequest('POST', `/api/files/${projectId}`, {
         name: `${file.name} (copy)`,
         isFolder: file.type === 'folder',
         parentId: file.parentId,
         content: file.content,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       toast({ title: 'Success', description: 'File duplicated' });
       setShowContextMenu(false);
     },
