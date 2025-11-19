@@ -136,17 +136,6 @@ app.get('/api/cors-health', async (_req, res) => {
   }
 
   try {
-    // Setup Agent WebSocket server for real-time AI agent progress streaming
-    // This enables the autonomous workspace bootstrap experience where users see
-    // their project being built in real-time by the AI agent
-    const { agentWebSocketService } = await import("./services/agent-websocket-service");
-    agentWebSocketService.initialize(httpServer);
-    console.log('[Agent WebSocket] Autonomous agent streaming service initialized at /ws/agent');
-  } catch (error) {
-    console.error('[WORKING SERVER] Failed to setup Agent WebSocket:', error);
-  }
-
-  try {
     // Setup Collaboration WebSocket server for real-time collaborative editing
     const { CollaborationServer } = await import("./collaboration/collaboration-server");
     const collaborationServer = new CollaborationServer(httpServer);
