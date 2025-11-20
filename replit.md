@@ -77,6 +77,13 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
     - Backend now emits frontend-compatible events: `task_start`, `task_complete`, `complete`, `error`, `file_created`
     - Proper taskId, taskName, progress, and message fields included in all events for AutonomousWorkspaceViewer compatibility
     - Real-time progress tracking now fully functional with WebSocket streaming to `/ws/agent` endpoint
+  - **Vite HMR WebSocket Code 1006 Fix (Nov 20, 2025):**
+    - Root cause: Vite's HMR WebSocket server destroyed `/ws/agent` connections (code 1006) after upgrade handler execution
+    - Solution: Pre-setup upgrade listener wrapper in `server/vite-loader.ts` that respects `kUpgradeHandled` socket tagging
+    - Implementation: Monkeypatch `httpServer.on/addListener` BEFORE `setupVite()`, wrap Vite's upgrade listeners to check `isSocketHandled()`, restore original methods after setup
+    - Fortune 500 socket management: `kUpgradeHandled` symbol pattern prevents orphan socket resource exhaustion
+    - Production validation: Architect-approved with maxListeners(20) for multi-service WebSocket surface (Agent, Terminal, LSP, Collaboration, WebRTC, Vite HMR)
+    - Result: `/ws/agent` connections now bypass Vite HMR and survive indefinitely for autonomous workspace streaming
 
 ### Infrastructure Services
 - **PostgreSQL:** Neon serverless

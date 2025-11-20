@@ -138,12 +138,23 @@ export function installFinalUpgradeGuard(
   request: IncomingMessage,
   socket: Socket
 ): void {
+  const pathname = extractPathname(request);
+  
+  // ✅ DEBUG LOGGING (Nov 20, 2025): Track socket handling lifecycle
+  logger.debug(`[Upgrade Guard] Checking socket for ${pathname} (remoteAddress: ${socket.remoteAddress})`);
+  logger.debug(`[Upgrade Guard] request.socket marked: ${!!(request.socket as any)?.[kUpgradeHandled]}`);
+  logger.debug(`[Upgrade Guard] raw socket marked: ${!!(socket as any)?.[kUpgradeHandled]}`);
+  
   // Defer check to next tick to allow all upgrade handlers to run first
   setImmediate(() => {
     // Check both request.socket and raw socket (ws library may null out request.socket)
-    if (!isSocketHandled(request, socket)) {
-      const pathname = extractPathname(request);
-      
+    const isHandled = isSocketHandled(request, socket);
+    
+    logger.debug(`[Upgrade Guard] setImmediate check for ${pathname}: isHandled=${isHandled}`);
+    logger.debug(`[Upgrade Guard] setImmediate - request.socket marked: ${!!(request.socket as any)?.[kUpgradeHandled]}`);
+    logger.debug(`[Upgrade Guard] setImmediate - raw socket marked: ${!!(socket as any)?.[kUpgradeHandled]}`);
+    
+    if (!isHandled) {
       logger.warn(`[Upgrade Guard] Destroying unhandled WebSocket upgrade: ${pathname}`);
       
       // Send HTTP 404 response before destroying socket
@@ -157,6 +168,8 @@ export function installFinalUpgradeGuard(
       );
       
       socket.destroy();
+    } else {
+      logger.debug(`[Upgrade Guard] Socket for ${pathname} is correctly handled - preserving`);
     }
   });
 }

@@ -63,6 +63,10 @@ const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
 // Create HTTP server (but don't listen yet - wait until after all middleware is registered)
 const httpServer = createServer(app);
 
+// Increase max listeners to prevent warnings (we have multiple WebSocket services + Vite HMR)
+// Agent WS, Terminal WS, LSP WS, Collaboration WS, WebRTC, Vite HMR, etc.
+httpServer.setMaxListeners(20);
+
 // Health check endpoint for deployment health checks
 // Note: Root '/' is handled by Vite middleware (dev) or serveStatic (prod) to serve the React app
 app.get('/health', (_req, res) => {
@@ -425,14 +429,14 @@ app.get('/api/cors-health', async (_req, res) => {
     }
   });
   
-  // Final catch-all guard to destroy orphan sockets (runs LAST)
-  // Uses setImmediate to allow all legitimate handlers to tag their sockets first
-  // ⚠️ TEMPORARILY DISABLED (Nov 20, 2025) - Testing if guard is still destroying legitimate sockets
-  // httpServer.on('upgrade', installFinalUpgradeGuard);
-
   // NOW start listening - ONLY after all middleware and routes are registered
   // This prevents the race condition where requests arrive before Vite middleware is ready
   httpServer.listen(port, "0.0.0.0", () => {
-    // Server started
+    // ✅ Re-enable final guard (Nov 20, 2025)  
+    // Root cause was Vite HMR, not the guard - guard correctly preserved /ws/agent sockets
+    // Now that Vite HMR is on separate port 24678, guard can safely destroy orphan sockets
+    httpServer.on('upgrade', installFinalUpgradeGuard);
+    
+    console.log('[Upgrade Guard] Final catch-all guard registered for orphan socket cleanup');
   });
 })();
