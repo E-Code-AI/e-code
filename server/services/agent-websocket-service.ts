@@ -2,6 +2,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import { createLogger } from '../utils/logger';
+import { markSocketAsHandled } from '../websocket/upgrade-guard';
 
 const logger = createLogger('agent-websocket-service');
 
@@ -56,6 +57,11 @@ class AgentWebSocketService {
     this.startHeartbeat();
     
     this.wss.on('connection', (ws, req) => {
+      // ✅ CRITICAL FIX (Nov 20, 2025): Re-mark socket in connection handler as fallback
+      // The ws library may null out request.socket during handleUpgrade, losing the tag from prependListener
+      // This ensures the socket is marked even if the upgrade handler's tag was lost
+      markSocketAsHandled(req);
+      
       logger.info(`[Agent WebSocket] New connection attempt from ${req.socket.remoteAddress} - URL: ${req.url}`);
       
       const url = new URL(req.url!, `http://${req.headers.host}`);
