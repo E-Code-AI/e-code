@@ -716,6 +716,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         provider,
         latencyMs: responseTime,
         success: true,
+        timestamp: new Date(),
         context: {
           operation: 'streaming_agent_execution',
           provider,
@@ -747,6 +748,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         latencyMs: responseTime,
         success: false,
         error: error.message,
+        timestamp: new Date(),
         context: {
           operation: 'streaming_agent_execution',
           provider,
