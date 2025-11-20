@@ -131,7 +131,7 @@ export class RedisCache {
       this.scheduleReconnect();
     });
 
-    client.on('reconnecting', (delay) => {
+    client.on('reconnecting', (delay: number) => {
       logger.warn(`Redis reconnecting in ${delay}ms`);
       this.isConnected = false;
     });
@@ -303,7 +303,7 @@ export class RedisCache {
         }
         this.client = null;
         this.isConnected = false;
-        return;
+        return null;
       }
 
       this.client = new Redis(redisUrl, {
@@ -391,26 +391,6 @@ export class RedisCache {
       logger.error('Failed to initialize Redis:', error);
       this.handleConnectionLoss();
     }
-
-    const unescaped = trimmed.replace(/\\n/g, '\n');
-    if (unescaped.includes('-----BEGIN')) {
-      return unescaped;
-    }
-
-    // Only attempt base64 decode if input is not too large (e.g., <10,000 chars)
-    if (trimmed.length > 0 && trimmed.length < 10000) {
-      try {
-        const decoded = Buffer.from(trimmed, 'base64').toString('utf8').trim();
-        // Validate that the decoded content contains expected certificate markers
-        if (decoded && decoded.includes('-----BEGIN')) {
-          return decoded.replace(/\r?\n/g, '\n');
-        }
-      } catch {
-        // Not base64 encoded, fall back to unescaped text
-      }
-    }
-
-    return unescaped;
   }
 
   private handleConnectionLoss() {
@@ -454,8 +434,7 @@ export class RedisCache {
       const serialized = JSON.stringify(value);
       const expiry = ttl || this.defaultTTL;
 
-      await this.client.setEx(key, expiry, serialized);
-      await client.setEx(key, expiry, serialized);
+      await client.setex(key, expiry, serialized);
     } catch (error) {
       logger.error(`Failed to set cache key ${key}:`, error);
     }
@@ -482,7 +461,7 @@ export class RedisCache {
     if (!client) return;
 
     try {
-      await client.flushAll();
+      await client.flushall();
       logger.info('Redis cache flushed');
     } catch (error) {
       logger.error('Failed to flush cache:', error);

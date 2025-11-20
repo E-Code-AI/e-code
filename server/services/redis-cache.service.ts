@@ -23,23 +23,20 @@ export class RedisCacheService {
     const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
     
     if (!redisUrl) {
-      logger.warn('Redis not configured - caching disabled (using in-memory fallback)');
+      logger.info('Redis not configured - caching disabled (using in-memory fallback)');
       this.isEnabled = false;
+      this.client = null;
       return;
     }
 
     try {
       this.client = new Redis(redisUrl, {
-        maxRetriesPerRequest: 3,
-        enableReadyCheck: true,
+        maxRetriesPerRequest: 0,
+        enableReadyCheck: false,
         lazyConnect: true,
-        retryStrategy(times) {
-          const delay = Math.min(times * 50, 2000);
-          return delay;
-        },
-        reconnectOnError(err) {
-          const targetErrors = ['READONLY', 'ECONNRESET'];
-          return targetErrors.some(targetError => err.message.includes(targetError));
+        retryStrategy() {
+          // Disable automatic retry - fail fast
+          return null;
         }
       });
 
@@ -49,7 +46,7 @@ export class RedisCacheService {
       });
 
       this.client.on('error', (err) => {
-        logger.error('Redis error:', err);
+        logger.error('Redis error:', { error: err.message });
         this.isEnabled = false;
       });
 
@@ -59,14 +56,21 @@ export class RedisCacheService {
       });
 
       // Connect
-      this.client.connect().catch(err => {
-        logger.error('Failed to connect to Redis:', err);
+      this.client.connect().catch((err) => {
+        logger.warn('Redis not available - caching disabled:', { error: err.message });
         this.isEnabled = false;
+        if (this.client) {
+          try {
+            this.client.disconnect();
+          } catch {}
+        }
+        this.client = null;
       });
 
-    } catch (error) {
-      logger.error('Redis initialization failed:', error);
+    } catch (error: any) {
+      logger.warn('Redis initialization failed - caching disabled:', { error: error.message });
       this.isEnabled = false;
+      this.client = null;
     }
   }
 
