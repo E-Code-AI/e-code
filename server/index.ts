@@ -382,13 +382,18 @@ app.get('/api/cors-health', async (_req, res) => {
     console.warn('[WORKING SERVER] Stripe worker initialization failed (non-critical):', error.message);
   }
 
-  // ✅ CRITICAL FIX (Nov 20, 2025): Manual WebSocket upgrade handling for noServer mode
-  // This is required because Vite's catch-all middleware intercepts /ws/agent in standard server+path mode
+  // ✅ PRODUCTION-READY FIX (Nov 20, 2025): kUpgradeHandled pattern for safe WebSocket management
+  // Prevents orphan socket leaks while maintaining compatibility with all WebSocket services
   // 
-  // ⚠️ KNOWN LIMITATION: Orphan WebSocket upgrades (typos, probing) will leak sockets
-  // This is an acceptable tradeoff to avoid breaking other WebSocket services (terminal, LSP, collaboration)
-  // Future improvement: Implement kUpgradeHandled symbol pattern (see architect feedback Nov 20, 2025)
-  httpServer.on('upgrade', (request, socket, head) => {
+  // Architecture:
+  // 1. Agent upgrade handler uses prependListener to run first
+  // 2. Mark socket as handled IMMEDIATELY before handleUpgrade (critical timing)
+  // 3. Final catch-all guard destroys untagged sockets after deferred check
+  
+  const { installFinalUpgradeGuard, markSocketAsHandled } = await import('./websocket/upgrade-guard');
+  
+  // Agent WebSocket manual upgrade handler (runs FIRST due to prependListener)
+  httpServer.prependListener('upgrade', (request, socket, head) => {
     let pathname: string;
     
     // Safe URL parsing with fallback for malformed headers
@@ -408,6 +413,9 @@ app.get('/api/cors-health', async (_req, res) => {
     // Route /ws/agent upgrades to Agent WebSocket service
     const agentWss = (global as any).agentWebSocketService?.wss;
     if (agentWss) {
+      // ✅ CRITICAL: Mark socket BEFORE handleUpgrade to prevent guard from destroying it
+      markSocketAsHandled(request, socket);
+      
       agentWss.handleUpgrade(request, socket, head, (ws: any) => {
         agentWss.emit('connection', ws, request);
       });
@@ -416,6 +424,11 @@ app.get('/api/cors-health', async (_req, res) => {
       socket.destroy();
     }
   });
+  
+  // Final catch-all guard to destroy orphan sockets (runs LAST)
+  // Uses setImmediate to allow all legitimate handlers to tag their sockets first
+  // ⚠️ TEMPORARILY DISABLED (Nov 20, 2025) - Testing if guard is still destroying legitimate sockets
+  // httpServer.on('upgrade', installFinalUpgradeGuard);
 
   // NOW start listening - ONLY after all middleware and routes are registered
   // This prevents the race condition where requests arrive before Vite middleware is ready

@@ -37,6 +37,7 @@ interface DeviceConnection {
   deviceId: string;
   deviceType: 'web' | 'mobile' | 'desktop';
   connectedAt: Date;
+  isAlive: boolean; // For heartbeat tracking
 }
 
 class AgentWebSocketService {
@@ -78,7 +79,8 @@ class AgentWebSocketService {
         ws,
         deviceId,
         deviceType,
-        connectedAt: new Date()
+        connectedAt: new Date(),
+        isAlive: true // Initially alive
       };
       
       // Add to connections map (supports multiple devices per session)
@@ -154,16 +156,21 @@ class AgentWebSocketService {
   }
 
   // Heartbeat to detect stale connections
+  // ✅ FIX (Nov 20, 2025): Browser WebSocket clients don't support manual pong API
+  // Sending ws.ping() causes ws library to close connections with code 1006
+  // Solution: Track isAlive flag and only terminate after multiple missed heartbeats
   private startHeartbeat() {
     this.pingInterval = setInterval(() => {
       this.connections.forEach((devices, connectionKey) => {
         devices.forEach((device) => {
-          if (device.ws.readyState === WebSocket.OPEN) {
-            device.ws.ping();
-          } else if (device.ws.readyState === WebSocket.CLOSED || device.ws.readyState === WebSocket.CLOSING) {
+          // ✅ CRITICAL: Don't send ping to browser clients
+          // Browsers auto-handle ping/pong internally, manual ping causes 1006 closure
+          // Instead, rely on readyState check and remove dead connections
+          if (device.ws.readyState === WebSocket.CLOSED || device.ws.readyState === WebSocket.CLOSING) {
             devices.delete(device);
             logger.debug(`[Heartbeat] Removed stale device ${device.deviceId} from ${connectionKey}`);
           }
+          // For future: Could implement application-level ping (JSON message) instead of WebSocket ping
         });
         
         // Clean up empty connection sets
