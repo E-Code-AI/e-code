@@ -13,6 +13,10 @@ export class RedisCacheService {
   private client: Redis | null = null;
   private isEnabled: boolean = false;
   private readonly defaultTTL = 3600; // 1 hour in seconds
+  private retryCount = 0;
+  private readonly MAX_RETRIES = 5;
+  private reconnectTimer: NodeJS.Timeout | null = null;
+  private readonly RECONNECT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
   constructor() {
     this.initialize();
@@ -31,46 +35,84 @@ export class RedisCacheService {
 
     try {
       this.client = new Redis(redisUrl, {
-        maxRetriesPerRequest: 0,
-        enableReadyCheck: false,
+        maxRetriesPerRequest: 3,
+        enableReadyCheck: true,
         lazyConnect: true,
-        retryStrategy() {
-          // Disable automatic retry - fail fast
-          return null;
+        retryStrategy: (times) => {
+          // True exponential backoff: max 5 retries
+          if (times > this.MAX_RETRIES) {
+            logger.warn(`Redis max retries reached - will retry reconnection every ${this.RECONNECT_INTERVAL_MS / 1000}s`);
+            this.scheduleReconnect();
+            return null; // Stop retrying, use periodic reconnect instead
+          }
+          // True exponential: 2s, 4s, 8s, 16s, 32s
+          const delay = Math.min(Math.pow(2, times) * 1000, 32000);
+          logger.info(`Redis retry attempt ${times}/${this.MAX_RETRIES} in ${delay}ms`);
+          return delay;
         }
       });
 
       this.client.on('connect', () => {
         logger.info('Redis connected successfully');
         this.isEnabled = true;
+        this.retryCount = 0; // Reset retry counter on successful connection
+        this.clearReconnectTimer(); // Clear periodic reconnect timer
       });
 
       this.client.on('error', (err) => {
-        logger.error('Redis error:', { error: err.message });
+        this.retryCount++;
+        if (this.retryCount === 1) {
+          // Only log first error to avoid spam
+          logger.error('Redis error:', { error: err.message, willRetry: this.retryCount <= this.MAX_RETRIES });
+        }
         this.isEnabled = false;
       });
 
       this.client.on('close', () => {
-        logger.warn('Redis connection closed');
+        if (this.isEnabled) {
+          // Only log if we were previously connected
+          logger.warn('Redis connection closed - will attempt reconnect');
+        }
         this.isEnabled = false;
       });
 
       // Connect
       this.client.connect().catch((err) => {
-        logger.warn('Redis not available - caching disabled:', { error: err.message });
+        logger.warn('Redis initial connection failed - will retry:', { error: err.message });
         this.isEnabled = false;
-        if (this.client) {
-          try {
-            this.client.disconnect();
-          } catch {}
-        }
-        this.client = null;
       });
 
     } catch (error: any) {
       logger.warn('Redis initialization failed - caching disabled:', { error: error.message });
       this.isEnabled = false;
       this.client = null;
+    }
+  }
+
+  /**
+   * Schedule periodic reconnection attempts
+   */
+  private scheduleReconnect() {
+    this.clearReconnectTimer();
+    
+    this.reconnectTimer = setInterval(() => {
+      if (!this.isEnabled && this.client) {
+        logger.info('Redis attempting periodic reconnection...');
+        this.retryCount = 0; // Reset retry counter for new connection attempt
+        this.client.connect().catch((err) => {
+          logger.warn('Redis periodic reconnect failed - will retry later:', { error: err.message });
+        });
+      }
+    }, this.RECONNECT_INTERVAL_MS);
+  }
+
+  /**
+   * Clear reconnect timer
+   */
+  private clearReconnectTimer() {
+    if (this.reconnectTimer) {
+      clearInterval(this.reconnectTimer);
+      this.reconnectTimer = null;
     }
   }
 
