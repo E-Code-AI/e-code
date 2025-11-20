@@ -146,12 +146,53 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     
     logger.info(`[Bootstrap] Agent session created: ${session.id}`, { sessionId: session.id, modelId });
     
-    // ✅ 40-YEAR ENGINEERING FIX (Nov 20, 2025): ASYNC plan generation
+    // 5. Setup WebSocket streaming
+    // WebSocket service is already initialized on server startup
+    // Client will connect to: ws://host/ws/agent?projectId=X&sessionId=Y
+    const workspaceUrl = `${getWebSocketBaseUrl(req)}/ws/agent?projectId=${project.id}&sessionId=${session.id}`;
+    
+    // 6. Generate bootstrap token (JWT)
+    const bootstrapToken = generateBootstrapToken({
+      projectId: String(project.id),
+      conversationId: session.id, // Use session ID as conversation ID initially
+      sessionId: session.id,
+      userId: Number(userId),
+      timestamp: Date.now()
+    });
+    
+    const elapsed = Date.now() - startTime;
+    logger.info(`[Bootstrap] Workspace ready in ${elapsed}ms - returning token IMMEDIATELY`, {
+      projectId: project.id,
+      sessionId: session.id,
+      modelId,
+      elapsed
+    });
+    
+    // 7. ✅ RETURN HTTP RESPONSE IMMEDIATELY (BEFORE background work starts)
+    // This guarantees client receives token in <1s and can redirect to IDE
+    res.status(200).json({
+      success: true,
+      projectId: project.id,
+      projectSlug: slug,
+      sessionId: session.id,
+      bootstrapToken,
+      workspaceUrl,
+      status: 'ready',
+      message: 'Workspace created successfully. Connect to workspaceUrl to stream agent progress.',
+      timing: {
+        totalMs: elapsed,
+        projectCreationMs: 0,
+        sessionCreationMs: 0,
+        workflowCreationMs: 0
+      }
+    });
+    
+    // 8. ✅ 40-YEAR ENGINEERING FIX (Nov 20, 2025): ASYNC plan generation
     // CRITICAL ISSUE: Synchronous plan generation took 3+ minutes, causing HTTP timeout
-    // SOLUTION: Return bootstrap token immediately, generate plan in background
+    // SOLUTION: Return bootstrap token immediately (ABOVE), generate plan in background (BELOW)
     // Client connects via WebSocket and receives real-time updates
     
-    logger.info(`[Bootstrap] Starting ASYNC plan generation for prompt: "${prompt.substring(0, 50)}..."`);
+    logger.info(`[Bootstrap] HTTP response sent - starting ASYNC plan generation for prompt: "${prompt.substring(0, 50)}..."`);
     
     // Store the prompt in session context for plan generation
     const planContext = {
@@ -163,9 +204,8 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
       prompt: prompt
     };
     
-    // 5. Start plan generation in background (NON-BLOCKING)
-    // ✅ ARCHITECT FIX: Always generate plan, not just when autoStart=true
-    (async () => {
+    // 9. ✅ ARCHITECT FIX: Detach background task with `void` to prevent Express from waiting
+    void (async () => {
       try {
         let plan: any = null;
         
@@ -184,7 +224,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
             const errorMsg = event.data.message || 'Plan generation failed';
             logger.error(`[Bootstrap] ❌ Plan generation error:`, errorMsg);
             
-            // ✅ ARCHITECT FIX: Send error to client via WebSocket
+            // Send error to client via WebSocket
             const agentWebSocketService = (await import('../services/agent-websocket-service.js')).agentWebSocketService;
             agentWebSocketService.broadcastToProject(String(project.id), {
               type: 'error',
@@ -199,7 +239,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
         if (!plan) {
           const errorMsg = 'No plan received from AI service - all providers may be unavailable';
           
-          // ✅ ARCHITECT FIX: Send error to client via WebSocket
+          // Send error to client via WebSocket
           const agentWebSocketService = (await import('../services/agent-websocket-service.js')).agentWebSocketService;
           agentWebSocketService.broadcastToProject(String(project.id), {
             type: 'error',
@@ -216,7 +256,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
           estimatedTime: plan.estimatedTime
         });
         
-        // 6. Execute autonomous plan (only if autoStart enabled)
+        // 10. Execute autonomous plan (only if autoStart enabled)
         if (options.autoStart) {
           logger.info(`[Bootstrap] Starting autonomous plan execution for ${plan.tasks.length} tasks`);
           
@@ -238,56 +278,27 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
           projectId: project.id,
           sessionId: session.id
         });
-        // Error already sent to client via WebSocket above
+        
+        // ✅ ARCHITECT FIX: Explicit error propagation via WebSocket
+        try {
+          const agentWebSocketService = (await import('../services/agent-websocket-service.js')).agentWebSocketService;
+          agentWebSocketService.broadcastToProject(String(project.id), {
+            type: 'error',
+            message: `Workspace creation failed: ${error.message}`,
+            timestamp: new Date().toISOString()
+          });
+        } catch (wsError) {
+          logger.error('[Bootstrap] Failed to broadcast error via WebSocket:', wsError);
+        }
       }
     })().catch(err => {
-      // ✅ ARCHITECT FIX: Prevent unhandled promise rejections on server shutdown
-      logger.error('[Bootstrap] Unhandled background task error:', err);
-    });
-    
-    logger.info(`[Bootstrap] Background plan generation started - returning token immediately`);
-    
-    // 7. Setup WebSocket streaming
-    // WebSocket service is already initialized on server startup
-    // Client will connect to: ws://host/ws/agent?projectId=X&sessionId=Y
-    const workspaceUrl = `${getWebSocketBaseUrl(req)}/ws/agent?projectId=${project.id}&sessionId=${session.id}`;
-    
-    // 8. Generate bootstrap token (JWT)
-    const bootstrapToken = generateBootstrapToken({
-      projectId: String(project.id),
-      conversationId: session.id, // Use session ID as conversation ID initially
-      sessionId: session.id,
-      userId: Number(userId),
-      timestamp: Date.now()
-    });
-    
-    // 9. Send initial WebSocket message (connection ready notification)
-    // Note: Client hasn't connected yet, but we prepare the channel
-    
-    const elapsed = Date.now() - startTime;
-    logger.info(`[Bootstrap] Workspace ready in ${elapsed}ms`, {
-      projectId: project.id,
-      sessionId: session.id,
-      modelId,
-      elapsed
-    });
-    
-    // 10. Return bootstrap response
-    res.json({
-      success: true,
-      projectId: project.id,
-      projectSlug: slug,
-      sessionId: session.id,
-      bootstrapToken,
-      workspaceUrl,
-      status: 'ready',
-      message: 'Workspace created successfully. Connect to workspaceUrl to stream agent progress.',
-      timing: {
-        totalMs: elapsed,
-        projectCreationMs: 0, // Could add granular timing if needed
-        sessionCreationMs: 0,
-        workflowCreationMs: 0
-      }
+      // ✅ ARCHITECT FIX: Watchdog for unhandled promise rejections
+      logger.error('[Bootstrap] Unhandled background task error:', {
+        error: err.message,
+        stack: err.stack,
+        projectId: project.id,
+        sessionId: session.id
+      });
     });
     
   } catch (error: any) {
