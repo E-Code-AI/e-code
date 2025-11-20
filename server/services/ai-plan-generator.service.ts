@@ -263,9 +263,10 @@ Remember:
           const systemPrompt = isGemini ? systemPromptCondensed : systemPromptFull;
           logger.info(`[generatePlan] Using ${isGemini ? 'CONDENSED' : 'FULL'} prompt for ${modelId} (${systemPrompt.length} chars)`);
           
-          // ✅ 40-YEAR ENGINEERING FIX: Per-provider timeout (90 seconds)
-          // Each provider attempt gets full 90s, allows multiple fallback attempts
-          const PLAN_GENERATION_TIMEOUT = 90000; // 90 seconds per provider
+          // ✅ 40-YEAR ENGINEERING FIX: Per-provider timeout (180 seconds for complex prompts)
+          // Each provider attempt gets full 180s for complex CRM/enterprise prompts
+          // This allows GPT-5.1 to fully generate detailed plans without premature timeout
+          const PLAN_GENERATION_TIMEOUT = 180000; // 180 seconds per provider (3 minutes)
           const streamStartTime = Date.now();
           
           // Stream response using AI Provider Manager

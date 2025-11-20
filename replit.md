@@ -53,8 +53,9 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 - **40-Year Engineering Reliability Fixes (Nov 19-20, 2025):** 
   - Stream timeout 60s (default), retries 2→4, circuit breaker 30s→20s
   - **Per-Call Timeout Override System**: AIProviderManager accepts custom `timeoutMs` parameter for complex operations
-  - Plan generation: 90s timeout per provider (vs 60s default) with preserved 10MB/100KB safety limits
+  - Plan generation: 180s timeout per provider (vs 60s default, increased from 90s for complex CRM/enterprise prompts) with preserved 10MB/100KB safety limits
   - **StreamLimiter Chunk Idle Timeout (Nov 20, 2025)**: Separated chunk idle timeout (30s) from total timeout to fix 11ms timeout errors after 90s streams - allows plan generation to complete without premature chunk timeouts
+  - **Complex Prompt Support (Nov 20, 2025)**: Plan generation timeout increased to 180s (3 minutes) per provider to support complex enterprise prompts (CRM, ERP, etc.) without premature timeout - allows GPT-5.1, Kimi K2, and other models to fully generate detailed execution plans
   - Moonshot model IDs corrected to production-recommended versions (kimi-k2-0711-preview, kimi-k2-0905-preview, kimi-k2-thinking)
   - Stripe API version updated to 2025-08-27.basil across all billing services (subscription-manager, stripe-billing-service, ai-metering-service, stripe-service)
   - Badge component refactored with React.forwardRef for proper ref handling in Radix UI Slot contexts
