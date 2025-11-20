@@ -66,10 +66,10 @@ export const aiModelEnum = pgEnum('ai_model', [
   'grok-4',
   'grok-4-fast',
   
-  // Moonshot AI (Nov 2025)
-  'kimi-k2',
-  'kimi-k2-thinking',
-  'kimi-k2-turbo'
+  // Moonshot AI (Nov 2025) - ✅ 40-YEAR FIX: Production-recommended IDs
+  'kimi-k2-0711-preview',
+  'kimi-k2-0905-preview',
+  'kimi-k2-thinking'
 ]);
 export const agentModeEnum = pgEnum('agent_mode', ['plan', 'build']);
 export const buildExecutionStatusEnum = pgEnum('build_execution_status', ['pending', 'running', 'completed', 'failed', 'cancelled']);
@@ -1503,10 +1503,10 @@ export const AI_MODELS = [
   // xAI (July-Sept 2025)
   'grok-4',
   'grok-4-fast',
-  // Moonshot AI (Nov 2025)
-  'kimi-k2',
-  'kimi-k2-thinking',
-  'kimi-k2-turbo'
+  // Moonshot AI (Nov 2025) - ✅ 40-YEAR FIX: Production-recommended IDs
+  'kimi-k2-0711-preview',
+  'kimi-k2-0905-preview',
+  'kimi-k2-thinking'
 ] as const;
 export type AiModel = typeof AI_MODELS[number];
 

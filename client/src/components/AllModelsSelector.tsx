@@ -167,11 +167,11 @@ export function AllModelsSelector() {
       available: true
     },
     
-    // Moonshot AI Kimi-K2 models (10-100× cheaper than GPT-4)
+    // ✅ 40-YEAR FIX: Moonshot AI - Production-recommended model IDs (10-100× cheaper than GPT-4)
     {
-      id: 'kimi-k2',
-      name: 'Kimi K2',
-      description: 'Cost-effective model with excellent agentic capabilities - 10× cheaper than GPT-4',
+      id: 'kimi-k2-0711-preview',
+      name: 'Kimi K2 (July 2025)',
+      description: 'Production-recommended - 1T param MoE model optimized for agentic tasks, 10-100× cheaper than GPT-4',
       provider: 'Moonshot AI',
       contextWindow: 128000,
       capabilities: ['Chat', 'Code', 'Analysis', 'Agents'],
@@ -179,23 +179,23 @@ export function AllModelsSelector() {
       available: true
     },
     {
-      id: 'kimi-k2-thinking',
-      name: 'Kimi K2 Thinking',
-      description: 'Enhanced reasoning and complex problem-solving capabilities',
+      id: 'kimi-k2-0905-preview',
+      name: 'Kimi K2 (Sept 2025)',
+      description: 'Latest stable - improved coding performance with 256K context window',
       provider: 'Moonshot AI',
-      contextWindow: 128000,
-      capabilities: ['Chat', 'Code', 'Reasoning', 'Analysis'],
-      pricing: { input: 0.80, output: 3.00, currency: 'USD', unit: '1M tokens' },
+      contextWindow: 256000,
+      capabilities: ['Chat', 'Code', 'Analysis', 'Agents'],
+      pricing: { input: 0.60, output: 2.50, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
-      id: 'kimi-k2-turbo',
-      name: 'Kimi K2 Turbo',
-      description: 'Fastest Kimi model for low-latency applications - 100× cheaper than GPT-4',
+      id: 'kimi-k2-thinking',
+      name: 'Kimi K2 Thinking',
+      description: 'Advanced reasoning & agentic model - 256K context with 200-300 sequential tool calls',
       provider: 'Moonshot AI',
-      contextWindow: 128000,
-      capabilities: ['Chat', 'Code', 'Fast Response'],
-      pricing: { input: 0.30, output: 1.00, currency: 'USD', unit: '1M tokens' },
+      contextWindow: 256000,
+      capabilities: ['Chat', 'Code', 'Reasoning', 'Analysis'],
+      pricing: { input: 0.60, output: 2.50, currency: 'USD', unit: '1M tokens' },
       available: true
     }
   ];

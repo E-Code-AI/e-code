@@ -1,0 +1,77 @@
+~/workspace$ # 1. Supprimer le fichier de verrou git
+rm -f .git/index.lock
+
+# 2. Annuler le cherry-pick
+git cherry-pick --abort
+
+# 3. Vérifier que c'est résolu
+git status
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+    modified:   client/index.html
+    modified:   client/src/App.tsx
+    modified:   client/src/components/AllModelsSelector.tsx
+    modified:   client/src/components/editor/ReplitMonacoEditor.tsx
+    modified:   client/src/components/ide/AutonomousWorkspaceViewer.tsx
+    modified:   client/src/components/mobile/MobileCodeActions.tsx
+    modified:   client/src/components/mobile/MobileMoreMenu.tsx
+    modified:   client/src/components/mobile/ReplitBottomTabs.tsx
+    modified:   client/src/components/mobile/index.ts
+    modified:   client/src/components/ui/badge.tsx
+    modified:   client/src/components/utilities/ShortcutHint.tsx
+    modified:   client/src/components/utilities/ShortcutTester.tsx
+    modified:   client/src/lib/monaco-features-enhancement.ts
+    modified:   client/src/pages/CodeGeneration.tsx
+    modified:   client/src/pages/Dashboard.tsx
+    modified:   client/src/pages/Home.tsx
+    modified:   client/src/pages/IDEPage.tsx
+    modified:   drizzle/0001_add_ai_models.sql
+    modified:   replit.md
+    modified:   server/agent/project-context.ts
+    modified:   server/ai/ai-provider-manager.ts
+    modified:   server/ai/ai-providers.ts
+    modified:   server/ai/enhanced-autonomous-agent.ts
+    modified:   server/ai/openai-enhanced-provider.ts
+    modified:   server/ai/stream-limiter.ts
+    modified:   server/billing/subscription-manager.ts
+    modified:   server/db-seed.ts
+    modified:   server/index.ts
+    modified:   server/middleware/tier-rate-limiter.ts
+    modified:   server/payments/stripe-service.ts
+    modified:   server/routes/agent-autonomous.router.ts
+    modified:   server/routes/files.router.ts
+    modified:   server/routes/index.ts
+    modified:   server/routes/workspace-bootstrap.router.ts
+    modified:   server/services/agent-websocket-service.ts
+    modified:   server/services/ai-metering-service.ts
+    modified:   server/services/ai-plan-generator.service.ts
+    modified:   server/services/stripe-billing-service.ts
+    modified:   server/utils/model-normalizer.ts
+    modified:   shared/aiModels.ts
+    modified:   shared/schema.ts
+    modified:   tailwind.config.ts
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+    MOBILE_SYMBOL_NAVIGATION_TEST_GUIDE.md
+    MOBILE_SYMBOL_NAVIGATION_VALIDATION.md
+    SMOKE_TEST_REPORT.md
+    attached_assets/IMG_2687_1763570048455.png
+    attached_assets/IMG_2689_1763596528499.jpeg
+    client/src/components/CodeGenerationPanel.tsx
+    client/src/components/UniversalAgentInterface.tsx
+    client/src/hooks/use-agent-websocket.ts
+    client/src/lib/ts-kind-map.ts
+    projects/
+    server/routes/code-generation.router.ts
+    test/unit/lib/
+
+no changes added to commit (use "git add" and/or "git commit -a")
+~/workspace$ rm -f .git/index.lock && git cherry-pick --abort && git status
+error: no cherry-pick or revert in progress
+fatal: cherry-pick failed
+~/workspace$ 

@@ -46,15 +46,16 @@ export interface ExecutionPlan {
 export class AIPlanGeneratorService {
   private storage: IStorage;
   
-  // Provider fallback chain: Try providers in order of reliability
+  // ✅ 40-YEAR ENGINEERING FIX: Provider fallback chain - corrected model IDs
   // ✅ GPT-5.1 UPGRADE (Nov 17, 2025): Adaptive reasoning with reasoning_effort='none' for fast plan generation
   // ✅ KIMI-K2 INTEGRATION (Nov 14, 2025): Added Moonshot AI for cost savings & performance
+  // FIXED: kimi-k2 → kimi-k2-0711-preview (production-recommended model ID)
   private readonly PROVIDER_FALLBACK_CHAIN = [
-    'gpt-5.1',             // OpenAI GPT-5.1 with adaptive reasoning (Nov 2025 flagship)
-    'kimi-k2',             // Moonshot AI Kimi-K2 (10-100× cheaper, optimized for agentic tasks)
-    'gemini-2.5-flash',    // ✅ FIXED: Google Gemini 2.5 Flash (was gemini-1.5-flash, now correct model ID)
-    'grok-4-fast',         // xAI Grok 4 Fast (correct model ID, was grok-2-1212)
-    'claude-haiku-4-5-20251015'  // Anthropic Claude Haiku 4.5 (updated to latest model)
+    'gpt-5.1',                      // OpenAI GPT-5.1 with adaptive reasoning (Nov 2025 flagship)
+    'kimi-k2-0711-preview',         // ✅ FIXED: Moonshot AI production-recommended model (was kimi-k2)
+    'gemini-2.5-flash',             // Google Gemini 2.5 Flash (250/day free tier)
+    'grok-4-fast',                  // xAI Grok 4 Fast (2M context, 64× cheaper than o3)
+    'claude-haiku-4-5-20251015'     // Anthropic Claude Haiku 4.5 (fastest Claude model)
   ];
 
   constructor(storage: IStorage) {
@@ -262,10 +263,16 @@ Remember:
           const systemPrompt = isGemini ? systemPromptCondensed : systemPromptFull;
           logger.info(`[generatePlan] Using ${isGemini ? 'CONDENSED' : 'FULL'} prompt for ${modelId} (${systemPrompt.length} chars)`);
           
+          // ✅ 40-YEAR ENGINEERING FIX: Per-provider timeout (90 seconds)
+          // Each provider attempt gets full 90s, allows multiple fallback attempts
+          const PLAN_GENERATION_TIMEOUT = 90000; // 90 seconds per provider
+          const streamStartTime = Date.now();
+          
           // Stream response using AI Provider Manager
           // ✅ CRITICAL FIX: Increased max_tokens to prevent JSON truncation
           // Complex plans with multiple files can easily exceed 8192 tokens
           // ✅ GPT-5.1 UPGRADE (Nov 17, 2025): Use reasoning_effort='none' for fast plan generation
+          // ✅ TIMEOUT FIX (Nov 19, 2025): Custom 90s timeout for plan generation (default 60s too short)
           const stream = await aiProviderManager.streamChat(
             modelId,
             [
@@ -276,19 +283,36 @@ Remember:
               max_tokens: 16384,  // ✅ DOUBLED: Prevents JSON being cut mid-generation
               temperature: 0.7,
               reasoning_effort: 'none', // ✅ GPT-5.1: Fast non-reasoning mode for low-latency responses
+              timeoutMs: PLAN_GENERATION_TIMEOUT, // ✅ Custom timeout for complex plan generation
             }
           );
 
-          // Stream chunks to client
+          // ✅ 40-YEAR ENGINEERING FIX: Stream with timeout monitoring
+          let lastChunkTime = Date.now();
+          const CHUNK_TIMEOUT = 10000; // 10 seconds between chunks
+          
           for await (const chunk of stream) {
+            // Check overall timeout
+            if (Date.now() - streamStartTime > PLAN_GENERATION_TIMEOUT) {
+              throw new Error(`Plan generation timeout after ${PLAN_GENERATION_TIMEOUT}ms`);
+            }
+            
+            // Check chunk timeout (no activity for 10 seconds)
+            if (Date.now() - lastChunkTime > CHUNK_TIMEOUT) {
+              throw new Error(`Stream stalled - no chunks for ${CHUNK_TIMEOUT}ms`);
+            }
+            
             if (chunk && typeof chunk === 'string') {
               fullResponse += chunk;
+              lastChunkTime = Date.now(); // Reset chunk timer
               yield { 
                 type: 'chunk', 
                 data: { content: chunk } 
               };
             }
           }
+          
+          logger.info(`[generatePlan] ✓ Stream completed in ${Date.now() - streamStartTime}ms`);
 
           logger.info(`[generatePlan] ✓ Received response from ${modelId}, attempting to parse...`);
 

@@ -32,14 +32,25 @@ interface AgentProgressUpdate {
   };
 }
 
+interface DeviceConnection {
+  ws: WebSocket;
+  deviceId: string;
+  deviceType: 'web' | 'mobile' | 'desktop';
+  connectedAt: Date;
+}
+
 class AgentWebSocketService {
   private wss: WebSocketServer | null = null;
-  private connections = new Map<string, WebSocket>();
+  private connections = new Map<string, Set<DeviceConnection>>();
+  private pingInterval: NodeJS.Timeout | null = null;
   
   initialize(server: Server) {
     this.wss = new WebSocketServer({ server, path: '/ws/agent' });
     
     logger.info('[Agent WebSocket] Service initialized at /ws/agent');
+    
+    // Start heartbeat for connection health monitoring
+    this.startHeartbeat();
     
     this.wss.on('connection', (ws, req) => {
       logger.info(`[Agent WebSocket] New connection attempt from ${req.socket.remoteAddress} - URL: ${req.url}`);
@@ -47,8 +58,10 @@ class AgentWebSocketService {
       const url = new URL(req.url!, `http://${req.headers.host}`);
       const projectId = url.searchParams.get('projectId');
       const sessionId = url.searchParams.get('sessionId');
+      const deviceId = url.searchParams.get('deviceId') || `device-${Date.now()}`;
+      const deviceType = (url.searchParams.get('deviceType') || 'web') as 'web' | 'mobile' | 'desktop';
       
-      logger.info(`[Agent WebSocket] Parsed params - projectId: ${projectId}, sessionId: ${sessionId}`);
+      logger.info(`[Agent WebSocket] Parsed params - projectId: ${projectId}, sessionId: ${sessionId}, deviceId: ${deviceId}, deviceType: ${deviceType}`);
       
       if (!projectId || !sessionId) {
         logger.warn(`[Agent WebSocket] Rejecting connection - missing params (projectId: ${projectId}, sessionId: ${sessionId})`);
@@ -57,43 +70,147 @@ class AgentWebSocketService {
       }
       
       const connectionKey = `${projectId}-${sessionId}`;
-      this.connections.set(connectionKey, ws);
-      logger.info(`[Agent WebSocket] ✅ Connection established: ${connectionKey}`);
+      
+      // Create device connection object
+      const deviceConnection: DeviceConnection = {
+        ws,
+        deviceId,
+        deviceType,
+        connectedAt: new Date()
+      };
+      
+      // Add to connections map (supports multiple devices per session)
+      if (!this.connections.has(connectionKey)) {
+        this.connections.set(connectionKey, new Set());
+      }
+      this.connections.get(connectionKey)!.add(deviceConnection);
+      
+      const deviceCount = this.connections.get(connectionKey)!.size;
+      logger.info(`[Agent WebSocket] ✅ Connection established: ${connectionKey} (deviceId: ${deviceId}, type: ${deviceType}, total devices: ${deviceCount})`);
+      
+      // Build roster of currently connected devices (excluding this one)
+      const roster = Array.from(this.connections.get(connectionKey)!)
+        .filter((d) => d.deviceId !== deviceId)
+        .map((d) => ({
+          deviceId: d.deviceId,
+          deviceType: d.deviceType,
+          connectedAt: d.connectedAt.toISOString()
+        }));
+      
+      // Send initial connection confirmation WITH roster
+      ws.send(JSON.stringify({
+        type: 'connected',
+        projectId,
+        sessionId,
+        deviceId,
+        deviceType,
+        totalDevices: deviceCount,
+        roster
+      }));
+      
+      // Notify other devices about new connection (presence update)
+      this.broadcastPresence(connectionKey, {
+        type: 'device_connected',
+        deviceId,
+        deviceType,
+        connectedAt: deviceConnection.connectedAt.toISOString(),
+        totalDevices: deviceCount
+      }, deviceId);
       
       ws.on('error', (error) => {
-        logger.error(`[Agent WebSocket] WebSocket error for ${connectionKey}: ${error.message}`);
+        logger.error(`[Agent WebSocket] WebSocket error for ${connectionKey} (device: ${deviceId}): ${error.message}`);
       });
       
       ws.on('close', (code, reason) => {
-        this.connections.delete(connectionKey);
-        logger.info(`[Agent WebSocket] Connection closed: ${connectionKey} (code: ${code}, reason: ${reason})`);
+        // Remove this device from the connections
+        const connections = this.connections.get(connectionKey);
+        if (connections) {
+          connections.delete(deviceConnection);
+          
+          const remainingDevices = connections.size;
+          logger.info(`[Agent WebSocket] Connection closed: ${connectionKey} (deviceId: ${deviceId}, code: ${code}, remaining devices: ${remainingDevices})`);
+          
+          // Clean up empty connection sets
+          if (remainingDevices === 0) {
+            this.connections.delete(connectionKey);
+          } else {
+            // Notify other devices about disconnection
+            this.broadcastPresence(connectionKey, {
+              type: 'device_disconnected',
+              deviceId,
+              deviceType,
+              totalDevices: remainingDevices
+            }, deviceId);
+          }
+        }
       });
-      
-      // Send initial connection confirmation
-      const confirmationMsg = JSON.stringify({
-        type: 'connected',
-        projectId,
-        sessionId
-      });
-      ws.send(confirmationMsg);
-      logger.info(`[Agent WebSocket] Sent confirmation to ${connectionKey}`);
     });
     
     this.wss.on('error', (error) => {
       logger.error(`[Agent WebSocket] Server error: ${error.message}`);
     });
   }
+
+  // Heartbeat to detect stale connections
+  private startHeartbeat() {
+    this.pingInterval = setInterval(() => {
+      this.connections.forEach((devices, connectionKey) => {
+        devices.forEach((device) => {
+          if (device.ws.readyState === WebSocket.OPEN) {
+            device.ws.ping();
+          } else if (device.ws.readyState === WebSocket.CLOSED || device.ws.readyState === WebSocket.CLOSING) {
+            devices.delete(device);
+            logger.debug(`[Heartbeat] Removed stale device ${device.deviceId} from ${connectionKey}`);
+          }
+        });
+        
+        // Clean up empty connection sets
+        if (devices.size === 0) {
+          this.connections.delete(connectionKey);
+        }
+      });
+    }, 30000); // Every 30 seconds
+  }
   
+  // Broadcast presence updates to all devices EXCEPT the sender
+  private broadcastPresence(connectionKey: string, message: any, excludeDeviceId?: string) {
+    const devices = this.connections.get(connectionKey);
+    if (!devices) return;
+    
+    const messageStr = JSON.stringify(message);
+    let sentCount = 0;
+    
+    devices.forEach((device) => {
+      if (device.deviceId !== excludeDeviceId && device.ws.readyState === WebSocket.OPEN) {
+        device.ws.send(messageStr);
+        sentCount++;
+      }
+    });
+    
+    logger.debug(`[Presence] Broadcasted ${message.type} to ${sentCount} devices on ${connectionKey}`);
+  }
+  
+  // Send progress update to ALL connected devices for a session
   sendProgress(update: AgentProgressUpdate) {
     const connectionKey = `${update.projectId}-${update.sessionId}`;
-    const ws = this.connections.get(connectionKey);
+    const devices = this.connections.get(connectionKey);
     
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(update));
-      logger.debug(`Sent progress update to ${connectionKey}: ${update.type}`);
-    } else {
-      logger.warn(`No active connection for ${connectionKey}`);
+    if (!devices || devices.size === 0) {
+      logger.warn(`No active connections for ${connectionKey}`);
+      return;
     }
+    
+    const messageStr = JSON.stringify(update);
+    let sentCount = 0;
+    
+    devices.forEach((device) => {
+      if (device.ws.readyState === WebSocket.OPEN) {
+        device.ws.send(messageStr);
+        sentCount++;
+      }
+    });
+    
+    logger.debug(`Sent progress update to ${sentCount} device(s) on ${connectionKey}: ${update.type}`);
   }
   
   sendStepUpdate(projectId: number, sessionId: string, step: any) {
@@ -132,48 +249,61 @@ class AgentWebSocketService {
     });
   }
 
-  // NEW: Generic broadcast method for autonomous agent events
+  // Generic broadcast method for autonomous agent events (sends to ALL devices)
   broadcast(message: any, projectId: string | number) {
     const sessionId = message.sessionId || 'default';
     const connectionKey = `${projectId}-${sessionId}`;
-    const ws = this.connections.get(connectionKey);
+    const devices = this.connections.get(connectionKey);
 
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(message));
-      logger.debug(`Broadcasted ${message.type} to ${connectionKey}`);
-    } else {
-      logger.warn(`Cannot broadcast ${message.type}: No active connection for ${connectionKey}`);
+    if (!devices || devices.size === 0) {
+      logger.warn(`Cannot broadcast ${message.type}: No active connections for ${connectionKey}`);
+      return;
     }
+
+    const messageStr = JSON.stringify(message);
+    let sentCount = 0;
+
+    devices.forEach((device) => {
+      if (device.ws.readyState === WebSocket.OPEN) {
+        device.ws.send(messageStr);
+        sentCount++;
+      }
+    });
+
+    logger.debug(`Broadcasted ${message.type} to ${sentCount} device(s) on ${connectionKey}`);
   }
 
   // NEW: Convenience methods for plan execution events (matches frontend expectations)
   broadcastPlanStarted(projectId: string | number, sessionId: string, totalTasks: number) {
     this.broadcast({
-      type: 'plan_started',
+      type: 'task_start',
       projectId,
       sessionId,
-      totalTasks
+      taskName: 'Initializing autonomous workspace creation',
+      message: `Starting ${totalTasks} tasks...`
     }, projectId);
   }
 
   broadcastTaskStarted(projectId: string | number, sessionId: string, taskIndex: number, task: any) {
     this.broadcast({
-      type: 'task_started',
+      type: 'task_start',
       projectId,
       sessionId,
-      taskIndex,
-      task
+      taskId: task.id || `task-${taskIndex}`,
+      taskName: task.description || task.name || `Task ${taskIndex + 1}`,
+      message: task.description || `Starting task ${taskIndex + 1}`
     }, projectId);
   }
 
   broadcastTaskCompleted(projectId: string | number, sessionId: string, taskIndex: number, totalTasks: number, result: any) {
+    const progress = Math.round(((taskIndex + 1) / totalTasks) * 100);
     this.broadcast({
-      type: 'task_completed',
+      type: 'task_complete',
       projectId,
       sessionId,
-      taskIndex,
-      totalTasks,
-      result
+      taskId: result.stepId || `task-${taskIndex}`,
+      taskName: `Task ${taskIndex + 1} completed`,
+      progress
     }, projectId);
   }
 
@@ -198,19 +328,19 @@ class AgentWebSocketService {
 
   broadcastPlanCompleted(projectId: string | number, sessionId: string, success: boolean) {
     this.broadcast({
-      type: 'plan_completed',
+      type: 'complete',
       projectId,
       sessionId,
-      success
+      message: 'Workspace creation complete! 🎉'
     }, projectId);
   }
 
   broadcastPlanFailed(projectId: string | number, sessionId: string, error: string) {
     this.broadcast({
-      type: 'plan_failed',
+      type: 'error',
       projectId,
       sessionId,
-      error
+      message: error
     }, projectId);
   }
 

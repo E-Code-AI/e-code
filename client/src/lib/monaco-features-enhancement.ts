@@ -16,6 +16,12 @@ export interface MonacoEnhancementConfig {
 }
 
 /**
+ * Note: Monaco's editor.addCommand() returns string | null (command ID), not IDisposable.
+ * Commands are managed by Monaco's keybinding service and don't need manual disposal.
+ * Only providers (languages.register*) return actual IDisposables that must be disposed.
+ */
+
+/**
  * Enhanced multi-cursor editing features
  */
 export class MultiCursorEnhancement {
@@ -28,68 +34,41 @@ export class MultiCursorEnhancement {
   }
 
   private registerCommands() {
+    // Note: addCommand returns command ID (string|null), not IDisposable
+    // Monaco manages command lifecycle, no disposal needed
+
     // Add selection to next find match (Ctrl+D / Cmd+D)
-    this.disposables.push(
-      this.editor.addCommand(
-        monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD,
-        () => {
-          this.editor.trigger('keyboard', 'editor.action.addSelectionToNextFindMatch', {});
-        }
-      )
-    );
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, () => {
+      this.editor.trigger('keyboard', 'editor.action.addSelectionToNextFindMatch', {});
+    });
 
     // Select all occurrences of find match (Ctrl+Shift+L / Cmd+Shift+L)
-    this.disposables.push(
-      this.editor.addCommand(
-        monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyL,
-        () => {
-          this.editor.trigger('keyboard', 'editor.action.selectHighlights', {});
-        }
-      )
-    );
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyL, () => {
+      this.editor.trigger('keyboard', 'editor.action.selectHighlights', {});
+    });
 
     // Add cursor above (Ctrl+Alt+Up / Cmd+Option+Up)
-    this.disposables.push(
-      this.editor.addCommand(
-        monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.UpArrow,
-        () => {
-          this.editor.trigger('keyboard', 'editor.action.insertCursorAbove', {});
-        }
-      )
-    );
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.UpArrow, () => {
+      this.editor.trigger('keyboard', 'editor.action.insertCursorAbove', {});
+    });
 
     // Add cursor below (Ctrl+Alt+Down / Cmd+Option+Down)
-    this.disposables.push(
-      this.editor.addCommand(
-        monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.DownArrow,
-        () => {
-          this.editor.trigger('keyboard', 'editor.action.insertCursorBelow', {});
-        }
-      )
-    );
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.DownArrow, () => {
+      this.editor.trigger('keyboard', 'editor.action.insertCursorBelow', {});
+    });
 
     // Column selection (Ctrl+Shift+Alt+Arrow)
-    this.disposables.push(
-      this.editor.addCommand(
-        monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.DownArrow,
-        () => {
-          this.editor.trigger('keyboard', 'cursorColumnSelectDown', {});
-        }
-      )
-    );
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.DownArrow, () => {
+      this.editor.trigger('keyboard', 'cursorColumnSelectDown', {});
+    });
 
-    this.disposables.push(
-      this.editor.addCommand(
-        monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.UpArrow,
-        () => {
-          this.editor.trigger('keyboard', 'cursorColumnSelectUp', {});
-        }
-      )
-    );
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.UpArrow, () => {
+      this.editor.trigger('keyboard', 'cursorColumnSelectUp', {});
+    });
   }
 
   dispose() {
-    this.disposables.forEach(d => d.dispose());
+    this.disposables.forEach(d => d?.dispose?.());
     this.disposables = [];
   }
 }
@@ -109,49 +88,46 @@ export class CodeNavigationEnhancement {
 
   private registerCommands() {
     // Go to Definition (F12)
-    this.disposables.push(
-      this.editor.addCommand(monaco.KeyCode.F12, () => {
-        this.editor.trigger('keyboard', 'editor.action.revealDefinition', {});
-      })
-    );
+    this.editor.addCommand(monaco.KeyCode.F12, () => {
+
+      this.editor.trigger('keyboard', 'editor.action.revealDefinition', {});
+
+    });
 
     // Peek Definition (Alt+F12)
-    this.disposables.push(
-      this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.F12, () => {
-        this.editor.trigger('keyboard', 'editor.action.peekDefinition', {});
-      })
-    );
+    this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.F12, () => {
+
+      this.editor.trigger('keyboard', 'editor.action.peekDefinition', {});
+
+    });
 
     // Find All References (Shift+F12)
-    this.disposables.push(
-      this.editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.F12, () => {
-        this.editor.trigger('keyboard', 'editor.action.goToReferences', {});
-      })
-    );
+    this.editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.F12, () => {
+
+      this.editor.trigger('keyboard', 'editor.action.goToReferences', {});
+
+    });
 
     // Go to Symbol in File (Ctrl+Shift+O / Cmd+Shift+O)
-    this.disposables.push(
-      this.editor.addCommand(
-        monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyO,
-        () => {
-          this.editor.trigger('keyboard', 'editor.action.quickOutline', {});
-        }
-      )
-    );
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyO, () => {
+
+      this.editor.trigger('keyboard', 'editor.action.quickOutline', {});
+
+    });
 
     // Go to Symbol in Workspace (Ctrl+T / Cmd+T)
-    this.disposables.push(
-      this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyT, () => {
-        this.editor.trigger('keyboard', 'editor.action.quickOpen', { prefix: '#' });
-      })
-    );
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyT, () => {
+
+      this.editor.trigger('keyboard', 'editor.action.quickOpen', { prefix: '#' });
+
+    });
 
     // Go to Line (Ctrl+G / Cmd+G)
-    this.disposables.push(
-      this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG, () => {
-        this.editor.trigger('keyboard', 'editor.action.gotoLine', {});
-      })
-    );
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG, () => {
+
+      this.editor.trigger('keyboard', 'editor.action.gotoLine', {});
+
+    });
   }
 
   private registerProviders() {
@@ -194,7 +170,7 @@ export class CodeNavigationEnhancement {
   }
 
   dispose() {
-    this.disposables.forEach(d => d.dispose());
+    this.disposables.forEach(d => d?.dispose?.());
     this.disposables = [];
   }
 }
@@ -214,56 +190,47 @@ export class CodeRefactoringEnhancement {
 
   private registerCommands() {
     // Rename Symbol (F2)
-    this.disposables.push(
-      this.editor.addCommand(monaco.KeyCode.F2, () => {
-        this.editor.trigger('keyboard', 'editor.action.rename', {});
-      })
-    );
+    this.editor.addCommand(monaco.KeyCode.F2, () => {
+
+      this.editor.trigger('keyboard', 'editor.action.rename', {});
+
+    });
 
     // Format Document (Shift+Alt+F)
-    this.disposables.push(
-      this.editor.addCommand(
-        monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.KeyF,
-        () => {
-          this.editor.trigger('keyboard', 'editor.action.formatDocument', {});
-        }
-      )
-    );
+    this.editor.addCommand(monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.KeyF, () => {
+
+      this.editor.trigger('keyboard', 'editor.action.formatDocument', {});
+
+    });
 
     // Format Selection (Ctrl+K Ctrl+F / Cmd+K Cmd+F)
-    this.disposables.push(
-      this.editor.addCommand(
-        monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK,
-        () => {
-          // This is a chord command - wait for second key
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
+
+      // This is a chord command - wait for second key
           this.editor.trigger('keyboard', 'editor.action.formatSelection', {});
-        }
-      )
-    );
+
+    });
 
     // Organize Imports (Shift+Alt+O)
-    this.disposables.push(
-      this.editor.addCommand(
-        monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.KeyO,
-        () => {
-          this.editor.trigger('keyboard', 'editor.action.organizeImports', {});
-        }
-      )
-    );
+    this.editor.addCommand(monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.KeyO, () => {
+
+      this.editor.trigger('keyboard', 'editor.action.organizeImports', {});
+
+    });
 
     // Quick Fix (Ctrl+. / Cmd+.)
-    this.disposables.push(
-      this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Period, () => {
-        this.editor.trigger('keyboard', 'editor.action.quickFix', {});
-      })
-    );
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Period, () => {
+
+      this.editor.trigger('keyboard', 'editor.action.quickFix', {});
+
+    });
 
     // Trigger Suggest (Ctrl+Space)
-    this.disposables.push(
-      this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space, () => {
-        this.editor.trigger('keyboard', 'editor.action.triggerSuggest', {});
-      })
-    );
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space, () => {
+
+      this.editor.trigger('keyboard', 'editor.action.triggerSuggest', {});
+
+    });
   }
 
   private registerProviders() {
@@ -280,7 +247,7 @@ export class CodeRefactoringEnhancement {
           const word = model.getWordAtPosition(position);
           if (!word) return null;
 
-          const edits: monaco.languages.WorkspaceTextEdit[] = [];
+          const edits: monaco.languages.IWorkspaceTextEdit[] = [];
           const matches = model.findMatches(
             word.word,
             true,
@@ -364,7 +331,7 @@ export class CodeRefactoringEnhancement {
   }
 
   dispose() {
-    this.disposables.forEach(d => d.dispose());
+    this.disposables.forEach(d => d?.dispose?.());
     this.disposables = [];
   }
 }
@@ -383,53 +350,53 @@ export class AdvancedSearchEnhancement {
 
   private registerCommands() {
     // Find with selection (Ctrl+F / Cmd+F)
-    this.disposables.push(
-      this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, () => {
-        this.editor.trigger('keyboard', 'actions.find', {});
-      })
-    );
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, () => {
+
+      this.editor.trigger('keyboard', 'actions.find', {});
+
+    });
 
     // Replace (Ctrl+H / Cmd+H)
-    this.disposables.push(
-      this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyH, () => {
-        this.editor.trigger('keyboard', 'editor.action.startFindReplaceAction', {});
-      })
-    );
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyH, () => {
+
+      this.editor.trigger('keyboard', 'editor.action.startFindReplaceAction', {});
+
+    });
 
     // Find Next (F3)
-    this.disposables.push(
-      this.editor.addCommand(monaco.KeyCode.F3, () => {
-        this.editor.trigger('keyboard', 'editor.action.nextMatchFindAction', {});
-      })
-    );
+    this.editor.addCommand(monaco.KeyCode.F3, () => {
+
+      this.editor.trigger('keyboard', 'editor.action.nextMatchFindAction', {});
+
+    });
 
     // Find Previous (Shift+F3)
-    this.disposables.push(
-      this.editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.F3, () => {
-        this.editor.trigger('keyboard', 'editor.action.previousMatchFindAction', {});
-      })
-    );
+    this.editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.F3, () => {
+
+      this.editor.trigger('keyboard', 'editor.action.previousMatchFindAction', {});
+
+    });
 
     // Toggle Find Regex (Alt+R)
-    this.disposables.push(
-      this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.KeyR, () => {
-        this.editor.trigger('keyboard', 'toggleFindRegex', {});
-      })
-    );
+    this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.KeyR, () => {
+
+      this.editor.trigger('keyboard', 'toggleFindRegex', {});
+
+    });
 
     // Toggle Find Whole Word (Alt+W)
-    this.disposables.push(
-      this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.KeyW, () => {
-        this.editor.trigger('keyboard', 'toggleFindWholeWord', {});
-      })
-    );
+    this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.KeyW, () => {
+
+      this.editor.trigger('keyboard', 'toggleFindWholeWord', {});
+
+    });
 
     // Toggle Find Case Sensitive (Alt+C)
-    this.disposables.push(
-      this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.KeyC, () => {
-        this.editor.trigger('keyboard', 'toggleFindCaseSensitive', {});
-      })
-    );
+    this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.KeyC, () => {
+
+      this.editor.trigger('keyboard', 'toggleFindCaseSensitive', {});
+
+    });
   }
 
   /**
@@ -476,7 +443,7 @@ export class AdvancedSearchEnhancement {
   }
 
   dispose() {
-    this.disposables.forEach(d => d.dispose());
+    this.disposables.forEach(d => d?.dispose?.());
     this.disposables = [];
   }
 }
@@ -496,21 +463,18 @@ export class IntelliSenseEnhancement {
 
   private registerCommands() {
     // Trigger Parameter Hints (Ctrl+Shift+Space / Cmd+Shift+Space)
-    this.disposables.push(
-      this.editor.addCommand(
-        monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Space,
-        () => {
-          this.editor.trigger('keyboard', 'editor.action.triggerParameterHints', {});
-        }
-      )
-    );
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Space, () => {
+
+      this.editor.trigger('keyboard', 'editor.action.triggerParameterHints', {});
+
+    });
 
     // Trigger Suggest (Ctrl+Space / Cmd+Space)
-    this.disposables.push(
-      this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space, () => {
-        this.editor.trigger('keyboard', 'editor.action.triggerSuggest', {});
-      })
-    );
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space, () => {
+
+      this.editor.trigger('keyboard', 'editor.action.triggerSuggest', {});
+
+    });
   }
 
   private registerProviders() {
@@ -555,7 +519,7 @@ export class IntelliSenseEnhancement {
   }
 
   dispose() {
-    this.disposables.forEach(d => d.dispose());
+    this.disposables.forEach(d => d?.dispose?.());
     this.disposables = [];
   }
 }

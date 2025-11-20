@@ -548,7 +548,7 @@ export class MoonshotProvider implements AIProvider {
   
   async generateChat(messages: any[], options?: any): Promise<string> {
     const response = await this.client.chat.completions.create({
-      model: options?.model || 'kimi-k2',
+      model: options?.model || 'kimi-k2-0711-preview',  // ✅ FIXED: Production-recommended model
       messages,
       ...options
     });

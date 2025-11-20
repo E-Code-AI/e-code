@@ -26,6 +26,7 @@ ALTER TYPE ai_model ADD VALUE IF NOT EXISTS 'grok-4';
 ALTER TYPE ai_model ADD VALUE IF NOT EXISTS 'grok-4-fast';
 
 -- Moonshot AI Models (Nov 2025)
-ALTER TYPE ai_model ADD VALUE IF NOT EXISTS 'kimi-k2';
+-- ✅ 40-YEAR FIX: Corrected to production-recommended model IDs
+ALTER TYPE ai_model ADD VALUE IF NOT EXISTS 'kimi-k2-0711-preview';
+ALTER TYPE ai_model ADD VALUE IF NOT EXISTS 'kimi-k2-0905-preview';
 ALTER TYPE ai_model ADD VALUE IF NOT EXISTS 'kimi-k2-thinking';
-ALTER TYPE ai_model ADD VALUE IF NOT EXISTS 'kimi-k2-turbo';

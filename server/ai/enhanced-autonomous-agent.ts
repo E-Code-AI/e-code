@@ -835,7 +835,11 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
             this.thinkingProcess.push(`📦 MCP installed packages: ${installOutput.substring(0, 100)}...`);
           } else {
             // Fallback to direct package installation
-            await realPackageManager.installPackages(allPackages, projectPath);
+            await realPackageManager.installPackages({
+              projectId: context.projectId,
+              packages: allPackages,
+              language: 'nodejs'
+            });
           }
           results.packagesInstalled = allPackages;
           

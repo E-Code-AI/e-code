@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Preview from '@/components/Preview';
+import { CodeGenerationPanel } from '@/components/CodeGenerationPanel';
 import { 
   Wand2, 
   Sparkles, 
@@ -167,11 +167,8 @@ export default function CodeGeneration() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="generator">
-              <Preview 
-                openFiles={[]}
-                projectId={0}
-              />
+            <TabsContent value="generator" className="h-[calc(100vh-400px)]">
+              <CodeGenerationPanel />
             </TabsContent>
 
             <TabsContent value="examples">

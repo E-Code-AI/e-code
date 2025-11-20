@@ -50,8 +50,12 @@ const STREAMING_LIMITS: Record<SubscriptionTier, TierLimits> = {
   enterprise: { points: 1000, duration: 3600 }, // 1000 streams per hour
 };
 
-// Development mode: 10x multiplier for all tiers
-const DEV_MULTIPLIER = process.env.NODE_ENV === 'development' ? 10 : 1;
+// Development mode: 1000x multiplier for all tiers (allows comprehensive E2E testing)
+// Test mode: 10000x multiplier (effectively unlimited for test suites)
+const DEV_MULTIPLIER = 
+  process.env.NODE_ENV === 'test' ? 10000 :
+  process.env.NODE_ENV === 'development' ? 1000 : 
+  1;
 
 // In-memory rate limiters per tier/type
 const rateLimiters = new Map<string, RateLimiterMemory>();

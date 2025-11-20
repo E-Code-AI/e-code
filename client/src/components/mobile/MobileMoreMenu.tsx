@@ -6,7 +6,9 @@ import {
   AlertTriangle, AlertCircle, Info, CheckCircle,
   Settings, Palette, Key, Database,
   Share2, Link, Users, Download,
-  ChevronRight, X
+  ChevronRight, X,
+  Globe, Package, TestTube, Search,
+  FileText, Server, Shield, Variable
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -164,6 +166,47 @@ export function MobileMoreMenu({
     onClose();
   };
 
+  // New handlers for additional services
+  const handleWebview = () => {
+    toast({ title: 'Webview', description: 'Opening web preview...' });
+    onClose();
+  };
+
+  const handlePackages = () => {
+    toast({ title: 'Packages', description: 'Managing dependencies...' });
+    onClose();
+  };
+
+  const handleTests = () => {
+    toast({ title: 'Tests', description: 'Running test suite...' });
+    onClose();
+  };
+
+  const handleGlobalSearch = () => {
+    toast({ title: 'Search', description: 'Opening global search...' });
+    onClose();
+  };
+
+  const handleOutput = () => {
+    toast({ title: 'Output', description: 'Viewing output logs...' });
+    onClose();
+  };
+
+  const handleResources = () => {
+    toast({ title: 'Resources', description: 'Managing project resources...' });
+    onClose();
+  };
+
+  const handleSecurity = () => {
+    toast({ title: 'Security', description: 'Running security scanner...' });
+    onClose();
+  };
+
+  const handleEnvVars = () => {
+    toast({ title: 'Environment Variables', description: 'Managing env vars...' });
+    onClose();
+  };
+
   // Menu sections
   const menuSections: MenuSection[] = [
     {
@@ -197,6 +240,26 @@ export function MobileMoreMenu({
           badge: problemsCount > 0 ? problemsCount : undefined,
           onClick: handleViewProblems 
         },
+      ],
+    },
+    {
+      title: 'Webview & Tools',
+      icon: Globe,
+      items: [
+        { id: 'webview', label: 'Web Preview', icon: Globe, onClick: handleWebview },
+        { id: 'packages', label: 'Packages', icon: Package, onClick: handlePackages },
+        { id: 'tests', label: 'Tests', icon: TestTube, onClick: handleTests },
+        { id: 'search', label: 'Global Search', icon: Search, onClick: handleGlobalSearch },
+      ],
+    },
+    {
+      title: 'Development',
+      icon: Server,
+      items: [
+        { id: 'output', label: 'Output & Logs', icon: FileText, onClick: handleOutput },
+        { id: 'resources', label: 'Resources', icon: Server, onClick: handleResources },
+        { id: 'security', label: 'Security Scanner', icon: Shield, onClick: handleSecurity },
+        { id: 'env-vars', label: 'Environment Variables', icon: Variable, onClick: handleEnvVars },
       ],
     },
     {

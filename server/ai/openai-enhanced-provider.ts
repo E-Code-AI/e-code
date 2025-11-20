@@ -132,6 +132,8 @@ export class EnhancedOpenAIProvider implements AIProvider {
   
   /**
    * Generate completion with full model support
+   * CRITICAL (Nov 2025): GPT-5 family uses NEW /v1/responses endpoint, GPT-4 uses legacy /v1/chat/completions
+   * Docs: https://platform.openai.com/docs/guides/latest-model
    */
   async generateCompletion(
     prompt: string,
@@ -149,47 +151,121 @@ export class EnhancedOpenAIProvider implements AIProvider {
     }
     
     try {
-      const completionParams: any = {
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt },
-        ],
-        max_tokens: Math.min(maxTokens, modelConfig.maxOutput),
-        temperature,
-        top_p: options?.topP,
-        frequency_penalty: options?.frequencyPenalty,
-        presence_penalty: options?.presencePenalty,
-        response_format: options?.responseFormat ? { type: options.responseFormat } : undefined,
-        seed: options?.seed,
-        logprobs: options?.logprobs,
-        top_logprobs: options?.topLogprobs,
-      };
-
-      if (options?.reasoningEffort && model.startsWith('gpt-5')) {
-        completionParams.reasoning_effort = options.reasoningEffort;
-      }
-
-      const completion = await this.client.chat.completions.create(completionParams);
-      
-      const result = completion.choices[0].message.content?.trim() || '';
-      
-      // Track usage for billing
-      if (userId && completion.usage) {
-        await aiBillingService.trackAIUsage(userId, {
-          model,
-          provider: 'OpenAI',
-          inputTokens: completion.usage.prompt_tokens || 0,
-          outputTokens: completion.usage.completion_tokens || 0,
-          totalTokens: completion.usage.total_tokens || 0,
-          prompt: prompt.substring(0, 200),
-          completion: result.substring(0, 200),
-          purpose: 'completion',
-          timestamp: new Date()
+      // GPT-5 family uses NEW Responses API endpoint (Nov 2025)
+      // Docs: https://platform.openai.com/docs/api-reference/responses
+      if (model.startsWith('gpt-5')) {
+        // CRITICAL: input must be array of role-tagged messages with typed content parts
+        // Per Responses API spec: content must be array of { type: 'input_text', text: ... }
+        const inputMessages: any[] = [];
+        if (systemPrompt) {
+          inputMessages.push({ 
+            role: 'system', 
+            content: [{ type: 'input_text', text: systemPrompt }]
+          });
+        }
+        inputMessages.push({ 
+          role: 'user', 
+          content: [{ type: 'input_text', text: prompt }]
         });
+
+        const responseParams: any = {
+          model,
+          input: inputMessages, // Role-based array structure per official docs
+          reasoning: {
+            effort: options?.reasoningEffort || 'high' // none/low/medium/high (high for complex coding/agent tasks)
+          },
+          max_output_tokens: Math.min(maxTokens, modelConfig.maxOutput),
+          temperature,
+          top_p: options?.topP,
+          frequency_penalty: options?.frequencyPenalty,
+          presence_penalty: options?.presencePenalty,
+          seed: options?.seed,
+        };
+
+        // Remove undefined values to avoid API errors
+        Object.keys(responseParams).forEach(key => 
+          responseParams[key] === undefined && delete responseParams[key]
+        );
+
+        // Use responses.create() for GPT-5.1 (official SDK method)
+        const response = await (this.client as any).responses.create(responseParams);
+        
+        // Extract text from response.output array
+        // CRITICAL: response.output contains reasoning items + message items
+        // We need to find the message (type: "message"), not the reasoning item (type: "reasoning")
+        // ALSO: aggregate ALL output_text blocks (multi-part answers)
+        let result = '';
+        if (response.output && response.output.length > 0) {
+          // Find the message item (not the reasoning item)
+          const messageItem = response.output.find((item: any) => item.type === 'message');
+          if (messageItem && messageItem.content && messageItem.content.length > 0) {
+            // Aggregate ALL output_text segments to avoid truncation
+            const textBlocks = messageItem.content
+              .filter((block: any) => block.type === 'output_text')
+              .map((block: any) => block.text || '');
+            result = textBlocks.join('').trim();
+          }
+        }
+        
+        // Track billing with reasoning tokens
+        if (userId && response.usage) {
+          const reasoningTokens = response.usage.output_tokens_details?.reasoning_tokens || 0;
+          await aiBillingService.trackAIUsage(userId, {
+            model,
+            provider: 'OpenAI',
+            inputTokens: response.usage.input_tokens || 0,
+            outputTokens: response.usage.output_tokens || 0,
+            totalTokens: response.usage.total_tokens || ((response.usage.input_tokens || 0) + (response.usage.output_tokens || 0)),
+            prompt: prompt.substring(0, 200),
+            completion: result.substring(0, 200),
+            purpose: 'completion',
+            timestamp: new Date()
+          });
+          
+          logger.info(`GPT-5.1 usage: ${response.usage.input_tokens} input, ${response.usage.output_tokens} output, ${reasoningTokens} reasoning tokens`);
+        }
+        
+        return result;
+      } else {
+        // GPT-4 and earlier use legacy Chat Completions API
+        const completionParams: any = {
+          model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt },
+          ],
+          max_tokens: Math.min(maxTokens, modelConfig.maxOutput),
+          temperature,
+          top_p: options?.topP,
+          frequency_penalty: options?.frequencyPenalty,
+          presence_penalty: options?.presencePenalty,
+          response_format: options?.responseFormat ? { type: options.responseFormat } : undefined,
+          seed: options?.seed,
+          logprobs: options?.logprobs,
+          top_logprobs: options?.topLogprobs,
+        };
+
+        const completion = await this.client.chat.completions.create(completionParams);
+        
+        const result = completion.choices[0].message.content?.trim() || '';
+        
+        // Track usage for billing
+        if (userId && completion.usage) {
+          await aiBillingService.trackAIUsage(userId, {
+            model,
+            provider: 'OpenAI',
+            inputTokens: completion.usage.prompt_tokens || 0,
+            outputTokens: completion.usage.completion_tokens || 0,
+            totalTokens: completion.usage.total_tokens || 0,
+            prompt: prompt.substring(0, 200),
+            completion: result.substring(0, 200),
+            purpose: 'completion',
+            timestamp: new Date()
+          });
+        }
+        
+        return result;
       }
-      
-      return result;
     } catch (error) {
       logger.error(`Error generating completion with ${model}: ${error}`);
       throw error;
@@ -198,6 +274,7 @@ export class EnhancedOpenAIProvider implements AIProvider {
   
   /**
    * Generate chat with function calling support
+   * CRITICAL (Nov 2025): GPT-5 uses Responses API, GPT-4 uses Chat Completions
    */
   async generateChatWithFunctions(
     messages: ChatMessage[],
@@ -219,41 +296,119 @@ export class EnhancedOpenAIProvider implements AIProvider {
     }
     
     try {
-      const completion = await this.client.chat.completions.create({
-        model,
-        messages: messages as any,
-        tools: functions.map(fn => ({
-          type: 'function' as const,
-          function: fn
-        })),
-        tool_choice: options?.functionCall || 'auto',
-        max_tokens: options?.maxTokens || 1024,
-        temperature: options?.temperature || 0.5,
-      });
-      
-      const message = completion.choices[0].message;
-      const result = {
-        content: message.content || '',
-        functionCall: message.tool_calls?.[0] ? {
-          name: message.tool_calls[0].function.name,
-          arguments: JSON.parse(message.tool_calls[0].function.arguments)
-        } : undefined
-      };
-      
-      // Track usage
-      if (userId && completion.usage) {
-        await aiBillingService.trackAIUsage(userId, {
+      // GPT-5 family uses Responses API
+      if (model.startsWith('gpt-5')) {
+        // Convert messages to Responses API format (typed content parts)
+        const inputMessages = messages.map(msg => ({
+          role: msg.role,
+          content: Array.isArray(msg.content) 
+            ? msg.content 
+            : [{ type: 'input_text', text: msg.content }]
+        }));
+
+        // Transform tool_choice to Responses API format (idempotent)
+        let toolChoice: any = options?.functionCall || 'auto';
+        if (typeof toolChoice === 'object') {
+          // If already in Responses format {type: 'function', function: {name}}, keep as-is
+          if (toolChoice.type === 'function' && toolChoice.function?.name) {
+            // Already correct format, no transformation needed
+          } else if (toolChoice.name) {
+            // Convert {name: 'fn'} to {type: 'function', function: {name: 'fn'}}
+            toolChoice = {
+              type: 'function',
+              function: { name: toolChoice.name }
+            };
+          }
+        }
+
+        const response = await (this.client as any).responses.create({
           model,
-          provider: 'OpenAI',
-          inputTokens: completion.usage.prompt_tokens || 0,
-          outputTokens: completion.usage.completion_tokens || 0,
-          totalTokens: completion.usage.total_tokens || 0,
-          purpose: 'function_calling',
-          timestamp: new Date()
+          input: inputMessages,
+          tools: functions.map(fn => ({
+            type: 'function' as const,
+            function: fn
+          })),
+          tool_choice: toolChoice,
+          max_output_tokens: options?.maxTokens || 1024,
+          temperature: options?.temperature || 0.5,
+          reasoning: {
+            effort: options?.reasoningEffort || 'medium'
+          }
         });
+
+        // Extract message and function call from response.output
+        let content = '';
+        let functionCall = undefined;
+
+        for (const item of response.output || []) {
+          if (item.type === 'message') {
+            // Aggregate all output_text blocks
+            const textBlocks = item.content
+              ?.filter((block: any) => block.type === 'output_text')
+              .map((block: any) => block.text || '') || [];
+            content = textBlocks.join('').trim();
+          } else if (item.type === 'function_call') {
+            functionCall = {
+              name: item.name,
+              arguments: JSON.parse(item.arguments)
+            };
+          }
+        }
+
+        // Track usage with reasoning tokens
+        if (userId && response.usage) {
+          const reasoningTokens = response.usage.output_tokens_details?.reasoning_tokens || 0;
+          await aiBillingService.trackAIUsage(userId, {
+            model,
+            provider: 'OpenAI',
+            inputTokens: response.usage.input_tokens || 0,
+            outputTokens: response.usage.output_tokens || 0,
+            totalTokens: response.usage.total_tokens || 0,
+            purpose: 'completion',
+            timestamp: new Date()
+          });
+          logger.info(`GPT-5 function call: ${response.usage.input_tokens} input, ${response.usage.output_tokens} output, ${reasoningTokens} reasoning tokens`);
+        }
+
+        return { content, functionCall };
+      } else {
+        // GPT-4 and earlier use Chat Completions API
+        const completion = await this.client.chat.completions.create({
+          model,
+          messages: messages as any,
+          tools: functions.map(fn => ({
+            type: 'function' as const,
+            function: fn
+          })),
+          tool_choice: options?.functionCall || 'auto',
+          max_tokens: options?.maxTokens || 1024,
+          temperature: options?.temperature || 0.5,
+        });
+        
+        const message = completion.choices[0].message;
+        const result = {
+          content: message.content || '',
+          functionCall: message.tool_calls?.[0] ? {
+            name: message.tool_calls[0].function.name,
+            arguments: JSON.parse(message.tool_calls[0].function.arguments)
+          } : undefined
+        };
+        
+        // Track usage
+        if (userId && completion.usage) {
+          await aiBillingService.trackAIUsage(userId, {
+            model,
+            provider: 'OpenAI',
+            inputTokens: completion.usage.prompt_tokens || 0,
+            outputTokens: completion.usage.completion_tokens || 0,
+            totalTokens: completion.usage.total_tokens || 0,
+            purpose: 'completion',
+            timestamp: new Date()
+          });
+        }
+        
+        return result;
       }
-      
-      return result;
     } catch (error) {
       logger.error(`Error in function calling with ${model}: ${error}`);
       throw error;
@@ -316,6 +471,7 @@ export class EnhancedOpenAIProvider implements AIProvider {
   
   /**
    * Stream chat responses for real-time interaction
+   * NOTE: Responses API doesn't support streaming yet, so GPT-5 models will throw error
    */
   async *streamChat(
     messages: ChatMessage[],
@@ -323,6 +479,11 @@ export class EnhancedOpenAIProvider implements AIProvider {
     options?: OpenAIOptions
   ): AsyncGenerator<string> {
     const model = options?.model || this.defaultModel;
+    
+    // Block GPT-5 models from streaming (Responses API doesn't support streaming yet)
+    if (model.startsWith('gpt-5')) {
+      throw new Error(`Streaming is not yet supported for ${model}. Please use non-streaming completion or use GPT-4 models for streaming.`);
+    }
     
     try {
       const stream = await this.client.chat.completions.create({

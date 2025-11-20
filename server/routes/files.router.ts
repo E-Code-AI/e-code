@@ -107,7 +107,7 @@ export class FilesRouter {
 
   private initializeRoutes() {
     // Get project files
-    this.router.get("/api/projects/:projectId/files", this.ensureProjectAccess, async (req: Request, res: Response) => {
+    this.router.get("/api/projects/:projectId/files", this.ensureAuthenticated, this.ensureProjectAccess, async (req: Request, res: Response) => {
       try {
         const projectId = req.params.projectId;
         const files = await this.storage.getProjectFiles(projectId);
@@ -121,34 +121,48 @@ export class FilesRouter {
       }
     });
 
-    // Get file content
-    this.router.get("/api/projects/:projectId/files/*", this.ensureProjectAccess, async (req: Request, res: Response) => {
+    // Get file content (supports both file ID and file path)
+    this.router.get("/api/projects/:projectId/files/*", this.ensureAuthenticated, this.ensureProjectAccess, async (req: Request, res: Response) => {
       try {
         const projectId = req.params.projectId;
-        let filePath = req.params[0];
+        let fileIdentifier = req.params[0];
         
-        if (!filePath) {
+        if (!fileIdentifier) {
           return res.status(400).json({
-            message: "File path is required",
-            code: "PATH_REQUIRED"
+            message: "File identifier is required",
+            code: "IDENTIFIER_REQUIRED"
           });
         }
 
-        // ✅ 40-YEAR SENIOR FIX: Sanitize path for consistency with POST
-        // Files are stored with sanitized paths, so we must sanitize on lookup too
-        const { aiSecurityService } = await import('../services/ai-security.service');
-        const pathValidation = aiSecurityService.validatePath(filePath);
-        if (pathValidation.valid && pathValidation.sanitized) {
-          filePath = pathValidation.sanitized;
+        let file;
+        
+        // ✅ 40-YEAR SENIOR FIX: Support both file ID (625) and file path (/symbol-test.ts)
+        // Frontend uses file ID for queries, check if identifier is numeric
+        if (/^\d+$/.test(fileIdentifier)) {
+          // Numeric ID - fetch directly by ID
+          const fileId = parseInt(fileIdentifier, 10);
+          file = await this.storage.getFile(fileId);
+          
+          // Verify file belongs to this project
+          if (file && file.projectId !== projectId) {
+            file = null; // Security: don't leak files from other projects
+          }
+        } else {
+          // File path - sanitize and lookup by path
+          const { aiSecurityService } = await import('../services/ai-security.service');
+          const pathValidation = aiSecurityService.validatePath(fileIdentifier);
+          if (pathValidation.valid && pathValidation.sanitized) {
+            fileIdentifier = pathValidation.sanitized;
+          }
+          
+          file = await this.getFileByPath(projectId, fileIdentifier);
         }
-
-        // ✅ FIX: Use helper method instead of non-existent getFile(projectId, path)
-        const file = await this.getFileByPath(projectId, filePath);
         
         if (!file) {
           return res.status(404).json({
             message: "File not found",
-            code: "FILE_NOT_FOUND"
+            code: "FILE_NOT_FOUND",
+            identifier: fileIdentifier
           });
         }
         
@@ -164,7 +178,7 @@ export class FilesRouter {
     });
 
     // Create or update file - FORTUNE 500 SECURITY APPLIED
-    this.router.post("/api/projects/:projectId/files", this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
+    this.router.post("/api/projects/:projectId/files", this.ensureAuthenticated, this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectId = req.params.projectId;
         
@@ -269,7 +283,7 @@ export class FilesRouter {
     });
 
     // Update file content
-    this.router.put("/api/projects/:projectId/files/*", this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
+    this.router.put("/api/projects/:projectId/files/*", this.ensureAuthenticated, this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectId = req.params.projectId;
         let filePath = req.params[0];
@@ -315,7 +329,7 @@ export class FilesRouter {
     });
 
     // Delete file
-    this.router.delete("/api/projects/:projectId/files/*", this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
+    this.router.delete("/api/projects/:projectId/files/*", this.ensureAuthenticated, this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectId = req.params.projectId;
         let filePath = req.params[0];
@@ -432,7 +446,7 @@ export class FilesRouter {
     });
 
     // Create file by project ID (for backwards compatibility) - FORTUNE 500 SECURITY
-    this.router.post("/api/files/:projectId", this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
+    this.router.post("/api/files/:projectId", this.ensureAuthenticated, this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectId = req.params.projectId;
         
