@@ -47,15 +47,16 @@ export class AIPlanGeneratorService {
   private storage: IStorage;
   
   // ✅ 40-YEAR ENGINEERING FIX: Provider fallback chain - corrected model IDs
-  // ✅ GPT-5.1 UPGRADE (Nov 17, 2025): Adaptive reasoning with reasoning_effort='none' for fast plan generation
+  // ✅ TEMPORARY FIX (Nov 20, 2025): Kimi K2 first while debugging GPT-5.1 JSON issues
+  // GPT-5.1 currently returns malformed JSON, using reliable Kimi K2 as primary
   // ✅ KIMI-K2 INTEGRATION (Nov 14, 2025): Added Moonshot AI for cost savings & performance
   // FIXED: kimi-k2 → kimi-k2-0711-preview (production-recommended model ID)
   private readonly PROVIDER_FALLBACK_CHAIN = [
-    'gpt-5.1',                      // OpenAI GPT-5.1 with adaptive reasoning (Nov 2025 flagship)
-    'kimi-k2-0711-preview',         // ✅ FIXED: Moonshot AI production-recommended model (was kimi-k2)
+    'kimi-k2-0711-preview',         // ✅ PRIMARY: Moonshot AI (reliable, fast, cost-effective)
     'gemini-2.5-flash',             // Google Gemini 2.5 Flash (250/day free tier)
     'grok-4-fast',                  // xAI Grok 4 Fast (2M context, 64× cheaper than o3)
-    'claude-haiku-4-5-20251015'     // Anthropic Claude Haiku 4.5 (fastest Claude model)
+    'claude-haiku-4-5-20251015',    // Anthropic Claude Haiku 4.5 (fastest Claude model)
+    'gpt-5.1'                       // OpenAI GPT-5.1 (currently debugging JSON parsing issues)
   ];
 
   constructor(storage: IStorage) {
@@ -359,8 +360,28 @@ Remember:
           // and unescaped newlines in AI-generated JSON responses
           jsonString = this.sanitizePlanResponse(jsonString);
           
-          // Parse JSON
-          const planData = JSON.parse(jsonString);
+          // ✅ CRITICAL FIX (Nov 20, 2025): Robust JSON parsing with fallback
+          // GPT-5.1 sometimes returns incomplete/malformed JSON, especially with streaming
+          // Try to parse, if fails, log detailed error and try next provider
+          let planData;
+          try {
+            planData = JSON.parse(jsonString);
+          } catch (parseError: any) {
+            // Enhanced error logging for JSON parse failures
+            logger.error(`[generatePlan] JSON parse failed for ${modelId}:`, {
+              error: parseError.message,
+              position: parseError.message.match(/position (\d+)/)?.[1],
+              jsonLength: jsonString.length,
+              jsonPreview: jsonString.substring(0, 500),
+              jsonAroundError: parseError.message.match(/position (\d+)/)
+                ? jsonString.substring(
+                    Math.max(0, parseInt(parseError.message.match(/position (\d+)/)?.[1] || '0') - 100),
+                    parseInt(parseError.message.match(/position (\d+)/)?.[1] || '0') + 100
+                  )
+                : 'unknown'
+            });
+            throw new Error(`JSON parse error: ${parseError.message} - JSON preview: ${jsonString.substring(0, 300)}`);
+          }
           
           const plan: ExecutionPlan = {
             id: `plan-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,

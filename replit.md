@@ -50,7 +50,7 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 - **Moonshot AI:** Kimi K2 (kimi-k2-0711-preview, kimi-k2-0905-preview), Kimi K2 Thinking
 - **xAI:** Grok 4, Grok 4 Fast
 - **Groq:** Mixtral 8x7B
-- **Provider Fallback Chain:** `['gpt-5.1', 'kimi-k2-0711-preview', 'gemini-2.5-flash', 'grok-4-fast', 'claude-haiku-4-5-20251015']`
+- **Provider Fallback Chain:** `['kimi-k2-0711-preview', 'gemini-2.5-flash', 'grok-4-fast', 'claude-haiku-4-5-20251015', 'gpt-5.1']` (Kimi K2 primary while debugging GPT-5.1 JSON issues - Nov 20, 2025)
 - **40-Year Engineering Reliability Fixes (Nov 19-20, 2025):** 
   - Stream timeout 60s (default), retries 2→4, circuit breaker 30s→20s
   - **Per-Call Timeout Override System**: AIProviderManager accepts custom `timeoutMs` parameter for complex operations
