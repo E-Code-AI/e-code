@@ -73,7 +73,7 @@ const updatePreferencesHandler = async (req: any, res: any) => {
 };
 
 // Get all notifications for current user
-router.get('/api/notifications', ensureAuthenticated, async (req, res) => {
+router.get('/', ensureAuthenticated, async (req, res) => {
   try {
     const userId = getUserIdOrThrow(req, res);
     if (!userId) return;
@@ -90,7 +90,7 @@ router.get('/api/notifications', ensureAuthenticated, async (req, res) => {
 });
 
 // Get unread notification count
-router.get('/api/notifications/unread-count', ensureAuthenticated, async (req, res) => {
+router.get('/unread-count', ensureAuthenticated, async (req, res) => {
   try {
     const userId = getUserIdOrThrow(req, res);
     if (!userId) return;
@@ -104,14 +104,14 @@ router.get('/api/notifications/unread-count', ensureAuthenticated, async (req, r
 });
 
 // Get notification preferences
-router.get('/api/notifications/preferences', ensureAuthenticated, getPreferencesHandler);
-router.get('/api/notifications/settings', ensureAuthenticated, getPreferencesHandler);
+router.get('/preferences', ensureAuthenticated, getPreferencesHandler);
+router.get('/settings', ensureAuthenticated, getPreferencesHandler);
 
 // Update notification preferences
-router.patch('/api/notifications/preferences', ensureAuthenticated, updatePreferencesHandler);
-router.put('/api/notifications/preferences', ensureAuthenticated, updatePreferencesHandler);
-router.patch('/api/notifications/settings', ensureAuthenticated, updatePreferencesHandler);
-router.put('/api/notifications/settings', ensureAuthenticated, updatePreferencesHandler);
+router.patch('/preferences', ensureAuthenticated, updatePreferencesHandler);
+router.put('/preferences', ensureAuthenticated, updatePreferencesHandler);
+router.patch('/settings', ensureAuthenticated, updatePreferencesHandler);
+router.put('/settings', ensureAuthenticated, updatePreferencesHandler);
 
 // Mark notification as read
 const markNotificationAsReadHandler = async (req: any, res: any) => {
@@ -132,8 +132,8 @@ const markNotificationAsReadHandler = async (req: any, res: any) => {
   }
 };
 
-router.patch('/api/notifications/:id/read', ensureAuthenticated, markNotificationAsReadHandler);
-router.put('/api/notifications/:id/read', ensureAuthenticated, markNotificationAsReadHandler);
+router.patch('/:id/read', ensureAuthenticated, markNotificationAsReadHandler);
+router.put('/:id/read', ensureAuthenticated, markNotificationAsReadHandler);
 
 // Mark all notifications as read
 const markAllNotificationsAsReadHandler = async (req: any, res: any) => {
@@ -149,11 +149,11 @@ const markAllNotificationsAsReadHandler = async (req: any, res: any) => {
   }
 };
 
-router.patch('/api/notifications/read-all', ensureAuthenticated, markAllNotificationsAsReadHandler);
-router.put('/api/notifications/read-all', ensureAuthenticated, markAllNotificationsAsReadHandler);
+router.patch('/read-all', ensureAuthenticated, markAllNotificationsAsReadHandler);
+router.put('/read-all', ensureAuthenticated, markAllNotificationsAsReadHandler);
 
 // Delete notification
-router.delete('/api/notifications/:id', ensureAuthenticated, async (req, res) => {
+router.delete('/:id', ensureAuthenticated, async (req, res) => {
   try {
     const userId = getUserIdOrThrow(req, res);
     if (!userId) return;
@@ -171,8 +171,8 @@ router.delete('/api/notifications/:id', ensureAuthenticated, async (req, res) =>
   }
 });
 
-// Delete all notifications
-router.delete('/api/notifications', ensureAuthenticated, async (req, res) => {
+// Delete all notifications  
+router.delete('/', ensureAuthenticated, async (req, res) => {
   try {
     const userId = getUserIdOrThrow(req, res);
     if (!userId) return;
@@ -186,7 +186,7 @@ router.delete('/api/notifications', ensureAuthenticated, async (req, res) => {
 });
 
 // Create notification (mainly for testing, real notifications will be created by system events)
-router.post('/api/notifications', ensureAuthenticated, async (req, res) => {
+router.post('/', ensureAuthenticated, async (req, res) => {
   try {
     const userId = getUserIdOrThrow(req, res);
     if (!userId) return;

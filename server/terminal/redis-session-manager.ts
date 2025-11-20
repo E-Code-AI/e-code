@@ -39,27 +39,22 @@ export class RedisSessionManager {
       const redisUrl = process.env.REDIS_URL;
 
       if (!redisUrl) {
-        logger.warn('REDIS_URL not configured - session persistence disabled (sessions will be lost on restart)');
+        logger.info('REDIS_URL not configured - session persistence disabled (sessions will be lost on restart)');
+        this.isConnected = false;
+        this.redis = null;
         return;
       }
 
       logger.info('Connecting to Redis for session persistence...');
 
       this.redis = new Redis(redisUrl, {
-        maxRetriesPerRequest: 3,
-        enableReadyCheck: true,
-        retryStrategy: (times) => {
-          if (times > 3) {
-            logger.error('Redis connection failed after 3 retries');
-            return null; // Stop retrying
-          }
-          const delay = Math.min(times * 200, 1000);
-          return delay;
+        maxRetriesPerRequest: 0,
+        enableReadyCheck: false,
+        retryStrategy: () => {
+          // Disable automatic retry - fail fast
+          return null;
         },
-        reconnectOnError: (err) => {
-          logger.error(`Redis error: ${err.message}`);
-          return true; // Always reconnect
-        }
+        lazyConnect: true
       });
 
       this.redis.on('connect', () => {
@@ -68,7 +63,7 @@ export class RedisSessionManager {
       });
 
       this.redis.on('error', (err) => {
-        logger.error(`Redis error: ${err.message}`);
+        logger.error('Redis error:', { error: err.message });
         this.isConnected = false;
       });
 
@@ -78,11 +73,18 @@ export class RedisSessionManager {
       });
 
       // Test connection
+      await this.redis.connect();
       await this.redis.ping();
       logger.info('Redis connection verified');
+      this.isConnected = true;
 
-    } catch (error) {
-      logger.error(`Failed to initialize Redis: ${error}`);
+    } catch (error: any) {
+      logger.warn('Redis not available - session persistence disabled:', { error: error.message });
+      if (this.redis) {
+        try {
+          this.redis.disconnect();
+        } catch {}
+      }
       this.redis = null;
       this.isConnected = false;
     }
