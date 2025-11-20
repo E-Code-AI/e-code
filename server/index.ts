@@ -223,6 +223,20 @@ app.get('/api/cors-health', async (_req, res) => {
       const { agentWebSocketService } = await import("./services/agent-websocket-service");
       agentWebSocketService.initialize(httpServer);
       
+      // ✅ CRITICAL FIX (Nov 20, 2025): Manual WebSocket upgrade handler
+      // This ensures /ws/agent upgrades are handled by our service, not intercepted by Vite HMR
+      // Vite's HMR WebSocket was intercepting ALL WebSocket connections
+      httpServer.on('upgrade', (request, socket, head) => {
+        const pathname = new URL(request.url || '', 'ws://localhost').pathname;
+        
+        // Only handle /ws/agent upgrades here, let other WebSockets pass through
+        if (pathname === '/ws/agent') {
+          console.log('[Agent WebSocket] Routing upgrade request to agent service');
+          agentWebSocketService.handleUpgrade(request, socket, head);
+        }
+        // For other paths (like Vite HMR, Terminal, etc.), let their handlers deal with it
+      });
+      
       // Make agent websocket service available globally for routes
       (global as any).agentWebSocketService = agentWebSocketService;
       console.log('[Agent WebSocket] Service initialized at /ws/agent');

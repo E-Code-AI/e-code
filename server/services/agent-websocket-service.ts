@@ -45,12 +45,42 @@ class AgentWebSocketService {
   private pingInterval: NodeJS.Timeout | null = null;
   
   initialize(server: Server) {
-    this.wss = new WebSocketServer({ server, path: '/ws/agent' });
+    // ✅ CRITICAL FIX (Nov 20, 2025): noServer mode to handle upgrades manually
+    // This prevents Vite HMR from intercepting /ws/agent connections
+    this.wss = new WebSocketServer({ noServer: true });
     
-    logger.info('[Agent WebSocket] Service initialized at /ws/agent');
+    logger.info('[Agent WebSocket] Service initialized at /ws/agent (noServer mode)');
+    
+    //Setup connection handlers
+    this.setupConnectionHandlers();
     
     // Start heartbeat for connection health monitoring
     this.startHeartbeat();
+  }
+  
+  // ✅ NEW METHOD: Handle WebSocket upgrade manually
+  handleUpgrade(request: any, socket: any, head: any) {
+    if (!this.wss) {
+      logger.error('[Agent WebSocket] WebSocketServer not initialized!');
+      socket.destroy();
+      return;
+    }
+    
+    logger.info(`[Agent WebSocket] handleUpgrade called for ${request.url}`);
+    
+    try {
+      this.wss.handleUpgrade(request, socket, head, (ws) => {
+        logger.info('[Agent WebSocket] ✅ Upgrade successful! Emitting connection event');
+        this.wss!.emit('connection', ws, request);
+      });
+    } catch (error: any) {
+      logger.error('[Agent WebSocket] ❌ handleUpgrade failed:', { error: error.message, stack: error.stack });
+      socket.destroy();
+    }
+  }
+  
+  private setupConnectionHandlers() {
+    if (!this.wss) return;
     
     this.wss.on('connection', (ws, req) => {
       logger.info(`[Agent WebSocket] New connection attempt from ${req.socket.remoteAddress} - URL: ${req.url}`);
