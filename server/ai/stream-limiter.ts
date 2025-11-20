@@ -50,7 +50,7 @@ export class StreamLimiter {
       maxSizeBytes: config.maxSizeBytes ?? 10 * 1024 * 1024, // 10MB
       timeoutMs: config.timeoutMs ?? 60000, // 60 seconds
       maxChunkSizeBytes: config.maxChunkSizeBytes ?? 100 * 1024, // 100KB
-      chunkIdleTimeoutMs: config.chunkIdleTimeoutMs ?? 60000, // 60 seconds (increased from 30s for complex plans)
+      chunkIdleTimeoutMs: config.chunkIdleTimeoutMs ?? 30000, // 30 seconds
       debug: config.debug ?? false
     };
   }
