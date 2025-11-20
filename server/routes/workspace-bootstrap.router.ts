@@ -146,7 +146,13 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     
     logger.info(`[Bootstrap] Agent session created: ${session.id}`, { sessionId: session.id, modelId });
     
-    // 5. Generate execution plan (SYNCHRONOUSLY - critical for autonomous execution)
+    // ✅ 40-YEAR ENGINEERING FIX (Nov 20, 2025): ASYNC plan generation
+    // CRITICAL ISSUE: Synchronous plan generation took 3+ minutes, causing HTTP timeout
+    // SOLUTION: Return bootstrap token immediately, generate plan in background
+    // Client connects via WebSocket and receives real-time updates
+    
+    logger.info(`[Bootstrap] Starting ASYNC plan generation for prompt: "${prompt.substring(0, 50)}..."`);
+    
     // Store the prompt in session context for plan generation
     const planContext = {
       projectType: 'web-app',
@@ -157,71 +163,89 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
       prompt: prompt
     };
     
-    logger.info(`[Bootstrap] Generating plan for prompt: "${prompt.substring(0, 50)}..."`);
-    
-    // ✅ FIX: Consume async generator to get plan (uses multi-provider fallback chain)
-    let plan: any = null;
-    let planGenerationError: string | null = null;
-    
-    try {
-      for await (const event of aiPlanGenerator.generatePlan(String(userId), String(project.id), prompt, {
-        projectType: planContext.projectType,
-        existingFiles: planContext.existingFiles,
-        technologies: planContext.technologies,
-        constraints: planContext.constraints
-      })) {
-        if (event.type === 'plan') {
-          plan = event.data;
-          logger.info(`[Bootstrap] ✅ Plan received successfully`, { planId: plan.id, tasks: plan.tasks?.length });
-          break; // Got the plan, exit loop
-        } else if (event.type === 'error') {
-          planGenerationError = event.data.message || 'Plan generation failed';
-          logger.error(`[Bootstrap] ❌ Plan generation error:`, planGenerationError);
-          throw new Error(planGenerationError || 'Plan generation failed');
+    // 5. Start plan generation in background (NON-BLOCKING)
+    // ✅ ARCHITECT FIX: Always generate plan, not just when autoStart=true
+    (async () => {
+      try {
+        let plan: any = null;
+        
+        // Generate plan using multi-provider fallback chain
+        for await (const event of aiPlanGenerator.generatePlan(String(userId), String(project.id), prompt, {
+          projectType: planContext.projectType,
+          existingFiles: planContext.existingFiles,
+          technologies: planContext.technologies,
+          constraints: planContext.constraints
+        })) {
+          if (event.type === 'plan') {
+            plan = event.data;
+            logger.info(`[Bootstrap] ✅ Plan received successfully`, { planId: plan.id, tasks: plan.tasks?.length });
+            break;
+          } else if (event.type === 'error') {
+            const errorMsg = event.data.message || 'Plan generation failed';
+            logger.error(`[Bootstrap] ❌ Plan generation error:`, errorMsg);
+            
+            // ✅ ARCHITECT FIX: Send error to client via WebSocket
+            const agentWebSocketService = (await import('../services/agent-websocket-service.js')).agentWebSocketService;
+            agentWebSocketService.broadcastToProject(String(project.id), {
+              type: 'error',
+              message: `Plan generation failed: ${errorMsg}`,
+              timestamp: new Date().toISOString()
+            });
+            
+            throw new Error(errorMsg);
+          }
         }
-        // Ignore 'chunk' events (streaming output)
+        
+        if (!plan) {
+          const errorMsg = 'No plan received from AI service - all providers may be unavailable';
+          
+          // ✅ ARCHITECT FIX: Send error to client via WebSocket
+          const agentWebSocketService = (await import('../services/agent-websocket-service.js')).agentWebSocketService;
+          agentWebSocketService.broadcastToProject(String(project.id), {
+            type: 'error',
+            message: errorMsg,
+            timestamp: new Date().toISOString()
+          });
+          
+          throw new Error(errorMsg);
+        }
+        
+        logger.info(`[Bootstrap] Plan generated: ${plan.id}`, { 
+          planId: plan.id, 
+          tasks: plan.tasks?.length || 0,
+          estimatedTime: plan.estimatedTime
+        });
+        
+        // 6. Execute autonomous plan (only if autoStart enabled)
+        if (options.autoStart) {
+          logger.info(`[Bootstrap] Starting autonomous plan execution for ${plan.tasks.length} tasks`);
+          
+          await agentOrchestrator.executeAutonomousPlan(
+            session.id,
+            plan,
+            String(project.id),
+            String(userId)
+          );
+          
+          logger.info(`[Bootstrap] ✅ Autonomous execution completed`);
+        } else {
+          logger.info(`[Bootstrap] Plan ready but autoStart=false - execution skipped`);
+        }
+        
+      } catch (error: any) {
+        logger.error(`[Bootstrap] ❌ Background plan/execution failed:`, {
+          message: error.message,
+          projectId: project.id,
+          sessionId: session.id
+        });
+        // Error already sent to client via WebSocket above
       }
-    } catch (error: any) {
-      logger.error(`[Bootstrap] ❌ Plan generation exception:`, {
-        message: error.message,
-        stack: error.stack?.split('\n').slice(0, 3),
-        userId,
-        projectId: project.id
-      });
-      throw new Error(`AI plan generation failed: ${error.message}. This may be due to API quotas or service unavailability. Please try again in a few minutes.`);
-    }
-    
-    if (!plan) {
-      const errorMsg = 'No plan received from AI service - all providers may be unavailable or quota-limited';
-      logger.error(`[Bootstrap] ❌ ${errorMsg}`);
-      throw new Error(errorMsg);
-    }
-    
-    logger.info(`[Bootstrap] Plan generated: ${plan.id}`, { 
-      planId: plan.id, 
-      tasks: plan.tasks?.length || 0,
-      estimatedTime: plan.estimatedTime
+    })().catch(err => {
+      // ✅ ARCHITECT FIX: Prevent unhandled promise rejections on server shutdown
+      logger.error('[Bootstrap] Unhandled background task error:', err);
     });
     
-    // 6. Execute autonomous plan (if autoStart enabled)
-    // This is where the magic happens - the AI agent autonomously builds the project
-    if (options.autoStart) {
-      logger.info(`[Bootstrap] Starting autonomous plan execution for ${plan.tasks.length} tasks`);
-      
-      // Execute the plan asynchronously (don't await - return bootstrap token immediately)
-      // The client will connect via WebSocket to receive real-time progress updates
-      agentOrchestrator.executeAutonomousPlan(
-        session.id,
-        plan,
-        String(project.id),
-        String(userId)
-      ).catch(error => {
-        logger.error(`[Bootstrap] Autonomous plan execution failed:`, error);
-        // Error will be sent to client via WebSocket
-      });
-      
-      logger.info(`[Bootstrap] Autonomous execution started in background`);
-    }
+    logger.info(`[Bootstrap] Background plan generation started - returning token immediately`);
     
     // 7. Setup WebSocket streaming
     // WebSocket service is already initialized on server startup
