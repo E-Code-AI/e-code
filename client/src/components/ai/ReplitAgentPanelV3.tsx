@@ -519,7 +519,7 @@ export function ReplitAgentPanelV3({
       role: 'user',
       content: input.trim(),
       timestamp: new Date(),
-      status: 'sent'
+      status: 'sending'
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -536,13 +536,18 @@ export function ReplitAgentPanelV3({
     }
 
     try {
+      // Update message status to sent
+      setMessages(prev => prev.map(m => 
+        m.id === userMessage.id ? { ...m, status: 'sent' } : m
+      ));
+
       // Use selected provider from model preference (fallback to openai)
       const selectedProvider = provider || 'openai';
       
       const response = await apiRequest('POST', '/api/agent/chat/stream', {
         message: userMessage.content,
         projectId: projectId,
-        conversationId: `conv-${Date.now()}`,
+        conversationId: conversationId || `conv-${Date.now()}`,
         provider: selectedProvider,
         modelId: modelId || undefined,
         context: messages.slice(-5).map(m => ({
@@ -583,8 +588,18 @@ export function ReplitAgentPanelV3({
       // Add assistant message to state BEFORE streaming to support live tool/thinking updates
       setMessages(prev => [...prev, assistantMessage]);
       
+      // Timeout handling - 30 seconds max per chunk
+      const CHUNK_TIMEOUT = 30000;
+      let lastChunkTime = Date.now();
+      
       while (reader) {
+        // Check for timeout
+        if (Date.now() - lastChunkTime > CHUNK_TIMEOUT) {
+          throw new Error('Agent response timeout - no data received for 30 seconds');
+        }
+        
         const { done, value } = await reader.read();
+        lastChunkTime = Date.now();
         
         if (done) break;
         
@@ -719,10 +734,15 @@ export function ReplitAgentPanelV3({
     } catch (error) {
       console.error('AI chat error:', error);
       
+      // Update user message status to error
+      setMessages(prev => prev.map(m => 
+        m.id === userMessage.id ? { ...m, status: 'error' } : m
+      ));
+      
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "I'll help you with that. Let me analyze your request and start working on it...",
+        content: "I apologize, but I encountered an error. Please try sending your message again.",
         timestamp: new Date(),
         thinking: extendedThinkingEnabled ? activeThinking : undefined,
         metadata: {
@@ -731,6 +751,12 @@ export function ReplitAgentPanelV3({
       };
       setMessages(prev => [...prev, assistantMessage]);
       setActiveThinking([]);
+      
+      toast({
+        title: "Connection Error",
+        description: "Failed to send message to agent. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsWorking(false);
     }
