@@ -43,8 +43,8 @@ export function ReplitBottomTabs({
       {/* Backdrop with iOS-style blur */}
       <div className="absolute inset-0 bg-background/95 dark:bg-background/98 backdrop-blur-xl border-t border-border/50" />
       
-      {/* Tab Navigation Container - 5 tabs with touch-optimized spacing */}
-      <nav className="relative flex items-center h-16 px-1">
+      {/* Tab Navigation Container - 6 tabs with horizontal scroll on small screens */}
+      <nav className="relative flex items-center h-16 px-1 overflow-x-auto scrollbar-hide">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -54,7 +54,8 @@ export function ReplitBottomTabs({
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
               className={cn(
-                "relative flex flex-col items-center justify-center gap-1 h-14 flex-1 rounded-lg transition-all touch-manipulation min-w-0",
+                "relative flex flex-col items-center justify-center gap-1 h-14 rounded-lg transition-all touch-manipulation shrink-0",
+                "min-w-[60px] w-[calc(100vw/6-8px)] max-w-[80px]",
                 isActive 
                   ? "bg-primary/10 text-primary" 
                   : "text-muted-foreground hover:bg-muted/50 active:bg-muted"
@@ -69,7 +70,7 @@ export function ReplitBottomTabs({
               )} />
               
               <span className={cn(
-                "text-[10px] font-medium truncate max-w-full px-0.5",
+                "text-xxs font-medium truncate max-w-full px-0.5",
                 isActive ? "text-primary" : "text-muted-foreground"
               )}>
                 {tab.label}

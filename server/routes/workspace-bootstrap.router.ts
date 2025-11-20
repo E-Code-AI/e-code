@@ -85,6 +85,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     const userId = (req.user as User).id;
     const username = (req.user as User).username || '';
     
+    console.log('🚀 [Bootstrap] RECEIVED REQUEST from user', userId, 'prompt:', prompt.substring(0, 50));
     logger.info(`[Bootstrap] Starting workspace creation for user ${userId}`, { prompt, options });
     
     // 2. Create project in database
@@ -158,25 +159,42 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     
     logger.info(`[Bootstrap] Generating plan for prompt: "${prompt.substring(0, 50)}..."`);
     
-    // ✅ FIX: Consume async generator to get plan (uses Gemini fallback chain)
+    // ✅ FIX: Consume async generator to get plan (uses multi-provider fallback chain)
     let plan: any = null;
-    for await (const event of aiPlanGenerator.generatePlan(String(userId), String(project.id), prompt, {
-      projectType: planContext.projectType,
-      existingFiles: planContext.existingFiles,
-      technologies: planContext.technologies,
-      constraints: planContext.constraints
-    })) {
-      if (event.type === 'plan') {
-        plan = event.data;
-        break; // Got the plan, exit loop
-      } else if (event.type === 'error') {
-        throw new Error(event.data.message || 'Plan generation failed');
+    let planGenerationError: string | null = null;
+    
+    try {
+      for await (const event of aiPlanGenerator.generatePlan(String(userId), String(project.id), prompt, {
+        projectType: planContext.projectType,
+        existingFiles: planContext.existingFiles,
+        technologies: planContext.technologies,
+        constraints: planContext.constraints
+      })) {
+        if (event.type === 'plan') {
+          plan = event.data;
+          logger.info(`[Bootstrap] ✅ Plan received successfully`, { planId: plan.id, tasks: plan.tasks?.length });
+          break; // Got the plan, exit loop
+        } else if (event.type === 'error') {
+          planGenerationError = event.data.message || 'Plan generation failed';
+          logger.error(`[Bootstrap] ❌ Plan generation error:`, planGenerationError);
+          throw new Error(planGenerationError || 'Plan generation failed');
+        }
+        // Ignore 'chunk' events (streaming output)
       }
-      // Ignore 'chunk' events (streaming output)
+    } catch (error: any) {
+      logger.error(`[Bootstrap] ❌ Plan generation exception:`, {
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 3),
+        userId,
+        projectId: project.id
+      });
+      throw new Error(`AI plan generation failed: ${error.message}. This may be due to API quotas or service unavailability. Please try again in a few minutes.`);
     }
     
     if (!plan) {
-      throw new Error('No plan received from AI service');
+      const errorMsg = 'No plan received from AI service - all providers may be unavailable or quota-limited';
+      logger.error(`[Bootstrap] ❌ ${errorMsg}`);
+      throw new Error(errorMsg);
     }
     
     logger.info(`[Bootstrap] Plan generated: ${plan.id}`, { 

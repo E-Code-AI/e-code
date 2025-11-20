@@ -109,10 +109,34 @@ export function ReplitMonacoEditor({
   const { toast } = useToast();
 
   // Récupération du fichier actuel
-  const { data: file, isLoading: fileLoading } = useQuery<EditorFile>({
+  const { data: file, isLoading: fileLoading, error: fileError } = useQuery<EditorFile>({
     queryKey: [`/api/projects/${projectId}/files/${fileId}`],
     enabled: !!fileId && !!projectId,
+    // ✅ FIX: Retry failed file loads (new files might not exist yet)
+    retry: 2,
+    retryDelay: 500,
   });
+
+  // ✅ FIX: Handle file error in useEffect to avoid setState during render
+  useEffect(() => {
+    if (!file && fileError && !currentFile) {
+      console.error('[Monaco] File load failed:', fileError);
+      toast({
+        title: "File not found",
+        description: "The requested file could not be loaded. Showing empty editor.",
+        variant: "destructive",
+      });
+      // Create a placeholder file to allow Monaco to initialize
+      setCurrentFile({
+        id: fileId as number,
+        path: 'untitled',
+        name: 'untitled',
+        content: '',
+        language: 'typescript',
+        lastModified: new Date(),
+      } as EditorFile);
+    }
+  }, [file, fileError, currentFile, fileId, toast]);
 
   // Mutation pour sauvegarder le fichier
   const saveFileMutation = useMutation({
@@ -139,7 +163,9 @@ export function ReplitMonacoEditor({
 
   // Configuration Monaco Editor
   useEffect(() => {
-    if (!editorRef.current || !file) return;
+    // ✅ FIX: Use file or currentFile placeholder (architect feedback)
+    const activeFile = file || currentFile;
+    if (!editorRef.current || !activeFile) return;
 
     // Configuration du thème E-Code
     monaco.editor.defineTheme("replit-dark", {
@@ -193,8 +219,8 @@ export function ReplitMonacoEditor({
 
     // Création de l'éditeur
     const editor = monaco.editor.create(editorRef.current, {
-      value: file.content,
-      language: file.language,
+      value: activeFile.content,
+      language: activeFile.language,
       theme: theme === "dark" ? "replit-dark" : "replit-light",
       fontSize: 14,
       fontFamily: "Monaco, Menlo, 'Ubuntu Mono', monospace",
@@ -321,7 +347,7 @@ export function ReplitMonacoEditor({
       monacoEnhancementsRef.current?.dispose();
       monacoEnhancementsRef.current = null;
     };
-  }, [file, theme, aiCompletionsEnabled, projectId, toast]);
+  }, [file, currentFile, theme, aiCompletionsEnabled, projectId, toast]);
 
   const handleSave = () => {
     if (!editorInstanceRef.current || !fileId) return;
@@ -420,7 +446,8 @@ export function ReplitMonacoEditor({
     return `${hours}h ago`;
   };
 
-  if (fileLoading || !file) {
+  // ✅ FIX: Handle file loading states properly
+  if (fileLoading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-[var(--ecode-editor-bg)]">
         <div className="text-center">
@@ -429,6 +456,23 @@ export function ReplitMonacoEditor({
         </div>
       </div>
     );
+  }
+
+  if (!file && !currentFile) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-[var(--ecode-editor-bg)]">
+        <div className="text-center">
+          <p className="text-[var(--ecode-text-secondary)]">No file selected</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ FIX: Use file or currentFile (fallback for failed loads)
+  const activeFile = file || currentFile;
+  
+  if (!activeFile) {
+    return null;
   }
 
   return (
@@ -440,12 +484,12 @@ export function ReplitMonacoEditor({
             {/* Infos du fichier */}
             <div className="flex items-center space-x-2">
               <FileText className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
-              <span className="text-sm font-medium text-[var(--ecode-text)]">{file.name}</span>
+              <span className="text-sm font-medium text-[var(--ecode-text)]">{activeFile.name}</span>
               {hasUnsavedChanges && (
                 <div className="h-2 w-2 bg-[var(--ecode-warning)] rounded-full"></div>
               )}
               <Badge variant="outline" className="text-xs">
-                {file.language}
+                {activeFile.language}
               </Badge>
             </div>
 

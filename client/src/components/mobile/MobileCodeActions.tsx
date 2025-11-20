@@ -2,6 +2,7 @@
  * Mobile Code Actions Panel
  * Provides touch-optimized access to Monaco advanced features
  * Brings mobile to 100% feature parity with desktop
+ * @version 2.0.0 - Fixed lucide-react import aliases (Function→FunctionIcon)
  */
 
 import { useState, useEffect } from 'react';
@@ -24,6 +25,17 @@ import {
   ListTree,
   MousePointerClick,
   Zap,
+  Box,
+  CircleDot,
+  Layers,
+  SquareFunction as FunctionIcon,
+  Variable as VariableIcon,
+  Hash,
+  Type as TypeIcon,
+  FileCode,
+  Boxes,
+  Settings,
+  FileJson,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +43,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { mapTsKindToMonacoSymbol } from '@/lib/ts-kind-map';
 
 interface MobileCodeActionsProps {
   editor: monaco.editor.IStandaloneCodeEditor | null;
@@ -53,7 +66,43 @@ export function MobileCodeActions({ editor, className }: MobileCodeActionsProps)
   const [searchQuery, setSearchQuery] = useState('');
   const [replaceQuery, setReplaceQuery] = useState('');
   const [symbolList, setSymbolList] = useState<any[]>([]);
+  const [currentLanguage, setCurrentLanguage] = useState<string>('');
   const { toast } = useToast();
+
+  // Helper: Get icon for Monaco SymbolKind
+  const getSymbolIcon = (kind: number) => {
+    const SymbolKind = monaco.languages.SymbolKind;
+    
+    switch (kind) {
+      case SymbolKind.File: return FileCode;
+      case SymbolKind.Module: return Boxes;
+      case SymbolKind.Namespace: return Layers;
+      case SymbolKind.Package: return Box;
+      case SymbolKind.Class: return Box;
+      case SymbolKind.Method: return FunctionIcon;
+      case SymbolKind.Property: return CircleDot;
+      case SymbolKind.Field: return CircleDot;
+      case SymbolKind.Constructor: return Settings;
+      case SymbolKind.Enum: return Hash;
+      case SymbolKind.Interface: return TypeIcon;
+      case SymbolKind.Function: return FunctionIcon;
+      case SymbolKind.Variable: return VariableIcon;
+      case SymbolKind.Constant: return VariableIcon;
+      case SymbolKind.String: return FileJson;
+      case SymbolKind.Number: return Hash;
+      case SymbolKind.Boolean: return Hash;
+      case SymbolKind.Array: return Boxes;
+      case SymbolKind.Object: return FileJson;
+      case SymbolKind.Key: return Hash;
+      case SymbolKind.Null: return CircleDot;
+      case SymbolKind.EnumMember: return CircleDot;
+      case SymbolKind.Struct: return Box;
+      case SymbolKind.Event: return Sparkles;
+      case SymbolKind.Operator: return Code2;
+      case SymbolKind.TypeParameter: return TypeIcon;
+      default: return CircleDot;
+    }
+  };
 
   // Get current word/selection info
   const getCurrentContext = () => {
@@ -204,6 +253,65 @@ export function MobileCodeActions({ editor, className }: MobileCodeActionsProps)
     },
   ];
 
+  // Helper: Get document symbols from Monaco's provider registry
+  const getDocumentSymbols = async (model: monaco.editor.ITextModel): Promise<any[]> => {
+    try {
+      // Access Monaco's internal DocumentSymbolProviderRegistry
+      const registry = (monaco.languages as any).DocumentSymbolProviderRegistry;
+      if (!registry) {
+        console.debug('DocumentSymbolProviderRegistry not available');
+        return [];
+      }
+
+      // Get all registered providers for this model
+      const providers = registry.ordered(model);
+      if (!providers || providers.length === 0) {
+        console.debug('No symbol providers registered for', model.getLanguageId());
+        return [];
+      }
+
+      // Try each provider until we get results
+      for (const provider of providers) {
+        try {
+          const symbols = await provider.provideDocumentSymbols(
+            model,
+            { isCancellationRequested: false, onCancellationRequested: () => ({} as any) }
+          );
+
+          if (symbols && symbols.length > 0) {
+            // Flatten nested DocumentSymbol structure
+            const flattenSymbols = (items: any[]): any[] => {
+              const result: any[] = [];
+              for (const item of items) {
+                result.push({
+                  name: item.name,
+                  kind: item.kind,
+                  range: item.range,
+                  selectionRange: item.selectionRange || item.range,
+                });
+                // Recursively add children
+                if (item.children && item.children.length > 0) {
+                  result.push(...flattenSymbols(item.children));
+                }
+              }
+              return result;
+            };
+
+            return flattenSymbols(symbols);
+          }
+        } catch (providerError) {
+          console.debug('Provider failed:', providerError);
+          continue;
+        }
+      }
+
+      return [];
+    } catch (error) {
+      console.debug('Error accessing symbol providers:', error);
+      return [];
+    }
+  };
+
   // Load document symbols
   const loadSymbols = async () => {
     if (!editor) return;
@@ -211,16 +319,99 @@ export function MobileCodeActions({ editor, className }: MobileCodeActionsProps)
     if (!model) return;
 
     try {
-      const symbols = await monaco.languages.executeDocumentSymbolProvider(
-        model.uri.toString(),
-        {} as any
-      );
-
-      if (symbols && Array.isArray(symbols)) {
+      const language = model.getLanguageId();
+      setCurrentLanguage(language);
+      
+      // Try generic document symbol provider registry first
+      // This works for all languages with registered providers (JSON, CSS, HTML, etc.)
+      const symbols = await getDocumentSymbols(model);
+      
+      if (symbols.length > 0) {
         setSymbolList(symbols);
+        return;
       }
+
+      // Fallback: For TS/JS family, try TypeScript worker for enhanced metadata
+      if (
+        language === 'typescript' || 
+        language === 'javascript' || 
+        language === 'typescriptreact' || 
+        language === 'javascriptreact'
+      ) {
+        const worker = await monaco.languages.typescript.getTypeScriptWorker();
+        const client = await worker(model.uri);
+        const navTree = await client.getNavigationTree(model.uri.toString());
+        
+        if (navTree) {
+          // Helper: Ensure Monaco Range has valid 1-based line/column numbers
+          const createValidRange = (start: number, length: number): monaco.Range => {
+            const startPos = model.getPositionAt(start);
+            const endPos = model.getPositionAt(start + length);
+            
+            // Monaco uses 1-based line/column numbers - clamp to >=1
+            return new monaco.Range(
+              Math.max(1, startPos.lineNumber || 1),
+              Math.max(1, startPos.column || 1),
+              Math.max(1, endPos.lineNumber || 1),
+              Math.max(1, endPos.column || 1)
+            );
+          };
+          
+          // Recursively flatten navigation tree and convert TS spans to Monaco Range objects
+          const flattenSymbols = (items: any[]): any[] => {
+            const tsSymbols: any[] = [];
+            for (const item of items) {
+              if (item.spans && item.spans[0]) {
+                const span = item.spans[0];
+                const range = createValidRange(span.start, span.length);
+                
+                tsSymbols.push({
+                  name: item.text,
+                  kind: mapTsKindToMonacoSymbol(item.kind),
+                  range: range,
+                  selectionRange: range,
+                });
+              }
+              
+              // Recursively add children
+              if (item.childItems && item.childItems.length > 0) {
+                tsSymbols.push(...flattenSymbols(item.childItems));
+              }
+            }
+            return tsSymbols;
+          };
+          
+          const tsSymbols: any[] = [];
+          
+          // Include root node itself if it has valid spans (e.g., minimal scripts)
+          if (navTree.spans && navTree.spans[0] && navTree.text) {
+            const span = navTree.spans[0];
+            const range = createValidRange(span.start, span.length);
+            
+            tsSymbols.push({
+              name: navTree.text,
+              kind: mapTsKindToMonacoSymbol(navTree.kind),
+              range: range,
+              selectionRange: range,
+            });
+          }
+          
+          // Process child items recursively
+          if (navTree.childItems && navTree.childItems.length > 0) {
+            tsSymbols.push(...flattenSymbols(navTree.childItems));
+          }
+          
+          // Always set symbolList, even if empty (allows proper empty state display)
+          setSymbolList(tsSymbols);
+          return;
+        }
+      }
+      
+      // No symbols found from any provider
+      setSymbolList([]);
     } catch (error) {
-      console.error('Failed to load symbols:', error);
+      console.debug('Document symbols not available:', error);
+      setSymbolList([]);
     }
   };
 
@@ -481,27 +672,51 @@ export function MobileCodeActions({ editor, className }: MobileCodeActionsProps)
                       className="p-4 space-y-2"
                     >
                       {symbolList.length > 0 ? (
-                        symbolList.map((symbol, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handleSymbolClick(symbol)}
-                            className="w-full p-3 rounded-lg bg-[var(--ecode-sidebar)] hover:bg-[var(--ecode-sidebar-hover)] transition-colors text-left flex items-center justify-between"
-                          >
-                            <div>
-                              <span className="text-sm font-medium text-[var(--ecode-text)]">
-                                {symbol.name}
-                              </span>
-                              <p className="text-xs text-[var(--ecode-text-secondary)]">
-                                Line {(symbol.selectionRange || symbol.range).startLineNumber}
-                              </p>
-                            </div>
-                            <ChevronRight className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
-                          </button>
-                        ))
+                        symbolList.map((symbol, index) => {
+                          const IconComponent = getSymbolIcon(symbol.kind);
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => handleSymbolClick(symbol)}
+                              className="w-full p-3 rounded-lg bg-[var(--ecode-sidebar)] hover:bg-[var(--ecode-sidebar-hover)] transition-colors text-left flex items-center gap-3"
+                            >
+                              <div className="p-2 rounded-lg bg-[var(--ecode-surface)] text-[var(--ecode-orange)]">
+                                <IconComponent className="h-4 w-4" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-sm font-medium text-[var(--ecode-text)] truncate block">
+                                  {symbol.name}
+                                </span>
+                                <p className="text-xs text-[var(--ecode-text-secondary)]">
+                                  Line {(symbol.selectionRange || symbol.range).startLineNumber}
+                                </p>
+                              </div>
+                              <ChevronRight className="h-4 w-4 text-[var(--ecode-text-secondary)] flex-shrink-0" />
+                            </button>
+                          );
+                        })
                       ) : (
-                        <div className="text-center py-8 text-[var(--ecode-text-secondary)]">
-                          <ListTree className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm">No symbols found in this file</p>
+                        <div className="text-center py-8 px-4 text-[var(--ecode-text-secondary)]">
+                          <ListTree className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                          {currentLanguage && !['typescript', 'javascript', 'typescriptreact', 'javascriptreact'].includes(currentLanguage) ? (
+                            <>
+                              <p className="text-sm font-medium mb-2">
+                                Symbol navigation not available for {currentLanguage.toUpperCase()} files
+                              </p>
+                              <p className="text-xs text-[var(--ecode-text-secondary)] mb-3">
+                                Currently supported: TypeScript, JavaScript, TSX, JSX
+                              </p>
+                              <p className="text-xs">
+                                Try using{' '}
+                                <kbd className="px-1.5 py-0.5 bg-[var(--ecode-sidebar)] rounded text-[var(--ecode-text)]">
+                                  Ctrl+Shift+O
+                                </kbd>{' '}
+                                for Quick Outline
+                              </p>
+                            </>
+                          ) : (
+                            <p className="text-sm">No symbols found in this file</p>
+                          )}
                         </div>
                       )}
                     </motion.div>

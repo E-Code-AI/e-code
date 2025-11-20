@@ -174,7 +174,8 @@ const ChatbotBuilder = lazy(() => import("@/pages/solutions/ChatbotBuilder"));
 const InternalAIBuilder = lazy(() => import("@/pages/solutions/InternalAIBuilder"));
 const PreviewWithDevTools = lazy(() => import("@/pages/PreviewWithDevTools"));
 
-const CodeGeneration = lazy(() => import("@/pages/CodeGeneration"));
+// DEPRECATED: Standalone code generation page - use autonomous workspace instead
+// const CodeGeneration = lazy(() => import("@/pages/CodeGeneration"));
 const MCPInterface = lazy(() => import("@/pages/MCPInterface"));
 const PolyglotBackendPage = lazy(() => import("@/pages/PolyglotBackendPage"));
 // Application Pages
@@ -458,7 +459,8 @@ function AppContent() {
             }, [navigate]);
             return <div>Redirecting to AI Agent...</div>;
           }} />
-          <Route path="/code-generation" component={CodeGeneration} />
+          {/* DEPRECATED: Standalone code generation - use Dashboard/Homepage prompt → autonomous workspace instead */}
+          {/* <Route path="/code-generation" component={CodeGeneration} /> */}
           <Route path="/mcp" component={MCPInterface} />
           <Route path="/polyglot" component={PolyglotBackendPage} />
           <Route path="/demo" component={AuthenticationDemo} />

@@ -28,6 +28,12 @@ export interface StreamLimiterConfig {
   maxChunkSizeBytes: number;
   
   /**
+   * Maximum idle time between chunks in milliseconds
+   * @default 30000 (30 seconds)
+   */
+  chunkIdleTimeoutMs?: number;
+  
+  /**
    * Enable debug logging
    * @default false
    */
@@ -44,6 +50,7 @@ export class StreamLimiter {
       maxSizeBytes: config.maxSizeBytes ?? 10 * 1024 * 1024, // 10MB
       timeoutMs: config.timeoutMs ?? 60000, // 60 seconds
       maxChunkSizeBytes: config.maxChunkSizeBytes ?? 100 * 1024, // 100KB
+      chunkIdleTimeoutMs: config.chunkIdleTimeoutMs ?? 30000, // 30 seconds
       debug: config.debug ?? false
     };
   }
@@ -117,28 +124,33 @@ export class StreamLimiter {
 
   /**
    * Wrap async generator with timeout
+   * ✅ 40-YEAR ENGINEERING FIX (Nov 20, 2025): Separate chunk idle timeout from total timeout
+   * - Total timeout: Maximum stream duration (e.g., 90s for plan generation)
+   * - Chunk idle timeout: Maximum time between chunks (e.g., 30s)
+   * CRITICAL: Using remaining total time as chunk timeout caused 11ms timeouts after 90s streams
    */
   private async *withTimeout<T>(stream: AsyncGenerator<T>): AsyncGenerator<T> {
     const iterator = stream[Symbol.asyncIterator]();
     const startTime = Date.now();
+    const chunkTimeout = this.config.chunkIdleTimeoutMs || 30000;
     
     try {
       while (true) {
         const elapsed = Date.now() - startTime;
-        const remainingTime = this.config.timeoutMs - elapsed;
         
-        if (remainingTime <= 0) {
+        // Check total timeout
+        if (elapsed > this.config.timeoutMs) {
           throw new Error(`Stream timeout: ${elapsed}ms > ${this.config.timeoutMs}ms`);
         }
         
-        // Create a timeout promise
+        // Create a chunk idle timeout promise (fixed duration, not remaining time)
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => {
-            reject(new Error(`Stream chunk timeout: ${remainingTime}ms exceeded`));
-          }, remainingTime);
+            reject(new Error(`Stream chunk idle timeout: ${chunkTimeout}ms exceeded`));
+          }, chunkTimeout);
         });
         
-        // Race between next chunk and timeout
+        // Race between next chunk and chunk idle timeout
         const result = await Promise.race([
           iterator.next(),
           timeoutPromise

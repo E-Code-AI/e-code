@@ -57,6 +57,7 @@ import globalSearchRouter from "./global-search.router";
 import logsViewerRouter from "./logs-viewer.router";
 import envVarsRouter from "./env-vars.router";
 import projectDataRouter from "./project-data.router";
+import codeGenerationRouter from "./code-generation.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -196,6 +197,9 @@ export class MainRouter {
     
     // AI Models Selection routes
     app.use('/api/models', tierRateLimiters.api, aiModelsRouter);
+    
+    // Code Generation routes (SSE streaming for real-time code generation)
+    app.use('/api/code-generation', tierRateLimiters.streaming, codeGenerationRouter);
     
     // Feature Flags routes (runtime toggles for experimental features)
     app.use(tierRateLimiters.api, featureFlagsRouter);

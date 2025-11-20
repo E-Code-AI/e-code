@@ -44,10 +44,10 @@ const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   'grok-4': { input: 5.0, output: 15.0 },
   'grok-4-fast': { input: 0.5, output: 1.5 },
   
-  // Moonshot AI
-  'kimi-k2': { input: 1.0, output: 2.0 },
-  'kimi-k2-thinking': { input: 8.0, output: 8.0 },
-  'kimi-k2-turbo': { input: 0.3, output: 0.6 },
+  // Moonshot AI - ✅ 40-YEAR FIX: Production-recommended pricing
+  'kimi-k2-0711-preview': { input: 0.6, output: 2.5 },  // Official pricing
+  'kimi-k2-0905-preview': { input: 0.6, output: 2.5 },  // Same pricing
+  'kimi-k2-thinking': { input: 0.6, output: 2.5 },      // Same pricing
 };
 
 interface TrackUsageParams {
@@ -71,7 +71,7 @@ export class AiMeteringService {
   constructor() {
     if (process.env.STRIPE_SECRET_KEY) {
       this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-        apiVersion: '2025-07-30.basil',
+        apiVersion: '2025-08-27.basil',  // ✅ FIXED: Updated to latest Stripe API version
       });
     } else {
       logger.warn('STRIPE_SECRET_KEY not found - Stripe metering disabled');

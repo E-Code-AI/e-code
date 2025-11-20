@@ -328,7 +328,7 @@ router.post('/build', async (req, res) => {
           userId,
           projectId,
           action,
-          { success: true, fileId: String(file.id), riskScore: risk.score }
+          { success: true, fileId: String(file.id) }
         );
         
         results.push({

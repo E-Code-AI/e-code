@@ -37,10 +37,11 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
   'grok': 'grok-4',
   'grok-fast': 'grok-4-fast',
   
-  // Moonshot AI aliases
-  'kimi': 'kimi-k2',
+  // Moonshot AI aliases - ✅ 40-YEAR FIX: Production-recommended IDs
+  'kimi': 'kimi-k2-0711-preview',
   'kimi-thinking': 'kimi-k2-thinking',
-  'kimi-turbo': 'kimi-k2-turbo',
+  'kimi-k2': 'kimi-k2-0711-preview',  // Legacy fallback
+  'kimi-k2-turbo': 'kimi-k2-0711-preview',  // Turbo doesn't exist
 };
 
 /**
@@ -69,7 +70,7 @@ export function normalizeModelName(modelName: string | undefined, provider: stri
     'gemini': 'gemini-2.5-flash',
     'google': 'gemini-2.5-flash',
     'xai': 'grok-4-fast',
-    'moonshot': 'kimi-k2-turbo',
+    'moonshot': 'kimi-k2-0711-preview',  // ✅ FIXED: Production-recommended model
   };
   
   // Step 4: Try exact match (already valid enum value - 26 total values)
@@ -83,7 +84,7 @@ export function normalizeModelName(modelName: string | undefined, provider: stri
     'claude-sonnet-4-5-20250929', 'claude-opus-4-1-20250805', 'claude-haiku-4-5-20251015',
     'gemini-2.5-pro', 'gemini-2.5-flash',
     'grok-4', 'grok-4-fast',
-    'kimi-k2', 'kimi-k2-thinking', 'kimi-k2-turbo'
+    'kimi-k2-0711-preview', 'kimi-k2-0905-preview', 'kimi-k2-thinking'  // ✅ FIXED
   ];
   
   if (modelName && validEnumValues.includes(modelName)) {

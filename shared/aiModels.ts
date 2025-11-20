@@ -297,51 +297,52 @@ export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
   // ========================================
   // Moonshot AI Models (Nov 2025)
   // ========================================
-  'kimi-k2': {
-    id: 'kimi-k2',
-    name: 'Kimi K2',
+  // ✅ 40-YEAR FIX: Corrected to kimi-k2-0711-preview (production-recommended ID)
+  'kimi-k2-0711-preview': {
+    id: 'kimi-k2-0711-preview',
+    name: 'Kimi K2 (July 2025)',
     provider: 'moonshot',
-    description: 'Cost-effective with excellent agentic capabilities - 10× cheaper than GPT-4',
+    description: 'Production-recommended - 1T param MoE model optimized for agentic tasks, 10-100× cheaper than GPT-4',
     capabilities: {
       extendedThinking: true,
       toolUse: true,
-      contextWindow: 128000,
+      contextWindow: 128000,  // 128K context
       codeGeneration: true,
       multimodal: false
     },
     pricing: { input: 0.6, output: 2.5 },
-    releaseDate: '2025-11-01',
+    releaseDate: '2025-07-11',
+    available: true
+  },
+  'kimi-k2-0905-preview': {
+    id: 'kimi-k2-0905-preview',
+    name: 'Kimi K2 (Sept 2025)',
+    provider: 'moonshot',
+    description: 'Latest stable - improved coding performance with 256K context window',
+    capabilities: {
+      extendedThinking: true,
+      toolUse: true,
+      contextWindow: 256000,  // 256K context
+      codeGeneration: true,
+      multimodal: false
+    },
+    pricing: { input: 0.6, output: 2.5 },
+    releaseDate: '2025-09-05',
     available: true
   },
   'kimi-k2-thinking': {
     id: 'kimi-k2-thinking',
     name: 'Kimi K2 Thinking',
     provider: 'moonshot',
-    description: 'Enhanced reasoning and complex problem-solving capabilities',
+    description: 'Advanced reasoning & agentic model - 256K context with 200-300 sequential tool calls',
     capabilities: {
       extendedThinking: true,
       toolUse: true,
-      contextWindow: 128000,
+      contextWindow: 256000,  // ✅ FIXED: 256K context (was 128K)
       codeGeneration: true,
       multimodal: false
     },
-    pricing: { input: 0.8, output: 3.0 },
-    releaseDate: '2025-11-01',
-    available: true
-  },
-  'kimi-k2-turbo': {
-    id: 'kimi-k2-turbo',
-    name: 'Kimi K2 Turbo',
-    provider: 'moonshot',
-    description: 'Fastest Kimi model - 100× cheaper than GPT-4',
-    capabilities: {
-      extendedThinking: false,
-      toolUse: true,
-      contextWindow: 128000,
-      codeGeneration: true,
-      multimodal: false
-    },
-    pricing: { input: 0.3, output: 1.0 },
+    pricing: { input: 0.6, output: 2.5 },  // ✅ FIXED: Same pricing as base model
     releaseDate: '2025-11-01',
     available: true
   }

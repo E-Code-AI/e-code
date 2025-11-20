@@ -117,6 +117,8 @@ export default function Dashboard() {
       }) as any;
 
       // Redirect to IDE with bootstrap token (agent auto-starts via WebSocket)
+      console.log('🎯 [Dashboard] Redirecting to IDE with bootstrap token:', response.bootstrapToken?.substring(0, 20) + '...');
+      console.log('🎯 [Dashboard] Full response:', { projectId: response.projectId, sessionId: response.sessionId, hasToken: !!response.bootstrapToken });
       navigate(`/ide/${response.projectId}?bootstrap=${response.bootstrapToken}`);
     } catch (error) {
       console.error('Failed to create project:', error);

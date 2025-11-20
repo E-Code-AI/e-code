@@ -28,6 +28,9 @@ export default {
         sans: ["'IBM Plex Sans'", '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', '"Fira Sans"', '"Droid Sans"', '"Helvetica Neue"', 'sans-serif'],
         mono: ["'IBM Plex Mono'", '"SF Mono"', 'Monaco', 'Inconsolata', '"Fira Mono"', '"Droid Sans Mono"', '"Source Code Pro"', 'monospace'],
       },
+      fontSize: {
+        'xxs': ['0.625rem', { lineHeight: '0.75rem' }], // 10px for mobile bottom tabs
+      },
       colors: {
         // E-Code brand colors
         'ecode-orange': {

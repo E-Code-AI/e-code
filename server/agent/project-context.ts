@@ -14,7 +14,8 @@ const execAsync = promisify(exec);
 export interface ProjectContext {
   files: string[];
   packageJson?: any;
-  structure: string;
+  structure: string; // Full tree (for tools that need complete file lists)
+  structureSummary?: string; // Compact summary (for AI prompts to stay under token limits)
   recentFiles?: string[];
   errors?: string[];
   gitStatus?: string;
@@ -53,6 +54,7 @@ export class ProjectContextProvider {
       this.getGitStatus()
     ]);
 
+    // Generate BOTH full structure (for tools) and compact summary (for AI prompts)
     const structure = this.generateStructureTree(files);
     const projectType = this.detectProjectType(packageJson);
     const framework = this.detectFramework(packageJson);
@@ -60,7 +62,8 @@ export class ProjectContextProvider {
     return {
       files,
       packageJson,
-      structure,
+      structure, // Full tree for tools that need it
+      structureSummary: this.generateStructureSummary(files), // Compact for AI
       gitStatus,
       projectType,
       framework
@@ -171,6 +174,57 @@ export class ProjectContextProvider {
   }
 
   /**
+   * Generate compact hierarchical summary for AI context
+   * Shows top-level directories with file counts + important files only
+   * CRITICAL FIX (Nov 19, 2025): Prevents 4M+ token system prompts for large repos
+   */
+  private generateStructureSummary(files: string[]): string {
+    const topLevel: Record<string, number> = {};
+    const importantFiles: string[] = [];
+    
+    // Important file patterns to always include
+    const importantPatterns = [
+      'package.json', 'tsconfig.json', 'vite.config', 'README.md', 
+      '.gitignore', 'Dockerfile', 'docker-compose', '.env.example',
+      'drizzle.config', 'tailwind.config'
+    ];
+    
+    for (const file of files) {
+      const parts = file.split(path.sep);
+      const topDir = parts[0];
+      
+      // Count files per top-level directory
+      topLevel[topDir] = (topLevel[topDir] || 0) + 1;
+      
+      // Track important files
+      if (importantPatterns.some(pattern => file.includes(pattern))) {
+        importantFiles.push(file);
+      }
+    }
+    
+    let summary = '';
+    
+    // Top-level directories with counts
+    Object.entries(topLevel)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .forEach(([dir, count]) => {
+        summary += `├── ${dir}/ (${count} files)\n`;
+      });
+    
+    // Important files section
+    if (importantFiles.length > 0) {
+      summary += '\nKey Configuration Files:\n';
+      importantFiles.slice(0, 10).forEach(file => {
+        summary += `  - ${file}\n`;
+      });
+    }
+    
+    summary += `\nTotal: ${files.length} files across ${Object.keys(topLevel).length} directories`;
+    
+    return summary;
+  }
+
+  /**
    * Convert tree object to string
    */
   private treeToString(tree: Record<string, any>, indent = ''): string {
@@ -247,10 +301,13 @@ export class ProjectContextProvider {
     
     prompt += '.\n\n';
     
-    // Project structure
-    prompt += '## Project Structure\n\n';
+    // Project structure (USE COMPACT SUMMARY for AI, full tree still available for tools)
+    // CRITICAL FIX (Nov 19, 2025): Use hierarchical summary to prevent 4M+ token system prompts
+    const structureToShow = context.structureSummary || context.structure;
+    
+    prompt += '## Project Structure (Summary)\n\n';
     prompt += '```\n';
-    prompt += context.structure;
+    prompt += structureToShow;
     prompt += '```\n\n';
     
     // Key files

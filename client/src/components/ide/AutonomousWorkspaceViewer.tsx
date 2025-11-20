@@ -64,7 +64,16 @@ export function AutonomousWorkspaceViewer({
   onComplete,
   onError
 }: AutonomousWorkspaceViewerProps) {
+  console.log('[AutonomousWorkspace] Component mounted with token:', bootstrapToken ? bootstrapToken.substring(0, 20) + '...' : 'null');
+  console.log('[AutonomousWorkspace] ProjectId:', projectId);
+  console.log('[AutonomousWorkspace] isOpen will be:', !!bootstrapToken);
+  
   const [isOpen, setIsOpen] = useState(!!bootstrapToken);
+  
+  // Debug: Log when isOpen changes
+  useEffect(() => {
+    console.log('[AutonomousWorkspace] isOpen changed to:', isOpen);
+  }, [isOpen]);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error' | 'closed'>('connecting');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [logs, setLogs] = useState<string[]>([]);

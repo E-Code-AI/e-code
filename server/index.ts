@@ -282,6 +282,15 @@ app.get('/api/cors-health', async (_req, res) => {
     } catch (error) {
       console.error('[WORKING SERVER] Failed to register AI optimization routes:', error);
     }
+
+    // ✅ 40-YEAR ENGINEERING FIX: Register Agent Autonomous routes
+    try {
+      const agentAutonomousRouter = (await import('./routes/agent-autonomous.router')).default;
+      app.use('/api/agent/autonomous', agentAutonomousRouter);
+      console.log('[Agent Autonomous] Routes registered at /api/agent/autonomous');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register agent autonomous routes:', error);
+    }
   } catch (error) {
     console.error('[WORKING SERVER] Failed to register routes:', error);
     // Server continues running even if routes fail to load
