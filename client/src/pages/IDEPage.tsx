@@ -130,7 +130,10 @@ export default function IDEPage() {
   
   // NEW: Autonomous workspace creation - detect ?bootstrap=token
   const bootstrapToken = searchParams.get('bootstrap');
-  console.log('🔍 [IDEPage] Mounted with projectId:', projectId, 'bootstrapToken:', bootstrapToken ? bootstrapToken.substring(0, 20) + '...' : 'NULL');
+  console.log('🔍🔍🔍 [IDEPage] MOUNTED - URL:', window.location.href);
+  console.log('🔍🔍🔍 [IDEPage] ProjectId:', projectId);
+  console.log('🔍🔍🔍 [IDEPage] BootstrapToken:', bootstrapToken ? bootstrapToken.substring(0, 30) + '...' : 'NULL');
+  console.log('🔍🔍🔍 [IDEPage] All search params:', Array.from(searchParams.entries()));
   
   // NEW: Support ?prompt=... query param for direct agent invocation
   const storedPrompt = projectId ? sessionStorage.getItem(`agent-prompt-${projectId}`) : null;

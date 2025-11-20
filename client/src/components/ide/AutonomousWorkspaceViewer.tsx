@@ -64,9 +64,17 @@ export function AutonomousWorkspaceViewer({
   onComplete,
   onError
 }: AutonomousWorkspaceViewerProps) {
-  console.log('[AutonomousWorkspace] Component mounted with token:', bootstrapToken ? bootstrapToken.substring(0, 20) + '...' : 'null');
-  console.log('[AutonomousWorkspace] ProjectId:', projectId);
-  console.log('[AutonomousWorkspace] isOpen will be:', !!bootstrapToken);
+  console.log('🚀🚀🚀 [AutonomousWorkspace] COMPONENT MOUNTED');
+  console.log('🚀🚀🚀 [AutonomousWorkspace] Token:', bootstrapToken ? bootstrapToken.substring(0, 30) + '...' : 'NULL');
+  console.log('🚀🚀🚀 [AutonomousWorkspace] ProjectId:', projectId);
+  console.log('🚀🚀🚀 [AutonomousWorkspace] isOpen will be:', !!bootstrapToken);
+  
+  // CRITICAL DEBUG: Alert if token is present
+  if (bootstrapToken) {
+    console.error('🎉🎉🎉 BOOTSTRAP TOKEN DETECTED - MODAL SHOULD OPEN!');
+  } else {
+    console.error('❌❌❌ NO BOOTSTRAP TOKEN - MODAL WILL NOT OPEN!');
+  }
   
   const [isOpen, setIsOpen] = useState(!!bootstrapToken);
   
