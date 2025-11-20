@@ -37,7 +37,8 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
                 req.originalUrl.startsWith('/collaboration/') || 
                 req.originalUrl.startsWith('/webrtc/') ||
                 req.originalUrl.startsWith('/health') ||
-                req.originalUrl.startsWith('/socket.io/')) {
+                req.originalUrl.startsWith('/socket.io/') ||
+                req.originalUrl.startsWith('/ws/')) {
               return next();
             }
             
