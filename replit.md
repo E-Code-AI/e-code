@@ -28,14 +28,15 @@ Key features include a Monaco Code Editor with VS Code-level enhancements (Git U
 
 **Autonomous Workspace Creation (Replit-Style Flow):**
 The platform provides a Replit-identical autonomous workspace creation experience. Users enter a natural language prompt on the Homepage or Dashboard (e.g., "Create a todo list app with React"). The system:
-1. **POST /api/workspace/bootstrap** - Creates project, agent session, generates AI execution plan
-2. **Autonomous Plan Execution** - `agentOrchestrator.executeAutonomousPlan()` autonomously generates all files/code
-3. **Redirect to IDE** - `/ide/:id?bootstrap=token` with WebSocket streaming
-4. **Real-Time Progress** - `AutonomousWorkspaceViewer` component displays file generation progress
-5. **Live Preview** - Preview pane shows app building in real-time
-6. **Agent Integration** - `ReplitAgent` receives `initialPrompt` and continues autonomous development
+1. **POST /api/workspace/bootstrap** - Creates project, agent session, returns token IMMEDIATELY (<1s)
+2. **Instant Redirect** - Client redirected to `/ide/:id?bootstrap=token` without waiting for plan
+3. **Background Plan Generation** - AI plan generates asynchronously (up to 180s) with multi-provider fallback
+4. **WebSocket Connection** - `AutonomousWorkspaceViewer` connects to `/ws/agent` and displays real-time progress
+5. **Autonomous Execution** - `agentOrchestrator.executeAutonomousPlan()` autonomously generates all files/code
+6. **Live Preview** - Preview tab opens by default, shows app building in real-time
+7. **Agent Integration** - `ReplitAgent` receives `initialPrompt` and continues autonomous development
 
-The flow is production-ready with multi-provider AI fallback, circuit breakers, and WebSocket progress streaming. Standalone code generation page deprecated in favor of autonomous workspace flow.
+**40-Year Engineering Fix (Nov 20, 2025):** Bootstrap changed from synchronous (3+ minute HTTP timeout) to asynchronous (instant token return, background plan generation). Client never waits for HTTP response, receives all updates via WebSocket streaming. Errors propagated via WebSocket with watchdog for unhandled rejections. Preview tab opens by default, `AutonomousWorkspaceViewer` modal opens automatically when `bootstrapToken` present.
 
 ### System Design Choices
 A PostgreSQL database stores user data, project hierarchies, AI agent sessions, deployment history, subscription management, and AI optimization monitoring. Security measures include CSRF protection, input sanitization, tier-based rate limiting, API versioning, and session-based authentication. The AI agent system provides server-sent event streaming, multi-provider AI model selection, and a database-backed conversation history, incorporating circuit breakers and retry logic for resilience. Health monitoring integrates Kubernetes probes and a Provider Health API, including a Prometheus metrics endpoint (`/metrics/prometheus`). A two-tier database API architecture is used: an Admin Database API and a Project Data API, with integrated security features like secret value masking and access control. Docker builds are optimized for small image sizes.
