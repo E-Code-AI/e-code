@@ -40,16 +40,16 @@ interface DeviceConnection {
 }
 
 class AgentWebSocketService {
-  private wss: WebSocketServer | null = null;
+  public wss: WebSocketServer | null = null; // Public for manual upgrade handling
   private connections = new Map<string, Set<DeviceConnection>>();
   private pingInterval: NodeJS.Timeout | null = null;
   
   initialize(server: Server) {
-    // ✅ CRITICAL FIX (Nov 20, 2025): Use standard server+path mode but configure BEFORE Vite
-    // This ensures the WebSocketServer is registered before Vite HMR can interfere
-    this.wss = new WebSocketServer({ server, path: '/ws/agent' });
+    // ✅ CRITICAL FIX (Nov 20, 2025): Use noServer mode to prevent Vite catch-all from intercepting
+    // Standard server+path mode doesn't work when Vite has a catch-all middleware
+    this.wss = new WebSocketServer({ noServer: true });
     
-    logger.info('[Agent WebSocket] Service initialized at /ws/agent');
+    logger.info('[Agent WebSocket] Service initialized (noServer mode for Vite compatibility)');
     
     // Start heartbeat for connection health monitoring
     this.startHeartbeat();

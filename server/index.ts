@@ -382,6 +382,41 @@ app.get('/api/cors-health', async (_req, res) => {
     console.warn('[WORKING SERVER] Stripe worker initialization failed (non-critical):', error.message);
   }
 
+  // ✅ CRITICAL FIX (Nov 20, 2025): Manual WebSocket upgrade handling for noServer mode
+  // This is required because Vite's catch-all middleware intercepts /ws/agent in standard server+path mode
+  // 
+  // ⚠️ KNOWN LIMITATION: Orphan WebSocket upgrades (typos, probing) will leak sockets
+  // This is an acceptable tradeoff to avoid breaking other WebSocket services (terminal, LSP, collaboration)
+  // Future improvement: Implement kUpgradeHandled symbol pattern (see architect feedback Nov 20, 2025)
+  httpServer.on('upgrade', (request, socket, head) => {
+    let pathname: string;
+    
+    // Safe URL parsing with fallback for malformed headers
+    try {
+      pathname = new URL(request.url!, `http://${request.headers.host || 'localhost'}`).pathname;
+    } catch (error) {
+      console.error('[WebSocket Upgrade] Malformed upgrade request:', error);
+      socket.destroy();
+      return;
+    }
+    
+    // Only handle /ws/agent upgrades, let other listeners handle their own paths
+    if (pathname !== '/ws/agent') {
+      return; // Let other upgrade listeners process this request
+    }
+    
+    // Route /ws/agent upgrades to Agent WebSocket service
+    const agentWss = (global as any).agentWebSocketService?.wss;
+    if (agentWss) {
+      agentWss.handleUpgrade(request, socket, head, (ws: any) => {
+        agentWss.emit('connection', ws, request);
+      });
+    } else {
+      console.error('[WebSocket Upgrade] Agent WebSocket service not initialized');
+      socket.destroy();
+    }
+  });
+
   // NOW start listening - ONLY after all middleware and routes are registered
   // This prevents the race condition where requests arrive before Vite middleware is ready
   httpServer.listen(port, "0.0.0.0", () => {
