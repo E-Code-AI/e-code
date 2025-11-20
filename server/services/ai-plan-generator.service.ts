@@ -45,7 +45,7 @@ export interface ExecutionPlan {
 
 export class AIPlanGeneratorService {
   private storage: IStorage;
-  
+
   // ✅ 40-YEAR ENGINEERING FIX: Provider fallback chain - corrected model IDs
   // ✅ GPT-5.1 UPGRADE (Nov 17, 2025): Adaptive reasoning with reasoning_effort='none' for fast plan generation
   // ✅ KIMI-K2 INTEGRATION (Nov 14, 2025): Added Moonshot AI for cost savings & performance
@@ -81,15 +81,15 @@ export class AIPlanGeneratorService {
     // Architect found bug: &quot; decoded to " without escaping = invalid JSON
     // Example broken: { "text": "He said "hello"" } → invalid
     // Example fixed: { "text": "He said \"hello\"" } → valid
-    
+
     // Step 1: Decode HTML entities BUT preserve string boundaries
     // Strategy: Only decode entities OUTSIDE of JSON string values
     // This prevents breaking JSON structure with unescaped quotes
-    
+
     // First, temporarily replace JSON string values with placeholders
     const stringPlaceholders: string[] = [];
     let placeholderIndex = 0;
-    
+
     // Extract all JSON string values and replace with placeholders
     let sanitized = jsonString.replace(/"((?:[^"\\]|\\.)*)"/g, (match) => {
       const placeholder = `__STRING_PLACEHOLDER_${placeholderIndex}__`;
@@ -97,7 +97,7 @@ export class AIPlanGeneratorService {
       placeholderIndex++;
       return placeholder;
     });
-    
+
     // Step 2: Decode HTML entities in non-string parts (keys, structural elements)
     const htmlEntities: Record<string, string> = {
       '&amp;': '&',
@@ -106,21 +106,21 @@ export class AIPlanGeneratorService {
       '&nbsp;': ' '
       // Note: NOT decoding &quot; and &#39; here to avoid breaking JSON
     };
-    
+
     for (const [entity, char] of Object.entries(htmlEntities)) {
       sanitized = sanitized.replace(new RegExp(entity, 'g'), char);
     }
-    
+
     // Step 3: Restore string values and fix escaping issues
     for (let i = 0; i < stringPlaceholders.length; i++) {
       const placeholder = `__STRING_PLACEHOLDER_${i}__`;
       let originalString = stringPlaceholders[i];
-      
+
       // Extract content between quotes
       const contentMatch = originalString.match(/^"((?:[^"\\]|\\.)*)"$/);
       if (contentMatch) {
         let content = contentMatch[1];
-        
+
         // Decode HTML entities in string content and re-escape for JSON
         content = content
           .replace(/&quot;/g, '\\"')    // &quot; → \" (JSON-safe escaped quote)
@@ -130,19 +130,19 @@ export class AIPlanGeneratorService {
           .replace(/&lt;/g, '<')         // &lt; → < (decoded)
           .replace(/&gt;/g, '>')         // &gt; → > (decoded)
           .replace(/&nbsp;/g, ' ');      // &nbsp; → space (decoded)
-        
+
         // Fix unescaped newlines (if any raw newlines slipped through)
         content = content
           .replace(/(?<!\\)\n/g, '\\n')  // Raw \n → \\n
           .replace(/(?<!\\)\r/g, '\\r')  // Raw \r → \\r
           .replace(/(?<!\\)\t/g, '\\t'); // Raw \t → \\t
-        
+
         originalString = `"${content}"`;
       }
-      
+
       sanitized = sanitized.replace(placeholder, originalString);
     }
-    
+
     return sanitized;
   }
 
@@ -176,7 +176,7 @@ export class AIPlanGeneratorService {
 
       // Condensed system prompt for providers with size limits (like Gemini)
       const systemPromptCondensed = `You are a software architect. Create a JSON execution plan for building software projects. Respond ONLY with valid JSON using this format: {"summary":"","technologies":[],"estimatedTime":"","tasks":[{"id":"","title":"","description":"","type":"file_create|file_edit|command|install_package|config","estimatedTime":"","dependencies":[],"priority":"high|medium|low","files":[{"path":"","content":"","language":""}],"packages":[],"commands":[]}],"riskAssessment":{"level":"low|medium|high","factors":[]}}. Requirements: Complete production-ready code, no placeholders, include all config files, specify exact package versions, order by dependencies.`;
-      
+
       // Full system prompt for providers without size limits
       const systemPromptFull = `You are an expert software architect and project planner. Your task is to create a detailed, executable plan for building software projects.
 
@@ -253,27 +253,28 @@ Remember:
 
       for (const modelId of this.PROVIDER_FALLBACK_CHAIN) {
         let fullResponse = '';
-        
+
         try {
           logger.info(`[generatePlan] Trying provider: ${modelId}`);
-          
+
           // ✅ GEMINI FIX: Use condensed prompt for Gemini (system_instruction size limit)
           // Gemini rejects long system instructions, use condensed version
           const isGemini = modelId.includes('gemini');
           const systemPrompt = isGemini ? systemPromptCondensed : systemPromptFull;
           logger.info(`[generatePlan] Using ${isGemini ? 'CONDENSED' : 'FULL'} prompt for ${modelId} (${systemPrompt.length} chars)`);
-          
-          // ✅ 40-YEAR ENGINEERING FIX: Per-provider timeout (180 seconds for complex prompts)
-          // Each provider attempt gets full 180s for complex CRM/enterprise prompts
+
+          // ✅ 40-YEAR ENGINEERING FIX: Per-provider timeout (300 seconds for complex prompts)
+          // Each provider attempt gets full 300s for complex CRM/enterprise prompts
           // This allows GPT-5.1 to fully generate detailed plans without premature timeout
-          const PLAN_GENERATION_TIMEOUT = 180000; // 180 seconds per provider (3 minutes)
+          const PLAN_GENERATION_TIMEOUT = 300000; // 5 minutes for plan generation (increased from 3min for very complex plans)
           const streamStartTime = Date.now();
-          
+          logger.info(`[generatePlan] Timeout set to ${PLAN_GENERATION_TIMEOUT}ms (${Math.round(PLAN_GENERATION_TIMEOUT / 60000)} minutes)`);
+
           // Stream response using AI Provider Manager
           // ✅ CRITICAL FIX: Increased max_tokens to prevent JSON truncation
           // Complex plans with multiple files can easily exceed 8192 tokens
           // ✅ GPT-5.1 UPGRADE (Nov 17, 2025): Use reasoning_effort='none' for fast plan generation
-          // ✅ TIMEOUT FIX (Nov 19, 2025): Custom 90s timeout for plan generation (default 60s too short)
+          // ✅ TIMEOUT FIX (Nov 19, 2025): Custom 300s timeout for plan generation (default 60s too short)
           const stream = await aiProviderManager.streamChat(
             modelId,
             [
@@ -291,18 +292,18 @@ Remember:
           // ✅ 40-YEAR ENGINEERING FIX: Stream with timeout monitoring
           let lastChunkTime = Date.now();
           const CHUNK_TIMEOUT = 10000; // 10 seconds between chunks
-          
+
           for await (const chunk of stream) {
             // Check overall timeout
             if (Date.now() - streamStartTime > PLAN_GENERATION_TIMEOUT) {
               throw new Error(`Plan generation timeout after ${PLAN_GENERATION_TIMEOUT}ms`);
             }
-            
+
             // Check chunk timeout (no activity for 10 seconds)
             if (Date.now() - lastChunkTime > CHUNK_TIMEOUT) {
               throw new Error(`Stream stalled - no chunks for ${CHUNK_TIMEOUT}ms`);
             }
-            
+
             if (chunk && typeof chunk === 'string') {
               fullResponse += chunk;
               lastChunkTime = Date.now(); // Reset chunk timer
@@ -312,7 +313,7 @@ Remember:
               };
             }
           }
-          
+
           logger.info(`[generatePlan] ✓ Stream completed in ${Date.now() - streamStartTime}ms`);
 
           logger.info(`[generatePlan] ✓ Received response from ${modelId}, attempting to parse...`);
@@ -320,25 +321,25 @@ Remember:
           // ✅ CRITICAL FIX (Nov 14, 2025): Parse JSON inside provider loop
           // If parsing fails, continue to next provider instead of bailing
           // This fixes autonomous IDE workflow blocking on malformed JSON
-          
+
           // ✅ ROBUST JSON EXTRACTION (fixes backtick template literal bug)
           let cleanedResponse = fullResponse.trim();
-          
+
           // Remove opening backticks with optional language identifier
           cleanedResponse = cleanedResponse.replace(/^```(?:json)?\s*/i, '');
-          
+
           // Remove closing backticks
           cleanedResponse = cleanedResponse.replace(/\s*```\s*$/i, '');
-          
+
           // ✅ CRITICAL FIX: Extract JSON object/array only (ignore surrounding text)
           // Claude sometimes adds commentary before/after JSON
           const jsonMatch = cleanedResponse.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
           if (!jsonMatch) {
             throw new Error('No JSON object found in response');
           }
-          
+
           let jsonString = jsonMatch[1];
-          
+
           // ✅ CRITICAL FIX: Replace JavaScript template literals with escaped strings
           // Claude sometimes uses `content` instead of "content"
           // This regex finds backtick-quoted strings and converts them to JSON strings
@@ -353,15 +354,15 @@ Remember:
               .replace(/\t/g, '\\t');   // Escape tabs
             return `"${escaped}"`;
           });
-          
+
           // ✅ CRITICAL FIX (Nov 14, 2025): Sanitize HTML entities and escape newlines
           // Logs showed 15 consecutive JSON parse failures due to HTML entities (&amp;, &gt;, &lt;)
           // and unescaped newlines in AI-generated JSON responses
           jsonString = this.sanitizePlanResponse(jsonString);
-          
+
           // Parse JSON
           const planData = JSON.parse(jsonString);
-          
+
           const plan: ExecutionPlan = {
             id: `plan-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             goal,
@@ -401,14 +402,14 @@ Remember:
             errorType: error.constructor?.name,
             responsePreview: fullResponse.substring(0, 300)
           });
-          
+
           // Log full error for Gemini to debug systemInstruction issues
           if (modelId.includes('gemini')) {
             logger.error(`[generatePlan] 🔍 Gemini detailed error:`, error);
           }
-          
+
           lastError = error;
-          
+
           // Continue to next provider in fallback chain
           continue;
         }
