@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is a web-based collaborative IDE with AI assistance, offering code editing, terminal access, file management, and an autonomous AI agent. Its primary purpose is to facilitate rapid prototyping and education, aiming for enterprise-grade scalability, multi-provider AI model selection, real-time collaboration, robust security, and the ambition to provide autonomous workspace creation from a natural language prompt to a live preview, streaming progress in real-time. Key capabilities include a mobile IDE with full feature parity, VS Code parity features, robust streaming with AI providers, and comprehensive security.
+E-Code is a web-based collaborative IDE with AI assistance, offering code editing, terminal access, file management, and an autonomous AI agent. Its primary purpose is to facilitate rapid prototyping and education. The platform aims for enterprise-grade scalability, multi-provider AI model selection, real-time collaboration, robust security, and the ability to create autonomous workspaces from a natural language prompt to a live preview with streaming progress. Key capabilities include a mobile IDE with full feature parity and VS Code-level features.
 
 ## User Preferences
 - **Communication:** Simple, everyday language
@@ -18,30 +18,26 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 ## System Architecture
 
 ### UI/UX Decisions
-The frontend uses Shadcn/UI with Tailwind CSS for responsive component styling. Monaco Editor provides the core code editing. A comprehensive Apple-quality mobile design system is implemented, including iOS Dynamic Color System, San Francisco Pro Typography, 8pt Grid Spacing, Apple-quality animation springs, iOS-style shadows, continuous corners, and appropriate touch target sizes. An autonomous agent interface is platform-agnostic with responsive layouts and real-time progress tracking.
+The frontend uses Shadcn/UI with Tailwind CSS for responsive component styling and Monaco Editor for code editing. A comprehensive Apple-quality mobile design system is implemented, including iOS Dynamic Color System, San Francisco Pro Typography, 8pt Grid Spacing, Apple-quality animation springs, iOS-style shadows, continuous corners, and appropriate touch target sizes. The autonomous agent interface is platform-agnostic with responsive layouts and real-time progress tracking.
 
 ### Technical Implementations
 The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Wouter. The backend is a Node.js and Express.js application in TypeScript, utilizing Drizzle ORM for PostgreSQL and Passport.js for authentication, following a RESTful API design. Real-time services for terminal, collaborative editing (Y.js), and build logs are powered by WebSockets. AI optimization infrastructure includes a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. UUIDs identify projects, and environment variables are encrypted using AES-256-GCM. Backend implements SSE streaming with buffered JSON parsing for reliable code generation.
 
 ### Feature Specifications
-Key features include a Monaco Code Editor with VS Code-level enhancements (Git UI components like BranchManager, GitGraph, MergeConflictResolver, VisualDiffEditor, GitBlameDecorator; multi-cursor editing, code navigation, refactoring, advanced search, IntelliSense), an interactive terminal (xterm.js), file management, real-time collaboration, robust authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager with encryption, a Logs Viewer, and a Debugger UI compatible with the VSCode Debug Adapter Protocol. The mobile IDE provides full feature parity with the desktop version, including touch-optimized quick actions and a comprehensive More menu with 23 services organized into 7 sections: Git (Commit, Push, Pull, Branches), Debug (Start, Stop, Breakpoints, Watch), Problems (View Problems), Webview & Tools (Web Preview, Packages, Tests, Global Search), Development (Output & Logs, Resources, Security Scanner, Environment Variables), Settings (Project Settings, Theme, Secrets, Database), and Share (Copy Link, Invite Users, Export).
+Key features include a Monaco Code Editor with VS Code-level enhancements (Git UI components, multi-cursor editing, code navigation, refactoring, advanced search, IntelliSense), an interactive terminal (xterm.js), file management, real-time collaboration, robust authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager with encryption, a Logs Viewer, and a Debugger UI compatible with the VSCode Debug Adapter Protocol. The mobile IDE provides full feature parity with the desktop version, including touch-optimized quick actions and a comprehensive More menu.
 
 **Autonomous Workspace Creation (Replit-Style Flow):**
-The platform provides a Replit-identical autonomous workspace creation experience. Users enter a natural language prompt on the Homepage or Dashboard (e.g., "Create a todo list app with React"). The system:
-1. **POST /api/workspace/bootstrap** - Creates project, agent session, returns token IMMEDIATELY (<1s)
-2. **Instant Redirect** - Client redirected to `/ide/:id?bootstrap=token` without waiting for plan
-3. **Background Plan Generation** - AI plan generates asynchronously (up to 180s) with multi-provider fallback
-4. **WebSocket Connection** - `AutonomousWorkspaceViewer` connects to `/ws/agent` and displays real-time progress
-5. **Autonomous Execution** - `agentOrchestrator.executeAutonomousPlan()` autonomously generates all files/code
-6. **Live Preview** - Preview tab opens by default, shows app building in real-time
-7. **Agent Integration** - `ReplitAgent` receives `initialPrompt` and continues autonomous development
-
-**40-Year Engineering Fix (Nov 20, 2025):** Bootstrap changed from synchronous (3+ minute HTTP timeout) to asynchronous (instant token return, background plan generation). Client never waits for HTTP response, receives all updates via WebSocket streaming. Errors propagated via WebSocket with watchdog for unhandled rejections. Preview tab opens by default, `AutonomousWorkspaceViewer` modal opens automatically when `bootstrapToken` present.
-
-**WebSocket Agent Fix (Nov 20, 2025):** Agent WebSocket switched to `noServer: true` mode with manual upgrade handling in `server/index.ts` to prevent Vite HMR from intercepting `/ws/agent` connections. The `httpServer.on('upgrade')` handler routes `/ws/agent` upgrades directly to `agentWebSocketService.handleUpgrade()`, bypassing Vite middleware that was blocking all WebSocket connections.
+The platform provides a Replit-identical autonomous workspace creation experience. Users enter a natural language prompt, leading to:
+1. **Bootstrap API Call:** `POST /api/workspace/bootstrap` immediately creates a project and agent session, returning a token.
+2. **Instant Redirect:** Client is redirected to `/ide/:id?bootstrap=token`.
+3. **Background Plan Generation:** An AI plan is generated asynchronously with multi-provider fallback.
+4. **WebSocket Connection:** `AutonomousWorkspaceViewer` connects to `/ws/agent` for real-time progress display.
+5. **Autonomous Execution:** `agentOrchestrator.executeAutonomousPlan()` autonomously generates all files and code.
+6. **Live Preview:** A preview tab opens by default, showing the application building in real-time.
+7. **Agent Integration:** `ReplitAgent` receives the `initialPrompt` and continues autonomous development.
 
 ### System Design Choices
-A PostgreSQL database stores user data, project hierarchies, AI agent sessions, deployment history, subscription management, and AI optimization monitoring. Security measures include CSRF protection, input sanitization, tier-based rate limiting, API versioning, and session-based authentication. The AI agent system provides server-sent event streaming, multi-provider AI model selection, and a database-backed conversation history, incorporating circuit breakers and retry logic for resilience. Health monitoring integrates Kubernetes probes and a Provider Health API, including a Prometheus metrics endpoint (`/metrics/prometheus`). A two-tier database API architecture is used: an Admin Database API and a Project Data API, with integrated security features like secret value masking and access control. Docker builds are optimized for small image sizes.
+A PostgreSQL database stores user data, project hierarchies, AI agent sessions, deployment history, subscription management, and AI optimization monitoring. Security measures include CSRF protection, input sanitization, tier-based rate limiting, API versioning, and session-based authentication. The AI agent system provides server-sent event streaming, multi-provider AI model selection, and a database-backed conversation history, incorporating circuit breakers and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API, including a Prometheus metrics endpoint. A two-tier database API architecture is used: an Admin Database API and a Project Data API, with integrated security features like secret value masking and access control. Docker builds are optimized for small image sizes.
 
 ## External Dependencies
 
@@ -52,47 +48,7 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 - **Moonshot AI:** Kimi K2 (kimi-k2-0711-preview, kimi-k2-0905-preview), Kimi K2 Thinking
 - **xAI:** Grok 4, Grok 4 Fast
 - **Groq:** Mixtral 8x7B
-- **Provider Fallback Chain:** `['kimi-k2-0711-preview', 'gemini-2.5-flash', 'grok-4-fast', 'claude-haiku-4-5-20251015', 'gpt-5.1']` (Kimi K2 primary while debugging GPT-5.1 JSON issues - Nov 20, 2025)
-- **40-Year Engineering Reliability Fixes (Nov 19-20, 2025):** 
-  - Stream timeout 60s (default), retries 2→4, circuit breaker 30s→20s
-  - **Per-Call Timeout Override System**: AIProviderManager accepts custom `timeoutMs` parameter for complex operations
-  - Plan generation: 180s timeout per provider (vs 60s default, increased from 90s for complex CRM/enterprise prompts) with preserved 10MB/100KB safety limits
-  - **StreamLimiter Chunk Idle Timeout (Nov 20, 2025)**: Separated chunk idle timeout (30s) from total timeout to fix 11ms timeout errors after 90s streams - allows plan generation to complete without premature chunk timeouts
-  - **Complex Prompt Support (Nov 20, 2025)**: Plan generation timeout increased to 180s (3 minutes) per provider to support complex enterprise prompts (CRM, ERP, etc.) without premature timeout - allows GPT-5.1, Kimi K2, and other models to fully generate detailed execution plans
-  - Moonshot model IDs corrected to production-recommended versions (kimi-k2-0711-preview, kimi-k2-0905-preview, kimi-k2-thinking)
-  - Stripe API version updated to 2025-08-27.basil across all billing services (subscription-manager, stripe-billing-service, ai-metering-service, stripe-service)
-  - Badge component refactored with React.forwardRef for proper ref handling in Radix UI Slot contexts
-  - **GPT-5.1 Responses API Integration (Nov 19, 2025):**
-    - Migrated from legacy `/v1/chat/completions` to new `/v1/responses` endpoint for GPT-5 family (gpt-5.1, gpt-5, gpt-5-mini, gpt-5-nano)
-    - Fixed autonomous workspace token overflow (4.1M→compact hierarchical summary via `generateStructureSummary()`)
-    - Input format: Role-tagged messages with typed content parts `[{type: 'input_text', text}]`
-    - Output parsing: Multi-part aggregation of all `output_text` blocks to prevent truncation
-    - Tool calling: Full function calling support via Responses API with idempotent `tool_choice` transformation
-    - Reasoning tokens: Tracked from `usage.output_tokens_details.reasoning_tokens` for accurate billing
-    - Streaming: GPT-5 models gracefully blocked (Responses API doesn't support streaming yet)
-    - Backward compatibility: GPT-4 models continue using Chat Completions API
-    - Production-ready: Architect-validated with complete parameter forwarding (max_output_tokens, temperature, top_p, frequency_penalty, presence_penalty, seed)
-  - **WebSocket Event Protocol Standardization (Nov 19, 2025):**
-    - Fixed critical event naming mismatch between backend and frontend for autonomous workspace streaming
-    - Backend now emits frontend-compatible events: `task_start`, `task_complete`, `complete`, `error`, `file_created`
-    - Proper taskId, taskName, progress, and message fields included in all events for AutonomousWorkspaceViewer compatibility
-    - Real-time progress tracking now fully functional with WebSocket streaming to `/ws/agent` endpoint
-  - **WebSocket Code 1006 Investigation (Nov 20-21, 2025):**
-    - **Initial Root Cause (Nov 20)**: Vite's HMR WebSocket server destroyed `/ws/agent` connections (code 1006) after upgrade handler execution
-    - **Attempted Fix v1 (Nov 20)**: Pre-setup upgrade listener wrapper in `server/vite-loader.ts` with `kUpgradeHandled` socket tagging - Vite HMR isolated to port 24678
-    - **New Root Cause Identified (Nov 21)**: ws library internal handshake timeout (~100ms) when socket paused during async validation
-    - **Attempted Fix v2 (Nov 21)**: socket.pause()/resume() pattern with database session validation
-    - **PRODUCTION BLOCKERS FOUND (Nov 21 - Architect Review)**:
-      1. **DoS Vulnerability**: Synchronous database queries on hot path block event loop - attackers can starve it under load
-      2. **HTTP Framing Issues**: Raw socket.write() doesn't flush properly on resumed streams across Node versions - clients still see code 1006
-      3. **Multi-Device Regression**: Missing deviceId/deviceType validation breaks existing multi-device synchronization flows
-    - **Required Production Architecture**:
-      1. Session caching layer (Redis/in-memory) to avoid blocking database queries on upgrade hot path
-      2. Async worker queue for validation to prevent event loop blocking
-      3. Proper HTTP response framing helper instead of raw socket writes
-      4. Device-level validation restoration for multi-device compatibility
-    - **Current Status**: Blocking production deployment - requires significant refactoring before safe deployment
-    - **Files Modified**: `server/index.ts` (upgrade handler), `server/websocket/upgrade-guard.ts`, `server/vite-loader.ts`, `server/services/agent-websocket-service.ts`
+- **Provider Fallback Chain:** `['kimi-k2-0711-preview', 'gemini-2.5-flash', 'grok-4-fast', 'claude-haiku-4-5-20251015', 'gpt-5.1']`
 
 ### Infrastructure Services
 - **PostgreSQL:** Neon serverless
