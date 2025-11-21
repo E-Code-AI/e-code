@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is a web-based collaborative IDE with AI assistance, offering code editing, terminal access, file management, and an autonomous AI agent. Its primary purpose is to facilitate rapid prototyping and education. The platform aims for enterprise-grade scalability, multi-provider AI model selection, real-time collaboration, robust security, and the ability to create autonomous workspaces from a natural language prompt to a live preview with streaming progress. Key capabilities include a mobile IDE with full feature parity and VS Code-level features.
+E-Code is a web-based collaborative IDE with AI assistance, offering code editing, terminal access, file management, and an autonomous AI agent. Its primary purpose is to facilitate rapid prototyping and education. The platform aims for enterprise-grade scalability, multi-provider AI model selection, real-time collaboration, robust security, and the ability to create autonomous workspaces from a natural language prompt to a live preview with streaming progress. Key capabilities include Monaco-based code editing with keyboard shortcuts (30+), real-time WebSocket streaming, and responsive UI design (cross-device verification pending).
 
 ## User Preferences
 - **Communication:** Simple, everyday language
@@ -54,10 +54,10 @@ The frontend uses Shadcn/UI with Tailwind CSS for responsive component styling a
 The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Wouter. The backend is a Node.js and Express.js application in TypeScript, utilizing Drizzle ORM for PostgreSQL and Passport.js for authentication, following a RESTful API design. Real-time services for terminal, collaborative editing (Y.js), and build logs are powered by WebSockets. AI optimization infrastructure includes a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. UUIDs identify projects, and environment variables are encrypted using AES-256-GCM. Backend implements SSE streaming with buffered JSON parsing for reliable code generation.
 
 ### Feature Specifications
-Key features include a Monaco Code Editor with VS Code-level enhancements (Git UI components, multi-cursor editing, code navigation, refactoring, advanced search, IntelliSense), an interactive terminal (xterm.js), file management, real-time collaboration, robust authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager with encryption, a Logs Viewer, and a Debugger UI compatible with the VSCode Debug Adapter Protocol. The mobile IDE provides full feature parity with the desktop version, including touch-optimized quick actions and a comprehensive More menu.
+Key features include a Monaco Code Editor with enhancements (Git UI components with demo data, multi-cursor editing, code navigation, refactoring, advanced search, IntelliSense with partial provider support), an interactive terminal (xterm.js), file management, real-time collaboration, robust authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager with encryption, a Logs Viewer, and a Debugger UI (VSCode Debug Adapter Protocol integration conceptual). The responsive UI adapts to desktop, tablet, and mobile devices (cross-device testing pending).
 
 **Autonomous Workspace Creation (Replit-Style Flow):**
-The platform provides a Replit-identical autonomous workspace creation experience. Users enter a natural language prompt, leading to:
+The platform implements autonomous workspace creation from natural language prompts (end-to-end validation pending). The intended flow:
 1. **Bootstrap API Call:** `POST /api/workspace/bootstrap` immediately creates a project and agent session, returning a token.
 2. **Instant Redirect:** Client is redirected to `/ide/:id?bootstrap=token`.
 3. **Background Plan Generation:** An AI plan is generated asynchronously with multi-provider fallback.
