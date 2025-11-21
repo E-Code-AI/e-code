@@ -22,6 +22,7 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 **Removed Obsolete Documentation**:
 - ❌ **VS-CODE-PARITY-COMPLETE.md** - Claimed 95% VS Code parity but used mock Git data and null Monaco providers (not production-ready)
 - ❌ **TEST-AI-AGENT-LIVE.md** - Obsolete guide suggesting features to implement that already exist (executeAutonomousPlan: 1144 lines, file ops: 626 lines, command exec: 490 lines)
+- ❌ **WORKSPACE_PANELS_VERIFICATION.md** - Referenced non-existent files (EditorPage.tsx instead of Editor.tsx), wrong line numbers, claimed "100% verified" with 4 TypeScript errors existing, never tested on web/tablet/mobile
 
 **WebSocket Critical Fixes**:
 - ✅ Fixed 3× `broadcastToProject()` errors in workspace-bootstrap.router.ts - replaced with correct `broadcast(message, projectId)` signature
