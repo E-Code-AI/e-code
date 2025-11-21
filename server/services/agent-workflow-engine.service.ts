@@ -339,7 +339,30 @@ export class AgentWorkflowEngineService extends EventEmitter {
     context: any,
     state: WorkflowState
   ): Promise<any> {
-    const { operation, path, content } = this.resolveVariables(config, state);
+    // ✅ FIX (Nov 21, 2025): Fetch full task details from plan store if taskId provided
+    // ARCHITECT APPROVED: Solves JSONB overflow by storing content separately
+    let effectiveConfig = config;
+    
+    if (config.taskId) {
+      const { agentPlanStore } = await import('./agent-plan-store.service');
+      const task = await agentPlanStore.getTask(context.sessionId, config.taskId);
+      
+      if (!task) {
+        throw new Error(`Task ${config.taskId} not found in plan store`);
+      }
+      
+      // Merge task details into config (task has full file contents, commands, etc.)
+      effectiveConfig = {
+        ...config,
+        ...task,
+        // Preserve original config values if not in task
+        operation: task.type === 'create_file' ? 'write' : config.operation,
+        path: task.path || config.path,
+        content: task.content || config.content
+      };
+    }
+    
+    const { operation, path, content } = this.resolveVariables(effectiveConfig, state);
     
     switch (operation) {
       case 'read':

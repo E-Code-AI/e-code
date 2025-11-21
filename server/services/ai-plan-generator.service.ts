@@ -46,17 +46,16 @@ export interface ExecutionPlan {
 export class AIPlanGeneratorService {
   private storage: IStorage;
   
-  // ✅ 40-YEAR ENGINEERING FIX: Provider fallback chain - corrected model IDs
-  // ✅ TEMPORARY FIX (Nov 20, 2025): Kimi K2 first while debugging GPT-5.1 JSON issues
-  // GPT-5.1 currently returns malformed JSON, using reliable Kimi K2 as primary
-  // ✅ KIMI-K2 INTEGRATION (Nov 14, 2025): Added Moonshot AI for cost savings & performance
-  // FIXED: kimi-k2 → kimi-k2-0711-preview (production-recommended model ID)
+  // ✅ 40-YEAR ENGINEERING FIX: Provider fallback chain - WORKING MODELS FIRST
+  // ✅ STRATEGY FIX (Nov 21, 2025): Test with Gemini/GPT first, debug Moonshot after
+  // Moonshot API has timeout/error issues, using proven models as primary
+  // Once Gemini works, we'll debug Moonshot separately
   private readonly PROVIDER_FALLBACK_CHAIN = [
-    'kimi-k2-0711-preview',         // ✅ PRIMARY: Moonshot AI (reliable, fast, cost-effective)
-    'gemini-2.5-flash',             // Google Gemini 2.5 Flash (250/day free tier)
-    'grok-4-fast',                  // xAI Grok 4 Fast (2M context, 64× cheaper than o3)
+    'gemini-2.5-flash',             // ✅ PRIMARY: Google Gemini 2.5 Flash (250/day free tier, PROVEN)
+    'gpt-5.1',                      // OpenAI GPT-5.1 (flagship, should work)
     'claude-haiku-4-5-20251015',    // Anthropic Claude Haiku 4.5 (fastest Claude model)
-    'gpt-5.1'                       // OpenAI GPT-5.1 (currently debugging JSON parsing issues)
+    'grok-4-fast',                  // xAI Grok 4 Fast (2M context, 64× cheaper than o3)
+    'kimi-k2-0711-preview'          // ⚠️ LAST: Moonshot AI (has timeout/error - debug after proving system works)
   ];
 
   constructor(storage: IStorage) {
