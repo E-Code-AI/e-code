@@ -65,28 +65,44 @@ export class AIPlanGeneratorService {
   /**
    * ✅ 40-YEAR ENGINEERING: Sanitize AI-generated JSON before parsing
    * 
-   * CRITICAL FIX (Nov 14, 2025): Production logs showed 15 consecutive JSON parse failures
-   * Root cause: HTML entities (&amp;, &gt;, &lt;) and unescaped newlines in AI responses
+   * CRITICAL FIX (Nov 21, 2025): GPT-5.1 double-escapes quotes in file content
+   * Root cause: GPT-5.1 generates `"content": \"import {` instead of `"content": "import {"`
    * 
    * This function:
-   * 1. Decodes HTML entities to their actual characters
-   * 2. Escapes unescaped newlines in JSON string values
-   * 3. Handles edge cases from multiple AI providers (OpenAI, Gemini, xAI, Anthropic)
+   * 1. Fixes GPT-5.1 double-escaped quotes (\"text\" → "text")
+   * 2. Strips code fences (```json ... ```)
+   * 3. Decodes HTML entities (&amp;, &gt;, &lt;)
+   * 4. Escapes unescaped newlines in JSON string values
+   * 5. Handles edge cases from multiple AI providers (OpenAI, Gemini, xAI, Anthropic, Moonshot)
    * 
    * @param jsonString - Raw JSON string from AI provider
    * @returns Sanitized JSON string ready for JSON.parse()
    */
   private sanitizePlanResponse(jsonString: string): string {
-    // ✅ CRITICAL FIX (Nov 14, 2025 - Second Iteration)
-    // Architect found bug: &quot; decoded to " without escaping = invalid JSON
-    // Example broken: { "text": "He said "hello"" } → invalid
-    // Example fixed: { "text": "He said \"hello\"" } → valid
+    // ✅ CRITICAL FIX (Nov 21, 2025): Strip code fences first
+    // Some models wrap JSON in ```json ... ```
+    jsonString = jsonString
+      .replace(/^```json\s*/i, '')
+      .replace(/```\s*$/i, '')
+      .trim();
     
-    // Step 1: Decode HTML entities BUT preserve string boundaries
-    // Strategy: Only decode entities OUTSIDE of JSON string values
-    // This prevents breaking JSON structure with unescaped quotes
+    // ✅ CRITICAL FIX (Nov 21, 2025): GPT-5.1 DOUBLE-ESCAPE FIX
+    // GPT-5.1 generates: "content": \"import { something }\"
+    // Should be:         "content": "import { something }"
+    // 
+    // Strategy: Fix ONLY malformed patterns where backslash appears before opening quote of a value
+    // Pattern: ": \\" followed by non-backslash character → ": "
+    // This preserves correctly escaped quotes inside strings (e.g., "text": "He said \"hello\"")
     
-    // First, temporarily replace JSON string values with placeholders
+    // Fix pattern: ": \"text\" → ": "text"
+    // Look for: colon + space + backslash + quote + non-backslash char
+    jsonString = jsonString.replace(/:\s*\\"/g, ': "');
+    
+    // Fix closing quotes: text\" → text"
+    // Look for: non-backslash char + backslash + quote + optional whitespace + comma/brace/bracket
+    jsonString = jsonString.replace(/([^\\])\\"(\s*[,}\]])/g, '$1"$2');
+    
+    // ✅ SECOND PASS: Extract and protect JSON string values with placeholders
     const stringPlaceholders: string[] = [];
     let placeholderIndex = 0;
     
