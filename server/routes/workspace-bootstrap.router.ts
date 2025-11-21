@@ -226,11 +226,11 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
             
             // Send error to client via WebSocket
             const agentWebSocketService = (await import('../services/agent-websocket-service.js')).agentWebSocketService;
-            agentWebSocketService.broadcastToProject(String(project.id), {
+            agentWebSocketService.broadcast({
               type: 'error',
               message: `Plan generation failed: ${errorMsg}`,
               timestamp: new Date().toISOString()
-            });
+            }, String(project.id));
             
             throw new Error(errorMsg);
           }
@@ -241,11 +241,11 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
           
           // Send error to client via WebSocket
           const agentWebSocketService = (await import('../services/agent-websocket-service.js')).agentWebSocketService;
-          agentWebSocketService.broadcastToProject(String(project.id), {
+          agentWebSocketService.broadcast({
             type: 'error',
             message: errorMsg,
             timestamp: new Date().toISOString()
-          });
+          }, String(project.id));
           
           throw new Error(errorMsg);
         }
@@ -282,11 +282,11 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
         // ✅ ARCHITECT FIX: Explicit error propagation via WebSocket
         try {
           const agentWebSocketService = (await import('../services/agent-websocket-service.js')).agentWebSocketService;
-          agentWebSocketService.broadcastToProject(String(project.id), {
+          agentWebSocketService.broadcast({
             type: 'error',
             message: `Workspace creation failed: ${error.message}`,
             timestamp: new Date().toISOString()
-          });
+          }, String(project.id));
         } catch (wsError) {
           logger.error('[Bootstrap] Failed to broadcast error via WebSocket:', wsError);
         }
