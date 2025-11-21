@@ -746,6 +746,7 @@ export class AIProviderManager {
   /**
    * Moonshot AI (Kimi-K2) streaming implementation with robust error handling
    * ✅ ROBUST PARSING: Handle stream errors and JSON parsing failures
+   * ✅ 40-YEAR FIX (Nov 21, 2025): Detect error payloads BEFORE iterating
    */
   private async *streamMoonshot(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.moonshotClient) throw new Error('Moonshot AI client not initialized');
@@ -767,9 +768,27 @@ export class AIProviderManager {
         temperature: options?.temperature || 0.7,
       }) as unknown as AsyncIterable<any>;
       
+      // ✅ CRITICAL FIX (Nov 21, 2025): Check if response is an error object instead of stream
+      // Moonshot API returns { body: { errors: [...] } } for auth/rate-limit failures
+      // This prevents infinite loop on empty stream
+      if ((stream as any).body?.errors) {
+        const errors = (stream as any).body.errors;
+        const errorMsg = errors[0]?.message || JSON.stringify(errors);
+        const errorCode = errors[0]?.code || 'UNKNOWN_ERROR';
+        console.error(`[Moonshot] API returned error payload:`, { code: errorCode, message: errorMsg, errors });
+        throw new Error(`Moonshot API error (${errorCode}): ${errorMsg}`);
+      }
+      
       let buffer = '';
+      let chunkCount = 0;
       for await (const chunk of stream) {
+        chunkCount++;
         try {
+          // ✅ ADDITIONAL CHECK: Detect error in chunk
+          if (chunk.error) {
+            throw new Error(`Moonshot stream error: ${chunk.error.message || JSON.stringify(chunk.error)}`);
+          }
+          
           const content = chunk.choices?.[0]?.delta?.content;
           if (content) {
             buffer += content;
@@ -781,11 +800,20 @@ export class AIProviderManager {
         }
       }
       
+      // ✅ ENHANCED ERROR: Log chunk count for debugging
       if (!buffer) {
-        throw new Error('Moonshot stream produced no content');
+        throw new Error(`Moonshot stream produced no content (received ${chunkCount} chunks)`);
       }
+      
+      console.log(`[Moonshot] Stream completed successfully: ${buffer.length} chars from ${chunkCount} chunks`);
     } catch (error: any) {
-      console.error(`[Moonshot] Stream error: ${error.message}`);
+      // ✅ ENHANCED LOGGING: Include status code, error details for diagnostics
+      console.error(`[Moonshot] Stream error:`, {
+        message: error.message,
+        statusCode: error.status || error.statusCode || error.code,
+        errorType: error.constructor?.name,
+        details: error.response?.data || error.body || 'No additional details'
+      });
       throw error;
     }
   }
