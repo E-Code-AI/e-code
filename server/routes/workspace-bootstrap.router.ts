@@ -37,14 +37,22 @@ const logger = createLogger('workspace-bootstrap');
 const router = Router();
 
 // Validation schema for bootstrap request
+// ✅ FIX (Nov 21, 2025): Properly set defaults for nested object
+// Problem: .optional().default({}) created empty object, nested defaults not applied
+// Solution: Use .default() with full object OR postprocess after validation
 const bootstrapRequestSchema = z.object({
   prompt: z.string().min(5, 'Prompt must be at least 5 characters'),
   options: z.object({
-    language: z.enum(['typescript', 'javascript', 'python', 'rust', 'go']).optional().default('typescript'),
-    framework: z.enum(['react', 'vue', 'svelte', 'express', 'fastapi']).optional().default('react'),
-    autoStart: z.boolean().optional().default(true),
-    visibility: z.enum(['public', 'private', 'unlisted']).optional().default('private')
-  }).optional().default({})
+    language: z.enum(['typescript', 'javascript', 'python', 'rust', 'go']).default('typescript'),
+    framework: z.enum(['react', 'vue', 'svelte', 'express', 'fastapi']).default('react'),
+    autoStart: z.boolean().default(true),
+    visibility: z.enum(['public', 'private', 'unlisted']).default('private')
+  }).default({
+    language: 'typescript',
+    framework: 'react',
+    autoStart: true,
+    visibility: 'private'
+  })
 });
 
 // Bootstrap token payload
