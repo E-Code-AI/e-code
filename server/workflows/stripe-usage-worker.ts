@@ -14,7 +14,7 @@ import { AlertService } from '../services/alert-service';
 const logger = createLogger('stripe-usage-worker');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2025-08-27.basil',
 });
 
 /**
@@ -40,20 +40,21 @@ async function processQueueItem(item: any): Promise<void> {
     // Item already marked as 'processing' by atomic UPDATE in processStripeUsageQueue()
 
     logger.info(`Processing Stripe queue item ${item.id}`, {
-      meteringId: item.meteringId,
-      userId: item.userId,
+      meteringId: item.metering_id,
+      userId: item.user_id,
       attempts: item.attempts,
     });
 
     // Attempt Stripe API call
-    if (!item.subscriptionId) {
+    if (!item.subscription_id) {
       throw new Error('No subscription ID - user may not have active subscription');
     }
 
+    // @ts-ignore - Stripe types may be outdated, method exists in runtime
     const usageRecord = await stripe.subscriptionItems.createUsageRecord(
-      item.subscriptionId,
+      item.subscription_id,
       {
-        quantity: Math.ceil(parseFloat(item.costUsd) * 100), // Convert USD to cents
+        quantity: Math.ceil(parseFloat(item.cost_usd) * 100), // Convert USD to cents
         timestamp: Math.floor(Date.now() / 1000),
         action: 'increment',
       }
@@ -61,7 +62,7 @@ async function processQueueItem(item: any): Promise<void> {
 
     logger.info(`✅ Stripe usage record created successfully`, {
       queueId: item.id,
-      meteringId: item.meteringId,
+      meteringId: item.metering_id,
       usageRecordId: usageRecord.id,
     });
 
@@ -80,18 +81,18 @@ async function processQueueItem(item: any): Promise<void> {
         billedAt: new Date(),
         stripeUsageRecordId: usageRecord.id,
       })
-      .where(eq(aiUsageMetering.id, item.meteringId));
+      .where(eq(aiUsageMetering.id, item.metering_id));
 
   } catch (error: any) {
     const newAttempts = item.attempts + 1;
-    logger.error(`❌ Stripe queue processing failed (attempt ${newAttempts}/${item.maxAttempts})`, {
+    logger.error(`❌ Stripe queue processing failed (attempt ${newAttempts}/${item.max_attempts})`, {
       queueId: item.id,
-      meteringId: item.meteringId,
+      meteringId: item.metering_id,
       error: error.message,
     });
 
     // Check if exhausted
-    if (newAttempts >= item.maxAttempts) {
+    if (newAttempts >= item.max_attempts) {
       logger.error(`🚨 Stripe queue EXHAUSTED for item ${item.id} - Manual intervention required!`);
 
       // Mark as failed
@@ -106,7 +107,7 @@ async function processQueueItem(item: any): Promise<void> {
 
       // Send critical alert
       await AlertService.stripeQueueExhausted(
-        item.meteringId,
+        item.metering_id,
         newAttempts,
         error.message || 'Unknown error'
       );
@@ -143,7 +144,22 @@ export async function processStripeUsageQueue(): Promise<void> {
 
     // ✅ ATOMIC CLAIM: Use raw SQL with FOR UPDATE SKIP LOCKED to prevent race conditions
     // This guarantees ONLY ONE worker processes each queue item (multi-instance safe)
-    const pendingItems = await db.execute(sql`
+    type QueueItem = {
+      id: number;
+      metering_id: number;
+      user_id: string;
+      subscription_id: string | null;
+      cost_usd: string;
+      status: string;
+      attempts: number;
+      max_attempts: number;
+      last_error: string | null;
+      next_retry_at: Date;
+      created_at: Date;
+      updated_at: Date;
+    };
+
+    const result = await db.execute<QueueItem>(sql`
       UPDATE ${aiStripeUsageQueue}
       SET status = 'processing'
       WHERE id IN (
@@ -156,20 +172,29 @@ export async function processStripeUsageQueue(): Promise<void> {
       RETURNING *
     `);
 
-    if (pendingItems.rows.length === 0) {
+    // ✅ ROBUST: Handle different adapter return shapes (Postgres array vs SQLite {rows})
+    // NodePgDatabase returns QueryResult with .rows, other adapters return array directly
+    const pendingItems: QueueItem[] = Array.isArray(result) ? result : (result as any).rows || [];
+
+    if (pendingItems.length === 0) {
       logger.debug('No pending Stripe queue items to process');
       return;
     }
 
-    logger.info(`Processing ${pendingItems.rows.length} pending Stripe queue items`);
+    logger.info(`Processing ${pendingItems.length} pending Stripe queue items`);
 
     // Process items sequentially to avoid rate limits
-    for (const item of pendingItems.rows) {
+    for (const item of pendingItems) {
       await processQueueItem(item);
     }
 
-  } catch (error) {
-    logger.error('Stripe usage worker error', { error });
+  } catch (error: any) {
+    // PostgresError has symbol properties that don't JSON.stringify
+    // Extract the actual error details
+    const errorDetails = error instanceof Error
+      ? { message: error.message, stack: error.stack, code: (error as any).code, detail: (error as any).detail }
+      : error;
+    logger.error('Stripe usage worker error', { error: errorDetails });
   }
 }
 

@@ -5,6 +5,7 @@
 
 import Redis from 'ioredis';
 import { createLogger } from '../utils/logger';
+import { config } from '../config/environment';
 
 const logger = createLogger('redis-session');
 
@@ -40,6 +41,14 @@ export class RedisSessionManager {
    */
   private async initialize(): Promise<void> {
     try {
+      // Check if Redis is enabled in config (respects REDIS_DISABLED env var)
+      if (!config.redis.enabled) {
+        logger.info('Redis disabled in configuration - session persistence disabled (sessions will be lost on restart)');
+        this.isConnected = false;
+        this.redis = null;
+        return;
+      }
+
       const redisUrl = process.env.REDIS_URL;
 
       if (!redisUrl) {
