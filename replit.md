@@ -77,13 +77,22 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
     - Backend now emits frontend-compatible events: `task_start`, `task_complete`, `complete`, `error`, `file_created`
     - Proper taskId, taskName, progress, and message fields included in all events for AutonomousWorkspaceViewer compatibility
     - Real-time progress tracking now fully functional with WebSocket streaming to `/ws/agent` endpoint
-  - **Vite HMR WebSocket Code 1006 Fix (Nov 20, 2025):**
-    - Root cause: Vite's HMR WebSocket server destroyed `/ws/agent` connections (code 1006) after upgrade handler execution
-    - Solution: Pre-setup upgrade listener wrapper in `server/vite-loader.ts` that respects `kUpgradeHandled` socket tagging
-    - Implementation: Monkeypatch `httpServer.on/addListener` BEFORE `setupVite()`, wrap Vite's upgrade listeners to check `isSocketHandled()`, restore original methods after setup
-    - Fortune 500 socket management: `kUpgradeHandled` symbol pattern prevents orphan socket resource exhaustion
-    - Production validation: Architect-approved with maxListeners(20) for multi-service WebSocket surface (Agent, Terminal, LSP, Collaboration, WebRTC, Vite HMR)
-    - Result: `/ws/agent` connections now bypass Vite HMR and survive indefinitely for autonomous workspace streaming
+  - **WebSocket Code 1006 Investigation (Nov 20-21, 2025):**
+    - **Initial Root Cause (Nov 20)**: Vite's HMR WebSocket server destroyed `/ws/agent` connections (code 1006) after upgrade handler execution
+    - **Attempted Fix v1 (Nov 20)**: Pre-setup upgrade listener wrapper in `server/vite-loader.ts` with `kUpgradeHandled` socket tagging - Vite HMR isolated to port 24678
+    - **New Root Cause Identified (Nov 21)**: ws library internal handshake timeout (~100ms) when socket paused during async validation
+    - **Attempted Fix v2 (Nov 21)**: socket.pause()/resume() pattern with database session validation
+    - **PRODUCTION BLOCKERS FOUND (Nov 21 - Architect Review)**:
+      1. **DoS Vulnerability**: Synchronous database queries on hot path block event loop - attackers can starve it under load
+      2. **HTTP Framing Issues**: Raw socket.write() doesn't flush properly on resumed streams across Node versions - clients still see code 1006
+      3. **Multi-Device Regression**: Missing deviceId/deviceType validation breaks existing multi-device synchronization flows
+    - **Required Production Architecture**:
+      1. Session caching layer (Redis/in-memory) to avoid blocking database queries on upgrade hot path
+      2. Async worker queue for validation to prevent event loop blocking
+      3. Proper HTTP response framing helper instead of raw socket writes
+      4. Device-level validation restoration for multi-device compatibility
+    - **Current Status**: Blocking production deployment - requires significant refactoring before safe deployment
+    - **Files Modified**: `server/index.ts` (upgrade handler), `server/websocket/upgrade-guard.ts`, `server/vite-loader.ts`, `server/services/agent-websocket-service.ts`
 
 ### Infrastructure Services
 - **PostgreSQL:** Neon serverless
