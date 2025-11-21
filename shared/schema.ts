@@ -2027,6 +2027,46 @@ export const agentSessions = pgTable('agent_sessions', {
   index('agent_sessions_active_idx').on(table.isActive),
 ]);
 
+// Agent Plans - Store complete AI-generated execution plans
+// ✅ FIX (Nov 21, 2025): Dedicated table to avoid JSONB overflow in agent_workflows
+// Stores full plan with file contents once, workflow steps reference via taskId
+export const agentPlans = pgTable('agent_plans', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: varchar('session_id').notNull().references(() => agentSessions.id),
+  planId: text('plan_id').notNull().unique(), // plan-1763731251998-9h9zssdxy
+  goal: text('goal').notNull(),
+  tasks: jsonb('tasks').$type<Array<{
+    id: string;
+    title: string;
+    type: 'file_create' | 'file_edit' | 'command' | 'install_package' | 'config';
+    description: string;
+    dependencies?: string[];
+    files?: Array<{
+      path: string;
+      content: string;
+      language: string;
+      action?: 'create_file' | 'update_file';
+    }>;
+    packages?: string[];
+    commands?: string[];
+    config?: Record<string, any>;
+  }>>().notNull(),
+  estimatedTime: text('estimated_time'),
+  status: text('status').notNull().default('pending'), // pending, executing, completed, failed
+  createdAt: timestamp('created_at').defaultNow(),
+  completedAt: timestamp('completed_at'),
+  metadata: jsonb('metadata').$type<{
+    provider?: string; // gemini-2.5-flash, gpt-5.1, etc
+    fallbackChain?: string[];
+    generationTimeMs?: number;
+    taskCount?: number;
+  }>(),
+}, (table) => [
+  index('agent_plans_session_id_idx').on(table.sessionId),
+  index('agent_plans_plan_id_idx').on(table.planId),
+  index('agent_plans_status_idx').on(table.status),
+]);
+
 // File Operations - Track all file system operations
 export const fileOperations = pgTable('file_operations', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -2801,6 +2841,12 @@ export const insertAgentSessionSchema = createInsertSchema(agentSessions).omit({
   totalOperations: true,
 });
 
+export const insertAgentPlanSchema = createInsertSchema(agentPlans).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
 export const insertFileOperationSchema = createInsertSchema(fileOperations).omit({
   id: true,
   executedAt: true,
@@ -2864,6 +2910,9 @@ export const insertAiAuditLogSchema = createInsertSchema(aiAuditLogs).omit({
 // Type exports
 export type AgentSession = typeof agentSessions.$inferSelect;
 export type InsertAgentSession = z.infer<typeof insertAgentSessionSchema>;
+
+export type AgentPlan = typeof agentPlans.$inferSelect;
+export type InsertAgentPlan = z.infer<typeof insertAgentPlanSchema>;
 
 export type FileOperation = typeof fileOperations.$inferSelect;
 export type InsertFileOperation = z.infer<typeof insertFileOperationSchema>;
