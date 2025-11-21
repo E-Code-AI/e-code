@@ -397,6 +397,103 @@ app.get('/api/cors-health', async (_req, res) => {
   const { installFinalUpgradeGuard, markSocketAsHandled } = await import('./websocket/upgrade-guard');
   
   // Agent WebSocket manual upgrade handler (runs FIRST due to prependListener)
+  // 🔥 ARCHITECT FIX v3 (Nov 21, 2025): Real session validation with database lookup
+  // Root Cause: ws library times out handshake if socket paused without resume
+  // Security: Validates session exists, is active, and project ID matches before upgrade
+  // Performance: Socket paused during DB query to prevent GC/timeout
+  async function handleAgentUpgrade(request: any, socket: any, head: any) {
+    // ✅ CRITICAL: Pause socket IMMEDIATELY to prevent GC during async validation
+    socket.pause();
+    
+    const startTime = Date.now();
+    const agentWss = (global as any).agentWebSocketService?.wss;
+    
+    if (!agentWss) {
+      console.error('[WebSocket Upgrade] Agent WebSocket service not initialized');
+      socket.resume(); // Resume before error response
+      sendHttpError(socket, 503, 'Service Unavailable');
+      return;
+    }
+    
+    try {
+      // Parse query params for validation
+      const url = new URL(request.url!, `http://${request.headers.host || 'localhost'}`);
+      const projectIdStr = url.searchParams.get('projectId');
+      const sessionId = url.searchParams.get('sessionId');
+      
+      if (!projectIdStr || !sessionId) {
+        console.warn('[WebSocket Upgrade] Rejecting - missing projectId or sessionId');
+        socket.resume(); // Resume before error response
+        sendHttpError(socket, 400, 'Bad Request: Missing projectId or sessionId');
+        return;
+      }
+      
+      // ✅ SECURITY: Validate session exists and is active
+      const { db } = await import('./db');
+      const { agentSessions } = await import('../shared/schema');
+      const { eq, and } = await import('drizzle-orm');
+      
+      const [session] = await db.select()
+        .from(agentSessions)
+        .where(and(
+          eq(agentSessions.id, sessionId),
+          eq(agentSessions.isActive, true)
+        ));
+      
+      if (!session) {
+        const validationDuration = Date.now() - startTime;
+        console.warn(`[WebSocket Upgrade] Rejecting - invalid or inactive session ${sessionId} (${validationDuration}ms)`);
+        socket.resume(); // Resume before error response
+        sendHttpError(socket, 401, 'Unauthorized: Invalid or inactive session');
+        return;
+      }
+      
+      // ✅ SECURITY: Validate project ID matches session's project
+      const projectId = parseInt(projectIdStr, 10);
+      const sessionProjectId = typeof session.projectId === 'number' ? session.projectId : parseInt(String(session.projectId), 10);
+      
+      if (sessionProjectId !== projectId) {
+        const validationDuration = Date.now() - startTime;
+        console.warn(`[WebSocket Upgrade] Rejecting - project ID mismatch for session ${sessionId} (expected ${sessionProjectId}, got ${projectId}) (${validationDuration}ms)`);
+        socket.resume(); // Resume before error response
+        sendHttpError(socket, 403, 'Forbidden: Project ID mismatch');
+        return;
+      }
+      
+      const validationDuration = Date.now() - startTime;
+      console.log(`[WebSocket Upgrade] ✅ Validated session ${sessionId} for project ${projectId} (${validationDuration}ms)`);
+      
+      // ✅ CRITICAL: Mark socket BEFORE handleUpgrade to prevent guard from destroying it
+      markSocketAsHandled(request, socket);
+      
+      // ✅ CRITICAL: Resume socket and call handleUpgrade AFTER validation completes
+      // This prevents the ws library from timing out the handshake
+      socket.resume();
+      agentWss.handleUpgrade(request, socket, head, (ws: any) => {
+        agentWss.emit('connection', ws, request);
+      });
+    } catch (error) {
+      const validationDuration = Date.now() - startTime;
+      console.error(`[WebSocket Upgrade] Validation error (${validationDuration}ms):`, error);
+      socket.resume(); // Resume before error response
+      sendHttpError(socket, 500, 'Internal Server Error');
+    }
+  }
+  
+  // Helper to send HTTP error responses before destroying socket
+  // IMPORTANT: Socket must be resumed before calling this function
+  function sendHttpError(socket: any, statusCode: number, message: string) {
+    const response = `HTTP/1.1 ${statusCode} ${message}\r\n` +
+      `Content-Type: text/plain\r\n` +
+      `Content-Length: ${message.length}\r\n` +
+      `Connection: close\r\n` +
+      `\r\n` +
+      message;
+    
+    socket.write(response);
+    socket.destroy();
+  }
+
   httpServer.prependListener('upgrade', (request, socket, head) => {
     let pathname: string;
     
@@ -414,19 +511,12 @@ app.get('/api/cors-health', async (_req, res) => {
       return; // Let other upgrade listeners process this request
     }
     
-    // Route /ws/agent upgrades to Agent WebSocket service
-    const agentWss = (global as any).agentWebSocketService?.wss;
-    if (agentWss) {
-      // ✅ CRITICAL: Mark socket BEFORE handleUpgrade to prevent guard from destroying it
-      markSocketAsHandled(request, socket);
-      
-      agentWss.handleUpgrade(request, socket, head, (ws: any) => {
-        agentWss.emit('connection', ws, request);
-      });
-    } else {
-      console.error('[WebSocket Upgrade] Agent WebSocket service not initialized');
+    // Route /ws/agent upgrades to async validation + upgrade handler
+    // ✅ CRITICAL: Don't await here - let validation run async to prevent blocking other upgrades
+    handleAgentUpgrade(request, socket, head).catch((error) => {
+      console.error('[WebSocket Upgrade] Unhandled error in handleAgentUpgrade:', error);
       socket.destroy();
-    }
+    });
   });
   
   // NOW start listening - ONLY after all middleware and routes are registered
