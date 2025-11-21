@@ -2,10 +2,13 @@
  * Stripe Usage Worker - Background Job Processor
  * Processes ai_stripe_usage_queue with exponential backoff retry logic
  * Ensures zero revenue loss by retrying failed Stripe billing calls
+ * 
+ * ✅ UPDATED: Uses Stripe API 2025-08-27.basil with billing.MeterEvent
+ * (Legacy subscriptionItems.createUsageRecord removed in API 2025-03-31.basil)
  */
 
 import { db } from '../db';
-import { aiStripeUsageQueue, aiUsageMetering } from '@shared/schema';
+import { aiStripeUsageQueue, aiUsageMetering, users } from '@shared/schema';
 import { eq, sql } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { createLogger } from '../utils/logger';
@@ -45,25 +48,33 @@ async function processQueueItem(item: any): Promise<void> {
       attempts: item.attempts,
     });
 
-    // Attempt Stripe API call
-    if (!item.subscription_id) {
-      throw new Error('No subscription ID - user may not have active subscription');
+    // ✅ Fetch user to get Stripe Customer ID (required for new Meter API)
+    const user = await db.select().from(users).where(eq(users.id, item.user_id)).limit(1);
+    if (!user || user.length === 0) {
+      throw new Error(`User ${item.user_id} not found`);
     }
 
-    // @ts-ignore - Stripe types may be outdated, method exists in runtime
-    const usageRecord = await stripe.subscriptionItems.createUsageRecord(
-      item.subscription_id,
-      {
-        quantity: Math.ceil(parseFloat(item.cost_usd) * 100), // Convert USD to cents
-        timestamp: Math.floor(Date.now() / 1000),
-        action: 'increment',
-      }
-    );
+    const stripeCustomerId = user[0].stripeCustomerId;
+    if (!stripeCustomerId) {
+      throw new Error('No Stripe Customer ID - user may not have active subscription');
+    }
 
-    logger.info(`✅ Stripe usage record created successfully`, {
+    // ✅ NEW API: billing.MeterEvent (replaces deprecated subscriptionItems.createUsageRecord)
+    // Stripe API 2025-03-31.basil removed legacy usage-based billing methods
+    const meterEvent = await stripe.billing.meterEvents.create({
+      event_name: 'ai_api_usage', // Meter event name (must match Stripe Dashboard meter)
+      payload: {
+        stripe_customer_id: stripeCustomerId,
+        value: String(Math.ceil(parseFloat(item.cost_usd) * 100)), // Convert USD to cents as string
+      },
+      timestamp: Math.floor(Date.now() / 1000),
+    });
+
+    logger.info(`✅ Stripe meter event created successfully`, {
       queueId: item.id,
       meteringId: item.metering_id,
-      usageRecordId: usageRecord.id,
+      meterEventId: meterEvent.identifier,
+      customerId: stripeCustomerId,
     });
 
     // Mark queue item as completed
@@ -79,7 +90,7 @@ async function processQueueItem(item: any): Promise<void> {
       .set({
         billed: true,
         billedAt: new Date(),
-        stripeUsageRecordId: usageRecord.id,
+        stripeUsageRecordId: meterEvent.identifier,
       })
       .where(eq(aiUsageMetering.id, item.metering_id));
 
