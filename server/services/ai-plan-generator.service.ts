@@ -63,103 +63,93 @@ export class AIPlanGeneratorService {
   }
 
   /**
-   * ✅ 40-YEAR ENGINEERING: Sanitize AI-generated JSON before parsing
+   * ✅ ARCHITECT-APPROVED FIX (Nov 21, 2025): Handle nested JSON in AI responses
    * 
-   * CRITICAL FIX (Nov 21, 2025): GPT-5.1 double-escapes quotes in file content
-   * Root cause: GPT-5.1 generates `"content": \"import {` instead of `"content": "import {"`
+   * ROOT CAUSE: AI providers (GPT-5.1, Claude) generate valid JSON with double-encoded
+   * file content (e.g., package.json content is JSON-stringified within the JSON response).
+   * Previous regex-based approach CORRUPTED valid JSON by stripping necessary escapes.
    * 
-   * This function:
-   * 1. Fixes GPT-5.1 double-escaped quotes (\"text\" → "text")
-   * 2. Strips code fences (```json ... ```)
-   * 3. Decodes HTML entities (&amp;, &gt;, &lt;)
-   * 4. Escapes unescaped newlines in JSON string values
-   * 5. Handles edge cases from multiple AI providers (OpenAI, Gemini, xAI, Anthropic, Moonshot)
+   * NEW APPROACH (per Architect):
+   * 1. Strip code fences only (```json ... ```)
+   * 2. Parse the JSON (now works because we removed destructive regex)
+   * 3. Deep-walk the parsed object to detect and repair double-encoded JSON strings
+   * 4. Re-serialize with correct escaping
+   * 
+   * This handles providers that encode file content like:
+   * "content": "{\\n  \\\"name\\\": \"my-app\\\",...}"
    * 
    * @param jsonString - Raw JSON string from AI provider
    * @returns Sanitized JSON string ready for JSON.parse()
    */
   private sanitizePlanResponse(jsonString: string): string {
-    // ✅ CRITICAL FIX (Nov 21, 2025): Strip code fences first
-    // Some models wrap JSON in ```json ... ```
+    // Step 1: Strip code fences (```json ... ```)
     jsonString = jsonString
       .replace(/^```json\s*/i, '')
       .replace(/```\s*$/i, '')
       .trim();
     
-    // ✅ CRITICAL FIX (Nov 21, 2025): GPT-5.1 DOUBLE-ESCAPE FIX
-    // GPT-5.1 generates: "content": \"import { something }\"
-    // Should be:         "content": "import { something }"
-    // 
-    // Strategy: Fix ONLY malformed patterns where backslash appears before opening quote of a value
-    // Pattern: ": \\" followed by non-backslash character → ": "
-    // This preserves correctly escaped quotes inside strings (e.g., "text": "He said \"hello\"")
-    
-    // Fix pattern: ": \"text\" → ": "text"
-    // Look for: colon + space + backslash + quote + non-backslash char
-    jsonString = jsonString.replace(/:\s*\\"/g, ': "');
-    
-    // Fix closing quotes: text\" → text"
-    // Look for: non-backslash char + backslash + quote + optional whitespace + comma/brace/bracket
-    jsonString = jsonString.replace(/([^\\])\\"(\s*[,}\]])/g, '$1"$2');
-    
-    // ✅ SECOND PASS: Extract and protect JSON string values with placeholders
-    const stringPlaceholders: string[] = [];
-    let placeholderIndex = 0;
-    
-    // Extract all JSON string values and replace with placeholders
-    let sanitized = jsonString.replace(/"((?:[^"\\]|\\.)*)"/g, (match) => {
-      const placeholder = `__STRING_PLACEHOLDER_${placeholderIndex}__`;
-      stringPlaceholders[placeholderIndex] = match;
-      placeholderIndex++;
-      return placeholder;
-    });
-    
-    // Step 2: Decode HTML entities in non-string parts (keys, structural elements)
-    const htmlEntities: Record<string, string> = {
-      '&amp;': '&',
-      '&lt;': '<',
-      '&gt;': '>',
-      '&nbsp;': ' '
-      // Note: NOT decoding &quot; and &#39; here to avoid breaking JSON
-    };
-    
-    for (const [entity, char] of Object.entries(htmlEntities)) {
-      sanitized = sanitized.replace(new RegExp(entity, 'g'), char);
+    // Step 2: Try direct parse - if valid JSON, no regex corruption needed!
+    try {
+      const parsed = JSON.parse(jsonString);
+      // Step 3: Repair any double-encoded nested JSON strings
+      const repaired = this.repairNestedJSON(parsed);
+      return JSON.stringify(repaired);
+    } catch (parseError: any) {
+      // If parse fails, return original - will fail later with better error context
+      logger.warn('[sanitizePlanResponse] JSON parse failed, returning as-is', {
+        error: parseError.message,
+        position: parseError.message?.match(/position (\d+)/)?.[1],
+        preview: jsonString.substring(0, 200)
+      });
+      return jsonString;
     }
-    
-    // Step 3: Restore string values and fix escaping issues
-    for (let i = 0; i < stringPlaceholders.length; i++) {
-      const placeholder = `__STRING_PLACEHOLDER_${i}__`;
-      let originalString = stringPlaceholders[i];
-      
-      // Extract content between quotes
-      const contentMatch = originalString.match(/^"((?:[^"\\]|\\.)*)"$/);
-      if (contentMatch) {
-        let content = contentMatch[1];
-        
-        // Decode HTML entities in string content and re-escape for JSON
-        content = content
-          .replace(/&quot;/g, '\\"')    // &quot; → \" (JSON-safe escaped quote)
-          .replace(/&#39;/g, "'")        // &#39; → ' (single quote is safe in JSON)
-          .replace(/&#x27;/g, "'")       // &#x27; → ' (single quote is safe in JSON)
-          .replace(/&amp;/g, '&')        // &amp; → & (decoded)
-          .replace(/&lt;/g, '<')         // &lt; → < (decoded)
-          .replace(/&gt;/g, '>')         // &gt; → > (decoded)
-          .replace(/&nbsp;/g, ' ');      // &nbsp; → space (decoded)
-        
-        // Fix unescaped newlines (if any raw newlines slipped through)
-        content = content
-          .replace(/(?<!\\)\n/g, '\\n')  // Raw \n → \\n
-          .replace(/(?<!\\)\r/g, '\\r')  // Raw \r → \\r
-          .replace(/(?<!\\)\t/g, '\\t'); // Raw \t → \\t
-        
-        originalString = `"${content}"`;
+  }
+
+  /**
+   * ✅ ARCHITECT SOLUTION: Recursively repair double-encoded JSON strings
+   * 
+   * Detects strings that are JSON-encoded (start with { or [) and re-parses them
+   * to restore correct escaping. This handles file content like package.json that's
+   * embedded as stringified JSON within the plan.
+   * 
+   * @param obj - Any value from parsed JSON
+   * @returns Repaired value with nested JSON properly handled
+   */
+  private repairNestedJSON(obj: any): any {
+    // Base case: string value
+    if (typeof obj === 'string') {
+      // Detect double-encoded JSON (starts with { or [)
+      const trimmed = obj.trim();
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+          // Attempt to parse as nested JSON
+          const nested = JSON.parse(obj);
+          // Re-stringify to ensure correct escaping
+          return JSON.stringify(nested);
+        } catch {
+          // Not valid JSON, return original string
+          return obj;
+        }
       }
-      
-      sanitized = sanitized.replace(placeholder, originalString);
+      return obj;
     }
     
-    return sanitized;
+    // Recursive case: array
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.repairNestedJSON(item));
+    }
+    
+    // Recursive case: object
+    if (obj && typeof obj === 'object') {
+      const result: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        result[key] = this.repairNestedJSON(value);
+      }
+      return result;
+    }
+    
+    // Primitive types (number, boolean, null)
+    return obj;
   }
 
   /**
@@ -398,28 +388,37 @@ Remember:
             throw new Error(`JSON parse error: ${parseError.message} - JSON preview: ${jsonString.substring(0, 300)}`);
           }
           
+          // ✅ ARCHITECT FIX v2 (Nov 21, 2025): Schema-aware coercion that preserves data
+          // WRAP scalars in arrays instead of discarding them (prevents data loss)
+          // Handles both Gemini's empty strings AND single-object responses
+          const toArray = (value: any): any[] => {
+            if (Array.isArray(value)) return value;
+            if (value === null || value === undefined || value === '') return [];
+            return [value]; // Wrap scalar in array
+          };
+
           const plan: ExecutionPlan = {
             id: `plan-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             goal,
             summary: planData.summary || 'Execution plan generated',
             totalTasks: planData.tasks?.length || 0,
             estimatedTime: planData.estimatedTime || 'Unknown',
-            technologies: planData.technologies || [],
+            technologies: toArray(planData.technologies),
             tasks: (planData.tasks || []).map((task: any, index: number) => ({
               id: task.id || `task-${index + 1}`,
               title: task.title || `Task ${index + 1}`,
               description: task.description || '',
               type: task.type || 'file_create',
               estimatedTime: task.estimatedTime || '10 min',
-              dependencies: task.dependencies || [],
-              files: task.files || [],
-              commands: task.commands || [],
-              packages: task.packages || [],
+              dependencies: toArray(task.dependencies),
+              files: toArray(task.files),
+              commands: toArray(task.commands),
+              packages: toArray(task.packages),
               priority: task.priority || 'medium'
             })),
             riskAssessment: {
               level: planData.riskAssessment?.level || 'low',
-              factors: planData.riskAssessment?.factors || []
+              factors: toArray(planData.riskAssessment?.factors)
             },
             createdAt: new Date()
           };
