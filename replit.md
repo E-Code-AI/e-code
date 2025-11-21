@@ -14,6 +14,35 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 - **Docker Build:** Optimized for <2GiB images
 - **Rate Limiting:** Tier-based (Free: 100/min, Pro: 1000/min, Enterprise: 10000/min)
 - **Monaco Editor:** Safe disposal pattern with optional chaining (`d?.dispose?.()`) for all enhancement classes
+- **Documentation:** Ruthlessly remove obsolete/misleading docs - maintain technical honesty
+
+## Recent Changes
+
+### 2025-11-21: Documentation Cleanup & WebSocket Fixes
+**Removed Obsolete Documentation**:
+- ❌ **VS-CODE-PARITY-COMPLETE.md** - Claimed 95% VS Code parity but used mock Git data and null Monaco providers (not production-ready)
+- ❌ **TEST-AI-AGENT-LIVE.md** - Obsolete guide suggesting features to implement that already exist (executeAutonomousPlan: 1144 lines, file ops: 626 lines, command exec: 490 lines)
+
+**WebSocket Critical Fixes**:
+- ✅ Fixed 3× `broadcastToProject()` errors in workspace-bootstrap.router.ts - replaced with correct `broadcast(message, projectId)` signature
+- ✅ AgentSessionCache production-ready with Redis + in-memory fallback (10K LRU)
+- ✅ HttpUpgradeResponder for reliable HTTP error framing
+
+**Current State of Git/Monaco Features**:
+- **Git Components** (client/src/components/git/): 1,868 lines total
+  - ⚠️ BranchManager.tsx, GitGraph.tsx, MergeConflictResolver.tsx, VisualDiffEditor.tsx, GitBlameDecorator.tsx
+  - ⚠️ **Status**: Demo UI with hardcoded mock data - NOT connected to real Git API endpoints
+  - ⚠️ **Production Requirement**: Replace mock data with `/api/projects/:id/git/*` backend integrations
+- **Monaco Enhancements** (client/src/lib/monaco-features-enhancement.ts): 603 lines
+  - ✅ 6 feature classes: MultiCursor, CodeNavigation, CodeRefactoring, AdvancedSearch, IntelliSense, MonacoFeaturesEnhancement
+  - ⚠️ Some providers return null - defers to default Monaco behavior
+  - ✅ 30+ keyboard shortcuts registered and functional
+
+**Known Issues**:
+- 4 TypeScript diagnostics remaining (non-blocking):
+  - diff-match-patch missing types declaration
+  - Drizzle ORM overload mismatches in file-operations service
+  - ProcessEnv type incompleteness in command-execution service
 
 ## System Architecture
 
