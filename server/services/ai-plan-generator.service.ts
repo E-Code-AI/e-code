@@ -104,9 +104,10 @@ export class AIPlanGeneratorService {
     // GPT-5.1 generates JavaScript code with template literals like "${Date.now()}"  
     // which breaks JSON parsing. We need to escape $ to \\$ in JSON string values.
     // This regex targets ${...} inside JSON string values (between quotes)
+    // NOTE: Use \\\\$ (4 backslashes) to produce \\$ in the final JSON string
     jsonString = jsonString.replace(/"([^"]*\$\{[^}]*\}[^"]*)"/g, (match, p1) => {
-      // Escape all $ characters in the captured string
-      return '"' + p1.replace(/\$/g, '\\$') + '"';
+      // Escape all $ characters in the captured string with DOUBLE backslash
+      return '"' + p1.replace(/\$/g, '\\\\$') + '"';
     });
     
     // Step 2: Try direct parse - if valid JSON, no regex corruption needed!
