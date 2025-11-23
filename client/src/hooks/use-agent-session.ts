@@ -7,6 +7,7 @@ export interface AgentSessionData {
   extendedThinking?: boolean;
   highPowerMode?: boolean;
   autoCheckpoints?: boolean;
+  autoApprovePlans?: boolean;
   pendingActions?: any[];
   timestamp?: number;
 }
