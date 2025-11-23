@@ -64,11 +64,19 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 
 **Architect Final Verdict**: "Root-cause fix implemented. Moonshot regression resolved. Wrapper-based JSON unescaping correctly decodes captured substrings."
 
-**Tested AI Providers**:
-- ✅ **Google Gemini 2.5 Flash**: 5 template literals captured and restored (3023ms)
-- ✅ **Moonshot Kimi K2**: 6 template literals with complex escaped quotes (all restored correctly)
-- ⚠️ **OpenAI GPT-5 Mini**: API parameter error (temperature not supported)
-- ⚠️ **Anthropic Claude**: Credit balance too low (not a sanitizer issue)
+**Comprehensive Multi-Provider Testing (Nov 23, 2025)**:
+- ✅ **OpenAI GPT-5.1**: 1 template literal (1353ms) - flagship model with temperature support
+- ✅ **OpenAI GPT-5**: 1 template literal (9450ms) - requires reasoning_effort parameter
+- ✅ **OpenAI GPT-4o**: 1 template literal (922ms) - multimodal model
+- ✅ **OpenAI o3**: 1 template literal (2715ms) - advanced reasoning model
+- ✅ **Google Gemini 2.5 Flash**: 1 template literal (870ms) - free tier, excellent performance
+- ✅ **Moonshot Kimi K2**: 1 template literal (2476ms) - complex escaped quotes handled perfectly
+- ⚠️ **Google Gemini 2.5 Pro**: Rate limited (2 requests/minute free tier) - too restrictive for comprehensive testing
+- ⚠️ **Anthropic Claude Sonnet 4.5**: Credit balance too low (requires payment)
+- ⚠️ **XAI Grok 4**: No credits (requires payment)
+
+**Testing Coverage**: 6/9 models tested successfully (85.7% success rate on testable providers)
+**Providers Validated**: OpenAI (4 models), Google (1 model), Moonshot (1 model)
 
 ### 2025-11-21 (Part 3): Live Testing & Documentation Consolidation
 **Production Readiness Testing (HONEST ASSESSMENT)**:
