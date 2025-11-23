@@ -89,11 +89,12 @@ export const sessions = pgTable(
 // User storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: serial("id").primaryKey(),
   username: varchar("username").unique(),
-  passwordHash: varchar("password_hash"), // For bcrypt hashed passwords
+  password: text("password"), // For bcrypt hashed passwords
   email: varchar("email").unique(),
   displayName: varchar("display_name"),
+  avatarUrl: varchar("avatar_url"),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -104,22 +105,24 @@ export const users = pgTable("users", {
   linkedinUsername: varchar("linkedin_username"),
   reputation: integer("reputation").default(0),
   isMentor: boolean("is_mentor").default(false),
-  isAdmin: boolean("is_admin").default(false),
+  role: text("role"),
   emailVerified: boolean("email_verified").default(false),
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   stripePriceId: varchar("stripe_price_id"),
   subscriptionStatus: varchar("subscription_status"),
-  subscriptionTier: subscriptionTierEnum("subscription_tier").default('free'),
   subscriptionCurrentPeriodEnd: timestamp("subscription_current_period_end"),
+  emailVerificationToken: varchar("email_verification_token"),
+  emailVerificationExpiry: timestamp("email_verification_expiry"),
   // Security fields
   twoFactorEnabled: boolean("two_factor_enabled").default(false),
   twoFactorSecret: varchar("two_factor_secret"),
   passwordResetToken: varchar("password_reset_token"),
   passwordResetExpiry: timestamp("password_reset_expiry"),
-  lastLogin: timestamp("last_login"),
+  lastLoginAt: timestamp("last_login_at"),
+  lastLoginIp: varchar("last_login_ip"),
   failedLoginAttempts: integer("failed_login_attempts").default(0),
-  lockedUntil: timestamp("locked_until"),
+  accountLockedUntil: timestamp("account_locked_until"),
   // AI Preferences
   preferredAiModel: varchar("preferred_ai_model"), // User's preferred AI model (e.g., 'gpt-5', 'claude-opus-4-1')
   createdAt: timestamp("created_at").defaultNow(),
@@ -129,7 +132,7 @@ export const users = pgTable("users", {
 // Email Verification Tokens table
 export const emailVerificationTokens = pgTable("email_verification_tokens", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   token: varchar("token").notNull().unique(), // Hashed token
   email: varchar("email").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
@@ -139,7 +142,7 @@ export const emailVerificationTokens = pgTable("email_verification_tokens", {
 // Password Reset Tokens table
 export const passwordResetTokens = pgTable("password_reset_tokens", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   token: varchar("token").notNull().unique(), // Hashed token
   expiresAt: timestamp("expires_at").notNull(),
   usedAt: timestamp("used_at"),
@@ -178,7 +181,6 @@ export const files = pgTable("files", {
   projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: 'cascade' }),
   parentId: integer("parent_id"),
   isDirectory: boolean("is_directory").notNull().default(false),
-  language: languageEnum("language"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   storageKey: text("storage_key"),
@@ -188,7 +190,7 @@ export const files = pgTable("files", {
 // API SDK Tables - Enhanced with security features
 export const apiKeys = pgTable("api_keys", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: integer("user_id").notNull().references(() => users.id),
   name: varchar("name").notNull(),
   publicKey: varchar("public_key").unique(), // Public identifier
   keyHash: varchar("key_hash").notNull().unique(), // SHA-256 hash of the actual key
@@ -221,7 +223,7 @@ export const apiUsage = pgTable("api_usage", {
 // Security logs table for audit logging
 export const securityLogs = pgTable("security_logs", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: varchar("user_id").references(() => users.id),
+  userId: integer("user_id").references(() => users.id),
   ip: varchar("ip").notNull(),
   action: varchar("action").notNull(),
   resource: text("resource"),
@@ -238,7 +240,7 @@ export const securityLogs = pgTable("security_logs", {
 export const terminalLogs = pgTable("terminal_logs", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: 'cascade' }),
-  userId: varchar("user_id").references(() => users.id),
+  userId: integer("user_id").references(() => users.id),
   type: varchar("type", { length: 32 }).notNull(), // 'info', 'error', 'warn', 'log', 'debug'
   message: text("message").notNull(),
   stack: text("stack"),
@@ -321,7 +323,7 @@ export const insertCustomerRequestSchema = createInsertSchema(customerRequests, 
 // Usage tracking table for billing
 export const usageTracking = pgTable("usage_tracking", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: integer("user_id").notNull().references(() => users.id),
   metricType: varchar("metric_type").notNull(), // compute, storage, bandwidth, etc.
   value: decimal("value", { precision: 10, scale: 2 }).notNull(),
   unit: varchar("unit").notNull(), // hours, GB, etc.
@@ -333,7 +335,7 @@ export const usageTracking = pgTable("usage_tracking", {
 // Credits and billing system
 export const userCredits = pgTable("user_credits", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: varchar("user_id").notNull().references(() => users.id).unique(),
+  userId: integer("user_id").notNull().references(() => users.id).unique(),
   monthlyCredits: decimal("monthly_credits", { precision: 10, scale: 2 }).notNull().default('25.00'),
   remainingCredits: decimal("remaining_credits", { precision: 10, scale: 2 }).notNull().default('25.00'),
   extraCredits: decimal("extra_credits", { precision: 10, scale: 2 }).notNull().default('0.00'),
@@ -343,7 +345,7 @@ export const userCredits = pgTable("user_credits", {
 
 export const budgetLimits = pgTable("budget_limits", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: varchar("user_id").notNull().references(() => users.id).unique(),
+  userId: integer("user_id").notNull().references(() => users.id).unique(),
   monthlyLimit: decimal("monthly_limit", { precision: 10, scale: 2 }),
   alertThreshold: integer("alert_threshold").default(80), // percentage
   hardStop: boolean("hard_stop").default(true),
@@ -354,7 +356,7 @@ export const budgetLimits = pgTable("budget_limits", {
 
 export const usageAlerts = pgTable("usage_alerts", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: integer("user_id").notNull().references(() => users.id),
   alertType: varchar("alert_type").notNull(), // threshold_reached, limit_exceeded, etc.
   threshold: integer("threshold").notNull(),
   sent: boolean("sent").default(false),
@@ -367,7 +369,7 @@ export const usageAlerts = pgTable("usage_alerts", {
 // Mentorship Tables
 export const mentorProfiles = pgTable("mentor_profiles", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: integer("user_id").notNull().references(() => users.id),
   expertise: jsonb("expertise").$type<string[]>().default([]),
   experience: text("experience"),
   hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }),
@@ -415,7 +417,7 @@ export const challenges = pgTable("challenges", {
 export const challengeSubmissions = pgTable("challenge_submissions", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   challengeId: integer("challenge_id").notNull().references(() => challenges.id),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: integer("user_id").notNull().references(() => users.id),
   code: text("code").notNull(),
   status: submissionStatusEnum("status").default('pending'),
   score: integer("score").default(0),
@@ -427,7 +429,7 @@ export const challengeSubmissions = pgTable("challenge_submissions", {
 export const challengeLeaderboard = pgTable("challenge_leaderboard", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   challengeId: integer("challenge_id").notNull().references(() => challenges.id),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: integer("user_id").notNull().references(() => users.id),
   bestScore: integer("best_score").default(0),
   bestTime: integer("best_time"), // in milliseconds
   submissionCount: integer("submission_count").default(0),
@@ -448,7 +450,7 @@ export const communityPosts = pgTable("community_posts", {
   id: serial("id").primaryKey(),
   title: varchar("title").notNull(),
   content: text("content").notNull(),
-  authorId: varchar("author_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  authorId: integer("author_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   categoryId: varchar("category_id").notNull().references(() => communityCategories.id),
   tags: jsonb("tags").$type<string[]>().default([]),
   projectUrl: text("project_url"),
@@ -462,7 +464,7 @@ export const communityPosts = pgTable("community_posts", {
 
 export const communityPostLikes = pgTable("community_post_likes", {
   postId: integer("post_id").notNull().references(() => communityPosts.id, { onDelete: 'cascade' }),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.postId, table.userId] }),
@@ -470,7 +472,7 @@ export const communityPostLikes = pgTable("community_post_likes", {
 
 export const communityPostBookmarks = pgTable("community_post_bookmarks", {
   postId: integer("post_id").notNull().references(() => communityPosts.id, { onDelete: 'cascade' }),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.postId, table.userId] }),
@@ -479,7 +481,7 @@ export const communityPostBookmarks = pgTable("community_post_bookmarks", {
 export const communityComments = pgTable("community_comments", {
   id: serial("id").primaryKey(),
   postId: integer("post_id").notNull().references(() => communityPosts.id, { onDelete: 'cascade' }),
-  authorId: varchar("author_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  authorId: integer("author_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   content: text("content").notNull(),
   parentCommentId: integer("parent_comment_id"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -497,7 +499,7 @@ export const communityFollows = pgTable("community_follows", {
 // Mobile App Tables
 export const mobileDevices = pgTable("mobile_devices", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: integer("user_id").notNull().references(() => users.id),
   deviceId: varchar("device_id").notNull(),
   platform: varchar("platform").notNull(), // ios, android
   deviceName: varchar("device_name"),
@@ -514,7 +516,7 @@ export const mobileDevices = pgTable("mobile_devices", {
 // or drizzle-kit version with --non-interactive enum handling
 export const pushNotifications = pgTable("push_notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`), // DB uses varchar UUID
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: integer("user_id").notNull().references(() => users.id),
   title: varchar("title").notNull(),
   body: text("body").notNull(),
   data: jsonb("data"),
@@ -632,7 +634,7 @@ export const teams = pgTable("teams", {
   slug: varchar("slug").notNull().unique(),
   description: text("description"),
   visibility: visibilityEnum("visibility").notNull().default('private'),
-  ownerId: varchar("owner_id").notNull().references(() => users.id),
+  ownerId: integer("owner_id").notNull().references(() => users.id),
   memberCount: integer("member_count").notNull().default(1),
   projectCount: integer("project_count").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -642,7 +644,7 @@ export const teams = pgTable("teams", {
 export const teamMembers = pgTable("team_members", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   teamId: integer("team_id").notNull().references(() => teams.id, { onDelete: 'cascade' }),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   role: roleEnum("role").notNull().default('member'),
   joinedAt: timestamp("joined_at").notNull().defaultNow(),
 });
@@ -652,7 +654,7 @@ export const comments = pgTable('comments', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id),
   fileId: integer('file_id').references(() => files.id),
-  authorId: varchar('author_id').notNull().references(() => users.id),
+  authorId: integer('author_id').notNull().references(() => users.id),
   content: text('content').notNull(),
   lineNumber: integer('line_number'),
   resolved: boolean('resolved').default(false),
@@ -738,7 +740,7 @@ export const reviewIssues = pgTable('review_issues', {
 
 export const reviewSettings = pgTable('review_settings', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id').notNull().references(() => users.id).unique(),
+  userId: integer('user_id').notNull().references(() => users.id).unique(),
   enabledChecks: jsonb('enabled_checks').notNull().default({
     security: true,
     performance: true,
@@ -785,7 +787,7 @@ export const webrtcSessions = pgTable('webrtc_sessions', {
 export const webrtcParticipants = pgTable('webrtc_participants', {
   id: serial('id').primaryKey(),
   sessionId: integer('session_id').notNull().references(() => webrtcSessions.id, { onDelete: 'cascade' }),
-  userId: varchar('user_id').notNull().references(() => users.id),
+  userId: integer('user_id').notNull().references(() => users.id),
   joinedAt: timestamp('joined_at').defaultNow().notNull(),
   leftAt: timestamp('left_at'),
   connectionId: varchar('connection_id').notNull(),
@@ -807,7 +809,7 @@ export const webrtcRecordings = pgTable('webrtc_recordings', {
 export const collaborationPresence = pgTable('collaboration_presence', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id),
-  userId: varchar('user_id').notNull().references(() => users.id),
+  userId: integer('user_id').notNull().references(() => users.id),
   fileId: integer('file_id').references(() => files.id),
   cursorPosition: jsonb('cursor_position').default({}), // {line: number, column: number}
   selection: jsonb('selection').default({}), // {start: {line, column}, end: {line, column}}
@@ -819,7 +821,7 @@ export const collaborationPresence = pgTable('collaboration_presence', {
 export const projectTimeTracking = pgTable('project_time_tracking', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id),
-  userId: varchar('user_id').notNull().references(() => users.id),
+  userId: integer('user_id').notNull().references(() => users.id),
   startTime: timestamp('start_time').notNull(),
   endTime: timestamp('end_time'),
   duration: integer('duration'),
@@ -958,7 +960,7 @@ export const keyValueStore = pgTable('key_value_store', {
 export const aiConversations = pgTable('ai_conversations', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id),
-  userId: varchar('user_id').notNull().references(() => users.id),
+  userId: integer('user_id').notNull().references(() => users.id),
   messages: jsonb('messages').notNull().default([]),
   context: jsonb('context').default({}),
   totalTokensUsed: integer('total_tokens_used').default(0),
@@ -971,7 +973,7 @@ export const aiConversations = pgTable('ai_conversations', {
 // Dynamic Intelligence settings
 export const dynamicIntelligence = pgTable('dynamic_intelligence', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id').notNull().references(() => users.id).unique(),
+  userId: integer('user_id').notNull().references(() => users.id).unique(),
   extendedThinking: boolean('extended_thinking').default(false),
   highPowerMode: boolean('high_power_mode').default(false),
   autoWebSearch: boolean('auto_web_search').default(true),
@@ -1002,7 +1004,7 @@ export const agentMessages = pgTable('agent_messages', {
   sessionId: varchar('session_id').references(() => agentSessions.id, { onDelete: 'cascade' }),
   conversationId: integer('conversation_id').notNull().references(() => aiConversations.id, { onDelete: 'cascade' }), // Primary thread identifier
   projectId: integer('project_id').notNull().references(() => projects.id),
-  userId: varchar('user_id').notNull().references(() => users.id),
+  userId: integer('user_id').notNull().references(() => users.id),
   role: varchar('role').notNull(), // 'user' | 'assistant' | 'system'
   content: text('content').notNull(),
   model: varchar('model'), // Model used for this specific message
@@ -1146,7 +1148,7 @@ export const customDomains = pgTable('custom_domains', {
 // AI Usage Tracking Table (for billing)
 export const aiUsageRecords = pgTable('ai_usage_records', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id').notNull().references(() => users.id),
+  userId: integer('user_id').notNull().references(() => users.id),
   model: varchar('model').notNull(),
   provider: varchar('provider').notNull(), // OpenAI, Anthropic, E-Code
   inputTokens: integer('input_tokens').notNull().default(0),
@@ -1196,7 +1198,7 @@ export const promptTemplates = pgTable('prompt_templates', {
 // Custom Prompts - User-specific custom prompts
 export const customPrompts = pgTable('custom_prompts', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id').notNull().references(() => users.id),
+  userId: integer('user_id').notNull().references(() => users.id),
   templateId: integer('template_id').references(() => promptTemplates.id), // Optional link to template
   name: varchar('name').notNull(),
   description: text('description'),
@@ -1246,7 +1248,7 @@ export const projectAiRules = pgTable('project_ai_rules', {
 // Prompt Usage History - Track usage of prompts
 export const promptUsageHistory = pgTable('prompt_usage_history', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id').notNull().references(() => users.id),
+  userId: integer('user_id').notNull().references(() => users.id),
   projectId: integer('project_id').references(() => projects.id),
   customPromptId: integer('custom_prompt_id').references(() => customPrompts.id),
   templateId: integer('template_id').references(() => promptTemplates.id),
@@ -1269,7 +1271,7 @@ export const promptUsageHistory = pgTable('prompt_usage_history', {
 export const promptTemplateRatings = pgTable('prompt_template_ratings', {
   id: serial('id').primaryKey(),
   templateId: integer('template_id').notNull().references(() => promptTemplates.id),
-  userId: varchar('user_id').notNull().references(() => users.id),
+  userId: integer('user_id').notNull().references(() => users.id),
   rating: integer('rating').notNull(), // 1-5
   comment: text('comment'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -1537,7 +1539,7 @@ export const voiceVideoSessions = pgTable("voice_video_sessions", {
 export const voiceVideoParticipants = pgTable("voice_video_participants", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   sessionId: integer("session_id").notNull().references(() => voiceVideoSessions.id, { onDelete: 'cascade' }),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: integer("user_id").notNull().references(() => users.id),
   role: varchar("role").notNull().default('participant'), // 'host' or 'participant'
   joinedAt: timestamp("joined_at").notNull().defaultNow(),
   leftAt: timestamp("left_at"),
@@ -1561,7 +1563,7 @@ export const gpuInstances = pgTable("gpu_instances", {
 export const gpuUsage = pgTable("gpu_usage", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   instanceId: integer("instance_id").notNull().references(() => gpuInstances.id),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: integer("user_id").notNull().references(() => users.id),
   startTime: timestamp("start_time").notNull(),
   endTime: timestamp("end_time"),
   gpuUtilization: integer("gpu_utilization"), // percentage
@@ -1643,7 +1645,7 @@ export const errorLogs = pgTable("error_logs", {
   timestamp: timestamp("timestamp").notNull().defaultNow(),
   userAgent: text("user_agent"),
   url: text("url"),
-  userId: varchar("user_id").references(() => users.id),
+  userId: integer("user_id").references(() => users.id),
   sessionId: varchar("session_id"),
   metadata: jsonb("metadata"), // Additional context
   resolved: boolean("resolved").notNull().default(false),
@@ -1665,7 +1667,7 @@ export const collaborationSessions = pgTable("collaboration_sessions", {
 export const sessionParticipants = pgTable("session_participants", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   sessionId: varchar("session_id").notNull().references(() => collaborationSessions.id, { onDelete: 'cascade' }),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: integer("user_id").notNull().references(() => users.id),
   username: varchar("username").notNull(),
   cursorColor: varchar("cursor_color").notNull(),
   joinedAt: timestamp("joined_at").notNull().defaultNow(),
@@ -1681,7 +1683,7 @@ export const templates = pgTable("templates", {
   description: text("description"),
   category: varchar("category").notNull(), // 'web', 'backend', 'bot', 'game', etc.
   tags: text().array().notNull().default([]),
-  authorId: varchar("author_id").references(() => users.id), // Link to user for community templates
+  authorId: integer("author_id").references(() => users.id), // Link to user for community templates
   authorName: varchar("author_name").notNull(),
   authorVerified: boolean("author_verified").notNull().default(false),
   uses: integer("uses").notNull().default(0),
@@ -1694,7 +1696,7 @@ export const templates = pgTable("templates", {
   features: text().array().notNull().default([]),
   isFeatured: boolean("is_featured").notNull().default(false),
   isOfficial: boolean("is_official").notNull().default(false),
-  isPublished: boolean("is_published").notNull().default(true),
+  published: boolean("published").notNull().default(true),
   isCommunity: boolean("is_community").notNull().default(false), // Community submitted templates
   status: varchar("status").notNull().default('published'), // 'draft', 'pending_review', 'published', 'rejected'
   githubUrl: text("github_url"), // Source repository URL
@@ -1728,7 +1730,7 @@ export const templateCategories = pgTable("template_categories", {
 export const templateRatings = pgTable("template_ratings", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   templateId: varchar("template_id").notNull().references(() => templates.id, { onDelete: 'cascade' }),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: integer("user_id").notNull().references(() => users.id),
   rating: integer("rating").notNull(), // 1-5 stars
   review: text("review"),
   isVerifiedPurchase: boolean("is_verified_purchase").notNull().default(false),
@@ -1757,7 +1759,7 @@ export const templateCollections = pgTable("template_collections", {
   name: varchar("name").notNull(),
   slug: varchar("slug").notNull().unique(),
   description: text("description"),
-  authorId: varchar("author_id").notNull().references(() => users.id),
+  authorId: integer("author_id").notNull().references(() => users.id),
   thumbnailUrl: text("thumbnail_url"),
   isPublic: boolean("is_public").notNull().default(true),
   isFeatured: boolean("is_featured").notNull().default(false),
@@ -1806,7 +1808,7 @@ export const alertHistory = pgTable("alert_history", {
 // Community Templates Table
 export const communityTemplates = pgTable("community_templates", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  authorId: varchar("author_id").notNull().references(() => users.id),
+  authorId: integer("author_id").notNull().references(() => users.id),
   name: varchar("name").notNull(),
   description: text("description"),
   githubUrl: text("github_url").notNull(),
@@ -2003,7 +2005,7 @@ export type RiskThreshold = 'low' | 'medium' | 'high' | 'critical';
 // Agent Sessions - Track active AI agent sessions
 export const agentSessions = pgTable('agent_sessions', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: varchar('user_id').notNull().references(() => users.id),
+  userId: integer('user_id').notNull().references(() => users.id),
   projectId: integer('project_id').references(() => projects.id),
   sessionToken: text('session_token').notNull().unique(),
   model: text('model').notNull(), // gpt-5, gpt-4, claude-3, etc
@@ -2244,7 +2246,7 @@ export const databaseOperations = pgTable('database_operations', {
 export const agentAuditTrail = pgTable('agent_audit_trail', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   sessionId: varchar('session_id').notNull().references(() => agentSessions.id),
-  userId: varchar('user_id').notNull().references(() => users.id),
+  userId: integer('user_id').notNull().references(() => users.id),
   action: text('action').notNull(),
   resourceType: text('resource_type').notNull(),
   resourceId: text('resource_id'),
@@ -2299,7 +2301,7 @@ export const autonomousActions = pgTable('autonomous_actions', {
 // Agent Permissions - Fine-grained permission control
 export const agentPermissions = pgTable('agent_permissions', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: varchar('user_id').references(() => users.id),
+  userId: integer('user_id').references(() => users.id),
   roleId: varchar('role_id'), // For future role-based permissions
   resource: text('resource').notNull(),
   action: text('action').notNull(),
@@ -2321,7 +2323,7 @@ export const agentPermissions = pgTable('agent_permissions', {
 // AI Approval Queue - Stores pending actions requiring human approval
 export const aiApprovalQueue = pgTable('ai_approval_queue', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: varchar('user_id').notNull().references(() => users.id),
+  userId: integer('user_id').notNull().references(() => users.id),
   projectId: integer('project_id').notNull().references(() => projects.id),
   action: jsonb('action').$type<{
     type: string;
@@ -2346,7 +2348,7 @@ export const aiApprovalQueue = pgTable('ai_approval_queue', {
 // AI Audit Logs - Comprehensive compliance-grade audit trail for all AI actions
 export const aiAuditLogs = pgTable('ai_audit_logs', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id').notNull().references(() => users.id),
+  userId: integer('user_id').notNull().references(() => users.id),
   projectId: integer('project_id').notNull().references(() => projects.id),
   approvalId: varchar('approval_id').references(() => aiApprovalQueue.id),
   action: jsonb('action').$type<{
@@ -2652,7 +2654,7 @@ export const resourceMetrics = pgTable('resource_metrics', {
 // Pane Configurations - For Split Editor workspace layout persistence
 export const paneConfigurations = pgTable('pane_configurations', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: varchar('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
   name: text('name').notNull(), // 'default', 'custom-1', etc.
   isDefault: boolean('is_default').default(false),
@@ -2710,7 +2712,7 @@ export const queuePriorityEnum = pgEnum('queue_priority', [
 // AI Token Usage - Track token consumption by operation
 export const aiTokenUsage = pgTable('ai_token_usage', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: varchar('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
   projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
   sessionId: varchar('session_id'), // Agent session ID
   taskType: taskTypeEnum('task_type').notNull(),
@@ -2790,7 +2792,7 @@ export const aiProviderHealth = pgTable('ai_provider_health', {
 // AI Request Queue - Priority queue for AI requests with rate limiting
 export const aiRequestQueue = pgTable('ai_request_queue', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: varchar('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
   projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
   priority: queuePriorityEnum('priority').notNull().default('normal'),
   taskType: taskTypeEnum('task_type').notNull(),
@@ -3113,7 +3115,7 @@ export type InsertSystemSetting = z.infer<typeof insertSystemSettingSchema>;
 // Rate Limit Violations Tracking (Fortune 500 Monitoring)
 export const rateLimitViolations = pgTable("rate_limit_violations", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id, { onDelete: 'set null' }),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'set null' }),
   ip: varchar("ip").notNull(),
   endpoint: text("endpoint").notNull(),
   method: varchar("method", { length: 10 }).notNull(),
@@ -3138,7 +3140,7 @@ export type InsertRateLimitViolation = z.infer<typeof insertRateLimitViolationSc
 // Tracks every AI request for Stripe metered billing
 export const aiUsageMetering = pgTable("ai_usage_metering", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
   
   // Request details
   endpoint: varchar("endpoint").notNull(), // '/api/agent/chat/stream', '/api/ai/completions'
@@ -3191,7 +3193,7 @@ export type InsertAiUsageMetering = z.infer<typeof insertAiUsageMeteringSchema>;
 export const aiStripeUsageQueue = pgTable("ai_stripe_usage_queue", {
   id: serial("id").primaryKey(),
   meteringId: integer("metering_id").notNull(), // Reference to ai_usage_metering.id
-  userId: varchar("user_id").notNull(),
+  userId: integer("user_id").notNull(),
   subscriptionId: varchar("subscription_id"),
   costUsd: decimal("cost_usd", { precision: 10, scale: 6 }).notNull(),
   attempts: integer("attempts").default(0).notNull(),
