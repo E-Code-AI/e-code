@@ -74,11 +74,10 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
       return originalPrependListener(event, listener);
     } as any;
     
-    // Import vite module - Vite/Rollup handle their own platform detection
+    // Import vite module
     const viteModule = await import('./vite');
     
     if (process.env.NODE_ENV === 'development') {
-      
       // WORKAROUND: Monkeypatch app.use to prevent Vite's catch-all from capturing API routes
       // This is necessary because server/vite.ts is forbidden from editing
       // Save original app.use method
@@ -118,66 +117,6 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
       // The wrapped upgrade listeners will mark Vite HMR sockets as handled
       // This prevents the final upgrade guard from destroying them
       await viteModule.setupVite(app, server);
-      
-      // ✅ CRITICAL FIX (Nov 23, 2025): Rewrite /@vite/client to inject correct HMR endpoint
-      // Problem: Vite client tries to connect to localhost:5173 instead of Replit domain
-      // Solution: Intercept /@vite/client response and inject correct WebSocket URL from headers
-      // This ensures HMR works correctly in proxied/Replit environments
-      app.use('/@vite/client', async (req, res, next) => {
-        try {
-          // Get the original /@vite/client script from Vite
-          const originalSend = res.send.bind(res);
-          const originalJson = res.json.bind(res);
-          
-          res.send = function(body: any) {
-            if (typeof body === 'string' && body.includes('createWebSocket')) {
-              // Derive the correct HMR WebSocket URL from request headers
-              const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
-              const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:5000';
-              const wsProtocol = protocol === 'https' ? 'wss' : 'ws';
-              
-              // Inject HMR config before the Vite client code
-              const hmrConfig = `
-// E-Code Platform: Auto-configured HMR for Replit/proxy environments
-window.__vite_hmr_config__ = {
-  protocol: '${wsProtocol}',
-  host: '${host}',
-  clientPort: undefined, // Use same port as page
-  timeout: 30000,
-  overlay: true
-};
-`;
-              
-              // Replace the WebSocket URL creation logic
-              // Vite client uses: `${protocol}://${hostAndPath}`
-              // We need: Use the domain from the page URL, not localhost:5173
-              const modifiedBody = hmrConfig + body.replace(
-                /const protocol = location\.protocol === 'https:' \? 'wss' : 'ws'/g,
-                `const protocol = window.__vite_hmr_config__.protocol`
-              ).replace(
-                /const host = __HMR_HOSTNAME__ \|\| location\.hostname/g,
-                `const host = window.__vite_hmr_config__.host`
-              ).replace(
-                /const port = __HMR_PORT__/g,
-                `const port = window.__vite_hmr_config__.clientPort`
-              );
-              
-              console.log(`[Vite HMR Fix] Injected correct WebSocket config: ${wsProtocol}://${host}`);
-              return originalSend(modifiedBody);
-            }
-            return originalSend(body);
-          } as any;
-          
-          res.json = function(body: any) {
-            return originalJson(body);
-          } as any;
-          
-          next();
-        } catch (error) {
-          console.error('[Vite HMR Fix] Error intercepting /@vite/client:', error);
-          next();
-        }
-      });
       
       // Restore original app.use method after Vite setup
       app.use = originalAppUse;
