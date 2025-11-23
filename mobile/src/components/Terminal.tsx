@@ -17,6 +17,21 @@ import {
 } from 'react-native';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
 
+// Auto-detect Replit or use environment variable
+function getWsUrl(): string {
+  if (__DEV__) {
+    return 'ws://localhost:3000';
+  }
+
+  // Use environment variable if set (configured in .env.production)
+  if (process.env.EXPO_PUBLIC_WS_URL) {
+    return process.env.EXPO_PUBLIC_WS_URL;
+  }
+
+  // Default production URL (update for your deployment)
+  return 'wss://your-production-host.com';
+}
+
 interface TerminalProps {
   projectId: string | number;
   token: string;
@@ -73,10 +88,9 @@ export const Terminal: React.FC<TerminalProps> = ({
     setIsConnecting(true);
 
     try {
-      // Determine protocol and host
-      const protocol = __DEV__ ? 'ws:' : 'wss:';
-      const host = __DEV__ ? 'localhost:3000' : 'your-production-host.com';
-      const wsUrl = `${protocol}//${host}/api/terminal/ws?projectId=${projectId}&token=${token}`;
+      // Use environment-aware WebSocket URL (supports Replit, localhost, custom)
+      const baseWsUrl = getWsUrl();
+      const wsUrl = `${baseWsUrl}/api/terminal/ws?projectId=${projectId}&token=${token}`;
 
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
