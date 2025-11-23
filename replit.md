@@ -147,8 +147,8 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 ### Infrastructure Services
 - **PostgreSQL:** Neon serverless
 - **Redis:** Optional caching layer
-- **Stripe:** Payment processing
-- **SendGrid:** Email delivery
+- **Stripe:** ✅ Payment processing (configured via Replit connector - Nov 23, 2025)
+- **SendGrid:** ⚠️ Email delivery (user will configure later - declined integration Nov 23, 2025)
 - **Sentry:** Error monitoring
 - **Slack:** Production monitoring alerts
 
