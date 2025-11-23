@@ -1676,6 +1676,7 @@ export const sessionParticipants = pgTable("session_participants", {
 });
 
 // Templates table for project templates with marketplace features
+// Canonical marketplace template table - PRIMARY SOURCE OF TRUTH
 export const templates = pgTable("templates", {
   id: serial("id").primaryKey(),
   slug: varchar("slug").notNull().unique(),
@@ -1713,6 +1714,28 @@ export const templates = pgTable("templates", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// LEGACY: marketplace_templates - Read-only staging table for pre-migration data
+// DO NOT USE for new features - this table lacks slug, published flags, and rich author metadata
+// Eventually to be deprecated once ETL sync is confirmed and no writers remain
+export const marketplaceTemplates = pgTable("marketplace_templates", {
+  id: serial("id").primaryKey(),
+  name: varchar("name"),
+  description: text("description"),
+  framework: varchar("framework"),
+  language: varchar("language"),
+  author: varchar("author"), // Denormalized string - not a foreign key
+  stars: integer("stars").notNull().default(0),
+  forks: integer("forks").notNull().default(0),
+  downloads: integer("downloads").notNull().default(0),
+  tags: text().array(),
+  featured: boolean("featured").notNull().default(false),
+  price: integer("price").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  authorId: integer("author_id"),
+  projectId: integer("project_id"),
+});
+
 // Template categories with icons
 export const templateCategories = pgTable("template_categories", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -1729,8 +1752,8 @@ export const templateCategories = pgTable("template_categories", {
 
 // Template ratings and reviews
 export const templateRatings = pgTable("template_ratings", {
-  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  templateId: varchar("template_id").notNull().references(() => templates.id, { onDelete: 'cascade' }),
+  id: serial("id").primaryKey(),
+  templateId: integer("template_id").notNull().references(() => templates.id, { onDelete: 'cascade' }),
   userId: integer("user_id").notNull().references(() => users.id),
   rating: integer("rating").notNull(), // 1-5 stars
   review: text("review"),
