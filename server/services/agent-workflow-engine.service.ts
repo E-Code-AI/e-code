@@ -333,6 +333,48 @@ export class AgentWorkflowEngineService extends EventEmitter {
     }
   }
 
+  /**
+   * ✅ ARCHITECT RECOMMENDATION (Nov 23, 2025): Centralized task type → operation mapping
+   * Maps AI-generated task types to concrete file operations
+   * Validates all required fields and fails fast for unknown types
+   */
+  private mapTaskTypeToOperation(taskType: string | undefined, configOperation: string | undefined): string {
+    // If operation is already explicitly provided, use it
+    if (configOperation) {
+      return configOperation;
+    }
+    
+    // Map common AI-generated task types to file operations
+    const mapping: Record<string, string> = {
+      'create_file': 'write',
+      'file_create': 'write',
+      'write_file': 'write',
+      'update_file': 'write',
+      'file_update': 'write',
+      'edit_file': 'write',
+      'file_edit': 'write',
+      'modify_file': 'write',
+      'read_file': 'read',
+      'file_read': 'read',
+      'delete_file': 'delete',
+      'file_delete': 'delete',
+      'remove_file': 'delete',
+      'list_files': 'list',
+      'list_directory': 'list'
+    };
+    
+    if (!taskType) {
+      throw new Error('Task type is undefined and no explicit operation provided');
+    }
+    
+    const operation = mapping[taskType];
+    if (!operation) {
+      throw new Error(`Unknown task type: "${taskType}". Expected one of: ${Object.keys(mapping).join(', ')}`);
+    }
+    
+    return operation;
+  }
+
   // Execute file operation step
   private async executeFileOperation(
     config: any,
@@ -351,12 +393,14 @@ export class AgentWorkflowEngineService extends EventEmitter {
         throw new Error(`Task ${config.taskId} not found in plan store`);
       }
       
+      // ✅ FIX (Nov 23, 2025): Use centralized mapping instead of hardcoded create_file check
+      const operation = this.mapTaskTypeToOperation(task.type, config.operation);
+      
       // Merge task details into config (task has full file contents, commands, etc.)
       effectiveConfig = {
         ...config,
         ...task,
-        // Preserve original config values if not in task
-        operation: task.type === 'create_file' ? 'write' : config.operation,
+        operation,
         path: task.path || config.path,
         content: task.content || config.content
       };
