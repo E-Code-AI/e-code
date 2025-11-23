@@ -13,6 +13,9 @@ import { agentFileOperations } from './agent-file-operations.service';
 import { agentCommandExecution } from './agent-command-execution.service';
 import { agentToolFramework } from './agent-tool-framework.service';
 import { OpenAI } from 'openai';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('agent-workflow-engine');
 
 // Workflow step types
 export type WorkflowStepType = 'file_operation' | 'command' | 'tool' | 'database' | 'conditional' | 'parallel' | 'loop';
@@ -358,8 +361,23 @@ export class AgentWorkflowEngineService extends EventEmitter {
         // Preserve original config values if not in task
         operation: task.type === 'create_file' ? 'write' : config.operation,
         path: task.path || config.path,
-        content: task.content || config.content
+        content: task.content || config.content,
+        outline: task.outline || config.outline,
+        language: task.language || config.language
       };
+    }
+    
+    // ✅ PHASE 2 EXECUTOR (Nov 23, 2025): Expand outline into content if needed
+    // When fallback plans provide outlines instead of content, generate actual file content
+    if (!effectiveConfig.content && effectiveConfig.outline) {
+      const { agentContentGenerator } = await import('./agent-content-generator.service');
+      const generatedFile = await agentContentGenerator.expandOutline({
+        path: effectiveConfig.path,
+        outline: effectiveConfig.outline,
+        language: effectiveConfig.language
+      });
+      effectiveConfig.content = generatedFile.content;
+      logger.info(`[WorkflowEngine] Expanded outline to content for ${effectiveConfig.path}`);
     }
     
     const { operation, path, content } = this.resolveVariables(effectiveConfig, state);
