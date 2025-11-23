@@ -15,7 +15,8 @@
 import { randomUUID } from 'crypto';
 
 interface CapturedTemplate {
-  original: string;
+  original: string;      // Raw captured string from JSON (with escapes)
+  decoded: string;       // JSON-decoded string (escapes resolved)
   sentinel: string;
   startIndex: number;
   endIndex: number;
@@ -31,6 +32,23 @@ interface TokenizerState {
     inSingleQuote: boolean;
     inDoubleQuote: boolean;
   }>;
+}
+
+/**
+ * Decode JSON escape sequences in a string
+ * Mirrors JSON.parse unescaping for:  \", \\, \n, \r, \t, \uXXXX, etc.
+ * 
+ * Uses JSON.parse wrapper technique: wrap in array and parse to leverage native unescaping
+ * This correctly decodes captured substrings from raw JSON without double-escaping
+ */
+function decodeJsonEscapes(str: string): string {
+  try {
+    // Wrap in JSON array and parse - JSON.parse natively unescapes the string
+    return JSON.parse(`["${str}"]`)[0];
+  } catch {
+    // If parsing fails, return original (best effort)
+    return str;
+  }
 }
 
 /**
@@ -130,6 +148,7 @@ export function replaceTemplateLiterals(jsonString: string): {
         
         templates.push({
           original: capture.expression,
+          decoded: decodeJsonEscapes(capture.expression),
           sentinel,
           startIndex: i,
           endIndex: capture.endIndex
@@ -244,12 +263,12 @@ export function restoreTemplateLiterals(
   if (typeof obj === 'string') {
     let result = obj;
     
-    // Replace sentinels with original expressions
+    // Replace sentinels with DECODED expressions (JSON escapes resolved)
     // Process in reverse order to avoid index shifting issues
     for (let i = templates.length - 1; i >= 0; i--) {
-      const { original, sentinel } = templates[i];
+      const { decoded, sentinel } = templates[i];
       // Use split/join for exact replacement (avoids regex escaping issues)
-      result = result.split(sentinel).join(original);
+      result = result.split(sentinel).join(decoded);
     }
     
     return result;
