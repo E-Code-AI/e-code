@@ -30,7 +30,6 @@ export async function setupVite(app: Express, server: Server) {
           clientPort: 443,
         }
       : { server },
-    allowedHosts: true,
   };
 
   const vite = await createViteServer({
