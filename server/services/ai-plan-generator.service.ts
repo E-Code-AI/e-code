@@ -2,6 +2,7 @@ import { aiProviderManager } from '../ai/ai-provider-manager';
 import { type IStorage, getStorage } from '../storage';
 import type { Project } from '@shared/schema';
 import { createLogger } from '../utils/logger';
+import * as jsonc from 'jsonc-parser';
 
 const logger = createLogger('AIPlanGenerator');
 
@@ -81,7 +82,7 @@ export class AIPlanGeneratorService {
    * @param jsonString - Raw JSON string from AI provider
    * @returns Sanitized JSON string ready for JSON.parse()
    */
-  private sanitizePlanResponse(jsonString: string): string {
+  private sanitizePlanResponse(jsonString: string): any {
     // Step 1: Strip code fences (```json ... ```)
     jsonString = jsonString
       .replace(/^```json\s*/i, '')
@@ -100,22 +101,31 @@ export class AIPlanGeneratorService {
       .replace(/&#x27;/g, "'")
       .replace(/&#x2F;/g, '/');
     
-    // ✅ CRITICAL FIX (Nov 23, 2025): Escape template literal interpolations in JSON strings
-    // GPT-5.1 generates JavaScript code with template literals like "${Date.now()}"  
-    // which breaks JSON parsing. We need to escape $ to \\$ in JSON string values.
-    // This regex targets ${...} inside JSON string values (between quotes)
-    // NOTE: Use \\\\$ (4 backslashes) to produce \\$ in the final JSON string
-    jsonString = jsonString.replace(/"([^"]*\$\{[^}]*\}[^"]*)"/g, (match, p1) => {
-      // Escape all $ characters in the captured string with DOUBLE backslash
-      return '"' + p1.replace(/\$/g, '\\\\$') + '"';
-    });
+    // ✅ ARCHITECT RECOMMENDATION (Nov 23, 2025): Template literal handling
+    // PROBLEM: GPT-5.1 generates code with ${...} which breaks JSON parsing
+    // SOLUTION: Replace ONLY the ${  token (not the full expression) with a safe placeholder
+    // This avoids injecting quotes into JSON strings while preserving template literal content
     
-    // Step 2: Try direct parse - if valid JSON, no regex corruption needed!
+    // Step 2: Pre-process to escape template literal markers
+    // Replace UNESCAPED ${ with safe token (avoid \\${ which would create invalid escape sequences)
+    const dollarBraceToken = '___DOLLAR_BRACE___';
+    // Use negative lookbehind to avoid matching ${  preceded by backslash
+    const preprocessed = jsonString.replace(/(?<!\\)\$\{/g, dollarBraceToken);
+    
+    // Step 3: Parse using jsonc-parser (tolerant of comments, trailing commas)
+    const errors: jsonc.ParseError[] = [];
     try {
-      const parsed = JSON.parse(jsonString);
-      // Step 3: Repair any double-encoded nested JSON strings
-      const repaired = this.repairNestedJSON(parsed);
-      return JSON.stringify(repaired);
+      const parsed = jsonc.parse(preprocessed, errors, { allowTrailingComma: true });
+      
+      // Step 4: Restore template literal markers in the parsed AST
+      const restored = this.restoreTemplateLiteralMarkers(parsed, dollarBraceToken);
+      
+      // Step 5: Repair any double-encoded nested JSON strings
+      const repaired = this.repairNestedJSON(restored);
+      
+      // ✅ CRITICAL: Return OBJECT, not JSON string
+      // This avoids re-serializing ${  which would break downstream parsing
+      return repaired;
     } catch (parseError: any) {
       // If parse fails, return original - will fail later with better error context
       logger.warn('[sanitizePlanResponse] JSON parse failed, returning as-is', {
@@ -125,6 +135,40 @@ export class AIPlanGeneratorService {
       });
       return jsonString;
     }
+  }
+
+  /**
+   * Recursively restore template literal markers (${ ) from safe token
+   * 
+   * After parsing, walks the object and replaces ___DOLLAR_BRACE___ with ${
+   * This preserves template literals in generated code
+   * 
+   * @param obj - Parsed JSON object
+   * @param token - Safe token used during replacement
+   * @returns Object with template literal markers restored
+   */
+  private restoreTemplateLiteralMarkers(obj: any, token: string): any {
+    // Base case: string value
+    if (typeof obj === 'string') {
+      return obj.replace(new RegExp(token, 'g'), '${');
+    }
+    
+    // Recursive case: array
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.restoreTemplateLiteralMarkers(item, token));
+    }
+    
+    // Recursive case: object
+    if (obj && typeof obj === 'object') {
+      const result: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        result[key] = this.restoreTemplateLiteralMarkers(value, token);
+      }
+      return result;
+    }
+    
+    // Primitive types (number, boolean, null)
+    return obj;
   }
 
   /**
@@ -203,7 +247,7 @@ export class AIPlanGeneratorService {
       const existingFilesList = files.map(f => f.path).join('\n');
 
       // Condensed system prompt for providers with size limits (like Gemini)
-      const systemPromptCondensed = `You are a software architect. Create a JSON execution plan for building software projects. Respond ONLY with valid JSON using this format: {"summary":"","technologies":[],"estimatedTime":"","tasks":[{"id":"","title":"","description":"","type":"file_create|file_edit|command|install_package|config","estimatedTime":"","dependencies":[],"priority":"high|medium|low","files":[{"path":"","content":"","language":""}],"packages":[],"commands":[]}],"riskAssessment":{"level":"low|medium|high","factors":[]}}. Requirements: Complete production-ready code, no placeholders, include all config files, specify exact package versions, order by dependencies.`;
+      const systemPromptCondensed = `You are a software architect. Create a JSON execution plan for building software projects. Respond ONLY with valid JSON using this format: {"summary":"","technologies":[],"estimatedTime":"","tasks":[{"id":"","title":"","description":"","type":"file_create|file_edit|command|install_package|config","estimatedTime":"","dependencies":[],"priority":"high|medium|low","files":[{"path":"","content":"","language":""}],"packages":[],"commands":[]}],"riskAssessment":{"level":"low|medium|high","factors":[]}}. Requirements: Complete production-ready code, no placeholders, include all config files, specify exact package versions, order by dependencies. CRITICAL: Never use shell operators (&&, ||, ;, |) in commands - create separate tasks instead.`;
       
       // Full system prompt for providers without size limits
       const systemPromptFull = `You are an expert software architect and project planner. Your task is to create a detailed, executable plan for building software projects.
@@ -233,7 +277,7 @@ Given a user's goal, create a comprehensive execution plan with the following:
       "files": [
         {
           "path": "path/to/file.ext",
-          "content": "complete file content here - use \\n for newlines, NO backticks",
+          "content": "complete file content here - use \\n for newlines",
           "language": "javascript"
         }
       ],
@@ -254,6 +298,8 @@ Given a user's goal, create a comprehensive execution plan with the following:
 - Specify exact package names and versions
 - Order tasks by dependencies (earlier tasks should be completed before later ones)
 - Be specific about file paths and content
+- **CRITICAL**: NEVER use shell operators (&&, ||, ;, |, >) in commands - create separate task entries instead
+- Each command must be a single, standalone command without shell operators
 
 **Project Context:**
 - Language: ${project.language}
@@ -383,14 +429,11 @@ Remember:
           // ✅ CRITICAL FIX (Nov 14, 2025): Sanitize HTML entities and escape newlines
           // Logs showed 15 consecutive JSON parse failures due to HTML entities (&amp;, &gt;, &lt;)
           // and unescaped newlines in AI-generated JSON responses
-          jsonString = this.sanitizePlanResponse(jsonString);
-          
-          // ✅ CRITICAL FIX (Nov 20, 2025): Robust JSON parsing with fallback
-          // GPT-5.1 sometimes returns incomplete/malformed JSON, especially with streaming
-          // Try to parse, if fails, log detailed error and try next provider
+          // ✅ CRITICAL FIX (Nov 23, 2025): sanitizePlanResponse now returns parsed OBJECT
+          // This avoids re-serializing ${  which would break downstream parsing
           let planData;
           try {
-            planData = JSON.parse(jsonString);
+            planData = this.sanitizePlanResponse(jsonString);
           } catch (parseError: any) {
             // Enhanced error logging for JSON parse failures
             logger.error(`[generatePlan] JSON parse failed for ${modelId}:`, {

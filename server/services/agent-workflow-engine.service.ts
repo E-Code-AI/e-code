@@ -13,6 +13,7 @@ import { agentFileOperations } from './agent-file-operations.service';
 import { agentCommandExecution } from './agent-command-execution.service';
 import { agentToolFramework } from './agent-tool-framework.service';
 import { OpenAI } from 'openai';
+import { parseCommandSpec } from '../utils/command-parser';
 
 // Workflow step types
 export type WorkflowStepType = 'file_operation' | 'command' | 'tool' | 'database' | 'conditional' | 'parallel' | 'loop';
@@ -336,7 +337,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
   /**
    * ✅ ARCHITECT RECOMMENDATION (Nov 23, 2025): Centralized task type → operation mapping
    * Maps AI-generated task types to concrete file operations
-   * Validates all required fields and fails fast for unknown types
+   * Normalizes case and handles multiple variants for resilience
    */
   private mapTaskTypeToOperation(taskType: string | undefined, configOperation: string | undefined): string {
     // If operation is already explicitly provided, use it
@@ -344,8 +345,17 @@ export class AgentWorkflowEngineService extends EventEmitter {
       return configOperation;
     }
     
+    if (!taskType) {
+      throw new Error('Task type is undefined and no explicit operation provided');
+    }
+    
+    // ✅ ARCHITECT FIX: Normalize to lowercase for case-insensitive matching
+    const normalizedType = taskType.toLowerCase().trim();
+    
     // Map common AI-generated task types to file operations
+    // Includes multiple variants and case-insensitive matching
     const mapping: Record<string, string> = {
+      // Write/Create variants
       'create_file': 'write',
       'file_create': 'write',
       'write_file': 'write',
@@ -354,22 +364,41 @@ export class AgentWorkflowEngineService extends EventEmitter {
       'edit_file': 'write',
       'file_edit': 'write',
       'modify_file': 'write',
+      'make_file': 'write',
+      'new_file': 'write',
+      'add_file': 'write',
+      
+      // Read variants
       'read_file': 'read',
       'file_read': 'read',
+      'get_file': 'read',
+      'fetch_file': 'read',
+      
+      // Delete variants
       'delete_file': 'delete',
       'file_delete': 'delete',
       'remove_file': 'delete',
+      'rm_file': 'delete',
+      'erase_file': 'delete',
+      
+      // List/Directory variants
       'list_files': 'list',
-      'list_directory': 'list'
+      'list_directory': 'list',
+      'list_dir': 'list',
+      'read_directory': 'list',
+      'get_files': 'list',
+      'browse_directory': 'list'
     };
     
-    if (!taskType) {
-      throw new Error('Task type is undefined and no explicit operation provided');
-    }
-    
-    const operation = mapping[taskType];
+    const operation = mapping[normalizedType];
     if (!operation) {
-      throw new Error(`Unknown task type: "${taskType}". Expected one of: ${Object.keys(mapping).join(', ')}`);
+      // ✅ ARCHITECT FIX: Log unknown type but don't crash workflow
+      logger.warn(`Unknown task type: "${taskType}" (normalized: "${normalizedType}"). Defaulting to 'write' operation.`, {
+        taskType,
+        normalizedType,
+        availableTypes: Object.keys(mapping)
+      });
+      return 'write'; // Default to write for unknown types
     }
     
     return operation;
@@ -449,16 +478,42 @@ export class AgentWorkflowEngineService extends EventEmitter {
     context: any,
     state: WorkflowState
   ): Promise<any> {
-    const { command, args, workingDirectory, timeout } = this.resolveVariables(config, state);
+    let { command, args, workingDirectory, timeout } = this.resolveVariables(config, state);
     
+    // ✅ ARCHITECT FIX (Nov 23, 2025): Use dedicated command parser utility
+    // Properly handles quoted args, env vars, and unsupported shell operators
+    const parsed = parseCommandSpec({ command, args });
+    
+    // Check for unsupported features and reject gracefully
+    if (parsed.unsupportedFeatures.length > 0) {
+      throw new Error(
+        `Workflow contains unsupported shell features: ${parsed.unsupportedFeatures.join(', ')}. ` +
+        `Please split this into separate task entries in your plan.`
+      );
+    }
+    
+    logger.debug(
+      `[executeCommand] Parsed command: "${command}" → ` +
+      `executable="${parsed.executable}", ` +
+      `args=${JSON.stringify(parsed.commandArgs)}, ` +
+      `envPatch=${JSON.stringify(parsed.envPatch)}`
+    );
+    
+    // Merge environment patches
+    const mergedEnvironment = {
+      ...context.environment,
+      ...parsed.envPatch
+    };
+    
+    // Execute with sanitized components
     const result = await agentCommandExecution.executeCommand(
       context.sessionId,
-      command,
-      args || [],
+      parsed.executable,
+      parsed.commandArgs,
       {
         workingDirectory,
         timeout,
-        environment: context.environment
+        environment: mergedEnvironment
       },
       context.userId
     );
