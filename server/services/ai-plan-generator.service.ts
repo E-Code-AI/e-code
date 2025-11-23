@@ -556,10 +556,14 @@ Remember:
     plan: ExecutionPlan
   ): Promise<number> {
     try {
+      // ✅ FIX: Convert string IDs to numbers (ai_conversations table expects integers)
+      const projectIdNum = parseInt(projectId, 10);
+      const userIdNum = parseInt(userId, 10);
+      
       // Create conversation record
       const conversation = await this.storage.createAiConversation({
-        projectId,
-        userId,
+        projectId: projectIdNum,
+        userId: userIdNum,
         messages: [],
         context: {
           plan,
@@ -571,11 +575,11 @@ Remember:
         agentMode: 'build'
       });
 
-      // Create initial message with plan
+      // Create initial message with plan (agent_messages expects string IDs)
       await this.storage.createAgentMessage({
         conversationId: conversation.id,
-        projectId,
-        userId,
+        projectId,  // Keep as string
+        userId,     // Keep as string
         role: 'assistant',
         content: JSON.stringify(plan, null, 2),
         model: 'claude-3-5-haiku-20241022',
