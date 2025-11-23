@@ -132,7 +132,7 @@ export const users = pgTable("users", {
 // Email Verification Tokens table
 export const emailVerificationTokens = pgTable("email_verification_tokens", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }), // ✅ Fixed to match serial users.id
   token: varchar("token").notNull().unique(), // Hashed token
   email: varchar("email").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
@@ -142,7 +142,7 @@ export const emailVerificationTokens = pgTable("email_verification_tokens", {
 // Password Reset Tokens table
 export const passwordResetTokens = pgTable("password_reset_tokens", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }), // ✅ Fixed to match serial users.id
   token: varchar("token").notNull().unique(), // Hashed token
   expiresAt: timestamp("expires_at").notNull(),
   usedAt: timestamp("used_at"),
@@ -176,11 +176,11 @@ export const files = pgTable("files", {
   projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: 'cascade' }),
   parentId: integer("parent_id"),
   isDirectory: boolean("is_directory").notNull().default(false),
-  language: languageEnum("language"),
+  type: text("type"), // ✅ Changed from language enum to match DB column 'type'
+  size: integer("size"), // ✅ Added to match DB
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-  storageKey: text("storage_key"),
-  storageUrl: text("storage_url"),
+  // Note: DB also has is_folder, but is_directory is the canonical boolean
 });
 
 // API SDK Tables - Enhanced with security features
@@ -1153,7 +1153,7 @@ export const aiUsageRecords = pgTable('ai_usage_records', {
   totalTokens: integer('total_tokens').notNull().default(0),
   creditsCost: decimal('credits_cost', { precision: 10, scale: 4 }).notNull().default('0'),
   purpose: varchar('purpose'), // chat, completion, embedding, code-generation, agent-task
-  projectId: varchar('project_id').references(() => projects.id),
+  projectId: integer('project_id').references(() => projects.id), // ✅ Fixed to match serial projects.id
   conversationId: varchar('conversation_id'),
   metadata: jsonb('metadata').default({}),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -1246,7 +1246,7 @@ export const projectAiRules = pgTable('project_ai_rules', {
 export const promptUsageHistory = pgTable('prompt_usage_history', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id),
-  projectId: varchar('project_id').references(() => projects.id),
+  projectId: integer('project_id').references(() => projects.id), // ✅ Fixed to match serial projects.id
   customPromptId: integer('custom_prompt_id').references(() => customPrompts.id),
   templateId: integer('template_id').references(() => promptTemplates.id),
   prompt: text('prompt').notNull(), // The actual prompt used
@@ -2652,8 +2652,8 @@ export const resourceMetrics = pgTable('resource_metrics', {
 // Pane Configurations - For Split Editor workspace layout persistence
 export const paneConfigurations = pgTable('pane_configurations', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: varchar('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  projectId: varchar('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }), // ✅ Fixed to match serial users.id
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }), // ✅ Fixed to match serial projects.id
   name: text('name').notNull(), // 'default', 'custom-1', etc.
   isDefault: boolean('is_default').default(false),
   layout: jsonb('layout').notNull().$type<{
@@ -2710,8 +2710,8 @@ export const queuePriorityEnum = pgEnum('queue_priority', [
 // AI Token Usage - Track token consumption by operation
 export const aiTokenUsage = pgTable('ai_token_usage', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: varchar('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  projectId: varchar('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }), // ✅ Fixed to match serial users.id
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }), // ✅ Fixed to match serial projects.id
   sessionId: varchar('session_id'), // Agent session ID
   taskType: taskTypeEnum('task_type').notNull(),
   taskCategory: taskCategoryEnum('task_category').notNull(),
@@ -2790,8 +2790,8 @@ export const aiProviderHealth = pgTable('ai_provider_health', {
 // AI Request Queue - Priority queue for AI requests with rate limiting
 export const aiRequestQueue = pgTable('ai_request_queue', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: varchar('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  projectId: varchar('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }), // ✅ Fixed to match serial users.id
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }), // ✅ Fixed to match serial projects.id
   priority: queuePriorityEnum('priority').notNull().default('normal'),
   taskType: taskTypeEnum('task_type').notNull(),
   provider: varchar('provider'), // Assigned provider, null if pending
