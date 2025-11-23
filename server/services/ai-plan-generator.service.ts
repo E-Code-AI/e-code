@@ -288,51 +288,76 @@ Remember:
           // ✅ 40-YEAR ENGINEERING FIX: Per-provider timeout (180 seconds for complex prompts)
           // Each provider attempt gets full 180s for complex CRM/enterprise prompts
           // This allows GPT-5.1 to fully generate detailed plans without premature timeout
-          const PLAN_GENERATION_TIMEOUT = 180000; // 180 seconds per provider (3 minutes)
+          const PLAN_GENERATION_TIMEOUT = 60000; // ✅ REDUCED: 60s per provider (fast fail)
           const streamStartTime = Date.now();
           
-          // Stream response using AI Provider Manager
-          // ✅ CRITICAL FIX: Increased max_tokens to prevent JSON truncation
-          // Complex plans with multiple files can easily exceed 8192 tokens
-          // ✅ GPT-5.1 UPGRADE (Nov 17, 2025): Use reasoning_effort='none' for fast plan generation
-          // ✅ TIMEOUT FIX (Nov 19, 2025): Custom 90s timeout for plan generation (default 60s too short)
-          const stream = await aiProviderManager.streamChat(
-            modelId,
-            [
-              { role: 'user', content: userPrompt }
-            ],
-            {
-              system: systemPrompt,
-              max_tokens: 16384,  // ✅ DOUBLED: Prevents JSON being cut mid-generation
-              temperature: 0.7,
-              reasoning_effort: 'none', // ✅ GPT-5.1: Fast non-reasoning mode for low-latency responses
-              timeoutMs: PLAN_GENERATION_TIMEOUT, // ✅ Custom timeout for complex plan generation
-            }
-          );
-
-          // ✅ 40-YEAR ENGINEERING FIX: Stream with timeout monitoring
-          let lastChunkTime = Date.now();
-          const CHUNK_TIMEOUT = 10000; // 10 seconds between chunks
+          // ✅ CRITICAL FIX (Nov 23, 2025): Timeout watchdog
+          // Architect review: provider manager's streamLimiter timeout (60s) is bypassed
+          // Any hang inside OpenAI SDK leaves for-await loop pending with no catch
+          // Solution: Watchdog timer that throws if overall timeout exceeded
           
-          for await (const chunk of stream) {
-            // Check overall timeout
-            if (Date.now() - streamStartTime > PLAN_GENERATION_TIMEOUT) {
-              throw new Error(`Plan generation timeout after ${PLAN_GENERATION_TIMEOUT}ms`);
+          let timeoutHandle: NodeJS.Timeout | null = null;
+          let timedOut = false;
+          
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            timeoutHandle = setTimeout(() => {
+              timedOut = true;
+              reject(new Error(`Provider ${modelId} timeout after ${PLAN_GENERATION_TIMEOUT}ms - no response`));
+            }, PLAN_GENERATION_TIMEOUT);
+          });
+          
+          try {
+            // Stream response using AI Provider Manager
+            // ✅ CRITICAL FIX: Increased max_tokens to prevent JSON truncation
+            // Complex plans with multiple files can easily exceed 8192 tokens
+            // ✅ GPT-5.1 UPGRADE (Nov 17, 2025): Use reasoning_effort='none' for fast plan generation
+            const stream = await Promise.race([
+              aiProviderManager.streamChat(
+                modelId,
+                [
+                  { role: 'user', content: userPrompt }
+                ],
+                {
+                  system: systemPrompt,
+                  max_tokens: 16384,  // ✅ DOUBLED: Prevents JSON being cut mid-generation
+                  temperature: 0.7,
+                  reasoning_effort: 'none', // ✅ GPT-5.1: Fast non-reasoning mode for low-latency responses
+                  timeoutMs: PLAN_GENERATION_TIMEOUT,
+                }
+              ),
+              timeoutPromise
+            ]);
+
+            // ✅ 40-YEAR ENGINEERING FIX: Stream with chunk timeout monitoring
+            let lastChunkTime = Date.now();
+            const CHUNK_TIMEOUT = 10000; // 10 seconds between chunks
+            
+            for await (const chunk of stream) {
+              if (timedOut) {
+                throw new Error(`Provider ${modelId} timed out during streaming`);
+              }
+              
+              // Check chunk timeout (no activity for 10 seconds)
+              if (Date.now() - lastChunkTime > CHUNK_TIMEOUT) {
+                throw new Error(`Stream stalled - no chunks for ${CHUNK_TIMEOUT}ms`);
+              }
+              
+              if (chunk && typeof chunk === 'string') {
+                fullResponse += chunk;
+                lastChunkTime = Date.now(); // Reset chunk timer
+                yield { 
+                  type: 'chunk', 
+                  data: { content: chunk } 
+                };
+              }
             }
             
-            // Check chunk timeout (no activity for 10 seconds)
-            if (Date.now() - lastChunkTime > CHUNK_TIMEOUT) {
-              throw new Error(`Stream stalled - no chunks for ${CHUNK_TIMEOUT}ms`);
-            }
-            
-            if (chunk && typeof chunk === 'string') {
-              fullResponse += chunk;
-              lastChunkTime = Date.now(); // Reset chunk timer
-              yield { 
-                type: 'chunk', 
-                data: { content: chunk } 
-              };
-            }
+            // Clear timeout if streaming completed successfully
+            if (timeoutHandle) clearTimeout(timeoutHandle);
+          } catch (error) {
+            // Clear timeout on error
+            if (timeoutHandle) clearTimeout(timeoutHandle);
+            throw error;
           }
           
           logger.info(`[generatePlan] ✓ Stream completed in ${Date.now() - streamStartTime}ms`);
