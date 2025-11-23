@@ -305,6 +305,15 @@ app.get('/api/cors-health', async (_req, res) => {
     } catch (error) {
       console.error('[WORKING SERVER] Failed to register websocket metrics routes:', error);
     }
+
+    // ✅ AUTONOMOUS WORKSPACE CREATION: Bootstrap routes
+    try {
+      const workspaceBootstrapRouter = (await import('./routes/workspace-bootstrap.router')).default;
+      app.use('/api/workspace-bootstrap', workspaceBootstrapRouter);
+      console.log('[Workspace Bootstrap] Routes registered at /api/workspace-bootstrap');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register workspace bootstrap routes:', error);
+    }
   } catch (error) {
     console.error('[WORKING SERVER] Failed to register routes:', error);
     // Server continues running even if routes fail to load

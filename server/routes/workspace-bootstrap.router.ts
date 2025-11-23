@@ -108,7 +108,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
         name: projectName,
         description: prompt,
         slug,
-        ownerId: String(userId),
+        ownerId: userId,  // userId is already a number from User.id
         language: options.language || 'typescript',
         visibility: options.visibility || 'private'
       })

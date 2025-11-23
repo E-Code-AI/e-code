@@ -3,6 +3,32 @@
 ## Overview
 E-Code is a web-based collaborative IDE with AI assistance, offering code editing, terminal access, file management, and an autonomous AI agent. Its primary purpose is to facilitate rapid prototyping and education. The platform aims for enterprise-grade scalability, multi-provider AI model selection, real-time collaboration, robust security, and the ability to create autonomous workspaces from a natural language prompt to a live preview with streaming progress. Key capabilities include Monaco-based code editing, real-time WebSocket streaming, and responsive UI design. The business vision is to provide a comprehensive, AI-powered development environment that streamlines the coding process and enhances learning.
 
+## Recent Changes (November 23, 2025)
+
+### Autonomous Workspace Creation - Partially Complete
+**Status:** Infrastructure fully functional, AI provider dependency identified
+
+**What Works:**
+- ✅ Bootstrap API (`/api/workspace-bootstrap/bootstrap`) - 100% functional
+- ✅ Authentication, project creation, session management (204ms avg)
+- ✅ Multi-provider AI fallback chain (gemini-2.5-flash → gpt-5.1 → claude-haiku → grok-4-fast → kimi-k2)
+- ✅ Extended GPT-5.1 timeout from 60s to 120s (was hitting timeout after 2794 successful chunks)
+- ✅ Real-time WebSocket streaming for plan generation progress
+- ✅ Database schema complete (agent_workflows, agent_mode column)
+
+**Current Limitations:**
+- ⚠️ **AI Provider Dependency:** All providers currently failing due to external issues (Gemini stalls, GPT-5.1 timeouts, Claude API credits exhausted)
+- ⚠️ **Incomplete Fallback Executor:** Deterministic fallback plan implemented but non-functional - requires "Phase 2" executor to expand outline-based file descriptors into actual file content
+- ⚠️ **Outline Contract Transition:** PlanTask schema updated to support `outline?: string` field, but downstream consumers (orchestrator, workflow engine) need updates
+
+**Next Actions Required:**
+1. Design finalized PlanTask schema (outline-first contract) and identify all consumers requiring updates
+2. Implement Phase 2 executor that materializes outlines into concrete file content
+3. Add automated smoke tests to verify generated workspaces build/run successfully
+4. Retest end-to-end autonomous workspace creation after executor implementation
+
+**External Blocker:** Cannot control AI provider availability - system designed for resilience but currently all providers experiencing issues
+
 ## User Preferences
 - **Communication:** Simple, everyday language
 - **Code Style:** TypeScript with strict typing

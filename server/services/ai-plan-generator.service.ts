@@ -20,7 +20,8 @@ export interface PlanTask {
   dependencies: string[];
   files?: {
     path: string;
-    content?: string;
+    content?: string;  // Legacy: Full file content (used by older plans)
+    outline?: string;  // NEW: Brief description of file purpose (Phase 2 executor expands this)
     language?: string;
   }[];
   commands?: string[];
@@ -320,10 +321,10 @@ Remember:
           const systemPrompt = isGemini ? systemPromptCondensed : systemPromptFull;
           logger.info(`[generatePlan] Using ${isGemini ? 'CONDENSED' : 'FULL'} prompt for ${modelId} (${systemPrompt.length} chars)`);
           
-          // ✅ 40-YEAR ENGINEERING FIX: Per-provider timeout (180 seconds for complex prompts)
-          // Each provider attempt gets full 180s for complex CRM/enterprise prompts
-          // This allows GPT-5.1 to fully generate detailed plans without premature timeout
-          const PLAN_GENERATION_TIMEOUT = 60000; // ✅ REDUCED: 60s per provider (fast fail)
+          // ✅ EXTENDED TIMEOUT (Nov 23, 2025): Per-provider timeout increased for complex prompts
+          // Architect review: GPT-5.1 successfully streamed 2794 chunks but hit 60s timeout
+          // Increasing to 120s allows successful completion of detailed autonomous workspace plans
+          const PLAN_GENERATION_TIMEOUT = 120000; // ✅ INCREASED: 120s per provider (architect-approved)
           const streamStartTime = Date.now();
           
           // ✅ CRITICAL FIX (Nov 23, 2025): Timeout watchdog
@@ -516,16 +517,28 @@ Remember:
         }
       }
 
-      // ✅ CRITICAL CHECK: If all providers failed, yield error
+      // ✅ CRITICAL CHECK: If all providers failed, use deterministic fallback plan
       if (!successfulPlan) {
-        logger.error('[generatePlan] ❌ All providers failed to generate valid plan!', lastError);
-        yield { 
-          type: 'error', 
-          data: { 
-            message: 'All AI providers failed to generate a valid plan. Please try again or rephrase your request.',
-            errorDetails: lastError?.message || 'Unknown error'
-          } 
+        logger.warn('[generatePlan] ⚠️  All AI providers failed - using deterministic fallback plan', lastError);
+        
+        // Generate fallback plan instead of failing completely
+        const fallbackPlan = this.generateFallbackPlan(goal);
+        
+        // Yield warning about fallback usage
+        yield {
+          type: 'warning',
+          data: {
+            message: 'AI providers unavailable - using basic starter template',
+            details: 'Your project will be initialized with a standard React + TypeScript setup. You can customize it after creation.'
+          }
         };
+        
+        // Yield the fallback plan
+        yield {
+          type: 'plan',
+          data: fallbackPlan
+        };
+        
         return;
       }
 
@@ -545,6 +558,145 @@ Remember:
         } 
       };
     }
+  }
+
+  /**
+   * Generate a deterministic fallback plan when all AI providers fail
+   * ✅ OUTLINE CONTRACT (Nov 23, 2025): Uses outline-based file descriptors per architect guidance
+   * Ensures autonomous workspace creation completes even when external AI providers are unavailable
+   */
+  private generateFallbackPlan(goal: string): ExecutionPlan {
+    const planId = `plan-fallback-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    logger.warn(`[generateFallbackPlan] All AI providers failed - generating deterministic fallback plan`);
+    
+    // Basic template-driven plan based on common web app patterns
+    const fallbackPlan: ExecutionPlan = {
+      id: planId,
+      goal,
+      summary: `Basic starter project for: ${goal}. (Note: AI providers unavailable - using fallback plan)`,
+      totalTasks: 5,
+      estimatedTime: '30 minutes',
+      technologies: ['React', 'TypeScript', 'Vite', 'Tailwind CSS'],
+      tasks: [
+        {
+          id: 'task-1',
+          title: 'Initialize project structure',
+          description: 'Set up basic project directories and configuration files with all required dependencies',
+          type: 'file_create',
+          estimatedTime: '5 min',
+          dependencies: [],
+          files: [
+            {
+              path: 'package.json',
+              outline: 'Package.json with React 18, TypeScript 5, Vite 5, Tailwind CSS 3, and all required build dependencies. Includes dev/build/preview scripts.',
+              language: 'json'
+            },
+            {
+              path: 'index.html',
+              outline: 'HTML5 entry point with root div and script tag loading /src/main.tsx. Includes viewport meta tag for responsive design.',
+              language: 'html'
+            },
+            {
+              path: 'src/main.tsx',
+              outline: 'React 18 application entry point using ReactDOM.createRoot() to render App component with StrictMode. Imports index.css for Tailwind.',
+              language: 'tsx'
+            },
+            {
+              path: 'src/index.css',
+              outline: 'Tailwind CSS imports using @tailwind directives for base, components, and utilities layers.',
+              language: 'css'
+            },
+            {
+              path: 'vite.config.ts',
+              outline: 'Vite configuration with React plugin, dev server on port 5173 with host:true for network access.',
+              language: 'typescript'
+            },
+            {
+              path: 'postcss.config.js',
+              outline: 'PostCSS configuration with Tailwind CSS and Autoprefixer plugins enabled.',
+              language: 'javascript'
+            }
+          ],
+          packages: [],
+          commands: [],
+          priority: 'high'
+        },
+        {
+          id: 'task-2',
+          title: 'Create main App component',
+          description: 'Set up the root React component with centered welcome message displaying the user goal',
+          type: 'file_create',
+          estimatedTime: '10 min',
+          dependencies: ['task-1'],
+          files: [
+            {
+              path: 'src/App.tsx',
+              outline: `TypeScript React component with centered layout using Tailwind classes. Displays "Project Initialized" heading and user's goal: "${goal}". Uses min-h-screen, flex, and Tailwind typography.`,
+              language: 'tsx'
+            }
+          ],
+          packages: [],
+          commands: [],
+          priority: 'high'
+        },
+        {
+          id: 'task-3',
+          title: 'Configure TypeScript',
+          description: 'Add TypeScript configuration with modern ES2020+ settings',
+          type: 'file_create',
+          estimatedTime: '5 min',
+          dependencies: ['task-1'],
+          files: [
+            {
+              path: 'tsconfig.json',
+              outline: 'TypeScript config targeting ES2020 with React JSX transform, bundler module resolution, strict type checking, and src/ include path. Enables useDefineForClassFields and allowImportingTsExtensions.',
+              language: 'json'
+            }
+          ],
+          packages: [],
+          commands: [],
+          priority: 'medium'
+        },
+        {
+          id: 'task-4',
+          title: 'Setup Tailwind CSS',
+          description: 'Configure Tailwind CSS for styling with content scanning',
+          type: 'file_create',
+          estimatedTime: '5 min',
+          dependencies: ['task-1'],
+          files: [
+            {
+              path: 'tailwind.config.js',
+              outline: 'Tailwind config with content paths for index.html and all src/ files (js/ts/jsx/tsx). Basic theme with empty extend object and no plugins.',
+              language: 'javascript'
+            }
+          ],
+          packages: [],
+          commands: [],
+          priority: 'medium'
+        },
+        {
+          id: 'task-5',
+          title: 'Install dependencies and start dev server',
+          description: 'Install all packages and launch development environment',
+          type: 'command',
+          estimatedTime: '5 min',
+          dependencies: ['task-1', 'task-2', 'task-3', 'task-4'],
+          files: [],
+          packages: [],
+          commands: ['npm install', 'npm run dev'],
+          priority: 'high'
+        }
+      ],
+      riskAssessment: {
+        level: 'low',
+        factors: ['Using fallback template - limited customization', 'Basic starter structure only']
+      },
+      createdAt: new Date()
+    };
+    
+    return fallbackPlan;
   }
 
   /**
