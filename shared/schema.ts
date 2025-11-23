@@ -1838,10 +1838,12 @@ export const insertTemplateRatingSchema = createInsertSchema(templateRatings).om
 export const insertTemplateTagSchema = createInsertSchema(templateTags).omit({ id: true, createdAt: true });
 export const insertTemplateCollectionSchema = createInsertSchema(templateCollections).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCollectionTemplateSchema = createInsertSchema(collectionTemplates).omit({ id: true, addedAt: true });
-// NOTE: Temporarily reduced to match actual DB columns (see pushNotifications schema)
+// Push notification insert schema - Full schema restored (Nov 23, 2025)
 export const insertNotificationSchema = createInsertSchema(pushNotifications, {
+  type: z.string().min(1).optional(),
+  actionUrl: z.string().url().optional(),
   data: z.record(z.any()).optional(),
-}).omit({ id: true, createdAt: true, sentAt: true });
+}).omit({ id: true, createdAt: true, read: true, readAt: true, sent: true, sentAt: true });
 export const insertNotificationPreferenceSchema = createInsertSchema(notificationPreferences, {
   email: z.record(z.boolean()),
   push: z.record(z.boolean()),
