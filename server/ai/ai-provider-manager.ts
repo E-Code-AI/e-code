@@ -699,12 +699,22 @@ export class AIProviderManager {
     // ✅ CRITICAL FIX: GPT-5 family and o-series use max_completion_tokens, older models use max_tokens
     const usesMaxCompletionTokens = modelId.startsWith('gpt-5') || modelId.startsWith('o3') || modelId.startsWith('o4');
     
+    // ✅ CRITICAL FIX: Many GPT-5 family models don't support temperature parameter
+    // Models that support temperature: gpt-5.1, gpt-4o, gpt-4o-mini, gpt-4-turbo
+    // Models that need reasoning_effort instead: gpt-5, gpt-5-mini, gpt-5-nano
+    const supportsTemperature = modelId === 'gpt-5.1' || modelId === 'gpt-4o' || modelId === 'gpt-4o-mini' || modelId.startsWith('gpt-4-turbo');
+    const needsReasoningEffort = modelId === 'gpt-5' || modelId === 'gpt-5-mini' || modelId === 'gpt-5-nano';
+    
     const completionParams: any = {
       model: modelId,
       messages: openaiMessages,
       stream: true,
-      temperature: options?.temperature || 0.7,
     };
+    
+    // Only add temperature if the model supports it
+    if (supportsTemperature && options?.temperature !== undefined) {
+      completionParams.temperature = options.temperature;
+    }
     
     // Use correct token parameter based on model family
     if (usesMaxCompletionTokens) {
@@ -713,7 +723,11 @@ export class AIProviderManager {
       completionParams.max_tokens = options?.max_tokens || 4000;
     }
 
-    if (options?.reasoning_effort && modelId.startsWith('gpt-5')) {
+    // Add reasoning_effort for models that need it (gpt-5, gpt-5-mini, gpt-5-nano)
+    if (needsReasoningEffort) {
+      completionParams.reasoning_effort = options?.reasoning_effort || 'medium';
+    } else if (options?.reasoning_effort && modelId.startsWith('gpt-5')) {
+      // For other gpt-5 models, add reasoning_effort if explicitly provided
       completionParams.reasoning_effort = options.reasoning_effort;
     }
 
