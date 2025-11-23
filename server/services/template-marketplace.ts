@@ -206,19 +206,6 @@ export class TemplateMarketplaceService {
         conditions.push(eq(templates.isCommunity, community));
       }
 
-      // Build the main query
-      let baseQuery = db.select({
-        template: templates,
-        author: users,
-      })
-      .from(templates)
-      .leftJoin(users, eq(templates.authorId, users.id))
-      .where(and(...conditions));
-
-      // Apply sorting
-      const orderBy = this.getSortOrder(sortBy);
-      baseQuery = baseQuery.orderBy(...orderBy);
-
       // Get total count
       const countQuery = db.select({ count: sql<number>`count(*)` })
         .from(templates)
@@ -228,10 +215,19 @@ export class TemplateMarketplaceService {
 
       // Apply pagination
       const offset = (page - 1) * limit;
-      baseQuery = baseQuery.limit(limit).offset(offset);
 
-      // Execute query
-      const results = await baseQuery;
+      // Build and execute the main query
+      const orderBy = this.getSortOrder(sortBy);
+      const results = await db.select({
+        template: templates,
+        author: users,
+      })
+      .from(templates)
+      .leftJoin(users, eq(templates.authorId, users.id))
+      .where(and(...conditions))
+      .orderBy(...orderBy)
+      .limit(limit)
+      .offset(offset);
 
       // Transform results
       const templatesWithDetails = results.map(({ template, author }) => 
@@ -267,18 +263,22 @@ export class TemplateMarketplaceService {
   /**
    * Get template by ID or slug
    */
-  async getTemplate(idOrSlug: string): Promise<TemplateWithDetails | null> {
+  async getTemplate(idOrSlug: string | number): Promise<TemplateWithDetails | null> {
     try {
+      const whereClause = typeof idOrSlug === 'number' 
+        ? eq(templates.id, idOrSlug)
+        : or(
+            eq(templates.slug, idOrSlug),
+            eq(templates.id, parseInt(String(idOrSlug), 10) || -1)
+          );
+
       const template = await db.select({
         template: templates,
         author: users,
       })
       .from(templates)
       .leftJoin(users, eq(templates.authorId, users.id))
-      .where(or(
-        eq(templates.id, idOrSlug),
-        eq(templates.slug, idOrSlug)
-      ))
+      .where(whereClause)
       .limit(1);
 
       if (!template.length) {
@@ -403,7 +403,7 @@ export class TemplateMarketplaceService {
   /**
    * Get template reviews
    */
-  async getTemplateReviews(templateId: string, page: number = 1, limit: number = 10) {
+  async getTemplateReviews(templateId: number, page: number = 1, limit: number = 10) {
     try {
       const offset = (page - 1) * limit;
 
@@ -539,7 +539,7 @@ export class TemplateMarketplaceService {
   /**
    * Track template usage (fork, deploy, etc.)
    */
-  async trackTemplateUsage(templateId: string, action: 'view' | 'fork' | 'deploy' | 'download') {
+  async trackTemplateUsage(templateId: number, action: 'view' | 'fork' | 'deploy' | 'download') {
     try {
       const updates: any = {};
 
@@ -569,7 +569,7 @@ export class TemplateMarketplaceService {
 
   // Helper methods
 
-  private getSortOrder(sortBy: string) {
+  private getSortOrder(sortBy: string): any[] {
     switch (sortBy) {
       case 'recent':
         return [desc(templates.createdAt)];
