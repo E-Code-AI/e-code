@@ -57,7 +57,7 @@ export class AuthRouter {
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
-      // EXCLUDED: passwordHash, twoFactorSecret, passwordResetToken, stripeCustomerId, etc.
+      // EXCLUDED: password, twoFactorSecret, passwordResetToken, stripeCustomerId, etc.
     };
   }
 
@@ -139,7 +139,7 @@ export class AuthRouter {
         const { password, ...userDataWithoutPassword } = validatedData;
         const user = await this.storage.createUser({
           ...userDataWithoutPassword,
-          passwordHash: hashedPassword,
+          password: hashedPassword,
           emailVerified: false
         });
 
@@ -345,7 +345,7 @@ export class AuthRouter {
         const { password, ...userDataWithoutPassword } = validatedData;
         const user = await this.storage.createUser({
           ...userDataWithoutPassword,
-          passwordHash: hashedPassword,
+          password: hashedPassword,
           emailVerified: false
         });
 
@@ -785,7 +785,7 @@ export class AuthRouter {
 
         // Update user password
         await this.storage.updateUser(resetRecord.userId, {
-          passwordHash: hashedPassword,
+          password: hashedPassword,
           passwordResetToken: null,
           passwordResetExpiry: null,
           failedLoginAttempts: 0,
