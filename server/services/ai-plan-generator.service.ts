@@ -335,8 +335,10 @@ Remember:
           );
 
           // ✅ 40-YEAR ENGINEERING FIX: Stream with timeout monitoring
+          // ✅ INCREASED TIMEOUT (Nov 23, 2025): 30s for rate-limited free tier APIs
+          // Gemini free tier (2 req/min) and other free APIs can be slow to respond
           let lastChunkTime = Date.now();
-          const CHUNK_TIMEOUT = 10000; // 10 seconds between chunks
+          const CHUNK_TIMEOUT = 30000; // 30 seconds between chunks (increased from 10s)
           
           for await (const chunk of stream) {
             // Check overall timeout
