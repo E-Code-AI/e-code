@@ -44,12 +44,12 @@ export function setupPassportAuth(app: Application) {
         }
         
         // Handle null password
-        if (!user.passwordHash) {
+        if (!user.password) {
           return done(null, false, { message: "Password not set" });
         }
         
         // Use bcrypt for password comparison
-        const isValid = await bcrypt.compare(password, user.passwordHash);
+        const isValid = await bcrypt.compare(password, user.password);
         
         if (!isValid) {
           return done(null, false, { message: "Incorrect email or password" });
