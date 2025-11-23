@@ -100,6 +100,15 @@ export class AIPlanGeneratorService {
       .replace(/&#x27;/g, "'")
       .replace(/&#x2F;/g, '/');
     
+    // ✅ CRITICAL FIX (Nov 23, 2025): Escape template literal interpolations in JSON strings
+    // GPT-5.1 generates JavaScript code with template literals like "${Date.now()}"  
+    // which breaks JSON parsing. We need to escape $ to \\$ in JSON string values.
+    // This regex targets ${...} inside JSON string values (between quotes)
+    jsonString = jsonString.replace(/"([^"]*\$\{[^}]*\}[^"]*)"/g, (match, p1) => {
+      // Escape all $ characters in the captured string
+      return '"' + p1.replace(/\$/g, '\\$') + '"';
+    });
+    
     // Step 2: Try direct parse - if valid JSON, no regex corruption needed!
     try {
       const parsed = JSON.parse(jsonString);
@@ -206,11 +215,6 @@ Given a user's goal, create a comprehensive execution plan with the following:
 4. **Dependencies**: Identify task dependencies
 5. **Risk Assessment**: Evaluate potential risks and challenges
 
-**CRITICAL**: Respond ONLY with valid JSON in this exact format.
-⚠️ IMPORTANT: When embedding JavaScript/TypeScript code in JSON strings:
-- Preserve template literals: use \` for template literal quotes (e.g., "const x = \`${val}\`")
-- OR escape dollar signs: "const x = \"\\${val}\"" 
-- NEVER mix: don't use double quotes with unescaped ${} interpolation
 
 {
   "summary": "Brief overview of what will be built",
