@@ -503,17 +503,15 @@ export const mobileDevices = pgTable("mobile_devices", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// NOTE: Schema temporarily reduced to match actual DB columns
+// Full schema with type, actionUrl, read, readAt, sent fields will be restored
+// after npm run db:push can be executed non-interactively
 export const pushNotifications = pgTable("push_notifications", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`), // Actual DB uses varchar UUID
   userId: varchar("user_id").notNull().references(() => users.id),
   title: varchar("title").notNull(),
   body: text("body").notNull(),
-  type: varchar("type").notNull().default('system'),
-  actionUrl: varchar("action_url"),
-  data: jsonb("data").default({}),
-  read: boolean("read").notNull().default(false),
-  readAt: timestamp("read_at"),
-  sent: boolean("sent").default(false),
+  data: jsonb("data"),
   sentAt: timestamp("sent_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -1837,11 +1835,10 @@ export const insertTemplateRatingSchema = createInsertSchema(templateRatings).om
 export const insertTemplateTagSchema = createInsertSchema(templateTags).omit({ id: true, createdAt: true });
 export const insertTemplateCollectionSchema = createInsertSchema(templateCollections).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCollectionTemplateSchema = createInsertSchema(collectionTemplates).omit({ id: true, addedAt: true });
+// NOTE: Temporarily reduced to match actual DB columns (see pushNotifications schema)
 export const insertNotificationSchema = createInsertSchema(pushNotifications, {
-  type: z.string().min(1).optional(),
-  actionUrl: z.string().min(1).optional(),
   data: z.record(z.any()).optional(),
-}).omit({ id: true, createdAt: true, read: true, readAt: true, sent: true, sentAt: true });
+}).omit({ id: true, createdAt: true, sentAt: true });
 export const insertNotificationPreferenceSchema = createInsertSchema(notificationPreferences, {
   email: z.record(z.boolean()),
   push: z.record(z.boolean()),
