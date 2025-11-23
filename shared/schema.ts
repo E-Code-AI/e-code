@@ -1677,10 +1677,11 @@ export const sessionParticipants = pgTable("session_participants", {
 
 // Templates table for project templates with marketplace features
 export const templates = pgTable("templates", {
-  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: serial("id").primaryKey(),
   slug: varchar("slug").notNull().unique(),
   name: varchar("name").notNull(),
   description: text("description"),
+  icon: varchar("icon"),
   category: varchar("category").notNull(), // 'web', 'backend', 'bot', 'game', etc.
   tags: text().array().notNull().default([]),
   authorId: integer("author_id").references(() => users.id), // Link to user for community templates
