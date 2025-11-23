@@ -1,72 +1,142 @@
 /**
  * Template Literal Sanitizer
  * 
- * Implements brace-balanced placeholder pipeline for handling ${...} in JSON strings
- * without corrupting the JSON syntax or the template literal content.
+ * Finite state machine tokenizer for handling ${...} in JSON strings
+ * Implements stack-based capture with UUID sentinels for safe parsing
  * 
  * Algorithm:
- * 1. Character-by-character scan tracking whether we're inside a JSON string literal
- * 2. When inside string, detect unescaped ${
- * 3. Use brace counter to capture full ${...} expression (supports nested braces)
- * 4. Replace captured expression with safe indexed sentinel
- * 5. After parsing, restore sentinels back to original ${...} expressions
+ * 1. Single-pass character scan maintaining JSON string state
+ * 2. Track backslash parity for escape detection
+ * 3. Stack-based capture of ${...} expressions with nested context tracking
+ * 4. UUID-based sentinels to avoid collision with user content
+ * 5. Structural restoration after jsonc parsing
  */
+
+import { randomUUID } from 'crypto';
 
 interface CapturedTemplate {
   original: string;
   sentinel: string;
+  startIndex: number;
+  endIndex: number;
+}
+
+interface TokenizerState {
+  insideJsonString: boolean;
+  backslashParity: number; // 0 = even, 1 = odd
+  templateStack: Array<{
+    startIndex: number;
+    braceDepth: number;
+    inBacktick: boolean;
+    inSingleQuote: boolean;
+    inDoubleQuote: boolean;
+  }>;
 }
 
 /**
- * Capture and replace template literals with safe sentinels
- * Only processes ${...} that appear inside JSON string values
+ * Helper: Check if ${ at given index is escaped by literal backslashes
+ * In JSON strings, \\ encodes a single \, so we need to count literal backslashes
+ * 
+ * @param str - The JSON string
+ * @param dollarIndex - Index of the $ character
+ * @returns true if ${  is escaped by an odd number of LITERAL backslashes
+ */
+function hasEscapingLiteralBackslash(str: string, dollarIndex: number): boolean {
+  // Count contiguous raw backslashes before $
+  let rawBackslashCount = 0;
+  let checkIndex = dollarIndex - 1;
+  
+  while (checkIndex >= 0 && str[checkIndex] === '\\') {
+    rawBackslashCount++;
+    checkIndex--;
+  }
+  
+  // Convert raw backslash count to literal backslash count
+  // In JSON: \\ → \ (each pair becomes one literal)
+  const literalBackslashCount = Math.floor(rawBackslashCount / 2);
+  
+  // Also check if there's an odd leftover raw backslash (escape of the $)
+  const hasOddRawBackslash = rawBackslashCount % 2 === 1;
+  
+  // ${ is escaped if:
+  // 1. Odd number of literal backslashes before it, OR
+  // 2. Odd raw backslash count (which means the $ itself is JSON-escaped)
+  return literalBackslashCount % 2 === 1 || hasOddRawBackslash;
+}
+
+/**
+ * Capture and replace template literals with UUID sentinels
+ * Uses finite state machine for accurate JSON string tracking
  */
 export function replaceTemplateLiterals(jsonString: string): {
   processed: string;
   templates: CapturedTemplate[];
 } {
   const templates: CapturedTemplate[] = [];
-  let result = '';
-  let inString = false;
-  let escaped = false;
+  const result: string[] = [];
+  
+  const state: TokenizerState = {
+    insideJsonString: false,
+    backslashParity: 0,
+    templateStack: []
+  };
+  
   let i = 0;
   
   while (i < jsonString.length) {
     const char = jsonString[i];
     const nextChar = i + 1 < jsonString.length ? jsonString[i + 1] : '';
     
-    // Count preceding backslashes to determine if current position is escaped
-    let backslashCount = 0;
-    let checkIndex = i - 1;
-    while (checkIndex >= 0 && jsonString[checkIndex] === '\\') {
-      backslashCount++;
-      checkIndex--;
-    }
-    const isEscaped = backslashCount % 2 === 1;
-    
-    // Track string boundaries
-    if (char === '"' && !isEscaped) {
-      inString = !inString;
-      result += char;
+    // Track backslash parity for escape detection
+    if (char === '\\') {
+      state.backslashParity = 1 - state.backslashParity;
+      result.push(char);
       i++;
       continue;
     }
     
-    // Look for ${ inside string literals (only if not escaped)
-    if (inString && char === '$' && nextChar === '{' && !isEscaped) {
-      // Found template literal start - capture full expression
-      const capture = captureTemplateLiteral(jsonString, i);
+    // Non-backslash character: reset parity
+    const isEscaped = state.backslashParity === 1;
+    state.backslashParity = 0;
+    
+    // Track JSON string boundaries (only at top level, not inside template captures)
+    if (state.templateStack.length === 0) {
+      if (char === '"' && !isEscaped) {
+        state.insideJsonString = !state.insideJsonString;
+        result.push(char);
+        i++;
+        continue;
+      }
+    }
+    
+    // Detect ${ inside JSON string (only if not escaped and not already capturing)
+    if (state.insideJsonString && state.templateStack.length === 0 && 
+        char === '$' && nextChar === '{' && !isEscaped) {
+      
+      // Check if ${ is escaped by literal backslashes (accounting for JSON encoding)
+      if (hasEscapingLiteralBackslash(jsonString, i)) {
+        // Escaped ${  - skip capture
+        result.push(char);
+        i++;
+        continue;
+      }
+      
+      // Start template literal capture
+      const capture = captureTemplateLiteralWithStack(jsonString, i);
       
       if (capture) {
-        // Create sentinel
-        const sentinel = `__TEMPLATE_LITERAL_${templates.length}__`;
+        // Generate UUID-based sentinel
+        const sentinel = `__TL_${randomUUID().replace(/-/g, '_')}__`;
+        
         templates.push({
           original: capture.expression,
-          sentinel
+          sentinel,
+          startIndex: i,
+          endIndex: capture.endIndex
         });
         
         // Add sentinel to result
-        result += sentinel;
+        result.push(sentinel);
         
         // Skip past captured expression
         i = capture.endIndex;
@@ -75,18 +145,21 @@ export function replaceTemplateLiterals(jsonString: string): {
     }
     
     // Regular character
-    result += char;
+    result.push(char);
     i++;
   }
   
-  return { processed: result, templates };
+  return { 
+    processed: result.join(''), 
+    templates 
+  };
 }
 
 /**
- * Capture template literal expression with brace balancing
- * Starts at $ in ${...} and captures until matching closing brace
+ * Stack-based template literal capture with full nested context tracking
+ * Handles escaped characters, nested templates, and quotes inside expressions
  */
-function captureTemplateLiteral(
+function captureTemplateLiteralWithStack(
   str: string,
   startIndex: number
 ): { expression: string; endIndex: number } | null {
@@ -96,36 +169,43 @@ function captureTemplateLiteral(
   }
   
   let braceDepth = 0;
+  let backslashParity = 0;
+  let inBacktick = false;
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
   let i = startIndex + 1; // Start after $
-  let inBacktickString = false;
-  let inSingleQuoteString = false;
-  let inDoubleQuoteString = false;
   
   while (i < str.length) {
     const char = str[i];
     
-    // Count preceding backslashes to determine if current position is escaped
-    let backslashCount = 0;
-    let checkIndex = i - 1;
-    while (checkIndex >= 0 && str[checkIndex] === '\\') {
-      backslashCount++;
-      checkIndex--;
+    // Track backslash parity
+    if (char === '\\') {
+      backslashParity = 1 - backslashParity;
+      i++;
+      continue;
     }
-    const isEscaped = backslashCount % 2 === 1;
     
-    // Handle string boundaries (skip braces inside strings)
+    const isEscaped = backslashParity === 1;
+    backslashParity = 0;
+    
+    // Track string state (quotes and backticks)
     if (!isEscaped) {
-      if (char === '`') {
-        inBacktickString = !inBacktickString;
-      } else if (char === "'" && !inBacktickString && !inDoubleQuoteString) {
-        inSingleQuoteString = !inSingleQuoteString;
-      } else if (char === '"' && !inBacktickString && !inSingleQuoteString) {
-        inDoubleQuoteString = !inDoubleQuoteString;
+      // Backtick handling (template strings)
+      if (char === '`' && !inSingleQuote && !inDoubleQuote) {
+        inBacktick = !inBacktick;
+      }
+      // Single quote handling
+      else if (char === "'" && !inBacktick && !inDoubleQuote) {
+        inSingleQuote = !inSingleQuote;
+      }
+      // Double quote handling
+      else if (char === '"' && !inBacktick && !inSingleQuote) {
+        inDoubleQuote = !inDoubleQuote;
       }
     }
     
-    // Only count braces outside of any string type and not escaped
-    const inAnyString = inBacktickString || inSingleQuoteString || inDoubleQuoteString;
+    // Only count braces outside of all string types and not escaped
+    const inAnyString = inBacktick || inSingleQuote || inDoubleQuote;
     if (!inAnyString && !isEscaped) {
       if (char === '{') {
         braceDepth++;
@@ -136,6 +216,11 @@ function captureTemplateLiteral(
         if (braceDepth === 0) {
           const expression = str.substring(startIndex, i + 1);
           return { expression, endIndex: i + 1 };
+        }
+        
+        // Underflow check
+        if (braceDepth < 0) {
+          return null; // Malformed expression
         }
       }
     }
@@ -148,8 +233,8 @@ function captureTemplateLiteral(
 }
 
 /**
- * Restore template literals from sentinels in parsed JSON object
- * Recursively walks AST and replaces sentinels with original ${...} expressions
+ * Restore template literals from UUID sentinels in parsed JSON object
+ * Uses structural replacement to avoid regex issues with overlapping content
  */
 export function restoreTemplateLiterals(
   obj: any,
@@ -159,10 +244,13 @@ export function restoreTemplateLiterals(
   if (typeof obj === 'string') {
     let result = obj;
     
-    // Replace all sentinels with original expressions
-    templates.forEach(({ original, sentinel }) => {
-      result = result.replace(new RegExp(sentinel, 'g'), original);
-    });
+    // Replace sentinels with original expressions
+    // Process in reverse order to avoid index shifting issues
+    for (let i = templates.length - 1; i >= 0; i--) {
+      const { original, sentinel } = templates[i];
+      // Use split/join for exact replacement (avoids regex escaping issues)
+      result = result.split(sentinel).join(original);
+    }
     
     return result;
   }
