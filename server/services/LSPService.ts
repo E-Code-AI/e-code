@@ -5,7 +5,6 @@ import type { InsertLspDiagnostic, LspDiagnostic } from '@shared/schema';
 import { wsRateLimiter, ipRateLimiter } from '../middleware/websocket-rate-limiter';
 import { getClientIp } from '../utils/ip-extraction';
 import { isOriginAllowed } from '../utils/origin-validation';
-import { markSocketAsHandled } from '../websocket/upgrade-guard';
 
 interface DiagnosticMessage {
   type: 'diagnostic';
@@ -425,9 +424,6 @@ export function setupLSPWebSocket(httpServer: any, storage: IStorage): LSPServic
     const url = new URL(request.url || '', `http://${request.headers.host}`);
     
     if (url.pathname === '/api/lsp/ws') {
-      // Mark socket as handled BEFORE handleUpgrade to prevent guard from destroying it
-      markSocketAsHandled(request, socket);
-      
       wss.handleUpgrade(request, socket, head, (ws: WebSocket) => {
         wss.emit('connection', ws, request);
       });

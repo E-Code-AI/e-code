@@ -5,7 +5,6 @@ import { previewService } from './preview-service';
 import { EventEmitter } from 'events';
 import { parse as parseCookie } from 'cookie';
 import { storage } from '../storage';
-import { markSocketAsHandled } from '../websocket/upgrade-guard';
 
 // Event emitter for preview updates
 export const previewEvents = new EventEmitter();
@@ -52,9 +51,6 @@ class PreviewWebSocketService {
           socket.destroy();
           return;
         }
-
-        // Mark socket as handled BEFORE handleUpgrade to prevent guard from destroying it
-        markSocketAsHandled(request, socket as any);
 
         // Handle upgrade
         this.wss!.handleUpgrade(request, socket, head, (ws) => {
@@ -202,7 +198,7 @@ class PreviewWebSocketService {
             type: 'preview:status',
             projectId: projectId,
             status: preview.status,
-            ports: preview.ports,
+            port: preview.port,
             url: preview.status === 'running' ? `/preview/${projectId}` : null,
             logs: preview.logs || []
           }));
@@ -245,9 +241,9 @@ class PreviewWebSocketService {
     this.broadcastToProject(projectId, message);
   }
 
-  private async verifyProjectAccess(userId: number, projectId: number | string): Promise<boolean> {
+  private async verifyProjectAccess(userId: number, projectId: number): Promise<boolean> {
     try {
-      const project = await storage.getProject(String(projectId));
+      const project = await storage.getProject(projectId);
       if (!project) {
         return false;
       }
@@ -258,7 +254,7 @@ class PreviewWebSocketService {
       }
 
       // Check if user is collaborator
-      const collaborators = await storage.getProjectCollaborators(String(projectId));
+      const collaborators = await storage.getProjectCollaborators(projectId);
       return collaborators.some((c: any) => c.userId === userId);
     } catch (error) {
       console.error('Error verifying project access:', error);
