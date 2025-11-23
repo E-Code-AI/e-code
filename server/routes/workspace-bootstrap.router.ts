@@ -227,6 +227,18 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
           if (event.type === 'plan') {
             plan = event.data;
             logger.info(`[Bootstrap] ✅ Plan received successfully`, { planId: plan.id, tasks: plan.tasks?.length });
+            
+            // ✅ CRITICAL FIX (Nov 23, 2025): PERSIST PLAN TO DATABASE!
+            // Architect review: Plan was being generated but never saved to agent_plans table
+            // This broke autonomous workspace creation - orchestrator expects persisted plan
+            try {
+              await aiPlanGenerator.savePlan(String(userId), String(project.id), plan);
+              logger.info(`[Bootstrap] ✅ Plan persisted to database successfully`, { planId: plan.id });
+            } catch (saveError: any) {
+              logger.error(`[Bootstrap] ⚠️  Plan save failed but continuing with execution:`, saveError.message);
+              // Continue anyway - plan is still in memory for execution
+            }
+            
             break;
           } else if (event.type === 'error') {
             const errorMsg = event.data.message || 'Plan generation failed';
