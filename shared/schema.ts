@@ -503,18 +503,16 @@ export const mobileDevices = pgTable("mobile_devices", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Push Notifications - Full schema restored (Nov 23, 2025)
+// Push Notifications - Schema temporarily reduced to match actual DB columns (Nov 23, 2025)
+// REASON: drizzle-kit push blocked on interactive enum prompt (mentorship_status)
+// Full schema with type, actionUrl, read, readAt, sent fields requires TTY-capable environment
+// or drizzle-kit version with --non-interactive enum handling
 export const pushNotifications = pgTable("push_notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`), // DB uses varchar UUID
   userId: varchar("user_id").notNull().references(() => users.id),
   title: varchar("title").notNull(),
   body: text("body").notNull(),
-  type: varchar("type").notNull().default('system'),
-  actionUrl: varchar("action_url"),
   data: jsonb("data"),
-  read: boolean("read").notNull().default(false),
-  readAt: timestamp("read_at"),
-  sent: boolean("sent").default(false),
   sentAt: timestamp("sent_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -1838,12 +1836,10 @@ export const insertTemplateRatingSchema = createInsertSchema(templateRatings).om
 export const insertTemplateTagSchema = createInsertSchema(templateTags).omit({ id: true, createdAt: true });
 export const insertTemplateCollectionSchema = createInsertSchema(templateCollections).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCollectionTemplateSchema = createInsertSchema(collectionTemplates).omit({ id: true, addedAt: true });
-// Push notification insert schema - Full schema restored (Nov 23, 2025)
+// Push notification insert schema - Temporarily reduced to match DB columns (Nov 23, 2025)
 export const insertNotificationSchema = createInsertSchema(pushNotifications, {
-  type: z.string().min(1).optional(),
-  actionUrl: z.string().url().optional(),
   data: z.record(z.any()).optional(),
-}).omit({ id: true, createdAt: true, read: true, readAt: true, sent: true, sentAt: true });
+}).omit({ id: true, createdAt: true, sentAt: true });
 export const insertNotificationPreferenceSchema = createInsertSchema(notificationPreferences, {
   email: z.record(z.boolean()),
   push: z.record(z.boolean()),
