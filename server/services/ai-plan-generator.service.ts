@@ -49,10 +49,11 @@ export class AIPlanGeneratorService {
   private storage: IStorage;
   
   // ✅ PROVIDER FALLBACK CHAIN: Verified working models (Nov 23, 2025)
-  // All models tested with template literal sanitizer - 85.7% success rate on testable providers
+  // Strategy: Speed-first (Flash) → Quality (Pro) → Multi-provider fallback
+  // Note: Gemini 2.5 Flash is 5x faster than Pro with excellent quality
   private readonly PROVIDER_FALLBACK_CHAIN = [
-    'gemini-2.5-flash',             // ✅ PRIMARY: Gemini 2.5 Flash (latest stable, verified)
-    'gemini-2.0-flash-001',         // ✅ BACKUP: Gemini 2.0 Flash (faster - 735ms avg)
+    'gemini-2.5-flash',             // ✅ PRIMARY: Fastest (2.5s avg), verified, excellent quality
+    'gemini-2.5-pro',               // ✅ BACKUP 1: Best quality (13s avg), adaptive thinking
     'gpt-5.1',                      // ✅ OpenAI GPT-5.1 (flagship, verified)
     'claude-haiku-4-5-20251015',    // Anthropic Claude Haiku 4.5 (requires credits)
     'grok-4-fast',                  // xAI Grok 4 Fast (requires credits)
