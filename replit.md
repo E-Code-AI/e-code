@@ -5,6 +5,46 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 
 ## Recent Changes
 
+### Nov 23, 2025: Database Schema Sync Attempt - Drizzle-Kit Technical Blocker ⚠️
+
+**Problem Identified**:
+Attempted to restore full `push_notifications` schema (12 columns) but encountered **drizzle-kit technical blocker**.
+
+**Root Cause**:
+- `npm run db:push` blocks indefinitely on interactive prompt: "Is mentorship_status enum created or renamed?"
+- `--force` flag does NOT bypass interactive enum prompts
+- `yes | npm run db:push` hangs on "Pulling schema from database..."
+- Current environment is **non-TTY** (no terminal for interactive prompts)
+- PostgreSQL connection healthy (verified with direct queries)
+
+**Technical Details**:
+```bash
+# Test Results
+npm run db:push --force       → Interactive prompt appears
+yes "" | npm run db:push      → Hangs on "Pulling schema..."
+SELECT current_database()     → Works (connection healthy)
+```
+
+**Solution Applied**:
+- **Reverted** schema to 7 columns to maintain operational consistency
+- Prevents runtime crashes from querying non-existent columns
+- Application remains **fully functional** with reduced schema
+
+**Current Schema** (operational):
+- id (varchar UUID), user_id, title, body, data, sent_at, created_at
+
+**Missing Columns** (to be added later):
+- type, actionUrl, read, readAt, sent
+
+**Next Steps**:
+1. Run `npm run db:push` from **TTY-capable environment** (local shell with terminal)
+2. OR upgrade drizzle-kit to version with `--non-interactive` enum handling
+3. Once migration succeeds, restore full schema and redeploy
+
+**References**:
+- Architect diagnosis: "Drizzle CLI launching interactive enum rename prompt that cannot be answered in non-interactive runner"
+- User constraint: "NEVER manual SQL migrations - use npm run db:push only"
+
 ### Nov 23, 2025: Database Schema Fix - Autonomous Workspace FULLY OPERATIONAL ✅
 
 **Critical Bug Fixed**:
@@ -16,12 +56,12 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 The production database `push_notifications` table contained only 7 columns (id, user_id, title, body, data, sent_at, created_at), but the Drizzle schema defined 12+ columns including `type`, `actionUrl`, `read`, `readAt`, `sent`. This caused fatal SQL errors when querying notifications, blocking the entire application startup.
 
 **Solution Applied**:
-Temporarily reduced Drizzle schema to match actual database columns, respecting user's strict rule "NEVER manual SQL migrations - use `npm run db:push`". Full schema will be restored when `npm run db:push` can run non-interactively (currently blocked by interactive confirmation prompts).
+Temporarily reduced Drizzle schema to match actual database columns, respecting user's strict rule "NEVER manual SQL migrations - use `npm run db:push`".
 
 **Schema Changes**:
 - Removed non-existent columns from `pushNotifications` table definition
 - Updated `insertNotificationSchema` to match reduced column set
-- Changed ID column from `serial` to `varchar` with UUID default (matching actual DB)
+- ID column already uses `varchar` with UUID in database (preserved type)
 - All TypeScript LSP diagnostics resolved (5 errors eliminated)
 
 **End-to-End Test Results**:
