@@ -4,8 +4,9 @@
  */
 
 import { ProjectFile } from '../types';
+import { getApiUrl } from '../../../shared/config/env';
 
-const API_BASE = __DEV__ ? 'http://localhost:3000' : 'https://your-production-url.com';
+const API_BASE = getApiUrl();
 
 /**
  * Get all files in a project
