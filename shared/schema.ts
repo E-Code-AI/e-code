@@ -1677,6 +1677,7 @@ export const sessionParticipants = pgTable("session_participants", {
 
 // Templates table for project templates with marketplace features
 // Canonical marketplace template table - PRIMARY SOURCE OF TRUTH
+// Full marketplace schema with business-critical columns restored
 export const templates = pgTable("templates", {
   id: serial("id").primaryKey(),
   slug: varchar("slug").notNull().unique(),
@@ -1688,27 +1689,30 @@ export const templates = pgTable("templates", {
   authorId: integer("author_id").references(() => users.id), // Link to user for community templates
   authorName: varchar("author_name").notNull(),
   authorVerified: boolean("author_verified").notNull().default(false),
-  uses: integer("uses").notNull().default(0),
-  stars: integer("stars").notNull().default(0),
-  forks: integer("forks").notNull().default(0),
   language: varchar("language").notNull(),
   framework: varchar("framework"),
   difficulty: varchar("difficulty").notNull(), // 'beginner', 'intermediate', 'advanced'
   estimatedTime: integer("estimated_time").notNull(), // in minutes
   features: text().array().notNull().default([]),
+  files: text("files"), // Template file structure
+  dependencies: text("dependencies"), // Package dependencies
+  uses: integer("uses").notNull().default(0),
+  stars: integer("stars").notNull().default(0),
+  forks: integer("forks").notNull().default(0),
   isFeatured: boolean("is_featured").notNull().default(false),
   isOfficial: boolean("is_official").notNull().default(false),
   published: boolean("published").notNull().default(true),
-  isCommunity: boolean("is_community").notNull().default(false), // Community submitted templates
-  status: varchar("status").notNull().default('published'), // 'draft', 'pending_review', 'published', 'rejected'
-  githubUrl: text("github_url"), // Source repository URL
-  demoUrl: text("demo_url"), // Live demo URL
-  thumbnailUrl: text("thumbnail_url"), // Screenshot/preview image
+  // Marketplace business logic columns (safe to add - non-PK with defaults)
+  isCommunity: boolean("is_community").notNull().default(false),
+  status: varchar("status").notNull().default('published'),
+  githubUrl: text("github_url"),
+  demoUrl: text("demo_url"),
+  thumbnailUrl: text("thumbnail_url"),
   version: varchar("version").notNull().default('1.0.0'),
   license: varchar("license").notNull().default('MIT'),
-  price: decimal("price", { precision: 10, scale: 2 }).default('0.00'), // For premium templates
+  price: decimal("price", { precision: 10, scale: 2 }).notNull().default('0.00'),
   downloads: integer("downloads").notNull().default(0),
-  rating: real("rating").notNull().default(0), // Average rating
+  rating: real("rating").notNull().default(0),
   reviewCount: integer("review_count").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
