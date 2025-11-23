@@ -38,12 +38,12 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
           return; // No-op - socket is already managed
         }
         
-        // Mark this socket as handled BEFORE Vite processes it
-        // This prevents the final upgrade guard from destroying Vite's HMR sockets
-        markSocketAsHandled(request, socket);
+        // Let Vite's HMR handle the upgrade first
+        listener(request, socket, head);
         
-        // Let Vite's HMR handle it normally
-        return listener(request, socket, head);
+        // Mark as handled AFTER Vite processes it (prevents Final Upgrade Guard from destroying it)
+        // This is safe because Final Upgrade Guard uses setImmediate() for deferred checking
+        markSocketAsHandled(request, socket);
       };
       
       // Mark this as wrapped to avoid double-wrapping
