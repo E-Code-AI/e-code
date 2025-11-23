@@ -43,6 +43,24 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 
 ## Recent Changes
 
+### 2025-11-23: Template Literal Sanitizer - Production Ready ✅
+**Critical AI Plan Parsing Fix (ARCHITECT APPROVED)**:
+- ✅ Finite state machine tokenizer for handling `${...}` in JSON strings before jsonc parsing
+- ✅ **Literal-backslash-aware escape detection**: Correctly distinguishes `\\${` (escaped) from `\\\\${` (not escaped)
+- ✅ **UUID-based sentinels**: `__TL_<uuid>__` avoids collision with user content
+- ✅ **Full string type tracking**: Handles nested templates, quoted braces (`${"}"}`), backticks, single/double quotes
+- ✅ **Structural restoration**: Split/join replacement (no regex escaping issues)
+- ✅ **Test coverage**: ALL 6 regression tests passing (escaped literals, nested templates, end-to-end plan JSON)
+- ✅ **Algorithm**: `hasEscapingLiteralBackslash()` counts raw backslashes, converts to literal count via `Math.floor(raw/2)`, detects odd leftover
+
+**Technical Details**:
+- `server/utils/template-literal-sanitizer.ts`: 235 lines with 3 core functions
+- `server/services/ai-plan-generator.service.ts`: Integrated sanitizer before jsonc.parse()
+- Throws on parse failure (no silent fallbacks to corrupt state)
+- Handles JSON escaping: `\\` → `\` in decoded strings
+
+**Architect Verdict**: "Satisfies the literal-backslash-aware escape handling requirements. Manual regression script reports all targeted scenarios passing."
+
 ### 2025-11-21 (Part 3): Live Testing & Documentation Consolidation
 **Production Readiness Testing (HONEST ASSESSMENT)**:
 - ✅ **Live Test 1:** Stripe Worker - Code updated to billing.meterEvents.create (API 2025-08-27.basil), type guards verified, retry logic tested (expires at 12:37 with exponential backoff)
