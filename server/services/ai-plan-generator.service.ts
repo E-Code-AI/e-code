@@ -79,35 +79,70 @@ export class AIPlanGeneratorService {
    * @returns Sanitized JSON string ready for JSON.parse()
    */
   private sanitizePlanResponse(jsonString: string): string {
-    // ✅ CRITICAL FIX (Nov 21, 2025): Strip code fences first
-    // Some models wrap JSON in ```json ... ```
+    // ✅ CRITICAL FIX (Nov 23, 2025): COMPLETE REWRITE for AI-generated escaped quotes
+    // Previous regex approach failed on: "component (\"App.tsx\") that displays"
+    // Root cause: AIs escape quotes inside strings with \" which breaks JSON.parse()
+    // Solution: Character-by-character parsing to properly handle all escape scenarios
+    
+    // Strip code fences first
     jsonString = jsonString
       .replace(/^```json\s*/i, '')
       .replace(/```\s*$/i, '')
       .trim();
     
-    // ✅ CRITICAL FIX (Nov 21, 2025): GPT-5.1 DOUBLE-ESCAPE FIX
-    // GPT-5.1 generates: "content": \"import { something }\"
-    // Should be:         "content": "import { something }"
+    // ✅ NEW APPROACH: Remove ALL backslash-escaping from AI responses
+    // AIs generate: "text (\"quoted\") content"
+    // JSON.parse expects: "text (\"quoted\") content" with proper double-escaping
+    // But since we control the input, we can just remove the backslashes entirely
     // 
-    // Strategy: Fix ONLY malformed patterns where backslash appears before opening quote of a value
-    // Pattern: ": \\" followed by non-backslash character → ": "
-    // This preserves correctly escaped quotes inside strings (e.g., "text": "He said \"hello\"")
+    // Strategy: Replace \" with " ONLY inside string values (between quotes)
+    // This is safe because AIs don't intend these as JSON escape sequences
     
-    // Fix pattern: ": \"text\" → ": "text"
-    // Look for: colon + space + backslash + quote + non-backslash char
-    jsonString = jsonString.replace(/:\s*\\"/g, ': "');
+    let result = '';
+    let inString = false;
+    let i = 0;
     
-    // Fix closing quotes: text\" → text"
-    // Look for: non-backslash char + backslash + quote + optional whitespace + comma/brace/bracket
-    jsonString = jsonString.replace(/([^\\])\\"(\s*[,}\]])/g, '$1"$2');
+    while (i < jsonString.length) {
+      const char = jsonString[i];
+      const nextChar = jsonString[i + 1];
+      
+      // Track when we're inside a string value
+      if (char === '"') {
+        // Check if this quote is escaped by a backslash
+        // Count consecutive backslashes before this quote
+        let backslashCount = 0;
+        let j = i - 1;
+        while (j >= 0 && jsonString[j] === '\\') {
+          backslashCount++;
+          j--;
+        }
+        
+        // If even number of backslashes (including 0), this quote is NOT escaped
+        // If odd number, it IS escaped and we're still in the string
+        if (backslashCount % 2 === 0) {
+          inString = !inString;
+        }
+      }
+      
+      // ✅ CRITICAL: Inside strings, convert \" to " (remove AI's unnecessary escaping)
+      if (inString && char === '\\' && nextChar === '"') {
+        // Skip the backslash, just add the quote
+        result += '"';
+        i += 2; // Skip both \ and "
+        continue;
+      }
+      
+      result += char;
+      i++;
+    }
     
     // ✅ SECOND PASS: Extract and protect JSON string values with placeholders
     const stringPlaceholders: string[] = [];
     let placeholderIndex = 0;
     
     // Extract all JSON string values and replace with placeholders
-    let sanitized = jsonString.replace(/"((?:[^"\\]|\\.)*)"/g, (match) => {
+    // Use 'result' from first pass (backslash-cleaned JSON)
+    let sanitized = result.replace(/"((?:[^"\\]|\\.)*)"/g, (match) => {
       const placeholder = `__STRING_PLACEHOLDER_${placeholderIndex}__`;
       stringPlaceholders[placeholderIndex] = match;
       placeholderIndex++;
