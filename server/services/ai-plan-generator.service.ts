@@ -88,6 +88,18 @@ export class AIPlanGeneratorService {
       .replace(/```\s*$/i, '')
       .trim();
     
+    // ✅ CRITICAL FIX (Nov 23, 2025): Decode HTML entities before parsing
+    // GPT-5.1 and other models return JSX code with HTML entities (&gt;, &lt;, &amp;, &quot;)
+    // which breaks JSON parsing. Example: onClick={() =&gt; handleDelete()} should be onClick={() => handleDelete()}
+    jsonString = jsonString
+      .replace(/&gt;/g, '>')
+      .replace(/&lt;/g, '<')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/&#x27;/g, "'")
+      .replace(/&#x2F;/g, '/');
+    
     // Step 2: Try direct parse - if valid JSON, no regex corruption needed!
     try {
       const parsed = JSON.parse(jsonString);
@@ -195,7 +207,10 @@ Given a user's goal, create a comprehensive execution plan with the following:
 5. **Risk Assessment**: Evaluate potential risks and challenges
 
 **CRITICAL**: Respond ONLY with valid JSON in this exact format.
-⚠️ IMPORTANT: Use DOUBLE QUOTES for all strings, NOT backticks or template literals!
+⚠️ IMPORTANT: When embedding JavaScript/TypeScript code in JSON strings:
+- Preserve template literals: use \` for template literal quotes (e.g., "const x = \`${val}\`")
+- OR escape dollar signs: "const x = \"\\${val}\"" 
+- NEVER mix: don't use double quotes with unescaped ${} interpolation
 
 {
   "summary": "Brief overview of what will be built",

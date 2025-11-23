@@ -64,10 +64,13 @@ export function aiUsageTracker(req: Request, res: Response, next: NextFunction) 
   res.json = function (body: any) {
     // Capture AI usage from response body (if present)
     if (body?.usage || body?.model) {
-      trackingContext.model = body.model;
+      // ✅ CRITICAL FIX (Nov 23, 2025): Convert model object to string if needed
+      // Some endpoints return model as {id: "gpt-5.1", name: "GPT-5.1", ...} instead of just "gpt-5.1"
+      const modelStr = typeof body.model === 'string' ? body.model : body.model?.id || 'unknown';
+      trackingContext.model = modelStr;
       trackingContext.tokensInput = body.usage?.prompt_tokens || body.usage?.input_tokens || 0;
       trackingContext.tokensOutput = body.usage?.completion_tokens || body.usage?.output_tokens || 0;
-      trackingContext.provider = extractProvider(body.model);
+      trackingContext.provider = extractProvider(modelStr);
       
       // Track usage asynchronously (don't block response)
       trackAiUsage(req, trackingContext).catch((error) => {
