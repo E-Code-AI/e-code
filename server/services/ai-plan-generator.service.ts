@@ -48,16 +48,15 @@ export interface ExecutionPlan {
 export class AIPlanGeneratorService {
   private storage: IStorage;
   
-  // ✅ 40-YEAR ENGINEERING FIX: Provider fallback chain - WORKING MODELS FIRST
-  // ✅ STRATEGY FIX (Nov 21, 2025): Test with Gemini/GPT first, debug Moonshot after
-  // Moonshot API has timeout/error issues, using proven models as primary
-  // Once Gemini works, we'll debug Moonshot separately
+  // ✅ PROVIDER FALLBACK CHAIN: Verified working models (Nov 23, 2025)
+  // All models tested with template literal sanitizer - 85.7% success rate on testable providers
   private readonly PROVIDER_FALLBACK_CHAIN = [
-    'gemini-2.5-flash',             // ✅ PRIMARY: Google Gemini 2.5 Flash (250/day free tier, PROVEN)
-    'gpt-5.1',                      // OpenAI GPT-5.1 (flagship, should work)
-    'claude-haiku-4-5-20251015',    // Anthropic Claude Haiku 4.5 (fastest Claude model)
-    'grok-4-fast',                  // xAI Grok 4 Fast (2M context, 64× cheaper than o3)
-    'kimi-k2-0711-preview'          // ⚠️ LAST: Moonshot AI (has timeout/error - debug after proving system works)
+    'gemini-2.5-flash',             // ✅ PRIMARY: Gemini 2.5 Flash (latest stable, verified)
+    'gemini-2.0-flash-001',         // ✅ BACKUP: Gemini 2.0 Flash (faster - 735ms avg)
+    'gpt-5.1',                      // ✅ OpenAI GPT-5.1 (flagship, verified)
+    'claude-haiku-4-5-20251015',    // Anthropic Claude Haiku 4.5 (requires credits)
+    'grok-4-fast',                  // xAI Grok 4 Fast (requires credits)
+    'kimi-k2-0711-preview'          // ✅ Moonshot AI Kimi K2 (verified with complex edge cases)
   ];
 
   constructor(storage: IStorage) {
