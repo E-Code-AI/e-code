@@ -54,7 +54,7 @@ class PreviewWebSocketService {
         }
 
         // Mark socket as handled BEFORE handleUpgrade to prevent guard from destroying it
-        markSocketAsHandled(request, socket);
+        markSocketAsHandled(request, socket as any);
 
         // Handle upgrade
         this.wss!.handleUpgrade(request, socket, head, (ws) => {
@@ -202,7 +202,7 @@ class PreviewWebSocketService {
             type: 'preview:status',
             projectId: projectId,
             status: preview.status,
-            port: preview.port,
+            ports: preview.ports,
             url: preview.status === 'running' ? `/preview/${projectId}` : null,
             logs: preview.logs || []
           }));
@@ -245,9 +245,9 @@ class PreviewWebSocketService {
     this.broadcastToProject(projectId, message);
   }
 
-  private async verifyProjectAccess(userId: number, projectId: number): Promise<boolean> {
+  private async verifyProjectAccess(userId: number, projectId: number | string): Promise<boolean> {
     try {
-      const project = await storage.getProject(projectId);
+      const project = await storage.getProject(String(projectId));
       if (!project) {
         return false;
       }
@@ -258,7 +258,7 @@ class PreviewWebSocketService {
       }
 
       // Check if user is collaborator
-      const collaborators = await storage.getProjectCollaborators(projectId);
+      const collaborators = await storage.getProjectCollaborators(String(projectId));
       return collaborators.some((c: any) => c.userId === userId);
     } catch (error) {
       console.error('Error verifying project access:', error);

@@ -139,9 +139,9 @@ export class ResourcesService {
         }
 
         // Mark socket as handled BEFORE handleUpgrade to prevent guard from destroying it
-        markSocketAsHandled(request, socket);
+        markSocketAsHandled(request, socket as any);
 
-        this.wss.handleUpgrade(request, socket, head, (ws) => {
+        this.wss.handleUpgrade(request, socket as any, head, (ws) => {
           this.wss.emit('connection', ws, request, projectId, userId);
         });
       } catch (error) {

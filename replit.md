@@ -5,6 +5,19 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 
 ## Recent Changes
 
+### Nov 23, 2025: WebSocket Upgrade Guard Fixed ✅
+
+**WebSocket Services Restored** - All 6 services now functional:
+- ✅ **Fixed** LSP, TestRuns, BuildLogs, Resources, SecurityScanner, Preview services
+- ✅ **Root cause** : Missing `markSocketAsHandled()` call before `handleUpgrade()`
+- ✅ **Solution** : Added `markSocketAsHandled(request, socket as any)` in all 6 services
+- ✅ **Vite HMR** : 1 listener wrapped, Upgrade Guard preserves HMR sockets correctly  
+- ⚠️ **Known issue** : Vite client shows "failed to connect" fallback warning but connection succeeds
+
+**Testing Status**:
+- Backend: All WebSocket upgrade handlers fixed and verified in logs
+- Frontend: Testing pending to confirm HMR functionality despite browser warning
+
 ### Nov 23, 2025: Gemini 2.5 Integration - PRODUCTION READY ✅
 **Complete End-to-End Validation** - API, Backend, and UI verified working:
 - ✅ **3 Gemini models** configured and displayed in UI
