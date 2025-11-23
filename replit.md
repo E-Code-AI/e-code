@@ -12,9 +12,9 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 - ✅ Moonshot Kimi K2
 
 **Gemini Model Performance**:
-- Gemini 2.5 Flash: 2.5s avg (PRIMARY - best speed/quality ratio)
-- Gemini 2.5 Pro: 13.4s avg (BACKUP - highest quality, adaptive thinking)
-- Note: Gemini 3 Pro not available via public API (Vertex AI only)
+- Gemini 2.5 Flash: 2.5s avg (PRIMARY - best speed/quality ratio) ✅ Verified working
+- Gemini 2.5 Pro: 13.4s avg (BACKUP - highest quality, adaptive thinking) ✅ Verified working
+- Note: Gemini 3 Pro not available via public API v1beta (Vertex AI only)
 
 **Critical Fixes Implemented**:
 1. `trimStart()` before code fence stripping (handles Gemini's `\n```json` responses)
