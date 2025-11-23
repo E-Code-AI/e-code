@@ -18,8 +18,8 @@ export class AdminService {
   constructor(private storage: DatabaseStorage) {}
 
   // ✅ 40-YEAR SENIOR FIX: Sanitize user responses to prevent password/secret exposure
-  private sanitizeUser(user: User): Omit<User, 'passwordHash' | 'twoFactorSecret' | 'passwordResetToken'> {
-    const { passwordHash, twoFactorSecret, passwordResetToken, ...safeUser } = user;
+  private sanitizeUser(user: User): Omit<User, 'password' | 'twoFactorSecret' | 'passwordResetToken'> {
+    const { password, twoFactorSecret, passwordResetToken, ...safeUser } = user;
     return safeUser;
   }
 

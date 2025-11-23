@@ -164,7 +164,7 @@ router.post('/reset-password', async (req, res) => {
     
     // Hash new password and update
     const hashedPassword = await hashPassword(newPassword);
-    await storage.updateUser(reset.userId, { passwordHash: hashedPassword });
+    await storage.updateUser(reset.userId, { password: hashedPassword });
     
     // Mark token as used and delete it
     await storage.markPasswordResetTokenUsed(token);

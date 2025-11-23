@@ -141,11 +141,11 @@ export function setupAuth(app: Express) {
         }
         
         // Handle null password
-        if (!user.passwordHash) {
+        if (!user.password) {
           return done(null, false, { message: "No password set for this user" });
         }
         
-        const isValidPassword = await comparePasswords(password, user.passwordHash);
+        const isValidPassword = await comparePasswords(password, user.password);
         if (!isValidPassword) {
           return done(null, false, { message: "Incorrect password" });
         }
@@ -642,9 +642,9 @@ export function setupAuth(app: Express) {
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      // Return user info - User schema doesn't have password field (it's passwordHash)
-      // passwordHash is excluded by not including it in the response
-      const { passwordHash, ...userWithoutPassword } = req.user;
+      // Return user info - User schema doesn't have password field (it's password)
+      // password is excluded by not including it in the response
+      const { password, ...userWithoutPassword } = req.user;
       res.json(userWithoutPassword);
     });
   });
@@ -664,8 +664,8 @@ export function setupAuth(app: Express) {
         return res.status(404).json({ error: 'User not found' });
       }
       
-      // Exclude passwordHash from response
-      const { passwordHash, ...userWithoutPassword } = updatedUser;
+      // Exclude password from response
+      const { password, ...userWithoutPassword } = updatedUser;
       res.json(userWithoutPassword);
     } catch (error) {
       console.error('Error updating profile:', error);
