@@ -5,6 +5,7 @@ import { previewService } from './preview-service';
 import { EventEmitter } from 'events';
 import { parse as parseCookie } from 'cookie';
 import { storage } from '../storage';
+import { markSocketAsHandled } from '../websocket/upgrade-guard';
 
 // Event emitter for preview updates
 export const previewEvents = new EventEmitter();
@@ -51,6 +52,9 @@ class PreviewWebSocketService {
           socket.destroy();
           return;
         }
+
+        // Mark socket as handled BEFORE handleUpgrade to prevent guard from destroying it
+        markSocketAsHandled(request, socket);
 
         // Handle upgrade
         this.wss!.handleUpgrade(request, socket, head, (ws) => {

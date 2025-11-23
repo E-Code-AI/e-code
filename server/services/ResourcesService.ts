@@ -5,6 +5,7 @@ import type { ResourceMetric } from '@shared/schema';
 import { isOriginAllowed } from '../utils/origin-validation';
 import { getClientIp } from '../utils/ip-extraction';
 import { ipRateLimiter, wsRateLimiter } from '../middleware/websocket-rate-limiter';
+import { markSocketAsHandled } from '../websocket/upgrade-guard';
 
 interface ResourcesClient {
   ws: WebSocket;
@@ -136,6 +137,9 @@ export class ResourcesService {
           socket.destroy();
           return;
         }
+
+        // Mark socket as handled BEFORE handleUpgrade to prevent guard from destroying it
+        markSocketAsHandled(request, socket);
 
         this.wss.handleUpgrade(request, socket, head, (ws) => {
           this.wss.emit('connection', ws, request, projectId, userId);

@@ -5,6 +5,7 @@ import type { TestRun, TestCase, InsertTestRun, InsertTestCase } from '@shared/s
 import { getClientIp } from '../utils/ip-extraction';
 import { ipRateLimiter, wsRateLimiter } from '../middleware/websocket-rate-limiter';
 import { isOriginAllowed } from '../utils/origin-validation';
+import { markSocketAsHandled } from '../websocket/upgrade-guard';
 
 interface TestRunsClient {
   ws: WebSocket;
@@ -354,6 +355,9 @@ export function setupTestRunsWebSocket(httpServer: any, storage: IStorage): Test
     const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
     
     if (pathname === '/api/test-runs/ws') {
+      // Mark socket as handled BEFORE handleUpgrade to prevent guard from destroying it
+      markSocketAsHandled(request, socket);
+      
       wss.handleUpgrade(request, socket, head, (ws: WebSocket) => {
         wss.emit('connection', ws, request);
       });
