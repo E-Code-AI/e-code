@@ -503,15 +503,18 @@ export const mobileDevices = pgTable("mobile_devices", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// NOTE: Schema temporarily reduced to match actual DB columns
-// Full schema with type, actionUrl, read, readAt, sent fields will be restored
-// after npm run db:push can be executed non-interactively
+// Push Notifications - Full schema restored (Nov 23, 2025)
 export const pushNotifications = pgTable("push_notifications", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`), // Actual DB uses varchar UUID
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`), // DB uses varchar UUID
   userId: varchar("user_id").notNull().references(() => users.id),
   title: varchar("title").notNull(),
   body: text("body").notNull(),
+  type: varchar("type").notNull().default('system'),
+  actionUrl: varchar("action_url"),
   data: jsonb("data"),
+  read: boolean("read").notNull().default(false),
+  readAt: timestamp("read_at"),
+  sent: boolean("sent").default(false),
   sentAt: timestamp("sent_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
