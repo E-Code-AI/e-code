@@ -393,8 +393,12 @@ export class AgentCommandExecutionService extends EventEmitter {
   }
 
   private validateCommand(command: string, args: string[]) {
-    // Check if command is in whitelist
-    const baseCommand = path.basename(command);
+    // ✅ FIX (Nov 23, 2025): Extract base command correctly
+    // path.basename() doesn't work for commands with args like "mkdir hello-world-app"
+    // We need to extract just the command name (first word)
+    const commandParts = command.trim().split(/\s+/);
+    const baseCommand = path.basename(commandParts[0]);
+    
     if (!this.ALLOWED_COMMANDS.includes(baseCommand)) {
       throw new Error(`Command not allowed: ${baseCommand}`);
     }
