@@ -1,32 +1,7 @@
 # E-Code Platform
 
-## ⚠️ HONEST PRODUCTION STATUS (November 21, 2025)
-
-**Overall Production Readiness: 75%**
-
-See **[PRODUCTION-READINESS-REPORT.md](./PRODUCTION-READINESS-REPORT.md)** for complete test evidence and honest assessment.
-
-### ✅ What's Production-Ready (100% Verified):
-- Backend APIs (Auth, Projects CRUD) - tested with curl
-- Stripe Usage Worker - billing.meterEvents API, retry logic working
-- Redis Configuration - clean dev/prod separation
-- Autonomous Workspace Bootstrap - 214ms response time
-- TypeScript Compilation - zero LSP errors
-
-### ⚠️ What Needs Work:
-- **Frontend UI (CRITICAL)** - Z-index overlays block Playwright tests → Agent/Terminal/Editor inaccessible
-- **WebSocket Code Gen** - Bootstrap works, but full generation flow not verified end-to-end
-- **External APIs** - Stripe & SendGrid keys expired/invalid (test keys needed)
-
-### 🎯 To Reach 100%:
-1. Fix UI overlay issues → re-run cross-device tests (Desktop/Tablet/Mobile)
-2. Verify complete autonomous code generation flow (Prompt → Plan → Code → Files → Preview)
-3. Test with valid API keys (Stripe test key, SendGrid)
-
----
-
 ## Overview
-E-Code is a web-based collaborative IDE with AI assistance, offering code editing, terminal access, file management, and an autonomous AI agent. Its primary purpose is to facilitate rapid prototyping and education. The platform aims for enterprise-grade scalability, multi-provider AI model selection, real-time collaboration, robust security, and the ability to create autonomous workspaces from a natural language prompt to a live preview with streaming progress. Key capabilities include Monaco-based code editing with keyboard shortcuts (30+), real-time WebSocket streaming, and responsive UI design.
+E-Code is a web-based collaborative IDE with AI assistance, offering code editing, terminal access, file management, and an autonomous AI agent. Its primary purpose is to facilitate rapid prototyping and education. The platform aims for enterprise-grade scalability, multi-provider AI model selection, real-time collaboration, robust security, and the ability to create autonomous workspaces from a natural language prompt to a live preview with streaming progress. Key capabilities include Monaco-based code editing, real-time WebSocket streaming, and responsive UI design. The business vision is to provide a comprehensive, AI-powered development environment that streamlines the coding process and enhances learning.
 
 ## User Preferences
 - **Communication:** Simple, everyday language
@@ -41,74 +16,6 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 - **Monaco Editor:** Safe disposal pattern with optional chaining (`d?.dispose?.()`) for all enhancement classes
 - **Documentation:** Ruthlessly remove obsolete/misleading docs - maintain technical honesty
 
-## Recent Changes
-
-### 2025-11-21 (Part 3): Live Testing & Documentation Consolidation
-**Production Readiness Testing (HONEST ASSESSMENT)**:
-- ✅ **Live Test 1:** Stripe Worker - Code updated to billing.meterEvents.create (API 2025-08-27.basil), type guards verified, retry logic tested (expires at 12:37 with exponential backoff)
-- ✅ **Live Test 3:** Backend APIs - Auth (register/login), Projects CRUD all functional via curl
-- ✅ **Live Test 7:** Autonomous Bootstrap - 214ms response, project/session created, async AI plan started (kimi-k2-0711-preview)
-- ⚠️ **Live Test 4-6:** Frontend UI - Playwright BLOCKED by overlays intercepting pointer events (Agent chat, Terminal, Monaco editor inaccessible)
-- ⚠️ **WebSocket Code Gen:** Bootstrap verified, plan generation started, but full code generation NOT verified end-to-end
-
-**Documentation Consolidation**:
-- ✅ Created **PRODUCTION-READINESS-REPORT.md** - Single authoritative source of truth (400+ lines)
-- ✅ Deleted 34 redundant files (6× CSRF, 7× DEPLOYMENT, 6× FORTUNE-500, 3× HONEST_STATUS, 5× TESTING, 4× SUMMARY, 3× duplicates)
-- ✅ Reduced from 64 → 31 markdown files in root directory
-- ✅ **HONEST 75% Production-Ready Status** documented with test evidence
-
-**Known Gaps**:
-- ❌ Frontend UI overlays prevent automated testing (z-index debugging required)
-- ❌ Stripe API key expired (sk_live_***JB6KKr) - test key needed for billing verification
-- ❌ SendGrid 401 Unauthorized - valid key needed for email verification
-- ❌ Redis production config untested (no instance available in dev environment)
-
-### 2025-11-21 (Part 2): Stripe Worker & Redis Configuration Fixes
-**Stripe Usage Worker (PRODUCTION READY)**:
-- ✅ Updated Stripe API version: 2024-11-20.acacia → 2025-08-27.basil
-- ✅ Fixed atomic queue claim with robust cross-adapter type guards: `Array.isArray(result) ? result : result.rows || []`
-- ✅ Corrected all field names to snake_case in catch blocks (subscription_id, metering_id, cost_usd, max_attempts)
-- ✅ Enhanced error logging: PostgresError symbol properties properly extracted (message, stack, code, detail)
-- ✅ **VERIFIED**: Worker runs every 30s without errors - "No pending Stripe queue items to process"
-- ✅ **ARCHITECT APPROVED**: "Satisfy the stated objectives and operate correctly in the current environment"
-
-**Redis Development Configuration (PRODUCTION READY)**:
-- ✅ Simplified config logic: `REDIS_ENABLED` defaults to false in development, true in production
-- ✅ redis-session-manager.ts checks `config.redis.enabled` before connecting
-- ✅ redis-cache.service.ts checks `config.redis.enabled` before connecting
-- ✅ **VERIFIED**: Zero SSL retry errors - logs confirm "Redis disabled in configuration"
-- ✅ **ARCHITECT APPROVED**: "Services short-circuit when false, runtime logs confirm Redis remains disabled"
-
-**TypeScript LSP Diagnostics**: ✅ ZERO errors across entire codebase
-
-### 2025-11-21 (Part 1): Documentation Cleanup & WebSocket Fixes
-**Removed Obsolete Documentation**:
-- ❌ **VS-CODE-PARITY-COMPLETE.md** - Claimed 95% VS Code parity but used mock Git data and null Monaco providers (not production-ready)
-- ❌ **TEST-AI-AGENT-LIVE.md** - Obsolete guide suggesting features to implement that already exist (executeAutonomousPlan: 1144 lines, file ops: 626 lines, command exec: 490 lines)
-- ❌ **WORKSPACE_PANELS_VERIFICATION.md** - Referenced non-existent files (EditorPage.tsx instead of Editor.tsx), wrong line numbers, claimed "100% verified" with 4 TypeScript errors existing, never tested on web/tablet/mobile
-- ❌ **VIBE_CREATION_FLOW.md** - Claimed "AI-powered autonomous code generation" but uses simple keyword matching (lines 143-191), claimed "Production-Ready (Architect-Approved)" but Architect confirmed FAIL, claimed "Fortune 500 Enterprise-Grade" but never tested web/tablet/mobile, all KPIs unverified
-
-**WebSocket Critical Fixes**:
-- ✅ Fixed 3× `broadcastToProject()` errors in workspace-bootstrap.router.ts - replaced with correct `broadcast(message, projectId)` signature
-- ✅ AgentSessionCache production-ready with Redis + in-memory fallback (10K LRU)
-- ✅ HttpUpgradeResponder for reliable HTTP error framing
-
-**Current State of Git/Monaco Features**:
-- **Git Components** (client/src/components/git/): 1,868 lines total
-  - ⚠️ BranchManager.tsx, GitGraph.tsx, MergeConflictResolver.tsx, VisualDiffEditor.tsx, GitBlameDecorator.tsx
-  - ⚠️ **Status**: Demo UI with hardcoded mock data - NOT connected to real Git API endpoints
-  - ⚠️ **Production Requirement**: Replace mock data with `/api/projects/:id/git/*` backend integrations
-- **Monaco Enhancements** (client/src/lib/monaco-features-enhancement.ts): 603 lines
-  - ✅ 6 feature classes: MultiCursor, CodeNavigation, CodeRefactoring, AdvancedSearch, IntelliSense, MonacoFeaturesEnhancement
-  - ⚠️ Some providers return null - defers to default Monaco behavior
-  - ✅ 30+ keyboard shortcuts registered and functional
-
-**Known Issues**:
-- 4 TypeScript diagnostics remaining (non-blocking):
-  - diff-match-patch missing types declaration
-  - Drizzle ORM overload mismatches in file-operations service
-  - ProcessEnv type incompleteness in command-execution service
-
 ## System Architecture
 
 ### UI/UX Decisions
@@ -118,17 +25,10 @@ The frontend uses Shadcn/UI with Tailwind CSS for responsive component styling a
 The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Wouter. The backend is a Node.js and Express.js application in TypeScript, utilizing Drizzle ORM for PostgreSQL and Passport.js for authentication, following a RESTful API design. Real-time services for terminal, collaborative editing (Y.js), and build logs are powered by WebSockets. AI optimization infrastructure includes a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. UUIDs identify projects, and environment variables are encrypted using AES-256-GCM. Backend implements SSE streaming with buffered JSON parsing for reliable code generation.
 
 ### Feature Specifications
-Key features include a Monaco Code Editor with enhancements (Git UI components with demo data, multi-cursor editing, code navigation, refactoring, advanced search, IntelliSense with partial provider support), an interactive terminal (xterm.js), file management, real-time collaboration, robust authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager with encryption, a Logs Viewer, and a Debugger UI (VSCode Debug Adapter Protocol integration conceptual). The responsive UI adapts to desktop, tablet, and mobile devices (cross-device testing pending).
+Key features include a Monaco Code Editor with enhancements (Git UI components with demo data, multi-cursor editing, code navigation, refactoring, advanced search, IntelliSense with partial provider support), an interactive terminal (xterm.js), file management, real-time collaboration, robust authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager with encryption, a Logs Viewer, and a Debugger UI (VSCode Debug Adapter Protocol integration conceptual). The responsive UI adapts to desktop, tablet, and mobile devices.
 
 **Autonomous Workspace Creation (Replit-Style Flow):**
-The platform implements autonomous workspace creation from natural language prompts (end-to-end validation pending). The intended flow:
-1. **Bootstrap API Call:** `POST /api/workspace/bootstrap` immediately creates a project and agent session, returning a token.
-2. **Instant Redirect:** Client is redirected to `/ide/:id?bootstrap=token`.
-3. **Background Plan Generation:** An AI plan is generated asynchronously with multi-provider fallback.
-4. **WebSocket Connection:** `AutonomousWorkspaceViewer` connects to `/ws/agent` for real-time progress display.
-5. **Autonomous Execution:** `agentOrchestrator.executeAutonomousPlan()` autonomously generates all files and code.
-6. **Live Preview:** A preview tab opens by default, showing the application building in real-time.
-7. **Agent Integration:** `ReplitAgent` receives the `initialPrompt` and continues autonomous development.
+The platform implements autonomous workspace creation from natural language prompts. The intended flow involves a Bootstrap API call, client redirection to the IDE, background AI plan generation with multi-provider fallback, a WebSocket connection for real-time progress, autonomous execution of the plan to generate files and code, a live preview tab, and continuous autonomous development by an integrated agent.
 
 ### System Design Choices
 A PostgreSQL database stores user data, project hierarchies, AI agent sessions, deployment history, subscription management, and AI optimization monitoring. Security measures include CSRF protection, input sanitization, tier-based rate limiting, API versioning, and session-based authentication. The AI agent system provides server-sent event streaming, multi-provider AI model selection, and a database-backed conversation history, incorporating circuit breakers and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API, including a Prometheus metrics endpoint. A two-tier database API architecture is used: an Admin Database API and a Project Data API, with integrated security features like secret value masking and access control. Docker builds are optimized for small image sizes.
@@ -142,7 +42,6 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 - **Moonshot AI:** Kimi K2 (kimi-k2-0711-preview, kimi-k2-0905-preview), Kimi K2 Thinking
 - **xAI:** Grok 4, Grok 4 Fast
 - **Groq:** Mixtral 8x7B
-- **Provider Fallback Chain:** `['kimi-k2-0711-preview', 'gemini-2.5-flash', 'grok-4-fast', 'claude-haiku-4-5-20251015', 'gpt-5.1']`
 
 ### Infrastructure Services
 - **PostgreSQL:** Neon serverless
