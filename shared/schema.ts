@@ -91,7 +91,7 @@ export const sessions = pgTable(
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   username: varchar("username").unique(),
-  passwordHash: varchar("password_hash"), // For bcrypt hashed passwords
+  password: text("password"), // ✅ ALIGNED WITH DB: DB has 'password' (text) not 'password_hash' (varchar)
   email: varchar("email").unique(),
   displayName: varchar("display_name"),
   firstName: varchar("first_name"),
