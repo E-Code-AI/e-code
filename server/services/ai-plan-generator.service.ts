@@ -84,8 +84,11 @@ export class AIPlanGeneratorService {
    * @returns Sanitized JSON string ready for JSON.parse()
    */
   private sanitizePlanResponse(jsonString: string): any {
-    // Step 1: Strip code fences (```json ... ```)
+    // Step 1: Normalize whitespace and strip code fences (```json ... ```)
+    // CRITICAL FIX: Gemini 2.5 Pro returns responses with leading newlines (\n```json)
+    // Must trim BEFORE fence stripping to handle this case
     jsonString = jsonString
+      .trimStart()  // Remove leading whitespace FIRST
       .replace(/^```json\s*/i, '')
       .replace(/```\s*$/i, '')
       .trim();
