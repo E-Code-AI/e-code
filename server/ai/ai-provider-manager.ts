@@ -121,26 +121,36 @@ export const AI_MODELS: AIModel[] = [
     costPer1kTokens: 0.001
   },
   
-  // Google Gemini Models - VERIFIED WORKING (Nov 23, 2025)
+  // Google Gemini Models - LATEST AVAILABLE via Public API (Nov 23, 2025)
   // Source: https://ai.google.dev/gemini-api/docs/models
-  // ✅ TESTED: Both models work correctly with template literal sanitizer
+  // Note: Gemini 1.x retired Apr 2025. Gemini 3 only available via Vertex AI (not public API)
+  // ✅ TESTED: Both gemini-2.5-pro and gemini-2.5-flash verified working
+  {
+    id: 'gemini-2.5-pro',
+    name: 'Gemini 2.5 Pro',
+    provider: 'gemini',
+    description: '✅ Latest flagship (public API) - adaptive thinking for complex reasoning, code, math (13s avg)',
+    maxTokens: 1000000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.00125
+  },
   {
     id: 'gemini-2.5-flash',
     name: 'Gemini 2.5 Flash',
     provider: 'gemini',
-    description: 'Latest stable - improved price-performance with hybrid reasoning (Nov 2025)',
+    description: '✅ Best price-performance - 5x faster than Pro (2.5s avg) with excellent quality',
     maxTokens: 1000000,
     supportsStreaming: true,
     costPer1kTokens: 0.000075
   },
   {
-    id: 'gemini-2.0-flash-001',
-    name: 'Gemini 2.0 Flash',
+    id: 'gemini-2.5-flash-lite',
+    name: 'Gemini 2.5 Flash Lite',
     provider: 'gemini',
-    description: 'Fast & stable - low latency (735ms avg) with 1M token context, native tool use (Dec 2024)',
+    description: 'Ultra cost-efficient - optimized for high-throughput and cost savings (GA)',
     maxTokens: 1000000,
     supportsStreaming: true,
-    costPer1kTokens: 0.000075
+    costPer1kTokens: 0.00005
   },
   
   // ✅ 40-YEAR ENGINEERING FIX: Moonshot AI - CORRECT Model IDs (November 2025)

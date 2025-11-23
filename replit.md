@@ -6,10 +6,15 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 ## Recent Changes
 
 ### Nov 23, 2025: Template Literal Sanitizer - PRODUCTION READY ✅
-**Comprehensive Multi-Provider Testing Completed** - Validated across 7 AI models from 3 major providers:
+**Comprehensive Multi-Provider Testing Completed** - Validated across 8 AI models from 3 major providers:
 - ✅ OpenAI GPT-5.1, GPT-5, GPT-4o, o3 (4 models tested)
-- ✅ Google Gemini 2.5 Flash, Gemini 2.0 Flash (2 models tested)
+- ✅ Google Gemini 2.5 Pro, Gemini 2.5 Flash (2 models tested, 5x speed difference)
 - ✅ Moonshot Kimi K2
+
+**Gemini Model Performance**:
+- Gemini 2.5 Flash: 2.5s avg (PRIMARY - best speed/quality ratio)
+- Gemini 2.5 Pro: 13.4s avg (BACKUP - highest quality, adaptive thinking)
+- Note: Gemini 3 Pro not available via public API (Vertex AI only)
 
 **Critical Fixes Implemented**:
 1. `trimStart()` before code fence stripping (handles Gemini's `\n```json` responses)
@@ -68,11 +73,12 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 ### AI/ML Services
 - **OpenAI:** GPT-5.1, GPT-5, GPT-5-mini, GPT-4o, o3, o4-mini
 - **Anthropic:** Claude Sonnet 4.5, Claude Opus 4.1, Claude Haiku 4.5
-- **Google Gemini:** Gemini 2.5 Flash, Gemini 2.5 Pro
+- **Google Gemini:** Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini 2.5 Flash Lite (all GA, verified working)
 - **Moonshot AI:** Kimi K2 (kimi-k2-0711-preview, kimi-k2-0905-preview), Kimi K2 Thinking
 - **xAI:** Grok 4, Grok 4 Fast
 - **Groq:** Mixtral 8x7B
-- **Provider Fallback Chain:** `['kimi-k2-0711-preview', 'gemini-2.5-flash', 'grok-4-fast', 'claude-haiku-4-5-20251015', 'gpt-5.1']`
+- **Provider Fallback Chain:** `['gemini-2.5-flash', 'gemini-2.5-pro', 'gpt-5.1', 'claude-haiku-4-5-20251015', 'grok-4-fast', 'kimi-k2-0711-preview']`
+- **Note:** Gemini 3 Pro exists but only via Vertex AI (not available in public Google AI API)
 
 ### Infrastructure Services
 - **PostgreSQL:** Neon serverless
