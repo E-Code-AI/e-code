@@ -6,9 +6,9 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 ## Recent Changes
 
 ### Nov 23, 2025: Template Literal Sanitizer - PRODUCTION READY ✅
-**Comprehensive Multi-Provider Testing Completed** - Validated across 6 AI models from 3 major providers:
+**Comprehensive Multi-Provider Testing Completed** - Validated across 7 AI models from 3 major providers:
 - ✅ OpenAI GPT-5.1, GPT-5, GPT-4o, o3 (4 models tested)
-- ✅ Google Gemini 2.5 Flash
+- ✅ Google Gemini 2.5 Flash, Gemini 2.0 Flash (2 models tested)
 - ✅ Moonshot Kimi K2
 
 **Critical Fixes Implemented**:
