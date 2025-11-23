@@ -190,8 +190,12 @@ export class AIPlanGeneratorService {
       const files = await this.storage.getProjectFiles(projectId);
       const existingFilesList = files.map(f => f.path).join('\n');
 
+      // ✅ TWO-PHASE FIX (Nov 23, 2025): Request file OUTLINES only, not full content
+      // This prevents JSON-in-JSON parsing failures when package.json content embeds in plan JSON
+      // File content will be generated in Phase 2 by the orchestrator
+      
       // Condensed system prompt for providers with size limits (like Gemini)
-      const systemPromptCondensed = `You are a software architect. Create a JSON execution plan for building software projects. Respond ONLY with valid JSON using this format: {"summary":"","technologies":[],"estimatedTime":"","tasks":[{"id":"","title":"","description":"","type":"file_create|file_edit|command|install_package|config","estimatedTime":"","dependencies":[],"priority":"high|medium|low","files":[{"path":"","content":"","language":""}],"packages":[],"commands":[]}],"riskAssessment":{"level":"low|medium|high","factors":[]}}. Requirements: Complete production-ready code, no placeholders, include all config files, specify exact package versions, order by dependencies.`;
+      const systemPromptCondensed = `You are a software architect. Create a JSON execution plan for building software projects. Respond ONLY with valid JSON using this format: {"summary":"","technologies":[],"estimatedTime":"","tasks":[{"id":"","title":"","description":"","type":"file_create|file_edit|command|install_package|config","estimatedTime":"","dependencies":[],"priority":"high|medium|low","files":[{"path":"","outline":"brief description of file purpose","language":""}],"packages":[],"commands":[]}],"riskAssessment":{"level":"low|medium|high","factors":[]}}. Requirements: Production-ready structure, include all config files, specify exact package versions, order by dependencies. IMPORTANT: Use 'outline' not 'content' for files.`;
       
       // Full system prompt for providers without size limits
       const systemPromptFull = `You are an expert software architect and project planner. Your task is to create a detailed, executable plan for building software projects.
@@ -206,6 +210,7 @@ Given a user's goal, create a comprehensive execution plan with the following:
 
 **CRITICAL**: Respond ONLY with valid JSON in this exact format.
 ⚠️ IMPORTANT: Use DOUBLE QUOTES for all strings, NOT backticks or template literals!
+⚠️ NEW: Use 'outline' instead of 'content' for files (content generated later)
 
 {
   "summary": "Brief overview of what will be built",
@@ -223,11 +228,11 @@ Given a user's goal, create a comprehensive execution plan with the following:
       "files": [
         {
           "path": "path/to/file.ext",
-          "content": "complete file content here - use \\n for newlines, NO backticks",
+          "outline": "Brief description of what this file should contain (2-3 sentences)",
           "language": "javascript"
         }
       ],
-      "packages": ["package1", "package2"],
+      "packages": ["package1@version", "package2@version"],
       "commands": ["npm install", "npm run build"]
     }
   ],
@@ -238,12 +243,12 @@ Given a user's goal, create a comprehensive execution plan with the following:
 }
 
 **Requirements:**
-- Generate COMPLETE, PRODUCTION-READY code for all files
-- NO placeholders, NO TODOs, NO incomplete code
-- Include ALL necessary configuration files (package.json, tsconfig.json, etc.)
-- Specify exact package names and versions
-- Order tasks by dependencies (earlier tasks should be completed before later ones)
-- Be specific about file paths and content
+- Create production-ready STRUCTURE with clear file outlines
+- Include ALL necessary files (source, config, etc.) with their paths
+- Specify exact package names with versions (e.g., "react@18.2.0")
+- Order tasks by dependencies (earlier tasks before later ones)
+- Be specific about file paths and purposes
+- DO NOT include full file content in the plan (it will be generated later)
 
 **Project Context:**
 - Language: ${project.language}
@@ -255,11 +260,12 @@ Given a user's goal, create a comprehensive execution plan with the following:
       const userPrompt = `Create a detailed execution plan for: ${goal}
 
 Remember:
-1. Provide COMPLETE file contents (not snippets)
-2. Include ALL necessary files (source, config, etc.)
-3. List exact package names
+1. List ALL necessary files with their paths and PURPOSE (2-3 sentence outline)
+2. Include ALL config files (package.json, tsconfig.json, etc.)
+3. Specify exact package names with versions
 4. Order tasks by dependencies
-5. Respond with ONLY valid JSON`;
+5. Use 'outline' field (NOT 'content') for files
+6. Respond with ONLY valid JSON`;
 
       // ✅ PRODUCTION FIX: Multi-provider fallback chain with JSON parsing retry
       // Try providers in order: OpenAI → Gemini → xAI → Anthropic
