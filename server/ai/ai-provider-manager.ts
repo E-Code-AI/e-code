@@ -121,15 +121,13 @@ export const AI_MODELS: AIModel[] = [
     costPer1kTokens: 0.001
   },
   
-  // Google Gemini Models - LATEST AVAILABLE via Public API (Nov 23, 2025)
+  // Google Gemini Models - LATEST NOVEMBER 2025
   // Source: https://ai.google.dev/gemini-api/docs/models
-  // Note: Gemini 1.x retired Apr 2025. Gemini 3 only available via Vertex AI (not public API)
-  // ✅ TESTED: Both gemini-2.5-pro and gemini-2.5-flash verified working
   {
     id: 'gemini-2.5-pro',
     name: 'Gemini 2.5 Pro',
     provider: 'gemini',
-    description: '✅ Latest flagship (public API) - adaptive thinking for complex reasoning, code, math (13s avg)',
+    description: 'Stable release with adaptive thinking - 2M token context coming soon (Nov 2025)',
     maxTokens: 1000000,
     supportsStreaming: true,
     costPer1kTokens: 0.00125
@@ -138,19 +136,10 @@ export const AI_MODELS: AIModel[] = [
     id: 'gemini-2.5-flash',
     name: 'Gemini 2.5 Flash',
     provider: 'gemini',
-    description: '✅ Best price-performance - 5x faster than Pro (2.5s avg) with excellent quality',
+    description: 'Hybrid reasoning - thinks before it speaks with low latency (Nov 2025)',
     maxTokens: 1000000,
     supportsStreaming: true,
     costPer1kTokens: 0.000075
-  },
-  {
-    id: 'gemini-2.5-flash-lite',
-    name: 'Gemini 2.5 Flash Lite',
-    provider: 'gemini',
-    description: 'Ultra cost-efficient - optimized for high-throughput and cost savings (GA)',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.00005
   },
   
   // ✅ 40-YEAR ENGINEERING FIX: Moonshot AI - CORRECT Model IDs (November 2025)
@@ -710,22 +699,12 @@ export class AIProviderManager {
     // ✅ CRITICAL FIX: GPT-5 family and o-series use max_completion_tokens, older models use max_tokens
     const usesMaxCompletionTokens = modelId.startsWith('gpt-5') || modelId.startsWith('o3') || modelId.startsWith('o4');
     
-    // ✅ CRITICAL FIX: Many GPT-5 family models don't support temperature parameter
-    // Models that support temperature: gpt-5.1, gpt-4o, gpt-4o-mini, gpt-4-turbo
-    // Models that need reasoning_effort instead: gpt-5, gpt-5-mini, gpt-5-nano
-    const supportsTemperature = modelId === 'gpt-5.1' || modelId === 'gpt-4o' || modelId === 'gpt-4o-mini' || modelId.startsWith('gpt-4-turbo');
-    const needsReasoningEffort = modelId === 'gpt-5' || modelId === 'gpt-5-mini' || modelId === 'gpt-5-nano';
-    
     const completionParams: any = {
       model: modelId,
       messages: openaiMessages,
       stream: true,
+      temperature: options?.temperature || 0.7,
     };
-    
-    // Only add temperature if the model supports it
-    if (supportsTemperature && options?.temperature !== undefined) {
-      completionParams.temperature = options.temperature;
-    }
     
     // Use correct token parameter based on model family
     if (usesMaxCompletionTokens) {
@@ -734,11 +713,7 @@ export class AIProviderManager {
       completionParams.max_tokens = options?.max_tokens || 4000;
     }
 
-    // Add reasoning_effort for models that need it (gpt-5, gpt-5-mini, gpt-5-nano)
-    if (needsReasoningEffort) {
-      completionParams.reasoning_effort = options?.reasoning_effort || 'medium';
-    } else if (options?.reasoning_effort && modelId.startsWith('gpt-5')) {
-      // For other gpt-5 models, add reasoning_effort if explicitly provided
+    if (options?.reasoning_effort && modelId.startsWith('gpt-5')) {
       completionParams.reasoning_effort = options.reasoning_effort;
     }
 

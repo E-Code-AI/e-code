@@ -131,7 +131,7 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
               Choose your preferred AI model for code generation ({availableModels.length} available)
             </p>
             <Select value={currentModel || undefined} onValueChange={handleModelChange}>
-              <SelectTrigger className="w-full min-h-[44px]" data-testid="select-ai-model">
+              <SelectTrigger className="w-full" data-testid="select-ai-model">
                 <SelectValue placeholder="Select AI model..." />
               </SelectTrigger>
               <SelectContent>
@@ -185,7 +185,7 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
         <span className="text-sm font-medium">AI Model:</span>
       </div>
       <Select value={currentModel || undefined} onValueChange={handleModelChange}>
-        <SelectTrigger className="w-64 min-h-[44px] bg-white/20 backdrop-blur-md text-white border-white/30 focus:border-white/50" data-testid="select-ai-model-inline">
+        <SelectTrigger className="w-64 bg-white/20 backdrop-blur-md text-white border-white/30 focus:border-white/50" data-testid="select-ai-model-inline">
           <SelectValue placeholder="Select AI model..." />
         </SelectTrigger>
         <SelectContent>
