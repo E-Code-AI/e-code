@@ -3,6 +3,7 @@ import { type IStorage, getStorage } from '../storage';
 import type { Project } from '@shared/schema';
 import { createLogger } from '../utils/logger';
 import * as jsonc from 'jsonc-parser';
+import { replaceTemplateLiterals, restoreTemplateLiterals } from '../utils/template-literal-sanitizer';
 
 const logger = createLogger('AIPlanGenerator');
 
@@ -103,73 +104,43 @@ export class AIPlanGeneratorService {
     
     // ✅ ARCHITECT RECOMMENDATION (Nov 23, 2025): Template literal handling
     // PROBLEM: GPT-5.1 generates code with ${...} which breaks JSON parsing
-    // SOLUTION: Replace ONLY the ${  token (not the full expression) with a safe placeholder
-    // This avoids injecting quotes into JSON strings while preserving template literal content
+    // SOLUTION: Brace-balanced scanner that captures full ${...} expressions
+    // Only processes ${...} inside JSON string values to avoid corrupting JSON syntax
     
-    // Step 2: Pre-process to escape template literal markers
-    // Replace UNESCAPED ${ with safe token (avoid \\${ which would create invalid escape sequences)
-    const dollarBraceToken = '___DOLLAR_BRACE___';
-    // Use negative lookbehind to avoid matching ${  preceded by backslash
-    const preprocessed = jsonString.replace(/(?<!\\)\$\{/g, dollarBraceToken);
+    // Step 2: Replace template literals with safe sentinels using brace-balanced scanner
+    const { processed, templates } = replaceTemplateLiterals(jsonString);
     
     // Step 3: Parse using jsonc-parser (tolerant of comments, trailing commas)
     const errors: jsonc.ParseError[] = [];
     try {
-      const parsed = jsonc.parse(preprocessed, errors, { allowTrailingComma: true });
+      const parsed = jsonc.parse(processed, errors, { allowTrailingComma: true });
       
-      // Step 4: Restore template literal markers in the parsed AST
-      const restored = this.restoreTemplateLiteralMarkers(parsed, dollarBraceToken);
+      // Check for parse errors
+      if (errors.length > 0) {
+        throw new Error(`JSON parse errors: ${errors.map(e => e.error).join(', ')}`);
+      }
+      
+      // Step 4: Restore template literals from sentinels in parsed AST
+      const restored = restoreTemplateLiterals(parsed, templates);
       
       // Step 5: Repair any double-encoded nested JSON strings
       const repaired = this.repairNestedJSON(restored);
       
       // ✅ CRITICAL: Return OBJECT, not JSON string
-      // This avoids re-serializing ${  which would break downstream parsing
+      // This avoids re-serializing ${...} which would break downstream parsing
       return repaired;
     } catch (parseError: any) {
-      // If parse fails, return original - will fail later with better error context
-      logger.warn('[sanitizePlanResponse] JSON parse failed, returning as-is', {
+      // ✅ CRITICAL: Throw instead of returning raw string
+      // This ensures upstream never attempts to re-parse malformed ${...} content
+      logger.error('[sanitizePlanResponse] JSON parse failed - plan cannot be loaded', {
         error: parseError.message,
         position: parseError.message?.match(/position (\d+)/)?.[1],
         preview: jsonString.substring(0, 200)
       });
-      return jsonString;
+      throw new Error(`Failed to parse plan JSON: ${parseError.message}`);
     }
   }
 
-  /**
-   * Recursively restore template literal markers (${ ) from safe token
-   * 
-   * After parsing, walks the object and replaces ___DOLLAR_BRACE___ with ${
-   * This preserves template literals in generated code
-   * 
-   * @param obj - Parsed JSON object
-   * @param token - Safe token used during replacement
-   * @returns Object with template literal markers restored
-   */
-  private restoreTemplateLiteralMarkers(obj: any, token: string): any {
-    // Base case: string value
-    if (typeof obj === 'string') {
-      return obj.replace(new RegExp(token, 'g'), '${');
-    }
-    
-    // Recursive case: array
-    if (Array.isArray(obj)) {
-      return obj.map(item => this.restoreTemplateLiteralMarkers(item, token));
-    }
-    
-    // Recursive case: object
-    if (obj && typeof obj === 'object') {
-      const result: any = {};
-      for (const [key, value] of Object.entries(obj)) {
-        result[key] = this.restoreTemplateLiteralMarkers(value, token);
-      }
-      return result;
-    }
-    
-    // Primitive types (number, boolean, null)
-    return obj;
-  }
 
   /**
    * ✅ ARCHITECT SOLUTION: Recursively repair double-encoded JSON strings
