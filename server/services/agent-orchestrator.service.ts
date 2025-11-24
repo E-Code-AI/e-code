@@ -1352,12 +1352,21 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       }, projectId);
       
       // 4. Convert plan tasks to workflow steps using existing buildStepConfig method
+      // ✅ FIX (Nov 24, 2025): Create task ID mapping table (task-X → step-X)
+      const taskIdMapping: Record<string, string> = {};
+      executionPlan.tasks.forEach((task: any, index: number) => {
+        if (task.id) {
+          taskIdMapping[task.id] = `step-${index + 1}`;
+        }
+      });
+      
       const workflowSteps = executionPlan.tasks.map((task: any, index: number) => ({
         id: `step-${index + 1}`,
         name: task.title,
         type: this.mapTaskTypeToWorkflowType(task.type),
         config: this.buildStepConfig(task),
-        dependencies: task.dependencies || [],
+        // ✅ FIX: Map dependencies from task-X to step-X IDs
+        dependencies: (task.dependencies || []).map((dep: string) => taskIdMapping[dep] || dep),
         status: 'pending' as const
       }));
       
