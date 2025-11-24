@@ -42,23 +42,30 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 - ✅ Build automation: Task-5 runs `npm install` + `npm run dev` commands
 - ✅ **Architect-verified:** All dependencies match generated code, no missing packages
 
-**Complete End-to-End Flow:**
-1. User enters prompt on Landing page
-2. Landing calls POST `/api/workspace/bootstrap` with prompt
-3. Bootstrap API returns {projectId, sessionId, bootstrapToken} in ~200ms
-4. Landing redirects to `/ide/:projectId?bootstrap=:jwt_token`
-5. IDE detects bootstrap param, renders AutonomousWorkspaceViewer modal
-6. Modal decodes JWT, connects to `/ws/agent?projectId=X&sessionId=Y`
-7. Backend generates plan via AI (or fallback if all providers fail)
-8. Plan stored in `agent_plans` table with outline-based file descriptors
-9. Orchestrator creates workflow with taskId references (no content duplication)
-10. Workflow engine fetches full task data from plan store
-11. **Phase 2 executor** expands outlines → concrete file content via template matching
-12. agentFileOperations writes files to disk
-13. Command task executes `npm install` and `npm run dev`
-14. Modal shows real-time progress via WebSocket events
-15. Modal closes, query invalidation triggers file tree refresh
-16. Live workspace with functioning Vite dev server
+**End-to-End Flow Status (BLOCKED - November 24, 2025):**
+
+**Infrastructure Fixes Applied:**
+1. ✅ WebSocket race condition fixed: Synchronous socket marking in prependListener (server/index.ts:564)
+2. ✅ Multi-file task expansion: Orchestrator flatMap creates one step per file (agent-orchestrator.service.ts:987-1016)
+3. ✅ Schema alignment: agent_workflows accepts 'parallel'/'loop' types (shared/schema.ts:2202)
+
+**Remaining Blockers (Architect-Identified November 24, 2025):**
+1. ❌ **Auth Gate**: Landing redirects anonymous users to `/register?redirect=build-from-prompt` BEFORE bootstrap API is called
+   - Root cause: handleStartBuilding (Landing.tsx:196-205) checks `if (user)` → redirects if not logged in
+   - Impact: No bootstrap request ever reaches server for anonymous users
+2. ❌ **WebSocket Connection Failure**: Agent WebSocket validator rejects upgrades without logged-in session
+   - Root cause: Socket never marked as handled during auth validation → Upgrade Guard destroys it
+   - Impact: Modal shows "Connection error" and "Disconnected" status
+3. ❌ **Database Type Mismatch**: agent_audit_trail INSERT failures prevent workflow state persistence
+   - Root cause: userId/sessionId type mismatches (11 LSP errors)
+   - Impact: Workflow execution crashes, progress stuck at 0%
+4. ⚠️ Modal remains at "Initializing workspace..." with no files created
+5. ⚠️ Test credentials (testuser@test.com/testpass123) work for auth, but bootstrap flow still fails
+
+**Architect Recommendations (Next Actions):**
+1. **Auth Strategy**: Decide whether autonomous bootstrap must run for guests OR ensure authenticated flow
+2. **WebSocket Graceful Failure**: Mark socket even when auth fails, emit diagnostic logs
+3. **Schema Fix**: Align agent_audit_trail Drizzle types with database column definitions
 
 **AI Provider Resilience:**
 - ⚠️ External dependency on AI provider availability (Gemini stalls, GPT-5.1 timeouts possible, Claude credits)
