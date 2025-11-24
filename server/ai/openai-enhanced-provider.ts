@@ -4,7 +4,20 @@
  */
 
 import OpenAI from 'openai';
-import { AIProvider, ChatMessage } from './ai-provider';
+
+interface AIProvider {
+  name: string;
+  generateCompletion(prompt: string, systemPrompt: string, maxTokens?: number, temperature?: number, userId?: number): Promise<string>;
+  generateChat(messages: ChatMessage[], maxTokens?: number, temperature?: number, userId?: number): Promise<string>;
+  generateCodeWithUnderstanding(code: string, language: string, instruction: string, userId?: number): Promise<string>;
+  analyzeCode(code: string, language: string): Promise<any>;
+  isAvailable(): boolean;
+}
+
+interface ChatMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string | any[];
+}
 import { createLogger } from '../utils/logger';
 import { aiBillingService } from '../services/ai-billing-service';
 
