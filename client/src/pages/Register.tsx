@@ -128,13 +128,12 @@ export default function Register() {
       const urlParams = new URLSearchParams(window.location.search);
       const shouldRedirectToAgent = urlParams.get('build') === 'true';
       
-      setTimeout(() => {
-        if (shouldRedirectToAgent && pendingAppDescription) {
-          navigate('/ai-agent/studio?mode=plan');
-        } else {
-          navigate('/dashboard');
-        }
-      }, 1500);
+      // Redirect immediately after registration success
+      if (shouldRedirectToAgent && pendingAppDescription) {
+        navigate('/ai-agent/studio?mode=plan');
+      } else {
+        navigate('/');
+      }
     } catch (error: any) {
       console.error('Registration error:', error);
       

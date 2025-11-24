@@ -85,7 +85,7 @@ export class TemplateMarketplaceService {
   private async initializeFuzzySearch() {
     try {
       // Initialize Fuse.js for fuzzy searching
-      const allTemplates = await db.select().from(templates).where(eq(templates.isPublished, true));
+      const allTemplates = await db.select().from(templates).where(eq(templates.published, true));
       
       this.fuseInstance = new Fuse(allTemplates, {
         keys: ['name', 'description', 'tags', 'category', 'language', 'framework'],
@@ -139,7 +139,7 @@ export class TemplateMarketplaceService {
       const conditions = [];
       
       // Always filter published templates
-      conditions.push(eq(templates.isPublished, true));
+      conditions.push(eq(templates.published, true));
 
       // Text search with fuzzy matching
       if (query) {
@@ -324,7 +324,7 @@ export class TemplateMarketplaceService {
       })
       .from(templates)
       .leftJoin(users, eq(templates.authorId, users.id))
-      .where(eq(templates.isPublished, true))
+      .where(eq(templates.published, true))
       .orderBy(desc(sql`score`))
       .limit(limit);
 
@@ -355,7 +355,7 @@ export class TemplateMarketplaceService {
         count: sql<number>`
           (SELECT COUNT(*) FROM ${templates} 
            WHERE ${templates.category} = ${templateCategories.slug} 
-           AND ${templates.isPublished} = true)
+           AND ${templates.published} = true)
         `.as('count')
       })
       .from(templateCategories)
@@ -388,7 +388,7 @@ export class TemplateMarketplaceService {
       })
       .from(templateTags)
       .innerJoin(templates, eq(templateTags.templateId, templates.id))
-      .where(eq(templates.isPublished, true))
+      .where(eq(templates.published, true))
       .groupBy(templateTags.tag)
       .orderBy(desc(sql`count`))
       .limit(limit);
@@ -522,7 +522,7 @@ export class TemplateMarketplaceService {
       .leftJoin(users, eq(templates.authorId, users.id))
       .where(and(
         not(eq(templates.id, templateId)),
-        eq(templates.isPublished, true)
+        eq(templates.published, true)
       ))
       .orderBy(desc(sql`score`), desc(templates.stars))
       .limit(limit);
@@ -629,7 +629,7 @@ export class TemplateMarketplaceService {
         featured: template.isFeatured,
         official: template.isOfficial,
         community: template.isCommunity,
-        published: template.isPublished,
+        published: template.published,
       },
       createdAt: template.createdAt,
       updatedAt: template.updatedAt,
