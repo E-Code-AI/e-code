@@ -27,7 +27,7 @@ interface AIModel {
 }
 
 interface AIModelSelectorProps {
-  variant?: 'inline' | 'card';
+  variant?: 'inline' | 'card' | 'hero';
   className?: string;
   onModelChange?: (modelId: string) => void;
 }
@@ -174,6 +174,101 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  // Hero variant - Large, prominent display for homepage
+  if (variant === 'hero') {
+    const currentModelData = availableModels.find(m => m.id === currentModel);
+    const ProviderIcon = currentModelData ? getProviderIcon(currentModelData.provider) : Sparkles;
+    const providerColor = currentModelData ? getProviderColor(currentModelData.provider) : 'bg-orange-500';
+
+    return (
+      <div className={`space-y-3 ${className}`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-white/90">
+            <Sparkles className="h-5 w-5" />
+            <span className="text-base font-semibold">Choose Your AI Model</span>
+          </div>
+          <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+            {availableModels.length} models available
+          </Badge>
+        </div>
+        
+        <Select value={currentModel || undefined} onValueChange={handleModelChange}>
+          <SelectTrigger 
+            className="w-full h-14 bg-white dark:bg-gray-900 text-foreground border-2 border-white/40 hover:border-white/60 transition-all shadow-lg"
+            data-testid="select-ai-model-hero"
+          >
+            {currentModelData ? (
+              <div className="flex items-center gap-3 w-full">
+                <div className={`w-3 h-3 rounded-full ${providerColor}`} />
+                <div className="flex-1 text-left">
+                  <div className="font-semibold text-base">{currentModelData.name}</div>
+                  <div className="text-xs text-muted-foreground">{currentModelData.description}</div>
+                </div>
+                {currentModelData.supportsStreaming && (
+                  <Badge variant="secondary" className="text-xs">
+                    <Zap className="h-3 w-3 mr-1" />
+                    Streaming
+                  </Badge>
+                )}
+              </div>
+            ) : (
+              <SelectValue placeholder="Select your preferred AI model..." />
+            )}
+          </SelectTrigger>
+          <SelectContent className="max-h-[400px]">
+            {availableModels.map((model) => {
+              const ModelIcon = getProviderIcon(model.provider);
+              const modelColor = getProviderColor(model.provider);
+              const isAvailable = model.available !== false;
+              return (
+                <SelectItem 
+                  key={model.id} 
+                  value={model.id} 
+                  data-testid={`select-model-${model.id}`}
+                  disabled={!isAvailable}
+                  className={!isAvailable ? 'opacity-50 cursor-not-allowed' : 'py-3'}
+                >
+                  <div className="flex items-center gap-3 py-1 w-full">
+                    <div className={`w-8 h-8 rounded-full ${modelColor} flex items-center justify-center`}>
+                      <ModelIcon className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold flex items-center gap-2">
+                        {model.name}
+                        {!isAvailable && (
+                          <Badge variant="destructive" className="text-xs">Not configured</Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate">{model.description}</div>
+                      {model.costPer1kTokens && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          ${model.costPer1kTokens.toFixed(4)} / 1K tokens
+                        </div>
+                      )}
+                    </div>
+                    {model.supportsStreaming && isAvailable && (
+                      <Badge variant="secondary" className="text-xs shrink-0">
+                        <Zap className="h-3 w-3 mr-1" />
+                        Streaming
+                      </Badge>
+                    )}
+                  </div>
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+
+        {currentModelData && (
+          <div className="flex items-center gap-2 text-sm text-white/80 bg-white/10 rounded-md px-3 py-2">
+            <CheckCircle2 className="h-4 w-4 text-green-400" />
+            <span>Using {currentModelData.name} for code generation</span>
+          </div>
+        )}
+      </div>
     );
   }
 
