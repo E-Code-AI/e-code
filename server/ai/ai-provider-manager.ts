@@ -4,6 +4,8 @@ import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { CircuitBreaker, RetryExecutor, isRetryableError } from './circuit-breaker';
 import { createStreamLimiter } from './stream-limiter';
+import { AGENT_SYSTEM_PROMPT, getSystemPromptForContext } from './prompts/agent-system-prompt';
+import { ContextWindowManager } from './context-window-manager';
 
 /**
  * Model configuration with provider metadata
@@ -447,15 +449,33 @@ export class AIProviderManager {
       temperature?: number; 
       reasoning_effort?: 'none' | 'low' | 'medium' | 'high';
       timeoutMs?: number;
+      context?: 'coding' | 'review' | 'explanation' | 'general';
     }
   ): AsyncGenerator<string> {
-    const messagesWithSystem = options?.system 
-      ? [{ role: 'system', content: options.system }, ...messages]
-      : messages;
+    // Get model for context window optimization
+    const model = this.getModel(modelId);
+    
+    // Inject system prompt if not provided
+    const systemPrompt = options?.system || getSystemPromptForContext(options?.context || 'general');
+    
+    // Check if messages already have system prompt
+    const hasSystemPrompt = messages.some(m => m.role === 'system');
+    
+    const messagesWithSystem = hasSystemPrompt
+      ? messages
+      : [{ role: 'system', content: systemPrompt }, ...messages];
+    
+    // Optimize for context window if model is available
+    const optimizedMessages = model 
+      ? new ContextWindowManager(model.maxTokens).optimizeConversationHistory(messagesWithSystem, {
+          preserveSystemMessages: true,
+          minRecentMessages: 10
+        })
+      : messagesWithSystem;
     
     // Try primary model first
     try {
-      yield* this.generateChatStreamWithRetry(modelId, messagesWithSystem, options);
+      yield* this.generateChatStreamWithRetry(modelId, optimizedMessages, options);
       return;
     } catch (primaryError: any) {
       console.log(`[AIProviderManager] Primary model ${modelId} failed, trying fallback chain...`);
@@ -492,7 +512,7 @@ export class AIProviderManager {
         try {
           console.log(`[AIProviderManager] Trying fallback: ${fallbackModelId} (provider: ${fallbackModel.provider})`);
           triedProviders.add(fallbackModel.provider);
-          yield* this.generateChatStreamWithRetry(fallbackModelId, messagesWithSystem, options);
+          yield* this.generateChatStreamWithRetry(fallbackModelId, optimizedMessages, options);
           console.log(`[AIProviderManager] ✓ Fallback successful: ${fallbackModelId}`);
           return;
         } catch (fallbackError: any) {

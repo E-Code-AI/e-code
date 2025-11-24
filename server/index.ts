@@ -315,6 +315,24 @@ app.get('/api/cors-health', async (_req, res) => {
     } catch (error) {
       console.error('[WORKING SERVER] Failed to register workspace bootstrap routes:', error);
     }
+
+    // ✅ TEMPLATES MARKETPLACE: Templates routes
+    try {
+      const templatesRouter = (await import('./routes/templates')).default;
+      app.use(templatesRouter);
+      console.log('[Templates Marketplace] Routes registered at /api/templates');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register templates routes:', error);
+    }
+
+    // ✅ AGENT CONTEXT: Repository overview routes
+    try {
+      const agentContextRouter = (await import('./agent/routes/agent-context')).default;
+      app.use(agentContextRouter);
+      console.log('[Agent Context] Routes registered at /api/agent/repo-overview');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register agent context routes:', error);
+    }
   } catch (error) {
     console.error('[WORKING SERVER] Failed to register routes:', error);
     // Server continues running even if routes fail to load
