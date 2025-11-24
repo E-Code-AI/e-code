@@ -371,10 +371,7 @@ export function AutonomousWorkspaceViewer({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open && !isComplete) {
-        // Prevent closing while in progress
-        return;
-      }
+      // Allow user to close at any time
       setIsOpen(open);
       if (!open) handleClose();
     }}>
@@ -495,10 +492,15 @@ export function AutonomousWorkspaceViewer({
               Close
             </Button>
           ) : (
-            <Button variant="outline" disabled className="text-xs sm:text-sm" data-testid="button-cancel">
-              <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
-              Building...
-            </Button>
+            <>
+              <Button variant="ghost" onClick={handleClose} className="text-xs sm:text-sm" data-testid="button-hide">
+                <span>Hide Progress</span>
+              </Button>
+              <Button variant="outline" disabled className="text-xs sm:text-sm" data-testid="button-cancel">
+                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                Building...
+              </Button>
+            </>
           )}
         </div>
       </DialogContent>
