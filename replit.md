@@ -69,18 +69,28 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
    - Structured keys: `['/api/projects', projectId, { bootstrap }]`
    - Correct endpoints: `/api/projects/${projectId}` (not `/api/projects`)
 
-**⚠️ REMAINING ISSUE (November 24, 2025) - PARTIALLY RESOLVED:**
-1. ⚠️ **WebSocket Connection Closes Immediately After Upgrade** - Connections validate successfully but close before agent starts
-   - **Breakthrough Discovery**: Server logs show **MULTIPLE** successful WebSocket upgrade validations:
+**✅ RESOLVED (November 24, 2025) - WebSocket Connection Issue FIXED:**
+1. ✅ **Dynamic Import Causing Socket Timeout - FIXED**
+   - **Root Cause Identified**: `await import('jsonwebtoken')` in upgrade handler caused async delay, socket timed out during JWT verification
+   - **Evidence**: Socket state showed `destroyed: true, readable: false, writable: false` before `handleUpgrade`
+   - **Fix Applied**: Changed to static import `import jwt from 'jsonwebtoken'` at top of server/index.ts (line 29)
+   - **Result**: Sockets now healthy (`destroyed: false`), handleUpgrade callback executes, agent service receives connections
+   - **Server Logs Confirm**:
      ```
-     [WebSocket Upgrade] ✅ Validated bootstrap token for project 300, session 68369464-8625-4c3c-a2a5-9a722b1e289a
+     [WebSocket Upgrade] 🔍 Socket state before handleUpgrade: { destroyed: false, readable: true, writable: true }
+     [WebSocket Upgrade] 🔌 handleUpgrade callback executing (NOW FIRES!)
+     [Agent WebSocket] 🎯 CONNECTION EVENT RECEIVED!
      ```
-   - Evidence: 6-7 successful validations in server logs (frontend reconnection attempts)
-   - WebSocket upgrade succeeds: `jwt.default.verify()` passes, Upgrade Guard preserves connection
-   - **Root cause**: Connection closes **AFTER** successful upgrade but **BEFORE** agent sends messages
-   - Component status: Modal shows "Disconnected", activity log shows "❌ Connection error" + reconnections
-   - Impact: No file creation progress (agent never starts sending task updates)
-   - **Next step**: Investigate why WebSocket closes after upgrade succeeds (check agent WebSocket service handler)
+   - **Frontend Confirmation**: Modal shows "✅ Connected to AI Agent workspace builder"
+
+**⚠️ NEW ISSUE IDENTIFIED (November 24, 2025):**
+2. ⚠️ **Autonomous Workflow Never Starts** - WebSocket connects successfully but no plan generation/execution
+   - WebSocket connections establish and remain open
+   - Agent service receives connections (code 1006 closures are expected reconnections)
+   - **Root Cause**: Bootstrap API creates session/project but never triggers autonomous workflow execution
+   - **Missing Trigger**: No call to start plan generation or workflow execution after session creation
+   - **Impact**: Modal shows "Connected" but progress never begins (no file creation, no task updates)
+   - **Next Step**: Add autonomous workflow kickoff after session creation in bootstrap API or WebSocket connection handler
 
 **AI Provider Resilience:**
 - ⚠️ External dependency on AI provider availability (Gemini stalls, GPT-5.1 timeouts possible, Claude credits)

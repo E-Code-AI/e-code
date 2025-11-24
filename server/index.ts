@@ -23,6 +23,7 @@ import { legacyRateLimiters, dynamicRateLimiter, logRateLimitViolations } from '
 import { tierRateLimiters } from './middleware/tier-rate-limiter';
 import { monitoringMiddleware } from './services/monitoring.service';
 import { sanitizeInput } from './middleware/input-validation';
+import jwt from 'jsonwebtoken'; // ✅ FIX: Import at top to avoid hot-path dynamic import delay
 
 const app = express();
 
@@ -475,8 +476,8 @@ app.get('/api/cors-health', async (_req, res) => {
       // ✅ FIX (Nov 24, 2025): Support bootstrap token authentication for anonymous users
       if (bootstrapToken) {
         try {
-          // ✅ FIX: Use named import for jwt.verify (default export doesn't have verify method)
-          const jwt = await import('jsonwebtoken');
+          // ✅ CRITICAL FIX: Use static import (at top of file) to avoid hot-path delay
+          // Dynamic import was causing socket timeout during async operation
           const jwtSecret = process.env.JWT_SECRET;
           
           if (!jwtSecret) {
@@ -491,8 +492,8 @@ app.get('/api/cors-health', async (_req, res) => {
             return;
           }
           
-          // Verify JWT signature and decode payload (jwt.default.verify for dynamic import)
-          const decoded = jwt.default.verify(bootstrapToken, jwtSecret) as {
+          // Verify JWT signature and decode payload (synchronous operation, no await needed)
+          const decoded = jwt.verify(bootstrapToken, jwtSecret) as {
             projectId: string;
             sessionId: string;
             userId: number;
@@ -583,12 +584,35 @@ app.get('/api/cors-health', async (_req, res) => {
       // ✅ CRITICAL: Mark socket BEFORE handleUpgrade to prevent guard from destroying it
       markSocketAsHandled(request, socket);
       
+      console.log(`[WebSocket Upgrade] 📡 About to call handleUpgrade for ${sessionId}`);
+      console.log(`[WebSocket Upgrade] 🔍 Socket state before handleUpgrade:`, {
+        destroyed: socket.destroyed,
+        readableEnded: socket.readableEnded,
+        writableEnded: socket.writableEnded,
+        readable: socket.readable,
+        writable: socket.writable
+      });
+      
       // ✅ CRITICAL: Resume socket and call handleUpgrade AFTER validation completes
       // This prevents the ws library from timing out the handshake
       socket.resume();
-      agentWss.handleUpgrade(request, socket, head, (ws: any) => {
-        agentWss.emit('connection', ws, request);
-      });
+      
+      try {
+        agentWss.handleUpgrade(request, socket, head, (ws: any) => {
+          console.log(`[WebSocket Upgrade] 🔌 handleUpgrade callback executing for ${sessionId}, ws.readyState:`, ws.readyState);
+          console.log(`[WebSocket Upgrade] 📤 About to emit 'connection' event...`);
+          agentWss.emit('connection', ws, request);
+          console.log(`[WebSocket Upgrade] ✅ 'connection' event emitted successfully`);
+        });
+        console.log(`[WebSocket Upgrade] ⏳ handleUpgrade called, waiting for callback...`);
+      } catch (upgradeError: any) {
+        console.error(`[WebSocket Upgrade] ❌ handleUpgrade threw error:`, upgradeError);
+        console.error(`[WebSocket Upgrade] Error details:`, {
+          message: upgradeError.message,
+          stack: upgradeError.stack,
+          code: upgradeError.code
+        });
+      }
       
     } catch (error: any) {
       console.error(`[WebSocket Upgrade] Validation error:`, error);
