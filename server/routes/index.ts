@@ -58,6 +58,7 @@ import logsViewerRouter from "./logs-viewer.router";
 import envVarsRouter from "./env-vars.router";
 import projectDataRouter from "./project-data.router";
 import codeGenerationRouter from "./code-generation.router";
+import syncRouter from "./sync";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -255,6 +256,9 @@ export class MainRouter {
     
     // Environment Variables routes (Priorité 1 - Core IDE)
     app.use('/api/env-vars', tierRateLimiters.api, envVarsRouter);
+
+    // Multi-Device Sync routes (Workspace state, preferences, devices)
+    app.use('/api/sync', tierRateLimiters.api, syncRouter);
   }
   
   /**
