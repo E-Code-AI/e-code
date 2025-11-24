@@ -310,8 +310,8 @@ app.get('/api/cors-health', async (_req, res) => {
     // ✅ AUTONOMOUS WORKSPACE CREATION: Bootstrap routes
     try {
       const workspaceBootstrapRouter = (await import('./routes/workspace-bootstrap.router')).default;
-      app.use('/api/workspace-bootstrap', workspaceBootstrapRouter);
-      console.log('[Workspace Bootstrap] Routes registered at /api/workspace-bootstrap');
+      app.use('/api/workspace', workspaceBootstrapRouter);
+      console.log('[Workspace Bootstrap] Routes registered at /api/workspace');
     } catch (error) {
       console.error('[WORKING SERVER] Failed to register workspace bootstrap routes:', error);
     }
