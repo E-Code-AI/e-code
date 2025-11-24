@@ -27,6 +27,11 @@ The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Woute
 ### Feature Specifications
 Key features include a Monaco Code Editor with enhancements (Git UI components, multi-cursor editing, code navigation, refactoring, advanced search, IntelliSense), an interactive terminal (xterm.js), file management, real-time collaboration, robust authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager, a Logs Viewer, and a Debugger UI. The UI is responsive across desktop, tablet, and mobile devices. Autonomous workspace creation involves a Bootstrap API call, client redirection to the IDE, background AI plan generation with multi-provider fallback, a WebSocket connection for real-time progress, autonomous execution, and a live preview tab. The platform also includes PWA features and desktop application support via Electron.
 
+**Recent UI Components (Nov 2025):**
+- **AppsView** (`/apps` route): Project management interface with grid/list views, search, filtering, sorting, and CRUD operations. Integrates with TanStack Query and existing authentication.
+- **AppToaster**: Sonner-based toast notification system with theme integration (uses `resolvedTheme` from ThemeProvider).
+- **TabBar**: Simplified tab management component for IDE workspace without complex drag-and-drop.
+
 ### System Design Choices
 A PostgreSQL database stores user data, project hierarchies, AI agent sessions, deployment history, subscription management, and AI optimization monitoring. Security measures include CSRF protection, input sanitization, tier-based rate limiting, API versioning, and session-based authentication. The AI agent system provides server-sent event streaming, multi-provider AI model selection, and a database-backed conversation history, incorporating circuit breakers and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API, including a Prometheus metrics endpoint. A two-tier database API architecture is used: an Admin Database API and a Project Data API, with integrated security features. Docker builds are optimized for small image sizes.
 
