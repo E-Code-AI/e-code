@@ -59,6 +59,7 @@ import envVarsRouter from "./env-vars.router";
 import projectDataRouter from "./project-data.router";
 import codeGenerationRouter from "./code-generation.router";
 import syncRouter from "./sync";
+import backgroundTestsRouter from "./background-tests.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -259,6 +260,9 @@ export class MainRouter {
 
     // Multi-Device Sync routes (Workspace state, preferences, devices)
     app.use('/api/sync', tierRateLimiters.api, syncRouter);
+    
+    // Background Testing routes (Replit Agent 3 auto-testing)
+    app.use('/api/background-tests', tierRateLimiters.api, backgroundTestsRouter);
   }
   
   /**
