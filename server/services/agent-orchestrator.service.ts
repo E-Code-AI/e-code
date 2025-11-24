@@ -206,7 +206,8 @@ export class AgentOrchestratorService extends EventEmitter {
   async createSession(
     userId: string,
     projectId?: string,
-    model: string = 'gpt-5.1'
+    model: string = 'gpt-5.1',
+    autonomousMode: boolean = false
   ): Promise<AgentSession> {
     const sessionToken = this.generateSessionToken();
     const workingDirectory = projectId ? 
@@ -225,7 +226,8 @@ export class AgentOrchestratorService extends EventEmitter {
           environment: {},
           capabilities: Object.keys(AGENT_FUNCTIONS)
         },
-        isActive: true
+        isActive: true,
+        autonomousMode
       })
       .returning();
 

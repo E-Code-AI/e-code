@@ -73,6 +73,7 @@ export const aiModelEnum = pgEnum('ai_model', [
 ]);
 export const agentModeEnum = pgEnum('agent_mode', ['plan', 'build']);
 export const buildExecutionStatusEnum = pgEnum('build_execution_status', ['pending', 'running', 'completed', 'failed', 'cancelled']);
+export const workflowStatusEnum = pgEnum('workflow_status', ['idle', 'planning', 'executing', 'completed', 'failed']);
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -2021,6 +2022,7 @@ export const agentSessions = pgTable('agent_sessions', {
   autonomousMode: boolean('autonomous_mode').default(false),
   riskThreshold: riskThresholdEnum('risk_threshold').default('medium'),
   autoApproveActions: boolean('auto_approve_actions').default(false),
+  workflowStatus: workflowStatusEnum('workflow_status').default('idle'),
   startedAt: timestamp('started_at').defaultNow(),
   endedAt: timestamp('ended_at'),
   metadata: jsonb('metadata').$type<Record<string, any>>(),
