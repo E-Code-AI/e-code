@@ -1,4 +1,4 @@
-import { legacyAIProviderManager as aiProviderManager } from '../ai/ai-provider';
+import { aiProviderManager } from '../ai/ai-provider-manager';
 import { CodeAnalyzer } from '../ai/code-analyzer';
 import * as babel from '@babel/parser';
 import traverse from '@babel/traverse';
