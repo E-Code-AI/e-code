@@ -174,7 +174,9 @@ export default function Landing() {
       // Bootstrap API now accepts both authenticated and anonymous users
       const result = await apiRequest('POST', '/api/workspace/bootstrap', {
         prompt: description,
-        autoStart: true
+        options: {
+          autoStart: true  // ✅ CRITICAL: autoStart must be inside options object
+        }
       }) as any;
 
       console.log('[Landing] Bootstrap API response:', result);
