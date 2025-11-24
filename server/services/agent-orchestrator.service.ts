@@ -12,6 +12,9 @@ import { agentFileOperations } from './agent-file-operations.service';
 import { agentCommandExecution } from './agent-command-execution.service';
 import { agentToolFramework } from './agent-tool-framework.service';
 import { agentWorkflowEngine } from './agent-workflow-engine.service';
+import { aiPlanGenerator } from './ai-plan-generator.service';
+import { agentPlanStore } from './agent-plan-store.service';
+import { agentWebSocketService } from './agent-websocket-service';
 import { aiOptimization } from './ai-optimization';
 import { observability } from './ai-optimization/observability.service';
 import { createLogger } from '../utils/logger';
@@ -1222,6 +1225,247 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
     }
 
     return config;
+  }
+
+  /**
+   * ✅ AUTONOMOUS WORKSPACE CREATION - Start autonomous plan generation and execution
+   * Triggered by bootstrap endpoint, runs fire-and-forget to avoid HTTP timeout
+   * 
+   * @param options.sessionId - Agent session ID
+   * @param options.projectId - Project ID
+   * @param options.userId - User ID (ephemeral or authenticated)
+   * @param options.prompt - User's natural language prompt
+   * @param options.options - Additional options (language, framework, etc.)
+   */
+  async startAutonomousWorkspace(options: {
+    sessionId: string;
+    projectId: string;
+    userId: string;
+    prompt: string;
+    options?: any;
+  }): Promise<void> {
+    const { sessionId, projectId, userId, prompt, options: workspaceOptions } = options;
+    
+    try {
+      logger.info(`[Autonomous] Starting workspace creation for session ${sessionId}`, { projectId, userId });
+      
+      // 1. Check idempotency - prevent double starts
+      const [session] = await db.select()
+        .from(agentSessions)
+        .where(eq(agentSessions.id, sessionId))
+        .limit(1);
+      
+      if (!session) {
+        throw new Error(`Session ${sessionId} not found`);
+      }
+      
+      // Check if already started (workflowStatus exists and not idle)
+      if (session.workflowStatus && session.workflowStatus !== 'idle') {
+        logger.warn(`[Autonomous] Session ${sessionId} already started, status: ${session.workflowStatus}`);
+        return;
+      }
+      
+      // Mark session as started (prevent race conditions)
+      await db.update(agentSessions)
+        .set({ 
+          workflowStatus: 'planning',
+          updatedAt: new Date()
+        })
+        .where(eq(agentSessions.id, sessionId));
+      
+      // Emit planning started event via WebSocket
+      agentWebSocketService.broadcast({
+        type: 'status',
+        sessionId,
+        projectId,
+        status: 'planning',
+        message: 'AI is analyzing your request and generating execution plan...'
+      }, projectId);
+      
+      logger.info(`[Autonomous] Generating execution plan for session ${sessionId}`);
+      
+      // 2. Generate execution plan with AI (with multi-provider fallback)
+      // Use async generator to get plan with real-time streaming
+      let executionPlan: any = null;
+      
+      for await (const event of aiPlanGenerator.generatePlan(userId, projectId, prompt, {
+        projectType: 'web-app',
+        existingFiles: [],
+        technologies: [workspaceOptions?.language || 'typescript', workspaceOptions?.framework || 'react'],
+        constraints: []
+      })) {
+        if (event.type === 'chunk') {
+          // Stream plan generation progress
+          agentWebSocketService.broadcast({
+            type: 'plan_chunk',
+            sessionId,
+            projectId,
+            data: event.data,
+            message: 'Generating execution plan...'
+          }, projectId);
+        } else if (event.type === 'plan') {
+          executionPlan = event.data;
+          logger.info(`[Autonomous] Plan generated with ${executionPlan.tasks?.length || 0} tasks`, { sessionId });
+          
+          // Emit plan generated event
+          agentWebSocketService.broadcast({
+            type: 'plan_generated',
+            sessionId,
+            projectId,
+            plan: executionPlan,
+            message: `Generated plan with ${executionPlan.tasks?.length || 0} tasks`
+          }, projectId);
+          
+          // Continue to drain the generator for cleanup
+          // Don't break immediately - let the generator complete
+        } else if (event.type === 'error') {
+          throw new Error(event.data.message || 'Plan generation failed');
+        }
+      }
+      
+      if (!executionPlan) {
+        throw new Error('No plan received from AI service - all providers may be unavailable');
+      }
+      
+      // 3. Store execution plan using the agentPlanStore service
+      await agentPlanStore.storePlan(sessionId, Number(projectId), executionPlan);
+      
+      logger.info(`[Autonomous] Plan stored, starting workflow execution`, { sessionId });
+      
+      // Update session status
+      await db.update(agentSessions)
+        .set({ 
+          workflowStatus: 'executing',
+          updatedAt: new Date()
+        })
+        .where(eq(agentSessions.id, sessionId));
+      
+      // Emit execution started event
+      agentWebSocketService.broadcast({
+        type: 'status',
+        sessionId,
+        projectId,
+        status: 'executing',
+        message: 'Starting autonomous execution...'
+      }, projectId);
+      
+      // 4. Convert plan tasks to workflow steps using existing buildStepConfig method
+      const workflowSteps = executionPlan.tasks.map((task: any, index: number) => ({
+        id: `step-${index + 1}`,
+        name: task.title,
+        type: this.mapTaskTypeToWorkflowType(task.type),
+        config: this.buildStepConfig(task),
+        dependencies: task.dependencies || [],
+        status: 'pending' as const
+      }));
+      
+      logger.info(`[Autonomous] Converted ${workflowSteps.length} workflow steps`, { sessionId });
+      
+      // 5. Execute workflow with event wiring
+      const workingDirectory = path.join(process.cwd(), 'projects', projectId);
+      
+      // Wire workflow engine events to WebSocket streaming
+      // Workflow engine emits all events via 'workflow:event' channel
+      const handleWorkflowEvent = (event: any) => {
+        logger.debug(`[Autonomous] Workflow event: ${event.type}`, { sessionId, event });
+        agentWebSocketService.broadcast({
+          type: 'workflow:event',
+          sessionId,
+          projectId,
+          ...event
+        }, projectId);
+      };
+      
+      // Subscribe to workflow:event channel (the actual event channel used by workflow engine)
+      agentWorkflowEngine.on('workflow:event', handleWorkflowEvent);
+      
+      try {
+        // Execute workflow
+        logger.info(`[Autonomous] Starting workflow execution`, { sessionId, workingDirectory });
+        
+        const result = await agentWorkflowEngine.executeWorkflow(
+          sessionId,
+          Number(projectId),
+          executionPlan.goal || `Autonomous Workspace: ${prompt.substring(0, 50)}`,
+          executionPlan.summary || `Autonomous workspace creation from prompt: ${prompt}`,
+          workflowSteps,
+          userId,
+          {} // initialVariables
+        );
+        
+        logger.info(`[Autonomous] Workflow execution completed`, { 
+          sessionId, 
+          success: result.success,
+          completedSteps: result.completedSteps 
+        });
+        
+        // Update session status
+        await db.update(agentSessions)
+          .set({ 
+            workflowStatus: result.success ? 'completed' : 'failed',
+            updatedAt: new Date()
+          })
+          .where(eq(agentSessions.id, sessionId));
+        
+        // Update plan status
+        await agentPlanStore.updateStatus(sessionId, result.success ? 'completed' : 'failed');
+        
+        // Emit final completion event
+        agentWebSocketService.broadcast({
+          type: 'status',
+          sessionId,
+          projectId,
+          status: result.success ? 'completed' : 'failed',
+          message: result.success 
+            ? `✅ Workspace created successfully!`
+            : `❌ Workspace creation failed: ${result.error || 'Unknown error'}`,
+          result
+        }, projectId);
+        
+      } finally {
+        // ✅ CRITICAL: Always cleanup event listener to prevent memory leaks
+        agentWorkflowEngine.off('workflow:event', handleWorkflowEvent);
+        logger.debug(`[Autonomous] Event listener cleaned up for session ${sessionId}`);
+      }
+      
+    } catch (error) {
+      logger.error(`[Autonomous] Workspace creation failed for session ${sessionId}`, { error, projectId });
+      
+      // Update session status to failed
+      await db.update(agentSessions)
+        .set({ 
+          workflowStatus: 'failed',
+          updatedAt: new Date()
+        })
+        .where(eq(agentSessions.id, sessionId))
+        .catch(dbErr => logger.error('[Autonomous] Failed to update session status', { dbErr }));
+      
+      // Update plan status to failed
+      await agentPlanStore.updateStatus(sessionId, 'failed')
+        .catch(storeErr => logger.error('[Autonomous] Failed to update plan status', { storeErr }));
+      
+      // ✅ CRITICAL: Emit terminal status updates to keep UI in sync
+      // Emit status failed event
+      agentWebSocketService.broadcast({
+        type: 'status',
+        sessionId,
+        projectId,
+        status: 'failed',
+        message: `❌ Autonomous workspace creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }, projectId);
+      
+      // Also emit detailed error event
+      agentWebSocketService.broadcast({
+        type: 'error',
+        sessionId,
+        projectId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        message: `❌ Autonomous workspace creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }, projectId);
+      
+      // Re-throw for logging/monitoring
+      throw error;
+    }
   }
 }
 
