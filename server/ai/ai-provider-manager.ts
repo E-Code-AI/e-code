@@ -920,6 +920,152 @@ export class AIProviderManager {
     }
     return fullResponse;
   }
+  
+  // ============================================================================
+  // LEGACY COMPATIBILITY LAYER
+  // ============================================================================
+  // These methods provide backward compatibility with the old provider-based API
+  // Used by: ai-code-completion, ai-code-review, advanced-ai-service, etc.
+  // ============================================================================
+  
+  /**
+   * Legacy API: Get available providers (mapped to model-based API)
+   * Maps old provider names to new model IDs
+   */
+  getAvailableProviders(): Array<{ name: string; isAvailable: boolean }> {
+    const providerMap: Record<string, string[]> = {
+      'OpenAI': ['gpt-5.1', 'gpt-5', 'gpt-5-mini'],
+      'Claude': ['claude-sonnet-4-5-20250929', 'claude-opus-4-1-20250805', 'claude-haiku-4-5-20251015'],
+      'Anthropic': ['claude-sonnet-4-5-20250929'],
+      'Gemini': ['gemini-2-5-flash', 'gemini-2-5-pro'],
+      'Moonshot': ['kimi-k2-0711-preview', 'kimi-k2-0905-preview'],
+      'xAI': ['grok-4', 'grok-4-fast'],
+      'Groq': ['mixtral-8x7b-32768']
+    };
+    
+    return Object.entries(providerMap).map(([name, modelIds]) => ({
+      name,
+      isAvailable: modelIds.some(id => {
+        const model = this.getModel(id);
+        return model && this.providers.has(model.provider);
+      })
+    }));
+  }
+  
+  /**
+   * Legacy API: Get provider by name (maps to default model for that provider)
+   */
+  getProvider(providerName: string): LegacyProviderAdapter | null {
+    const providerToModelMap: Record<string, string> = {
+      'OpenAI': 'gpt-5.1',
+      'Claude': 'claude-sonnet-4-5-20250929',
+      'Claude 3.5 Sonnet': 'claude-sonnet-4-5-20250929',
+      'Anthropic': 'claude-sonnet-4-5-20250929',
+      'Gemini': 'gemini-2-5-flash',
+      'Moonshot': 'kimi-k2-0905-preview',
+      'xAI': 'grok-4',
+      'Groq': 'mixtral-8x7b-32768'
+    };
+    
+    const modelId = providerToModelMap[providerName];
+    if (!modelId) return null;
+    
+    const model = this.getModel(modelId);
+    if (!model || !this.providers.has(model.provider)) return null;
+    
+    return new LegacyProviderAdapter(this, modelId, providerName);
+  }
+  
+  /**
+   * Legacy API: Get default provider
+   */
+  getDefaultProvider(): LegacyProviderAdapter {
+    // Try providers in order of preference
+    const preferredModels = [
+      'claude-sonnet-4-5-20250929', // Best coding model
+      'gpt-5.1',                    // Latest GPT
+      'gemini-2-5-flash',           // Fast fallback
+      'kimi-k2-0905-preview',       // Moonshot fallback
+      'grok-4'                      // xAI fallback
+    ];
+    
+    for (const modelId of preferredModels) {
+      const model = this.getModel(modelId);
+      if (model && this.providers.has(model.provider)) {
+        return new LegacyProviderAdapter(this, modelId, model.name);
+      }
+    }
+    
+    throw new Error('No AI providers available. Please configure API keys in Replit Secrets.');
+  }
+}
+
+/**
+ * Legacy Provider Adapter
+ * Adapts the new model-based API to the old provider-based interface
+ */
+class LegacyProviderAdapter {
+  name: string;
+  private manager: AIProviderManager;
+  private modelId: string;
+  
+  constructor(manager: AIProviderManager, modelId: string, name: string) {
+    this.manager = manager;
+    this.modelId = modelId;
+    this.name = name;
+  }
+  
+  async generateCompletion(
+    prompt: string,
+    systemPrompt: string,
+    maxTokens = 1024,
+    temperature = 0.2,
+    userId?: number
+  ): Promise<string> {
+    const messages = [
+      { role: 'system' as const, content: systemPrompt },
+      { role: 'user' as const, content: prompt }
+    ];
+    
+    return this.manager.generateChat(this.modelId, messages, {
+      max_tokens: maxTokens,
+      temperature
+    });
+  }
+  
+  async generateChat(
+    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    maxTokens = 1024,
+    temperature = 0.5,
+    userId?: number
+  ): Promise<string> {
+    return this.manager.generateChat(this.modelId, messages, {
+      max_tokens: maxTokens,
+      temperature
+    });
+  }
+  
+  async generateCodeWithUnderstanding(
+    code: string,
+    language: string,
+    instruction: string,
+    userId?: number
+  ): Promise<string> {
+    const systemPrompt = `You are an expert ${language} developer. Generate code that follows the existing patterns and conventions.`;
+    const prompt = `Given this ${language} code:\n\`\`\`${language}\n${code}\n\`\`\`\n\nUser instruction: ${instruction}\n\nGenerate the requested code following the existing code style.`;
+    
+    return this.generateCompletion(prompt, systemPrompt, 2048, 0.3, userId);
+  }
+  
+  async analyzeCode(code: string, language: string): Promise<any> {
+    // Delegate to code analyzer if needed
+    return { suggestions: [] };
+  }
+  
+  isAvailable(): boolean {
+    const model = this.manager.getModel(this.modelId);
+    return model ? this.manager['providers'].has(model.provider) : false;
+  }
 }
 
 // Singleton instance
