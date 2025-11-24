@@ -165,43 +165,32 @@ export default function Landing() {
     sessionStorage.setItem('pendingAppDescription', description);
     setChatOpen(false);
     
-    if (user) {
-      try {
-        // 🚀 AUTONOMOUS WORKSPACE CREATION: Use bootstrap API for Replit-style flow
-        const result = await apiRequest('POST', '/api/workspace/bootstrap', {
-          prompt: description,
-          userId: user.id,
-          autoStart: true // ✅ FIX: Actually execute the workflow after plan generation!
-        }) as any;
+    try {
+      // ✅ FIX (Nov 24, 2025): Support anonymous workspace creation for "No credit card required" promise
+      // Bootstrap API now accepts both authenticated and anonymous users
+      const result = await apiRequest('POST', '/api/workspace/bootstrap', {
+        prompt: description,
+        autoStart: true
+      }) as any;
 
-        if (result.success) {
-          toast({
-            title: 'Creating your workspace...',
-            description: 'AI is generating your project structure now',
-          });
-
-          // Redirect to IDE with bootstrap token - triggers autonomous workspace viewer
-          navigate(`/ide/${result.projectId}?bootstrap=${result.bootstrapToken}`);
-        } else {
-          throw new Error(result.error || 'Bootstrap failed');
-        }
-      } catch (error) {
-        console.error('Failed to bootstrap workspace:', error);
+      if (result.success) {
         toast({
-          title: 'Error',
-          description: 'Failed to create workspace. Please try again.',
-          variant: 'destructive'
+          title: 'Creating your workspace...',
+          description: 'AI is generating your project structure now',
         });
+
+        // Redirect to IDE with bootstrap token - triggers autonomous workspace viewer
+        navigate(`/ide/${result.projectId}?bootstrap=${result.bootstrapToken}`);
+      } else {
+        throw new Error(result.error || 'Bootstrap failed');
       }
-    } else {
-      // Redirect to auth with preserved prompt in session storage
+    } catch (error) {
+      console.error('Failed to bootstrap workspace:', error);
       toast({
-        title: 'Sign up to continue',
-        description: 'Create a free account to build your app with AI',
+        title: 'Error',
+        description: 'Failed to create workspace. Please try again.',
+        variant: 'destructive'
       });
-      setTimeout(() => {
-        navigate('/register?redirect=build-from-prompt');
-      }, 1000);
     }
   };
 
