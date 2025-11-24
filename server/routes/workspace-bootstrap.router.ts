@@ -258,43 +258,93 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
           throw new Error(errorMsg);
         }
         
-        logger.info(`[Bootstrap] Plan generated: ${plan.id}`, { 
-          planId: plan.id, 
+        logger.info(`[Bootstrap] Plan generated: ${plan.id}`, {
+          planId: plan.id,
           tasks: plan.tasks?.length || 0,
           estimatedTime: plan.estimatedTime
         });
-        
+
+        // ✅ CRITICAL FIX (Nov 24, 2025): Notify WebSocket clients that plan generation succeeded
+        try {
+          const agentWebSocketService = (await import('../services/agent-websocket-service.js')).agentWebSocketService;
+          agentWebSocketService.broadcast({
+            type: 'plan_ready',
+            sessionId: session.id,
+            planId: plan.id,
+            taskCount: plan.tasks?.length || 0,
+            message: 'Plan generated successfully, starting execution...',
+            timestamp: new Date().toISOString()
+          }, String(project.id));
+          logger.info('[Bootstrap] Plan ready notification sent to WebSocket clients');
+        } catch (wsError) {
+          logger.warn('[Bootstrap] Failed to notify WebSocket of plan readiness:', wsError);
+        }
+
         // 10. Execute autonomous plan (only if autoStart enabled)
         if (options.autoStart) {
           logger.info(`[Bootstrap] Starting autonomous plan execution for ${plan.tasks.length} tasks`);
-          
+
           await agentOrchestrator.executeAutonomousPlan(
             session.id,
             plan,
             String(project.id),
             String(userId)
           );
-          
+
           logger.info(`[Bootstrap] ✅ Autonomous execution completed`);
         } else {
           logger.info(`[Bootstrap] Plan ready but autoStart=false - execution skipped`);
+
+          // Notify WebSocket clients that manual start is required
+          try {
+            const agentWebSocketService = (await import('../services/agent-websocket-service.js')).agentWebSocketService;
+            agentWebSocketService.broadcast({
+              type: 'plan_ready',
+              sessionId: session.id,
+              planId: plan.id,
+              taskCount: plan.tasks?.length || 0,
+              message: 'Plan ready. Auto-start is disabled. Please manually approve execution.',
+              requiresManualStart: true,
+              timestamp: new Date().toISOString()
+            }, String(project.id));
+          } catch (wsError) {
+            logger.warn('[Bootstrap] Failed to notify WebSocket:', wsError);
+          }
         }
         
       } catch (error: any) {
         logger.error(`[Bootstrap] ❌ Background plan/execution failed:`, {
           message: error.message,
+          stack: error.stack,
           projectId: project.id,
           sessionId: session.id
         });
-        
-        // ✅ ARCHITECT FIX: Explicit error propagation via WebSocket
+
+        // ✅ CRITICAL FIX (Nov 24, 2025): Broadcast detailed error to all connected WebSocket clients
         try {
           const agentWebSocketService = (await import('../services/agent-websocket-service.js')).agentWebSocketService;
+
+          // Send error message
+          agentWebSocketService.broadcastPlanFailed(
+            String(project.id),
+            session.id,
+            `Workspace creation failed: ${error.message}`
+          );
+
+          // Also send as generic error for compatibility
           agentWebSocketService.broadcast({
             type: 'error',
+            sessionId: session.id,
             message: `Workspace creation failed: ${error.message}`,
+            details: {
+              error: error.message,
+              phase: 'plan_generation_or_execution',
+              canRetry: true
+            },
             timestamp: new Date().toISOString()
           }, String(project.id));
+
+          logger.info('[Bootstrap] Error broadcasted to WebSocket clients');
         } catch (wsError) {
           logger.error('[Bootstrap] Failed to broadcast error via WebSocket:', wsError);
         }
