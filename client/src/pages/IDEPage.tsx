@@ -303,6 +303,16 @@ export default function IDEPage() {
     { id: 'global-search', label: 'Global Search', icon: '🔎' },
     { id: 'logs', label: 'Logs Viewer', icon: '📋' },
   ];
+  
+  // Validate tool registry in development
+  if (import.meta.env.DEV) {
+    import('@/lib/tool-registry').then(({ validateToolRegistry }) => {
+      const validation = validateToolRegistry(availableTools);
+      if (!validation.valid) {
+        console.warn('[Tool Registry] Missing tools:', validation.missing);
+      }
+    });
+  }
 
   // Handlers
   const handleFileSelect = (file: any) => {
