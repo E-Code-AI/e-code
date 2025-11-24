@@ -70,7 +70,7 @@ interface BootstrapTokenPayload {
  * Main orchestration endpoint - creates complete workspace with AI agent auto-started
  * 
  * Flow:
- * 1. Validate user authentication
+ * 1. Validate request (authentication optional for guest access)
  * 2. Create project in database
  * 3. Generate AI plan (streamed via SSE in separate endpoint)
  * 4. Create agent session
@@ -83,15 +83,51 @@ interface BootstrapTokenPayload {
  * - Redirects to /ide/:projectId?bootstrap=token
  * - IDE parses token and subscribes to WebSocket
  * - Agent streams progress in real-time
+ * 
+ * ✅ FIX (Nov 24, 2025): Support anonymous guest access for "No credit card required" promise
+ * - Removed ensureAuthenticated requirement
+ * - Anonymous users get guest project with temporary ownership
  */
-router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+router.post('/bootstrap', csrfProtection, async (req: Request, res: Response) => {
   const startTime = Date.now();
   
   try {
     // 1. Validate request
     const { prompt, options } = bootstrapRequestSchema.parse(req.body);
-    const userId = (req.user as User).id;
-    const username = (req.user as User).username || '';
+    
+    // Support both authenticated and anonymous users
+    const user = req.user as User | undefined;
+    let userId: number;
+    let username: string;
+    
+    if (user) {
+      // Authenticated user
+      userId = user.id;
+      username = user.username || 'user';
+      logger.info(`[Bootstrap] Authenticated user ${userId}`, { username });
+    } else {
+      // Anonymous user - create or get guest user
+      logger.info(`[Bootstrap] Anonymous user - using guest account`);
+      let [guestUser] = await db.select()
+        .from(users)
+        .where(eq(users.email, 'guest@ecode.platform'))
+        .limit(1);
+      
+      if (!guestUser) {
+        // Create guest user if it doesn't exist
+        [guestUser] = await db.insert(users)
+          .values({
+            email: 'guest@ecode.platform',
+            username: 'guest',
+            password: '', // No password for guest user
+          })
+          .returning();
+        logger.info(`[Bootstrap] Created guest user: ${guestUser.id}`);
+      }
+      
+      userId = guestUser.id;
+      username = 'guest';
+    }
     
     console.log('🚀 [Bootstrap] RECEIVED REQUEST from user', userId, 'prompt:', prompt.substring(0, 50));
     logger.info(`[Bootstrap] Starting workspace creation for user ${userId}`, { prompt, options });
@@ -108,7 +144,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
         name: projectName,
         description: prompt,
         slug,
-        ownerId: userId,  // userId is already a number from User.id
+        ownerId: userId,
         language: options.language || 'typescript',
         visibility: options.visibility || 'private'
       })
