@@ -482,8 +482,12 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           break;
 
         case 'create_workflow':
+          if (!session.projectId || typeof session.projectId !== 'number') {
+            throw new Error(`Invalid session: projectId required for workflow creation (got ${session.projectId})`);
+          }
           result = await agentWorkflowEngine.executeWorkflow(
             session.id,
+            session.projectId,
             args.name,
             args.description || '',
             args.steps,
@@ -963,8 +967,12 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       // ✅ FIX (Nov 21, 2025): Store complete plan in dedicated table BEFORE execution
       // ARCHITECT APPROVED: Solves JSONB overflow by separating plan storage from workflows
       const { agentPlanStore } = await import('./agent-plan-store.service');
-      await agentPlanStore.storePlan(sessionId, plan);
-      logger.info(`[Execute Plan] Plan ${plan.id} stored in agent_plans table`);
+      const projectIdNum = parseInt(projectId, 10);
+      if (isNaN(projectIdNum) || projectIdNum <= 0) {
+        throw new Error(`Invalid projectId for plan execution: "${projectId}" (parsed: ${projectIdNum})`);
+      }
+      await agentPlanStore.storePlan(sessionId, projectIdNum, plan);
+      logger.info(`[Execute Plan] Plan ${plan.id} stored in agent_plans table with projectId ${projectIdNum}`);
 
       // Import WebSocket service (dynamic to avoid circular dependency)
       const { agentWebSocketService } = await import('./agent-websocket-service');
@@ -1053,6 +1061,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         // Execute the workflow
         const workflow = await agentWorkflowEngine.executeWorkflow(
           sessionId,
+          projectIdNum,
           `Build: ${plan.goal}`,
           `Autonomous execution of ${plan.tasks.length} tasks`,
           workflowSteps,

@@ -2036,6 +2036,7 @@ export const agentSessions = pgTable('agent_sessions', {
 export const agentPlans = pgTable('agent_plans', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   sessionId: varchar('session_id').notNull().references(() => agentSessions.id),
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
   planId: text('plan_id').notNull().unique(), // plan-1763731251998-9h9zssdxy
   goal: text('goal').notNull(),
   tasks: jsonb('tasks').$type<Array<{
@@ -2056,8 +2057,11 @@ export const agentPlans = pgTable('agent_plans', {
   }>>().notNull(),
   estimatedTime: text('estimated_time'),
   status: text('status').notNull().default('pending'), // pending, executing, completed, failed
+  totalTokens: integer('total_tokens').default(0),
+  totalCost: decimal('total_cost', { precision: 10, scale: 6 }).default('0'),
   createdAt: timestamp('created_at').defaultNow(),
   completedAt: timestamp('completed_at'),
+  updatedAt: timestamp('updated_at').defaultNow(),
   metadata: jsonb('metadata').$type<{
     provider?: string; // gemini-2.5-flash, gpt-5.1, etc
     fallbackChain?: string[];
@@ -2066,6 +2070,7 @@ export const agentPlans = pgTable('agent_plans', {
   }>(),
 }, (table) => [
   index('agent_plans_session_id_idx').on(table.sessionId),
+  index('agent_plans_project_id_idx').on(table.projectId),
   index('agent_plans_plan_id_idx').on(table.planId),
   index('agent_plans_status_idx').on(table.status),
 ]);
@@ -2185,6 +2190,7 @@ export const toolExecutions = pgTable('tool_executions', {
 export const agentWorkflows = pgTable('agent_workflows', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   sessionId: varchar('session_id').notNull().references(() => agentSessions.id),
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   description: text('description'),
   steps: jsonb('steps').$type<Array<{
@@ -2213,6 +2219,7 @@ export const agentWorkflows = pgTable('agent_workflows', {
   metadata: jsonb('metadata').$type<Record<string, any>>(),
 }, (table) => [
   index('agent_workflows_session_id_idx').on(table.sessionId),
+  index('agent_workflows_project_id_idx').on(table.projectId),
   index('agent_workflows_status_idx').on(table.status),
 ]);
 
