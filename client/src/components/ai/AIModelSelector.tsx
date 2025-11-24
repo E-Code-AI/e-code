@@ -178,39 +178,42 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
   }
 
   // Hero variant - Large, prominent display for homepage
+  // ✅ MOBILE-RESPONSIVE (Nov 24, 2025): Stack header on mobile, adjust sizes, hide descriptions on xs screens
   if (variant === 'hero') {
     const currentModelData = availableModels.find(m => m.id === currentModel);
     const ProviderIcon = currentModelData ? getProviderIcon(currentModelData.provider) : Sparkles;
     const providerColor = currentModelData ? getProviderColor(currentModelData.provider) : 'bg-orange-500';
 
     return (
-      <div className={`space-y-3 ${className}`}>
-        <div className="flex items-center justify-between">
+      <div className={`space-y-2 sm:space-y-3 ${className}`}>
+        {/* Header: Stack on mobile, side-by-side on sm+ */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex items-center gap-2 text-white/90">
-            <Sparkles className="h-5 w-5" />
-            <span className="text-base font-semibold">Choose Your AI Model</span>
+            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-sm sm:text-base font-semibold">Choose Your AI Model</span>
           </div>
-          <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+          <Badge variant="secondary" className="bg-white/20 text-white border-white/30 w-fit">
             {availableModels.length} models available
           </Badge>
         </div>
         
         <Select value={currentModel || undefined} onValueChange={handleModelChange}>
           <SelectTrigger 
-            className="w-full h-14 bg-white dark:bg-gray-900 text-foreground border-2 border-white/40 hover:border-white/60 transition-all shadow-lg"
+            className="w-full h-12 sm:h-14 bg-white dark:bg-gray-900 text-foreground border-2 border-white/40 hover:border-white/60 transition-all shadow-lg"
             data-testid="select-ai-model-hero"
           >
             {currentModelData ? (
-              <div className="flex items-center gap-3 w-full">
-                <div className={`w-3 h-3 rounded-full ${providerColor}`} />
-                <div className="flex-1 text-left">
-                  <div className="font-semibold text-base">{currentModelData.name}</div>
-                  <div className="text-xs text-muted-foreground">{currentModelData.description}</div>
+              <div className="flex items-center gap-2 sm:gap-3 w-full">
+                <div className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${providerColor} shrink-0`} />
+                <div className="flex-1 text-left min-w-0">
+                  <div className="font-semibold text-sm sm:text-base truncate">{currentModelData.name}</div>
+                  {/* Hide description on mobile, show on sm+ */}
+                  <div className="hidden sm:block text-xs text-muted-foreground truncate">{currentModelData.description}</div>
                 </div>
                 {currentModelData.supportsStreaming && (
-                  <Badge variant="secondary" className="text-xs">
-                    <Zap className="h-3 w-3 mr-1" />
-                    Streaming
+                  <Badge variant="secondary" className="text-xs shrink-0">
+                    <Zap className="h-3 w-3 sm:mr-1" />
+                    <span className="hidden sm:inline">Streaming</span>
                   </Badge>
                 )}
               </div>
@@ -229,17 +232,17 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
                   value={model.id} 
                   data-testid={`select-model-${model.id}`}
                   disabled={!isAvailable}
-                  className={!isAvailable ? 'opacity-50 cursor-not-allowed' : 'py-3'}
+                  className={!isAvailable ? 'opacity-50 cursor-not-allowed' : 'py-2 sm:py-3'}
                 >
-                  <div className="flex items-center gap-3 py-1 w-full">
-                    <div className={`w-8 h-8 rounded-full ${modelColor} flex items-center justify-center`}>
-                      <ModelIcon className="h-4 w-4 text-white" />
+                  <div className="flex items-center gap-2 sm:gap-3 py-1 w-full">
+                    <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${modelColor} flex items-center justify-center shrink-0`}>
+                      <ModelIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold flex items-center gap-2">
-                        {model.name}
+                      <div className="font-semibold flex items-center gap-2 flex-wrap">
+                        <span className="truncate">{model.name}</span>
                         {!isAvailable && (
-                          <Badge variant="destructive" className="text-xs">Not configured</Badge>
+                          <Badge variant="destructive" className="text-xs shrink-0">Not configured</Badge>
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground truncate">{model.description}</div>
@@ -251,8 +254,8 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
                     </div>
                     {model.supportsStreaming && isAvailable && (
                       <Badge variant="secondary" className="text-xs shrink-0">
-                        <Zap className="h-3 w-3 mr-1" />
-                        Streaming
+                        <Zap className="h-3 w-3 sm:mr-1" />
+                        <span className="hidden sm:inline">Streaming</span>
                       </Badge>
                     )}
                   </div>
@@ -263,9 +266,9 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
         </Select>
 
         {currentModelData && (
-          <div className="flex items-center gap-2 text-sm text-white/80 bg-white/10 rounded-md px-3 py-2">
-            <CheckCircle2 className="h-4 w-4 text-green-400" />
-            <span>Using {currentModelData.name} for code generation</span>
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-white/80 bg-white/10 rounded-md px-2 sm:px-3 py-1.5 sm:py-2">
+            <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-400 shrink-0" />
+            <span className="truncate">Using {currentModelData.name} for code generation</span>
           </div>
         )}
       </div>
