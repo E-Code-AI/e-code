@@ -57,6 +57,8 @@ class AgentWebSocketService {
     this.startHeartbeat();
     
     this.wss.on('connection', (ws, req) => {
+      console.log(`[Agent WebSocket] 🎯 CONNECTION EVENT RECEIVED! remoteAddress: ${req.socket.remoteAddress}, URL: ${req.url}, ws.readyState: ${ws.readyState}`);
+      
       // ✅ CRITICAL FIX (Nov 20, 2025): Re-mark socket in connection handler as fallback
       // The ws library may null out request.socket during handleUpgrade, losing the tag from prependListener
       // This ensures the socket is marked even if the upgrade handler's tag was lost
