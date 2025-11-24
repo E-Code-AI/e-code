@@ -106,27 +106,26 @@ router.post('/bootstrap', csrfProtection, async (req: Request, res: Response) =>
       username = user.username || 'user';
       logger.info(`[Bootstrap] Authenticated user ${userId}`, { username });
     } else {
-      // Anonymous user - create or get guest user
-      logger.info(`[Bootstrap] Anonymous user - using guest account`);
-      let [guestUser] = await db.select()
-        .from(users)
-        .where(eq(users.email, 'guest@ecode.platform'))
-        .limit(1);
+      // ✅ SECURITY FIX (Nov 24, 2025): Create unique ephemeral user for each anonymous session
+      // Problem: Shared guest account allowed cross-user data access (multi-tenant leak)
+      // Solution: Each anonymous workspace gets its own isolated user with unique email
+      const ephemeralId = crypto.randomUUID();
+      const ephemeralEmail = `guest-${ephemeralId}@ecode.platform`;
+      const ephemeralUsername = `guest-${ephemeralId.substring(0, 8)}`;
       
-      if (!guestUser) {
-        // Create guest user if it doesn't exist
-        [guestUser] = await db.insert(users)
-          .values({
-            email: 'guest@ecode.platform',
-            username: 'guest',
-            password: '', // No password for guest user
-          })
-          .returning();
-        logger.info(`[Bootstrap] Created guest user: ${guestUser.id}`);
-      }
+      logger.info(`[Bootstrap] Creating ephemeral user for anonymous session`, { ephemeralEmail });
       
-      userId = guestUser.id;
-      username = 'guest';
+      const [ephemeralUser] = await db.insert(users)
+        .values({
+          email: ephemeralEmail,
+          username: ephemeralUsername,
+          password: crypto.randomBytes(32).toString('hex'), // Random unguessable password
+        })
+        .returning();
+      
+      userId = ephemeralUser.id;
+      username = ephemeralUsername;
+      logger.info(`[Bootstrap] Ephemeral user created: ${userId}`, { email: ephemeralEmail });
     }
     
     console.log('🚀 [Bootstrap] RECEIVED REQUEST from user', userId, 'prompt:', prompt.substring(0, 50));
