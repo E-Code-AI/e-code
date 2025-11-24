@@ -525,6 +525,277 @@ export class IntelliSenseEnhancement {
 }
 
 /**
+ * AI-Powered Code Actions Enhancement (Replit Agent 3 style)
+ * Provides inline AI quick fixes with lightbulb and right-click context menu
+ */
+export class AICodeActionsEnhancement {
+  private editor: monaco.editor.IStandaloneCodeEditor;
+  private disposables: monaco.IDisposable[] = [];
+  private projectId: string | number;
+
+  constructor(editor: monaco.editor.IStandaloneCodeEditor, projectId?: string | number) {
+    this.editor = editor;
+    this.projectId = projectId || 'unknown';
+    this.registerProviders();
+  }
+
+  private registerProviders() {
+    const model = this.editor.getModel();
+    if (!model) return;
+
+    const language = model.getLanguageId();
+
+    // Register AI Code Action Provider for ALL languages
+    this.disposables.push(
+      monaco.languages.registerCodeActionProvider(['typescript', 'javascript', 'python', 'java', 'cpp', 'go', 'rust', 'css', 'html', 'json', 'yaml'], {
+        provideCodeActions: (model, range, context, token) => {
+          const actions: monaco.languages.CodeAction[] = [];
+          
+          // Get selected text or current line
+          const selection = this.editor.getSelection();
+          const selectedText = selection ? model.getValueInRange(selection) : '';
+          const hasSelection = selectedText.length > 0;
+
+          // 🔥 AI-POWERED QUICK FIXES (Replit Agent 3 style)
+          actions.push({
+            title: '✨ AI Explain',
+            kind: 'quickfix',
+            command: {
+              id: 'ai.explain',
+              title: 'AI Explain Code',
+              arguments: [model, range, selectedText],
+            },
+            diagnostics: [],
+          });
+
+          actions.push({
+            title: '🐛 AI Debug',
+            kind: 'quickfix',
+            command: {
+              id: 'ai.debug',
+              title: 'AI Debug Code',
+              arguments: [model, range, selectedText],
+            },
+            diagnostics: [],
+          });
+
+          actions.push({
+            title: '🧪 AI Test',
+            kind: 'quickfix',
+            command: {
+              id: 'ai.test',
+              title: 'AI Generate Tests',
+              arguments: [model, range, selectedText],
+            },
+            diagnostics: [],
+          });
+
+          actions.push({
+            title: '📝 AI Document',
+            kind: 'quickfix',
+            command: {
+              id: 'ai.document',
+              title: 'AI Add Documentation',
+              arguments: [model, range, selectedText],
+            },
+            diagnostics: [],
+          });
+
+          actions.push({
+            title: '⚡ AI Optimize',
+            kind: 'quickfix',
+            command: {
+              id: 'ai.optimize',
+              title: 'AI Optimize Code',
+              arguments: [model, range, selectedText],
+            },
+            diagnostics: [],
+          });
+
+          actions.push({
+            title: '🔍 AI Review',
+            kind: 'quickfix',
+            command: {
+              id: 'ai.review',
+              title: 'AI Code Review',
+              arguments: [model, range, selectedText],
+            },
+            diagnostics: [],
+          });
+
+          // Only show if text is selected
+          if (hasSelection) {
+            actions.push({
+              title: '🔎 AI Search Similar',
+              kind: 'quickfix',
+              command: {
+                id: 'ai.search',
+                title: 'AI Search Similar Code',
+                arguments: [model, range, selectedText],
+              },
+              diagnostics: [],
+            });
+          }
+
+          return { actions, dispose: () => {} };
+        },
+      })
+    );
+
+    // Register command handlers for AI actions
+    this.registerAICommandHandlers();
+  }
+
+  private registerAICommandHandlers() {
+    // Handler for AI Explain
+    this.editor.addAction({
+      id: 'ai.explain',
+      label: '✨ AI Explain',
+      contextMenuGroupId: 'ai-actions',
+      contextMenuOrder: 1,
+      run: async (editor, ...args) => {
+        const [model, range, selectedText] = args;
+        await this.handleAIAction('explain', selectedText || model.getValueInRange(range));
+      },
+    });
+
+    // Handler for AI Debug
+    this.editor.addAction({
+      id: 'ai.debug',
+      label: '🐛 AI Debug',
+      contextMenuGroupId: 'ai-actions',
+      contextMenuOrder: 2,
+      run: async (editor, ...args) => {
+        const [model, range, selectedText] = args;
+        await this.handleAIAction('debug', selectedText || model.getValueInRange(range));
+      },
+    });
+
+    // Handler for AI Test
+    this.editor.addAction({
+      id: 'ai.test',
+      label: '🧪 AI Test',
+      contextMenuGroupId: 'ai-actions',
+      contextMenuOrder: 3,
+      run: async (editor, ...args) => {
+        const [model, range, selectedText] = args;
+        await this.handleAIAction('test', selectedText || model.getValueInRange(range));
+      },
+    });
+
+    // Handler for AI Document
+    this.editor.addAction({
+      id: 'ai.document',
+      label: '📝 AI Document',
+      contextMenuGroupId: 'ai-actions',
+      contextMenuOrder: 4,
+      run: async (editor, ...args) => {
+        const [model, range, selectedText] = args;
+        await this.handleAIAction('document', selectedText || model.getValueInRange(range));
+      },
+    });
+
+    // Handler for AI Optimize
+    this.editor.addAction({
+      id: 'ai.optimize',
+      label: '⚡ AI Optimize',
+      contextMenuGroupId: 'ai-actions',
+      contextMenuOrder: 5,
+      run: async (editor, ...args) => {
+        const [model, range, selectedText] = args;
+        await this.handleAIAction('optimize', selectedText || model.getValueInRange(range));
+      },
+    });
+
+    // Handler for AI Review
+    this.editor.addAction({
+      id: 'ai.review',
+      label: '🔍 AI Review',
+      contextMenuGroupId: 'ai-actions',
+      contextMenuOrder: 6,
+      run: async (editor, ...args) => {
+        const [model, range, selectedText] = args;
+        await this.handleAIAction('review', selectedText || model.getValueInRange(range));
+      },
+    });
+
+    // Handler for AI Search
+    this.editor.addAction({
+      id: 'ai.search',
+      label: '🔎 AI Search Similar',
+      contextMenuGroupId: 'ai-actions',
+      contextMenuOrder: 7,
+      run: async (editor, ...args) => {
+        const [model, range, selectedText] = args;
+        await this.handleAIAction('search', selectedText || model.getValueInRange(range));
+      },
+    });
+  }
+
+  private async handleAIAction(action: string, code: string) {
+    try {
+      // Show loading indicator
+      console.log(`[AI ${action}] Processing code...`, code.substring(0, 100));
+
+      // Call AI backend API
+      const response = await fetch(`/api/ai/code-actions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          code,
+          projectId: this.projectId,
+          language: this.editor.getModel()?.getLanguageId() || 'typescript',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`AI action failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      // Handle different action types
+      if (action === 'optimize' || action === 'document') {
+        // Replace code with AI suggestion
+        this.applyCodeSuggestion(result.suggestion);
+      } else {
+        // Show result in a notification or modal
+        this.showAIResult(action, result);
+      }
+
+      console.log(`[AI ${action}] Success:`, result);
+    } catch (error) {
+      console.error(`[AI ${action}] Error:`, error);
+      // Show error notification
+      alert(`AI ${action} failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  private applyCodeSuggestion(suggestion: string) {
+    const selection = this.editor.getSelection();
+    if (!selection) return;
+
+    this.editor.executeEdits('ai-suggestion', [{
+      range: selection,
+      text: suggestion,
+      forceMoveMarkers: true,
+    }]);
+  }
+
+  private showAIResult(action: string, result: any) {
+    // For now, show in console (can be replaced with modal/panel)
+    console.log(`[AI ${action}] Result:`, result);
+    alert(`AI ${action} result:\n\n${JSON.stringify(result, null, 2)}`);
+  }
+
+  dispose() {
+    this.disposables.forEach(d => d?.dispose?.());
+    this.disposables = [];
+  }
+}
+
+/**
  * Main enhancement class that orchestrates all features
  */
 export class MonacoFeaturesEnhancement {
@@ -535,6 +806,7 @@ export class MonacoFeaturesEnhancement {
   private refactoring?: CodeRefactoringEnhancement;
   private search?: AdvancedSearchEnhancement;
   private intelliSense?: IntelliSenseEnhancement;
+  private aiCodeActions?: AICodeActionsEnhancement;
 
   constructor(editor: monaco.editor.IStandaloneCodeEditor, config: MonacoEnhancementConfig = {}) {
     this.editor = editor;
@@ -571,6 +843,11 @@ export class MonacoFeaturesEnhancement {
     if (this.config.enableIntelliSense) {
       this.intelliSense = new IntelliSenseEnhancement(this.editor);
     }
+
+    // 🔥 REPLIT AGENT 3: AI-powered inline code actions
+    if (this.config.enableCodeActions) {
+      this.aiCodeActions = new AICodeActionsEnhancement(this.editor, this.config.projectId);
+    }
   }
 
   /**
@@ -589,6 +866,7 @@ export class MonacoFeaturesEnhancement {
     this.refactoring?.dispose();
     this.search?.dispose();
     this.intelliSense?.dispose();
+    this.aiCodeActions?.dispose();
   }
 }
 
