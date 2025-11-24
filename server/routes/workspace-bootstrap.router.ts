@@ -84,8 +84,9 @@ interface BootstrapTokenPayload {
  * ✅ FIX (Nov 24, 2025): Support anonymous guest access for "No credit card required" promise
  * - Removed ensureAuthenticated requirement
  * - Anonymous users get guest project with temporary ownership
+ * - Removed csrfProtection to allow anonymous POST requests without session cookies
  */
-router.post('/bootstrap', csrfProtection, async (req: Request, res: Response) => {
+router.post('/bootstrap', async (req: Request, res: Response) => {
   const startTime = Date.now();
   
   logger.info(`[Bootstrap] 🚀 POST /bootstrap REQUEST RECEIVED`, { 
