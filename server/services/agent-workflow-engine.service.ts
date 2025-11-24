@@ -72,6 +72,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
   // Create and execute a workflow
   async executeWorkflow(
     sessionId: string,
+    projectId: number,
     name: string,
     description: string,
     steps: WorkflowStep[],
@@ -86,6 +87,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
       const [workflow] = await db.insert(agentWorkflows)
         .values({
           sessionId,
+          projectId,
           name,
           description,
           steps,
