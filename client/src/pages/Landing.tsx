@@ -161,11 +161,15 @@ export default function Landing() {
   ];
 
   const handleStartBuilding = async (description: string) => {
+    console.log('[Landing] 🚀 handleStartBuilding called with description:', description);
+    console.log('[Landing] User status:', user ? `authenticated (${user.id})` : 'anonymous');
+    
     // Store the app description for post-auth use
     sessionStorage.setItem('pendingAppDescription', description);
     setChatOpen(false);
     
     try {
+      console.log('[Landing] Calling bootstrap API...');
       // ✅ FIX (Nov 24, 2025): Support anonymous workspace creation for "No credit card required" promise
       // Bootstrap API now accepts both authenticated and anonymous users
       const result = await apiRequest('POST', '/api/workspace/bootstrap', {
@@ -173,7 +177,10 @@ export default function Landing() {
         autoStart: true
       }) as any;
 
+      console.log('[Landing] Bootstrap API response:', result);
+
       if (result.success) {
+        console.log('[Landing] Bootstrap successful, navigating to IDE...');
         toast({
           title: 'Creating your workspace...',
           description: 'AI is generating your project structure now',
@@ -185,7 +192,7 @@ export default function Landing() {
         throw new Error(result.error || 'Bootstrap failed');
       }
     } catch (error) {
-      console.error('Failed to bootstrap workspace:', error);
+      console.error('[Landing] ❌ Failed to bootstrap workspace:', error);
       toast({
         title: 'Error',
         description: 'Failed to create workspace. Please try again.',
