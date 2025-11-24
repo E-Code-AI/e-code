@@ -160,7 +160,7 @@ export default function IDEPage() {
     window.history.replaceState({}, '', url);
     
     // Refresh project data with correct query keys
-    queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
+    queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
     queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
     
     toast({
@@ -240,15 +240,32 @@ export default function IDEPage() {
   
   // Load project
   // ✅ FIX (Nov 24, 2025): Allow anonymous access with bootstrap token
+  // ✅ FIX (Nov 24, 2025): Use structured query key with custom queryFn for clean REST API
   const { data: project, isLoading: isLoadingProject } = useQuery<Project>({
-    queryKey: ['/api/projects', projectId],
+    queryKey: ['/api/projects', projectId, { bootstrap: !!bootstrapToken }],
+    queryFn: async () => {
+      const url = `/api/projects/${projectId}${bootstrapToken ? `?bootstrap=${bootstrapToken}` : ''}`;
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) {
+        throw new Error(`Failed to fetch project: ${res.status} ${res.statusText}`);
+      }
+      return res.json();
+    },
     enabled: !!projectId && (!!user || !!bootstrapToken),
   });
   
   // Load files
-  // ✅ FIX (Nov 24, 2025): Allow anonymous access with bootstrap token
+  // ✅ FIX (Nov 24, 2025): Allow anonymous access with bootstrap token using structured query key
   const { data: files = [] } = useQuery<File[]>({
-    queryKey: [`/api/projects/${projectId}/files`],
+    queryKey: ['/api/projects', projectId, 'files', { bootstrap: !!bootstrapToken }],
+    queryFn: async () => {
+      const url = `/api/projects/${projectId}/files${bootstrapToken ? `?bootstrap=${bootstrapToken}` : ''}`;
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) {
+        throw new Error(`Failed to fetch files: ${res.status} ${res.statusText}`);
+      }
+      return res.json();
+    },
     enabled: !!projectId && (!!user || !!bootstrapToken),
   });
   
