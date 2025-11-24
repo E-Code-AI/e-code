@@ -126,11 +126,15 @@ export default function Register() {
       
       const pendingAppDescription = sessionStorage.getItem('pendingAppDescription');
       const urlParams = new URLSearchParams(window.location.search);
-      const shouldRedirectToAgent = urlParams.get('build') === 'true';
+      const redirectParam = urlParams.get('redirect');
       
       // Redirect immediately after registration success
-      if (shouldRedirectToAgent && pendingAppDescription) {
-        navigate('/ai-agent/studio?mode=plan');
+      // If user was trying to build from prompt, redirect to home with a flag
+      // Landing page will detect the user is now logged in and trigger workspace creation
+      if (redirectParam === 'build-from-prompt' && pendingAppDescription) {
+        // Keep prompt in session storage, add a flag to trigger immediate build
+        sessionStorage.setItem('triggerBuildOnLanding', 'true');
+        navigate('/');
       } else {
         navigate('/');
       }

@@ -73,6 +73,20 @@ export default function Landing() {
   const y = useTransform(scrollYProgress, [0, 1], [0, -50]);
   const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
 
+  // Check if user just registered and needs to trigger workspace creation
+  useEffect(() => {
+    const triggerBuild = sessionStorage.getItem('triggerBuildOnLanding');
+    const pendingPrompt = sessionStorage.getItem('pendingAppDescription');
+    
+    if (user && triggerBuild === 'true' && pendingPrompt) {
+      // Clear the flags
+      sessionStorage.removeItem('triggerBuildOnLanding');
+      
+      // Trigger workspace creation
+      handleStartBuilding(pendingPrompt);
+    }
+  }, [user]);
+
   // Fetch real templates from database
   const { data: templates = [], isLoading: templatesLoading } = useQuery<any[]>({
     queryKey: ['/api/marketplace/templates'],
