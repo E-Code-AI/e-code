@@ -88,9 +88,23 @@ interface BootstrapTokenPayload {
 router.post('/bootstrap', csrfProtection, async (req: Request, res: Response) => {
   const startTime = Date.now();
   
+  logger.info(`[Bootstrap] 🚀 POST /bootstrap REQUEST RECEIVED`, { 
+    body: req.body,
+    hasPrompt: !!req.body?.prompt,
+    hasOptions: !!req.body?.options,
+    rawBody: JSON.stringify(req.body)
+  });
+  
   try {
     // 1. Validate request
+    logger.info(`[Bootstrap] Attempting to parse request body...`);
     const { prompt, options } = bootstrapRequestSchema.parse(req.body);
+    logger.info(`[Bootstrap] ✅ Request validated successfully`, { 
+      promptLength: prompt.length,
+      autoStart: options.autoStart,
+      language: options.language,
+      framework: options.framework
+    });
     
     // Support both authenticated and anonymous users
     const user = req.user as User | undefined;

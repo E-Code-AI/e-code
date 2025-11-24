@@ -169,17 +169,36 @@ export default function Landing() {
     setChatOpen(false);
     
     try {
-      console.log('[Landing] Calling bootstrap API...');
-      // ✅ FIX (Nov 24, 2025): Support anonymous workspace creation for "No credit card required" promise
-      // Bootstrap API now accepts both authenticated and anonymous users
-      const result = await apiRequest('POST', '/api/workspace/bootstrap', {
+      const requestPayload = {
         prompt: description,
         options: {
-          autoStart: true  // ✅ CRITICAL: autoStart must be inside options object
+          autoStart: true,  // ✅ CRITICAL: autoStart must be inside options object
+          language: 'typescript',
+          framework: 'react'
         }
-      }) as any;
+      };
+      
+      console.log('[Landing] 🚀 Calling bootstrap API with payload:', requestPayload);
+      console.log('[Landing] Request details:', {
+        endpoint: '/api/workspace/bootstrap',
+        method: 'POST',
+        payloadSize: JSON.stringify(requestPayload).length,
+        hasPrompt: !!requestPayload.prompt,
+        hasOptions: !!requestPayload.options,
+        autoStart: requestPayload.options.autoStart
+      });
+      
+      // ✅ FIX (Nov 24, 2025): Support anonymous workspace creation for "No credit card required" promise
+      // Bootstrap API now accepts both authenticated and anonymous users
+      const result = await apiRequest('POST', '/api/workspace/bootstrap', requestPayload) as any;
 
-      console.log('[Landing] Bootstrap API response:', result);
+      console.log('[Landing] ✅ Bootstrap API response received:', result);
+      console.log('[Landing] Response details:', {
+        success: result.success,
+        hasBootstrapToken: !!result.bootstrapToken,
+        hasProjectId: !!result.projectId,
+        hasSessionId: !!result.sessionId
+      });
 
       if (result.success) {
         console.log('[Landing] Bootstrap successful, navigating to IDE...');
