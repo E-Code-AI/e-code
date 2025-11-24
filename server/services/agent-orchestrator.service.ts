@@ -1351,24 +1351,112 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         message: 'Starting autonomous execution...'
       }, projectId);
       
-      // 4. Convert plan tasks to workflow steps using existing buildStepConfig method
-      // ✅ FIX (Nov 24, 2025): Create task ID mapping table (task-X → step-X)
-      const taskIdMapping: Record<string, string> = {};
-      executionPlan.tasks.forEach((task: any, index: number) => {
-        if (task.id) {
-          taskIdMapping[task.id] = `step-${index + 1}`;
+      // 4. Convert plan tasks to workflow steps with dependency mapping
+      // ✅ FIX (Nov 24, 2025): Expand multi-file tasks + map dependencies correctly
+      // STEP 1: Build task-to-stepIDs mapping for dependency resolution
+      const taskToStepIds: Record<string, string[]> = {};
+      
+      const workflowSteps = executionPlan.tasks.flatMap((task: any) => {
+        const stepIds: string[] = [];
+        let steps: any[] = [];
+        
+        // For file operations with multiple files, create separate steps
+        if ((task.type === 'file_create' || task.type === 'file_edit' || task.type === 'config') && 
+            task.files && task.files.length > 1) {
+          // Create one step per file
+          steps = task.files.map((file: any, fileIndex: number) => {
+            const stepId = `${task.id}-file-${fileIndex}`;
+            stepIds.push(stepId);
+            return {
+              id: stepId,
+              name: `${task.title} - ${file.path}`,
+              type: this.mapTaskTypeToWorkflowType(task.type),
+              config: {
+                description: task.description,
+                taskId: task.id,
+                fileIndex,
+                action: task.type === 'file_edit' ? 'update_file' : 'create_file',
+                path: file.path,
+                language: file.language
+              },
+              dependencies: [],  // Will be populated in STEP 2
+              status: 'pending' as const
+            };
+          });
+        } else if ((task.type === 'file_create' || task.type === 'file_edit' || task.type === 'config') && 
+                   task.files && task.files.length === 1) {
+          // Single-file operation: use buildStepConfig
+          stepIds.push(task.id);
+          steps = [{
+            id: task.id,
+            name: task.title,
+            type: this.mapTaskTypeToWorkflowType(task.type),
+            config: this.buildStepConfig(task),
+            dependencies: [],  // Will be populated in STEP 2
+            status: 'pending' as const
+          }];
+        } else {
+          // Non-file operations (install_package, command, etc.) OR file tasks with empty files[]
+          // Don't use buildStepConfig for these - create minimal config
+          stepIds.push(task.id);
+          const minimalConfig: any = {
+            description: task.description,
+            taskId: task.id
+          };
+          
+          // For install_package, add packages/command
+          if (task.type === 'install_package') {
+            if (task.packages && task.packages.length > 0) {
+              minimalConfig.command = `npm install ${task.packages.join(' ')}`;
+            } else if (task.commands && task.commands.length > 0) {
+              minimalConfig.command = task.commands.join(' && ');
+            }
+          }
+          
+          // For command, add commands
+          if (task.type === 'command') {
+            if (task.commands && task.commands.length > 0) {
+              minimalConfig.command = task.commands.join(' && ');
+            }
+          }
+          
+          steps = [{
+            id: task.id,
+            name: task.title,
+            type: this.mapTaskTypeToWorkflowType(task.type),
+            config: minimalConfig,
+            dependencies: [],  // Will be populated in STEP 2
+            status: 'pending' as const
+          }];
         }
+        
+        // Store mapping for this task
+        taskToStepIds[task.id] = stepIds;
+        
+        // Store original task dependencies for STEP 2
+        steps.forEach(step => {
+          (step as any)._originalTaskDependencies = task.dependencies || [];
+        });
+        
+        return steps;
       });
       
-      const workflowSteps = executionPlan.tasks.map((task: any, index: number) => ({
-        id: `step-${index + 1}`,
-        name: task.title,
-        type: this.mapTaskTypeToWorkflowType(task.type),
-        config: this.buildStepConfig(task),
-        // ✅ FIX: Map dependencies from task-X to step-X IDs
-        dependencies: (task.dependencies || []).map((dep: string) => taskIdMapping[dep] || dep),
-        status: 'pending' as const
-      }));
+      // STEP 2: Map all dependencies from task IDs to actual step IDs
+      workflowSteps.forEach(step => {
+        const originalDeps = (step as any)._originalTaskDependencies || [];
+        step.dependencies = originalDeps.flatMap((taskId: string) => {
+          // Map task dependency to all its step IDs
+          const stepIds = taskToStepIds[taskId];
+          if (!stepIds) {
+            logger.warn(`[Autonomous] Dependency ${taskId} not found in task mapping, keeping as-is`);
+            return [taskId];
+          }
+          return stepIds;
+        });
+        
+        // Clean up temporary property
+        delete (step as any)._originalTaskDependencies;
+      });
       
       logger.info(`[Autonomous] Converted ${workflowSteps.length} workflow steps`, { sessionId });
       

@@ -369,7 +369,10 @@ export class AgentWorkflowEngineService extends EventEmitter {
       let operation = config.operation;
       
       // Map file action types to internal operation names
-      if (taskType === 'create_file' || taskType === 'update_file') {
+      // ✅ FIX (Nov 24, 2025): Support both plan task types (file_create/file_edit/config) AND config types (create_file/update_file)
+      if (taskType === 'file_create' || taskType === 'create_file' || taskType === 'update_file') {
+        operation = 'write';
+      } else if (taskType === 'file_edit' || taskType === 'config') {
         operation = 'write';
       } else if (taskType === 'read_file') {
         operation = 'read';
