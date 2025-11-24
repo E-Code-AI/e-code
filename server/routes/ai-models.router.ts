@@ -59,7 +59,7 @@ router.get('/', (req, res) => {
  */
 router.get('/preferred', ensureAuthenticated, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user!.id.toString();
     const storage = getStorage();
     
     // Get user's preferred model from database
@@ -89,7 +89,7 @@ router.get('/preferred', ensureAuthenticated, async (req, res) => {
  */
 router.post('/preferred', ensureAuthenticated, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user!.id.toString();
     const { modelId } = req.body;
     
     if (!modelId) {
