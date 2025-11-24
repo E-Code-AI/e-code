@@ -680,10 +680,15 @@ export const checkpoints = pgTable('checkpoints', {
   changedFiles: jsonb('changed_files').$type<string[]>().default([]), // List of modified file paths
   testResults: jsonb('test_results').$type<{passed: boolean; total: number; failures: any[]}>(), // Automated test results
   rollbackCount: integer('rollback_count').default(0), // Times this checkpoint was rolled back to
-  parentCheckpointId: integer('parent_checkpoint_id'), // For bidirectional history (rollback/rollforward)
+  parentCheckpointId: integer('parent_checkpoint_id').references(() => checkpoints.id), // 🔥 Self-referencing FK for bidirectional rollback/rollforward
   databaseBranchId: varchar('database_branch_id'), // Neon branch ID for dev/prod separation
   environment: varchar('environment', { length: 20 }).default('development'), // development, production
-});
+}, (table) => [
+  // 🔥 PERFORMANCE INDEXES - Architect recommendations
+  index('checkpoints_project_environment_idx').on(table.projectId, table.environment), // Fast filtering by project + environment
+  index('checkpoints_created_at_idx').on(table.createdAt), // Timeline queries
+  index('checkpoints_parent_id_idx').on(table.parentCheckpointId), // Rollback chain traversal
+]);
 
 // Checkpoint files for storing file snapshots
 export const checkpointFiles = pgTable('checkpoint_files', {
