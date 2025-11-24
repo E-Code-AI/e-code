@@ -185,9 +185,9 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
     const providerColor = currentModelData ? getProviderColor(currentModelData.provider) : 'bg-orange-500';
 
     return (
-      <div className={`space-y-2 sm:space-y-3 ${className}`}>
+      <div className={`space-y-2 sm:space-y-3 ${className}`} data-testid="ai-model-selector-hero-container">
         {/* Header: Stack on mobile, side-by-side on sm+ */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2" data-testid="ai-model-selector-hero-header">
           <div className="flex items-center gap-2 text-white/90">
             <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
             <span className="text-sm sm:text-base font-semibold">Choose Your AI Model</span>
@@ -235,7 +235,10 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
                   className={!isAvailable ? 'opacity-50 cursor-not-allowed' : 'py-2 sm:py-3'}
                 >
                   <div className="flex items-center gap-2 sm:gap-3 py-1 w-full">
-                    <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${modelColor} flex items-center justify-center shrink-0`}>
+                    <div 
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${modelColor} flex items-center justify-center shrink-0`}
+                      data-testid={`provider-icon-${model.provider}`}
+                    >
                       <ModelIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -253,7 +256,7 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
                       )}
                     </div>
                     {model.supportsStreaming && isAvailable && (
-                      <Badge variant="secondary" className="text-xs shrink-0">
+                      <Badge variant="secondary" className="text-xs shrink-0" data-testid={`streaming-badge-${model.id}`}>
                         <Zap className="h-3 w-3 sm:mr-1" />
                         <span className="hidden sm:inline">Streaming</span>
                       </Badge>
