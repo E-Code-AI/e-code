@@ -343,7 +343,7 @@ function formatResults(results: DiagnosticResults): void {
   if (results.buildExecutions.length === 0) {
     issues.push('⚠️  No build executions found');
     recommendations.push('5. Check if plan generation is working');
-    recommendations.push('6. Review workspace-bootstrap-router logs');
+    recommendations.push('6. Review workspace router logs (/api/workspace)');
   }
 
   if (results.buildExecutions.some((b: any) => b.status === 'pending')) {
