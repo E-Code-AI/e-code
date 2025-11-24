@@ -170,7 +170,8 @@ export default function Landing() {
         // 🚀 AUTONOMOUS WORKSPACE CREATION: Use bootstrap API for Replit-style flow
         const result = await apiRequest('POST', '/api/workspace/bootstrap', {
           prompt: description,
-          userId: user.id
+          userId: user.id,
+          autoStart: true // ✅ FIX: Actually execute the workflow after plan generation!
         }) as any;
 
         if (result.success) {

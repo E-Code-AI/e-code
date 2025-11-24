@@ -231,7 +231,7 @@ export class AIPlanGeneratorService {
       // File content will be generated in Phase 2 by the orchestrator
       
       // Condensed system prompt for providers with size limits (like Gemini)
-      const systemPromptCondensed = `You are a software architect. Create a JSON execution plan for building software projects. Respond ONLY with valid JSON using this format: {"summary":"","technologies":[],"estimatedTime":"","tasks":[{"id":"","title":"","description":"","type":"file_create|file_edit|command|install_package|config","estimatedTime":"","dependencies":[],"priority":"high|medium|low","files":[{"path":"","outline":"brief description of file purpose","language":""}],"packages":[],"commands":[]}],"riskAssessment":{"level":"low|medium|high","factors":[]}}. Requirements: Production-ready structure, include all config files, specify exact package versions, order by dependencies. IMPORTANT: Use 'outline' not 'content' for files.`;
+      const systemPromptCondensed = `You are a software architect. Create a JSON execution plan for building software projects. Respond ONLY with valid JSON using this format: {"summary":"","technologies":[],"estimatedTime":"","tasks":[{"id":"","title":"","description":"","type":"file_create|file_edit|command|install_package|config","estimatedTime":"","dependencies":[],"priority":"high|medium|low","files":[{"path":"","outline":"brief description of file purpose","language":""}],"packages":[],"commands":[]}],"riskAssessment":{"level":"low|medium|high","factors":[]}}. Requirements: Production-ready structure, include all config files, specify exact package versions, order by dependencies. IMPORTANT: Use 'outline' not 'content' for files. 🚫 FORBIDDEN: NEVER use scaffolding commands like "npm create", "npx create-*", "npm init", or template generators - ALWAYS create files directly instead.`;
       
       // Full system prompt for providers without size limits
       const systemPromptFull = `You are an expert software architect and project planner. Your task is to create a detailed, executable plan for building software projects.
@@ -285,6 +285,12 @@ Given a user's goal, create a comprehensive execution plan with the following:
 - Order tasks by dependencies (earlier tasks before later ones)
 - Be specific about file paths and purposes
 - DO NOT include full file content in the plan (it will be generated later)
+
+**🚫 FORBIDDEN COMMANDS (Security Policy):**
+- NEVER use scaffolding tools: "npm create", "npx create-*", "npm init", "yarn create"
+- NEVER use template generators like "vite create", "create-react-app", "ng new"
+- INSTEAD: Create files directly using file_create tasks with proper outlines
+- Example: Instead of "npm create vite" → Create package.json, index.html, main.tsx, etc. separately
 
 **Project Context:**
 - Language: ${project.language}
