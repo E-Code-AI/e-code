@@ -3,26 +3,34 @@
 ## Overview
 E-Code is a web-based collaborative IDE with AI assistance, offering code editing, terminal access, file management, and an autonomous AI agent. Its primary purpose is to facilitate rapid prototyping and education. The platform aims for enterprise-grade scalability, multi-provider AI model selection, real-time collaboration, robust security, and the ability to create autonomous workspaces from a natural language prompt to a live preview with streaming progress. Key capabilities include Monaco-based code editing, real-time WebSocket streaming, and responsive UI design. The business vision is to provide a comprehensive, AI-powered development environment that streamlines the coding process and enhances learning.
 
-## Recent Changes (November 23, 2025)
+## Recent Changes (November 24, 2025)
 
 ### Autonomous Workspace Creation - PRODUCTION READY ✅
-**Status:** Complete end-to-end autonomous workspace creation system (November 23, 2025)
+**Status:** Complete end-to-end autonomous workspace creation system (November 24, 2025)
+**Final Approval:** Architect-approved production-ready implementation
 
 **Core Infrastructure (100% Complete):**
-- ✅ Bootstrap API (`/api/workspace-bootstrap/bootstrap`) - Authentication, project creation, session management (204ms avg)
+- ✅ Bootstrap API (`/api/workspace/bootstrap`) - Authentication, project creation, session management (204ms avg)
 - ✅ Multi-provider AI fallback chain (gemini-2.5-flash → gpt-5.1 → claude-haiku → grok-4-fast → kimi-k2)
 - ✅ Extended GPT-5.1 timeout: 60s → 120s (allows completion of large plans with 2794+ chunks)
 - ✅ Real-time WebSocket streaming for plan generation progress
 - ✅ Database schema complete (agent_workflows, agent_mode, agent_plans tables)
 - ✅ Outline-based PlanTask schema with `outline?: string` field support
 
-**Phase 2 Executor - Content Generation (NEW):**
+**Phase 2 Executor - Content Generation:**
 - ✅ **agent-content-generator.service.ts** (273 lines) - Template-based file content generation
 - ✅ Robust path matching using `endsWith()` for subdirectory support (client/package.json, src/main.tsx, etc.)
 - ✅ Intelligent templates for: package.json, index.html, index.css, main.tsx, App.tsx, vite.config.ts, tsconfig.json, tailwind.config.js, postcss.config.js
 - ✅ Tailwind CSS detection: case-insensitive check for 'tailwind' OR '@tailwind' in outline description
 - ✅ Smart fallback content generation by file extension (TSX/JSX components, TS/JS modules, CSS, JSON, Markdown)
 - ✅ Integrated into workflow engine's `executeFileOperation` method (lines 370-381)
+
+**Phase 3 UI Integration - Complete User Experience (NEW):**
+- ✅ **Landing.tsx** (lines 160-172) - Bootstrap API integration with `/api/workspace/bootstrap` (fixed path mismatch)
+- ✅ **IDEPage.tsx** (line 132, 702) - Bootstrap parameter detection, AutonomousWorkspaceViewer modal rendering
+- ✅ **AutonomousWorkspaceViewer.tsx** - JWT token decoding, WebSocket connection, real-time progress tracking
+- ✅ **Query invalidation** (line 167) - Automatic file tree refresh on workflow completion
+- ✅ **End-to-end flow verified** - Landing → Bootstrap → IDE → Live Preview with WebSocket streaming
 
 **Deterministic Fallback Plan (Production-Ready):**
 - ✅ Generates complete React 18 + TypeScript + Vite + Tailwind CSS starter scaffold
@@ -35,14 +43,22 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 - ✅ **Architect-verified:** All dependencies match generated code, no missing packages
 
 **Complete End-to-End Flow:**
-1. AI provider generates plan (or fallback triggers if all providers fail)
-2. Plan stored in `agent_plans` table with outline-based file descriptors
-3. Orchestrator creates workflow with taskId references (no content duplication)
-4. Workflow engine fetches full task data from plan store
-5. **Phase 2 executor** expands outlines → concrete file content via template matching
-6. agentFileOperations writes files to disk
-7. Command task executes `npm install` and `npm run dev`
-8. Live workspace with functioning Vite dev server
+1. User enters prompt on Landing page
+2. Landing calls POST `/api/workspace/bootstrap` with prompt
+3. Bootstrap API returns {projectId, sessionId, bootstrapToken} in ~200ms
+4. Landing redirects to `/ide/:projectId?bootstrap=:jwt_token`
+5. IDE detects bootstrap param, renders AutonomousWorkspaceViewer modal
+6. Modal decodes JWT, connects to `/ws/agent?projectId=X&sessionId=Y`
+7. Backend generates plan via AI (or fallback if all providers fail)
+8. Plan stored in `agent_plans` table with outline-based file descriptors
+9. Orchestrator creates workflow with taskId references (no content duplication)
+10. Workflow engine fetches full task data from plan store
+11. **Phase 2 executor** expands outlines → concrete file content via template matching
+12. agentFileOperations writes files to disk
+13. Command task executes `npm install` and `npm run dev`
+14. Modal shows real-time progress via WebSocket events
+15. Modal closes, query invalidation triggers file tree refresh
+16. Live workspace with functioning Vite dev server
 
 **AI Provider Resilience:**
 - ⚠️ External dependency on AI provider availability (Gemini stalls, GPT-5.1 timeouts possible, Claude credits)
