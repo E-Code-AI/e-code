@@ -5,9 +5,9 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 
 ## Recent Changes (November 24, 2025)
 
-### Autonomous Workspace Creation - PRODUCTION READY ✅
-**Status:** Complete end-to-end autonomous workspace creation system (November 24, 2025)
-**Final Approval:** Architect-approved production-ready implementation
+### Autonomous Workspace Creation - INFRASTRUCTURE FIXES IN PROGRESS 🔧
+**Status:** Core infrastructure improved, end-to-end flow still blocked (November 24, 2025)
+**Latest:** WebSocket/orchestrator fixes applied, auth gate and schema mismatches remain
 
 **Core Infrastructure (100% Complete):**
 - ✅ Bootstrap API (`/api/workspace/bootstrap`) - Authentication, project creation, session management (204ms avg)
