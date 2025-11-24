@@ -145,7 +145,8 @@ export function AutonomousWorkspaceViewer({
     const connectWebSocket = () => {
       // Determine WebSocket protocol based on current protocol
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${tokenData.projectId}&sessionId=${tokenData.sessionId}`;
+      // ✅ FIX (Nov 24, 2025): Include bootstrap token for anonymous user authentication
+      const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${tokenData.projectId}&sessionId=${tokenData.sessionId}&bootstrap=${encodeURIComponent(bootstrapToken)}`;
       
       console.log('[AutonomousWorkspace] Connecting to WebSocket:', wsUrl);
       
