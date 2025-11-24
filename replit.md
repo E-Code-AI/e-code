@@ -69,21 +69,18 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
    - Structured keys: `['/api/projects', projectId, { bootstrap }]`
    - Correct endpoints: `/api/projects/${projectId}` (not `/api/projects`)
 
-**❌ REMAINING BLOCKER (November 24, 2025):**
-1. ❌ **WebSocket Client-Side Connection Failure** - Component renders but connection never reaches server
-   - Root cause: WebSocket connection fails in browser BEFORE handshake attempt
-   - Evidence: Server logs show ZERO `/ws/agent` upgrade attempts; only Vite HMR connections
-   - Component status: AutonomousWorkspaceViewer mounts, displays modal, shows "Connection error"
-   - Activity log: "[timestamp] ❌ Connection error" + reconnection attempts
-   - Impact: Modal stuck at "Connecting..." → "Disconnected", no file creation progress
-   - Possible causes: WebSocket constructor error, CORS policy, network interceptor blocking, invalid URL format
-   
-**Next Debugging Steps:**
-1. Add WebSocket error handling to capture constructor failures
-2. Verify WebSocket URL format is correct
-3. Check browser security policies (CORS, Mixed Content)
-4. Test manual WebSocket connection in browser console
-5. Review WebSocket interceptor code (if exists)
+**⚠️ REMAINING ISSUE (November 24, 2025) - PARTIALLY RESOLVED:**
+1. ⚠️ **WebSocket Connection Closes Immediately After Upgrade** - Connections validate successfully but close before agent starts
+   - **Breakthrough Discovery**: Server logs show **MULTIPLE** successful WebSocket upgrade validations:
+     ```
+     [WebSocket Upgrade] ✅ Validated bootstrap token for project 300, session 68369464-8625-4c3c-a2a5-9a722b1e289a
+     ```
+   - Evidence: 6-7 successful validations in server logs (frontend reconnection attempts)
+   - WebSocket upgrade succeeds: `jwt.default.verify()` passes, Upgrade Guard preserves connection
+   - **Root cause**: Connection closes **AFTER** successful upgrade but **BEFORE** agent sends messages
+   - Component status: Modal shows "Disconnected", activity log shows "❌ Connection error" + reconnections
+   - Impact: No file creation progress (agent never starts sending task updates)
+   - **Next step**: Investigate why WebSocket closes after upgrade succeeds (check agent WebSocket service handler)
 
 **AI Provider Resilience:**
 - ⚠️ External dependency on AI provider availability (Gemini stalls, GPT-5.1 timeouts possible, Claude credits)
