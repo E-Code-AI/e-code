@@ -21,7 +21,7 @@ import {
   ResizablePanelGroup 
 } from '@/components/ui/resizable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Brain, Zap, X } from 'lucide-react';
+import { Brain, Zap, X, Layers } from 'lucide-react';
 import { ECodeLoading } from '@/components/ECodeLoading';
 import { Button } from '@/components/ui/button';
 
@@ -31,6 +31,7 @@ import { StatusBar } from '@/components/ide/StatusBar';
 import { QuickFileSearch } from '@/components/ide/QuickFileSearch';
 import { KeyboardShortcutsOverlay } from '@/components/ide/KeyboardShortcutsOverlay';
 import { AgentActionsPanel } from '@/components/ide/AgentActionsPanel';
+import { ToolsPanel } from '@/components/ide/ToolsPanel';
 import { ReplitAgent } from '@/components/ReplitAgent';
 import { AutonomousWorkspaceViewer } from '@/components/ide/AutonomousWorkspaceViewer';
 import { ReplitFileExplorer } from '@/components/editor/ReplitFileExplorer';
@@ -541,13 +542,17 @@ export default function IDEPage() {
           <div className="h-full flex flex-col border-r">
             <Tabs defaultValue="agent" className="h-full flex flex-col">
               <TabsList className="w-full justify-start rounded-none border-b">
-                <TabsTrigger value="agent" className="gap-2">
+                <TabsTrigger value="agent" className="gap-2" data-testid="tab-agent">
                   <Brain className="h-4 w-4" />
                   Agent
                 </TabsTrigger>
-                <TabsTrigger value="actions" className="gap-2">
+                <TabsTrigger value="actions" className="gap-2" data-testid="tab-actions">
                   <Zap className="h-4 w-4" />
                   Actions
+                </TabsTrigger>
+                <TabsTrigger value="tools" className="gap-2" data-testid="tab-tools">
+                  <Layers className="h-4 w-4" />
+                  Tools
                 </TabsTrigger>
               </TabsList>
               
@@ -593,6 +598,14 @@ export default function IDEPage() {
               
               <TabsContent value="actions" className="flex-1 mt-0 overflow-hidden">
                 <AgentActionsPanel projectId={projectId} />
+              </TabsContent>
+              
+              <TabsContent value="tools" className="flex-1 mt-0 overflow-hidden">
+                <ToolsPanel
+                  availableTools={availableTools}
+                  onSelectTool={handleAddTool}
+                  activeTabs={tabs.map(t => t.id)}
+                />
               </TabsContent>
             </Tabs>
           </div>
