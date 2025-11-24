@@ -98,7 +98,7 @@ export interface CodeReview {
 
 export class AdvancedAIService {
   private analyzer: CodeAnalyzer;
-  private provider: AIProvider;
+  private provider: ReturnType<typeof getAIProvider>;
 
   constructor() {
     this.analyzer = new CodeAnalyzer();
