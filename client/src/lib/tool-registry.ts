@@ -48,6 +48,7 @@ export interface ToolMetadata {
 
 /**
  * Complete tool registry matching availableTools from IDEPage
+ * IMPORTANT: This registry MUST contain ALL tools from IDEPage.availableTools
  */
 export const TOOL_REGISTRY: Record<string, ToolMetadata> = {
   // Development Tools
@@ -77,6 +78,15 @@ export const TOOL_REGISTRY: Record<string, ToolMetadata> = {
     category: 'Development',
     description: 'Multiple shell sessions',
     keywords: ['bash', 'terminal'],
+  },
+  'git': {
+    id: 'git',
+    label: 'Git',
+    icon: Code,
+    emoji: '🔀',
+    category: 'Tools',
+    description: 'Version control with Git',
+    keywords: ['commit', 'push', 'branch'],
   },
   'output': {
     id: 'output',
@@ -237,15 +247,6 @@ export const TOOL_REGISTRY: Record<string, ToolMetadata> = {
     description: 'IDE preferences and configuration',
     keywords: ['config', 'preferences'],
   },
-  'git': {
-    id: 'git',
-    label: 'Git',
-    icon: Code,
-    emoji: '🔀',
-    category: 'Tools',
-    description: 'Version control with Git',
-    keywords: ['commit', 'push', 'branch'],
-  },
   'extensions': {
     id: 'extensions',
     label: 'Extensions',
@@ -315,6 +316,22 @@ export const TOOL_REGISTRY: Record<string, ToolMetadata> = {
     keywords: ['payment', 'subscription'],
   },
 };
+
+/**
+ * Validation: Check if all tools from IDEPage.availableTools are present
+ * Run this in development to ensure registry completeness
+ */
+export function validateToolRegistry(availableTools: { id: string; label: string; icon: string }[]): { valid: boolean; missing: string[] } {
+  const registryIds = new Set(Object.keys(TOOL_REGISTRY));
+  const missing = availableTools
+    .filter(tool => !registryIds.has(tool.id))
+    .map(tool => tool.id);
+  
+  return {
+    valid: missing.length === 0,
+    missing,
+  };
+}
 
 /**
  * Get tool metadata by ID
