@@ -49,23 +49,41 @@ E-Code is a web-based collaborative IDE with AI assistance, offering code editin
 2. ✅ Multi-file task expansion: Orchestrator flatMap creates one step per file (agent-orchestrator.service.ts:987-1016)
 3. ✅ Schema alignment: agent_workflows accepts 'parallel'/'loop' types (shared/schema.ts:2202)
 
-**Remaining Blockers (Architect-Identified November 24, 2025):**
-1. ❌ **Auth Gate**: Landing redirects anonymous users to `/register?redirect=build-from-prompt` BEFORE bootstrap API is called
-   - Root cause: handleStartBuilding (Landing.tsx:196-205) checks `if (user)` → redirects if not logged in
-   - Impact: No bootstrap request ever reaches server for anonymous users
-2. ❌ **WebSocket Connection Failure**: Agent WebSocket validator rejects upgrades without logged-in session
-   - Root cause: Socket never marked as handled during auth validation → Upgrade Guard destroys it
-   - Impact: Modal shows "Connection error" and "Disconnected" status
-3. ❌ **Database Type Mismatch**: agent_audit_trail INSERT failures prevent workflow state persistence
-   - Root cause: userId/sessionId type mismatches (11 LSP errors)
-   - Impact: Workflow execution crashes, progress stuck at 0%
-4. ⚠️ Modal remains at "Initializing workspace..." with no files created
-5. ⚠️ Test credentials (testuser@test.com/testpass123) work for auth, but bootstrap flow still fails
+**✅ COMPLETED Infrastructure Fixes (November 24, 2025):**
+1. ✅ **Anonymous Bootstrap Authentication** - Ephemeral users (`guest-{uuid}@ecode.platform`) created per session
+   - Bootstrap API creates unique guest users with project-specific JWT tokens
+   - No multi-tenant data leaks - each session isolated
+   - Test results: Bootstrap API succeeds, IDE accessible with token
+2. ✅ **JWT Security & Validation** - Signature verification prevents token tampering
+   - `jwt.default.verify()` with JWT_SECRET in WebSocket upgrade handler
+   - Type-safe string/number normalization for project ID comparison
+   - Project-specific enforcement blocks cross-project access
+3. ✅ **IDE Route Public Access** - Changed from `ProtectedRoute` to `Route` for `/ide/:id`
+   - Anonymous users can access IDE with valid bootstrap tokens
+   - Maintains security through JWT validation
+4. ✅ **Project API Authorization** - Modified `ensureProjectAccess` middleware
+   - Accepts bootstrap tokens as alternative to session auth
+   - Validates JWT signature and project match before granting access
+5. ✅ **Frontend Query Architecture** - Clean REST patterns with structured query keys
+   - Bootstrap tokens included in API requests: `?bootstrap=${token}`
+   - Structured keys: `['/api/projects', projectId, { bootstrap }]`
+   - Correct endpoints: `/api/projects/${projectId}` (not `/api/projects`)
 
-**Architect Recommendations (Next Actions):**
-1. **Auth Strategy**: Decide whether autonomous bootstrap must run for guests OR ensure authenticated flow
-2. **WebSocket Graceful Failure**: Mark socket even when auth fails, emit diagnostic logs
-3. **Schema Fix**: Align agent_audit_trail Drizzle types with database column definitions
+**❌ REMAINING BLOCKER (November 24, 2025):**
+1. ❌ **WebSocket Client-Side Connection Failure** - Component renders but connection never reaches server
+   - Root cause: WebSocket connection fails in browser BEFORE handshake attempt
+   - Evidence: Server logs show ZERO `/ws/agent` upgrade attempts; only Vite HMR connections
+   - Component status: AutonomousWorkspaceViewer mounts, displays modal, shows "Connection error"
+   - Activity log: "[timestamp] ❌ Connection error" + reconnection attempts
+   - Impact: Modal stuck at "Connecting..." → "Disconnected", no file creation progress
+   - Possible causes: WebSocket constructor error, CORS policy, network interceptor blocking, invalid URL format
+   
+**Next Debugging Steps:**
+1. Add WebSocket error handling to capture constructor failures
+2. Verify WebSocket URL format is correct
+3. Check browser security policies (CORS, Mixed Content)
+4. Test manual WebSocket connection in browser console
+5. Review WebSocket interceptor code (if exists)
 
 **AI Provider Resilience:**
 - ⚠️ External dependency on AI provider availability (Gemini stalls, GPT-5.1 timeouts possible, Claude credits)
