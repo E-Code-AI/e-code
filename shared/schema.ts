@@ -2196,7 +2196,7 @@ export const agentWorkflows = pgTable('agent_workflows', {
   steps: jsonb('steps').$type<Array<{
     id: string;
     name: string;
-    type: 'file_operation' | 'command' | 'tool' | 'database' | 'conditional';
+    type: 'file_operation' | 'command' | 'tool' | 'database' | 'conditional' | 'parallel' | 'loop';
     config: Record<string, any>;
     dependencies?: string[];
     retryPolicy?: {

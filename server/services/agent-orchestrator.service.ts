@@ -978,13 +978,39 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       const { agentWebSocketService } = await import('./agent-websocket-service');
 
       // Convert plan tasks to workflow steps (metadata only - no large content)
-      const workflowSteps = plan.tasks.map((task: any) => ({
-        id: task.id,
-        name: task.title,
-        type: this.mapTaskTypeToWorkflowType(task.type),
-        config: this.buildStepConfig(task),  // Now stores taskId reference, not full content
-        dependencies: task.dependencies || []
-      }));
+      // ✅ FIX (Nov 24, 2025): Expand multi-file tasks into multiple workflow steps
+      // Previously created ONE step with files[] array, causing "Unknown file operation: undefined"
+      // Now creates ONE step PER FILE for proper execution
+      const workflowSteps = plan.tasks.flatMap((task: any) => {
+        // For file operations with multiple files, create separate steps
+        if ((task.type === 'file_create' || task.type === 'file_edit' || task.type === 'config') && 
+            task.files && task.files.length > 1) {
+          // Create one step per file, all with same task dependencies
+          return task.files.map((file: any, fileIndex: number) => ({
+            id: `${task.id}-file-${fileIndex}`,
+            name: `${task.title} - ${file.path}`,
+            type: this.mapTaskTypeToWorkflowType(task.type),
+            config: {
+              description: task.description,
+              taskId: task.id,  // Reference to original task
+              fileIndex,  // Index into task.files array
+              action: task.type === 'file_edit' ? 'update_file' : 'create_file',
+              path: file.path,
+              language: file.language
+            },
+            dependencies: task.dependencies || []
+          }));
+        }
+        
+        // For single-file tasks or non-file operations, keep original behavior
+        return [{
+          id: task.id,
+          name: task.title,
+          type: this.mapTaskTypeToWorkflowType(task.type),
+          config: this.buildStepConfig(task),  // Now stores taskId reference, not full content
+          dependencies: task.dependencies || []
+        }];
+      });
 
       logger.info(`[Execute Plan] Converted ${workflowSteps.length} tasks to workflow steps (metadata only)`);
 

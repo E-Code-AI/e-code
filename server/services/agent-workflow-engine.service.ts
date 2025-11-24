@@ -356,16 +356,38 @@ export class AgentWorkflowEngineService extends EventEmitter {
         throw new Error(`Task ${config.taskId} not found in plan store`);
       }
       
+      // ✅ FIX (Nov 24, 2025): Handle multi-file tasks with fileIndex
+      // When orchestrator expands multi-file tasks, each step has fileIndex to select the right file
+      let fileData = task;
+      if (typeof config.fileIndex === 'number' && task.files && task.files[config.fileIndex]) {
+        fileData = task.files[config.fileIndex];
+      }
+      
       // Merge task details into config (task has full file contents, commands, etc.)
+      // ✅ FIX (Nov 24, 2025): Support both 'type' and 'action' field names for operation mapping
+      const taskType = task.type || task.action || config.action;
+      let operation = config.operation;
+      
+      // Map file action types to internal operation names
+      if (taskType === 'create_file' || taskType === 'update_file') {
+        operation = 'write';
+      } else if (taskType === 'read_file') {
+        operation = 'read';
+      } else if (taskType === 'delete_file') {
+        operation = 'delete';
+      } else if (taskType === 'list_files') {
+        operation = 'list';
+      }
+      
       effectiveConfig = {
         ...config,
-        ...task,
-        // Preserve original config values if not in task
-        operation: task.type === 'create_file' ? 'write' : config.operation,
-        path: task.path || config.path,
-        content: task.content || config.content,
-        outline: task.outline || config.outline,
-        language: task.language || config.language
+        ...fileData,  // Use fileData instead of task to get specific file details
+        // Preserve original config values if not in task/file
+        operation,
+        path: fileData.path || config.path,
+        content: fileData.content || config.content,
+        outline: fileData.outline || config.outline,
+        language: fileData.language || config.language
       };
     }
     

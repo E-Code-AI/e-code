@@ -555,6 +555,11 @@ app.get('/api/cors-health', async (_req, res) => {
       return; // Let other upgrade listeners process this request
     }
     
+    // ✅ CRITICAL FIX (Nov 24, 2025): Mark socket SYNCHRONOUSLY to prevent race condition!
+    // The Upgrade Guard's setImmediate runs before async validation completes,
+    // causing sockets to be destroyed. Marking synchronously prevents this.
+    markSocketAsHandled(request, socket);
+    
     // Route /ws/agent upgrades to async validation + upgrade handler
     // ✅ CRITICAL: Don't await here - let validation run async to prevent blocking other upgrades
     handleAgentUpgrade(request, socket, head).catch((error) => {
