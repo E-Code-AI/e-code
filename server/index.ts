@@ -455,6 +455,8 @@ app.get('/api/cors-health', async (_req, res) => {
       const sessionId = url.searchParams.get('sessionId');
       const deviceId = url.searchParams.get('deviceId') || undefined;
       const deviceType = url.searchParams.get('deviceType') || undefined;
+      // ✅ FIX (Nov 24, 2025): Support bootstrap token authentication for anonymous users
+      const bootstrapToken = url.searchParams.get('bootstrap');
       
       // ✅ PRODUCTION FIX: Only sessionId is required (projectId can be null for shared sessions)
       if (!sessionId) {
@@ -470,50 +472,113 @@ app.get('/api/cors-health', async (_req, res) => {
         return;
       }
       
-      // ✅ PRODUCTION FIX: Cached validation eliminates DoS vulnerability
-      // Uses AgentSessionCache with Redis primary + in-memory fallback
-      // Cache hit: <1ms (vs 50-200ms database query)
-      // Async fallback: Non-blocking database hydration on cache miss
-      const { agentSessionCache } = await import('./services/agent-session-cache.service');
-      
-      const validation = await agentSessionCache.validateSession({
-        sessionId,
-        projectId,
-        deviceId,
-        deviceType,
-      });
-      
-      // ✅ PRODUCTION FIX: Verify validation AND session data existence
-      if (!validation.valid || !validation.session) {
-        console.warn(`[WebSocket Upgrade] Rejecting - ${validation.error || 'Missing session data'} (${validation.source}, ${validation.latencyMs}ms)`);
-        socket.resume(); // Resume before error response
-        
-        const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
-        
-        // Map validation error to appropriate HTTP status
-        if (validation.error?.includes('not found')) {
+      // ✅ FIX (Nov 24, 2025): Support bootstrap token authentication for anonymous users
+      if (bootstrapToken) {
+        try {
+          // ✅ FIX: Use named import for jwt.verify (default export doesn't have verify method)
+          const jwt = await import('jsonwebtoken');
+          const jwtSecret = process.env.JWT_SECRET;
+          
+          if (!jwtSecret) {
+            console.error('[WebSocket Upgrade] JWT_SECRET not configured');
+            socket.resume();
+            const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
+            HttpUpgradeResponder.sendError(
+              request,
+              socket,
+              HttpUpgradeResponder.ErrorResponses.INTERNAL_ERROR('JWT configuration error')
+            );
+            return;
+          }
+          
+          // Verify JWT signature and decode payload (jwt.default.verify for dynamic import)
+          const decoded = jwt.default.verify(bootstrapToken, jwtSecret) as {
+            projectId: string;
+            sessionId: string;
+            userId: number;
+          };
+          
+          // Validate token matches requested project and session
+          const tokenProjectId = String(decoded.projectId);
+          const tokenSessionId = String(decoded.sessionId);
+          const actualProjectId = String(projectId);
+          const actualSessionId = String(sessionId);
+          
+          if (tokenProjectId !== actualProjectId || tokenSessionId !== actualSessionId) {
+            console.warn('[WebSocket Upgrade] Bootstrap token mismatch:', {
+              tokenProjectId,
+              actualProjectId,
+              tokenSessionId,
+              actualSessionId
+            });
+            socket.resume();
+            const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
+            HttpUpgradeResponder.sendError(
+              request,
+              socket,
+              HttpUpgradeResponder.ErrorResponses.FORBIDDEN('Bootstrap token invalid for this session')
+            );
+            return;
+          }
+          
+          console.log(`[WebSocket Upgrade] ✅ Validated bootstrap token for project ${projectId}, session ${sessionId}`);
+          // Skip session cache validation for bootstrap users - token is sufficient
+        } catch (error: any) {
+          console.error('[WebSocket Upgrade] Bootstrap token validation failed:', error.message);
+          socket.resume();
+          const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
           HttpUpgradeResponder.sendError(
             request,
             socket,
-            HttpUpgradeResponder.ErrorResponses.UNAUTHORIZED('Invalid or inactive session')
+            HttpUpgradeResponder.ErrorResponses.UNAUTHORIZED('Invalid or expired bootstrap token')
           );
-        } else if (validation.error?.includes('mismatch')) {
-          HttpUpgradeResponder.sendError(
-            request,
-            socket,
-            HttpUpgradeResponder.ErrorResponses.FORBIDDEN('Project ID or device mismatch')
-          );
-        } else {
-          HttpUpgradeResponder.sendError(
-            request,
-            socket,
-            HttpUpgradeResponder.ErrorResponses.UNAUTHORIZED(validation.error || 'Session validation failed')
-          );
+          return;
         }
-        return;
+      } else {
+        // ✅ PRODUCTION FIX: Cached validation for authenticated users
+        // Uses AgentSessionCache with Redis primary + in-memory fallback
+        // Cache hit: <1ms (vs 50-200ms database query)
+        const { agentSessionCache } = await import('./services/agent-session-cache.service');
+        
+        const validation = await agentSessionCache.validateSession({
+          sessionId,
+          projectId,
+          deviceId,
+          deviceType,
+        });
+        
+        // ✅ PRODUCTION FIX: Verify validation AND session data existence
+        if (!validation.valid || !validation.session) {
+          console.warn(`[WebSocket Upgrade] Rejecting - ${validation.error || 'Missing session data'} (${validation.source}, ${validation.latencyMs}ms)`);
+          socket.resume(); // Resume before error response
+          
+          const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
+          
+          // Map validation error to appropriate HTTP status
+          if (validation.error?.includes('not found')) {
+            HttpUpgradeResponder.sendError(
+              request,
+              socket,
+              HttpUpgradeResponder.ErrorResponses.UNAUTHORIZED('Invalid or inactive session')
+            );
+          } else if (validation.error?.includes('mismatch')) {
+            HttpUpgradeResponder.sendError(
+              request,
+              socket,
+              HttpUpgradeResponder.ErrorResponses.FORBIDDEN('Project ID or device mismatch')
+            );
+          } else {
+            HttpUpgradeResponder.sendError(
+              request,
+              socket,
+              HttpUpgradeResponder.ErrorResponses.UNAUTHORIZED(validation.error || 'Session validation failed')
+            );
+          }
+          return;
+        }
+        
+        console.log(`[WebSocket Upgrade] ✅ Validated session ${sessionId} for project ${projectId || 'shared'} (${validation.source} cache, ${validation.latencyMs}ms)`);
       }
-      
-      console.log(`[WebSocket Upgrade] ✅ Validated session ${sessionId} for project ${projectId || 'shared'} (${validation.source} cache, ${validation.latencyMs}ms)`);
       
       // ✅ CRITICAL: Mark socket BEFORE handleUpgrade to prevent guard from destroying it
       markSocketAsHandled(request, socket);
