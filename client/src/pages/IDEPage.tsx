@@ -159,9 +159,9 @@ export default function IDEPage() {
     url.searchParams.delete('bootstrap');
     window.history.replaceState({}, '', url);
     
-    // Refresh project data
+    // Refresh project data with correct query keys
     queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
-    queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+    queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
     
     toast({
       title: "Workspace Ready!",
