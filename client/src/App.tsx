@@ -729,7 +729,8 @@ function AppContent() {
           )} />
           
           {/* New unified workspace route with Add Tab dropdown and complete feature parity */}
-          <ProtectedRoute path="/ide/:id" component={() => (
+          {/* ✅ FIX (Nov 24, 2025): Allow anonymous access with bootstrap token for autonomous workspace creation */}
+          <Route path="/ide/:id" component={() => (
             <IDEPage />
           )} />
           <ProtectedRoute path="/runtimes" component={() => (

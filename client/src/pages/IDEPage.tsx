@@ -239,15 +239,17 @@ export default function IDEPage() {
   }, []);
   
   // Load project
+  // ✅ FIX (Nov 24, 2025): Allow anonymous access with bootstrap token
   const { data: project, isLoading: isLoadingProject } = useQuery<Project>({
     queryKey: ['/api/projects', projectId],
-    enabled: !!projectId && !!user,
+    enabled: !!projectId && (!!user || !!bootstrapToken),
   });
   
   // Load files
+  // ✅ FIX (Nov 24, 2025): Allow anonymous access with bootstrap token
   const { data: files = [] } = useQuery<File[]>({
     queryKey: [`/api/projects/${projectId}/files`],
-    enabled: !!projectId && !!user,
+    enabled: !!projectId && (!!user || !!bootstrapToken),
   });
   
   // Available tools/panels that can be added (comprehensive list with all features)
@@ -477,7 +479,7 @@ export default function IDEPage() {
   // ✅ Device-aware rendering: Route to optimized views for mobile/tablet
   // Use project.id (UUID) with fallback to projectId (URL param, which backend normalizes to UUID)
   // Optional chaining defends against guard regressions
-  const normalizedProjectId = project?.id ?? projectId;
+  const normalizedProjectId = String(project?.id ?? projectId);
   
   if (deviceType === 'mobile') {
     return (
@@ -500,7 +502,7 @@ export default function IDEPage() {
       {/* Top Navigation */}
       <TopNavBar
         projectName={project.name}
-        projectSlug={project.slug || project.id}
+        projectSlug={project.slug || String(project.id)}
         ownerUsername={user?.username || ''}
         isDeployed={false}
         onRun={handleRunStop}
