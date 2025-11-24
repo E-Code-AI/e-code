@@ -1,5 +1,10 @@
 import { Request, Response } from 'express';
-import { legacyAIProviderManager as aiProviderManager, type ChatMessage } from './ai/ai-provider';
+import { aiProviderManager } from './ai/ai-provider-manager';
+
+type ChatMessage = {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+};
 
 // Get available AI providers
 export async function getAvailableProviders(req: Request, res: Response) {
