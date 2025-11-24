@@ -346,9 +346,7 @@ router.get('/bootstrap/:token/status', ensureAuthenticated, async (req: Request,
   }
 });
 
-// ============================================================================
 // Helper Functions
-// ============================================================================
 
 /**
  * Generate URL-safe slug from project name

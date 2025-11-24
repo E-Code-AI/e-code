@@ -21,12 +21,14 @@ import { getProjectFiles, runProject, updateProjectFile } from '../services/api'
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
 import { useAgentSession } from '../../../shared/agent';
 import { setMobileAgentToken } from '../lib/agentApiClient';
+import { CodeEditor } from '../components/CodeEditor';
+import { Terminal } from '../components/Terminal';
 
 type ProjectScreenProps = NativeStackScreenProps<RootStackParamList, 'Project'> & {
   token: string;
 };
 
-type TabType = 'agent' | 'files' | 'editor';
+type TabType = 'agent' | 'files' | 'editor' | 'terminal';
 
 const ProjectScreen: React.FC<ProjectScreenProps> = ({ route, token }) => {
   const { projectId, projectName } = route.params;
@@ -307,21 +309,26 @@ const ProjectScreen: React.FC<ProjectScreenProps> = ({ route, token }) => {
       );
     }
 
+    // Terminal tab
+    if (activeTab === 'terminal') {
+      return (
+        <View style={styles.tabContent}>
+          <Terminal projectId={projectId} token={token} />
+        </View>
+      );
+    }
+
     // Editor tab
     return (
       <View style={styles.tabContent}>
         <Text style={styles.sectionTitle}>{selectedFile?.path ?? 'Select a file to edit'}</Text>
-        <ScrollView style={styles.editorScroll} keyboardShouldPersistTaps="handled">
-          <TextInput
-            style={styles.editor}
-            multiline
-            editable={Boolean(selectedFile)}
-            value={editorContent}
-            onChangeText={setEditorContent}
-            placeholder={selectedFile ? undefined : 'Select a file from Files tab'}
-            placeholderTextColor={mobileColors.textMuted}
-          />
-        </ScrollView>
+        <CodeEditor
+          value={editorContent}
+          onChange={setEditorContent}
+          language={selectedFile?.language as any}
+          readOnly={!selectedFile}
+          placeholder={selectedFile ? undefined : 'Select a file from Files tab'}
+        />
 
         <View style={styles.actions}>
           <TouchableOpacity
@@ -394,6 +401,14 @@ const ProjectScreen: React.FC<ProjectScreenProps> = ({ route, token }) => {
         >
           <Text style={[styles.tabText, activeTab === 'editor' && styles.tabTextActive]}>
             📝 Editor
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'terminal' && styles.tabActive]}
+          onPress={() => setActiveTab('terminal')}
+        >
+          <Text style={[styles.tabText, activeTab === 'terminal' && styles.tabTextActive]}>
+            💻 Terminal
           </Text>
         </TouchableOpacity>
       </View>
