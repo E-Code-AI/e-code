@@ -660,7 +660,7 @@ export const comments = pgTable('comments', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// Checkpoints for version control
+// Checkpoints for version control (Replit Agent 3 style - complete snapshots)
 export const checkpoints = pgTable('checkpoints', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id),
@@ -671,6 +671,18 @@ export const checkpoints = pgTable('checkpoints', {
   createdBy: integer('created_by').notNull().references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   metadata: jsonb('metadata').notNull().default({}),
+  
+  // 🔥 REPLIT AGENT 3 ENHANCEMENTS
+  conversationSnapshot: jsonb('conversation_snapshot').$type<Array<{role: string; content: string}>>(), // AI conversation history
+  conversationId: varchar('conversation_id'), // Link to AI conversation
+  userPrompt: text('user_prompt'), // User's original request that triggered this checkpoint
+  screenshotUrl: text('screenshot_url'), // App preview screenshot
+  changedFiles: jsonb('changed_files').$type<string[]>().default([]), // List of modified file paths
+  testResults: jsonb('test_results').$type<{passed: boolean; total: number; failures: any[]}>(), // Automated test results
+  rollbackCount: integer('rollback_count').default(0), // Times this checkpoint was rolled back to
+  parentCheckpointId: integer('parent_checkpoint_id'), // For bidirectional history (rollback/rollforward)
+  databaseBranchId: varchar('database_branch_id'), // Neon branch ID for dev/prod separation
+  environment: varchar('environment', { length: 20 }).default('development'), // development, production
 });
 
 // Checkpoint files for storing file snapshots
