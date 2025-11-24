@@ -1693,7 +1693,7 @@ export const templates = pgTable("templates", {
   features: text().array().notNull().default([]),
   isFeatured: boolean("is_featured").notNull().default(false),
   isOfficial: boolean("is_official").notNull().default(false),
-  isPublished: boolean("is_published").notNull().default(true),
+  published: boolean("published").notNull().default(true),
   isCommunity: boolean("is_community").notNull().default(false), // Community submitted templates
   status: varchar("status").notNull().default('published'), // 'draft', 'pending_review', 'published', 'rejected'
   githubUrl: text("github_url"), // Source repository URL

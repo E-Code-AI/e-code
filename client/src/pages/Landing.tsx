@@ -153,23 +153,28 @@ export default function Landing() {
     
     if (user) {
       try {
-        const project = await apiRequest('POST', '/api/projects', {
-          name: description.slice(0, 30),
-          description: description,
-          language: 'javascript',
-          visibility: 'private'
+        // 🚀 AUTONOMOUS WORKSPACE CREATION: Use bootstrap API for Replit-style flow
+        const result = await apiRequest('POST', '/api/workspace/bootstrap', {
+          prompt: description,
+          userId: user.id
         }) as any;
 
-        // 🚀 REPLIT FLOW: Redirect to IDE with AI Agent panel (auto-start build)
-        const params = new URLSearchParams();
-        params.set('panel', 'agent');
-        params.set('prompt', description);
-        navigate(`/ide/${project.id}?${params.toString()}`);
+        if (result.success) {
+          toast({
+            title: 'Creating your workspace...',
+            description: 'AI is generating your project structure now',
+          });
+
+          // Redirect to IDE with bootstrap token - triggers autonomous workspace viewer
+          navigate(`/ide/${result.projectId}?bootstrap=${result.bootstrapToken}`);
+        } else {
+          throw new Error(result.error || 'Bootstrap failed');
+        }
       } catch (error) {
-        console.error('Failed to create project:', error);
+        console.error('Failed to bootstrap workspace:', error);
         toast({
           title: 'Error',
-          description: 'Failed to create project. Please try again.',
+          description: 'Failed to create workspace. Please try again.',
           variant: 'destructive'
         });
       }
