@@ -117,7 +117,7 @@ class AgentWebSocketService {
         totalDevices: deviceCount,
         roster
       }));
-      
+
       // Notify other devices about new connection (presence update)
       this.broadcastPresence(connectionKey, {
         type: 'device_connected',
@@ -126,6 +126,89 @@ class AgentWebSocketService {
         connectedAt: deviceConnection.connectedAt.toISOString(),
         totalDevices: deviceCount
       }, deviceId);
+
+      // ✅ CRITICAL FIX (Nov 24, 2025): Trigger workflow startup on WebSocket connection
+      // PROBLEM: Background plan generation could fail, leaving WebSocket connected but idle
+      // SOLUTION: When WebSocket connects, check if workflow exists and start it if needed
+      logger.info(`[Agent WebSocket] Checking workflow status for session ${sessionId}...`);
+
+      (async () => {
+        try {
+          // Import services dynamically to avoid circular dependencies
+          const { db } = await import('../db');
+          const { agentPlans, agentWorkflows, agentSessions } = await import('@shared/schema');
+          const { eq } = await import('drizzle-orm');
+          const { agentOrchestrator } = await import('./agent-orchestrator.service');
+          const { aiPlanGenerator } = await import('./ai-plan-generator.service');
+
+          // Check if a plan exists for this session
+          const existingPlans = await db.select()
+            .from(agentPlans)
+            .where(eq(agentPlans.sessionId, sessionId))
+            .limit(1);
+
+          if (existingPlans.length > 0) {
+            logger.info(`[Agent WebSocket] Plan already exists for session ${sessionId}, checking workflow...`);
+
+            // Check if workflow has been executed
+            const existingWorkflows = await db.select()
+              .from(agentWorkflows)
+              .where(eq(agentWorkflows.sessionId, sessionId))
+              .limit(1);
+
+            if (existingWorkflows.length === 0) {
+              logger.warn(`[Agent WebSocket] Plan exists but NO workflow! Starting execution for session ${sessionId}...`);
+
+              // Get session data
+              const sessions = await db.select()
+                .from(agentSessions)
+                .where(eq(agentSessions.id, sessionId))
+                .limit(1);
+
+              if (sessions.length === 0) {
+                throw new Error(`Session ${sessionId} not found`);
+              }
+
+              const session = sessions[0];
+              const plan = existingPlans[0];
+
+              // Execute the plan
+              await agentOrchestrator.executeAutonomousPlan(
+                sessionId,
+                plan.plan,
+                projectId,
+                session.userId.toString()
+              );
+
+              logger.info(`[Agent WebSocket] ✅ Workflow execution started for session ${sessionId}`);
+            } else {
+              logger.info(`[Agent WebSocket] Workflow already exists for session ${sessionId}, status: ${existingWorkflows[0].status}`);
+            }
+          } else {
+            logger.warn(`[Agent WebSocket] NO plan found for session ${sessionId}! Plan generation may have failed.`);
+
+            // Send notification to client that plan is missing
+            ws.send(JSON.stringify({
+              type: 'error',
+              message: 'Plan generation is still in progress or failed. Please wait...',
+              sessionId,
+              projectId
+            }));
+          }
+        } catch (error: any) {
+          logger.error(`[Agent WebSocket] Failed to check/start workflow for session ${sessionId}:`, error);
+
+          // Send error to client
+          ws.send(JSON.stringify({
+            type: 'error',
+            message: `Failed to start workspace workflow: ${error.message}`,
+            sessionId,
+            projectId
+          }));
+        }
+      })().catch(err => {
+        logger.error(`[Agent WebSocket] Unhandled error in workflow startup check:`, err);
+      });
       
       ws.on('error', (error) => {
         logger.error(`[Agent WebSocket] WebSocket error for ${connectionKey} (device: ${deviceId}): ${error.message}`);
