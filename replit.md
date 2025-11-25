@@ -33,6 +33,22 @@ The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Woute
 - **Unified AI Provider System** (`server/ai/ai-provider-manager.ts`): Consolidated all AI services to use single modern provider system with multi-provider fallback, system prompts injection, context window optimization, and circuit breakers. Legacy `ai-provider.ts` marked DEPRECATED (Nov 24, 2025).
 - **🔥 AI-Powered Inline Code Actions** (`client/src/lib/monaco-features-enhancement.ts`, `server/ai.ts`): Replit Agent 3 style lightbulb quick fixes and right-click context menu AI actions in Monaco Editor. Provides 7 inline actions (Explain, Debug, Test, Document, Optimize, Review, Search) with `registerCodeActionProvider` for all languages. Backend API endpoint `/api/ai/code-actions` handles multi-provider AI requests with action-specific prompts and automatic code suggestion extraction.
 
+**🔥 Checkpoints & Rollback System (Nov 25, 2025):**
+- **Database Schema** (`shared/schema.ts`): Production-ready checkpoints table with 19 columns, self-referencing parent-child FK for bidirectional navigation, 3 composite indexes (projectId+createdAt, projectId+type, projectId+parentCheckpointId), metadata JSONB for agent state/screenshots/test results, and Neon branch integration. Added `currentCheckpointId` to projects table for O(1) navigation queries.
+- **Checkpoint Service** (`server/services/checkpoint-service.ts`): Atomic transactions with `SELECT FOR UPDATE` row-level locks prevent race conditions during concurrent checkpoint creation. Auto-assigns `parentCheckpointId` from `projects.currentCheckpointId` for parent-child chain. Post-commit lineage validation ensures data integrity. Supports manual/automatic/before_action/error_recovery checkpoint types with file snapshots, database dumps, environment variables, and AI conversation history.
+- **Rollback Service** (`server/services/rollback-service.ts`): Bidirectional navigation (backward/forward) with transactional safety. Creates "Before rollback" checkpoint automatically. Zero chronological fallbacks—all navigation uses parent-child relationships. Supports selective restore (files only, database only, or environment only).
+- **API Routes** (`server/routes/checkpoints.router.ts`): 9 production-ready endpoints mounted at `/api` with comprehensive Zod validation and error handling:
+  - `POST /api/checkpoints` - Create checkpoint with atomic transactions
+  - `GET /api/checkpoints/:id` - Get checkpoint by ID (direct SELECT, no project filter)
+  - `POST /api/checkpoints/:id/restore` - Restore files/database/environment
+  - `POST /api/checkpoints/rollback` - Navigate backward to previous checkpoint
+  - `POST /api/checkpoints/rollforward` - Navigate forward to future checkpoint
+  - `GET /api/projects/:projectId/checkpoints` - List all checkpoints for project
+  - `GET /api/projects/:projectId/checkpoints/tree` - Tree visualization for timeline UI
+  - `GET /api/projects/:projectId/checkpoints/navigation` - Navigation options from current checkpoint
+  - `DELETE /api/checkpoints/:id` - Delete checkpoint with cascade cleanup
+- **Integration** (`server/index.ts`): Routes registered at `/api` with atomic transactions and row-level locks enabled. Comprehensive logging for all checkpoint operations.
+
 ### Feature Specifications
 Key features include a Monaco Code Editor with enhancements (Git UI components, multi-cursor editing, code navigation, refactoring, advanced search, IntelliSense), an interactive terminal (xterm.js), file management, real-time collaboration, robust authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager, a Logs Viewer, and a Debugger UI. The UI is responsive across desktop, tablet, and mobile devices. Autonomous workspace creation involves a Bootstrap API call, client redirection to the IDE, background AI plan generation with multi-provider fallback, a WebSocket connection for real-time progress, autonomous execution, and a live preview tab. The platform also includes PWA features and desktop application support via Electron.
 
