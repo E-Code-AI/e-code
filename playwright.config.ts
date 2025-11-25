@@ -40,6 +40,6 @@ export default defineConfig({
   },
 
   expect: {
-    timeout: 10000,
+    timeout: parseInt(process.env.EXPECT_TIMEOUT || '10000'),
   },
 });

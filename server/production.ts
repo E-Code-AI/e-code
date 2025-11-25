@@ -17,7 +17,7 @@ configureCors(app);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
-// Cloud Run provides PORT environment variable, fallback to 5000 for development
+// PORT is set by Docker (3000) or Cloud Run, fallback to 5000 for local development
 const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
 
 // Create HTTP server
