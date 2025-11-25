@@ -29,8 +29,12 @@ COPY server ./server
 COPY shared ./shared
 COPY types ./types
 
-# Build the application
-RUN npm run build
+# Copy production Vite config for optimized build
+COPY vite.production.config.ts ./vite.production.config.ts
+
+# Build the application with production config (smaller bundles via manualChunks)
+RUN npx vite build --config vite.production.config.ts && \
+    npx esbuild server/index.ts --bundle --platform=node --outfile=dist/index.js --external:pg-native --external:better-sqlite3
 
 # Production stage - Minimal runtime image
 FROM node:18-alpine
