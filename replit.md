@@ -49,6 +49,22 @@ The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Woute
   - `DELETE /api/checkpoints/:id` - Delete checkpoint with cascade cleanup
 - **Integration** (`server/index.ts`): Routes registered at `/api` with atomic transactions and row-level locks enabled. Comprehensive logging for all checkpoint operations.
 
+**🔥 Background Auto-Testing System (Nov 25, 2025):**
+- **Testing Service** (`server/services/background-testing-service.ts`): Production-ready background test execution with Playwright integration. Features configurable `APP_URL` env var (defaults to http://localhost:5000), async Playwright import with availability check and graceful fallback when binaries missing, test result persistence with success/failure tracking, and EventEmitter-based real-time notifications.
+- **WebSocket Security** (`server/websocket/background-testing-ws.ts`): Enterprise-grade authenticated WebSocket bridge with 5-layer security:
+  1. **JWT Signature Verification**: `jwt.verify(token, JWT_SECRET)` prevents forged tokens
+  2. **Database User Validation**: `storage.getUser(decoded.userId)` prevents deleted/invalid users
+  3. **Strict Project Ownership**: `and(eq(projects.id, projectId), eq(projects.ownerId, userIdNum))` prevents unauthorized subscriptions
+  4. **Filtered Event Broadcasting**: Only subscribed projects receive test events (prevents data leaks)
+  5. **Comprehensive Security Logging**: Audit trail for all auth failures with explicit rejection messages
+- **Real-Time Notifications**: WebSocket clients receive test:queued, test:started, test:completed, test:failed, and test:agent-notification events only for projects they own.
+- **Security Best Practices**: 
+  - Token validation before any operations (no naive splitting)
+  - Database-backed authorization checks (not just token claims)
+  - Event listener lifecycle scoped per connection with cleanup on disconnect
+  - Production requirement: Configure `JWT_SECRET` env var (never use dev-secret fallback)
+- **Future Enhancements**: Extend `handleSubscribe` to honor collaborator/role-based access when those models land.
+
 ### Feature Specifications
 Key features include a Monaco Code Editor with enhancements (Git UI components, multi-cursor editing, code navigation, refactoring, advanced search, IntelliSense), an interactive terminal (xterm.js), file management, real-time collaboration, robust authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager, a Logs Viewer, and a Debugger UI. The UI is responsive across desktop, tablet, and mobile devices. Autonomous workspace creation involves a Bootstrap API call, client redirection to the IDE, background AI plan generation with multi-provider fallback, a WebSocket connection for real-time progress, autonomous execution, and a live preview tab. The platform also includes PWA features and desktop application support via Electron.
 
