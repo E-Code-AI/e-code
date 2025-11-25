@@ -339,6 +339,15 @@ app.get('/api/cors-health', async (_req, res) => {
       console.error('[WORKING SERVER] Failed to register templates routes:', error);
     }
 
+    // ✅ CHECKPOINTS & ROLLBACK SYSTEM: Checkpoint routes with atomic transactions
+    try {
+      const checkpointsRouter = (await import('./routes/checkpoints.router')).default;
+      app.use('/api', checkpointsRouter); // Mount at /api to get /api/projects/:projectId/checkpoints
+      console.log('[Checkpoints] Routes registered at /api - Atomic transactions + row-level locks enabled');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register checkpoints routes:', error);
+    }
+
     // ✅ AGENT CONTEXT: Repository overview routes
     try {
       const agentContextRouter = (await import('./agent/routes/agent-context')).default;

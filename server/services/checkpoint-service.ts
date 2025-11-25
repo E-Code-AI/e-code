@@ -325,6 +325,39 @@ export class CheckpointService {
   }
 
   /**
+   * Get a single checkpoint by ID (direct SELECT, no project filtering)
+   */
+  async getCheckpointById(checkpointId: number): Promise<CheckpointMetadata | null> {
+    try {
+      const [checkpoint] = await db.select()
+        .from(checkpoints)
+        .where(eq(checkpoints.id, checkpointId));
+
+      if (!checkpoint) {
+        return null;
+      }
+
+      return {
+        id: checkpoint.id,
+        projectId: checkpoint.projectId,
+        name: checkpoint.name,
+        description: checkpoint.description || undefined,
+        type: checkpoint.type as any,
+        createdAt: checkpoint.createdAt,
+        createdBy: checkpoint.createdBy,
+        size: checkpoint.metadata?.size || 0,
+        fileCount: checkpoint.metadata?.fileCount || 0,
+        databaseSnapshot: checkpoint.metadata?.databaseSnapshot || false,
+        environmentVars: checkpoint.metadata?.environmentVars || {},
+        agentState: checkpoint.metadata?.agentState
+      };
+    } catch (error) {
+      logger.error('Failed to get checkpoint by ID:', error);
+      throw new Error(`Failed to get checkpoint by ID: ${error}`);
+    }
+  }
+
+  /**
    * Delete a checkpoint
    */
   async deleteCheckpoint(checkpointId: number): Promise<boolean> {
