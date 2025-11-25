@@ -8,7 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ECodeLoading } from "@/components/ECodeLoading";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ScrollToTop } from "@/components/ScrollToTop";
-import { motion, AnimatePresence } from "framer-motion";
+import { LazyAnimatedRoutes } from "@/components/LazyAnimatedRoutes";
 import { instrumentedLazy } from "./utils/instrumented-lazy";
 
 // Performance optimizations imports
@@ -189,8 +189,7 @@ const SolarTechStoreApp = lazy(() => import("@/pages/SolarTechStoreApp"));
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ReplitLayout } from "@/components/layout/ReplitLayout";
-import { SpotlightSearch } from "@/components/SpotlightSearch";
-import { CommandPalette } from "@/components/CommandPalette";
+import { LazyShellWidgets } from "@/components/LazyShellWidgets";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ApplicationIDEWrapper } from "@/components/ApplicationIDEWrapper";
@@ -346,19 +345,11 @@ function AppContent() {
             <ScrollToTop />
             <Toaster />
             <AppToaster />
-            <SpotlightSearch />
-            <CommandPalette />
+            <LazyShellWidgets />
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={location}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-              >
-                <Suspense fallback={<PageLoader />}>
-                  <Switch>
+            <LazyAnimatedRoutes>
+              <Suspense fallback={<PageLoader />}>
+                <Switch>
                 <Route path="/auth" component={AuthPage} />
                 <Route path="/login" component={Login} />
                 <Route path="/register" component={Register} />
@@ -1005,13 +996,12 @@ function AppContent() {
             </ReplitLayout>
           )} />
           <Route component={NotFound} />
-          </Switch>
-        </Suspense>
-      </motion.div>
-    </AnimatePresence>
-      </div>
+                </Switch>
+              </Suspense>
+            </LazyAnimatedRoutes>
+          </div>
         </AtSymbolRedirectHandler>
-    </TooltipProvider>
+      </TooltipProvider>
     </ErrorBoundary>
   );
 }
