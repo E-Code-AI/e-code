@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: `Welcome back, ${user.username}!`,
       });
       // If user is admin, redirect to admin page, otherwise dashboard
-      if (user.isAdmin) {
+      if (user.role === 'admin' || user.role === 'super_admin') {
         window.location.href = '/admin/chatgpt';
       } else {
         window.location.href = '/dashboard';

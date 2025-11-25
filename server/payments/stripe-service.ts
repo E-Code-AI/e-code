@@ -117,7 +117,7 @@ export class StripePaymentService {
     });
 
     // Save customer ID to user record
-    await storage.updateUser(userId, { stripeCustomerId: customer.id });
+    await storage.updateUser(String(userId), { stripeCustomerId: customer.id });
 
     return customer.id;
   }
@@ -127,7 +127,7 @@ export class StripePaymentService {
     planId: string,
     paymentMethodId?: string
   ): Promise<Stripe.Subscription> {
-    const user = await storage.getUser(userId);
+    const user = await storage.getUser(String(userId));
     if (!user) {
       throw new Error('User not found');
     }
@@ -176,7 +176,7 @@ export class StripePaymentService {
     // Update user subscription info
     const periodEnd = getSubscriptionPeriodBoundary(subscription, 'current_period_end');
 
-    await storage.updateUser(userId, {
+    await storage.updateUser(String(userId), {
       stripeSubscriptionId: subscription.id,
       stripePriceId: plan.id,
       subscriptionStatus: subscription.status,
@@ -187,7 +187,7 @@ export class StripePaymentService {
   }
 
   async cancelSubscription(userId: number): Promise<void> {
-    const user = await storage.getUser(userId);
+    const user = await storage.getUser(String(userId));
     if (!user || !user.stripeSubscriptionId) {
       throw new Error('No active subscription found');
     }
@@ -197,13 +197,13 @@ export class StripePaymentService {
       { cancel_at_period_end: true }
     );
 
-    await storage.updateUser(userId, {
+    await storage.updateUser(String(userId), {
       subscriptionStatus: 'canceled',
     });
   }
 
   async updateSubscription(userId: number, newPlanId: string): Promise<Stripe.Subscription> {
-    const user = await storage.getUser(userId);
+    const user = await storage.getUser(String(userId));
     if (!user || !user.stripeSubscriptionId) {
       throw new Error('No active subscription found');
     }
@@ -235,7 +235,7 @@ export class StripePaymentService {
     );
 
     // Update user info
-    await storage.updateUser(userId, {
+    await storage.updateUser(String(userId), {
       stripePriceId: plan.id,
       subscriptionStatus: updatedSubscription.status,
     });
@@ -249,7 +249,7 @@ export class StripePaymentService {
     currency: string = 'usd',
     description?: string
   ): Promise<Stripe.PaymentIntent> {
-    const user = await storage.getUser(userId);
+    const user = await storage.getUser(String(userId));
     if (!user) {
       throw new Error('User not found');
     }
@@ -277,7 +277,7 @@ export class StripePaymentService {
   }
 
   async recordUsage(userId: number, metric: string, quantity: number): Promise<void> {
-    const user = await storage.getUser(userId);
+    const user = await storage.getUser(String(userId));
     if (!user || !user.stripeSubscriptionId) {
       return; // Free tier user
     }
@@ -399,7 +399,7 @@ export class StripePaymentService {
     const userId = parseInt(subscription.metadata.userId);
     if (!userId) return;
 
-    await storage.updateUser(userId, {
+    await storage.updateUser(String(userId), {
       stripeSubscriptionId: subscription.id,
       subscriptionStatus: subscription.status,
       subscriptionCurrentPeriodEnd: getSubscriptionPeriodBoundary(
@@ -413,7 +413,7 @@ export class StripePaymentService {
     const userId = parseInt(subscription.metadata.userId);
     if (!userId) return;
 
-    await storage.updateUser(userId, {
+    await storage.updateUser(String(userId), {
       subscriptionStatus: 'canceled',
       stripeSubscriptionId: null,
       stripePriceId: null,

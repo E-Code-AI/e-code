@@ -21,7 +21,7 @@ import {
   ResizablePanelGroup 
 } from '@/components/ui/resizable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Brain, Zap, X } from 'lucide-react';
+import { Brain, Zap, X, Layers } from 'lucide-react';
 import { ECodeLoading } from '@/components/ECodeLoading';
 import { Button } from '@/components/ui/button';
 
@@ -31,6 +31,7 @@ import { StatusBar } from '@/components/ide/StatusBar';
 import { QuickFileSearch } from '@/components/ide/QuickFileSearch';
 import { KeyboardShortcutsOverlay } from '@/components/ide/KeyboardShortcutsOverlay';
 import { AgentActionsPanel } from '@/components/ide/AgentActionsPanel';
+import { ToolsPanel } from '@/components/ide/ToolsPanel';
 import { ReplitAgent } from '@/components/ReplitAgent';
 import { AutonomousWorkspaceViewer } from '@/components/ide/AutonomousWorkspaceViewer';
 import { ReplitFileExplorer } from '@/components/editor/ReplitFileExplorer';
@@ -58,7 +59,7 @@ import { GlobalSearchPanel } from '@/components/ide/GlobalSearchPanel';
 import { LogsViewerPanel } from '@/components/ide/LogsViewerPanel';
 
 // Additional missing components from EditorPage
-import { CommandPalette } from '@/components/editor/CommandPalette';
+import { CommandPalette } from '@/components/CommandPalette';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { EnvironmentVariables } from '@/components/EnvironmentVariables';
 import { DatabaseBrowser } from '@/components/DatabaseBrowser';
@@ -159,9 +160,9 @@ export default function IDEPage() {
     url.searchParams.delete('bootstrap');
     window.history.replaceState({}, '', url);
     
-    // Refresh project data
-    queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
-    queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+    // Refresh project data with correct query keys
+    queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
+    queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
     
     toast({
       title: "Workspace Ready!",
@@ -239,15 +240,34 @@ export default function IDEPage() {
   }, []);
   
   // Load project
+  // ✅ FIX (Nov 24, 2025): Allow anonymous access with bootstrap token
+  // ✅ FIX (Nov 24, 2025): Use structured query key with custom queryFn for clean REST API
   const { data: project, isLoading: isLoadingProject } = useQuery<Project>({
-    queryKey: ['/api/projects', projectId],
-    enabled: !!projectId && !!user,
+    queryKey: ['/api/projects', projectId, { bootstrap: !!bootstrapToken }],
+    queryFn: async () => {
+      const url = `/api/projects/${projectId}${bootstrapToken ? `?bootstrap=${bootstrapToken}` : ''}`;
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) {
+        throw new Error(`Failed to fetch project: ${res.status} ${res.statusText}`);
+      }
+      return res.json();
+    },
+    enabled: !!projectId && (!!user || !!bootstrapToken),
   });
   
   // Load files
+  // ✅ FIX (Nov 24, 2025): Allow anonymous access with bootstrap token using structured query key
   const { data: files = [] } = useQuery<File[]>({
-    queryKey: [`/api/projects/${projectId}/files`],
-    enabled: !!projectId && !!user,
+    queryKey: ['/api/projects', projectId, 'files', { bootstrap: !!bootstrapToken }],
+    queryFn: async () => {
+      const url = `/api/projects/${projectId}/files${bootstrapToken ? `?bootstrap=${bootstrapToken}` : ''}`;
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) {
+        throw new Error(`Failed to fetch files: ${res.status} ${res.statusText}`);
+      }
+      return res.json();
+    },
+    enabled: !!projectId && (!!user || !!bootstrapToken),
   });
   
   // Available tools/panels that can be added (comprehensive list with all features)
@@ -283,6 +303,16 @@ export default function IDEPage() {
     { id: 'global-search', label: 'Global Search', icon: '🔎' },
     { id: 'logs', label: 'Logs Viewer', icon: '📋' },
   ];
+  
+  // Validate tool registry in development
+  if (import.meta.env.DEV) {
+    import('@/lib/tool-registry').then(({ validateToolRegistry }) => {
+      const validation = validateToolRegistry(availableTools);
+      if (!validation.valid) {
+        console.warn('[Tool Registry] Missing tools:', validation.missing);
+      }
+    });
+  }
 
   // Handlers
   const handleFileSelect = (file: any) => {
@@ -477,7 +507,7 @@ export default function IDEPage() {
   // ✅ Device-aware rendering: Route to optimized views for mobile/tablet
   // Use project.id (UUID) with fallback to projectId (URL param, which backend normalizes to UUID)
   // Optional chaining defends against guard regressions
-  const normalizedProjectId = project?.id ?? projectId;
+  const normalizedProjectId = String(project?.id ?? projectId);
   
   if (deviceType === 'mobile') {
     return (
@@ -500,7 +530,7 @@ export default function IDEPage() {
       {/* Top Navigation */}
       <TopNavBar
         projectName={project.name}
-        projectSlug={project.slug || project.id}
+        projectSlug={project.slug || String(project.id)}
         ownerUsername={user?.username || ''}
         isDeployed={false}
         onRun={handleRunStop}
@@ -522,13 +552,17 @@ export default function IDEPage() {
           <div className="h-full flex flex-col border-r">
             <Tabs defaultValue="agent" className="h-full flex flex-col">
               <TabsList className="w-full justify-start rounded-none border-b">
-                <TabsTrigger value="agent" className="gap-2">
+                <TabsTrigger value="agent" className="gap-2" data-testid="tab-agent">
                   <Brain className="h-4 w-4" />
                   Agent
                 </TabsTrigger>
-                <TabsTrigger value="actions" className="gap-2">
+                <TabsTrigger value="actions" className="gap-2" data-testid="tab-actions">
                   <Zap className="h-4 w-4" />
                   Actions
+                </TabsTrigger>
+                <TabsTrigger value="tools" className="gap-2" data-testid="tab-tools">
+                  <Layers className="h-4 w-4" />
+                  Tools
                 </TabsTrigger>
               </TabsList>
               
@@ -574,6 +608,14 @@ export default function IDEPage() {
               
               <TabsContent value="actions" className="flex-1 mt-0 overflow-hidden">
                 <AgentActionsPanel projectId={projectId} />
+              </TabsContent>
+              
+              <TabsContent value="tools" className="flex-1 mt-0 overflow-hidden">
+                <ToolsPanel
+                  availableTools={availableTools}
+                  onSelectTool={handleAddTool}
+                  activeTabs={tabs.map(t => t.id)}
+                />
               </TabsContent>
             </Tabs>
           </div>

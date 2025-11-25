@@ -73,6 +73,20 @@ export default function Landing() {
   const y = useTransform(scrollYProgress, [0, 1], [0, -50]);
   const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
 
+  // Check if user just registered and needs to trigger workspace creation
+  useEffect(() => {
+    const triggerBuild = sessionStorage.getItem('triggerBuildOnLanding');
+    const pendingPrompt = sessionStorage.getItem('pendingAppDescription');
+    
+    if (user && triggerBuild === 'true' && pendingPrompt) {
+      // Clear the flags
+      sessionStorage.removeItem('triggerBuildOnLanding');
+      
+      // Trigger workspace creation
+      handleStartBuilding(pendingPrompt);
+    }
+  }, [user]);
+
   // Fetch real templates from database
   const { data: templates = [], isLoading: templatesLoading } = useQuery<any[]>({
     queryKey: ['/api/marketplace/templates'],
@@ -147,41 +161,64 @@ export default function Landing() {
   ];
 
   const handleStartBuilding = async (description: string) => {
+    console.log('[Landing] 🚀 handleStartBuilding called with description:', description);
+    console.log('[Landing] User status:', user ? `authenticated (${user.id})` : 'anonymous');
+    
     // Store the app description for post-auth use
     sessionStorage.setItem('pendingAppDescription', description);
     setChatOpen(false);
     
-    if (user) {
-      try {
-        const project = await apiRequest('POST', '/api/projects', {
-          name: description.slice(0, 30),
-          description: description,
-          language: 'javascript',
-          visibility: 'private'
-        }) as any;
-
-        // 🚀 REPLIT FLOW: Redirect to IDE with AI Agent panel (auto-start build)
-        const params = new URLSearchParams();
-        params.set('panel', 'agent');
-        params.set('prompt', description);
-        navigate(`/ide/${project.id}?${params.toString()}`);
-      } catch (error) {
-        console.error('Failed to create project:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to create project. Please try again.',
-          variant: 'destructive'
-        });
-      }
-    } else {
-      // Redirect to auth with preserved prompt in session storage
-      toast({
-        title: 'Sign up to continue',
-        description: 'Create a free account to build your app with AI',
+    try {
+      const requestPayload = {
+        prompt: description,
+        options: {
+          autoStart: true,  // ✅ CRITICAL: autoStart must be inside options object
+          language: 'typescript',
+          framework: 'react'
+        }
+      };
+      
+      console.log('[Landing] 🚀 Calling bootstrap API with payload:', requestPayload);
+      console.log('[Landing] Request details:', {
+        endpoint: '/api/workspace/bootstrap',
+        method: 'POST',
+        payloadSize: JSON.stringify(requestPayload).length,
+        hasPrompt: !!requestPayload.prompt,
+        hasOptions: !!requestPayload.options,
+        autoStart: requestPayload.options.autoStart
       });
-      setTimeout(() => {
-        navigate('/register?redirect=build-from-prompt');
-      }, 1000);
+      
+      // ✅ FIX (Nov 24, 2025): Support anonymous workspace creation for "No credit card required" promise
+      // Bootstrap API now accepts both authenticated and anonymous users
+      const result = await apiRequest('POST', '/api/workspace/bootstrap', requestPayload) as any;
+
+      console.log('[Landing] ✅ Bootstrap API response received:', result);
+      console.log('[Landing] Response details:', {
+        success: result.success,
+        hasBootstrapToken: !!result.bootstrapToken,
+        hasProjectId: !!result.projectId,
+        hasSessionId: !!result.sessionId
+      });
+
+      if (result.success) {
+        console.log('[Landing] Bootstrap successful, navigating to IDE...');
+        toast({
+          title: 'Creating your workspace...',
+          description: 'AI is generating your project structure now',
+        });
+
+        // Redirect to IDE with bootstrap token - triggers autonomous workspace viewer
+        navigate(`/ide/${result.projectId}?bootstrap=${result.bootstrapToken}`);
+      } else {
+        throw new Error(result.error || 'Bootstrap failed');
+      }
+    } catch (error) {
+      console.error('[Landing] ❌ Failed to bootstrap workspace:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create workspace. Please try again.',
+        variant: 'destructive'
+      });
     }
   };
 

@@ -1,9 +1,9 @@
 import { CodeAnalyzer } from './code-analyzer';
-import { legacyAIProviderManager as aiProviderManager, type AIProvider } from './ai-provider';
+import { aiProviderManager } from './ai-provider-manager';
 import { File, Project } from '@shared/schema';
 
 // Helper function to get the default AI provider
-function getAIProvider(): AIProvider {
+function getAIProvider() {
   return aiProviderManager.getDefaultProvider();
 }
 
@@ -98,7 +98,7 @@ export interface CodeReview {
 
 export class AdvancedAIService {
   private analyzer: CodeAnalyzer;
-  private provider: AIProvider;
+  private provider: ReturnType<typeof getAIProvider>;
 
   constructor() {
     this.analyzer = new CodeAnalyzer();

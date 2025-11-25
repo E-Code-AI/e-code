@@ -57,7 +57,7 @@ export class AuthRouter {
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
-      // EXCLUDED: passwordHash, twoFactorSecret, passwordResetToken, stripeCustomerId, etc.
+      // EXCLUDED: password, twoFactorSecret, passwordResetToken, stripeCustomerId, etc.
     };
   }
 
@@ -139,7 +139,7 @@ export class AuthRouter {
         const { password, ...userDataWithoutPassword } = validatedData;
         const user = await this.storage.createUser({
           ...userDataWithoutPassword,
-          passwordHash: hashedPassword,
+          password: hashedPassword,
           emailVerified: false
         });
 
@@ -345,7 +345,7 @@ export class AuthRouter {
         const { password, ...userDataWithoutPassword } = validatedData;
         const user = await this.storage.createUser({
           ...userDataWithoutPassword,
-          passwordHash: hashedPassword,
+          password: hashedPassword,
           emailVerified: false
         });
 
@@ -785,7 +785,7 @@ export class AuthRouter {
 
         // Update user password
         await this.storage.updateUser(resetRecord.userId, {
-          passwordHash: hashedPassword,
+          password: hashedPassword,
           passwordResetToken: null,
           passwordResetExpiry: null,
           failedLoginAttempts: 0,
@@ -821,6 +821,45 @@ export class AuthRouter {
         res.status(500).json({ 
           message: "Failed to reset password",
           code: "RESET_ERROR"
+        });
+      }
+    });
+
+    // WebSocket authentication token endpoint
+    // Generates a short-lived JWT token for WebSocket connections (e.g., background testing)
+    this.router.get("/api/auth/ws-token", this.ensureAuthenticated, async (req: Request, res: Response) => {
+      try {
+        const user = req.user;
+        if (!user) {
+          return res.status(401).json({ 
+            message: "Not authenticated",
+            code: "AUTH_REQUIRED"
+          });
+        }
+
+        // Generate a short-lived JWT token for WebSocket auth (5 minutes)
+        const jwt = await import('jsonwebtoken');
+        const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+        
+        const token = jwt.default.sign(
+          { 
+            userId: user.id, 
+            username: user.username,
+            type: 'websocket'
+          },
+          JWT_SECRET,
+          { expiresIn: '5m' }
+        );
+
+        res.json({ 
+          token,
+          expiresIn: 300 // 5 minutes in seconds
+        });
+      } catch (error: any) {
+        logger.error('WebSocket token generation error:', error);
+        res.status(500).json({ 
+          message: "Failed to generate WebSocket token",
+          code: "TOKEN_ERROR"
         });
       }
     });

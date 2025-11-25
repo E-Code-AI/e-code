@@ -23,6 +23,7 @@ import { legacyRateLimiters, dynamicRateLimiter, logRateLimitViolations } from '
 import { tierRateLimiters } from './middleware/tier-rate-limiter';
 import { monitoringMiddleware } from './services/monitoring.service';
 import { sanitizeInput } from './middleware/input-validation';
+import jwt from 'jsonwebtoken'; // ✅ FIX: Import at top to avoid hot-path dynamic import delay
 
 const app = express();
 
@@ -137,6 +138,20 @@ app.get('/api/cors-health', async (_req, res) => {
     console.log('[Terminal] Using local bash terminal (Replit Cloud Run compatible)');
   } catch (error) {
     console.error('[WORKING SERVER] Failed to setup terminal WebSocket:', error);
+  }
+
+  try {
+    // Setup Background Testing WebSocket server for real-time test notifications
+    const { WebSocketServer } = await import("ws");
+    const { setupBackgroundTestingWebSocket } = await import("./websocket/background-testing-ws");
+    const backgroundTestingWss = new WebSocketServer({ 
+      server: httpServer, 
+      path: '/ws/background-tests' 
+    });
+    setupBackgroundTestingWebSocket(backgroundTestingWss);
+    console.log('[BackgroundTesting] WebSocket server initialized at /ws/background-tests');
+  } catch (error) {
+    console.error('[WORKING SERVER] Failed to setup Background Testing WebSocket:', error);
   }
 
   try {
@@ -305,6 +320,51 @@ app.get('/api/cors-health', async (_req, res) => {
     } catch (error) {
       console.error('[WORKING SERVER] Failed to register websocket metrics routes:', error);
     }
+
+    // ✅ AUTONOMOUS WORKSPACE CREATION: Bootstrap routes
+    try {
+      const workspaceBootstrapRouter = (await import('./routes/workspace-bootstrap.router')).default;
+      app.use('/api/workspace', workspaceBootstrapRouter);
+      console.log('[Workspace Bootstrap] Routes registered at /api/workspace');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register workspace bootstrap routes:', error);
+    }
+
+    // ✅ TEMPLATES MARKETPLACE: Templates routes
+    try {
+      const templatesRouter = (await import('./routes/templates')).default;
+      app.use(templatesRouter);
+      console.log('[Templates Marketplace] Routes registered at /api/templates');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register templates routes:', error);
+    }
+
+    // ✅ CHECKPOINTS & ROLLBACK SYSTEM: Checkpoint routes with atomic transactions
+    try {
+      const checkpointsRouter = (await import('./routes/checkpoints.router')).default;
+      app.use('/api', checkpointsRouter); // Mount at /api to get /api/projects/:projectId/checkpoints
+      console.log('[Checkpoints] Routes registered at /api - Atomic transactions + row-level locks enabled');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register checkpoints routes:', error);
+    }
+
+    // ✅ STRIPE PAYMENTS: Payment and subscription routes
+    try {
+      const paymentsRouter = (await import('./routes/payments.router')).default;
+      app.use('/api/payments', paymentsRouter);
+      console.log('[Stripe Payments] Routes registered at /api/payments');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register payments routes:', error);
+    }
+
+    // ✅ AGENT CONTEXT: Repository overview routes
+    try {
+      const agentContextRouter = (await import('./agent/routes/agent-context')).default;
+      app.use(agentContextRouter);
+      console.log('[Agent Context] Routes registered at /api/agent/repo-overview');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register agent context routes:', error);
+    }
   } catch (error) {
     console.error('[WORKING SERVER] Failed to register routes:', error);
     // Server continues running even if routes fail to load
@@ -446,6 +506,8 @@ app.get('/api/cors-health', async (_req, res) => {
       const sessionId = url.searchParams.get('sessionId');
       const deviceId = url.searchParams.get('deviceId') || undefined;
       const deviceType = url.searchParams.get('deviceType') || undefined;
+      // ✅ FIX (Nov 24, 2025): Support bootstrap token authentication for anonymous users
+      const bootstrapToken = url.searchParams.get('bootstrap');
       
       // ✅ PRODUCTION FIX: Only sessionId is required (projectId can be null for shared sessions)
       if (!sessionId) {
@@ -461,60 +523,146 @@ app.get('/api/cors-health', async (_req, res) => {
         return;
       }
       
-      // ✅ PRODUCTION FIX: Cached validation eliminates DoS vulnerability
-      // Uses AgentSessionCache with Redis primary + in-memory fallback
-      // Cache hit: <1ms (vs 50-200ms database query)
-      // Async fallback: Non-blocking database hydration on cache miss
-      const { agentSessionCache } = await import('./services/agent-session-cache.service');
-      
-      const validation = await agentSessionCache.validateSession({
-        sessionId,
-        projectId,
-        deviceId,
-        deviceType,
-      });
-      
-      // ✅ PRODUCTION FIX: Verify validation AND session data existence
-      if (!validation.valid || !validation.session) {
-        console.warn(`[WebSocket Upgrade] Rejecting - ${validation.error || 'Missing session data'} (${validation.source}, ${validation.latencyMs}ms)`);
-        socket.resume(); // Resume before error response
-        
-        const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
-        
-        // Map validation error to appropriate HTTP status
-        if (validation.error?.includes('not found')) {
+      // ✅ FIX (Nov 24, 2025): Support bootstrap token authentication for anonymous users
+      if (bootstrapToken) {
+        try {
+          // ✅ CRITICAL FIX: Use static import (at top of file) to avoid hot-path delay
+          // Dynamic import was causing socket timeout during async operation
+          const jwtSecret = process.env.JWT_SECRET;
+          
+          if (!jwtSecret) {
+            console.error('[WebSocket Upgrade] JWT_SECRET not configured');
+            socket.resume();
+            const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
+            HttpUpgradeResponder.sendError(
+              request,
+              socket,
+              HttpUpgradeResponder.ErrorResponses.INTERNAL_ERROR('JWT configuration error')
+            );
+            return;
+          }
+          
+          // Verify JWT signature and decode payload (synchronous operation, no await needed)
+          const decoded = jwt.verify(bootstrapToken, jwtSecret) as {
+            projectId: string;
+            sessionId: string;
+            userId: number;
+          };
+          
+          // Validate token matches requested project and session
+          const tokenProjectId = String(decoded.projectId);
+          const tokenSessionId = String(decoded.sessionId);
+          const actualProjectId = String(projectId);
+          const actualSessionId = String(sessionId);
+          
+          if (tokenProjectId !== actualProjectId || tokenSessionId !== actualSessionId) {
+            console.warn('[WebSocket Upgrade] Bootstrap token mismatch:', {
+              tokenProjectId,
+              actualProjectId,
+              tokenSessionId,
+              actualSessionId
+            });
+            socket.resume();
+            const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
+            HttpUpgradeResponder.sendError(
+              request,
+              socket,
+              HttpUpgradeResponder.ErrorResponses.FORBIDDEN('Bootstrap token invalid for this session')
+            );
+            return;
+          }
+          
+          console.log(`[WebSocket Upgrade] ✅ Validated bootstrap token for project ${projectId}, session ${sessionId}`);
+          // Skip session cache validation for bootstrap users - token is sufficient
+        } catch (error: any) {
+          console.error('[WebSocket Upgrade] Bootstrap token validation failed:', error.message);
+          socket.resume();
+          const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
           HttpUpgradeResponder.sendError(
             request,
             socket,
-            HttpUpgradeResponder.ErrorResponses.UNAUTHORIZED('Invalid or inactive session')
+            HttpUpgradeResponder.ErrorResponses.UNAUTHORIZED('Invalid or expired bootstrap token')
           );
-        } else if (validation.error?.includes('mismatch')) {
-          HttpUpgradeResponder.sendError(
-            request,
-            socket,
-            HttpUpgradeResponder.ErrorResponses.FORBIDDEN('Project ID or device mismatch')
-          );
-        } else {
-          HttpUpgradeResponder.sendError(
-            request,
-            socket,
-            HttpUpgradeResponder.ErrorResponses.UNAUTHORIZED(validation.error || 'Session validation failed')
-          );
+          return;
         }
-        return;
+      } else {
+        // ✅ PRODUCTION FIX: Cached validation for authenticated users
+        // Uses AgentSessionCache with Redis primary + in-memory fallback
+        // Cache hit: <1ms (vs 50-200ms database query)
+        const { agentSessionCache } = await import('./services/agent-session-cache.service');
+        
+        const validation = await agentSessionCache.validateSession({
+          sessionId,
+          projectId,
+          deviceId,
+          deviceType,
+        });
+        
+        // ✅ PRODUCTION FIX: Verify validation AND session data existence
+        if (!validation.valid || !validation.session) {
+          console.warn(`[WebSocket Upgrade] Rejecting - ${validation.error || 'Missing session data'} (${validation.source}, ${validation.latencyMs}ms)`);
+          socket.resume(); // Resume before error response
+          
+          const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
+          
+          // Map validation error to appropriate HTTP status
+          if (validation.error?.includes('not found')) {
+            HttpUpgradeResponder.sendError(
+              request,
+              socket,
+              HttpUpgradeResponder.ErrorResponses.UNAUTHORIZED('Invalid or inactive session')
+            );
+          } else if (validation.error?.includes('mismatch')) {
+            HttpUpgradeResponder.sendError(
+              request,
+              socket,
+              HttpUpgradeResponder.ErrorResponses.FORBIDDEN('Project ID or device mismatch')
+            );
+          } else {
+            HttpUpgradeResponder.sendError(
+              request,
+              socket,
+              HttpUpgradeResponder.ErrorResponses.UNAUTHORIZED(validation.error || 'Session validation failed')
+            );
+          }
+          return;
+        }
+        
+        console.log(`[WebSocket Upgrade] ✅ Validated session ${sessionId} for project ${projectId || 'shared'} (${validation.source} cache, ${validation.latencyMs}ms)`);
       }
-      
-      console.log(`[WebSocket Upgrade] ✅ Validated session ${sessionId} for project ${projectId || 'shared'} (${validation.source} cache, ${validation.latencyMs}ms)`);
       
       // ✅ CRITICAL: Mark socket BEFORE handleUpgrade to prevent guard from destroying it
       markSocketAsHandled(request, socket);
       
+      console.log(`[WebSocket Upgrade] 📡 About to call handleUpgrade for ${sessionId}`);
+      console.log(`[WebSocket Upgrade] 🔍 Socket state before handleUpgrade:`, {
+        destroyed: socket.destroyed,
+        readableEnded: socket.readableEnded,
+        writableEnded: socket.writableEnded,
+        readable: socket.readable,
+        writable: socket.writable
+      });
+      
       // ✅ CRITICAL: Resume socket and call handleUpgrade AFTER validation completes
       // This prevents the ws library from timing out the handshake
       socket.resume();
-      agentWss.handleUpgrade(request, socket, head, (ws: any) => {
-        agentWss.emit('connection', ws, request);
-      });
+      
+      try {
+        agentWss.handleUpgrade(request, socket, head, (ws: any) => {
+          console.log(`[WebSocket Upgrade] 🔌 handleUpgrade callback executing for ${sessionId}, ws.readyState:`, ws.readyState);
+          console.log(`[WebSocket Upgrade] 📤 About to emit 'connection' event...`);
+          agentWss.emit('connection', ws, request);
+          console.log(`[WebSocket Upgrade] ✅ 'connection' event emitted successfully`);
+        });
+        console.log(`[WebSocket Upgrade] ⏳ handleUpgrade called, waiting for callback...`);
+      } catch (upgradeError: any) {
+        console.error(`[WebSocket Upgrade] ❌ handleUpgrade threw error:`, upgradeError);
+        console.error(`[WebSocket Upgrade] Error details:`, {
+          message: upgradeError.message,
+          stack: upgradeError.stack,
+          code: upgradeError.code
+        });
+      }
       
     } catch (error: any) {
       console.error(`[WebSocket Upgrade] Validation error:`, error);
@@ -545,6 +693,11 @@ app.get('/api/cors-health', async (_req, res) => {
     if (pathname !== '/ws/agent') {
       return; // Let other upgrade listeners process this request
     }
+    
+    // ✅ CRITICAL FIX (Nov 24, 2025): Mark socket SYNCHRONOUSLY to prevent race condition!
+    // The Upgrade Guard's setImmediate runs before async validation completes,
+    // causing sockets to be destroyed. Marking synchronously prevents this.
+    markSocketAsHandled(request, socket);
     
     // Route /ws/agent upgrades to async validation + upgrade handler
     // ✅ CRITICAL: Don't await here - let validation run async to prevent blocking other upgrades

@@ -649,8 +649,7 @@ const Terminal: React.FC<TerminalProps> = ({
           
           <TabsContent value="term1" className="m-0 p-0">
             <div 
-              ref={terminalRef}
-              data-testid="terminal-container" 
+              ref={terminalRef} 
               className={`terminal-container ${
                 minimized ? 'h-0' : 'h-[calc(288px-40px)]'
               }`} 

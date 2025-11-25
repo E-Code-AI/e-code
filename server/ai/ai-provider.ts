@@ -1,10 +1,46 @@
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║                          ⚠️  DEPRECATED - DO NOT USE  ⚠️                  ║
+// ╠══════════════════════════════════════════════════════════════════════════╣
+// ║                                                                          ║
+// ║  This file is DEPRECATED as of November 24, 2025                        ║
+// ║                                                                          ║
+// ║  Migration Instructions:                                                ║
+// ║  ════════════════════════                                                ║
+// ║  Old (DEPRECATED):                                                       ║
+// ║    import { legacyAIProviderManager } from './ai/ai-provider';          ║
+// ║    const provider = legacyAIProviderManager.getDefaultProvider();       ║
+// ║    const result = await provider.generateChat(messages);                ║
+// ║                                                                          ║
+// ║  New (RECOMMENDED):                                                      ║
+// ║    import { aiProviderManager } from './ai/ai-provider-manager';        ║
+// ║    const result = await aiProviderManager.generateChat(                 ║
+// ║      'claude-sonnet-4-5-20250929', messages, { max_tokens: 1024 }       ║
+// ║    );                                                                    ║
+// ║                                                                          ║
+// ║  Why migrate?                                                            ║
+// ║  ─────────────                                                           ║
+// ║  • Multi-provider fallback (6 AI providers: Gemini, Claude, GPT, etc.)  ║
+// ║  • System prompts automatically injected (agent-system-prompt.ts)       ║
+// ║  • Context window optimization (smart conversation history truncation)  ║
+// ║  • Circuit breakers for 99.9% uptime                                    ║
+// ║  • Model-based API (more flexible than provider-based API)              ║
+// ║                                                                          ║
+// ║  Compatibility layer available:                                         ║
+// ║  ────────────────────────────                                           ║
+// ║  The new aiProviderManager includes getProvider() / getDefaultProvider()║
+// ║  methods for backward compatibility. Just change the import!            ║
+// ║                                                                          ║
+// ║  For help: See replit.md → "AI Provider Migration" section              ║
+// ║                                                                          ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { codeAnalyzer } from './code-analyzer';
 import { createLogger } from '../utils/logger';
 import { aiBillingService } from '../services/ai-billing-service';
 
-const logger = createLogger('ai-provider');
+const logger = createLogger('ai-provider [DEPRECATED]');
 
 export interface AIProvider {
   name: string;

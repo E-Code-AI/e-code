@@ -2,8 +2,6 @@ import { aiProviderManager } from '../ai/ai-provider-manager';
 import { type IStorage, getStorage } from '../storage';
 import type { Project } from '@shared/schema';
 import { createLogger } from '../utils/logger';
-import * as jsonc from 'jsonc-parser';
-import { replaceTemplateLiterals, restoreTemplateLiterals } from '../utils/template-literal-sanitizer';
 
 const logger = createLogger('AIPlanGenerator');
 
@@ -22,7 +20,8 @@ export interface PlanTask {
   dependencies: string[];
   files?: {
     path: string;
-    content?: string;
+    content?: string;  // Legacy: Full file content (used by older plans)
+    outline?: string;  // NEW: Brief description of file purpose (Phase 2 executor expands this)
     language?: string;
   }[];
   commands?: string[];
@@ -48,16 +47,16 @@ export interface ExecutionPlan {
 export class AIPlanGeneratorService {
   private storage: IStorage;
   
-  // ✅ PROVIDER FALLBACK CHAIN: Verified working models (Nov 23, 2025)
-  // Strategy: Speed-first (Flash) → Quality (Pro) → Multi-provider fallback
-  // Note: Gemini 2.5 Flash is 5x faster than Pro with excellent quality
+  // ✅ 40-YEAR ENGINEERING FIX: Provider fallback chain - WORKING MODELS FIRST
+  // ✅ STRATEGY FIX (Nov 21, 2025): Test with Gemini/GPT first, debug Moonshot after
+  // Moonshot API has timeout/error issues, using proven models as primary
+  // Once Gemini works, we'll debug Moonshot separately
   private readonly PROVIDER_FALLBACK_CHAIN = [
-    'gemini-2.5-flash',             // ✅ PRIMARY: Fastest (2.5s avg), verified, excellent quality
-    'gemini-2.5-pro',               // ✅ BACKUP 1: Best quality (13s avg), adaptive thinking
-    'gpt-5.1',                      // ✅ OpenAI GPT-5.1 (flagship, verified)
-    'claude-haiku-4-5-20251015',    // Anthropic Claude Haiku 4.5 (requires credits)
-    'grok-4-fast',                  // xAI Grok 4 Fast (requires credits)
-    'kimi-k2-0711-preview'          // ✅ Moonshot AI Kimi K2 (verified with complex edge cases)
+    'gemini-2.5-flash',             // ✅ PRIMARY: Google Gemini 2.5 Flash (250/day free tier, PROVEN)
+    'gpt-5.1',                      // OpenAI GPT-5.1 (flagship, should work)
+    'claude-haiku-4-5-20251015',    // Anthropic Claude Haiku 4.5 (fastest Claude model)
+    'grok-4-fast',                  // xAI Grok 4 Fast (2M context, 64× cheaper than o3)
+    'kimi-k2-0711-preview'          // ⚠️ LAST: Moonshot AI (has timeout/error - debug after proving system works)
   ];
 
   constructor(storage: IStorage) {
@@ -65,131 +64,138 @@ export class AIPlanGeneratorService {
   }
 
   /**
-   * ✅ ARCHITECT-APPROVED FIX (Nov 21, 2025): Handle nested JSON in AI responses
+   * ✅ 40-YEAR ENGINEERING: Sanitize AI-generated JSON before parsing
    * 
-   * ROOT CAUSE: AI providers (GPT-5.1, Claude) generate valid JSON with double-encoded
-   * file content (e.g., package.json content is JSON-stringified within the JSON response).
-   * Previous regex-based approach CORRUPTED valid JSON by stripping necessary escapes.
+   * CRITICAL FIX (Nov 21, 2025): GPT-5.1 double-escapes quotes in file content
+   * Root cause: GPT-5.1 generates `"content": \"import {` instead of `"content": "import {"`
    * 
-   * NEW APPROACH (per Architect):
-   * 1. Strip code fences only (```json ... ```)
-   * 2. Parse the JSON (now works because we removed destructive regex)
-   * 3. Deep-walk the parsed object to detect and repair double-encoded JSON strings
-   * 4. Re-serialize with correct escaping
-   * 
-   * This handles providers that encode file content like:
-   * "content": "{\\n  \\\"name\\\": \"my-app\\\",...}"
+   * This function:
+   * 1. Fixes GPT-5.1 double-escaped quotes (\"text\" → "text")
+   * 2. Strips code fences (```json ... ```)
+   * 3. Decodes HTML entities (&amp;, &gt;, &lt;)
+   * 4. Escapes unescaped newlines in JSON string values
+   * 5. Handles edge cases from multiple AI providers (OpenAI, Gemini, xAI, Anthropic, Moonshot)
    * 
    * @param jsonString - Raw JSON string from AI provider
    * @returns Sanitized JSON string ready for JSON.parse()
    */
-  private sanitizePlanResponse(jsonString: string): any {
-    // Step 1: Normalize whitespace and strip code fences (```json ... ```)
-    // CRITICAL FIX: Gemini 2.5 Pro returns responses with leading newlines (\n```json)
-    // Must trim BEFORE fence stripping to handle this case
+  private sanitizePlanResponse(jsonString: string): string {
+    // ✅ CRITICAL FIX (Nov 23, 2025): COMPLETE REWRITE for AI-generated escaped quotes
+    // Previous regex approach failed on: "component (\"App.tsx\") that displays"
+    // Root cause: AIs escape quotes inside strings with \" which breaks JSON.parse()
+    // Solution: Character-by-character parsing to properly handle all escape scenarios
+    
+    // Strip code fences first
     jsonString = jsonString
-      .trimStart()  // Remove leading whitespace FIRST
       .replace(/^```json\s*/i, '')
       .replace(/```\s*$/i, '')
       .trim();
     
-    // ✅ CRITICAL FIX (Nov 23, 2025): Decode HTML entities before parsing
-    // GPT-5.1 and other models return JSX code with HTML entities (&gt;, &lt;, &amp;, &quot;)
-    // which breaks JSON parsing. Example: onClick={() =&gt; handleDelete()} should be onClick={() => handleDelete()}
-    jsonString = jsonString
-      .replace(/&gt;/g, '>')
-      .replace(/&lt;/g, '<')
-      .replace(/&amp;/g, '&')
-      .replace(/&quot;/g, '"')
-      .replace(/&apos;/g, "'")
-      .replace(/&#x27;/g, "'")
-      .replace(/&#x2F;/g, '/');
+    // ✅ NEW APPROACH: Remove ALL backslash-escaping from AI responses
+    // AIs generate: "text (\"quoted\") content"
+    // JSON.parse expects: "text (\"quoted\") content" with proper double-escaping
+    // But since we control the input, we can just remove the backslashes entirely
+    // 
+    // Strategy: Replace \" with " ONLY inside string values (between quotes)
+    // This is safe because AIs don't intend these as JSON escape sequences
     
-    // ✅ ARCHITECT RECOMMENDATION (Nov 23, 2025): Template literal handling
-    // PROBLEM: GPT-5.1 generates code with ${...} which breaks JSON parsing
-    // SOLUTION: Brace-balanced scanner that captures full ${...} expressions
-    // Only processes ${...} inside JSON string values to avoid corrupting JSON syntax
+    let result = '';
+    let inString = false;
+    let i = 0;
     
-    // Step 2: Replace template literals with safe sentinels using brace-balanced scanner
-    const { processed, templates } = replaceTemplateLiterals(jsonString);
-    
-    // Step 3: Parse using jsonc-parser (tolerant of comments, trailing commas)
-    const errors: jsonc.ParseError[] = [];
-    try {
-      const parsed = jsonc.parse(processed, errors, { allowTrailingComma: true });
+    while (i < jsonString.length) {
+      const char = jsonString[i];
+      const nextChar = jsonString[i + 1];
       
-      // Check for parse errors
-      if (errors.length > 0) {
-        throw new Error(`JSON parse errors: ${errors.map(e => e.error).join(', ')}`);
-      }
-      
-      // Step 4: Restore template literals from sentinels in parsed AST
-      const restored = restoreTemplateLiterals(parsed, templates);
-      
-      // Step 5: Repair any double-encoded nested JSON strings
-      const repaired = this.repairNestedJSON(restored);
-      
-      // ✅ CRITICAL: Return OBJECT, not JSON string
-      // This avoids re-serializing ${...} which would break downstream parsing
-      return repaired;
-    } catch (parseError: any) {
-      // ✅ CRITICAL: Throw instead of returning raw string
-      // This ensures upstream never attempts to re-parse malformed ${...} content
-      logger.error('[sanitizePlanResponse] JSON parse failed - plan cannot be loaded', {
-        error: parseError.message,
-        position: parseError.message?.match(/position (\d+)/)?.[1],
-        preview: jsonString.substring(0, 200)
-      });
-      throw new Error(`Failed to parse plan JSON: ${parseError.message}`);
-    }
-  }
-
-
-  /**
-   * ✅ ARCHITECT SOLUTION: Recursively repair double-encoded JSON strings
-   * 
-   * Detects strings that are JSON-encoded (start with { or [) and re-parses them
-   * to restore correct escaping. This handles file content like package.json that's
-   * embedded as stringified JSON within the plan.
-   * 
-   * @param obj - Any value from parsed JSON
-   * @returns Repaired value with nested JSON properly handled
-   */
-  private repairNestedJSON(obj: any): any {
-    // Base case: string value
-    if (typeof obj === 'string') {
-      // Detect double-encoded JSON (starts with { or [)
-      const trimmed = obj.trim();
-      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-        try {
-          // Attempt to parse as nested JSON
-          const nested = JSON.parse(obj);
-          // Re-stringify to ensure correct escaping
-          return JSON.stringify(nested);
-        } catch {
-          // Not valid JSON, return original string
-          return obj;
+      // Track when we're inside a string value
+      if (char === '"') {
+        // Check if this quote is escaped by a backslash
+        // Count consecutive backslashes before this quote
+        let backslashCount = 0;
+        let j = i - 1;
+        while (j >= 0 && jsonString[j] === '\\') {
+          backslashCount++;
+          j--;
+        }
+        
+        // If even number of backslashes (including 0), this quote is NOT escaped
+        // If odd number, it IS escaped and we're still in the string
+        if (backslashCount % 2 === 0) {
+          inString = !inString;
         }
       }
-      return obj;
-    }
-    
-    // Recursive case: array
-    if (Array.isArray(obj)) {
-      return obj.map(item => this.repairNestedJSON(item));
-    }
-    
-    // Recursive case: object
-    if (obj && typeof obj === 'object') {
-      const result: any = {};
-      for (const [key, value] of Object.entries(obj)) {
-        result[key] = this.repairNestedJSON(value);
+      
+      // ✅ CRITICAL: Inside strings, convert \" to " (remove AI's unnecessary escaping)
+      if (inString && char === '\\' && nextChar === '"') {
+        // Skip the backslash, just add the quote
+        result += '"';
+        i += 2; // Skip both \ and "
+        continue;
       }
-      return result;
+      
+      result += char;
+      i++;
     }
     
-    // Primitive types (number, boolean, null)
-    return obj;
+    // ✅ SECOND PASS: Extract and protect JSON string values with placeholders
+    const stringPlaceholders: string[] = [];
+    let placeholderIndex = 0;
+    
+    // Extract all JSON string values and replace with placeholders
+    // Use 'result' from first pass (backslash-cleaned JSON)
+    let sanitized = result.replace(/"((?:[^"\\]|\\.)*)"/g, (match) => {
+      const placeholder = `__STRING_PLACEHOLDER_${placeholderIndex}__`;
+      stringPlaceholders[placeholderIndex] = match;
+      placeholderIndex++;
+      return placeholder;
+    });
+    
+    // Step 2: Decode HTML entities in non-string parts (keys, structural elements)
+    const htmlEntities: Record<string, string> = {
+      '&amp;': '&',
+      '&lt;': '<',
+      '&gt;': '>',
+      '&nbsp;': ' '
+      // Note: NOT decoding &quot; and &#39; here to avoid breaking JSON
+    };
+    
+    for (const [entity, char] of Object.entries(htmlEntities)) {
+      sanitized = sanitized.replace(new RegExp(entity, 'g'), char);
+    }
+    
+    // Step 3: Restore string values and fix escaping issues
+    for (let i = 0; i < stringPlaceholders.length; i++) {
+      const placeholder = `__STRING_PLACEHOLDER_${i}__`;
+      let originalString = stringPlaceholders[i];
+      
+      // Extract content between quotes
+      const contentMatch = originalString.match(/^"((?:[^"\\]|\\.)*)"$/);
+      if (contentMatch) {
+        let content = contentMatch[1];
+        
+        // Decode HTML entities in string content and re-escape for JSON
+        content = content
+          .replace(/&quot;/g, '\\"')    // &quot; → \" (JSON-safe escaped quote)
+          .replace(/&#39;/g, "'")        // &#39; → ' (single quote is safe in JSON)
+          .replace(/&#x27;/g, "'")       // &#x27; → ' (single quote is safe in JSON)
+          .replace(/&amp;/g, '&')        // &amp; → & (decoded)
+          .replace(/&lt;/g, '<')         // &lt; → < (decoded)
+          .replace(/&gt;/g, '>')         // &gt; → > (decoded)
+          .replace(/&nbsp;/g, ' ');      // &nbsp; → space (decoded)
+        
+        // Fix unescaped newlines (if any raw newlines slipped through)
+        content = content
+          .replace(/(?<!\\)\n/g, '\\n')  // Raw \n → \\n
+          .replace(/(?<!\\)\r/g, '\\r')  // Raw \r → \\r
+          .replace(/(?<!\\)\t/g, '\\t'); // Raw \t → \\t
+        
+        originalString = `"${content}"`;
+      }
+      
+      sanitized = sanitized.replace(placeholder, originalString);
+    }
+    
+    return sanitized;
   }
 
   /**
@@ -220,8 +226,12 @@ export class AIPlanGeneratorService {
       const files = await this.storage.getProjectFiles(projectId);
       const existingFilesList = files.map(f => f.path).join('\n');
 
+      // ✅ TWO-PHASE FIX (Nov 23, 2025): Request file OUTLINES only, not full content
+      // This prevents JSON-in-JSON parsing failures when package.json content embeds in plan JSON
+      // File content will be generated in Phase 2 by the orchestrator
+      
       // Condensed system prompt for providers with size limits (like Gemini)
-      const systemPromptCondensed = `You are a software architect. Create a JSON execution plan for building software projects. Respond ONLY with valid JSON using this format: {"summary":"","technologies":[],"estimatedTime":"","tasks":[{"id":"","title":"","description":"","type":"file_create|file_edit|command|install_package|config","estimatedTime":"","dependencies":[],"priority":"high|medium|low","files":[{"path":"","content":"","language":""}],"packages":[],"commands":[]}],"riskAssessment":{"level":"low|medium|high","factors":[]}}. Requirements: Complete production-ready code, no placeholders, include all config files, specify exact package versions, order by dependencies. CRITICAL: Never use shell operators (&&, ||, ;, |) in commands - create separate tasks instead.`;
+      const systemPromptCondensed = `You are a software architect. Create a JSON execution plan for building software projects. Respond ONLY with valid JSON using this format: {"summary":"","technologies":[],"estimatedTime":"","tasks":[{"id":"","title":"","description":"","type":"file_create|file_edit|command|install_package|config","estimatedTime":"","dependencies":[],"priority":"high|medium|low","files":[{"path":"","outline":"brief description of file purpose","language":""}],"packages":[],"commands":[]}],"riskAssessment":{"level":"low|medium|high","factors":[]}}. Requirements: Production-ready structure, include all config files, specify exact package versions, order by dependencies. IMPORTANT: Use 'outline' not 'content' for files. 🚫 FORBIDDEN: NEVER use scaffolding commands like "npm create", "npx create-*", "npm init", or template generators - ALWAYS create files directly instead.`;
       
       // Full system prompt for providers without size limits
       const systemPromptFull = `You are an expert software architect and project planner. Your task is to create a detailed, executable plan for building software projects.
@@ -234,6 +244,9 @@ Given a user's goal, create a comprehensive execution plan with the following:
 4. **Dependencies**: Identify task dependencies
 5. **Risk Assessment**: Evaluate potential risks and challenges
 
+**CRITICAL**: Respond ONLY with valid JSON in this exact format.
+⚠️ IMPORTANT: Use DOUBLE QUOTES for all strings, NOT backticks or template literals!
+⚠️ NEW: Use 'outline' instead of 'content' for files (content generated later)
 
 {
   "summary": "Brief overview of what will be built",
@@ -251,11 +264,11 @@ Given a user's goal, create a comprehensive execution plan with the following:
       "files": [
         {
           "path": "path/to/file.ext",
-          "content": "complete file content here - use \\n for newlines",
+          "outline": "Brief description of what this file should contain (2-3 sentences)",
           "language": "javascript"
         }
       ],
-      "packages": ["package1", "package2"],
+      "packages": ["package1@version", "package2@version"],
       "commands": ["npm install", "npm run build"]
     }
   ],
@@ -266,14 +279,18 @@ Given a user's goal, create a comprehensive execution plan with the following:
 }
 
 **Requirements:**
-- Generate COMPLETE, PRODUCTION-READY code for all files
-- NO placeholders, NO TODOs, NO incomplete code
-- Include ALL necessary configuration files (package.json, tsconfig.json, etc.)
-- Specify exact package names and versions
-- Order tasks by dependencies (earlier tasks should be completed before later ones)
-- Be specific about file paths and content
-- **CRITICAL**: NEVER use shell operators (&&, ||, ;, |, >) in commands - create separate task entries instead
-- Each command must be a single, standalone command without shell operators
+- Create production-ready STRUCTURE with clear file outlines
+- Include ALL necessary files (source, config, etc.) with their paths
+- Specify exact package names with versions (e.g., "react@18.2.0")
+- Order tasks by dependencies (earlier tasks before later ones)
+- Be specific about file paths and purposes
+- DO NOT include full file content in the plan (it will be generated later)
+
+**🚫 FORBIDDEN COMMANDS (Security Policy):**
+- NEVER use scaffolding tools: "npm create", "npx create-*", "npm init", "yarn create"
+- NEVER use template generators like "vite create", "create-react-app", "ng new"
+- INSTEAD: Create files directly using file_create tasks with proper outlines
+- Example: Instead of "npm create vite" → Create package.json, index.html, main.tsx, etc. separately
 
 **Project Context:**
 - Language: ${project.language}
@@ -285,11 +302,12 @@ Given a user's goal, create a comprehensive execution plan with the following:
       const userPrompt = `Create a detailed execution plan for: ${goal}
 
 Remember:
-1. Provide COMPLETE file contents (not snippets)
-2. Include ALL necessary files (source, config, etc.)
-3. List exact package names
+1. List ALL necessary files with their paths and PURPOSE (2-3 sentence outline)
+2. Include ALL config files (package.json, tsconfig.json, etc.)
+3. Specify exact package names with versions
 4. Order tasks by dependencies
-5. Respond with ONLY valid JSON`;
+5. Use 'outline' field (NOT 'content') for files
+6. Respond with ONLY valid JSON`;
 
       // ✅ PRODUCTION FIX: Multi-provider fallback chain with JSON parsing retry
       // Try providers in order: OpenAI → Gemini → xAI → Anthropic
@@ -309,56 +327,79 @@ Remember:
           const systemPrompt = isGemini ? systemPromptCondensed : systemPromptFull;
           logger.info(`[generatePlan] Using ${isGemini ? 'CONDENSED' : 'FULL'} prompt for ${modelId} (${systemPrompt.length} chars)`);
           
-          // ✅ 40-YEAR ENGINEERING FIX: Per-provider timeout (180 seconds for complex prompts)
-          // Each provider attempt gets full 180s for complex CRM/enterprise prompts
-          // This allows GPT-5.1 to fully generate detailed plans without premature timeout
-          const PLAN_GENERATION_TIMEOUT = 180000; // 180 seconds per provider (3 minutes)
+          // ✅ EXTENDED TIMEOUT (Nov 23, 2025): Per-provider timeout increased for complex prompts
+          // Architect review: GPT-5.1 successfully streamed 2794 chunks but hit 60s timeout
+          // Increasing to 120s allows successful completion of detailed autonomous workspace plans
+          const PLAN_GENERATION_TIMEOUT = 120000; // ✅ INCREASED: 120s per provider (architect-approved)
           const streamStartTime = Date.now();
           
-          // Stream response using AI Provider Manager
-          // ✅ CRITICAL FIX: Increased max_tokens to prevent JSON truncation
-          // Complex plans with multiple files can easily exceed 8192 tokens
-          // ✅ GPT-5.1 UPGRADE (Nov 17, 2025): Use reasoning_effort='none' for fast plan generation
-          // ✅ TIMEOUT FIX (Nov 19, 2025): Custom 90s timeout for plan generation (default 60s too short)
-          const stream = await aiProviderManager.streamChat(
-            modelId,
-            [
-              { role: 'user', content: userPrompt }
-            ],
-            {
-              system: systemPrompt,
-              max_tokens: 16384,  // ✅ DOUBLED: Prevents JSON being cut mid-generation
-              temperature: 0.7,
-              reasoning_effort: 'none', // ✅ GPT-5.1: Fast non-reasoning mode for low-latency responses
-              timeoutMs: PLAN_GENERATION_TIMEOUT, // ✅ Custom timeout for complex plan generation
-            }
-          );
-
-          // ✅ 40-YEAR ENGINEERING FIX: Stream with timeout monitoring
-          // ✅ INCREASED TIMEOUT (Nov 23, 2025): 30s for rate-limited free tier APIs
-          // Gemini free tier (2 req/min) and other free APIs can be slow to respond
-          let lastChunkTime = Date.now();
-          const CHUNK_TIMEOUT = 30000; // 30 seconds between chunks (increased from 10s)
+          // ✅ CRITICAL FIX (Nov 23, 2025): Timeout watchdog
+          // Architect review: provider manager's streamLimiter timeout (60s) is bypassed
+          // Any hang inside OpenAI SDK leaves for-await loop pending with no catch
+          // Solution: Watchdog timer that throws if overall timeout exceeded
           
-          for await (const chunk of stream) {
-            // Check overall timeout
-            if (Date.now() - streamStartTime > PLAN_GENERATION_TIMEOUT) {
-              throw new Error(`Plan generation timeout after ${PLAN_GENERATION_TIMEOUT}ms`);
+          let timeoutHandle: NodeJS.Timeout | null = null;
+          let timedOut = false;
+          
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            timeoutHandle = setTimeout(() => {
+              timedOut = true;
+              reject(new Error(`Provider ${modelId} timeout after ${PLAN_GENERATION_TIMEOUT}ms - no response`));
+            }, PLAN_GENERATION_TIMEOUT);
+          });
+          
+          try {
+            // Stream response using AI Provider Manager
+            // ✅ CRITICAL FIX: Increased max_tokens to prevent JSON truncation
+            // Complex plans with multiple files can easily exceed 8192 tokens
+            // ✅ GPT-5.1 UPGRADE (Nov 17, 2025): Use reasoning_effort='none' for fast plan generation
+            const stream = await Promise.race([
+              aiProviderManager.streamChat(
+                modelId,
+                [
+                  { role: 'user', content: userPrompt }
+                ],
+                {
+                  system: systemPrompt,
+                  max_tokens: 16384,  // ✅ DOUBLED: Prevents JSON being cut mid-generation
+                  temperature: 0.7,
+                  reasoning_effort: 'none', // ✅ GPT-5.1: Fast non-reasoning mode for low-latency responses
+                  timeoutMs: PLAN_GENERATION_TIMEOUT,
+                }
+              ),
+              timeoutPromise
+            ]);
+
+            // ✅ 40-YEAR ENGINEERING FIX: Stream with chunk timeout monitoring
+            let lastChunkTime = Date.now();
+            const CHUNK_TIMEOUT = 10000; // 10 seconds between chunks
+            
+            for await (const chunk of stream) {
+              if (timedOut) {
+                throw new Error(`Provider ${modelId} timed out during streaming`);
+              }
+              
+              // Check chunk timeout (no activity for 10 seconds)
+              if (Date.now() - lastChunkTime > CHUNK_TIMEOUT) {
+                throw new Error(`Stream stalled - no chunks for ${CHUNK_TIMEOUT}ms`);
+              }
+              
+              if (chunk && typeof chunk === 'string') {
+                fullResponse += chunk;
+                lastChunkTime = Date.now(); // Reset chunk timer
+                yield { 
+                  type: 'chunk', 
+                  data: { content: chunk } 
+                };
+              }
             }
             
-            // Check chunk timeout (no activity for 10 seconds)
-            if (Date.now() - lastChunkTime > CHUNK_TIMEOUT) {
-              throw new Error(`Stream stalled - no chunks for ${CHUNK_TIMEOUT}ms`);
-            }
-            
-            if (chunk && typeof chunk === 'string') {
-              fullResponse += chunk;
-              lastChunkTime = Date.now(); // Reset chunk timer
-              yield { 
-                type: 'chunk', 
-                data: { content: chunk } 
-              };
-            }
+            // Clear timeout if streaming completed successfully
+            if (timeoutHandle) clearTimeout(timeoutHandle);
+          } catch (error) {
+            // Clear timeout on error
+            if (timeoutHandle) clearTimeout(timeoutHandle);
+            throw error;
           }
           
           logger.info(`[generatePlan] ✓ Stream completed in ${Date.now() - streamStartTime}ms`);
@@ -405,11 +446,14 @@ Remember:
           // ✅ CRITICAL FIX (Nov 14, 2025): Sanitize HTML entities and escape newlines
           // Logs showed 15 consecutive JSON parse failures due to HTML entities (&amp;, &gt;, &lt;)
           // and unescaped newlines in AI-generated JSON responses
-          // ✅ CRITICAL FIX (Nov 23, 2025): sanitizePlanResponse now returns parsed OBJECT
-          // This avoids re-serializing ${  which would break downstream parsing
+          jsonString = this.sanitizePlanResponse(jsonString);
+          
+          // ✅ CRITICAL FIX (Nov 20, 2025): Robust JSON parsing with fallback
+          // GPT-5.1 sometimes returns incomplete/malformed JSON, especially with streaming
+          // Try to parse, if fails, log detailed error and try next provider
           let planData;
           try {
-            planData = this.sanitizePlanResponse(jsonString);
+            planData = JSON.parse(jsonString);
           } catch (parseError: any) {
             // Enhanced error logging for JSON parse failures
             logger.error(`[generatePlan] JSON parse failed for ${modelId}:`, {
@@ -427,37 +471,28 @@ Remember:
             throw new Error(`JSON parse error: ${parseError.message} - JSON preview: ${jsonString.substring(0, 300)}`);
           }
           
-          // ✅ ARCHITECT FIX v2 (Nov 21, 2025): Schema-aware coercion that preserves data
-          // WRAP scalars in arrays instead of discarding them (prevents data loss)
-          // Handles both Gemini's empty strings AND single-object responses
-          const toArray = (value: any): any[] => {
-            if (Array.isArray(value)) return value;
-            if (value === null || value === undefined || value === '') return [];
-            return [value]; // Wrap scalar in array
-          };
-
           const plan: ExecutionPlan = {
             id: `plan-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             goal,
             summary: planData.summary || 'Execution plan generated',
             totalTasks: planData.tasks?.length || 0,
             estimatedTime: planData.estimatedTime || 'Unknown',
-            technologies: toArray(planData.technologies),
+            technologies: planData.technologies || [],
             tasks: (planData.tasks || []).map((task: any, index: number) => ({
               id: task.id || `task-${index + 1}`,
               title: task.title || `Task ${index + 1}`,
               description: task.description || '',
               type: task.type || 'file_create',
               estimatedTime: task.estimatedTime || '10 min',
-              dependencies: toArray(task.dependencies),
-              files: toArray(task.files),
-              commands: toArray(task.commands),
-              packages: toArray(task.packages),
+              dependencies: task.dependencies || [],
+              files: task.files || [],
+              commands: task.commands || [],
+              packages: task.packages || [],
               priority: task.priority || 'medium'
             })),
             riskAssessment: {
               level: planData.riskAssessment?.level || 'low',
-              factors: toArray(planData.riskAssessment?.factors)
+              factors: planData.riskAssessment?.factors || []
             },
             createdAt: new Date()
           };
@@ -488,16 +523,28 @@ Remember:
         }
       }
 
-      // ✅ CRITICAL CHECK: If all providers failed, yield error
+      // ✅ CRITICAL CHECK: If all providers failed, use deterministic fallback plan
       if (!successfulPlan) {
-        logger.error('[generatePlan] ❌ All providers failed to generate valid plan!', lastError);
-        yield { 
-          type: 'error', 
-          data: { 
-            message: 'All AI providers failed to generate a valid plan. Please try again or rephrase your request.',
-            errorDetails: lastError?.message || 'Unknown error'
-          } 
+        logger.warn('[generatePlan] ⚠️  All AI providers failed - using deterministic fallback plan', lastError);
+        
+        // Generate fallback plan instead of failing completely
+        const fallbackPlan = this.generateFallbackPlan(goal);
+        
+        // Yield warning about fallback usage
+        yield {
+          type: 'warning',
+          data: {
+            message: 'AI providers unavailable - using basic starter template',
+            details: 'Your project will be initialized with a standard React + TypeScript setup. You can customize it after creation.'
+          }
         };
+        
+        // Yield the fallback plan
+        yield {
+          type: 'plan',
+          data: fallbackPlan
+        };
+        
         return;
       }
 
@@ -520,6 +567,145 @@ Remember:
   }
 
   /**
+   * Generate a deterministic fallback plan when all AI providers fail
+   * ✅ OUTLINE CONTRACT (Nov 23, 2025): Uses outline-based file descriptors per architect guidance
+   * Ensures autonomous workspace creation completes even when external AI providers are unavailable
+   */
+  private generateFallbackPlan(goal: string): ExecutionPlan {
+    const planId = `plan-fallback-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    logger.warn(`[generateFallbackPlan] All AI providers failed - generating deterministic fallback plan`);
+    
+    // Basic template-driven plan based on common web app patterns
+    const fallbackPlan: ExecutionPlan = {
+      id: planId,
+      goal,
+      summary: `Basic starter project for: ${goal}. (Note: AI providers unavailable - using fallback plan)`,
+      totalTasks: 5,
+      estimatedTime: '30 minutes',
+      technologies: ['React', 'TypeScript', 'Vite', 'Tailwind CSS'],
+      tasks: [
+        {
+          id: 'task-1',
+          title: 'Initialize project structure',
+          description: 'Set up basic project directories and configuration files with all required dependencies',
+          type: 'file_create',
+          estimatedTime: '5 min',
+          dependencies: [],
+          files: [
+            {
+              path: 'package.json',
+              outline: 'Package.json with React 18, TypeScript 5, Vite 5, Tailwind CSS 3, and all required build dependencies. Includes dev/build/preview scripts.',
+              language: 'json'
+            },
+            {
+              path: 'index.html',
+              outline: 'HTML5 entry point with root div and script tag loading /src/main.tsx. Includes viewport meta tag for responsive design.',
+              language: 'html'
+            },
+            {
+              path: 'src/main.tsx',
+              outline: 'React 18 application entry point using ReactDOM.createRoot() to render App component with StrictMode. Imports index.css for Tailwind.',
+              language: 'tsx'
+            },
+            {
+              path: 'src/index.css',
+              outline: 'Tailwind CSS imports using @tailwind directives for base, components, and utilities layers.',
+              language: 'css'
+            },
+            {
+              path: 'vite.config.ts',
+              outline: 'Vite configuration with React plugin, dev server on port 5173 with host:true for network access.',
+              language: 'typescript'
+            },
+            {
+              path: 'postcss.config.js',
+              outline: 'PostCSS configuration with Tailwind CSS and Autoprefixer plugins enabled.',
+              language: 'javascript'
+            }
+          ],
+          packages: [],
+          commands: [],
+          priority: 'high'
+        },
+        {
+          id: 'task-2',
+          title: 'Create main App component',
+          description: 'Set up the root React component with centered welcome message displaying the user goal',
+          type: 'file_create',
+          estimatedTime: '10 min',
+          dependencies: ['task-1'],
+          files: [
+            {
+              path: 'src/App.tsx',
+              outline: `TypeScript React component with centered layout using Tailwind classes. Displays "Project Initialized" heading and user's goal: "${goal}". Uses min-h-screen, flex, and Tailwind typography.`,
+              language: 'tsx'
+            }
+          ],
+          packages: [],
+          commands: [],
+          priority: 'high'
+        },
+        {
+          id: 'task-3',
+          title: 'Configure TypeScript',
+          description: 'Add TypeScript configuration with modern ES2020+ settings',
+          type: 'file_create',
+          estimatedTime: '5 min',
+          dependencies: ['task-1'],
+          files: [
+            {
+              path: 'tsconfig.json',
+              outline: 'TypeScript config targeting ES2020 with React JSX transform, bundler module resolution, strict type checking, and src/ include path. Enables useDefineForClassFields and allowImportingTsExtensions.',
+              language: 'json'
+            }
+          ],
+          packages: [],
+          commands: [],
+          priority: 'medium'
+        },
+        {
+          id: 'task-4',
+          title: 'Setup Tailwind CSS',
+          description: 'Configure Tailwind CSS for styling with content scanning',
+          type: 'file_create',
+          estimatedTime: '5 min',
+          dependencies: ['task-1'],
+          files: [
+            {
+              path: 'tailwind.config.js',
+              outline: 'Tailwind config with content paths for index.html and all src/ files (js/ts/jsx/tsx). Basic theme with empty extend object and no plugins.',
+              language: 'javascript'
+            }
+          ],
+          packages: [],
+          commands: [],
+          priority: 'medium'
+        },
+        {
+          id: 'task-5',
+          title: 'Install dependencies and start dev server',
+          description: 'Install all packages and launch development environment',
+          type: 'command',
+          estimatedTime: '5 min',
+          dependencies: ['task-1', 'task-2', 'task-3', 'task-4'],
+          files: [],
+          packages: [],
+          commands: ['npm install', 'npm run dev'],
+          priority: 'high'
+        }
+      ],
+      riskAssessment: {
+        level: 'low',
+        factors: ['Using fallback template - limited customization', 'Basic starter structure only']
+      },
+      createdAt: new Date()
+    };
+    
+    return fallbackPlan;
+  }
+
+  /**
    * Persist plan to database (aiConversations + agentMessages)
    */
   async savePlan(
@@ -528,10 +714,14 @@ Remember:
     plan: ExecutionPlan
   ): Promise<number> {
     try {
+      // ✅ FIX: Convert string IDs to numbers (ai_conversations table expects integers)
+      const projectIdNum = parseInt(projectId, 10);
+      const userIdNum = parseInt(userId, 10);
+      
       // Create conversation record
       const conversation = await this.storage.createAiConversation({
-        projectId,
-        userId,
+        projectId: projectIdNum,
+        userId: userIdNum,
         messages: [],
         context: {
           plan,
@@ -543,11 +733,11 @@ Remember:
         agentMode: 'build'
       });
 
-      // Create initial message with plan
+      // Create initial message with plan (agent_messages expects string IDs)
       await this.storage.createAgentMessage({
         conversationId: conversation.id,
-        projectId,
-        userId,
+        projectId,  // Keep as string
+        userId,     // Keep as string
         role: 'assistant',
         content: JSON.stringify(plan, null, 2),
         model: 'claude-3-5-haiku-20241022',

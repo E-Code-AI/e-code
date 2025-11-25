@@ -4,6 +4,8 @@ import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { CircuitBreaker, RetryExecutor, isRetryableError } from './circuit-breaker';
 import { createStreamLimiter } from './stream-limiter';
+import { AGENT_SYSTEM_PROMPT, getSystemPromptForContext } from './prompts/agent-system-prompt';
+import { ContextWindowManager } from './context-window-manager';
 
 /**
  * Model configuration with provider metadata
@@ -121,15 +123,13 @@ export const AI_MODELS: AIModel[] = [
     costPer1kTokens: 0.001
   },
   
-  // Google Gemini Models - LATEST AVAILABLE via Public API (Nov 23, 2025)
+  // Google Gemini Models - LATEST NOVEMBER 2025
   // Source: https://ai.google.dev/gemini-api/docs/models
-  // Note: Gemini 1.x retired Apr 2025. Gemini 3 only available via Vertex AI (not public API)
-  // ✅ TESTED: Both gemini-2.5-pro and gemini-2.5-flash verified working
   {
     id: 'gemini-2.5-pro',
     name: 'Gemini 2.5 Pro',
     provider: 'gemini',
-    description: '✅ Latest flagship (public API) - adaptive thinking for complex reasoning, code, math (13s avg)',
+    description: 'Stable release with adaptive thinking - 2M token context coming soon (Nov 2025)',
     maxTokens: 1000000,
     supportsStreaming: true,
     costPer1kTokens: 0.00125
@@ -138,19 +138,10 @@ export const AI_MODELS: AIModel[] = [
     id: 'gemini-2.5-flash',
     name: 'Gemini 2.5 Flash',
     provider: 'gemini',
-    description: '✅ Best price-performance - 5x faster than Pro (2.5s avg) with excellent quality',
+    description: 'Hybrid reasoning - thinks before it speaks with low latency (Nov 2025)',
     maxTokens: 1000000,
     supportsStreaming: true,
     costPer1kTokens: 0.000075
-  },
-  {
-    id: 'gemini-2.5-flash-lite',
-    name: 'Gemini 2.5 Flash Lite',
-    provider: 'gemini',
-    description: 'Ultra cost-efficient - optimized for high-throughput and cost savings (GA)',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.00005
   },
   
   // ✅ 40-YEAR ENGINEERING FIX: Moonshot AI - CORRECT Model IDs (November 2025)
@@ -458,15 +449,33 @@ export class AIProviderManager {
       temperature?: number; 
       reasoning_effort?: 'none' | 'low' | 'medium' | 'high';
       timeoutMs?: number;
+      context?: 'coding' | 'review' | 'explanation' | 'general';
     }
   ): AsyncGenerator<string> {
-    const messagesWithSystem = options?.system 
-      ? [{ role: 'system', content: options.system }, ...messages]
-      : messages;
+    // Get model for context window optimization
+    const model = this.getModel(modelId);
+    
+    // Inject system prompt if not provided
+    const systemPrompt = options?.system || getSystemPromptForContext(options?.context || 'general');
+    
+    // Check if messages already have system prompt
+    const hasSystemPrompt = messages.some(m => m.role === 'system');
+    
+    const messagesWithSystem = hasSystemPrompt
+      ? messages
+      : [{ role: 'system', content: systemPrompt }, ...messages];
+    
+    // Optimize for context window if model is available
+    const optimizedMessages = model 
+      ? new ContextWindowManager(model.maxTokens).optimizeConversationHistory(messagesWithSystem, {
+          preserveSystemMessages: true,
+          minRecentMessages: 10
+        })
+      : messagesWithSystem;
     
     // Try primary model first
     try {
-      yield* this.generateChatStreamWithRetry(modelId, messagesWithSystem, options);
+      yield* this.generateChatStreamWithRetry(modelId, optimizedMessages, options);
       return;
     } catch (primaryError: any) {
       console.log(`[AIProviderManager] Primary model ${modelId} failed, trying fallback chain...`);
@@ -503,7 +512,7 @@ export class AIProviderManager {
         try {
           console.log(`[AIProviderManager] Trying fallback: ${fallbackModelId} (provider: ${fallbackModel.provider})`);
           triedProviders.add(fallbackModel.provider);
-          yield* this.generateChatStreamWithRetry(fallbackModelId, messagesWithSystem, options);
+          yield* this.generateChatStreamWithRetry(fallbackModelId, optimizedMessages, options);
           console.log(`[AIProviderManager] ✓ Fallback successful: ${fallbackModelId}`);
           return;
         } catch (fallbackError: any) {
@@ -710,22 +719,12 @@ export class AIProviderManager {
     // ✅ CRITICAL FIX: GPT-5 family and o-series use max_completion_tokens, older models use max_tokens
     const usesMaxCompletionTokens = modelId.startsWith('gpt-5') || modelId.startsWith('o3') || modelId.startsWith('o4');
     
-    // ✅ CRITICAL FIX: Many GPT-5 family models don't support temperature parameter
-    // Models that support temperature: gpt-5.1, gpt-4o, gpt-4o-mini, gpt-4-turbo
-    // Models that need reasoning_effort instead: gpt-5, gpt-5-mini, gpt-5-nano
-    const supportsTemperature = modelId === 'gpt-5.1' || modelId === 'gpt-4o' || modelId === 'gpt-4o-mini' || modelId.startsWith('gpt-4-turbo');
-    const needsReasoningEffort = modelId === 'gpt-5' || modelId === 'gpt-5-mini' || modelId === 'gpt-5-nano';
-    
     const completionParams: any = {
       model: modelId,
       messages: openaiMessages,
       stream: true,
+      temperature: options?.temperature || 0.7,
     };
-    
-    // Only add temperature if the model supports it
-    if (supportsTemperature && options?.temperature !== undefined) {
-      completionParams.temperature = options.temperature;
-    }
     
     // Use correct token parameter based on model family
     if (usesMaxCompletionTokens) {
@@ -734,11 +733,7 @@ export class AIProviderManager {
       completionParams.max_tokens = options?.max_tokens || 4000;
     }
 
-    // Add reasoning_effort for models that need it (gpt-5, gpt-5-mini, gpt-5-nano)
-    if (needsReasoningEffort) {
-      completionParams.reasoning_effort = options?.reasoning_effort || 'medium';
-    } else if (options?.reasoning_effort && modelId.startsWith('gpt-5')) {
-      // For other gpt-5 models, add reasoning_effort if explicitly provided
+    if (options?.reasoning_effort && modelId.startsWith('gpt-5')) {
       completionParams.reasoning_effort = options.reasoning_effort;
     }
 
@@ -924,6 +919,152 @@ export class AIProviderManager {
       fullResponse += chunk;
     }
     return fullResponse;
+  }
+  
+  // ============================================================================
+  // LEGACY COMPATIBILITY LAYER
+  // ============================================================================
+  // These methods provide backward compatibility with the old provider-based API
+  // Used by: ai-code-completion, ai-code-review, advanced-ai-service, etc.
+  // ============================================================================
+  
+  /**
+   * Legacy API: Get available providers (mapped to model-based API)
+   * Maps old provider names to new model IDs
+   */
+  getAvailableProviders(): Array<{ name: string; isAvailable: boolean }> {
+    const providerMap: Record<string, string[]> = {
+      'OpenAI': ['gpt-5.1', 'gpt-5', 'gpt-5-mini'],
+      'Claude': ['claude-sonnet-4-5-20250929', 'claude-opus-4-1-20250805', 'claude-haiku-4-5-20251015'],
+      'Anthropic': ['claude-sonnet-4-5-20250929'],
+      'Gemini': ['gemini-2-5-flash', 'gemini-2-5-pro'],
+      'Moonshot': ['kimi-k2-0711-preview', 'kimi-k2-0905-preview'],
+      'xAI': ['grok-4', 'grok-4-fast'],
+      'Groq': ['mixtral-8x7b-32768']
+    };
+    
+    return Object.entries(providerMap).map(([name, modelIds]) => ({
+      name,
+      isAvailable: modelIds.some(id => {
+        const model = this.getModel(id);
+        return model && this.providers.has(model.provider);
+      })
+    }));
+  }
+  
+  /**
+   * Legacy API: Get provider by name (maps to default model for that provider)
+   */
+  getProvider(providerName: string): LegacyProviderAdapter | null {
+    const providerToModelMap: Record<string, string> = {
+      'OpenAI': 'gpt-5.1',
+      'Claude': 'claude-sonnet-4-5-20250929',
+      'Claude 3.5 Sonnet': 'claude-sonnet-4-5-20250929',
+      'Anthropic': 'claude-sonnet-4-5-20250929',
+      'Gemini': 'gemini-2-5-flash',
+      'Moonshot': 'kimi-k2-0905-preview',
+      'xAI': 'grok-4',
+      'Groq': 'mixtral-8x7b-32768'
+    };
+    
+    const modelId = providerToModelMap[providerName];
+    if (!modelId) return null;
+    
+    const model = this.getModel(modelId);
+    if (!model || !this.providers.has(model.provider)) return null;
+    
+    return new LegacyProviderAdapter(this, modelId, providerName);
+  }
+  
+  /**
+   * Legacy API: Get default provider
+   */
+  getDefaultProvider(): LegacyProviderAdapter {
+    // Try providers in order of preference
+    const preferredModels = [
+      'claude-sonnet-4-5-20250929', // Best coding model
+      'gpt-5.1',                    // Latest GPT
+      'gemini-2-5-flash',           // Fast fallback
+      'kimi-k2-0905-preview',       // Moonshot fallback
+      'grok-4'                      // xAI fallback
+    ];
+    
+    for (const modelId of preferredModels) {
+      const model = this.getModel(modelId);
+      if (model && this.providers.has(model.provider)) {
+        return new LegacyProviderAdapter(this, modelId, model.name);
+      }
+    }
+    
+    throw new Error('No AI providers available. Please configure API keys in Replit Secrets.');
+  }
+}
+
+/**
+ * Legacy Provider Adapter
+ * Adapts the new model-based API to the old provider-based interface
+ */
+class LegacyProviderAdapter {
+  name: string;
+  private manager: AIProviderManager;
+  private modelId: string;
+  
+  constructor(manager: AIProviderManager, modelId: string, name: string) {
+    this.manager = manager;
+    this.modelId = modelId;
+    this.name = name;
+  }
+  
+  async generateCompletion(
+    prompt: string,
+    systemPrompt: string,
+    maxTokens = 1024,
+    temperature = 0.2,
+    userId?: number
+  ): Promise<string> {
+    const messages = [
+      { role: 'system' as const, content: systemPrompt },
+      { role: 'user' as const, content: prompt }
+    ];
+    
+    return this.manager.generateChat(this.modelId, messages, {
+      max_tokens: maxTokens,
+      temperature
+    });
+  }
+  
+  async generateChat(
+    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    maxTokens = 1024,
+    temperature = 0.5,
+    userId?: number
+  ): Promise<string> {
+    return this.manager.generateChat(this.modelId, messages, {
+      max_tokens: maxTokens,
+      temperature
+    });
+  }
+  
+  async generateCodeWithUnderstanding(
+    code: string,
+    language: string,
+    instruction: string,
+    userId?: number
+  ): Promise<string> {
+    const systemPrompt = `You are an expert ${language} developer. Generate code that follows the existing patterns and conventions.`;
+    const prompt = `Given this ${language} code:\n\`\`\`${language}\n${code}\n\`\`\`\n\nUser instruction: ${instruction}\n\nGenerate the requested code following the existing code style.`;
+    
+    return this.generateCompletion(prompt, systemPrompt, 2048, 0.3, userId);
+  }
+  
+  async analyzeCode(code: string, language: string): Promise<any> {
+    // Delegate to code analyzer if needed
+    return { suggestions: [] };
+  }
+  
+  isAvailable(): boolean {
+    const model = this.manager.getModel(this.modelId);
+    return model ? this.manager['providers'].has(model.provider) : false;
   }
 }
 

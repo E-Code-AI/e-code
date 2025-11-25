@@ -114,12 +114,13 @@ export function TemplateFilters({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="template-filters">
       {/* Category Filter */}
       <Collapsible open={expandedSections.includes('category')}>
         <CollapsibleTrigger
           onClick={() => toggleSection('category')}
           className="flex w-full items-center justify-between py-2 text-sm font-medium hover:text-foreground"
+          data-testid="filter-category-toggle"
         >
           <span>Category</span>
           {expandedSections.includes('category') ? (
@@ -165,6 +166,7 @@ export function TemplateFilters({
         <CollapsibleTrigger
           onClick={() => toggleSection('languages')}
           className="flex w-full items-center justify-between py-2 text-sm font-medium hover:text-foreground"
+          data-testid="filter-languages-toggle"
         >
           <span>Languages</span>
           {selectedLanguages.length > 0 && (

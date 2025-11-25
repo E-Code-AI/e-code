@@ -132,8 +132,17 @@ export function AutonomousWorkspaceViewer({
 
   // Connect to WebSocket
   useEffect(() => {
-    if (!bootstrapToken || !isOpen) return;
+    console.log('🔌🔌🔌 [AutonomousWorkspace] WebSocket useEffect TRIGGERED');
+    console.log('🔌🔌🔌 [AutonomousWorkspace] bootstrapToken:', bootstrapToken ? 'EXISTS' : 'NULL');
+    console.log('🔌🔌🔌 [AutonomousWorkspace] isOpen:', isOpen);
+    
+    if (!bootstrapToken || !isOpen) {
+      console.error('❌❌❌ [AutonomousWorkspace] GUARD CLAUSE BLOCKED CONNECTION');
+      console.error('❌❌❌ [AutonomousWorkspace] bootstrapToken?', !!bootstrapToken, 'isOpen?', isOpen);
+      return;
+    }
 
+    console.log('✅✅✅ [AutonomousWorkspace] PASSED GUARD CLAUSE - CONNECTING...');
     const tokenData = decodeToken(bootstrapToken);
     if (!tokenData) {
       setErrorMessage('Invalid bootstrap token');
@@ -145,11 +154,35 @@ export function AutonomousWorkspaceViewer({
     const connectWebSocket = () => {
       // Determine WebSocket protocol based on current protocol
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${tokenData.projectId}&sessionId=${tokenData.sessionId}`;
+      // ✅ FIX (Nov 24, 2025): Include bootstrap token for anonymous user authentication
+      const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${tokenData.projectId}&sessionId=${tokenData.sessionId}&bootstrap=${encodeURIComponent(bootstrapToken)}`;
       
       console.log('[AutonomousWorkspace] Connecting to WebSocket:', wsUrl);
+      console.log('[AutonomousWorkspace] WebSocket URL details:', {
+        protocol,
+        host: window.location.host,
+        projectId: tokenData.projectId,
+        sessionId: tokenData.sessionId,
+        bootstrapLength: bootstrapToken.length
+      });
       
-      const ws = new WebSocket(wsUrl);
+      let ws: WebSocket;
+      try {
+        ws = new WebSocket(wsUrl);
+        console.log('[AutonomousWorkspace] ✅ WebSocket constructor succeeded');
+      } catch (error) {
+        console.error('[AutonomousWorkspace] ❌ WebSocket constructor FAILED:', error);
+        console.error('[AutonomousWorkspace] Error details:', {
+          name: (error as Error).name,
+          message: (error as Error).message,
+          stack: (error as Error).stack
+        });
+        setConnectionStatus('error');
+        addLog(`❌ Failed to create WebSocket: ${(error as Error).message}`);
+        setErrorMessage(`WebSocket construction failed: ${(error as Error).message}`);
+        return;
+      }
+      
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -170,13 +203,47 @@ export function AutonomousWorkspaceViewer({
       };
 
       ws.onerror = (error) => {
-        console.error('[AutonomousWorkspace] WebSocket error:', error);
+        console.error('[AutonomousWorkspace] ❌ WebSocket ERROR event:', error);
+        console.error('[AutonomousWorkspace] Error event details:', {
+          type: error.type,
+          target: error.target,
+          currentTarget: error.currentTarget,
+          eventPhase: error.eventPhase,
+          bubbles: error.bubbles,
+          cancelable: error.cancelable,
+          defaultPrevented: error.defaultPrevented,
+          composed: error.composed,
+          isTrusted: error.isTrusted,
+          timeStamp: error.timeStamp
+        });
+        console.error('[AutonomousWorkspace] WebSocket readyState:', ws.readyState);
+        console.error('[AutonomousWorkspace] WebSocket url:', ws.url);
+        
         setConnectionStatus('error');
-        addLog('❌ Connection error');
+        addLog('❌ Connection error - check console for details');
       };
 
       ws.onclose = (event) => {
-        console.log('[AutonomousWorkspace] WebSocket closed:', event.code, event.reason);
+        console.log('[AutonomousWorkspace] ❌ WebSocket CLOSE event:', {
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean,
+          type: event.type,
+          timeStamp: event.timeStamp
+        });
+        console.log('[AutonomousWorkspace] Close code meanings:', {
+          1000: 'Normal closure',
+          1001: 'Going away (page navigation)',
+          1002: 'Protocol error',
+          1003: 'Unsupported data',
+          1006: 'Abnormal closure (no close frame)',
+          1007: 'Invalid frame payload',
+          1008: 'Policy violation',
+          1009: 'Message too big',
+          1010: 'Mandatory extension',
+          1011: 'Internal server error',
+          1015: 'TLS handshake failure'
+        });
         setConnectionStatus('closed');
         
         // Attempt reconnection if not graceful close
@@ -304,10 +371,7 @@ export function AutonomousWorkspaceViewer({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open && !isComplete) {
-        // Prevent closing while in progress
-        return;
-      }
+      // Allow user to close at any time
       setIsOpen(open);
       if (!open) handleClose();
     }}>
@@ -428,10 +492,15 @@ export function AutonomousWorkspaceViewer({
               Close
             </Button>
           ) : (
-            <Button variant="outline" disabled className="text-xs sm:text-sm" data-testid="button-cancel">
-              <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
-              Building...
-            </Button>
+            <>
+              <Button variant="ghost" onClick={handleClose} className="text-xs sm:text-sm" data-testid="button-hide">
+                <span>Hide Progress</span>
+              </Button>
+              <Button variant="outline" disabled className="text-xs sm:text-sm" data-testid="button-cancel">
+                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                Building...
+              </Button>
+            </>
           )}
         </div>
       </DialogContent>

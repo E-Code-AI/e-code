@@ -166,8 +166,8 @@ export default function Home() {
             <p className="text-xl mb-6 text-orange-50">The collaborative, in-browser IDE that makes coding accessible</p>
             
             {/* AI Model Selection */}
-            <div className="mb-4">
-              <AIModelSelector variant="inline" />
+            <div className="mb-6">
+              <AIModelSelector variant="hero" />
             </div>
 
             <div className="bg-white/10 backdrop-blur-sm p-2 rounded-lg border border-white/20 shadow-xl">

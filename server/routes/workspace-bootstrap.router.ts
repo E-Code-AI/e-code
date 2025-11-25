@@ -25,9 +25,6 @@ import { db } from '../db';
 import { projects, agentSessions, users, insertProjectSchema, type User } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { agentOrchestrator } from '../services/agent-orchestrator.service';
-import { aiPlanGenerator } from '../services/ai-plan-generator.service'; // ✅ FIX: Use AI service with Gemini fallback
-import { agentWorkflowEngine } from '../services/agent-workflow-engine.service';
-import { agentWebSocketService } from '../services/agent-websocket-service';
 import { aiProviderManager } from '../ai/ai-provider-manager';
 import { createLogger } from '../utils/logger';
 import crypto from 'crypto';
@@ -70,7 +67,7 @@ interface BootstrapTokenPayload {
  * Main orchestration endpoint - creates complete workspace with AI agent auto-started
  * 
  * Flow:
- * 1. Validate user authentication
+ * 1. Validate request (authentication optional for guest access)
  * 2. Create project in database
  * 3. Generate AI plan (streamed via SSE in separate endpoint)
  * 4. Create agent session
@@ -83,15 +80,65 @@ interface BootstrapTokenPayload {
  * - Redirects to /ide/:projectId?bootstrap=token
  * - IDE parses token and subscribes to WebSocket
  * - Agent streams progress in real-time
+ * 
+ * ✅ FIX (Nov 24, 2025): Support anonymous guest access for "No credit card required" promise
+ * - Removed ensureAuthenticated requirement
+ * - Anonymous users get guest project with temporary ownership
+ * - Removed csrfProtection to allow anonymous POST requests without session cookies
  */
-router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+router.post('/bootstrap', async (req: Request, res: Response) => {
   const startTime = Date.now();
+  
+  logger.info(`[Bootstrap] 🚀 POST /bootstrap REQUEST RECEIVED`, { 
+    body: req.body,
+    hasPrompt: !!req.body?.prompt,
+    hasOptions: !!req.body?.options,
+    rawBody: JSON.stringify(req.body)
+  });
   
   try {
     // 1. Validate request
+    logger.info(`[Bootstrap] Attempting to parse request body...`);
     const { prompt, options } = bootstrapRequestSchema.parse(req.body);
-    const userId = (req.user as User).id;
-    const username = (req.user as User).username || '';
+    logger.info(`[Bootstrap] ✅ Request validated successfully`, { 
+      promptLength: prompt.length,
+      autoStart: options.autoStart,
+      language: options.language,
+      framework: options.framework
+    });
+    
+    // Support both authenticated and anonymous users
+    const user = req.user as User | undefined;
+    let userId: number;
+    let username: string;
+    
+    if (user) {
+      // Authenticated user
+      userId = user.id;
+      username = user.username || 'user';
+      logger.info(`[Bootstrap] Authenticated user ${userId}`, { username });
+    } else {
+      // ✅ SECURITY FIX (Nov 24, 2025): Create unique ephemeral user for each anonymous session
+      // Problem: Shared guest account allowed cross-user data access (multi-tenant leak)
+      // Solution: Each anonymous workspace gets its own isolated user with unique email
+      const ephemeralId = crypto.randomUUID();
+      const ephemeralEmail = `guest-${ephemeralId}@ecode.platform`;
+      const ephemeralUsername = `guest-${ephemeralId.substring(0, 8)}`;
+      
+      logger.info(`[Bootstrap] Creating ephemeral user for anonymous session`, { ephemeralEmail });
+      
+      const [ephemeralUser] = await db.insert(users)
+        .values({
+          email: ephemeralEmail,
+          username: ephemeralUsername,
+          password: crypto.randomBytes(32).toString('hex'), // Random unguessable password
+        })
+        .returning();
+      
+      userId = ephemeralUser.id;
+      username = ephemeralUsername;
+      logger.info(`[Bootstrap] Ephemeral user created: ${userId}`, { email: ephemeralEmail });
+    }
     
     console.log('🚀 [Bootstrap] RECEIVED REQUEST from user', userId, 'prompt:', prompt.substring(0, 50));
     logger.info(`[Bootstrap] Starting workspace creation for user ${userId}`, { prompt, options });
@@ -108,7 +155,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
         name: projectName,
         description: prompt,
         slug,
-        ownerId: String(userId),
+        ownerId: userId,
         language: options.language || 'typescript',
         visibility: options.visibility || 'private'
       })
@@ -195,119 +242,47 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
       }
     });
     
-    // 8. ✅ 40-YEAR ENGINEERING FIX (Nov 20, 2025): ASYNC plan generation
-    // CRITICAL ISSUE: Synchronous plan generation took 3+ minutes, causing HTTP timeout
-    // SOLUTION: Return bootstrap token immediately (ABOVE), generate plan in background (BELOW)
+    // 8. ✅ AUTONOMOUS WORKSPACE CREATION (Nov 24, 2025): Fire-and-forget orchestration
+    // CRITICAL FIX: Replace separate plan generation + execution with unified orchestrator call
+    // SOLUTION: Return bootstrap token immediately (ABOVE), start autonomous workspace in background (BELOW)
     // Client connects via WebSocket and receives real-time updates
     
-    logger.info(`[Bootstrap] HTTP response sent - starting ASYNC plan generation for prompt: "${prompt.substring(0, 50)}..."`);
+    logger.info(`[Bootstrap] HTTP response sent - starting autonomous workspace creation for prompt: "${prompt.substring(0, 50)}..."`);
     
-    // Store the prompt in session context for plan generation
-    const planContext = {
-      projectType: 'web-app',
-      existingFiles: [],
-      technologies: [options.language || 'typescript', options.framework || 'react'],
-      constraints: [],
-      userId: String(userId),
-      prompt: prompt
-    };
-    
-    // 9. ✅ ARCHITECT FIX: Detach background task with `void` to prevent Express from waiting
-    void (async () => {
-      try {
-        let plan: any = null;
-        
-        // Generate plan using multi-provider fallback chain
-        for await (const event of aiPlanGenerator.generatePlan(String(userId), String(project.id), prompt, {
-          projectType: planContext.projectType,
-          existingFiles: planContext.existingFiles,
-          technologies: planContext.technologies,
-          constraints: planContext.constraints
-        })) {
-          if (event.type === 'plan') {
-            plan = event.data;
-            logger.info(`[Bootstrap] ✅ Plan received successfully`, { planId: plan.id, tasks: plan.tasks?.length });
-            break;
-          } else if (event.type === 'error') {
-            const errorMsg = event.data.message || 'Plan generation failed';
-            logger.error(`[Bootstrap] ❌ Plan generation error:`, errorMsg);
-            
-            // Send error to client via WebSocket
-            const agentWebSocketService = (await import('../services/agent-websocket-service.js')).agentWebSocketService;
-            agentWebSocketService.broadcast({
-              type: 'error',
-              message: `Plan generation failed: ${errorMsg}`,
-              timestamp: new Date().toISOString()
-            }, String(project.id));
-            
-            throw new Error(errorMsg);
-          }
+    // 9. ✅ FIRE-AND-FORGET: Detach autonomous workspace creation to prevent Express from waiting
+    // The startAutonomousWorkspace method handles:
+    // - Idempotency check (prevent double starts)
+    // - Plan generation with multi-provider fallback
+    // - Plan storage to database
+    // - Workflow execution
+    // - WebSocket streaming of all events
+    if (options.autoStart) {
+      void agentOrchestrator.startAutonomousWorkspace({
+        sessionId: session.id,
+        projectId: String(project.id),
+        userId: String(userId),
+        prompt: prompt,
+        options: {
+          language: options.language || 'typescript',
+          framework: options.framework || 'react'
         }
-        
-        if (!plan) {
-          const errorMsg = 'No plan received from AI service - all providers may be unavailable';
-          
-          // Send error to client via WebSocket
-          const agentWebSocketService = (await import('../services/agent-websocket-service.js')).agentWebSocketService;
-          agentWebSocketService.broadcast({
-            type: 'error',
-            message: errorMsg,
-            timestamp: new Date().toISOString()
-          }, String(project.id));
-          
-          throw new Error(errorMsg);
-        }
-        
-        logger.info(`[Bootstrap] Plan generated: ${plan.id}`, { 
-          planId: plan.id, 
-          tasks: plan.tasks?.length || 0,
-          estimatedTime: plan.estimatedTime
-        });
-        
-        // 10. Execute autonomous plan (only if autoStart enabled)
-        if (options.autoStart) {
-          logger.info(`[Bootstrap] Starting autonomous plan execution for ${plan.tasks.length} tasks`);
-          
-          await agentOrchestrator.executeAutonomousPlan(
-            session.id,
-            plan,
-            String(project.id),
-            String(userId)
-          );
-          
-          logger.info(`[Bootstrap] ✅ Autonomous execution completed`);
-        } else {
-          logger.info(`[Bootstrap] Plan ready but autoStart=false - execution skipped`);
-        }
-        
-      } catch (error: any) {
-        logger.error(`[Bootstrap] ❌ Background plan/execution failed:`, {
+      }).catch(error => {
+        logger.error(`[Bootstrap] ❌ Autonomous workspace creation failed:`, {
           message: error.message,
           projectId: project.id,
-          sessionId: session.id
+          sessionId: session.id,
+          stack: error.stack
         });
-        
-        // ✅ ARCHITECT FIX: Explicit error propagation via WebSocket
-        try {
-          const agentWebSocketService = (await import('../services/agent-websocket-service.js')).agentWebSocketService;
-          agentWebSocketService.broadcast({
-            type: 'error',
-            message: `Workspace creation failed: ${error.message}`,
-            timestamp: new Date().toISOString()
-          }, String(project.id));
-        } catch (wsError) {
-          logger.error('[Bootstrap] Failed to broadcast error via WebSocket:', wsError);
-        }
-      }
-    })().catch(err => {
-      // ✅ ARCHITECT FIX: Watchdog for unhandled promise rejections
-      logger.error('[Bootstrap] Unhandled background task error:', {
-        error: err.message,
-        stack: err.stack,
-        projectId: project.id,
-        sessionId: session.id
+        // Error already broadcasted via WebSocket in startAutonomousWorkspace
       });
-    });
+      
+      logger.info(`[Bootstrap] ✅ Autonomous workspace creation started in background`, {
+        sessionId: session.id,
+        projectId: project.id
+      });
+    } else {
+      logger.info(`[Bootstrap] Plan ready but autoStart=false - autonomous execution skipped`);
+    }
     
   } catch (error: any) {
     const elapsed = Date.now() - startTime;
@@ -372,9 +347,7 @@ router.get('/bootstrap/:token/status', ensureAuthenticated, async (req: Request,
   }
 });
 
-// ============================================================================
 // Helper Functions
-// ============================================================================
 
 /**
  * Generate URL-safe slug from project name

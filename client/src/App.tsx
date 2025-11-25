@@ -3,6 +3,7 @@ import { Switch, Route, useLocation, useRoute } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
+import { AppToaster } from "@/components/ui/AppToaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ECodeLoading } from "@/components/ECodeLoading";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -158,6 +159,7 @@ const AIDocumentation = lazy(() => import("@/pages/AIDocumentation"));
 // New feature pages
 const APISDKPage = lazy(() => import("@/pages/APISDKPage"));
 const MobileAppsPage = lazy(() => import("@/pages/MobileAppsPage"));
+const Apps = lazy(() => import("@/pages/Apps"));
 const FigmaImport = lazy(() => import("@/pages/FigmaImport"));
 const BoltImport = lazy(() => import("@/pages/BoltImport"));
 const LovableImport = lazy(() => import("@/pages/LovableImport"));
@@ -343,6 +345,7 @@ function AppContent() {
           <div className="min-h-screen replit-layout-main">
             <ScrollToTop />
             <Toaster />
+            <AppToaster />
             <SpotlightSearch />
             <CommandPalette />
 
@@ -526,6 +529,11 @@ function AppContent() {
           <ProtectedRoute path="/dashboard" component={() => (
             <ReplitLayout showSidebar={false}>
               <Dashboard />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/apps" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Apps />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/explore" component={() => (
@@ -729,7 +737,8 @@ function AppContent() {
           )} />
           
           {/* New unified workspace route with Add Tab dropdown and complete feature parity */}
-          <ProtectedRoute path="/ide/:id" component={() => (
+          {/* ✅ FIX (Nov 24, 2025): Allow anonymous access with bootstrap token for autonomous workspace creation */}
+          <Route path="/ide/:id" component={() => (
             <IDEPage />
           )} />
           <ProtectedRoute path="/runtimes" component={() => (

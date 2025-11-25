@@ -38,12 +38,12 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
           return; // No-op - socket is already managed
         }
         
-        // Let Vite's HMR handle the upgrade first
-        listener(request, socket, head);
-        
-        // Mark as handled AFTER Vite processes it (prevents Final Upgrade Guard from destroying it)
-        // This is safe because Final Upgrade Guard uses setImmediate() for deferred checking
+        // Mark this socket as handled BEFORE Vite processes it
+        // This prevents the final upgrade guard from destroying Vite's HMR sockets
         markSocketAsHandled(request, socket);
+        
+        // Let Vite's HMR handle it normally
+        return listener(request, socket, head);
       };
       
       // Mark this as wrapped to avoid double-wrapping
@@ -74,10 +74,27 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
       return originalPrependListener(event, listener);
     } as any;
     
-    // Import vite module
+    // 🔥 CRITICAL FIX (Nov 20, 2025): Configure Vite HMR on separate port
+    // Problem: Vite's HMR WebSocket server destroys /ws/agent connections (code 1006) 
+    //          even when upgrade listeners are wrapped to skip them
+    // Root cause: Vite's internal HMR logic rejects sockets that don't match HMR protocol
+    // Solution: Use separate HMR port (24678) instead of sharing HTTP server
+    //           This completely isolates Vite HMR from our WebSocket services
+    const VITE_HMR_PORT = 24678;
+    
+    // Import vite module - Vite/Rollup handle their own platform detection
     const viteModule = await import('./vite');
     
     if (process.env.NODE_ENV === 'development') {
+      // 🔥 Create separate HTTP server for Vite HMR (completely isolated from our WebSocket services)
+      const { createServer: createHttpServer } = await import('http');
+      const viteHmrServer = createHttpServer();
+      
+      // Listen on separate port for HMR WebSocket connections
+      viteHmrServer.listen(VITE_HMR_PORT, '0.0.0.0', () => {
+        console.log(`[Vite HMR] Dedicated WebSocket server listening on port ${VITE_HMR_PORT}`);
+      });
+      
       // WORKAROUND: Monkeypatch app.use to prevent Vite's catch-all from capturing API routes
       // This is necessary because server/vite.ts is forbidden from editing
       // Save original app.use method
@@ -113,10 +130,9 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
         return originalAppUse(pathOrMiddleware, ...middlewares);
       };
       
-      // 🔥 Setup Vite with main HTTP server
-      // The wrapped upgrade listeners will mark Vite HMR sockets as handled
-      // This prevents the final upgrade guard from destroying them
-      await viteModule.setupVite(app, server);
+      // 🔥 Setup Vite with SEPARATE HMR server (not main HTTP server!)
+      // This completely prevents Vite HMR from interfering with /ws/agent connections
+      await viteModule.setupVite(app, viteHmrServer);
       
       // Restore original app.use method after Vite setup
       app.use = originalAppUse;
