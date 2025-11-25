@@ -455,6 +455,15 @@ app.get('/api/cors-health', async (_req, res) => {
     console.warn('[WORKING SERVER] Stripe worker initialization failed (non-critical):', error.message);
   }
 
+  // ✅ Initialize Pay-as-you-go Queue Processor
+  try {
+    const { startPayAsYouGoWorker } = await import('./workflows/payg-queue-processor');
+    startPayAsYouGoWorker();
+    console.log('✅ Pay-as-you-go Worker started - processing overage charges every 30s');
+  } catch (error) {
+    console.warn('[WORKING SERVER] Pay-as-you-go worker initialization failed (non-critical):', error.message);
+  }
+
   // ✅ PRODUCTION-READY FIX (Nov 20, 2025): kUpgradeHandled pattern for safe WebSocket management
   // Prevents orphan socket leaks while maintaining compatibility with all WebSocket services
   // 

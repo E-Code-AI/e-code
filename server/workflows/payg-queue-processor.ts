@@ -1,0 +1,304 @@
+/**
+ * Pay-as-you-go Queue Processor - Background Job Worker
+ * Processes payAsYouGoQueue with exponential backoff retry logic
+ * Ensures zero revenue loss by retrying failed Stripe billing calls
+ * 
+ * Production-ready features:
+ * - Atomic claim with FOR UPDATE SKIP LOCKED (multi-instance safe)
+ * - Idempotent Stripe API calls using idempotencyKey
+ * - Exponential backoff retry logic
+ * - Status tracking: pending → processing → completed/failed
+ */
+
+import { db } from '../db';
+import { payAsYouGoQueue, users } from '@shared/schema';
+import { eq, sql } from 'drizzle-orm';
+import Stripe from 'stripe';
+import { createLogger } from '../utils/logger';
+import { AlertService, AlertSeverity, AlertCategory } from '../services/alert-service';
+
+const logger = createLogger('payg-queue-processor');
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+  apiVersion: '2025-08-27.basil',
+});
+
+/**
+ * Calculate next retry delay with exponential backoff
+ * 1st retry: 5 minutes
+ * 2nd retry: 15 minutes (3x)
+ * 3rd retry: 45 minutes (3x)
+ * 4th retry: 135 minutes (3x)
+ */
+function calculateNextRetry(attempts: number): Date {
+  const baseDelayMinutes = 5;
+  const delayMinutes = baseDelayMinutes * Math.pow(3, attempts);
+  const nextRetry = new Date();
+  nextRetry.setMinutes(nextRetry.getMinutes() + delayMinutes);
+  return nextRetry;
+}
+
+/**
+ * Process a single queue item
+ * NOTE: Items are already marked as 'processing' by atomic claim in main loop
+ */
+async function processQueueItem(item: any): Promise<void> {
+  const MAX_ATTEMPTS = 5;
+
+  try {
+    logger.info(`Processing pay-as-you-go queue item ${item.id}`, {
+      userId: item.user_id,
+      metric: item.metric,
+      amount: item.amount,
+      attempts: item.attempts,
+    });
+
+    // Fetch user to get Stripe Customer ID
+    const user = await db.select().from(users).where(eq(users.id, item.user_id)).limit(1);
+    if (!user || user.length === 0) {
+      throw new Error(`User ${item.user_id} not found`);
+    }
+
+    const stripeCustomerId = user[0].stripeCustomerId;
+    if (!stripeCustomerId) {
+      throw new Error('No Stripe Customer ID - user may not have active subscription');
+    }
+
+    // CRITICAL FIX: Get or create draft invoice BEFORE creating invoice item
+    // Invoice items must be attached to invoices for billing
+    let invoiceId: string | null = null;
+    
+    try {
+      // Try to find existing draft/open invoice for this customer and billing period
+      const invoices = await stripe.invoices.list({
+        customer: stripeCustomerId,
+        status: 'draft',
+        limit: 10, // Check multiple to find matching period
+      });
+
+      // Filter by billing period metadata
+      const matchingInvoice = invoices.data.find(inv => 
+        inv.metadata?.billingPeriod === item.billing_period
+      );
+
+      if (matchingInvoice) {
+        invoiceId = matchingInvoice.id;
+        logger.info(`Using existing draft invoice ${invoiceId} for period ${item.billing_period}`);
+      } else {
+        // Create new draft invoice for this billing period
+        const invoice = await stripe.invoices.create({
+          customer: stripeCustomerId,
+          description: `Pay-as-you-go usage - ${item.billing_period}`,
+          auto_advance: false, // Keep as draft until monthly finalization
+          metadata: {
+            billingPeriod: item.billing_period,
+          },
+        });
+        invoiceId = invoice.id;
+        logger.info(`Created new draft invoice ${invoiceId} for period ${item.billing_period}`);
+      }
+    } catch (invoiceError: any) {
+      // CRITICAL: Cannot proceed without invoice - throw to retry
+      throw new Error(`Failed to create/find draft invoice: ${invoiceError.message}`);
+    }
+
+    // Create invoice item for pay-as-you-go usage
+    // NOW ATTACHED TO INVOICE via invoice parameter
+    const invoiceItem = await stripe.invoiceItems.create({
+      customer: stripeCustomerId,
+      invoice: invoiceId, // CRITICAL: Attach to invoice immediately
+      amount: Math.round(parseFloat(item.amount) * 100), // Convert USD to cents
+      currency: 'usd',
+      description: item.description || `${item.metric} usage - ${item.billing_period}`,
+      metadata: {
+        userId: item.user_id.toString(),
+        metric: item.metric,
+        billingPeriod: item.billing_period,
+        usageEventId: item.usage_event_id?.toString() || '',
+      },
+    }, {
+      idempotencyKey: item.idempotency_key, // CRITICAL: Prevents double-charging on retries
+    });
+
+    logger.info(`✅ Stripe invoice item created and attached to invoice`, {
+      queueId: item.id,
+      invoiceItemId: invoiceItem.id,
+      invoiceId: invoiceId,
+      customerId: stripeCustomerId,
+      amount: item.amount,
+    });
+
+    // Mark queue item as completed
+    await db.update(payAsYouGoQueue)
+      .set({ 
+        status: 'completed',
+        stripeInvoiceItemId: invoiceItem.id,
+        stripeInvoiceId: invoiceId,
+        processedAt: new Date(),
+      })
+      .where(eq(payAsYouGoQueue.id, item.id));
+
+  } catch (error: any) {
+    const newAttempts = item.attempts + 1;
+    logger.error(`❌ Pay-as-you-go processing failed (attempt ${newAttempts}/${MAX_ATTEMPTS})`, {
+      queueId: item.id,
+      userId: item.user_id,
+      metric: item.metric,
+      error: error.message,
+      stripeCode: error.code,
+    });
+
+    // Check if exhausted
+    if (newAttempts >= MAX_ATTEMPTS) {
+      logger.error(`🚨 Pay-as-you-go queue EXHAUSTED for item ${item.id} - Manual intervention required!`, {
+        userId: item.user_id,
+        amount: item.amount,
+        error: error.message,
+        idempotencyKey: item.idempotency_key,
+      });
+
+      // Mark as failed
+      await db.update(payAsYouGoQueue)
+        .set({
+          status: 'failed',
+          attempts: newAttempts,
+          lastError: error.message || 'Unknown error',
+        })
+        .where(eq(payAsYouGoQueue.id, item.id));
+
+      // CRITICAL: Alert for manual intervention
+      // Revenue loss prevented by idempotency key - item can be manually retried
+      logger.error(`💰 REVENUE ALERT: Failed pay-as-you-go charge (user: ${item.user_id}, amount: $${item.amount}, key: ${item.idempotency_key})`, {
+        queueId: item.id,
+        stripeError: error.code || error.type,
+        action: 'Manual retry required via Stripe Dashboard or admin panel',
+      });
+
+      // Send critical alert for manual intervention
+      await AlertService.sendAlert({
+        severity: AlertSeverity.CRITICAL,
+        category: AlertCategory.BILLING,
+        title: '💰 Pay-as-you-go Billing Failure',
+        message: `Failed to charge user ${item.user_id} for $${item.amount} after ${MAX_ATTEMPTS} attempts. Manual intervention required.`,
+        metadata: {
+          userId: item.user_id,
+          amount: item.amount,
+          metric: item.metric,
+          billingPeriod: item.billing_period,
+          queueId: item.id,
+          idempotencyKey: item.idempotency_key,
+          stripeError: error.code || error.type || error.message,
+          retryPath: 'Stripe Dashboard → Invoice Items or Admin Panel',
+        },
+      });
+
+    } else {
+      // Schedule retry with exponential backoff
+      const nextRetry = calculateNextRetry(newAttempts);
+      await db.update(payAsYouGoQueue)
+        .set({
+          status: 'pending',
+          attempts: newAttempts,
+          lastError: error.message || 'Unknown error',
+          nextRetryAt: nextRetry,
+        })
+        .where(eq(payAsYouGoQueue.id, item.id));
+
+      logger.info(`Scheduled retry for queue item ${item.id} at ${nextRetry.toISOString()}`, {
+        attempt: newAttempts,
+        nextRetry: nextRetry.toISOString(),
+      });
+    }
+  }
+}
+
+/**
+ * Main worker loop - processes pending queue items with row-level locking
+ * CRITICAL: Uses atomic claim to prevent double-processing in multi-instance environments
+ */
+export async function processPayAsYouGoQueue(): Promise<void> {
+  try {
+    // SHORT-CIRCUIT: Skip processing if Stripe key not configured
+    if (!process.env.STRIPE_SECRET_KEY) {
+      logger.debug('Stripe API key not configured - skipping queue processing');
+      return;
+    }
+
+    // ATOMIC CLAIM: Use raw SQL with FOR UPDATE SKIP LOCKED to prevent race conditions
+    // This guarantees ONLY ONE worker processes each queue item (multi-instance safe)
+    type QueueItem = {
+      id: number;
+      user_id: number;
+      usage_event_id: number | null;
+      idempotency_key: string;
+      metric: string;
+      amount: string;
+      description: string | null;
+      billing_period: string;
+      status: string;
+      attempts: number;
+      last_error: string | null;
+      stripe_invoice_item_id: string | null;
+      stripe_invoice_id: string | null;
+      created_at: Date;
+      processed_at: Date | null;
+      next_retry_at: Date | null;
+      metadata: any;
+    };
+
+    const result = await db.execute<QueueItem>(sql`
+      UPDATE ${payAsYouGoQueue}
+      SET status = 'processing'
+      WHERE id IN (
+        SELECT id FROM ${payAsYouGoQueue}
+        WHERE status = 'pending' AND (next_retry_at IS NULL OR next_retry_at <= NOW())
+        ORDER BY created_at ASC
+        LIMIT 10
+        FOR UPDATE SKIP LOCKED
+      )
+      RETURNING *
+    `);
+
+    // CRITICAL FIX: Drizzle Postgres driver returns {rows}, normalize to array
+    const pendingItems: QueueItem[] = Array.isArray(result) ? result : ((result as any)?.rows || []);
+
+    if (pendingItems.length === 0) {
+      logger.debug('No pending pay-as-you-go queue items to process');
+      return;
+    }
+
+    logger.info(`Processing ${pendingItems.length} pending pay-as-you-go queue items`);
+
+    // Process items sequentially to avoid rate limits
+    for (const item of pendingItems) {
+      await processQueueItem(item);
+    }
+
+  } catch (error: any) {
+    // Extract error details (PostgresError has symbol properties that don't JSON.stringify)
+    const errorDetails = error instanceof Error
+      ? { message: error.message, stack: error.stack, code: (error as any).code, detail: (error as any).detail }
+      : error;
+    logger.error('Pay-as-you-go queue processor error', { error: errorDetails });
+  }
+}
+
+/**
+ * Start worker with interval (30 seconds)
+ */
+export function startPayAsYouGoWorker(): NodeJS.Timeout {
+  const intervalMs = 30 * 1000; // 30 seconds
+  logger.info(`Starting pay-as-you-go queue processor (interval: ${intervalMs}ms)`);
+
+  // Run immediately on startup
+  processPayAsYouGoQueue().catch((error) => {
+    logger.error('Initial pay-as-you-go queue processing failed', { error });
+  });
+
+  // Then run on interval
+  return setInterval(() => {
+    processPayAsYouGoQueue().catch((error) => {
+      logger.error('Pay-as-you-go queue processing failed', { error });
+    });
+  }, intervalMs);
+}
