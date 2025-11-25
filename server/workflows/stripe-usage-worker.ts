@@ -16,9 +16,10 @@ import { AlertService } from '../services/alert-service';
 
 const logger = createLogger('stripe-usage-worker');
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-08-27.basil',
-});
+// Initialize Stripe client (guardrail at runtime in processStripeUsageQueue)
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-08-27.basil' })
+  : null;
 
 /**
  * Calculate next retry delay with exponential backoff
@@ -150,6 +151,12 @@ export async function processStripeUsageQueue(): Promise<void> {
     // ✅ SHORT-CIRCUIT: Skip processing if Stripe key not configured
     if (!process.env.STRIPE_SECRET_KEY) {
       logger.debug('Stripe API key not configured - skipping queue processing');
+      return;
+    }
+
+    // ✅ SAFETY: Assert Stripe client is initialized (TypeScript type narrowing)
+    if (!stripe) {
+      logger.error('Stripe client not initialized despite STRIPE_SECRET_KEY being set');
       return;
     }
 

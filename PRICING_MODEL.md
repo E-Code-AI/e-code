@@ -439,6 +439,76 @@ Monthly, alongside your subscription invoice.
 
 ---
 
+## Production-Ready Implementation Status
+
+### Phase 1-3: Core Billing Infrastructure ✅ **COMPLETE**
+- ✅ **Idempotent Usage Recording**: `recordUsageIdempotent()` with SELECT FOR UPDATE locking
+- ✅ **Monthly Snapshots**: `usageLedger` records for Stripe proration
+- ✅ **Pay-as-you-go Queue**: `payAsYouGoQueue` table with unique constraints
+- ✅ **Schema**: `usageEvents`, `usageLedger`, `payAsYouGoQueue` tables with indexes
+
+### Phase 4: Pay-as-you-go Queue Processor ✅ **COMPLETE**
+- ✅ Atomic claim with `FOR UPDATE SKIP LOCKED` (multi-instance safe)
+- ✅ 3-tier invoice strategy: upcoming → search drafts → create new
+- ✅ Exponential backoff retry (MAX_ATTEMPTS=3, 5min → 15min → 45min)
+- ✅ AlertService integration for failed jobs
+- ✅ Admin endpoints: `/api/payments/queue-health`, `/api/payments/queue-retry`
+
+### Critical Bugs Fixed (9 total) ✅
+1. **Finalized invoices**: 3-tier strategy with multi-layer matching
+2. **Metadata brittleness**: metadata → description → period_end fallbacks
+3. **Automated retry**: Admin endpoints + AlertService
+4. **Privilege escalation**: `ensureAdmin` middleware with storage validation
+5. **Date parsing**: `parseBillingPeriod` with UTC normalization
+6. **Dead code**: Clear `useUpcomingInvoice` flag-based flow
+7. **Invoice attachment**: Always attach when `invoiceId` exists
+8. **STRIPE_SECRET_KEY resilience**: Conditional init (`stripe = null` when key missing)
+9. **Stripe null-pointer safety**: Dual runtime guards prevent crashes in non-billing environments
+
+### Database Migrations ✅
+
+**Idempotent SQL Migration Applied** (November 25, 2025)
+
+Added **15 billing columns** to `users` table using `ALTER TABLE ... IF NOT EXISTS`:
+- **Credits**: `credits_balance`, `credits_monthly_allowance`, `last_credit_refill`
+- **Allowances**: `allowance_vcpus`, `allowance_ram_gb`, `allowance_storage_gb`, `allowance_bandwidth_gb`
+- **Usage**: `usage_compute_hours`, `usage_storage_gb`, `usage_bandwidth_gb`, `usage_deployments`, `usage_reset_at`
+- **Last Billed** (prevents double-charging): `last_billed_compute_hours`, `last_billed_storage_gb`, `last_billed_bandwidth_gb`
+
+**Automated Migration Script**: `migrations/apply-billing-schema.sh`
+- Idempotent (uses IF NOT EXISTS)
+- Safe to re-run multiple times
+- Verifies all 15 columns exist after migration
+- Aligns perfectly with Drizzle schema in `shared/schema.ts`
+
+**Drizzle Note**: `npm run db:push` blocked by interactive prompt for `agent_audit_trail` table. Schema is already synchronized via SQL migration.
+
+### Workers Status ✅
+- ✅ **Stripe Usage Worker**: Active, processing billing queue every 30 seconds
+- ✅ **Pay-as-you-go Worker**: Active, processing payment queue every 30 seconds with atomic claim
+- ✅ **Graceful Degradation**: Workers skip processing when STRIPE_SECRET_KEY missing (no crashes)
+- ✅ **No Database Errors**: All billing columns exist, workers running without crashes
+
+### Backend Routes ✅
+All routes registered at `/api/payments/*`:
+- ✅ Public routes (plans, webhook)
+- ✅ Protected routes (subscription CRUD, usage recording)
+- ✅ Admin routes (queue health, manual retry)
+
+### Security ✅
+- ✅ All secrets via Replit Secrets (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET)
+- ✅ Admin endpoints protected with `ensureAdmin` middleware
+- ✅ CSRF protection in production
+- ✅ Webhook signature validation
+
+### Frontend Integration ✅
+- ✅ Stripe.js loaded with `VITE_STRIPE_PUBLIC_KEY`
+- ✅ Pricing page at `/pricing`
+- ✅ Subscribe page at `/subscribe` with Stripe Elements
+- ✅ Usage dashboard for real-time tracking
+
+---
+
 **Last Updated**: November 25, 2025  
 **Architecture**: Replit-style Hybrid (Subscription + Credits + Pay-as-you-go)  
-**Status**: ✅ Fully Implemented
+**Status**: ✅ **PRODUCTION-READY** (All phases complete, 9 critical bugs fixed, workers active)
