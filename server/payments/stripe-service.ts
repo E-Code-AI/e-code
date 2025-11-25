@@ -36,9 +36,9 @@ export class StripePaymentService {
   }
 
   private initializePlans() {
-    // Core Plan
+    // Core Plan - Monthly
     this.plans.set('core', {
-      id: process.env.STRIPE_PRICE_ID_CORE || 'price_core',
+      id: process.env.STRIPE_PRICE_ID_CORE_MONTHLY || 'price_core_monthly',
       name: 'Core',
       price: 20,
       interval: 'month',
@@ -59,9 +59,32 @@ export class StripePaymentService {
       },
     });
 
-    // Pro Plan
+    // Core Plan - Yearly
+    this.plans.set('core_yearly', {
+      id: process.env.STRIPE_PRICE_ID_CORE_YEARLY || 'price_core_yearly',
+      name: 'Core',
+      price: 20,
+      interval: 'year',
+      features: [
+        'Unlimited public projects',
+        '5 private projects', 
+        '2 collaborators per project',
+        '10GB storage',
+        '100 CPU hours/month',
+        '10 deployments/month',
+      ],
+      limits: {
+        projects: 5,
+        collaborators: 2,
+        storage: 10,
+        cpuHours: 100,
+        deployments: 10,
+      },
+    });
+
+    // Pro Plan - Monthly
     this.plans.set('pro', {
-      id: process.env.STRIPE_PRICE_ID_PRO || 'price_pro',
+      id: process.env.STRIPE_PRICE_ID_PRO_MONTHLY || 'price_pro_monthly',
       name: 'Pro',
       price: 40,
       interval: 'month',
@@ -82,12 +105,59 @@ export class StripePaymentService {
       },
     });
 
-    // Enterprise Plan
+    // Pro Plan - Yearly
+    this.plans.set('pro_yearly', {
+      id: process.env.STRIPE_PRICE_ID_PRO_YEARLY || 'price_pro_yearly',
+      name: 'Pro',
+      price: 40,
+      interval: 'year',
+      features: [
+        'Unlimited projects',
+        'Unlimited collaborators',
+        '50GB storage',
+        '500 CPU hours/month',
+        'Unlimited deployments',
+        'Priority support',
+      ],
+      limits: {
+        projects: -1, // Unlimited
+        collaborators: -1,
+        storage: 50,
+        cpuHours: 500,
+        deployments: -1,
+      },
+    });
+
+    // Enterprise Plan - Monthly
     this.plans.set('enterprise', {
-      id: process.env.STRIPE_PRICE_ID_ENTERPRISE_MONTHLY || 'price_enterprise',
+      id: process.env.STRIPE_PRICE_ID_ENTERPRISE_MONTHLY || 'price_enterprise_monthly',
       name: 'Enterprise',
       price: 200,
       interval: 'month',
+      features: [
+        'Everything in Pro',
+        'Custom domains',
+        'SSO/SAML',
+        'Dedicated support',
+        'SLA guarantee',
+        '1TB storage',
+        'Unlimited CPU hours',
+      ],
+      limits: {
+        projects: -1,
+        collaborators: -1,
+        storage: 1000,
+        cpuHours: -1,
+        deployments: -1,
+      },
+    });
+
+    // Enterprise Plan - Yearly
+    this.plans.set('enterprise_yearly', {
+      id: process.env.STRIPE_PRICE_ID_ENTERPRISE_YEARLY || 'price_enterprise_yearly',
+      name: 'Enterprise',
+      price: 200,
+      interval: 'year',
       features: [
         'Everything in Pro',
         'Custom domains',
