@@ -25,7 +25,7 @@ export async function seedDatabase() {
       });
 
       // Update user to mark as email verified for testing
-      await storage.updateUser(testUser.id, {
+      await storage.updateUser(String(testUser.id), {
         emailVerified: true
       });
       
@@ -34,7 +34,7 @@ export async function seedDatabase() {
 
     // Create test project with sample files for E2E testing (always check)
     if (testUser) {
-      const existingProjects = await storage.getProjectsByUserId(testUser.id);
+      const existingProjects = await storage.getProjectsByUserId(String(testUser.id));
       
       if (existingProjects.length === 0) {
         // Create test project
@@ -146,18 +146,18 @@ This project is automatically created for E2E testing.
         displayName: "Admin User",
       });
       
-      // Update to mark as admin and email verified
-      await storage.updateUser(adminUser.id, {
-        isAdmin: true,
+      // Update to mark as admin (role='admin') and email verified
+      await storage.updateUser(String(adminUser.id), {
+        role: 'admin',
         emailVerified: true
       });
       
       console.log('✅ Admin user seeded (admin@test.com / adminpass123)');
-    } else if (!existingAdmin.emailVerified) {
-      // Update existing admin to have email verified for development
-      await storage.updateUser(existingAdmin.id, {
+    } else if (!existingAdmin.emailVerified || existingAdmin.role !== 'admin') {
+      // Update existing admin to have email verified and admin role
+      await storage.updateUser(String(existingAdmin.id), {
         emailVerified: true,
-        isAdmin: true // Ensure admin flag is set
+        role: 'admin'
       });
     }
     

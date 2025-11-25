@@ -1,10 +1,18 @@
 /**
  * Admin authentication middleware
  * Ensures only admin users can access protected routes
+ * Uses role-based access control (role = 'admin' | 'user')
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { getStorage } from '../storage';
+
+/**
+ * Helper function to check if a user has admin role
+ */
+export const isAdmin = (user: { role?: string | null }): boolean => {
+  return user?.role === 'admin';
+};
 
 export const ensureAdmin = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -17,10 +25,11 @@ export const ensureAdmin = async (req: Request, res: Response, next: NextFunctio
     }
 
     const storage = getStorage();
-    const user = await storage.getUser(req.user.id);
+    const userId = typeof req.user.id === 'number' ? String(req.user.id) : req.user.id;
+    const user = await storage.getUser(userId);
 
-    // Check if user is an admin
-    if (!user || !user.isAdmin) {
+    // Check if user has admin role
+    if (!user || !isAdmin(user)) {
       return res.status(403).json({
         message: 'Admin access required',
         code: 'INSUFFICIENT_PERMISSIONS'
@@ -38,11 +47,12 @@ export const ensureAdmin = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const checkAdminStatus = async (userId: string): Promise<boolean> => {
+export const checkAdminStatus = async (userId: number | string): Promise<boolean> => {
   try {
     const storage = getStorage();
-    const user = await storage.getUser(userId);
-    return user?.isAdmin || false;
+    const userIdStr = typeof userId === 'number' ? String(userId) : userId;
+    const user = await storage.getUser(userIdStr);
+    return isAdmin(user || {});
   } catch (error) {
     console.error('Admin status check error:', error);
     return false;
