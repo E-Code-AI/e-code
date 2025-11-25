@@ -124,7 +124,6 @@ export const users = pgTable("users", {
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   stripePriceId: varchar("stripe_price_id"),
   subscriptionTier: subscriptionTierEnum("subscription_tier").default('free'),
-  subscriptionPeriodEnd: timestamp("subscription_period_end"),
   // Credits System (Replit-style)
   creditsBalance: decimal("credits_balance", { precision: 10, scale: 2 }).default('0.00'),
   creditsMonthlyAllowance: decimal("credits_monthly_allowance", { precision: 10, scale: 2 }).default('0.00'),
@@ -309,6 +308,38 @@ export const usageLedger = pgTable("usage_ledger", {
   metadata: jsonb("metadata").$type<Record<string, any>>(),
 }, (table) => ({
   idxUserPeriod: index("idx_usage_ledger_user_period").on(table.userId, table.billingPeriod),
+}));
+
+// Pay-as-you-go Billing Queue - Asynchronous Stripe charges
+export const payAsYouGoQueue = pgTable("pay_as_you_go_queue", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  usageEventId: integer("usage_event_id").references(() => usageEvents.id),
+  
+  // Billing details
+  metric: varchar("metric", { length: 50 }).notNull(), // 'compute', 'storage', 'bandwidth', 'deployment'
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Amount in USD
+  description: text("description"), // Human-readable description for invoice
+  billingPeriod: varchar("billing_period", { length: 20 }).notNull(),
+  
+  // Processing status
+  status: varchar("status", { length: 20 }).notNull().default('pending'), // 'pending', 'processing', 'completed', 'failed'
+  attempts: integer("attempts").notNull().default(0),
+  lastError: text("last_error"),
+  
+  // Stripe references
+  stripeInvoiceItemId: varchar("stripe_invoice_item_id"),
+  stripeInvoiceId: varchar("stripe_invoice_id"),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  processedAt: timestamp("processed_at"),
+  nextRetryAt: timestamp("next_retry_at"),
+  
+  metadata: jsonb("metadata").$type<Record<string, any>>(),
+}, (table) => ({
+  idxPending: index("idx_payg_queue_pending").on(table.status, table.nextRetryAt),
+  idxUserId: index("idx_payg_queue_user_id").on(table.userId),
 }));
 
 // Terminal logs table for persistent console output storage
