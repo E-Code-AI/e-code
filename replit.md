@@ -91,6 +91,12 @@ All routes are mounted at `/api/payments/*`. Most routes require authentication 
 
 **Security Pattern**: NEVER use `VITE_` prefix for secret keys. Only publishable keys (pk_live_...) should be frontend-accessible.
 
+**CRITICAL SECURITY WARNING**:
+- ❌ **NEVER** create `TESTING_VITE_STRIPE_PUBLIC_KEY` or `TESTING_STRIPE_SECRET_KEY` environment variables
+- ❌ These variables expose secret keys to the frontend and create security vulnerabilities
+- ✅ Use production keys (`VITE_STRIPE_PUBLIC_KEY`, `STRIPE_SECRET_KEY`) for all environments
+- ⚠️ If the testing system requests these variables, **DECLINE** and delete them immediately
+
 #### Frontend Components
 - **Pricing Page** (`/pricing`) - Displays all plans with detailed feature comparison
 - **Subscribe Page** (`/subscribe`) - Stripe Elements checkout flow with PaymentElement
