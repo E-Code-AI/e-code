@@ -1,5 +1,24 @@
-import playwright from 'playwright';
 import { EventEmitter } from 'events';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('background-testing-service');
+
+// 🔥 CRITICAL: Playwright runtime check
+// Playwright requires browser binaries to be installed via `npx playwright install`
+// This service will gracefully handle missing Playwright to prevent crashes
+let playwright: any = null;
+let playwrightAvailable = false;
+
+(async () => {
+  try {
+    playwright = await import('playwright');
+    playwrightAvailable = true;
+    logger.info('✅ Playwright runtime available');
+  } catch (error) {
+    logger.error('❌ Playwright not available. Install with: npm install playwright && npx playwright install chromium');
+    logger.error('Background testing will be disabled until Playwright is installed');
+  }
+})();
 
 interface TestJob {
   projectId: number;
@@ -25,9 +44,52 @@ interface TestResults {
   formsSubmitPassed: boolean;
 }
 
+/**
+ * 🔥 CRITICAL WEBSOCKET SECURITY REQUIREMENTS:
+ * 
+ * This service emits events via EventEmitter for background test notifications.
+ * These events MUST be consumed by a WebSocket bridge that implements proper authentication/authorization.
+ * 
+ * **SECURITY CHECKLIST for WebSocket Bridge:**
+ * 1. ✅ Authenticate WebSocket connections (verify user session/JWT)
+ * 2. ✅ Verify project access permissions (user must own or have access to projectId)
+ * 3. ✅ Only broadcast events to authorized users for that specific projectId
+ * 4. ✅ Rate limit test notifications to prevent DoS attacks
+ * 
+ * **Event Types:**
+ * - test:queued - Test scheduled for execution (includes projectId)
+ * - test:started - Test execution started (includes projectId)
+ * - test:completed - Test finished successfully (includes projectId, results)
+ * - test:failed - Test execution failed (includes projectId, error)
+ * - test:agent-notification - AI agent notification for failed tests (includes projectId, failures)
+ * 
+ * **Example Secure WebSocket Integration:**
+ * ```typescript
+ * backgroundTestingService.on('test:completed', ({ projectId, job, results }) => {
+ *   // 1. Get all authenticated connections for this project
+ *   const authorizedConnections = getAuthorizedConnections(projectId);
+ *   
+ *   // 2. Broadcast only to authorized users
+ *   authorizedConnections.forEach(ws => {
+ *     ws.send(JSON.stringify({ type: 'test:completed', projectId, results }));
+ *   });
+ * });
+ * ```
+ */
 export class BackgroundTestingService extends EventEmitter {
   private testQueue: Map<number, TestJob> = new Map();
   private isProcessing: boolean = false;
+  
+  // 🔥 CRITICAL: Configurable app URL (not hard-coded localhost:5000)
+  private appUrl: string;
+  
+  constructor() {
+    super();
+    // Default to localhost:5000 for dev, but allow override via env var
+    this.appUrl = process.env.APP_URL || process.env.VITE_PUBLIC_URL || 'http://localhost:5000';
+    logger.info(`Background testing service initialized with app URL: ${this.appUrl}`);
+    logger.warn('⚠️  WebSocket bridge MUST implement auth/authorization for test events!');
+  }
   
   async scheduleTest(projectId: number, changedFiles: string[]): Promise<void> {
     // Ne teste PAS après chaque message
@@ -117,6 +179,12 @@ export class BackgroundTestingService extends EventEmitter {
   }
   
   private async runTests(projectId: number): Promise<TestResults> {
+    // 🔥 CRITICAL: Check Playwright availability before running tests
+    if (!playwrightAvailable || !playwright) {
+      logger.error('Cannot run tests: Playwright not available');
+      throw new Error('Playwright not installed. Run: npm install playwright && npx playwright install chromium');
+    }
+    
     const browser = await playwright.chromium.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -134,9 +202,9 @@ export class BackgroundTestingService extends EventEmitter {
     };
     
     try {
-      // 1. Load app
-      console.log('[BackgroundTesting] Loading app...');
-      await page.goto('http://localhost:5000', { timeout: 30000 });
+      // 1. Load app (🔥 FIXED: Use configurable URL, not hard-coded localhost:5000)
+      logger.info(`[BackgroundTesting] Loading app at ${this.appUrl}...`);
+      await page.goto(this.appUrl, { timeout: 30000 });
       
       // 2. Run basic checks
       const tests = [
