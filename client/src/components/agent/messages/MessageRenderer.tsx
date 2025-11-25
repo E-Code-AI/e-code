@@ -4,7 +4,7 @@
  * Production-grade component matching Replit's architecture
  */
 
-import { Bot, User } from 'lucide-react';
+import { Bot, User, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AgentMessage } from './types';
 import { ThinkingMessage } from './ThinkingMessage';
@@ -12,6 +12,7 @@ import { TaskMessage } from './TaskMessage';
 import { ActionMessage } from './ActionMessage';
 import { RichMessageContent } from './RichMessageContent';
 import { VibingAnimation } from './VibingAnimation';
+import { MultiFileDiff } from './FileDiffViewer';
 import { Button } from '@/components/ui/button';
 import { Copy } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -108,6 +109,20 @@ export function MessageRenderer({ message, onApproveAction, onRejectAction }: Me
           />
         )}
 
+        {/* Checkpoint Diffs */}
+        {!isUser && message.checkpoint && message.checkpoint.diff.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="h-px flex-1 bg-[var(--ecode-border)]" />
+              <span className="text-xs font-medium text-[var(--ecode-text-secondary)]">
+                Checkpoint: {message.checkpoint.name}
+              </span>
+              <div className="h-px flex-1 bg-[var(--ecode-border)]" />
+            </div>
+            <MultiFileDiff diffs={message.checkpoint.diff} />
+          </div>
+        )}
+
         {/* Error Display */}
         {message.error && (
           <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/10 border border-red-200 dark:border-red-800">
@@ -129,20 +144,32 @@ export function MessageRenderer({ message, onApproveAction, onRejectAction }: Me
           </div>
         )}
 
-        {/* Metadata (Tokens, Time, Model) */}
-        {!isUser && message.metadata && (
-          <div className="flex flex-wrap gap-2 pt-2 border-t border-[var(--ecode-border)]">
-            {message.metadata.tokensUsed !== undefined && (
-              <span className="text-xs text-[var(--ecode-text-secondary)]">
-                {message.metadata.tokensUsed} tokens
+        {/* Metadata (Tokens, Time, Model, Cost) - Enhanced with Pricing */}
+        {!isUser && (message.metadata || message.pricing) && (
+          <div className="flex flex-wrap gap-3 pt-2 border-t border-[var(--ecode-border)]">
+            {message.metadata?.tokensUsed !== undefined && (
+              <span className="text-xs text-[var(--ecode-text-secondary)] flex items-center gap-1">
+                <span className="font-medium">{message.metadata.tokensUsed.toLocaleString()}</span>
+                <span>tokens</span>
               </span>
             )}
-            {message.metadata.executionTimeMs !== undefined && (
-              <span className="text-xs text-[var(--ecode-text-secondary)]">
-                {message.metadata.executionTimeMs}ms
+            {message.pricing && (
+              <span className="text-xs text-[var(--ecode-text-secondary)] flex items-center gap-1">
+                <DollarSign className="h-3 w-3 text-green-600 dark:text-green-400" />
+                <span className="font-medium text-green-600 dark:text-green-400">
+                  {message.pricing.costInDollars}
+                </span>
+                <span className="text-[var(--ecode-text-tertiary)]">
+                  ({message.pricing.complexity})
+                </span>
               </span>
             )}
-            {message.metadata.model && (
+            {message.metadata?.executionTimeMs !== undefined && (
+              <span className="text-xs text-[var(--ecode-text-secondary)]">
+                <span className="font-medium">{message.metadata.executionTimeMs}</span>ms
+              </span>
+            )}
+            {message.metadata?.model && (
               <span className="text-xs text-[var(--ecode-text-secondary)] font-mono">
                 {message.metadata.model}
               </span>

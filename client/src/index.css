@@ -3,6 +3,7 @@
 @import './styles/collaboration.css';
 @import './styles/performance-animations.css';
 @import './styles/micro-interactions.css';
+@import './styles/agent-animations.css';
 
 @tailwind base;
 @tailwind components;
