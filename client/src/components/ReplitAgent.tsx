@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
+import {
   Bot, Send, Sparkles, Code, FileText, HelpCircle,
   Lightbulb, Zap, RefreshCw, Copy, X, Hammer, Package,
   FolderOpen, FileCode, Loader2, CheckCircle, AlertCircle,
   Wrench, Rocket, GitBranch, Database, Globe, Server,
   MessageSquare, DollarSign, Link, Camera, Brain, Power,
-  Pause, Play, Plus, ChevronLeft, ChevronRight, FileTerminal,
+  Pause, Play, Plus, ChevronLeft, ChevronRight, ChevronDown, FileTerminal,
   History, Palette, Heart, Edit, BeakerIcon, Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -839,6 +839,10 @@ What would you like me to build for you today?`,
   const [activeSessionId, setActiveSessionId] = useState<string>('default');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isUserScrolledUp, setIsUserScrolledUp] = useState(false);
+  const [showNewMessagesBadge, setShowNewMessagesBadge] = useState(false);
+  const previousMessagesLengthRef = useRef(messages.length);
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
@@ -1047,9 +1051,21 @@ What would you like me to build for you today?`,
     }
   }, [selectedModel, extendedThinking, highPowerMode, autoCheckpoints, autoApprovePlans, autonomousModeEnabled, updateSettings, sessionLoading]);
 
+  // ✅ PHASE 3.3: Smart auto-scroll - only scroll if user hasn't manually scrolled up
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const hasNewMessages = messages.length > previousMessagesLengthRef.current;
+    previousMessagesLengthRef.current = messages.length;
+
+    if (hasNewMessages) {
+      if (!isUserScrolledUp) {
+        // User is at bottom - auto-scroll
+        scrollToBottom();
+      } else {
+        // User has scrolled up - show notification badge
+        setShowNewMessagesBadge(true);
+      }
+    }
+  }, [messages, isUserScrolledUp]);
 
   // REMOVED: Legacy sessionStorage loading (Task 2c)
   // Conversation/plan state now managed via useAgentSession hook
@@ -1375,8 +1391,32 @@ What would you like me to build for you today?`,
     }
   }, [input]);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (force = false) => {
+    if (force) {
+      setIsUserScrolledUp(false);
+      setShowNewMessagesBadge(false);
+    }
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // ✅ PHASE 3.3: Detect user scroll position
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const container = event.currentTarget;
+    const scrollTop = container.scrollTop;
+    const scrollHeight = container.scrollHeight;
+    const clientHeight = container.clientHeight;
+
+    // Check if user is near bottom (within 100px threshold)
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+
+    if (isNearBottom && isUserScrolledUp) {
+      // User scrolled back to bottom manually
+      setIsUserScrolledUp(false);
+      setShowNewMessagesBadge(false);
+    } else if (!isNearBottom && !isUserScrolledUp) {
+      // User scrolled up
+      setIsUserScrolledUp(true);
+    }
   };
 
   const copyCode = (code: string) => {
@@ -2551,9 +2591,9 @@ What would you like me to build?`,
           )}
         </TabsList>
         
-        <TabsContent value="chat" className="flex flex-1 flex-col overflow-hidden m-0">
+        <TabsContent value="chat" className="flex flex-1 flex-col overflow-hidden m-0 relative">
           <ScrollArea className="flex-1">
-            <div className="py-4" role="log" aria-live="polite" aria-relevant="additions">
+            <div className="py-4" role="log" aria-live="polite" aria-relevant="additions" onScroll={handleScroll}>
           {messages.length === 0 ? (
             <div className="px-4 py-8">
               <div className="flex items-center gap-3 mb-6">
@@ -2598,8 +2638,21 @@ What would you like me to build?`,
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
+
+        {/* ✅ PHASE 3.3: New Messages Notification Button */}
+        {showNewMessagesBadge && (
+          <Button
+            onClick={() => scrollToBottom(true)}
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 shadow-lg gap-2 agent-message-fade-in"
+            variant="default"
+            size="sm"
+          >
+            <ChevronDown className="h-4 w-4" />
+            New messages
+          </Button>
+        )}
       </TabsContent>
-      
+
       {/* Approvals Tab - Fortune 500 Security */}
       <TabsContent value="approvals" className="flex flex-1 flex-col overflow-hidden m-0" data-testid="approvals-content">
         <ScrollArea className="flex-1">
