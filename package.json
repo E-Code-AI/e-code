@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
-    "build": "vite build --config vite.production.config.ts && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "start:prod": "NODE_ENV=production node --max-old-space-size=4096 dist/index.js",
     "lint": "eslint --ext .ts,.tsx,.js,.jsx --no-error-on-unmatched-pattern client/src server shared types",
