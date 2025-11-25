@@ -62,7 +62,7 @@ async function processQueueItem(item: any): Promise<void> {
 
     // ✅ NEW API: billing.MeterEvent (replaces deprecated subscriptionItems.createUsageRecord)
     // Stripe API 2025-03-31.basil removed legacy usage-based billing methods
-    const meterEvent = await stripe.billing.meterEvents.create({
+    const meterEvent = await stripe!.billing.meterEvents.create({
       event_name: 'ai_api_usage', // Meter event name (must match Stripe Dashboard meter)
       payload: {
         stripe_customer_id: stripeCustomerId,
