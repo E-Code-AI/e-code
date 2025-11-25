@@ -42,6 +42,60 @@ Core features include a Monaco Code Editor with advanced enhancements (Git UI, m
 ### System Design Choices
 A PostgreSQL database stores user data, project hierarchies, AI agent sessions, deployment history, subscription management, and AI optimization monitoring. Security measures include CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system provides server-sent event streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API with Prometheus metrics. A two-tier database API architecture (Admin and Project Data APIs) is used with integrated security. Docker builds are optimized for small image sizes. Security enhancements include authentication and authorization for repository overview and templates APIs, context route timeouts, file system scanning limits, and project path scoping.
 
+### Stripe Payment Integration
+**Complete production-ready Stripe integration** for subscription billing and usage-based pricing with comprehensive security patterns.
+
+#### Backend Configuration
+- **StripePaymentService** (`server/payments/stripe-service.ts`) - Core Stripe API integration
+- **StripeBillingService** (`server/services/stripe-billing-service.ts`) - Subscription management and metered billing
+- **BountyPaymentService** (`server/services/bounty-payment-service.ts`) - Escrow and payout handling
+- **Stripe Usage Worker** (`server/workflows/stripe-usage-worker.ts`) - Automated billing queue processor (runs every 30s)
+
+#### API Routes (`/api/payments/*`)
+All routes require authentication via `ensureAuthenticated` middleware:
+- **GET /api/payments/plans** - Returns all subscription plans (Core $20, Pro $40, Enterprise $200)
+- **POST /api/payments/create-subscription** - Creates new Stripe subscription
+- **POST /api/payments/cancel-subscription** - Cancels active subscription
+- **POST /api/payments/update-subscription** - Modifies subscription plan
+- **POST /api/payments/create-payment-intent** - One-time payments
+- **GET /api/payments/subscription-status** - Current user subscription status
+- **POST /api/payments/webhook** - Stripe webhook handler (validates signature)
+
+#### Subscription Plans
+1. **Core**: $20/month - `prod_SmqeF8z5hVEDgn` - 5 private projects, 10GB storage, 100 CPU hours/month
+2. **Pro**: $40/month - `prod_SmqqkOPRY15MGD` - Unlimited projects, 50GB storage, 500 CPU hours/month
+3. **Enterprise**: $200/month - `price_1RrHLq2VSIgdqPLP9Z9KniIZ` - 1TB storage, unlimited CPU, SLA guarantee
+
+#### Usage-Based Pricing (Metered)
+- **Compute**: `STRIPE_PRICE_ID_COMPUTE` - Per CPU hour beyond plan limits
+- **Storage**: `STRIPE_PRICE_ID_STORAGE` - Per GB/month beyond plan limits
+- **Bandwidth**: `STRIPE_PRICE_ID_BANDWIDTH` - Per GB transferred
+- **Deployments**: `STRIPE_PRICE_ID_DEPLOYMENT` - Per deployment beyond limits
+- **Database**: `STRIPE_PRICE_ID_DATABASE` - Per GB database storage
+- **AI Agent Usage**: `STRIPE_PRICE_ID_AGENT_USAGE` - Per AI request
+
+#### Environment Variables
+**Shared Environment (Production & Development):**
+- `VITE_STRIPE_PUBLIC_KEY` - Stripe publishable key (pk_live_...) for frontend Stripe.js initialization
+
+**Secrets (Backend Only - Never expose to frontend):**
+- `STRIPE_SECRET_KEY` - Stripe secret key (sk_live_...)
+- `STRIPE_WEBHOOK_SECRET` - Webhook signature verification
+- All price IDs for subscription plans and metered billing
+
+**Security Pattern**: NEVER use `VITE_` prefix for secret keys. Only publishable keys (pk_live_...) should be frontend-accessible.
+
+#### Frontend Components
+- **Pricing Page** (`/pricing`) - Displays all plans with detailed feature comparison
+- **Subscribe Page** (`/subscribe`) - Stripe Elements checkout flow with PaymentElement
+- **Usage Dashboard** - Real-time billing and usage tracking
+
+#### Workflow Status
+✅ **Stripe Usage Worker**: Active, processing billing queue every 30 seconds
+✅ **Backend Routes**: Registered at `/api/payments/*` and verified working
+✅ **Frontend Integration**: Stripe.js loaded with VITE_STRIPE_PUBLIC_KEY
+✅ **Security**: All secrets properly secured via Replit Secrets
+
 ## External Dependencies
 
 ### AI/ML Services
