@@ -169,6 +169,20 @@ router.get('/subscription-status', ensureAuthenticated, async (req: Request, res
   }
 });
 
+// Get credits status (balance, allowance, usage)
+router.get('/credits-status', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { creditsService } = await import('../services/credits-service');
+    
+    const status = await creditsService.getCreditsStatus(String(userId));
+    res.json(status);
+  } catch (error: any) {
+    logger.error('Failed to fetch credits status:', error);
+    res.status(500).json({ error: 'Failed to fetch credits status' });
+  }
+});
+
 // Get billing history
 router.get('/billing-history', ensureAuthenticated, async (req: Request, res: Response) => {
   try {

@@ -46,6 +46,16 @@ export default function Usage() {
     enabled: !!user
   });
 
+  // Fetch credits status (balance, allowance, usage)
+  const { data: creditsData } = useQuery<{
+    creditsBalance: number;
+    creditsMonthlyAllowance: number;
+    lastRefill: Date | null;
+  }>({
+    queryKey: ['/api/payments/credits-status'],
+    enabled: !!user
+  });
+
   if (isLoading) {
     return (
       <PageShell>
@@ -61,8 +71,25 @@ export default function Usage() {
     );
   }
 
+  // Define usage metric type
+  interface UsageMetric {
+    used: number;
+    limit: number;
+    unit: string;
+    percentage: number;
+  }
+
+  interface UsageData {
+    compute: UsageMetric;
+    storage: UsageMetric;
+    bandwidth: UsageMetric;
+    privateProjects: UsageMetric;
+    deployments: UsageMetric;
+    collaborators: UsageMetric;
+  }
+
   // Use real data from API or fallback to default structure
-  const usage = usageData || {
+  const usage: UsageData = (usageData as UsageData) || {
     compute: {
       used: 72,
       limit: 100,
@@ -205,26 +232,83 @@ export default function Usage() {
         </AlertDescription>
       </Alert>
 
-      {/* Billing Cycle Info */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">Current Billing Cycle</CardTitle>
-              <CardDescription>
-                {billingCycle.start.toLocaleDateString()} - {billingCycle.end.toLocaleDateString()}
-              </CardDescription>
-            </div>
-            <div className="text-right">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                <span>{billingCycle.daysRemaining} days remaining</span>
+      {/* Billing Cycle & Credits Info */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Current Billing Cycle</CardTitle>
+                <CardDescription>
+                  {billingCycle.start.toLocaleDateString()} - {billingCycle.end.toLocaleDateString()}
+                </CardDescription>
               </div>
-              <Badge variant="outline" className="mt-1">Pro Plan</Badge>
+              <div className="text-right">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  <span>{billingCycle.daysRemaining} days remaining</span>
+                </div>
+                <Badge variant="outline" className="mt-1">{billingData?.plan || 'Free'} Plan</Badge>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-      </Card>
+          </CardHeader>
+        </Card>
+
+        {/* Credits Balance Card */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Credits Balance</CardTitle>
+                <CardDescription>
+                  Monthly allowance: ${creditsData?.creditsMonthlyAllowance?.toFixed(2) || '0.00'}
+                </CardDescription>
+              </div>
+              <Zap className="h-8 w-8 text-yellow-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="text-3xl font-bold">
+                ${creditsData?.creditsBalance?.toFixed(2) || '0.00'}
+                <span className="text-sm font-normal text-muted-foreground ml-2">remaining</span>
+              </div>
+              <Progress 
+                value={
+                  creditsData?.creditsMonthlyAllowance 
+                    ? (creditsData.creditsBalance / creditsData.creditsMonthlyAllowance) * 100 
+                    : 0
+                } 
+                className="h-2" 
+              />
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>
+                  ${((creditsData?.creditsMonthlyAllowance || 0) - (creditsData?.creditsBalance || 0)).toFixed(2)} used
+                </span>
+                <span>
+                  {creditsData?.creditsMonthlyAllowance 
+                    ? Math.round((creditsData.creditsBalance / creditsData.creditsMonthlyAllowance) * 100) 
+                    : 0}% available
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Pay-as-you-go Alert (shown when credits exhausted) */}
+      {creditsData && creditsData.creditsBalance <= 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Pay-as-you-go mode active!</strong> Your monthly credits are exhausted. 
+            Additional usage will be billed at standard rates. 
+            <Button variant="link" className="h-auto p-0 ml-1" onClick={handleUpgradePlan}>
+              Upgrade plan
+            </Button> to increase your monthly allowance.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Usage Tabs */}
       <Tabs defaultValue="ai" className="space-y-4">
