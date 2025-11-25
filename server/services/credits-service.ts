@@ -9,7 +9,7 @@
 
 import { storage } from '../storage';
 import { db } from '../db';
-import { users, usageEvents, usageLedger } from '../../shared/schema';
+import { users, usageEvents, usageLedger, payAsYouGoQueue } from '../../shared/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import {
   METERED_PRICES,
@@ -103,9 +103,43 @@ export class CreditsService {
       const userData = user[0];
       const plan = getPlanByTier(userData.subscriptionTier || 'free');
 
+      // Explicit field mapping to prevent silent failures
+      const fieldMapping = {
+        compute: {
+          lastBilled: 'lastBilledComputeHours' as const,
+          usage: 'usageComputeHours' as const,
+          allowanceKey: null, // No allowance for compute
+          costCalculator: calculateComputeCost,
+        },
+        storage: {
+          lastBilled: 'lastBilledStorageGb' as const,
+          usage: 'usageStorageGb' as const,
+          allowanceKey: 'storageGb' as const,
+          costCalculator: calculateStorageCost,
+        },
+        bandwidth: {
+          lastBilled: 'lastBilledBandwidthGb' as const,
+          usage: 'usageBandwidthGb' as const,
+          allowanceKey: 'bandwidthGb' as const,
+          costCalculator: calculateBandwidthCost,
+        },
+        deployment: {
+          lastBilled: null, // No lastBilled tracking for deployments
+          usage: 'usageDeployments' as const,
+          allowanceKey: null,
+          costCalculator: () => 0,
+        },
+      };
+
+      const mapping = fieldMapping[metric];
+      if (!mapping) {
+        throw new Error(`Unknown metric: ${metric}`);
+      }
+
       // Get last billed total for this metric
-      const lastBilledField = `lastBilled${metric.charAt(0).toUpperCase() + metric.slice(1)}` as keyof typeof userData;
-      const lastBilledTotal = parseFloat((userData[lastBilledField] as any)?.toString() || '0');
+      const lastBilledTotal = mapping.lastBilled
+        ? parseFloat((userData[mapping.lastBilled] as any)?.toString() || '0')
+        : 0;
 
       // Calculate incremental usage (what's new since last billing)
       const incrementalUsage = Math.max(0, reportedTotal - lastBilledTotal);
@@ -122,31 +156,12 @@ export class CreditsService {
       }
 
       // Get allowance for this metric
-      let allowance = 0;
-      let costCalculator: (amount: number) => number;
-      
-      switch (metric) {
-        case 'compute':
-          allowance = -1; // Unlimited (goes straight to credits)
-          costCalculator = calculateComputeCost;
-          break;
-        case 'storage':
-          allowance = plan.allowances.storageGb;
-          costCalculator = calculateStorageCost;
-          break;
-        case 'bandwidth':
-          allowance = plan.allowances.bandwidthGb;
-          costCalculator = calculateBandwidthCost;
-          break;
-        case 'deployment':
-          allowance = -1; // Unlimited
-          costCalculator = () => 0; // Custom pricing per deployment
-          break;
-      }
+      const allowance = mapping.allowanceKey
+        ? (plan.allowances as any)[mapping.allowanceKey] || 0
+        : 0;
 
       // Calculate how much of the incremental usage exceeds allowance
-      const currentUsageField = `usage${metric.charAt(0).toUpperCase() + metric.slice(1)}` as keyof typeof userData;
-      const currentUsage = parseFloat((userData[currentUsageField] as any)?.toString() || '0');
+      const currentUsage = parseFloat((userData[mapping.usage] as any)?.toString() || '0');
       const newTotalUsage = reportedTotal;
 
       let allowanceCost = 0;
@@ -162,7 +177,7 @@ export class CreditsService {
       }
 
       // Calculate cost for billable usage
-      const cost = costCalculator(billableUsage);
+      const cost = mapping.costCalculator(billableUsage);
       let creditsBalance = parseFloat(userData.creditsBalance?.toString() || '0');
 
       let creditsCost = 0;
@@ -184,14 +199,18 @@ export class CreditsService {
       // Update user record with new totals
       const updates: any = {
         creditsBalance: creditsBalance.toFixed(2),
+        [mapping.usage]: newTotalUsage.toFixed(2),
       };
-      updates[currentUsageField] = newTotalUsage.toFixed(2);
-      updates[lastBilledField] = reportedTotal.toFixed(2);
+
+      // Only update lastBilled if metric has it
+      if (mapping.lastBilled) {
+        updates[mapping.lastBilled] = reportedTotal.toFixed(2);
+      }
 
       await tx.update(users).set(updates).where(eq(users.id, parseInt(userId)));
 
       // Record event in usage_events for idempotency
-      await tx.insert(usageEvents).values({
+      const eventResult = await tx.insert(usageEvents).values({
         userId: parseInt(userId),
         idempotencyKey,
         metric,
@@ -207,15 +226,34 @@ export class CreditsService {
           allowance,
           incrementalUsage,
         },
-      });
+      }).returning({ id: usageEvents.id });
 
-      // If pay-as-you-go triggered, log for Stripe worker
+      // If pay-as-you-go triggered, enqueue for Stripe billing
       if (payAsYouGoCost > 0) {
+        const eventId = eventResult[0]?.id;
+        const description = `${metric.charAt(0).toUpperCase() + metric.slice(1)} usage (${incrementalUsage.toFixed(2)} ${metric === 'compute' ? 'hours' : 'GB'})`;
+
+        await tx.insert(payAsYouGoQueue).values({
+          userId: parseInt(userId),
+          usageEventId: eventId,
+          metric,
+          amount: payAsYouGoCost.toString(),
+          description,
+          billingPeriod,
+          status: 'pending',
+          attempts: 0,
+          createdAt: new Date(),
+          nextRetryAt: new Date(), // Process immediately
+          metadata: {
+            idempotencyKey,
+            plan: userData.subscriptionTier,
+          },
+        });
+
         console.log(
-          `[Credits] Pay-as-you-go triggered for user ${userId}: ` +
-          `${metric} = $${payAsYouGoCost.toFixed(2)} (idempotency: ${idempotencyKey})`
+          `[Credits] Pay-as-you-go enqueued for user ${userId}: ` +
+          `${metric} = $${payAsYouGoCost.toFixed(2)} (queue id: ${eventId}, idempotency: ${idempotencyKey})`
         );
-        // TODO: Enqueue to pay-as-you-go billing queue
       }
 
       return {
@@ -228,28 +266,115 @@ export class CreditsService {
   }
 
   /**
-   * Refill monthly credits for a user
+   * Refill monthly credits for a user - Production-ready with snapshots
+   * Creates usageLedger snapshot BEFORE reset for Stripe proration
+   * CRITICAL: lastBilled* are NEVER reset (lifetime totals)
    */
   async refillMonthlyCredits(userId: string): Promise<void> {
-    const user = await storage.getUser(userId);
-    if (!user) {
-      throw new Error('User not found');
-    }
+    return await db.transaction(async (tx) => {
+      // Lock user row for update
+      const user = await tx
+        .select()
+        .from(users)
+        .where(eq(users.id, parseInt(userId)))
+        .for('update')
+        .limit(1);
 
-    const plan = getPlanByTier(user.subscriptionTier || 'free');
-    const newBalance = parseFloat(user.creditsBalance || '0') + plan.creditsMonthly;
-    const now = new Date();
+      if (!user || user.length === 0) {
+        throw new Error('User not found');
+      }
 
-    await storage.updateUser(userId, {
-      creditsBalance: newBalance.toFixed(2),
-      lastCreditRefill: now,
-      usageResetAt: now, // Reset usage tracking period
+      const userData = user[0];
+      const plan = getPlanByTier(userData.subscriptionTier || 'free');
+
+      // Calculate billing period being CLOSED (last refill date)
+      const lastRefill = userData.lastCreditRefill ? new Date(userData.lastCreditRefill) : new Date();
+      const closingPeriod = `${lastRefill.getFullYear()}-${String(lastRefill.getMonth() + 1).padStart(2, '0')}`;
+
+      // Query usageEvents for the period being closed
+      const periodEvents = await tx
+        .select()
+        .from(usageEvents)
+        .where(
+          and(
+            eq(usageEvents.userId, parseInt(userId)),
+            eq(usageEvents.billingPeriod, closingPeriod)
+          )
+        );
+
+      // Aggregate credits and pay-as-you-go from events
+      const creditsUsed = periodEvents.reduce(
+        (sum, event) => sum + parseFloat(event.creditsDeducted.toString()),
+        0
+      );
+
+      const payAsYouGoTotal = periodEvents.reduce(
+        (sum, event) => sum + parseFloat(event.payAsYouGo.toString()),
+        0
+      );
+
+      // Get current usage totals (for snapshot only)
+      const computeHours = parseFloat(userData.usageComputeHours?.toString() || '0');
+      const storageGb = parseFloat(userData.usageStorageGb?.toString() || '0');
+      const bandwidthGb = parseFloat(userData.usageBandwidthGb?.toString() || '0');
+      const deployments = parseInt(userData.usageDeployments?.toString() || '0');
+
+      // Calculate allowance usage percentage
+      const storageAllowance = plan.allowances.storageGb;
+      const bandwidthAllowance = plan.allowances.bandwidthGb;
+      const allowanceUsedPercent = 
+        ((storageGb / Math.max(storageAllowance, 1)) * 50) +
+        ((bandwidthGb / Math.max(bandwidthAllowance, 1)) * 50);
+
+      const currentBalance = parseFloat(userData.creditsBalance?.toString() || '0');
+
+      // Create snapshot in usageLedger BEFORE reset
+      await tx.insert(usageLedger).values({
+        userId: parseInt(userId),
+        billingPeriod: closingPeriod,
+        snapshotType: 'monthly_refill',
+        computeHoursTotal: computeHours.toString(),
+        storageGbTotal: storageGb.toString(),
+        bandwidthGbTotal: bandwidthGb.toString(),
+        deploymentsTotal: deployments,
+        creditsUsed: creditsUsed.toString(),
+        payAsYouGoTotal: payAsYouGoTotal.toString(),
+        allowanceUsedPercent: allowanceUsedPercent.toFixed(2),
+        subscriptionTier: userData.subscriptionTier || 'free',
+        creditsBalance: currentBalance.toString(),
+        creditsMonthlyAllowance: plan.creditsMonthly.toString(),
+        createdAt: new Date(),
+        metadata: {
+          plan: userData.subscriptionTier,
+          eventsCount: periodEvents.length,
+          closingPeriod,
+        },
+      });
+
+      // Now refill credits and reset ONLY allowance-facing usage fields
+      // NEVER reset lastBilled* (they are lifetime totals)
+      const newBalance = currentBalance + plan.creditsMonthly;
+      const now = new Date();
+
+      await tx.update(users).set({
+        creditsBalance: newBalance.toFixed(2),
+        creditsMonthlyAllowance: plan.creditsMonthly.toFixed(2),
+        lastCreditRefill: now,
+        usageResetAt: now,
+        // Reset ONLY allowance-facing usage counters
+        usageComputeHours: '0.00',
+        usageStorageGb: '0.00',
+        usageBandwidthGb: '0.00',
+        usageDeployments: 0,
+        // NEVER reset lastBilled* - these are lifetime cumulative totals
+      }).where(eq(users.id, parseInt(userId)));
+
+      console.log(
+        `[Credits] Monthly refill for user ${userId}: ` +
+        `+${plan.creditsMonthly} credits (new balance: ${newBalance.toFixed(2)}), ` +
+        `snapshot saved (period: ${closingPeriod}, credits used: $${creditsUsed.toFixed(2)}, pay-as-you-go: $${payAsYouGoTotal.toFixed(2)})`
+      );
     });
-
-    // Reset usage counters at refill
-    await this.resetMonthlyUsage(userId);
-
-    console.log(`[Credits] Refilled ${plan.creditsMonthly} credits for user ${userId}. New balance: ${newBalance}`);
   }
 
   /**
@@ -275,6 +400,7 @@ export class CreditsService {
 
   /**
    * Record compute usage and deduct from allowance/credits/pay-as-you-go
+   * MIGRATED: Now uses recordUsageIdempotent for production-ready billing
    */
   async recordComputeUsage(userId: string, vcpuHours: number): Promise<CostBreakdown> {
     const user = await storage.getUser(userId);
@@ -282,215 +408,84 @@ export class CreditsService {
       throw new Error('User not found');
     }
 
-    const plan = getPlanByTier(user.subscriptionTier || 'free');
+    // Convert incremental usage to absolute total
     const currentUsage = parseFloat(user.usageComputeHours || '0');
-    const newUsage = currentUsage + vcpuHours;
+    const newTotalUsage = currentUsage + vcpuHours;
 
-    // Check allowance
-    const { exceeds, overage } = exceedsAllowance(
-      newUsage,
-      -1 // Compute has no fixed allowance, goes straight to credits
+    // Generate idempotency key for this usage report
+    const idempotencyKey = `compute-${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    // Use production-ready idempotent billing
+    return await this.recordUsageIdempotent(
+      userId,
+      newTotalUsage,
+      'compute',
+      idempotencyKey
     );
-
-    // Calculate cost
-    const cost = calculateComputeCost(vcpuHours);
-    let creditsBalance = parseFloat(user.creditsBalance || '0');
-
-    let allowanceCost = 0;
-    let creditsCost = 0;
-    let payAsYouGoCost = 0;
-
-    if (creditsBalance >= cost) {
-      // Deduct from credits
-      creditsCost = cost;
-      creditsBalance -= cost;
-    } else {
-      // Partially from credits, rest pay-as-you-go
-      creditsCost = creditsBalance;
-      payAsYouGoCost = cost - creditsBalance;
-      creditsBalance = 0;
-    }
-
-    // Update user
-    await storage.updateUser(userId, {
-      usageComputeHours: newUsage.toFixed(2),
-      creditsBalance: creditsBalance.toFixed(2),
-    });
-
-    // If pay-as-you-go triggered, record for Stripe billing
-    if (payAsYouGoCost > 0) {
-      await this.recordPayAsYouGoCharge(userId, 'compute', payAsYouGoCost);
-    }
-
-    return {
-      allowanceCost,
-      creditsCost,
-      payAsYouGoCost,
-      totalCost: cost,
-    };
   }
 
   /**
    * Record storage usage (incremental billing - only charge for NEW usage beyond allowance)
    * @param storageGb - INCREMENTAL storage used (GB added, must be >= 0)
+   * MIGRATED: Now uses recordUsageIdempotent for production-ready billing
    */
   async recordStorageUsage(userId: string, storageGb: number): Promise<CostBreakdown> {
+    // Validation: Reject negative increments (deletions/refunds not supported)
+    if (storageGb < 0) {
+      throw new Error('Negative storage increments not supported. Use absolute decrease tracking.');
+    }
+
     const user = await storage.getUser(userId);
     if (!user) {
       throw new Error('User not found');
     }
 
-    // Validation: Reject negative increments (deletions/refunds not supported in MVP)
-    if (storageGb < 0) {
-      throw new Error('Negative storage increments not supported. Use absolute decrease tracking.');
-    }
-
-    const plan = getPlanByTier(user.subscriptionTier || 'free');
+    // Convert incremental usage to absolute total
     const currentUsage = parseFloat(user.usageStorageGb || '0');
-    
-    // storageGb is INCREMENTAL - add to current total
     const newTotalUsage = currentUsage + storageGb;
-    const { exceeds, overage } = exceedsAllowance(newTotalUsage, plan.allowances.storageGb);
 
-    let allowanceCost = 0;
-    let creditsCost = 0;
-    let payAsYouGoCost = 0;
-    let cost = 0;
+    // Generate idempotency key for this usage report
+    const idempotencyKey = `storage-${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-    if (exceeds) {
-      // Calculate cost only for NEW overage (not previously billed)
-      const previousOverage = Math.max(0, currentUsage - plan.allowances.storageGb);
-      const newOverage = overage - previousOverage;
-      
-      if (newOverage > 0) {
-        cost = calculateStorageCost(newOverage);
-        let creditsBalance = parseFloat(user.creditsBalance || '0');
-
-        if (creditsBalance >= cost) {
-          creditsCost = cost;
-          creditsBalance -= cost;
-        } else {
-          creditsCost = creditsBalance;
-          payAsYouGoCost = cost - creditsBalance;
-          creditsBalance = 0;
-        }
-
-        await storage.updateUser(userId, {
-          usageStorageGb: newTotalUsage.toFixed(2),
-          creditsBalance: creditsBalance.toFixed(2),
-        });
-
-        if (payAsYouGoCost > 0) {
-          await this.recordPayAsYouGoCharge(userId, 'storage', payAsYouGoCost);
-        }
-      } else {
-        // No new overage to bill
-        await storage.updateUser(userId, {
-          usageStorageGb: newTotalUsage.toFixed(2),
-        });
-      }
-
-      return {
-        allowanceCost,
-        creditsCost,
-        payAsYouGoCost,
-        totalCost: cost,
-      };
-    }
-
-    // Within allowance - no cost
-    await storage.updateUser(userId, {
-      usageStorageGb: newTotalUsage.toFixed(2),
-    });
-
-    return {
-      allowanceCost: 0,
-      creditsCost: 0,
-      payAsYouGoCost: 0,
-      totalCost: 0,
-    };
+    // Use production-ready idempotent billing
+    return await this.recordUsageIdempotent(
+      userId,
+      newTotalUsage,
+      'storage',
+      idempotencyKey
+    );
   }
 
   /**
    * Record bandwidth usage (incremental billing - only charge for NEW usage beyond allowance)
    * @param bandwidthGb - INCREMENTAL bandwidth used (GB added, must be >= 0)
+   * MIGRATED: Now uses recordUsageIdempotent for production-ready billing
    */
   async recordBandwidthUsage(userId: string, bandwidthGb: number): Promise<CostBreakdown> {
-    const user = await storage.getUser(userId);
-    if (!user) {
-      throw new Error('User not found');
-    }
-
     // Validation: Reject negative increments (prevents retry/reconciliation errors)
     if (bandwidthGb < 0) {
       throw new Error('Negative bandwidth increments not supported.');
     }
 
-    const plan = getPlanByTier(user.subscriptionTier || 'free');
-    const currentUsage = parseFloat(user.usageBandwidthGb || '0');
-    
-    // bandwidthGb is INCREMENTAL - add to current total
-    const newUsage = currentUsage + bandwidthGb;
-
-    const { exceeds, overage } = exceedsAllowance(newUsage, plan.allowances.bandwidthGb);
-
-    let allowanceCost = 0;
-    let creditsCost = 0;
-    let payAsYouGoCost = 0;
-    let cost = 0;
-
-    if (exceeds) {
-      // Calculate cost only for NEW overage (not previously billed)
-      const previousOverage = Math.max(0, currentUsage - plan.allowances.bandwidthGb);
-      const newOverage = overage - previousOverage;
-      
-      if (newOverage > 0) {
-        cost = calculateBandwidthCost(newOverage);
-        let creditsBalance = parseFloat(user.creditsBalance || '0');
-
-        if (creditsBalance >= cost) {
-          creditsCost = cost;
-          creditsBalance -= cost;
-        } else {
-          creditsCost = creditsBalance;
-          payAsYouGoCost = cost - creditsBalance;
-          creditsBalance = 0;
-        }
-
-        await storage.updateUser(userId, {
-          usageBandwidthGb: newUsage.toFixed(2),
-          creditsBalance: creditsBalance.toFixed(2),
-        });
-
-        if (payAsYouGoCost > 0) {
-          await this.recordPayAsYouGoCharge(userId, 'bandwidth', payAsYouGoCost);
-        }
-      } else {
-        // No new overage to bill
-        await storage.updateUser(userId, {
-          usageBandwidthGb: newUsage.toFixed(2),
-        });
-      }
-
-      return {
-        allowanceCost,
-        creditsCost,
-        payAsYouGoCost,
-        totalCost: cost,
-      };
+    const user = await storage.getUser(userId);
+    if (!user) {
+      throw new Error('User not found');
     }
 
-    // Within allowance
-    await storage.updateUser(userId, {
-      usageBandwidthGb: newUsage.toFixed(2),
-    });
+    // Convert incremental usage to absolute total
+    const currentUsage = parseFloat(user.usageBandwidthGb || '0');
+    const newUsage = currentUsage + bandwidthGb;
 
-    return {
-      allowanceCost: 0,
-      creditsCost: 0,
-      payAsYouGoCost: 0,
-      totalCost: 0,
-    };
+    // Generate idempotency key for this usage report
+    const idempotencyKey = `bandwidth-${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    // Use production-ready idempotent billing
+    return await this.recordUsageIdempotent(
+      userId,
+      newUsage,
+      'bandwidth',
+      idempotencyKey
+    );
   }
 
   /**
@@ -576,41 +571,7 @@ export class CreditsService {
     console.log(`[Credits] Updated plan allowances for user ${userId} to ${tier} tier (preserved $${currentBalance.toFixed(2)} credits and current-period usage)`);
   }
 
-  /**
-   * Record pay-as-you-go charge for Stripe billing
-   * This gets picked up by the Stripe usage worker
-   */
-  private async recordPayAsYouGoCharge(
-    userId: string,
-    metric: string,
-    amount: number
-  ): Promise<void> {
-    // Convert dollar amount to usage quantity based on metric pricing
-    let quantity = 0;
-    
-    switch (metric) {
-      case 'compute':
-        quantity = amount / METERED_PRICES.VCPU_HOUR;
-        break;
-      case 'storage':
-        quantity = amount / METERED_PRICES.APP_STORAGE_PER_GB_MONTH;
-        break;
-      case 'bandwidth':
-        quantity = amount / METERED_PRICES.OUTBOUND_DATA_PER_GB;
-        break;
-      default:
-        quantity = amount; // Raw amount
-    }
-
-    console.log(
-      `[Credits] Pay-as-you-go triggered for user ${userId}: ` +
-      `${metric} = $${amount.toFixed(2)} (${quantity.toFixed(2)} units)`
-    );
-
-    // This will be picked up by Stripe billing
-    // For now, just log - in production, this would queue for Stripe
-    // You could integrate with your existing Stripe recordUsage here
-  }
+  // REMOVED: recordPayAsYouGoCharge - now handled by recordUsageIdempotent → pay_as_you_go_queue
 }
 
 export const creditsService = new CreditsService();
