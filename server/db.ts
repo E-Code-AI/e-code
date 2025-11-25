@@ -2,6 +2,13 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from "@shared/schema";
 import { databaseQueryOptimizer } from './services/database-query-optimizer';
+import { 
+  databaseManager, 
+  databaseContextMiddleware, 
+  getDatabase, 
+  getDatabaseClient,
+  type DatabaseEnvironment 
+} from './config/database';
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -40,3 +47,35 @@ export const db = drizzle(client, { schema });
 
 // Export pool for direct SQL queries (used by database management service)
 export const pool = client;
+
+// Export dev/prod database separation utilities
+export { 
+  databaseManager, 
+  databaseContextMiddleware, 
+  getDatabase, 
+  getDatabaseClient,
+  type DatabaseEnvironment 
+};
+
+// Convenience functions for dev/prod database access
+export const devDb = databaseManager.getDevDatabase();
+export const devClient = databaseManager.getDevClient();
+
+// Production database access (throws if DATABASE_URL_PROD not configured)
+export function getProdDb(options?: { agentRequest?: boolean; userId?: number }) {
+  return databaseManager.getProdDatabase(options);
+}
+
+export function getProdClient(options?: { agentRequest?: boolean; userId?: number }) {
+  return databaseManager.getProdClient(options);
+}
+
+// Check if production database is available
+export function isProdDbAvailable(): boolean {
+  return databaseManager.isProdAvailable();
+}
+
+// Get connection stats for monitoring
+export function getDbConnectionStats() {
+  return databaseManager.getConnectionStats();
+}

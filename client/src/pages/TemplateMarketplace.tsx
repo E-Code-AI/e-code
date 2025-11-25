@@ -212,12 +212,12 @@ export default function TemplateMarketplace() {
     searchQuery !== '';
 
   return (
-    <PageShell>
+    <PageShell data-testid="templates-marketplace">
       <PageHeader>
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold">Template Marketplace</h1>
+              <h1 className="text-3xl font-bold" data-testid="marketplace-title">Template Marketplace</h1>
               <p className="text-muted-foreground mt-2">
                 Discover and deploy production-ready templates for your next project
               </p>
@@ -228,6 +228,7 @@ export default function TemplateMarketplace() {
                   variant="outline"
                   className="gap-2"
                   onClick={() => window.location.href = '/templates/submit'}
+                  data-testid="submit-template-button"
                 >
                   <Upload className="h-4 w-4" />
                   Submit Template
@@ -237,11 +238,12 @@ export default function TemplateMarketplace() {
                 variant="outline"
                 className={cn("gap-2", !showFilters && "bg-accent")}
                 onClick={() => setShowFilters(!showFilters)}
+                data-testid="filter-toggle-button"
               >
                 <Filter className="h-4 w-4" />
                 Filters
                 {hasActiveFilters && (
-                  <Badge variant="secondary" className="ml-1">
+                  <Badge variant="secondary" className="ml-1" data-testid="active-filters-count">
                     {[
                       selectedCategory !== 'all' ? 1 : 0,
                       selectedTags.length,
@@ -259,6 +261,7 @@ export default function TemplateMarketplace() {
                   size="sm"
                   className="rounded-r-none"
                   onClick={() => setViewMode('grid')}
+                  data-testid="grid-view-button"
                 >
                   <Grid3x3 className="h-4 w-4" />
                 </Button>
@@ -267,6 +270,7 @@ export default function TemplateMarketplace() {
                   size="sm"
                   className="rounded-l-none"
                   onClick={() => setViewMode('list')}
+                  data-testid="list-view-button"
                 >
                   <List className="h-4 w-4" />
                 </Button>
@@ -284,7 +288,7 @@ export default function TemplateMarketplace() {
               />
             </div>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[200px]" data-testid="sort-select">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
@@ -310,7 +314,7 @@ export default function TemplateMarketplace() {
               exit={{ opacity: 0, x: -20 }}
               className="w-80 shrink-0"
             >
-              <Card className="sticky top-4">
+              <Card className="sticky top-4" data-testid="filters-panel">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold">Filters</h3>
@@ -320,6 +324,7 @@ export default function TemplateMarketplace() {
                         size="sm"
                         onClick={clearFilters}
                         className="text-muted-foreground hover:text-foreground"
+                        data-testid="clear-filters-button"
                       >
                         Clear all
                       </Button>
@@ -348,21 +353,21 @@ export default function TemplateMarketplace() {
         </AnimatePresence>
 
         {/* Main Content */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0" data-testid="templates-content">
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
             <TabsList className="grid w-full grid-cols-5 max-w-[600px]">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="featured">Featured</TabsTrigger>
-              <TabsTrigger value="official">Official</TabsTrigger>
-              <TabsTrigger value="community">Community</TabsTrigger>
-              <TabsTrigger value="trending">Trending</TabsTrigger>
+              <TabsTrigger value="all" data-testid="tab-all">All</TabsTrigger>
+              <TabsTrigger value="featured" data-testid="tab-featured">Featured</TabsTrigger>
+              <TabsTrigger value="official" data-testid="tab-official">Official</TabsTrigger>
+              <TabsTrigger value="community" data-testid="tab-community">Community</TabsTrigger>
+              <TabsTrigger value="trending" data-testid="tab-trending">Trending</TabsTrigger>
             </TabsList>
           </Tabs>
 
           {/* Trending Section */}
           {activeTab === 'all' && trendingTemplates && trendingTemplates.length > 0 && (
-            <div className="mb-8">
+            <div className="mb-8" data-testid="trending-section">
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="h-5 w-5 text-orange-500" />
                 <h2 className="text-lg font-semibold">Trending This Week</h2>
@@ -372,6 +377,7 @@ export default function TemplateMarketplace() {
                   <Card
                     key={template.id}
                     className="min-w-[200px] cursor-pointer hover:shadow-lg transition-shadow"
+                    data-testid={`trending-card-${template.id}`}
                     onClick={() => handleTemplateClick(template)}
                   >
                     <CardContent className="p-4">
@@ -400,7 +406,7 @@ export default function TemplateMarketplace() {
             <div className={cn(
               "grid gap-4",
               viewMode === 'grid' ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
-            )}>
+            )} data-testid="templates-loading">
               {[...Array(6)].map((_, i) => (
                 <Skeleton key={i} className="h-[300px]" />
               ))}
@@ -410,7 +416,7 @@ export default function TemplateMarketplace() {
               <div className={cn(
                 "grid gap-4",
                 viewMode === 'grid' ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
-              )}>
+              )} data-testid="templates-grid">
                 {templatesData?.templates?.map((template: any) => (
                   <TemplateCard
                     key={template.id}
@@ -425,11 +431,12 @@ export default function TemplateMarketplace() {
 
               {/* Pagination */}
               {templatesData && templatesData.total > templatesData.pageSize && (
-                <div className="flex justify-center gap-2 mt-8">
+                <div className="flex justify-center gap-2 mt-8" data-testid="pagination">
                   <Button
                     variant="outline"
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page === 1}
+                    data-testid="pagination-prev"
                   >
                     Previous
                   </Button>
@@ -460,6 +467,7 @@ export default function TemplateMarketplace() {
                     variant="outline"
                     onClick={() => setPage(p => p + 1)}
                     disabled={!templatesData.hasMore}
+                    data-testid="pagination-next"
                   >
                     Next
                   </Button>

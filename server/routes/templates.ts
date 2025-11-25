@@ -12,18 +12,23 @@ import {
   templateTags,
   templateCollections,
   collectionTemplates,
+  templateForks,
+  projects,
   insertTemplateSchema,
   insertTemplateCategorySchema,
   insertTemplateRatingSchema,
   insertTemplateTagSchema,
   insertTemplateCollectionSchema,
   insertCollectionTemplateSchema,
+  insertTemplateForkSchema,
   type Template,
   type TemplateCategory,
   type TemplateRating,
-  type TemplateTag
+  type TemplateTag,
+  type TemplateFork
 } from '@shared/schema';
-import { eq, desc, sql, and, or, ilike } from 'drizzle-orm';
+import { eq, desc, sql, and, or, ilike, gte, lte, asc } from 'drizzle-orm';
+import { z } from 'zod';
 
 const router = Router();
 
@@ -38,9 +43,14 @@ router.get('/api/templates', async (req, res) => {
       search,
       featured,
       official,
+      minRating,
+      maxRating,
+      difficulty,
+      language,
       limit = '20',
       offset = '0',
-      sortBy = 'downloads' // downloads, rating, recent, popular
+      sortBy = 'downloads', // downloads, rating, recent, popular, forks
+      sortOrder = 'desc' // asc, desc
     } = req.query;
 
     let query = db.select().from(templates);
@@ -69,24 +79,53 @@ router.get('/api/templates', async (req, res) => {
       conditions.push(eq(templates.isOfficial, true));
     }
 
+    // Rating range filter
+    if (minRating) {
+      const min = parseFloat(minRating as string);
+      if (!isNaN(min) && min >= 0 && min <= 5) {
+        conditions.push(gte(templates.rating, min));
+      }
+    }
+    
+    if (maxRating) {
+      const max = parseFloat(maxRating as string);
+      if (!isNaN(max) && max >= 0 && max <= 5) {
+        conditions.push(lte(templates.rating, max));
+      }
+    }
+
+    // Difficulty filter
+    if (difficulty) {
+      conditions.push(eq(templates.difficulty, difficulty as string));
+    }
+
+    // Language filter
+    if (language) {
+      conditions.push(eq(templates.language, language as string));
+    }
+
     if (conditions.length > 0) {
       query = query.where(and(...conditions)!);
     }
 
     // Sort
+    const orderFn = sortOrder === 'asc' ? asc : desc;
     switch (sortBy) {
       case 'rating':
-        query = query.orderBy(desc(templates.rating));
+        query = query.orderBy(orderFn(templates.rating));
         break;
       case 'recent':
-        query = query.orderBy(desc(templates.createdAt));
+        query = query.orderBy(orderFn(templates.createdAt));
         break;
       case 'popular':
-        query = query.orderBy(desc(templates.uses));
+        query = query.orderBy(orderFn(templates.uses));
+        break;
+      case 'forks':
+        query = query.orderBy(orderFn(templates.forks));
         break;
       case 'downloads':
       default:
-        query = query.orderBy(desc(templates.downloads));
+        query = query.orderBy(orderFn(templates.downloads));
     }
 
     // Pagination
@@ -113,6 +152,38 @@ router.get('/api/templates', async (req, res) => {
   } catch (error) {
     console.error('Error fetching templates:', error);
     res.status(500).json({ error: 'Failed to fetch templates' });
+  }
+});
+
+/**
+ * GET /api/templates/featured
+ * Get featured templates with customizable limit
+ */
+router.get('/api/templates/featured', async (req, res) => {
+  try {
+    const { limit = '10', category } = req.query;
+    const limitNum = Math.min(parseInt(limit as string) || 10, 50);
+
+    const conditions = [eq(templates.isFeatured, true)];
+    
+    if (category) {
+      conditions.push(eq(templates.category, category as string));
+    }
+
+    const featuredTemplates = await db
+      .select()
+      .from(templates)
+      .where(and(...conditions))
+      .orderBy(desc(templates.rating), desc(templates.downloads))
+      .limit(limitNum);
+
+    res.json({
+      templates: featuredTemplates,
+      total: featuredTemplates.length
+    });
+  } catch (error) {
+    console.error('Error fetching featured templates:', error);
+    res.status(500).json({ error: 'Failed to fetch featured templates' });
   }
 });
 
@@ -372,18 +443,28 @@ router.post('/api/templates/:id/rate', async (req, res) => {
         .returning();
     }
 
-    // Update template average rating
-    const [avgRating] = await db
-      .select({ avg: sql<number>`avg(${templateRatings.rating})` })
+    // Update template average rating and review count
+    const [ratingStats] = await db
+      .select({ 
+        avg: sql<number>`avg(${templateRatings.rating})`,
+        count: sql<number>`count(*)`
+      })
       .from(templateRatings)
       .where(eq(templateRatings.templateId, id));
 
     await db
       .update(templates)
-      .set({ rating: Number(avgRating.avg).toFixed(1) })
+      .set({ 
+        rating: Number(ratingStats.avg).toFixed(1),
+        reviewCount: Number(ratingStats.count)
+      })
       .where(eq(templates.id, id));
 
-    res.json(result);
+    res.json({
+      ...result,
+      templateRating: Number(ratingStats.avg).toFixed(1),
+      templateReviewCount: Number(ratingStats.count)
+    });
   } catch (error) {
     console.error('Error rating template:', error);
     res.status(500).json({ error: 'Failed to rate template' });
@@ -410,6 +491,254 @@ router.post('/api/templates/:id/use', async (req, res) => {
   } catch (error) {
     console.error('Error incrementing usage:', error);
     res.status(500).json({ error: 'Failed to update usage count' });
+  }
+});
+
+/**
+ * GET /api/templates/:id/preview
+ * Get live preview URL for a template
+ */
+router.get('/api/templates/:id/preview', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [template] = await db
+      .select({
+        id: templates.id,
+        name: templates.name,
+        livePreviewUrl: templates.livePreviewUrl,
+        demoUrl: templates.demoUrl,
+        thumbnailUrl: templates.thumbnailUrl
+      })
+      .from(templates)
+      .where(eq(templates.id, id))
+      .limit(1);
+
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    res.json({
+      id: template.id,
+      name: template.name,
+      previewUrl: template.livePreviewUrl || template.demoUrl,
+      thumbnailUrl: template.thumbnailUrl,
+      hasLivePreview: !!template.livePreviewUrl
+    });
+  } catch (error) {
+    console.error('Error fetching template preview:', error);
+    res.status(500).json({ error: 'Failed to fetch template preview' });
+  }
+});
+
+/**
+ * POST /api/templates/:id/fork
+ * Fork a template to create a new project
+ */
+router.post('/api/templates/:id/fork', async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { id } = req.params;
+    const { projectName } = req.body;
+
+    const userId = typeof req.user === 'object' && 'id' in req.user ? req.user.id : null;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Invalid user session' });
+    }
+
+    // Check if template exists
+    const [template] = await db
+      .select()
+      .from(templates)
+      .where(eq(templates.id, id))
+      .limit(1);
+
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    // Create a new project from the template
+    const [newProject] = await db
+      .insert(projects)
+      .values({
+        name: projectName || `${template.name} (Fork)`,
+        description: template.description || `Forked from ${template.name}`,
+        ownerId: userId,
+        visibility: 'private',
+        language: template.language as any
+      })
+      .returning();
+
+    // Record the fork
+    const templateIdInt = parseInt(id, 10);
+    const [fork] = await db
+      .insert(templateForks)
+      .values({
+        templateId: templateIdInt,
+        userId,
+        forkedProjectId: newProject.id
+      })
+      .returning();
+
+    // Increment fork count on template
+    await db
+      .update(templates)
+      .set({ 
+        forks: sql`${templates.forks} + 1`
+      })
+      .where(eq(templates.id, id));
+
+    res.status(201).json({
+      success: true,
+      fork,
+      project: newProject,
+      message: `Successfully forked template "${template.name}"`
+    });
+  } catch (error) {
+    console.error('Error forking template:', error);
+    res.status(500).json({ error: 'Failed to fork template' });
+  }
+});
+
+/**
+ * GET /api/templates/:id/forks
+ * Get all forks of a template
+ */
+router.get('/api/templates/:id/forks', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit = '20', offset = '0' } = req.query;
+
+    const limitNum = parseInt(limit as string);
+    const offsetNum = parseInt(offset as string);
+
+    // Check if template exists
+    const [template] = await db
+      .select()
+      .from(templates)
+      .where(eq(templates.id, id))
+      .limit(1);
+
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    const templateIdInt = parseInt(id, 10);
+    const forks = await db
+      .select()
+      .from(templateForks)
+      .where(eq(templateForks.templateId, templateIdInt))
+      .orderBy(desc(templateForks.createdAt))
+      .limit(limitNum)
+      .offset(offsetNum);
+
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(templateForks)
+      .where(eq(templateForks.templateId, templateIdInt));
+
+    res.json({
+      forks,
+      pagination: {
+        total: Number(count),
+        limit: limitNum,
+        offset: offsetNum,
+        hasMore: offsetNum + limitNum < Number(count)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching template forks:', error);
+    res.status(500).json({ error: 'Failed to fetch template forks' });
+  }
+});
+
+/**
+ * GET /api/templates/:id/ratings
+ * Get all ratings for a template
+ */
+router.get('/api/templates/:id/ratings', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit = '20', offset = '0', sortBy = 'recent' } = req.query;
+
+    const limitNum = parseInt(limit as string);
+    const offsetNum = parseInt(offset as string);
+
+    // Check if template exists
+    const [template] = await db
+      .select()
+      .from(templates)
+      .where(eq(templates.id, id))
+      .limit(1);
+
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    let query = db
+      .select()
+      .from(templateRatings)
+      .where(eq(templateRatings.templateId, id));
+
+    // Sort ratings
+    switch (sortBy) {
+      case 'helpful':
+        query = query.orderBy(desc(templateRatings.helpful));
+        break;
+      case 'highest':
+        query = query.orderBy(desc(templateRatings.rating));
+        break;
+      case 'lowest':
+        query = query.orderBy(asc(templateRatings.rating));
+        break;
+      case 'recent':
+      default:
+        query = query.orderBy(desc(templateRatings.createdAt));
+    }
+
+    const ratings = await query.limit(limitNum).offset(offsetNum);
+
+    // Get rating distribution
+    const [distribution] = await db
+      .select({
+        avgRating: sql<number>`avg(${templateRatings.rating})`,
+        totalRatings: sql<number>`count(*)`,
+        five: sql<number>`count(*) filter (where ${templateRatings.rating} = 5)`,
+        four: sql<number>`count(*) filter (where ${templateRatings.rating} = 4)`,
+        three: sql<number>`count(*) filter (where ${templateRatings.rating} = 3)`,
+        two: sql<number>`count(*) filter (where ${templateRatings.rating} = 2)`,
+        one: sql<number>`count(*) filter (where ${templateRatings.rating} = 1)`
+      })
+      .from(templateRatings)
+      .where(eq(templateRatings.templateId, id));
+
+    res.json({
+      ratings,
+      stats: {
+        average: distribution?.avgRating ? Number(distribution.avgRating).toFixed(1) : '0',
+        total: Number(distribution?.totalRatings || 0),
+        distribution: {
+          5: Number(distribution?.five || 0),
+          4: Number(distribution?.four || 0),
+          3: Number(distribution?.three || 0),
+          2: Number(distribution?.two || 0),
+          1: Number(distribution?.one || 0)
+        }
+      },
+      pagination: {
+        total: Number(distribution?.totalRatings || 0),
+        limit: limitNum,
+        offset: offsetNum,
+        hasMore: offsetNum + limitNum < Number(distribution?.totalRatings || 0)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching template ratings:', error);
+    res.status(500).json({ error: 'Failed to fetch template ratings' });
   }
 });
 

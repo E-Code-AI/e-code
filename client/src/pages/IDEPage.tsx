@@ -59,7 +59,7 @@ import { GlobalSearchPanel } from '@/components/ide/GlobalSearchPanel';
 import { LogsViewerPanel } from '@/components/ide/LogsViewerPanel';
 
 // Additional missing components from EditorPage
-import { CommandPalette } from '@/components/editor/CommandPalette';
+import { CommandPalette } from '@/components/CommandPalette';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { EnvironmentVariables } from '@/components/EnvironmentVariables';
 import { DatabaseBrowser } from '@/components/DatabaseBrowser';

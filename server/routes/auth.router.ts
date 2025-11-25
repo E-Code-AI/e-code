@@ -824,6 +824,45 @@ export class AuthRouter {
         });
       }
     });
+
+    // WebSocket authentication token endpoint
+    // Generates a short-lived JWT token for WebSocket connections (e.g., background testing)
+    this.router.get("/api/auth/ws-token", this.ensureAuthenticated, async (req: Request, res: Response) => {
+      try {
+        const user = req.user;
+        if (!user) {
+          return res.status(401).json({ 
+            message: "Not authenticated",
+            code: "AUTH_REQUIRED"
+          });
+        }
+
+        // Generate a short-lived JWT token for WebSocket auth (5 minutes)
+        const jwt = await import('jsonwebtoken');
+        const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+        
+        const token = jwt.default.sign(
+          { 
+            userId: user.id, 
+            username: user.username,
+            type: 'websocket'
+          },
+          JWT_SECRET,
+          { expiresIn: '5m' }
+        );
+
+        res.json({ 
+          token,
+          expiresIn: 300 // 5 minutes in seconds
+        });
+      } catch (error: any) {
+        logger.error('WebSocket token generation error:', error);
+        res.status(500).json({ 
+          message: "Failed to generate WebSocket token",
+          code: "TOKEN_ERROR"
+        });
+      }
+    });
   }
 
   getRouter(): Router {

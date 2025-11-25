@@ -96,12 +96,12 @@ export type {
   UseContextMenuReturn,
 } from './components/ContextMenu';
 
-// Command Palette
-export { CommandPalette, useCommandPalette } from './components/CommandPalette';
+// Command Palette (re-exported from consolidated version)
+export { CommandPalette, useCommandPalette, generateDefaultCommands } from '@/components/CommandPalette';
 export type {
-  Command,
-  CommandPaletteProps,
-} from './components/CommandPalette';
+  CommandItem as Command,
+  CommandCategory,
+} from '@/components/CommandPalette';
 
 // Search & Replace
 export { SearchReplace } from './components/SearchReplace';
