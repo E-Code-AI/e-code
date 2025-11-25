@@ -140,6 +140,10 @@ export const users = pgTable("users", {
   usageBandwidthGb: decimal("usage_bandwidth_gb", { precision: 10, scale: 2 }).default('0.00'),
   usageDeployments: integer("usage_deployments").default(0),
   usageResetAt: timestamp("usage_reset_at"),
+  // Last billed totals (prevents double-charging on retries)
+  lastBilledComputeHours: decimal("last_billed_compute_hours", { precision: 10, scale: 2 }).default('0.00'),
+  lastBilledStorageGb: decimal("last_billed_storage_gb", { precision: 10, scale: 2 }).default('0.00'),
+  lastBilledBandwidthGb: decimal("last_billed_bandwidth_gb", { precision: 10, scale: 2 }).default('0.00'),
   subscriptionStatus: varchar("subscription_status"),
   subscriptionCurrentPeriodEnd: timestamp("subscription_current_period_end"),
   stripeConnectAccountId: varchar("stripe_connect_account_id"),
@@ -253,6 +257,59 @@ export const securityLogs = pgTable("security_logs", {
   metadata: jsonb("metadata").$type<Record<string, any>>(),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
+
+// Usage Events - Idempotent usage ingestion with deduplication
+export const usageEvents = pgTable("usage_events", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  idempotencyKey: varchar("idempotency_key", { length: 255 }).notNull(), // UUID or request ID
+  metric: varchar("metric", { length: 50 }).notNull(), // 'compute', 'storage', 'bandwidth', 'deployment'
+  reportedTotal: decimal("reported_total", { precision: 15, scale: 2 }).notNull(), // Absolute cumulative total
+  billedAmount: decimal("billed_amount", { precision: 10, scale: 2 }).notNull(), // Amount deducted from credits
+  creditsDeducted: decimal("credits_deducted", { precision: 10, scale: 2 }).notNull(),
+  payAsYouGo: decimal("pay_as_you_go", { precision: 10, scale: 2 }).notNull(),
+  allowanceUsed: decimal("allowance_used", { precision: 10, scale: 2 }).notNull(),
+  billingPeriod: varchar("billing_period", { length: 20 }).notNull(), // '2025-11' format
+  sequenceNumber: integer("sequence_number"), // Monotonic guard for ordering
+  processedAt: timestamp("processed_at").notNull().defaultNow(),
+  metadata: jsonb("metadata").$type<Record<string, any>>(),
+}, (table) => ({
+  uniqueIdempotency: unique("unique_idempotency_usage").on(table.userId, table.idempotencyKey, table.metric),
+  idxBillingPeriod: index("idx_usage_events_billing_period").on(table.userId, table.billingPeriod),
+}));
+
+// Usage Ledger - Monthly snapshots for proration and invoice reconciliation  
+export const usageLedger = pgTable("usage_ledger", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  billingPeriod: varchar("billing_period", { length: 20 }).notNull(), // '2025-11' format
+  snapshotType: varchar("snapshot_type", { length: 20 }).notNull(), // 'monthly_refill', 'plan_change', 'manual'
+  
+  // Usage totals at snapshot time
+  computeHoursTotal: decimal("compute_hours_total", { precision: 10, scale: 2 }).notNull(),
+  storageGbTotal: decimal("storage_gb_total", { precision: 10, scale: 2 }).notNull(),
+  bandwidthGbTotal: decimal("bandwidth_gb_total", { precision: 10, scale: 2 }).notNull(),
+  deploymentsTotal: integer("deployments_total").notNull(),
+  
+  // Billing breakdown at snapshot
+  creditsUsed: decimal("credits_used", { precision: 10, scale: 2 }).notNull(),
+  payAsYouGoTotal: decimal("pay_as_you_go_total", { precision: 10, scale: 2 }).notNull(),
+  allowanceUsedPercent: decimal("allowance_used_percent", { precision: 5, scale: 2 }),
+  
+  // Plan context at snapshot
+  subscriptionTier: subscriptionTierEnum("subscription_tier").notNull(),
+  creditsBalance: decimal("credits_balance", { precision: 10, scale: 2 }).notNull(),
+  creditsMonthlyAllowance: decimal("credits_monthly_allowance", { precision: 10, scale: 2 }).notNull(),
+  
+  // Stripe invoice reference
+  stripeInvoiceId: varchar("stripe_invoice_id"),
+  stripeInvoiceStatus: varchar("stripe_invoice_status"), // 'draft', 'open', 'paid', 'void'
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  metadata: jsonb("metadata").$type<Record<string, any>>(),
+}, (table) => ({
+  idxUserPeriod: index("idx_usage_ledger_user_period").on(table.userId, table.billingPeriod),
+}));
 
 // Terminal logs table for persistent console output storage
 export const terminalLogs = pgTable("terminal_logs", {
