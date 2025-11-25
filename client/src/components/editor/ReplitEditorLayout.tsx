@@ -175,7 +175,6 @@ export function ReplitEditorLayout({
       case 'git':
         return <ReplitGitPanel projectId={projectId} />;
       case 'debug':
-        return <ReplitDebuggerPanel projectId={projectId} />;
       case 'debugger':
         return <ReplitDebuggerPanel projectId={projectId} />;
       case 'database':
@@ -196,8 +195,6 @@ export function ReplitEditorLayout({
         return <ReplitSecretsPanel projectId={projectId} />;
       case 'themes':
         return <ReplitThemesPanel projectId={projectId} />;
-      case 'debugger':
-        return <ReplitDebuggerPanel projectId={projectId} />;
       case 'history':
         return <ReplitHistoryPanel projectId={projectId} />;
       case 'multiplayers':
