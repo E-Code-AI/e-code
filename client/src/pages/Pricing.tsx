@@ -100,41 +100,59 @@ export default function Pricing() {
       return [freeTier];
     }
 
-    const mappedTiers: PricingTier[] = apiPlans.map((plan) => {
-      const isCore = plan.name === 'Core';
-      const isPro = plan.name === 'Pro';
-      const isEnterprise = plan.name === 'Enterprise';
-
-      return {
-        name: plan.name,
-        description: isCore 
-          ? 'Essential tools for productive development'
-          : isPro 
-            ? 'For professional developers and small teams'
-            : 'For large teams and Fortune 500 companies',
-        monthlyPrice: plan.price,
-        yearlyPrice: plan.price,
-        popular: isPro,
-        enterprise: isEnterprise,
-        icon: isCore 
-          ? <Star className="h-6 w-6" />
-          : isPro
-            ? <Crown className="h-6 w-6" />
-            : <Building2 className="h-6 w-6" />,
-        gradient: isCore
-          ? 'from-blue-600 to-cyan-600'
-          : isPro
-            ? 'from-violet-600 to-fuchsia-600'
-            : 'from-amber-600 to-orange-600',
-        features: plan.features.map((f: string) => ({
-          text: f,
-          included: true,
-          highlight: false
-        })),
-        cta: isEnterprise ? 'Contact Sales' : `Start ${plan.name}`,
-        ctaVariant: isPro ? 'default' : isEnterprise ? 'default' : 'outline'
-      };
+    // Group plans by tier to avoid duplicates (monthly + yearly = 1 card per tier)
+    const tierGroups: Record<string, { monthly?: any; yearly?: any }> = {};
+    
+    apiPlans.forEach((plan) => {
+      const tierName = plan.tier || plan.name.toLowerCase();
+      if (!tierGroups[tierName]) {
+        tierGroups[tierName] = {};
+      }
+      if (plan.interval === 'month') {
+        tierGroups[tierName].monthly = plan;
+      } else if (plan.interval === 'year') {
+        tierGroups[tierName].yearly = plan;
+      }
     });
+
+    const mappedTiers: PricingTier[] = Object.entries(tierGroups)
+      .filter(([tierName]) => tierName !== 'free') // Free tier already added
+      .map(([tierName, plans]) => {
+        const plan = plans.monthly || plans.yearly;
+        const isCore = tierName === 'core';
+        const isTeams = tierName === 'teams';
+        const isEnterprise = tierName === 'enterprise';
+
+        return {
+          name: plan.name,
+          description: isCore 
+            ? 'Essential tools for productive development'
+            : isTeams 
+              ? 'For professional developers and small teams'
+              : 'For large teams and Fortune 500 companies',
+          monthlyPrice: plans.monthly?.price || plans.yearly?.price || 0,
+          yearlyPrice: plans.yearly?.price || plans.monthly?.price || 0,
+          popular: isCore,
+          enterprise: isEnterprise,
+          icon: isCore 
+            ? <Star className="h-6 w-6" />
+            : isTeams
+              ? <Users className="h-6 w-6" />
+              : <Building2 className="h-6 w-6" />,
+          gradient: isCore
+            ? 'from-blue-600 to-cyan-600'
+            : isTeams
+              ? 'from-violet-600 to-fuchsia-600'
+              : 'from-amber-600 to-orange-600',
+          features: plan.features.map((f: string) => ({
+            text: f,
+            included: true,
+            highlight: false
+          })),
+          cta: isEnterprise ? 'Contact Sales' : `Start ${plan.name}`,
+          ctaVariant: isCore ? 'default' : isEnterprise ? 'default' : 'outline'
+        };
+      });
 
     return [freeTier, ...mappedTiers];
   }, [apiPlans]);
