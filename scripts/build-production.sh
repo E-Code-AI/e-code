@@ -9,7 +9,7 @@ rm -rf dist server/public node_modules/.vite .vite
 
 # Step 2: Build frontend with optimizations
 echo "📦 Building optimized frontend assets..."
-NODE_ENV=production npx vite build
+NODE_ENV=production NODE_OPTIONS="--max-old-space-size=4096" npx vite build --config vite.production.config.ts
 
 # Step 3: Skip backend build - we'll use tsx in production
 echo "⚙️ Backend will use tsx in production (no build needed)..."
