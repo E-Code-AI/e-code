@@ -167,6 +167,8 @@ export const projects = pgTable("projects", {
   coverImage: text("cover_image"),
   isPinned: boolean("is_pinned").notNull().default(false),
   slug: text("slug").unique(),
+  // 🔥 REPLIT AGENT 3: Track currently active checkpoint (decoupled from chronological order)
+  currentCheckpointId: integer("current_checkpoint_id"), // FK to checkpoints.id (nullable - no checkpoint until first one created)
 });
 
 export const files = pgTable("files", {
