@@ -15,7 +15,7 @@ import { payAsYouGoQueue, users } from '@shared/schema';
 import { eq, sql } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { createLogger } from '../utils/logger';
-import { AlertService, AlertSeverity, AlertCategory } from '../services/alert-service';
+import { AlertService, AlertSeverity, AlertCategory, sendAlert } from '../services/alert-service';
 
 const logger = createLogger('payg-queue-processor');
 
@@ -189,9 +189,9 @@ async function processQueueItem(item: any): Promise<void> {
       // STEP 1: Try to use upcoming invoice from subscription (Stripe best practice)
       // This automatically attaches to the current billing cycle
       try {
-        const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
+        const upcomingInvoice = await stripe!.invoices.retrieve('upcoming', {
           customer: stripeCustomerId,
-        });
+        } as any);
         
         // Verify this invoice matches our billing period (within same month)
         // Use UTC to normalize time zones
@@ -201,7 +201,7 @@ async function processQueueItem(item: any): Promise<void> {
         
         if (upcomingYear === targetPeriod.year && upcomingMonth === targetPeriod.month) {
           // Use upcoming invoice - assign ID so invoice item attaches correctly
-          invoiceId = upcomingInvoice.id;
+          invoiceId = upcomingInvoice.id ?? null;
           useUpcomingInvoice = true;
           logger.info(`Using upcoming subscription invoice ${invoiceId} for period ${item.billing_period}`);
         }
@@ -213,7 +213,7 @@ async function processQueueItem(item: any): Promise<void> {
       // STEP 2: If no upcoming invoice, look for existing draft/open invoice
       // FIX: Only run if we're NOT using upcoming invoice
       if (!useUpcomingInvoice) {
-        const invoices = await stripe.invoices.list({
+        const invoices = await stripe!.invoices.list({
           customer: stripeCustomerId,
           limit: 20, // Check more invoices for robustness
         });
@@ -244,11 +244,11 @@ async function processQueueItem(item: any): Promise<void> {
         });
         
         if (matchingInvoice) {
-          invoiceId = matchingInvoice.id;
+          invoiceId = matchingInvoice.id ?? null;
           logger.info(`Found existing ${matchingInvoice.status} invoice ${invoiceId} for period ${item.billing_period} (matched via ${matchingInvoice.metadata?.billingPeriod ? 'metadata' : 'description/period'})`);
         } else {
           // STEP 3: Create new draft invoice if nothing found
-          const invoice = await stripe.invoices.create({
+          const invoice = await stripe!.invoices.create({
             customer: stripeCustomerId,
             description: `Pay-as-you-go usage - ${item.billing_period}`, // Deterministic format
             auto_advance: false, // Manual finalization for control
@@ -258,7 +258,7 @@ async function processQueueItem(item: any): Promise<void> {
               version: '2.0', // Track invoice schema version
             },
           });
-          invoiceId = invoice.id;
+          invoiceId = invoice.id ?? null;
           logger.info(`Created new draft invoice ${invoiceId} for period ${item.billing_period}`);
         }
       }
@@ -287,7 +287,7 @@ async function processQueueItem(item: any): Promise<void> {
       invoiceItemParams.invoice = invoiceId;
     }
     
-    const invoiceItem = await stripe.invoiceItems.create(invoiceItemParams, {
+    const invoiceItem = await stripe!.invoiceItems.create(invoiceItemParams, {
       idempotencyKey: item.idempotency_key, // CRITICAL: Prevents double-charging on retries
     });
 
@@ -346,7 +346,7 @@ async function processQueueItem(item: any): Promise<void> {
       });
 
       // Send critical alert for manual intervention
-      await AlertService.sendAlert({
+      await sendAlert({
         severity: AlertSeverity.CRITICAL,
         category: AlertCategory.BILLING,
         title: '💰 Pay-as-you-go Billing Failure',
