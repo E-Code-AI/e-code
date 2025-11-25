@@ -19,7 +19,7 @@ import { createLogger } from '../utils/logger';
 
 const logger = createLogger('tier-rate-limiter');
 
-type SubscriptionTier = 'free' | 'pro' | 'enterprise';
+type SubscriptionTier = 'free' | 'core' | 'teams' | 'enterprise';
 type LimitType = 'api' | 'auth'; // Streaming handled separately
 
 interface TierLimits {
@@ -33,9 +33,13 @@ const TIER_LIMITS: Record<SubscriptionTier, Record<LimitType, TierLimits>> = {
     api: { points: 100, duration: 60 },      // 100 req/min
     auth: { points: 5, duration: 900 },      // 5 req/15min
   },
-  pro: {
+  core: {
     api: { points: 1000, duration: 60 },     // 1000 req/min (10x)
     auth: { points: 20, duration: 900 },     // 20 req/15min (4x)
+  },
+  teams: {
+    api: { points: 5000, duration: 60 },     // 5000 req/min (50x)
+    auth: { points: 50, duration: 900 },     // 50 req/15min (10x)
   },
   enterprise: {
     api: { points: 10000, duration: 60 },    // 10000 req/min (100x)
@@ -46,7 +50,8 @@ const TIER_LIMITS: Record<SubscriptionTier, Record<LimitType, TierLimits>> = {
 // ✅ FORTUNE 500 FIX: Separate streaming limits (different structure than API/auth)
 const STREAMING_LIMITS: Record<SubscriptionTier, TierLimits> = {
   free: { points: 10, duration: 900 },        // 10 streams per 15min
-  pro: { points: 100, duration: 3600 },       // 100 streams per hour
+  core: { points: 100, duration: 3600 },      // 100 streams per hour
+  teams: { points: 500, duration: 3600 },     // 500 streams per hour
   enterprise: { points: 1000, duration: 3600 }, // 1000 streams per hour
 };
 
@@ -143,7 +148,7 @@ export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming'
           await logViolation(req, tier, 'streaming', error.consumedPoints || 1, limits.points);
           return res.status(429).json({
             error: 'Too many streaming requests',
-            message: `${tier === 'free' ? 'Free' : tier === 'pro' ? 'Pro' : 'Enterprise'} tier: Maximum ${limits.points} concurrent AI streams per ${limits.duration / 60} minutes. ${tier === 'free' ? 'Upgrade to Pro for higher limits.' : ''}`,
+            message: `${tier === 'free' ? 'Free' : tier === 'core' ? 'Core' : tier === 'teams' ? 'Teams' : 'Enterprise'} tier: Maximum ${limits.points} concurrent AI streams per ${limits.duration / 60} minutes. ${tier === 'free' ? 'Upgrade to Core for higher limits.' : ''}`,
             retryAfter: Math.ceil(error.msBeforeNext / 1000),
             tier,
             limit: limits.points,
@@ -170,7 +175,7 @@ export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming'
       const rateLimiterRes = await limiter.get(key);
       if (rateLimiterRes) {
         // ✅ TYPE SAFETY: limitType is guaranteed to be 'api' or 'auth' here (streaming returned early)
-        const limits = TIER_LIMITS[tier][limitType as LimitType];
+        const limits = TIER_LIMITS[tier]?.[limitType as LimitType] || TIER_LIMITS.free.api;
         res.setHeader('X-RateLimit-Limit', limits.points * DEV_MULTIPLIER);
         res.setHeader('X-RateLimit-Remaining', rateLimiterRes.remainingPoints || 0);
         res.setHeader('X-RateLimit-Reset', new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString());
@@ -180,9 +185,11 @@ export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming'
       next();
     } catch (rejRes: any) {
       const user = req.user as any;
-      const tier: SubscriptionTier = user?.subscriptionTier || 'free';
+      const rawTier = user?.subscriptionTier || 'free';
+      // ✅ SAFETY: Validate tier exists in TIER_LIMITS, fallback to 'free'
+      const tier: SubscriptionTier = (rawTier in TIER_LIMITS) ? rawTier : 'free';
       // ✅ TYPE SAFETY: limitType is guaranteed to be 'api' or 'auth' here (streaming returned early)
-      const limits = TIER_LIMITS[tier][limitType as LimitType];
+      const limits = TIER_LIMITS[tier]?.[limitType as LimitType] || TIER_LIMITS.free.api;
       const retryAfter = Math.round(rejRes.msBeforeNext / 1000) || 60;
       
       logger.warn('Rate limit exceeded', {
@@ -200,7 +207,9 @@ export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming'
       res.setHeader('Retry-After', retryAfter);
       res.setHeader('X-RateLimit-Limit', limits.points * DEV_MULTIPLIER);
       res.setHeader('X-RateLimit-Remaining', 0);
-      res.setHeader('X-RateLimit-Reset', new Date(Date.now() + rejRes.msBeforeNext).toISOString());
+      // ✅ SAFETY: Handle undefined msBeforeNext gracefully
+      const resetTime = rejRes?.msBeforeNext ? Date.now() + rejRes.msBeforeNext : Date.now() + 60000;
+      res.setHeader('X-RateLimit-Reset', new Date(resetTime).toISOString());
       res.setHeader('X-RateLimit-Tier', tier);
       
       res.status(429).json({
@@ -209,7 +218,7 @@ export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming'
         tier,
         limit: limits.points,
         retryAfter,
-        upgradeTo: tier === 'free' ? 'pro' : tier === 'pro' ? 'enterprise' : null,
+        upgradeTo: tier === 'free' ? 'core' : tier === 'core' ? 'teams' : tier === 'teams' ? 'enterprise' : null,
       });
     }
   };
