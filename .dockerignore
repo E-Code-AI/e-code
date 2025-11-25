@@ -2,17 +2,20 @@
 node_modules/
 npm-debug.log*
 yarn-error.log*
-# Keep package-lock.json for reproducible builds (Fortune 500 requirement)
-# package-lock.json  
 yarn.lock
 pnpm-lock.yaml
 
-# Development files
+# Git and version control
 .git/
 .gitignore
+.gitattributes
+
+# Environment files (NEVER include secrets)
 .env
+.env.*
 .env.local
 .env.*.local
+*.local
 
 # Build artifacts that will be regenerated
 dist/
@@ -21,6 +24,10 @@ temp/
 .cache/
 coverage/
 .nyc_output/
+.parcel-cache/
+.next/
+out/
+build/
 
 # Logs and temporary files
 logs/
@@ -36,8 +43,9 @@ logs/
 *.swo
 *~
 .DS_Store
+Thumbs.db
 
-# Test files
+# Test files (CRITICAL - save significant space)
 __tests__/
 *.test.ts
 *.test.tsx
@@ -47,50 +55,72 @@ test/
 tests/
 playwright/
 .playwright/
+playwright-report/
+test-results/
+e2e/
+cypress/
 
-# Documentation
+# Documentation (not needed in runtime)
 *.md
 docs/
-README.md
+documentation/
 PRODUCTION_READINESS.md
 audit-report.md
+CHANGELOG*
+LICENSE*
 
 # Development configuration
 tsconfig.check.json
 tsconfig.full.json
 .eslintrc*
 .prettierrc*
+prettier.config.*
+eslint.config.*
+.editorconfig
+.browserslistrc
+babel.config.*
+jest.config.*
+vitest.config.*
+playwright.config.*
 vite.config.ts.timestamp*
 
-# Mobile development (not needed for web deployment)
-mobile/
-android/
-ios/
-
-# Development-only directories (CRITICAL - save >2GB)
+# Development-only directories (CRITICAL - save >3GB)
 dokploy/
 sdk/
 vscode-extension/
 cli/
 github-copilot-extension/
+mobile/
+android/
+ios/
+containers/
 
 # Source maps (remove to save space)
 **/*.map
 dist/public/*.map
+*.js.map
+*.d.ts.map
 
-# CI/CD and Docker
+# CI/CD and Docker (not needed inside container)
 .github/
 .gitlab-ci.yml
 .travis.yml
+Jenkinsfile
+azure-pipelines.yml
+.circleci/
 Dockerfile
+docker-compose*
 .dockerignore
 
 # Replit specific
 .replit
 replit.nix
 .config/
+.upm/
+.breakpoints/
+.cache/
 
-# Large image assets
+# Large development image assets (keep client/public for production)
 attached_assets/
 generated-icon.png
 
@@ -98,6 +128,7 @@ generated-icon.png
 *.db
 *.sqlite
 *.sqlite3
+*.sql
 
 # Generated files (will be built during deployment)
 server/public/
@@ -110,3 +141,44 @@ containers/seccomp.json
 .npm/
 .yarn/
 .pnpm-store/
+.pnpm-debug.log
+
+# TypeScript build info
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Storybook and component documentation
+storybook/
+.storybook/
+chromatic/
+
+# Benchmarks and performance testing
+benchmarks/
+perf/
+
+# Secrets and credentials (should NEVER be included)
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+credentials/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# OS generated files
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# Package manager caches
+.npm/
+.yarn-integrity
+.yarn/cache
+.yarn/unplugged
+.yarn/install-state.gz
