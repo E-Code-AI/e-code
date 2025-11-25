@@ -48,7 +48,7 @@ export function aiUsageTracker(req: Request, res: Response, next: NextFunction) 
   const user = req.user as any;
   
   if (!user?.id) {
-    logger.debug('No authenticated user - skipping AI tracking');
+    // Silent skip for unauthenticated requests - this is expected behavior
     return next();
   }
 
@@ -160,7 +160,10 @@ export async function trackAiUsageManually(params: {
   metadata?: Record<string, any>;
 }) {
   try {
-    await aiMeteringService.trackUsage(params);
+    await aiMeteringService.trackUsage({
+      ...params,
+      status: params.status || 'success',
+    });
     logger.info(`AI usage tracked manually: user=${params.userId}, model=${params.model}, tokens=${params.tokensInput + params.tokensOutput}`);
   } catch (error) {
     logger.error('Failed to track AI usage manually', { error, params });
