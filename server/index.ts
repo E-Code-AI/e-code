@@ -297,6 +297,15 @@ app.get('/api/cors-health', async (_req, res) => {
       console.error('[WORKING SERVER] Failed to register agent autonomous routes:', error);
     }
 
+    // ✅ PHASE 1 CRITICAL FIX: Register Workspace Bootstrap routes (Replit-like flow)
+    try {
+      const workspaceBootstrapRouter = (await import('./routes/workspace-bootstrap.router')).default;
+      app.use('/api/workspace', workspaceBootstrapRouter);
+      console.log('[Workspace Bootstrap] Routes registered at /api/workspace/bootstrap - Replit-like agent flow enabled ✅');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register workspace bootstrap routes:', error);
+    }
+
     // ✅ FORTUNE 500 OBSERVABILITY: WebSocket Metrics routes
     try {
       const websocketMetricsRouter = (await import('./routes/websocket-metrics.router')).default;
