@@ -127,5 +127,3 @@ defaultBucketID = "replit-objstore-2566672f-a4a2-4a4f-94f0-4e6c88fa4e9b"
 [userenv]
 
 [userenv.shared]
-TESTING_VITE_STRIPE_PUBLIC_KEY = "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"
-TESTING_STRIPE_SECRET_KEY = "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"
