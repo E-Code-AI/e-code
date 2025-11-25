@@ -1,0 +1,46 @@
+~/workspace$ # 1. Marquer les fichiers résolus
+git add client/src/components/ErrorBoundary.tsx
+git add playwright.config.ts
+
+# 2. Supprimer les fichiers obsolètes du staging
+git rm DEPLOYMENT.md FORTUNE-500-README.md client/src/lib/analytics.ts client/src/lib/logger.ts client/src/lib/security.ts client/src/lib/testing.tsx 2>/dev/null
+
+# 3. Ajouter les autres fichiers de la branche
+git add .env.production.example .github/workflows/ci-cd-production.yml server/production.ts FINAL_MERGE_READY.md server/index.ts
+
+# 4. Finaliser le merge
+git commit -m "Merge: Production config with resolved conflicts"
+rm 'DEPLOYMENT.md'
+rm 'FORTUNE-500-README.md'
+rm 'client/src/lib/analytics.ts'
+rm 'client/src/lib/logger.ts'
+rm 'client/src/lib/security.ts'
+rm 'client/src/lib/testing.tsx'
+Can't find lefthook in PATH
+[main a649f329] Merge: Production config with resolved conflicts
+~/workspace$ # Ajouter tous les fichiers résolus et committer
+git add -A && git commit -m "Merge: Production config with resolved conflicts
+
+- Resolved ErrorBoundary.tsx conflict (kept Shadcn version)
+- Resolved playwright.config.ts conflict (merged timeouts)
+- Fixed ReplitAgent.tsx duplicate function
+- Removed obsolete files (analytics.ts, logger.ts, etc.)"
+Can't find lefthook in PATH
+[main add8654f] Merge: Production config with resolved conflicts
+ 2 files changed, 109 insertions(+), 12 deletions(-)
+ create mode 100644 attached_assets/Pasted--workspace-git-branch-d-pr-39-pr-40-pr-59-pr-64-pr-89-pr-90-pr-91-pr-92-replit-agent-error-the-b-1764077006532_1764077006534.txt
+~/workspace$ git push origin main
+Enumerating objects: 92, done.
+Counting objects: 100% (82/82), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (31/31), done.
+Writing objects: 100% (32/32), 5.73 KiB | 5.73 MiB/s, done.
+Total 32 (delta 26), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (26/26), completed with 14 local objects.
+remote: 
+remote: GitHub found 4 vulnerabilities on E-Code-AI/e-code's default branch (1 high, 3 moderate). To find out more, visit:
+remote:      https://github.com/E-Code-AI/e-code/security/dependabot
+remote: 
+To https://github.com/E-Code-AI/e-code.git
+   bfe0d15d..add8654f  main -> main
+~/workspace$ 
