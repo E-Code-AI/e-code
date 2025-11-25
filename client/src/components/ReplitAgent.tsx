@@ -1349,18 +1349,6 @@ What would you like me to build for you today?`,
     }
   };
 
-  // Progress logging
-  const addProgressLog = (type: 'info' | 'success' | 'warning' | 'error', message: string, file?: string) => {
-    const log = {
-      id: Date.now().toString(),
-      timestamp: new Date(),
-      message,
-      file,
-      type
-    };
-    setProgressLogs(prev => [...prev, log]);
-  };
-
   // Session management
   const createNewSession = () => {
     const sessionName = prompt('Enter session name:') || `Session ${sessions.length + 1}`;
