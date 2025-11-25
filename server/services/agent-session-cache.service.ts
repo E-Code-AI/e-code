@@ -28,8 +28,8 @@ const logger = createLogger('agent-session-cache');
 
 export interface CachedAgentSession {
   id: string;
-  projectId: string | null; // Schema uses varchar, not number
-  userId: string;
+  projectId: number | null; // ✅ FIX: Database uses integer, not varchar
+  userId: number;
   isActive: boolean | null;
   deviceId?: string | null; // Stored in metadata if needed
   deviceType?: string | null; // Stored in metadata if needed
@@ -176,8 +176,12 @@ export class AgentSessionCacheService {
     }
 
     // Must match project ID (allow null for shared sessions)
-    if (projectId !== null && session.projectId !== null && session.projectId !== projectId) {
-      return false;
+    // ✅ FIX: Convert projectId to number for comparison (URL params are strings, DB is integer)
+    if (projectId !== null && session.projectId !== null) {
+      const projectIdNum = parseInt(projectId, 10);
+      if (!isNaN(projectIdNum) && session.projectId !== projectIdNum) {
+        return false;
+      }
     }
 
     // Device validation (if provided via metadata)

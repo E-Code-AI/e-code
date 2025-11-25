@@ -1,4 +1,9 @@
-import { legacyAIProviderManager as aiProviderManager, type ChatMessage } from '../ai/ai-provider';
+import { aiProviderManager } from '../ai/ai-provider-manager';
+
+type ChatMessage = {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+};
 import { CodeAnalyzer } from '../ai/code-analyzer';
 import { createLogger } from '../utils/logger';
 import { LRUCache } from 'lru-cache';

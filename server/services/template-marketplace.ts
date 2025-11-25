@@ -18,7 +18,7 @@ export interface TemplateSearchOptions {
   difficulty?: string[];
   minRating?: number;
   maxPrice?: number;
-  authorId?: number;
+  authorId?: string;
   featured?: boolean;
   official?: boolean;
   community?: boolean;
@@ -28,14 +28,14 @@ export interface TemplateSearchOptions {
 }
 
 export interface TemplateWithDetails {
-  id: number;
+  id: string;
   slug: string;
   name: string;
   description: string;
   category: string;
   tags: string[];
   author: {
-    id?: number;
+    id?: string;
     name: string;
     verified: boolean;
     avatar?: string;
@@ -450,7 +450,7 @@ export class TemplateMarketplaceService {
   /**
    * Rate a template
    */
-  async rateTemplate(templateId: number, userId: number, rating: number, review?: string) {
+  async rateTemplate(templateId: string, userId: string, rating: number, review?: string) {
     try {
       // Check if user has already rated
       const existing = await db.select()
@@ -493,7 +493,7 @@ export class TemplateMarketplaceService {
   /**
    * Get similar templates
    */
-  async getSimilarTemplates(templateId: number, limit: number = 6): Promise<TemplateWithDetails[]> {
+  async getSimilarTemplates(templateId: string, limit: number = 6): Promise<TemplateWithDetails[]> {
     try {
       // Get the source template
       const source = await db.select()
@@ -629,7 +629,7 @@ export class TemplateMarketplaceService {
         featured: template.isFeatured,
         official: template.isOfficial,
         community: template.isCommunity,
-        published: template.isPublished,
+        published: template.published,
       },
       createdAt: template.createdAt,
       updatedAt: template.updatedAt,
@@ -661,7 +661,7 @@ export class TemplateMarketplaceService {
     templates.sort((a, b) => (b as any).trendingScore - (a as any).trendingScore);
   }
 
-  private async updateTemplateRating(templateId: number) {
+  private async updateTemplateRating(templateId: string) {
     try {
       const ratings = await db.select({
         avg: sql<number>`avg(${templateRatings.rating})`.as('avg'),

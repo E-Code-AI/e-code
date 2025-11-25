@@ -102,7 +102,7 @@ export default function Subscribe() {
     if (!selectedTier || !billingInterval) return;
     
     // Create subscription for selected tier
-    apiRequest("POST", "/api/create-subscription", { 
+    apiRequest("POST", "/api/payments/create-subscription", { 
       tier: selectedTier,
       interval: billingInterval 
     })

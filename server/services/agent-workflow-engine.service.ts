@@ -13,7 +13,9 @@ import { agentFileOperations } from './agent-file-operations.service';
 import { agentCommandExecution } from './agent-command-execution.service';
 import { agentToolFramework } from './agent-tool-framework.service';
 import { OpenAI } from 'openai';
-import { parseCommandSpec } from '../utils/command-parser';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('agent-workflow-engine');
 
 // Workflow step types
 export type WorkflowStepType = 'file_operation' | 'command' | 'tool' | 'database' | 'conditional' | 'parallel' | 'loop';
@@ -70,6 +72,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
   // Create and execute a workflow
   async executeWorkflow(
     sessionId: string,
+    projectId: number,
     name: string,
     description: string,
     steps: WorkflowStep[],
@@ -84,6 +87,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
       const [workflow] = await db.insert(agentWorkflows)
         .values({
           sessionId,
+          projectId,
           name,
           description,
           steps,
@@ -334,76 +338,6 @@ export class AgentWorkflowEngineService extends EventEmitter {
     }
   }
 
-  /**
-   * ✅ ARCHITECT RECOMMENDATION (Nov 23, 2025): Centralized task type → operation mapping
-   * Maps AI-generated task types to concrete file operations
-   * Normalizes case and handles multiple variants for resilience
-   */
-  private mapTaskTypeToOperation(taskType: string | undefined, configOperation: string | undefined): string {
-    // If operation is already explicitly provided, use it
-    if (configOperation) {
-      return configOperation;
-    }
-    
-    if (!taskType) {
-      throw new Error('Task type is undefined and no explicit operation provided');
-    }
-    
-    // ✅ ARCHITECT FIX: Normalize to lowercase for case-insensitive matching
-    const normalizedType = taskType.toLowerCase().trim();
-    
-    // Map common AI-generated task types to file operations
-    // Includes multiple variants and case-insensitive matching
-    const mapping: Record<string, string> = {
-      // Write/Create variants
-      'create_file': 'write',
-      'file_create': 'write',
-      'write_file': 'write',
-      'update_file': 'write',
-      'file_update': 'write',
-      'edit_file': 'write',
-      'file_edit': 'write',
-      'modify_file': 'write',
-      'make_file': 'write',
-      'new_file': 'write',
-      'add_file': 'write',
-      
-      // Read variants
-      'read_file': 'read',
-      'file_read': 'read',
-      'get_file': 'read',
-      'fetch_file': 'read',
-      
-      // Delete variants
-      'delete_file': 'delete',
-      'file_delete': 'delete',
-      'remove_file': 'delete',
-      'rm_file': 'delete',
-      'erase_file': 'delete',
-      
-      // List/Directory variants
-      'list_files': 'list',
-      'list_directory': 'list',
-      'list_dir': 'list',
-      'read_directory': 'list',
-      'get_files': 'list',
-      'browse_directory': 'list'
-    };
-    
-    const operation = mapping[normalizedType];
-    if (!operation) {
-      // ✅ ARCHITECT FIX: Log unknown type but don't crash workflow
-      logger.warn(`Unknown task type: "${taskType}" (normalized: "${normalizedType}"). Defaulting to 'write' operation.`, {
-        taskType,
-        normalizedType,
-        availableTypes: Object.keys(mapping)
-      });
-      return 'write'; // Default to write for unknown types
-    }
-    
-    return operation;
-  }
-
   // Execute file operation step
   private async executeFileOperation(
     config: any,
@@ -422,17 +356,55 @@ export class AgentWorkflowEngineService extends EventEmitter {
         throw new Error(`Task ${config.taskId} not found in plan store`);
       }
       
-      // ✅ FIX (Nov 23, 2025): Use centralized mapping instead of hardcoded create_file check
-      const operation = this.mapTaskTypeToOperation(task.type, config.operation);
+      // ✅ FIX (Nov 24, 2025): Handle multi-file tasks with fileIndex
+      // When orchestrator expands multi-file tasks, each step has fileIndex to select the right file
+      let fileData = task;
+      if (typeof config.fileIndex === 'number' && task.files && task.files[config.fileIndex]) {
+        fileData = task.files[config.fileIndex];
+      }
       
       // Merge task details into config (task has full file contents, commands, etc.)
+      // ✅ FIX (Nov 24, 2025): Support both 'type' and 'action' field names for operation mapping
+      const taskType = task.type || task.action || config.action;
+      let operation = config.operation;
+      
+      // Map file action types to internal operation names
+      // ✅ FIX (Nov 24, 2025): Support both plan task types (file_create/file_edit/config) AND config types (create_file/update_file)
+      if (taskType === 'file_create' || taskType === 'create_file' || taskType === 'update_file') {
+        operation = 'write';
+      } else if (taskType === 'file_edit' || taskType === 'config') {
+        operation = 'write';
+      } else if (taskType === 'read_file') {
+        operation = 'read';
+      } else if (taskType === 'delete_file') {
+        operation = 'delete';
+      } else if (taskType === 'list_files') {
+        operation = 'list';
+      }
+      
       effectiveConfig = {
         ...config,
-        ...task,
+        ...fileData,  // Use fileData instead of task to get specific file details
+        // Preserve original config values if not in task/file
         operation,
-        path: task.path || config.path,
-        content: task.content || config.content
+        path: fileData.path || config.path,
+        content: fileData.content || config.content,
+        outline: fileData.outline || config.outline,
+        language: fileData.language || config.language
       };
+    }
+    
+    // ✅ PHASE 2 EXECUTOR (Nov 23, 2025): Expand outline into content if needed
+    // When fallback plans provide outlines instead of content, generate actual file content
+    if (!effectiveConfig.content && effectiveConfig.outline) {
+      const { agentContentGenerator } = await import('./agent-content-generator.service');
+      const generatedFile = await agentContentGenerator.expandOutline({
+        path: effectiveConfig.path,
+        outline: effectiveConfig.outline,
+        language: effectiveConfig.language
+      });
+      effectiveConfig.content = generatedFile.content;
+      logger.info(`[WorkflowEngine] Expanded outline to content for ${effectiveConfig.path}`);
     }
     
     const { operation, path, content } = this.resolveVariables(effectiveConfig, state);
@@ -478,42 +450,16 @@ export class AgentWorkflowEngineService extends EventEmitter {
     context: any,
     state: WorkflowState
   ): Promise<any> {
-    let { command, args, workingDirectory, timeout } = this.resolveVariables(config, state);
+    const { command, args, workingDirectory, timeout } = this.resolveVariables(config, state);
     
-    // ✅ ARCHITECT FIX (Nov 23, 2025): Use dedicated command parser utility
-    // Properly handles quoted args, env vars, and unsupported shell operators
-    const parsed = parseCommandSpec({ command, args });
-    
-    // Check for unsupported features and reject gracefully
-    if (parsed.unsupportedFeatures.length > 0) {
-      throw new Error(
-        `Workflow contains unsupported shell features: ${parsed.unsupportedFeatures.join(', ')}. ` +
-        `Please split this into separate task entries in your plan.`
-      );
-    }
-    
-    logger.debug(
-      `[executeCommand] Parsed command: "${command}" → ` +
-      `executable="${parsed.executable}", ` +
-      `args=${JSON.stringify(parsed.commandArgs)}, ` +
-      `envPatch=${JSON.stringify(parsed.envPatch)}`
-    );
-    
-    // Merge environment patches
-    const mergedEnvironment = {
-      ...context.environment,
-      ...parsed.envPatch
-    };
-    
-    // Execute with sanitized components
     const result = await agentCommandExecution.executeCommand(
       context.sessionId,
-      parsed.executable,
-      parsed.commandArgs,
+      command,
+      args || [],
       {
         workingDirectory,
         timeout,
-        environment: mergedEnvironment
+        environment: context.environment
       },
       context.userId
     );

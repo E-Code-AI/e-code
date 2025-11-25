@@ -38,6 +38,7 @@ import {
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAICodeActions } from "@/hooks/use-ai-code-actions";
 import { registerAICodeCompletion, checkAICompletionAvailability } from "@/lib/ai-code-completion";
 import { registerMonacoEnhancements, MonacoFeaturesEnhancement } from "@/lib/monaco-features-enhancement";
 import { CollaborativeProvider } from "./CollaborativeProvider";
@@ -107,6 +108,9 @@ export function ReplitMonacoEditor({
   const [editorContent, setEditorContent] = useState("");
 
   const { toast } = useToast();
+  
+  // Listen for AI code action events and display results
+  const aiCodeActionsState = useAICodeActions();
 
   // Récupération du fichier actuel
   const { data: file, isLoading: fileLoading, error: fileError } = useQuery<EditorFile>({
@@ -277,6 +281,18 @@ export function ReplitMonacoEditor({
         enabled: aiCompletionsEnabled,
         mode: 'subword'
       },
+      // Enable lightbulb for AI code actions
+      lightbulb: {
+        enabled: monaco.editor.ShowLightbulbIconMode.On,
+      },
+      // Enable quick suggestions for better code actions visibility
+      quickSuggestions: {
+        other: true,
+        comments: false,
+        strings: false,
+      },
+      // Enable code lens for function-level AI actions
+      codeLens: true,
     });
 
     editorInstanceRef.current = editor;

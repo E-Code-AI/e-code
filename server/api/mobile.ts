@@ -171,14 +171,14 @@ router.post('/mobile/auth/login', async (req, res) => {
     }
     
     const user = await storage.getUserByUsername(username);
-    if (!user || !user.passwordHash) {
+    if (!user || !user.password) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Verify password with bcrypt
     let isValidPassword = false;
     try {
-      isValidPassword = await bcrypt.compare(password, user.passwordHash);
+      isValidPassword = await bcrypt.compare(password, user.password);
     } catch (bcryptError) {
       console.error('Password verification error:', bcryptError);
       return res.status(401).json({ message: 'Invalid credentials' });

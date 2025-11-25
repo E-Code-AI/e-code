@@ -86,6 +86,7 @@ export function TemplateCard({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
+        data-testid={`template-card-${template.id}`}
       >
         <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden">
           <div className="flex">
@@ -194,11 +195,11 @@ export function TemplateCard({
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={onFork}>
+                  <Button size="sm" variant="outline" onClick={onFork} data-testid={`fork-button-${template.id}`}>
                     <GitBranch className="h-4 w-4 mr-1" />
                     Fork
                   </Button>
-                  <Button size="sm" className="bg-orange-500 hover:bg-orange-600" onClick={onDeploy}>
+                  <Button size="sm" className="bg-orange-500 hover:bg-orange-600" onClick={onDeploy} data-testid={`deploy-button-${template.id}`}>
                     Deploy
                   </Button>
                 </div>
@@ -219,6 +220,7 @@ export function TemplateCard({
       exit={{ opacity: 0, scale: 0.95 }}
       whileHover={{ y: -4 }}
       transition={{ duration: 0.2 }}
+      data-testid={`template-card-${template.id}`}
     >
       <Card className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden group">
         {/* Thumbnail */}
@@ -235,11 +237,11 @@ export function TemplateCard({
                 onError={() => setImageError(true)}
               />
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); onClick(); }}>
+                <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); onClick(); }} data-testid={`preview-button-${template.id}`}>
                   <Eye className="h-4 w-4 mr-1" />
                   Preview
                 </Button>
-                <Button size="sm" className="bg-orange-500 hover:bg-orange-600" onClick={(e) => { e.stopPropagation(); onDeploy(); }}>
+                <Button size="sm" className="bg-orange-500 hover:bg-orange-600" onClick={(e) => { e.stopPropagation(); onDeploy(); }} data-testid={`deploy-now-button-${template.id}`}>
                   Deploy Now
                 </Button>
               </div>
@@ -250,7 +252,7 @@ export function TemplateCard({
             </div>
           )}
           {template.featured && (
-            <Badge className="absolute top-2 left-2 bg-orange-500">
+            <Badge className="absolute top-2 left-2 bg-orange-500" data-testid={`featured-badge-${template.id}`}>
               <Sparkles className="h-3 w-3 mr-1" />
               Featured
             </Badge>
@@ -355,11 +357,11 @@ export function TemplateCard({
 
           {/* Actions */}
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="flex-1" onClick={(e) => { e.stopPropagation(); onFork(); }}>
+            <Button size="sm" variant="outline" className="flex-1" onClick={(e) => { e.stopPropagation(); onFork(); }} data-testid={`fork-button-${template.id}`}>
               <GitBranch className="h-3 w-3 mr-1" />
               Fork
             </Button>
-            <Button size="sm" className="flex-1 bg-orange-500 hover:bg-orange-600" onClick={(e) => { e.stopPropagation(); onDeploy(); }}>
+            <Button size="sm" className="flex-1 bg-orange-500 hover:bg-orange-600" onClick={(e) => { e.stopPropagation(); onDeploy(); }} data-testid={`deploy-button-${template.id}`}>
               Deploy
             </Button>
           </div>

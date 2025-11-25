@@ -1,5 +1,10 @@
 import { Request, Response } from 'express';
-import { legacyAIProviderManager as aiProviderManager, type ChatMessage } from './ai/ai-provider';
+import { aiProviderManager } from './ai/ai-provider-manager';
+
+type ChatMessage = {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+};
 
 // Get available AI providers
 export async function getAvailableProviders(req: Request, res: Response) {
@@ -302,6 +307,119 @@ export async function generateTests(req: Request, res: Response) {
     
     res.status(500).json({ 
       error: 'Failed to generate tests',
+      details: error.message 
+    });
+  }
+}
+
+// 🔥 REPLIT AGENT 3: AI-Powered Code Actions (Inline Quick Fixes)
+// Handles: Explain, Debug, Test, Document, Optimize, Review, Search
+export async function handleCodeActions(req: Request, res: Response) {
+  try {
+    const { action, code, language, projectId, provider: providerName } = req.body;
+
+    if (!action || !code) {
+      return res.status(400).json({ error: 'Action and code are required' });
+    }
+
+    // Validate action type
+    const validActions = ['explain', 'debug', 'test', 'document', 'optimize', 'review', 'search'];
+    if (!validActions.includes(action)) {
+      return res.status(400).json({ 
+        error: `Invalid action: ${action}. Valid actions: ${validActions.join(', ')}` 
+      });
+    }
+
+    let provider;
+    if (providerName) {
+      provider = aiProviderManager.getProvider(providerName);
+      if (!provider) {
+        return res.status(404).json({ 
+          error: `Provider '${providerName}' not found`,
+          code: 'PROVIDER_NOT_FOUND'
+        });
+      }
+      if (!provider.isAvailable()) {
+        return res.status(503).json({ 
+          error: `Provider '${providerName}' is not configured. Please configure the required API key.`,
+          code: 'PROVIDER_NOT_CONFIGURED',
+          suggestion: 'Configure AI provider API keys using environment variables or Replit integrations'
+        });
+      }
+    } else {
+      provider = aiProviderManager.getDefaultProvider();
+    }
+
+    // Build action-specific prompts
+    const systemPrompts: Record<string, string> = {
+      explain: 'You are an expert programmer that provides clear, concise explanations of code. Explain what the code does, its purpose, any important patterns, and potential issues. Use markdown formatting.',
+      debug: 'You are an expert debugger. Analyze the code for bugs, errors, edge cases, and potential issues. Provide specific fixes and explanations. Use markdown formatting.',
+      test: 'You are an expert test engineer. Generate comprehensive unit tests for the given code using the appropriate testing framework for the language. Include edge cases and error scenarios. Return complete, runnable test code.',
+      document: 'You are an expert technical writer. Add comprehensive JSDoc/docstring comments to the code explaining parameters, return values, and functionality. Return the fully documented code.',
+      optimize: 'You are an expert performance engineer. Analyze the code for performance issues, memory leaks, and inefficiencies. Provide an optimized version with explanations. Return the improved code.',
+      review: 'You are a senior code reviewer. Review the code for: code quality, best practices, security issues, maintainability, and suggest improvements. Use markdown formatting.',
+      search: 'You are an expert code analyst. Analyze the code snippet and suggest keywords, libraries, patterns, or similar implementations to search for. Provide actionable search queries.',
+    };
+
+    const userPrompts: Record<string, string> = {
+      explain: `Explain this ${language || 'code'}:\n\n\`\`\`${language}\n${code}\n\`\`\``,
+      debug: `Debug this ${language || 'code'} and identify issues:\n\n\`\`\`${language}\n${code}\n\`\`\``,
+      test: `Generate unit tests for this ${language || 'code'}:\n\n\`\`\`${language}\n${code}\n\`\`\``,
+      document: `Add documentation to this ${language || 'code'}:\n\n\`\`\`${language}\n${code}\n\`\`\``,
+      optimize: `Optimize this ${language || 'code'} for better performance:\n\n\`\`\`${language}\n${code}\n\`\`\``,
+      review: `Review this ${language || 'code'} for quality and best practices:\n\n\`\`\`${language}\n${code}\n\`\`\``,
+      search: `Analyze this ${language || 'code'} and suggest search queries to find similar implementations:\n\n\`\`\`${language}\n${code}\n\`\`\``,
+    };
+
+    const messages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: systemPrompts[action],
+      },
+      {
+        role: 'user',
+        content: userPrompts[action],
+      },
+    ];
+
+    // Generate AI response
+    const result = await provider.generateChat(messages, 2048, 0.5);
+
+    // Return formatted result
+    const response: any = {
+      action,
+      result,
+      provider: provider.name,
+      language,
+    };
+
+    // For optimize/document actions, extract the code suggestion
+    if (action === 'optimize' || action === 'document') {
+      // Extract code blocks from markdown
+      const codeBlockRegex = /```[\w]*\n([\s\S]*?)```/g;
+      const matches = [...result.matchAll(codeBlockRegex)];
+      if (matches.length > 0) {
+        response.suggestion = matches[0][1].trim();
+      } else {
+        response.suggestion = result; // Fallback to full result
+      }
+    }
+
+    res.json(response);
+  } catch (error: any) {
+    console.error(`[AI Code Actions] Error processing ${req.body.action}:`, error);
+    
+    // Check if error is due to missing API keys
+    if (error.message?.includes('not configured') || error.message?.includes('Please configure')) {
+      return res.status(503).json({ 
+        error: error.message,
+        code: 'PROVIDER_NOT_CONFIGURED',
+        suggestion: 'Configure AI provider API keys using environment variables or Replit integrations'
+      });
+    }
+    
+    res.status(500).json({ 
+      error: `Failed to process AI code action: ${req.body.action}`,
       details: error.message 
     });
   }

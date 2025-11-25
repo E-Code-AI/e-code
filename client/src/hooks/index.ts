@@ -37,3 +37,6 @@ export {
 
 // Other Hooks
 export { useToast } from './use-toast';
+
+// AI Code Actions Hook (Monaco Editor Integration)
+export { useAICodeActions } from './use-ai-code-actions';

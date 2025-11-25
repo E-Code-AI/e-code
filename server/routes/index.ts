@@ -58,6 +58,10 @@ import logsViewerRouter from "./logs-viewer.router";
 import envVarsRouter from "./env-vars.router";
 import projectDataRouter from "./project-data.router";
 import codeGenerationRouter from "./code-generation.router";
+import syncRouter from "./sync";
+import backgroundTestsRouter from "./background-tests.router";
+import maxAutonomyRouter from "./max-autonomy.router";
+import { bountiesRouter } from "./bounties.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -255,6 +259,18 @@ export class MainRouter {
     
     // Environment Variables routes (Priorité 1 - Core IDE)
     app.use('/api/env-vars', tierRateLimiters.api, envVarsRouter);
+
+    // Multi-Device Sync routes (Workspace state, preferences, devices)
+    app.use('/api/sync', tierRateLimiters.api, syncRouter);
+    
+    // Background Testing routes (Replit Agent 3 auto-testing)
+    app.use('/api/background-tests', tierRateLimiters.api, backgroundTestsRouter);
+    
+    // Max Autonomy Mode routes (200+ minute autonomous sessions)
+    app.use('/api/autonomy', tierRateLimiters.streaming, maxAutonomyRouter);
+    
+    // Bounties Marketplace routes (Stripe Connect integration)
+    app.use('/api/bounties', tierRateLimiters.api, bountiesRouter);
   }
   
   /**

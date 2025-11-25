@@ -38,7 +38,7 @@ function getProjectIcon(project: Project) {
     'bg-gradient-to-br from-yellow-500 to-orange-600',
     'bg-gradient-to-br from-green-500 to-emerald-600',
   ];
-  const bgColor = colors[project.id.charCodeAt(0) % colors.length];
+  const bgColor = colors[project.id % colors.length];
   const firstLetter = project.name.charAt(0).toUpperCase();
 
   return (
@@ -86,7 +86,15 @@ export default function Dashboard() {
   const { data: recentProjects = [], isLoading } = useQuery<ProjectWithDeployment[]>({
     queryKey: ['/api/projects'],
     enabled: !!user,
-    select: (data) => data.slice(0, 12), // Show up to 12 recent projects
+    select: (data) => {
+      // Sort by most recent first (updatedAt descending)
+      const sorted = [...data].sort((a, b) => {
+        const dateA = new Date(b.updatedAt).getTime();
+        const dateB = new Date(a.updatedAt).getTime();
+        return dateA - dateB;
+      });
+      return sorted.slice(0, 12); // Show up to 12 recent projects
+    },
   });
 
   const handleCreateProject = async (e: React.FormEvent) => {

@@ -9,7 +9,8 @@ import {
   generateExplanation,
   convertCode,
   generateDocumentation,
-  generateTests
+  generateTests,
+  handleCodeActions
 } from '../ai';
 import { ensureAuthenticated } from '../middleware/auth';
 
@@ -22,5 +23,9 @@ router.post('/ai/explanation', ensureAuthenticated, generateExplanation);
 router.post('/ai/convert', ensureAuthenticated, convertCode);
 router.post('/ai/documentation', ensureAuthenticated, generateDocumentation);
 router.post('/ai/tests', ensureAuthenticated, generateTests);
+
+// 🔥 REPLIT AGENT 3: AI-Powered Inline Code Actions (Right-click + Lightbulb)
+// Handles: Explain, Debug, Test, Document, Optimize, Review, Search
+router.post('/ai/code-actions', ensureAuthenticated, handleCodeActions);
 
 export default router;

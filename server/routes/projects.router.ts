@@ -5,6 +5,7 @@ import { devAuthBypass, isAuthBypassEnabled } from "../dev-auth-bypass";
 import { csrfProtection } from "../middleware/csrf";
 import type { User, Project } from "@shared/schema";
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import { getProjectAIAgent } from '../services/project-ai-agent.service';
 import { aiApprovalQueue } from '../services/ai-approval-queue.service';
 import { aiSecurityService } from '../services/ai-security.service';
@@ -49,14 +50,21 @@ export class ProjectsRouter {
   };
 
   private ensureProjectAccess = async (req: Request, res: Response, next: NextFunction) => {
-    if (!this.restoreSessionUser(req)) {
+    // ✅ FIX (Nov 24, 2025): Allow anonymous access with bootstrap token for autonomous workspace creation
+    const hasSession = this.restoreSessionUser(req);
+    const bootstrapToken = req.query.bootstrap || req.headers['x-bootstrap-token'];
+    
+    // Require either session OR bootstrap token
+    if (!hasSession && !bootstrapToken) {
       return res.status(401).json({ 
-        message: "Unauthorized",
+        message: "Unauthorized - authentication or bootstrap token required",
         code: "AUTH_REQUIRED" 
       });
     }
     
-    const userId = (req.user as User).id;
+    // For authenticated users, use their user ID
+    // For anonymous users with bootstrap token, skip ownership check (token itself provides auth)
+    const userId = hasSession ? (req.user as User).id : null;
     const projectId = (req.params.projectId || req.params.id || '').toString();
 
     if (!projectId) {
@@ -96,6 +104,62 @@ export class ProjectsRouter {
     // Store the actual project ID for downstream use
     req.params.projectId = project.id;
     req.params.id = project.id;
+    
+    // ✅ FIX (Nov 24, 2025): Validate bootstrap token and enforce project-specific access
+    if (bootstrapToken) {
+      try {
+        // Decode and verify JWT token with shared secret (with development fallback)
+        const jwtSecret = process.env.JWT_SECRET || 'ecode-platform-bootstrap-secret-key';
+        
+        const decoded = jwt.verify(bootstrapToken as string, jwtSecret) as {
+          projectId: string;
+          userId: number;
+          conversationId?: string;
+          sessionId?: string;
+          timestamp?: number;
+        };
+        
+        // Enforce token is project-specific: payload.projectId must match requested project
+        // Normalize both to strings for comparison (token may have string ID, project has number)
+        const tokenProjectId = String(decoded.projectId);
+        const actualProjectId = String(project.id);
+        
+        if (tokenProjectId !== actualProjectId) {
+          console.warn('[ensureProjectAccess] Bootstrap token project mismatch:', {
+            tokenProjectId,
+            actualProjectId,
+            tokenProjectIdType: typeof decoded.projectId,
+            actualProjectIdType: typeof project.id
+          });
+          return res.status(403).json({
+            message: "Bootstrap token invalid for this project",
+            code: "BOOTSTRAP_TOKEN_MISMATCH"
+          });
+        }
+        
+        // Token is valid and project-specific - grant access
+        console.log('[ensureProjectAccess] Bootstrap token validated for project:', project.id);
+        return next();
+        
+      } catch (error) {
+        // Invalid or expired token
+        console.error('[ensureProjectAccess] Bootstrap token validation failed:', error);
+        return res.status(401).json({
+          message: "Invalid or expired bootstrap token",
+          code: "BOOTSTRAP_TOKEN_INVALID",
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+    
+    // For authenticated users, check ownership/collaboration/visibility
+    if (!userId) {
+      // Should not reach here (would have failed earlier auth check)
+      return res.status(401).json({
+        message: "Unauthorized",
+        code: "AUTH_REQUIRED"
+      });
+    }
     
     // Check if user is owner
     if (project.ownerId === userId) {

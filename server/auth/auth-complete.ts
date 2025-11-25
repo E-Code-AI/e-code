@@ -358,7 +358,7 @@ export const handleLogin = async (req: Request, res: Response) => {
     }
 
     // Verify password
-    const passwordValid = await passwordSecurity.verify(password, user.passwordHash);
+    const passwordValid = await passwordSecurity.verify(password, user.password);
     if (!passwordValid) {
       await lockoutManager.recordFailedAttempt(username, ip);
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -478,7 +478,7 @@ export const handleRegister = async (req: Request, res: Response) => {
     }
 
     // Hash password
-    const passwordHash = await passwordSecurity.hash(password);
+    const password = await passwordSecurity.hash(password);
 
     // Create user
     const userId = crypto.randomUUID();
@@ -486,7 +486,7 @@ export const handleRegister = async (req: Request, res: Response) => {
       id: userId,
       username,
       email: emailValidation.normalize(email),
-      passwordHash,
+      password,
       role: 'user',
       createdAt: new Date(),
     });

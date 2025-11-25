@@ -16,18 +16,22 @@ class AgentPlanStoreService {
   /**
    * Store a complete execution plan
    * @param sessionId - Agent session ID
+   * @param projectId - Project ID
    * @param plan - Complete plan from AI provider
    * @returns Created plan record
    */
-  async storePlan(sessionId: string, plan: any): Promise<AgentPlan> {
+  async storePlan(sessionId: string, projectId: number, plan: any): Promise<AgentPlan> {
     try {
       const planData: InsertAgentPlan = {
         sessionId,
+        projectId,
         planId: plan.id,
         goal: plan.goal || plan.prompt || 'Autonomous execution',
         tasks: plan.tasks,
         estimatedTime: plan.estimatedTime,
         status: 'pending',
+        totalTokens: plan.totalTokens || 0,
+        totalCost: plan.totalCost || '0',
         metadata: {
           provider: plan.provider,
           fallbackChain: plan.fallbackChain,

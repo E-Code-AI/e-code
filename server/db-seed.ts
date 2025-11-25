@@ -19,7 +19,7 @@ export async function seedDatabase() {
       const hashedPassword = await hashPassword(testPassword);
       testUser = await storage.createUser({
         username: "testuser",
-        passwordHash: hashedPassword,
+        password: hashedPassword,
         email: "testuser@test.com",
         displayName: "Test User",
       });
@@ -141,7 +141,7 @@ This project is automatically created for E2E testing.
       const adminHashedPassword = await hashPassword(adminPassword);
       const adminUser = await storage.createUser({
         username: "admin",
-        passwordHash: adminHashedPassword,
+        password: adminHashedPassword,
         email: "admin@test.com",
         displayName: "Admin User",
       });
