@@ -46,25 +46,31 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 **Complete production-ready Stripe integration** for subscription billing and usage-based pricing with comprehensive security patterns.
 
 #### Backend Configuration
-- **StripePaymentService** (`server/payments/stripe-service.ts`) - Core Stripe API integration
+- **StripePaymentService** (`server/payments/stripe-service.ts`) - Core Stripe API integration with plan definitions
 - **StripeBillingService** (`server/services/stripe-billing-service.ts`) - Subscription management and metered billing
 - **BountyPaymentService** (`server/services/bounty-payment-service.ts`) - Escrow and payout handling
 - **Stripe Usage Worker** (`server/workflows/stripe-usage-worker.ts`) - Automated billing queue processor (runs every 30s)
 
-#### API Routes (`/api/payments/*`)
-All routes require authentication via `ensureAuthenticated` middleware:
-- **GET /api/payments/plans** - Returns all subscription plans (Core $20, Pro $40, Enterprise $200)
-- **POST /api/payments/create-subscription** - Creates new Stripe subscription
+#### API Routes
+All routes are mounted at `/api/payments/*`. Most routes require authentication via `ensureAuthenticated` middleware except where noted:
+
+**Public Routes:**
+- **GET /api/payments/plans** - Returns all subscription plans (Core $20, Pro $40, Enterprise $200) with features and limits (no auth required)
+- **POST /api/payments/webhook** - Stripe webhook handler with signature validation (no auth required, validates webhook signature instead)
+
+**Protected Routes (require authentication):**
+- **POST /api/payments/create-subscription** - Creates new Stripe subscription with payment intent
 - **POST /api/payments/cancel-subscription** - Cancels active subscription
 - **POST /api/payments/update-subscription** - Modifies subscription plan
 - **POST /api/payments/create-payment-intent** - One-time payments
 - **GET /api/payments/subscription-status** - Current user subscription status
-- **POST /api/payments/webhook** - Stripe webhook handler (validates signature)
+- **GET /api/payments/billing-history** - Retrieves user's billing history
+- **POST /api/payments/record-usage** - Records usage for metered billing
 
-#### Subscription Plans
-1. **Core**: $20/month - `prod_SmqeF8z5hVEDgn` - 5 private projects, 10GB storage, 100 CPU hours/month
-2. **Pro**: $40/month - `prod_SmqqkOPRY15MGD` - Unlimited projects, 50GB storage, 500 CPU hours/month
-3. **Enterprise**: $200/month - `price_1RrHLq2VSIgdqPLP9Z9KniIZ` - 1TB storage, unlimited CPU, SLA guarantee
+#### Subscription Plans (Backend Implementation)
+1. **Core**: $20/month - 5 private projects, 2 collaborators, 10GB storage, 100 CPU hours/month, 10 deployments/month
+2. **Pro**: $40/month - Unlimited projects/collaborators, 50GB storage, 500 CPU hours/month, unlimited deployments, priority support
+3. **Enterprise**: $200/month - Everything in Pro + custom domains, SSO/SAML, dedicated support, SLA guarantee, 1TB storage, unlimited CPU hours
 
 #### Usage-Based Pricing (Metered)
 - **Compute**: `STRIPE_PRICE_ID_COMPUTE` - Per CPU hour beyond plan limits
