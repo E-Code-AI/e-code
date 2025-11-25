@@ -115,7 +115,7 @@ export function TaskMessage({ tasks, className }: TaskMessageProps) {
             >
               <Collapsible open={isExpanded} onOpenChange={() => toggleTask(task.id)}>
                 <CollapsibleTrigger className="w-full">
-                  <div className="flex items-start gap-3 p-3 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                  <div className="flex items-start gap-3 p-3 min-h-[44px] cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors touch-manipulation">
                     {/* Status Icon */}
                     <div className="flex-shrink-0 mt-0.5">
                       <Icon className={cn("h-4 w-4", config.color, task.status === 'in_progress' && 'animate-spin')} />

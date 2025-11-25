@@ -62,6 +62,9 @@ export interface Action {
   type: ActionType;
   path?: string;
   content?: string;
+  oldContent?: string; // For edit_file operations - shows diff
+  newContent?: string; // For edit_file operations - shows diff
+  language?: string; // Language for syntax highlighting in diff
   command?: string;
   package?: string;
   description: string;
