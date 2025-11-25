@@ -348,6 +348,15 @@ app.get('/api/cors-health', async (_req, res) => {
       console.error('[WORKING SERVER] Failed to register checkpoints routes:', error);
     }
 
+    // ✅ STRIPE PAYMENTS: Payment and subscription routes
+    try {
+      const paymentsRouter = (await import('./routes/payments.router')).default;
+      app.use('/api/payments', paymentsRouter);
+      console.log('[Stripe Payments] Routes registered at /api/payments');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register payments routes:', error);
+    }
+
     // ✅ AGENT CONTEXT: Repository overview routes
     try {
       const agentContextRouter = (await import('./agent/routes/agent-context')).default;
