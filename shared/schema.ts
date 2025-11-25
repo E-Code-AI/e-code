@@ -30,7 +30,7 @@ export const reviewStatusEnum = pgEnum('review_status', ['pending', 'approved', 
 export const mentorshipStatusEnum = pgEnum('mentorship_status', ['active', 'completed', 'cancelled']);
 export const challengeStatusEnum = pgEnum('challenge_status', ['draft', 'published', 'archived']);
 export const submissionStatusEnum = pgEnum('submission_status', ['pending', 'accepted', 'rejected']);
-export const subscriptionTierEnum = pgEnum('subscription_tier', ['free', 'pro', 'enterprise']);
+export const subscriptionTierEnum = pgEnum('subscription_tier', ['free', 'core', 'teams', 'enterprise']);
 // AI Models - Production enum (26 values: legacy + new)
 export const aiModelEnum = pgEnum('ai_model', [
   // Legacy models (kept for backward compatibility)
@@ -123,6 +123,23 @@ export const users = pgTable("users", {
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   stripePriceId: varchar("stripe_price_id"),
+  subscriptionTier: subscriptionTierEnum("subscription_tier").default('free'),
+  subscriptionPeriodEnd: timestamp("subscription_period_end"),
+  // Credits System (Replit-style)
+  creditsBalance: decimal("credits_balance", { precision: 10, scale: 2 }).default('0.00'),
+  creditsMonthlyAllowance: decimal("credits_monthly_allowance", { precision: 10, scale: 2 }).default('0.00'),
+  lastCreditRefill: timestamp("last_credit_refill"),
+  // Resource Allowances (included in plan)
+  allowanceVcpus: integer("allowance_vcpus").default(1),
+  allowanceRamGb: integer("allowance_ram_gb").default(2),
+  allowanceStorageGb: integer("allowance_storage_gb").default(1),
+  allowanceBandwidthGb: integer("allowance_bandwidth_gb").default(1),
+  // Usage Tracking (current month)
+  usageComputeHours: decimal("usage_compute_hours", { precision: 10, scale: 2 }).default('0.00'),
+  usageStorageGb: decimal("usage_storage_gb", { precision: 10, scale: 2 }).default('0.00'),
+  usageBandwidthGb: decimal("usage_bandwidth_gb", { precision: 10, scale: 2 }).default('0.00'),
+  usageDeployments: integer("usage_deployments").default(0),
+  usageResetAt: timestamp("usage_reset_at"),
   subscriptionStatus: varchar("subscription_status"),
   subscriptionCurrentPeriodEnd: timestamp("subscription_current_period_end"),
   stripeConnectAccountId: varchar("stripe_connect_account_id"),

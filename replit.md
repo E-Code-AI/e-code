@@ -43,11 +43,17 @@ Core features include a Monaco Code Editor with advanced enhancements (Git UI, m
 A PostgreSQL database stores user data, project hierarchies, AI agent sessions, deployment history, subscription management, and AI optimization monitoring. Security measures include CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system provides server-sent event streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API with Prometheus metrics. A two-tier database API architecture (Admin and Project Data APIs) is used with integrated security. Docker builds are optimized for small image sizes. Security enhancements include authentication and authorization for repository overview and templates APIs, context route timeouts, file system scanning limits, and project path scoping.
 
 ### Stripe Payment Integration
-**Complete production-ready Stripe integration** for subscription billing and usage-based pricing with comprehensive security patterns.
+**Complete production-ready Stripe integration** for subscription billing with **Replit-style hybrid pricing model**:
+1. Fixed subscription (monthly/yearly)
+2. Monthly credits included in plan
+3. Resource allowances (vCPUs, RAM, storage, bandwidth)
+4. Pay-as-you-go when credits exhausted
 
 #### Backend Configuration
 - **StripePaymentService** (`server/payments/stripe-service.ts`) - Core Stripe API integration with plan definitions
 - **StripeBillingService** (`server/services/stripe-billing-service.ts`) - Subscription management and metered billing
+- **CreditsService** (`server/services/credits-service.ts`) - Credits balance, refills, allowance tracking, and pay-as-you-go logic
+- **Pricing Constants** (`server/payments/pricing-constants.ts`) - Metered prices matching Replit exactly
 - **BountyPaymentService** (`server/services/bounty-payment-service.ts`) - Escrow and payout handling
 - **Stripe Usage Worker** (`server/workflows/stripe-usage-worker.ts`) - Automated billing queue processor (runs every 30s)
 
@@ -68,17 +74,29 @@ All routes are mounted at `/api/payments/*`. Most routes require authentication 
 - **POST /api/payments/record-usage** - Records usage for metered billing
 
 #### Subscription Plans (Backend Implementation)
-1. **Core**: $20/month - 5 private projects, 2 collaborators, 10GB storage, 100 CPU hours/month, 10 deployments/month
-2. **Pro**: $40/month - Unlimited projects/collaborators, 50GB storage, 500 CPU hours/month, unlimited deployments, priority support
-3. **Enterprise**: $200/month - Everything in Pro + custom domains, SSO/SAML, dedicated support, SLA guarantee, 1TB storage, unlimited CPU hours
+1. **Starter (Free)**: $0/month - $3 credits/month, 1 vCPU, 2GB RAM, 1GB storage, 1GB bandwidth, 10 public apps
+2. **Core**: $25/month ($20 yearly) - $25 credits/month, 4 vCPUs, 8GB RAM, 50GB storage, 100GB bandwidth, unlimited development time
+3. **Teams**: $40/user/month ($35 yearly) - $40 credits/month, 8 vCPUs, 16GB RAM, 256GB storage, 1TB bandwidth, unlimited collaborators
+4. **Enterprise**: Custom pricing - $100 credits/month, up to 64 vCPUs, 128GB RAM, 256GB+ storage, 10TB+ bandwidth, SSO/SAML, dedicated support
 
-#### Usage-Based Pricing (Metered)
-- **Compute**: `STRIPE_PRICE_ID_COMPUTE` - Per CPU hour beyond plan limits
-- **Storage**: `STRIPE_PRICE_ID_STORAGE` - Per GB/month beyond plan limits
-- **Bandwidth**: `STRIPE_PRICE_ID_BANDWIDTH` - Per GB transferred
-- **Deployments**: `STRIPE_PRICE_ID_DEPLOYMENT` - Per deployment beyond limits
-- **Database**: `STRIPE_PRICE_ID_DATABASE` - Per GB database storage
-- **AI Agent Usage**: `STRIPE_PRICE_ID_AGENT_USAGE` - Per AI request
+#### Hybrid Pricing Architecture (Replit Model)
+
+**Flow**: `Usage → Check Allowance → Deduct Credits → Pay-as-you-go`
+
+**Metered Prices (Pay-as-you-go when credits exhausted)**:
+- **Compute Boost**: $0.36/hour (4 vCPUs) = $0.09/vCPU hour
+- **App Storage**: $0.03/GB/month beyond allowance
+- **PostgreSQL Storage**: $1.50/GB/month
+- **PostgreSQL Compute**: $0.16/compute hour
+- **Outbound Bandwidth**: $0.10/GB beyond allowance
+- **Autoscale Deployments**: $1/month base + $1 per million compute units
+- **Scheduled Deployments**: $1/month base + $0.000061/second
+- **AI Agent**: $0.25-$5.00 per task (effort-based)
+
+**Database Schema Additions**:
+- Credits system: `creditsBalance`, `creditsMonthlyAllowance`, `lastCreditRefill`
+- Resource allowances: `allowanceVcpus`, `allowanceRamGb`, `allowanceStorageGb`, `allowanceBandwidthGb`
+- Usage tracking: `usageComputeHours`, `usageStorageGb`, `usageBandwidthGb`, `usageDeployments`
 
 #### Environment Variables
 **Shared Environment (Production & Development):**
