@@ -1,0 +1,109 @@
+~/workspace$ git branch -d pr-39 pr-40 pr-59 pr-64 pr-89 pr-90 pr-91 pr-92 replit-agent
+error: the branch 'replit-agent' is not fully merged
+hint: If you are sure you want to delete it, run 'git branch -D replit-agent'
+hint: Disable this message with "git config set advice.forceDeleteBranch false"
+Deleted branch pr-39 (was 217962e6).
+Deleted branch pr-40 (was dc350409).
+Deleted branch pr-59 (was aea2304e).
+Deleted branch pr-64 (was 36bd4830).
+Deleted branch pr-89 (was 3b34e06d).
+Deleted branch pr-90 (was 4b63363a).
+Deleted branch pr-91 (was 7b2cfc1a).
+Deleted branch pr-92 (was 670d0c34).
+~/workspace$ # 1. Supprimer les branches locales obsolètes
+git branch -d pr-39 pr-40 pr-59 pr-64 pr-89 pr-90 pr-91 pr-92 replit-agent
+
+# 2. Nettoyer les références remote obsolètes
+git remote prune origin
+
+# 3. Supprimer les branches remote (optionnel - attention!)
+git push origin --delete claude/complete-design-elements-01Fwv6os6wLVysqsJUKU5SQN
+# ... répéter pour chaque branche à supprimer
+error: branch 'pr-39' not found
+error: branch 'pr-40' not found
+error: branch 'pr-59' not found
+error: branch 'pr-64' not found
+error: branch 'pr-89' not found
+error: branch 'pr-90' not found
+error: branch 'pr-91' not found
+error: branch 'pr-92' not found
+error: the branch 'replit-agent' is not fully merged
+hint: If you are sure you want to delete it, run 'git branch -D replit-agent'
+hint: Disable this message with "git config set advice.forceDeleteBranch false"
+remote: 
+remote: GitHub found 4 vulnerabilities on E-Code-AI/e-code's default branch (1 high, 3 moderate). To find out more, visit:
+remote:      https://github.com/E-Code-AI/e-code/security/dependabot
+remote: 
+To https://github.com/E-Code-AI/e-code.git
+ - [deleted]           claude/complete-design-elements-01Fwv6os6wLVysqsJUKU5SQN
+~/workspace$ git merge origin/claude/senior-engineer-profile-01GFcNh89EgSyfcnAdPB7gMV -m "Merge: Documentation and analysis"
+Can't find lefthook in PATH
+Merge made by the 'ort' strategy.
+ CURRENT_STATE_ANALYSIS.md | 240 +++++++++++++++++++++++++++++++
+ TESTING_GUIDE.md          | 781 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ mobile/package.json       |   3 +-
+ 3 files changed, 1023 insertions(+), 1 deletion(-)
+ create mode 100644 CURRENT_STATE_ANALYSIS.md
+ create mode 100644 TESTING_GUIDE.md
+~/workspace$ git merge origin/claude/list-platform-requirements-01LcdxxUVHQsrkgE2yCXdjwY -m "Merge: Replit-style agent UX"
+Auto-merging client/src/components/ReplitAgent.tsx
+Auto-merging client/src/index.css
+Auto-merging client/src/pages/IDEPage.tsx
+Auto-merging server/index.ts
+Can't find lefthook in PATH
+Merge made by the 'ort' strategy.
+ client/src/components/ReplitAgent.tsx                      | 264 ++++++++++++++++++++++++++++++++++++++++++++++++----
+ client/src/components/agent/ReplitProgressBar.tsx          | 152 ++++++++++++++++++++++++++++++
+ client/src/components/agent/StopButton.tsx                 |  68 ++++++++++++++
+ client/src/components/agent/messages/ActionMessage.tsx     |  24 ++++-
+ client/src/components/agent/messages/MessageRenderer.tsx   |  47 ++++++++--
+ client/src/components/agent/messages/StreamingSkeleton.tsx | 109 ++++++++++++++++++++++
+ client/src/components/agent/messages/TaskMessage.tsx       |   2 +-
+ client/src/components/agent/messages/VibingAnimation.tsx   |  35 ++++---
+ client/src/components/agent/messages/index.ts              |   1 +
+ client/src/components/agent/messages/types.ts              |   3 +
+ client/src/index.css                                       |   1 +
+ client/src/pages/IDEPage.tsx                               |  47 +++++++++-
+ client/src/styles/agent-animations.css                     | 332 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ server/index.ts                                            |   9 ++
+ 14 files changed, 1043 insertions(+), 51 deletions(-)
+ create mode 100644 client/src/components/agent/ReplitProgressBar.tsx
+ create mode 100644 client/src/components/agent/StopButton.tsx
+ create mode 100644 client/src/components/agent/messages/StreamingSkeleton.tsx
+ create mode 100644 client/src/styles/agent-animations.css
+~/workspace$ git merge origin/claude/mobile-ide-design-013dabHxvuaU5xy1Nv7LQxzh
+CONFLICT (modify/delete): DEPLOYMENT.md deleted in HEAD and modified in origin/claude/mobile-ide-design-013dabHxvuaU5xy1Nv7LQxzh.  Version origin/claude/mobile-ide-design-013dabHxvuaU5xy1Nv7LQxzh of DEPLOYMENT.md left in tree.
+CONFLICT (modify/delete): FORTUNE-500-README.md deleted in HEAD and modified in origin/claude/mobile-ide-design-013dabHxvuaU5xy1Nv7LQxzh.  Version origin/claude/mobile-ide-design-013dabHxvuaU5xy1Nv7LQxzh of FORTUNE-500-README.md left in tree.
+Auto-merging client/src/components/ErrorBoundary.tsx
+CONFLICT (content): Merge conflict in client/src/components/ErrorBoundary.tsx
+CONFLICT (modify/delete): client/src/lib/analytics.ts deleted in HEAD and modified in origin/claude/mobile-ide-design-013dabHxvuaU5xy1Nv7LQxzh.  Version origin/claude/mobile-ide-design-013dabHxvuaU5xy1Nv7LQxzh of client/src/lib/analytics.ts left in tree.
+CONFLICT (modify/delete): client/src/lib/logger.ts deleted in HEAD and modified in origin/claude/mobile-ide-design-013dabHxvuaU5xy1Nv7LQxzh.  Version origin/claude/mobile-ide-design-013dabHxvuaU5xy1Nv7LQxzh of client/src/lib/logger.ts left in tree.
+CONFLICT (modify/delete): client/src/lib/security.ts deleted in HEAD and modified in origin/claude/mobile-ide-design-013dabHxvuaU5xy1Nv7LQxzh.  Version origin/claude/mobile-ide-design-013dabHxvuaU5xy1Nv7LQxzh of client/src/lib/security.ts left in tree.
+CONFLICT (rename/delete): client/src/lib/testing.ts renamed to client/src/lib/testing.tsx in origin/claude/mobile-ide-design-013dabHxvuaU5xy1Nv7LQxzh, but deleted in HEAD.
+Auto-merging playwright.config.ts
+CONFLICT (content): Merge conflict in playwright.config.ts
+Auto-merging server/index.ts
+Automatic merge failed; fix conflicts and then commit the result.
+~/workspace$ # 1. Merger la documentation (safe)
+git merge origin/claude/senior-engineer-profile-01GFcNh89EgSyfcnAdPB7gMV -m "Merge: Documentation and analysis"
+
+# 2. Merger l'agent UX (safe)
+git merge origin/claude/list-platform-requirements-01LcdxxUVHQsrkgE2yCXdjwY -m "Merge: Replit-style agent UX"
+
+# 3. Pour la branche avec conflits, vous devrez résoudre manuellement
+git merge origin/claude/mobile-ide-design-013dabHxvuaU5xy1Nv7LQxzh
+# → Résoudre les conflits dans ErrorBoundary.tsx et playwright.config.ts
+# → git add . && git commit
+error: Merging is not possible because you have unmerged files.
+hint: Fix them up in the work tree, and then use 'git add/rm <file>'
+hint: as appropriate to mark resolution and make a commit.
+fatal: Exiting because of an unresolved conflict.
+error: Merging is not possible because you have unmerged files.
+hint: Fix them up in the work tree, and then use 'git add/rm <file>'
+hint: as appropriate to mark resolution and make a commit.
+fatal: Exiting because of an unresolved conflict.
+error: Merging is not possible because you have unmerged files.
+hint: Fix them up in the work tree, and then use 'git add/rm <file>'
+hint: as appropriate to mark resolution and make a commit.
+fatal: Exiting because of an unresolved conflict.
+~/workspace$ 
