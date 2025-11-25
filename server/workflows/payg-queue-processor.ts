@@ -24,6 +24,113 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 });
 
 /**
+ * EDGE CASE FIX #3: Queue Retry & Recovery System
+ * Allows safe manual/automated retry of failed jobs with idempotency
+ */
+export async function retryFailedQueueItems(): Promise<{ retried: number; errors: string[] }> {
+  const logger = createLogger('payg-queue-retry');
+  
+  try {
+    // Find all failed items that could be retried
+    const failedItems = await db.select()
+      .from(payAsYouGoQueue)
+      .where(eq(payAsYouGoQueue.status, 'failed'))
+      .limit(50); // Safety limit
+    
+    if (failedItems.length === 0) {
+      logger.info('No failed queue items to retry');
+      return { retried: 0, errors: [] };
+    }
+    
+    logger.info(`Found ${failedItems.length} failed queue items - preparing retry`);
+    
+    const errors: string[] = [];
+    let retriedCount = 0;
+    
+    for (const item of failedItems) {
+      try {
+        // Reset status to pending with cleared retry state
+        // Idempotency key preserved - Stripe will handle duplicates
+        await db.update(payAsYouGoQueue)
+          .set({
+            status: 'pending',
+            attempts: 0, // Reset attempts for fresh retry
+            nextRetryAt: null,
+            lastError: null,
+          })
+          .where(eq(payAsYouGoQueue.id, item.id));
+        
+        retriedCount++;
+        logger.info(`Reset failed item ${item.id} to pending (user: ${item.userId}, amount: $${item.amount})`);
+        
+      } catch (error: any) {
+        const errorMsg = `Failed to reset item ${item.id}: ${error.message}`;
+        logger.error(errorMsg);
+        errors.push(errorMsg);
+      }
+    }
+    
+    logger.info(`✅ Queue retry completed: ${retriedCount} items reset to pending`);
+    
+    return { retried: retriedCount, errors };
+    
+  } catch (error: any) {
+    logger.error(`Queue retry failed: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
+ * EDGE CASE FIX #3: Inspect Queue Health
+ * Provides visibility into queue status for monitoring
+ */
+export async function getQueueHealthMetrics(): Promise<{
+  pending: number;
+  processing: number;
+  completed: number;
+  failed: number;
+  oldestPending: Date | null;
+  oldestFailed: Date | null;
+}> {
+  const [pendingCount] = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(payAsYouGoQueue)
+    .where(eq(payAsYouGoQueue.status, 'pending'));
+  
+  const [processingCount] = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(payAsYouGoQueue)
+    .where(eq(payAsYouGoQueue.status, 'processing'));
+  
+  const [completedCount] = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(payAsYouGoQueue)
+    .where(eq(payAsYouGoQueue.status, 'completed'));
+  
+  const [failedCount] = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(payAsYouGoQueue)
+    .where(eq(payAsYouGoQueue.status, 'failed'));
+  
+  const oldestPending = await db.select({ createdAt: payAsYouGoQueue.createdAt })
+    .from(payAsYouGoQueue)
+    .where(eq(payAsYouGoQueue.status, 'pending'))
+    .orderBy(payAsYouGoQueue.createdAt)
+    .limit(1);
+  
+  const oldestFailed = await db.select({ createdAt: payAsYouGoQueue.createdAt })
+    .from(payAsYouGoQueue)
+    .where(eq(payAsYouGoQueue.status, 'failed'))
+    .orderBy(payAsYouGoQueue.createdAt)
+    .limit(1);
+  
+  return {
+    pending: Number(pendingCount?.count || 0),
+    processing: Number(processingCount?.count || 0),
+    completed: Number(completedCount?.count || 0),
+    failed: Number(failedCount?.count || 0),
+    oldestPending: oldestPending[0]?.createdAt || null,
+    oldestFailed: oldestFailed[0]?.createdAt || null,
+  };
+}
+
+/**
  * Calculate next retry delay with exponential backoff
  * 1st retry: 5 minutes
  * 2nd retry: 15 minutes (3x)
@@ -64,49 +171,105 @@ async function processQueueItem(item: any): Promise<void> {
       throw new Error('No Stripe Customer ID - user may not have active subscription');
     }
 
-    // CRITICAL FIX: Get or create draft invoice BEFORE creating invoice item
-    // Invoice items must be attached to invoices for billing
+    // PRODUCTION-GRADE INVOICE MANAGEMENT (40-year veteran approach)
+    // Handles: draft invoices, finalized invoices, subscription cycles, metadata fallbacks
     let invoiceId: string | null = null;
+    let useUpcomingInvoice = false; // Flag to use upcoming invoice
+    
+    // Helper: Parse YYYY-MM billing period to Date range
+    const parseBillingPeriod = (periodStr: string): { year: number; month: number } => {
+      const [year, month] = periodStr.split('-').map(Number);
+      return { year, month: month - 1 }; // month is 0-indexed in Date
+    };
     
     try {
-      // Try to find existing draft/open invoice for this customer and billing period
-      const invoices = await stripe.invoices.list({
-        customer: stripeCustomerId,
-        status: 'draft',
-        limit: 10, // Check multiple to find matching period
-      });
-
-      // Filter by billing period metadata
-      const matchingInvoice = invoices.data.find(inv => 
-        inv.metadata?.billingPeriod === item.billing_period
-      );
-
-      if (matchingInvoice) {
-        invoiceId = matchingInvoice.id;
-        logger.info(`Using existing draft invoice ${invoiceId} for period ${item.billing_period}`);
-      } else {
-        // Create new draft invoice for this billing period
-        const invoice = await stripe.invoices.create({
+      const targetPeriod = parseBillingPeriod(item.billing_period);
+      
+      // STEP 1: Try to use upcoming invoice from subscription (Stripe best practice)
+      // This automatically attaches to the current billing cycle
+      try {
+        const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
           customer: stripeCustomerId,
-          description: `Pay-as-you-go usage - ${item.billing_period}`,
-          auto_advance: false, // Keep as draft until monthly finalization
-          metadata: {
-            billingPeriod: item.billing_period,
-          },
         });
-        invoiceId = invoice.id;
-        logger.info(`Created new draft invoice ${invoiceId} for period ${item.billing_period}`);
+        
+        // Verify this invoice matches our billing period (within same month)
+        // Use UTC to normalize time zones
+        const upcomingDate = new Date(upcomingInvoice.period_end * 1000);
+        const upcomingYear = upcomingDate.getUTCFullYear();
+        const upcomingMonth = upcomingDate.getUTCMonth();
+        
+        if (upcomingYear === targetPeriod.year && upcomingMonth === targetPeriod.month) {
+          // Use upcoming invoice - assign ID so invoice item attaches correctly
+          invoiceId = upcomingInvoice.id;
+          useUpcomingInvoice = true;
+          logger.info(`Using upcoming subscription invoice ${invoiceId} for period ${item.billing_period}`);
+        }
+      } catch (upcomingError: any) {
+        // No upcoming invoice - continue to manual draft creation
+        logger.debug(`No upcoming invoice available: ${upcomingError.message}`);
+      }
+      
+      // STEP 2: If no upcoming invoice, look for existing draft/open invoice
+      // FIX: Only run if we're NOT using upcoming invoice
+      if (!useUpcomingInvoice) {
+        const invoices = await stripe.invoices.list({
+          customer: stripeCustomerId,
+          limit: 20, // Check more invoices for robustness
+        });
+        
+        // Multi-layer matching strategy (metadata → description → period_end)
+        const matchingInvoice = invoices.data.find(inv => {
+          // Skip paid/void invoices - can't add items to them
+          if (inv.status === 'paid' || inv.status === 'void') return false;
+          
+          // Strategy 1: Metadata match (most reliable)
+          if (inv.metadata?.billingPeriod === item.billing_period) return true;
+          
+          // Strategy 2: Description match (fallback for human-created invoices)
+          if (inv.description?.includes(item.billing_period)) return true;
+          
+          // Strategy 3: Period_end match (fallback for invoices without metadata)
+          // Use UTC to normalize time zones for consistent month comparison
+          if (inv.period_end) {
+            const invoiceDate = new Date(inv.period_end * 1000);
+            const invoiceYear = invoiceDate.getUTCFullYear();
+            const invoiceMonth = invoiceDate.getUTCMonth();
+            if (invoiceYear === targetPeriod.year && invoiceMonth === targetPeriod.month) {
+              return true;
+            }
+          }
+          
+          return false;
+        });
+        
+        if (matchingInvoice) {
+          invoiceId = matchingInvoice.id;
+          logger.info(`Found existing ${matchingInvoice.status} invoice ${invoiceId} for period ${item.billing_period} (matched via ${matchingInvoice.metadata?.billingPeriod ? 'metadata' : 'description/period'})`);
+        } else {
+          // STEP 3: Create new draft invoice if nothing found
+          const invoice = await stripe.invoices.create({
+            customer: stripeCustomerId,
+            description: `Pay-as-you-go usage - ${item.billing_period}`, // Deterministic format
+            auto_advance: false, // Manual finalization for control
+            metadata: {
+              billingPeriod: item.billing_period, // Primary identifier
+              createdBy: 'payg-queue-processor',
+              version: '2.0', // Track invoice schema version
+            },
+          });
+          invoiceId = invoice.id;
+          logger.info(`Created new draft invoice ${invoiceId} for period ${item.billing_period}`);
+        }
       }
     } catch (invoiceError: any) {
       // CRITICAL: Cannot proceed without invoice - throw to retry
-      throw new Error(`Failed to create/find draft invoice: ${invoiceError.message}`);
+      throw new Error(`Failed to create/find invoice: ${invoiceError.message}`);
     }
 
     // Create invoice item for pay-as-you-go usage
-    // NOW ATTACHED TO INVOICE via invoice parameter
-    const invoiceItem = await stripe.invoiceItems.create({
+    // CRITICAL: Always attach to invoice ID (upcoming or draft)
+    const invoiceItemParams: any = {
       customer: stripeCustomerId,
-      invoice: invoiceId, // CRITICAL: Attach to invoice immediately
       amount: Math.round(parseFloat(item.amount) * 100), // Convert USD to cents
       currency: 'usd',
       description: item.description || `${item.metric} usage - ${item.billing_period}`,
@@ -116,7 +279,14 @@ async function processQueueItem(item: any): Promise<void> {
         billingPeriod: item.billing_period,
         usageEventId: item.usage_event_id?.toString() || '',
       },
-    }, {
+    };
+    
+    // CRITICAL FIX: Always attach to invoice (whether upcoming or draft)
+    if (invoiceId) {
+      invoiceItemParams.invoice = invoiceId;
+    }
+    
+    const invoiceItem = await stripe.invoiceItems.create(invoiceItemParams, {
       idempotencyKey: item.idempotency_key, // CRITICAL: Prevents double-charging on retries
     });
 

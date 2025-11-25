@@ -3,6 +3,7 @@ import { StripePaymentService } from '../payments/stripe-service';
 import { StripeBillingService } from '../services/stripe-billing-service';
 import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
+import { retryFailedQueueItems, getQueueHealthMetrics } from '../workflows/payg-queue-processor';
 
 const router = Router();
 const paymentService = new StripePaymentService();
@@ -209,6 +210,81 @@ router.post('/record-usage', ensureAuthenticated, async (req: Request, res: Resp
   } catch (error: any) {
     logger.error('Failed to record usage:', error);
     res.status(500).json({ error: 'Failed to record usage' });
+  }
+});
+
+// ============================================================================
+// EDGE CASE FIX #3: Queue Management & Recovery Endpoints (Admin/SRE)
+// ============================================================================
+
+/**
+ * Middleware: Ensure admin role
+ * Loads full user from storage to validate role
+ */
+async function ensureAdmin(req: Request, res: Response, next: Function) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    // Load full user from storage to get role
+    const { storage } = await import('../storage');
+    const user = await storage.getUser(String(req.user.id));
+    
+    if (!user || user.role !== 'admin') {
+      logger.warn(`Unauthorized admin access attempt by user ${req.user.id}`);
+      return res.status(403).json({ error: 'Admin privileges required' });
+    }
+    
+    next();
+  } catch (error: any) {
+    logger.error('Admin check failed:', error);
+    res.status(500).json({ error: 'Authorization check failed' });
+  }
+}
+
+/**
+ * Get pay-as-you-go queue health metrics
+ * Returns counts and oldest items for monitoring
+ * ADMIN ONLY - Privileged operation
+ */
+router.get('/queue-health', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
+  try {
+    const metrics = await getQueueHealthMetrics();
+    
+    res.json({
+      success: true,
+      metrics,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    logger.error('Failed to fetch queue health:', error);
+    res.status(500).json({ error: 'Failed to fetch queue health metrics' });
+  }
+});
+
+/**
+ * Retry all failed queue items
+ * Resets failed items to pending status for reprocessing
+ * Safe to call multiple times - idempotency keys prevent double-charging
+ * ADMIN ONLY - Privileged operation
+ */
+router.post('/queue-retry', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
+  try {
+    logger.info(`Queue retry initiated by admin user ${req.user!.id}`);
+    
+    const result = await retryFailedQueueItems();
+    
+    res.json({
+      success: true,
+      retried: result.retried,
+      errors: result.errors,
+      message: `${result.retried} failed items reset to pending for retry`,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    logger.error('Failed to retry queue items:', error);
+    res.status(500).json({ error: 'Failed to retry failed queue items' });
   }
 });
 
