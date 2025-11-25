@@ -8,7 +8,7 @@ packages = ["glibcLocales", "go", "google-cloud-sdk", "jq", "libxcrypt", "sptk",
 
 [deployment]
 deploymentTarget = "cloudrun"
-build = ["sh", "-c", "npm install && npm run build && mkdir -p server/public && cp -r dist/public/* server/public/ 2>/dev/null || true"]
+build = ["sh", "-c", "npm install && vite build --config vite.production.config.ts && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && mkdir -p server/public && cp -r dist/public/* server/public/ 2>/dev/null || true"]
 run = ["sh", "-c", "NODE_ENV=production tsx server/index.ts"]
 ignorePorts = false
 
