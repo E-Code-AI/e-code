@@ -236,6 +236,7 @@ export class CreditsService {
         await tx.insert(payAsYouGoQueue).values({
           userId: parseInt(userId),
           usageEventId: eventId,
+          idempotencyKey, // Dedicated column for deduplication
           metric,
           amount: payAsYouGoCost.toString(),
           description,
@@ -245,7 +246,6 @@ export class CreditsService {
           createdAt: new Date(),
           nextRetryAt: new Date(), // Process immediately
           metadata: {
-            idempotencyKey,
             plan: userData.subscriptionTier,
           },
         });

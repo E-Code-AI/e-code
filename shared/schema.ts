@@ -315,6 +315,7 @@ export const payAsYouGoQueue = pgTable("pay_as_you_go_queue", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   userId: integer("user_id").notNull().references(() => users.id),
   usageEventId: integer("usage_event_id").references(() => usageEvents.id),
+  idempotencyKey: varchar("idempotency_key", { length: 255 }).notNull(), // Critical for deduplication
   
   // Billing details
   metric: varchar("metric", { length: 50 }).notNull(), // 'compute', 'storage', 'bandwidth', 'deployment'
@@ -340,6 +341,8 @@ export const payAsYouGoQueue = pgTable("pay_as_you_go_queue", {
 }, (table) => ({
   idxPending: index("idx_payg_queue_pending").on(table.status, table.nextRetryAt),
   idxUserId: index("idx_payg_queue_user_id").on(table.userId),
+  // CRITICAL: Unique constraint prevents duplicate enqueues on retries
+  uniqueIdempotency: unique("unique_payg_idempotency").on(table.userId, table.metric, table.idempotencyKey),
 }));
 
 // Terminal logs table for persistent console output storage

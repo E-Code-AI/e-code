@@ -120,6 +120,14 @@ All routes are mounted at `/api/payments/*`. Most routes require authentication 
 - **Subscribe Page** (`/subscribe`) - Stripe Elements checkout flow with PaymentElement
 - **Usage Dashboard** - Real-time billing and usage tracking
 
+#### Production-Ready Billing System (Phases 1-3 Complete)
+✅ **Idempotent Usage Recording**: `recordUsageIdempotent()` with SELECT FOR UPDATE locking, lifetime `lastBilled*` tracking, and automatic queue enqueueing
+✅ **Monthly Snapshots**: `refillMonthlyCredits()` creates `usageLedger` records with complete billing breakdown (credits used, pay-as-you-go, allowance %) for Stripe proration
+✅ **Pay-as-you-go Queue**: `payAsYouGoQueue` table with unique constraint on `(userId, metric, idempotencyKey)` prevents duplicate enqueues on retries
+✅ **Legacy Migration**: All usage methods (`recordComputeUsage`, `recordStorageUsage`, `recordBandwidthUsage`) now route through `recordUsageIdempotent`
+✅ **Schema**: `usageEvents`, `usageLedger`, `payAsYouGoQueue` tables created with proper indexes and constraints
+⏳ **Queue Processor Worker**: Architecture complete, worker implementation pending (drains queue → Stripe API → status updates)
+
 #### Workflow Status
 ✅ **Stripe Usage Worker**: Active, processing billing queue every 30 seconds
 ✅ **Backend Routes**: Registered at `/api/payments/*` and verified working
