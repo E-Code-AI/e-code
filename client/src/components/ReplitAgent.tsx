@@ -2393,11 +2393,12 @@ What would you like me to build?`,
       
       // Remove action from legacy message state
       setMessages(prev => prev.map(m => {
-        if (m.actions?.some(a => a.actionId === action.id || `${m.id}-action-${m.actions.indexOf(a)}` === action.id)) {
+        const actions = m.actions || [];
+        if (actions.some(a => a.actionId === action.id || `${m.id}-action-${actions.indexOf(a)}` === action.id)) {
           return {
             ...m,
-            actions: m.actions?.filter(a => 
-              a.actionId !== action.id && `${m.id}-action-${m.actions.indexOf(a)}` !== action.id
+            actions: actions.filter(a => 
+              a.actionId !== action.id && `${m.id}-action-${actions.indexOf(a)}` !== action.id
             )
           };
         }
@@ -2419,11 +2420,12 @@ What would you like me to build?`,
   const handleRejectAction = (action: Action) => {
     // Remove action from legacy message state
     setMessages(prev => prev.map(m => {
-      if (m.actions?.some(a => a.actionId === action.id || `${m.id}-action-${m.actions.indexOf(a)}` === action.id)) {
+      const actions = m.actions || [];
+      if (actions.some(a => a.actionId === action.id || `${m.id}-action-${actions.indexOf(a)}` === action.id)) {
         return {
           ...m,
-          actions: m.actions?.filter(a => 
-            a.actionId !== action.id && `${m.id}-action-${m.actions.indexOf(a)}` !== action.id
+          actions: actions.filter(a => 
+            a.actionId !== action.id && `${m.id}-action-${actions.indexOf(a)}` !== action.id
           )
         };
       }
