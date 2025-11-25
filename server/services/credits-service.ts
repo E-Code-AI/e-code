@@ -418,8 +418,8 @@ export class CreditsService {
     // Use production-ready idempotent billing
     return await this.recordUsageIdempotent(
       userId,
-      newTotalUsage,
       'compute',
+      newTotalUsage,
       idempotencyKey
     );
   }
@@ -450,8 +450,8 @@ export class CreditsService {
     // Use production-ready idempotent billing
     return await this.recordUsageIdempotent(
       userId,
-      newTotalUsage,
       'storage',
+      newTotalUsage,
       idempotencyKey
     );
   }
@@ -482,8 +482,8 @@ export class CreditsService {
     // Use production-ready idempotent billing
     return await this.recordUsageIdempotent(
       userId,
-      newUsage,
       'bandwidth',
+      newUsage,
       idempotencyKey
     );
   }
