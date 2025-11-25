@@ -94,6 +94,16 @@ mobile/
 android/
 ios/
 containers/
+desktop/
+kubernetes/
+deploy/
+e-code/
+migrations/
+projects/
+reports/
+scripts/
+services/
+storage/
 
 # Source maps (remove to save space)
 **/*.map
@@ -123,6 +133,38 @@ replit.nix
 # Large development image assets (keep client/public for production)
 attached_assets/
 generated-icon.png
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.ico
+*.svg
+
+# Exclude all markdown files except README in client
+**/*.md
+!client/README.md
+
+# Shell scripts not needed in production
+*.sh
+!start.js
+
+# SQL files
+*.sql
+
+# Config files for build tools not needed at runtime
+vite.config.optimized.ts
+vite.config.production.ts
+vitest.config.ts
+ecosystem.config.js
+docker-compose*.yml
+nginx.conf
+
+# Session and temp files
+*.txt
+*.jar
+cookies.*
+*_snapshot.png
 
 # Database files (use remote database)
 *.db
