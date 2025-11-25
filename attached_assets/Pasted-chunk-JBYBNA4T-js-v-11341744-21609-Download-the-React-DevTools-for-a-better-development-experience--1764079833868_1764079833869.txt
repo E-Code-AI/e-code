@@ -1,0 +1,290 @@
+chunk-JBYBNA4T.js?v=11341744:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+manifest.json:1 Manifest: found icon with no valid purpose; ignoring it.
+network-optimization.ts:211  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/api/projects 500 (Internal Server Error)
+executeRequest @ network-optimization.ts:211
+request @ network-optimization.ts:74
+(anonyme) @ network-optimization.ts:414
+(anonyme) @ network-optimization.ts:414
+requestIdleCallback
+prefetch @ network-optimization.ts:413
+prefetchResources @ network-optimization.ts:435
+(anonyme) @ App.tsx:299
+commitHookEffectListMount @ chunk-JBYBNA4T.js?v=11341744:16963
+commitPassiveMountOnFiber @ chunk-JBYBNA4T.js?v=11341744:18206
+commitPassiveMountEffects_complete @ chunk-JBYBNA4T.js?v=11341744:18179
+commitPassiveMountEffects_begin @ chunk-JBYBNA4T.js?v=11341744:18169
+commitPassiveMountEffects @ chunk-JBYBNA4T.js?v=11341744:18159
+flushPassiveEffectsImpl @ chunk-JBYBNA4T.js?v=11341744:19543
+flushPassiveEffects @ chunk-JBYBNA4T.js?v=11341744:19500
+(anonyme) @ chunk-JBYBNA4T.js?v=11341744:19381
+workLoop @ chunk-JBYBNA4T.js?v=11341744:197
+flushWork @ chunk-JBYBNA4T.js?v=11341744:176
+performWorkUntilDeadline @ chunk-JBYBNA4T.js?v=11341744:384
+client:809 [vite] TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (client:449:7)
+    at Object.send (client:780:16)
+    at Object.send (client:318:23)
+    at Object.send (client:396:30)
+    at HMRClient.send (client:157:18)
+    at HMRContext.send (client:119:18)
+    at sendError (dashboard:61:7)
+    at dashboard:69:3
+error @ client:809
+(anonyme) @ client:158
+Promise.catch
+send @ client:157
+send @ client:119
+sendError @ dashboard:61
+(anonyme) @ dashboard:69
+network-optimization.ts:227 Uncaught (in promise) Error: HTTP 500: Internal Server Error
+    at NetworkOptimizer.executeRequest (network-optimization.ts:227:15)
+executeRequest @ network-optimization.ts:227
+await in executeRequest
+request @ network-optimization.ts:74
+(anonyme) @ network-optimization.ts:414
+(anonyme) @ network-optimization.ts:414
+requestIdleCallback
+prefetch @ network-optimization.ts:413
+prefetchResources @ network-optimization.ts:435
+(anonyme) @ App.tsx:299
+commitHookEffectListMount @ chunk-JBYBNA4T.js?v=11341744:16963
+commitPassiveMountOnFiber @ chunk-JBYBNA4T.js?v=11341744:18206
+commitPassiveMountEffects_complete @ chunk-JBYBNA4T.js?v=11341744:18179
+commitPassiveMountEffects_begin @ chunk-JBYBNA4T.js?v=11341744:18169
+commitPassiveMountEffects @ chunk-JBYBNA4T.js?v=11341744:18159
+flushPassiveEffectsImpl @ chunk-JBYBNA4T.js?v=11341744:19543
+flushPassiveEffects @ chunk-JBYBNA4T.js?v=11341744:19500
+(anonyme) @ chunk-JBYBNA4T.js?v=11341744:19381
+workLoop @ chunk-JBYBNA4T.js?v=11341744:197
+flushWork @ chunk-JBYBNA4T.js?v=11341744:176
+performWorkUntilDeadline @ chunk-JBYBNA4T.js?v=11341744:384
+client:809 [vite] TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (client:449:7)
+    at Object.send (client:780:16)
+    at Object.send (client:318:23)
+    at Object.send (client:396:30)
+    at HMRClient.send (client:157:18)
+    at HMRContext.send (client:119:18)
+    at sendError (dashboard:61:7)
+    at dashboard:69:3
+error @ client:809
+(anonyme) @ client:158
+Promise.catch
+send @ client:157
+send @ client:119
+sendError @ dashboard:61
+(anonyme) @ dashboard:69
+network-optimization.ts:227 Uncaught (in promise) Error: HTTP 500: Internal Server Error
+    at NetworkOptimizer.executeRequest (network-optimization.ts:227:15)
+executeRequest @ network-optimization.ts:227
+await in executeRequest
+request @ network-optimization.ts:74
+(anonyme) @ network-optimization.ts:414
+(anonyme) @ network-optimization.ts:414
+requestIdleCallback
+prefetch @ network-optimization.ts:413
+prefetchResources @ network-optimization.ts:435
+(anonyme) @ App.tsx:299
+commitHookEffectListMount @ chunk-JBYBNA4T.js?v=11341744:16963
+commitPassiveMountOnFiber @ chunk-JBYBNA4T.js?v=11341744:18206
+commitPassiveMountEffects_complete @ chunk-JBYBNA4T.js?v=11341744:18179
+commitPassiveMountEffects_begin @ chunk-JBYBNA4T.js?v=11341744:18169
+commitPassiveMountEffects @ chunk-JBYBNA4T.js?v=11341744:18159
+flushPassiveEffectsImpl @ chunk-JBYBNA4T.js?v=11341744:19543
+flushPassiveEffects @ chunk-JBYBNA4T.js?v=11341744:19500
+(anonyme) @ chunk-JBYBNA4T.js?v=11341744:19381
+workLoop @ chunk-JBYBNA4T.js?v=11341744:197
+flushWork @ chunk-JBYBNA4T.js?v=11341744:176
+performWorkUntilDeadline @ chunk-JBYBNA4T.js?v=11341744:384
+queryClient.ts:133  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/api/notifications 500 (Internal Server Error)
+(anonyme) @ queryClient.ts:133
+fetchFn @ @tanstack_react-query.js?v=11341744:1066
+run @ @tanstack_react-query.js?v=11341744:776
+start @ @tanstack_react-query.js?v=11341744:818
+fetch @ @tanstack_react-query.js?v=11341744:1113
+#executeFetch @ @tanstack_react-query.js?v=11341744:1432
+onSubscribe @ @tanstack_react-query.js?v=11341744:1305
+subscribe @ @tanstack_react-query.js?v=11341744:19
+(anonyme) @ @tanstack_react-query.js?v=11341744:3243
+subscribeToStore @ chunk-JBYBNA4T.js?v=11341744:12032
+commitHookEffectListMount @ chunk-JBYBNA4T.js?v=11341744:16963
+commitPassiveMountOnFiber @ chunk-JBYBNA4T.js?v=11341744:18206
+commitPassiveMountEffects_complete @ chunk-JBYBNA4T.js?v=11341744:18179
+commitPassiveMountEffects_begin @ chunk-JBYBNA4T.js?v=11341744:18169
+commitPassiveMountEffects @ chunk-JBYBNA4T.js?v=11341744:18159
+flushPassiveEffectsImpl @ chunk-JBYBNA4T.js?v=11341744:19543
+flushPassiveEffects @ chunk-JBYBNA4T.js?v=11341744:19500
+performSyncWorkOnRoot @ chunk-JBYBNA4T.js?v=11341744:18921
+flushSyncCallbacks @ chunk-JBYBNA4T.js?v=11341744:9166
+commitRootImpl @ chunk-JBYBNA4T.js?v=11341744:19485
+commitRoot @ chunk-JBYBNA4T.js?v=11341744:19330
+finishConcurrentRender @ chunk-JBYBNA4T.js?v=11341744:18858
+performConcurrentWorkOnRoot @ chunk-JBYBNA4T.js?v=11341744:18768
+workLoop @ chunk-JBYBNA4T.js?v=11341744:197
+flushWork @ chunk-JBYBNA4T.js?v=11341744:176
+performWorkUntilDeadline @ chunk-JBYBNA4T.js?v=11341744:384
+queryClient.ts:133  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/api/projects 500 (Internal Server Error)
+(anonyme) @ queryClient.ts:133
+fetchFn @ @tanstack_react-query.js?v=11341744:1066
+run @ @tanstack_react-query.js?v=11341744:776
+start @ @tanstack_react-query.js?v=11341744:818
+fetch @ @tanstack_react-query.js?v=11341744:1113
+#executeFetch @ @tanstack_react-query.js?v=11341744:1432
+onSubscribe @ @tanstack_react-query.js?v=11341744:1305
+subscribe @ @tanstack_react-query.js?v=11341744:19
+(anonyme) @ @tanstack_react-query.js?v=11341744:3243
+subscribeToStore @ chunk-JBYBNA4T.js?v=11341744:12032
+commitHookEffectListMount @ chunk-JBYBNA4T.js?v=11341744:16963
+commitPassiveMountOnFiber @ chunk-JBYBNA4T.js?v=11341744:18206
+commitPassiveMountEffects_complete @ chunk-JBYBNA4T.js?v=11341744:18179
+commitPassiveMountEffects_begin @ chunk-JBYBNA4T.js?v=11341744:18169
+commitPassiveMountEffects @ chunk-JBYBNA4T.js?v=11341744:18159
+flushPassiveEffectsImpl @ chunk-JBYBNA4T.js?v=11341744:19543
+flushPassiveEffects @ chunk-JBYBNA4T.js?v=11341744:19500
+performSyncWorkOnRoot @ chunk-JBYBNA4T.js?v=11341744:18921
+flushSyncCallbacks @ chunk-JBYBNA4T.js?v=11341744:9166
+commitRootImpl @ chunk-JBYBNA4T.js?v=11341744:19485
+commitRoot @ chunk-JBYBNA4T.js?v=11341744:19330
+finishConcurrentRender @ chunk-JBYBNA4T.js?v=11341744:18858
+performConcurrentWorkOnRoot @ chunk-JBYBNA4T.js?v=11341744:18768
+workLoop @ chunk-JBYBNA4T.js?v=11341744:197
+flushWork @ chunk-JBYBNA4T.js?v=11341744:176
+performWorkUntilDeadline @ chunk-JBYBNA4T.js?v=11341744:384
+queryClient.ts:133  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/api/projects 500 (Internal Server Error)
+(anonyme) @ queryClient.ts:133
+fetchFn @ @tanstack_react-query.js?v=11341744:1066
+run @ @tanstack_react-query.js?v=11341744:776
+(anonyme) @ @tanstack_react-query.js?v=11341744:800
+Promise.then
+(anonyme) @ @tanstack_react-query.js?v=11341744:796
+Promise.catch
+run @ @tanstack_react-query.js?v=11341744:780
+start @ @tanstack_react-query.js?v=11341744:818
+fetch @ @tanstack_react-query.js?v=11341744:1113
+#executeFetch @ @tanstack_react-query.js?v=11341744:1432
+onSubscribe @ @tanstack_react-query.js?v=11341744:1305
+subscribe @ @tanstack_react-query.js?v=11341744:19
+(anonyme) @ @tanstack_react-query.js?v=11341744:3243
+subscribeToStore @ chunk-JBYBNA4T.js?v=11341744:12032
+commitHookEffectListMount @ chunk-JBYBNA4T.js?v=11341744:16963
+commitPassiveMountOnFiber @ chunk-JBYBNA4T.js?v=11341744:18206
+commitPassiveMountEffects_complete @ chunk-JBYBNA4T.js?v=11341744:18179
+commitPassiveMountEffects_begin @ chunk-JBYBNA4T.js?v=11341744:18169
+commitPassiveMountEffects @ chunk-JBYBNA4T.js?v=11341744:18159
+flushPassiveEffectsImpl @ chunk-JBYBNA4T.js?v=11341744:19543
+flushPassiveEffects @ chunk-JBYBNA4T.js?v=11341744:19500
+performSyncWorkOnRoot @ chunk-JBYBNA4T.js?v=11341744:18921
+flushSyncCallbacks @ chunk-JBYBNA4T.js?v=11341744:9166
+commitRootImpl @ chunk-JBYBNA4T.js?v=11341744:19485
+commitRoot @ chunk-JBYBNA4T.js?v=11341744:19330
+finishConcurrentRender @ chunk-JBYBNA4T.js?v=11341744:18858
+performConcurrentWorkOnRoot @ chunk-JBYBNA4T.js?v=11341744:18768
+workLoop @ chunk-JBYBNA4T.js?v=11341744:197
+flushWork @ chunk-JBYBNA4T.js?v=11341744:176
+performWorkUntilDeadline @ chunk-JBYBNA4T.js?v=11341744:384
+queryClient.ts:133  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/api/notifications 500 (Internal Server Error)
+(anonyme) @ queryClient.ts:133
+fetchFn @ @tanstack_react-query.js?v=11341744:1066
+run @ @tanstack_react-query.js?v=11341744:776
+(anonyme) @ @tanstack_react-query.js?v=11341744:800
+Promise.then
+(anonyme) @ @tanstack_react-query.js?v=11341744:796
+Promise.catch
+run @ @tanstack_react-query.js?v=11341744:780
+start @ @tanstack_react-query.js?v=11341744:818
+fetch @ @tanstack_react-query.js?v=11341744:1113
+#executeFetch @ @tanstack_react-query.js?v=11341744:1432
+onSubscribe @ @tanstack_react-query.js?v=11341744:1305
+subscribe @ @tanstack_react-query.js?v=11341744:19
+(anonyme) @ @tanstack_react-query.js?v=11341744:3243
+subscribeToStore @ chunk-JBYBNA4T.js?v=11341744:12032
+commitHookEffectListMount @ chunk-JBYBNA4T.js?v=11341744:16963
+commitPassiveMountOnFiber @ chunk-JBYBNA4T.js?v=11341744:18206
+commitPassiveMountEffects_complete @ chunk-JBYBNA4T.js?v=11341744:18179
+commitPassiveMountEffects_begin @ chunk-JBYBNA4T.js?v=11341744:18169
+commitPassiveMountEffects @ chunk-JBYBNA4T.js?v=11341744:18159
+flushPassiveEffectsImpl @ chunk-JBYBNA4T.js?v=11341744:19543
+flushPassiveEffects @ chunk-JBYBNA4T.js?v=11341744:19500
+performSyncWorkOnRoot @ chunk-JBYBNA4T.js?v=11341744:18921
+flushSyncCallbacks @ chunk-JBYBNA4T.js?v=11341744:9166
+commitRootImpl @ chunk-JBYBNA4T.js?v=11341744:19485
+commitRoot @ chunk-JBYBNA4T.js?v=11341744:19330
+finishConcurrentRender @ chunk-JBYBNA4T.js?v=11341744:18858
+performConcurrentWorkOnRoot @ chunk-JBYBNA4T.js?v=11341744:18768
+workLoop @ chunk-JBYBNA4T.js?v=11341744:197
+flushWork @ chunk-JBYBNA4T.js?v=11341744:176
+performWorkUntilDeadline @ chunk-JBYBNA4T.js?v=11341744:384
+queryClient.ts:133  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/api/projects 500 (Internal Server Error)
+(anonyme) @ queryClient.ts:133
+fetchFn @ @tanstack_react-query.js?v=11341744:1066
+run @ @tanstack_react-query.js?v=11341744:776
+(anonyme) @ @tanstack_react-query.js?v=11341744:800
+Promise.then
+(anonyme) @ @tanstack_react-query.js?v=11341744:796
+Promise.catch
+run @ @tanstack_react-query.js?v=11341744:780
+(anonyme) @ @tanstack_react-query.js?v=11341744:800
+Promise.then
+(anonyme) @ @tanstack_react-query.js?v=11341744:796
+Promise.catch
+run @ @tanstack_react-query.js?v=11341744:780
+start @ @tanstack_react-query.js?v=11341744:818
+fetch @ @tanstack_react-query.js?v=11341744:1113
+#executeFetch @ @tanstack_react-query.js?v=11341744:1432
+onSubscribe @ @tanstack_react-query.js?v=11341744:1305
+subscribe @ @tanstack_react-query.js?v=11341744:19
+(anonyme) @ @tanstack_react-query.js?v=11341744:3243
+subscribeToStore @ chunk-JBYBNA4T.js?v=11341744:12032
+commitHookEffectListMount @ chunk-JBYBNA4T.js?v=11341744:16963
+commitPassiveMountOnFiber @ chunk-JBYBNA4T.js?v=11341744:18206
+commitPassiveMountEffects_complete @ chunk-JBYBNA4T.js?v=11341744:18179
+commitPassiveMountEffects_begin @ chunk-JBYBNA4T.js?v=11341744:18169
+commitPassiveMountEffects @ chunk-JBYBNA4T.js?v=11341744:18159
+flushPassiveEffectsImpl @ chunk-JBYBNA4T.js?v=11341744:19543
+flushPassiveEffects @ chunk-JBYBNA4T.js?v=11341744:19500
+performSyncWorkOnRoot @ chunk-JBYBNA4T.js?v=11341744:18921
+flushSyncCallbacks @ chunk-JBYBNA4T.js?v=11341744:9166
+commitRootImpl @ chunk-JBYBNA4T.js?v=11341744:19485
+commitRoot @ chunk-JBYBNA4T.js?v=11341744:19330
+finishConcurrentRender @ chunk-JBYBNA4T.js?v=11341744:18858
+performConcurrentWorkOnRoot @ chunk-JBYBNA4T.js?v=11341744:18768
+workLoop @ chunk-JBYBNA4T.js?v=11341744:197
+flushWork @ chunk-JBYBNA4T.js?v=11341744:176
+performWorkUntilDeadline @ chunk-JBYBNA4T.js?v=11341744:384
+queryClient.ts:133  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/api/notifications 500 (Internal Server Error)
+(anonyme) @ queryClient.ts:133
+fetchFn @ @tanstack_react-query.js?v=11341744:1066
+run @ @tanstack_react-query.js?v=11341744:776
+(anonyme) @ @tanstack_react-query.js?v=11341744:800
+Promise.then
+(anonyme) @ @tanstack_react-query.js?v=11341744:796
+Promise.catch
+run @ @tanstack_react-query.js?v=11341744:780
+(anonyme) @ @tanstack_react-query.js?v=11341744:800
+Promise.then
+(anonyme) @ @tanstack_react-query.js?v=11341744:796
+Promise.catch
+run @ @tanstack_react-query.js?v=11341744:780
+start @ @tanstack_react-query.js?v=11341744:818
+fetch @ @tanstack_react-query.js?v=11341744:1113
+#executeFetch @ @tanstack_react-query.js?v=11341744:1432
+onSubscribe @ @tanstack_react-query.js?v=11341744:1305
+subscribe @ @tanstack_react-query.js?v=11341744:19
+(anonyme) @ @tanstack_react-query.js?v=11341744:3243
+subscribeToStore @ chunk-JBYBNA4T.js?v=11341744:12032
+commitHookEffectListMount @ chunk-JBYBNA4T.js?v=11341744:16963
+commitPassiveMountOnFiber @ chunk-JBYBNA4T.js?v=11341744:18206
+commitPassiveMountEffects_complete @ chunk-JBYBNA4T.js?v=11341744:18179
+commitPassiveMountEffects_begin @ chunk-JBYBNA4T.js?v=11341744:18169
+commitPassiveMountEffects @ chunk-JBYBNA4T.js?v=11341744:18159
+flushPassiveEffectsImpl @ chunk-JBYBNA4T.js?v=11341744:19543
+flushPassiveEffects @ chunk-JBYBNA4T.js?v=11341744:19500
+performSyncWorkOnRoot @ chunk-JBYBNA4T.js?v=11341744:18921
+flushSyncCallbacks @ chunk-JBYBNA4T.js?v=11341744:9166
+commitRootImpl @ chunk-JBYBNA4T.js?v=11341744:19485
+commitRoot @ chunk-JBYBNA4T.js?v=11341744:19330
+finishConcurrentRender @ chunk-JBYBNA4T.js?v=11341744:18858
+performConcurrentWorkOnRoot @ chunk-JBYBNA4T.js?v=11341744:18768
+workLoop @ chunk-JBYBNA4T.js?v=11341744:197
+flushWork @ chunk-JBYBNA4T.js?v=11341744:176
+performWorkUntilDeadline @ chunk-JBYBNA4T.js?v=11341744:384
