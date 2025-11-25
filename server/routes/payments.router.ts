@@ -42,9 +42,23 @@ router.post('/create-subscription', ensureAuthenticated, async (req: Request, re
       paymentMethodId
     );
 
+    // Extract client secret from payment intent
+    let clientSecret = (subscription.latest_invoice as any)?.payment_intent?.client_secret;
+
+    // If no payment intent (no payment method attached), create a setup intent for future payments
+    if (!clientSecret && !paymentMethodId) {
+      const { storage } = await import('../storage');
+      const user = await storage.getUser(String(userId));
+      
+      if (user?.stripeCustomerId) {
+        const setupIntent = await paymentService.createSetupIntent(user.stripeCustomerId);
+        clientSecret = setupIntent.client_secret;
+      }
+    }
+
     res.json({
       subscriptionId: subscription.id,
-      clientSecret: (subscription.latest_invoice as any)?.payment_intent?.client_secret,
+      clientSecret: clientSecret || null,
       status: subscription.status
     });
   } catch (error: any) {
@@ -158,9 +172,16 @@ router.get('/subscription-status', ensureAuthenticated, async (req: Request, res
 router.get('/billing-history', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
-    // This would typically fetch invoice history from Stripe
-    // For now, return empty array
-    res.json({ invoices: [] });
+    const { storage } = await import('../storage');
+    const user = await storage.getUser(String(userId));
+
+    if (!user?.stripeCustomerId) {
+      return res.json({ invoices: [] });
+    }
+
+    // Fetch invoices from Stripe
+    const invoices = await paymentService.getBillingHistory(user.stripeCustomerId);
+    res.json({ invoices });
   } catch (error: any) {
     logger.error('Failed to fetch billing history:', error);
     res.status(500).json({ error: 'Failed to fetch billing history' });

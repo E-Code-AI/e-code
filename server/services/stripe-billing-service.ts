@@ -54,7 +54,7 @@ export class StripeBillingService {
         },
       });
       
-      await storage.updateStripeCustomerId(userId, customer.id);
+      await storage.updateStripeCustomerId(String(userId), customer.id);
       logger.info(`Created Stripe customer ${customer.id} for user ${userId}`);
       
       return customer.id;
@@ -66,7 +66,7 @@ export class StripeBillingService {
   
   async createSubscription(userId: number, planId: string): Promise<Stripe.Subscription> {
     try {
-      const user = await storage.getUser(userId);
+      const user = await storage.getUser(String(userId));
       if (!user) throw new Error('User not found');
       
       let customerId = user.stripeCustomerId;
@@ -94,7 +94,7 @@ export class StripeBillingService {
       // Update user's subscription info
       const periodEnd = getSubscriptionPeriodBoundary(subscription, 'current_period_end');
 
-      await storage.updateUserStripeInfo(userId, {
+      await storage.updateUserStripeInfo(String(userId), {
         stripeCustomerId: customerId,
         stripeSubscriptionId: subscription.id,
         subscriptionStatus: subscription.status,
@@ -128,7 +128,7 @@ export class StripeBillingService {
   
   async reportUsage(userId: number, metricType: string, quantity: number): Promise<void> {
     try {
-      const user = await storage.getUser(userId);
+      const user = await storage.getUser(String(userId));
       if (!user?.stripeSubscriptionId) {
         logger.warn(`User ${userId} has no active subscription`);
         return;
@@ -184,7 +184,7 @@ export class StripeBillingService {
         
         // Get usage for the current billing period
         const billingPeriodStart = await this.getBillingPeriodStart(user.stripeSubscriptionId);
-        const usage = await storage.getUserUsage(user.id, billingPeriodStart);
+        const usage = await storage.getUserUsage(String(user.id), billingPeriodStart);
 
         if (usage && typeof usage === 'object') {
           // Report each metric to Stripe
@@ -223,12 +223,12 @@ export class StripeBillingService {
   
   async enforceUsageLimits(userId: number): Promise<boolean> {
     try {
-      const user = await storage.getUser(userId);
+      const user = await storage.getUser(String(userId));
       if (!user) return false;
       
       const plan = 'starter'; // Default plan, will be updated from subscription
       const limits = this.getPlanLimits(plan);
-      const usage = await storage.getUserUsage(userId);
+      const usage = await storage.getUserUsage(String(userId));
       
       // Check each resource against limits
       for (const [resource, limit] of Object.entries(limits)) {
@@ -289,7 +289,7 @@ export class StripeBillingService {
   
   async generateInvoice(userId: number): Promise<string> {
     try {
-      const user = await storage.getUser(userId);
+      const user = await storage.getUser(String(userId));
       if (!user?.stripeCustomerId) {
         throw new Error('User has no Stripe customer ID');
       }
@@ -302,7 +302,7 @@ export class StripeBillingService {
       });
       
       // Add custom line items for detailed breakdown
-      const usage = await storage.getUserUsage(userId);
+      const usage = await storage.getUserUsage(String(userId));
 
       if (usage && typeof usage === 'object') {
         for (const [metricType, entry] of Object.entries(
@@ -375,7 +375,7 @@ export class StripeBillingService {
     
     const periodEnd = getSubscriptionPeriodBoundary(subscription, 'current_period_end');
 
-    await storage.updateUserStripeInfo(userId, {
+    await storage.updateUserStripeInfo(String(userId), {
       subscriptionStatus: subscription.status,
       subscriptionCurrentPeriodEnd: periodEnd ?? undefined,
     });

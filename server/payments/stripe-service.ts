@@ -230,10 +230,11 @@ export class StripePaymentService {
       throw new Error('Invalid plan');
     }
 
-    // Create subscription
+    // Create subscription with ONLY the base plan price
+    // Usage-based items are added dynamically via recordUsage() when first used
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
-      items: [{ price: plan.id }],
+      items: [{ price: plan.id }], // Only base subscription price
       payment_behavior: 'default_incomplete',
       payment_settings: { save_default_payment_method: 'on_subscription' },
       expand: ['latest_invoice.payment_intent'],
@@ -344,6 +345,16 @@ export class StripePaymentService {
     });
 
     return paymentIntent;
+  }
+
+  async createSetupIntent(customerId: string): Promise<Stripe.SetupIntent> {
+    const setupIntent = await stripe.setupIntents.create({
+      customer: customerId,
+      payment_method_types: ['card'],
+      usage: 'off_session',
+    });
+
+    return setupIntent;
   }
 
   async recordUsage(userId: number, metric: string, quantity: number): Promise<void> {
@@ -519,6 +530,23 @@ export class StripePaymentService {
 
   getPlan(planId: string): SubscriptionPlan | undefined {
     return this.plans.get(planId);
+  }
+
+  async getBillingHistory(customerId: string): Promise<any[]> {
+    const invoices = await stripe.invoices.list({
+      customer: customerId,
+      limit: 12, // Last 12 invoices
+    });
+
+    return invoices.data.map(invoice => ({
+      id: invoice.id,
+      amount: invoice.total / 100, // Convert from cents
+      currency: invoice.currency,
+      status: invoice.status,
+      date: new Date(invoice.created * 1000),
+      pdfUrl: invoice.invoice_pdf,
+      hostedUrl: invoice.hosted_invoice_url,
+    }));
   }
 }
 
