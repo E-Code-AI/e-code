@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
+import { useQuery } from '@tanstack/react-query';
 import { 
   Check, X, Zap, Users, Shield, Rocket, Star, Info,
   Code, Terminal, Globe, Database, Lock, Package,
@@ -16,7 +17,7 @@ import {
   CreditCard, Award, BarChart3, Users2, Briefcase,
   Brain, Layers, GitBranch, Timer, CheckCircle2, PlayCircle
 } from 'lucide-react';
-import { useState, useEffect, type ReactNode, Fragment } from 'react';
+import { useState, useEffect, useMemo, type ReactNode, Fragment } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
 
@@ -62,8 +63,12 @@ export default function Pricing() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly');
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
-  const tiers: PricingTier[] = [
-    {
+  const { data: apiPlans, isLoading } = useQuery<any[]>({
+    queryKey: ['/api/payments/plans'],
+  });
+
+  const tiers: PricingTier[] = useMemo(() => {
+    const freeTier: PricingTier = {
       name: 'Free',
       description: 'Perfect for learning and personal projects',
       monthlyPrice: 0,
@@ -89,121 +94,50 @@ export default function Pricing() {
       ],
       cta: 'Start Free',
       ctaVariant: 'outline'
-    },
-    {
-      name: 'Pro',
-      description: 'For professional developers and small teams',
-      monthlyPrice: 20,
-      yearlyPrice: 20,
-      popular: true,
-      icon: <Star className="h-6 w-6" />,
-      gradient: 'from-violet-600 to-fuchsia-600',
-      features: [
-        { text: '4 vCPUs + 8 GB RAM', included: true, highlight: true },
-        { text: '100 GB SSD storage', included: true, highlight: true },
-        { text: '1 TB bandwidth/month', included: true },
-        { text: 'Unlimited projects', included: true, highlight: true },
-        { text: 'Private & public projects', included: true },
-        { text: 'Priority email support', included: true },
-        { text: 'All premium templates', included: true },
-        { text: 'Custom domains (5 included)', included: true, highlight: true },
-        { text: 'Team collaboration (5 members)', included: true },
-        { text: '$25/month AI credits', included: true, highlight: true, tooltip: 'Monthly credits for AI, deployments, storage, databases' },
-        { text: 'Pay-as-you-go beyond credits', included: true, tooltip: 'Only pay for AI usage beyond your monthly credit allowance' },
-        { text: 'AI Agent - Unlimited apps', included: true, highlight: true, tooltip: 'Build unlimited apps with our AI Agent' },
-        { text: 'Advanced AI code completion', included: true },
-        { text: 'Automated deployments', included: true },
-        { text: 'Database hosting', included: true },
-        { text: 'Analytics dashboard', included: true }
-      ],
-      cta: 'Start Pro Trial',
-      ctaVariant: 'default'
-    },
-    {
-      name: 'Business',
-      description: 'For growing teams and businesses',
-      monthlyPrice: 99,
-      yearlyPrice: 89,
-      icon: <Briefcase className="h-6 w-6" />,
-      gradient: 'from-blue-600 to-cyan-600',
-      features: [
-        { text: '8 vCPUs + 16 GB RAM per seat', included: true, highlight: true },
-        { text: '500 GB SSD storage', included: true },
-        { text: 'Unlimited bandwidth', included: true, highlight: true },
-        { text: 'Unlimited everything', included: true, highlight: true },
-        { text: 'Team collaboration (50 members)', included: true },
-        { text: 'Priority support + SLA', included: true, highlight: true },
-        { text: 'Custom domain (unlimited)', included: true },
-        { text: 'Advanced security features', included: true },
-        { text: 'SSO/SAML authentication', included: true, highlight: true },
-        { text: 'Role-based access control', included: true },
-        { text: 'Private cloud deployment', included: true },
-        { text: 'Dedicated resources', included: true },
-        { text: 'Custom AI model training', included: true, highlight: true },
-        { text: 'White-label options', included: true },
-        { text: 'API access', included: true }
-      ],
-      cta: 'Contact Sales',
-      ctaVariant: 'default'
-    },
-    {
-      name: 'Enterprise',
-      description: 'For large teams and Fortune 500 companies',
-      monthlyPrice: 500,
-      yearlyPrice: 500,
-      enterprise: true,
-      icon: <Building2 className="h-6 w-6" />,
-      gradient: 'from-amber-600 to-orange-600',
-      features: [
-        { text: 'Custom vCPUs + RAM', included: true, highlight: true },
-        { text: 'Unlimited storage', included: true, highlight: true },
-        { text: 'Unlimited bandwidth', included: true },
-        { text: 'Unlimited projects & teams', included: true, highlight: true },
-        { text: 'Dedicated account manager', included: true, highlight: true },
-        { text: '99.9% SLA guarantee', included: true },
-        { text: 'Custom domain (unlimited)', included: true },
-        { text: 'Advanced security & compliance', included: true },
-        { text: 'SSO/SAML authentication', included: true, highlight: true },
-        { text: 'Audit logs & monitoring', included: true },
-        { text: 'Private cloud deployment', included: true },
-        { text: '$100/month AI credits per seat', included: true, highlight: true, tooltip: 'Enterprise-grade AI credits pool for your organization' },
-        { text: 'Volume discounts on overage', included: true, tooltip: 'Negotiated rates for AI usage beyond monthly credits' },
-        { text: 'Custom AI model training', included: true, highlight: true },
-        { text: 'White-label options', included: true },
-        { text: 'API access & custom integrations', included: true }
-      ],
-      cta: 'Contact Sales',
-      ctaVariant: 'default'
-    },
-    {
-      name: 'Enterprise-Legacy',
-      description: 'Custom solutions for large organizations',
-      monthlyPrice: -1,
-      yearlyPrice: -1,
-      enterprise: true,
-      icon: <Building2 className="h-6 w-6" />,
-      gradient: 'from-gray-800 to-gray-900',
-      features: [
-        { text: 'Custom infrastructure', included: true, highlight: true },
-        { text: 'Unlimited everything', included: true },
-        { text: 'Dedicated account team', included: true, highlight: true },
-        { text: '24/7 phone support', included: true, highlight: true },
-        { text: 'Air-gapped deployment', included: true },
-        { text: 'SOC 2 Type II certified', included: true, highlight: true },
-        { text: 'HIPAA compliance', included: true },
-        { text: 'Custom SLA (99.99% uptime)', included: true, highlight: true },
-        { text: 'On-premise deployment', included: true },
-        { text: 'Custom integrations', included: true },
-        { text: 'Audit logs & compliance', included: true },
-        { text: 'Advanced threat protection', included: true },
-        { text: 'Custom billing & invoicing', included: true },
-        { text: 'Professional services', included: true },
-        { text: 'Training & onboarding', included: true }
-      ],
-      cta: 'Get Quote',
-      ctaVariant: 'outline'
+    };
+
+    if (!apiPlans || apiPlans.length === 0) {
+      return [freeTier];
     }
-  ];
+
+    const mappedTiers: PricingTier[] = apiPlans.map((plan) => {
+      const isCore = plan.name === 'Core';
+      const isPro = plan.name === 'Pro';
+      const isEnterprise = plan.name === 'Enterprise';
+
+      return {
+        name: plan.name,
+        description: isCore 
+          ? 'Essential tools for productive development'
+          : isPro 
+            ? 'For professional developers and small teams'
+            : 'For large teams and Fortune 500 companies',
+        monthlyPrice: plan.price,
+        yearlyPrice: plan.price,
+        popular: isPro,
+        enterprise: isEnterprise,
+        icon: isCore 
+          ? <Star className="h-6 w-6" />
+          : isPro
+            ? <Crown className="h-6 w-6" />
+            : <Building2 className="h-6 w-6" />,
+        gradient: isCore
+          ? 'from-blue-600 to-cyan-600'
+          : isPro
+            ? 'from-violet-600 to-fuchsia-600'
+            : 'from-amber-600 to-orange-600',
+        features: plan.features.map((f: string) => ({
+          text: f,
+          included: true,
+          highlight: false
+        })),
+        cta: isEnterprise ? 'Contact Sales' : `Start ${plan.name}`,
+        ctaVariant: isPro ? 'default' : isEnterprise ? 'default' : 'outline'
+      };
+    });
+
+    return [freeTier, ...mappedTiers];
+  }, [apiPlans]);
 
   const comparisonFeatures = [
     { category: 'Infrastructure', features: [
@@ -246,6 +180,20 @@ export default function Pricing() {
     if (monthlyPrice <= 0) return 0;
     return Math.round(((monthlyPrice - yearlyPrice) / monthlyPrice) * 100);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-gray-50 dark:to-gray-900/50">
+        <PublicNavbar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+            <p className="text-lg text-muted-foreground">Loading pricing plans...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-gray-50 dark:to-gray-900/50">
