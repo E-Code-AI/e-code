@@ -23,7 +23,7 @@ router.get('/plans', (_req: Request, res: Response) => {
 // Create a new subscription
 router.post('/create-subscription', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    const userId = parseInt(req.user!.id);
+    const userId = req.user!.id;
     const { tier, interval, paymentMethodId } = req.body;
 
     if (!tier) {
@@ -56,7 +56,7 @@ router.post('/create-subscription', ensureAuthenticated, async (req: Request, re
 // Cancel subscription
 router.post('/cancel-subscription', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    const userId = parseInt(req.user!.id);
+    const userId = req.user!.id;
     await paymentService.cancelSubscription(userId);
     res.json({ success: true, message: 'Subscription cancelled successfully' });
   } catch (error: any) {
@@ -68,7 +68,7 @@ router.post('/cancel-subscription', ensureAuthenticated, async (req: Request, re
 // Update subscription
 router.post('/update-subscription', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    const userId = parseInt(req.user!.id);
+    const userId = req.user!.id;
     const { newPlanId } = req.body;
 
     if (!newPlanId) {
@@ -89,7 +89,7 @@ router.post('/update-subscription', ensureAuthenticated, async (req: Request, re
 // Create payment intent for one-time payments
 router.post('/create-payment-intent', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    const userId = parseInt(req.user!.id);
+    const userId = req.user!.id;
     const { amount, currency, description } = req.body;
 
     if (!amount || amount <= 0) {
@@ -133,7 +133,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
 // Get current subscription status
 router.get('/subscription-status', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    const userId = parseInt(req.user!.id);
+    const userId = req.user!.id;
     const { storage } = await import('../storage');
     const user = await storage.getUser(String(userId));
 
@@ -157,7 +157,7 @@ router.get('/subscription-status', ensureAuthenticated, async (req: Request, res
 // Get billing history
 router.get('/billing-history', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    const userId = parseInt(req.user!.id);
+    const userId = req.user!.id;
     // This would typically fetch invoice history from Stripe
     // For now, return empty array
     res.json({ invoices: [] });
@@ -170,7 +170,7 @@ router.get('/billing-history', ensureAuthenticated, async (req: Request, res: Re
 // Record usage for metered billing
 router.post('/record-usage', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    const userId = parseInt(req.user!.id);
+    const userId = req.user!.id;
     const { metric, quantity } = req.body;
 
     if (!metric || !quantity) {
