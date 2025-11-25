@@ -1196,3 +1196,88 @@ body.tablet-device {
 body.landscape-mode .mobile-navigation {
   height: 48px;
 }
+
+/* ============================================
+ * Monaco AI Code Actions - Loading & Highlights
+ * ============================================ */
+
+/* AI Loading Line Highlight */
+.ai-loading-line {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  border-left: 3px solid rgb(59, 130, 246) !important;
+}
+
+/* AI Loading Glyph Margin (spinner icon area) */
+.ai-loading-glyph {
+  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
+  animation: aiPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes aiPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* AI Loading Spinner (after content) */
+.ai-loading-spinner::after {
+  content: '⏳';
+  position: absolute;
+  right: 10px;
+  animation: spin 1s linear infinite;
+  font-size: 14px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Monaco Editor - Code Lens Styling for AI Actions */
+.monaco-editor .codelens-decoration {
+  font-family: var(--font-sans);
+  font-size: 11px !important;
+}
+
+.monaco-editor .codelens-decoration > span {
+  color: var(--ecode-text-secondary) !important;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.monaco-editor .codelens-decoration > span:hover {
+  color: var(--ecode-accent) !important;
+  background: rgba(59, 130, 246, 0.2);
+}
+
+/* Monaco Editor - Lightbulb Styling */
+.monaco-editor .lightBulbWidget {
+  background: rgba(59, 130, 246, 0.9) !important;
+  border-radius: 4px;
+}
+
+/* Monaco Context Menu - AI Actions Group */
+.monaco-menu .action-item[data-action-id^="ai."] .action-label {
+  font-weight: 500;
+}
+
+/* AI Result Applied Highlight */
+.ai-applied-highlight {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  border-left: 3px solid rgb(34, 197, 94) !important;
+  animation: fadeHighlight 2s ease-out forwards;
+}
+
+@keyframes fadeHighlight {
+  0% { background-color: rgba(34, 197, 94, 0.3); }
+  100% { background-color: transparent; }
+}
+
+/* AI Error Highlight */
+.ai-error-highlight {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  border-left: 3px solid rgb(239, 68, 68) !important;
+}

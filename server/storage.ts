@@ -43,6 +43,9 @@ import {
   PaneConfiguration, InsertPaneConfiguration,
   AiApprovalQueue, InsertAiApprovalQueue,
   AiAuditLog, InsertAiAuditLog,
+  Bounty, InsertBounty,
+  BountySubmission, InsertBountySubmission,
+  BountyReview, InsertBountyReview,
 
   projects, files, users, apiKeys, codeReviews,
   emailVerificationTokens, passwordResetTokens,
@@ -60,6 +63,7 @@ import {
   lspDiagnostics, buildLogs, terminalLogs, testRuns, testCases, securityScans, vulnerabilities,
   resourceMetrics, paneConfigurations,
   aiApprovalQueue, aiAuditLogs,
+  bounties, bountySubmissions, bountyReviews,
   alerts, insertAlertSchema,
   insertAiApprovalQueueSchema, insertAiAuditLogSchema,
   insertUserCreditsSchema, insertBudgetLimitSchema, insertUsageAlertSchema,
@@ -713,6 +717,45 @@ export interface IStorage {
 
   // Team membership check - For access control
   getTeamMemberByUserAndProject?(userId: string, projectId: string): Promise<any | undefined>;
+
+  // Bounty operations
+  createBounty(bounty: InsertBounty): Promise<Bounty>;
+  getBounty(id: number): Promise<Bounty | undefined>;
+  updateBounty(id: number, bounty: Partial<Bounty>): Promise<Bounty | undefined>;
+  listBounties(filters: {
+    status?: string;
+    minAmount?: number;
+    maxAmount?: number;
+    skills?: string[];
+    isPublic?: boolean;
+    featured?: boolean;
+    difficulty?: string;
+    sortBy?: string;
+    sortOrder?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ bounties: Bounty[]; total: number; page: number; limit: number }>;
+  getCreatedBounties(creatorId: number): Promise<Bounty[]>;
+  getAssignedBounties(assigneeId: number): Promise<Bounty[]>;
+  getAppliedBounties(userId: number): Promise<Bounty[]>;
+  getFeaturedBounties(limit?: number): Promise<Bounty[]>;
+  incrementBountyViews(bountyId: number): Promise<void>;
+  incrementBountyApplications(bountyId: number): Promise<void>;
+
+  // Bounty Submission operations
+  createBountySubmission(submission: InsertBountySubmission): Promise<BountySubmission>;
+  getBountySubmissions(bountyId: number): Promise<BountySubmission[]>;
+  getBountySubmissionByUserAndBounty(userId: number, bountyId: number): Promise<BountySubmission | undefined>;
+  updateBountySubmission(id: number, submission: Partial<BountySubmission>): Promise<BountySubmission | undefined>;
+
+  // Bounty Review operations
+  createBountyReview(review: InsertBountyReview): Promise<BountyReview>;
+  getBountyReviews(bountyId: number): Promise<BountyReview[]>;
+  getBountyReviewByReviewerAndBounty(reviewerId: number, bountyId: number): Promise<BountyReview | undefined>;
+  getBountyReviewByTypeAndBounty(reviewType: string, bountyId: number, reviewerId: number): Promise<BountyReview | undefined>;
+  getHunterReviews(hunterId: number): Promise<BountyReview[]>;
+  getPosterReviews(posterId: number): Promise<BountyReview[]>;
+  getUserAverageRating(userId: number, reviewType: 'hunter_review' | 'poster_review'): Promise<number | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -4822,6 +4865,291 @@ Constraints: {{constraints}}`,
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(aiAuditLogs.timestamp))
       .limit(filters.limit || 100);
+  }
+
+  // ============================================================================
+  // BOUNTIES SYSTEM - Marketplace with Stripe Connect
+  // ============================================================================
+
+  async createBounty(bounty: InsertBounty): Promise<Bounty> {
+    const [created] = await this.db.insert(bounties).values(bounty).returning();
+    return created;
+  }
+
+  async getBounty(id: number): Promise<Bounty | undefined> {
+    const [bounty] = await this.db.select().from(bounties).where(eq(bounties.id, id));
+    return bounty;
+  }
+
+  async updateBounty(id: number, updates: Partial<Bounty>): Promise<Bounty | undefined> {
+    const [updated] = await this.db
+      .update(bounties)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(bounties.id, id))
+      .returning();
+    return updated;
+  }
+
+  async listBounties(filters: {
+    status?: string;
+    minAmount?: number;
+    maxAmount?: number;
+    skills?: string[];
+    isPublic?: boolean;
+    featured?: boolean;
+    difficulty?: string;
+    sortBy?: string;
+    sortOrder?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ bounties: Bounty[]; total: number; page: number; limit: number }> {
+    const conditions = [];
+    
+    if (filters.status) {
+      conditions.push(eq(bounties.status, filters.status as any));
+    }
+    if (filters.minAmount !== undefined) {
+      conditions.push(sql`${bounties.amount} >= ${filters.minAmount}`);
+    }
+    if (filters.maxAmount !== undefined) {
+      conditions.push(sql`${bounties.amount} <= ${filters.maxAmount}`);
+    }
+    if (filters.skills && filters.skills.length > 0) {
+      conditions.push(sql`${bounties.skills} ?| array[${sql.join(filters.skills.map(s => sql`${s}`), sql`, `)}]`);
+    }
+    if (filters.isPublic !== undefined) {
+      conditions.push(eq(bounties.isPublic, filters.isPublic));
+    }
+    if (filters.featured !== undefined) {
+      conditions.push(eq(bounties.featured, filters.featured));
+    }
+    if (filters.difficulty) {
+      conditions.push(eq(bounties.difficulty, filters.difficulty));
+    }
+
+    const page = filters.page || 1;
+    const limit = filters.limit || 20;
+    const offset = (page - 1) * limit;
+
+    let orderBy;
+    const sortOrder = filters.sortOrder === 'asc' ? 'asc' : 'desc';
+    switch (filters.sortBy) {
+      case 'amount':
+        orderBy = sortOrder === 'asc' ? bounties.amount : desc(bounties.amount);
+        break;
+      case 'deadline':
+        orderBy = sortOrder === 'asc' ? bounties.deadline : desc(bounties.deadline);
+        break;
+      case 'views':
+        orderBy = sortOrder === 'asc' ? bounties.viewsCount : desc(bounties.viewsCount);
+        break;
+      case 'applications':
+        orderBy = sortOrder === 'asc' ? bounties.applicationsCount : desc(bounties.applicationsCount);
+        break;
+      default:
+        orderBy = sortOrder === 'asc' ? bounties.createdAt : desc(bounties.createdAt);
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [countResult] = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(bounties)
+      .where(whereClause);
+
+    const result = await this.db
+      .select()
+      .from(bounties)
+      .where(whereClause)
+      .orderBy(orderBy)
+      .limit(limit)
+      .offset(offset);
+
+    return {
+      bounties: result,
+      total: countResult?.count || 0,
+      page,
+      limit,
+    };
+  }
+
+  async getCreatedBounties(creatorId: number): Promise<Bounty[]> {
+    return await this.db
+      .select()
+      .from(bounties)
+      .where(eq(bounties.authorId, creatorId))
+      .orderBy(desc(bounties.createdAt));
+  }
+
+  async getAssignedBounties(assigneeId: number): Promise<Bounty[]> {
+    return await this.db
+      .select()
+      .from(bounties)
+      .where(eq(bounties.assigneeId, assigneeId))
+      .orderBy(desc(bounties.createdAt));
+  }
+
+  async getAppliedBounties(userId: number): Promise<Bounty[]> {
+    const submissions = await this.db
+      .select({ bountyId: bountySubmissions.bountyId })
+      .from(bountySubmissions)
+      .where(eq(bountySubmissions.userId, userId));
+
+    if (submissions.length === 0) {
+      return [];
+    }
+
+    const bountyIds = submissions.map(s => s.bountyId);
+    return await this.db
+      .select()
+      .from(bounties)
+      .where(inArray(bounties.id, bountyIds))
+      .orderBy(desc(bounties.createdAt));
+  }
+
+  // Bounty Submissions
+
+  async createBountySubmission(submission: InsertBountySubmission): Promise<BountySubmission> {
+    const [created] = await this.db.insert(bountySubmissions).values(submission).returning();
+    return created;
+  }
+
+  async getBountySubmissions(bountyId: number): Promise<BountySubmission[]> {
+    return await this.db
+      .select()
+      .from(bountySubmissions)
+      .where(eq(bountySubmissions.bountyId, bountyId))
+      .orderBy(desc(bountySubmissions.submittedAt));
+  }
+
+  async getBountySubmissionByUserAndBounty(userId: number, bountyId: number): Promise<BountySubmission | undefined> {
+    const [submission] = await this.db
+      .select()
+      .from(bountySubmissions)
+      .where(and(
+        eq(bountySubmissions.userId, userId),
+        eq(bountySubmissions.bountyId, bountyId)
+      ));
+    return submission;
+  }
+
+  async updateBountySubmission(id: number, updates: Partial<BountySubmission>): Promise<BountySubmission | undefined> {
+    const [updated] = await this.db
+      .update(bountySubmissions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(bountySubmissions.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Bounty Reviews
+
+  async createBountyReview(review: InsertBountyReview): Promise<BountyReview> {
+    const [created] = await this.db.insert(bountyReviews).values(review).returning();
+    return created;
+  }
+
+  async getBountyReviews(bountyId: number): Promise<BountyReview[]> {
+    return await this.db
+      .select()
+      .from(bountyReviews)
+      .where(eq(bountyReviews.bountyId, bountyId))
+      .orderBy(desc(bountyReviews.createdAt));
+  }
+
+  async getBountyReviewByReviewerAndBounty(reviewerId: number, bountyId: number): Promise<BountyReview | undefined> {
+    const [review] = await this.db
+      .select()
+      .from(bountyReviews)
+      .where(and(
+        eq(bountyReviews.reviewerId, reviewerId),
+        eq(bountyReviews.bountyId, bountyId)
+      ));
+    return review;
+  }
+
+  async getHunterReviews(hunterId: number): Promise<BountyReview[]> {
+    return await this.db
+      .select()
+      .from(bountyReviews)
+      .where(and(
+        eq(bountyReviews.hunterId, hunterId),
+        eq(bountyReviews.reviewType, 'hunter_review')
+      ))
+      .orderBy(desc(bountyReviews.createdAt));
+  }
+
+  async getPosterReviews(posterId: number): Promise<BountyReview[]> {
+    return await this.db
+      .select()
+      .from(bountyReviews)
+      .where(and(
+        eq(bountyReviews.reviewerId, posterId),
+        eq(bountyReviews.reviewType, 'poster_review')
+      ))
+      .orderBy(desc(bountyReviews.createdAt));
+  }
+
+  async getFeaturedBounties(limit: number = 10): Promise<Bounty[]> {
+    return await this.db
+      .select()
+      .from(bounties)
+      .where(and(
+        eq(bounties.featured, true),
+        eq(bounties.isPublic, true),
+        eq(bounties.status, 'open')
+      ))
+      .orderBy(desc(bounties.createdAt))
+      .limit(limit);
+  }
+
+  async incrementBountyViews(bountyId: number): Promise<void> {
+    await this.db
+      .update(bounties)
+      .set({ viewsCount: sql`${bounties.viewsCount} + 1` })
+      .where(eq(bounties.id, bountyId));
+  }
+
+  async incrementBountyApplications(bountyId: number): Promise<void> {
+    await this.db
+      .update(bounties)
+      .set({ applicationsCount: sql`${bounties.applicationsCount} + 1` })
+      .where(eq(bounties.id, bountyId));
+  }
+
+  async getBountyReviewByTypeAndBounty(
+    reviewType: string,
+    bountyId: number,
+    reviewerId: number
+  ): Promise<BountyReview | undefined> {
+    const [review] = await this.db
+      .select()
+      .from(bountyReviews)
+      .where(and(
+        eq(bountyReviews.bountyId, bountyId),
+        eq(bountyReviews.reviewerId, reviewerId),
+        eq(bountyReviews.reviewType, reviewType)
+      ));
+    return review;
+  }
+
+  async getUserAverageRating(
+    userId: number,
+    reviewType: 'hunter_review' | 'poster_review'
+  ): Promise<number | null> {
+    const targetColumn = reviewType === 'hunter_review' 
+      ? bountyReviews.hunterId 
+      : bountyReviews.reviewerId;
+
+    const [result] = await this.db
+      .select({ avgRating: sql<number>`avg(${bountyReviews.rating})::numeric(3,2)` })
+      .from(bountyReviews)
+      .where(and(
+        eq(targetColumn, userId),
+        eq(bountyReviews.reviewType, reviewType)
+      ));
+
+    return result?.avgRating || null;
   }
 }
 

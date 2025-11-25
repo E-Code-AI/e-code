@@ -1,20 +1,47 @@
 import { createLogger } from '../utils/logger';
 import { checkpointService } from './checkpoint-service';
+import { realObjectStorageService, type StorageObject } from './real-object-storage';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import * as crypto from 'crypto';
 
-// Type definitions for playwright (when available)
 type Browser = any;
 type Page = any;
 
 const logger = createLogger('ScreenshotService');
 
+export interface ScreenshotStorageOptions {
+  storeInObjectStorage?: boolean;
+  storeAsBase64?: boolean;
+  projectId?: number;
+  userId?: number;
+  checkpointId?: number;
+  metadata?: Record<string, string>;
+}
+
+export interface StoredScreenshot {
+  screenshotPath: string;
+  objectStorageKey?: string;
+  base64Data?: string;
+  thumbnail: string;
+  thumbnailBase64?: string;
+  storageObject?: StorageObject;
+  metadata: {
+    width: number;
+    height: number;
+    timestamp: Date;
+    projectId: number;
+    checkpointId?: number;
+    storageType: 'local' | 'object_storage' | 'base64';
+  };
+}
+
 export class ScreenshotService {
   private browser: Browser | null = null;
+  private objectStorageEnabled: boolean = false;
 
   async initialize() {
     try {
-      // Try to load playwright dynamically
       const playwright = await import('playwright').catch(() => null);
       
       if (playwright) {
@@ -26,51 +53,97 @@ export class ScreenshotService {
       } else {
         logger.info('Playwright not available, running in basic mode without browser automation');
       }
+
+      this.objectStorageEnabled = await realObjectStorageService.fileExists('screenshots/.initialized').catch(() => false) || true;
+      if (this.objectStorageEnabled) {
+        logger.info('Object storage integration enabled for screenshots');
+      }
     } catch (error) {
       logger.error('Failed to initialize screenshot service:', error);
       logger.info('Running in basic mode without browser automation');
     }
   }
 
-  async captureProjectPreview(projectId: number, userId: number): Promise<{
-    screenshotPath: string;
-    thumbnail: string;
-    metadata: {
-      width: number;
-      height: number;
-      timestamp: Date;
-      projectId: number;
-    };
-  }> {
+  async storeScreenshotInObjectStorage(
+    buffer: Buffer,
+    projectId: number,
+    options: ScreenshotStorageOptions = {}
+  ): Promise<StorageObject> {
+    const timestamp = Date.now();
+    const hash = crypto.createHash('md5').update(buffer).digest('hex').substring(0, 8);
+    const key = options.checkpointId 
+      ? `screenshots/checkpoints/${projectId}/${options.checkpointId}-${timestamp}-${hash}.png`
+      : `screenshots/projects/${projectId}/${timestamp}-${hash}.png`;
+
+    const storageObject = await realObjectStorageService.uploadFile(
+      key,
+      buffer,
+      {
+        contentType: 'image/png',
+        public: true,
+        metadata: {
+          projectId: projectId.toString(),
+          checkpointId: options.checkpointId?.toString() || '',
+          capturedAt: new Date().toISOString(),
+          ...options.metadata
+        }
+      },
+      projectId,
+      options.userId
+    );
+
+    logger.info(`Screenshot stored in object storage: ${key}`);
+    return storageObject;
+  }
+
+  async getScreenshotFromObjectStorage(key: string): Promise<Buffer | null> {
     try {
-      // Get the preview URL for the project
+      const buffer = await realObjectStorageService.downloadFile(key);
+      return buffer;
+    } catch (error) {
+      logger.warn(`Failed to retrieve screenshot from object storage: ${key}`);
+      return null;
+    }
+  }
+
+  async listCheckpointScreenshots(projectId: number, checkpointId?: number): Promise<StorageObject[]> {
+    const prefix = checkpointId
+      ? `screenshots/checkpoints/${projectId}/${checkpointId}`
+      : `screenshots/checkpoints/${projectId}`;
+    
+    return realObjectStorageService.listFiles(prefix);
+  }
+
+  async captureProjectPreview(
+    projectId: number, 
+    userId: number,
+    options: ScreenshotStorageOptions = {}
+  ): Promise<StoredScreenshot> {
+    try {
       const previewUrl = this.getProjectPreviewUrl(projectId);
       logger.info(`Capturing screenshot for project ${projectId} at ${previewUrl}`);
 
+      const storageType = options.storeInObjectStorage ? 'object_storage' : 
+                         options.storeAsBase64 ? 'base64' : 'local';
+
       if (this.browser) {
-        // Use Playwright for full browser screenshots
         const page = await this.browser.newPage();
         
         try {
-          // Set viewport size
           await page.setViewportSize({ width: 1920, height: 1080 });
           
-          // Navigate to the preview URL
           await page.goto(previewUrl, { 
             waitUntil: 'networkidle',
             timeout: 30000 
           });
 
-          // Wait for content to load
           await page.waitForTimeout(2000);
 
-          // Capture screenshot
           const screenshotBuffer = await page.screenshot({
             fullPage: false,
             type: 'png'
           });
 
-          // Generate thumbnail
           const thumbnailBuffer = await page.screenshot({
             fullPage: false,
             type: 'jpeg',
@@ -78,7 +151,6 @@ export class ScreenshotService {
             clip: { x: 0, y: 0, width: 400, height: 300 }
           });
 
-          // Save screenshots
           const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
           const screenshotDir = path.join(process.cwd(), 'screenshots', projectId.toString());
           await fs.mkdir(screenshotDir, { recursive: true });
@@ -89,30 +161,42 @@ export class ScreenshotService {
           await fs.writeFile(screenshotPath, screenshotBuffer);
           await fs.writeFile(thumbnailPath, thumbnailBuffer);
 
-          // Convert to base64 for immediate use
           const thumbnailBase64 = thumbnailBuffer.toString('base64');
+          const screenshotBase64 = screenshotBuffer.toString('base64');
 
-          // Track in checkpoint
-          await checkpointService.createComprehensiveCheckpoint({
-            projectId,
-            userId,
-            message: 'Captured project screenshot',
-            agentTaskDescription: 'Screenshot capture',
-            filesModified: 0,
-            linesOfCodeWritten: 0,
-            tokensUsed: 0,
-            executionTimeMs: 100,
-            apiCallsCount: 1
-          });
+          let storageObject: StorageObject | undefined;
+          let objectStorageKey: string | undefined;
+
+          if (options.storeInObjectStorage && this.objectStorageEnabled) {
+            storageObject = await this.storeScreenshotInObjectStorage(
+              screenshotBuffer, 
+              projectId, 
+              { 
+                ...options, 
+                userId,
+                metadata: {
+                  ...options.metadata,
+                  captureType: 'project_preview'
+                }
+              }
+            );
+            objectStorageKey = storageObject.key;
+          }
 
           return {
             screenshotPath,
+            objectStorageKey,
+            base64Data: options.storeAsBase64 ? `data:image/png;base64,${screenshotBase64}` : undefined,
             thumbnail: `data:image/jpeg;base64,${thumbnailBase64}`,
+            thumbnailBase64,
+            storageObject,
             metadata: {
               width: 1920,
               height: 1080,
               timestamp: new Date(),
-              projectId
+              projectId,
+              checkpointId: options.checkpointId,
+              storageType
             }
           };
         } finally {
@@ -121,19 +205,23 @@ export class ScreenshotService {
           }
         }
       } else {
-        // Deterministic fallback: Generate project-specific preview
         logger.warn('Browser not available, generating deterministic project preview');
         
         const projectPreview = await this.generateProjectPreview(projectId);
+        const svgBase64 = Buffer.from(projectPreview).toString('base64');
         
         return {
           screenshotPath: `/screenshots/project-${projectId}-preview.png`,
-          thumbnail: 'data:image/svg+xml;base64,' + Buffer.from(projectPreview).toString('base64'),
+          base64Data: options.storeAsBase64 ? `data:image/svg+xml;base64,${svgBase64}` : undefined,
+          thumbnail: `data:image/svg+xml;base64,${svgBase64}`,
+          thumbnailBase64: svgBase64,
           metadata: {
             width: 1920,
             height: 1080,
             timestamp: new Date(),
-            projectId
+            projectId,
+            checkpointId: options.checkpointId,
+            storageType: 'base64'
           }
         };
       }
@@ -141,6 +229,22 @@ export class ScreenshotService {
       logger.error(`Failed to capture screenshot for project ${projectId}:`, error);
       throw error;
     }
+  }
+
+  async captureForCheckpoint(
+    projectId: number,
+    userId: number,
+    checkpointId: number
+  ): Promise<StoredScreenshot> {
+    return this.captureProjectPreview(projectId, userId, {
+      storeInObjectStorage: true,
+      storeAsBase64: true,
+      checkpointId,
+      metadata: {
+        captureType: 'checkpoint',
+        checkpointId: checkpointId.toString()
+      }
+    });
   }
 
   async captureWorkflowState(projectId: number): Promise<{

@@ -6,7 +6,7 @@ import { createLogger } from '../utils/logger';
 import { db } from '../db';
 import { projects } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
-import storage from '../storage';
+import { storage } from '../storage';
 
 const logger = createLogger('background-testing-ws');
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';

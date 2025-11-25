@@ -125,6 +125,8 @@ export const users = pgTable("users", {
   stripePriceId: varchar("stripe_price_id"),
   subscriptionStatus: varchar("subscription_status"),
   subscriptionCurrentPeriodEnd: timestamp("subscription_current_period_end"),
+  stripeConnectAccountId: varchar("stripe_connect_account_id"),
+  stripeConnectOnboarded: boolean("stripe_connect_onboarded").default(false),
   role: text("role").default('user'), // ✅ DB has role (text), not isAdmin (boolean)
   // AI Preferences
   preferredAiModel: varchar("preferred_ai_model"),
@@ -1718,6 +1720,7 @@ export const templates = pgTable("templates", {
   status: varchar("status").notNull().default('published'), // 'draft', 'pending_review', 'published', 'rejected'
   githubUrl: text("github_url"), // Source repository URL
   demoUrl: text("demo_url"), // Live demo URL
+  livePreviewUrl: text("live_preview_url"), // Live preview iframe URL
   thumbnailUrl: text("thumbnail_url"), // Screenshot/preview image
   version: varchar("version").notNull().default('1.0.0'),
   license: varchar("license").notNull().default('MIT'),
@@ -1756,6 +1759,19 @@ export const templateRatings = pgTable("template_ratings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (table) => [
   unique('unique_template_user_rating').on(table.templateId, table.userId),
+]);
+
+// Template forks - Track when users fork templates to their projects
+// Note: templateId is integer to match actual database schema
+export const templateForks = pgTable("template_forks", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  templateId: integer("template_id").notNull(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  forkedProjectId: integer("forked_project_id").references(() => projects.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  index('template_forks_template_idx').on(table.templateId),
+  index('template_forks_user_idx').on(table.userId),
 ]);
 
 // Template tags for enhanced categorization
@@ -1857,6 +1873,7 @@ export const insertAlertHistorySchema = createInsertSchema(alertHistory).omit({ 
 export const insertTemplateSchema = createInsertSchema(templates).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertTemplateCategorySchema = createInsertSchema(templateCategories).omit({ id: true, createdAt: true });
 export const insertTemplateRatingSchema = createInsertSchema(templateRatings).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertTemplateForkSchema = createInsertSchema(templateForks).omit({ id: true, createdAt: true });
 export const insertTemplateTagSchema = createInsertSchema(templateTags).omit({ id: true, createdAt: true });
 export const insertTemplateCollectionSchema = createInsertSchema(templateCollections).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCollectionTemplateSchema = createInsertSchema(collectionTemplates).omit({ id: true, addedAt: true });
@@ -1905,6 +1922,8 @@ export type TemplateCategory = typeof templateCategories.$inferSelect;
 export type InsertTemplateCategory = z.infer<typeof insertTemplateCategorySchema>;
 export type TemplateRating = typeof templateRatings.$inferSelect;
 export type InsertTemplateRating = z.infer<typeof insertTemplateRatingSchema>;
+export type TemplateFork = typeof templateForks.$inferSelect;
+export type InsertTemplateFork = z.infer<typeof insertTemplateForkSchema>;
 export type TemplateTag = typeof templateTags.$inferSelect;
 export type InsertTemplateTag = z.infer<typeof insertTemplateTagSchema>;
 export type TemplateCollection = typeof templateCollections.$inferSelect;
@@ -3243,4 +3262,244 @@ export const insertAiStripeUsageQueueSchema = createInsertSchema(aiStripeUsageQu
 
 export type AiStripeUsageQueue = typeof aiStripeUsageQueue.$inferSelect;
 export type InsertAiStripeUsageQueue = z.infer<typeof insertAiStripeUsageQueueSchema>;
+
+// ============================================
+// MAX AUTONOMY MODE - 200+ minute autonomous sessions
+// ============================================
+
+export const maxAutonomySessionStatusEnum = pgEnum('max_autonomy_session_status', [
+  'pending', 'active', 'paused', 'completed', 'failed', 'cancelled'
+]);
+
+export const maxAutonomyTaskStatusEnum = pgEnum('max_autonomy_task_status', [
+  'pending', 'queued', 'running', 'completed', 'failed', 'skipped', 'cancelled'
+]);
+
+export const maxAutonomyTaskPriorityEnum = pgEnum('max_autonomy_task_priority', [
+  'critical', 'high', 'medium', 'low'
+]);
+
+export const maxAutonomySessions = pgTable('max_autonomy_sessions', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: integer('user_id').notNull().references(() => users.id),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  agentSessionId: varchar('agent_session_id').references(() => agentSessions.id),
+  
+  goal: text('goal').notNull(),
+  status: maxAutonomySessionStatusEnum('status').notNull().default('pending'),
+  
+  maxDurationMinutes: integer('max_duration_minutes').default(240),
+  executionIntervalMs: integer('execution_interval_ms').default(2000),
+  
+  tasksTotal: integer('tasks_total').default(0),
+  tasksCompleted: integer('tasks_completed').default(0),
+  tasksFailed: integer('tasks_failed').default(0),
+  tasksSkipped: integer('tasks_skipped').default(0),
+  
+  checkpointsCreated: integer('checkpoints_created').default(0),
+  rollbacksPerformed: integer('rollbacks_performed').default(0),
+  testsRun: integer('tests_run').default(0),
+  testsPassed: integer('tests_passed').default(0),
+  
+  totalTokensUsed: integer('total_tokens_used').default(0),
+  totalCostUsd: decimal('total_cost_usd', { precision: 10, scale: 6 }).default('0'),
+  
+  autoCheckpoint: boolean('auto_checkpoint').default(true),
+  autoTest: boolean('auto_test').default(true),
+  autoRollback: boolean('auto_rollback').default(true),
+  riskThreshold: riskThresholdEnum('risk_threshold').default('medium'),
+  
+  lastCheckpointId: integer('last_checkpoint_id'),
+  currentTaskId: varchar('current_task_id'),
+  
+  startedAt: timestamp('started_at'),
+  pausedAt: timestamp('paused_at'),
+  resumedAt: timestamp('resumed_at'),
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  
+  errorMessage: text('error_message'),
+  metadata: jsonb('metadata').$type<{
+    model?: string;
+    conversationHistory?: Array<{ role: string; content: string }>;
+    executionLog?: Array<{ timestamp: string; event: string; details?: any }>;
+  }>(),
+}, (table) => [
+  index('max_autonomy_sessions_user_id_idx').on(table.userId),
+  index('max_autonomy_sessions_project_id_idx').on(table.projectId),
+  index('max_autonomy_sessions_status_idx').on(table.status),
+]);
+
+export const maxAutonomyTasks = pgTable('max_autonomy_tasks', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: varchar('session_id').notNull().references(() => maxAutonomySessions.id, { onDelete: 'cascade' }),
+  
+  title: text('title').notNull(),
+  description: text('description'),
+  type: text('type').notNull(),
+  
+  priority: maxAutonomyTaskPriorityEnum('priority').notNull().default('medium'),
+  status: maxAutonomyTaskStatusEnum('status').notNull().default('pending'),
+  
+  order: integer('order').notNull().default(0),
+  dependencies: jsonb('dependencies').$type<string[]>().default([]),
+  
+  input: jsonb('input').$type<Record<string, any>>(),
+  output: jsonb('output').$type<Record<string, any>>(),
+  
+  retryCount: integer('retry_count').default(0),
+  maxRetries: integer('max_retries').default(3),
+  
+  estimatedDurationMs: integer('estimated_duration_ms'),
+  actualDurationMs: integer('actual_duration_ms'),
+  
+  checkpointId: integer('checkpoint_id'),
+  requiresCheckpoint: boolean('requires_checkpoint').default(false),
+  requiresTest: boolean('requires_test').default(false),
+  
+  errorMessage: text('error_message'),
+  errorStack: text('error_stack'),
+  
+  startedAt: timestamp('started_at'),
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  
+  metadata: jsonb('metadata').$type<{
+    filesModified?: string[];
+    commandsExecuted?: string[];
+    aiResponse?: string;
+    testResults?: { passed: boolean; total: number; failures: any[] };
+  }>(),
+}, (table) => [
+  index('max_autonomy_tasks_session_id_idx').on(table.sessionId),
+  index('max_autonomy_tasks_status_idx').on(table.status),
+  index('max_autonomy_tasks_priority_idx').on(table.priority),
+  index('max_autonomy_tasks_order_idx').on(table.order),
+]);
+
+export const insertMaxAutonomySessionSchema = createInsertSchema(maxAutonomySessions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMaxAutonomyTaskSchema = createInsertSchema(maxAutonomyTasks).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type MaxAutonomySession = typeof maxAutonomySessions.$inferSelect;
+export type InsertMaxAutonomySession = z.infer<typeof insertMaxAutonomySessionSchema>;
+
+export type MaxAutonomyTask = typeof maxAutonomyTasks.$inferSelect;
+export type InsertMaxAutonomyTask = z.infer<typeof insertMaxAutonomyTaskSchema>;
+
+// ============================================
+// BOUNTIES SYSTEM - Stripe Connect Marketplace
+// ============================================
+
+export const bountyStatusEnum = pgEnum('bounty_status', [
+  'draft', 'open', 'in_progress', 'submitted', 'completed', 'cancelled', 'disputed'
+]);
+
+export const bountySubmissionStatusEnum = pgEnum('bounty_submission_status', [
+  'pending', 'accepted', 'rejected', 'withdrawn'
+]);
+
+export const bounties = pgTable('bounties', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  reward: integer('reward'),
+  amount: decimal('amount', { precision: 10, scale: 2 }),
+  currency: varchar('currency', { length: 3 }).default('USD'),
+  status: varchar('status', { length: 32 }).default('draft'),
+  difficulty: varchar('difficulty', { length: 32 }),
+  deadline: timestamp('deadline'),
+  tags: text().array().default([]),
+  authorId: integer('author_id').notNull().references(() => users.id),
+  authorName: varchar('author_name'),
+  authorAvatar: varchar('author_avatar'),
+  authorVerified: boolean('author_verified').default(false),
+  winnerId: integer('winner_id').references(() => users.id),
+  assigneeId: integer('assignee_id').references(() => users.id),
+  projectId: integer('project_id').references(() => projects.id),
+  skills: jsonb('skills').$type<string[]>().default([]),
+  
+  stripePaymentIntentId: varchar('stripe_payment_intent_id'),
+  stripeTransferId: varchar('stripe_transfer_id'),
+  escrowStatus: varchar('escrow_status', { length: 32 }).default('pending'),
+  payoutStatus: varchar('payout_status', { length: 32 }).default('pending'),
+  
+  isPublic: boolean('is_public').default(true).notNull(),
+  featured: boolean('featured').default(false).notNull(),
+  
+  hunterRating: decimal('hunter_rating', { precision: 3, scale: 2 }),
+  posterRating: decimal('poster_rating', { precision: 3, scale: 2 }),
+  
+  applicationsCount: integer('applications_count').default(0).notNull(),
+  viewsCount: integer('views_count').default(0).notNull(),
+  
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const bountySubmissions = pgTable('bounty_submissions', {
+  id: serial('id').primaryKey(),
+  bountyId: integer('bounty_id').notNull().references(() => bounties.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id),
+  proposal: text('proposal').notNull(),
+  estimatedTime: varchar('estimated_time', { length: 64 }),
+  status: varchar('status', { length: 32 }).default('pending'),
+  submittedAt: timestamp('submitted_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const bountyReviews = pgTable('bounty_reviews', {
+  id: serial('id').primaryKey(),
+  bountyId: integer('bounty_id').notNull().references(() => bounties.id, { onDelete: 'cascade' }),
+  reviewerId: integer('reviewer_id').notNull().references(() => users.id),
+  hunterId: integer('hunter_id').notNull().references(() => users.id),
+  rating: integer('rating').notNull(),
+  review: text('review'),
+  reviewType: varchar('review_type', { length: 32 }).default('hunter_review').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const insertBountySchema = createInsertSchema(bounties).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true,
+  stripePaymentIntentId: true,
+  stripeTransferId: true,
+  escrowStatus: true,
+  payoutStatus: true,
+  hunterRating: true,
+  posterRating: true,
+  applicationsCount: true,
+  viewsCount: true,
+});
+
+export const insertBountySubmissionSchema = createInsertSchema(bountySubmissions).omit({
+  id: true,
+  submittedAt: true,
+  updatedAt: true,
+});
+
+export const insertBountyReviewSchema = createInsertSchema(bountyReviews).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type Bounty = typeof bounties.$inferSelect;
+export type InsertBounty = z.infer<typeof insertBountySchema>;
+
+export type BountySubmission = typeof bountySubmissions.$inferSelect;
+export type InsertBountySubmission = z.infer<typeof insertBountySubmissionSchema>;
+
+export type BountyReview = typeof bountyReviews.$inferSelect;
+export type InsertBountyReview = z.infer<typeof insertBountyReviewSchema>;
 

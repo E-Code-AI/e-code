@@ -525,6 +525,24 @@ export class IntelliSenseEnhancement {
 }
 
 /**
+ * AI Code Action Event Types - for communication with UI components
+ */
+export interface AICodeActionEvent {
+  type: 'loading' | 'result' | 'error';
+  action: string;
+  code?: string;
+  result?: any;
+  error?: string;
+}
+
+/**
+ * Dispatch AI code action events to the window for UI components to listen
+ */
+function dispatchAIEvent(event: AICodeActionEvent) {
+  window.dispatchEvent(new CustomEvent('ai-code-action', { detail: event }));
+}
+
+/**
  * AI-Powered Code Actions Enhancement (Replit Agent 3 style)
  * Provides inline AI quick fixes with lightbulb and right-click context menu
  */
@@ -532,110 +550,144 @@ export class AICodeActionsEnhancement {
   private editor: monaco.editor.IStandaloneCodeEditor;
   private disposables: monaco.IDisposable[] = [];
   private projectId: string | number;
+  private loadingDecorations: string[] = [];
 
   constructor(editor: monaco.editor.IStandaloneCodeEditor, projectId?: string | number) {
     this.editor = editor;
     this.projectId = projectId || 'unknown';
     this.registerProviders();
+    this.registerCodeLensProvider();
   }
 
   private registerProviders() {
     const model = this.editor.getModel();
     if (!model) return;
 
-    const language = model.getLanguageId();
-
-    // Register AI Code Action Provider for ALL languages
+    // Register AI Code Action Provider for ALL languages (shows in lightbulb menu)
+    // Using comprehensive language list + wildcard patterns for broad coverage
+    const supportedLanguages = [
+      // Web languages
+      'typescript', 'javascript', 'typescriptreact', 'javascriptreact', 
+      'html', 'css', 'scss', 'less', 'sass', 'stylus',
+      // Backend languages  
+      'python', 'java', 'cpp', 'c', 'csharp', 'go', 'rust', 'ruby', 'php',
+      'scala', 'kotlin', 'swift', 'objective-c', 'perl',
+      // Data & Config
+      'json', 'yaml', 'xml', 'toml', 'ini',
+      // Scripting & Shell
+      'shell', 'bash', 'powershell', 'sh',
+      // Database
+      'sql', 'mysql', 'pgsql', 'plpgsql',
+      // Markup & Docs
+      'markdown', 'plaintext', 'latex', 'restructuredtext',
+      // Other
+      'lua', 'r', 'julia', 'dart', 'elixir', 'erlang', 'haskell',
+      'clojure', 'fsharp', 'ocaml', 'zig', 'nim', 'v',
+      'dockerfile', 'makefile', 'cmake', 'nginx', 'graphql',
+    ];
+    
     this.disposables.push(
-      monaco.languages.registerCodeActionProvider(['typescript', 'javascript', 'python', 'java', 'cpp', 'go', 'rust', 'css', 'html', 'json', 'yaml'], {
+      monaco.languages.registerCodeActionProvider(supportedLanguages, {
         provideCodeActions: (model, range, context, token) => {
           const actions: monaco.languages.CodeAction[] = [];
           
-          // Get selected text or current line
+          // Get selected text or current line content
           const selection = this.editor.getSelection();
-          const selectedText = selection ? model.getValueInRange(selection) : '';
-          const hasSelection = selectedText.length > 0;
+          let selectedText = '';
+          let effectiveRange = range;
+          
+          if (selection && !selection.isEmpty()) {
+            selectedText = model.getValueInRange(selection);
+            effectiveRange = selection;
+          } else {
+            // Get the current line if no selection
+            const lineNumber = range.startLineNumber;
+            selectedText = model.getLineContent(lineNumber);
+            effectiveRange = new monaco.Range(lineNumber, 1, lineNumber, model.getLineMaxColumn(lineNumber));
+          }
+
+          const hasContent = selectedText.trim().length > 0;
+          if (!hasContent) return { actions, dispose: () => {} };
+
+          // Check if there are diagnostics in the selection (for QuickFix kind)
+          const hasDiagnostics = context.markers && context.markers.length > 0;
+          
+          // Use QuickFix for lines with errors, Refactor for other selections
+          const primaryKind = hasDiagnostics ? 'quickfix' : 'refactor.rewrite';
 
           // 🔥 AI-POWERED QUICK FIXES (Replit Agent 3 style)
+          // Using dynamic kind based on diagnostics for better lightbulb visibility
           actions.push({
             title: '✨ AI Explain',
-            kind: 'quickfix',
+            kind: primaryKind,
             command: {
               id: 'ai.explain',
               title: 'AI Explain Code',
-              arguments: [model, range, selectedText],
+              arguments: [selectedText, effectiveRange],
             },
-            diagnostics: [],
+            isPreferred: hasDiagnostics,
           });
 
           actions.push({
             title: '🐛 AI Debug',
-            kind: 'quickfix',
+            kind: hasDiagnostics ? 'quickfix' : 'refactor.rewrite',
             command: {
               id: 'ai.debug',
               title: 'AI Debug Code',
-              arguments: [model, range, selectedText],
+              arguments: [selectedText, effectiveRange],
             },
-            diagnostics: [],
+            isPreferred: hasDiagnostics,
           });
 
           actions.push({
-            title: '🧪 AI Test',
-            kind: 'quickfix',
+            title: '🧪 AI Generate Tests',
+            kind: 'refactor.rewrite',
             command: {
               id: 'ai.test',
               title: 'AI Generate Tests',
-              arguments: [model, range, selectedText],
+              arguments: [selectedText, effectiveRange],
             },
-            diagnostics: [],
           });
 
           actions.push({
             title: '📝 AI Document',
-            kind: 'quickfix',
+            kind: 'refactor.rewrite',
             command: {
               id: 'ai.document',
               title: 'AI Add Documentation',
-              arguments: [model, range, selectedText],
+              arguments: [selectedText, effectiveRange],
             },
-            diagnostics: [],
           });
 
           actions.push({
             title: '⚡ AI Optimize',
-            kind: 'quickfix',
+            kind: 'refactor.rewrite',
             command: {
               id: 'ai.optimize',
               title: 'AI Optimize Code',
-              arguments: [model, range, selectedText],
+              arguments: [selectedText, effectiveRange],
             },
-            diagnostics: [],
           });
 
           actions.push({
             title: '🔍 AI Review',
-            kind: 'quickfix',
+            kind: 'refactor.rewrite',
             command: {
               id: 'ai.review',
               title: 'AI Code Review',
-              arguments: [model, range, selectedText],
+              arguments: [selectedText, effectiveRange],
             },
-            diagnostics: [],
           });
 
-          // Only show if text is selected
-          if (hasSelection) {
-            actions.push({
-              title: '🔎 AI Search Similar',
-              kind: 'quickfix',
-              command: {
-                id: 'ai.search',
-                title: 'AI Search Similar Code',
-                arguments: [model, range, selectedText],
-              },
-              diagnostics: [],
-            });
-          }
+          actions.push({
+            title: '🔎 AI Search Similar',
+            kind: 'refactor.rewrite',
+            command: {
+              id: 'ai.search',
+              title: 'AI Search Similar Code',
+              arguments: [selectedText, effectiveRange],
+            },
+          });
 
           return { actions, dispose: () => {} };
         },
@@ -646,6 +698,140 @@ export class AICodeActionsEnhancement {
     this.registerAICommandHandlers();
   }
 
+  /**
+   * Register Code Lens provider for function-level AI actions
+   */
+  private registerCodeLensProvider() {
+    // Comprehensive language support for function-level AI actions
+    const supportedLanguages = [
+      'typescript', 'javascript', 'typescriptreact', 'javascriptreact',
+      'python', 'java', 'cpp', 'c', 'csharp', 'go', 'rust', 'ruby', 'php',
+      'scala', 'kotlin', 'swift', 'lua', 'dart', 'elixir', 'haskell',
+    ];
+    
+    this.disposables.push(
+      monaco.languages.registerCodeLensProvider(supportedLanguages, {
+        provideCodeLenses: (model, token) => {
+          const lenses: monaco.languages.CodeLens[] = [];
+          const text = model.getValue();
+          
+          // Simple function detection patterns
+          const functionPatterns = [
+            /^[\s]*(async\s+)?function\s+(\w+)\s*\(/gm,  // function declarations
+            /^[\s]*(export\s+)?(async\s+)?function\s+(\w+)\s*\(/gm,  // exported functions
+            /^[\s]*(const|let|var)\s+(\w+)\s*=\s*(async\s+)?\(/gm,  // arrow functions
+            /^[\s]*(public|private|protected)?\s*(async\s+)?(\w+)\s*\([^)]*\)\s*[:{]/gm,  // class methods
+            /^[\s]*def\s+(\w+)\s*\(/gm,  // Python functions
+            /^[\s]*async\s+def\s+(\w+)\s*\(/gm,  // Python async functions
+          ];
+
+          for (const pattern of functionPatterns) {
+            let match;
+            while ((match = pattern.exec(text)) !== null) {
+              const position = model.getPositionAt(match.index);
+              const line = position.lineNumber;
+              
+              // Add AI actions as code lenses above functions
+              lenses.push({
+                range: new monaco.Range(line, 1, line, 1),
+                command: {
+                  id: 'ai.explain.function',
+                  title: '✨ Explain',
+                  arguments: [this.getFunctionBody(model, line)],
+                },
+              });
+              
+              lenses.push({
+                range: new monaco.Range(line, 1, line, 1),
+                command: {
+                  id: 'ai.test.function',
+                  title: '🧪 Test',
+                  arguments: [this.getFunctionBody(model, line)],
+                },
+              });
+              
+              lenses.push({
+                range: new monaco.Range(line, 1, line, 1),
+                command: {
+                  id: 'ai.document.function',
+                  title: '📝 Doc',
+                  arguments: [this.getFunctionBody(model, line)],
+                },
+              });
+            }
+          }
+
+          return { lenses, dispose: () => {} };
+        },
+        resolveCodeLens: (model, codeLens, token) => {
+          return codeLens;
+        },
+      })
+    );
+
+    // Register function-level AI command handlers
+    this.registerFunctionAICommands();
+  }
+
+  /**
+   * Get the body of a function starting at the given line
+   */
+  private getFunctionBody(model: monaco.editor.ITextModel, startLine: number): string {
+    const lines: string[] = [];
+    let braceCount = 0;
+    let foundOpen = false;
+    
+    for (let i = startLine; i <= Math.min(startLine + 100, model.getLineCount()); i++) {
+      const line = model.getLineContent(i);
+      lines.push(line);
+      
+      for (const char of line) {
+        if (char === '{' || char === ':') {
+          braceCount++;
+          foundOpen = true;
+        } else if (char === '}') {
+          braceCount--;
+        }
+      }
+      
+      if (foundOpen && braceCount <= 0) break;
+    }
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Register function-level AI commands
+   */
+  private registerFunctionAICommands() {
+    // Function Explain
+    this.editor.addAction({
+      id: 'ai.explain.function',
+      label: '✨ AI Explain Function',
+      run: async (editor, code) => {
+        await this.handleAIAction('explain', code as string);
+      },
+    });
+
+    // Function Test
+    this.editor.addAction({
+      id: 'ai.test.function',
+      label: '🧪 AI Test Function',
+      run: async (editor, code) => {
+        await this.handleAIAction('test', code as string);
+      },
+    });
+
+    // Function Document
+    this.editor.addAction({
+      id: 'ai.document.function',
+      label: '📝 AI Document Function',
+      run: async (editor, code) => {
+        await this.handleAIAction('document', code as string);
+      },
+    });
+  }
+
   private registerAICommandHandlers() {
     // Handler for AI Explain
     this.editor.addAction({
@@ -653,9 +839,10 @@ export class AICodeActionsEnhancement {
       label: '✨ AI Explain',
       contextMenuGroupId: 'ai-actions',
       contextMenuOrder: 1,
+      keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyE],
       run: async (editor, ...args) => {
-        const [model, range, selectedText] = args;
-        await this.handleAIAction('explain', selectedText || model.getValueInRange(range));
+        const [code] = args as [string];
+        await this.handleAIAction('explain', code || this.getSelectedOrLineCode());
       },
     });
 
@@ -665,21 +852,23 @@ export class AICodeActionsEnhancement {
       label: '🐛 AI Debug',
       contextMenuGroupId: 'ai-actions',
       contextMenuOrder: 2,
+      keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyB],
       run: async (editor, ...args) => {
-        const [model, range, selectedText] = args;
-        await this.handleAIAction('debug', selectedText || model.getValueInRange(range));
+        const [code] = args as [string];
+        await this.handleAIAction('debug', code || this.getSelectedOrLineCode());
       },
     });
 
     // Handler for AI Test
     this.editor.addAction({
       id: 'ai.test',
-      label: '🧪 AI Test',
+      label: '🧪 AI Generate Tests',
       contextMenuGroupId: 'ai-actions',
       contextMenuOrder: 3,
+      keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyT],
       run: async (editor, ...args) => {
-        const [model, range, selectedText] = args;
-        await this.handleAIAction('test', selectedText || model.getValueInRange(range));
+        const [code] = args as [string];
+        await this.handleAIAction('test', code || this.getSelectedOrLineCode());
       },
     });
 
@@ -689,9 +878,10 @@ export class AICodeActionsEnhancement {
       label: '📝 AI Document',
       contextMenuGroupId: 'ai-actions',
       contextMenuOrder: 4,
+      keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyD],
       run: async (editor, ...args) => {
-        const [model, range, selectedText] = args;
-        await this.handleAIAction('document', selectedText || model.getValueInRange(range));
+        const [code] = args as [string];
+        await this.handleAIAction('document', code || this.getSelectedOrLineCode());
       },
     });
 
@@ -701,9 +891,10 @@ export class AICodeActionsEnhancement {
       label: '⚡ AI Optimize',
       contextMenuGroupId: 'ai-actions',
       contextMenuOrder: 5,
+      keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyO],
       run: async (editor, ...args) => {
-        const [model, range, selectedText] = args;
-        await this.handleAIAction('optimize', selectedText || model.getValueInRange(range));
+        const [code] = args as [string];
+        await this.handleAIAction('optimize', code || this.getSelectedOrLineCode());
       },
     });
 
@@ -713,9 +904,10 @@ export class AICodeActionsEnhancement {
       label: '🔍 AI Review',
       contextMenuGroupId: 'ai-actions',
       contextMenuOrder: 6,
+      keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyR],
       run: async (editor, ...args) => {
-        const [model, range, selectedText] = args;
-        await this.handleAIAction('review', selectedText || model.getValueInRange(range));
+        const [code] = args as [string];
+        await this.handleAIAction('review', code || this.getSelectedOrLineCode());
       },
     });
 
@@ -726,16 +918,82 @@ export class AICodeActionsEnhancement {
       contextMenuGroupId: 'ai-actions',
       contextMenuOrder: 7,
       run: async (editor, ...args) => {
-        const [model, range, selectedText] = args;
-        await this.handleAIAction('search', selectedText || model.getValueInRange(range));
+        const [code] = args as [string];
+        await this.handleAIAction('search', code || this.getSelectedOrLineCode());
       },
     });
   }
 
+  /**
+   * Get selected text or current line content
+   */
+  private getSelectedOrLineCode(): string {
+    const model = this.editor.getModel();
+    if (!model) return '';
+    
+    const selection = this.editor.getSelection();
+    if (selection && !selection.isEmpty()) {
+      return model.getValueInRange(selection);
+    }
+    
+    const position = this.editor.getPosition();
+    if (position) {
+      return model.getLineContent(position.lineNumber);
+    }
+    
+    return '';
+  }
+
+  /**
+   * Show loading decoration on the editor
+   */
+  private showLoadingState(range: monaco.Range | null) {
+    if (!range) return;
+    
+    this.loadingDecorations = this.editor.deltaDecorations(this.loadingDecorations, [
+      {
+        range,
+        options: {
+          isWholeLine: true,
+          className: 'ai-loading-line',
+          glyphMarginClassName: 'ai-loading-glyph',
+          glyphMarginHoverMessage: { value: '⏳ AI is processing...' },
+          afterContentClassName: 'ai-loading-spinner',
+        },
+      },
+    ]);
+  }
+
+  /**
+   * Hide loading decoration
+   */
+  private hideLoadingState() {
+    this.loadingDecorations = this.editor.deltaDecorations(this.loadingDecorations, []);
+  }
+
   private async handleAIAction(action: string, code: string) {
+    if (!code || code.trim().length === 0) {
+      dispatchAIEvent({
+        type: 'error',
+        action,
+        error: 'No code selected. Please select some code first.',
+      });
+      return;
+    }
+
+    const selection = this.editor.getSelection();
+    
     try {
-      // Show loading indicator
+      // Show loading state
       console.log(`[AI ${action}] Processing code...`, code.substring(0, 100));
+      this.showLoadingState(selection);
+      
+      // Dispatch loading event for UI
+      dispatchAIEvent({
+        type: 'loading',
+        action,
+        code: code.substring(0, 200),
+      });
 
       // Call AI backend API
       const response = await fetch(`/api/ai/code-actions`, {
@@ -750,43 +1008,59 @@ export class AICodeActionsEnhancement {
       });
 
       if (!response.ok) {
-        throw new Error(`AI action failed: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(errorData.error || `AI action failed: ${response.statusText}`);
       }
 
       const result = await response.json();
       
+      // Hide loading state
+      this.hideLoadingState();
+      
       // Handle different action types
       if (action === 'optimize' || action === 'document') {
-        // Replace code with AI suggestion
-        this.applyCodeSuggestion(result.suggestion);
-      } else {
-        // Show result in a notification or modal
-        this.showAIResult(action, result);
+        // Apply code suggestion if available
+        if (result.suggestion && selection) {
+          this.applyCodeSuggestion(result.suggestion, selection);
+        }
       }
+
+      // Dispatch result event for UI to show
+      dispatchAIEvent({
+        type: 'result',
+        action,
+        code: code.substring(0, 200),
+        result,
+      });
 
       console.log(`[AI ${action}] Success:`, result);
     } catch (error) {
+      // Hide loading state
+      this.hideLoadingState();
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[AI ${action}] Error:`, error);
-      // Show error notification
-      alert(`AI ${action} failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      // Dispatch error event for UI
+      dispatchAIEvent({
+        type: 'error',
+        action,
+        error: errorMessage,
+      });
     }
   }
 
-  private applyCodeSuggestion(suggestion: string) {
-    const selection = this.editor.getSelection();
-    if (!selection) return;
+  private applyCodeSuggestion(suggestion: string, range: monaco.Selection) {
+    if (!suggestion) return;
 
     this.editor.executeEdits('ai-suggestion', [{
-      range: selection,
+      range,
       text: suggestion,
       forceMoveMarkers: true,
     }]);
-  }
-
-  private showAIResult(action: string, result: any) {
-    // For now, show in console (can be replaced with modal/panel)
-    console.log(`[AI ${action}] Result:`, result);
-    alert(`AI ${action} result:\n\n${JSON.stringify(result, null, 2)}`);
+    
+    // Focus editor after applying suggestion
+    this.editor.focus();
   }
 
   dispose() {

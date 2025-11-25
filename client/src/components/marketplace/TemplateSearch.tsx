@@ -149,6 +149,7 @@ export function TemplateSearch({ value, onChange, onSearch, className }: Templat
                 }}
                 onFocus={() => setIsOpen(true)}
                 className="pl-10 pr-24"
+                data-testid="search-input"
               />
               <div className="absolute right-2 flex items-center gap-1">
                 <AnimatePresence>
@@ -164,6 +165,7 @@ export function TemplateSearch({ value, onChange, onSearch, className }: Templat
                         size="sm"
                         className="h-7 w-7 p-0"
                         onClick={clearSearch}
+                        data-testid="clear-search-button"
                       >
                         <X className="h-3 w-3" />
                       </Button>
@@ -179,6 +181,7 @@ export function TemplateSearch({ value, onChange, onSearch, className }: Templat
                     isListening && "text-red-500 animate-pulse"
                   )}
                   onClick={handleVoiceSearch}
+                  data-testid="voice-search-button"
                 >
                   <Mic className="h-3 w-3" />
                 </Button>
@@ -187,6 +190,7 @@ export function TemplateSearch({ value, onChange, onSearch, className }: Templat
                   size="sm"
                   className="h-7 bg-orange-500 hover:bg-orange-600"
                   onClick={() => handleSearch()}
+                  data-testid="search-button"
                 >
                   Search
                 </Button>
