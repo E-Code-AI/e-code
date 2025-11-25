@@ -11,6 +11,17 @@ import crypto from 'crypto';
 const execAsync = promisify(exec);
 const logger = createLogger('checkpoint-service');
 
+// 🔥 REPLIT AGENT 3: Screenshot Service for checkpoint previews
+let ScreenshotService: any;
+(async () => {
+  try {
+    const module = await import('./screenshot-service');
+    ScreenshotService = module.ScreenshotService;
+  } catch (error) {
+    logger.warn('Screenshot service not available');
+  }
+})();
+
 export interface CheckpointMetadata {
   id: number;
   projectId: number;
@@ -40,6 +51,15 @@ export interface CreateCheckpointOptions {
   includeDatabase?: boolean;
   includeEnvironment?: boolean;
   agentState?: any;
+  // 🔥 REPLIT AGENT 3 ENHANCEMENTS
+  conversationSnapshot?: Array<{role: string; content: string}>; // AI conversation history
+  conversationId?: string; // Link to AI conversation
+  userPrompt?: string; // User's original request
+  captureScreenshot?: boolean; // Capture preview screenshot
+  changedFiles?: string[]; // List of modified file paths
+  testResults?: {passed: boolean; total: number; failures: any[]}; // Test results
+  parentCheckpointId?: number; // Parent checkpoint for bidirectional navigation
+  environment?: 'development' | 'production'; // Environment
 }
 
 export interface RestoreCheckpointOptions {
@@ -71,13 +91,46 @@ export class CheckpointService {
   }
 
   /**
-   * Create a checkpoint for a project
+   * Create a checkpoint for a project (ENHANCED for Replit Agent 3)
    */
   async createCheckpoint(options: CreateCheckpointOptions): Promise<CheckpointMetadata> {
     const startTime = Date.now();
     logger.info(`Creating checkpoint for project ${options.projectId}`);
 
     try {
+      // 🔥 REPLIT AGENT 3: Capture screenshot BEFORE creating checkpoint
+      let screenshotUrl: string | null = null;
+      if (options.captureScreenshot && ScreenshotService) {
+        try {
+          const screenshotService = new ScreenshotService();
+          await screenshotService.initialize();
+          const result = await screenshotService.captureProjectPreview(options.projectId, options.userId);
+          screenshotUrl = result.screenshotPath;
+          logger.info(`Screenshot captured: ${screenshotUrl}`);
+        } catch (error) {
+          logger.warn('Failed to capture screenshot, continuing without it:', error);
+        }
+      }
+
+      // 🔥 REPLIT AGENT 3: Auto-assign parentCheckpointId if not provided
+      // This ensures lineage continuity for forward navigation
+      let parentCheckpointId = options.parentCheckpointId;
+      if (!parentCheckpointId) {
+        const [project] = await db.select().from(projects).where(eq(projects.id, options.projectId));
+        parentCheckpointId = project?.currentCheckpointId || null;
+      }
+
+      // 🔥 REPLIT AGENT 3: Create Neon database branch for dev/prod separation
+      let databaseBranchId: string | null = null;
+      if (options.includeDatabase && options.environment === 'development') {
+        try {
+          databaseBranchId = await this.createNeonBranch(options.projectId, options.name);
+          logger.info(`Neon branch created: ${databaseBranchId}`);
+        } catch (error) {
+          logger.warn('Failed to create Neon branch, using regular snapshot:', error);
+        }
+      }
+
       // Create checkpoint record
       const [checkpoint] = await db.insert(checkpoints).values({
         projectId: options.projectId,
@@ -91,7 +144,17 @@ export class CheckpointService {
           agentState: options.agentState || {},
           environmentIncluded: options.includeEnvironment || false,
           databaseIncluded: options.includeDatabase || false
-        }
+        },
+        // 🔥 REPLIT AGENT 3 ENHANCEMENTS
+        conversationSnapshot: options.conversationSnapshot || null,
+        conversationId: options.conversationId || null,
+        userPrompt: options.userPrompt || null,
+        screenshotUrl: screenshotUrl,
+        changedFiles: options.changedFiles || [],
+        testResults: options.testResults || null,
+        parentCheckpointId: parentCheckpointId, // Auto-assigned if not provided
+        databaseBranchId: databaseBranchId,
+        environment: options.environment || 'development',
       }).returning();
 
       // Create checkpoint directory
@@ -136,6 +199,11 @@ export class CheckpointService {
 
       // Clean up old checkpoints
       await this.cleanupOldCheckpoints(options.projectId);
+
+      // 🔥 REPLIT AGENT 3: Set this checkpoint as the current active checkpoint
+      await db.update(projects)
+        .set({ currentCheckpointId: checkpoint.id })
+        .where(eq(projects.id, options.projectId));
 
       logger.info(`Checkpoint ${checkpoint.id} created successfully in ${Date.now() - startTime}ms`);
 
@@ -187,32 +255,27 @@ export class CheckpointService {
         await this.restoreProjectFiles(checkpoint.projectId, checkpoint.id, checkpointDir);
       }
 
-      // Restore database if requested and available
-      if (options.restoreDatabase !== false && checkpoint.metadata?.databaseSnapshot) {
+      // 🔥 FIX: Restore database if requested and available (check ALL database flags)
+      const hasDatabaseSnapshot = 
+        checkpoint.databaseBranchId || 
+        checkpoint.metadata?.databaseSnapshot || 
+        checkpoint.metadata?.databaseIncluded;
+
+      if (options.restoreDatabase !== false && hasDatabaseSnapshot) {
         await this.restoreDatabaseSnapshot(checkpoint.projectId, checkpoint.id, checkpointDir);
       }
 
       // Restore environment variables if requested and available
-      if (options.restoreEnvironment !== false && checkpoint.metadata?.environmentVars) {
+      if (options.restoreEnvironment !== false && (checkpoint.metadata?.environmentVars || checkpoint.metadata?.environmentIncluded)) {
         await this.restoreEnvironmentVars(checkpoint.projectId, checkpointDir);
       }
 
-      // Log restoration
-      await db.insert(checkpoints).values({
-        projectId: checkpoint.projectId,
-        name: `Restored from: ${checkpoint.name}`,
-        description: `Restored checkpoint ${checkpoint.id} at ${new Date().toISOString()}`,
-        type: 'automatic',
-        createdBy: options.userId,
-        createdAt: new Date(),
-        metadata: {
-          restoredFrom: checkpoint.id,
-          restoreOptions: options,
-          duration: Date.now() - startTime
-        }
-      });
+      // 🔥 FIX: REMOVED "Restored from" log checkpoint - it breaks parent-child chain for rollforward navigation
+      // RollbackService already creates "Before rollback" checkpoint for logging
+      // Keeping this would create: ... -> C1 -> "Before rollback" -> "Restored from" (orphan)
+      // Instead we keep: ... -> C1 -> "Before rollback" -> [current state points back to C1]
 
-      logger.info(`Checkpoint ${checkpoint.id} restored successfully in ${Date.now() - startTime}ms`);
+      logger.info(`Checkpoint ${checkpoint.id} restored successfully in ${Date.now() - startTime}ms (files: ${options.restoreFiles !== false}, DB: ${hasDatabaseSnapshot}, env: ${options.restoreEnvironment !== false})`);
       return true;
     } catch (error) {
       logger.error('Failed to restore checkpoint:', error);
@@ -573,6 +636,56 @@ export class CheckpointService {
       logger.info(`Cleaned up ${checkpointsToDelete.length} old checkpoints for project ${projectId}`);
     } catch (error) {
       logger.error('Failed to cleanup old checkpoints:', error);
+    }
+  }
+
+  /**
+   * 🔥 REPLIT AGENT 3: Create Neon database branch for dev/prod separation
+   * This allows independent database snapshots per checkpoint
+   */
+  private async createNeonBranch(projectId: number, checkpointName: string): Promise<string | null> {
+    try {
+      const neonApiKey = process.env.NEON_API_KEY;
+      const neonProjectId = process.env.NEON_PROJECT_ID;
+
+      if (!neonApiKey || !neonProjectId) {
+        logger.warn('Neon API credentials not configured, skipping branch creation');
+        return null;
+      }
+
+      // Generate branch name from checkpoint name
+      const branchName = `checkpoint-${projectId}-${Date.now()}`;
+
+      // Call Neon API to create branch
+      const response = await fetch(
+        `https://console.neon.tech/api/v2/projects/${neonProjectId}/branches`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${neonApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            branch: {
+              name: branchName,
+              parent_id: 'main', // Create branch from main
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(`Neon API error: ${response.status} - ${errorText}`);
+        return null;
+      }
+
+      const data = await response.json();
+      logger.info(`Neon branch created successfully: ${data.branch.id}`);
+      return data.branch.id;
+    } catch (error) {
+      logger.error('Failed to create Neon branch:', error);
+      return null;
     }
   }
 }
