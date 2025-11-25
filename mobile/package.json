@@ -29,7 +29,8 @@
     "react-native-webview": "13.2.2",
     "react-native-syntax-highlighter": "^2.1.0",
     "socket.io-client": "^4.5.0",
-    "expo-constants": "~14.4.2"
+    "expo-constants": "~14.4.2",
+    "@react-native-community/netinfo": "^11.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
