@@ -31,10 +31,7 @@ export default function Account() {
     email: user?.email || '',
     displayName: user?.displayName || '',
     bio: user?.bio || '',
-    website: '',
-    location: '',
-    twitter: '',
-    github: ''
+    website: user?.website || ''
   });
 
   const [emailPreferences, setEmailPreferences] = useState({
@@ -57,10 +54,7 @@ export default function Account() {
         email: user.email || '',
         displayName: user.displayName || '',
         bio: user.bio || '',
-        website: user.website || '',
-        location: user.location || '',
-        twitter: user.twitter || '',
-        github: user.github || ''
+        website: user.website || ''
       });
       
       // Set 2FA status if available
@@ -73,16 +67,10 @@ export default function Account() {
   const handleSaveProfile = async () => {
     setIsLoading(true);
     try {
-      await apiRequest('/api/user/profile', {
-        method: 'PATCH',
-        body: JSON.stringify({
-          displayName: profile.displayName,
-          bio: profile.bio,
-          website: profile.website,
-          location: profile.location,
-          github: profile.github,
-          twitter: profile.twitter
-        })
+      await apiRequest('PATCH', '/api/user/profile', {
+        displayName: profile.displayName,
+        bio: profile.bio,
+        website: profile.website
       });
       
       toast({
@@ -109,12 +97,9 @@ export default function Account() {
     }
     
     try {
-      await apiRequest('/api/user/change-password', {
-        method: 'POST',
-        body: JSON.stringify({
-          currentPassword,
-          newPassword
-        })
+      await apiRequest('POST', '/api/user/change-password', {
+        currentPassword,
+        newPassword
       });
       
       toast({
@@ -132,9 +117,8 @@ export default function Account() {
 
   const handleEnable2FA = async () => {
     try {
-      const response = await apiRequest('/api/user/2fa', {
-        method: 'POST',
-        body: JSON.stringify({ enabled: !security.twoFactor })
+      const response = await apiRequest('POST', '/api/user/2fa', {
+        enabled: !security.twoFactor
       });
       
       setSecurity({ ...security, twoFactor: !security.twoFactor });
@@ -154,9 +138,8 @@ export default function Account() {
 
   const handleUpdateEmail = async () => {
     try {
-      await apiRequest('/api/user/email', {
-        method: 'PATCH',
-        body: JSON.stringify({ email: profile.email })
+      await apiRequest('PATCH', '/api/user/email', {
+        email: profile.email
       });
       
       toast({
@@ -180,9 +163,7 @@ export default function Account() {
     }
     
     try {
-      await apiRequest('/api/user/account', {
-        method: 'DELETE'
-      });
+      await apiRequest('DELETE', '/api/user/account');
       
       toast({
         title: "Account deleted",
@@ -285,32 +266,14 @@ export default function Account() {
                 <Separator />
 
                 <div className="space-y-4">
-                  <h3 className="text-sm font-medium">Social Links</h3>
-                  <div className="grid gap-4">
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="https://yourwebsite.com"
-                        value={profile.website}
-                        onChange={(e) => setProfile({ ...profile, website: e.target.value })}
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Twitter className="h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="@username"
-                        value={profile.twitter}
-                        onChange={(e) => setProfile({ ...profile, twitter: e.target.value })}
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Github className="h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="username"
-                        value={profile.github}
-                        onChange={(e) => setProfile({ ...profile, github: e.target.value })}
-                      />
-                    </div>
+                  <h3 className="text-sm font-medium">Website</h3>
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="https://yourwebsite.com"
+                      value={profile.website}
+                      onChange={(e) => setProfile({ ...profile, website: e.target.value })}
+                    />
                   </div>
                 </div>
 

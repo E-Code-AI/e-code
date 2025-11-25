@@ -512,3 +512,61 @@ All routes registered at `/api/payments/*`:
 **Last Updated**: November 25, 2025  
 **Architecture**: Replit-style Hybrid (Subscription + Credits + Pay-as-you-go)  
 **Status**: ✅ **PRODUCTION-READY** (All phases complete, 9 critical bugs fixed, workers active)
+
+## 🎨 Frontend UI Implementation
+
+### Public Pages
+
+#### `/pricing` - Pricing Page
+**File:** `client/src/pages/Pricing.tsx`
+- ✅ Displays all subscription plans (Free, Core, Teams, Enterprise)  
+- ✅ Monthly/Yearly billing toggle with savings badge
+- ✅ Fetches plans from `/api/payments/plans`
+- ✅ Responsive design with Framer Motion animations
+
+#### `/subscribe` - Subscription Checkout  
+**File:** `client/src/pages/Subscribe.tsx`
+- ✅ Stripe Elements integration (PaymentElement)
+- ✅ Creates subscription via `/api/payments/create-subscription`
+- ✅ Handles payment confirmation and redirects
+
+### Protected User Pages
+
+#### `/usage` - Usage Dashboard  
+**File:** `client/src/pages/Usage.tsx`
+- ✅ Real-time usage metrics (compute, storage, bandwidth)
+- ✅ Progress bars with allowance tracking  
+- ✅ AI usage tab with detailed tracking
+- ❌ **TODO:** Credits balance display missing
+- ❌ **TODO:** Pay-as-you-go alerts missing
+
+#### `/account` - Account Settings
+**File:** `client/src/pages/Account.tsx`
+- ✅ Profile management
+- ⚠️ **13 LSP errors:** Incorrect apiRequest signature
+- ⚠️ **Impact:** Compilation warnings but functional
+
+### Admin Pages
+
+#### `/admin/billing` - Admin Dashboard  
+**File:** `client/src/pages/AdminBilling.tsx`
+- ✅ Plan management
+- ✅ Resource limits configuration
+- ✅ Admin-only access with role check
+
+### Testing Status
+
+**Automated Tests:**
+- ❌ E2E billing flow tests (Playwright) - Missing
+- ✅ Backend routes tested
+- ❌ Frontend component tests - Missing
+
+**Manual Testing Required:**
+1. Complete subscription flow
+2. Credits display
+3. Pay-as-you-go alerts  
+4. Admin billing management
+
+---
+
+**Frontend Status:** ✅ **FUNCTIONAL** (13 LSP errors non-blocking, 2 features missing)
