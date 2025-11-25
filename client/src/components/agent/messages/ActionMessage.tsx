@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Action, ActionType } from './types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { FileDiffViewer } from './FileDiffViewer';
 
 interface ActionMessageProps {
   actions: Action[];
@@ -122,8 +123,23 @@ export function ActionMessage({ actions, onApprove, onReject, className }: Actio
               )}
             </div>
 
-            {/* Code Preview (for file operations) */}
-            {action.content && action.type !== 'delete_file' && (
+            {/* File Diff (for edit_file with before/after) */}
+            {action.type === 'edit_file' && action.oldContent && action.newContent && action.path && (
+              <FileDiffViewer
+                diff={{
+                  path: action.path,
+                  before: action.oldContent,
+                  after: action.newContent,
+                  language: action.language,
+                  linesAdded: action.newContent.split('\n').length - action.oldContent.split('\n').length,
+                  linesRemoved: Math.max(0, action.oldContent.split('\n').length - action.newContent.split('\n').length)
+                }}
+                defaultExpanded={false}
+              />
+            )}
+
+            {/* Code Preview (for create_file or when no diff available) */}
+            {action.content && action.type !== 'delete_file' && !action.oldContent && (
               <div className="mt-2 p-2 rounded-md bg-[var(--ecode-surface)] border border-[var(--ecode-border)]">
                 <pre className="text-xs font-mono text-[var(--ecode-text)] overflow-x-auto max-h-40">
                   <code>{action.content.substring(0, 300)}{action.content.length > 300 ? '...' : ''}</code>
@@ -152,7 +168,7 @@ export function ActionMessage({ actions, onApprove, onReject, className }: Actio
                 <Button
                   size="sm"
                   variant="default"
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-xs h-8"
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-xs min-h-[44px] h-auto py-2 touch-manipulation"
                   onClick={() => onApprove(action)}
                   data-testid={`approve-action-${action.id}`}
                 >
@@ -162,7 +178,7 @@ export function ActionMessage({ actions, onApprove, onReject, className }: Actio
                 <Button
                   size="sm"
                   variant="destructive"
-                  className="text-xs h-8"
+                  className="text-xs min-h-[44px] h-auto py-2 touch-manipulation"
                   onClick={() => onReject(action)}
                   data-testid={`reject-action-${action.id}`}
                 >

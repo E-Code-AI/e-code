@@ -135,7 +135,47 @@ export default function IDEPage() {
   console.log('🔍🔍🔍 [IDEPage] ProjectId:', projectId);
   console.log('🔍🔍🔍 [IDEPage] BootstrapToken:', bootstrapToken ? bootstrapToken.substring(0, 30) + '...' : 'NULL');
   console.log('🔍🔍🔍 [IDEPage] All search params:', Array.from(searchParams.entries()));
-  
+
+  // ✅ PHASE 1 FIX: Decode bootstrap token to extract sessionId
+  const decodeBootstrapToken = (token: string) => {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.error('[IDEPage] Invalid JWT format');
+        return null;
+      }
+
+      // Base64url decode
+      let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const pad = base64.length % 4;
+      if (pad) {
+        if (pad === 1) {
+          throw new Error('Invalid base64url string');
+        }
+        base64 += new Array(5 - pad).join('=');
+      }
+
+      const payload = JSON.parse(atob(base64));
+      console.log('🎯 [IDEPage] Decoded token payload:', payload);
+      return {
+        projectId: payload.projectId,
+        sessionId: payload.sessionId,
+        conversationId: payload.conversationId,
+        userId: payload.userId
+      };
+    } catch (e) {
+      console.error('[IDEPage] Failed to decode bootstrap token:', e);
+      return null;
+    }
+  };
+
+  const tokenData = bootstrapToken ? decodeBootstrapToken(bootstrapToken) : null;
+  const agentSessionId = tokenData?.sessionId || null;
+  const agentConversationId = tokenData?.conversationId || null;
+
+  console.log('🎯 [IDEPage] Extracted sessionId:', agentSessionId);
+  console.log('🎯 [IDEPage] Extracted conversationId:', agentConversationId);
+
   // NEW: Support ?prompt=... query param for direct agent invocation
   const storedPrompt = projectId ? sessionStorage.getItem(`agent-prompt-${projectId}`) : null;
   const agentInitialPrompt = promptParam || (autoStartAgent && storedPrompt ? storedPrompt : null);
@@ -567,9 +607,12 @@ export default function IDEPage() {
               </TabsList>
               
               <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden">
-                <ReplitAgent 
+                <ReplitAgent
                   projectId={projectId}
+                  sessionId={agentSessionId}
+                  conversationId={agentConversationId}
                   initialPrompt={agentInitialPrompt || undefined}
+                  autoStart={!!bootstrapToken || autoStartAgent}
                   onBuildComplete={async () => {
                     // REAL: Auto-start preview when build completes (Task 12)
                     setActiveTab('preview');

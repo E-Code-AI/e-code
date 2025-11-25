@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
+import {
   Bot, Send, Sparkles, Code, FileText, HelpCircle,
   Lightbulb, Zap, RefreshCw, Copy, X, Hammer, Package,
   FolderOpen, FileCode, Loader2, CheckCircle, AlertCircle,
   Wrench, Rocket, GitBranch, Database, Globe, Server,
   MessageSquare, DollarSign, Link, Camera, Brain, Power,
-  Pause, Play, Plus, ChevronLeft, ChevronRight, FileTerminal,
+  Pause, Play, Plus, ChevronLeft, ChevronRight, ChevronDown, FileTerminal,
   History, Palette, Heart, Edit, BeakerIcon, Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -56,6 +56,10 @@ interface ReplitAgentProps {
   initialPrompt?: string | null;
   websocket?: WebSocket | null; // NEW: Accept external WebSocket from Editor.tsx
   onBuildComplete?: () => void; // Callback when build execution completes (Task 12)
+  // ✅ PHASE 1 FIX: Add sessionId, conversationId, autoStart props
+  sessionId?: string | null;
+  conversationId?: number | null;
+  autoStart?: boolean;
 }
 
 interface Message {
@@ -733,12 +737,32 @@ const QUICK_ACTIONS = [
   { id: 'generate', label: 'Generate', icon: Code }
 ];
 
-export function ReplitAgent({ projectId, selectedFile, selectedCode, className, initialPrompt, websocket, onBuildComplete }: ReplitAgentProps) {
+export function ReplitAgent({
+  projectId,
+  selectedFile,
+  selectedCode,
+  className,
+  initialPrompt,
+  websocket,
+  onBuildComplete,
+  // ✅ PHASE 1 FIX: Accept new props
+  sessionId: externalSessionId,
+  conversationId: externalConversationId,
+  autoStart = false
+}: ReplitAgentProps) {
   // NEW: Load persisted session for this project
   const { session, isLoading: sessionLoading, saveSession, updateMessages, updateSettings } = useAgentSession(projectId);
   const hasHydrated = useRef(false);
   const hasAutoStarted = useRef(false); // Track if we've auto-started from initialPrompt
   const externalWebSocket = useRef<WebSocket | null>(websocket || null); // Store external WebSocket
+
+  console.log('🚀 [ReplitAgent] Mounted with:', {
+    projectId,
+    sessionId: externalSessionId,
+    conversationId: externalConversationId,
+    autoStart,
+    initialPrompt
+  });
   
   // State with default values (hydrated from session in useEffect below)
   const [messages, setMessages] = useState<Message[]>([
@@ -815,6 +839,10 @@ What would you like me to build for you today?`,
   const [activeSessionId, setActiveSessionId] = useState<string>('default');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isUserScrolledUp, setIsUserScrolledUp] = useState(false);
+  const [showNewMessagesBadge, setShowNewMessagesBadge] = useState(false);
+  const previousMessagesLengthRef = useRef(messages.length);
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
@@ -854,6 +882,143 @@ What would you like me to build for you today?`,
     }
   }, [sessionLoading, session, projectId]);
 
+  // ✅ PHASE 1 FIX: Initialize conversationId from external prop (bootstrap flow)
+  useEffect(() => {
+    if (externalConversationId && conversationId === null) {
+      console.log('🎯 [ReplitAgent] Initializing with external conversationId:', externalConversationId);
+      setConversationId(externalConversationId);
+    }
+  }, [externalConversationId, conversationId]);
+
+  // ✅ PHASE 1 FIX: Connect to WebSocket if sessionId is provided (autonomous bootstrap)
+  useEffect(() => {
+    if (!externalSessionId || !projectId) return;
+
+    console.log('🔌 [ReplitAgent] Connecting to WebSocket with sessionId:', externalSessionId);
+
+    // Determine WebSocket protocol
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${projectId}&sessionId=${externalSessionId}`;
+
+    console.log('🔌 [ReplitAgent] WebSocket URL:', wsUrl);
+
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      console.log('✅ [ReplitAgent] WebSocket connected');
+      externalWebSocket.current = ws;
+
+      // Show connection status
+      toast({
+        title: "Agent Connected",
+        description: "Streaming progress from AI agent...",
+      });
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        console.log('📨 [ReplitAgent] WebSocket message:', message);
+
+        // Handle different message types
+        switch (message.type) {
+          case 'task_start':
+            setCurrentTask(message.taskName || 'Working...');
+            setIsBuilding(true);
+            break;
+
+          case 'task_progress':
+            if (message.progress !== undefined) {
+              setBuildProgress(message.progress);
+            }
+            if (message.message) {
+              addProgressLog('info', message.message);
+            }
+            break;
+
+          case 'task_complete':
+            addProgressLog('success', `✅ ${message.taskName || 'Task completed'}`);
+            break;
+
+          case 'file_created':
+            if (message.filePath) {
+              addProgressLog('success', `📄 Created: ${message.filePath}`);
+            }
+            break;
+
+          case 'build_log':
+            if (message.content) {
+              const level = message.level === 'error' ? 'error' :
+                           message.level === 'warn' ? 'warning' : 'info';
+              addProgressLog(level, message.content);
+            }
+            break;
+
+          case 'error':
+            addProgressLog('error', message.message || 'An error occurred');
+            setIsBuilding(false);
+            toast({
+              title: "Agent Error",
+              description: message.message || 'An error occurred',
+              variant: "destructive",
+            });
+            break;
+
+          case 'complete':
+            setIsBuilding(false);
+            setBuildProgress(100);
+            setCurrentTask('Build complete! 🎉');
+            addProgressLog('success', '🎉 Workspace creation complete!');
+
+            toast({
+              title: "Build Complete!",
+              description: "Your application is ready.",
+            });
+
+            // Call onBuildComplete callback
+            if (onBuildComplete) {
+              onBuildComplete();
+            }
+            break;
+        }
+      } catch (e) {
+        console.error('[ReplitAgent] Failed to parse WebSocket message:', e);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('[ReplitAgent] WebSocket error:', error);
+      toast({
+        title: "Connection Error",
+        description: "Failed to connect to AI agent",
+        variant: "destructive",
+      });
+    };
+
+    ws.onclose = () => {
+      console.log('🔌 [ReplitAgent] WebSocket closed');
+      externalWebSocket.current = null;
+    };
+
+    // Cleanup
+    return () => {
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        ws.close();
+      }
+    };
+  }, [externalSessionId, projectId, onBuildComplete, toast]);
+
+  // Helper to add progress logs
+  const addProgressLog = (type: 'info' | 'success' | 'warning' | 'error', message: string, file?: string) => {
+    setProgressLogs(prev => [...prev, {
+      id: `log-${Date.now()}-${Math.random()}`,
+      timestamp: new Date(),
+      message,
+      file,
+      type
+    }]);
+  };
+
   // NEW: Auto-save messages to session when they change (Task 2b)
   useEffect(() => {
     // Only save after hydration is complete to avoid overwriting with defaults
@@ -886,30 +1051,52 @@ What would you like me to build for you today?`,
     }
   }, [selectedModel, extendedThinking, highPowerMode, autoCheckpoints, autoApprovePlans, autonomousModeEnabled, updateSettings, sessionLoading]);
 
+  // ✅ PHASE 3.3: Smart auto-scroll - only scroll if user hasn't manually scrolled up
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const hasNewMessages = messages.length > previousMessagesLengthRef.current;
+    previousMessagesLengthRef.current = messages.length;
+
+    if (hasNewMessages) {
+      if (!isUserScrolledUp) {
+        // User is at bottom - auto-scroll
+        scrollToBottom();
+      } else {
+        // User has scrolled up - show notification badge
+        setShowNewMessagesBadge(true);
+      }
+    }
+  }, [messages, isUserScrolledUp]);
 
   // REMOVED: Legacy sessionStorage loading (Task 2c)
   // Conversation/plan state now managed via useAgentSession hook
   // If conversationId/planId persistence is needed, add to AgentSessionData in useAgentSession
 
-  // Handle initial prompt if provided (NEW: Auto-start BUILD flow instead of chat)
+  // ✅ PHASE 1 FIX: Handle initial prompt if provided (NEW: Auto-start BUILD flow instead of chat)
   useEffect(() => {
     // Wait for session to finish loading before auto-starting build
-    if (!sessionLoading && initialPrompt && messages.length === 1 && !hasAutoStarted.current) {
-      // Only auto-start if we haven't already hydrated a stored conversation
-      if (!session?.messages?.length) {
-        hasAutoStarted.current = true;
-        setTimeout(async () => {
-          // 🚀 AUTO-START BUILD FLOW (like Replit)
-          // Generate plan instead of sending chat message
+    // ✅ Auto-start if: (initialPrompt exists AND messages is default) OR (autoStart is true AND sessionId exists)
+    const shouldAutoStart = !sessionLoading && !hasAutoStarted.current && (
+      (initialPrompt && messages.length === 1 && !session?.messages?.length) ||
+      (autoStart && externalSessionId && messages.length === 1)
+    );
+
+    if (shouldAutoStart) {
+      hasAutoStarted.current = true;
+      setTimeout(async () => {
+        if (initialPrompt) {
+          // 🚀 AUTO-START BUILD FLOW (like Replit) with user prompt
           addProgressLog('info', `🤖 Auto-starting build from prompt: "${initialPrompt}"`);
           await generatePlan(initialPrompt);
-        }, 500);
-      }
+        } else if (autoStart && externalSessionId) {
+          // 🚀 AUTO-START from bootstrap token (agent already running on backend)
+          console.log('🎯 [ReplitAgent] Auto-start enabled with sessionId - agent should be streaming...');
+          setIsBuilding(true);
+          setCurrentTask('Connecting to autonomous agent...');
+          addProgressLog('info', '🤖 Connecting to autonomous AI agent...');
+        }
+      }, 500);
     }
-  }, [sessionLoading, initialPrompt, projectId, messages.length, session?.messages]);
+  }, [sessionLoading, initialPrompt, projectId, messages.length, session?.messages, autoStart, externalSessionId]);
 
   // NEW: Handle external WebSocket from workspace bootstrap (Task 5, 6, 7)
   useEffect(() => {
@@ -1204,8 +1391,32 @@ What would you like me to build for you today?`,
     }
   }, [input]);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (force = false) => {
+    if (force) {
+      setIsUserScrolledUp(false);
+      setShowNewMessagesBadge(false);
+    }
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // ✅ PHASE 3.3: Detect user scroll position
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const container = event.currentTarget;
+    const scrollTop = container.scrollTop;
+    const scrollHeight = container.scrollHeight;
+    const clientHeight = container.clientHeight;
+
+    // Check if user is near bottom (within 100px threshold)
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+
+    if (isNearBottom && isUserScrolledUp) {
+      // User scrolled back to bottom manually
+      setIsUserScrolledUp(false);
+      setShowNewMessagesBadge(false);
+    } else if (!isNearBottom && !isUserScrolledUp) {
+      // User scrolled up
+      setIsUserScrolledUp(true);
+    }
   };
 
   const copyCode = (code: string) => {
@@ -2376,9 +2587,9 @@ What would you like me to build?`,
           )}
         </TabsList>
         
-        <TabsContent value="chat" className="flex flex-1 flex-col overflow-hidden m-0">
+        <TabsContent value="chat" className="flex flex-1 flex-col overflow-hidden m-0 relative">
           <ScrollArea className="flex-1">
-            <div className="py-4" role="log" aria-live="polite" aria-relevant="additions">
+            <div className="py-4" role="log" aria-live="polite" aria-relevant="additions" onScroll={handleScroll}>
           {messages.length === 0 ? (
             <div className="px-4 py-8">
               <div className="flex items-center gap-3 mb-6">
@@ -2423,8 +2634,21 @@ What would you like me to build?`,
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
+
+        {/* ✅ PHASE 3.3: New Messages Notification Button */}
+        {showNewMessagesBadge && (
+          <Button
+            onClick={() => scrollToBottom(true)}
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 shadow-lg gap-2 agent-message-fade-in"
+            variant="default"
+            size="sm"
+          >
+            <ChevronDown className="h-4 w-4" />
+            New messages
+          </Button>
+        )}
       </TabsContent>
-      
+
       {/* Approvals Tab - Fortune 500 Security */}
       <TabsContent value="approvals" className="flex flex-1 flex-col overflow-hidden m-0" data-testid="approvals-content">
         <ScrollArea className="flex-1">
