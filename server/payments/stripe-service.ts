@@ -1,6 +1,8 @@
 import Stripe from 'stripe';
 import { storage } from '../storage';
 import { getSubscriptionPeriodBoundary } from '../services/stripe-utils';
+import { PLANS, getPlanByTier } from './pricing-constants';
+import { creditsService } from '../services/credits-service';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-08-27.basil',  // ✅ FIXED: Updated to latest Stripe API version
@@ -9,8 +11,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 export interface SubscriptionPlan {
   id: string;
   name: string;
+  tier: 'free' | 'core' | 'teams' | 'enterprise';
   price: number;
   interval: 'month' | 'year';
+  creditsMonthly: number;        // Monthly credits included
   features: string[];
   limits: {
     projects: number;
@@ -18,6 +22,16 @@ export interface SubscriptionPlan {
     storage: number; // GB
     cpuHours: number;
     deployments: number;
+  };
+  allowances: {
+    vcpus: number;
+    ramGb: number;
+    storageGb: number;
+    bandwidthGb: number;
+    developmentMinutes: number;
+    publicApps: number;
+    privateApps: number;
+    collaborators: number;
   };
 }
 
@@ -36,144 +50,142 @@ export class StripePaymentService {
   }
 
   private initializePlans() {
+    const starterPlan = PLANS.STARTER;
+    const corePlan = PLANS.CORE;
+    const teamsPlan = PLANS.TEAMS;
+    const enterprisePlan = PLANS.ENTERPRISE;
+
+    // Starter (Free) Plan
+    this.plans.set('free', {
+      id: 'free', // No Stripe price ID for free plan
+      name: starterPlan.name,
+      tier: 'free',
+      price: 0,
+      interval: 'month',
+      creditsMonthly: starterPlan.creditsMonthly,
+      features: starterPlan.features,
+      limits: {
+        projects: -1,
+        collaborators: starterPlan.allowances.collaborators,
+        storage: starterPlan.allowances.storageGb,
+        cpuHours: -1,
+        deployments: -1,
+      },
+      allowances: starterPlan.allowances,
+    });
+
     // Core Plan - Monthly
     this.plans.set('core', {
       id: process.env.STRIPE_PRICE_ID_CORE_MONTHLY || 'price_core_monthly',
-      name: 'Core',
-      price: 20,
+      name: corePlan.name,
+      tier: 'core',
+      price: corePlan.priceMonthly,
       interval: 'month',
-      features: [
-        'Unlimited public projects',
-        '5 private projects', 
-        '2 collaborators per project',
-        '10GB storage',
-        '100 CPU hours/month',
-        '10 deployments/month',
-      ],
+      creditsMonthly: corePlan.creditsMonthly,
+      features: corePlan.features,
       limits: {
-        projects: 5,
-        collaborators: 2,
-        storage: 10,
-        cpuHours: 100,
-        deployments: 10,
+        projects: -1,
+        collaborators: corePlan.allowances.collaborators,
+        storage: corePlan.allowances.storageGb,
+        cpuHours: -1,
+        deployments: -1,
       },
+      allowances: corePlan.allowances,
     });
 
     // Core Plan - Yearly
     this.plans.set('core_yearly', {
       id: process.env.STRIPE_PRICE_ID_CORE_YEARLY || 'price_core_yearly',
-      name: 'Core',
-      price: 20,
+      name: corePlan.name,
+      tier: 'core',
+      price: corePlan.priceYearly,
       interval: 'year',
-      features: [
-        'Unlimited public projects',
-        '5 private projects', 
-        '2 collaborators per project',
-        '10GB storage',
-        '100 CPU hours/month',
-        '10 deployments/month',
-      ],
+      creditsMonthly: corePlan.creditsMonthly,
+      features: corePlan.features,
       limits: {
-        projects: 5,
-        collaborators: 2,
-        storage: 10,
-        cpuHours: 100,
-        deployments: 10,
+        projects: -1,
+        collaborators: corePlan.allowances.collaborators,
+        storage: corePlan.allowances.storageGb,
+        cpuHours: -1,
+        deployments: -1,
       },
+      allowances: corePlan.allowances,
     });
 
-    // Pro Plan - Monthly
-    this.plans.set('pro', {
-      id: process.env.STRIPE_PRICE_ID_PRO_MONTHLY || 'price_pro_monthly',
-      name: 'Pro',
-      price: 40,
+    // Teams Plan - Monthly
+    this.plans.set('teams', {
+      id: process.env.STRIPE_PRICE_ID_TEAMS_MONTHLY || 'price_teams_monthly',
+      name: teamsPlan.name,
+      tier: 'teams',
+      price: teamsPlan.priceMonthly,
       interval: 'month',
-      features: [
-        'Unlimited projects',
-        'Unlimited collaborators',
-        '50GB storage',
-        '500 CPU hours/month',
-        'Unlimited deployments',
-        'Priority support',
-      ],
+      creditsMonthly: teamsPlan.creditsMonthly,
+      features: teamsPlan.features,
       limits: {
         projects: -1, // Unlimited
         collaborators: -1,
-        storage: 50,
-        cpuHours: 500,
+        storage: teamsPlan.allowances.storageGb,
+        cpuHours: -1,
         deployments: -1,
       },
+      allowances: teamsPlan.allowances,
     });
 
-    // Pro Plan - Yearly
-    this.plans.set('pro_yearly', {
-      id: process.env.STRIPE_PRICE_ID_PRO_YEARLY || 'price_pro_yearly',
-      name: 'Pro',
-      price: 40,
+    // Teams Plan - Yearly
+    this.plans.set('teams_yearly', {
+      id: process.env.STRIPE_PRICE_ID_TEAMS_YEARLY || 'price_teams_yearly',
+      name: teamsPlan.name,
+      tier: 'teams',
+      price: teamsPlan.priceYearly,
       interval: 'year',
-      features: [
-        'Unlimited projects',
-        'Unlimited collaborators',
-        '50GB storage',
-        '500 CPU hours/month',
-        'Unlimited deployments',
-        'Priority support',
-      ],
+      creditsMonthly: teamsPlan.creditsMonthly,
+      features: teamsPlan.features,
       limits: {
         projects: -1, // Unlimited
         collaborators: -1,
-        storage: 50,
-        cpuHours: 500,
+        storage: teamsPlan.allowances.storageGb,
+        cpuHours: -1,
         deployments: -1,
       },
+      allowances: teamsPlan.allowances,
     });
 
     // Enterprise Plan - Monthly
     this.plans.set('enterprise', {
       id: process.env.STRIPE_PRICE_ID_ENTERPRISE_MONTHLY || 'price_enterprise_monthly',
-      name: 'Enterprise',
-      price: 200,
+      name: enterprisePlan.name,
+      tier: 'enterprise',
+      price: enterprisePlan.priceMonthly,
       interval: 'month',
-      features: [
-        'Everything in Pro',
-        'Custom domains',
-        'SSO/SAML',
-        'Dedicated support',
-        'SLA guarantee',
-        '1TB storage',
-        'Unlimited CPU hours',
-      ],
+      creditsMonthly: enterprisePlan.creditsMonthly,
+      features: enterprisePlan.features,
       limits: {
         projects: -1,
         collaborators: -1,
-        storage: 1000,
+        storage: enterprisePlan.allowances.storageGb,
         cpuHours: -1,
         deployments: -1,
       },
+      allowances: enterprisePlan.allowances,
     });
 
     // Enterprise Plan - Yearly
     this.plans.set('enterprise_yearly', {
       id: process.env.STRIPE_PRICE_ID_ENTERPRISE_YEARLY || 'price_enterprise_yearly',
-      name: 'Enterprise',
-      price: 200,
+      name: enterprisePlan.name,
+      tier: 'enterprise',
+      price: enterprisePlan.priceYearly,
       interval: 'year',
-      features: [
-        'Everything in Pro',
-        'Custom domains',
-        'SSO/SAML',
-        'Dedicated support',
-        'SLA guarantee',
-        '1TB storage',
-        'Unlimited CPU hours',
-      ],
+      creditsMonthly: enterprisePlan.creditsMonthly,
+      features: enterprisePlan.features,
       limits: {
         projects: -1,
         collaborators: -1,
-        storage: 1000,
+        storage: enterprisePlan.allowances.storageGb,
         cpuHours: -1,
         deployments: -1,
       },
+      allowances: enterprisePlan.allowances,
     });
   }
 
@@ -293,6 +305,9 @@ export class StripePaymentService {
       subscriptionCurrentPeriodEnd: periodEnd ?? undefined,
     });
 
+    // Update plan allowances and credits in database
+    await creditsService.updatePlanAllowances(String(userId), plan.tier);
+
     return subscription;
   }
 
@@ -349,6 +364,9 @@ export class StripePaymentService {
       stripePriceId: plan.id,
       subscriptionStatus: updatedSubscription.status,
     });
+
+    // Update plan allowances and credits in database
+    await creditsService.updatePlanAllowances(String(userId), plan.tier);
 
     return updatedSubscription;
   }
