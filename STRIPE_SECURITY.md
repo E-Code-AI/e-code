@@ -72,6 +72,83 @@ export VITE_STRIPE_PUBLIC_KEY=pk_live_...
 
 ---
 
+## 💳 Usage-Based Billing Configuration
+
+### ⚠️ CRITICAL: Metered Prices Must Match Subscription Intervals
+
+The current implementation attempts to add usage-based items during subscription creation, but **this will fail if the prices in Stripe Dashboard have mismatched billing intervals**.
+
+### Problem
+```
+[Stripe Error] All prices on a subscription must have the same `recurring.interval`
+```
+
+### Root Cause
+- Subscription plan: `monthly` (e.g., Core Monthly - price_1RrGxL2VSIgdqPLPk54OZhZX)
+- Usage-based price: `yearly` or different interval
+- **Stripe rejects mixing intervals** in the same subscription
+
+### Solution: Configure Prices Correctly in Stripe Dashboard
+
+#### Step 1: Create Matching Usage-Based Prices
+For EACH subscription interval (monthly/yearly), create separate metered prices:
+
+**Monthly Plans Need:**
+- `STRIPE_PRICE_ID_COMPUTE_MONTHLY` - Metered, $X per CPU hour, billed monthly
+- `STRIPE_PRICE_ID_STORAGE_MONTHLY` - Metered, $Y per GB, billed monthly
+- `STRIPE_PRICE_ID_BANDWIDTH_MONTHLY` - Metered, $Z per GB, billed monthly
+- etc.
+
+**Yearly Plans Need:**
+- `STRIPE_PRICE_ID_COMPUTE_YEARLY` - Metered, $X per CPU hour, billed yearly
+- `STRIPE_PRICE_ID_STORAGE_YEARLY` - Metered, $Y per GB, billed yearly
+- etc.
+
+#### Step 2: Update Environment Variables
+```bash
+# Monthly usage-based prices
+STRIPE_PRICE_ID_COMPUTE_MONTHLY=price_1xxx
+STRIPE_PRICE_ID_STORAGE_MONTHLY=price_1yyy
+
+# Yearly usage-based prices
+STRIPE_PRICE_ID_COMPUTE_YEARLY=price_1zzz
+STRIPE_PRICE_ID_STORAGE_YEARLY=price_1aaa
+```
+
+#### Step 3: Update Code to Use Interval-Specific Prices
+Currently, the code uses generic price IDs. You need to select the correct price based on the subscription interval:
+
+```typescript
+const usagePriceIds = interval === 'month' 
+  ? [
+      process.env.STRIPE_PRICE_ID_COMPUTE_MONTHLY,
+      process.env.STRIPE_PRICE_ID_STORAGE_MONTHLY,
+      // ...
+    ]
+  : [
+      process.env.STRIPE_PRICE_ID_COMPUTE_YEARLY,
+      process.env.STRIPE_PRICE_ID_STORAGE_YEARLY,
+      // ...
+    ];
+```
+
+### Current Behavior (Temporary Workaround)
+Until prices are configured correctly:
+- ✅ Subscriptions create with **base plan only** (graceful fallback)
+- ⚠️ Usage-based billing **stores locally** but **does NOT report to Stripe**
+- 📊 API returns `reportedToStripe: false` with transparent messaging
+- 🔄 System continues functioning without crashes
+
+### Testing Checklist
+- [ ] Create metered prices in Stripe Dashboard with matching intervals
+- [ ] Update environment variables with interval-specific price IDs
+- [ ] Update code to select prices based on subscription interval
+- [ ] Verify subscription creation adds usage items successfully
+- [ ] Confirm `recordUsage()` returns `reportedToStripe: true`
+- [ ] Check Stripe Dashboard for actual usage records
+
+---
+
 **Last Updated**: 2025-11-25  
-**Status**: ✅ Secure configuration verified  
+**Status**: ✅ Secure configuration verified | ⚠️ Usage-based billing requires Stripe Dashboard configuration  
 **Audit**: All dangerous variables removed

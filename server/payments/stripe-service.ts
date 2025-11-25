@@ -230,19 +230,58 @@ export class StripePaymentService {
       throw new Error('Invalid plan');
     }
 
-    // Create subscription with ONLY the base plan price
-    // Usage-based items are added dynamically via recordUsage() when first used
-    const subscription = await stripe.subscriptions.create({
-      customer: customerId,
-      items: [{ price: plan.id }], // Only base subscription price
-      payment_behavior: 'default_incomplete',
-      payment_settings: { save_default_payment_method: 'on_subscription' },
-      expand: ['latest_invoice.payment_intent'],
-      metadata: {
-        userId: String(userId),
-        planId,
-      },
-    });
+    // Get usage-based price IDs for metered billing
+    const usagePriceIds = [
+      process.env.STRIPE_PRICE_ID_COMPUTE,
+      process.env.STRIPE_PRICE_ID_STORAGE,
+      process.env.STRIPE_PRICE_ID_BANDWIDTH,
+      process.env.STRIPE_PRICE_ID_DEPLOYMENT,
+      process.env.STRIPE_PRICE_ID_DATABASE,
+      process.env.STRIPE_PRICE_ID_AGENT_USAGE,
+    ].filter(Boolean) as string[];
+
+    // Try creating subscription with all items (base + usage-based)
+    // If this fails due to interval mismatch, fall back to base plan only
+    let subscription: Stripe.Subscription;
+    try {
+      subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [
+          { price: plan.id }, // Base subscription
+          ...usagePriceIds.map(priceId => ({ price: priceId }))
+        ],
+        payment_behavior: 'default_incomplete',
+        payment_settings: { save_default_payment_method: 'on_subscription' },
+        expand: ['latest_invoice.payment_intent'],
+        metadata: {
+          userId: String(userId),
+          planId,
+        },
+      });
+      console.log(`[Stripe] ✅ Created subscription with ${usagePriceIds.length} usage-based items`);
+    } catch (error: any) {
+      // If interval mismatch error, create with base plan only
+      if (error.code === 'parameter_invalid_empty' || 
+          error.message?.includes('recurring.interval')) {
+        console.warn(
+          `[Stripe] ⚠️  Could not add usage-based items to subscription (interval mismatch). ` +
+          `Creating with base plan only. Configure usage prices with same interval in Stripe Dashboard.`
+        );
+        subscription = await stripe.subscriptions.create({
+          customer: customerId,
+          items: [{ price: plan.id }],
+          payment_behavior: 'default_incomplete',
+          payment_settings: { save_default_payment_method: 'on_subscription' },
+          expand: ['latest_invoice.payment_intent'],
+          metadata: {
+            userId: String(userId),
+            planId,
+          },
+        });
+      } else {
+        throw error; // Re-throw unexpected errors
+      }
+    }
 
     // Update user subscription info
     const periodEnd = getSubscriptionPeriodBoundary(subscription, 'current_period_end');
@@ -357,10 +396,10 @@ export class StripePaymentService {
     return setupIntent;
   }
 
-  async recordUsage(userId: number, metric: string, quantity: number): Promise<void> {
+  async recordUsage(userId: number, metric: string, quantity: number): Promise<boolean> {
     const user = await storage.getUser(String(userId));
     if (!user || !user.stripeSubscriptionId) {
-      return; // Free tier user
+      return false; // Free tier user - no Stripe reporting
     }
 
     // Get usage-based price IDs from environment
@@ -370,51 +409,63 @@ export class StripePaymentService {
       bandwidth: process.env.STRIPE_PRICE_ID_BANDWIDTH || '',
       deployments: process.env.STRIPE_PRICE_ID_DEPLOYMENT || '',
       ai_tokens: process.env.STRIPE_PRICE_ID_AGENT_USAGE || '',
+      database: process.env.STRIPE_PRICE_ID_DATABASE || '',
     };
 
     const priceId = usagePriceIds[metric];
     if (!priceId) {
-      console.warn(`No price ID configured for metric: ${metric}`);
-      return;
+      console.warn(`[Stripe] No price ID configured for metric: ${metric}`);
+      return false;
     }
 
-    // Get subscription
-    const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId, {
-      expand: ['items']
-    });
-
-    // Find or create usage subscription item
-    let usageItem = subscription.items.data.find(item => item.price?.id === priceId);
-
-    if (!usageItem) {
-      // Add usage-based item to subscription
-      usageItem = await stripe.subscriptionItems.create({
-        subscription: user.stripeSubscriptionId,
-        price: priceId,
-      });
-    }
-
-    // Record usage
-    const usageItemId = usageItem.id;
-    if (!usageItemId) {
-      throw new Error('Unable to determine subscription item identifier for usage record');
-    }
-
-    await (stripe.subscriptionItems as any).createUsageRecord(usageItemId, {
-      quantity: Math.ceil(quantity),
-      timestamp: Math.floor(Date.now() / 1000),
-      action: 'increment',
-    });
-
-    // Store usage record
+    // Always store usage record locally
     const usageRecord: UsageRecord = {
       userId,
       metric: metric as any,
       quantity,
       timestamp: new Date(),
     };
-
     await this.saveUsageRecord(usageRecord);
+
+    try {
+      // Get subscription
+      const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId, {
+        expand: ['items']
+      });
+
+      // Find existing usage subscription item
+      const usageItem = subscription.items.data.find(item => item.price?.id === priceId);
+
+      if (!usageItem) {
+        // Usage-based items must be added to subscription during creation
+        // or manually via Stripe Dashboard. We can't dynamically add them here
+        // due to Stripe's recurring interval constraints.
+        console.warn(
+          `[Stripe] Usage item for ${metric} not found in subscription ${user.stripeSubscriptionId}. ` +
+          `Usage-based items must be configured during subscription creation.`
+        );
+        return false; // Stored locally but not reported to Stripe
+      }
+
+      // Record usage on existing item
+      const usageItemId = usageItem.id;
+      if (!usageItemId) {
+        console.error('[Stripe] Unable to determine subscription item identifier for usage record');
+        return false;
+      }
+
+      await (stripe.subscriptionItems as any).createUsageRecord(usageItemId, {
+        quantity: Math.ceil(quantity),
+        timestamp: Math.floor(Date.now() / 1000),
+        action: 'increment',
+      });
+
+      console.log(`[Stripe] ✅ Recorded ${quantity} ${metric} for user ${userId}`);
+      return true; // Successfully reported to Stripe
+    } catch (error) {
+      console.error(`[Stripe] Failed to record usage for ${metric}:`, error);
+      return false; // Stored locally but Stripe reporting failed
+    }
   }
 
   async getUsageReport(userId: number, startDate: Date, endDate: Date): Promise<Record<string, number>> {

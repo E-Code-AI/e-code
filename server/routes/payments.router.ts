@@ -198,8 +198,14 @@ router.post('/record-usage', ensureAuthenticated, async (req: Request, res: Resp
       return res.status(400).json({ error: 'Metric and quantity are required' });
     }
 
-    await paymentService.recordUsage(userId, metric, quantity);
-    res.json({ success: true });
+    const result = await paymentService.recordUsage(userId, metric, quantity);
+    res.json({ 
+      success: true,
+      reportedToStripe: result,
+      message: result 
+        ? 'Usage recorded successfully (local storage + Stripe)'
+        : 'Usage recorded locally (Stripe reporting unavailable - configure metered items)'
+    });
   } catch (error: any) {
     logger.error('Failed to record usage:', error);
     res.status(500).json({ error: 'Failed to record usage' });
