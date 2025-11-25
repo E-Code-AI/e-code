@@ -112,14 +112,6 @@ export class CheckpointService {
         }
       }
 
-      // 🔥 REPLIT AGENT 3: Auto-assign parentCheckpointId if not provided
-      // This ensures lineage continuity for forward navigation
-      let parentCheckpointId = options.parentCheckpointId;
-      if (!parentCheckpointId) {
-        const [project] = await db.select().from(projects).where(eq(projects.id, options.projectId));
-        parentCheckpointId = project?.currentCheckpointId || null;
-      }
-
       // 🔥 REPLIT AGENT 3: Create Neon database branch for dev/prod separation
       let databaseBranchId: string | null = null;
       if (options.includeDatabase && options.environment === 'development') {
@@ -131,8 +123,16 @@ export class CheckpointService {
         }
       }
 
-      // Create checkpoint record
-      const [checkpoint] = await db.insert(checkpoints).values({
+      // 🔥 TRANSACTION: Atomically read current checkpoint, create new checkpoint, and update pointer
+      // This prevents race conditions when multiple checkpoints are created simultaneously
+      const [checkpoint] = await db.transaction(async (tx) => {
+        // Read current checkpoint ID with ROW-LEVEL LOCK (prevents concurrent reads)
+        // SELECT ... FOR UPDATE ensures other transactions wait until this one commits
+        const [project] = await tx.select().from(projects).where(eq(projects.id, options.projectId)).for('update');
+        const parentCheckpointId = options.parentCheckpointId || project?.currentCheckpointId || null;
+
+        // Create checkpoint record
+        const [newCheckpoint] = await tx.insert(checkpoints).values({
         projectId: options.projectId,
         name: options.name,
         description: options.description,
@@ -152,10 +152,18 @@ export class CheckpointService {
         screenshotUrl: screenshotUrl,
         changedFiles: options.changedFiles || [],
         testResults: options.testResults || null,
-        parentCheckpointId: parentCheckpointId, // Auto-assigned if not provided
-        databaseBranchId: databaseBranchId,
-        environment: options.environment || 'development',
-      }).returning();
+          parentCheckpointId: parentCheckpointId, // Auto-assigned if not provided
+          databaseBranchId: databaseBranchId || undefined, // Convert null to undefined for TypeScript
+          environment: options.environment || 'development',
+        }).returning();
+
+        // Set this checkpoint as the current active checkpoint (within transaction)
+        await tx.update(projects)
+          .set({ currentCheckpointId: newCheckpoint.id })
+          .where(eq(projects.id, options.projectId));
+
+        return [newCheckpoint];
+      });
 
       // Create checkpoint directory
       const checkpointDir = path.join(
@@ -200,12 +208,14 @@ export class CheckpointService {
       // Clean up old checkpoints
       await this.cleanupOldCheckpoints(options.projectId);
 
-      // 🔥 REPLIT AGENT 3: Set this checkpoint as the current active checkpoint
-      await db.update(projects)
-        .set({ currentCheckpointId: checkpoint.id })
-        .where(eq(projects.id, options.projectId));
+      // 🔥 POST-COMMIT VALIDATION: Verify parent-child chain integrity
+      const [updatedProject] = await db.select().from(projects).where(eq(projects.id, options.projectId));
+      if (updatedProject?.currentCheckpointId !== checkpoint.id) {
+        logger.error(`LINEAGE ANOMALY DETECTED: Project ${options.projectId} current checkpoint is ${updatedProject?.currentCheckpointId} but expected ${checkpoint.id}`);
+        // Alert monitoring system (Sentry, Slack, etc.)
+      }
 
-      logger.info(`Checkpoint ${checkpoint.id} created successfully in ${Date.now() - startTime}ms`);
+      logger.info(`Checkpoint ${checkpoint.id} created successfully in ${Date.now() - startTime}ms (atomic transaction + row lock)`);
 
       return {
         id: checkpoint.id,
