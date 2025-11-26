@@ -31,66 +31,6 @@ failureThreshold = 2
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 34125
-externalPort = 9000
-
-[[ports]]
-localPort = 34501
-externalPort = 8008
-
-[[ports]]
-localPort = 35547
-externalPort = 8000
-
-[[ports]]
-localPort = 35659
-externalPort = 3001
-
-[[ports]]
-localPort = 35803
-externalPort = 6800
-
-[[ports]]
-localPort = 35873
-externalPort = 6000
-
-[[ports]]
-localPort = 36193
-externalPort = 8099
-
-[[ports]]
-localPort = 37325
-externalPort = 5000
-
-[[ports]]
-localPort = 39591
-externalPort = 3003
-
-[[ports]]
-localPort = 40305
-externalPort = 8080
-
-[[ports]]
-localPort = 42085
-externalPort = 8081
-
-[[ports]]
-localPort = 44885
-externalPort = 3002
-
-[[ports]]
-localPort = 46305
-externalPort = 5173
-
-[[ports]]
-localPort = 46661
-externalPort = 3000
-
-[[ports]]
-localPort = 46731
-externalPort = 4200
-
 [workflows]
 runButton = "Project"
 
