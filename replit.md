@@ -21,6 +21,12 @@ E-Code is a web-based collaborative IDE with AI assistance, code editing, termin
 ### UI/UX Decisions
 The frontend uses Shadcn/UI with Tailwind CSS and Monaco Editor. The design adheres to iOS Dynamic Color System principles, San Francisco Pro Typography, 8pt Grid Spacing, Apple-quality animation, iOS-style shadows, continuous corners, and appropriate touch targets for a mobile-first experience. The autonomous agent interface is platform-agnostic, responsive, and includes real-time progress tracking.
 
+**Responsive Implementation (Fortune 500-grade, verified Nov 2025):**
+- **Mobile (≤768px):** MobileIDEView with swipe gestures, velocity tracking, haptic feedback; ReplitBottomTabs with min-w-[60px], h-14 touch targets; safe-area-inset-bottom for notched devices
+- **Tablet (768-1024px):** TabletIDEView with resizable dual panels, sliding drawer navigation, orientation change handling, panel size persistence
+- **Desktop (≥1024px):** ReplitLayout with conditional sidebar rendering, proper overflow handling, fixed header with backdrop blur
+- **Breakpoints:** Mobile ≤640px, Tablet 641-1024px, Laptop 1025-1440px, Desktop >1440px (SSR-safe hooks in use-media-query.ts)
+
 ### Technical Implementations
 The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Wouter. The backend is a Node.js and Express.js application in TypeScript, utilizing Drizzle ORM for PostgreSQL and Passport.js for authentication, following a RESTful API design. Real-time features are powered by WebSockets. AI optimization includes a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are AES-256-GCM encrypted. Backend uses SSE streaming for code generation. Anonymous bootstrap authentication creates ephemeral guest users with project-specific JWT tokens.
 
