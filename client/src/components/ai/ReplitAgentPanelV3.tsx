@@ -1016,6 +1016,25 @@ export function ReplitAgentPanelV3({
               </DropdownMenuContent>
             </DropdownMenu>
 
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setHistoryModalOpen(true)}
+                    data-testid="button-history"
+                  >
+                    <History className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  View session history
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
             <Button
               variant="ghost"
               size="icon"
