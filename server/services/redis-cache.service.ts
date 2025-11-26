@@ -43,7 +43,12 @@ export class RedisCacheService {
     }
 
     try {
-      this.client = new Redis(redisUrl, {
+      // Normalize URL to redis:// (remove TLS for now - Redis Cloud on this port may not support TLS)
+      const connectionUrl = redisUrl.replace('rediss://', 'redis://');
+      
+      logger.info(`Connecting to Redis: ${connectionUrl.replace(/:[^:@]+@/, ':***@')}`);
+      
+      this.client = new Redis(connectionUrl, {
         maxRetriesPerRequest: 3,
         enableReadyCheck: true,
         lazyConnect: true,

@@ -58,9 +58,12 @@ export class RedisSessionManager {
         return;
       }
 
-      logger.info('Connecting to Redis for session persistence...');
+      // Normalize URL to redis:// (remove TLS for now - Redis Cloud on this port may not support TLS)
+      const connectionUrl = redisUrl.replace('rediss://', 'redis://');
+      
+      logger.info(`Connecting to Redis for session persistence: ${connectionUrl.replace(/:[^:@]+@/, ':***@')}`);
 
-      this.redis = new Redis(redisUrl, {
+      this.redis = new Redis(connectionUrl, {
         maxRetriesPerRequest: 3,
         enableReadyCheck: true,
         retryStrategy: (times) => {

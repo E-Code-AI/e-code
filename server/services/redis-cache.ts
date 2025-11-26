@@ -47,7 +47,8 @@ export class RedisCache {
       this.reconnectTimeout = null;
     }
 
-    const redisUrl = process.env.REDIS_TLS_URL || process.env.REDIS_URL || 'redis://localhost:6379';
+    const rawUrl = process.env.REDIS_TLS_URL || process.env.REDIS_URL || 'redis://localhost:6379';
+    const redisUrl = this.normalizeRedisUrl(rawUrl);
 
     try {
       this.disposeClient();
@@ -173,14 +174,19 @@ export class RedisCache {
   private shouldUseTLS(redisUrl: string) {
     if (!redisUrl) return false;
 
-    if (redisUrl.startsWith('rediss://')) return true;
-
+    // Don't auto-enable TLS based on rediss:// prefix - Redis Cloud may not support TLS on all ports
+    // Instead, only use TLS if explicitly enabled via environment variable
     const explicitFlag = process.env.REDIS_USE_TLS || process.env.REDIS_TLS_ENABLED;
     if (explicitFlag) {
       return ['1', 'true', 'yes', 'on'].includes(explicitFlag.toLowerCase());
     }
 
     return false;
+  }
+  
+  private normalizeRedisUrl(url: string): string {
+    // Convert rediss:// to redis:// since Redis Cloud may not support TLS on all ports
+    return url.replace('rediss://', 'redis://');
   }
 
   private buildTlsOptions() {
@@ -288,13 +294,13 @@ export class RedisCache {
     }
 
     try {
-      const redisUrl =
+      const rawUrl =
         process.env.REDIS_URL ||
         process.env.TEST_REDIS_URL ||
         process.env.VITE_REDIS_URL ||
         '';
 
-      if (!redisUrl) {
+      if (!rawUrl) {
         if (!RedisCache.hasLoggedMissingConfig) {
           logger.warn(
             'Redis URL not provided – Redis cache service disabled. Set REDIS_URL to enable Redis integration.'
@@ -306,6 +312,7 @@ export class RedisCache {
         return null;
       }
 
+      const redisUrl = this.normalizeRedisUrl(rawUrl);
       this.client = new Redis(redisUrl, {
         retryStrategy: (times) => {
           if (times > 10) {
@@ -330,13 +337,14 @@ export class RedisCache {
   private async initialize(): Promise<void> {
     if (this.disabled) return;
 
-    const redisUrl = this.redisUrl || process.env.REDIS_URL?.trim();
-    if (!redisUrl) {
+    const rawUrl = this.redisUrl || process.env.REDIS_URL?.trim();
+    if (!rawUrl) {
       logger.warn('Redis URL unavailable. Disabling cache service.');
       this.disabled = true;
       return;
     }
 
+    const redisUrl = this.normalizeRedisUrl(rawUrl);
     this.redisUrl = redisUrl;
 
     if (this.client) {
@@ -554,9 +562,10 @@ export class RedisCache {
 
   // Health check
   async healthCheck(): Promise<boolean> {
-    if (!this.isConnected || !this.client) return false;
+    // Try to ensure client is connected first
     const client = await this.ensureClient();
     if (!client) return false;
+    if (!this.isConnected) return false;
 
     try {
       await client.ping();
