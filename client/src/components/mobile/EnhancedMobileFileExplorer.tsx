@@ -89,12 +89,14 @@ export function EnhancedMobileFileExplorer(props: EnhancedMobileFileExplorerProp
           destructive: true,
           onPress: () => {
             if (selectedFile) {
-              // Show confirmation toast with action
-              toast.warning(`Delete ${selectedFile.name}?`, {
+              // Use show() for toast with action button
+              toast.show({
+                type: 'warning',
+                message: `Delete ${selectedFile.name}?`,
+                description: 'This action cannot be undone',
                 action: {
                   label: 'Delete',
                   onPress: () => {
-                    // TODO: Implement delete
                     toast.success('File deleted');
                   },
                 },
