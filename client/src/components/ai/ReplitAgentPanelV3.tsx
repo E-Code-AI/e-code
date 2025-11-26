@@ -34,14 +34,11 @@ import {
   RefreshCw,
   Pause,
   Play,
-  AlertCircle,
-  MessageSquare,
-  Activity
+  AlertCircle
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThinkingDisplay, ThinkingDisplayCompact, ThinkingStep } from './ThinkingDisplay';
 import { ToolExecutionList, ToolExecutionProps } from './ToolExecutionDisplay';
-import { AgentActivityFeed, ActivityEvent, SessionStats } from './AgentActivityFeed';
 import { MessageMetadataFooter } from './MessageMetadataFooter';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
@@ -55,11 +52,7 @@ import { AIModelSelector } from './AIModelSelector';
 import { CurrentModelChip } from './CurrentModelChip';
 import { handleSSEWarning, type SSEWarningData } from '@/lib/sse-warning-handler';
 import { AgentHistoryModal } from '@/components/grids/AgentHistoryModal';
-import { AgentSessionsGrid } from '@/components/grids/AgentSessionsGrid';
-import { AgentActionsGrid } from '@/components/grids/AgentActionsGrid';
-import { FileOperationsGrid } from '@/components/grids/FileOperationsGrid';
-import { ConversationHistoryGrid } from '@/components/grids/ConversationHistoryGrid';
-import { History, FileCode, Table2, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { History, X } from 'lucide-react';
 
 interface ToolExecution {
   id: string;
@@ -135,34 +128,6 @@ interface ReplitAgentPanelV3Props {
   mode?: 'desktop' | 'tablet' | 'mobile';
 }
 
-function getActivityEventType(tool: string): ActivityEvent['type'] {
-  if (tool.includes('write') || tool.includes('create') || tool.includes('edit_file')) return 'file_create';
-  if (tool.includes('edit') || tool.includes('modify') || tool.includes('update')) return 'file_edit';
-  if (tool.includes('delete') || tool.includes('remove')) return 'file_delete';
-  if (tool.includes('read') || tool.includes('view')) return 'file_read';
-  if (tool.includes('command') || tool.includes('bash') || tool.includes('shell') || tool.includes('terminal')) return 'command';
-  if (tool.includes('package') || tool.includes('install') || tool.includes('npm') || tool.includes('yarn')) return 'package';
-  if (tool.includes('search') || tool.includes('grep') || tool.includes('glob') || tool.includes('find')) return 'search';
-  if (tool.includes('analyze') || tool.includes('database') || tool.includes('sql')) return 'analysis';
-  return 'command';
-}
-
-function getToolTarget(exec: ToolExecution): string {
-  if (exec.parameters?.file_path) return exec.parameters.file_path;
-  if (exec.parameters?.path) return exec.parameters.path;
-  if (exec.parameters?.command) return exec.parameters.command.slice(0, 50) + (exec.parameters.command.length > 50 ? '...' : '');
-  if (exec.parameters?.pattern) return exec.parameters.pattern;
-  if (exec.parameters?.query) return exec.parameters.query.slice(0, 40) + (exec.parameters.query.length > 40 ? '...' : '');
-  return exec.tool;
-}
-
-function getToolDescription(exec: ToolExecution): string | undefined {
-  if (exec.parameters?.description) return exec.parameters.description;
-  if (exec.parameters?.content) return `Content: ${exec.parameters.content.slice(0, 100)}...`;
-  if (exec.result && typeof exec.result === 'string') return exec.result.slice(0, 100);
-  return undefined;
-}
-
 export function ReplitAgentPanelV3({ 
   projectId, 
   className,
@@ -218,70 +183,12 @@ export function ReplitAgentPanelV3({
     }
   ]);
   
-  const [activityPanelOpen, setActivityPanelOpen] = useState(false);
-  const [activityView, setActivityView] = useState<'live' | 'sessions' | 'actions' | 'files' | 'messages'>('live');
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
-  const [sessionStartTime] = useState<Date>(new Date());
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
-  
-  // Convert tool executions from messages to activity events
-  const activityEvents = useMemo((): ActivityEvent[] => {
-    const events: ActivityEvent[] = [];
-    messages.forEach((msg, msgIdx) => {
-      if (msg.toolExecutions) {
-        msg.toolExecutions.forEach((exec, execIdx) => {
-          const eventType = getActivityEventType(exec.tool);
-          events.push({
-            id: `${msgIdx}-${execIdx}`,
-            type: eventType,
-            target: getToolTarget(exec),
-            description: getToolDescription(exec),
-            timestamp: msg.timestamp,
-            status: exec.status,
-            duration: exec.metadata?.executionTime,
-            details: {
-              output: exec.metadata?.commandOutput || (typeof exec.result === 'string' ? exec.result : undefined),
-              error: exec.error,
-              filesChanged: exec.metadata?.filesChanged,
-            }
-          });
-        });
-      }
-    });
-    return events.reverse();
-  }, [messages]);
-  
-  // Calculate session stats
-  const sessionStats = useMemo((): SessionStats => {
-    const duration = Date.now() - sessionStartTime.getTime();
-    let filesCreated = 0, filesModified = 0, filesDeleted = 0, commandsRun = 0, errorsCount = 0;
-    
-    activityEvents.forEach(e => {
-      if (e.type === 'file_create') filesCreated++;
-      if (e.type === 'file_edit') filesModified++;
-      if (e.type === 'file_delete') filesDeleted++;
-      if (e.type === 'command') commandsRun++;
-      if (e.type === 'error' || e.status === 'error') errorsCount++;
-    });
-    
-    return {
-      duration,
-      tokensUsed: 0,
-      estimatedCost: '$0.00',
-      filesCreated,
-      filesModified,
-      filesDeleted,
-      commandsRun,
-      errorsCount,
-      model: model?.name,
-      provider: provider || undefined,
-    };
-  }, [activityEvents, sessionStartTime, model, provider]);
 
   // Bootstrap conversation on mount
   useEffect(() => {
@@ -1045,17 +952,6 @@ export function ReplitAgentPanelV3({
             >
               <Plus className="h-3.5 w-3.5" />
             </Button>
-
-            {/* Activity Dashboard Toggle */}
-            <Button
-              variant={activityPanelOpen ? 'secondary' : 'ghost'}
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setActivityPanelOpen(!activityPanelOpen)}
-              data-testid="button-toggle-activity"
-            >
-              <Activity className="h-3.5 w-3.5" />
-            </Button>
           </div>
         </div>
         
@@ -1299,189 +1195,7 @@ export function ReplitAgentPanelV3({
       </div>
         </>
 
-      {/* Activity Dashboard Drawer - Collapsible panel at bottom of chat */}
-      {activityPanelOpen && (
-        <div className="border-t bg-background" data-testid="activity-drawer">
-          {/* Drawer Header with tabs */}
-          <div className="border-b px-2 py-1.5">
-            <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
-              <Button
-                variant={activityView === 'live' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => { setActivityView('live'); setSelectedSessionId(null); }}
-                className="h-7 text-xs gap-1 shrink-0 min-h-[44px]"
-                data-testid="view-live"
-              >
-                <Activity className="h-3 w-3" />
-                Live
-                {isWorking && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
-              </Button>
-              <Button
-                variant={activityView === 'sessions' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => { setActivityView('sessions'); setSelectedSessionId(null); }}
-                className="h-7 text-xs gap-1 shrink-0 min-h-[44px]"
-                data-testid="view-sessions"
-              >
-                <Table2 className="h-3 w-3" />
-                Sessions
-              </Button>
-              <Button
-                variant={activityView === 'actions' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => setActivityView('actions')}
-                className="h-7 text-xs gap-1 shrink-0 min-h-[44px]"
-                data-testid="view-actions"
-              >
-                <Zap className="h-3 w-3" />
-                Actions
-              </Button>
-              <Button
-                variant={activityView === 'files' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => setActivityView('files')}
-                className="h-7 text-xs gap-1 shrink-0 min-h-[44px]"
-                data-testid="view-files"
-              >
-                <FileCode className="h-3 w-3" />
-                Files
-              </Button>
-              <Button
-                variant={activityView === 'messages' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => setActivityView('messages')}
-                className="h-7 text-xs gap-1 shrink-0 min-h-[44px]"
-                data-testid="view-messages"
-              >
-                <MessageSquare className="h-3 w-3" />
-                Messages
-              </Button>
-              <div className="flex-1" />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setHistoryModalOpen(true)}
-                className="h-7 w-7 p-0 shrink-0"
-                data-testid="button-expand-fullscreen"
-              >
-                <History className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setActivityPanelOpen(false)}
-                className="h-7 w-7 p-0 shrink-0"
-                data-testid="button-close-drawer"
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Drawer Content - Fixed height */}
-          <div className="h-[300px] overflow-hidden">
-            {/* Live Activity Feed */}
-            {activityView === 'live' && (
-              <AgentActivityFeed
-                events={activityEvents}
-                stats={sessionStats}
-                isLive={isWorking}
-                className="h-full border-none shadow-none"
-              />
-            )}
-
-            {/* Sessions Grid */}
-            {activityView === 'sessions' && (
-              <ScrollArea className="h-full p-3">
-                <AgentSessionsGrid
-                  onSessionSelect={(session) => {
-                    setSelectedSessionId(session.id);
-                    setActivityView('actions');
-                  }}
-                  height={250}
-                />
-              </ScrollArea>
-            )}
-
-            {/* Actions Grid */}
-            {activityView === 'actions' && (
-              <ScrollArea className="h-full p-3">
-                {selectedSessionId && (
-                  <div className="flex items-center gap-2 mb-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => { setSelectedSessionId(null); setActivityView('sessions'); }}
-                      className="h-7 text-xs min-h-[44px]"
-                    >
-                      ← All Sessions
-                    </Button>
-                    <Badge variant="secondary" className="text-xs font-mono">
-                      {selectedSessionId.slice(0, 8)}
-                    </Badge>
-                  </div>
-                )}
-                <AgentActionsGrid
-                  sessionId={selectedSessionId || undefined}
-                  height={selectedSessionId ? 200 : 250}
-                />
-              </ScrollArea>
-            )}
-
-            {/* Files Grid */}
-            {activityView === 'files' && (
-              <ScrollArea className="h-full p-3">
-                {selectedSessionId && (
-                  <div className="flex items-center gap-2 mb-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedSessionId(null)}
-                      className="h-7 text-xs min-h-[44px]"
-                    >
-                      ← Clear Filter
-                    </Button>
-                    <Badge variant="secondary" className="text-xs font-mono">
-                      {selectedSessionId.slice(0, 8)}
-                    </Badge>
-                  </div>
-                )}
-                <FileOperationsGrid
-                  sessionId={selectedSessionId || undefined}
-                  height={selectedSessionId ? 200 : 250}
-                />
-              </ScrollArea>
-            )}
-
-            {/* Messages Grid */}
-            {activityView === 'messages' && (
-              <ScrollArea className="h-full p-3">
-                {selectedSessionId && (
-                  <div className="flex items-center gap-2 mb-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedSessionId(null)}
-                      className="h-7 text-xs min-h-[44px]"
-                    >
-                      ← Clear Filter
-                    </Button>
-                    <Badge variant="secondary" className="text-xs font-mono">
-                      {selectedSessionId.slice(0, 8)}
-                    </Badge>
-                  </div>
-                )}
-                <ConversationHistoryGrid
-                  sessionId={selectedSessionId || undefined}
-                  height={selectedSessionId ? 200 : 250}
-                />
-              </ScrollArea>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Agent History Modal */}
+      {/* Agent History Modal - For viewing full session history */}
       <AgentHistoryModal
         open={historyModalOpen}
         onOpenChange={setHistoryModalOpen}

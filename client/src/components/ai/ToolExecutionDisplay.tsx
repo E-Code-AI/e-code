@@ -518,5 +518,3 @@ export function ToolExecutionDisplay({
     </Card>
   );
 }
-
-export type { ToolExecutionProps };
