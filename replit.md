@@ -41,6 +41,13 @@ The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Woute
 
 Key AI Agent Enhancements include structured XML-based system prompts, a repository overview service, a context window manager with token optimization and long-term memory, a unified AI provider system with multi-provider fallback, and AI-powered inline code actions within the Monaco Editor. A robust Checkpoints & Rollback System provides atomic transactions for file, database, or environment variable restoration. A Background Auto-Testing System uses Playwright. Max Autonomy Mode enables 240-minute autonomous sessions with AI task decomposition, auto-execution, ETA estimation, and cost tracking, integrating with auto-checkpointing, auto-testing, and auto-rollback. A Templates Marketplace and a Bounties Marketplace with Stripe integration for escrow and payouts are included. Context Window Enhancements provide separate dev/prod database connections, screenshot capture, and AI memory retention.
 
+**Agent Activity Dashboard (Phase 1 - Nov 2025):**
+- **ToolExecutionDisplay.tsx:** Collapsible tool groups by category (files/commands/search), severity badges (success/warning/error), quick filters (All/Files/Commands/Errors), compact mode with expandable details
+- **AgentActivityFeed.tsx:** Real-time activity stream with ActivityEvent interface, session stats display (duration/tokens/cost/files), filter toggles for files/commands/errors, collapsible event details
+- **ReplitAgentPanelV3.tsx:** Chat/Activity tabs with count badges, tool execution to activity event conversion, session stats calculation
+- **MessageMetadataFooter.tsx:** Enhanced metadata display with model/provider, token breakdown (prompt/completion), cost/latency/finish reason, extended thinking and web search badges, cache hit indicator, expandable details
+- **data-testid Convention:** All metadata details use unique IDs: `metadata-detail-{key}-${messageId}` (e.g., `metadata-detail-promptTokens-${messageId}`)
+
 ### Feature Specifications
 Core features include a Monaco Code Editor with advanced enhancements, an interactive terminal (xterm.js), file management, real-time collaboration, authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager, a Logs Viewer, and a Debugger UI. The UI is responsive across devices. Autonomous workspace creation involves a Bootstrap API call, AI plan generation, WebSocket-based real-time progress, autonomous execution, and a live preview. PWA features and Electron desktop support are included.
 
