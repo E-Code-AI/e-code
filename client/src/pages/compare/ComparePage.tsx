@@ -11,7 +11,6 @@ import {
   Monitor, Tablet, Smartphone, Laptop, TrendingUp, Award
 } from 'lucide-react';
 import { BRAND } from '@/constants/brand';
-import { SiGoogle, SiMeta, SiMicrosoft, SiAmazon, SiSalesforce, SiOracle, SiIbm, SiIntel } from 'react-icons/si';
 
 const comparisonContent: Record<string, {
   heroTitle: string;
@@ -264,14 +263,14 @@ const comparisonContent: Record<string, {
 };
 
 const enterpriseLogos = [
-  { name: 'Google', Icon: SiGoogle },
-  { name: 'Meta', Icon: SiMeta },
-  { name: 'Microsoft', Icon: SiMicrosoft },
-  { name: 'Amazon', Icon: SiAmazon },
-  { name: 'Salesforce', Icon: SiSalesforce },
-  { name: 'Oracle', Icon: SiOracle },
-  { name: 'IBM', Icon: SiIbm },
-  { name: 'Intel', Icon: SiIntel },
+  { name: 'Google', initials: 'G' },
+  { name: 'Meta', initials: 'M' },
+  { name: 'Microsoft', initials: 'MS' },
+  { name: 'Amazon', initials: 'A' },
+  { name: 'Salesforce', initials: 'SF' },
+  { name: 'Oracle', initials: 'O' },
+  { name: 'Nvidia', initials: 'NV' },
+  { name: 'Intel', initials: 'I' },
 ];
 
 const getIcon = (iconName: string) => {
@@ -410,8 +409,10 @@ export default function ComparePage() {
           <p className="text-center text-sm sm:text-base text-slate-400 mb-6 sm:mb-8">Trusted by engineering teams at</p>
           <div className="grid grid-cols-4 md:grid-cols-8 gap-4 sm:gap-6 lg:gap-8 items-center justify-items-center opacity-60">
             {enterpriseLogos.map((logo, index) => (
-              <div key={logo.name} className="flex items-center justify-center min-w-[40px]" data-testid={`logo-enterprise-${index}`} aria-label={`${logo.name} logo`}>
-                <logo.Icon className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-slate-400 hover:text-white transition-colors" />
+              <div key={logo.name} className="flex items-center justify-center min-w-[40px] min-h-[40px]" data-testid={`logo-enterprise-${index}`} aria-label={`${logo.name} logo`}>
+                <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-lg bg-slate-700/50 border border-slate-600/30 text-slate-400 hover:text-white hover:border-slate-500 transition-all font-semibold text-xs sm:text-sm md:text-base">
+                  {logo.initials}
+                </div>
               </div>
             ))}
           </div>

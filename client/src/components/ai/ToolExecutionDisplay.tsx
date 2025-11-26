@@ -1,14 +1,22 @@
 /**
  * Tool Execution Display Component
- * Shows real-time tool execution results (file changes, command outputs, etc.)
+ * Shows real-time tool execution results with collapsible groups, filters, and enhanced UX
+ * Enhanced Nov 2025 - Phase 1 UX improvements
  */
 
-import { CheckCircle2, XCircle, Loader2, FileEdit, Terminal, Search, Database, Globe } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { 
+  CheckCircle2, XCircle, Loader2, FileEdit, Terminal, Search, Database, Globe,
+  ChevronDown, ChevronRight, Filter, FileText, FolderOpen, Package, AlertTriangle,
+  Clock, Trash2, Eye, FilePlus, FileCode, Command
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 
-interface ToolExecutionProps {
+export interface ToolExecutionProps {
   id: string;
   tool: string;
   parameters: any;
@@ -21,20 +29,23 @@ interface ToolExecutionProps {
     commandOutput?: string;
   };
   error?: string;
+  timestamp?: Date;
 }
 
+type FilterType = 'all' | 'files' | 'commands' | 'errors' | 'search';
+
 const toolIcons: Record<string, React.ElementType> = {
-  create_file: FileEdit,
+  create_file: FilePlus,
   edit_file: FileEdit,
-  read_file: FileEdit,
-  delete_file: FileEdit,
-  list_directory: Database,
+  read_file: Eye,
+  delete_file: Trash2,
+  list_directory: FolderOpen,
   run_command: Terminal,
-  install_package: Terminal,
+  install_package: Package,
   web_search: Globe,
   search_code: Search,
   get_project_structure: Database,
-  get_diagnostics: Database,
+  get_diagnostics: AlertTriangle,
 };
 
 const toolLabels: Record<string, string> = {
@@ -50,6 +61,326 @@ const toolLabels: Record<string, string> = {
   get_project_structure: 'Analyzed Project',
   get_diagnostics: 'Ran Diagnostics',
 };
+
+const toolCategories: Record<string, FilterType> = {
+  create_file: 'files',
+  edit_file: 'files',
+  read_file: 'files',
+  delete_file: 'files',
+  list_directory: 'files',
+  run_command: 'commands',
+  install_package: 'commands',
+  web_search: 'search',
+  search_code: 'search',
+  get_project_structure: 'files',
+  get_diagnostics: 'commands',
+};
+
+function CompactToolExecution({ 
+  tool, 
+  parameters, 
+  result, 
+  success, 
+  status, 
+  metadata,
+  error,
+  timestamp
+}: ToolExecutionProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const Icon = toolIcons[tool] || Terminal;
+  const label = toolLabels[tool] || tool;
+
+  const getStatusIcon = () => {
+    if (status === 'complete' && success) {
+      return <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-500" />;
+    }
+    if (status === 'error' || (status === 'complete' && !success)) {
+      return <XCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-red-500" />;
+    }
+    if (status === 'running') {
+      return <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-blue-500 animate-spin" />;
+    }
+    if (status === 'pending') {
+      return <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-slate-400" />;
+    }
+    return null;
+  };
+
+  const getStatusBg = () => {
+    if (status === 'complete' && success) return 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/15';
+    if (status === 'error' || (status === 'complete' && !success)) return 'bg-red-500/10 border-red-500/20 hover:bg-red-500/15';
+    if (status === 'running') return 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/15';
+    return 'bg-muted/50 border-border hover:bg-muted';
+  };
+
+  const getTarget = () => {
+    if (tool === 'create_file' || tool === 'edit_file' || tool === 'read_file' || tool === 'delete_file') {
+      return parameters.path;
+    }
+    if (tool === 'run_command') {
+      return parameters.command?.slice(0, 50) + (parameters.command?.length > 50 ? '...' : '');
+    }
+    if (tool === 'install_package') {
+      return parameters.package_name;
+    }
+    if (tool === 'web_search' || tool === 'search_code') {
+      return parameters.query || parameters.pattern;
+    }
+    if (tool === 'list_directory') {
+      return parameters.path || '.';
+    }
+    return null;
+  };
+
+  const target = getTarget();
+  const hasDetails = result || error || metadata?.commandOutput || (metadata?.filesChanged && metadata.filesChanged.length > 0);
+
+  return (
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+      <CollapsibleTrigger asChild>
+        <div 
+          className={cn(
+            "flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border cursor-pointer transition-all",
+            getStatusBg()
+          )}
+          data-testid={`tool-execution-${tool}`}
+        >
+          <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+          <div className="flex-1 min-w-0 flex items-center gap-1 sm:gap-2">
+            <span className="text-[10px] sm:text-xs font-medium truncate">{label}</span>
+            {target && (
+              <code className="text-[9px] sm:text-[10px] bg-background/50 px-1 sm:px-1.5 py-0.5 rounded truncate max-w-[100px] sm:max-w-[200px] hidden xs:inline">
+                {target}
+              </code>
+            )}
+          </div>
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            {metadata?.executionTime && (
+              <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 h-4 sm:h-5 hidden sm:flex">
+                {metadata.executionTime}ms
+              </Badge>
+            )}
+            {getStatusIcon()}
+            {hasDetails && (
+              isExpanded ? 
+                <ChevronDown className="h-3 w-3 text-muted-foreground" /> : 
+                <ChevronRight className="h-3 w-3 text-muted-foreground" />
+            )}
+          </div>
+        </div>
+      </CollapsibleTrigger>
+
+      {hasDetails && (
+        <CollapsibleContent>
+          <div className="mt-1.5 ml-4 sm:ml-6 pl-2 sm:pl-3 border-l-2 border-muted space-y-1.5 sm:space-y-2 text-[10px] sm:text-xs">
+            {/* Target on mobile (hidden above) */}
+            {target && (
+              <div className="xs:hidden">
+                <span className="text-muted-foreground">Target: </span>
+                <code className="bg-muted px-1 rounded break-all">{target}</code>
+              </div>
+            )}
+
+            {/* Execution time on mobile */}
+            {metadata?.executionTime && (
+              <div className="sm:hidden text-muted-foreground">
+                Duration: {metadata.executionTime}ms
+              </div>
+            )}
+
+            {/* File changes */}
+            {metadata?.filesChanged && metadata.filesChanged.length > 0 && (
+              <div>
+                <span className="text-muted-foreground">Files changed:</span>
+                <ul className="mt-1 space-y-0.5">
+                  {metadata.filesChanged.map((file, i) => (
+                    <li key={i}>
+                      <code className="bg-muted px-1 rounded text-[10px] break-all">{file}</code>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Command output */}
+            {result?.stdout && (
+              <div>
+                <span className="text-muted-foreground">Output:</span>
+                <pre className="bg-muted p-1.5 sm:p-2 rounded mt-1 overflow-x-auto max-h-24 sm:max-h-32 overflow-y-auto text-[9px] sm:text-[10px]">
+                  {result.stdout}
+                </pre>
+              </div>
+            )}
+
+            {/* Success message */}
+            {result?.description && (
+              <p className="text-emerald-600 dark:text-emerald-400">
+                ✓ {result.description}
+              </p>
+            )}
+
+            {/* File size / lines changed */}
+            {(result?.size || result?.linesChanged) && (
+              <p className="text-muted-foreground">
+                {result.size ? `Size: ${result.size} bytes` : `Lines changed: ${result.linesChanged}`}
+              </p>
+            )}
+
+            {/* Error display */}
+            {(status === 'error' || error) && (
+              <div className="text-red-600 dark:text-red-400">
+                <p>✗ {error || 'Execution failed'}</p>
+                {result?.stderr && (
+                  <pre className="bg-red-500/10 p-1.5 sm:p-2 rounded mt-1 overflow-x-auto max-h-24 overflow-y-auto text-[9px] sm:text-[10px]">
+                    {result.stderr}
+                  </pre>
+                )}
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      )}
+    </Collapsible>
+  );
+}
+
+interface ToolExecutionListProps {
+  toolExecutions: ToolExecutionProps[];
+  showFilters?: boolean;
+  compact?: boolean;
+  maxVisible?: number;
+}
+
+export function ToolExecutionList({ 
+  toolExecutions, 
+  showFilters = true, 
+  compact = true,
+  maxVisible = 50
+}: ToolExecutionListProps) {
+  const [filter, setFilter] = useState<FilterType>('all');
+  const [showAll, setShowAll] = useState(false);
+
+  const stats = useMemo(() => {
+    const counts = { files: 0, commands: 0, search: 0, errors: 0, success: 0, running: 0 };
+    toolExecutions.forEach(exec => {
+      const category = toolCategories[exec.tool] || 'commands';
+      if (category === 'files') counts.files++;
+      else if (category === 'commands') counts.commands++;
+      else if (category === 'search') counts.search++;
+      
+      if (exec.status === 'error' || (exec.status === 'complete' && !exec.success)) {
+        counts.errors++;
+      } else if (exec.status === 'complete' && exec.success) {
+        counts.success++;
+      } else if (exec.status === 'running') {
+        counts.running++;
+      }
+    });
+    return counts;
+  }, [toolExecutions]);
+
+  const filteredExecutions = useMemo(() => {
+    if (filter === 'all') return toolExecutions;
+    if (filter === 'errors') {
+      return toolExecutions.filter(exec => 
+        exec.status === 'error' || (exec.status === 'complete' && !exec.success)
+      );
+    }
+    return toolExecutions.filter(exec => toolCategories[exec.tool] === filter);
+  }, [toolExecutions, filter]);
+
+  const visibleExecutions = showAll ? filteredExecutions : filteredExecutions.slice(0, maxVisible);
+  const hasMore = filteredExecutions.length > maxVisible && !showAll;
+
+  if (!toolExecutions || toolExecutions.length === 0) {
+    return null;
+  }
+
+  const filterButtons: { id: FilterType; label: string; icon: React.ElementType; count: number }[] = [
+    { id: 'all', label: 'All', icon: Filter, count: toolExecutions.length },
+    { id: 'files', label: 'Files', icon: FileText, count: stats.files },
+    { id: 'commands', label: 'Commands', icon: Command, count: stats.commands },
+    { id: 'errors', label: 'Errors', icon: XCircle, count: stats.errors },
+  ];
+
+  return (
+    <div className="space-y-2 sm:space-y-3" data-testid="tool-execution-list">
+      {/* Header with stats */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            Agent Actions
+          </span>
+          <div className="flex items-center gap-1">
+            {stats.success > 0 && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                {stats.success} ✓
+              </Badge>
+            )}
+            {stats.running > 0 && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-blue-500/10 text-blue-600 border-blue-500/20 animate-pulse">
+                {stats.running} running
+              </Badge>
+            )}
+            {stats.errors > 0 && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-red-500/10 text-red-600 border-red-500/20">
+                {stats.errors} ✗
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        {/* Filters */}
+        {showFilters && toolExecutions.length > 3 && (
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 -mb-1">
+            {filterButtons.map(({ id, label, icon: Icon, count }) => (
+              <Button
+                key={id}
+                variant={filter === id ? 'secondary' : 'ghost'}
+                size="sm"
+                className={cn(
+                  "h-6 px-2 text-[10px] shrink-0",
+                  filter === id && "bg-primary/10"
+                )}
+                onClick={() => setFilter(id)}
+                disabled={count === 0 && id !== 'all'}
+                data-testid={`filter-${id}`}
+              >
+                <Icon className="h-3 w-3 mr-1" />
+                {label}
+                {count > 0 && <span className="ml-1 opacity-70">({count})</span>}
+              </Button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Execution list */}
+      <div className="space-y-1 sm:space-y-1.5">
+        {visibleExecutions.map((execution) => (
+          compact ? (
+            <CompactToolExecution key={execution.id} {...execution} />
+          ) : (
+            <ToolExecutionDisplay key={execution.id} {...execution} />
+          )
+        ))}
+      </div>
+
+      {/* Show more button */}
+      {hasMore && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full h-7 text-xs text-muted-foreground"
+          onClick={() => setShowAll(true)}
+          data-testid="button-show-more"
+        >
+          Show {filteredExecutions.length - maxVisible} more actions
+        </Button>
+      )}
+    </div>
+  );
+}
 
 export function ToolExecutionDisplay({ 
   tool, 
@@ -98,9 +429,7 @@ export function ToolExecutionDisplay({
         </div>
       </CardHeader>
       <CardContent className="p-3 pt-0">
-        {/* Parameters */}
         <div className="space-y-2">
-          {/* File operations */}
           {(tool === 'create_file' || tool === 'edit_file') && (
             <div className="text-xs">
               <span className="text-muted-foreground">Path: </span>
@@ -111,7 +440,6 @@ export function ToolExecutionDisplay({
             </div>
           )}
 
-          {/* Command execution */}
           {(tool === 'run_command' || tool === 'install_package') && (
             <div className="text-xs">
               <span className="text-muted-foreground">Command: </span>
@@ -124,7 +452,6 @@ export function ToolExecutionDisplay({
             </div>
           )}
 
-          {/* Search operations */}
           {(tool === 'web_search' || tool === 'search_code') && (
             <div className="text-xs">
               <span className="text-muted-foreground">Query: </span>
@@ -132,10 +459,8 @@ export function ToolExecutionDisplay({
             </div>
           )}
 
-          {/* Results */}
           {status === 'complete' && result && (
             <div className="mt-2 pt-2 border-t text-xs">
-              {/* File changes */}
               {metadata?.filesChanged && metadata.filesChanged.length > 0 && (
                 <div>
                   <span className="text-muted-foreground">Files changed:</span>
@@ -149,7 +474,6 @@ export function ToolExecutionDisplay({
                 </div>
               )}
 
-              {/* Command output */}
               {result.stdout && (
                 <div className="mt-2">
                   <span className="text-muted-foreground">Output:</span>
@@ -159,28 +483,24 @@ export function ToolExecutionDisplay({
                 </div>
               )}
 
-              {/* Generic success message */}
               {result.description && (
                 <p className="text-green-600 dark:text-green-400 mt-1">
                   ✓ {result.description}
                 </p>
               )}
 
-              {/* File size for create/edit */}
               {(result.size || result.linesChanged) && (
                 <p className="text-muted-foreground mt-1">
                   {result.size ? `Size: ${result.size} bytes` : `Lines changed: ${result.linesChanged}`}
                 </p>
               )}
 
-              {/* Package installation success */}
               {result.message && (
                 <p className="text-muted-foreground mt-1">{result.message}</p>
               )}
             </div>
           )}
 
-          {/* Error display */}
           {(status === 'error' || error) && (
             <div className="mt-2 pt-2 border-t">
               <p className="text-red-600 dark:text-red-400 text-xs">
@@ -199,19 +519,4 @@ export function ToolExecutionDisplay({
   );
 }
 
-export function ToolExecutionList({ toolExecutions }: { toolExecutions: ToolExecutionProps[] }) {
-  if (!toolExecutions || toolExecutions.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="space-y-2 mt-3">
-      <div className="text-xs font-medium text-muted-foreground mb-2">
-        Agent Actions ({toolExecutions.length})
-      </div>
-      {toolExecutions.map((execution) => (
-        <ToolExecutionDisplay key={execution.id} {...execution} />
-      ))}
-    </div>
-  );
-}
+export type { ToolExecutionProps };
