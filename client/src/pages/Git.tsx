@@ -166,7 +166,7 @@ export default function Git() {
               />
             </div>
             <Select defaultValue="updated">
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[160px]">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
@@ -233,7 +233,7 @@ export default function Git() {
                   <h2 className="text-xl font-semibold">{selectedRepo.name}</h2>
                   <ChevronDown className="h-4 w-4" />
                   <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-                    <SelectTrigger className="w-[150px]">
+                    <SelectTrigger className="w-full sm:w-[140px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
