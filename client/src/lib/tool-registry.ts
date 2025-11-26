@@ -32,6 +32,8 @@ import {
   Layers,
   FileSearch,
   ScrollText,
+  Activity,
+  Video,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -264,6 +266,28 @@ export const TOOL_REGISTRY: Record<string, ToolMetadata> = {
     category: 'Tools',
     description: 'Import and export projects',
     keywords: ['backup', 'restore'],
+  },
+
+  // Progress & Activity (Replit-style)
+  'progress': {
+    id: 'progress',
+    label: 'Progress',
+    icon: Activity,
+    emoji: '📊',
+    category: 'Monitoring',
+    description: 'Real-time agent activity feed',
+    badge: 'NEW',
+    keywords: ['activity', 'feed', 'actions', 'history'],
+  },
+  'video-replay': {
+    id: 'video-replay',
+    label: 'Video Replay',
+    icon: Video,
+    emoji: '🎬',
+    category: 'Tools',
+    description: 'Playback testing session recordings',
+    badge: 'NEW',
+    keywords: ['test', 'recording', 'playback', 'replay'],
   },
 
   // AI & Automation

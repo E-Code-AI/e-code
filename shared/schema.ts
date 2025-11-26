@@ -71,7 +71,7 @@ export const aiModelEnum = pgEnum('ai_model', [
   'kimi-k2-0905-preview',
   'kimi-k2-thinking'
 ]);
-export const agentModeEnum = pgEnum('agent_mode', ['plan', 'build']);
+export const agentModeEnum = pgEnum('agent_mode', ['plan', 'build', 'edit']);
 export const buildExecutionStatusEnum = pgEnum('build_execution_status', ['pending', 'running', 'completed', 'failed', 'cancelled']);
 export const workflowStatusEnum = pgEnum('workflow_status', ['idle', 'planning', 'executing', 'completed', 'failed']);
 
@@ -819,6 +819,44 @@ export const checkpointDatabase = pgTable('checkpoint_database', {
   snapshotPath: text('snapshot_path').notNull(),
   metadata: jsonb('metadata').default({}),
 });
+
+// Testing Session Recordings (Nov 2025 - Video Replay Feature)
+export const testingSessionRecordings = pgTable('testing_session_recordings', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  sessionId: varchar('session_id').notNull(), // Agent session that triggered the test
+  testName: varchar('test_name').notNull(),
+  testPlan: text('test_plan'),
+  status: varchar('status').notNull().default('pending'), // pending, recording, completed, failed
+  videoUrl: text('video_url'), // Signed URL for video file
+  videoPath: text('video_path'), // Storage path
+  thumbnailUrl: text('thumbnail_url'),
+  duration: integer('duration'), // Duration in seconds
+  steps: jsonb('steps').$type<Array<{
+    timestamp: number;
+    type: 'navigation' | 'click' | 'input' | 'assertion' | 'screenshot' | 'api';
+    description: string;
+    status: 'pending' | 'in_progress' | 'passed' | 'failed';
+    screenshot?: string;
+    error?: string;
+    metadata?: Record<string, unknown>;
+  }>>().default([]),
+  summary: jsonb('summary').$type<{
+    totalSteps: number;
+    passedSteps: number;
+    failedSteps: number;
+    coverage: number;
+    errors: string[];
+  }>(),
+  metadata: jsonb('metadata').default({}),
+  createdBy: integer('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  completedAt: timestamp('completed_at'),
+}, (table) => [
+  index('testing_recordings_project_idx').on(table.projectId),
+  index('testing_recordings_session_idx').on(table.sessionId),
+  index('testing_recordings_status_idx').on(table.status),
+]);
 
 // Code Review Tables
 export const codeReviews = pgTable('code_reviews', {
