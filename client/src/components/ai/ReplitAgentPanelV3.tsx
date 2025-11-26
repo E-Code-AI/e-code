@@ -47,11 +47,13 @@ import { useAgentModelPreference } from '@/hooks/use-agent-model-preference';
 import { AgentWorkflowSelector } from './AgentWorkflowSelector';
 import { DesignPrototypeViewer } from './DesignPrototypeViewer';
 import { MVPCompletionDialog } from './MVPCompletionDialog';
-import { ModeSelector } from './ModeSelector';
+import { ModeSelector, type AgentMode } from './ModeSelector';
 import { AIModelSelector } from './AIModelSelector';
 import { CurrentModelChip } from './CurrentModelChip';
 import { handleSSEWarning, type SSEWarningData } from '@/lib/sse-warning-handler';
 import { AgentHistoryModal } from '@/components/grids/AgentHistoryModal';
+import { MaxAutonomyProgress, MaxAutonomyStartForm } from './MaxAutonomyProgress';
+import { useMaxAutonomy } from '@/hooks/useMaxAutonomy';
 import { History, X } from 'lucide-react';
 
 interface ToolExecution {
@@ -142,7 +144,8 @@ export function ReplitAgentPanelV3({
   
   // Conversation state
   const [conversationId, setConversationId] = useState<number | null>(null);
-  const [agentMode, setAgentMode] = useState<'plan' | 'build'>('build');
+  const [agentMode, setAgentMode] = useState<AgentMode>('build');
+  const [autonomySessionId, setAutonomySessionId] = useState<string | null>(null);
   
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -213,8 +216,36 @@ export function ReplitAgentPanelV3({
     bootstrapConversation();
   }, [projectId, toast]);
 
+  // Max Autonomy hook
+  const projectIdNum = typeof projectId === 'string' ? parseInt(projectId) : projectId;
+  const {
+    startSession: startAutonomySession,
+    isStartingSession: isStartingAutonomy,
+    session: autonomySession
+  } = useMaxAutonomy(autonomySessionId, projectIdNum);
+
   // Handler for mode changes
-  const handleModeChange = async (newMode: 'plan' | 'build') => {
+  const handleModeChange = async (newMode: AgentMode) => {
+    // If switching to max-autonomy, just set the mode (form will be shown)
+    if (newMode === 'max-autonomy') {
+      setAgentMode(newMode);
+      toast({
+        title: "Max Autonomy Mode",
+        description: "Describe your goal and the AI will work autonomously for up to 4 hours",
+      });
+      return;
+    }
+
+    // If we have an active autonomy session and switching away, warn user
+    if (agentMode === 'max-autonomy' && autonomySessionId && autonomySession?.status === 'active') {
+      toast({
+        title: "Session Still Active",
+        description: "Your autonomous session is still running. Stop it first if you want to switch modes.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!conversationId) {
       console.error('Cannot change mode: no conversationId');
       return;
@@ -241,6 +272,48 @@ export function ReplitAgentPanelV3({
         variant: "destructive"
       });
     }
+  };
+
+  // Handler for starting autonomy session
+  const handleStartAutonomy = async (goal: string, options: any) => {
+    try {
+      const response = await apiRequest<{ success: boolean; session: { id: string } }>(
+        'POST', 
+        '/api/autonomy/sessions', 
+        {
+          projectId: projectIdNum,
+          goal,
+          ...options
+        }
+      );
+      
+      if (response?.success && response?.session?.id) {
+        setAutonomySessionId(response.session.id);
+        
+        // Add a system message about the autonomous session starting
+        const systemMessage: Message = {
+          id: `autonomy-start-${Date.now()}`,
+          role: 'assistant',
+          content: `🚀 **Max Autonomy Session Started**\n\n**Goal:** ${goal}\n\nI'll work autonomously on this with automatic checkpoints and testing. You can pause or stop at any time.`,
+          timestamp: new Date(),
+          type: 'text'
+        };
+        setMessages(prev => [...prev, systemMessage]);
+      }
+    } catch (error: any) {
+      console.error('Failed to start autonomy session:', error);
+      toast({
+        title: "Failed to Start Session",
+        description: error.message || "Could not start autonomous session",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Handler for stopping autonomy session
+  const handleStopAutonomy = () => {
+    setAutonomySessionId(null);
+    setAgentMode('build');
   };
 
   // Auto-scroll to bottom using instant scroll for reliability
@@ -1136,30 +1209,61 @@ export function ReplitAgentPanelV3({
                   Agent will autonomously make changes
                 </span>
               )}
+              {agentMode === 'max-autonomy' && !autonomySessionId && (
+                <span className="text-[10px] text-amber-600 dark:text-amber-400">
+                  AI works for hours with checkpoints
+                </span>
+              )}
             </div>
           )}
           
-          <div className="relative">
-            <Textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyPress}
-              placeholder={agentMode === 'build' ? "What would you like me to build?" : "Ask a question or describe what you want to plan..."}
-              className="pr-12 resize-none text-sm min-h-[60px] max-h-[200px]"
-              disabled={isWorking}
-              data-testid="input-message"
-            />
-            <Button
-              size="icon"
-              onClick={handleSend}
-              disabled={!input.trim() || isWorking}
-              className="absolute bottom-2 right-2 h-7 w-7 rounded"
-              data-testid="button-send"
-            >
-              <Send className="h-3.5 w-3.5" />
-            </Button>
-          </div>
+          {/* Max Autonomy Mode UI */}
+          {agentMode === 'max-autonomy' && (
+            <div className="space-y-3">
+              {/* Show progress if session is active */}
+              {autonomySessionId && (
+                <MaxAutonomyProgress
+                  sessionId={autonomySessionId}
+                  projectId={projectIdNum}
+                  onStop={handleStopAutonomy}
+                />
+              )}
+              
+              {/* Show start form if no active session */}
+              {!autonomySessionId && (
+                <MaxAutonomyStartForm
+                  projectId={projectIdNum}
+                  onStart={handleStartAutonomy}
+                  isStarting={isWorking}
+                />
+              )}
+            </div>
+          )}
+          
+          {/* Regular input - hide in max-autonomy mode */}
+          {agentMode !== 'max-autonomy' && (
+            <div className="relative">
+              <Textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder={agentMode === 'build' ? "What would you like me to build?" : "Ask a question or describe what you want to plan..."}
+                className="pr-12 resize-none text-sm min-h-[60px] max-h-[200px]"
+                disabled={isWorking}
+                data-testid="input-message"
+              />
+              <Button
+                size="icon"
+                onClick={handleSend}
+                disabled={!input.trim() || isWorking}
+                className="absolute bottom-2 right-2 h-7 w-7 rounded"
+                data-testid="button-send"
+              >
+                <Send className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
         </div>
         
         {/* Quick actions */}
