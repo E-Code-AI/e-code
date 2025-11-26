@@ -869,51 +869,45 @@ export function ReplitAgentPanelV3({
                   <Settings className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <div className="p-3 space-y-3">
-                  <div className="font-medium text-sm mb-2">AI Model</div>
+              <DropdownMenuContent align="end" className="w-64 sm:w-72">
+                <div className="p-2 space-y-2">
+                  <div className="font-medium text-xs text-muted-foreground uppercase tracking-wide">AI Model</div>
                   <AIModelSelector 
                     variant="inline" 
-                    className="mb-4" 
+                    className="mb-2" 
                     onModelChange={(newModelId) => setPreferredModel(newModelId)}
                   />
                   
-                  <div className="font-medium text-sm">Agent Capabilities</div>
+                  <div className="font-medium text-xs text-muted-foreground uppercase tracking-wide pt-1">Capabilities</div>
                   {capabilities.map(capability => {
                     const Icon = capability.icon;
-                    // Disable Extended Thinking if model doesn't support it
                     const isDisabled = capability.id === 'extended_thinking' && !modelSupportsExtendedThinking;
                     
                     return (
-                      <div key={capability.id} className="flex items-center justify-between gap-3" data-testid={`capability-${capability.id}`}>
-                        <div className="flex items-center gap-2 flex-1">
-                          <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" data-testid={`capability-icon-${capability.id}`} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <Label htmlFor={capability.id} className={cn("text-sm font-medium cursor-pointer", isDisabled && "opacity-50")} data-testid={`capability-label-${capability.id}`}>
-                                {capability.label}
-                              </Label>
-                              {capability.badge && (
-                                <Badge variant="secondary" className="text-xs px-1 py-0" data-testid={`capability-badge-${capability.id}`}>
-                                  {capability.badge}
-                                </Badge>
-                              )}
-                              {isDisabled && (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <AlertCircle className="h-3.5 w-3.5 text-yellow-500" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      Current model doesn't support Extended Thinking. Select a compatible model (e.g., Claude Sonnet) to enable.
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-0.5" data-testid={`capability-description-${capability.id}`}>
-                              {capability.description}
-                            </p>
+                      <div key={capability.id} className="flex items-center justify-between gap-2 py-1" data-testid={`capability-${capability.id}`}>
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" data-testid={`capability-icon-${capability.id}`} />
+                          <div className="flex items-center gap-1 min-w-0">
+                            <Label htmlFor={capability.id} className={cn("text-xs font-medium cursor-pointer truncate", isDisabled && "opacity-50")} data-testid={`capability-label-${capability.id}`}>
+                              {capability.label}
+                            </Label>
+                            {capability.badge && (
+                              <Badge variant="secondary" className="text-[10px] px-1 py-0 shrink-0" data-testid={`capability-badge-${capability.id}`}>
+                                {capability.badge}
+                              </Badge>
+                            )}
+                            {isDisabled && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <AlertCircle className="h-3 w-3 text-yellow-500 shrink-0" />
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-[200px] text-xs">
+                                    Model doesn't support Extended Thinking
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
                           </div>
                         </div>
                         <Switch
@@ -921,6 +915,7 @@ export function ReplitAgentPanelV3({
                           checked={capability.enabled}
                           onCheckedChange={() => toggleCapability(capability.id)}
                           disabled={isDisabled}
+                          className="scale-90"
                           data-testid={`switch-${capability.id}`}
                         />
                       </div>
@@ -1148,8 +1143,7 @@ export function ReplitAgentPanelV3({
           {conversationId && (
             <ModeSelector 
               mode={agentMode} 
-              onModeChange={handleModeChange}
-              disabled={isWorking}
+              onChange={handleModeChange}
             />
           )}
         </div>

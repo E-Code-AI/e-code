@@ -89,7 +89,7 @@ export const ToolsDropdown: React.FC<ToolsDropdownProps> = ({ onSelectTool, curr
           New tab
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[450px] max-h-[600px] overflow-y-auto">
+      <DropdownMenuContent align="end" className="w-[280px] sm:w-[320px] max-h-[70vh] overflow-y-auto">
         <div className="p-2">
           <input
             type="text"
@@ -110,17 +110,13 @@ export const ToolsDropdown: React.FC<ToolsDropdownProps> = ({ onSelectTool, curr
               <DropdownMenuItem
                 key={tool.id}
                 onClick={() => onSelectTool(tool.id)}
-                className="flex items-start gap-3 p-2 cursor-pointer"
+                className="flex items-center gap-2 p-2 cursor-pointer"
+                data-testid={`tool-${tool.id}`}
               >
-                <Icon className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                <div className="flex-1">
-                  <div className="font-medium text-sm">{tool.label}</div>
-                  {tool.description && (
-                    <div className="text-xs text-muted-foreground">{tool.description}</div>
-                  )}
-                </div>
+                <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="font-medium text-sm truncate">{tool.label}</span>
                 {isActive && (
-                  <span className="text-xs text-muted-foreground">Move existing tab here</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground shrink-0">Active</span>
                 )}
               </DropdownMenuItem>
             );

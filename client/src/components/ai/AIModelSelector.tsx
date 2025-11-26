@@ -278,21 +278,17 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
     );
   }
 
-  // Inline variant
+  // Inline variant - Compact for settings dropdown
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
-      <div className="flex items-center gap-2 text-white/90">
-        <Cpu className="h-4 w-4" />
-        <span className="text-sm font-medium">AI Model:</span>
-      </div>
+    <div className={`space-y-1 ${className}`}>
       <Select value={currentModel || undefined} onValueChange={handleModelChange}>
-        <SelectTrigger className="w-64 bg-white/20 backdrop-blur-md text-white border-white/30 focus:border-white/50" data-testid="select-ai-model-inline">
-          <SelectValue placeholder="Select AI model..." />
+        <SelectTrigger className="w-full h-8 text-xs bg-muted/50 border-border/50" data-testid="select-ai-model-inline">
+          <SelectValue placeholder="Select model..." />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="w-56 max-h-[300px]">
           {availableModels.map((model) => {
             const providerColor = getProviderColor(model.provider);
-            const isAvailable = model.available !== false; // Default to true if not specified
+            const isAvailable = model.available !== false;
             return (
               <SelectItem 
                 key={model.id} 
@@ -301,24 +297,16 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
                 disabled={!isAvailable}
                 className={!isAvailable ? 'opacity-50 cursor-not-allowed' : ''}
               >
-                <div className="flex items-center gap-3 py-1">
-                  <div className={`w-2 h-2 rounded-full ${providerColor}`} />
-                  <div className="flex-1">
-                    <div className="font-medium">
-                      {model.name}
-                      {!isAvailable && <span className="text-xs text-red-500 ml-2">(Not configured)</span>}
-                    </div>
-                    <div className="text-xs text-muted-foreground">{model.description}</div>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${providerColor}`} />
+                  <span className="truncate text-xs font-medium">{model.name}</span>
+                  {!isAvailable && <span className="text-[10px] text-red-500 shrink-0">N/A</span>}
                 </div>
               </SelectItem>
             );
           })}
         </SelectContent>
       </Select>
-      <Badge variant="secondary" className="text-xs">
-        {availableModels.length} available
-      </Badge>
     </div>
   );
 }
