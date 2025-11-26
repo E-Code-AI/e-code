@@ -3,13 +3,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown, Hammer, MessageSquare, Zap, Pencil } from 'lucide-react';
+import { ChevronDown, Hammer, MessageSquare, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type AgentMode = 'plan' | 'build' | 'edit' | 'max-autonomy';
+export type AgentMode = 'plan' | 'build' | 'edit';
 
 interface ModeSelectorProps {
   mode: AgentMode;
@@ -40,14 +39,6 @@ export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
       icon: Pencil,
       description: 'Targeted changes to specific files',
       color: 'purple'
-    },
-    {
-      id: 'max-autonomy' as const,
-      label: 'Max Autonomy',
-      icon: Zap,
-      description: 'AI works for hours with checkpoints',
-      badge: '240min',
-      color: 'amber'
     }
   ];
 
@@ -79,14 +70,6 @@ export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
         text: "text-purple-600 dark:text-purple-400",
         dot: "bg-purple-500",
         badge: "bg-purple-500"
-      },
-      amber: {
-        trigger: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950/50",
-        bg: "bg-amber-50 dark:bg-amber-950/30",
-        icon: "bg-amber-100 dark:bg-amber-900/50",
-        text: "text-amber-600 dark:text-amber-400",
-        dot: "bg-amber-500",
-        badge: "bg-amber-500"
       }
     };
     return colors[color]?.[type] || colors.blue[type];
@@ -112,57 +95,7 @@ export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
-        {modes.slice(0, 3).map((m) => {
-          const Icon = m.icon;
-          const isActive = m.id === mode;
-          
-          return (
-            <DropdownMenuItem
-              key={m.id}
-              onClick={() => onChange(m.id)}
-              className={cn(
-                "flex items-center gap-2.5 p-2.5 cursor-pointer min-h-[44px]",
-                isActive && getColorClasses(m.color, 'bg')
-              )}
-              data-testid={`mode-option-${m.id}`}
-            >
-              <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                getColorClasses(m.color, 'icon')
-              )}>
-                <Icon className={cn("w-4 h-4", getColorClasses(m.color, 'text'))} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className={cn(
-                    "font-medium text-sm",
-                    isActive ? getColorClasses(m.color, 'text') : "text-gray-900 dark:text-gray-100"
-                  )}>
-                    {m.label}
-                  </span>
-                  {m.badge && (
-                    <span className={cn(
-                      "text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full text-white",
-                      getColorClasses(m.color, 'badge')
-                    )}>
-                      {m.badge}
-                    </span>
-                  )}
-                </div>
-                <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                  {m.description}
-                </div>
-              </div>
-              {isActive && (
-                <div className={cn("w-2 h-2 rounded-full shrink-0", getColorClasses(m.color, 'dot'))} />
-              )}
-            </DropdownMenuItem>
-          );
-        })}
-        
-        <DropdownMenuSeparator />
-        
-        {modes.slice(3).map((m) => {
+        {modes.map((m) => {
           const Icon = m.icon;
           const isActive = m.id === mode;
           
