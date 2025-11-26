@@ -1,23 +1,27 @@
-# 🚀 QUICK START - Monitoring Fortune 500
+# ✅ QUICK START - Monitoring Fortune 500
+
+**Date de vérification** : 26 Novembre 2025  
+**Domaine** : https://e-code.ai  
+**Status** : ✅ VÉRIFIÉ - Endpoints et scripts existent
 
 Guide rapide pour démarrer le monitoring de votre plateforme.
 
 ## 🎯 Liens Rapides
 
-### Sur Replit (Remplacez par votre URL)
+### Production (E-Code)
 
 ```bash
 # Health Checks
-https://votre-app.replit.app/health
-https://votre-app.replit.app/health/liveness
-https://votre-app.replit.app/health/readiness
-https://votre-app.replit.app/health/detailed
+https://e-code.ai/health
+https://e-code.ai/health/liveness
+https://e-code.ai/health/readiness
+https://e-code.ai/health/detailed
 
 # Métriques Prometheus
-https://votre-app.replit.app/metrics
+https://e-code.ai/metrics
 
 # Documentation API
-https://votre-app.replit.app/api/docs
+https://e-code.ai/api/docs
 ```
 
 ### En Local
@@ -34,16 +38,16 @@ http://localhost:5000/api/docs
 
 ```bash
 ./test-fortune500-endpoints.sh
-# Ou pour Replit :
-./test-fortune500-endpoints.sh https://votre-app.replit.app
+# Pour production E-Code :
+./test-fortune500-endpoints.sh https://e-code.ai
 ```
 
 ### 2. Dashboard en temps réel
 
 ```bash
 ./monitor-dashboard.sh
-# Ou pour Replit :
-./monitor-dashboard.sh https://votre-app.replit.app
+# Pour production E-Code :
+./monitor-dashboard.sh https://e-code.ai
 ```
 
 ### 3. Voir les logs
@@ -86,7 +90,7 @@ npm run test:full
 
 Voir l'exécution :
 ```
-https://github.com/E-Code-AI/e-code/actions
+https://github.com/e-code-ai/e-code/actions
 ```
 
 Le pipeline s'exécute automatiquement sur :
@@ -112,9 +116,10 @@ tail -20 logs/application.log
 ## 📚 Documentation Complète
 
 Pour plus de détails, consultez :
-- **GUIDE-UTILISATION-FORTUNE-500.md** - Guide complet
-- **RAPPORT-IMPLEMENTATION-FORTUNE-500.md** - Rapport d'implémentation
-- **docs/REPLIT-DEPLOYMENT-GUIDE.md** - Guide Replit
+- **docs/PRODUCTION-DEPLOYMENT-GUIDE.md** - Guide de déploiement production
+- **docs/operations/deployment.md** - Opérations de déploiement
+- **docs/✅_REPLIT-DEPLOYMENT-GUIDE.md** - Guide Replit vérifié
+- **docs/operations/disaster-recovery-plan.md** - Plan de reprise
 
 ## 🆘 Troubleshooting
 
@@ -163,4 +168,4 @@ grep "prometheus" logs/application.log
 
 ---
 
-**Besoin d'aide ?** Consultez `GUIDE-UTILISATION-FORTUNE-500.md`
+**Besoin d'aide ?** Consultez `docs/PRODUCTION-DEPLOYMENT-GUIDE.md` ou `docs/operations/deployment.md`
