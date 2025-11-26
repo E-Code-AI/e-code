@@ -87,10 +87,7 @@ export default function AIOptimizationDashboard() {
 
   const updateWebhookMutation = useMutation({
     mutationFn: async (url: string | null) => {
-      return apiRequest('/api/slack-config', {
-        method: 'PUT',
-        body: JSON.stringify({ webhookUrl: url })
-      });
+      return apiRequest('PUT', '/api/slack-config', { webhookUrl: url });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/slack-config'] });
@@ -111,9 +108,7 @@ export default function AIOptimizationDashboard() {
 
   const testWebhookMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('/api/slack-config/test', {
-        method: 'POST'
-      });
+      return apiRequest('POST', '/api/slack-config/test');
     },
     onSuccess: () => {
       toast({
@@ -232,48 +227,48 @@ export default function AIOptimizationDashboard() {
 
   return (
     <AdminLayout>
-      <div className="p-4 md:p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2" data-testid="heading-page-title">AI Optimization Dashboard</h1>
-          <p className="text-zinc-400" data-testid="text-page-description">Monitor queue, circuit breakers, and token usage</p>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
+        <div className="mb-4 sm:mb-6 lg:mb-8">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1 sm:mb-2" data-testid="heading-page-title">AI Optimization</h1>
+          <p className="text-xs sm:text-sm text-zinc-400" data-testid="text-page-description">Monitor queue, circuit breakers, and token usage</p>
         </div>
 
         {/* Queue Stats Section */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2" data-testid="heading-queue-stats">
-            <Activity className="h-5 w-5" />
+        <div className="mb-4 sm:mb-6 lg:mb-8">
+          <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-queue-stats">
+            <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
             Queue Statistics
           </h2>
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
               {[...Array(4)].map((_, i) => (
                 <Card key={i} className="bg-zinc-800 border-zinc-700">
-                  <CardHeader className="pb-2">
-                    <div className="h-4 bg-zinc-700 rounded w-20 animate-pulse" />
+                  <CardHeader className="p-3 sm:p-4 pb-2 sm:pb-2">
+                    <div className="h-3 sm:h-4 bg-zinc-700 rounded w-16 sm:w-20 animate-pulse" />
                   </CardHeader>
-                  <CardContent>
-                    <div className="h-8 bg-zinc-700 rounded w-12 mb-1 animate-pulse" />
-                    <div className="h-3 bg-zinc-700 rounded w-24 animate-pulse" />
+                  <CardContent className="p-3 sm:p-4 pt-0">
+                    <div className="h-6 sm:h-8 bg-zinc-700 rounded w-10 sm:w-12 mb-1 animate-pulse" />
+                    <div className="h-2 sm:h-3 bg-zinc-700 rounded w-20 sm:w-24 animate-pulse" />
                   </CardContent>
                 </Card>
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
               {queueStatCards.map((stat) => {
                 const Icon = stat.icon;
                 const testId = `card-queue-${stat.title.toLowerCase()}`;
                 return (
                   <Card key={stat.title} className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors" data-testid={testId}>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium text-zinc-300">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 sm:p-4 pb-1 sm:pb-2">
+                      <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300">
                         {stat.title}
                       </CardTitle>
-                      <Icon className={`h-4 w-4 ${stat.color}`} />
+                      <Icon className={`h-3 w-3 sm:h-4 sm:w-4 ${stat.color}`} />
                     </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-white" data-testid={`text-queue-${stat.title.toLowerCase()}`}>{stat.value}</div>
-                      <p className="text-xs text-zinc-400 mt-1">{stat.description}</p>
+                    <CardContent className="p-2 sm:p-4 pt-0">
+                      <div className="text-lg sm:text-2xl font-bold text-white" data-testid={`text-queue-${stat.title.toLowerCase()}`}>{stat.value}</div>
+                      <p className="text-[10px] sm:text-xs text-zinc-400 mt-1 truncate">{stat.description}</p>
                     </CardContent>
                   </Card>
                 );
@@ -283,27 +278,27 @@ export default function AIOptimizationDashboard() {
         </div>
 
         {/* Token Usage Section */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2" data-testid="heading-token-usage">
-            <DollarSign className="h-5 w-5" />
+        <div className="mb-4 sm:mb-6 lg:mb-8">
+          <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-token-usage">
+            <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
             Token Usage & Savings
           </h2>
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
               {[...Array(4)].map((_, i) => (
                 <Card key={i} className="bg-zinc-800 border-zinc-700">
-                  <CardHeader className="pb-2">
-                    <div className="h-4 bg-zinc-700 rounded w-24 animate-pulse" />
+                  <CardHeader className="p-3 sm:p-4 pb-2 sm:pb-2">
+                    <div className="h-3 sm:h-4 bg-zinc-700 rounded w-20 sm:w-24 animate-pulse" />
                   </CardHeader>
-                  <CardContent>
-                    <div className="h-8 bg-zinc-700 rounded w-16 mb-1 animate-pulse" />
-                    <div className="h-3 bg-zinc-700 rounded w-32 animate-pulse" />
+                  <CardContent className="p-3 sm:p-4 pt-0">
+                    <div className="h-6 sm:h-8 bg-zinc-700 rounded w-12 sm:w-16 mb-1 animate-pulse" />
+                    <div className="h-2 sm:h-3 bg-zinc-700 rounded w-24 sm:w-32 animate-pulse" />
                   </CardContent>
                 </Card>
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
               {tokenStatCards.map((stat) => {
                 const Icon = stat.icon;
                 const testIdKey = stat.title === 'Total Tokens Used' ? 'total' : 
@@ -312,15 +307,15 @@ export default function AIOptimizationDashboard() {
                 const testId = `card-token-${testIdKey}`;
                 return (
                   <Card key={stat.title} className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors" data-testid={testId}>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium text-zinc-300">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 sm:p-4 pb-1 sm:pb-2">
+                      <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300 truncate pr-2">
                         {stat.title}
                       </CardTitle>
-                      <Icon className={`h-4 w-4 ${stat.color}`} />
+                      <Icon className={`h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 ${stat.color}`} />
                     </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-white" data-testid={`text-token-${testIdKey}`}>{stat.value}</div>
-                      <p className="text-xs text-zinc-400 mt-1">{stat.description}</p>
+                    <CardContent className="p-2 sm:p-4 pt-0">
+                      <div className="text-lg sm:text-2xl font-bold text-white" data-testid={`text-token-${testIdKey}`}>{stat.value}</div>
+                      <p className="text-[10px] sm:text-xs text-zinc-400 mt-1 truncate">{stat.description}</p>
                     </CardContent>
                   </Card>
                 );
@@ -330,47 +325,47 @@ export default function AIOptimizationDashboard() {
         </div>
 
         {/* Circuit Breaker Status Section */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2" data-testid="heading-circuit-breaker">
-            <Zap className="h-5 w-5" />
+        <div className="mb-4 sm:mb-6 lg:mb-8">
+          <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-circuit-breaker">
+            <Zap className="h-4 w-4 sm:h-5 sm:w-5" />
             Circuit Breaker Status
           </h2>
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
               {[...Array(3)].map((_, i) => (
                 <Card key={i} className="bg-zinc-800 border-zinc-700">
-                  <CardHeader className="pb-2">
-                    <div className="h-4 bg-zinc-700 rounded w-20 animate-pulse" />
+                  <CardHeader className="p-3 sm:p-4 pb-2 sm:pb-2">
+                    <div className="h-3 sm:h-4 bg-zinc-700 rounded w-16 sm:w-20 animate-pulse" />
                   </CardHeader>
-                  <CardContent>
-                    <div className="h-6 bg-zinc-700 rounded w-16 mb-2 animate-pulse" />
-                    <div className="space-y-2">
-                      <div className="h-3 bg-zinc-700 rounded w-full animate-pulse" />
-                      <div className="h-3 bg-zinc-700 rounded w-full animate-pulse" />
+                  <CardContent className="p-3 sm:p-4 pt-0">
+                    <div className="h-5 sm:h-6 bg-zinc-700 rounded w-12 sm:w-16 mb-2 animate-pulse" />
+                    <div className="space-y-1 sm:space-y-2">
+                      <div className="h-2 sm:h-3 bg-zinc-700 rounded w-full animate-pulse" />
+                      <div className="h-2 sm:h-3 bg-zinc-700 rounded w-full animate-pulse" />
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
               {data?.circuitBreakers.map((breaker) => {
                 const Icon = getCircuitBreakerIcon(breaker.state);
                 const stateColor = getCircuitBreakerStateColor(breaker.state);
                 const providerKey = breaker.provider.toLowerCase().replace(/[^a-z0-9]+/g, '-');
                 return (
                   <Card key={breaker.provider} className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors" data-testid={`card-circuit-${providerKey}`}>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium text-zinc-300">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 sm:p-4 pb-1 sm:pb-2">
+                      <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300">
                         {breaker.provider.toUpperCase()}
                       </CardTitle>
-                      <Icon className={`h-4 w-4 ${stateColor}`} />
+                      <Icon className={`h-3 w-3 sm:h-4 sm:w-4 ${stateColor}`} />
                     </CardHeader>
-                    <CardContent>
-                      <div className={`text-lg font-bold ${stateColor} mb-2 uppercase`} data-testid={`text-circuit-${providerKey}-state`}>
+                    <CardContent className="p-2 sm:p-4 pt-0">
+                      <div className={`text-sm sm:text-lg font-bold ${stateColor} mb-1 sm:mb-2 uppercase`} data-testid={`text-circuit-${providerKey}-state`}>
                         {breaker.state}
                       </div>
-                      <div className="space-y-1 text-xs text-zinc-400">
+                      <div className="space-y-0.5 sm:space-y-1 text-[10px] sm:text-xs text-zinc-400">
                         <div className="flex justify-between">
                           <span>Failures:</span>
                           <span className="text-white" data-testid={`text-circuit-${providerKey}-failures`}>{breaker.failureCount}</span>
@@ -380,7 +375,7 @@ export default function AIOptimizationDashboard() {
                           <span className="text-white" data-testid={`text-circuit-${providerKey}-successes`}>{breaker.successCount}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Failure Rate:</span>
+                          <span>Fail Rate:</span>
                           <span className="text-white" data-testid={`text-circuit-${providerKey}-failure-rate`}>{(breaker.failureRate * 100).toFixed(1)}%</span>
                         </div>
                       </div>
@@ -393,9 +388,9 @@ export default function AIOptimizationDashboard() {
         </div>
 
         {/* Task Classification Stats */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2" data-testid="heading-task-classification">
-            <TrendingUp className="h-5 w-5" />
+        <div className="mb-4 sm:mb-6 lg:mb-8">
+          <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-task-classification">
+            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
             Task Classification Stats
           </h2>
           {isLoading ? (
