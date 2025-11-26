@@ -58,21 +58,20 @@ class DatabaseManager {
   }
 
   private initializeConnections() {
-    const devUrl = process.env.DATABASE_URL;
-    const prodUrl = process.env.DATABASE_URL_PROD;
+    const databaseUrl = process.env.DATABASE_URL;
+    const isProduction = process.env.NODE_ENV === 'production';
 
-    if (!devUrl) {
-      throw new Error("DATABASE_URL must be set for development database.");
+    if (!databaseUrl) {
+      throw new Error("DATABASE_URL must be set.");
     }
 
-    this.devConnection = this.createConnection(devUrl, 'development', developmentConfig);
-    logger.info('Development database connection initialized');
-
-    if (prodUrl) {
-      this.prodConnection = this.createConnection(prodUrl, 'production', productionConfig);
+    if (isProduction) {
+      this.prodConnection = this.createConnection(databaseUrl, 'production', productionConfig);
+      this.devConnection = this.prodConnection;
       logger.info('Production database connection initialized');
     } else {
-      logger.warn('DATABASE_URL_PROD not set - production database unavailable');
+      this.devConnection = this.createConnection(databaseUrl, 'development', developmentConfig);
+      logger.info('Development database connection initialized');
     }
   }
 
@@ -121,8 +120,14 @@ class DatabaseManager {
   }
 
   getProdDatabase(options?: { agentRequest?: boolean; userId?: number }): PostgresJsDatabase<typeof schema> {
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    if (!isProduction) {
+      throw new Error('Production database only available in production environment.');
+    }
+    
     if (!this.prodConnection) {
-      throw new Error('Production database not configured. Set DATABASE_URL_PROD environment variable.');
+      throw new Error('Production database not initialized.');
     }
 
     if (options?.agentRequest && this.agentBlockedFromProd) {
@@ -134,8 +139,14 @@ class DatabaseManager {
   }
 
   getProdClient(options?: { agentRequest?: boolean; userId?: number }): postgres.Sql {
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    if (!isProduction) {
+      throw new Error('Production database only available in production environment.');
+    }
+    
     if (!this.prodConnection) {
-      throw new Error('Production database not configured. Set DATABASE_URL_PROD environment variable.');
+      throw new Error('Production database not initialized.');
     }
 
     if (options?.agentRequest && this.agentBlockedFromProd) {
@@ -189,7 +200,7 @@ class DatabaseManager {
   }
 
   isProdAvailable(): boolean {
-    return this.prodConnection !== null;
+    return process.env.NODE_ENV === 'production' && this.prodConnection !== null;
   }
 
   getConnectionStats(): {
