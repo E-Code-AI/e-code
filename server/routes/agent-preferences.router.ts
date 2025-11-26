@@ -21,7 +21,14 @@ export default function createAgentPreferencesRouter(storage: IStorage): Router 
     try {
       const preferencesService = new AgentPreferencesService(storage);
       const models = preferencesService.getAvailableModels();
-      res.json({ models });
+      const highPowerModels = preferencesService.getHighPowerModels();
+      const extendedThinkingModels = preferencesService.getExtendedThinkingModels();
+      
+      res.json({ 
+        models,
+        highPowerModels,
+        extendedThinkingModels
+      });
     } catch (error: any) {
       logger.error('Error fetching models:', error);
       res.status(500).json({ error: 'Failed to fetch models' });
@@ -40,7 +47,7 @@ export default function createAgentPreferencesRouter(storage: IStorage): Router 
           extendedThinking: false,
           highPowerMode: false,
           autoWebSearch: true,
-          preferredModel: 'claude-3-5-sonnet-20241022',
+          preferredModel: 'claude-sonnet-4-5-20250929',
           customInstructions: null,
           improvePromptEnabled: false,
           progressTabEnabled: false,
@@ -81,10 +88,11 @@ export default function createAgentPreferencesRouter(storage: IStorage): Router 
   router.post('/recommend-model', async (req, res) => {
     try {
       const preferencesService = new AgentPreferencesService(storage);
-      const { requiresExtendedThinking, complexity, speedPriority } = req.body;
+      const { requiresExtendedThinking, highPowerMode, complexity, speedPriority } = req.body;
 
       const recommended = preferencesService.getRecommendedModel({
         requiresExtendedThinking,
+        highPowerMode,
         complexity,
         speedPriority,
       });
@@ -95,11 +103,44 @@ export default function createAgentPreferencesRouter(storage: IStorage): Router 
       res.json({
         recommended,
         modelInfo,
-        reasoning: `Selected ${recommended} based on: complexity=${complexity || 'medium'}, speedPriority=${speedPriority || 'balanced'}, extendedThinking=${requiresExtendedThinking || false}`,
+        reasoning: `Selected ${recommended} based on: complexity=${complexity || 'medium'}, speedPriority=${speedPriority || 'balanced'}, extendedThinking=${requiresExtendedThinking || false}, highPower=${highPowerMode || false}`,
       });
     } catch (error: any) {
       logger.error('Error recommending model:', error);
       res.status(500).json({ error: 'Failed to recommend model' });
+    }
+  });
+
+  router.get('/effective-model', async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const preferencesService = new AgentPreferencesService(storage);
+      
+      const preferences = await preferencesService.getUserPreferences(userId);
+      const taskComplexity = (req.query.complexity as 'simple' | 'medium' | 'complex') || 'medium';
+      
+      const effectiveModel = preferencesService.getEffectiveModel({
+        preferredModel: preferences?.preferredModel || undefined,
+        extendedThinking: preferences?.extendedThinking ?? undefined,
+        highPowerMode: preferences?.highPowerMode ?? undefined,
+        taskComplexity,
+      });
+      
+      const models = preferencesService.getAvailableModels();
+      const modelInfo = models.find(m => m.id === effectiveModel);
+      
+      res.json({
+        effectiveModel,
+        modelInfo,
+        settings: {
+          extendedThinking: preferences?.extendedThinking || false,
+          highPowerMode: preferences?.highPowerMode || false,
+          autoWebSearch: preferences?.autoWebSearch ?? true,
+        }
+      });
+    } catch (error: any) {
+      logger.error('Error getting effective model:', error);
+      res.status(500).json({ error: 'Failed to get effective model' });
     }
   });
 
@@ -133,10 +174,10 @@ export default function createAgentPreferencesRouter(storage: IStorage): Router 
       const newConversation = await db
         .insert(aiConversations)
         .values({
-          userId: String(userId),
-          projectId: String(projectId || 0),
+          userId,
+          projectId: projectId || 0,
           messages: [],
-          model: 'claude-3-5-sonnet-20241022',
+          model: 'claude-sonnet-4-5-20250929',
           agentMode: 'build',
         })
         .returning();
