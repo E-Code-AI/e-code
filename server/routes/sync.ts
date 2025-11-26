@@ -1,14 +1,35 @@
 /**
  * Multi-Device Sync API
  * Synchronizes user preferences, workspace state, and settings across devices
+ * 
+ * ✅ 40-YEAR SENIOR SECURITY FIX:
+ * All sync endpoints require authentication - user data must be protected
  */
 
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { users } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
+import { ensureAuthenticated } from '../middleware/auth';
+import { csrfProtection } from '../middleware/csrf';
 
 const router = Router();
+
+/**
+ * SECURITY: All sync routes require authentication
+ * Workspace state, preferences, and device info are sensitive user data
+ */
+router.use(ensureAuthenticated);
+
+/**
+ * CSRF protection for all mutating operations (PUT, POST, DELETE)
+ */
+router.use((req, res, next) => {
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+    return csrfProtection(req, res, next);
+  }
+  return next();
+});
 
 // Type definitions
 interface WorkspaceState {
