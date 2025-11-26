@@ -2,11 +2,11 @@ import { lazy, Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 
-// Lazy load Mobile Code Editor and Monaco
-const MobileCodeEditor = lazy(() => 
+// Lazy load Enhanced Mobile Code Editor (with StatusBar, SearchReplace, IDE events) and Monaco
+const EnhancedMobileCodeEditor = lazy(() => 
   import('monaco-editor').then(() => 
-    import('./MobileCodeEditor').then(module => ({
-      default: module.MobileCodeEditor
+    import('./EnhancedMobileCodeEditor').then(module => ({
+      default: module.EnhancedMobileCodeEditor
     }))
   )
 );
@@ -84,7 +84,7 @@ const MobileEditorSkeleton = () => (
 export function LazyMobileCodeEditor(props: LazyMobileCodeEditorProps) {
   return (
     <Suspense fallback={<MobileEditorSkeleton />}>
-      <MobileCodeEditor {...props} />
+      <EnhancedMobileCodeEditor {...props} />
     </Suspense>
   );
 }
