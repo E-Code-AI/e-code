@@ -106,10 +106,6 @@ export default function Home() {
       
       // Handle redirect based on response type
       if (data.bootstrapToken) {
-        // AI-powered workspace (with auto-start agent)
-        // Redirect to IDE with bootstrap token
-        console.log('[Bootstrap] Redirecting to IDE with token:', data.bootstrapToken.substring(0, 20) + '...');
-        console.log('[Bootstrap] Full response:', JSON.stringify(data, null, 2));
         window.location.href = `/ide/${data.projectId}?bootstrap=${data.bootstrapToken}`;
         
         toast({

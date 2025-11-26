@@ -36,13 +36,8 @@ import { cn } from '@/lib/utils';
 type MobileTab = 'agent' | 'files' | 'code' | 'terminal' | 'preview' | 'more';
 
 export default function MobileWorkspace() {
-  console.log('🔵 MobileWorkspace component loaded');
-  
   const params = useParams();
   const projectId = (params.projectId || params.id) as string;
-  
-  console.log('🔵 MobileWorkspace params:', params);
-  console.log('🔵 MobileWorkspace projectId:', projectId);
   
   // Guard: projectId required
   if (!projectId) {

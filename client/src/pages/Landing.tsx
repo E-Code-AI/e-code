@@ -161,10 +161,6 @@ export default function Landing() {
   ];
 
   const handleStartBuilding = async (description: string) => {
-    console.log('[Landing] 🚀 handleStartBuilding called with description:', description);
-    console.log('[Landing] User status:', user ? `authenticated (${user.id})` : 'anonymous');
-    
-    // Store the app description for post-auth use
     sessionStorage.setItem('pendingAppDescription', description);
     setChatOpen(false);
     
@@ -172,48 +168,24 @@ export default function Landing() {
       const requestPayload = {
         prompt: description,
         options: {
-          autoStart: true,  // ✅ CRITICAL: autoStart must be inside options object
+          autoStart: true,
           language: 'typescript',
           framework: 'react'
         }
       };
       
-      console.log('[Landing] 🚀 Calling bootstrap API with payload:', requestPayload);
-      console.log('[Landing] Request details:', {
-        endpoint: '/api/workspace/bootstrap',
-        method: 'POST',
-        payloadSize: JSON.stringify(requestPayload).length,
-        hasPrompt: !!requestPayload.prompt,
-        hasOptions: !!requestPayload.options,
-        autoStart: requestPayload.options.autoStart
-      });
-      
-      // ✅ FIX (Nov 24, 2025): Support anonymous workspace creation for "No credit card required" promise
-      // Bootstrap API now accepts both authenticated and anonymous users
       const result = await apiRequest('POST', '/api/workspace/bootstrap', requestPayload) as any;
 
-      console.log('[Landing] ✅ Bootstrap API response received:', result);
-      console.log('[Landing] Response details:', {
-        success: result.success,
-        hasBootstrapToken: !!result.bootstrapToken,
-        hasProjectId: !!result.projectId,
-        hasSessionId: !!result.sessionId
-      });
-
       if (result.success) {
-        console.log('[Landing] Bootstrap successful, navigating to IDE...');
         toast({
           title: 'Creating your workspace...',
           description: 'AI is generating your project structure now',
         });
-
-        // Redirect to IDE with bootstrap token - triggers autonomous workspace viewer
         navigate(`/ide/${result.projectId}?bootstrap=${result.bootstrapToken}`);
       } else {
         throw new Error(result.error || 'Bootstrap failed');
       }
     } catch (error) {
-      console.error('[Landing] ❌ Failed to bootstrap workspace:', error);
       toast({
         title: 'Error',
         description: 'Failed to create workspace. Please try again.',

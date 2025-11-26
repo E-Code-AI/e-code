@@ -75,7 +75,7 @@ export default function Editor(props: EditorProps = {}) {
     initialData:
       initialProject &&
       resolvedProjectId &&
-      initialProject.id === resolvedProjectId
+      String(initialProject.id) === String(resolvedProjectId)
         ? initialProject
         : undefined,
   });
@@ -104,13 +104,9 @@ export default function Editor(props: EditorProps = {}) {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${projectId}&sessionId=${sessionId}`;
 
-            console.log('[Workspace Bootstrap] Connecting to WebSocket:', wsUrl);
-
-            // Create WebSocket connection
             const ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
-              console.log('[Workspace Bootstrap] WebSocket connected successfully');
               agentWebSocket.current = ws;
               setAgentWebSocketConnected(true);
 
@@ -130,7 +126,6 @@ export default function Editor(props: EditorProps = {}) {
             };
 
             ws.onclose = () => {
-              console.log('[Workspace Bootstrap] WebSocket connection closed');
               setAgentWebSocketConnected(false);
             };
 
