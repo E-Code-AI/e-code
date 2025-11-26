@@ -63,7 +63,7 @@ export function ChatToolbar({
               onClick={onToggleExtendedThinking}
               disabled={isUpdating}
               className={cn(
-                "h-8 w-8 p-0",
+                "h-9 w-9 p-0 md:h-8 md:w-8 min-h-[36px] min-w-[36px]",
                 extendedThinking && "bg-purple-600 hover:bg-purple-700 text-white"
               )}
               data-testid="toolbar-extended-thinking"
@@ -91,7 +91,7 @@ export function ChatToolbar({
               onClick={onToggleHighPowerModels}
               disabled={isUpdating}
               className={cn(
-                "h-8 w-8 p-0",
+                "h-9 w-9 p-0 md:h-8 md:w-8 min-h-[36px] min-w-[36px]",
                 highPowerModels && "bg-orange-500 hover:bg-orange-600 text-white"
               )}
               data-testid="toolbar-high-power"
@@ -115,7 +115,7 @@ export function ChatToolbar({
               onClick={onToggleWebSearch}
               disabled={isUpdating}
               className={cn(
-                "h-8 w-8 p-0",
+                "h-9 w-9 p-0 md:h-8 md:w-8 min-h-[36px] min-w-[36px]",
                 webSearch && "bg-blue-500 hover:bg-blue-600 text-white"
               )}
               data-testid="toolbar-web-search"
@@ -139,7 +139,7 @@ export function ChatToolbar({
                 size="sm"
                 onClick={onToggleElementSelector}
                 className={cn(
-                  "h-8 w-8 p-0",
+                  "h-9 w-9 p-0 md:h-8 md:w-8 min-h-[36px] min-w-[36px]",
                   elementSelectorActive && "bg-violet-600 hover:bg-violet-700 text-white"
                 )}
                 data-testid="toolbar-element-selector"
