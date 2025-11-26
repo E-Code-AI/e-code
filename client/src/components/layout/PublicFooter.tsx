@@ -88,16 +88,18 @@ export function PublicFooter() {
             </p>
             <div className="flex flex-wrap gap-3">
               <Button
-                className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/25"
+                className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/25 min-h-[44px]"
                 onClick={() => (window.location.href = '/contact-sales')}
+                data-testid="button-footer-contact-sales"
               >
                 Talk to sales
                 <ArrowUpRight className="ml-2 h-4 w-4" />
               </Button>
               <Button
                 variant="outline"
-                className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] dark:border-white/20 dark:text-slate-100 dark:hover:text-white"
+                className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] dark:border-white/20 dark:text-slate-100 dark:hover:text-white min-h-[44px]"
                 onClick={() => (window.location.href = '/register')}
+                data-testid="button-footer-start-building"
               >
                 Start building
               </Button>
@@ -207,7 +209,8 @@ export function PublicFooter() {
                 href={social.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-white/10 bg-[var(--ecode-surface-secondary)] dark:bg-white/5 text-[var(--ecode-text-secondary)] dark:text-slate-200 transition hover:border-[var(--ecode-accent)] dark:hover:border-white/40 hover:text-[var(--ecode-accent)] dark:hover:text-white"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-white/10 bg-[var(--ecode-surface-secondary)] dark:bg-white/5 text-[var(--ecode-text-secondary)] dark:text-slate-200 transition hover:border-[var(--ecode-accent)] dark:hover:border-white/40 hover:text-[var(--ecode-accent)] dark:hover:text-white"
+                data-testid={`link-social-${social.label.toLowerCase()}`}
               >
                 <social.icon className="h-5 w-5" />
               </a>

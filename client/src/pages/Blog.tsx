@@ -156,7 +156,7 @@ export default function Blog() {
                           <span>{featuredPost.readTime} min read</span>
                         </div>
                       </div>
-                      <Button className="mt-6 w-fit">
+                      <Button className="mt-6 w-fit min-h-[44px]" data-testid="button-blog-featured-read-more">
                         Read more
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
@@ -168,7 +168,7 @@ export default function Blog() {
           )}
 
           {/* Category Filter */}
-          <section className="py-8 px-4">
+          <section className="py-6 sm:py-8 px-4">
             <div className="container mx-auto max-w-6xl">
               <div className="flex gap-2 flex-wrap">
                 {categories.map(category => (
@@ -176,8 +176,9 @@ export default function Blog() {
                     key={category}
                     variant="outline"
                     size="sm"
-                    className={category === selectedCategory ? 'bg-primary text-primary-foreground' : ''}
+                    className={`min-h-[44px] text-xs sm:text-sm ${category === selectedCategory ? 'bg-primary text-primary-foreground' : ''}`}
                     onClick={() => setSelectedCategory(category)}
+                    data-testid={`button-blog-category-${category.toLowerCase()}`}
                   >
                     {category}
                   </Button>
@@ -187,23 +188,28 @@ export default function Blog() {
           </section>
 
       {/* Blog Posts Grid */}
-      <section className="py-8 px-4">
+      <section className="py-6 sm:py-8 px-4">
         <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.map(post => (
-              <Card key={post.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href = `/blog/${post.slug}`}>
-                <CardHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {posts.map((post: any, index: number) => (
+              <Card 
+                key={post.id} 
+                className="hover:shadow-lg transition-shadow cursor-pointer" 
+                onClick={() => window.location.href = `/blog/${post.slug}`}
+                data-testid={`card-blog-post-${post.id || index}`}
+              >
+                <CardHeader className="p-4 sm:p-6">
                   <div className="flex items-center justify-between mb-2">
-                    <Badge variant="secondary" className={getCategoryColor(post.category)}>
+                    <Badge variant="secondary" className={`text-xs ${getCategoryColor(post.category)}`}>
                       {post.category}
                     </Badge>
-                    <span className="text-sm text-muted-foreground">{post.readTime} min read</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground">{post.readTime} min read</span>
                   </div>
-                  <CardTitle className="line-clamp-2">{post.title}</CardTitle>
+                  <CardTitle className="line-clamp-2 text-base sm:text-lg">{post.title}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground line-clamp-3 mb-4">{post.excerpt}</p>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <CardContent className="p-4 sm:p-6 pt-0">
+                  <p className="text-muted-foreground line-clamp-3 mb-4 text-sm">{post.excerpt}</p>
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <User className="h-3 w-3" />
                       <span>{post.author}</span>
@@ -219,11 +225,13 @@ export default function Blog() {
           </div>
 
           {/* Load More */}
-          <div className="text-center mt-12">
+          <div className="text-center mt-8 sm:mt-12">
             <Button 
               variant="outline" 
               size="lg"
+              className="min-h-[44px]"
               onClick={() => window.location.reload()}
+              data-testid="button-blog-load-more"
             >
               Load more posts
               <ChevronRight className="ml-2 h-4 w-4" />
@@ -245,16 +253,22 @@ export default function Blog() {
               <p className="text-muted-foreground mb-6">
                 Get the latest product updates, engineering insights, and community stories delivered to your inbox.
               </p>
-              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 sm:gap-4 max-w-md mx-auto px-4 sm:px-0">
                 <input
                   type="email"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 px-4 py-2 rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="flex-1 px-4 py-3 min-h-[44px] rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
                   required
+                  data-testid="input-newsletter-email"
                 />
-                <Button type="submit" disabled={isSubmitting}>
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="min-h-[44px]"
+                  data-testid="button-newsletter-subscribe"
+                >
                   {isSubmitting ? 'Subscribing...' : 'Subscribe'}
                 </Button>
               </form>

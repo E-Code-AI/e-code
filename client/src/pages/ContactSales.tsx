@@ -130,26 +130,37 @@ export default function ContactSales() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="py-20 bg-gradient-to-b from-background to-muted/30">
+        <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-background to-muted/30">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-4xl mx-auto">
-              <Badge variant="secondary" className="mb-6">
+              <Badge variant="secondary" className="mb-4 sm:mb-6">
                 <Building2 className="h-3 w-3 mr-1" />
                 Enterprise Sales
               </Badge>
-              <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                 Empower your entire organization
               </h1>
-              <p className="text-xl text-muted-foreground mb-8">
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 px-4 sm:px-0">
                 Transform how your teams build, deploy, and collaborate with E-Code Enterprise. 
                 Get dedicated support, enhanced security, and custom solutions tailored to your needs.
               </p>
-              <div className="flex gap-4 justify-center">
-                <Button size="lg" onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 sm:px-0">
+                <Button 
+                  size="lg" 
+                  className="min-h-[44px]"
+                  onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}
+                  data-testid="button-contact-sales-cta"
+                >
                   Contact Sales
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => navigate('/pricing')}>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="min-h-[44px]"
+                  onClick={() => navigate('/pricing')}
+                  data-testid="button-view-pricing"
+                >
                   View Pricing
                 </Button>
               </div>
@@ -158,28 +169,28 @@ export default function ContactSales() {
         </section>
 
         {/* Features Section */}
-        <section className="py-16 bg-muted/30">
+        <section className="py-12 sm:py-16 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
-              <h2 className="text-3xl font-bold text-center mb-12">Enterprise Features</h2>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8 sm:mb-12">Enterprise Features</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {benefits.map((benefit, index) => (
-                  <Card key={index} className="border-none shadow-sm">
-                    <CardContent className="pt-6">
-                      <div className="p-3 bg-primary/10 rounded-lg w-fit mb-4">
+                  <Card key={index} className="border-none shadow-sm" data-testid={`card-benefit-${index}`}>
+                    <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
+                      <div className="p-2 sm:p-3 bg-primary/10 rounded-lg w-fit mb-3 sm:mb-4">
                         {benefit.icon}
                       </div>
-                      <h3 className="font-semibold mb-2">{benefit.title}</h3>
-                      <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                      <h3 className="font-semibold mb-2 text-sm sm:text-base">{benefit.title}</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{benefit.description}</p>
                     </CardContent>
                   </Card>
                 ))}
               </div>
-              <div className="mt-12 grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+              <div className="mt-8 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-4xl mx-auto">
                 {features.map((feature, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">{feature}</span>
+                  <div key={index} className="flex items-center gap-2 sm:gap-3">
+                    <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">{feature}</span>
                   </div>
                 ))}
               </div>
@@ -188,10 +199,10 @@ export default function ContactSales() {
         </section>
 
         {/* Contact Form Section */}
-        <section className="py-16" id="contact-form">
+        <section className="py-12 sm:py-16" id="contact-form">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
-              <div className="grid lg:grid-cols-3 gap-12">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-12">
                 {/* Contact Form */}
                 <div className="lg:col-span-2">
                   <Card>
@@ -208,18 +219,22 @@ export default function ContactSales() {
                         <Label htmlFor="firstName">First Name *</Label>
                         <Input
                           id="firstName"
+                          className="min-h-[44px]"
                           value={formData.firstName}
                           onChange={(e) => handleChange('firstName', e.target.value)}
                           required
+                          data-testid="input-first-name"
                         />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="lastName">Last Name *</Label>
                         <Input
                           id="lastName"
+                          className="min-h-[44px]"
                           value={formData.lastName}
                           onChange={(e) => handleChange('lastName', e.target.value)}
                           required
+                          data-testid="input-last-name"
                         />
                       </div>
                     </div>
@@ -229,9 +244,11 @@ export default function ContactSales() {
                       <Input
                         id="email"
                         type="email"
+                        className="min-h-[44px]"
                         value={formData.email}
                         onChange={(e) => handleChange('email', e.target.value)}
                         required
+                        data-testid="input-work-email"
                       />
                     </div>
 
@@ -240,9 +257,11 @@ export default function ContactSales() {
                         <Label htmlFor="company">Company *</Label>
                         <Input
                           id="company"
+                          className="min-h-[44px]"
                           value={formData.company}
                           onChange={(e) => handleChange('company', e.target.value)}
                           required
+                          data-testid="input-company"
                         />
                       </div>
                       <div className="space-y-2">
@@ -251,16 +270,16 @@ export default function ContactSales() {
                           value={formData.companySize}
                           onValueChange={(value) => handleChange('companySize', value)}
                         >
-                          <SelectTrigger id="companySize">
+                          <SelectTrigger id="companySize" className="min-h-[44px]" data-testid="select-company-size">
                             <SelectValue placeholder="Select size" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="1-10">1-10 employees</SelectItem>
-                            <SelectItem value="11-50">11-50 employees</SelectItem>
-                            <SelectItem value="51-200">51-200 employees</SelectItem>
-                            <SelectItem value="201-500">201-500 employees</SelectItem>
-                            <SelectItem value="501-1000">501-1000 employees</SelectItem>
-                            <SelectItem value="1000+">1000+ employees</SelectItem>
+                            <SelectItem value="1-10" data-testid="option-size-1-10">1-10 employees</SelectItem>
+                            <SelectItem value="11-50" data-testid="option-size-11-50">11-50 employees</SelectItem>
+                            <SelectItem value="51-200" data-testid="option-size-51-200">51-200 employees</SelectItem>
+                            <SelectItem value="201-500" data-testid="option-size-201-500">201-500 employees</SelectItem>
+                            <SelectItem value="501-1000" data-testid="option-size-501-1000">501-1000 employees</SelectItem>
+                            <SelectItem value="1000+" data-testid="option-size-1000+">1000+ employees</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -271,8 +290,10 @@ export default function ContactSales() {
                       <Input
                         id="phone"
                         type="tel"
+                        className="min-h-[44px]"
                         value={formData.phone}
                         onChange={(e) => handleChange('phone', e.target.value)}
+                        data-testid="input-phone"
                       />
                     </div>
 
@@ -282,15 +303,15 @@ export default function ContactSales() {
                         value={formData.interest}
                         onValueChange={(value) => handleChange('interest', value)}
                       >
-                        <SelectTrigger id="interest">
+                        <SelectTrigger id="interest" className="min-h-[44px]" data-testid="select-interest">
                           <SelectValue placeholder="Select your interest" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="enterprise">Enterprise Plan</SelectItem>
-                          <SelectItem value="education">Education License</SelectItem>
-                          <SelectItem value="teams">Teams Plan</SelectItem>
-                          <SelectItem value="custom">Custom Solution</SelectItem>
-                          <SelectItem value="demo">Product Demo</SelectItem>
+                          <SelectItem value="enterprise" data-testid="option-interest-enterprise">Enterprise Plan</SelectItem>
+                          <SelectItem value="education" data-testid="option-interest-education">Education License</SelectItem>
+                          <SelectItem value="teams" data-testid="option-interest-teams">Teams Plan</SelectItem>
+                          <SelectItem value="custom" data-testid="option-interest-custom">Custom Solution</SelectItem>
+                          <SelectItem value="demo" data-testid="option-interest-demo">Product Demo</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -300,13 +321,21 @@ export default function ContactSales() {
                       <Textarea
                         id="message"
                         rows={4}
+                        className="min-h-[88px]"
                         value={formData.message}
                         onChange={(e) => handleChange('message', e.target.value)}
                         placeholder="What challenges are you looking to solve? How many developers will be using E-Code?"
+                        data-testid="textarea-message"
                       />
                     </div>
 
-                    <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                    <Button 
+                      type="submit" 
+                      size="lg" 
+                      className="w-full min-h-[44px]" 
+                      disabled={isSubmitting}
+                      data-testid="button-submit-sales-request"
+                    >
                       {isSubmitting ? 'Submitting...' : 'Submit Request'}
                     </Button>
                   </form>
@@ -357,7 +386,7 @@ export default function ContactSales() {
                   <p className="text-sm mb-4 opacity-90">
                     Our team is standing by to help you succeed.
                   </p>
-                  <Button variant="secondary" size="sm" className="w-full">
+                  <Button variant="secondary" className="w-full min-h-[44px]" data-testid="button-schedule-demo">
                     Schedule a Demo
                     <Calendar className="ml-2 h-4 w-4" />
                   </Button>
