@@ -1111,6 +1111,10 @@ export const dynamicIntelligence = pgTable('dynamic_intelligence', {
   progressTabEnabled: boolean('progress_tab_enabled').default(false),
   pauseResumeEnabled: boolean('pause_resume_enabled').default(false),
   autoCheckpoints: boolean('auto_checkpoints').default(true),
+  // Multi-device sync data (jsonb for flexible storage)
+  workspaceState: jsonb('workspace_state'),
+  userPreferences: jsonb('user_preferences'),
+  devices: jsonb('devices').default([]),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
