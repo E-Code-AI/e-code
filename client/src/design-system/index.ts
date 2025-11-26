@@ -7,6 +7,7 @@
 // DESIGN TOKENS
 // ============================================================================
 
+import tokensModule from './tokens';
 export { default as tokens } from './tokens';
 export * from './tokens';
 
@@ -14,9 +15,25 @@ export * from './tokens';
 // HOOKS
 // ============================================================================
 
+import {
+  useDesignSystem as _useDesignSystem,
+  useDeviceType as _useDeviceType,
+  useIsTouchDevice as _useIsTouchDevice,
+  useResponsiveValue as _useResponsiveValue,
+  useSafeArea as _useSafeArea,
+} from './hooks/useDesignSystem';
 export { useDesignSystem, useDeviceType, useIsTouchDevice, useResponsiveValue, useSafeArea } from './hooks/useDesignSystem';
 export type { Theme, DeviceType } from './hooks/useDesignSystem';
 
+import {
+  useSwipeGesture as _useSwipeGesture,
+  useLongPress as _useLongPress,
+  usePullToRefresh as _usePullToRefresh,
+  usePinchToZoom as _usePinchToZoom,
+  useSwipeBack as _useSwipeBack,
+  useDoubleTap as _useDoubleTap,
+  triggerHaptic as _triggerHaptic,
+} from './hooks/useGestures';
 export {
   useSwipeGesture,
   useLongPress,
@@ -40,10 +57,12 @@ export type {
 // ============================================================================
 
 // Toast Notifications
+import { ToastProvider as _ToastProvider, useToast as _useToast } from './components/Toast';
 export { ToastProvider, useToast } from './components/Toast';
 export type { Toast, ToastType, ToastPosition } from './components/Toast';
 
 // Empty States
+import { EmptyState as _EmptyState } from './components/EmptyState';
 export {
   EmptyState,
   NoFilesEmptyState,
@@ -182,9 +201,9 @@ export const applyDesignTokens = (
   element: HTMLElement,
   theme: 'light' | 'dark' = 'light'
 ) => {
-  const variables = tokens.generateCSSVariables(theme);
+  const variables = tokensModule.generateCSSVariables(theme);
   Object.entries(variables).forEach(([key, value]) => {
-    element.style.setProperty(key, value);
+    element.style.setProperty(key, value as string);
   });
 };
 
@@ -317,29 +336,18 @@ export const throttle = <T extends (...args: any[]) => any>(
 // ============================================================================
 
 export default {
-  tokens,
-  useDesignSystem,
-  useSwipeGesture,
-  useLongPress,
-  usePullToRefresh,
-  usePinchToZoom,
-  useSwipeBack,
-  useDoubleTap,
-  triggerHaptic,
-  ToastProvider,
-  useToast,
-  EmptyState,
-  Skeleton,
-  Onboarding,
-  ContextMenu,
-  CommandPalette,
-  StatusBar,
-  Settings,
-  SplitView,
-  SearchReplace,
-  FileUpload,
-  KeyboardShortcuts,
-  useKeyboardShortcuts,
+  tokens: tokensModule,
+  useDesignSystem: _useDesignSystem,
+  useSwipeGesture: _useSwipeGesture,
+  useLongPress: _useLongPress,
+  usePullToRefresh: _usePullToRefresh,
+  usePinchToZoom: _usePinchToZoom,
+  useSwipeBack: _useSwipeBack,
+  useDoubleTap: _useDoubleTap,
+  triggerHaptic: _triggerHaptic,
+  ToastProvider: _ToastProvider,
+  useToast: _useToast,
+  EmptyState: _EmptyState,
   applyDesignTokens,
   isIOS,
   isAndroid,
