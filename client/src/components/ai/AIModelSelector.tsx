@@ -221,7 +221,7 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
               <SelectValue placeholder="Select your preferred AI model..." />
             )}
           </SelectTrigger>
-          <SelectContent className="max-h-[400px]">
+          <SelectContent className="max-h-[400px] w-[340px] sm:w-[400px] max-w-[90vw]">
             {availableModels.map((model) => {
               const ModelIcon = getProviderIcon(model.provider);
               const modelColor = getProviderColor(model.provider);
@@ -243,12 +243,12 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold flex items-center gap-2 flex-wrap">
-                        <span className="truncate">{model.name}</span>
+                        <span>{model.name}</span>
                         {!isAvailable && (
                           <Badge variant="destructive" className="text-xs shrink-0">Not configured</Badge>
                         )}
                       </div>
-                      <div className="text-xs text-muted-foreground truncate">{model.description}</div>
+                      <div className="text-xs text-muted-foreground">{model.description}</div>
                       {model.costPer1kTokens && (
                         <div className="text-xs text-muted-foreground mt-1">
                           ${model.costPer1kTokens.toFixed(4)} / 1K tokens

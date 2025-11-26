@@ -718,7 +718,20 @@ class AgentGridDataService {
       },
       actions: {
         totalActions: 0,
-        actionsByType: {},
+        actionsByType: {
+          file_create: 0,
+          file_edit: 0,
+          file_delete: 0,
+          file_read: 0,
+          command_execute: 0,
+          package_install: 0,
+          web_search: 0,
+          code_search: 0,
+          diagnostics: 0,
+          project_analysis: 0,
+          tool_call: 0,
+          unknown: 0
+        },
         actionsByStatus: { completed: 0, failed: 0, pending: 0, in_progress: 0, cancelled: 0, rolled_back: 0 },
         avgRiskScore: 0,
         autoApprovalRate: 0,

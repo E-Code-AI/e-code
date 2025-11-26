@@ -361,4 +361,3 @@ export interface GridUpdateEvent {
 
 export type FilesGridResponse = FileOperationsGridResponse;
 export type ConversationRow = ConversationMessageRow;
-export type ConversationsGridResponse = GridDataResponse<ConversationMessageRow>;
