@@ -27,10 +27,6 @@ periodSeconds = 5
 timeoutSeconds = 3
 failureThreshold = 2
 
-[[ports]]
-localPort = 5000
-externalPort = 80
-
 [workflows]
 runButton = "Project"
 
