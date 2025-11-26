@@ -408,9 +408,11 @@ export default function ComparePage() {
       <section className="py-12 sm:py-16 lg:py-20 bg-slate-900" data-testid="section-enterprise-logos">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           <p className="text-center text-sm sm:text-base text-slate-400 mb-6 sm:mb-8">Trusted by engineering teams at</p>
-          <div className="grid grid-cols-4 md:grid-cols-8 gap-6 sm:gap-8 items-center justify-items-center opacity-60">
-            {enterpriseLogos.map((logo) => (
-              <logo.Icon key={logo.name} className="h-6 w-6 sm:h-8 sm:w-8 text-slate-400 hover:text-white transition-colors" />
+          <div className="grid grid-cols-4 md:grid-cols-8 gap-4 sm:gap-6 lg:gap-8 items-center justify-items-center opacity-60">
+            {enterpriseLogos.map((logo, index) => (
+              <div key={logo.name} className="flex items-center justify-center min-w-[40px]" data-testid={`logo-enterprise-${index}`} aria-label={`${logo.name} logo`}>
+                <logo.Icon className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-slate-400 hover:text-white transition-colors" />
+              </div>
             ))}
           </div>
         </div>
@@ -714,6 +716,28 @@ export default function ComparePage() {
           </div>
         </div>
       )}
+
+      <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-gradient-to-t from-slate-900 via-slate-900 to-transparent pb-safe" data-testid="sticky-cta-mobile">
+        <div className="px-4 py-3 flex gap-2">
+          <Button 
+            size="sm"
+            className="flex-1 bg-gradient-to-r from-sky-500 to-indigo-500 text-white font-semibold rounded-lg text-sm min-h-[44px]"
+            onClick={() => window.location.href = '/register'}
+            data-testid="button-sticky-start"
+          >
+            Start Free
+          </Button>
+          <Button 
+            size="sm"
+            variant="outline"
+            className="flex-1 bg-transparent border-white/20 text-white font-semibold rounded-lg text-sm min-h-[44px] hover:bg-white/10"
+            onClick={() => window.location.href = '/contact-sales'}
+            data-testid="button-sticky-demo"
+          >
+            Get Demo
+          </Button>
+        </div>
+      </div>
     </MarketingLayout>
   );
 }
