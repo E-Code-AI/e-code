@@ -1,0 +1,298 @@
+Prompt pour l'Agent : Implémentation Complète d'AG Grid
+Objectif
+Implémenter AG Grid dans E-Code avec les mêmes fonctionnalités que Replit utilise, plus des améliorations supplémentaires pour l'Agent AI, les métriques, l'historique des conversations et les opérations fichiers.
+
+Phase 1 : Installation et Configuration Backend
+1.1 Installation des dépendances
+npm install ag-grid-community ag-grid-react
+npm install --save-dev @types/ag-grid-community
+1.2 Backend - Services de données pour AG Grid
+Créer server/services/agent-grid-data.service.ts :
+
+Service pour agréger les données des sessions agent
+Formatage des données pour AG Grid (actions, tâches, fichiers modifiés, métriques)
+Endpoints REST pour récupérer :
+Historique complet des sessions avec métriques (tokens, coût, durée)
+Actions par session (create_file, edit_file, run_command, etc.)
+Opérations fichiers avec diff et rollback
+Historique de conversation avec métadonnées (modèle, provider, thinking mode)
+Statistiques globales par projet/utilisateur
+Créer server/routes/agent-grid.router.ts :
+
+GET /api/agent/grid/sessions - Liste des sessions avec filtres et tri
+GET /api/agent/grid/actions/:sessionId - Actions d'une session
+GET /api/agent/grid/files/:sessionId - Opérations fichiers
+GET /api/agent/grid/conversations/:conversationId - Historique de messages
+GET /api/agent/grid/metrics/summary - Métriques agrégées
+GET /api/agent/grid/export/:type - Export CSV/Excel
+1.3 Modèles de données TypeScript
+Créer shared/types/agent-grid.types.ts :
+
+interface AgentSessionRow {
+  id: string;
+  projectId: number;
+  conversationId: number;
+  startedAt: Date;
+  endedAt?: Date;
+  status: 'active' | 'completed' | 'failed';
+  totalActions: number;
+  filesCreated: number;
+  filesModified: number;
+  filesDeleted: number;
+  commandsRun: number;
+  tokensUsed: number;
+  estimatedCost: string;
+  model: string;
+  provider: string;
+  extendedThinking: boolean;
+}
+interface AgentActionRow {
+  id: string;
+  sessionId: string;
+  timestamp: Date;
+  type: 'file_create' | 'file_edit' | 'file_delete' | 'run_command' | 'install_package';
+  target: string; // file path or command
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  duration?: number;
+  result?: string;
+  error?: string;
+}
+interface FileOperationRow {
+  id: string;
+  sessionId: string;
+  operationType: string;
+  filePath: string;
+  timestamp: Date;
+  linesAdded?: number;
+  linesRemoved?: number;
+  checksum: string;
+  canRollback: boolean;
+}
+interface ConversationMessageRow {
+  id: string;
+  conversationId: number;
+  timestamp: Date;
+  role: 'user' | 'assistant' | 'system';
+  contentPreview: string; // Premiers 100 caractères
+  tokens: number;
+  model: string;
+  provider: string;
+  extendedThinking: boolean;
+  toolsUsed: string[]; // Noms des tools
+}
+Phase 2 : Composants Frontend AG Grid
+2.1 Composant principal : Agent Sessions Grid
+Créer client/src/components/agent/grids/AgentSessionsGrid.tsx :
+
+Table AG Grid avec colonnes :
+Session ID (avec lien vers détail)
+Projet
+Date début/fin
+Durée totale
+Status (badge coloré)
+Actions totales
+Fichiers créés/modifiés/supprimés
+Tokens utilisés
+Coût estimé ($)
+Modèle + Provider (badges)
+Extended Thinking (icône)
+Fonctionnalités :
+Tri multi-colonnes
+Filtres avancés (date range, status, modèle, provider)
+Groupement par projet ou date
+Pagination server-side
+Recherche globale
+Export CSV/Excel
+Sélection multiple pour actions groupées
+Colonnes redimensionnables et réorganisables
+Mode dark/light automatique
+2.2 Composant : Agent Actions Grid
+Créer client/src/components/agent/grids/AgentActionsGrid.tsx :
+
+Table détaillée des actions par session
+Colonnes :
+Timestamp
+Type d'action (icône + label)
+Cible (file path ou command)
+Status (avec progress bar si running)
+Durée
+Résultat/Erreur
+Fonctionnalités :
+Filtrage par type d'action
+Master/Detail : clic sur une ligne montre le détail complet
+Recherche par path ou command
+Export sélection
+Bouton "Voir diff" pour file_edit
+2.3 Composant : File Operations Grid
+Créer client/src/components/agent/grids/FileOperationsGrid.tsx :
+
+Table des opérations fichiers
+Colonnes :
+File path (avec icône de type de fichier)
+Type d'opération
+Date/Heure
+Lignes +/-
+Checksum
+Actions (View Diff, Rollback)
+Fonctionnalités :
+Filtrage par type d'opération
+Groupement par dossier
+Vue diff inline (modal Monaco Diff Editor)
+Bouton Rollback avec confirmation
+Export historique
+2.4 Composant : Conversation History Grid
+Créer client/src/components/agent/grids/ConversationHistoryGrid.tsx :
+
+Table des messages de conversation
+Colonnes :
+Timestamp
+Rôle (avatar)
+Aperçu du message
+Tokens
+Modèle
+Tools utilisés (badges)
+Actions (View Full, Copy)
+Fonctionnalités :
+Filtrage par rôle
+Recherche full-text dans les messages
+Master/Detail pour voir le message complet
+Copie du message
+Export de la conversation
+2.5 Composant : Agent Metrics Dashboard
+Créer client/src/components/agent/grids/AgentMetricsDashboard.tsx :
+
+Tableau de bord avec AG Grid pour métriques agrégées
+Grids :
+Top Projects by Usage (tokens, coût, sessions)
+Model Performance (avg response time, tokens/request, coût/request)
+Provider Statistics (uptime, avg latency, error rate)
+Cost Analysis (coût par jour/semaine/mois, tendances)
+Token Usage by Feature (extended thinking, web search, etc.)
+Charts intégrés (AG Charts ou Recharts)
+Export multi-tables
+Phase 3 : Intégration UI dans l'IDE
+3.1 Nouvel onglet dans ReplitAgentPanelV3
+Modifier client/src/components/ai/ReplitAgentPanelV3.tsx :
+
+Ajouter un tab "Activity" avec icône Analytics
+Sous-tabs :
+Sessions (AgentSessionsGrid)
+Actions (AgentActionsGrid)
+Files (FileOperationsGrid)
+Metrics (AgentMetricsDashboard)
+Bouton "Export All Data" (CSV ou JSON)
+3.2 Modal autonome pour l'historique
+Créer client/src/components/agent/AgentHistoryModal.tsx :
+
+Modal plein écran accessible depuis n'importe où
+Tabs pour chaque type de grid
+Bouton dans TopNavBar de l'IDE
+Raccourci clavier : Cmd/Ctrl + Shift + H
+3.3 Integration dans IDEPage
+Modifier client/src/pages/IDEPage.tsx :
+
+Ajouter tool "Agent History" dans availableTools
+Routing vers AgentHistoryModal
+Persistance de la dernière vue consultée
+Phase 4 : Fonctionnalités Avancées
+4.1 Filtres intelligents
+Filtres pré-définis : "Aujourd'hui", "Cette semaine", "Erreurs uniquement", "Extended Thinking", "High Cost (>$1)"
+Sauvegarde de filtres personnalisés (localStorage)
+Partage de vues filtrées via URL
+4.2 Actions contextuelles
+Menu contextuel (clic droit) :
+View Details
+Copy ID
+Export Row
+Rollback (pour file operations)
+Re-run Action
+Open in Editor (pour fichiers)
+4.3 Real-time updates
+WebSocket pour mises à jour en temps réel
+Nouvelle ligne clignotante quand action ajoutée
+Badge de notification sur l'onglet Activity
+4.4 Performance optimizations
+Pagination server-side (100 lignes par page)
+Lazy loading des détails
+Cache avec invalidation intelligente
+Virtualisation pour grandes listes (10,000+ lignes)
+4.5 Accessibilité
+Navigation complète au clavier
+ARIA labels sur toutes les colonnes
+Annonces screen reader pour changements
+High contrast mode support
+Phase 5 : Configuration et Thème
+5.1 Configuration AG Grid
+Créer client/src/lib/ag-grid-config.ts :
+
+import { GridOptions } from 'ag-grid-community';
+export const defaultGridOptions: GridOptions = {
+  defaultColDef: {
+    sortable: true,
+    filter: true,
+    resizable: true,
+    minWidth: 100,
+  },
+  enableRangeSelection: true,
+  enableCharts: true,
+  suppressMenuHide: true,
+  rowSelection: 'multiple',
+  pagination: true,
+  paginationPageSize: 100,
+  cacheBlockSize: 100,
+  rowModelType: 'serverSide',
+  animateRows: true,
+  enableCellTextSelection: true,
+};
+5.2 Thème personnalisé
+Créer client/src/styles/ag-grid-theme.css :
+
+Variables CSS pour couleurs E-Code
+Support dark/light mode
+Intégration avec Tailwind colors
+Animations personnalisées
+Phase 6 : Tests
+6.1 Tests unitaires
+Tests des services backend
+Tests des composants grids (React Testing Library)
+Tests des transformations de données
+6.2 Tests E2E
+Test du flux complet : session → actions → grids
+Test des exports
+Test des rollbacks
+Test des filtres et tri
+Résumé des fichiers à créer/modifier
+Backend (Nouveau)
+server/services/agent-grid-data.service.ts
+server/routes/agent-grid.router.ts
+shared/types/agent-grid.types.ts
+Frontend (Nouveau)
+client/src/components/agent/grids/AgentSessionsGrid.tsx
+client/src/components/agent/grids/AgentActionsGrid.tsx
+client/src/components/agent/grids/FileOperationsGrid.tsx
+client/src/components/agent/grids/ConversationHistoryGrid.tsx
+client/src/components/agent/grids/AgentMetricsDashboard.tsx
+client/src/components/agent/AgentHistoryModal.tsx
+client/src/lib/ag-grid-config.ts
+client/src/styles/ag-grid-theme.css
+Modifications
+client/src/components/ai/ReplitAgentPanelV3.tsx (ajouter tab Activity)
+client/src/pages/IDEPage.tsx (ajouter tool)
+server/routes/index.ts (monter le router)
+package.json (dépendances)
+Priorités d'implémentation
+Phase 1 (Critique) : Backend services + types
+Phase 2 (Essentiel) : AgentSessionsGrid + AgentActionsGrid
+Phase 3 (Important) : Integration dans UI
+Phase 4 (Nice-to-have) : Fonctionnalités avancées
+Phase 5 (Polish) : Thème et config
+Phase 6 (Quality) : Tests
+Critères de réussite
+✅ L'utilisateur peut voir toutes ses sessions agent dans une table interactive
+✅ Export CSV/Excel fonctionne
+✅ Filtres et tri performants (< 100ms)
+✅ Rollback de fichiers fonctionne
+✅ Métriques de coût précises
+✅ Real-time updates sans rafraîchissement
+✅ Accessible au clavier
+✅ Support mobile (responsive)
