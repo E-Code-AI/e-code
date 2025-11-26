@@ -98,7 +98,7 @@ export default function PreviewWithDevTools() {
               <div className="flex items-center gap-2">
                 {/* Device selector */}
                 <Select value={selectedDevice} onValueChange={handleDeviceChange}>
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="w-full sm:w-[140px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

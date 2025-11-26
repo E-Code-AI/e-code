@@ -19,32 +19,27 @@ export function ReplitBottomTabs({
   activeTab,
   onTabChange
 }: ReplitBottomTabsProps) {
-  // Mobile tabs with AI Agent first
   const tabs: Tab[] = [
     { id: 'agent', icon: Sparkles, label: 'Agent' },
     { id: 'files', icon: FileText, label: 'Files' },
     { id: 'code', icon: Code2, label: 'Code' },
-    { id: 'terminal', icon: TerminalIcon, label: 'Terminal' },
-    { id: 'preview', icon: Monitor, label: 'Preview' },
+    { id: 'terminal', icon: TerminalIcon, label: 'Shell' },
+    { id: 'preview', icon: Monitor, label: 'Web' },
     { id: 'more', icon: MoreHorizontal, label: 'More' },
   ];
 
   const handleTabClick = (tabId: string) => {
     onTabChange(tabId);
-    
-    // Haptic feedback for tab switch
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
     }
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 safe-area-inset-bottom md:hidden">
-      {/* Backdrop with iOS-style blur */}
-      <div className="absolute inset-0 bg-background/95 dark:bg-background/98 backdrop-blur-xl border-t border-border/50" />
+    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <div className="absolute inset-0 bg-background/98 backdrop-blur-xl border-t border-border" />
       
-      {/* Tab Navigation Container - 6 tabs with horizontal scroll on small screens */}
-      <nav className="relative flex items-center h-16 px-1 overflow-x-auto scrollbar-hide">
+      <nav className="relative flex items-center justify-around h-[60px] px-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -54,35 +49,32 @@ export function ReplitBottomTabs({
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
               className={cn(
-                "relative flex flex-col items-center justify-center gap-1 h-14 rounded-lg transition-all touch-manipulation shrink-0",
-                "min-w-[60px] w-[calc(100vw/6-8px)] max-w-[80px]",
-                isActive 
-                  ? "bg-primary/10 text-primary" 
-                  : "text-muted-foreground hover:bg-muted/50 active:bg-muted"
+                "relative flex flex-col items-center justify-center flex-1 h-full py-2 touch-manipulation",
+                "min-w-[52px] max-w-[72px]",
+                isActive ? "text-primary" : "text-muted-foreground"
               )}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.92 }}
               transition={{ type: 'spring', stiffness: 400, damping: 17 }}
               data-testid={`tab-${tab.id}`}
             >
               <Icon className={cn(
-                "h-5 w-5 transition-transform flex-shrink-0",
-                isActive && "scale-110"
+                "h-6 w-6 mb-1 transition-all duration-200",
+                isActive ? "text-primary" : "text-muted-foreground"
               )} />
               
               <span className={cn(
-                "text-xxs font-medium truncate max-w-full px-0.5",
+                "text-[11px] font-medium leading-tight",
                 isActive ? "text-primary" : "text-muted-foreground"
               )}>
                 {tab.label}
               </span>
               
-              {/* Active indicator bar */}
               <AnimatePresence>
                 {isActive && (
                   <motion.div
-                    className="absolute bottom-1 left-1/2 h-0.5 bg-primary rounded-full"
+                    className="absolute -top-[1px] left-1/2 h-[2px] bg-primary rounded-full"
                     initial={{ width: 0, x: '-50%' }}
-                    animate={{ width: '70%', x: '-50%' }}
+                    animate={{ width: '60%', x: '-50%' }}
                     exit={{ width: 0, x: '-50%' }}
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   />

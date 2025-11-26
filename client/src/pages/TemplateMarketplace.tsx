@@ -288,7 +288,7 @@ export default function TemplateMarketplace() {
               />
             </div>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[200px]" data-testid="sort-select">
+              <SelectTrigger className="w-full sm:w-[180px]" data-testid="sort-select">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
