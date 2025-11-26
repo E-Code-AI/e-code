@@ -280,7 +280,7 @@ export default function Dashboard() {
                   placeholder="Search projects..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-3 py-2 text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="pl-9 pr-3 py-2 min-h-[44px] text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                   data-testid="input-search-projects"
                 />
               </div>
@@ -288,6 +288,7 @@ export default function Dashboard() {
                 <Button
                   variant="outline"
                   size="sm"
+                  className="min-h-[44px]"
                   onClick={() => navigate('/projects')}
                   data-testid="button-view-all"
                 >
