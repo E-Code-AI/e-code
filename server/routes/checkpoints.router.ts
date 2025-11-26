@@ -1,14 +1,106 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { checkpointService } from '../services/checkpoint-service';
 import { rollbackService } from '../services/rollback-service';
 import { z } from 'zod';
 import { createLogger } from '../utils/logger';
+import { ensureAuthenticated } from '../middleware/auth';
+import { csrfProtection } from '../middleware/csrf';
+import { db } from '../db';
+import { projects, checkpoints } from '@shared/schema';
+import { eq, and } from 'drizzle-orm';
 
 const router = Router();
 const logger = createLogger('checkpoints-router');
 
+// SECURITY: All checkpoint routes require authentication
+router.use(ensureAuthenticated);
+
 // 🔥 REPLIT AGENT 3: Checkpoint & Rollback API Routes
 // Production-ready with atomic transactions, row-level locks, and post-commit validation
+
+/**
+ * SECURITY: Verify user owns the project for a checkpoint
+ * Prevents unauthorized access to other users' checkpoints
+ */
+async function verifyCheckpointOwnership(userId: number, checkpointId: number): Promise<{ authorized: boolean; projectId?: number }> {
+  try {
+    const [checkpoint] = await db
+      .select({ projectId: checkpoints.projectId })
+      .from(checkpoints)
+      .where(eq(checkpoints.id, checkpointId))
+      .limit(1);
+    
+    if (!checkpoint) {
+      return { authorized: false };
+    }
+    
+    const [project] = await db
+      .select({ ownerId: projects.ownerId })
+      .from(projects)
+      .where(eq(projects.id, checkpoint.projectId))
+      .limit(1);
+    
+    if (!project) {
+      return { authorized: false };
+    }
+    
+    return { 
+      authorized: project.ownerId === userId,
+      projectId: checkpoint.projectId
+    };
+  } catch (error) {
+    logger.error('Checkpoint ownership verification failed:', error);
+    return { authorized: false };
+  }
+}
+
+/**
+ * SECURITY: Verify user owns a project
+ */
+async function verifyProjectOwnership(userId: number, projectId: number): Promise<boolean> {
+  try {
+    const [project] = await db
+      .select({ ownerId: projects.ownerId })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .limit(1);
+    
+    if (!project) {
+      return false;
+    }
+    
+    return project.ownerId === userId;
+  } catch (error) {
+    logger.error('Project ownership verification failed:', error);
+    return false;
+  }
+}
+
+/**
+ * SECURITY: Middleware to verify project access for checkpoint operations
+ */
+async function ensureProjectAccess(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user?.id;
+    const projectId = parseInt(req.params.projectId, 10);
+    
+    if (!userId || isNaN(projectId)) {
+      return res.status(400).json({ success: false, error: 'Invalid request' });
+    }
+    
+    const hasAccess = await verifyProjectOwnership(userId, projectId);
+    
+    if (!hasAccess) {
+      logger.warn(`Unauthorized checkpoint access attempt: userId=${userId}, projectId=${projectId}`);
+      return res.status(404).json({ success: false, error: 'Project not found' });
+    }
+    
+    next();
+  } catch (error) {
+    logger.error('Project access verification failed:', error);
+    res.status(500).json({ success: false, error: 'Access verification failed' });
+  }
+}
 
 /**
  * Validation schemas for request bodies
@@ -49,18 +141,31 @@ const RollbackSchema = z.object({
 /**
  * POST /api/checkpoints
  * Create a new checkpoint with atomic transaction + row-level lock
+ * SECURITY: Requires authentication, CSRF protection, and project ownership verification
  */
-router.post('/checkpoints', async (req: Request, res: Response) => {
+router.post('/checkpoints', csrfProtection, async (req: Request, res: Response) => {
   try {
+    const userId = req.user!.id;
     const data = CreateCheckpointSchema.parse(req.body);
 
-    logger.info(`Creating checkpoint "${data.name}" for project ${data.projectId}`, {
-      type: data.type,
-      includeDatabase: data.includeDatabase,
-      includeEnvironment: data.includeEnvironment,
+    // SECURITY: Verify user owns the project
+    const hasAccess = await verifyProjectOwnership(userId, data.projectId);
+    if (!hasAccess) {
+      logger.warn(`Unauthorized checkpoint creation attempt: userId=${userId}, projectId=${data.projectId}`);
+      return res.status(404).json({ success: false, error: 'Project not found' });
+    }
+
+    // Override userId from body with authenticated user
+    const secureData = { ...data, userId };
+
+    logger.info(`Creating checkpoint "${secureData.name}" for project ${secureData.projectId}`, {
+      type: secureData.type,
+      includeDatabase: secureData.includeDatabase,
+      includeEnvironment: secureData.includeEnvironment,
+      userId,
     });
 
-    const checkpoint = await checkpointService.createCheckpoint(data);
+    const checkpoint = await checkpointService.createCheckpoint(secureData);
 
     res.status(201).json({
       success: true,
@@ -87,10 +192,12 @@ router.post('/checkpoints', async (req: Request, res: Response) => {
 
 /**
  * GET /api/checkpoints/:id
- * Get checkpoint details by ID (direct SELECT, no project filtering)
+ * Get checkpoint details by ID
+ * SECURITY: Requires authentication and checkpoint ownership verification
  */
 router.get('/checkpoints/:id', async (req: Request, res: Response) => {
   try {
+    const userId = req.user!.id;
     const checkpointId = parseInt(req.params.id, 10);
     
     if (isNaN(checkpointId)) {
@@ -100,7 +207,15 @@ router.get('/checkpoints/:id', async (req: Request, res: Response) => {
       });
     }
 
-    // Get checkpoint from service (direct SELECT by ID)
+    // SECURITY: Verify user owns the checkpoint's project
+    const ownership = await verifyCheckpointOwnership(userId, checkpointId);
+    if (!ownership.authorized) {
+      return res.status(404).json({
+        success: false,
+        error: 'Checkpoint not found',
+      });
+    }
+
     const checkpoint = await checkpointService.getCheckpointById(checkpointId);
 
     if (!checkpoint) {
@@ -126,8 +241,9 @@ router.get('/checkpoints/:id', async (req: Request, res: Response) => {
 /**
  * GET /api/projects/:projectId/checkpoints
  * List all checkpoints for a project
+ * SECURITY: Requires authentication and project ownership
  */
-router.get('/projects/:projectId/checkpoints', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/checkpoints', ensureProjectAccess, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId, 10);
     const limit = parseInt(req.query.limit as string, 10) || 20;
@@ -139,12 +255,12 @@ router.get('/projects/:projectId/checkpoints', async (req: Request, res: Respons
       });
     }
 
-    const checkpoints = await checkpointService.listCheckpoints(projectId, limit);
+    const checkpointsList = await checkpointService.listCheckpoints(projectId, limit);
 
     res.json({
       success: true,
-      checkpoints,
-      count: checkpoints.length,
+      checkpoints: checkpointsList,
+      count: checkpointsList.length,
     });
   } catch (error) {
     logger.error('Failed to list checkpoints:', error);
@@ -158,9 +274,11 @@ router.get('/projects/:projectId/checkpoints', async (req: Request, res: Respons
 /**
  * POST /api/checkpoints/:id/restore
  * Restore a checkpoint (files, database, environment)
+ * SECURITY: Requires authentication, CSRF protection, and checkpoint ownership
  */
-router.post('/checkpoints/:id/restore', async (req: Request, res: Response) => {
+router.post('/checkpoints/:id/restore', csrfProtection, async (req: Request, res: Response) => {
   try {
+    const userId = req.user!.id;
     const checkpointId = parseInt(req.params.id, 10);
     
     if (isNaN(checkpointId)) {
@@ -170,15 +288,27 @@ router.post('/checkpoints/:id/restore', async (req: Request, res: Response) => {
       });
     }
 
+    // SECURITY: Verify user owns the checkpoint's project
+    const ownership = await verifyCheckpointOwnership(userId, checkpointId);
+    if (!ownership.authorized) {
+      logger.warn(`Unauthorized restore attempt: userId=${userId}, checkpointId=${checkpointId}`);
+      return res.status(404).json({
+        success: false,
+        error: 'Checkpoint not found',
+      });
+    }
+
     const data = RestoreCheckpointSchema.parse({
       ...req.body,
       checkpointId,
+      userId, // Use authenticated user ID
     });
 
     logger.info(`Restoring checkpoint ${checkpointId}`, {
       restoreFiles: data.restoreFiles,
       restoreDatabase: data.restoreDatabase,
       restoreEnvironment: data.restoreEnvironment,
+      userId,
     });
 
     const success = await checkpointService.restoreCheckpoint(data);
@@ -208,17 +338,33 @@ router.post('/checkpoints/:id/restore', async (req: Request, res: Response) => {
 /**
  * POST /api/checkpoints/rollback
  * Rollback to a previous checkpoint
+ * SECURITY: Requires authentication, CSRF protection, and checkpoint ownership
  */
-router.post('/checkpoints/rollback', async (req: Request, res: Response) => {
+router.post('/checkpoints/rollback', csrfProtection, async (req: Request, res: Response) => {
   try {
+    const userId = req.user!.id;
     const data = RollbackSchema.parse({
       ...req.body,
       direction: 'backward',
     });
 
-    logger.info(`Rolling back project ${data.projectId} to checkpoint ${data.checkpointId}`);
+    // SECURITY: Verify user owns the project
+    const hasAccess = await verifyProjectOwnership(userId, data.projectId);
+    if (!hasAccess) {
+      logger.warn(`Unauthorized rollback attempt: userId=${userId}, projectId=${data.projectId}`);
+      return res.status(404).json({ success: false, error: 'Project not found' });
+    }
 
-    const result = await rollbackService.rollbackToCheckpoint(data);
+    // SECURITY: Verify user owns the checkpoint
+    const ownership = await verifyCheckpointOwnership(userId, data.checkpointId);
+    if (!ownership.authorized) {
+      logger.warn(`Unauthorized rollback to checkpoint: userId=${userId}, checkpointId=${data.checkpointId}`);
+      return res.status(404).json({ success: false, error: 'Checkpoint not found' });
+    }
+
+    logger.info(`Rolling back project ${data.projectId} to checkpoint ${data.checkpointId}`, { userId });
+
+    const result = await rollbackService.rollbackToCheckpoint({ ...data, userId });
 
     res.json({
       success: result.success,
@@ -248,17 +394,33 @@ router.post('/checkpoints/rollback', async (req: Request, res: Response) => {
 /**
  * POST /api/checkpoints/rollforward
  * Rollforward to a future checkpoint
+ * SECURITY: Requires authentication, CSRF protection, and checkpoint ownership
  */
-router.post('/checkpoints/rollforward', async (req: Request, res: Response) => {
+router.post('/checkpoints/rollforward', csrfProtection, async (req: Request, res: Response) => {
   try {
+    const userId = req.user!.id;
     const data = RollbackSchema.parse({
       ...req.body,
       direction: 'forward',
     });
 
-    logger.info(`Rolling forward project ${data.projectId} to checkpoint ${data.checkpointId}`);
+    // SECURITY: Verify user owns the project
+    const hasAccess = await verifyProjectOwnership(userId, data.projectId);
+    if (!hasAccess) {
+      logger.warn(`Unauthorized rollforward attempt: userId=${userId}, projectId=${data.projectId}`);
+      return res.status(404).json({ success: false, error: 'Project not found' });
+    }
 
-    const result = await rollbackService.rollforwardToCheckpoint(data);
+    // SECURITY: Verify user owns the checkpoint
+    const ownership = await verifyCheckpointOwnership(userId, data.checkpointId);
+    if (!ownership.authorized) {
+      logger.warn(`Unauthorized rollforward to checkpoint: userId=${userId}, checkpointId=${data.checkpointId}`);
+      return res.status(404).json({ success: false, error: 'Checkpoint not found' });
+    }
+
+    logger.info(`Rolling forward project ${data.projectId} to checkpoint ${data.checkpointId}`, { userId });
+
+    const result = await rollbackService.rollforwardToCheckpoint({ ...data, userId });
 
     res.json({
       success: result.success,
@@ -288,8 +450,9 @@ router.post('/checkpoints/rollforward', async (req: Request, res: Response) => {
 /**
  * GET /api/projects/:projectId/checkpoints/tree
  * Get checkpoint tree structure for visualization
+ * SECURITY: Requires authentication and project ownership
  */
-router.get('/projects/:projectId/checkpoints/tree', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/checkpoints/tree', ensureProjectAccess, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId, 10);
 
@@ -319,8 +482,9 @@ router.get('/projects/:projectId/checkpoints/tree', async (req: Request, res: Re
 /**
  * GET /api/projects/:projectId/checkpoints/navigation
  * Get backward/forward navigation options from current checkpoint
+ * SECURITY: Requires authentication and project ownership
  */
-router.get('/projects/:projectId/checkpoints/navigation', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/checkpoints/navigation', ensureProjectAccess, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId, 10);
 
@@ -349,9 +513,11 @@ router.get('/projects/:projectId/checkpoints/navigation', async (req: Request, r
 /**
  * DELETE /api/checkpoints/:id
  * Delete a checkpoint
+ * SECURITY: Requires authentication, CSRF protection, and checkpoint ownership
  */
-router.delete('/checkpoints/:id', async (req: Request, res: Response) => {
+router.delete('/checkpoints/:id', csrfProtection, async (req: Request, res: Response) => {
   try {
+    const userId = req.user!.id;
     const checkpointId = parseInt(req.params.id, 10);
     
     if (isNaN(checkpointId)) {
@@ -361,7 +527,17 @@ router.delete('/checkpoints/:id', async (req: Request, res: Response) => {
       });
     }
 
-    logger.info(`Deleting checkpoint ${checkpointId}`);
+    // SECURITY: Verify user owns the checkpoint's project
+    const ownership = await verifyCheckpointOwnership(userId, checkpointId);
+    if (!ownership.authorized) {
+      logger.warn(`Unauthorized delete attempt: userId=${userId}, checkpointId=${checkpointId}`);
+      return res.status(404).json({
+        success: false,
+        error: 'Checkpoint not found',
+      });
+    }
+
+    logger.info(`Deleting checkpoint ${checkpointId}`, { userId });
 
     const success = await checkpointService.deleteCheckpoint(checkpointId);
 
