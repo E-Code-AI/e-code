@@ -1347,7 +1347,7 @@ export function ReplitAgentPanelV3({
             </Button>
           </div>
           
-          {/* Agent Tools Panel - Replit-style toggles for Max Autonomy, App Testing, Fast Mode */}
+          {/* Agent Tools Panel - Replit Agent 3 toggles: Max Autonomy, App Testing, Extended Thinking, High Power Models, Web Search */}
           <AgentToolsPanel
             settings={agentToolsSettings}
             onSettingsChange={handleAgentToolsChange}
