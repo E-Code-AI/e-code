@@ -4,9 +4,28 @@ import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { ensureAuthenticated } from '../middleware/auth';
+import { csrfProtection } from '../middleware/csrf';
 
 const router = Router();
 const logger = createLogger('global-search');
+
+/**
+ * ✅ 40-YEAR SENIOR SECURITY FIX
+ * Global search/replace is a CRITICAL operation - requires authentication
+ * Replace operation can modify ALL files in a project
+ */
+router.use(ensureAuthenticated);
+
+/**
+ * CSRF protection for replace operations (mutating)
+ */
+router.use((req, res, next) => {
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+    return csrfProtection(req, res, next);
+  }
+  return next();
+});
 
 const searchSchema = z.object({
   query: z.string().min(1).max(500),

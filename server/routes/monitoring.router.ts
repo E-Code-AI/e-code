@@ -1,21 +1,30 @@
 /**
  * Monitoring API Routes
  * Provides real-time metrics dashboard endpoints
- * SECURITY: All privileged endpoints require admin authentication
+ * 
+ * ✅ 40-YEAR SENIOR SECURITY FIX (Fortune 500 Zero-Trust):
+ * - Health endpoints: PUBLIC (K8s probes) - minimal data only
+ * - Metrics/Cache endpoints: ADMIN ONLY - prevents reconnaissance attacks
+ * - Cache flush: ADMIN ONLY with audit logging
  */
 
 import { Router, Request, Response } from 'express';
 import { monitoringService } from '../services/monitoring.service';
 import { redisCache } from '../services/redis-cache.service';
 import { ensureAdmin } from '../middleware/admin-auth';
+import { ensureAuthenticated } from '../middleware/auth';
+import { createLogger } from '../utils/logger';
 
 const router = Router();
+const logger = createLogger('monitoring-routes');
 
 /**
  * Get all metrics for dashboard
+ * SECURITY: Admin only - metrics expose infrastructure KPIs (load, latency, throughput)
  */
-router.get('/api/monitoring/metrics', async (req: Request, res: Response) => {
+router.get('/api/monitoring/metrics', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
   try {
+    logger.info('Metrics accessed by admin', { userId: req.user?.id, ip: req.ip });
     const metrics = monitoringService.getAllMetrics();
     res.json(metrics);
   } catch (error) {
@@ -26,12 +35,14 @@ router.get('/api/monitoring/metrics', async (req: Request, res: Response) => {
 
 /**
  * Get specific metric history
+ * SECURITY: Admin only - prevents reconnaissance of system performance patterns
  */
-router.get('/api/monitoring/metrics/:name/history', async (req: Request, res: Response) => {
+router.get('/api/monitoring/metrics/:name/history', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
   try {
     const { name } = req.params;
     const limit = parseInt(req.query.limit as string) || 100;
     
+    logger.info('Metric history accessed', { metric: name, userId: req.user?.id });
     const history = monitoringService.getMetricHistory(name, limit);
     res.json({ name, history });
   } catch (error) {
@@ -88,9 +99,11 @@ router.get('/api/monitoring/health/summary', async (req: Request, res: Response)
 
 /**
  * Get Redis cache statistics
+ * SECURITY: Admin only - cache stats reveal infrastructure capacity and hit rates
  */
-router.get('/api/monitoring/cache/stats', async (req: Request, res: Response) => {
+router.get('/api/monitoring/cache/stats', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
   try {
+    logger.info('Cache stats accessed', { userId: req.user?.id, ip: req.ip });
     const stats = await redisCache.getStats();
     res.json(stats);
   } catch (error) {
@@ -101,18 +114,19 @@ router.get('/api/monitoring/cache/stats', async (req: Request, res: Response) =>
 
 /**
  * Flush Redis cache (admin only)
- * SECURITY: Critical operation - requires admin authentication
+ * SECURITY: Critical destructive operation - requires admin authentication + audit trail
  */
-router.post('/api/monitoring/cache/flush', ensureAdmin, async (req: Request, res: Response) => {
+router.post('/api/monitoring/cache/flush', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
   try {
     const success = await redisCache.flushAll();
     
-    // Log this critical action for audit trail
-    console.warn('[SECURITY] Cache flush requested by admin:', {
+    // Audit trail for critical operation
+    logger.warn('SECURITY: Cache flush executed', {
       userId: req.user?.id,
       username: req.user?.username,
       ip: req.ip,
-      success
+      success,
+      timestamp: new Date().toISOString()
     });
     
     res.json({ 

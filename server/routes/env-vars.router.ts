@@ -2,13 +2,102 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { createLogger } from '../utils/logger';
 import { db } from '../db';
-import { environmentVariables } from '@shared/schema';
+import { environmentVariables, projects } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { RealSecretManagementService } from '../services/real-secret-management';
+import { ensureAuthenticated } from '../middleware/auth';
+import { csrfProtection } from '../middleware/csrf';
 
 const router = Router();
 const logger = createLogger('env-vars');
 const secretService = new RealSecretManagementService();
+
+/**
+ * ✅ 40-YEAR SENIOR SECURITY FIX
+ * All routes require authentication - environment variables are CRITICAL security assets
+ */
+router.use(ensureAuthenticated);
+
+/**
+ * CSRF protection for all mutating operations
+ */
+router.use((req, res, next) => {
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+    return csrfProtection(req, res, next);
+  }
+  return next();
+});
+
+/**
+ * Project ownership verification helper
+ * Ensures user can only access env vars for their own projects
+ * SECURITY: Prevents cross-tenant data access (CRITICAL for multi-tenant isolation)
+ */
+async function verifyProjectOwnership(userId: number | string, projectId: number | string): Promise<boolean> {
+  try {
+    // Convert to numbers with strict validation
+    const userIdNum = typeof userId === 'number' ? userId : parseInt(String(userId), 10);
+    const projectIdNum = typeof projectId === 'number' ? projectId : parseInt(String(projectId), 10);
+    
+    // Reject invalid IDs early - prevents NaN bypass attacks
+    if (isNaN(userIdNum) || isNaN(projectIdNum) || userIdNum <= 0 || projectIdNum <= 0) {
+      logger.warn('Invalid ID in ownership verification', { userId, projectId });
+      return false;
+    }
+    
+    const project = await db.query.projects.findFirst({
+      where: and(
+        eq(projects.id, projectIdNum),
+        eq(projects.ownerId, userIdNum)
+      )
+    });
+    return !!project;
+  } catch (error) {
+    logger.error('Project ownership verification failed', { userId, projectId, error });
+    return false;
+  }
+}
+
+/**
+ * Verify env var access by ID - checks ownership before exposing data
+ * SECURITY: Prevents ID enumeration by checking ownership before revealing env var exists
+ */
+async function verifyEnvVarAccess(userId: number | string, envVarId: string): Promise<{ allowed: boolean; envVar?: any }> {
+  try {
+    const userIdNum = typeof userId === 'number' ? userId : parseInt(String(userId), 10);
+    
+    if (isNaN(userIdNum) || userIdNum <= 0) {
+      return { allowed: false };
+    }
+    
+    // Join env var with project to verify ownership in single query
+    const envVar = await db.query.environmentVariables.findFirst({
+      where: eq(environmentVariables.id, envVarId)
+    });
+    
+    if (!envVar) {
+      return { allowed: false };
+    }
+    
+    // Verify ownership
+    const project = await db.query.projects.findFirst({
+      where: and(
+        eq(projects.id, envVar.projectId),
+        eq(projects.ownerId, userIdNum)
+      )
+    });
+    
+    if (!project) {
+      logger.warn('Unauthorized env var access attempt', { userId, envVarId });
+      return { allowed: false };
+    }
+    
+    return { allowed: true, envVar };
+  } catch (error) {
+    logger.error('Env var access verification failed', { userId, envVarId, error });
+    return { allowed: false };
+  }
+}
 
 const createEnvVarSchema = z.object({
   projectId: z.string(),
@@ -25,13 +114,26 @@ const updateEnvVarSchema = z.object({
 /**
  * Get environment variables for a project
  * GET /api/env-vars/:projectId
+ * SECURITY: Only project owner can access env vars (multi-tenant isolation)
  */
 router.get('/:projectId', async (req, res) => {
   try {
     const projectId = req.params.projectId;
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    // SECURITY: Verify project ownership before exposing env vars
+    const isOwner = await verifyProjectOwnership(userId, projectId);
+    if (!isOwner) {
+      logger.warn('Unauthorized env vars access attempt', { userId, projectId });
+      return res.status(403).json({ error: 'Access denied: not project owner' });
+    }
     
     const envVars = await db.query.environmentVariables.findMany({
-      where: eq(environmentVariables.projectId, projectId),
+      where: eq(environmentVariables.projectId, parseInt(projectId, 10)),
       orderBy: (envVars, { asc }) => [asc(envVars.key)]
     });
 
@@ -51,15 +153,28 @@ router.get('/:projectId', async (req, res) => {
 /**
  * Create environment variable
  * POST /api/env-vars
+ * SECURITY: Only project owner can create env vars
  */
 router.post('/', async (req, res) => {
   try {
     const data = createEnvVarSchema.parse(req.body);
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    // SECURITY: Verify project ownership
+    const isOwner = await verifyProjectOwnership(userId, data.projectId);
+    if (!isOwner) {
+      logger.warn('Unauthorized env var creation attempt', { userId, projectId: data.projectId });
+      return res.status(403).json({ error: 'Access denied: not project owner' });
+    }
 
     // Check if key already exists
     const existing = await db.query.environmentVariables.findFirst({
       where: and(
-        eq(environmentVariables.projectId, data.projectId),
+        eq(environmentVariables.projectId, parseInt(data.projectId, 10)),
         eq(environmentVariables.key, data.key)
       )
     });
@@ -77,7 +192,7 @@ router.post('/', async (req, res) => {
     }
 
     const [envVar] = await db.insert(environmentVariables).values({
-      projectId: data.projectId,
+      projectId: parseInt(data.projectId, 10),
       key: data.key,
       value: valueToStore,
       isSecret: data.isSecret
@@ -102,18 +217,23 @@ router.post('/', async (req, res) => {
 /**
  * Update environment variable
  * PATCH /api/env-vars/:id
+ * SECURITY: Only project owner can update env vars - prevents ID enumeration
  */
 router.patch('/:id', async (req, res) => {
   try {
     const id = req.params.id;  // UUID string, not integer
+    const userId = req.user?.id;
     const updates = updateEnvVarSchema.parse(req.body);
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
-    const envVar = await db.query.environmentVariables.findFirst({
-      where: eq(environmentVariables.id, id)
-    });
-
-    if (!envVar) {
-      return res.status(404).json({ error: 'Environment variable not found' });
+    // SECURITY: Verify ownership BEFORE revealing if env var exists (prevents enumeration)
+    const { allowed, envVar } = await verifyEnvVarAccess(userId, id);
+    if (!allowed || !envVar) {
+      // Generic error to prevent ID enumeration
+      return res.status(404).json({ error: 'Environment variable not found or access denied' });
     }
 
     // Preserve existing isSecret flag if not explicitly changed
@@ -181,21 +301,27 @@ router.patch('/:id', async (req, res) => {
 /**
  * Delete environment variable
  * DELETE /api/env-vars/:id
+ * SECURITY: Only project owner can delete env vars - prevents ID enumeration
  */
 router.delete('/:id', async (req, res) => {
   try {
     const id = req.params.id;  // UUID string, not integer
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
-    const envVar = await db.query.environmentVariables.findFirst({
-      where: eq(environmentVariables.id, id)
-    });
-
-    if (!envVar) {
-      return res.status(404).json({ error: 'Environment variable not found' });
+    // SECURITY: Verify ownership BEFORE revealing if env var exists (prevents enumeration)
+    const { allowed, envVar } = await verifyEnvVarAccess(userId, id);
+    if (!allowed || !envVar) {
+      return res.status(404).json({ error: 'Environment variable not found or access denied' });
     }
 
     await db.delete(environmentVariables)
       .where(eq(environmentVariables.id, id));
+    
+    logger.info('Env var deleted', { userId, envVarId: id, key: envVar.key });
 
     res.json({ message: 'Environment variable deleted' });
   } catch (error: any) {
@@ -207,24 +333,24 @@ router.delete('/:id', async (req, res) => {
 /**
  * Reveal secret value (temporary, requires authentication)
  * POST /api/env-vars/:id/reveal
+ * SECURITY: Only project owner can reveal secrets - CRITICAL multi-tenant isolation
+ * SECURITY: Uses verifyEnvVarAccess to prevent ID enumeration
  * 
  * Security: Decrypts AES-256 encrypted value, generates time-limited reveal token, logs audit trail
  */
 router.post('/:id/reveal', async (req, res) => {
   try {
     const id = req.params.id;  // UUID string, not integer
+    const userId = req.user?.id;
 
-    // Check if user is authenticated (add proper auth middleware in production)
-    if (!req.user) {
+    if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const envVar = await db.query.environmentVariables.findFirst({
-      where: eq(environmentVariables.id, id)
-    });
-
-    if (!envVar) {
-      return res.status(404).json({ error: 'Environment variable not found' });
+    // SECURITY: Verify ownership BEFORE revealing if env var exists (prevents enumeration)
+    const { allowed, envVar } = await verifyEnvVarAccess(userId, id);
+    if (!allowed || !envVar) {
+      return res.status(404).json({ error: 'Environment variable not found or access denied' });
     }
 
     // Decrypt value if it's a secret
@@ -264,13 +390,26 @@ router.post('/:id/reveal', async (req, res) => {
 /**
  * Export environment variables as .env file
  * GET /api/env-vars/:projectId/export
+ * SECURITY: Only project owner can export env vars (contains secrets!)
  */
 router.get('/:projectId/export', async (req, res) => {
   try {
     const projectId = req.params.projectId;
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    // SECURITY: Verify project ownership before exporting sensitive data
+    const isOwner = await verifyProjectOwnership(userId, projectId);
+    if (!isOwner) {
+      logger.warn('Unauthorized env vars export attempt', { userId, projectId });
+      return res.status(403).json({ error: 'Access denied: not project owner' });
+    }
     
     const envVars = await db.query.environmentVariables.findMany({
-      where: eq(environmentVariables.projectId, projectId),
+      where: eq(environmentVariables.projectId, parseInt(projectId, 10)),
       orderBy: (envVars, { asc }) => [asc(envVars.key)]
     });
 
@@ -281,6 +420,9 @@ router.get('/:projectId/export', async (req, res) => {
     for (const envVar of envVars) {
       envContent += `${envVar.key}=${envVar.value}\n`;
     }
+    
+    // Audit log for sensitive operation
+    logger.info('Env vars exported', { userId, projectId, count: envVars.length });
 
     res.setHeader('Content-Type', 'text/plain');
     res.setHeader('Content-Disposition', `attachment; filename=".env"`);

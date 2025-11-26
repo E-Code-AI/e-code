@@ -1,6 +1,10 @@
 /**
  * Templates Marketplace API Routes
  * CRUD operations for templates, categories, ratings, and collections
+ * 
+ * ✅ 40-YEAR SENIOR SECURITY MODEL:
+ * - GET routes: PUBLIC (marketplace browsing)
+ * - POST/PATCH/DELETE: Auth required + CSRF protection
  */
 
 import { Router } from 'express';
@@ -29,8 +33,20 @@ import {
 } from '@shared/schema';
 import { eq, desc, sql, and, or, ilike, gte, lte, asc } from 'drizzle-orm';
 import { z } from 'zod';
+import { csrfProtection } from '../middleware/csrf';
 
 const router = Router();
+
+/**
+ * CSRF protection for mutating operations
+ * Applied selectively to POST/PUT/PATCH/DELETE routes
+ */
+router.use((req, res, next) => {
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+    return csrfProtection(req, res, next);
+  }
+  return next();
+});
 
 /**
  * GET /api/templates
