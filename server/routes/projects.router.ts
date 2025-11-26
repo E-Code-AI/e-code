@@ -101,9 +101,8 @@ export class ProjectsRouter {
       });
     }
     
-    // Store the actual project ID for downstream use
-    req.params.projectId = project.id;
-    req.params.id = project.id;
+    req.params.projectId = String(project.id);
+    req.params.id = String(project.id);
     
     // ✅ FIX (Nov 24, 2025): Validate bootstrap token and enforce project-specific access
     if (bootstrapToken) {
@@ -199,11 +198,10 @@ export class ProjectsRouter {
     this.router.get("/api/projects", this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
         const userId = (req.user as User).id;
-        const projects = await this.storage.getProjectsByUserId(userId);
+        const projects = await this.storage.getProjectsByUserId(String(userId));
         
-        // Enrich projects with owner info
         const enrichedProjects = await Promise.all(projects.map(async (project) => {
-          const owner = await this.storage.getUser(project.ownerId);
+          const owner = await this.storage.getUser(String(project.ownerId));
           return { ...project, owner };
         }));
         
@@ -233,8 +231,7 @@ export class ProjectsRouter {
         // Generate slug if not provided (use name field from schema)
         const slug = validatedData.slug || this.generateSlug(validatedData.name);
         
-        // Check if slug is already taken for this user
-        const existingProject = await this.storage.getProjectBySlug(slug, userId);
+        const existingProject = await this.storage.getProjectBySlug(slug, String(userId));
         if (existingProject) {
           return res.status(400).json({
             message: "Project with this slug already exists",
@@ -248,8 +245,7 @@ export class ProjectsRouter {
           visibility: validatedData.visibility || 'private'
         });
         
-        // Include owner info in response for URL construction
-        const owner = await this.storage.getUser(userId);
+        const owner = await this.storage.getUser(String(userId));
         
         res.json({ ...project, owner });
       } catch (error: any) {
@@ -281,8 +277,7 @@ export class ProjectsRouter {
           });
         }
         
-        // Get owner info
-        const owner = await this.storage.getUser(project.ownerId);
+        const owner = await this.storage.getUser(String(project.ownerId));
         
         res.json({ ...project, owner });
       } catch (error) {
@@ -371,8 +366,7 @@ export class ProjectsRouter {
           });
         }
         
-        // Get project by slug belonging to the user
-        const project = await this.storage.getProjectBySlug(slug, user.id);
+        const project = await this.storage.getProjectBySlug(slug, String(user.id));
         if (!project) {
           console.error('[Projects] Project not found');
           return res.status(404).json({ 
@@ -383,14 +377,12 @@ export class ProjectsRouter {
           });
         }
         
-        // WORKAROUND: If request wants to open workspace, redirect to editor
-        // This fixes the "Workspace unavailable" error when Dashboard sends users to /u/:username/:slug
         const wantsWorkspace = req.query.workspace === 'true' || req.query.open === 'true' || req.header('X-Open-Workspace') === 'true';
         if (wantsWorkspace && project?.id) {
           return res.json({
             ...project,
             redirectTo: `/editor/${project.id}`,
-            owner: await this.storage.getUser(project.ownerId)
+            owner: await this.storage.getUser(String(project.ownerId))
           });
         }
         
@@ -407,9 +399,8 @@ export class ProjectsRouter {
             });
           }
           
-          // Check if user has access
           if ((req.user as User).id !== project.ownerId) {
-            const isCollaborator = await this.storage.isProjectCollaborator(project.id, (req.user as User).id);
+            const isCollaborator = await this.storage.isProjectCollaborator(String(project.id), String((req.user as User).id));
             if (!isCollaborator) {
               return res.status(403).json({ 
                 error: 'Access denied',
@@ -419,8 +410,7 @@ export class ProjectsRouter {
           }
         }
         
-        // Get additional project info including owner
-        const owner = await this.storage.getUser(project.ownerId);
+        const owner = await this.storage.getUser(String(project.ownerId));
         res.json({
           ...project,
           owner

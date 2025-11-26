@@ -6,6 +6,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { randomUUID } from 'node:crypto';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
 import { storage } from '../storage';
@@ -299,7 +300,7 @@ router.post('/devices', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Device info is required' });
     }
 
-    const deviceId = crypto.randomUUID();
+    const deviceId = randomUUID();
     const newDevice: DeviceInfo = {
       deviceId,
       deviceName,
