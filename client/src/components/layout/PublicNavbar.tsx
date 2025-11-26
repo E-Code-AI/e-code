@@ -217,18 +217,18 @@ export function PublicNavbar() {
         </div>
       </div>
 
-      <nav className="relative border-b border-[var(--ecode-border)] bg-background dark:border-white/10 dark:bg-slate-950/75 backdrop-blur-xl">
-        <div className="absolute inset-0 marketing-grid opacity-0 dark:opacity-100" aria-hidden />
-        <div className="container-responsive relative">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-6">
+      <nav className="relative border-b border-[var(--ecode-border)] bg-background dark:border-white/10 dark:bg-slate-950/75 backdrop-blur-xl overflow-visible">
+        <div className="absolute inset-0 marketing-grid opacity-0 dark:opacity-100 pointer-events-none" aria-hidden />
+        <div className="container-responsive-nav relative overflow-visible">
+          <div className="flex h-16 items-center justify-between overflow-visible">
+            <div className="flex items-center gap-6 overflow-visible">
               <Link href="/">
                 <div className="cursor-pointer">
                   <ECodeLogo size="sm" />
                 </div>
               </Link>
 
-              <div className="hidden lg:block text-[var(--ecode-text)] dark:text-slate-200">
+              <div className="hidden lg:block text-[var(--ecode-text)] dark:text-slate-200 overflow-visible">
                 {desktopNav}
               </div>
             </div>
