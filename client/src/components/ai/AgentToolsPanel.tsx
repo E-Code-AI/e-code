@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Collapsible,
   CollapsibleContent,
@@ -20,42 +21,87 @@ import {
   Brain,
   Sparkles,
   Globe,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-export interface AgentToolsSettings {
-  maxAutonomy: boolean;
-  appTesting: boolean;
-  extendedThinking: boolean;
-  highPowerModels: boolean;
-  webSearch: boolean;
-}
+import { useAgentTools, type AgentToolsSettings } from '@/hooks/useAgentTools';
 
 interface AgentToolsPanelProps {
-  settings: AgentToolsSettings;
-  onSettingsChange: (settings: AgentToolsSettings) => void;
+  projectId?: number;
   onViewVideoReplays?: () => void;
-  videoReplayCount?: number;
   className?: string;
 }
 
 export function AgentToolsPanel({
-  settings,
-  onSettingsChange,
+  projectId,
   onViewVideoReplays,
-  videoReplayCount = 0,
   className
 }: AgentToolsPanelProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const [localSettings, setLocalSettings] = useState<AgentToolsSettings>({
+    maxAutonomy: false,
+    appTesting: true,
+    extendedThinking: false,
+    highPowerModels: false,
+    webSearch: true,
+  });
+
+  const {
+    settings,
+    updateSettings,
+    isUpdating,
+    isLoadingPreferences,
+    videoReplayCount,
+    effectiveModel,
+    effectiveModelInfo,
+  } = useAgentTools(projectId);
+
+  // Sync local settings with server settings
+  useEffect(() => {
+    if (settings) {
+      setLocalSettings(settings);
+    }
+  }, [settings]);
 
   const handleToggle = (key: keyof AgentToolsSettings) => {
-    onSettingsChange({
-      ...settings,
-      [key]: !settings[key]
-    });
+    const newSettings = {
+      ...localSettings,
+      [key]: !localSettings[key]
+    };
+    setLocalSettings(newSettings);
+    
+    // Max autonomy and app testing are local-only toggles
+    if (key !== 'maxAutonomy' && key !== 'appTesting') {
+      updateSettings(newSettings);
+    }
   };
 
-  const activeCount = Object.values(settings).filter(Boolean).length;
+  const activeCount = Object.values(localSettings).filter(Boolean).length;
+
+  if (isLoadingPreferences) {
+    return (
+      <div className={cn("bg-card border rounded-lg p-4", className)}>
+        <div className="flex items-center gap-2 mb-4">
+          <Settings2 className="w-4 h-4 text-muted-foreground" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+        <div className="space-y-4">
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Skeleton className="w-8 h-8 rounded-full" />
+                <div className="space-y-1">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+              </div>
+              <Skeleton className="w-10 h-5 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("bg-card border rounded-lg", className)}>
@@ -74,6 +120,9 @@ export function AgentToolsPanel({
                   {activeCount} active
                 </Badge>
               )}
+              {isUpdating && (
+                <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+              )}
             </div>
             <ChevronDown className={cn(
               "w-4 h-4 text-muted-foreground transition-transform",
@@ -85,6 +134,16 @@ export function AgentToolsPanel({
         <CollapsibleContent>
           <div className="px-3 pb-3 space-y-3">
             <Separator />
+
+            {/* Current Model Indicator */}
+            {effectiveModelInfo && (
+              <div className="flex items-center justify-between py-1 px-2 bg-muted/30 rounded-md">
+                <span className="text-[11px] text-muted-foreground">Active model:</span>
+                <Badge variant="outline" className="text-[10px] font-mono">
+                  {effectiveModelInfo.name}
+                </Badge>
+              </div>
+            )}
             
             {/* Max Autonomy Toggle - Replit Agent 3 */}
             <div className="flex items-start justify-between gap-3 py-2">
@@ -107,7 +166,7 @@ export function AgentToolsPanel({
                   <p className="text-[11px] text-muted-foreground leading-tight">
                     Agent will supervise itself, so you don't have to (runs up to 200 minutes)
                   </p>
-                  {settings.maxAutonomy && (
+                  {localSettings.maxAutonomy && (
                     <div className="flex items-center gap-1.5 mt-1">
                       <Clock className="w-3 h-3 text-amber-500" />
                       <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
@@ -119,7 +178,7 @@ export function AgentToolsPanel({
               </div>
               <Switch
                 id="max-autonomy"
-                checked={settings.maxAutonomy}
+                checked={localSettings.maxAutonomy}
                 onCheckedChange={() => handleToggle('maxAutonomy')}
                 data-testid="toggle-max-autonomy"
                 className="data-[state=checked]:bg-amber-500"
@@ -144,7 +203,7 @@ export function AgentToolsPanel({
                   <p className="text-[11px] text-muted-foreground leading-tight">
                     Agent tests itself using an actual browser, navigating through your app like a real user
                   </p>
-                  {settings.appTesting && videoReplayCount > 0 && (
+                  {localSettings.appTesting && videoReplayCount > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -160,7 +219,7 @@ export function AgentToolsPanel({
               </div>
               <Switch
                 id="app-testing"
-                checked={settings.appTesting}
+                checked={localSettings.appTesting}
                 onCheckedChange={() => handleToggle('appTesting')}
                 data-testid="toggle-app-testing"
                 className="data-[state=checked]:bg-emerald-500"
@@ -185,13 +244,22 @@ export function AgentToolsPanel({
                   <p className="text-[11px] text-muted-foreground leading-tight">
                     Deeper reasoning for harder problems
                   </p>
+                  {localSettings.extendedThinking && (
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <Brain className="w-3 h-3 text-purple-500 animate-pulse" />
+                      <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">
+                        Deep reasoning active
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
               <Switch
                 id="extended-thinking"
-                checked={settings.extendedThinking}
+                checked={localSettings.extendedThinking}
                 onCheckedChange={() => handleToggle('extendedThinking')}
                 data-testid="toggle-extended-thinking"
+                disabled={isUpdating}
                 className="data-[state=checked]:bg-purple-500"
               />
             </div>
@@ -214,13 +282,22 @@ export function AgentToolsPanel({
                   <p className="text-[11px] text-muted-foreground leading-tight">
                     Uses more sophisticated AI for performance optimizations, integrations, unfamiliar tech
                   </p>
+                  {localSettings.highPowerModels && (
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <Sparkles className="w-3 h-3 text-orange-500" />
+                      <span className="text-[10px] text-orange-600 dark:text-orange-400 font-medium">
+                        Premium models enabled
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
               <Switch
                 id="high-power-models"
-                checked={settings.highPowerModels}
+                checked={localSettings.highPowerModels}
                 onCheckedChange={() => handleToggle('highPowerModels')}
                 data-testid="toggle-high-power-models"
+                disabled={isUpdating}
                 className="data-[state=checked]:bg-orange-500"
               />
             </div>
@@ -243,13 +320,22 @@ export function AgentToolsPanel({
                   <p className="text-[11px] text-muted-foreground leading-tight">
                     Agent searches the web for up-to-date docs and APIs
                   </p>
+                  {localSettings.webSearch && (
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <Globe className="w-3 h-3 text-blue-500" />
+                      <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
+                        Live search enabled
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
               <Switch
                 id="web-search"
-                checked={settings.webSearch}
+                checked={localSettings.webSearch}
                 onCheckedChange={() => handleToggle('webSearch')}
                 data-testid="toggle-web-search"
+                disabled={isUpdating}
                 className="data-[state=checked]:bg-blue-500"
               />
             </div>
@@ -276,3 +362,6 @@ export function AgentToolsPanel({
     </div>
   );
 }
+
+// Re-export types for convenience
+export type { AgentToolsSettings };
