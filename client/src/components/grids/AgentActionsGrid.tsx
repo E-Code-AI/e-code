@@ -8,11 +8,15 @@ import { useState, useCallback, useMemo } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { useQuery } from '@tanstack/react-query';
 import { 
-  RefreshCw, Filter, Search, Loader2, Activity, AlertTriangle
+  RefreshCw, Filter, Search, Loader2, Activity, AlertTriangle,
+  Clock, CheckCircle, XCircle, Play, ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { format } from 'date-fns';
 import {
   Select,
   SelectContent,
@@ -34,11 +38,62 @@ interface AgentActionsGridProps {
   height?: string | number;
 }
 
+function ActionCard({ action, onSelect }: { action: AgentActionRow; onSelect?: (a: AgentActionRow) => void }) {
+  const statusConfig: Record<string, { icon: typeof CheckCircle; color: string }> = {
+    completed: { icon: CheckCircle, color: 'text-green-600' },
+    failed: { icon: XCircle, color: 'text-red-600' },
+    pending: { icon: Clock, color: 'text-yellow-600' },
+    running: { icon: Play, color: 'text-blue-600' },
+  };
+  const config = statusConfig[action.status] || statusConfig.pending;
+  const StatusIcon = config.icon;
+
+  return (
+    <Card 
+      className="cursor-pointer hover:bg-muted/50 transition-colors active:scale-[0.98]"
+      onClick={() => onSelect?.(action)}
+      data-testid={`action-card-${action.id}`}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <StatusIcon className={cn("h-4 w-4", config.color)} />
+              <Badge variant="outline" className="text-xs">
+                {action.actionType.replace('_', ' ')}
+              </Badge>
+            </div>
+            <div className="text-sm font-medium truncate mb-1">
+              {action.actionLabel}
+            </div>
+            <div className="text-xs text-muted-foreground truncate mb-2">
+              {action.target}
+            </div>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span>{action.duration ? `${action.duration}ms` : '-'}</span>
+              {action.riskScore !== undefined && (
+                <Badge variant={action.riskScore > 50 ? 'destructive' : 'secondary'} className="text-xs">
+                  Risk: {action.riskScore}
+                </Badge>
+              )}
+            </div>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+        </div>
+        <div className="mt-2 pt-2 border-t text-xs text-muted-foreground">
+          {action.executedAt ? format(new Date(action.executedAt), 'MMM d, HH:mm:ss') : '-'}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function AgentActionsGrid({ 
   sessionId, 
   onActionSelect,
   height = 400 
 }: AgentActionsGridProps) {
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
@@ -175,31 +230,43 @@ export function AgentActionsGrid({
         </div>
       </div>
 
-      {/* Grid */}
-      <div 
-        className="ag-theme-custom rounded-lg border overflow-hidden"
-        style={{ height: typeof height === 'number' ? `${height}px` : height }}
-      >
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground text-sm">
-            <p>Failed to load actions</p>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
-              Retry
-            </Button>
-          </div>
-        ) : (
+      {/* Grid / Mobile Cards */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground text-sm">
+          <p>Failed to load actions</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : isMobile ? (
+        <div className="space-y-3" data-testid="actions-mobile-view">
+          {filteredData.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              No actions found
+            </div>
+          ) : (
+            filteredData.map((action) => (
+              <ActionCard key={action.id} action={action} onSelect={onActionSelect} />
+            ))
+          )}
+        </div>
+      ) : (
+        <div 
+          className="ag-theme-custom rounded-lg border overflow-hidden"
+          style={{ height: typeof height === 'number' ? `${height}px` : height }}
+        >
           <AgGridReact
             rowData={filteredData}
             columnDefs={actionGridColDefs}
             gridOptions={gridOptions}
             onGridReady={onGridReady}
           />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
