@@ -190,7 +190,8 @@ export function PublicNavbar() {
   const primaryCta = (
     <Button
       onClick={() => window.location.href = '/register'}
-      className="hidden sm:inline-flex bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400 shadow-lg shadow-blue-500/25"
+      className="hidden sm:inline-flex bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400 shadow-lg shadow-blue-500/25 min-h-[44px]"
+      data-testid="button-get-started"
     >
       Get started
     </Button>
@@ -232,15 +233,16 @@ export function PublicNavbar() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <ThemeSwitcher />
               <Button
                 variant="ghost"
-                className="text-[var(--ecode-text)] dark:text-slate-200 hover:text-[var(--ecode-accent)] dark:hover:text-white"
+                className="text-[var(--ecode-text)] dark:text-slate-200 hover:text-[var(--ecode-accent)] dark:hover:text-white min-h-[44px] px-3 sm:px-4"
                 onClick={() => window.location.href = '/login'}
+                data-testid="button-login"
               >
-                <LogIn className="mr-2 h-4 w-4" />
-                Log in
+                <LogIn className="mr-1 sm:mr-2 h-4 w-4" />
+                <span className="hidden xs:inline">Log in</span>
               </Button>
               {primaryCta}
 

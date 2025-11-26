@@ -247,12 +247,23 @@ export default function Features() {
               From writing your first line of code to deploying at scale, 
               E-Code provides all the tools you need in a single platform.
             </p>
-            <div className="flex gap-4 justify-center">
-              <Button size="lg" onClick={() => navigate(user ? '/dashboard' : '/auth')}>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 sm:px-0">
+              <Button 
+                size="lg" 
+                onClick={() => navigate(user ? '/dashboard' : '/auth')}
+                className="min-h-[44px]"
+                data-testid="button-features-start-building"
+              >
                 Start building
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate('/docs')}>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                onClick={() => navigate('/docs')}
+                className="min-h-[44px]"
+                data-testid="button-features-docs"
+              >
                 View documentation
               </Button>
             </div>
@@ -261,36 +272,46 @@ export default function Features() {
       </section>
 
       {/* Features Grid */}
-      <section className="py-20 px-4">
+      <section className="py-12 sm:py-16 md:py-20 px-4">
         <div className="container mx-auto max-w-7xl">
           <Tabs defaultValue="All" className="w-full">
-            <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full max-w-3xl mx-auto">
+            <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 w-full max-w-3xl mx-auto gap-1 h-auto flex-wrap">
               {categories.map(category => (
-                <TabsTrigger key={category} value={category}>
+                <TabsTrigger 
+                  key={category} 
+                  value={category}
+                  className="text-xs sm:text-sm min-h-[44px]"
+                  data-testid={`tab-features-${category.toLowerCase()}`}
+                >
                   {category}
                 </TabsTrigger>
               ))}
             </TabsList>
 
             {categories.map(category => (
-              <TabsContent key={category} value={category} className="mt-12">
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <TabsContent key={category} value={category} className="mt-8 sm:mt-12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
                   {features
                     .filter(f => category === 'All' || f.category === category)
                     .map((feature, index) => (
-                      <Card key={index} id={feature.id} className="hover:shadow-lg transition-shadow">
-                        <CardHeader>
-                          <div className="p-3 bg-primary/10 rounded-lg w-fit mb-4">
+                      <Card 
+                        key={index} 
+                        id={feature.id} 
+                        className="hover:shadow-lg transition-shadow"
+                        data-testid={`card-feature-${feature.id || index}`}
+                      >
+                        <CardHeader className="p-4 sm:p-6">
+                          <div className="p-2 sm:p-3 bg-primary/10 rounded-lg w-fit mb-3 sm:mb-4">
                             {feature.icon}
                           </div>
-                          <CardTitle>{feature.title}</CardTitle>
-                          <CardDescription>{feature.description}</CardDescription>
+                          <CardTitle className="text-base sm:text-lg">{feature.title}</CardTitle>
+                          <CardDescription className="text-xs sm:text-sm">{feature.description}</CardDescription>
                         </CardHeader>
-                        <CardContent>
-                          <ul className="space-y-2">
+                        <CardContent className="p-4 sm:p-6 pt-0">
+                          <ul className="space-y-1.5 sm:space-y-2">
                             {feature.details.map((detail, i) => (
-                              <li key={i} className="flex items-start gap-2 text-sm">
-                                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                              <li key={i} className="flex items-start gap-2 text-xs sm:text-sm">
+                                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
                                 <span>{detail}</span>
                               </li>
                             ))}

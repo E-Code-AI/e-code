@@ -274,20 +274,21 @@ export default function Pricing() {
 
             {/* Billing Toggle with Animation */}
             <motion.div 
-              className="flex items-center justify-center gap-4 pt-8"
+              className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-6 sm:pt-8"
               variants={fadeInUp}
             >
-              <span className={`text-lg font-medium transition-colors ${billingPeriod === 'monthly' ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>
+              <span className={`text-sm sm:text-lg font-medium transition-colors ${billingPeriod === 'monthly' ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>
                 Monthly
               </span>
               <Switch
                 checked={billingPeriod === 'yearly'}
                 onCheckedChange={(checked) => setBillingPeriod(checked ? 'yearly' : 'monthly')}
-                className="scale-125"
+                className="scale-110 sm:scale-125"
+                data-testid="switch-billing-period"
               />
-              <span className={`text-lg font-medium transition-colors ${billingPeriod === 'yearly' ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>
+              <span className={`text-sm sm:text-lg font-medium transition-colors ${billingPeriod === 'yearly' ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>
                 Yearly
-                <Badge className="ml-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white border-0">
+                <Badge className="ml-1 sm:ml-2 text-[10px] sm:text-xs bg-gradient-to-r from-green-600 to-emerald-600 text-white border-0">
                   Save 20%
                 </Badge>
               </span>
@@ -296,7 +297,7 @@ export default function Pricing() {
 
           {/* Pricing Cards with Glassmorphism */}
           <motion.div 
-            className="grid md:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
             initial="initial"
             whileInView="animate"
             viewport={{ once: true }}
@@ -368,19 +369,20 @@ export default function Pricing() {
                       </div>
                     </CardHeader>
                     
-                    <CardContent className="relative z-10 space-y-4">
+                    <CardContent className="relative z-10 space-y-3 sm:space-y-4 p-4 sm:p-6">
                       {/* CTA Button */}
                       <Button 
-                        className={`w-full h-12 text-base font-semibold transition-all duration-200 ${
+                        className={`w-full h-11 sm:h-12 text-sm sm:text-base font-semibold transition-all duration-200 ${
                           tier.popular 
                             ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white shadow-lg' 
                             : ''
                         }`}
                         variant={tier.popular ? 'default' : tier.ctaVariant}
                         onClick={() => handleSelectPlan(tier)}
+                        data-testid={`button-pricing-${tier.name.toLowerCase()}`}
                       >
                         {tier.cta}
-                        <ArrowRight className="ml-2 h-4 w-4" />
+                        <ArrowRight className="ml-1 sm:ml-2 h-4 w-4" />
                       </Button>
                       
                       {/* Features List */}

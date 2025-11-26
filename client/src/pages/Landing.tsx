@@ -333,12 +333,12 @@ export default function Landing() {
                 
                 {/* Input Container */}
                 <div className="relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-2 shadow-2xl">
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                     <div className="flex-1">
                       <input
                         type="text"
                         placeholder="Describe your app idea in any language..."
-                        className="w-full bg-transparent border-none outline-none text-lg placeholder:text-gray-400 dark:placeholder:text-gray-500 px-6 py-4 font-normal"
+                        className="w-full bg-transparent border-none outline-none text-base sm:text-lg placeholder:text-gray-400 dark:placeholder:text-gray-500 px-4 sm:px-6 py-3 sm:py-4 font-normal"
                         value={appDescription}
                         onChange={(e) => setAppDescription(e.target.value)}
                         onKeyDown={(e) => {
@@ -346,20 +346,23 @@ export default function Landing() {
                             handleStartBuilding(appDescription);
                           }
                         }}
+                        data-testid="input-app-description"
                       />
                     </div>
                     <Button 
                       size="lg"
-                      className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white shadow-lg px-8 py-4 text-lg font-semibold h-auto rounded-xl transition-all duration-200 transform hover:scale-105"
+                      className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white shadow-lg px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold h-auto min-h-[44px] rounded-xl transition-all duration-200 transform hover:scale-105"
                       onClick={() => {
                         if (appDescription.trim()) {
                           handleStartBuilding(appDescription);
                         }
                       }}
                       disabled={!appDescription.trim()}
+                      data-testid="button-build-now"
                     >
-                      <Sparkles className="mr-2 h-5 w-5" />
-                      Build Now
+                      <Sparkles className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                      <span className="hidden xs:inline">Build Now</span>
+                      <span className="xs:hidden">Build</span>
                     </Button>
                   </div>
                 </div>
@@ -375,12 +378,12 @@ export default function Landing() {
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">
                   {[
-                    { icon: <ShoppingCart className="h-4 w-4" />, text: "E-commerce store with Stripe payments", color: "from-purple-600 to-pink-600" },
-                    { icon: <MessageSquare className="h-4 w-4" />, text: "Real-time chat app with websockets", color: "from-blue-600 to-cyan-600" },
-                    { icon: <Bot className="h-4 w-4" />, text: "AI chatbot with OpenAI GPT-4", color: "from-green-600 to-emerald-600" },
-                    { icon: <Globe className="h-4 w-4" />, text: "Social media dashboard with analytics", color: "from-orange-600 to-red-600" },
-                    { icon: <Briefcase className="h-4 w-4" />, text: "SaaS landing page with auth", color: "from-indigo-600 to-purple-600" },
-                    { icon: <ListTodo className="h-4 w-4" />, text: "Project management tool like Jira", color: "from-teal-600 to-cyan-600" }
+                    { icon: <ShoppingCart className="h-4 w-4" />, text: "E-commerce store with Stripe payments", color: "from-purple-600 to-pink-600", id: "ecommerce" },
+                    { icon: <MessageSquare className="h-4 w-4" />, text: "Real-time chat app with websockets", color: "from-blue-600 to-cyan-600", id: "chat" },
+                    { icon: <Bot className="h-4 w-4" />, text: "AI chatbot with OpenAI GPT-4", color: "from-green-600 to-emerald-600", id: "chatbot" },
+                    { icon: <Globe className="h-4 w-4" />, text: "Social media dashboard with analytics", color: "from-orange-600 to-red-600", id: "dashboard" },
+                    { icon: <Briefcase className="h-4 w-4" />, text: "SaaS landing page with auth", color: "from-indigo-600 to-purple-600", id: "saas" },
+                    { icon: <ListTodo className="h-4 w-4" />, text: "Project management tool like Jira", color: "from-teal-600 to-cyan-600", id: "project" }
                   ].map((example, index) => (
                     <button
                       key={index}
@@ -388,12 +391,13 @@ export default function Landing() {
                         setAppDescription(example.text);
                         handleStartBuilding(example.text);
                       }}
-                      className="group flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-violet-600 dark:hover:border-violet-400 transition-all duration-200 hover:scale-105"
+                      className="group flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-violet-600 dark:hover:border-violet-400 transition-all duration-200 hover:scale-105 min-h-[44px]"
+                      data-testid={`button-example-${example.id}`}
                     >
                       <div className={`bg-gradient-to-r ${example.color} bg-clip-text text-transparent`}>
                         {example.icon}
                       </div>
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                      <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
                         {example.text}
                       </span>
                     </button>
@@ -423,29 +427,31 @@ export default function Landing() {
 
             {/* CTA Buttons */}
             <motion.div 
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8"
+              className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mt-8 w-full px-4 sm:px-0"
               variants={fadeInUp}
             >
               <Button 
                 size="lg"
                 variant="outline"
-                className="gap-2 px-8 py-6 text-lg border-2"
+                className="gap-2 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg border-2 w-full sm:w-auto min-h-[48px]"
                 onClick={() => {
                   const demoSection = document.getElementById('video-demo');
                   demoSection?.scrollIntoView({ behavior: 'smooth' });
                 }}
+                data-testid="button-watch-demo"
               >
-                <PlayCircle className="h-5 w-5" />
+                <PlayCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                 Watch Demo (2 min)
               </Button>
               <Button 
                 size="lg"
                 variant="ghost"
-                className="gap-2 px-8 py-6 text-lg"
+                className="gap-2 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg w-full sm:w-auto min-h-[48px]"
                 onClick={() => navigate('/pricing')}
+                data-testid="button-view-pricing"
               >
                 View Pricing
-                <ArrowRight className="h-5 w-5" />
+                <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </motion.div>
           </motion.div>
