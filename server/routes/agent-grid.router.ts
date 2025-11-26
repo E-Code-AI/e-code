@@ -3,7 +3,8 @@
  * REST endpoints for AG Grid data access
  * Phase 2 - Agent Activity Dashboard
  * 
- * REFACTORED Nov 2025: Simplified query parameters, proper auth checks
+ * SECURITY: All endpoints require authentication
+ * REFACTORED Nov 2025: Proper auth, error propagation
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
@@ -18,7 +19,11 @@ const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => P
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 
-const optionalAuth = (req: Request, res: Response, next: NextFunction) => {
+const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.isAuthenticated?.() || !req.user) {
+    logger.warn('Unauthorized access attempt to agent-grid API');
+    return res.status(401).json({ error: 'Authentication required' });
+  }
   next();
 };
 
@@ -45,12 +50,16 @@ function parseQueryParams(query: any, userId?: number) {
  * GET /api/agent-grid/sessions
  * Get paginated list of agent sessions
  */
-router.get('/sessions', optionalAuth, asyncHandler(async (req: Request, res: Response) => {
+router.get('/sessions', requireAuth, asyncHandler(async (req: Request, res: Response) => {
   const userId = (req.user as any)?.id;
   const params = parseQueryParams(req.query, userId);
   
   logger.debug('Fetching sessions grid data', { userId: params.userId, page: params.page });
   const result = await agentGridDataService.getSessions(params);
+  
+  if (result.error) {
+    return res.status(500).json({ error: result.error, message: 'Failed to fetch sessions' });
+  }
   
   res.json(result);
 }));
@@ -59,13 +68,17 @@ router.get('/sessions', optionalAuth, asyncHandler(async (req: Request, res: Res
  * GET /api/agent-grid/sessions/:sessionId
  * Get single session details
  */
-router.get('/sessions/:sessionId', optionalAuth, asyncHandler(async (req: Request, res: Response) => {
+router.get('/sessions/:sessionId', requireAuth, asyncHandler(async (req: Request, res: Response) => {
   const { sessionId } = req.params;
   
   const result = await agentGridDataService.getSessions({ 
     page: 1, 
     pageSize: 1000 
   });
+  
+  if (result.error) {
+    return res.status(500).json({ error: result.error, message: 'Failed to fetch session' });
+  }
   
   const session = result.rows.find(s => s.id === sessionId);
   
@@ -80,11 +93,15 @@ router.get('/sessions/:sessionId', optionalAuth, asyncHandler(async (req: Reques
  * GET /api/agent-grid/actions
  * Get paginated list of agent actions
  */
-router.get('/actions', optionalAuth, asyncHandler(async (req: Request, res: Response) => {
+router.get('/actions', requireAuth, asyncHandler(async (req: Request, res: Response) => {
   const params = parseQueryParams(req.query);
   
   logger.debug('Fetching actions grid data', { sessionId: params.sessionId, page: params.page });
   const result = await agentGridDataService.getActions(params);
+  
+  if (result.error) {
+    return res.status(500).json({ error: result.error, message: 'Failed to fetch actions' });
+  }
   
   res.json(result);
 }));
@@ -93,11 +110,15 @@ router.get('/actions', optionalAuth, asyncHandler(async (req: Request, res: Resp
  * GET /api/agent-grid/files
  * Get paginated list of file operations
  */
-router.get('/files', optionalAuth, asyncHandler(async (req: Request, res: Response) => {
+router.get('/files', requireAuth, asyncHandler(async (req: Request, res: Response) => {
   const params = parseQueryParams(req.query);
   
   logger.debug('Fetching file operations grid data', { sessionId: params.sessionId, page: params.page });
   const result = await agentGridDataService.getFileOperations(params);
+  
+  if (result.error) {
+    return res.status(500).json({ error: result.error, message: 'Failed to fetch file operations' });
+  }
   
   res.json(result);
 }));
@@ -106,11 +127,15 @@ router.get('/files', optionalAuth, asyncHandler(async (req: Request, res: Respon
  * GET /api/agent-grid/conversations
  * Get paginated list of conversation messages
  */
-router.get('/conversations', optionalAuth, asyncHandler(async (req: Request, res: Response) => {
+router.get('/conversations', requireAuth, asyncHandler(async (req: Request, res: Response) => {
   const params = parseQueryParams(req.query);
   
   logger.debug('Fetching conversations grid data', { sessionId: params.sessionId, page: params.page });
   const result = await agentGridDataService.getConversations(params);
+  
+  if (result.error) {
+    return res.status(500).json({ error: result.error, message: 'Failed to fetch conversations' });
+  }
   
   res.json(result);
 }));
@@ -119,12 +144,16 @@ router.get('/conversations', optionalAuth, asyncHandler(async (req: Request, res
  * GET /api/agent-grid/metrics
  * Get aggregated metrics for dashboard
  */
-router.get('/metrics', optionalAuth, asyncHandler(async (req: Request, res: Response) => {
+router.get('/metrics', requireAuth, asyncHandler(async (req: Request, res: Response) => {
   const userId = (req.user as any)?.id;
   const params = parseQueryParams(req.query, userId);
   
   logger.debug('Fetching metrics dashboard data', { userId: params.userId, projectId: params.projectId });
   const result = await agentGridDataService.getMetrics(params);
+  
+  if (result.error) {
+    return res.status(500).json({ error: result.error, message: 'Failed to fetch metrics' });
+  }
   
   res.json(result);
 }));
@@ -133,7 +162,7 @@ router.get('/metrics', optionalAuth, asyncHandler(async (req: Request, res: Resp
  * GET /api/agent-grid/export/sessions
  * Export sessions data as CSV or JSON
  */
-router.get('/export/sessions', optionalAuth, asyncHandler(async (req: Request, res: Response) => {
+router.get('/export/sessions', requireAuth, asyncHandler(async (req: Request, res: Response) => {
   const userId = (req.user as any)?.id;
   const format = (req.query.format as 'csv' | 'json') || 'json';
   const params = parseQueryParams(req.query, userId);
