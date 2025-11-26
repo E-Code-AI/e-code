@@ -331,14 +331,7 @@ export default function AI() {
     <div className="min-h-screen bg-background">
       <PublicNavbar />
 
-      {error && (
-        <div className="container-responsive pt-6">
-          <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-            We couldn't load the latest AI feature data. Displaying default information instead.
-          </div>
-        </div>
-      )}
-
+      
       {/* Hero Section - Fortune 500 Style */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-b from-background to-muted/20">
         <div className="absolute inset-0">
