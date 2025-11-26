@@ -15,7 +15,9 @@ import {
   Menu,
   X,
   Zap,
-  ChevronLeft
+  ChevronLeft,
+  HeartPulse,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -32,6 +34,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const navItems = [
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/admin/ai-optimization', icon: Zap, label: 'AI Optimization' },
+    { path: '/admin/monitoring', icon: HeartPulse, label: 'Monitoring' },
     { path: '/admin/requests', icon: Inbox, label: 'Customer Requests' },
     { path: '/admin/users', icon: Users, label: 'Users' },
     { path: '/admin/api-keys', icon: Key, label: 'API Keys' },
