@@ -1,8 +1,20 @@
-# 🧪 E-CODE PLATFORM - GUIDE DE TEST COMPLET
+# ✅ E-CODE PLATFORM - GUIDE DE TEST COMPLET
 
-**Date**: 25 Novembre 2025
-**Version**: 1.0.0
-**Branch**: claude/senior-engineer-profile-01GFcNh89EgSyfcnAdPB7gMV
+**Date**: 25 Novembre 2025  
+**Vérification**: 26 Novembre 2025  
+**Version**: 1.0.0  
+**Domaine**: https://e-code.ai  
+**Status**: ✅ VÉRIFIÉ - Apps mobile (7,186 lignes) et desktop existent
+
+---
+
+## 📊 Structure Vérifiée
+
+| App | Répertoire | Technologie | Status |
+|-----|------------|-------------|--------|
+| Mobile | `mobile/` | React Native + Expo | ✅ 7,186 lignes |
+| Desktop | `desktop/` | Electron | ✅ Implémenté |
+| Web Mobile | `client/src/components/mobile/` | React + PWA | ✅ 30 composants |
 
 ---
 
@@ -69,12 +81,12 @@ npm list expo                                 # ✅ Doit afficher ~49.0.15
 ```typescript
 // IMPORTANT: Configurer l'URL du backend
 // Pour tests locaux:
-export const API_BASE_URL = 'http://localhost:3000';
-export const WS_URL = 'ws://localhost:3000';
+export const API_BASE_URL = 'http://localhost:5000';
+export const WS_URL = 'ws://localhost:5000';
 
 // Pour tests avec device physique, remplacer localhost par IP locale:
-// export const API_BASE_URL = 'http://192.168.1.X:3000';
-// export const WS_URL = 'ws://192.168.1.X:3000';
+// export const API_BASE_URL = 'http://192.168.1.X:5000';
+// export const WS_URL = 'ws://192.168.1.X:5000';
 ```
 
 ### Étape 3: Lancer le serveur backend
@@ -83,7 +95,7 @@ export const WS_URL = 'ws://localhost:3000';
 # Dans un terminal séparé
 cd /home/user/e-code
 npm run dev
-# Vérifier que le serveur démarre sur http://localhost:3000
+# Vérifier que le serveur démarre sur http://localhost:5000
 ```
 
 ### Étape 4: Lancer l'app Mobile
@@ -581,20 +593,20 @@ npm start -- --reset-cache
    ```bash
    cd /home/user/e-code
    npm run dev
-   # Vérifier: http://localhost:3000/health
+   # Vérifier: http://localhost:5000/health
    ```
 
 2. **Mauvaise URL dans config.ts**
    - Si test sur device physique, utiliser IP locale (pas localhost)
    ```typescript
    // mobile/src/services/config.ts
-   export const API_BASE_URL = 'http://192.168.1.X:3000';
+   export const API_BASE_URL = 'http://192.168.1.X:5000';
    ```
 
-3. **Firewall bloque le port 3000**
+3. **Firewall bloque le port 5000**
    ```bash
    # Linux
-   sudo ufw allow 3000
+   sudo ufw allow 5000
    ```
 
 ---
@@ -625,14 +637,14 @@ npm start -- --reset-cache
 2. **URL WebSocket correcte:**
    ```typescript
    // mobile/src/services/config.ts
-   export const WS_URL = 'ws://192.168.1.X:3000'; // Pas wss:// en local
+   export const WS_URL = 'ws://192.168.1.X:5000'; // Pas wss:// en local
    ```
 
 3. **Tester WebSocket avec curl:**
    ```bash
    curl -i -N -H "Connection: Upgrade" \
         -H "Upgrade: websocket" \
-        http://localhost:3000
+        http://localhost:5000
    ```
 
 ---
