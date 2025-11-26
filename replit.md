@@ -41,12 +41,42 @@ The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Woute
 
 Key AI Agent Enhancements include structured XML-based system prompts, a repository overview service, a context window manager with token optimization and long-term memory, a unified AI provider system with multi-provider fallback, and AI-powered inline code actions within the Monaco Editor. A robust Checkpoints & Rollback System provides atomic transactions for file, database, or environment variable restoration. A Background Auto-Testing System uses Playwright. Max Autonomy Mode enables 240-minute autonomous sessions with AI task decomposition, auto-execution, ETA estimation, and cost tracking, integrating with auto-checkpointing, auto-testing, and auto-rollback. A Templates Marketplace and a Bounties Marketplace with Stripe integration for escrow and payouts are included. Context Window Enhancements provide separate dev/prod database connections, screenshot capture, and AI memory retention.
 
-**Agent Activity Dashboard (Phase 1 - Nov 2025):**
+**Agent Activity Dashboard (Phases 1-3 - Nov 2025):**
+
+Phase 1 - Real-time Activity Components:
 - **ToolExecutionDisplay.tsx:** Collapsible tool groups by category (files/commands/search), severity badges (success/warning/error), quick filters (All/Files/Commands/Errors), compact mode with expandable details
 - **AgentActivityFeed.tsx:** Real-time activity stream with ActivityEvent interface, session stats display (duration/tokens/cost/files), filter toggles for files/commands/errors, collapsible event details
 - **ReplitAgentPanelV3.tsx:** Chat/Activity tabs with count badges, tool execution to activity event conversion, session stats calculation
 - **MessageMetadataFooter.tsx:** Enhanced metadata display with model/provider, token breakdown (prompt/completion), cost/latency/finish reason, extended thinking and web search badges, cache hit indicator, expandable details
-- **data-testid Convention:** All metadata details use unique IDs: `metadata-detail-{key}-${messageId}` (e.g., `metadata-detail-promptTokens-${messageId}`)
+
+Phase 2 - AG Grid Enterprise Components:
+- **AgentSessionsGrid.tsx:** Session history with filtering, sorting, export; onSessionSelect callback for drill-down
+- **AgentActionsGrid.tsx:** Autonomous actions log with session filtering, action type badges, execution status
+- **FileOperationsGrid.tsx:** File operations tracking (create/update/delete) with session filtering
+- **ConversationHistoryGrid.tsx:** Message history with extended thinking details, search, filtering
+- **AgentMetricsDashboard.tsx:** Analytics charts using Recharts for session metrics visualization
+- **AgentHistoryModal.tsx:** Modal wrapper for grid components, integrates into IDE panel
+
+Phase 3 - Integration & Routes:
+- **AgentActivity.tsx:** Standalone page at `/agent-activity` with Dashboard/Sessions/Actions/Files/Messages tabs
+- **Route Protection:** Uses ProtectedRoute wrapper, no redundant auth checks in component
+- **Layout:** ReplitLayout wrapper with showSidebar={false} for full-width content
+- **Navigation:** Back to Dashboard button, session drill-down with "All Sessions" return
+
+Database Tables (agent_sessions, autonomous_actions, file_operations, agent_messages):
+- All tables indexed on session_id for efficient filtering
+- Enum types for status, action_type, operation_type, role
+- Foreign key relationships to users and projects tables
+
+API Endpoints (server/routes/agent-grid.router.ts):
+- GET /api/agent-grid/sessions - Paginated session list with filtering
+- GET /api/agent-grid/actions - Autonomous actions with session filter
+- GET /api/agent-grid/files - File operations with session filter
+- GET /api/agent-grid/messages - Conversation history with session filter
+- GET /api/agent-grid/metrics - Aggregated dashboard metrics
+- All endpoints require authentication (401 for unauthorized)
+
+**data-testid Convention:** All metadata details use unique IDs: `metadata-detail-{key}-${messageId}` (e.g., `metadata-detail-promptTokens-${messageId}`)
 
 ### Feature Specifications
 Core features include a Monaco Code Editor with advanced enhancements, an interactive terminal (xterm.js), file management, real-time collaboration, authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager, a Logs Viewer, and a Debugger UI. The UI is responsive across devices. Autonomous workspace creation involves a Bootstrap API call, AI plan generation, WebSocket-based real-time progress, autonomous execution, and a live preview. PWA features and Electron desktop support are included.
