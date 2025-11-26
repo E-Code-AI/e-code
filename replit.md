@@ -46,22 +46,25 @@ Key AI Agent Enhancements include structured XML-based system prompts, a reposit
 Phase 1 - Real-time Activity Components:
 - **ToolExecutionDisplay.tsx:** Collapsible tool groups by category (files/commands/search), severity badges (success/warning/error), quick filters (All/Files/Commands/Errors), compact mode with expandable details
 - **AgentActivityFeed.tsx:** Real-time activity stream with ActivityEvent interface, session stats display (duration/tokens/cost/files), filter toggles for files/commands/errors, collapsible event details
-- **ReplitAgentPanelV3.tsx:** Chat/Activity tabs with count badges, tool execution to activity event conversion, session stats calculation
 - **MessageMetadataFooter.tsx:** Enhanced metadata display with model/provider, token breakdown (prompt/completion), cost/latency/finish reason, extended thinking and web search badges, cache hit indicator, expandable details
 
 Phase 2 - AG Grid Enterprise Components:
-- **AgentSessionsGrid.tsx:** Session history with filtering, sorting, export; onSessionSelect callback for drill-down
-- **AgentActionsGrid.tsx:** Autonomous actions log with session filtering, action type badges, execution status
-- **FileOperationsGrid.tsx:** File operations tracking (create/update/delete) with session filtering
-- **ConversationHistoryGrid.tsx:** Message history with extended thinking details, search, filtering
+- **AgentSessionsGrid.tsx:** Session history with filtering, sorting, export; onSessionSelect callback for drill-down; mobile card fallback (SessionCard)
+- **AgentActionsGrid.tsx:** Autonomous actions log with session filtering, action type badges, execution status; mobile card fallback (ActionCard)
+- **FileOperationsGrid.tsx:** File operations tracking (create/update/delete) with session filtering; mobile card fallback (FileCard)
+- **ConversationHistoryGrid.tsx:** Message history with extended thinking details, search, filtering; mobile card fallback (MessageCard)
 - **AgentMetricsDashboard.tsx:** Analytics charts using Recharts for session metrics visualization
-- **AgentHistoryModal.tsx:** Modal wrapper for grid components, integrates into IDE panel
+- **AgentHistoryModal.tsx:** Full-screen modal for detailed grid analysis
 
-Phase 3 - Integration & Routes:
-- **AgentActivity.tsx:** Standalone page at `/agent-activity` with Dashboard/Sessions/Actions/Files/Messages tabs
-- **Route Protection:** Uses ProtectedRoute wrapper, no redundant auth checks in component
-- **Layout:** ReplitLayout wrapper with showSidebar={false} for full-width content
-- **Navigation:** Back to Dashboard button, session drill-down with "All Sessions" return
+Phase 3 - IDE Integration (Nov 2025):
+- **ReplitAgentPanelV3.tsx:** Activity Dashboard integrated directly into chat interface
+  - Activity toggle button (📊 icon) in panel header
+  - Collapsible drawer at bottom of chat (300px height)
+  - Sub-views: Live, Sessions, Actions, Files, Messages
+  - Session drill-down with back navigation
+  - Mobile-responsive with card views on small screens
+- **AgentActivity.tsx:** Standalone page at `/agent-activity` (backup/alternative access)
+- **Mobile Cards:** All grids check `isMobile` (≤768px) and render touch-friendly cards instead of AG Grid tables
 
 Database Tables (agent_sessions, autonomous_actions, file_operations, agent_messages):
 - All tables indexed on session_id for efficient filtering

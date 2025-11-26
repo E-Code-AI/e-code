@@ -55,7 +55,11 @@ import { AIModelSelector } from './AIModelSelector';
 import { CurrentModelChip } from './CurrentModelChip';
 import { handleSSEWarning, type SSEWarningData } from '@/lib/sse-warning-handler';
 import { AgentHistoryModal } from '@/components/grids/AgentHistoryModal';
-import { History } from 'lucide-react';
+import { AgentSessionsGrid } from '@/components/grids/AgentSessionsGrid';
+import { AgentActionsGrid } from '@/components/grids/AgentActionsGrid';
+import { FileOperationsGrid } from '@/components/grids/FileOperationsGrid';
+import { ConversationHistoryGrid } from '@/components/grids/ConversationHistoryGrid';
+import { History, FileCode, Table2, X, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface ToolExecution {
   id: string;
@@ -214,7 +218,9 @@ export function ReplitAgentPanelV3({
     }
   ]);
   
-  const [activeTab, setActiveTab] = useState<'chat' | 'activity'>('chat');
+  const [activityPanelOpen, setActivityPanelOpen] = useState(false);
+  const [activityView, setActivityView] = useState<'live' | 'sessions' | 'actions' | 'files' | 'messages'>('live');
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [sessionStartTime] = useState<Date>(new Date());
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   
@@ -1039,45 +1045,24 @@ export function ReplitAgentPanelV3({
             >
               <Plus className="h-3.5 w-3.5" />
             </Button>
+
+            {/* Activity Dashboard Toggle */}
+            <Button
+              variant={activityPanelOpen ? 'secondary' : 'ghost'}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setActivityPanelOpen(!activityPanelOpen)}
+              data-testid="button-toggle-activity"
+            >
+              <Activity className="h-3.5 w-3.5" />
+            </Button>
           </div>
         </div>
         
-        {/* Tab Bar */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'chat' | 'activity')}>
-          <TabsList className="h-8 w-full">
-            <TabsTrigger 
-              value="chat" 
-              className="flex-1 h-7 text-xs gap-1.5"
-              data-testid="tab-chat"
-            >
-              <MessageSquare className="h-3.5 w-3.5" />
-              Chat
-              {messages.length > 1 && (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
-                  {messages.length - 1}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger 
-              value="activity" 
-              className="flex-1 h-7 text-xs gap-1.5"
-              data-testid="tab-activity"
-            >
-              <Activity className="h-3.5 w-3.5" />
-              Activity
-              {activityEvents.length > 0 && (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
-                  {activityEvents.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
       </div>
 
-      {/* Chat Tab Content */}
-      {activeTab === 'chat' && (
-        <>
+      {/* Main Chat Content */}
+      <>
       {/* Messages */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <ScrollArea ref={scrollRef} className="flex-1 px-4 py-3">
@@ -1313,31 +1298,185 @@ export function ReplitAgentPanelV3({
         )}
       </div>
         </>
-      )}
 
-      {/* Activity Tab Content */}
-      {activeTab === 'activity' && (
-        <div className="flex-1 overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-3 py-2 border-b">
-            <span className="text-xs text-muted-foreground">Current Session Activity</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setHistoryModalOpen(true)}
-              className="h-7 text-xs gap-1.5"
-              data-testid="button-open-history"
-            >
-              <History className="h-3.5 w-3.5" />
-              View Full History
-            </Button>
+      {/* Activity Dashboard Drawer - Collapsible panel at bottom of chat */}
+      {activityPanelOpen && (
+        <div className="border-t bg-background" data-testid="activity-drawer">
+          {/* Drawer Header with tabs */}
+          <div className="border-b px-2 py-1.5">
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+              <Button
+                variant={activityView === 'live' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => { setActivityView('live'); setSelectedSessionId(null); }}
+                className="h-7 text-xs gap-1 shrink-0 min-h-[44px]"
+                data-testid="view-live"
+              >
+                <Activity className="h-3 w-3" />
+                Live
+                {isWorking && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
+              </Button>
+              <Button
+                variant={activityView === 'sessions' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => { setActivityView('sessions'); setSelectedSessionId(null); }}
+                className="h-7 text-xs gap-1 shrink-0 min-h-[44px]"
+                data-testid="view-sessions"
+              >
+                <Table2 className="h-3 w-3" />
+                Sessions
+              </Button>
+              <Button
+                variant={activityView === 'actions' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setActivityView('actions')}
+                className="h-7 text-xs gap-1 shrink-0 min-h-[44px]"
+                data-testid="view-actions"
+              >
+                <Zap className="h-3 w-3" />
+                Actions
+              </Button>
+              <Button
+                variant={activityView === 'files' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setActivityView('files')}
+                className="h-7 text-xs gap-1 shrink-0 min-h-[44px]"
+                data-testid="view-files"
+              >
+                <FileCode className="h-3 w-3" />
+                Files
+              </Button>
+              <Button
+                variant={activityView === 'messages' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setActivityView('messages')}
+                className="h-7 text-xs gap-1 shrink-0 min-h-[44px]"
+                data-testid="view-messages"
+              >
+                <MessageSquare className="h-3 w-3" />
+                Messages
+              </Button>
+              <div className="flex-1" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setHistoryModalOpen(true)}
+                className="h-7 w-7 p-0 shrink-0"
+                data-testid="button-expand-fullscreen"
+              >
+                <History className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setActivityPanelOpen(false)}
+                className="h-7 w-7 p-0 shrink-0"
+                data-testid="button-close-drawer"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           </div>
-          <div className="flex-1 overflow-hidden">
-            <AgentActivityFeed
-              events={activityEvents}
-              stats={sessionStats}
-              isLive={isWorking}
-              className="h-full border-none shadow-none"
-            />
+
+          {/* Drawer Content - Fixed height */}
+          <div className="h-[300px] overflow-hidden">
+            {/* Live Activity Feed */}
+            {activityView === 'live' && (
+              <AgentActivityFeed
+                events={activityEvents}
+                stats={sessionStats}
+                isLive={isWorking}
+                className="h-full border-none shadow-none"
+              />
+            )}
+
+            {/* Sessions Grid */}
+            {activityView === 'sessions' && (
+              <ScrollArea className="h-full p-3">
+                <AgentSessionsGrid
+                  onSessionSelect={(session) => {
+                    setSelectedSessionId(session.id);
+                    setActivityView('actions');
+                  }}
+                  height={250}
+                />
+              </ScrollArea>
+            )}
+
+            {/* Actions Grid */}
+            {activityView === 'actions' && (
+              <ScrollArea className="h-full p-3">
+                {selectedSessionId && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => { setSelectedSessionId(null); setActivityView('sessions'); }}
+                      className="h-7 text-xs min-h-[44px]"
+                    >
+                      ← All Sessions
+                    </Button>
+                    <Badge variant="secondary" className="text-xs font-mono">
+                      {selectedSessionId.slice(0, 8)}
+                    </Badge>
+                  </div>
+                )}
+                <AgentActionsGrid
+                  sessionId={selectedSessionId || undefined}
+                  height={selectedSessionId ? 200 : 250}
+                />
+              </ScrollArea>
+            )}
+
+            {/* Files Grid */}
+            {activityView === 'files' && (
+              <ScrollArea className="h-full p-3">
+                {selectedSessionId && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedSessionId(null)}
+                      className="h-7 text-xs min-h-[44px]"
+                    >
+                      ← Clear Filter
+                    </Button>
+                    <Badge variant="secondary" className="text-xs font-mono">
+                      {selectedSessionId.slice(0, 8)}
+                    </Badge>
+                  </div>
+                )}
+                <FileOperationsGrid
+                  sessionId={selectedSessionId || undefined}
+                  height={selectedSessionId ? 200 : 250}
+                />
+              </ScrollArea>
+            )}
+
+            {/* Messages Grid */}
+            {activityView === 'messages' && (
+              <ScrollArea className="h-full p-3">
+                {selectedSessionId && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedSessionId(null)}
+                      className="h-7 text-xs min-h-[44px]"
+                    >
+                      ← Clear Filter
+                    </Button>
+                    <Badge variant="secondary" className="text-xs font-mono">
+                      {selectedSessionId.slice(0, 8)}
+                    </Badge>
+                  </div>
+                )}
+                <ConversationHistoryGrid
+                  sessionId={selectedSessionId || undefined}
+                  height={selectedSessionId ? 200 : 250}
+                />
+              </ScrollArea>
+            )}
           </div>
         </div>
       )}
