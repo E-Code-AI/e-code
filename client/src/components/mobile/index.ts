@@ -8,7 +8,8 @@ export { MobilePreviewPanel } from './MobilePreviewPanel';
 export { MobileMoreMenu } from './MobileMoreMenu';
 export { MobileIDEView } from './MobileIDEView';
 export { MobileFAB } from './MobileFAB';
+export { EnhancedMobileIDEView } from './EnhancedMobileIDEView';
 
-// Re-export MobileIDEView as default for lazy loading
-export { MobileIDEView as default } from './MobileIDEView';
-Timestamp: 1763549006
+// Re-export EnhancedMobileIDEView as default for lazy loading
+// This wraps MobileIDEView with IDEProvider for Command Palette, Keyboard Shortcuts, etc.
+export { EnhancedMobileIDEView as default } from './EnhancedMobileIDEView';
