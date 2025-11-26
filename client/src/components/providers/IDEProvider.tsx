@@ -66,7 +66,7 @@ const IDEProviderInner: React.FC<IDEProviderProps> = ({
     localStorage.setItem('ide-shortcuts', JSON.stringify(shortcuts));
   }, [shortcuts]);
 
-  // Define IDE commands
+  // Define IDE commands (using CommandItem interface from CommandPalette)
   const ideCommands: Command[] = [
     // File operations
     {
@@ -74,12 +74,11 @@ const IDEProviderInner: React.FC<IDEProviderProps> = ({
       label: 'New File',
       description: 'Create a new file in the current directory',
       icon: '📄',
-      category: 'File',
+      category: 'file',
       shortcut: '⌘N',
       keywords: ['new', 'create', 'file'],
-      onExecute: async () => {
+      action: () => {
         toast.info('File creation', 'Opening file creator...');
-        // Emit custom event
         window.dispatchEvent(new CustomEvent('ide:new-file'));
       },
     },
@@ -88,10 +87,10 @@ const IDEProviderInner: React.FC<IDEProviderProps> = ({
       label: 'Save File',
       description: 'Save the current file',
       icon: '💾',
-      category: 'File',
+      category: 'file',
       shortcut: '⌘S',
       keywords: ['save', 'write'],
-      onExecute: async () => {
+      action: () => {
         window.dispatchEvent(new CustomEvent('ide:save-file'));
         toast.success('File saved');
       },
@@ -101,10 +100,10 @@ const IDEProviderInner: React.FC<IDEProviderProps> = ({
       label: 'Save All Files',
       description: 'Save all modified files',
       icon: '💾',
-      category: 'File',
+      category: 'file',
       shortcut: '⌘⇧S',
       keywords: ['save', 'all'],
-      onExecute: async () => {
+      action: () => {
         window.dispatchEvent(new CustomEvent('ide:save-all'));
         toast.success('All files saved');
       },
@@ -116,10 +115,10 @@ const IDEProviderInner: React.FC<IDEProviderProps> = ({
       label: 'Find',
       description: 'Search in current file',
       icon: '🔍',
-      category: 'Editor',
+      category: 'edit',
       shortcut: '⌘F',
       keywords: ['find', 'search'],
-      onExecute: async () => {
+      action: () => {
         window.dispatchEvent(new CustomEvent('ide:find'));
       },
     },
@@ -128,10 +127,10 @@ const IDEProviderInner: React.FC<IDEProviderProps> = ({
       label: 'Replace',
       description: 'Search and replace in current file',
       icon: '🔄',
-      category: 'Editor',
+      category: 'edit',
       shortcut: '⌘H',
       keywords: ['replace', 'find'],
-      onExecute: async () => {
+      action: () => {
         window.dispatchEvent(new CustomEvent('ide:replace'));
       },
     },
@@ -140,10 +139,10 @@ const IDEProviderInner: React.FC<IDEProviderProps> = ({
       label: 'Format Document',
       description: 'Format the current file',
       icon: '✨',
-      category: 'Editor',
+      category: 'edit',
       shortcut: '⌘⇧F',
       keywords: ['format', 'prettier', 'beautify'],
-      onExecute: async () => {
+      action: () => {
         window.dispatchEvent(new CustomEvent('ide:format'));
         toast.success('Document formatted');
       },
@@ -155,10 +154,10 @@ const IDEProviderInner: React.FC<IDEProviderProps> = ({
       label: 'Toggle Sidebar',
       description: 'Show or hide the file explorer sidebar',
       icon: '📁',
-      category: 'View',
+      category: 'view',
       shortcut: '⌘B',
       keywords: ['sidebar', 'toggle', 'files'],
-      onExecute: async () => {
+      action: () => {
         window.dispatchEvent(new CustomEvent('ide:toggle-sidebar'));
       },
     },
@@ -167,24 +166,24 @@ const IDEProviderInner: React.FC<IDEProviderProps> = ({
       label: 'Toggle Terminal',
       description: 'Show or hide the terminal panel',
       icon: '💻',
-      category: 'View',
+      category: 'view',
       shortcut: '⌘`',
       keywords: ['terminal', 'toggle', 'console'],
-      onExecute: async () => {
+      action: () => {
         window.dispatchEvent(new CustomEvent('ide:toggle-terminal'));
       },
     },
 
-    // Settings
+    // Tools (Settings)
     {
       id: 'settings:open',
       label: 'Open Settings',
       description: 'Open IDE settings',
       icon: '⚙️',
-      category: 'Settings',
+      category: 'tool',
       shortcut: '⌘,',
       keywords: ['settings', 'preferences', 'config'],
-      onExecute: async () => {
+      action: () => {
         setShowSettings(true);
       },
     },
@@ -193,24 +192,24 @@ const IDEProviderInner: React.FC<IDEProviderProps> = ({
       label: 'Keyboard Shortcuts',
       description: 'View and edit keyboard shortcuts',
       icon: '⌨️',
-      category: 'Settings',
+      category: 'tool',
       shortcut: '?',
       keywords: ['shortcuts', 'keyboard', 'hotkeys'],
-      onExecute: async () => {
+      action: () => {
         keyboardShortcuts.open();
       },
     },
 
-    // Help
+    // Navigation (Help)
     {
       id: 'help:docs',
       label: 'Documentation',
       description: 'Open E-Code documentation',
       icon: '📚',
-      category: 'Help',
+      category: 'navigation',
       keywords: ['help', 'docs', 'documentation'],
-      onExecute: async () => {
-        window.open('https://docs.e-code.dev', '_blank');
+      action: () => {
+        window.open('https://docs.e-code.ai', '_blank');
       },
     },
   ];
@@ -348,13 +347,11 @@ const IDEProviderInner: React.FC<IDEProviderProps> = ({
       {children}
 
       {/* Command Palette */}
-      {commandPalette.isOpen && (
-        <CommandPalette
-          commands={ideCommands}
-          onClose={commandPalette.close}
-          placeholder="Type a command or search..."
-        />
-      )}
+      <CommandPalette
+        open={commandPalette.isOpen}
+        onOpenChange={(open) => !open && commandPalette.close()}
+        commands={ideCommands}
+      />
 
       {/* Keyboard Shortcuts */}
       {keyboardShortcuts.isOpen && (
