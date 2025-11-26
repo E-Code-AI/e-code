@@ -56,7 +56,9 @@ import { MaxAutonomyProgress, MaxAutonomyStartForm } from './MaxAutonomyProgress
 import { useMaxAutonomy } from '@/hooks/useMaxAutonomy';
 import { AgentToolsPanel, type AgentToolsSettings } from './AgentToolsPanel';
 import { ElementEditor, type ElementSelection } from './ElementEditor';
-import { History, X, MousePointer2 } from 'lucide-react';
+import { ChatToolbar, ChatToolbarMobile } from './ChatToolbar';
+import { UsageTrackingIcon } from './UsageTrackingIcon';
+import { History, X, MousePointer2, Coins } from 'lucide-react';
 
 interface ToolExecution {
   id: string;
@@ -1080,6 +1082,9 @@ export function ReplitAgentPanelV3({
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Usage Tracking - Replit Agent 3 style credits icon */}
+            <UsageTrackingIcon />
+
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -1320,7 +1325,7 @@ export function ReplitAgentPanelV3({
             />
           )}
           
-          {/* Chat input */}
+          {/* Chat input with inline toolbar */}
           <div className="relative">
             <Textarea
               ref={textareaRef}
@@ -1346,6 +1351,31 @@ export function ReplitAgentPanelV3({
               <Send className="h-3.5 w-3.5" />
             </Button>
           </div>
+          
+          {/* Chat Toolbar - Replit Agent 3 inline icons for quick toggle access */}
+          {isCompactMode ? (
+            <ChatToolbarMobile
+              extendedThinking={agentToolsSettings.extendedThinking}
+              highPowerModels={agentToolsSettings.highPowerModels}
+              webSearch={agentToolsSettings.webSearch}
+              onToggleExtendedThinking={() => handleAgentToolsChange({ ...agentToolsSettings, extendedThinking: !agentToolsSettings.extendedThinking })}
+              onToggleHighPowerModels={() => handleAgentToolsChange({ ...agentToolsSettings, highPowerModels: !agentToolsSettings.highPowerModels })}
+              onToggleWebSearch={() => handleAgentToolsChange({ ...agentToolsSettings, webSearch: !agentToolsSettings.webSearch })}
+              isUpdating={false}
+            />
+          ) : (
+            <ChatToolbar
+              extendedThinking={agentToolsSettings.extendedThinking}
+              highPowerModels={agentToolsSettings.highPowerModels}
+              webSearch={agentToolsSettings.webSearch}
+              onToggleExtendedThinking={() => handleAgentToolsChange({ ...agentToolsSettings, extendedThinking: !agentToolsSettings.extendedThinking })}
+              onToggleHighPowerModels={() => handleAgentToolsChange({ ...agentToolsSettings, highPowerModels: !agentToolsSettings.highPowerModels })}
+              onToggleWebSearch={() => handleAgentToolsChange({ ...agentToolsSettings, webSearch: !agentToolsSettings.webSearch })}
+              onToggleElementSelector={() => setElementEditorActive(!elementEditorActive)}
+              elementSelectorActive={elementEditorActive}
+              isUpdating={false}
+            />
+          )}
           
           {/* Agent Tools Panel - Replit Agent 3 toggles: Max Autonomy, App Testing, Extended Thinking, High Power Models, Web Search */}
           <AgentToolsPanel
