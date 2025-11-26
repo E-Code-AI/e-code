@@ -71,7 +71,7 @@ export const aiModelEnum = pgEnum('ai_model', [
   'kimi-k2-0905-preview',
   'kimi-k2-thinking'
 ]);
-export const agentModeEnum = pgEnum('agent_mode', ['plan', 'build', 'edit']);
+export const agentModeEnum = pgEnum('agent_mode', ['plan', 'build', 'edit', 'max-autonomy']);
 export const buildExecutionStatusEnum = pgEnum('build_execution_status', ['pending', 'running', 'completed', 'failed', 'cancelled']);
 export const workflowStatusEnum = pgEnum('workflow_status', ['idle', 'planning', 'executing', 'completed', 'failed']);
 
