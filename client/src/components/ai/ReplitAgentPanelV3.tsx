@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -34,10 +34,15 @@ import {
   RefreshCw,
   Pause,
   Play,
-  AlertCircle
+  AlertCircle,
+  MessageSquare,
+  Activity
 } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThinkingDisplay, ThinkingDisplayCompact, ThinkingStep } from './ThinkingDisplay';
-import { ToolExecutionList } from './ToolExecutionDisplay';
+import { ToolExecutionList, ToolExecutionProps } from './ToolExecutionDisplay';
+import { AgentActivityFeed, ActivityEvent, SessionStats } from './AgentActivityFeed';
+import { MessageMetadataFooter } from './MessageMetadataFooter';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useWorkflowManager } from '@/hooks/use-workflow-manager';
@@ -94,10 +99,17 @@ interface Message {
   };
   metadata?: {
     model?: string;
+    provider?: string;
     tokens?: number;
+    promptTokens?: number;
+    completionTokens?: number;
     cost?: string;
+    latency?: number;
     webSearchUsed?: boolean;
     extendedThinking?: boolean;
+    cacheHit?: boolean;
+    streamingDuration?: number;
+    finishReason?: 'stop' | 'length' | 'content_filter' | 'tool_calls';
   };
 }
 
@@ -115,6 +127,34 @@ interface ReplitAgentPanelV3Props {
   className?: string;
   onMinimize?: () => void;
   mode?: 'desktop' | 'tablet' | 'mobile';
+}
+
+function getActivityEventType(tool: string): ActivityEvent['type'] {
+  if (tool.includes('write') || tool.includes('create') || tool.includes('edit_file')) return 'file_create';
+  if (tool.includes('edit') || tool.includes('modify') || tool.includes('update')) return 'file_edit';
+  if (tool.includes('delete') || tool.includes('remove')) return 'file_delete';
+  if (tool.includes('read') || tool.includes('view')) return 'file_read';
+  if (tool.includes('command') || tool.includes('bash') || tool.includes('shell') || tool.includes('terminal')) return 'command';
+  if (tool.includes('package') || tool.includes('install') || tool.includes('npm') || tool.includes('yarn')) return 'package';
+  if (tool.includes('search') || tool.includes('grep') || tool.includes('glob') || tool.includes('find')) return 'search';
+  if (tool.includes('analyze') || tool.includes('database') || tool.includes('sql')) return 'analysis';
+  return 'command';
+}
+
+function getToolTarget(exec: ToolExecution): string {
+  if (exec.parameters?.file_path) return exec.parameters.file_path;
+  if (exec.parameters?.path) return exec.parameters.path;
+  if (exec.parameters?.command) return exec.parameters.command.slice(0, 50) + (exec.parameters.command.length > 50 ? '...' : '');
+  if (exec.parameters?.pattern) return exec.parameters.pattern;
+  if (exec.parameters?.query) return exec.parameters.query.slice(0, 40) + (exec.parameters.query.length > 40 ? '...' : '');
+  return exec.tool;
+}
+
+function getToolDescription(exec: ToolExecution): string | undefined {
+  if (exec.parameters?.description) return exec.parameters.description;
+  if (exec.parameters?.content) return `Content: ${exec.parameters.content.slice(0, 100)}...`;
+  if (exec.result && typeof exec.result === 'string') return exec.result.slice(0, 100);
+  return undefined;
 }
 
 export function ReplitAgentPanelV3({ 
@@ -172,10 +212,67 @@ export function ReplitAgentPanelV3({
     }
   ]);
   
+  const [activeTab, setActiveTab] = useState<'chat' | 'activity'>('chat');
+  const [sessionStartTime] = useState<Date>(new Date());
+  
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
+  
+  // Convert tool executions from messages to activity events
+  const activityEvents = useMemo((): ActivityEvent[] => {
+    const events: ActivityEvent[] = [];
+    messages.forEach((msg, msgIdx) => {
+      if (msg.toolExecutions) {
+        msg.toolExecutions.forEach((exec, execIdx) => {
+          const eventType = getActivityEventType(exec.tool);
+          events.push({
+            id: `${msgIdx}-${execIdx}`,
+            type: eventType,
+            target: getToolTarget(exec),
+            description: getToolDescription(exec),
+            timestamp: msg.timestamp,
+            status: exec.status,
+            duration: exec.metadata?.executionTime,
+            details: {
+              output: exec.metadata?.commandOutput || (typeof exec.result === 'string' ? exec.result : undefined),
+              error: exec.error,
+              filesChanged: exec.metadata?.filesChanged,
+            }
+          });
+        });
+      }
+    });
+    return events.reverse();
+  }, [messages]);
+  
+  // Calculate session stats
+  const sessionStats = useMemo((): SessionStats => {
+    const duration = Date.now() - sessionStartTime.getTime();
+    let filesCreated = 0, filesModified = 0, filesDeleted = 0, commandsRun = 0, errorsCount = 0;
+    
+    activityEvents.forEach(e => {
+      if (e.type === 'file_create') filesCreated++;
+      if (e.type === 'file_edit') filesModified++;
+      if (e.type === 'file_delete') filesDeleted++;
+      if (e.type === 'command') commandsRun++;
+      if (e.type === 'error' || e.status === 'error') errorsCount++;
+    });
+    
+    return {
+      duration,
+      tokensUsed: 0,
+      estimatedCost: '$0.00',
+      filesCreated,
+      filesModified,
+      filesDeleted,
+      commandsRun,
+      errorsCount,
+      model: model?.name,
+      provider: provider || undefined,
+    };
+  }, [activityEvents, sessionStartTime, model, provider]);
 
   // Bootstrap conversation on mount
   useEffect(() => {
@@ -771,8 +868,8 @@ export function ReplitAgentPanelV3({
 
   return (
     <div className={cn("h-full flex flex-col bg-background", className)} data-testid="replit-agent-panel-v3">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-border bg-card">
+      {/* Header with Tabs */}
+      <div className="px-4 py-2 border-b border-border bg-card space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -941,8 +1038,43 @@ export function ReplitAgentPanelV3({
             </Button>
           </div>
         </div>
+        
+        {/* Tab Bar */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'chat' | 'activity')}>
+          <TabsList className="h-8 w-full">
+            <TabsTrigger 
+              value="chat" 
+              className="flex-1 h-7 text-xs gap-1.5"
+              data-testid="tab-chat"
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              Chat
+              {messages.length > 1 && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                  {messages.length - 1}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="activity" 
+              className="flex-1 h-7 text-xs gap-1.5"
+              data-testid="tab-activity"
+            >
+              <Activity className="h-3.5 w-3.5" />
+              Activity
+              {activityEvents.length > 0 && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                  {activityEvents.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
+      {/* Chat Tab Content */}
+      {activeTab === 'chat' && (
+        <>
       {/* Messages */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <ScrollArea ref={scrollRef} className="flex-1 px-4 py-3">
@@ -1024,26 +1156,13 @@ export function ReplitAgentPanelV3({
                   </div>
                 )}
 
-                {/* Metadata */}
-                {message.metadata && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground" data-testid={`metadata-${message.id}`}>
-                    {message.metadata.extendedThinking && (
-                      <Badge variant="outline" className="text-xs" data-testid={`metadata-thinking-${message.id}`}>
-                        Extended Thinking
-                      </Badge>
-                    )}
-                    {message.metadata.webSearchUsed && (
-                      <Badge variant="outline" className="text-xs" data-testid={`metadata-websearch-${message.id}`}>
-                        Web Search
-                      </Badge>
-                    )}
-                    {message.metadata.tokens && (
-                      <span data-testid={`metadata-tokens-${message.id}`}>{message.metadata.tokens.toLocaleString()} tokens</span>
-                    )}
-                    {message.metadata.cost && (
-                      <span data-testid={`metadata-cost-${message.id}`}>${message.metadata.cost}</span>
-                    )}
-                  </div>
+                {/* Metadata Footer */}
+                {message.metadata && message.role === 'assistant' && (
+                  <MessageMetadataFooter
+                    metadata={message.metadata}
+                    messageId={message.id}
+                    compact={isCompactMode}
+                  />
                 )}
               </div>
             </div>
@@ -1190,6 +1309,20 @@ export function ReplitAgentPanelV3({
           </div>
         )}
       </div>
+        </>
+      )}
+
+      {/* Activity Tab Content */}
+      {activeTab === 'activity' && (
+        <div className="flex-1 overflow-hidden">
+          <AgentActivityFeed
+            events={activityEvents}
+            stats={sessionStats}
+            isLive={isWorking}
+            className="h-full border-none shadow-none"
+          />
+        </div>
+      )}
     </div>
   );
 }
