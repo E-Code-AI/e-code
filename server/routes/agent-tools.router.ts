@@ -33,8 +33,57 @@ export default function createAgentToolsRouter(): Router {
   // ============================================
 
   /**
+   * GET /api/agent/tools/web-search
+   * Get web search history for the user
+   */
+  router.get('/tools/web-search', async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const limit = parseInt(req.query.limit as string) || 20;
+
+      // For now, return empty history - in production this would query a search_history table
+      // This endpoint exists for API completeness
+      res.json({
+        searches: [],
+        count: 0,
+        message: 'Search history tracking not yet implemented'
+      });
+    } catch (error: any) {
+      logger.error('Error fetching search history:', error);
+      res.status(500).json({ error: 'Failed to fetch search history' });
+    }
+  });
+
+  /**
+   * POST /api/agent/tools/web-search
+   * Perform a web search (alias for /web-search)
+   */
+  router.post('/tools/web-search', async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { query, maxResults = 10, searchType = 'web' } = req.body;
+
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ error: 'Query is required' });
+      }
+
+      logger.info(`Web search request from user ${userId}: "${query}"`);
+
+      const searchResult = await webSearchService.search(query, {
+        maxResults,
+        searchType
+      });
+
+      res.json(searchResult);
+    } catch (error: any) {
+      logger.error('Web search error:', error);
+      res.status(500).json({ error: 'Search failed', message: error.message });
+    }
+  });
+
+  /**
    * POST /api/agent/web-search
-   * Perform a web search
+   * Perform a web search (legacy endpoint)
    */
   router.post('/web-search', async (req, res) => {
     try {
@@ -419,6 +468,170 @@ export default function createAgentToolsRouter(): Router {
     } catch (error: any) {
       logger.error('Error starting thinking analysis:', error);
       res.status(500).json({ error: 'Failed to start thinking analysis' });
+    }
+  });
+
+  // ============================================
+  // TOOLS/ ALIASED ENDPOINTS (for /api/agent/tools/... paths)
+  // ============================================
+
+  /**
+   * GET /api/agent/tools/testing/replays
+   * Get video replays (alias)
+   */
+  router.get('/tools/testing/replays', async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const projectId = parseInt(req.query.projectId as string);
+      const limit = parseInt(req.query.limit as string) || 20;
+
+      if (!projectId) {
+        return res.status(400).json({ error: 'projectId is required' });
+      }
+
+      const replays = await db.select()
+        .from(testingSessionRecordings)
+        .where(and(
+          eq(testingSessionRecordings.projectId, projectId),
+          sql`${testingSessionRecordings.videoUrl} IS NOT NULL`
+        ))
+        .orderBy(desc(testingSessionRecordings.createdAt))
+        .limit(limit);
+
+      res.json({ 
+        replays: replays.map(r => ({
+          id: r.id.toString(),
+          testSessionId: r.sessionId,
+          projectId: r.projectId,
+          filename: r.testName,
+          url: r.videoUrl,
+          thumbnailUrl: r.thumbnailUrl,
+          duration: r.duration || 0,
+          status: r.status === 'completed' ? 'ready' : r.status,
+          createdAt: r.createdAt?.toISOString(),
+        })),
+        count: replays.length 
+      });
+    } catch (error: any) {
+      logger.error('Error fetching video replays:', error);
+      res.status(500).json({ error: 'Failed to fetch video replays' });
+    }
+  });
+
+  /**
+   * POST /api/agent/tools/testing/start
+   * Start a test session (alias)
+   */
+  router.post('/tools/testing/start', async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { projectId, testPlan, testName, recordVideo = true } = req.body;
+
+      if (!projectId || !testPlan) {
+        return res.status(400).json({ error: 'projectId and testPlan are required' });
+      }
+
+      const sessionId = crypto.randomUUID();
+
+      const [recording] = await db.insert(testingSessionRecordings).values({
+        projectId,
+        sessionId,
+        testName: testName || `Test ${new Date().toISOString()}`,
+        testPlan,
+        status: 'pending',
+        createdBy: userId,
+        metadata: {
+          recordVideo,
+          startedBy: 'agent-tools',
+          timestamp: new Date().toISOString()
+        }
+      }).returning();
+
+      const testingService = new BackgroundTestingService();
+      testingService.scheduleTest(projectId, []).catch(err => {
+        logger.error(`Test session ${sessionId} failed to start:`, err);
+        db.update(testingSessionRecordings)
+          .set({ status: 'failed' })
+          .where(eq(testingSessionRecordings.id, recording.id))
+          .catch(() => {});
+      });
+
+      logger.info(`Test session ${sessionId} started for project ${projectId}`);
+
+      res.json({
+        sessionId,
+        recordingId: recording.id,
+        status: recording.status,
+        message: 'Test session started'
+      });
+    } catch (error: any) {
+      logger.error('Error starting test:', error);
+      res.status(500).json({ error: 'Failed to start test' });
+    }
+  });
+
+  /**
+   * GET /api/agent/tools/thinking/:conversationId
+   * Get extended thinking steps (alias)
+   */
+  router.get('/tools/thinking/:conversationId', async (req, res) => {
+    try {
+      const conversationId = parseInt(req.params.conversationId);
+
+      if (!conversationId) {
+        return res.json({ steps: [], isThinking: false });
+      }
+
+      const messages = await db.select()
+        .from(agentMessages)
+        .where(eq(agentMessages.conversationId, conversationId))
+        .orderBy(desc(agentMessages.createdAt))
+        .limit(10);
+
+      const steps: Array<{
+        id: string;
+        type: 'reasoning' | 'analysis' | 'planning';
+        title: string;
+        content: string;
+        status: 'active' | 'completed' | 'error';
+        timestamp: Date;
+        duration?: number;
+      }> = [];
+
+      for (const message of messages) {
+        const thinking = message.extendedThinking as {
+          enabled: boolean;
+          reasoning: string;
+          steps: Array<{
+            step: number;
+            thought: string;
+            conclusion: string;
+          }>;
+          confidence: number;
+        } | null;
+
+        if (thinking?.enabled && thinking.steps) {
+          for (const step of thinking.steps) {
+            steps.push({
+              id: `${message.id}-step-${step.step}`,
+              type: step.step === 1 ? 'reasoning' : step.step === 2 ? 'analysis' : 'planning',
+              title: `Step ${step.step}: ${step.thought.substring(0, 50)}...`,
+              content: `${step.thought}\n\nConclusion: ${step.conclusion}`,
+              status: 'completed',
+              timestamp: message.createdAt,
+              duration: (message.metadata as any)?.processingTimeMs || undefined
+            });
+          }
+        }
+      }
+
+      res.json({
+        steps: steps.slice(0, 20),
+        isThinking: false
+      });
+    } catch (error: any) {
+      logger.error('Error fetching thinking steps:', error);
+      res.status(500).json({ error: 'Failed to fetch thinking steps' });
     }
   });
 

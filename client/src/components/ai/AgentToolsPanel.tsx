@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import {
   Collapsible,
   CollapsibleContent,
@@ -22,6 +23,9 @@ import {
   Sparkles,
   Globe,
   Loader2,
+  Search,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAgentTools, type AgentToolsSettings } from '@/hooks/useAgentTools';
@@ -54,6 +58,9 @@ export function AgentToolsPanel({
     videoReplayCount,
     effectiveModel,
     effectiveModelInfo,
+    toolsStatus,
+    isLoadingToolsStatus,
+    testSessionCount,
   } = useAgentTools(projectId);
 
   // Sync local settings with server settings
@@ -63,18 +70,17 @@ export function AgentToolsPanel({
     }
   }, [settings]);
 
-  const handleToggle = (key: keyof AgentToolsSettings) => {
+  const handleToggle = useCallback((key: keyof AgentToolsSettings) => {
     const newSettings = {
       ...localSettings,
       [key]: !localSettings[key]
     };
     setLocalSettings(newSettings);
     
-    // Max autonomy and app testing are local-only toggles
-    if (key !== 'maxAutonomy' && key !== 'appTesting') {
-      updateSettings(newSettings);
-    }
-  };
+    // All toggles now go through updateSettings which handles
+    // local vs persisted toggles internally
+    updateSettings(newSettings);
+  }, [localSettings, updateSettings]);
 
   const activeCount = Object.values(localSettings).filter(Boolean).length;
 
