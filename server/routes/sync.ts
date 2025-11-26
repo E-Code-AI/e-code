@@ -12,6 +12,10 @@ import { users } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
+import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('sync');
 
 const router = Router();
 
@@ -96,13 +100,12 @@ router.get('/workspace', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const userId = req.user.id;
+    const userId = String(req.user.id);
 
     // Get workspace state from storage (using dynamic intelligence settings as storage)
-    const { getDynamicIntelligenceSettings } = await import('../storage');
-    const settings = await getDynamicIntelligenceSettings(userId);
+    const settings = await storage.getDynamicIntelligenceSettings(userId);
 
-    const workspaceState: WorkspaceState = settings.workspaceState || {
+    const workspaceState: WorkspaceState = settings?.workspaceState || {
       openFiles: [],
       activeProjectId: null,
       activeFileId: null,
@@ -145,8 +148,7 @@ router.put('/workspace', async (req: Request, res: Response) => {
     }
 
     // Get current settings
-    const { getDynamicIntelligenceSettings, updateDynamicIntelligenceSettings } = await import('../storage');
-    const settings = await getDynamicIntelligenceSettings(userId);
+    const settings = await storage.getDynamicIntelligenceSettings(userId);
 
     // Merge with existing state
     const updatedState: WorkspaceState = {
@@ -156,7 +158,7 @@ router.put('/workspace', async (req: Request, res: Response) => {
     };
 
     // Save to storage
-    await updateDynamicIntelligenceSettings(userId, {
+    await storage.updateDynamicIntelligenceSettings(userId, {
       workspaceState: updatedState,
     });
 
@@ -186,8 +188,7 @@ router.get('/preferences', async (req: Request, res: Response) => {
     const userId = req.user.id;
 
     // Get preferences from storage
-    const { getDynamicIntelligenceSettings } = await import('../storage');
-    const settings = await getDynamicIntelligenceSettings(userId);
+    const settings = await storage.getDynamicIntelligenceSettings(userId);
 
     const preferences: UserPreferences = settings.userPreferences || {
       theme: 'dark',
@@ -239,8 +240,7 @@ router.put('/preferences', async (req: Request, res: Response) => {
     }
 
     // Get current settings
-    const { getDynamicIntelligenceSettings, updateDynamicIntelligenceSettings } = await import('../storage');
-    const settings = await getDynamicIntelligenceSettings(userId);
+    const settings = await storage.getDynamicIntelligenceSettings(userId);
 
     // Merge with existing preferences
     const updatedPreferences: UserPreferences = {
@@ -250,7 +250,7 @@ router.put('/preferences', async (req: Request, res: Response) => {
     };
 
     // Save to storage
-    await updateDynamicIntelligenceSettings(userId, {
+    await storage.updateDynamicIntelligenceSettings(userId, {
       userPreferences: updatedPreferences,
     });
 
@@ -280,8 +280,7 @@ router.get('/devices', async (req: Request, res: Response) => {
     const userId = req.user.id;
 
     // Get devices from storage
-    const { getDynamicIntelligenceSettings } = await import('../storage');
-    const settings = await getDynamicIntelligenceSettings(userId);
+    const settings = await storage.getDynamicIntelligenceSettings(userId);
 
     const devices: DeviceInfo[] = settings.devices || [];
 
@@ -320,14 +319,13 @@ router.post('/devices', async (req: Request, res: Response) => {
     };
 
     // Get current settings
-    const { getDynamicIntelligenceSettings, updateDynamicIntelligenceSettings } = await import('../storage');
-    const settings = await getDynamicIntelligenceSettings(userId);
+    const settings = await storage.getDynamicIntelligenceSettings(userId);
 
     const devices = settings.devices || [];
     devices.push(newDevice);
 
     // Save to storage
-    await updateDynamicIntelligenceSettings(userId, { devices });
+    await storage.updateDynamicIntelligenceSettings(userId, { devices });
 
     console.log(`[Sync] Device registered for user ${userId}:`, deviceName);
 
@@ -352,8 +350,7 @@ router.put('/devices/:deviceId', async (req: Request, res: Response) => {
     const { deviceId } = req.params;
 
     // Get current settings
-    const { getDynamicIntelligenceSettings, updateDynamicIntelligenceSettings } = await import('../storage');
-    const settings = await getDynamicIntelligenceSettings(userId);
+    const settings = await storage.getDynamicIntelligenceSettings(userId);
 
     const devices = settings.devices || [];
     const device = devices.find((d: DeviceInfo) => d.deviceId === deviceId);
@@ -365,7 +362,7 @@ router.put('/devices/:deviceId', async (req: Request, res: Response) => {
     device.lastSyncAt = Date.now();
 
     // Save to storage
-    await updateDynamicIntelligenceSettings(userId, { devices });
+    await storage.updateDynamicIntelligenceSettings(userId, { devices });
 
     res.json({ success: true, device });
   } catch (error) {
@@ -388,13 +385,12 @@ router.delete('/devices/:deviceId', async (req: Request, res: Response) => {
     const { deviceId } = req.params;
 
     // Get current settings
-    const { getDynamicIntelligenceSettings, updateDynamicIntelligenceSettings } = await import('../storage');
-    const settings = await getDynamicIntelligenceSettings(userId);
+    const settings = await storage.getDynamicIntelligenceSettings(userId);
 
     const devices = (settings.devices || []).filter((d: DeviceInfo) => d.deviceId !== deviceId);
 
     // Save to storage
-    await updateDynamicIntelligenceSettings(userId, { devices });
+    await storage.updateDynamicIntelligenceSettings(userId, { devices });
 
     console.log(`[Sync] Device removed for user ${userId}:`, deviceId);
 
@@ -422,8 +418,7 @@ router.get('/status', async (req: Request, res: Response) => {
     const userId = req.user.id;
 
     // Get all sync data
-    const { getDynamicIntelligenceSettings } = await import('../storage');
-    const settings = await getDynamicIntelligenceSettings(userId);
+    const settings = await storage.getDynamicIntelligenceSettings(userId);
 
     const status = {
       workspaceLastModified: settings.workspaceState?.lastModified || null,
