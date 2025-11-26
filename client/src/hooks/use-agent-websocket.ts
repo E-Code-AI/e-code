@@ -2,12 +2,21 @@
  * Real-time Agent WebSocket Hook
  * Subscribes to agent progress updates via WebSocket for live UI sync
  * Supports cross-platform synchronization across web, mobile, and desktop
+ * Extended with unified activity event streaming for inline chat and Progress dock
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import type { 
+  ActivityEvent, 
+  ActivityStreamMessage,
+  ThinkingStep,
+  ToolExecutionEvent,
+  FileChangeEvent,
+  AgentSessionState
+} from '@shared/types/agent-activity.types';
 
 interface AgentProgressUpdate {
-  type: 'step' | 'summary' | 'error' | 'complete' | 'progress' | 'device_connected' | 'device_disconnected' | 'connected';
+  type: 'step' | 'summary' | 'error' | 'complete' | 'progress' | 'device_connected' | 'device_disconnected' | 'connected' | 'activity';
   projectId: number;
   sessionId: string;
   data?: any;
@@ -16,6 +25,7 @@ interface AgentProgressUpdate {
   totalDevices?: number;
   roster?: ConnectedDevice[];
   connectedAt?: string;
+  activity?: ActivityEvent;
 }
 
 interface ConnectedDevice {
@@ -28,6 +38,7 @@ interface UseAgentWebSocketOptions {
   projectId: number;
   sessionId?: string;
   onUpdate?: (update: AgentProgressUpdate) => void;
+  onActivity?: (activity: ActivityEvent) => void;
   enabled?: boolean;
 }
 
@@ -58,6 +69,7 @@ export function useAgentWebSocket({
   projectId,
   sessionId,
   onUpdate,
+  onActivity,
   enabled = true
 }: UseAgentWebSocketOptions) {
   const [isConnected, setIsConnected] = useState(false);
@@ -67,6 +79,14 @@ export function useAgentWebSocket({
   const [currentDeviceId] = useState(getDeviceId());
   const [currentDeviceType] = useState(detectDeviceType());
   const [serverTotalDevices, setServerTotalDevices] = useState<number | null>(null);
+  
+  const [activityEvents, setActivityEvents] = useState<ActivityEvent[]>([]);
+  const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
+  const [toolExecutions, setToolExecutions] = useState<ToolExecutionEvent[]>([]);
+  const [fileChanges, setFileChanges] = useState<FileChangeEvent[]>([]);
+  const [currentActivity, setCurrentActivity] = useState<ActivityEvent | null>(null);
+  const [isThinking, setIsThinking] = useState(false);
+  const activityHistoryRef = useRef<ActivityEvent[]>([]);
   
   const connect = useCallback(() => {
     if (!enabled || !sessionId) {
@@ -147,6 +167,55 @@ export function useAgentWebSocket({
             setConnectedDevices((prev) => 
               prev.filter((d) => d.deviceId !== update.deviceId)
             );
+          } else if (update.type === 'activity' && update.activity) {
+            const activity = update.activity;
+            
+            // Store in activity history
+            activityHistoryRef.current = [...activityHistoryRef.current, activity].slice(-100);
+            setActivityEvents(activityHistoryRef.current);
+            setCurrentActivity(activity);
+            
+            // Handle specific activity types
+            switch (activity.type) {
+              case 'thinking_start':
+                setIsThinking(true);
+                setThinkingSteps([]);
+                break;
+              case 'thinking_step':
+                if ('stepNumber' in activity.payload && 'content' in activity.payload) {
+                  setThinkingSteps(prev => [...prev, activity.payload as ThinkingStep]);
+                }
+                break;
+              case 'thinking_end':
+                setIsThinking(false);
+                break;
+              case 'tool_start':
+              case 'tool_progress':
+              case 'tool_complete':
+              case 'tool_error':
+                if ('toolName' in activity.payload && 'status' in activity.payload) {
+                  const toolEvent = activity.payload as ToolExecutionEvent;
+                  setToolExecutions(prev => {
+                    const existing = prev.findIndex(t => t.id === toolEvent.id);
+                    if (existing >= 0) {
+                      const updated = [...prev];
+                      updated[existing] = toolEvent;
+                      return updated;
+                    }
+                    return [...prev, toolEvent];
+                  });
+                }
+                break;
+              case 'file_create':
+              case 'file_edit':
+              case 'file_delete':
+                if ('filePath' in activity.payload && 'operation' in activity.payload) {
+                  setFileChanges(prev => [...prev, activity.payload as FileChangeEvent]);
+                }
+                break;
+            }
+            
+            onActivity?.(activity);
           }
           
           setLastUpdate(update);
@@ -185,13 +254,47 @@ export function useAgentWebSocket({
   // Prefer server's authoritative total, fall back to local count
   const totalDevices = serverTotalDevices ?? connectedDevices.length;
   
+  // Clear activity state when session changes
+  const clearActivityState = useCallback(() => {
+    setActivityEvents([]);
+    setThinkingSteps([]);
+    setToolExecutions([]);
+    setFileChanges([]);
+    setCurrentActivity(null);
+    setIsThinking(false);
+    activityHistoryRef.current = [];
+  }, []);
+  
   return {
+    // Connection state
     isConnected,
     lastUpdate,
     error,
+    
+    // Device presence
     connectedDevices,
     currentDeviceId,
     currentDeviceType,
-    totalDevices
+    totalDevices,
+    
+    // Activity stream (for inline chat + Progress dock)
+    activityEvents,
+    currentActivity,
+    isThinking,
+    thinkingSteps,
+    toolExecutions,
+    fileChanges,
+    clearActivityState,
   };
 }
+
+// Export types for consumers
+export type { 
+  AgentProgressUpdate, 
+  ConnectedDevice, 
+  UseAgentWebSocketOptions,
+  ActivityEvent,
+  ThinkingStep,
+  ToolExecutionEvent,
+  FileChangeEvent,
+};
