@@ -243,7 +243,7 @@ export default function ComparePage() {
 
   return (
     <MarketingLayout>
-      <section className="relative overflow-hidden py-16">
+      <section className="relative overflow-hidden py-16 bg-gradient-to-b from-slate-900 to-slate-800 dark:from-slate-900 dark:to-slate-800">
         <div className="pointer-events-none absolute inset-0 opacity-60">
           <div className="absolute -left-32 top-16 h-64 w-64 rounded-full bg-sky-500/20 blur-3xl" />
           <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-purple-500/20 blur-3xl" />
@@ -289,7 +289,7 @@ export default function ComparePage() {
         </div>
       </section>
 
-      <section className="pb-12">
+      <section className="pb-12 bg-slate-800 dark:bg-slate-800">
         <div className="container-responsive max-w-6xl grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <Card className="bg-white/5 border-white/10">
             <CardHeader>
@@ -327,7 +327,7 @@ export default function ComparePage() {
         </div>
       </section>
 
-      <section className="py-12">
+      <section className="py-12 bg-slate-800 dark:bg-slate-800">
         <div className="container-responsive max-w-6xl">
           <Card className="bg-white/5 border-white/10">
             <CardHeader>
@@ -357,7 +357,7 @@ export default function ComparePage() {
         </div>
       </section>
 
-      <section className="py-12">
+      <section className="py-12 bg-slate-800 dark:bg-slate-800">
         <div className="container-responsive max-w-6xl grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {content.differentiators.map((item) => (
             <Card key={item.title} className="bg-white/5 border-white/10">
@@ -370,7 +370,7 @@ export default function ComparePage() {
         </div>
       </section>
 
-      <section className="pb-20">
+      <section className="pb-20 bg-slate-800 dark:bg-slate-800">
         <div className="container-responsive max-w-5xl">
           <Card className="bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 border-white/10">
             <CardContent className="grid gap-6 py-10 text-center sm:text-left sm:grid-cols-2">
@@ -387,7 +387,7 @@ export default function ComparePage() {
                 <Button className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white" onClick={() => (window.location.href = '/contact-sales')}>
                   Book a personalized demo
                 </Button>
-                <Button variant="outline" className="border-white/20 text-slate-100 hover:text-white" onClick={() => (window.location.href = '/pricing')}>
+                <Button variant="outline" className="bg-transparent border-white/20 text-slate-100 hover:text-white hover:bg-white/10" onClick={() => (window.location.href = '/pricing')}>
                   View pricing
                 </Button>
               </div>
