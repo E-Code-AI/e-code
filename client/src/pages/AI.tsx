@@ -355,7 +355,7 @@ export default function AI() {
             >
               <Badge variant="default" className="mb-6 text-sm px-4 py-1.5 bg-primary/90">
                 <Sparkles className="h-4 w-4 mr-1" />
-                POWERED BY CLAUDE 4.0 SONNET
+                POWERED BY E-CODE.AI
               </Badge>
               
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight">
