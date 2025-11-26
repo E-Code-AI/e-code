@@ -17,9 +17,9 @@ export function ECodeLogo({ className, size = 'md', showText = true }: ECodeLogo
   const resolvedSize = sizeMap[size] ?? sizeMap.md;
 
   return (
-    <div className={cn('flex items-center gap-2', className)}>
+    <div className={cn('flex flex-row items-center gap-2 flex-nowrap whitespace-nowrap', className)}>
       <svg
-        className={resolvedSize.icon}
+        className={cn(resolvedSize.icon, 'shrink-0')}
         viewBox="0 0 40 40"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
