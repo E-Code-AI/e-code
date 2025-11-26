@@ -73,7 +73,7 @@ export class FigmaImportService {
         description: `Imported from Figma file: ${fileKey}`,
         language: 'javascript',
         visibility: 'private',
-        ownerId: userId.toString()
+        ownerId: userId
       });
 
       // Fetch Figma file data
@@ -88,6 +88,7 @@ export class FigmaImportService {
       // Create basic React project structure
       await storage.createFile({
         projectId: project.id,
+        name: 'package.json',
         path: 'package.json',
         content: JSON.stringify({
           name: project.name.toLowerCase().replace(/\s+/g, '-'),
@@ -116,6 +117,7 @@ export class FigmaImportService {
       // Create vite config
       await storage.createFile({
         projectId: project.id,
+        name: 'vite.config.ts',
         path: 'vite.config.ts',
         content: `import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -129,6 +131,7 @@ export default defineConfig({
       // Create index.html
       await storage.createFile({
         projectId: project.id,
+        name: 'index.html',
         path: 'index.html',
         content: `<!DOCTYPE html>
 <html lang="en">
@@ -148,6 +151,7 @@ export default defineConfig({
       // Create main.tsx
       await storage.createFile({
         projectId: project.id,
+        name: 'main.tsx',
         path: 'src/main.tsx',
         content: `import React from 'react'
 import ReactDOM from 'react-dom/client'
@@ -165,6 +169,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       // Create index.css with Figma-extracted styles
       await storage.createFile({
         projectId: project.id,
+        name: 'index.css',
         path: 'src/index.css',
         content: this.generateGlobalStyles(figmaData)
       });
@@ -174,8 +179,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       for (const [componentName, componentCode] of Object.entries(components)) {
         await storage.createFile({
           projectId: project.id,
+          name: `${componentName}.tsx`,
           path: `src/components/${componentName}.tsx`,
-          content: componentCode
+          content: componentCode as string
         });
         filesCreated++;
       }
@@ -183,6 +189,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       // Create App.tsx using the main frame
       await storage.createFile({
         projectId: project.id,
+        name: 'App.tsx',
         path: 'src/App.tsx',
         content: this.generateAppComponent(components)
       });
