@@ -128,7 +128,7 @@ export function AgentToolsPanel({
         <CollapsibleTrigger asChild>
           <Button
             variant="ghost"
-            className="w-full flex items-center justify-between p-3 hover:bg-muted/50"
+            className="w-full flex items-center justify-between p-3 min-h-[44px] hover:bg-muted/50"
             data-testid="agent-tools-trigger"
           >
             <div className="flex items-center gap-2">
@@ -165,7 +165,7 @@ export function AgentToolsPanel({
             )}
             
             {/* Max Autonomy Toggle - Replit Agent 3 */}
-            <div className="flex items-start justify-between gap-3 py-2">
+            <div className="flex items-start justify-between gap-3 py-2 min-h-[44px]">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
                   <Zap className="w-4 h-4 text-amber-600 dark:text-amber-400" />
@@ -207,7 +207,7 @@ export function AgentToolsPanel({
             <Separator />
 
             {/* App Testing Toggle - Replit Agent 3 (ON by default) */}
-            <div className="flex items-start justify-between gap-3 py-2">
+            <div className="flex items-start justify-between gap-3 py-2 min-h-[44px]">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center shrink-0">
                   <TestTube2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -248,7 +248,7 @@ export function AgentToolsPanel({
             <Separator />
 
             {/* Extended Thinking Toggle - Replit Advanced Options */}
-            <div className="flex items-start justify-between gap-3 py-2">
+            <div className="flex items-start justify-between gap-3 py-2 min-h-[44px]">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center shrink-0">
                   <Brain className="w-4 h-4 text-purple-600 dark:text-purple-400" />
@@ -286,7 +286,7 @@ export function AgentToolsPanel({
             <Separator />
 
             {/* High Power Models Toggle - Replit Advanced Options */}
-            <div className="flex items-start justify-between gap-3 py-2">
+            <div className="flex items-start justify-between gap-3 py-2 min-h-[44px]">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center shrink-0">
                   <Sparkles className="w-4 h-4 text-orange-600 dark:text-orange-400" />
@@ -324,7 +324,7 @@ export function AgentToolsPanel({
             <Separator />
 
             {/* Web Search Toggle - Replit Advanced Options */}
-            <div className="flex items-start justify-between gap-3 py-2">
+            <div className="flex items-start justify-between gap-3 py-2 min-h-[44px]">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center shrink-0">
                   <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -366,7 +366,7 @@ export function AgentToolsPanel({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full h-9 text-xs"
+                  className="w-full min-h-[44px] text-xs"
                   onClick={onViewVideoReplays}
                   data-testid="open-video-replays"
                 >
