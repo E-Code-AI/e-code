@@ -212,23 +212,23 @@ export default function Dashboard() {
             <AIModelSelector variant="inline" />
           </div>
 
-          {/* AI Prompt Input */}
+          {/* AI Prompt Input - Mobile Optimized */}
           <form onSubmit={handleCreateProject} className="max-w-2xl">
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
               <input
                 ref={inputRef}
                 type="text"
                 value={aiPrompt}
                 onChange={(e) => setAiPrompt(e.target.value)}
-                placeholder="Describe your app idea in natural language..."
-                className="flex-1 px-4 py-3 rounded-lg bg-white/20 backdrop-blur-md text-white placeholder:text-white/70 border border-white/30 focus:border-white/50 focus:outline-none focus:ring-2 focus:ring-white/30"
+                placeholder={isMobile ? "Describe your app..." : "Describe your app idea in natural language..."}
+                className="flex-1 px-4 py-3 sm:py-3 rounded-lg bg-white/20 backdrop-blur-md text-white placeholder:text-white/70 border border-white/30 focus:border-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 text-base"
                 data-testid="input-ai-prompt"
               />
               <Button
                 type="submit"
                 size="lg"
                 disabled={!aiPrompt.trim() || isCreating}
-                className="bg-white text-orange-600 hover:bg-white/90 font-semibold"
+                className="bg-white text-orange-600 hover:bg-white/90 font-semibold h-12 sm:h-auto w-full sm:w-auto"
                 data-testid="button-create-project"
               >
                 {isCreating ? (

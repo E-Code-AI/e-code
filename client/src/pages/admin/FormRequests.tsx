@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { AdminLayout } from './AdminLayout';
@@ -25,7 +24,6 @@ import {
   Inbox,
   Search as SearchIcon,
 } from 'lucide-react';
-import { Mail, Phone, ExternalLink, RefreshCw, Loader2, CheckCircle2, Clock, Archive } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
 const FORM_TABS = [
@@ -96,7 +94,6 @@ export default function AdminFormRequests() {
 
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['admin.formRequests', activeTab, statusFilter, debouncedSearch, page],
-    keepPreviousData: true,
     queryFn: async () => {
       const params = new URLSearchParams();
       if (activeTab !== 'all') {
@@ -129,8 +126,8 @@ export default function AdminFormRequests() {
   const summary = data?.summary || { currentTab: { total: 0, byStatus: {} }, byFormType: {}, matchedTotal: 0 };
   const statusCounts = summary.currentTab?.byStatus || {};
 
-  const tabCounts = useMemo(() => {
-    const counts = {
+  const tabCounts: Record<string, number> = useMemo(() => {
+    const counts: Record<string, number> = {
       contact_sales: summary.byFormType?.contact_sales || 0,
       support_ticket: summary.byFormType?.support_ticket || 0,
       report_abuse: summary.byFormType?.report_abuse || 0,
@@ -219,45 +216,45 @@ export default function AdminFormRequests() {
 
   return (
     <AdminLayout>
-      <div className="p-8 space-y-8">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Customer Requests</h1>
-            <p className="text-sm text-zinc-400">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">Customer Requests</h1>
+            <p className="text-xs sm:text-sm text-zinc-400">
               Track every form submission from marketing pages, trust &amp; safety, and support.
             </p>
           </div>
-          <Button variant="outline" onClick={() => refetch()} disabled={isFetching} className="text-white border-zinc-700">
+          <Button variant="outline" onClick={() => refetch()} disabled={isFetching} className="text-white border-zinc-700 w-full sm:w-auto">
             {isFetching ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Refreshing
+                <span className="sm:inline">Refreshing</span>
               </>
             ) : (
               <>
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Refresh
+                <span className="sm:inline">Refresh</span>
               </>
             )}
           </Button>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-2 sm:gap-3 grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {statusHighlights.map((item) => {
             const Icon = item.icon;
             return (
               <Card key={item.key} className="bg-zinc-900 border-zinc-800">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm text-zinc-400">{item.label}</p>
-                      <p className="mt-2 text-2xl font-semibold text-white">
+                <CardContent className="p-2 sm:p-4">
+                  <div className="flex items-start justify-between gap-2 sm:gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm text-zinc-400 truncate">{item.label}</p>
+                      <p className="mt-1 sm:mt-2 text-lg sm:text-2xl font-semibold text-white">
                         {item.value.toLocaleString()}
                       </p>
-                      <p className="text-xs text-zinc-500 mt-1">{item.description}</p>
+                      <p className="text-xs text-zinc-500 mt-1 hidden sm:block">{item.description}</p>
                     </div>
-                    <div className="p-2 rounded-full bg-zinc-800/60">
-                      <Icon className="h-5 w-5 text-zinc-300" />
+                    <div className="p-1.5 sm:p-2 rounded-full bg-zinc-800/60 flex-shrink-0">
+                      <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-zinc-300" />
                     </div>
                   </div>
                 </CardContent>
@@ -294,28 +291,32 @@ export default function AdminFormRequests() {
                   ) : null}
                 </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
-                  <TabsList className="bg-zinc-800/60 border border-zinc-700">
-                    {FORM_TABS.map((tab) => (
-                      <TabsTrigger
-                        key={tab.value}
-                        value={tab.value}
-                        className="data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
-                      >
-                        <span className="flex items-center gap-2">
-                          {tab.label}
-                          <Badge
-                            variant="outline"
-                            className="border-zinc-700 bg-transparent text-xs text-zinc-300"
-                          >
-                            {Number(tabCounts[tab.value] || 0).toLocaleString()}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center w-full">
+                {/* Scrollable tabs on mobile */}
+                <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 w-full sm:w-auto">
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-auto min-w-full sm:w-auto">
+                    <TabsList className="inline-flex w-auto bg-zinc-800/60 border border-zinc-700 gap-0.5 p-1">
+                      {FORM_TABS.map((tab) => (
+                        <TabsTrigger
+                          key={tab.value}
+                          value={tab.value}
+                          className="flex-shrink-0 whitespace-nowrap px-2 sm:px-3 text-xs sm:text-sm data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
+                        >
+                          <span className="flex items-center gap-1 sm:gap-2">
+                            <span className="hidden sm:inline">{tab.label}</span>
+                            <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
+                            <Badge
+                              variant="outline"
+                              className="border-zinc-700 bg-transparent text-[10px] sm:text-xs text-zinc-300 px-1.5"
+                            >
+                              {Number(tabCounts[tab.value] || 0).toLocaleString()}
                           </Badge>
                         </span>
                       </TabsTrigger>
                     ))}
-                  </TabsList>
-                </Tabs>
+                    </TabsList>
+                  </Tabs>
+                </div>
 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-full sm:w-48 bg-zinc-800 border-zinc-700 text-white">
@@ -433,7 +434,7 @@ export default function AdminFormRequests() {
                             <div className="inline-flex gap-2">
                               {STATUS_ACTIONS.map((action) => {
                                 const Icon = action.icon;
-                                const disabled = updateStatus.isLoading || request.status === action.value;
+                                const disabled = updateStatus.isPending || request.status === action.value;
                                 return (
                                   <Button
                                     key={action.value}
@@ -443,7 +444,7 @@ export default function AdminFormRequests() {
                                     className="border-zinc-700 text-zinc-200 hover:bg-zinc-800"
                                     onClick={() => updateStatus.mutate({ id: request.id, status: action.value })}
                                   >
-                                    {updateStatus.isLoading && updateStatus.variables?.id === request.id &&
+                                    {updateStatus.isPending && updateStatus.variables?.id === request.id &&
                                     updateStatus.variables?.status === action.value ? (
                                       <Loader2 className="mr-2 h-3 w-3 animate-spin" />
                                     ) : (

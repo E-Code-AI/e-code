@@ -197,13 +197,16 @@ export default function UserSettings() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="account">Account</TabsTrigger>
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
-          </TabsList>
+          {/* Scrollable tabs on mobile */}
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 pb-2 sm:pb-0">
+            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-5 gap-1 bg-muted/50 p-1 rounded-lg">
+              <TabsTrigger value="profile" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap">Profile</TabsTrigger>
+              <TabsTrigger value="account" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap">Account</TabsTrigger>
+              <TabsTrigger value="appearance" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap">Appearance</TabsTrigger>
+              <TabsTrigger value="notifications" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap">Notifications</TabsTrigger>
+              <TabsTrigger value="security" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap">Security</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="profile" className="space-y-6">
             <Card>

@@ -255,31 +255,31 @@ export default function UserProfile() {
               </div>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-              <div className="text-center p-4 bg-muted/50 rounded-lg">
-                <div className="text-2xl font-bold">{profile.stats.projects}</div>
-                <div className="text-sm text-muted-foreground">Projects</div>
+            {/* Stats - Responsive Grid */}
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 sm:gap-4">
+              <div className="text-center p-2 sm:p-4 bg-muted/50 rounded-lg">
+                <div className="text-lg sm:text-2xl font-bold">{profile.stats.projects}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Projects</div>
               </div>
-              <div className="text-center p-4 bg-muted/50 rounded-lg">
-                <div className="text-2xl font-bold">{profile.stats.stars}</div>
-                <div className="text-sm text-muted-foreground">Stars</div>
+              <div className="text-center p-2 sm:p-4 bg-muted/50 rounded-lg">
+                <div className="text-lg sm:text-2xl font-bold">{profile.stats.stars}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Stars</div>
               </div>
-              <div className="text-center p-4 bg-muted/50 rounded-lg">
-                <div className="text-2xl font-bold">{profile.stats.followers}</div>
-                <div className="text-sm text-muted-foreground">Followers</div>
+              <div className="text-center p-2 sm:p-4 bg-muted/50 rounded-lg">
+                <div className="text-lg sm:text-2xl font-bold">{profile.stats.followers}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Followers</div>
               </div>
-              <div className="text-center p-4 bg-muted/50 rounded-lg">
-                <div className="text-2xl font-bold">{profile.stats.following}</div>
-                <div className="text-sm text-muted-foreground">Following</div>
+              <div className="text-center p-2 sm:p-4 bg-muted/50 rounded-lg">
+                <div className="text-lg sm:text-2xl font-bold">{profile.stats.following}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Following</div>
               </div>
-              <div className="text-center p-4 bg-muted/50 rounded-lg">
-                <div className="text-2xl font-bold">{profile.stats.contributions}</div>
-                <div className="text-sm text-muted-foreground">Contributions</div>
+              <div className="text-center p-2 sm:p-4 bg-muted/50 rounded-lg">
+                <div className="text-lg sm:text-2xl font-bold">{profile.stats.contributions}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Contrib.</div>
               </div>
-              <div className="text-center p-4 bg-muted/50 rounded-lg">
-                <div className="text-2xl font-bold">{profile.stats.deployments}</div>
-                <div className="text-sm text-muted-foreground">Deployments</div>
+              <div className="text-center p-2 sm:p-4 bg-muted/50 rounded-lg">
+                <div className="text-lg sm:text-2xl font-bold">{profile.stats.deployments}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Deploys</div>
               </div>
             </div>
           </CardContent>
@@ -287,12 +287,15 @@ export default function UserProfile() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 mb-6">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="projects">Projects</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="achievements">Achievements</TabsTrigger>
-          </TabsList>
+          {/* Scrollable tabs on mobile */}
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 pb-2 sm:pb-0 mb-4 sm:mb-6">
+            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-4 gap-1 bg-muted/50 p-1 rounded-lg">
+              <TabsTrigger value="overview" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap">Overview</TabsTrigger>
+              <TabsTrigger value="projects" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap">Projects</TabsTrigger>
+              <TabsTrigger value="activity" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap">Activity</TabsTrigger>
+              <TabsTrigger value="achievements" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap">Achievements</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="overview" className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
