@@ -46,18 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: async (user: SelectUser) => {
       queryClient.setQueryData(["/api/me"], user);
-      // Invalidate and refetch all queries that depend on authentication
       await queryClient.invalidateQueries();
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.username}!`,
       });
-      // If user is admin, redirect to admin page, otherwise dashboard
-      if (user.role === 'admin' || user.role === 'super_admin') {
-        window.location.href = '/admin/chatgpt';
-      } else {
-        window.location.href = '/dashboard';
-      }
+      // IMPORTANT: Do NOT navigate here with window.location.href
+      // Let Login.tsx useEffect handle navigation to preserve sessionStorage flags
+      // for the Replit-style BUILD → Login → Workspace flow
     },
     onError: (error: Error) => {
       toast({
