@@ -114,10 +114,7 @@ export default function TemplateMarketplace() {
   // Track template action
   const trackAction = useMutation({
     mutationFn: async ({ templateId, action }: { templateId: string; action: string }) => {
-      return apiRequest(`/api/marketplace/template/${templateId}/track`, {
-        method: 'POST',
-        body: JSON.stringify({ action }),
-      });
+      return apiRequest('POST', `/api/marketplace/template/${templateId}/track`, { action });
     },
   });
 
@@ -213,7 +210,7 @@ export default function TemplateMarketplace() {
 
   return (
     <PageShell data-testid="templates-marketplace">
-      <PageHeader>
+      <PageHeader title="Template Marketplace" description="Discover and deploy production-ready templates for your next project">
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div>

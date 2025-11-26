@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, PanInfo } from 'framer-motion';
-import { FileText, Code, Terminal, Monitor, MoreHorizontal, Sparkles } from 'lucide-react';
+import { Code, Terminal, Monitor, MoreHorizontal, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MobileFileExplorer } from './MobileFileExplorer';
 import { LazyMobileCodeEditor } from './LazyMobileCodeEditor';
@@ -13,7 +13,7 @@ import { useTabPersistence, useFileBrowserPersistence } from '@/hooks/use-mobile
 import { ReplitAgentPanelV3 } from '../ai/ReplitAgentPanelV3';
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 
-export type MobileTab = 'agent' | 'files' | 'code' | 'terminal' | 'preview' | 'more';
+export type MobileTab = 'agent' | 'code' | 'terminal' | 'preview' | 'more';
 
 interface MobileIDEViewProps {
   projectId: string | number; // Support both UUID strings and numeric IDs
@@ -23,12 +23,11 @@ interface MobileIDEViewProps {
 // Normalize projectId to string for all child components
 const normalizeProjectId = (id: string | number): string => String(id);
 
-const tabs: { id: MobileTab; label: string; icon: typeof FileText }[] = [
+const tabs: { id: MobileTab; label: string; icon: typeof Code }[] = [
   { id: 'agent', label: 'Agent', icon: Sparkles },
-  { id: 'files', label: 'Files', icon: FileText },
   { id: 'code', label: 'Code', icon: Code },
-  { id: 'terminal', label: 'Terminal', icon: Terminal },
-  { id: 'preview', label: 'Preview', icon: Monitor },
+  { id: 'terminal', label: 'Shell', icon: Terminal },
+  { id: 'preview', label: 'Web', icon: Monitor },
   { id: 'more', label: 'More', icon: MoreHorizontal },
 ];
 
@@ -96,7 +95,6 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         const prevTab = tabs[activeIndex - 1];
         if (prevTab.id !== 'more') {
           setActiveTab(prevTab.id);
-          if (prevTab.id === 'files') setIsFilesOpen(true);
           // Haptic feedback
           if ('vibrate' in navigator) {
             navigator.vibrate(10);
@@ -107,7 +105,6 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         const nextTab = tabs[activeIndex + 1];
         if (nextTab.id !== 'more') {
           setActiveTab(nextTab.id);
-          if (nextTab.id === 'files') setIsFilesOpen(true);
           // Haptic feedback
           if ('vibrate' in navigator) {
             navigator.vibrate(10);
@@ -124,8 +121,6 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
   const handleTabClick = (tabId: string) => {
     if (tabId === 'more') {
       setIsMoreMenuOpen(true);
-    } else if (tabId === 'files') {
-      setIsFilesOpen(true);
     } else {
       // Only set active tab for content tabs (agent, code, terminal, preview)
       setActiveTab(tabId);
@@ -135,6 +130,12 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
     }
+  };
+  
+  // Handle opening files from More menu
+  const handleOpenFiles = () => {
+    setIsFilesOpen(true);
+    setIsMoreMenuOpen(false);
   };
   
   // File selection handler with persistence
@@ -241,6 +242,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         projectId={normalizedProjectId}
         isOpen={isMoreMenuOpen}
         onClose={() => setIsMoreMenuOpen(false)}
+        onOpenFiles={handleOpenFiles}
       />
       
       {/* Keyboard Utilities (work with external keyboards on mobile) */}
