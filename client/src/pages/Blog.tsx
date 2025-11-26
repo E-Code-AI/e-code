@@ -36,18 +36,22 @@ export default function Blog() {
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   // Fetch blog posts from API
-  const { data: allPosts = [], isLoading } = useQuery({
+  const { data: rawPosts, isLoading } = useQuery({
     queryKey: ['/api/blog/posts'],
   });
 
-  const { data: featuredPosts = [] } = useQuery({
+  const { data: rawFeatured } = useQuery({
     queryKey: ['/api/blog/featured'],
   });
+
+  // Ensure we always have arrays (API may return null)
+  const allPosts = Array.isArray(rawPosts) ? rawPosts : [];
+  const featuredPosts = Array.isArray(rawFeatured) ? rawFeatured : [];
 
   // Filter posts by category
   const filteredPosts = selectedCategory === 'All' 
     ? allPosts 
-    : allPosts.filter((post: any) => post.category.toLowerCase() === selectedCategory.toLowerCase());
+    : allPosts.filter((post: any) => post.category?.toLowerCase() === selectedCategory.toLowerCase());
 
   // Get the first featured post
   const featuredPost = featuredPosts[0];
