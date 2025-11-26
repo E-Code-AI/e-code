@@ -131,14 +131,14 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
               Choose your preferred AI model for code generation ({availableModels.length} available)
             </p>
             <Select value={currentModel || undefined} onValueChange={handleModelChange}>
-              <SelectTrigger className="w-full" data-testid="select-ai-model">
+              <SelectTrigger className="w-full max-w-sm" data-testid="select-ai-model">
                 <SelectValue placeholder="Select AI model..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="w-[320px] max-w-[90vw]">
                 {availableModels.map((model) => {
                   const ProviderIcon = getProviderIcon(model.provider);
                   const providerColor = getProviderColor(model.provider);
-                  const isAvailable = model.available !== false; // Default to true if not specified
+                  const isAvailable = model.available !== false;
                   return (
                     <SelectItem 
                       key={model.id} 
@@ -147,17 +147,17 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
                       disabled={!isAvailable}
                       className={!isAvailable ? 'opacity-50 cursor-not-allowed' : ''}
                     >
-                      <div className="flex items-center gap-3 py-1">
-                        <div className={`w-2 h-2 rounded-full ${providerColor}`} />
-                        <div className="flex-1">
-                          <div className="font-medium">
+                      <div className="flex items-center gap-2 py-1">
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${providerColor}`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate">
                             {model.name}
-                            {!isAvailable && <span className="text-xs text-red-500 ml-2">(Not configured)</span>}
+                            {!isAvailable && <span className="text-xs text-red-500 ml-1">(N/A)</span>}
                           </div>
-                          <div className="text-xs text-muted-foreground">{model.description}</div>
+                          <div className="text-xs text-muted-foreground truncate">{model.description}</div>
                         </div>
                         {model.supportsStreaming && isAvailable && (
-                          <Badge variant="secondary" className="text-xs">Streaming</Badge>
+                          <Badge variant="secondary" className="text-[10px] shrink-0">Stream</Badge>
                         )}
                       </div>
                     </SelectItem>
