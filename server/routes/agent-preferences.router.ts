@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { ensureAuthenticated } from '../middleware/auth';
 import { AgentPreferencesService } from '../services/agent-preferences.service';
-import { AI_MODELS } from '@shared/schema';
+import { AI_MODELS, type AiModel } from '@shared/schema';
 import type { IStorage } from '../storage';
 import { createLogger } from '../utils/logger';
 
@@ -120,7 +120,7 @@ export default function createAgentPreferencesRouter(storage: IStorage): Router 
       const taskComplexity = (req.query.complexity as 'simple' | 'medium' | 'complex') || 'medium';
       
       const effectiveModel = preferencesService.getEffectiveModel({
-        preferredModel: preferences?.preferredModel || undefined,
+        preferredModel: preferences?.preferredModel as AiModel | undefined,
         extendedThinking: preferences?.extendedThinking ?? undefined,
         highPowerMode: preferences?.highPowerMode ?? undefined,
         taskComplexity,
