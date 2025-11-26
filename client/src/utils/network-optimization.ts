@@ -1,4 +1,5 @@
 // Network optimization utilities for improved performance
+import { handleUnauthorized } from '@/lib/auth-redirect';
 
 interface RequestConfig {
   url: string;
@@ -220,8 +221,14 @@ class NetworkOptimizer {
       });
       
       if (!response.ok) {
-        // For 401 errors on auth endpoints, return null instead of throwing
-        if (response.status === 401 && (config.url.includes('/api/auth/user') || config.url.includes('/api/user'))) {
+        // Handle 401 Unauthorized - redirect to login silently
+        if (response.status === 401) {
+          // For auth check endpoints, just return null (expected behavior)
+          if (config.url.includes('/api/auth/user') || config.url.includes('/api/user')) {
+            return null as any;
+          }
+          // For other endpoints, trigger redirect to login
+          handleUnauthorized(config.url);
           return null as any;
         }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);

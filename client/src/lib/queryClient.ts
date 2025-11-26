@@ -1,9 +1,25 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { handleUnauthorized } from "./auth-redirect";
 
-async function throwIfResNotOk(res: Response) {
+interface HttpError extends Error {
+  status: number;
+}
+
+async function throwIfResNotOk(res: Response, url?: string): Promise<void> {
   if (!res.ok) {
+    // Handle 401 specially - redirect to login
+    if (res.status === 401) {
+      handleUnauthorized(url);
+      // Create error with status for downstream handling
+      const error = new Error('Unauthorized') as HttpError;
+      error.status = 401;
+      throw error;
+    }
+    
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    const error = new Error(`${res.status}: ${text}`) as HttpError;
+    error.status = res.status;
+    throw error;
   }
 }
 
@@ -91,7 +107,7 @@ export async function apiRequest<T = any>(
   }
 
   // Throw if response not ok (following TanStack Query pattern)
-  await throwIfResNotOk(res);
+  await throwIfResNotOk(res, url);
   
   // Handle responses that should not have a body (204, 205, 304)
   // 204 No Content, 205 Reset Content, 304 Not Modified
@@ -130,15 +146,24 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    const url = queryKey[0] as string;
+    const res = await fetch(url, {
       credentials: "include",
     });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    if (res.status === 401) {
+      if (unauthorizedBehavior === "returnNull") {
+        // Silently return null for expected auth checks
+        return null;
+      }
+      // Trigger redirect for unexpected 401s
+      handleUnauthorized(url);
+      const error = new Error('Unauthorized') as HttpError;
+      error.status = 401;
+      throw error;
     }
 
-    await throwIfResNotOk(res);
+    await throwIfResNotOk(res, url);
     return await res.json();
   };
 
@@ -162,18 +187,17 @@ export const queryClient = new QueryClient({
     mutations: {
       retry: (failureCount, error: any) => {
         // Don't retry on 401 Unauthorized
-        if (error?.message?.includes('401')) return false;
+        if (error?.status === 401 || error?.message?.includes('401')) return false;
         // Only retry on network errors, not on other 4xx errors
         if (error?.status >= 400 && error?.status < 500) return false;
-        return failureCount < 3; // Retry up to 3 times with exponential backoff
+        return failureCount < 3;
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       onError: (error: any) => {
-        // Global error handler for 401 - graceful degradation
-        if (error?.message?.includes('401')) {
-          console.info('[Auth] Unauthenticated request - user not logged in');
-          // Frontend components should handle this gracefully with fallback UI
-          // We don't throw/toast here to avoid noise for intentional anonymous access
+        // 401 errors trigger redirect in throwIfResNotOk, no console logging needed
+        if (error?.status === 401 || error?.message?.includes('401')) {
+          // Silent handling - redirect already triggered
+          return;
         }
       }
     },
