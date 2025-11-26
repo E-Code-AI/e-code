@@ -190,11 +190,13 @@ export function ReplitAgentPanelV3({
   
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   
-  // Agent Tools Panel settings (Replit-style toggles)
+  // Agent Tools Panel settings (Replit Agent 3 exact toggles)
   const [agentToolsSettings, setAgentToolsSettings] = useState<AgentToolsSettings>({
     maxAutonomy: false,
-    appTesting: false,
-    fastMode: false
+    appTesting: true, // ON by default per Replit Agent 3
+    extendedThinking: false,
+    highPowerModels: false,
+    webSearch: false
   });
   
   // Element Editor state
@@ -238,7 +240,7 @@ export function ReplitAgentPanelV3({
     session: autonomySession
   } = useMaxAutonomy(autonomySessionId, projectIdNum);
 
-  // Handler for agent tools settings changes (Max Autonomy, App Testing, Fast Mode)
+  // Handler for agent tools settings changes (Replit Agent 3 toggles)
   const handleAgentToolsChange = useCallback((newSettings: AgentToolsSettings) => {
     setAgentToolsSettings(newSettings);
     
@@ -246,7 +248,7 @@ export function ReplitAgentPanelV3({
     if (newSettings.maxAutonomy && !agentToolsSettings.maxAutonomy) {
       toast({
         title: "Max Autonomy Enabled",
-        description: "Agent will work for up to 200 minutes with checkpoints"
+        description: "Agent will supervise itself for up to 200 minutes"
       });
     }
     
@@ -254,15 +256,31 @@ export function ReplitAgentPanelV3({
     if (newSettings.appTesting && !agentToolsSettings.appTesting) {
       toast({
         title: "App Testing Enabled",
-        description: "Agent will test your app using browser automation"
+        description: "Agent will test using browser automation with video replays"
       });
     }
     
-    // Handle Fast Mode toggle
-    if (newSettings.fastMode && !agentToolsSettings.fastMode) {
+    // Handle Extended Thinking toggle
+    if (newSettings.extendedThinking && !agentToolsSettings.extendedThinking) {
       toast({
-        title: "Fast Mode Enabled",
-        description: "5x faster responses for targeted changes"
+        title: "Extended Thinking Enabled",
+        description: "Deeper reasoning for harder problems"
+      });
+    }
+    
+    // Handle High Power Models toggle
+    if (newSettings.highPowerModels && !agentToolsSettings.highPowerModels) {
+      toast({
+        title: "High Power Models Enabled",
+        description: "Using sophisticated AI for complex tasks"
+      });
+    }
+    
+    // Handle Web Search toggle
+    if (newSettings.webSearch && !agentToolsSettings.webSearch) {
+      toast({
+        title: "Web Search Enabled",
+        description: "Agent can search the web for docs and APIs"
       });
     }
   }, [agentToolsSettings, toast]);

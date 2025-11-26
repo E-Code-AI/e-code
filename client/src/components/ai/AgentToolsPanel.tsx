@@ -15,16 +15,20 @@ import {
   Video,
   ChevronDown,
   Settings2,
-  Gauge,
   Clock,
   PlayCircle,
+  Brain,
+  Sparkles,
+  Globe,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface AgentToolsSettings {
+export interface AgentToolsSettings {
   maxAutonomy: boolean;
   appTesting: boolean;
-  fastMode: boolean;
+  extendedThinking: boolean;
+  highPowerModels: boolean;
+  webSearch: boolean;
 }
 
 interface AgentToolsPanelProps {
@@ -51,6 +55,8 @@ export function AgentToolsPanel({
     });
   };
 
+  const activeCount = Object.values(settings).filter(Boolean).length;
+
   return (
     <div className={cn("bg-card border rounded-lg", className)}>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -63,6 +69,11 @@ export function AgentToolsPanel({
             <div className="flex items-center gap-2">
               <Settings2 className="w-4 h-4 text-muted-foreground" />
               <span className="font-medium text-sm">Agent Tools</span>
+              {activeCount > 0 && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  {activeCount} active
+                </Badge>
+              )}
             </div>
             <ChevronDown className={cn(
               "w-4 h-4 text-muted-foreground transition-transform",
@@ -75,7 +86,7 @@ export function AgentToolsPanel({
           <div className="px-3 pb-3 space-y-3">
             <Separator />
             
-            {/* Max Autonomy Toggle - Replit Style */}
+            {/* Max Autonomy Toggle - Replit Agent 3 */}
             <div className="flex items-start justify-between gap-3 py-2">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
@@ -94,7 +105,7 @@ export function AgentToolsPanel({
                     </Badge>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-tight">
-                    Agent works for much longer with minimal supervision (up to 200 minutes)
+                    Agent will supervise itself, so you don't have to (runs up to 200 minutes)
                   </p>
                   {settings.maxAutonomy && (
                     <div className="flex items-center gap-1.5 mt-1">
@@ -117,7 +128,7 @@ export function AgentToolsPanel({
 
             <Separator />
 
-            {/* App Testing Toggle - Replit Style */}
+            {/* App Testing Toggle - Replit Agent 3 (ON by default) */}
             <div className="flex items-start justify-between gap-3 py-2">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center shrink-0">
@@ -158,34 +169,87 @@ export function AgentToolsPanel({
 
             <Separator />
 
-            {/* Fast Mode Toggle - New Nov 2025 */}
+            {/* Extended Thinking Toggle - Replit Advanced Options */}
             <div className="flex items-start justify-between gap-3 py-2">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center shrink-0">
-                  <Gauge className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center shrink-0">
+                  <Brain className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <Label 
-                      htmlFor="fast-mode" 
-                      className="font-medium text-sm cursor-pointer"
-                    >
-                      Fast mode
-                    </Label>
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">
-                      5x faster
-                    </Badge>
-                  </div>
+                  <Label 
+                    htmlFor="extended-thinking" 
+                    className="font-medium text-sm cursor-pointer"
+                  >
+                    Extended thinking
+                  </Label>
                   <p className="text-[11px] text-muted-foreground leading-tight">
-                    Instant, precise control for targeted changes
+                    Deeper reasoning for harder problems
                   </p>
                 </div>
               </div>
               <Switch
-                id="fast-mode"
-                checked={settings.fastMode}
-                onCheckedChange={() => handleToggle('fastMode')}
-                data-testid="toggle-fast-mode"
+                id="extended-thinking"
+                checked={settings.extendedThinking}
+                onCheckedChange={() => handleToggle('extendedThinking')}
+                data-testid="toggle-extended-thinking"
+                className="data-[state=checked]:bg-purple-500"
+              />
+            </div>
+
+            <Separator />
+
+            {/* High Power Models Toggle - Replit Advanced Options */}
+            <div className="flex items-start justify-between gap-3 py-2">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div className="space-y-0.5">
+                  <Label 
+                    htmlFor="high-power-models" 
+                    className="font-medium text-sm cursor-pointer"
+                  >
+                    High power models
+                  </Label>
+                  <p className="text-[11px] text-muted-foreground leading-tight">
+                    Uses more sophisticated AI for performance optimizations, integrations, unfamiliar tech
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="high-power-models"
+                checked={settings.highPowerModels}
+                onCheckedChange={() => handleToggle('highPowerModels')}
+                data-testid="toggle-high-power-models"
+                className="data-[state=checked]:bg-orange-500"
+              />
+            </div>
+
+            <Separator />
+
+            {/* Web Search Toggle - Replit Advanced Options */}
+            <div className="flex items-start justify-between gap-3 py-2">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center shrink-0">
+                  <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="space-y-0.5">
+                  <Label 
+                    htmlFor="web-search" 
+                    className="font-medium text-sm cursor-pointer"
+                  >
+                    Web search
+                  </Label>
+                  <p className="text-[11px] text-muted-foreground leading-tight">
+                    Agent searches the web for up-to-date docs and APIs
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="web-search"
+                checked={settings.webSearch}
+                onCheckedChange={() => handleToggle('webSearch')}
+                data-testid="toggle-web-search"
                 className="data-[state=checked]:bg-blue-500"
               />
             </div>
@@ -212,5 +276,3 @@ export function AgentToolsPanel({
     </div>
   );
 }
-
-export type { AgentToolsSettings };
