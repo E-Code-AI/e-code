@@ -109,7 +109,7 @@ export default function Profile() {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <h1 className="text-2xl font-bold">{profile.displayName}</h1>
-                  {profile.badges.slice(0, 2).map((badge) => {
+                  {profile.badges.slice(0, 2).map((badge: { id: string; icon: any; name: string; color: string }) => {
                     const Icon = badge.icon;
                     return (
                       <span key={badge.id} title={badge.name}>
@@ -302,7 +302,7 @@ export default function Profile() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {profile.skills.map((skill) => (
+                      {profile.skills.map((skill: string) => (
                         <Badge key={skill} variant="secondary">
                           {skill}
                         </Badge>
@@ -318,7 +318,7 @@ export default function Profile() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {profile.recentActivity.map((activity, index) => (
+                      {profile.recentActivity.map((activity: { type: string; repl: string; time: string }, index: number) => (
                         <div key={index} className="flex items-start gap-2 text-sm">
                           <Activity className="h-4 w-4 mt-0.5 text-muted-foreground" />
                           <div>
@@ -343,7 +343,7 @@ export default function Profile() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-3 gap-4">
-                      {profile.badges.map((badge) => {
+                      {profile.badges.map((badge: { id: string; icon: any; name: string; color: string }) => {
                         const Icon = badge.icon;
                         return (
                           <div
@@ -364,7 +364,7 @@ export default function Profile() {
 
           <TabsContent value="repls" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {mockRepls.map((repl) => (
+              {projects.map((repl: any) => (
                 <Card
                   key={repl.id}
                   className="cursor-pointer hover:shadow-md transition-shadow"
@@ -418,7 +418,7 @@ export default function Profile() {
 
           <TabsContent value="achievements" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {profile.badges.map((badge) => {
+              {profile.badges.map((badge: { id: string; icon: any; name: string; color: string }) => {
                 const Icon = badge.icon;
                 return (
                   <Card key={badge.id}>

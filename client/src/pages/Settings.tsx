@@ -136,8 +136,9 @@ export default function Settings() {
                 <Button
                   key={item.id}
                   variant={activeTab === item.id ? 'secondary' : 'ghost'}
-                  className="w-full justify-start"
+                  className="w-full justify-start min-h-[44px]"
                   onClick={() => setActiveTab(item.id)}
+                  data-testid={`button-settings-${item.id}`}
                 >
                   <Icon className="mr-2 h-4 w-4" />
                   {item.label}
@@ -196,6 +197,8 @@ export default function Settings() {
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
                       placeholder="Your display name"
+                      className="min-h-[44px]"
+                      data-testid="input-display-name"
                     />
                   </div>
 
@@ -206,6 +209,8 @@ export default function Settings() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="your.email@example.com"
+                      className="min-h-[44px]"
+                      data-testid="input-settings-email"
                     />
                   </div>
 
@@ -216,11 +221,13 @@ export default function Settings() {
                       onChange={(e) => setBio(e.target.value)}
                       placeholder="Tell us about yourself..."
                       rows={4}
+                      className="min-h-[88px]"
+                      data-testid="textarea-settings-bio"
                     />
                   </div>
                 </div>
 
-                <Button onClick={handleSaveProfile}>Save Changes</Button>
+                <Button onClick={handleSaveProfile} className="min-h-[44px]" data-testid="button-save-profile">Save Changes</Button>
               </CardContent>
             </Card>
           )}
@@ -312,7 +319,7 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <Button>Save Preferences</Button>
+                <Button className="min-h-[44px]" data-testid="button-save-preferences">Save Preferences</Button>
               </CardContent>
             </Card>
           )}
