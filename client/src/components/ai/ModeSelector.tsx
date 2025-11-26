@@ -5,7 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown, Sparkles, Lightbulb } from 'lucide-react';
+import { ChevronDown, Hammer, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type AgentMode = 'plan' | 'build';
@@ -19,20 +19,21 @@ interface ModeSelectorProps {
 export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
   const modes = [
     {
-      id: 'plan' as const,
-      label: 'Plan',
-      icon: Lightbulb,
-      description: 'Brainstorm and plan without changing code'
-    },
-    {
       id: 'build' as const,
       label: 'Build',
-      icon: Sparkles,
-      description: 'Build and modify your application'
+      icon: Hammer,
+      description: 'Make, test, iterate autonomously',
+      badge: 'Auto'
+    },
+    {
+      id: 'plan' as const,
+      label: 'Plan',
+      icon: MessageSquare,
+      description: 'Ask questions, plan your work'
     }
   ];
 
-  const currentMode = modes.find(m => m.id === mode) || modes[1];
+  const currentMode = modes.find(m => m.id === mode) || modes[0];
   const CurrentIcon = currentMode.icon;
 
   return (
@@ -42,19 +43,21 @@ export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
           variant="ghost"
           size="sm"
           className={cn(
-            "h-8 px-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100",
-            "border border-gray-200 dark:border-gray-700 rounded-md",
-            "hover:bg-gray-50 dark:hover:bg-gray-800",
+            "h-7 px-2 gap-1 text-xs font-medium",
+            mode === 'build' 
+              ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-950/50" 
+              : "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50",
+            "border-0 rounded-full",
             className
           )}
           data-testid="mode-selector-trigger"
         >
-          <CurrentIcon className="w-3.5 h-3.5 mr-1.5" />
+          <CurrentIcon className="w-3 h-3" />
           {currentMode.label}
-          <ChevronDown className="w-3.5 h-3.5 ml-1 opacity-50" />
+          <ChevronDown className="w-3 h-3 opacity-60" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-48 sm:w-56">
+      <DropdownMenuContent align="start" className="w-56">
         {modes.map((m) => {
           const Icon = m.icon;
           const isActive = m.id === mode;
@@ -64,28 +67,51 @@ export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
               key={m.id}
               onClick={() => onChange(m.id)}
               className={cn(
-                "flex items-center gap-2 p-2 cursor-pointer",
-                isActive && "bg-blue-50 dark:bg-blue-950/30"
+                "flex items-center gap-2.5 p-2.5 cursor-pointer min-h-[44px]",
+                isActive && (m.id === 'build' 
+                  ? "bg-emerald-50 dark:bg-emerald-950/30" 
+                  : "bg-blue-50 dark:bg-blue-950/30")
               )}
               data-testid={`mode-option-${m.id}`}
             >
-              <Icon className={cn(
-                "w-4 h-4 shrink-0",
-                isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"
-              )} />
+              <div className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                m.id === 'build' 
+                  ? "bg-emerald-100 dark:bg-emerald-900/50" 
+                  : "bg-blue-100 dark:bg-blue-900/50"
+              )}>
+                <Icon className={cn(
+                  "w-4 h-4",
+                  m.id === 'build' 
+                    ? "text-emerald-600 dark:text-emerald-400" 
+                    : "text-blue-600 dark:text-blue-400"
+                )} />
+              </div>
               <div className="flex-1 min-w-0">
-                <div className={cn(
-                  "font-medium text-sm",
-                  isActive ? "text-blue-900 dark:text-blue-100" : "text-gray-900 dark:text-gray-100"
-                )}>
-                  {m.label}
+                <div className="flex items-center gap-1.5">
+                  <span className={cn(
+                    "font-medium text-sm",
+                    isActive 
+                      ? (m.id === 'build' ? "text-emerald-900 dark:text-emerald-100" : "text-blue-900 dark:text-blue-100")
+                      : "text-gray-900 dark:text-gray-100"
+                  )}>
+                    {m.label}
+                  </span>
+                  {m.badge && (
+                    <span className="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full bg-emerald-500 text-white">
+                      {m.badge}
+                    </span>
+                  )}
                 </div>
-                <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                <div className="text-[11px] text-gray-500 dark:text-gray-400">
                   {m.description}
                 </div>
               </div>
               {isActive && (
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 shrink-0" />
+                <div className={cn(
+                  "w-2 h-2 rounded-full shrink-0",
+                  m.id === 'build' ? "bg-emerald-500" : "bg-blue-500"
+                )} />
               )}
             </DropdownMenuItem>
           );
