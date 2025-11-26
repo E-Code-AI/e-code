@@ -304,56 +304,62 @@ export function ToolExecutionList({
   ];
 
   return (
-    <div className="space-y-2 sm:space-y-3" data-testid="tool-execution-list">
-      {/* Header with stats */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground">
-            Agent Actions
-          </span>
+    <div className="space-y-1.5 sm:space-y-2" data-testid="tool-execution-list">
+      {/* Compact inline stats (only show when there are multiple items or errors) */}
+      {(toolExecutions.length > 1 || stats.errors > 0) && (
+        <div className="flex items-center gap-1.5">
           <div className="flex items-center gap-1">
             {stats.success > 0 && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                {stats.success} ✓
+              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                {stats.success} done
               </Badge>
             )}
             {stats.running > 0 && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-blue-500/10 text-blue-600 border-blue-500/20 animate-pulse">
+              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-blue-500/10 text-blue-600 border-blue-500/20 animate-pulse">
                 {stats.running} running
               </Badge>
             )}
             {stats.errors > 0 && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-red-500/10 text-red-600 border-red-500/20">
-                {stats.errors} ✗
+              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-red-500/10 text-red-600 border-red-500/20">
+                {stats.errors} failed
               </Badge>
             )}
           </div>
         </div>
+      )}
 
-        {/* Filters */}
-        {showFilters && toolExecutions.length > 3 && (
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 -mb-1">
-            {filterButtons.map(({ id, label, icon: Icon, count }) => (
-              <Button
-                key={id}
-                variant={filter === id ? 'secondary' : 'ghost'}
-                size="sm"
-                className={cn(
-                  "h-6 px-2 text-[10px] shrink-0",
-                  filter === id && "bg-primary/10"
-                )}
-                onClick={() => setFilter(id)}
-                disabled={count === 0 && id !== 'all'}
-                data-testid={`filter-${id}`}
-              >
-                <Icon className="h-3 w-3 mr-1" />
-                {label}
-                {count > 0 && <span className="ml-1 opacity-70">({count})</span>}
-              </Button>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Filters - only when showFilters is true and many items */}
+      {showFilters && toolExecutions.length > 5 && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            Agent Actions ({toolExecutions.length})
+          </span>
+        </div>
+      )}
+
+      {/* Filter buttons - only when showFilters is true */}
+      {showFilters && toolExecutions.length > 5 && (
+        <div className="flex items-center gap-1 overflow-x-auto pb-1 -mb-1">
+          {filterButtons.map(({ id, label, icon: Icon, count }) => (
+            <Button
+              key={id}
+              variant={filter === id ? 'secondary' : 'ghost'}
+              size="sm"
+              className={cn(
+                "h-6 px-2 text-[10px] shrink-0",
+                filter === id && "bg-primary/10"
+              )}
+              onClick={() => setFilter(id)}
+              disabled={count === 0 && id !== 'all'}
+              data-testid={`filter-${id}`}
+            >
+              <Icon className="h-3 w-3 mr-1" />
+              {label}
+              {count > 0 && <span className="ml-1 opacity-70">({count})</span>}
+            </Button>
+          ))}
+        </div>
+      )}
 
       {/* Execution list */}
       <div className="space-y-1 sm:space-y-1.5">

@@ -1033,10 +1033,14 @@ export function ReplitAgentPanelV3({
                   </Button>
                 </div>
 
-                {/* Tool Executions */}
+                {/* Tool Executions - inline in chat like Replit */}
                 {message.toolExecutions && message.toolExecutions.length > 0 && (
                   <div className="w-full mt-2" data-testid={`tool-executions-${message.id}`}>
-                    <ToolExecutionList toolExecutions={message.toolExecutions} />
+                    <ToolExecutionList 
+                      toolExecutions={message.toolExecutions} 
+                      showFilters={false}
+                      compact={true}
+                    />
                   </div>
                 )}
 
