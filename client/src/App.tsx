@@ -61,6 +61,7 @@ const AdminBilling = lazy(() => import("@/pages/AdminBilling"));
 const AdminAIModels = lazy(() => import("@/pages/admin/AIModels"));
 const AdminFormRequests = lazy(() => import("@/pages/admin/FormRequests"));
 const AdminAIOptimization = lazy(() => import("@/pages/admin/AIOptimizationDashboard"));
+const AdminMonitoring = lazy(() => import("@/pages/admin/AdminMonitoring"));
 const PitchDeck = lazy(() => import("@/pages/admin/PitchDeck"));
 const ChatGPTAdmin = lazy(() => import("@/pages/ChatGPTAdmin"));
 // Public pages
@@ -896,6 +897,11 @@ function AppContent() {
           <ProtectedRoute path="/admin/ai-optimization" component={() => (
             <ReplitLayout showSidebar={false}>
               <AdminAIOptimization />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/admin/monitoring" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <AdminMonitoring />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/admin/pitch-deck" component={() => (

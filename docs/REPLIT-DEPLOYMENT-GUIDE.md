@@ -42,7 +42,7 @@ E-Code Platform deploys to **Replit Cloud Run** with the following architecture:
 │  └────────────────────────────────────────────────────┘    │
 │                                                             │
 │  Health Checks: /health/liveness, /health/readiness        │
-│  Metrics: /metrics (Prometheus format)                     │
+│  Metrics: /api/metrics (JSON), /api/health/detailed        │
 │  Logs: stdout/stderr → Replit Logs                         │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -103,7 +103,7 @@ ignorePorts = false
 - [ ] Environment variables configured in Replit Secrets
 - [ ] Database migrations tested
 - [ ] Health check endpoints responding
-- [ ] Metrics endpoint accessible (`/metrics`)
+- [ ] Metrics endpoint accessible (`/api/metrics`)
 - [ ] API documentation updated (`/api/docs`)
 
 ### 3. Security Checklist
@@ -416,61 +416,62 @@ done
    - **Response time**: p50, p95, p99
    - **Instance count**: Auto-scaling metrics
 
-### 2. Prometheus Metrics
+### 2. Platform Metrics
 
-E-Code exposes metrics in two formats:
+E-Code exposes metrics through the `/api/` prefixed endpoints (required for Vite/SPA compatibility):
 
-**Production (Replit Cloud Run)** - Port 5000 only:
-- `/metrics` - JSON format (custom)
-- `/metrics/prometheus` - Prometheus format (standard)
+**Production Endpoints** (port 5000 only):
+- `/api/health` - Basic health status (JSON)
+- `/api/metrics` - System metrics: CPU, memory, request stats (JSON)
+- `/api/health/detailed` - Full diagnostics with DB status, security info (JSON)
+- `/api/health/providers` - AI provider health status
+- `/health/liveness` - Kubernetes liveness probe
+- `/health/readiness` - Kubernetes readiness probe
 
-**Development (Local)** - Two ports available:
-- Port 5000: `/metrics` (JSON) and `/metrics/prometheus` (Prometheus)
-- Port 9464: `/metrics` (Prometheus, dev-only)
-
-**IMPORTANT**: Replit Cloud Run only exposes port 5000 (externalPort 80).
-Port 9464 is for local development only and is NOT accessible in production.
+**IMPORTANT**: Use `/api/` prefix for all monitoring endpoints. Non-prefixed routes like `/metrics` are intercepted by Vite in development and return HTML instead of JSON.
 
 ```bash
-# Access metrics - JSON format
-curl https://e-code.replit.app/metrics
+# Access health status
+curl https://e-code.replit.app/api/health
 
-# Access metrics - Prometheus format
-curl https://e-code.replit.app/metrics/prometheus
+# Access system metrics  
+curl https://e-code.replit.app/api/metrics
 
-# Sample Prometheus metrics:
-# HELP http_requests_total Total number of HTTP requests
-# TYPE http_requests_total counter
-# http_requests_total{method="GET",path="/api/projects",status_code="200"} 1523
+# Access detailed diagnostics
+curl https://e-code.replit.app/api/health/detailed
 
-# HELP http_request_duration_ms HTTP request duration in milliseconds
-# TYPE http_request_duration_ms histogram
-# http_request_duration_ms_bucket{method="GET",path="/api/projects",le="100"} 450
-# http_request_duration_ms_bucket{method="GET",path="/api/projects",le="500"} 890
-
-# HELP ai_tokens_used_total Total number of AI tokens used
-# TYPE ai_tokens_used_total counter
-# ai_tokens_used_total{provider="anthropic",model="claude-3-5-sonnet"} 45234
-
-# HELP db_queries_total Total number of database queries
-# TYPE db_queries_total counter
-# db_queries_total{operation="SELECT",table="projects"} 1234
+# Sample metrics response (JSON):
+{
+  "timestamp": 1732611120531,
+  "uptime": 45.626,
+  "memory": {
+    "rss": 474644480,
+    "heapTotal": 293699584,
+    "heapUsed": 280773400
+  },
+  "cpu": {
+    "user": 20910269,
+    "system": 2508781
+  },
+  "requests": {
+    "total": 1523,
+    "errors": 2,
+    "avgResponseTime": 45
+  }
+}
 ```
 
-#### Configure Grafana (Optional)
+#### Admin Monitoring Dashboard
 
-```yaml
-# grafana/datasources.yml
-apiVersion: 1
-datasources:
-  - name: E-Code Metrics
-    type: prometheus
-    access: proxy
-    url: https://e-code.replit.app/metrics/prometheus
-    # IMPORTANT: Use /metrics/prometheus endpoint on port 5000
-    # Port 9464 is NOT exposed in Replit Cloud Run production
-    isDefault: true
-```
+Access the integrated monitoring dashboard at:
+- **Development**: http://localhost:5000/admin/monitoring
+- **Production**: https://e-code.replit.app/admin/monitoring
+
+The dashboard provides:
+- Real-time health status overview
+- System metrics (CPU, Memory, Uptime)
+- Database connection status
+- Direct links to all monitoring endpoints
 
 ### 3. Error Tracking with Sentry
 
@@ -619,7 +620,7 @@ curl https://e-code.replit.app/health/liveness
 **Diagnosis**:
 ```bash
 # Check metrics
-curl https://e-code.replit.app/metrics | grep memory
+curl https://e-code.replit.app/api/metrics | jq '.memory'
 
 # Check Node.js memory
 process.memoryUsage()
@@ -749,7 +750,7 @@ curl https://e-code.replit.app/api/health | jq '.version'
 ./scripts/smoke-tests.sh
 
 # 3. Check error rate
-curl https://e-code.replit.app/metrics | grep http_requests_total
+curl https://e-code.replit.app/api/metrics | jq '.requests'
 
 # 4. Monitor for 15 minutes
 watch -n 10 "curl -s https://e-code.replit.app/health/readiness"
