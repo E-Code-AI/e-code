@@ -54,6 +54,8 @@ import { ModeSelector } from './ModeSelector';
 import { AIModelSelector } from './AIModelSelector';
 import { CurrentModelChip } from './CurrentModelChip';
 import { handleSSEWarning, type SSEWarningData } from '@/lib/sse-warning-handler';
+import { AgentHistoryModal } from '@/components/grids/AgentHistoryModal';
+import { History } from 'lucide-react';
 
 interface ToolExecution {
   id: string;
@@ -214,6 +216,7 @@ export function ReplitAgentPanelV3({
   
   const [activeTab, setActiveTab] = useState<'chat' | 'activity'>('chat');
   const [sessionStartTime] = useState<Date>(new Date());
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -1314,15 +1317,37 @@ export function ReplitAgentPanelV3({
 
       {/* Activity Tab Content */}
       {activeTab === 'activity' && (
-        <div className="flex-1 overflow-hidden">
-          <AgentActivityFeed
-            events={activityEvents}
-            stats={sessionStats}
-            isLive={isWorking}
-            className="h-full border-none shadow-none"
-          />
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between px-3 py-2 border-b">
+            <span className="text-xs text-muted-foreground">Current Session Activity</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setHistoryModalOpen(true)}
+              className="h-7 text-xs gap-1.5"
+              data-testid="button-open-history"
+            >
+              <History className="h-3.5 w-3.5" />
+              View Full History
+            </Button>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <AgentActivityFeed
+              events={activityEvents}
+              stats={sessionStats}
+              isLive={isWorking}
+              className="h-full border-none shadow-none"
+            />
+          </div>
         </div>
       )}
+
+      {/* Agent History Modal */}
+      <AgentHistoryModal
+        open={historyModalOpen}
+        onOpenChange={setHistoryModalOpen}
+        projectId={typeof projectId === 'number' ? projectId : parseInt(projectId as string, 10) || undefined}
+      />
     </div>
   );
 }
