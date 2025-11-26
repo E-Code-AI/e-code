@@ -137,8 +137,6 @@ export class ProjectsRouter {
           });
         }
         
-        // Token is valid and project-specific - grant access
-        console.log('[ensureProjectAccess] Bootstrap token validated for project:', project.id);
         return next();
         
       } catch (error) {
