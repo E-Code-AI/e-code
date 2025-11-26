@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, PanInfo } from 'framer-motion';
 import { Code, Terminal, Monitor, MoreHorizontal, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { MobileFileExplorer } from './MobileFileExplorer';
+import { EnhancedMobileFileExplorer } from './EnhancedMobileFileExplorer';
 import { LazyMobileCodeEditor } from './LazyMobileCodeEditor';
-import { MobileTerminal } from './MobileTerminal';
+import { EnhancedMobileTerminal } from './EnhancedMobileTerminal';
 import { MobilePreviewPanel } from './MobilePreviewPanel';
 import { MobileMoreMenu } from './MobileMoreMenu';
 import { ReplitBottomTabs } from './ReplitBottomTabs';
@@ -184,7 +184,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
               )}
               
               {activeTab === 'terminal' && (
-                <MobileTerminal projectId={projectId} />
+                <EnhancedMobileTerminal projectId={projectId} />
               )}
               
               {activeTab === 'preview' && (
@@ -225,7 +225,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
       <MobileFAB projectId={normalizedProjectId} />
 
       {/* File Explorer Modal */}
-      <MobileFileExplorer
+      <EnhancedMobileFileExplorer
         isOpen={isFilesOpen}
         onClose={() => setIsFilesOpen(false)}
         projectId={normalizedProjectId}
@@ -234,7 +234,6 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
           setActiveTab('code' as MobileTab);
           setIsFilesOpen(false);
         }}
-        currentFileId={selectedFileId}
       />
 
       {/* More Menu Modal */}
