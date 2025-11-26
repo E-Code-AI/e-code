@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -13,19 +13,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Loader2, Code, AlertCircle, ArrowRight, Eye, EyeOff,
   Mail, Lock, User, Github, Chrome, Twitter, CheckCircle2,
-  X, Shield, Sparkles, ChevronLeft, Badge, Zap
+  X, Shield, Sparkles, ChevronLeft, Zap, CheckCircle
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ECodeLogo } from '@/components/ECodeLogo';
 
-// Import stock image
 import codingWorkspaceImg from '@assets/stock_images/coding_programming_l_3c65a90d.jpg';
-
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5 }
-};
 
 const calculatePasswordStrength = (password: string): { score: number; label: string; color: string } => {
   let score = 0;
@@ -62,7 +56,6 @@ export default function Register() {
     displayName: ''
   });
 
-  // Password validation requirements
   const passwordRequirements = [
     { met: formData.password.length >= 8, text: 'At least 8 characters' },
     { met: /[A-Z]/.test(formData.password), text: 'One uppercase letter' },
@@ -83,7 +76,6 @@ export default function Register() {
     e.preventDefault();
     setErrors([]);
     
-    // Validation
     const validationErrors: string[] = [];
     
     if (!formData.username || !formData.email || !formData.password) {
@@ -110,7 +102,6 @@ export default function Register() {
     setIsLoading(true);
     
     try {
-      // apiRequest already parses JSON and throws on error, so we just await the data
       const data = await apiRequest('POST', '/api/register', {
         username: formData.username,
         email: formData.email,
@@ -118,7 +109,6 @@ export default function Register() {
         displayName: formData.displayName || formData.username
       });
       
-      // Success - apiRequest only returns on 2xx responses
       toast({
         title: 'Success!',
         description: data.message || 'Account created successfully. Please check your email to verify.',
@@ -128,11 +118,7 @@ export default function Register() {
       const urlParams = new URLSearchParams(window.location.search);
       const redirectParam = urlParams.get('redirect');
       
-      // Redirect immediately after registration success
-      // If user was trying to build from prompt, redirect to home with a flag
-      // Landing page will detect the user is now logged in and trigger workspace creation
       if (redirectParam === 'build-from-prompt' && pendingAppDescription) {
-        // Keep prompt in session storage, add a flag to trigger immediate build
         sessionStorage.setItem('triggerBuildOnLanding', 'true');
         navigate('/');
       } else {
@@ -141,12 +127,9 @@ export default function Register() {
     } catch (error: any) {
       console.error('Registration error:', error);
       
-      // Parse error message from thrown error
       try {
-        // Extract error details from the thrown error message
         const errorText = error.message || String(error);
         
-        // Try to extract JSON from error message (format: "400: {...}")
         const jsonMatch = errorText.match(/\d+:\s*(\{.*\})/);
         if (jsonMatch) {
           const errorData = JSON.parse(jsonMatch[1]);
@@ -184,88 +167,10 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-gray-50/50 to-background dark:from-background dark:via-gray-900/50 dark:to-background flex">
-      {/* Left Side - Image & Features - Hidden on Mobile */}
-      <motion.div 
-        className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-violet-600 to-fuchsia-600 relative overflow-hidden"
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          <img 
-            src={codingWorkspaceImg} 
-            alt="Coding Workspace"
-            className="w-full h-full object-cover opacity-20"
-          />
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-600/90 to-fuchsia-600/90" />
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10 flex items-center justify-center p-12">
-          <div className="max-w-md text-white space-y-8">
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                <Zap className="h-4 w-4" />
-                <span className="text-sm font-medium">Get Started in Seconds</span>
-              </div>
-              
-              <h2 className="text-4xl font-bold leading-tight">
-                Join millions of developers worldwide
-              </h2>
-              
-              <p className="text-lg opacity-90">
-                Start building production-ready applications with AI assistance, enterprise security, and unlimited scalability.
-              </p>
-            </div>
-
-            {/* Benefits */}
-            <div className="space-y-4">
-              {[
-                { text: "Free forever starter plan" },
-                { text: "No credit card required" },
-                { text: "Unlimited public projects" },
-                { text: "AI Agent included" },
-                { text: "Deploy instantly" }
-              ].map((benefit, idx) => (
-                <motion.div 
-                  key={idx}
-                  className="flex items-center gap-3"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 + idx * 0.1 }}
-                >
-                  <CheckCircle2 className="h-5 w-5 text-green-400" />
-                  <span className="text-white/90">{benefit.text}</span>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Testimonial */}
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-              <CardContent className="p-6">
-                <p className="text-white/90 italic mb-4">
-                  "E-Code's AI Agent built our entire MVP in 2 days. What used to take months now takes hours."
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-bold">SC</span>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-white">Sarah Chen</div>
-                    <div className="text-sm text-white/75">CTO, TechStartup</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Right Side - Form - Mobile Optimized */}
+      {/* Left Side - Form - Mobile Optimized */}
       <motion.div 
         className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-8 lg:p-16 overflow-y-auto"
-        initial={{ opacity: 0, x: 50 }}
+        initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
       >
@@ -280,14 +185,9 @@ export default function Register() {
           </button>
 
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-xl">E</span>
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">E-Code</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Start building for free</p>
-            </div>
+          <div className="flex flex-col items-center justify-center mb-2">
+            <ECodeLogo size="lg" showText={true} />
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Enterprise Development Platform</p>
           </div>
 
           {/* Welcome Message - Responsive Typography */}
@@ -455,7 +355,7 @@ export default function Register() {
                   name="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Re-enter your password"
-                  className="pl-10 pr-10 h-11"
+                  className="pl-10 pr-12 h-12 sm:h-11 text-base sm:text-sm"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                   disabled={isLoading}
@@ -464,9 +364,9 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 -mr-2 sm:mr-0 flex items-center justify-center"
                 >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showConfirmPassword ? <EyeOff className="h-5 w-5 sm:h-4 sm:w-4" /> : <Eye className="h-5 w-5 sm:h-4 sm:w-4" />}
                 </button>
               </div>
               {formData.confirmPassword && formData.password !== formData.confirmPassword && (
@@ -485,11 +385,11 @@ export default function Register() {
                 className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer"
               >
                 I agree to the{' '}
-                <Link href="/terms" className="text-violet-600 dark:text-violet-400 hover:underline">
+                <Link href="/terms" className="text-orange-600 dark:text-orange-400 hover:underline">
                   Terms of Service
                 </Link>{' '}
                 and{' '}
-                <Link href="/privacy" className="text-violet-600 dark:text-violet-400 hover:underline">
+                <Link href="/privacy" className="text-orange-600 dark:text-orange-400 hover:underline">
                   Privacy Policy
                 </Link>
               </label>
@@ -497,8 +397,18 @@ export default function Register() {
 
             <Button 
               type="submit" 
-              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
+              className="w-full h-12 sm:h-11 text-base sm:text-sm font-semibold"
+              style={{
+                background: 'linear-gradient(135deg, #F26207 0%, #F99D25 100%)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #D85506 0%, #E88D20 100%)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #F26207 0%, #F99D25 100%)';
+              }}
               disabled={isLoading || !acceptTerms}
+              data-testid="button-register"
             >
               {isLoading ? (
                 <>
@@ -528,7 +438,7 @@ export default function Register() {
               <Button 
                 type="button"
                 variant="outline" 
-                className="h-11 hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="h-12 hover:bg-gray-50 dark:hover:bg-gray-800"
                 onClick={() => handleSocialSignup('GitHub')}
               >
                 <Github className="h-5 w-5" />
@@ -536,7 +446,7 @@ export default function Register() {
               <Button 
                 type="button"
                 variant="outline" 
-                className="h-11 hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="h-12 hover:bg-gray-50 dark:hover:bg-gray-800"
                 onClick={() => handleSocialSignup('Google')}
               >
                 <Chrome className="h-5 w-5" />
@@ -544,7 +454,7 @@ export default function Register() {
               <Button 
                 type="button"
                 variant="outline" 
-                className="h-11 hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="h-12 hover:bg-gray-50 dark:hover:bg-gray-800"
                 onClick={() => handleSocialSignup('Twitter')}
               >
                 <Twitter className="h-5 w-5" />
@@ -555,10 +465,100 @@ export default function Register() {
           {/* Sign In Link */}
           <p className="text-center text-sm text-gray-600 dark:text-gray-400">
             Already have an account?{' '}
-            <Link href="/login" className="font-semibold text-violet-600 dark:text-violet-400 hover:underline">
+            <Link href="/login" className="font-semibold text-orange-600 dark:text-orange-400 hover:underline" data-testid="link-login">
               Sign in
             </Link>
           </p>
+
+          {/* Terms */}
+          <p className="text-center text-xs text-gray-500">
+            By signing up, you agree to our{' '}
+            <Link href="/terms" className="underline hover:text-gray-700 dark:hover:text-gray-300">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link href="/privacy" className="underline hover:text-gray-700 dark:hover:text-gray-300">
+              Privacy Policy
+            </Link>
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Right Side - Image & Features */}
+      <motion.div 
+        className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-orange-500 to-amber-500 relative overflow-hidden"
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6 }}
+        style={{
+          background: 'linear-gradient(135deg, #F26207 0%, #F99D25 100%)'
+        }}
+      >
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src={codingWorkspaceImg} 
+            alt="Coding Workspace"
+            className="w-full h-full object-cover opacity-20"
+          />
+          <div className="absolute inset-0" style={{
+            background: 'linear-gradient(135deg, rgba(242, 98, 7, 0.9) 0%, rgba(249, 157, 37, 0.9) 100%)'
+          }} />
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 flex items-center justify-center p-12">
+          <div className="max-w-md text-white space-y-8">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                <Zap className="h-4 w-4" />
+                <span className="text-sm font-medium">Get Started in Seconds</span>
+              </div>
+              
+              <h2 className="text-4xl font-bold leading-tight">
+                Join millions of developers worldwide
+              </h2>
+              
+              <p className="text-lg opacity-90">
+                Start building production-ready applications with AI assistance, enterprise security, and unlimited scalability.
+              </p>
+            </div>
+
+            {/* Feature List */}
+            <div className="space-y-4">
+              {[
+                { icon: Shield, text: "SOC 2 Type II Certified" },
+                { icon: Sparkles, text: "AI Agent builds complete apps" },
+                { icon: Code, text: "Support for 50+ languages" },
+                { icon: CheckCircle, text: "99.99% uptime guaranteed" }
+              ].map((feature, idx) => (
+                <motion.div 
+                  key={idx}
+                  className="flex items-center gap-3"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 + idx * 0.1 }}
+                >
+                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                    <feature.icon className="h-5 w-5" />
+                  </div>
+                  <span className="text-white/90">{feature.text}</span>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-4 pt-8 border-t border-white/20">
+              <div>
+                <div className="text-3xl font-bold">2M+</div>
+                <div className="text-sm opacity-75">Active developers</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold">10M+</div>
+                <div className="text-sm opacity-75">Apps deployed</div>
+              </div>
+            </div>
+          </div>
         </div>
       </motion.div>
     </div>
