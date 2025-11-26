@@ -361,7 +361,6 @@ export default function Landing() {
                       key={index}
                       onClick={() => {
                         setAppDescription(example.text);
-                        handleStartBuilding(example.text);
                       }}
                       className="group flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-violet-600 dark:hover:border-violet-400 transition-all duration-200 hover:scale-105 min-h-[44px]"
                       data-testid={`button-example-${example.id}`}
