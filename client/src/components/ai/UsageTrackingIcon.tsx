@@ -130,7 +130,7 @@ export function UsageTrackingIcon({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "h-8 gap-1.5 px-2",
+                  "h-10 min-h-[44px] gap-1.5 px-3",
                   isCriticalCredits && "text-red-500",
                   isLowCredits && !isCriticalCredits && "text-amber-500",
                   className

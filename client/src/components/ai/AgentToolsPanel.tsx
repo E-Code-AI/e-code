@@ -226,7 +226,7 @@ export function AgentToolsPanel({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 px-2 mt-1 text-[10px] text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                      className="min-h-[44px] px-3 mt-1 text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                       onClick={onViewVideoReplays}
                       data-testid="view-video-replays"
                     >
