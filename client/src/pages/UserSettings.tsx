@@ -808,7 +808,7 @@ export default function UserSettings() {
             </Button>
             <Button 
               variant="destructive" 
-              onClick={() => deleteAccountMutation.mutate()}
+              onClick={() => deleteAccountMutation.mutate(undefined)}
               disabled={deleteAccountMutation.isPending}
             >
               {deleteAccountMutation.isPending ? 'Deleting...' : 'Delete Account'}
