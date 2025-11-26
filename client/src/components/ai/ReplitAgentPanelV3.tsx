@@ -1154,29 +1154,38 @@ export function ReplitAgentPanelV3({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setInput("Build a todo app with React and TypeScript")}
+              onClick={() => setInput("Build a full-stack dashboard with real-time charts, data tables with sorting/filtering, user authentication, and dark mode support")}
               className="text-xs"
-              data-testid="quick-action-build-app"
+              data-testid="quick-action-dashboard"
             >
-              Build a todo app
+              Build Dashboard
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setInput("Debug this code and explain the issue")}
+              onClick={() => setInput("Add Stripe payment integration with subscription billing, usage tracking, and customer portal")}
+              className="text-xs"
+              data-testid="quick-action-payments"
+            >
+              Add Payments
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setInput("Implement user authentication with email/password, social login (Google, GitHub), session management, and protected routes")}
+              className="text-xs"
+              data-testid="quick-action-auth"
+            >
+              Add Auth
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setInput("Debug and fix all TypeScript errors, optimize performance bottlenecks, and add proper error handling throughout the codebase")}
               className="text-xs"
               data-testid="quick-action-debug"
             >
-              Debug my code
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setInput("Refactor this component for better performance")}
-              className="text-xs"
-              data-testid="quick-action-optimize"
-            >
-              Optimize code
+              Debug & Optimize
             </Button>
           </div>
         )}
