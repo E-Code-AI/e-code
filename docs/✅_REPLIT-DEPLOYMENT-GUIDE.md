@@ -166,7 +166,7 @@ REDIS_URL=redis://redis.upstash.io:6379
 SENTRY_DSN=https://...@sentry.io/...
 
 # Monitoring
-OTEL_EXPORTER_OTLP_ENDPOINT=https://otel-collector.example.com
+OTEL_EXPORTER_OTLP_ENDPOINT=https://otel-collector.e-code.ai
 PROMETHEUS_ENABLED=true
 METRICS_PORT=9464
 
