@@ -36,7 +36,7 @@ export default function Deployments() {
   });
 
   const createDeploymentMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (_?: void) => {
       if (!projectId) throw new Error('Project ID required');
       const res = await apiRequest('POST', `/api/projects/${projectId}/deploy`, {});
       return await res.json();
@@ -253,10 +253,10 @@ export default function Deployments() {
                                 )}
                               </div>
 
-                              {deployment.error && (
+                              {deployment.status === 'failed' && deployment.buildLogs && (
                                 <Alert variant="destructive" className="mt-3">
                                   <AlertCircle className="h-4 w-4" />
-                                  <AlertDescription>{deployment.error}</AlertDescription>
+                                  <AlertDescription>{deployment.buildLogs}</AlertDescription>
                                 </Alert>
                               )}
                             </div>
