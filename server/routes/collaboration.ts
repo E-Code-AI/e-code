@@ -28,14 +28,18 @@ router.post('/generate-link', requireAuth, async (req: Request, res: Response) =
 // Get active sessions for a project
 router.get('/sessions/:projectId', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
+    const projectIdNum = parseInt(req.params.projectId, 10);
+    
+    if (isNaN(projectIdNum)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
     
     const sessions = await db
       .select()
       .from(collaborationSessions)
       .where(
         and(
-          eq(collaborationSessions.projectId, projectId),
+          eq(collaborationSessions.projectId, projectIdNum),
           eq(collaborationSessions.active, true)
         )
       );
@@ -73,7 +77,8 @@ router.get('/sessions/:sessionId/participants', requireAuth, async (req: Request
 router.post('/join', requireAuth, async (req: Request, res: Response) => {
   try {
     const { token, sessionId } = req.body;
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
+    const username = req.user?.username || 'Anonymous';
     
     if (!sessionId || !userId) {
       return res.status(400).json({ error: 'Invalid request' });
@@ -105,11 +110,16 @@ router.post('/join', requireAuth, async (req: Request, res: Response) => {
         )
       );
     
+    // Generate a random cursor color for the participant
+    const cursorColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'];
+    const cursorColor = cursorColors[Math.floor(Math.random() * cursorColors.length)];
+    
     if (existingParticipant.length === 0) {
       await db.insert(sessionParticipants).values({
         sessionId,
         userId,
-        role: 'viewer',
+        username,
+        cursorColor,
         active: true,
         joinedAt: new Date()
       });
@@ -131,14 +141,18 @@ router.post('/join', requireAuth, async (req: Request, res: Response) => {
 // Get session statistics
 router.get('/stats/:projectId', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
+    const projectIdNum = parseInt(req.params.projectId, 10);
+    
+    if (isNaN(projectIdNum)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
     
     const activeSessions = await db
       .select()
       .from(collaborationSessions)
       .where(
         and(
-          eq(collaborationSessions.projectId, projectId),
+          eq(collaborationSessions.projectId, projectIdNum),
           eq(collaborationSessions.active, true)
         )
       );
@@ -152,7 +166,7 @@ router.get('/stats/:projectId', requireAuth, async (req: Request, res: Response)
       )
       .where(
         and(
-          eq(collaborationSessions.projectId, projectId),
+          eq(collaborationSessions.projectId, projectIdNum),
           eq(sessionParticipants.active, true)
         )
       );
