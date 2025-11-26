@@ -192,33 +192,39 @@ export default function Home() {
                 <span>Exemples:</span>
                 <Button 
                   variant="link" 
-                  className="p-0 h-auto text-orange-50 hover:text-white"
+                  className="p-0 h-auto text-orange-50 hover:text-white font-medium"
                   onClick={() => {
-                    setSearchQuery("Application web de todo list avec design moderne");
-                    handleCreateProject("Application web de todo list avec design moderne");
+                    setSearchQuery("Build a full-stack e-commerce marketplace with Stripe payments, product catalog, shopping cart, user authentication, order management, and mobile-responsive design");
                   }}
                 >
-                  Todo app
+                  E-commerce
                 </Button>
                 <Button 
                   variant="link" 
-                  className="p-0 h-auto text-orange-50 hover:text-white"
+                  className="p-0 h-auto text-orange-50 hover:text-white font-medium"
                   onClick={() => {
-                    setSearchQuery("Portfolio professionnel avec animations");
-                    handleCreateProject("Portfolio professionnel avec animations");
+                    setSearchQuery("Create a Slack-like real-time messaging app with WebSocket connections, channels, direct messages, file sharing, reactions, and presence indicators");
                   }}
                 >
-                  Portfolio
+                  Chat App
                 </Button>
                 <Button 
                   variant="link" 
-                  className="p-0 h-auto text-orange-50 hover:text-white"
+                  className="p-0 h-auto text-orange-50 hover:text-white font-medium"
                   onClick={() => {
-                    setSearchQuery("Dashboard analytique avec graphiques");
-                    handleCreateProject("Dashboard analytique avec graphiques");
+                    setSearchQuery("Design a Fortune 500-grade analytics dashboard with real-time charts, KPI widgets, data tables with sorting/filtering, date range picker, and CSV/PDF export");
                   }}
                 >
                   Dashboard
+                </Button>
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-orange-50 hover:text-white font-medium"
+                  onClick={() => {
+                    setSearchQuery("Build an AI chatbot with OpenAI GPT-4 integration, conversation memory, document upload for RAG, streaming responses, and conversation history");
+                  }}
+                >
+                  AI Assistant
                 </Button>
               </div>
             </div>

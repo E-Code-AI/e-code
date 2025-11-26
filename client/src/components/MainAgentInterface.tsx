@@ -550,23 +550,30 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setInput("Build a todo app with React")}
+                  onClick={() => setInput("Build a full-stack dashboard with real-time charts, KPI widgets, data tables with sorting/filtering, and dark mode")}
                 >
-                  Build a todo app
+                  Build Dashboard
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setInput("Add authentication to my app")}
+                  onClick={() => setInput("Implement user authentication with email/password, social login (Google, GitHub), session management, and protected routes")}
                 >
-                  Add authentication
+                  Add Auth
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setInput("Fix the bug in my code")}
+                  onClick={() => setInput("Add Stripe payment integration with subscription billing, checkout flow, and customer portal")}
                 >
-                  Debug my code
+                  Add Payments
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setInput("Debug and fix TypeScript errors, optimize performance, and add comprehensive error handling")}
+                >
+                  Debug & Optimize
                 </Button>
               </div>
             </div>

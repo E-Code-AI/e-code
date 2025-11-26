@@ -12,7 +12,7 @@ import {
   Loader2, Sparkles, Code, Terminal, Globe, Database,
   Settings, RotateCcw, Play, Square, CheckCircle,
   AlertCircle, Clock, Zap, Brain, Search, Upload, MessageSquare,
-  Eye, Palette, FileCode, ListPlus, Shield, Cpu, Activity
+  Eye, Palette, FileCode, ListPlus, Shield, Cpu, Activity, ShoppingCart
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -1205,54 +1205,54 @@ Our team is working to resolve this issue. Please try again in a moment.`,
                       // Generic suggestions when no project is loaded
                       <>
                         <button
-                          onClick={() => setInput('Build a todo app with React and TypeScript')}
+                          onClick={() => setInput('Build a full-stack e-commerce platform with Stripe payments, product catalog, shopping cart, user authentication, order management, and mobile-responsive design')}
                           className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span className="text-sm font-medium">Build a todo app</span>
+                            <ShoppingCart className="h-4 w-4 text-purple-500" />
+                            <span className="text-sm font-medium">E-commerce Platform</span>
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Create a modern task management app with React
+                            Full marketplace with payments, cart, and admin dashboard
                           </p>
                         </button>
                         
                         <button
-                          onClick={() => setInput('Create a portfolio website with animations')}
+                          onClick={() => setInput('Create a Slack-like real-time messaging app with WebSocket connections, channels, direct messages, file sharing, reactions, and presence indicators')}
                           className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex items-center gap-2">
-                            <Globe className="h-4 w-4 text-blue-500" />
-                            <span className="text-sm font-medium">Portfolio website</span>
+                            <MessageSquare className="h-4 w-4 text-blue-500" />
+                            <span className="text-sm font-medium">Real-time Chat App</span>
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Design a personal portfolio with smooth animations
+                            Slack-like messaging with channels, DMs, and file sharing
                           </p>
                         </button>
                         
                         <button
-                          onClick={() => setInput('Build a real-time chat application')}
+                          onClick={() => setInput('Design a Fortune 500-grade analytics dashboard with real-time charts, KPI widgets, data tables with sorting/filtering, date range picker, and CSV/PDF export')}
                           className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex items-center gap-2">
-                            <MessageSquare className="h-4 w-4 text-purple-500" />
-                            <span className="text-sm font-medium">Chat application</span>
+                            <Activity className="h-4 w-4 text-green-500" />
+                            <span className="text-sm font-medium">Analytics Dashboard</span>
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Create a WebSocket-powered chat with rooms
+                            Enterprise dashboard with charts, KPIs, and data export
                           </p>
                         </button>
                         
                         <button
-                          onClick={() => setInput('Create an expense tracker with charts')}
+                          onClick={() => setInput('Build an AI chatbot with OpenAI GPT-4 integration, conversation memory, document upload for RAG, streaming responses, and conversation history')}
                           className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex items-center gap-2">
-                            <Database className="h-4 w-4 text-orange-500" />
-                            <span className="text-sm font-medium">Expense tracker</span>
+                            <Bot className="h-4 w-4 text-orange-500" />
+                            <span className="text-sm font-medium">AI Assistant</span>
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Track expenses with visual charts and reports
+                            Intelligent chatbot with GPT-4, memory, and document RAG
                           </p>
                         </button>
                       </>

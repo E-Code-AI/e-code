@@ -350,26 +350,69 @@ export default function Landing() {
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">
                   {[
-                    { icon: <ShoppingCart className="h-4 w-4" />, text: "E-commerce store with Stripe payments", color: "from-purple-600 to-pink-600", id: "ecommerce" },
-                    { icon: <MessageSquare className="h-4 w-4" />, text: "Real-time chat app with websockets", color: "from-blue-600 to-cyan-600", id: "chat" },
-                    { icon: <Bot className="h-4 w-4" />, text: "AI chatbot with OpenAI GPT-4", color: "from-green-600 to-emerald-600", id: "chatbot" },
-                    { icon: <Globe className="h-4 w-4" />, text: "Social media dashboard with analytics", color: "from-orange-600 to-red-600", id: "dashboard" },
-                    { icon: <Briefcase className="h-4 w-4" />, text: "SaaS landing page with auth", color: "from-indigo-600 to-purple-600", id: "saas" },
-                    { icon: <ListTodo className="h-4 w-4" />, text: "Project management tool like Jira", color: "from-teal-600 to-cyan-600", id: "project" }
+                    { 
+                      icon: <ShoppingCart className="h-4 w-4" />, 
+                      label: "E-commerce Platform",
+                      text: "Build a full-stack e-commerce marketplace with Stripe payments, product catalog with search and filters, shopping cart with checkout flow, user authentication, order management dashboard, inventory tracking, email notifications for orders, and mobile-responsive design with dark mode", 
+                      color: "from-purple-600 to-pink-600", 
+                      id: "ecommerce" 
+                    },
+                    { 
+                      icon: <MessageSquare className="h-4 w-4" />, 
+                      label: "Real-time Chat",
+                      text: "Create a Slack-like real-time messaging platform with WebSocket connections, public and private channels, direct messages, file and image sharing, message reactions and threading, typing indicators, read receipts, user presence status, and push notifications", 
+                      color: "from-blue-600 to-cyan-600", 
+                      id: "chat" 
+                    },
+                    { 
+                      icon: <Bot className="h-4 w-4" />, 
+                      label: "AI Assistant",
+                      text: "Build an intelligent AI chatbot with OpenAI GPT-4 integration, conversation memory and context, document upload for RAG knowledge base, code execution sandbox, streaming responses with typing animation, conversation history with search, export to PDF, and multi-language support", 
+                      color: "from-green-600 to-emerald-600", 
+                      id: "chatbot" 
+                    },
+                    { 
+                      icon: <Globe className="h-4 w-4" />, 
+                      label: "Analytics Dashboard",
+                      text: "Design a Fortune 500-grade analytics dashboard with real-time interactive charts (line, bar, pie, area), KPI metric widgets, data tables with sorting and filtering, date range picker with presets, CSV and PDF export, role-based access control, customizable widgets, and dark mode support", 
+                      color: "from-orange-600 to-red-600", 
+                      id: "dashboard" 
+                    },
+                    { 
+                      icon: <Briefcase className="h-4 w-4" />, 
+                      label: "SaaS Starter",
+                      text: "Create a complete SaaS starter kit with beautiful landing page, pricing tiers comparison, Stripe subscription billing with usage-based pricing, user authentication with social login, team management and invitations, admin dashboard with analytics, email onboarding flow, and API documentation", 
+                      color: "from-indigo-600 to-purple-600", 
+                      id: "saas" 
+                    },
+                    { 
+                      icon: <ListTodo className="h-4 w-4" />, 
+                      label: "Project Management",
+                      text: "Build a Jira-like project management tool with drag-and-drop Kanban boards, sprint planning and backlog, task assignments with deadlines, time tracking and estimates, Gantt chart timeline view, team collaboration with comments, file attachments, activity feed, and customizable workflows", 
+                      color: "from-teal-600 to-cyan-600", 
+                      id: "project" 
+                    }
                   ].map((example, index) => (
                     <button
                       key={index}
                       onClick={() => {
                         setAppDescription(example.text);
+                        setTimeout(() => {
+                          const inputElement = document.querySelector('textarea[data-testid="input-app-description"]') as HTMLTextAreaElement;
+                          if (inputElement) {
+                            inputElement.focus();
+                            inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }
+                        }, 100);
                       }}
                       className="group flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-violet-600 dark:hover:border-violet-400 transition-all duration-200 hover:scale-105 min-h-[44px]"
                       data-testid={`button-example-${example.id}`}
                     >
-                      <div className={`bg-gradient-to-r ${example.color} bg-clip-text text-transparent`}>
+                      <div className={`bg-gradient-to-r ${example.color} text-white p-1.5 rounded-md`}>
                         {example.icon}
                       </div>
-                      <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
-                        {example.text}
+                      <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {example.label}
                       </span>
                     </button>
                   ))}
