@@ -90,6 +90,7 @@ const Security = lazy(() => import("@/pages/Security"));
 const Desktop = lazy(() => import("@/pages/Desktop"));
 
 const AIAgentStudio = lazy(() => import("@/pages/AIAgentStudio"));
+const AgentActivity = lazy(() => import("@/pages/AgentActivity"));
 const PublicTeamPage = lazy(() => import("@/pages/PublicTeamPage"));
 const PublicDeploymentsPage = lazy(() => import("@/pages/PublicDeploymentsPage"));
 const Scalability = lazy(() => import("@/pages/Scalability"));
@@ -522,6 +523,11 @@ function AppContent() {
           <ProtectedRoute path="/dashboard" component={() => (
             <ReplitLayout showSidebar={false}>
               <Dashboard />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/agent-activity" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <AgentActivity />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/apps" component={() => (
