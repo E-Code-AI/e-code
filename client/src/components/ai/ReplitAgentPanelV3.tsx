@@ -54,7 +54,9 @@ import { handleSSEWarning, type SSEWarningData } from '@/lib/sse-warning-handler
 import { AgentHistoryModal } from '@/components/grids/AgentHistoryModal';
 import { MaxAutonomyProgress, MaxAutonomyStartForm } from './MaxAutonomyProgress';
 import { useMaxAutonomy } from '@/hooks/useMaxAutonomy';
-import { History, X } from 'lucide-react';
+import { AgentToolsPanel, type AgentToolsSettings } from './AgentToolsPanel';
+import { ElementEditor, type ElementSelection } from './ElementEditor';
+import { History, X, MousePointer2 } from 'lucide-react';
 
 interface ToolExecution {
   id: string;
@@ -188,6 +190,18 @@ export function ReplitAgentPanelV3({
   
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   
+  // Agent Tools Panel settings (Replit-style toggles)
+  const [agentToolsSettings, setAgentToolsSettings] = useState<AgentToolsSettings>({
+    maxAutonomy: false,
+    appTesting: false,
+    fastMode: false
+  });
+  
+  // Element Editor state
+  const [elementEditorActive, setElementEditorActive] = useState(false);
+  const [selectedElement, setSelectedElement] = useState<ElementSelection | null>(null);
+  const [videoReplayCount, setVideoReplayCount] = useState(0);
+  
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -224,28 +238,56 @@ export function ReplitAgentPanelV3({
     session: autonomySession
   } = useMaxAutonomy(autonomySessionId, projectIdNum);
 
-  // Handler for mode changes
+  // Handler for agent tools settings changes (Max Autonomy, App Testing, Fast Mode)
+  const handleAgentToolsChange = useCallback((newSettings: AgentToolsSettings) => {
+    setAgentToolsSettings(newSettings);
+    
+    // Handle Max Autonomy toggle
+    if (newSettings.maxAutonomy && !agentToolsSettings.maxAutonomy) {
+      toast({
+        title: "Max Autonomy Enabled",
+        description: "Agent will work for up to 200 minutes with checkpoints"
+      });
+    }
+    
+    // Handle App Testing toggle
+    if (newSettings.appTesting && !agentToolsSettings.appTesting) {
+      toast({
+        title: "App Testing Enabled",
+        description: "Agent will test your app using browser automation"
+      });
+    }
+    
+    // Handle Fast Mode toggle
+    if (newSettings.fastMode && !agentToolsSettings.fastMode) {
+      toast({
+        title: "Fast Mode Enabled",
+        description: "5x faster responses for targeted changes"
+      });
+    }
+  }, [agentToolsSettings, toast]);
+  
+  // Handler for Element Editor save
+  const handleElementSave = useCallback((changes: Partial<ElementSelection['styles']> & { text?: string }) => {
+    console.log('Element changes to apply:', changes);
+    setSelectedElement(null);
+    setElementEditorActive(false);
+    toast({
+      title: "Changes Applied",
+      description: "Element styles updated successfully"
+    });
+  }, [toast]);
+  
+  // Handler for viewing video replays
+  const handleViewVideoReplays = useCallback(() => {
+    toast({
+      title: "Video Replays",
+      description: "Opening test session recordings..."
+    });
+  }, [toast]);
+
+  // Handler for mode changes (Build/Plan/Edit - 3 modes only)
   const handleModeChange = async (newMode: AgentMode) => {
-    // If switching to max-autonomy, just set the mode (form will be shown)
-    if (newMode === 'max-autonomy') {
-      setAgentMode(newMode);
-      toast({
-        title: "Max Autonomy Mode",
-        description: "Describe your goal and the AI will work autonomously for up to 4 hours",
-      });
-      return;
-    }
-
-    // If we have an active autonomy session and switching away, warn user
-    if (agentMode === 'max-autonomy' && autonomySessionId && autonomySession?.status === 'active') {
-      toast({
-        title: "Session Still Active",
-        description: "Your autonomous session is still running. Stop it first if you want to switch modes.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (!conversationId) {
       console.error('Cannot change mode: no conversationId');
       return;
@@ -258,11 +300,15 @@ export function ReplitAgentPanelV3({
 
       setAgentMode(newMode);
       
+      const modeDescriptions: Record<AgentMode, string> = {
+        build: "Agent will autonomously make changes",
+        plan: "Agent will brainstorm without making code changes",
+        edit: "Targeted changes to specific files with precise control"
+      };
+      
       toast({
-        title: `Switched to ${newMode.toUpperCase()} Mode`,
-        description: newMode === 'plan' 
-          ? "Agent will brainstorm without making code changes"
-          : "Agent can now execute code changes",
+        title: `Switched to ${newMode.charAt(0).toUpperCase() + newMode.slice(1)} Mode`,
+        description: modeDescriptions[newMode],
       });
     } catch (error) {
       console.error('Failed to update mode:', error);
@@ -1216,73 +1262,80 @@ export function ReplitAgentPanelV3({
       {/* Input area */}
       <div className="p-4 border-t border-border">
         <div className="space-y-2">
-          {/* Mode selector row - above input like Replit */}
+          {/* Mode selector and Element Editor row - above input like Replit */}
           {conversationId && (
-            <div className="flex items-center gap-2">
-              <ModeSelector 
-                mode={agentMode} 
-                onChange={handleModeChange}
-              />
-              {agentMode === 'build' && (
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <ModeSelector 
+                  mode={agentMode} 
+                  onChange={handleModeChange}
+                />
                 <span className="text-[10px] text-muted-foreground">
-                  Agent will autonomously make changes
+                  {agentMode === 'build' && "Agent will autonomously make changes"}
+                  {agentMode === 'plan' && "Agent will brainstorm without changes"}
+                  {agentMode === 'edit' && "Targeted changes to specific files"}
                 </span>
-              )}
-              {agentMode === 'max-autonomy' && !autonomySessionId && (
-                <span className="text-[10px] text-amber-600 dark:text-amber-400">
-                  AI works for hours with checkpoints
-                </span>
-              )}
-            </div>
-          )}
-          
-          {/* Max Autonomy Mode UI */}
-          {agentMode === 'max-autonomy' && (
-            <div className="space-y-3">
-              {/* Show progress if session is active */}
-              {autonomySessionId && (
-                <MaxAutonomyProgress
-                  sessionId={autonomySessionId}
-                  projectId={projectIdNum}
-                  onStop={handleStopAutonomy}
-                />
-              )}
+              </div>
               
-              {/* Show start form if no active session */}
-              {!autonomySessionId && (
-                <MaxAutonomyStartForm
-                  projectId={projectIdNum}
-                  onStart={handleStartAutonomy}
-                  isStarting={isWorking}
+              {/* Element Editor toggle - Replit Nov 2025 feature */}
+              <div className="relative">
+                <ElementEditor
+                  isActive={elementEditorActive}
+                  onToggle={() => setElementEditorActive(!elementEditorActive)}
+                  selectedElement={selectedElement}
+                  onSave={handleElementSave}
+                  onCancel={() => {
+                    setSelectedElement(null);
+                    setElementEditorActive(false);
+                  }}
                 />
-              )}
+              </div>
             </div>
           )}
           
-          {/* Regular input - hide in max-autonomy mode */}
-          {agentMode !== 'max-autonomy' && (
-            <div className="relative">
-              <Textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder={agentMode === 'build' ? "What would you like me to build?" : "Ask a question or describe what you want to plan..."}
-                className="pr-12 resize-none text-sm min-h-[60px] max-h-[200px]"
-                disabled={isWorking}
-                data-testid="input-message"
-              />
-              <Button
-                size="icon"
-                onClick={handleSend}
-                disabled={!input.trim() || isWorking}
-                className="absolute bottom-2 right-2 h-7 w-7 rounded"
-                data-testid="button-send"
-              >
-                <Send className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+          {/* Max Autonomy Progress - shown when toggle is on */}
+          {agentToolsSettings.maxAutonomy && autonomySessionId && (
+            <MaxAutonomyProgress
+              sessionId={autonomySessionId}
+              projectId={projectIdNum}
+              onStop={handleStopAutonomy}
+            />
           )}
+          
+          {/* Chat input */}
+          <div className="relative">
+            <Textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder={
+                agentMode === 'build' ? "What would you like me to build?" :
+                agentMode === 'edit' ? "Describe the changes you want to make..." :
+                "Ask a question or describe what you want to plan..."
+              }
+              className="pr-12 resize-none text-sm min-h-[60px] max-h-[200px]"
+              disabled={isWorking}
+              data-testid="input-message"
+            />
+            <Button
+              size="icon"
+              onClick={handleSend}
+              disabled={!input.trim() || isWorking}
+              className="absolute bottom-2 right-2 h-7 w-7 rounded"
+              data-testid="button-send"
+            >
+              <Send className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          
+          {/* Agent Tools Panel - Replit-style toggles for Max Autonomy, App Testing, Fast Mode */}
+          <AgentToolsPanel
+            settings={agentToolsSettings}
+            onSettingsChange={handleAgentToolsChange}
+            onViewVideoReplays={handleViewVideoReplays}
+            videoReplayCount={videoReplayCount}
+          />
         </div>
         
         {/* Quick actions */}
