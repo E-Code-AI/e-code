@@ -320,6 +320,7 @@ export default function createAgentToolsRouter(): Router {
           thumbnailUrl: r.thumbnailUrl,
           duration: r.duration || 0,
           status: r.status === 'completed' ? 'ready' : r.status,
+          steps: r.steps || [],
           createdAt: r.createdAt?.toISOString(),
         })),
         count: replays.length 
@@ -508,6 +509,7 @@ export default function createAgentToolsRouter(): Router {
           thumbnailUrl: r.thumbnailUrl,
           duration: r.duration || 0,
           status: r.status === 'completed' ? 'ready' : r.status,
+          steps: r.steps || [],
           createdAt: r.createdAt?.toISOString(),
         })),
         count: replays.length 
