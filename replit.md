@@ -63,11 +63,20 @@ Phase 3 - IDE Integration (Nov 2025) - Replit-Style Inline Activity:
   - Collapsible details for each action (output, errors, timing)
   - Real-time thinking steps and streaming content visible in chat flow
   - No separate drawer, tab, or toggle - everything is part of the conversation
-- **ModeSelector.tsx:** Replit-style Build/Plan dropdown
-  - **Build mode:** "Make, test, iterate autonomously" with "Auto" badge
-  - **Plan mode:** "Ask questions, plan your work"
+- **ModeSelector.tsx:** Replit-style 3-mode dropdown (Build/Plan/Edit)
+  - **Build mode:** "Make, test, iterate autonomously" with emerald color
+  - **Plan mode:** "Ask questions, plan your work" with blue color
+  - **Edit mode:** "Targeted changes to specific files" with purple color
   - Positioned above input field with pill-style button
-  - Color-coded: emerald for Build, blue for Plan
+- **AgentToolsPanel.tsx:** Replit-style toggles panel (Nov 2025)
+  - **Max Autonomy toggle:** Agent works up to 200min with checkpoints
+  - **App Testing toggle:** Automated browser testing with video replays
+  - **Fast Mode toggle:** 5x faster responses for targeted changes
+  - Collapsible panel with badge indicators for active toggles
+- **ElementEditor.tsx:** Click-to-edit visual editing (Nov 2025 Replit feature)
+  - Click elements in preview to edit text, colors, padding, fonts
+  - Real-time style updates with AI-generated code changes
+  - Positioned alongside mode selector for quick access
 - **AgentHistoryModal.tsx:** Full-screen modal for detailed session history (optional deep-dive)
 - **Mobile Cards:** All grids check `isMobile` (≤768px) and render touch-friendly cards
 
