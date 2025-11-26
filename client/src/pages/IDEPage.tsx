@@ -131,10 +131,6 @@ export default function IDEPage() {
   
   // NEW: Autonomous workspace creation - detect ?bootstrap=token
   const bootstrapToken = searchParams.get('bootstrap');
-  console.log('🔍🔍🔍 [IDEPage] MOUNTED - URL:', window.location.href);
-  console.log('🔍🔍🔍 [IDEPage] ProjectId:', projectId);
-  console.log('🔍🔍🔍 [IDEPage] BootstrapToken:', bootstrapToken ? bootstrapToken.substring(0, 30) + '...' : 'NULL');
-  console.log('🔍🔍🔍 [IDEPage] All search params:', Array.from(searchParams.entries()));
 
   // ✅ PHASE 1 FIX: Decode bootstrap token to extract sessionId
   const decodeBootstrapToken = (token: string) => {
@@ -156,7 +152,6 @@ export default function IDEPage() {
       }
 
       const payload = JSON.parse(atob(base64));
-      console.log('🎯 [IDEPage] Decoded token payload:', payload);
       return {
         projectId: payload.projectId,
         sessionId: payload.sessionId,
@@ -172,9 +167,6 @@ export default function IDEPage() {
   const tokenData = bootstrapToken ? decodeBootstrapToken(bootstrapToken) : null;
   const agentSessionId = tokenData?.sessionId || null;
   const agentConversationId = tokenData?.conversationId || null;
-
-  console.log('🎯 [IDEPage] Extracted sessionId:', agentSessionId);
-  console.log('🎯 [IDEPage] Extracted conversationId:', agentConversationId);
 
   // NEW: Support ?prompt=... query param for direct agent invocation
   const storedPrompt = projectId ? sessionStorage.getItem(`agent-prompt-${projectId}`) : null;
