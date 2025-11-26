@@ -24,7 +24,7 @@ export interface AgentSessionRow {
   totalOperations: number;
   totalCost?: number;
   autonomousMode: boolean;
-  riskThreshold: 'low' | 'medium' | 'high';
+  riskThreshold: 'low' | 'medium' | 'high' | 'critical';
   actionsCount: number;
   filesCreated: number;
   filesModified: number;

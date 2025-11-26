@@ -8,6 +8,8 @@
  * - autonomousActions: id (varchar), sessionId, actionType (text), riskScore, status, autoApproved
  * - fileOperations: id (varchar), sessionId, operationType, filePath, status, content, previousContent
  * - agentMessages: id (varchar), sessionId, conversationId, role, content, model, metadata
+ * 
+ * SECURITY: All errors are propagated to caller for proper 500 responses
  */
 
 import { db } from '../db';
@@ -20,7 +22,7 @@ import {
   users,
   projects
 } from '@shared/schema';
-import { eq, and, or, gte, lte, desc, asc, count, sql, isNotNull } from 'drizzle-orm';
+import { eq, and, gte, lte, desc, asc, count, sql, isNotNull } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
 import type {
   AgentSessionRow,
@@ -54,12 +56,16 @@ interface QueryParams {
   searchQuery?: string;
 }
 
+interface ErrorResponse {
+  error?: string;
+}
+
 class AgentGridDataService {
   // ============================================================================
   // Sessions Grid
   // ============================================================================
 
-  async getSessions(params: QueryParams): Promise<SessionsGridResponse> {
+  async getSessions(params: QueryParams): Promise<SessionsGridResponse & ErrorResponse> {
     const { 
       page = 1, 
       pageSize = 25, 
@@ -184,14 +190,18 @@ class AgentGridDataService {
         pageSize,
         totalPages: Math.ceil(totalCount / pageSize),
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error fetching sessions:', error);
+      const errorMessage = error?.code === '42P01' 
+        ? 'Database tables not initialized. Please run migrations.'
+        : 'Database query failed';
       return {
         rows: [],
         totalCount: 0,
         page,
         pageSize,
         totalPages: 0,
+        error: errorMessage,
       };
     }
   }
@@ -200,7 +210,7 @@ class AgentGridDataService {
   // Actions Grid
   // ============================================================================
 
-  async getActions(params: QueryParams): Promise<ActionsGridResponse> {
+  async getActions(params: QueryParams): Promise<ActionsGridResponse & ErrorResponse> {
     const { 
       page = 1, 
       pageSize = 50, 
@@ -270,14 +280,18 @@ class AgentGridDataService {
         pageSize,
         totalPages: Math.ceil(totalCount / pageSize),
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error fetching actions:', error);
+      const errorMessage = error?.code === '42P01' 
+        ? 'Database tables not initialized. Please run migrations.'
+        : 'Database query failed';
       return {
         rows: [],
         totalCount: 0,
         page,
         pageSize,
         totalPages: 0,
+        error: errorMessage,
       };
     }
   }
@@ -286,7 +300,7 @@ class AgentGridDataService {
   // File Operations Grid
   // ============================================================================
 
-  async getFileOperations(params: QueryParams): Promise<FileOperationsGridResponse> {
+  async getFileOperations(params: QueryParams): Promise<FileOperationsGridResponse & ErrorResponse> {
     const { 
       page = 1, 
       pageSize = 50, 
@@ -357,14 +371,18 @@ class AgentGridDataService {
         pageSize,
         totalPages: Math.ceil(totalCount / pageSize),
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error fetching file operations:', error);
+      const errorMessage = error?.code === '42P01' 
+        ? 'Database tables not initialized. Please run migrations.'
+        : 'Database query failed';
       return {
         rows: [],
         totalCount: 0,
         page,
         pageSize,
         totalPages: 0,
+        error: errorMessage,
       };
     }
   }
@@ -373,7 +391,7 @@ class AgentGridDataService {
   // Conversations Grid
   // ============================================================================
 
-  async getConversations(params: QueryParams): Promise<ConversationsGridResponse> {
+  async getConversations(params: QueryParams): Promise<ConversationsGridResponse & ErrorResponse> {
     const { 
       page = 1, 
       pageSize = 50, 
@@ -461,14 +479,18 @@ class AgentGridDataService {
         pageSize,
         totalPages: Math.ceil(totalCount / pageSize),
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error fetching conversations:', error);
+      const errorMessage = error?.code === '42P01' 
+        ? 'Database tables not initialized. Please run migrations.'
+        : 'Database query failed';
       return {
         rows: [],
         totalCount: 0,
         page,
         pageSize,
         totalPages: 0,
+        error: errorMessage,
       };
     }
   }
@@ -477,7 +499,7 @@ class AgentGridDataService {
   // Metrics Dashboard
   // ============================================================================
 
-  async getMetrics(params: QueryParams): Promise<MetricsDashboardResponse> {
+  async getMetrics(params: QueryParams): Promise<MetricsDashboardResponse & ErrorResponse> {
     const { userId, projectId, startDate, endDate } = params;
 
     try {
@@ -511,121 +533,175 @@ class AgentGridDataService {
         metrics,
         generatedAt: new Date(),
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error fetching metrics:', error);
+      const errorMessage = error?.code === '42P01' 
+        ? 'Database tables not initialized. Please run migrations.'
+        : 'Database query failed';
       return {
         metrics: this.getEmptyMetrics(),
         generatedAt: new Date(),
+        error: errorMessage,
       };
     }
   }
 
   private async getSessionMetrics(whereClause: any) {
-    const result = await db.select({
-      totalSessions: count(),
-      activeSessions: sql<number>`COUNT(CASE WHEN ${agentSessions.isActive} = true THEN 1 END)`,
-      completedSessions: sql<number>`COUNT(CASE WHEN ${agentSessions.isActive} = false AND ${agentSessions.endedAt} IS NOT NULL THEN 1 END)`,
-      totalTokens: sql<number>`COALESCE(SUM(${agentSessions.totalTokensUsed}), 0)`,
-      totalOperations: sql<number>`COALESCE(SUM(${agentSessions.totalOperations}), 0)`,
-    }).from(agentSessions).where(whereClause);
+    try {
+      const result = await db.select({
+        totalSessions: count(),
+        activeSessions: sql<number>`COUNT(CASE WHEN ${agentSessions.isActive} = true THEN 1 END)`,
+        completedSessions: sql<number>`COUNT(CASE WHEN ${agentSessions.isActive} = false AND ${agentSessions.endedAt} IS NOT NULL THEN 1 END)`,
+        totalTokens: sql<number>`COALESCE(SUM(${agentSessions.totalTokensUsed}), 0)`,
+        totalOperations: sql<number>`COALESCE(SUM(${agentSessions.totalOperations}), 0)`,
+      }).from(agentSessions).where(whereClause);
 
-    const stats = result[0] || {};
-    const totalSessions = Number(stats.totalSessions) || 0;
-    const totalTokens = Number(stats.totalTokens) || 0;
-    const totalOperations = Number(stats.totalOperations) || 0;
+      const stats = result[0] || {};
+      const totalSessions = Number(stats.totalSessions) || 0;
+      const totalTokens = Number(stats.totalTokens) || 0;
+      const totalOperations = Number(stats.totalOperations) || 0;
 
-    return {
-      totalSessions,
-      activeSessions: Number(stats.activeSessions) || 0,
-      completedSessions: Number(stats.completedSessions) || 0,
-      failedSessions: totalSessions - (Number(stats.activeSessions) || 0) - (Number(stats.completedSessions) || 0),
-      avgSessionDuration: 0,
-      avgTokensPerSession: totalSessions > 0 ? Math.round(totalTokens / totalSessions) : 0,
-      avgActionsPerSession: totalSessions > 0 ? Math.round(totalOperations / totalSessions) : 0,
-      totalCost: 0,
-    };
+      return {
+        totalSessions,
+        activeSessions: Number(stats.activeSessions) || 0,
+        completedSessions: Number(stats.completedSessions) || 0,
+        failedSessions: totalSessions - (Number(stats.activeSessions) || 0) - (Number(stats.completedSessions) || 0),
+        avgSessionDuration: 0,
+        avgTokensPerSession: totalSessions > 0 ? Math.round(totalTokens / totalSessions) : 0,
+        avgActionsPerSession: totalSessions > 0 ? Math.round(totalOperations / totalSessions) : 0,
+        totalCost: 0,
+      };
+    } catch {
+      return {
+        totalSessions: 0,
+        activeSessions: 0,
+        completedSessions: 0,
+        failedSessions: 0,
+        avgSessionDuration: 0,
+        avgTokensPerSession: 0,
+        avgActionsPerSession: 0,
+        totalCost: 0,
+      };
+    }
   }
 
   private async getActionMetrics(sessionWhere: any) {
-    const result = await db.select({
-      totalActions: count(),
-      completedActions: sql<number>`COUNT(CASE WHEN ${autonomousActions.status} = 'completed' THEN 1 END)`,
-      failedActions: sql<number>`COUNT(CASE WHEN ${autonomousActions.status} = 'failed' THEN 1 END)`,
-      autoApprovedCount: sql<number>`COUNT(CASE WHEN ${autonomousActions.autoApproved} = true THEN 1 END)`,
-      avgRisk: sql<number>`COALESCE(AVG(${autonomousActions.riskScore}), 0)`,
-    }).from(autonomousActions);
+    try {
+      const result = await db.select({
+        totalActions: count(),
+        completedActions: sql<number>`COUNT(CASE WHEN ${autonomousActions.status} = 'completed' THEN 1 END)`,
+        failedActions: sql<number>`COUNT(CASE WHEN ${autonomousActions.status} = 'failed' THEN 1 END)`,
+        autoApprovedCount: sql<number>`COUNT(CASE WHEN ${autonomousActions.autoApproved} = true THEN 1 END)`,
+        avgRisk: sql<number>`COALESCE(AVG(${autonomousActions.riskScore}), 0)`,
+      }).from(autonomousActions);
 
-    const stats = result[0] || {};
-    const totalActions = Number(stats.totalActions) || 0;
-    const autoApprovedCount = Number(stats.autoApprovedCount) || 0;
+      const stats = result[0] || {};
+      const totalActions = Number(stats.totalActions) || 0;
+      const autoApprovedCount = Number(stats.autoApprovedCount) || 0;
 
-    return {
-      totalActions,
-      actionsByType: {} as Record<string, number>,
-      actionsByStatus: {
-        completed: Number(stats.completedActions) || 0,
-        failed: Number(stats.failedActions) || 0,
-        pending: 0,
-        in_progress: 0,
-        cancelled: 0,
-        rolled_back: 0,
-      },
-      avgRiskScore: Number(stats.avgRisk) || 0,
-      autoApprovalRate: totalActions > 0 ? (autoApprovedCount / totalActions) * 100 : 0,
-      rollbackRate: 0,
-      avgActionDuration: 0,
-    };
+      return {
+        totalActions,
+        actionsByType: {} as Record<string, number>,
+        actionsByStatus: {
+          completed: Number(stats.completedActions) || 0,
+          failed: Number(stats.failedActions) || 0,
+          pending: 0,
+          in_progress: 0,
+          cancelled: 0,
+          rolled_back: 0,
+        },
+        avgRiskScore: Number(stats.avgRisk) || 0,
+        autoApprovalRate: totalActions > 0 ? (autoApprovedCount / totalActions) * 100 : 0,
+        rollbackRate: 0,
+        avgActionDuration: 0,
+      };
+    } catch {
+      return {
+        totalActions: 0,
+        actionsByType: {},
+        actionsByStatus: { completed: 0, failed: 0, pending: 0, in_progress: 0, cancelled: 0, rolled_back: 0 },
+        avgRiskScore: 0,
+        autoApprovalRate: 0,
+        rollbackRate: 0,
+        avgActionDuration: 0,
+      };
+    }
   }
 
   private async getFileMetrics(sessionWhere: any) {
-    const result = await db.select({
-      totalOps: count(),
-      created: sql<number>`COUNT(CASE WHEN ${fileOperations.operationType} = 'file_create' THEN 1 END)`,
-      updated: sql<number>`COUNT(CASE WHEN ${fileOperations.operationType} = 'file_update' THEN 1 END)`,
-      deleted: sql<number>`COUNT(CASE WHEN ${fileOperations.operationType} = 'file_delete' THEN 1 END)`,
-    }).from(fileOperations);
+    try {
+      const result = await db.select({
+        totalOps: count(),
+        created: sql<number>`COUNT(CASE WHEN ${fileOperations.operationType} = 'file_create' THEN 1 END)`,
+        updated: sql<number>`COUNT(CASE WHEN ${fileOperations.operationType} = 'file_update' THEN 1 END)`,
+        deleted: sql<number>`COUNT(CASE WHEN ${fileOperations.operationType} = 'file_delete' THEN 1 END)`,
+      }).from(fileOperations);
 
-    const stats = result[0] || {};
+      const stats = result[0] || {};
 
-    return {
-      totalFileOperations: Number(stats.totalOps) || 0,
-      filesCreated: Number(stats.created) || 0,
-      filesModified: Number(stats.updated) || 0,
-      filesDeleted: Number(stats.deleted) || 0,
-      totalLinesAdded: 0,
-      totalLinesRemoved: 0,
-      topLanguages: [],
-      topFileTypes: [],
-    };
+      return {
+        totalFileOperations: Number(stats.totalOps) || 0,
+        filesCreated: Number(stats.created) || 0,
+        filesModified: Number(stats.updated) || 0,
+        filesDeleted: Number(stats.deleted) || 0,
+        totalLinesAdded: 0,
+        totalLinesRemoved: 0,
+        topLanguages: [],
+        topFileTypes: [],
+      };
+    } catch {
+      return {
+        totalFileOperations: 0,
+        filesCreated: 0,
+        filesModified: 0,
+        filesDeleted: 0,
+        totalLinesAdded: 0,
+        totalLinesRemoved: 0,
+        topLanguages: [],
+        topFileTypes: [],
+      };
+    }
   }
 
   private async getConversationMetrics(sessionWhere: any) {
-    const result = await db.select({
-      totalMessages: count(),
-      userMessages: sql<number>`COUNT(CASE WHEN ${agentMessages.role} = 'user' THEN 1 END)`,
-      assistantMessages: sql<number>`COUNT(CASE WHEN ${agentMessages.role} = 'assistant' THEN 1 END)`,
-    }).from(agentMessages);
+    try {
+      const result = await db.select({
+        totalMessages: count(),
+        userMessages: sql<number>`COUNT(CASE WHEN ${agentMessages.role} = 'user' THEN 1 END)`,
+        assistantMessages: sql<number>`COUNT(CASE WHEN ${agentMessages.role} = 'assistant' THEN 1 END)`,
+      }).from(agentMessages);
 
-    const convResult = await db.select({ totalConvs: count() }).from(aiConversations);
+      const convResult = await db.select({ totalConvs: count() }).from(aiConversations);
 
-    const stats = result[0] || {};
-    const totalMessages = Number(stats.totalMessages) || 0;
-    const totalConversations = Number(convResult[0]?.totalConvs) || 0;
+      const stats = result[0] || {};
+      const totalMessages = Number(stats.totalMessages) || 0;
+      const totalConversations = Number(convResult[0]?.totalConvs) || 0;
 
-    return {
-      totalConversations,
-      totalMessages,
-      messagesByRole: {
-        user: Number(stats.userMessages) || 0,
-        assistant: Number(stats.assistantMessages) || 0,
-        system: 0,
-        tool: 0,
-      },
-      totalTokensUsed: 0,
-      totalCost: 0,
-      avgMessagesPerConversation: totalConversations > 0 ? totalMessages / totalConversations : 0,
-      topModels: [],
-    };
+      return {
+        totalConversations,
+        totalMessages,
+        messagesByRole: {
+          user: Number(stats.userMessages) || 0,
+          assistant: Number(stats.assistantMessages) || 0,
+          system: 0,
+          tool: 0,
+        },
+        totalTokensUsed: 0,
+        totalCost: 0,
+        avgMessagesPerConversation: totalConversations > 0 ? totalMessages / totalConversations : 0,
+        topModels: [],
+      };
+    } catch {
+      return {
+        totalConversations: 0,
+        totalMessages: 0,
+        messagesByRole: { user: 0, assistant: 0, system: 0, tool: 0 },
+        totalTokensUsed: 0,
+        totalCost: 0,
+        avgMessagesPerConversation: 0,
+        topModels: [],
+      };
+    }
   }
 
   private getEmptyMetrics(): AgentDashboardMetrics {
