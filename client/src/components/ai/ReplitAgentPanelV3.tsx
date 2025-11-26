@@ -58,6 +58,7 @@ import { AgentToolsPanel, type AgentToolsSettings } from './AgentToolsPanel';
 import { ElementEditor, type ElementSelection } from './ElementEditor';
 import { ChatToolbar, ChatToolbarMobile } from './ChatToolbar';
 import { UsageTrackingIcon } from './UsageTrackingIcon';
+import { VideoReplayViewer } from './VideoReplayViewer';
 import { History, X, MousePointer2, Coins } from 'lucide-react';
 
 interface ToolExecution {
@@ -191,6 +192,7 @@ export function ReplitAgentPanelV3({
   ]);
   
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [videoReplayViewerOpen, setVideoReplayViewerOpen] = useState(false);
   
   // Agent Tools Panel settings (Replit Agent 3 exact toggles)
   const [agentToolsSettings, setAgentToolsSettings] = useState<AgentToolsSettings>({
@@ -300,6 +302,7 @@ export function ReplitAgentPanelV3({
   
   // Handler for viewing video replays
   const handleViewVideoReplays = useCallback(() => {
+    setVideoReplayViewerOpen(true);
     toast({
       title: "Video Replays",
       description: "Opening test session recordings..."
@@ -1437,6 +1440,13 @@ export function ReplitAgentPanelV3({
         open={historyModalOpen}
         onOpenChange={setHistoryModalOpen}
         projectId={typeof projectId === 'number' ? projectId : parseInt(projectId as string, 10) || undefined}
+      />
+      
+      {/* Video Replay Viewer - For viewing test session recordings */}
+      <VideoReplayViewer
+        open={videoReplayViewerOpen}
+        onOpenChange={setVideoReplayViewerOpen}
+        projectId={projectIdNum}
       />
     </div>
   );
