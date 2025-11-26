@@ -56,15 +56,20 @@ Phase 2 - AG Grid Enterprise Components:
 - **AgentMetricsDashboard.tsx:** Analytics charts using Recharts for session metrics visualization
 - **AgentHistoryModal.tsx:** Full-screen modal for detailed grid analysis
 
-Phase 3 - IDE Integration (Nov 2025):
-- **ReplitAgentPanelV3.tsx:** Activity Dashboard integrated directly into chat interface
-  - Activity toggle button (📊 icon) in panel header
-  - Collapsible drawer at bottom of chat (300px height)
-  - Sub-views: Live, Sessions, Actions, Files, Messages
-  - Session drill-down with back navigation
-  - Mobile-responsive with card views on small screens
-- **AgentActivity.tsx:** Standalone page at `/agent-activity` (backup/alternative access)
-- **Mobile Cards:** All grids check `isMobile` (≤768px) and render touch-friendly cards instead of AG Grid tables
+Phase 3 - IDE Integration (Nov 2025) - Replit-Style Inline Activity:
+- **ReplitAgentPanelV3.tsx:** Activity shown INLINE within chat messages (like Replit)
+  - Tool executions (file edits, commands, searches) display directly in conversation
+  - ToolExecutionList component renders actions within each message
+  - Collapsible details for each action (output, errors, timing)
+  - Real-time thinking steps and streaming content visible in chat flow
+  - No separate drawer, tab, or toggle - everything is part of the conversation
+- **ModeSelector.tsx:** Replit-style Build/Plan dropdown
+  - **Build mode:** "Make, test, iterate autonomously" with "Auto" badge
+  - **Plan mode:** "Ask questions, plan your work"
+  - Positioned above input field with pill-style button
+  - Color-coded: emerald for Build, blue for Plan
+- **AgentHistoryModal.tsx:** Full-screen modal for detailed session history (optional deep-dive)
+- **Mobile Cards:** All grids check `isMobile` (≤768px) and render touch-friendly cards
 
 Database Tables (agent_sessions, autonomous_actions, file_operations, agent_messages):
 - All tables indexed on session_id for efficient filtering
