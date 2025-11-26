@@ -8,7 +8,8 @@ import {
   Share2, Link, Users, Download,
   ChevronRight, X,
   Globe, Package, TestTube, Search,
-  FileText, Server, Shield, Variable
+  FileText, Server, Shield, Variable,
+  FolderOpen, FileCode, FilePlus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ interface MobileMoreMenuProps {
   projectId: string | number; // Support both UUID strings and numeric IDs
   isOpen: boolean;
   onClose: () => void;
+  onOpenFiles?: () => void;
   problemsCount?: number;
   className?: string;
 }
@@ -43,6 +45,7 @@ export function MobileMoreMenu({
   projectId,
   isOpen,
   onClose,
+  onOpenFiles,
   problemsCount = 0,
   className 
 }: MobileMoreMenuProps) {
@@ -207,8 +210,37 @@ export function MobileMoreMenu({
     onClose();
   };
 
+  // Files handlers
+  const handleOpenFiles = () => {
+    if (onOpenFiles) {
+      onOpenFiles();
+    } else {
+      toast({ title: 'Files', description: 'Opening file explorer...' });
+    }
+    onClose();
+  };
+
+  const handleNewFile = () => {
+    toast({ title: 'New File', description: 'Creating new file...' });
+    onClose();
+  };
+
+  const handleOpenRecent = () => {
+    toast({ title: 'Recent Files', description: 'Opening recent files...' });
+    onClose();
+  };
+
   // Menu sections
   const menuSections: MenuSection[] = [
+    {
+      title: 'Files',
+      icon: FolderOpen,
+      items: [
+        { id: 'files-explorer', label: 'File Explorer', icon: FolderOpen, onClick: handleOpenFiles },
+        { id: 'files-new', label: 'New File', icon: FilePlus, onClick: handleNewFile },
+        { id: 'files-recent', label: 'Recent Files', icon: FileCode, onClick: handleOpenRecent },
+      ],
+    },
     {
       title: 'Git',
       icon: GitBranch,
