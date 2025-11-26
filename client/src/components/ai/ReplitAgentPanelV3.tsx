@@ -1120,13 +1120,28 @@ export function ReplitAgentPanelV3({
       {/* Input area */}
       <div className="p-4 border-t border-border">
         <div className="space-y-2">
+          {/* Mode selector row - above input like Replit */}
+          {conversationId && (
+            <div className="flex items-center gap-2">
+              <ModeSelector 
+                mode={agentMode} 
+                onChange={handleModeChange}
+              />
+              {agentMode === 'build' && (
+                <span className="text-[10px] text-muted-foreground">
+                  Agent will autonomously make changes
+                </span>
+              )}
+            </div>
+          )}
+          
           <div className="relative">
             <Textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyPress}
-              placeholder="Ask me anything..."
+              placeholder={agentMode === 'build' ? "What would you like me to build?" : "Ask a question or describe what you want to plan..."}
               className="pr-12 resize-none text-sm min-h-[60px] max-h-[200px]"
               disabled={isWorking}
               data-testid="input-message"
@@ -1141,14 +1156,6 @@ export function ReplitAgentPanelV3({
               <Send className="h-3.5 w-3.5" />
             </Button>
           </div>
-          
-          {/* Mode Selector */}
-          {conversationId && (
-            <ModeSelector 
-              mode={agentMode} 
-              onChange={handleModeChange}
-            />
-          )}
         </div>
         
         {/* Quick actions */}
