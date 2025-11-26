@@ -54,7 +54,7 @@ export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
           <ChevronDown className="w-3.5 h-3.5 ml-1 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-64">
+      <DropdownMenuContent align="start" className="w-48 sm:w-56">
         {modes.map((m) => {
           const Icon = m.icon;
           const isActive = m.id === mode;
@@ -64,28 +64,28 @@ export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
               key={m.id}
               onClick={() => onChange(m.id)}
               className={cn(
-                "flex items-start gap-3 p-3 cursor-pointer",
+                "flex items-center gap-2 p-2 cursor-pointer",
                 isActive && "bg-blue-50 dark:bg-blue-950/30"
               )}
               data-testid={`mode-option-${m.id}`}
             >
               <Icon className={cn(
-                "w-4 h-4 mt-0.5",
+                "w-4 h-4 shrink-0",
                 isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"
               )} />
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className={cn(
                   "font-medium text-sm",
                   isActive ? "text-blue-900 dark:text-blue-100" : "text-gray-900 dark:text-gray-100"
                 )}>
                   {m.label}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
                   {m.description}
                 </div>
               </div>
               {isActive && (
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-2" />
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 shrink-0" />
               )}
             </DropdownMenuItem>
           );
