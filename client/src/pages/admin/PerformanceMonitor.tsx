@@ -151,31 +151,35 @@ export default function PerformanceMonitor() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Performance Monitor</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Performance Monitor</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Real-time system performance and health metrics
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => refetchHealth()}
+            className="flex-1 sm:flex-none"
+            data-testid="button-refresh-health"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+            <span className="hidden xs:inline">Refresh</span>
           </Button>
           <Button
             variant={autoRefresh ? 'default' : 'outline'}
             size="sm"
             onClick={() => setAutoRefresh(!autoRefresh)}
+            className="flex-1 sm:flex-none"
+            data-testid="button-toggle-autorefresh"
           >
-            <Activity className="h-4 w-4 mr-2" />
-            Auto-refresh {autoRefresh ? 'ON' : 'OFF'}
+            <Activity className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="text-xs sm:text-sm">Auto {autoRefresh ? 'ON' : 'OFF'}</span>
           </Button>
         </div>
       </div>
@@ -209,27 +213,27 @@ export default function PerformanceMonitor() {
               </Alert>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
               <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Uptime</CardTitle>
+                <CardHeader className="p-3 sm:p-4 pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-medium">Uptime</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
+                <CardContent className="p-3 sm:p-4 pt-0">
+                  <div className="text-lg sm:text-2xl font-bold">
                     {formatUptime(health.system.uptime)}
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                     System running time
                   </p>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+                <CardHeader className="p-3 sm:p-4 pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-medium">Success Rate</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
+                <CardContent className="p-3 sm:p-4 pt-0">
+                  <div className="text-lg sm:text-2xl font-bold">
                     {health.stats.overallSuccessRate.toFixed(1)}%
                   </div>
                   <Progress
@@ -240,11 +244,11 @@ export default function PerformanceMonitor() {
               </Card>
 
               <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
+                <CardHeader className="p-3 sm:p-4 pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-medium">Total Requests</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
+                <CardContent className="p-3 sm:p-4 pt-0">
+                  <div className="text-lg sm:text-2xl font-bold">
                     {health.stats.totalRequests.toLocaleString()}
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -254,14 +258,14 @@ export default function PerformanceMonitor() {
               </Card>
 
               <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Memory Usage</CardTitle>
+                <CardHeader className="p-3 sm:p-4 pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-medium">Memory Usage</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
+                <CardContent className="p-3 sm:p-4 pt-0">
+                  <div className="text-lg sm:text-2xl font-bold">
                     {formatBytes(health.system.memory.heapUsed)}
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                     of {formatBytes(health.system.memory.heapTotal)}
                   </p>
                 </CardContent>
@@ -273,111 +277,119 @@ export default function PerformanceMonitor() {
 
       {/* Response Time Chart */}
       {timeSeries?.data && timeSeries.data.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Response Time Trends</CardTitle>
-            <CardDescription>
+        <Card data-testid="card-response-time-chart">
+          <CardHeader className="p-3 sm:p-4 lg:p-6">
+            <CardTitle className="text-sm sm:text-base lg:text-lg">Response Time Trends</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               Average response times over the last 10 minutes
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={timeSeries.data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="timestamp"
-                  tickFormatter={(value) => new Date(value).toLocaleTimeString()}
-                />
-                <YAxis />
-                <Tooltip
-                  labelFormatter={(value) => new Date(value).toLocaleString()}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="avgResponseTime"
-                  stroke="#8884d8"
-                  fill="#8884d8"
-                  fillOpacity={0.6}
-                  name="Avg Response Time (ms)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+          <CardContent className="p-2 sm:p-4 lg:p-6 pt-0">
+            <div className="h-[200px] sm:h-[250px] lg:h-[300px] w-full overflow-x-auto">
+              <ResponsiveContainer width="100%" height="100%" minWidth={300}>
+                <AreaChart data={timeSeries.data}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="timestamp"
+                    tickFormatter={(value) => new Date(value).toLocaleTimeString()}
+                    tick={{ fontSize: 10 }}
+                  />
+                  <YAxis tick={{ fontSize: 10 }} width={40} />
+                  <Tooltip
+                    labelFormatter={(value) => new Date(value).toLocaleString()}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="avgResponseTime"
+                    stroke="#8884d8"
+                    fill="#8884d8"
+                    fillOpacity={0.6}
+                    name="Avg Response Time (ms)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Request Volume Chart */}
       {timeSeries?.data && timeSeries.data.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Request Volume</CardTitle>
-            <CardDescription>
+        <Card data-testid="card-request-volume-chart">
+          <CardHeader className="p-3 sm:p-4 lg:p-6">
+            <CardTitle className="text-sm sm:text-base lg:text-lg">Request Volume</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               Number of requests and errors over time
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={timeSeries.data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="timestamp"
-                  tickFormatter={(value) => new Date(value).toLocaleTimeString()}
-                />
-                <YAxis />
-                <Tooltip
-                  labelFormatter={(value) => new Date(value).toLocaleString()}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="requests"
-                  stroke="#82ca9d"
-                  name="Requests"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="errorCount"
-                  stroke="#ff7c7c"
-                  name="Errors"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+          <CardContent className="p-2 sm:p-4 lg:p-6 pt-0">
+            <div className="h-[200px] sm:h-[250px] lg:h-[300px] w-full overflow-x-auto">
+              <ResponsiveContainer width="100%" height="100%" minWidth={300}>
+                <LineChart data={timeSeries.data}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="timestamp"
+                    tickFormatter={(value) => new Date(value).toLocaleTimeString()}
+                    tick={{ fontSize: 10 }}
+                  />
+                  <YAxis tick={{ fontSize: 10 }} width={40} />
+                  <Tooltip
+                    labelFormatter={(value) => new Date(value).toLocaleString()}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="requests"
+                    stroke="#82ca9d"
+                    name="Requests"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="errorCount"
+                    stroke="#ff7c7c"
+                    name="Errors"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Endpoint Performance */}
       {health?.stats.endpointStats && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Endpoint Performance</CardTitle>
-            <CardDescription>
+        <Card data-testid="card-endpoint-performance">
+          <CardHeader className="p-3 sm:p-4 lg:p-6">
+            <CardTitle className="text-sm sm:text-base lg:text-lg">Endpoint Performance</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               Performance metrics for individual API endpoints
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="p-3 sm:p-4 lg:p-6 pt-0">
+            <div className="space-y-3 sm:space-y-4">
               {Object.entries(health.stats.endpointStats).map(([key, stat]: [string, any]) => (
-                <div key={key} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">{stat.method}</Badge>
-                      <span className="font-mono text-sm">{stat.endpoint}</span>
+                <div key={key} className="border rounded-lg p-2 sm:p-3 lg:p-4" data-testid={`card-endpoint-${key}`}>
+                  {/* Mobile: stacked layout, Desktop: flex row */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className="text-[10px] sm:text-xs">{stat.method}</Badge>
+                      <span className="font-mono text-[10px] sm:text-xs lg:text-sm break-all">{stat.endpoint}</span>
                     </div>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span>
-                        <Clock className="h-3 w-3 inline mr-1" />
-                        {stat.avgResponseTime.toFixed(0)}ms avg
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[10px] sm:text-xs lg:text-sm">
+                      <span className="flex items-center">
+                        <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />
+                        {stat.avgResponseTime.toFixed(0)}ms
                       </span>
-                      <span>
-                        <Zap className="h-3 w-3 inline mr-1" />
-                        {stat.p95.toFixed(0)}ms p95
+                      <span className="flex items-center">
+                        <Zap className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />
+                        p95: {stat.p95.toFixed(0)}ms
                       </span>
                       <span className={stat.successRate < 95 ? 'text-red-500' : 'text-green-500'}>
-                        {stat.successRate.toFixed(1)}% success
+                        {stat.successRate.toFixed(1)}%
                       </span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-5 gap-2 text-xs text-muted-foreground">
+                  {/* Mobile: 2-col grid, Desktop: 5-col */}
+                  <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 gap-1 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
                     <div>Count: {stat.count}</div>
                     <div>Min: {stat.minResponseTime}ms</div>
                     <div>Max: {stat.maxResponseTime}ms</div>
@@ -392,38 +404,40 @@ export default function PerformanceMonitor() {
       )}
 
       {/* Real-time Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Real-time Activity</CardTitle>
-          <CardDescription>
+      <Card data-testid="card-realtime-activity">
+        <CardHeader className="p-3 sm:p-4 lg:p-6">
+          <CardTitle className="text-sm sm:text-base lg:text-lg">Real-time Activity</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             Live stream of API requests (last 20)
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 sm:p-4 lg:p-6 pt-0">
           <div className="space-y-2">
             {realtimeMetrics.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
+              <p className="text-muted-foreground text-center py-4 sm:py-8 text-xs sm:text-sm">
                 Waiting for activity...
               </p>
             ) : (
               realtimeMetrics.map((metric, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between py-2 px-3 rounded-md bg-muted/50"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 py-2 px-2 sm:px-3 rounded-md bg-muted/50"
+                  data-testid={`metric-row-${i}`}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                     <Badge
                       variant={metric.statusCode >= 400 ? 'destructive' : 'default'}
+                      className="text-[10px] sm:text-xs"
                     >
                       {metric.statusCode}
                     </Badge>
-                    <span className="font-mono text-sm">
+                    <span className="font-mono text-[10px] sm:text-xs lg:text-sm break-all">
                       {metric.method} {metric.endpoint}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-xs lg:text-sm text-muted-foreground">
                     <span>{metric.responseTime}ms</span>
-                    <span>{formatDistanceToNow(new Date(metric.timestamp))} ago</span>
+                    <span className="truncate">{formatDistanceToNow(new Date(metric.timestamp))} ago</span>
                   </div>
                 </div>
               ))
