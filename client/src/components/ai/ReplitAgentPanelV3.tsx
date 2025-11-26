@@ -1349,10 +1349,12 @@ export function ReplitAgentPanelV3({
           
           {/* Agent Tools Panel - Replit Agent 3 toggles: Max Autonomy, App Testing, Extended Thinking, High Power Models, Web Search */}
           <AgentToolsPanel
+            projectId={projectIdNum}
             settings={agentToolsSettings}
             onSettingsChange={handleAgentToolsChange}
             onViewVideoReplays={handleViewVideoReplays}
             videoReplayCount={videoReplayCount}
+            compact={mode !== 'desktop'}
           />
         </div>
         

@@ -34,14 +34,22 @@ interface AgentToolsPanelProps {
   projectId?: number;
   onViewVideoReplays?: () => void;
   className?: string;
+  settings?: AgentToolsSettings;
+  onSettingsChange?: (settings: AgentToolsSettings) => void;
+  videoReplayCount?: number;
+  compact?: boolean;
 }
 
 export function AgentToolsPanel({
   projectId,
   onViewVideoReplays,
-  className
+  className,
+  settings: externalSettings,
+  onSettingsChange,
+  videoReplayCount: externalVideoReplayCount,
+  compact = false,
 }: AgentToolsPanelProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(!compact);
   const [localSettings, setLocalSettings] = useState<AgentToolsSettings>({
     maxAutonomy: false,
     appTesting: true,
@@ -50,20 +58,25 @@ export function AgentToolsPanel({
     webSearch: true,
   });
 
+  const hookData = useAgentTools(projectId);
+  
   const {
-    settings,
-    updateSettings,
+    settings: hookSettings,
+    updateSettings: hookUpdateSettings,
     isUpdating,
     isLoadingPreferences,
-    videoReplayCount,
+    videoReplayCount: hookVideoReplayCount,
     effectiveModel,
     effectiveModelInfo,
     toolsStatus,
     isLoadingToolsStatus,
     testSessionCount,
-  } = useAgentTools(projectId);
+  } = hookData;
+  
+  const settings = externalSettings || hookSettings;
+  const updateSettings = onSettingsChange || hookUpdateSettings;
+  const videoReplayCount = externalVideoReplayCount ?? hookVideoReplayCount;
 
-  // Sync local settings with server settings
   useEffect(() => {
     if (settings) {
       setLocalSettings(settings);
