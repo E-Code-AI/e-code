@@ -64,21 +64,26 @@ export default function Login() {
       const pendingAppDescription = sessionStorage.getItem('pendingAppDescription');
       const triggerBuild = sessionStorage.getItem('triggerBuildOnLanding');
       
-      // Check if we need to continue workspace creation from Homepage
+      // PRIORITY 1: Check if we need to continue workspace creation from Homepage (Replit-style flow)
       if (triggerBuild === 'true' && pendingAppDescription) {
-        // Don't clear flags here - Landing page will handle it
         // Redirect to Landing page which will auto-trigger workspace creation
         navigate('/');
         return;
       }
       
-      // Legacy check: URL param method
+      // PRIORITY 2: Legacy URL param method
       const urlParams = new URLSearchParams(window.location.search);
       const shouldRedirectToAgent = urlParams.get('build') === 'true';
       
       if (shouldRedirectToAgent && pendingAppDescription) {
         sessionStorage.removeItem('pendingAppDescription');
         createProjectAndNavigate(pendingAppDescription);
+        return;
+      }
+      
+      // PRIORITY 3: Admin redirect
+      if (user.role === 'admin' || user.role === 'super_admin') {
+        navigate('/admin/chatgpt');
         return;
       }
       
