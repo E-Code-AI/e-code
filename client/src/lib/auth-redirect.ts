@@ -75,19 +75,42 @@ export function handleUnauthorized(originUrl?: string): boolean {
 }
 
 /**
+ * Validate that a redirect URL is safe (same-origin relative path)
+ */
+function isValidRedirectUrl(url: string | null): boolean {
+  if (!url) return false;
+  // Must start with / and not contain protocol or host
+  if (!url.startsWith('/')) return false;
+  // Prevent protocol-relative URLs like //evil.com
+  if (url.startsWith('//')) return false;
+  // Prevent javascript: or data: URLs
+  if (url.includes(':')) return false;
+  return true;
+}
+
+/**
  * Get the stored post-login redirect URL
  * Call this after successful login to redirect user back
+ * Returns validated same-origin path or null
  */
 export function getPostLoginRedirect(): string | null {
-  const next = sessionStorage.getItem('auth_redirect_next');
+  let next = sessionStorage.getItem('auth_redirect_next');
   if (next) {
     sessionStorage.removeItem('auth_redirect_next');
-    return next;
+    if (isValidRedirectUrl(next)) {
+      return next;
+    }
   }
   
   // Also check URL parameter
   const params = new URLSearchParams(window.location.search);
-  return params.get('next');
+  next = params.get('next');
+  
+  if (isValidRedirectUrl(next)) {
+    return next;
+  }
+  
+  return null;
 }
 
 /**

@@ -107,6 +107,14 @@ function saveRecentCommand(commandId: string): void {
   }
 }
 
+function useSafeAuth() {
+  try {
+    return useAuth();
+  } catch {
+    return { user: null, logoutMutation: { mutate: () => {} } };
+  }
+}
+
 export function CommandPalette({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
@@ -122,7 +130,7 @@ export function CommandPalette({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [recentCommandIds, setRecentCommandIds] = useState<string[]>([]);
   const [, navigate] = useLocation();
-  const { user, logoutMutation } = useAuth();
+  const { user, logoutMutation } = useSafeAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
