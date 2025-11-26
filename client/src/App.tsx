@@ -82,6 +82,7 @@ const ComparePage = lazy(() => import("@/pages/compare/ComparePage"));
 
 const MobileAdmin = lazy(() => import("@/pages/admin/MobileAdminDashboard"));
 const MobileWorkspace = lazy(() => import("@/pages/MobileWorkspace"));
+const MobileMarketingPage = lazy(() => import("@/pages/mobile"));
 const AI = lazy(() => import("@/pages/AI"));
 const Press = lazy(() => import("@/pages/Press"));
 const Partners = lazy(() => import("@/pages/Partners"));
@@ -396,7 +397,7 @@ function AppContent() {
           <Route path="/solutions/chatbot-builder" component={ChatbotBuilder} />
           <Route path="/solutions/internal-ai-builder" component={InternalAIBuilder} />
 
-          <Route path="/mobile" component={MobileAdmin} />
+          <Route path="/mobile" component={MobileMarketingPage} />
           <Route path="/mobile-workspace/:projectId" component={MobileWorkspace} />
           <Route path="/ai" component={AI} />
           <Route path="/ai-documentation" component={AIDocumentation} />
