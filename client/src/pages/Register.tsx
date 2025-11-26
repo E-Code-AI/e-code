@@ -114,15 +114,24 @@ export default function Register() {
         description: data.message || 'Account created successfully. Please check your email to verify.',
       });
       
+      // Check for pending workspace creation (Replit-style flow)
       const pendingAppDescription = sessionStorage.getItem('pendingAppDescription');
-      const urlParams = new URLSearchParams(window.location.search);
-      const redirectParam = urlParams.get('redirect');
+      const triggerBuild = sessionStorage.getItem('triggerBuildOnLanding');
       
-      if (redirectParam === 'build-from-prompt' && pendingAppDescription) {
-        sessionStorage.setItem('triggerBuildOnLanding', 'true');
+      if (triggerBuild === 'true' && pendingAppDescription) {
+        // Flags are already set - redirect to landing to trigger workspace creation
         navigate('/');
       } else {
-        navigate('/');
+        // Legacy: check URL param
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectParam = urlParams.get('redirect');
+        
+        if (redirectParam === 'build-from-prompt' && pendingAppDescription) {
+          sessionStorage.setItem('triggerBuildOnLanding', 'true');
+          navigate('/');
+        } else {
+          navigate('/');
+        }
       }
     } catch (error: any) {
       console.error('Registration error:', error);

@@ -62,6 +62,7 @@ const scaleIn = {
 export default function Landing() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [chatOpen, setChatOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -161,8 +162,26 @@ export default function Landing() {
   ];
 
   const handleStartBuilding = async (description: string) => {
-    sessionStorage.setItem('pendingAppDescription', description);
     setChatOpen(false);
+    
+    // CRITICAL: Check if user is authenticated FIRST (Replit-style flow)
+    if (!user) {
+      // Save prompt for after login
+      sessionStorage.setItem('pendingAppDescription', description);
+      sessionStorage.setItem('triggerBuildOnLanding', 'true');
+      
+      toast({
+        title: 'Sign in to continue',
+        description: 'Your workspace will be created automatically after login.',
+      });
+      
+      // Redirect to login page
+      navigate('/login');
+      return;
+    }
+    
+    // User is authenticated - proceed with workspace creation
+    sessionStorage.setItem('pendingAppDescription', description);
     
     try {
       const requestPayload = {
@@ -177,6 +196,10 @@ export default function Landing() {
       const result = await apiRequest('POST', '/api/workspace/bootstrap', requestPayload) as any;
 
       if (result.success) {
+        // Clear pending prompt on success
+        sessionStorage.removeItem('pendingAppDescription');
+        sessionStorage.removeItem('triggerBuildOnLanding');
+        
         toast({
           title: 'Creating your workspace...',
           description: 'AI is generating your project structure now',
@@ -193,8 +216,6 @@ export default function Landing() {
       });
     }
   };
-
-  const { toast } = useToast();
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

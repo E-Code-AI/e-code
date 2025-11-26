@@ -58,19 +58,32 @@ export default function Login() {
     }
   };
 
-  // Redirect if already logged in
+  // Redirect after successful login - handle pending workspace creation (Replit-style flow)
   useEffect(() => {
     if (user) {
       const pendingAppDescription = sessionStorage.getItem('pendingAppDescription');
+      const triggerBuild = sessionStorage.getItem('triggerBuildOnLanding');
+      
+      // Check if we need to continue workspace creation from Homepage
+      if (triggerBuild === 'true' && pendingAppDescription) {
+        // Don't clear flags here - Landing page will handle it
+        // Redirect to Landing page which will auto-trigger workspace creation
+        navigate('/');
+        return;
+      }
+      
+      // Legacy check: URL param method
       const urlParams = new URLSearchParams(window.location.search);
       const shouldRedirectToAgent = urlParams.get('build') === 'true';
       
       if (shouldRedirectToAgent && pendingAppDescription) {
         sessionStorage.removeItem('pendingAppDescription');
         createProjectAndNavigate(pendingAppDescription);
-      } else {
-        navigate('/dashboard');
+        return;
       }
+      
+      // Default: go to dashboard
+      navigate('/dashboard');
     }
   }, [user, navigate]);
 

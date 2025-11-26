@@ -44,6 +44,30 @@ Key AI Agent Enhancements include structured XML-based system prompts, a reposit
 ### Feature Specifications
 Core features include a Monaco Code Editor with advanced enhancements, an interactive terminal (xterm.js), file management, real-time collaboration, authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager, a Logs Viewer, and a Debugger UI. The UI is responsive across devices. Autonomous workspace creation involves a Bootstrap API call, AI plan generation, WebSocket-based real-time progress, autonomous execution, and a live preview. PWA features and Electron desktop support are included.
 
+### Critical Authentication Flow: Homepage BUILD → Login → Workspace (Replit-style, Nov 2025)
+When unauthenticated users click BUILD on the homepage, the system implements a seamless Replit-style flow:
+
+**SessionStorage Keys:**
+- `pendingAppDescription`: Stores the user's prompt text
+- `triggerBuildOnLanding`: Flag set to 'true' to auto-resume workspace creation
+
+**Flow Implementation:**
+1. **Landing.tsx:** `handleStartBuilding()` checks `user` state first. If not authenticated:
+   - Saves prompt to `sessionStorage.pendingAppDescription`
+   - Sets `sessionStorage.triggerBuildOnLanding = 'true'`
+   - Shows toast "Sign in to continue"
+   - Redirects to `/login`
+
+2. **Login.tsx/Register.tsx:** After successful auth, `useEffect` checks flags:
+   - If `triggerBuildOnLanding === 'true'` AND `pendingAppDescription` exists
+   - Redirects to `/` (Landing page)
+
+3. **Landing.tsx useEffect:** Monitors `user` state changes:
+   - If user AND flags exist → clears flags → calls `handleStartBuilding(pendingPrompt)`
+   - Workspace bootstrap API called → redirects to `/ide/{projectId}`
+
+**Critical: ALL changes to Landing.tsx, Login.tsx, or Register.tsx must preserve this flow.**
+
 ### System Design Choices
 A PostgreSQL database stores user data, project hierarchies, AI agent sessions, deployment history, subscription management, and AI optimization monitoring. Security measures include CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system provides server-sent event streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API with Prometheus metrics. A two-tier database API architecture (Admin and Project Data APIs) is used with integrated security. Docker builds are optimized for small image sizes. Security enhancements include authentication/authorization for repository overview and templates APIs, context route timeouts, file system scanning limits, and project path scoping.
 
