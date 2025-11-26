@@ -169,6 +169,7 @@ export function MobileCodeKeyboard({
   className
 }: MobileCodeKeyboardProps) {
   const [showSymbols, setShowSymbols] = useState(false);
+  const [clipboardHistory, setClipboardHistory] = useState<string[]>([]);
   
   const snippets = languageSnippets[language] || languageSnippets.generic;
 
@@ -180,6 +181,43 @@ export function MobileCodeKeyboard({
     onSnippetSelect?.(snippet);
     onInsert?.(snippet.insert);
   }, [onSnippetSelect, onInsert]);
+
+  const handleAction = useCallback(async (action: 'undo' | 'redo' | 'indent' | 'outdent' | 'comment' | 'copy' | 'paste') => {
+    if (onAction) {
+      onAction(action);
+      return;
+    }
+    
+    if (action === 'copy') {
+      try {
+        const selection = window.getSelection()?.toString() || '';
+        if (selection) {
+          await navigator.clipboard.writeText(selection);
+          setClipboardHistory(prev => [selection, ...prev.slice(0, 9)]);
+        }
+      } catch (err) {
+        console.warn('Copy failed:', err);
+      }
+    }
+    
+    if (action === 'paste') {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text && onInsert) {
+          onInsert(text);
+        }
+      } catch (err) {
+        console.warn('Paste failed:', err);
+        if (clipboardHistory[0] && onInsert) {
+          onInsert(clipboardHistory[0]);
+        }
+      }
+    }
+    
+    if (action === 'indent' && onInsert) {
+      onInsert('  ');
+    }
+  }, [onAction, onInsert, clipboardHistory]);
 
   if (!isExpanded) {
     return (
@@ -238,7 +276,7 @@ export function MobileCodeKeyboard({
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => onAction?.('undo')}
+          onClick={() => handleAction('undo')}
           data-testid="action-undo"
         >
           <Undo2 className="w-4 h-4" />
@@ -247,7 +285,7 @@ export function MobileCodeKeyboard({
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => onAction?.('redo')}
+          onClick={() => handleAction('redo')}
           data-testid="action-redo"
         >
           <Redo2 className="w-4 h-4" />
@@ -257,7 +295,7 @@ export function MobileCodeKeyboard({
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => onAction?.('outdent')}
+          onClick={() => handleAction('outdent')}
           data-testid="action-outdent"
         >
           <IndentDecrease className="w-4 h-4" />
@@ -266,7 +304,7 @@ export function MobileCodeKeyboard({
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => onAction?.('indent')}
+          onClick={() => handleAction('indent')}
           data-testid="action-indent"
         >
           <IndentIncrease className="w-4 h-4" />
@@ -276,7 +314,7 @@ export function MobileCodeKeyboard({
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => onAction?.('comment')}
+          onClick={() => handleAction('comment')}
           data-testid="action-comment"
         >
           <MessageSquareCode className="w-4 h-4" />
@@ -286,7 +324,7 @@ export function MobileCodeKeyboard({
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => onAction?.('copy')}
+          onClick={() => handleAction('copy')}
           data-testid="action-copy"
         >
           <Copy className="w-4 h-4" />
@@ -295,7 +333,7 @@ export function MobileCodeKeyboard({
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => onAction?.('paste')}
+          onClick={() => handleAction('paste')}
           data-testid="action-paste"
         >
           <Clipboard className="w-4 h-4" />

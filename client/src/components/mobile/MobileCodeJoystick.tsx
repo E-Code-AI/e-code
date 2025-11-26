@@ -27,6 +27,10 @@ interface MobileCodeJoystickProps {
 
 type SelectionMode = 'none' | 'token' | 'line' | 'block';
 
+const SCROLL_INTERVAL = 50;
+const MOMENTUM_DECAY = 0.92;
+const MIN_VELOCITY = 0.05;
+
 export function MobileCodeJoystick({
   onScroll,
   onCursorMove,
@@ -42,6 +46,58 @@ export function MobileCodeJoystick({
   const [tapCount, setTapCount] = useState(0);
   const lastTapTimeRef = useRef(0);
   const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const momentumRef = useRef<{ velocity: number; direction: 'up' | 'down' } | null>(null);
+  const momentumIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sustained scrolling while held
+  useEffect(() => {
+    if (isDragging && Math.abs(dragOffset.y) > 10) {
+      const direction = dragOffset.y < 0 ? 'up' : 'down';
+      const velocity = Math.abs(dragOffset.y) / 30;
+      
+      scrollIntervalRef.current = setInterval(() => {
+        onScroll?.(direction, velocity);
+      }, SCROLL_INTERVAL);
+      
+      momentumRef.current = { velocity, direction };
+    } else {
+      if (scrollIntervalRef.current) {
+        clearInterval(scrollIntervalRef.current);
+        scrollIntervalRef.current = null;
+      }
+    }
+    
+    return () => {
+      if (scrollIntervalRef.current) {
+        clearInterval(scrollIntervalRef.current);
+      }
+    };
+  }, [isDragging, dragOffset.y, onScroll]);
+
+  // Momentum decay after release
+  useEffect(() => {
+    if (!isDragging && momentumRef.current && momentumRef.current.velocity > MIN_VELOCITY) {
+      momentumIntervalRef.current = setInterval(() => {
+        if (momentumRef.current && momentumRef.current.velocity > MIN_VELOCITY) {
+          onScroll?.(momentumRef.current.direction, momentumRef.current.velocity);
+          momentumRef.current.velocity *= MOMENTUM_DECAY;
+        } else {
+          if (momentumIntervalRef.current) {
+            clearInterval(momentumIntervalRef.current);
+            momentumIntervalRef.current = null;
+          }
+          momentumRef.current = null;
+        }
+      }, SCROLL_INTERVAL);
+    }
+    
+    return () => {
+      if (momentumIntervalRef.current) {
+        clearInterval(momentumIntervalRef.current);
+      }
+    };
+  }, [isDragging, onScroll]);
 
   // Handle multi-tap selection
   const handleTap = useCallback(() => {
@@ -54,7 +110,6 @@ export function MobileCodeJoystick({
     }
 
     if (timeSinceLastTap < 300) {
-      // Quick successive tap - advance selection mode
       const nextTap = tapCount + 1;
       setTapCount(nextTap);
       
@@ -70,13 +125,11 @@ export function MobileCodeJoystick({
         setTapCount(0);
       }
     } else {
-      // First tap in new sequence
       setTapCount(1);
       setSelectionMode('token');
       onSelect?.('token');
     }
 
-    // Reset after delay
     tapTimeoutRef.current = setTimeout(() => {
       setTapCount(0);
       setSelectionMode('none');
@@ -85,6 +138,11 @@ export function MobileCodeJoystick({
 
   // Handle touch/drag start
   const handleDragStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    momentumRef.current = null;
+    if (momentumIntervalRef.current) {
+      clearInterval(momentumIntervalRef.current);
+      momentumIntervalRef.current = null;
+    }
     setIsDragging(true);
     setDragOffset({ x: 0, y: 0 });
   }, []);
@@ -104,14 +162,7 @@ export function MobileCodeJoystick({
     const offsetY = Math.max(-30, Math.min(30, touch.clientY - centerY));
     
     setDragOffset({ x: offsetX, y: offsetY });
-
-    // Calculate velocity based on offset
-    const velocity = Math.abs(offsetY) / 30;
-    
-    if (Math.abs(offsetY) > 10) {
-      onScroll?.(offsetY < 0 ? 'up' : 'down', velocity);
-    }
-  }, [isDragging, onScroll]);
+  }, [isDragging]);
 
   // Handle touch/drag end
   const handleDragEnd = useCallback(() => {
@@ -124,12 +175,12 @@ export function MobileCodeJoystick({
     onCursorMove?.(direction);
   }, [onCursorMove]);
 
-  // Cleanup timeout on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (tapTimeoutRef.current) {
-        clearTimeout(tapTimeoutRef.current);
-      }
+      if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
+      if (scrollIntervalRef.current) clearInterval(scrollIntervalRef.current);
+      if (momentumIntervalRef.current) clearInterval(momentumIntervalRef.current);
     };
   }, []);
 
