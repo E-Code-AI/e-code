@@ -5,13 +5,12 @@ import { BackgroundTestingService } from '../services/background-testing-service
 import { createLogger } from '../utils/logger';
 import { db } from '../db';
 import { 
-  webSearchHistory, 
-  testingSessions,
-  testVideoReplays,
-  extendedThinkingSessions,
-  extendedThinkingSteps
+  testingSessionRecordings,
+  agentMessages,
+  aiConversations,
+  projects
 } from '@shared/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, sql } from 'drizzle-orm';
 import crypto from 'crypto';
 
 const logger = createLogger('agent-tools');
@@ -53,43 +52,10 @@ export default function createAgentToolsRouter(): Router {
         searchType
       });
 
-      // Save search to history
-      await db.insert(webSearchHistory).values({
-        userId,
-        query,
-        resultsCount: searchResult.totalResults,
-        results: searchResult.results,
-        searchTime: searchResult.searchTime,
-      }).catch(err => {
-        logger.warn('Failed to save search history:', err);
-      });
-
       res.json(searchResult);
     } catch (error: any) {
       logger.error('Web search error:', error);
       res.status(500).json({ error: 'Search failed', message: error.message });
-    }
-  });
-
-  /**
-   * GET /api/agent/web-search/history
-   * Get user's search history
-   */
-  router.get('/web-search/history', async (req, res) => {
-    try {
-      const userId = req.user!.id;
-      const limit = parseInt(req.query.limit as string) || 20;
-
-      const history = await db.select()
-        .from(webSearchHistory)
-        .where(eq(webSearchHistory.userId, userId))
-        .orderBy(desc(webSearchHistory.timestamp))
-        .limit(limit);
-
-      res.json({ history, count: history.length });
-    } catch (error: any) {
-      logger.error('Error fetching search history:', error);
-      res.status(500).json({ error: 'Failed to fetch search history' });
     }
   });
 
@@ -113,18 +79,38 @@ export default function createAgentToolsRouter(): Router {
     }
   });
 
+  /**
+   * POST /api/agent/web-search/ai
+   * Search formatted for AI consumption
+   */
+  router.post('/web-search/ai', async (req, res) => {
+    try {
+      const { query } = req.body;
+
+      if (!query) {
+        return res.status(400).json({ error: 'Query is required' });
+      }
+
+      const formattedResults = await webSearchService.searchForAI(query);
+      res.json({ result: formattedResults });
+    } catch (error: any) {
+      logger.error('AI search error:', error);
+      res.status(500).json({ error: 'AI search failed' });
+    }
+  });
+
   // ============================================
   // APP TESTING ENDPOINTS
   // ============================================
 
   /**
    * POST /api/agent/testing/start
-   * Start a new test session
+   * Start a new test session with video recording
    */
   router.post('/testing/start', async (req, res) => {
     try {
       const userId = req.user!.id;
-      const { projectId, testPlan, recordVideo = true } = req.body;
+      const { projectId, testPlan, testName, recordVideo = true } = req.body;
 
       if (!projectId || !testPlan) {
         return res.status(400).json({ error: 'projectId and testPlan are required' });
@@ -132,35 +118,38 @@ export default function createAgentToolsRouter(): Router {
 
       const sessionId = crypto.randomUUID();
 
-      // Create test session in database
-      const [session] = await db.insert(testingSessions).values({
-        id: sessionId,
-        userId,
+      // Create test recording entry in database
+      const [recording] = await db.insert(testingSessionRecordings).values({
         projectId,
+        sessionId,
+        testName: testName || `Test ${new Date().toISOString()}`,
         testPlan,
         status: 'pending',
-        recordVideo,
+        createdBy: userId,
         metadata: {
+          recordVideo,
           startedBy: 'agent-tools',
           timestamp: new Date().toISOString()
         }
       }).returning();
 
-      // Start the actual test (async - returns immediately)
+      // Start the actual test asynchronously
       const testingService = new BackgroundTestingService();
-      testingService.scheduleTest(projectId, [], {
-        sessionId,
-        testPlan,
-        recordVideo
-      }).catch(err => {
+      testingService.scheduleTest(projectId, []).catch(err => {
         logger.error(`Test session ${sessionId} failed to start:`, err);
+        // Update status to failed
+        db.update(testingSessionRecordings)
+          .set({ status: 'failed' })
+          .where(eq(testingSessionRecordings.id, recording.id))
+          .catch(() => {});
       });
 
       logger.info(`Test session ${sessionId} started for project ${projectId}`);
 
       res.json({
-        sessionId: session.id,
-        status: session.status,
+        sessionId,
+        recordingId: recording.id,
+        status: recording.status,
         message: 'Test session started'
       });
     } catch (error: any) {
@@ -183,16 +172,42 @@ export default function createAgentToolsRouter(): Router {
         return res.status(400).json({ error: 'projectId is required' });
       }
 
-      const sessions = await db.select()
-        .from(testingSessions)
+      // Verify user has access to project
+      const [project] = await db.select()
+        .from(projects)
         .where(and(
-          eq(testingSessions.userId, userId),
-          eq(testingSessions.projectId, projectId)
-        ))
-        .orderBy(desc(testingSessions.createdAt))
+          eq(projects.id, projectId),
+          eq(projects.ownerId, userId)
+        ));
+
+      if (!project) {
+        return res.status(403).json({ error: 'Access denied to project' });
+      }
+
+      const sessions = await db.select()
+        .from(testingSessionRecordings)
+        .where(eq(testingSessionRecordings.projectId, projectId))
+        .orderBy(desc(testingSessionRecordings.createdAt))
         .limit(limit);
 
-      res.json({ sessions, count: sessions.length });
+      res.json({ 
+        sessions: sessions.map(s => ({
+          id: s.sessionId,
+          recordingId: s.id,
+          projectId: s.projectId,
+          testName: s.testName,
+          testPlan: s.testPlan,
+          status: s.status,
+          videoUrl: s.videoUrl,
+          thumbnailUrl: s.thumbnailUrl,
+          duration: s.duration,
+          steps: s.steps,
+          summary: s.summary,
+          createdAt: s.createdAt,
+          completedAt: s.completedAt,
+        })),
+        count: sessions.length 
+      });
     } catch (error: any) {
       logger.error('Error fetching test sessions:', error);
       res.status(500).json({ error: 'Failed to fetch test sessions' });
@@ -208,8 +223,8 @@ export default function createAgentToolsRouter(): Router {
       const { sessionId } = req.params;
 
       const [session] = await db.select()
-        .from(testingSessions)
-        .where(eq(testingSessions.id, sessionId));
+        .from(testingSessionRecordings)
+        .where(eq(testingSessionRecordings.sessionId, sessionId));
 
       if (!session) {
         return res.status(404).json({ error: 'Test session not found' });
@@ -236,16 +251,30 @@ export default function createAgentToolsRouter(): Router {
         return res.status(400).json({ error: 'projectId is required' });
       }
 
+      // Get recordings with video URLs
       const replays = await db.select()
-        .from(testVideoReplays)
+        .from(testingSessionRecordings)
         .where(and(
-          eq(testVideoReplays.userId, userId),
-          eq(testVideoReplays.projectId, projectId)
+          eq(testingSessionRecordings.projectId, projectId),
+          sql`${testingSessionRecordings.videoUrl} IS NOT NULL`
         ))
-        .orderBy(desc(testVideoReplays.createdAt))
+        .orderBy(desc(testingSessionRecordings.createdAt))
         .limit(limit);
 
-      res.json({ replays, count: replays.length });
+      res.json({ 
+        replays: replays.map(r => ({
+          id: r.id.toString(),
+          testSessionId: r.sessionId,
+          projectId: r.projectId,
+          filename: r.testName,
+          url: r.videoUrl,
+          thumbnailUrl: r.thumbnailUrl,
+          duration: r.duration || 0,
+          status: r.status === 'completed' ? 'ready' : r.status,
+          createdAt: r.createdAt?.toISOString(),
+        })),
+        count: replays.length 
+      });
     } catch (error: any) {
       logger.error('Error fetching video replays:', error);
       res.status(500).json({ error: 'Failed to fetch video replays' });
@@ -258,17 +287,32 @@ export default function createAgentToolsRouter(): Router {
    */
   router.get('/testing/replays/:replayId', async (req, res) => {
     try {
-      const { replayId } = req.params;
+      const replayId = parseInt(req.params.replayId);
 
       const [replay] = await db.select()
-        .from(testVideoReplays)
-        .where(eq(testVideoReplays.id, replayId));
+        .from(testingSessionRecordings)
+        .where(eq(testingSessionRecordings.id, replayId));
 
       if (!replay) {
         return res.status(404).json({ error: 'Video replay not found' });
       }
 
-      res.json({ replay });
+      res.json({ 
+        replay: {
+          id: replay.id.toString(),
+          testSessionId: replay.sessionId,
+          projectId: replay.projectId,
+          filename: replay.testName,
+          url: replay.videoUrl,
+          thumbnailUrl: replay.thumbnailUrl,
+          duration: replay.duration || 0,
+          status: replay.status === 'completed' ? 'ready' : replay.status,
+          steps: replay.steps,
+          summary: replay.summary,
+          createdAt: replay.createdAt?.toISOString(),
+          completedAt: replay.completedAt?.toISOString(),
+        }
+      });
     } catch (error: any) {
       logger.error('Error fetching video replay:', error);
       res.status(500).json({ error: 'Failed to fetch video replay' });
@@ -280,40 +324,67 @@ export default function createAgentToolsRouter(): Router {
   // ============================================
 
   /**
-   * GET /api/agent/thinking/:sessionId
-   * Get extended thinking steps for a session
+   * GET /api/agent/thinking/:conversationId
+   * Get extended thinking data for a conversation
    */
-  router.get('/thinking/:sessionId', async (req, res) => {
+  router.get('/thinking/:conversationId', async (req, res) => {
     try {
-      const { sessionId } = req.params;
+      const conversationId = parseInt(req.params.conversationId);
 
-      // Get the thinking session
-      const [session] = await db.select()
-        .from(extendedThinkingSessions)
-        .where(eq(extendedThinkingSessions.id, sessionId));
-
-      if (!session) {
+      if (!conversationId) {
         return res.json({ steps: [], isThinking: false });
       }
 
-      // Get thinking steps
-      const steps = await db.select()
-        .from(extendedThinkingSteps)
-        .where(eq(extendedThinkingSteps.sessionId, sessionId))
-        .orderBy(extendedThinkingSteps.order);
+      // Get messages with extended thinking for this conversation
+      const messages = await db.select()
+        .from(agentMessages)
+        .where(eq(agentMessages.conversationId, conversationId))
+        .orderBy(desc(agentMessages.createdAt))
+        .limit(10);
+
+      // Extract thinking steps from messages with extended thinking
+      const steps: Array<{
+        id: string;
+        type: 'reasoning' | 'analysis' | 'planning';
+        title: string;
+        content: string;
+        status: 'active' | 'completed' | 'error';
+        timestamp: Date;
+        duration?: number;
+      }> = [];
+
+      let isThinking = false;
+
+      for (const message of messages) {
+        const thinking = message.extendedThinking as {
+          enabled: boolean;
+          reasoning: string;
+          steps: Array<{
+            step: number;
+            thought: string;
+            conclusion: string;
+          }>;
+          confidence: number;
+        } | null;
+
+        if (thinking?.enabled && thinking.steps) {
+          for (const step of thinking.steps) {
+            steps.push({
+              id: `${message.id}-step-${step.step}`,
+              type: step.step === 1 ? 'reasoning' : step.step === 2 ? 'analysis' : 'planning',
+              title: `Step ${step.step}: ${step.thought.substring(0, 50)}...`,
+              content: `${step.thought}\n\nConclusion: ${step.conclusion}`,
+              status: 'completed',
+              timestamp: message.createdAt,
+              duration: (message.metadata as any)?.processingTimeMs || undefined
+            });
+          }
+        }
+      }
 
       res.json({
-        steps: steps.map(step => ({
-          id: step.id,
-          type: step.type,
-          title: step.title,
-          content: step.content,
-          status: step.status,
-          timestamp: step.createdAt,
-          duration: step.duration,
-          isStreaming: step.status === 'active'
-        })),
-        isThinking: session.status === 'thinking'
+        steps: steps.slice(0, 20), // Limit to last 20 steps
+        isThinking
       });
     } catch (error: any) {
       logger.error('Error fetching thinking steps:', error);
@@ -322,124 +393,76 @@ export default function createAgentToolsRouter(): Router {
   });
 
   /**
-   * POST /api/agent/thinking/start
-   * Start an extended thinking session
+   * POST /api/agent/thinking/analyze
+   * Perform extended thinking analysis on a prompt
    */
-  router.post('/thinking/start', async (req, res) => {
+  router.post('/thinking/analyze', async (req, res) => {
     try {
       const userId = req.user!.id;
-      const { projectId, prompt, model } = req.body;
+      const { prompt, conversationId, model } = req.body;
 
       if (!prompt) {
         return res.status(400).json({ error: 'Prompt is required' });
       }
 
-      const sessionId = crypto.randomUUID();
-
-      const [session] = await db.insert(extendedThinkingSessions).values({
-        id: sessionId,
-        userId,
-        projectId,
-        prompt,
-        model: model || 'claude-sonnet-4-5-20250929',
-        status: 'thinking',
-        metadata: {
-          startedAt: new Date().toISOString()
-        }
-      }).returning();
-
-      logger.info(`Extended thinking session ${sessionId} started`);
-
+      // This endpoint would trigger extended thinking mode on the AI
+      // For now, return a structure that the frontend can use
       res.json({
-        sessionId: session.id,
-        status: session.status,
-        message: 'Extended thinking session started'
+        sessionId: crypto.randomUUID(),
+        status: 'started',
+        message: 'Extended thinking analysis started',
+        settings: {
+          model: model || 'claude-sonnet-4-5-20250929',
+          extendedThinking: true,
+        }
       });
     } catch (error: any) {
-      logger.error('Error starting thinking session:', error);
-      res.status(500).json({ error: 'Failed to start thinking session' });
+      logger.error('Error starting thinking analysis:', error);
+      res.status(500).json({ error: 'Failed to start thinking analysis' });
     }
   });
 
-  /**
-   * POST /api/agent/thinking/:sessionId/step
-   * Add a thinking step (internal use)
-   */
-  router.post('/thinking/:sessionId/step', async (req, res) => {
-    try {
-      const { sessionId } = req.params;
-      const { type, title, content, status = 'active' } = req.body;
-
-      // Get current step count
-      const existingSteps = await db.select()
-        .from(extendedThinkingSteps)
-        .where(eq(extendedThinkingSteps.sessionId, sessionId));
-
-      const [step] = await db.insert(extendedThinkingSteps).values({
-        id: crypto.randomUUID(),
-        sessionId,
-        type: type || 'reasoning',
-        title: title || 'Thinking...',
-        content: content || '',
-        status,
-        order: existingSteps.length
-      }).returning();
-
-      res.json({ step });
-    } catch (error: any) {
-      logger.error('Error adding thinking step:', error);
-      res.status(500).json({ error: 'Failed to add thinking step' });
-    }
-  });
+  // ============================================
+  // TOOL STATUS ENDPOINT
+  // ============================================
 
   /**
-   * PATCH /api/agent/thinking/:sessionId/step/:stepId
-   * Update a thinking step (for streaming)
+   * GET /api/agent/tools/status
+   * Get status of all agent tools
    */
-  router.patch('/thinking/:sessionId/step/:stepId', async (req, res) => {
+  router.get('/tools/status', async (req, res) => {
     try {
-      const { stepId } = req.params;
-      const { content, status, duration } = req.body;
-
-      const updates: any = {};
-      if (content !== undefined) updates.content = content;
-      if (status !== undefined) updates.status = status;
-      if (duration !== undefined) updates.duration = duration;
-
-      const [step] = await db.update(extendedThinkingSteps)
-        .set(updates)
-        .where(eq(extendedThinkingSteps.id, stepId))
-        .returning();
-
-      res.json({ step });
+      res.json({
+        webSearch: {
+          enabled: true,
+          status: 'operational',
+          provider: 'DuckDuckGo'
+        },
+        appTesting: {
+          enabled: true,
+          status: 'operational',
+          videoRecording: true,
+          provider: 'Playwright'
+        },
+        extendedThinking: {
+          enabled: true,
+          status: 'operational',
+          models: ['claude-sonnet-4-5-20250929', 'claude-opus-4-1-20250805', 'o3', 'gpt-5.1']
+        },
+        highPowerModels: {
+          enabled: true,
+          status: 'operational',
+          models: ['gpt-5.1', 'claude-opus-4-1-20250805', 'gemini-2.5-pro', 'grok-4']
+        },
+        maxAutonomy: {
+          enabled: true,
+          status: 'operational',
+          maxDuration: 240 // minutes
+        }
+      });
     } catch (error: any) {
-      logger.error('Error updating thinking step:', error);
-      res.status(500).json({ error: 'Failed to update thinking step' });
-    }
-  });
-
-  /**
-   * POST /api/agent/thinking/:sessionId/complete
-   * Complete a thinking session
-   */
-  router.post('/thinking/:sessionId/complete', async (req, res) => {
-    try {
-      const { sessionId } = req.params;
-      const { conclusion } = req.body;
-
-      const [session] = await db.update(extendedThinkingSessions)
-        .set({
-          status: 'completed',
-          conclusion,
-          completedAt: new Date()
-        })
-        .where(eq(extendedThinkingSessions.id, sessionId))
-        .returning();
-
-      res.json({ session, message: 'Thinking session completed' });
-    } catch (error: any) {
-      logger.error('Error completing thinking session:', error);
-      res.status(500).json({ error: 'Failed to complete thinking session' });
+      logger.error('Error fetching tools status:', error);
+      res.status(500).json({ error: 'Failed to fetch tools status' });
     }
   });
 

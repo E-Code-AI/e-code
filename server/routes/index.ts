@@ -63,6 +63,7 @@ import backgroundTestsRouter from "./background-tests.router";
 import maxAutonomyRouter from "./max-autonomy.router";
 import { bountiesRouter } from "./bounties.router";
 import agentGridRouter from "./agent-grid.router";
+import createAgentToolsRouter from "./agent-tools.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -131,6 +132,9 @@ export class MainRouter {
     
     // Agent preferences routes (authenticated users) - user-facing preferences
     app.use('/api/agent', tierRateLimiters.api, createAgentPreferencesRouter(this.storage));
+    
+    // Agent tools routes (web search, testing, extended thinking) - authenticated users
+    app.use('/api/agent', tierRateLimiters.api, createAgentToolsRouter());
     
     // Agent routes (admin only)
     app.use('/api/admin/agent', tierRateLimiters.api, agentRouter);
