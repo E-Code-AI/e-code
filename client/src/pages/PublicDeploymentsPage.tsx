@@ -189,7 +189,7 @@ export default function PublicDeploymentsPage() {
                 </Button>
               </Link>
               <Link href="/docs/deployments">
-                <Button size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10">
+                <Button size="lg" variant="outline" className="bg-transparent border-white/40 text-white hover:bg-white/10">
                   Explore deployment docs
                 </Button>
               </Link>
