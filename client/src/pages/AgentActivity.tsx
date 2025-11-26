@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Activity, ArrowLeft, Table2, BarChart3, FileCode, 
+  Activity, ArrowLeft, BarChart3, FileCode, 
   MessageSquare, Zap, Clock, Bot, TrendingUp
 } from 'lucide-react';
 import { AgentSessionsGrid } from '@/components/grids/AgentSessionsGrid';
@@ -18,22 +17,8 @@ import type { AgentSessionRow } from '@shared/types/agent-grid.types';
 
 export default function AgentActivity() {
   const [, navigate] = useLocation();
-  const { user, isLoading } = useAuth();
   const [selectedSession, setSelectedSession] = useState<AgentSessionRow | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    navigate('/login');
-    return null;
-  }
 
   const handleSessionSelect = (session: AgentSessionRow) => {
     setSelectedSession(session);
