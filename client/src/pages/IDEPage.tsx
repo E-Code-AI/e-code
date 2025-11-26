@@ -58,6 +58,10 @@ import { EnvVarsManager } from '@/components/ide/EnvVarsManager';
 import { GlobalSearchPanel } from '@/components/ide/GlobalSearchPanel';
 import { LogsViewerPanel } from '@/components/ide/LogsViewerPanel';
 
+// Replit-style Progress & Video Replay (Nov 2025)
+import { ProgressPanel } from '@/components/ai/ProgressPanel';
+import { VideoReplayPlayer } from '@/components/ai/VideoReplayPlayer';
+
 // Additional missing components from EditorPage
 import { CommandPalette } from '@/components/CommandPalette';
 import { GlobalSearch } from '@/components/GlobalSearch';
@@ -334,6 +338,9 @@ export default function IDEPage() {
     { id: 'env-vars', label: 'Env Vars Manager', icon: '🔐' },
     { id: 'global-search', label: 'Global Search', icon: '🔎' },
     { id: 'logs', label: 'Logs Viewer', icon: '📋' },
+    // Replit-style Progress & Video Replay (Nov 2025)
+    { id: 'progress', label: 'Progress', icon: '📊' },
+    { id: 'video-replay', label: 'Video Replay', icon: '🎬' },
   ];
   
   // Validate tool registry in development
@@ -501,6 +508,16 @@ export default function IDEPage() {
         return <GlobalSearchPanel projectId={projectId} />;
       case 'logs':
         return <LogsViewerPanel projectId={projectId} />;
+      // Replit-style Progress & Video Replay (Nov 2025)
+      case 'progress':
+        return <ProgressPanel projectId={projectId} onFileNavigate={(path) => console.log('Navigate to:', path)} />;
+      case 'video-replay':
+        return <VideoReplayPlayer 
+          testSteps={[]} 
+          duration={0} 
+          testName="No recording selected" 
+          testStatus="passed" 
+        />;
       default:
         if (activeTab.startsWith('file:') && selectedFileId) {
           return (

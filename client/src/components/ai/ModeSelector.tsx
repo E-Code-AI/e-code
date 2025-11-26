@@ -6,10 +6,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown, Hammer, MessageSquare, Zap } from 'lucide-react';
+import { ChevronDown, Hammer, MessageSquare, Zap, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type AgentMode = 'plan' | 'build' | 'max-autonomy';
+export type AgentMode = 'plan' | 'build' | 'edit' | 'max-autonomy';
 
 interface ModeSelectorProps {
   mode: AgentMode;
@@ -33,6 +33,13 @@ export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
       icon: MessageSquare,
       description: 'Ask questions, plan your work',
       color: 'blue'
+    },
+    {
+      id: 'edit' as const,
+      label: 'Edit',
+      icon: Pencil,
+      description: 'Targeted changes to specific files',
+      color: 'purple'
     },
     {
       id: 'max-autonomy' as const,
@@ -64,6 +71,14 @@ export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
         text: "text-blue-600 dark:text-blue-400",
         dot: "bg-blue-500",
         badge: "bg-blue-500"
+      },
+      purple: {
+        trigger: "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30 hover:bg-purple-100 dark:hover:bg-purple-950/50",
+        bg: "bg-purple-50 dark:bg-purple-950/30",
+        icon: "bg-purple-100 dark:bg-purple-900/50",
+        text: "text-purple-600 dark:text-purple-400",
+        dot: "bg-purple-500",
+        badge: "bg-purple-500"
       },
       amber: {
         trigger: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950/50",
@@ -97,7 +112,7 @@ export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
-        {modes.slice(0, 2).map((m) => {
+        {modes.slice(0, 3).map((m) => {
           const Icon = m.icon;
           const isActive = m.id === mode;
           
@@ -147,7 +162,7 @@ export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
         
         <DropdownMenuSeparator />
         
-        {modes.slice(2).map((m) => {
+        {modes.slice(3).map((m) => {
           const Icon = m.icon;
           const isActive = m.id === mode;
           
