@@ -62,6 +62,7 @@ import syncRouter from "./sync";
 import backgroundTestsRouter from "./background-tests.router";
 import maxAutonomyRouter from "./max-autonomy.router";
 import { bountiesRouter } from "./bounties.router";
+import agentGridRouter from "./agent-grid.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -271,6 +272,9 @@ export class MainRouter {
     
     // Bounties Marketplace routes (Stripe Connect integration)
     app.use('/api/bounties', tierRateLimiters.api, bountiesRouter);
+    
+    // Agent Grid routes (Phase 2 - AG Grid Dashboard)
+    app.use('/api/agent-grid', tierRateLimiters.api, agentGridRouter);
   }
   
   /**
