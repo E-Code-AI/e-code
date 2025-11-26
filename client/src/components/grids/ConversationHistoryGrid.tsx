@@ -9,11 +9,14 @@ import { AgGridReact } from 'ag-grid-react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   RefreshCw, Search, Loader2, MessageSquare, User, Bot,
-  Wrench, Settings
+  Wrench, Settings, ChevronRight, Clock, Cpu
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { format } from 'date-fns';
 import {
   Select,
   SelectContent,
@@ -35,11 +38,63 @@ interface ConversationHistoryGridProps {
   height?: string | number;
 }
 
+function MessageCard({ message, onSelect }: { message: ConversationMessageRow; onSelect?: (m: ConversationMessageRow) => void }) {
+  const roleConfig: Record<string, { icon: typeof User; color: string; label: string }> = {
+    user: { icon: User, color: 'text-blue-600', label: 'User' },
+    assistant: { icon: Bot, color: 'text-green-600', label: 'Assistant' },
+    system: { icon: Settings, color: 'text-gray-600', label: 'System' },
+    tool: { icon: Wrench, color: 'text-orange-600', label: 'Tool' },
+  };
+  const config = roleConfig[message.role] || roleConfig.user;
+  const RoleIcon = config.icon;
+
+  return (
+    <Card 
+      className="cursor-pointer hover:bg-muted/50 transition-colors active:scale-[0.98]"
+      onClick={() => onSelect?.(message)}
+      data-testid={`message-card-${message.id}`}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          <div className={cn("p-2 rounded-full bg-muted shrink-0", config.color)}>
+            <RoleIcon className="h-4 w-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <span className="font-medium text-sm">{config.label}</span>
+              {message.model && (
+                <Badge variant="outline" className="text-xs flex items-center gap-1">
+                  <Cpu className="h-2.5 w-2.5" />
+                  {message.model}
+                </Badge>
+              )}
+            </div>
+            <div className="text-sm text-muted-foreground line-clamp-2 mb-2">
+              {message.content}
+            </div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {message.createdAt ? format(new Date(message.createdAt), 'MMM d, HH:mm') : '-'}
+              </span>
+              {message.promptTokens != null && message.completionTokens != null && (
+                <span>{message.promptTokens + message.completionTokens} tokens</span>
+              )}
+            </div>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 self-center" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function ConversationHistoryGrid({ 
   sessionId, 
   onMessageSelect,
   height = 400 
 }: ConversationHistoryGridProps) {
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
@@ -173,31 +228,43 @@ export function ConversationHistoryGrid({
         </div>
       </div>
 
-      {/* Grid */}
-      <div 
-        className="ag-theme-custom rounded-lg border overflow-hidden"
-        style={{ height: typeof height === 'number' ? `${height}px` : height }}
-      >
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground text-sm">
-            <p>Failed to load messages</p>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
-              Retry
-            </Button>
-          </div>
-        ) : (
+      {/* Grid / Mobile Cards */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground text-sm">
+          <p>Failed to load messages</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : isMobile ? (
+        <div className="space-y-3" data-testid="messages-mobile-view">
+          {(data?.rows || []).length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              No messages found
+            </div>
+          ) : (
+            (data?.rows || []).map((message) => (
+              <MessageCard key={message.id} message={message} onSelect={onMessageSelect} />
+            ))
+          )}
+        </div>
+      ) : (
+        <div 
+          className="ag-theme-custom rounded-lg border overflow-hidden"
+          style={{ height: typeof height === 'number' ? `${height}px` : height }}
+        >
           <AgGridReact
             rowData={data?.rows || []}
             columnDefs={conversationGridColDefs}
             gridOptions={gridOptions}
             onGridReady={onGridReady}
           />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

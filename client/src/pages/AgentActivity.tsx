@@ -31,29 +31,30 @@ export default function AgentActivity() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-background pb-safe">
+      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10 pt-safe">
+        <div className="container mx-auto px-4 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/dashboard')}
-                className="gap-2"
+                className="gap-2 min-h-[44px] px-3"
                 data-testid="button-back-dashboard"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Dashboard
+                <span className="hidden xs:inline">Dashboard</span>
               </Button>
-              <div className="h-6 w-px bg-border" />
+              <div className="hidden sm:block h-6 w-px bg-border" />
               <div className="flex items-center gap-2">
                 <Activity className="h-5 w-5 text-primary" />
-                <h1 className="text-xl font-semibold">Agent Activity</h1>
+                <h1 className="text-lg sm:text-xl font-semibold">Agent Activity</h1>
               </div>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
               {selectedSession && (
                 <>
-                  <div className="h-6 w-px bg-border" />
                   <Badge variant="secondary" className="font-mono text-xs">
                     Session: {selectedSession.id.slice(0, 8)}
                   </Badge>
@@ -61,7 +62,7 @@ export default function AgentActivity() {
                     variant="outline"
                     size="sm"
                     onClick={handleBackToSessions}
-                    className="gap-1"
+                    className="gap-1 min-h-[44px]"
                     data-testid="button-back-sessions"
                   >
                     <ArrowLeft className="h-3 w-3" />
@@ -69,9 +70,7 @@ export default function AgentActivity() {
                   </Button>
                 </>
               )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="gap-1">
+              <Badge variant="outline" className="gap-1 hidden md:flex">
                 <Bot className="h-3 w-3" />
                 AI Agent Dashboard
               </Badge>
@@ -80,28 +79,48 @@ export default function AgentActivity() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-5 mx-auto">
-            <TabsTrigger value="dashboard" className="gap-2" data-testid="tab-dashboard">
+      <div className="container mx-auto px-4 py-4 sm:py-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full max-w-2xl grid-cols-5 mx-auto h-auto p-1">
+            <TabsTrigger 
+              value="dashboard" 
+              className="gap-1 sm:gap-2 min-h-[44px] flex-col sm:flex-row py-2 px-1 sm:px-3" 
+              data-testid="tab-dashboard"
+            >
               <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Dashboard</span>
+              <span className="text-[10px] sm:text-sm">Dashboard</span>
             </TabsTrigger>
-            <TabsTrigger value="sessions" className="gap-2" data-testid="tab-sessions">
+            <TabsTrigger 
+              value="sessions" 
+              className="gap-1 sm:gap-2 min-h-[44px] flex-col sm:flex-row py-2 px-1 sm:px-3" 
+              data-testid="tab-sessions"
+            >
               <Clock className="h-4 w-4" />
-              <span className="hidden sm:inline">Sessions</span>
+              <span className="text-[10px] sm:text-sm">Sessions</span>
             </TabsTrigger>
-            <TabsTrigger value="actions" className="gap-2" data-testid="tab-actions">
+            <TabsTrigger 
+              value="actions" 
+              className="gap-1 sm:gap-2 min-h-[44px] flex-col sm:flex-row py-2 px-1 sm:px-3" 
+              data-testid="tab-actions"
+            >
               <Zap className="h-4 w-4" />
-              <span className="hidden sm:inline">Actions</span>
+              <span className="text-[10px] sm:text-sm">Actions</span>
             </TabsTrigger>
-            <TabsTrigger value="files" className="gap-2" data-testid="tab-files">
+            <TabsTrigger 
+              value="files" 
+              className="gap-1 sm:gap-2 min-h-[44px] flex-col sm:flex-row py-2 px-1 sm:px-3" 
+              data-testid="tab-files"
+            >
               <FileCode className="h-4 w-4" />
-              <span className="hidden sm:inline">Files</span>
+              <span className="text-[10px] sm:text-sm">Files</span>
             </TabsTrigger>
-            <TabsTrigger value="messages" className="gap-2" data-testid="tab-messages">
+            <TabsTrigger 
+              value="messages" 
+              className="gap-1 sm:gap-2 min-h-[44px] flex-col sm:flex-row py-2 px-1 sm:px-3" 
+              data-testid="tab-messages"
+            >
               <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">Messages</span>
+              <span className="text-[10px] sm:text-sm">Messages</span>
             </TabsTrigger>
           </TabsList>
 

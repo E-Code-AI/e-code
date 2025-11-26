@@ -9,11 +9,14 @@ import { AgGridReact } from 'ag-grid-react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   RefreshCw, Search, Loader2, FileCode, FilePlus, FileEdit, 
-  Trash2, FolderInput, ArrowRight
+  Trash2, FolderInput, ArrowRight, ChevronRight, Plus, Minus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { format } from 'date-fns';
 import {
   Select,
   SelectContent,
@@ -35,11 +38,53 @@ interface FileOperationsGridProps {
   height?: string | number;
 }
 
+function FileCard({ file, onSelect }: { file: FileOperationRow; onSelect?: (f: FileOperationRow) => void }) {
+  const opConfig: Record<string, { icon: typeof FilePlus; color: string; label: string }> = {
+    create: { icon: FilePlus, color: 'text-green-600', label: 'Created' },
+    edit: { icon: FileEdit, color: 'text-blue-600', label: 'Modified' },
+    delete: { icon: Trash2, color: 'text-red-600', label: 'Deleted' },
+    move: { icon: FolderInput, color: 'text-orange-600', label: 'Moved' },
+  };
+  const config = opConfig[file.operationType] || opConfig.edit;
+  const OpIcon = config.icon;
+
+  return (
+    <Card 
+      className="cursor-pointer hover:bg-muted/50 transition-colors active:scale-[0.98]"
+      onClick={() => onSelect?.(file)}
+      data-testid={`file-card-${file.id}`}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <OpIcon className={cn("h-4 w-4", config.color)} />
+              <Badge variant="outline" className="text-xs">{config.label}</Badge>
+              {file.language && <Badge variant="secondary" className="text-xs">{file.language}</Badge>}
+            </div>
+            <div className="text-sm font-medium truncate mb-1">{file.fileName}</div>
+            <div className="text-xs text-muted-foreground truncate mb-2">{file.filePath}</div>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="text-green-600 flex items-center gap-1"><Plus className="h-3 w-3" />{file.linesAdded || 0}</span>
+              <span className="text-red-600 flex items-center gap-1"><Minus className="h-3 w-3" />{file.linesRemoved || 0}</span>
+            </div>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+        </div>
+        <div className="mt-2 pt-2 border-t text-xs text-muted-foreground">
+          {file.createdAt ? format(new Date(file.createdAt), 'MMM d, HH:mm:ss') : '-'}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function FileOperationsGrid({ 
   sessionId, 
   onFileSelect,
   height = 350 
 }: FileOperationsGridProps) {
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
@@ -187,31 +232,43 @@ export function FileOperationsGrid({
         </div>
       </div>
 
-      {/* Grid */}
-      <div 
-        className="ag-theme-custom rounded-lg border overflow-hidden"
-        style={{ height: typeof height === 'number' ? `${height}px` : height }}
-      >
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground text-sm">
-            <p>Failed to load files</p>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
-              Retry
-            </Button>
-          </div>
-        ) : (
+      {/* Grid / Mobile Cards */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground text-sm">
+          <p>Failed to load files</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : isMobile ? (
+        <div className="space-y-3" data-testid="files-mobile-view">
+          {filteredData.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              No file operations found
+            </div>
+          ) : (
+            filteredData.map((file) => (
+              <FileCard key={file.id} file={file} onSelect={onFileSelect} />
+            ))
+          )}
+        </div>
+      ) : (
+        <div 
+          className="ag-theme-custom rounded-lg border overflow-hidden"
+          style={{ height: typeof height === 'number' ? `${height}px` : height }}
+        >
           <AgGridReact
             rowData={filteredData}
             columnDefs={fileOperationGridColDefs}
             gridOptions={gridOptions}
             onGridReady={onGridReady}
           />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

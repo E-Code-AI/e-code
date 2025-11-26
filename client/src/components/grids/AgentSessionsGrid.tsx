@@ -9,11 +9,14 @@ import { AgGridReact } from 'ag-grid-react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   Download, RefreshCw, Filter, Search, Calendar, 
-  ChevronDown, Loader2, Table2, SlidersHorizontal
+  ChevronDown, Loader2, Table2, SlidersHorizontal,
+  Clock, Cpu, DollarSign, User, ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import {
   Select,
   SelectContent,
@@ -42,11 +45,79 @@ interface AgentSessionsGridProps {
   height?: string | number;
 }
 
+function SessionCard({ 
+  session, 
+  onSelect 
+}: { 
+  session: AgentSessionRow; 
+  onSelect?: (session: AgentSessionRow) => void 
+}) {
+  const statusColors: Record<string, string> = {
+    active: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+    completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  };
+
+  return (
+    <Card 
+      className="cursor-pointer hover:bg-muted/50 transition-colors active:scale-[0.98]"
+      onClick={() => onSelect?.(session)}
+      data-testid={`session-card-${session.id}`}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <Badge className={cn("text-xs", statusColors[session.status] || 'bg-gray-100')}>
+                {session.status}
+              </Badge>
+              <span className="text-xs text-muted-foreground font-mono truncate">
+                {session.id.slice(0, 8)}...
+              </span>
+            </div>
+            <div className="text-sm font-medium truncate mb-1">
+              {session.projectName || 'Unknown Project'}
+            </div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+              <User className="h-3 w-3" />
+              {session.userName || 'Unknown User'}
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                <span>{session.duration ? `${Math.round(session.duration / 1000)}s` : '-'}</span>
+              </div>
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Cpu className="h-3 w-3" />
+                <span>{session.totalTokensUsed?.toLocaleString() || 0}</span>
+              </div>
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <DollarSign className="h-3 w-3" />
+                <span>${session.totalCost?.toFixed(3) || '0.00'}</span>
+              </div>
+            </div>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 mt-1" />
+        </div>
+        <div className="mt-2 pt-2 border-t">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">{session.model}</span>
+            <span className="text-muted-foreground">
+              {session.startedAt ? format(new Date(session.startedAt), 'MMM d, HH:mm') : '-'}
+            </span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function AgentSessionsGrid({ 
   projectId, 
   onSessionSelect,
   height = 500 
 }: AgentSessionsGridProps) {
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
@@ -283,31 +354,47 @@ export function AgentSessionsGrid({
         </div>
       )}
 
-      {/* Grid */}
-      <div 
-        className="ag-theme-custom rounded-lg border overflow-hidden"
-        style={{ height: typeof height === 'number' ? `${height}px` : height }}
-      >
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
-            <p>Failed to load sessions</p>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
-              Retry
-            </Button>
-          </div>
-        ) : (
+      {/* Grid / Mobile Cards */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
+          <p>Failed to load sessions</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : isMobile ? (
+        <div className="space-y-3" data-testid="sessions-mobile-view">
+          {filteredData.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No sessions found
+            </div>
+          ) : (
+            filteredData.map((session) => (
+              <SessionCard 
+                key={session.id} 
+                session={session} 
+                onSelect={onSessionSelect}
+              />
+            ))
+          )}
+        </div>
+      ) : (
+        <div 
+          className="ag-theme-custom rounded-lg border overflow-hidden"
+          style={{ height: typeof height === 'number' ? `${height}px` : height }}
+        >
           <AgGridReact
             rowData={filteredData}
             columnDefs={sessionGridColDefs}
             gridOptions={gridOptions}
             onGridReady={onGridReady}
           />
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Pagination */}
       {data && data.totalPages > 1 && (
