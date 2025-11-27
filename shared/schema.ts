@@ -19,6 +19,44 @@ import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+/**
+ * UserId type alias - Database uses serial integers for user IDs.
+ * Use this type throughout the codebase for type safety.
+ */
+export type UserId = number;
+
+/**
+ * Normalize a user ID to number format.
+ * Handles both number and string inputs for backward compatibility.
+ * @param id - User ID as number or string
+ * @returns Normalized user ID as number
+ * @throws Error if ID cannot be parsed as a valid number
+ */
+export function normalizeUserId(id: number | string): UserId {
+  if (typeof id === 'number') {
+    return id;
+  }
+  const parsed = parseInt(id, 10);
+  if (isNaN(parsed)) {
+    throw new Error(`Invalid user ID: ${id}`);
+  }
+  return parsed;
+}
+
+/**
+ * Check if a value is a valid user ID
+ */
+export function isValidUserId(id: unknown): id is UserId {
+  if (typeof id === 'number') {
+    return Number.isInteger(id) && id > 0;
+  }
+  if (typeof id === 'string') {
+    const parsed = parseInt(id, 10);
+    return !isNaN(parsed) && parsed > 0;
+  }
+  return false;
+}
+
 // Enums
 export const visibilityEnum = pgEnum('visibility', ['public', 'private', 'unlisted']);
 export const languageEnum = pgEnum('language', [
@@ -792,7 +830,7 @@ export const checkpoints = pgTable('checkpoints', {
   changedFiles: jsonb('changed_files').$type<string[]>().default([]), // List of modified file paths
   testResults: jsonb('test_results').$type<{passed: boolean; total: number; failures: any[]}>(), // Automated test results
   rollbackCount: integer('rollback_count').default(0), // Times this checkpoint was rolled back to
-  parentCheckpointId: integer('parent_checkpoint_id').references(() => checkpoints.id), // 🔥 Self-referencing FK for bidirectional rollback/rollforward
+  parentCheckpointId: integer('parent_checkpoint_id'), // Self-referencing FK (constraint added via relations)
   databaseBranchId: varchar('database_branch_id'), // Neon branch ID for dev/prod separation
   environment: varchar('environment', { length: 20 }).default('development'), // development, production
 }, (table) => [

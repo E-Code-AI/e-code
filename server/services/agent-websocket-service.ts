@@ -172,12 +172,21 @@ class AgentWebSocketService {
               }
 
               const session = sessions[0];
-              const plan = existingPlans[0];
+              const storedPlan = existingPlans[0];
+
+              // Reconstruct ExecutionPlan from stored agentPlans columns
+              const executionPlan = {
+                goal: storedPlan.goal,
+                tasks: storedPlan.tasks,
+                metadata: storedPlan.metadata ?? {},
+                planId: storedPlan.planId,
+                estimatedTime: storedPlan.estimatedTime
+              };
 
               // Execute the plan
               await agentOrchestrator.executeAutonomousPlan(
                 sessionId,
-                plan.plan,
+                executionPlan,
                 projectId,
                 session.userId.toString()
               );
