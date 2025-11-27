@@ -3,7 +3,6 @@ import { File, Project } from '@shared/schema';
 import CodeEditor from './CodeEditor';
 import FileExplorer from './FileExplorer';
 import { ReplitFileExplorer } from './editor/ReplitFileExplorer';
-import { ReplitAgent } from './ReplitAgent';
 import { ReplitAgentPanelV3 } from './ai/ReplitAgentPanelV3';
 import Terminal from './Terminal';
 import { Ghostwriter } from './Ghostwriter';
@@ -451,10 +450,11 @@ export function EditorWorkspace({
                   </div>
                   
                   <div className="flex-1 overflow-hidden">
-                    <ReplitAgent 
+                    <ReplitAgentPanelV3 
                       projectId={parseInt(project.id)}
                       selectedFile={activeFile?.name}
                       selectedCode=""
+                      className="h-full"
                     />
                   </div>
                 </div>

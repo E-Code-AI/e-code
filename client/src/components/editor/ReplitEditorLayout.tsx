@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { useMediaQuery, useIsDesktop } from '@/hooks/use-media-query';
 import { ReplitMultiplayers } from './ReplitMultiplayers';
 import { ReplitToolDock } from './ReplitToolDock';
-import { ReplitAgent } from '../ReplitAgent';
+import { ReplitAgentPanelV3 } from '../ai/ReplitAgentPanelV3';
 import { ReplitFileSidebar } from './ReplitFileSidebar';
 import { ReplitSearchPanel } from './ReplitSearchPanel';
 import { ReplitGitPanel } from './ReplitGitPanel';
@@ -169,7 +169,7 @@ export function ReplitEditorLayout({
           />
         );
       case 'agent':
-        return <ReplitAgent projectId={projectId || '1'} className="h-full" />;
+        return <ReplitAgentPanelV3 projectId={projectId || '1'} className="h-full" />;
       case 'search':
         return <ReplitSearchPanel projectId={projectId} />;
       case 'git':
