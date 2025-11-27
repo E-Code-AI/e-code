@@ -48,6 +48,20 @@ Key AI Agent Enhancements include structured XML-based system prompts, a reposit
 ### Feature Specifications
 Core features include a Monaco Code Editor with advanced enhancements, an interactive terminal (xterm.js), file management, real-time collaboration, authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager, a Logs Viewer, and a Debugger UI. The UI is responsive across devices. Autonomous workspace creation involves a Bootstrap API call, AI plan generation, WebSocket-based real-time progress, autonomous execution, and a live preview. PWA features and Electron desktop support are included.
 
+**Centralized Logging System (Fortune 500 Standard - Nov 2025):**
+- **Backend Logger:** `server/logging/centralized-logger.ts` - Winston-based with request context via AsyncLocalStorage, correlation IDs, per-service caching, multi-transport (console + daily rotation files)
+- **Request Context:** `server/logging/request-context.ts` - AsyncLocalStorage for request-scoped tracking (requestId, correlationId, userId, startTime)
+- **Logging Middleware:** `server/logging/logging-middleware.ts` - Automatic request/response logging, security event logging (rate limits, suspicious IPs), performance threshold monitoring (3s warn, 5s error)
+- **Logs API:** `server/routes/logs.router.ts` at `/api/logs/*`:
+  - GET `/api/logs/query` - Query logs with filters (level, service, since, limit)
+  - GET `/api/logs/search` - Full-text search across log messages
+  - GET `/api/logs/stats` - Log level counts and service distribution
+  - GET `/api/logs/request/:requestId` - Trace single request across services
+  - GET `/api/logs/correlation/:correlationId` - Trace related requests
+  - POST `/api/logs/ingest` - Frontend log ingestion with Zod validation
+  - GET `/api/logs/export` - Export logs as JSON/CSV
+- **Frontend Telemetry:** `client/src/lib/telemetry.ts` - Automatic error capture, Web Vitals (LCP, FID, CLS), network request logging, console interception, batched log shipping with beacon fallback, session management
+
 ### System Design Choices
 A PostgreSQL database stores user data, project hierarchies, AI agent sessions, deployment history, subscription management, and AI optimization monitoring. Security measures include CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system provides server-sent event streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API with Prometheus metrics. A two-tier database API architecture (Admin and Project Data APIs) is used with integrated security. Docker builds are optimized for small image sizes. Security enhancements include authentication/authorization for repository overview and templates APIs, context route timeouts, file system scanning limits, and project path scoping. The Stripe payment integration supports a Replit-style hybrid pricing model with subscription management, metered billing, credit tracking, and bounty payouts.
 
