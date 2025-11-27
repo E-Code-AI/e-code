@@ -26,6 +26,13 @@ The frontend uses React 18, TypeScript, Vite, TanStack Query, and Wouter. The ba
 
 Key AI Agent Enhancements include structured XML-based system prompts, a repository overview service, a context window manager with token optimization and long-term memory, a unified AI provider system with multi-provider fallback, and AI-powered inline code actions within the Monaco Editor. A Checkpoints & Rollback System ensures atomic transactions. A Background Auto-Testing System uses Playwright. Max Autonomy Mode enables extended autonomous sessions with AI task decomposition, auto-execution, ETA estimation, and cost tracking, integrated with auto-checkpointing, auto-testing, and auto-rollback. A Templates Marketplace and a Bounties Marketplace with Stripe integration are included. Context Window Enhancements provide separate dev/prod database connections, screenshot capture, and AI memory retention. The Agent Activity Dashboard provides real-time activity components, AG Grid Enterprise components for session history and metrics, and IDE integration for inline activity and mode selection. Mobile code editing components include a joystick for navigation and a custom coding keyboard. A critical authentication flow ensures seamless user experience from homepage "BUILD" to workspace creation.
 
+**Unified Agent System (ReplitAgentPanelV3 - Consolidated Nov 2025):**
+- **Single Component:** `client/src/components/ai/ReplitAgentPanelV3.tsx` - unified agent for all platforms (web, desktop, mobile, responsive)
+- **Legacy Components Removed:** ReplitAgent.tsx, ReplitAgentV2.tsx, ReplitAgentChat.tsx, editor/ReplitAgentPanel.tsx - all deleted
+- **Used In:** IDEPage.tsx, Editor.tsx, MobileIDEView.tsx, EditorWorkspace.tsx, ApplicationIDEWrapper.tsx, ReplitEditorLayout.tsx, SplitsEditorLayout.tsx
+- **Features:** Build/Plan modes, streaming responses, tool executions inline, thinking display, context injection, Max Autonomy integration, extended thinking support
+- **Props:** projectId (string|number), selectedFile, selectedCode, initialPrompt, autoStart, onBuildComplete, sessionId, conversationId, websocket, className
+
 **Agent Tools Panel (Replit Agent 3 Parity - Updated Nov 2025):**
 - **Backend Endpoints (100% Complete):** All 6 endpoints at `/api/agent/tools/*` - web-search (GET/POST), testing/replays (GET), testing/start (POST), thinking/:id (GET), status (GET)
 - **useAgentTools Hook:** 5 toggles (maxAutonomy, appTesting, extendedThinking, highPowerModels, webSearch), action functions (performWebSearch, startTest), queries for preferences/models/replays/sessions/status
