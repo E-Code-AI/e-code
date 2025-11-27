@@ -24,7 +24,10 @@ import { tierRateLimiters } from './middleware/tier-rate-limiter';
 import { monitoringMiddleware } from './services/monitoring.service';
 import { sanitizeInput } from './middleware/input-validation';
 import jwt from 'jsonwebtoken'; // ✅ FIX: Import at top to avoid hot-path dynamic import delay
+import { loggingMiddleware, securityLoggingMiddleware, performanceLoggingMiddleware } from './logging/logging-middleware';
+import { createCentralizedLogger } from './logging/centralized-logger';
 
+const serverLogger = createCentralizedLogger('server');
 const app = express();
 
 // Secure CORS configuration - must be before other middleware
@@ -46,6 +49,11 @@ app.use(monitoringMiddleware);
 
 // XSS sanitization middleware - sanitizes all user input
 app.use(sanitizeInput);
+
+// Centralized logging middleware with request correlation IDs (Fortune 500 Standard)
+app.use(loggingMiddleware);
+app.use(securityLoggingMiddleware);
+app.use(performanceLoggingMiddleware(3000)); // Log requests > 3s
 
 // Apply global rate limiting for DDoS protection
 // Log all rate limit violations for security monitoring
@@ -373,6 +381,15 @@ app.get('/api/cors-health', async (_req, res) => {
       console.log('[Agent Context] Routes registered at /api/agent/repo-overview');
     } catch (error) {
       console.error('[WORKING SERVER] Failed to register agent context routes:', error);
+    }
+
+    // ✅ CENTRALIZED LOGS: Fortune 500 logging API with frontend ingestion
+    try {
+      const logsRouter = (await import('./routes/logs.router')).default;
+      app.use(logsRouter);
+      console.log('[Centralized Logs] Routes registered at /api/logs - Request tracing enabled');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register logs routes:', error);
     }
   } catch (error) {
     console.error('[WORKING SERVER] Failed to register routes:', error);
