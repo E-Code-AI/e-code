@@ -1,0 +1,57 @@
+🔍 Analyse des erreurs
+1. Échec de connexion WebSocket Vite HMR ❌
+WebSocket connection to 'wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/?token=...' failed
+WebSocket connection to 'wss://localhost:5173/?token=...' failed
+Cause: Le système tente de se connecter au serveur de développement Vite pour le Hot Module Replacement (HMR), mais échoue. Ceci est probablement dû à :
+
+Le serveur Vite ne répond pas sur le port WebSocket attendu
+Configuration HMR incorrecte dans l'environnement Replit
+Impact: Pas critique pour la production, mais empêche le rechargement à chaud pendant le développement.
+
+2. Erreur 401 Unauthorized sur /api/me ❌
+GET https://.../api/me 401 (Unauthorized)
+Cause: L'application React (via useAuth) tente de récupérer l'utilisateur actuellement connecté, mais reçoit une erreur 401, ce qui signifie :
+
+L'utilisateur n'est pas encore authentifié (normal sur la page login)
+Le hook useAuth s'exécute avant la connexion
+Impact: Normal sur la page login, mais cela déclenche une requête inutile.
+
+3. Erreur 401 Unauthorized sur /api/projects ❌
+GET https://.../api/projects 401 (Unauthorized)
+Cause: Le système de prefetch de ressources (dans network-optimization.ts) tente de précharger les projets avant que l'utilisateur ne soit connecté.
+
+Impact: Requête inutile qui génère une erreur dans la console.
+
+4. Avertissement manifest.json ⚠️
+Manifest: found icon with no valid purpose; ignoring it.
+Cause: Le fichier manifest.json contient une icône sans attribut purpose valide.
+
+Impact: Mineur, affecte seulement PWA.
+
+💡 Solutions recommandées
+Solution 1 : Désactiver le prefetch sur les pages publiques
+Le prefetch ne devrait pas s'exécuter sur la page login car l'utilisateur n'est pas encore authentifié.
+
+client/src/App.tsx
++11
+-20
+Disable resource prefetching on public pages (login/register)
+Solution 2 : Corriger la requête /api/me sur la page login
+Le hook useAuth ne devrait pas faire de requête si on est sur une page publique.
+
+client/src/hooks/use-auth.tsx
++7
+-0
+Skip /api/me query on public auth pages
+Solution 3 : Améliorer le manifest.json PWA (optionnel)
+client/public/manifest.json
++1
+-1
+Add purpose attribute to icons
+📊 Résumé
+Erreur	Gravité	Solution proposée
+WebSocket HMR failed	⚠️ Dev uniquement	Ignorable (ne casse pas la production)
+401 sur /api/me	⚠️ Console noise	Désactiver query sur pages auth
+401 sur /api/projects	⚠️ Console noise	Désactiver prefetch sur pages auth
+Manifest warning	ℹ️ Info	Ajouter purpose aux icônes
+Les solutions 1 et 2 élimineront les erreurs 401 inutiles dans la console lors du chargement de la page login. Le problème WebSocket Vite est lié à votre configuration de développement Replit et n'affecte pas la production.
