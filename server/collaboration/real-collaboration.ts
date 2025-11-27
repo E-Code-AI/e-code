@@ -6,12 +6,166 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import * as Y from 'yjs';
-import { setupWSConnection } from 'y-websocket/bin/utils';
+import * as syncProtocol from 'y-protocols/sync';
+import * as awarenessProtocol from 'y-protocols/awareness';
+import * as encoding from 'lib0/encoding';
+import * as decoding from 'lib0/decoding';
 import SimplePeer from 'simple-peer';
 import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
 
 const logger = createLogger('real-collaboration');
+
+// y-websocket protocol message types
+const messageSync = 0;
+const messageAwareness = 1;
+
+// Document storage for y-websocket protocol compatibility
+interface DocData {
+  doc: Y.Doc;
+  awareness: awarenessProtocol.Awareness;
+  conns: Map<WebSocket, Set<number>>; // WebSocket -> tracked client IDs
+}
+const docs = new Map<string, DocData>();
+
+function getYDoc(docName: string): DocData {
+  let docData = docs.get(docName);
+  if (!docData) {
+    const doc = new Y.Doc();
+    const awareness = new awarenessProtocol.Awareness(doc);
+    docData = { doc, awareness, conns: new Map() };
+    docs.set(docName, docData);
+    
+    // Broadcast updates to all connected clients
+    doc.on('update', (update: Uint8Array, origin: any) => {
+      const encoder = encoding.createEncoder();
+      encoding.writeVarUint(encoder, messageSync);
+      syncProtocol.writeUpdate(encoder, update);
+      const message = encoding.toUint8Array(encoder);
+      
+      // Get origin wsId if available (for filtering sender)
+      const originWsId = origin && (origin as any).__wsId;
+      
+      docData!.conns.forEach((clientIds, conn) => {
+        // Skip sender if we can identify them via wsId
+        const connWsId = (conn as any).__wsId;
+        const isSender = originWsId && connWsId === originWsId;
+        
+        if (conn.readyState === WebSocket.OPEN && !isSender) {
+          conn.send(message);
+        }
+      });
+    });
+    
+    // Broadcast awareness updates (always send to all - awareness protocol handles dedup)
+    awareness.on('update', ({ added, updated, removed }: any, origin: any) => {
+      const changedClients = added.concat(updated).concat(removed);
+      if (changedClients.length === 0) return;
+      
+      const encoder = encoding.createEncoder();
+      encoding.writeVarUint(encoder, messageAwareness);
+      encoding.writeVarUint8Array(encoder, awarenessProtocol.encodeAwarenessUpdate(awareness, changedClients));
+      const message = encoding.toUint8Array(encoder);
+      
+      // Get origin wsId if available
+      const originWsId = origin && (origin as any).__wsId;
+      
+      docData!.conns.forEach((clientIds, conn) => {
+        // Skip sender if we can identify them via wsId
+        const connWsId = (conn as any).__wsId;
+        const isSender = originWsId && connWsId === originWsId;
+        
+        if (conn.readyState === WebSocket.OPEN && !isSender) {
+          conn.send(message);
+        }
+      });
+    });
+  }
+  return docData;
+}
+
+function setupWSConnection(ws: WebSocket, req: any) {
+  const url = new URL(req.url, 'http://localhost');
+  const docName = url.searchParams.get('room') || 'default';
+  const docData = getYDoc(docName);
+  const { doc, awareness, conns } = docData;
+  
+  // Track client IDs for this connection
+  const trackedClientIds = new Set<number>();
+  conns.set(ws, trackedClientIds);
+  
+  // Mark this WebSocket for origin tracking
+  const wsId = Symbol('ws');
+  (ws as any).__wsId = wsId;
+  
+  // Track awareness updates from this connection
+  const awarenessUpdateHandler = ({ added, updated, removed }: { added: number[]; updated: number[]; removed: number[] }, origin: any) => {
+    // Track IDs that came from this connection
+    if (origin && (origin as any).__wsId === wsId) {
+      added.forEach((id: number) => trackedClientIds.add(id));
+      updated.forEach((id: number) => trackedClientIds.add(id));
+    }
+  };
+  awareness.on('update', awarenessUpdateHandler);
+  
+  // Send sync step 1
+  const encoder = encoding.createEncoder();
+  encoding.writeVarUint(encoder, messageSync);
+  syncProtocol.writeSyncStep1(encoder, doc);
+  ws.send(encoding.toUint8Array(encoder));
+  
+  // Send current awareness state
+  const awarenessStates = awareness.getStates();
+  if (awarenessStates.size > 0) {
+    const awarenessEncoder = encoding.createEncoder();
+    encoding.writeVarUint(awarenessEncoder, messageAwareness);
+    encoding.writeVarUint8Array(
+      awarenessEncoder,
+      awarenessProtocol.encodeAwarenessUpdate(awareness, Array.from(awarenessStates.keys()))
+    );
+    ws.send(encoding.toUint8Array(awarenessEncoder));
+  }
+  
+  ws.on('message', (data: Buffer) => {
+    try {
+      const decoder = decoding.createDecoder(new Uint8Array(data));
+      const messageType = decoding.readVarUint(decoder);
+      
+      switch (messageType) {
+        case messageSync: {
+          const encoder = encoding.createEncoder();
+          encoding.writeVarUint(encoder, messageSync);
+          syncProtocol.readSyncMessage(decoder, encoder, doc, ws);
+          if (encoding.length(encoder) > 1) {
+            ws.send(encoding.toUint8Array(encoder));
+          }
+          break;
+        }
+        case messageAwareness: {
+          awarenessProtocol.applyAwarenessUpdate(
+            awareness,
+            decoding.readVarUint8Array(decoder),
+            ws  // Pass ws as origin for tracking
+          );
+          break;
+        }
+      }
+    } catch (err) {
+      logger.error('Error processing y-websocket message', { error: err });
+    }
+  });
+  
+  ws.on('close', () => {
+    // Remove awareness update listener
+    awareness.off('update', awarenessUpdateHandler);
+    
+    // Remove awareness states for all tracked client IDs from this connection
+    if (trackedClientIds.size > 0) {
+      awarenessProtocol.removeAwarenessStates(awareness, Array.from(trackedClientIds), null);
+    }
+    conns.delete(ws);
+  });
+}
 
 interface CollaborationSession {
   projectId: number;
@@ -37,7 +191,7 @@ interface CursorUpdate {
 }
 
 export class RealCollaborationService {
-  private wss: WebSocketServer;
+  private wss!: WebSocketServer;
   private sessions: Map<string, CollaborationSession> = new Map();
   private userSessions: Map<number, Set<string>> = new Map();
 
@@ -221,7 +375,7 @@ export class RealCollaborationService {
     peer.cursor = message.cursor;
 
     // Get user info for display
-    const user = await storage.getUser(peer.userId);
+    const user = await storage.getUser(String(peer.userId));
     
     // Broadcast cursor update to other peers
     const cursorUpdate: CursorUpdate = {
@@ -246,7 +400,7 @@ export class RealCollaborationService {
 
     peer.selection = message.selection;
 
-    const user = await storage.getUser(peer.userId);
+    const user = await storage.getUser(String(peer.userId));
 
     this.broadcast(session, {
       type: 'selection-update',
@@ -448,7 +602,7 @@ export class RealCollaborationService {
 
     const collaborators = await Promise.all(
       Array.from(session.peers.values()).map(async (peer) => {
-        const user = await storage.getUser(peer.userId);
+        const user = await storage.getUser(String(peer.userId));
         return {
           userId: peer.userId,
           username: user?.username || `User ${peer.userId}`,
