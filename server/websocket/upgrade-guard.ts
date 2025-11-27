@@ -14,6 +14,7 @@
 
 import { IncomingMessage } from 'http';
 import { Socket } from 'net';
+import { Duplex } from 'stream';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('upgrade-guard');
@@ -25,16 +26,11 @@ const logger = createLogger('upgrade-guard');
 export const kUpgradeHandled = Symbol('websocket.upgrade.handled');
 
 /**
- * TypeScript augmentation for IncomingMessage socket
- * Allows type-safe access to kUpgradeHandled symbol
+ * TypeScript augmentation note:
+ * We use `as any` casting for kUpgradeHandled access since Socket.Duplex
+ * types don't support symbol indexing. This is intentional for flexibility
+ * in handling both Socket and Duplex streams from HTTP upgrade events.
  */
-declare module 'http' {
-  interface IncomingMessage {
-    socket: Socket & {
-      [kUpgradeHandled]?: boolean;
-    };
-  }
-}
 
 /**
  * Mark a socket as successfully handled by a WebSocket service
@@ -57,7 +53,7 @@ declare module 'http' {
  *   markSocketAsHandled(request);
  * });
  */
-export function markSocketAsHandled(request: IncomingMessage, socket?: Socket): void {
+export function markSocketAsHandled(request: IncomingMessage, socket?: Socket | Duplex): void {
   // Tag the request.socket (if still available)
   if (request.socket) {
     (request.socket as any)[kUpgradeHandled] = true;
@@ -79,7 +75,7 @@ export function markSocketAsHandled(request: IncomingMessage, socket?: Socket): 
  * @param socket - Raw TCP socket (optional, for upgrade guards)
  * @returns true if the socket has been marked as handled
  */
-export function isSocketHandled(request: IncomingMessage, socket?: Socket): boolean {
+export function isSocketHandled(request: IncomingMessage, socket?: Socket | Duplex): boolean {
   // Check request.socket first (most common case)
   if (request.socket && (request.socket as any)[kUpgradeHandled] === true) {
     return true;
