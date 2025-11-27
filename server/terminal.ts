@@ -3,6 +3,7 @@ import { Server } from 'http';
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
+import { spawn, ChildProcess } from 'child_process';
 import { storage } from './storage';
 import { File } from '@shared/schema';
 import readline from 'readline';
@@ -80,7 +81,7 @@ export function setupTerminalWebsocket(server: Server) {
 
         const newSession = {
           sessionId,
-          clients: new Set(),
+          clients: new Set<WebSocket>(),
           commandHistory: existingSession?.commandHistory || [],
           autocompleteSuggestions: [
             'ls', 'cd', 'mkdir', 'touch', 'cat', 'grep', 'find', 'echo',
@@ -445,7 +446,7 @@ function broadcastToClients(clients: Set<WebSocket>, message: TerminalMessage): 
 }
 
 // Create a temporary project directory with all project files
-async function createProjectDir(project: { id: string }, files: File[]): Promise<string> {
+async function createProjectDir(project: { id: number | string }, files: File[]): Promise<string> {
   const projectDir = path.join(os.tmpdir(), `plot-terminal-${project.id}`);
   
   try {
@@ -454,7 +455,7 @@ async function createProjectDir(project: { id: string }, files: File[]): Promise
     
     // Write all files to the directory
     for (const file of files) {
-      if (file.isFolder) {
+      if (file.isDirectory) {
         await fs.promises.mkdir(path.join(projectDir, file.name), { recursive: true });
       } else {
         await fs.promises.writeFile(
