@@ -47,7 +47,23 @@ const Sidebar = () => {
         <TooltipProvider delayDuration={300}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button className="text-white opacity-80 hover:opacity-100 w-10 h-10 flex items-center justify-center rounded hover:bg-dark-700">
+              <button 
+                className="text-white opacity-80 hover:opacity-100 w-10 h-10 flex items-center justify-center rounded hover:bg-dark-700"
+                onClick={() => navigate("/usage")}
+              >
+                <i className="ri-bank-card-line text-xl"></i>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>Billing & Usage</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button 
+                className="text-white opacity-80 hover:opacity-100 w-10 h-10 flex items-center justify-center rounded hover:bg-dark-700"
+                onClick={() => navigate("/settings")}
+              >
                 <i className="ri-settings-4-line text-xl"></i>
               </button>
             </TooltipTrigger>

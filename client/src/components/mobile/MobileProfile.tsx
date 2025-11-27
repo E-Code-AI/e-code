@@ -82,9 +82,9 @@ export function MobileProfile() {
       },
     },
     {
-      label: "Billing",
+      label: "Billing & Usage",
       icon: CreditCard,
-      href: "/settings/billing",
+      href: "/usage",
     },
     {
       label: "Help & Support",
