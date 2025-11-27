@@ -75,8 +75,10 @@ export async function startProject(
   logs: string[];
   error?: string;
 }> {
+  const projectId = String(project.id);
+  let projectDir: string | null = null;
+  
   try {
-    const projectId = String(project.id);
     
     // Check if project is already running
     if (activeRuntimes.has(projectId)) {
@@ -101,7 +103,7 @@ export async function startProject(
     }
     
     // Create project directory
-    const projectDir = await createProjectDir(project, files);
+    projectDir = await createProjectDir(project, files);
     
     // Detect language from files
     const language = detectProjectLanguage(files);
@@ -109,6 +111,16 @@ export async function startProject(
     if (!language) {
       const error = 'Could not detect language for project';
       logger.error(error);
+      
+      // Clean up project directory on language detection failure
+      try {
+        if (fs.existsSync(projectDir)) {
+          fs.rmSync(projectDir, { recursive: true, force: true });
+          logger.info(`Cleaned up project directory after language detection failure: ${projectDir}`);
+        }
+      } catch (cleanupErr) {
+        logger.warn(`Failed to cleanup project directory: ${projectDir}`);
+      }
       
       return {
         success: false,
@@ -351,13 +363,16 @@ export async function startProject(
         logs.push(`ERROR: ${error}`);
         logger.error(error);
         
-        activeRuntimes.set(projectId, {
-          projectId,
-          language,
-          status: 'error',
-          logs,
-          error
-        });
+        // CRITICAL: Clean up on Nix config failure
+        activeRuntimes.delete(projectId);
+        try {
+          if (fs.existsSync(projectDir)) {
+            fs.rmSync(projectDir, { recursive: true, force: true });
+            logger.info(`Cleaned up project directory after Nix config failure: ${projectDir}`);
+          }
+        } catch (cleanupErr) {
+          logger.warn(`Failed to cleanup project directory: ${projectDir}`);
+        }
         
         return {
           success: false,
@@ -376,13 +391,16 @@ export async function startProject(
         logs.push(`ERROR: ${error}`);
         logger.error(error);
         
-        activeRuntimes.set(projectId, {
-          projectId,
-          language,
-          status: 'error',
-          logs,
-          error
-        });
+        // CRITICAL: Clean up on Nix apply failure
+        activeRuntimes.delete(projectId);
+        try {
+          if (fs.existsSync(projectDir)) {
+            fs.rmSync(projectDir, { recursive: true, force: true });
+            logger.info(`Cleaned up project directory after Nix apply failure: ${projectDir}`);
+          }
+        } catch (cleanupErr) {
+          logger.warn(`Failed to cleanup project directory: ${projectDir}`);
+        }
         
         return {
           success: false,
@@ -411,13 +429,16 @@ export async function startProject(
       logs.push(...containerResult.logs);
       logger.error(error);
       
-      activeRuntimes.set(projectId, {
-        projectId,
-        language,
-        status: 'error',
-        logs,
-        error
-      });
+      // CRITICAL: Clean up on container start failure
+      activeRuntimes.delete(projectId);
+      try {
+        if (fs.existsSync(projectDir)) {
+          fs.rmSync(projectDir, { recursive: true, force: true });
+          logger.info(`Cleaned up project directory after container failure: ${projectDir}`);
+        }
+      } catch (cleanupErr) {
+        logger.warn(`Failed to cleanup project directory: ${projectDir}`);
+      }
       
       return {
         success: false,
@@ -465,6 +486,19 @@ export async function startProject(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error(`Error starting project: ${errorMessage}`);
+    
+    // CRITICAL: Clean up projectDir and activeRuntimes on any error
+    activeRuntimes.delete(projectId);
+    if (projectDir) {
+      try {
+        if (fs.existsSync(projectDir)) {
+          fs.rmSync(projectDir, { recursive: true, force: true });
+          logger.info(`Cleaned up project directory on error: ${projectDir}`);
+        }
+      } catch (cleanupErr) {
+        logger.warn(`Failed to cleanup project directory on error: ${projectDir}`);
+      }
+    }
     
     return {
       success: false,

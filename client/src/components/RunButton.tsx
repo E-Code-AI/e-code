@@ -84,6 +84,11 @@ export function RunButton({
       setLocalExecutionId(execId);
       (window as any).__currentExecutionId = execId;
       
+      // CRITICAL: Notify parent immediately with running state and executionId
+      // This enables ReplitConsole to subscribe to WebSocket for real-time logs
+      setIsRunning(true);
+      onRunning?.(true, execId);
+      
       // CRITICAL: Invalidate query to force refetch and start polling
       await queryClient.invalidateQueries({ 
         queryKey: [`/api/runtime/${projectId}`] 
@@ -121,6 +126,10 @@ export function RunButton({
       // Clear execution ID
       setLocalExecutionId(undefined);
       delete (window as any).__currentExecutionId;
+      
+      // CRITICAL: Notify parent that runtime has stopped
+      setIsRunning(false);
+      onRunning?.(false, undefined);
       
       // CRITICAL: Invalidate query to force refetch and clear stale "running" status
       await queryClient.invalidateQueries({ 
