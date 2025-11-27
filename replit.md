@@ -29,7 +29,7 @@ Key AI Agent Enhancements include structured XML-based system prompts, a reposit
 **Unified Agent System (ReplitAgentPanelV3 - Consolidated Nov 2025):**
 - **Single Component:** `client/src/components/ai/ReplitAgentPanelV3.tsx` - unified agent for all platforms (web, desktop, mobile, responsive)
 - **Legacy Components Removed:** ReplitAgent.tsx, ReplitAgentV2.tsx, ReplitAgentChat.tsx, editor/ReplitAgentPanel.tsx - all deleted
-- **Used In:** IDEPage.tsx, Editor.tsx, MobileIDEView.tsx, EditorWorkspace.tsx, ApplicationIDEWrapper.tsx, ReplitEditorLayout.tsx, SplitsEditorLayout.tsx
+- **Used In:** IDEPage.tsx, Editor.tsx, MobileIDEView.tsx, MobileWorkspace.tsx, EditorWorkspace.tsx, ApplicationIDEWrapper.tsx, ReplitEditorLayout.tsx, SplitsEditorLayout.tsx, SplitsEditorLayoutV2.tsx
 - **Features:** Build/Plan modes, streaming responses, tool executions inline, thinking display, context injection, Max Autonomy integration, extended thinking support
 - **Props:** projectId (string|number), selectedFile, selectedCode, initialPrompt, autoStart, onBuildComplete, sessionId, conversationId, websocket, className
 
