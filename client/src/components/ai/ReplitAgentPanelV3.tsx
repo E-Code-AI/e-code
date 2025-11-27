@@ -149,13 +149,30 @@ interface ReplitAgentPanelV3Props {
   className?: string;
   onMinimize?: () => void;
   mode?: 'desktop' | 'tablet' | 'mobile';
+  // Props from ReplitAgent for compatibility during consolidation
+  selectedFile?: string;
+  selectedCode?: string;
+  initialPrompt?: string | null;
+  websocket?: WebSocket | null;
+  onBuildComplete?: () => void;
+  sessionId?: string | null;
+  externalConversationId?: number | null;
+  autoStart?: boolean;
 }
 
 export function ReplitAgentPanelV3({ 
   projectId, 
   className,
   onMinimize,
-  mode = 'desktop'
+  mode = 'desktop',
+  selectedFile,
+  selectedCode,
+  initialPrompt,
+  websocket: externalWebsocket,
+  onBuildComplete,
+  sessionId: externalSessionId,
+  externalConversationId,
+  autoStart = false
 }: ReplitAgentPanelV3Props) {
   // AI Model preference hook
   const { modelId, provider, supportsExtendedThinking: modelSupportsExtendedThinking, model, setPreferredModel } = useAgentModelPreference();
@@ -232,6 +249,13 @@ export function ReplitAgentPanelV3({
   // Bootstrap conversation on mount
   useEffect(() => {
     const bootstrapConversation = async () => {
+      // Use external conversation ID if provided
+      if (externalConversationId) {
+        setConversationId(externalConversationId);
+        console.log('[ReplitAgentPanelV3] Using external conversationId:', externalConversationId);
+        return;
+      }
+      
       try {
         const response = await apiRequest('POST', '/api/agent/conversation', {
           projectId: projectId.toString()
@@ -250,7 +274,46 @@ export function ReplitAgentPanelV3({
     };
 
     bootstrapConversation();
-  }, [projectId, toast]);
+  }, [projectId, toast, externalConversationId]);
+
+  // Track whether initial prompt has been processed (idempotent guard)
+  const initialPromptProcessedRef = useRef(false);
+  const contextInjectedRef = useRef<string | null>(null);
+  
+  // Handle initial prompt (from workspace bootstrap flow) - with idempotent check
+  useEffect(() => {
+    if (initialPrompt && conversationId && !isWorking && !initialPromptProcessedRef.current) {
+      console.log('[ReplitAgentPanelV3] Processing initial prompt:', initialPrompt.substring(0, 50) + '...');
+      initialPromptProcessedRef.current = true;
+      setInput(initialPrompt);
+      // Auto-start if requested
+      if (autoStart) {
+        setTimeout(() => {
+          const form = document.querySelector('form[data-testid="chat-form"]') as HTMLFormElement;
+          if (form) {
+            form.requestSubmit();
+          }
+        }, 500);
+      }
+    }
+  }, [initialPrompt, conversationId, autoStart, isWorking]);
+
+  // Handle selected file/code context injection - with idempotent check using content hash
+  useEffect(() => {
+    if (!selectedFile || !selectedCode) return;
+    
+    // Create a unique key using file name and content length + first/last chars for better uniqueness
+    const codeHash = `${selectedCode.length}-${selectedCode.substring(0, 50)}-${selectedCode.substring(selectedCode.length - 50)}`;
+    const contextKey = `${selectedFile}:${codeHash}`;
+    
+    if (contextInjectedRef.current !== contextKey) {
+      console.log('[ReplitAgentPanelV3] Context injection:', selectedFile);
+      contextInjectedRef.current = contextKey;
+      // Add context to the input
+      const contextPrefix = `\n\n[Context: ${selectedFile}]\n\`\`\`\n${selectedCode.substring(0, 500)}${selectedCode.length > 500 ? '...' : ''}\n\`\`\`\n\n`;
+      setInput(prev => prev ? prev + contextPrefix : contextPrefix);
+    }
+  }, [selectedFile, selectedCode]);
 
   // Max Autonomy hook
   const projectIdNum = typeof projectId === 'string' ? parseInt(projectId) : projectId;
@@ -621,6 +684,11 @@ export function ReplitAgentPanelV3({
             setActiveThinking([]);
           } finally {
             setIsWorking(false);
+            // Call onBuildComplete callback when bootstrap build finishes
+            if (onBuildComplete) {
+              console.log('[ReplitAgentPanelV3] Bootstrap build complete, calling onBuildComplete');
+              onBuildComplete();
+            }
           }
         })();
       }, 1000); // 1 second delay for smooth UX
@@ -887,6 +955,12 @@ export function ReplitAgentPanelV3({
       setStreamingContent('');
       setActiveThinking([]);
       
+      // Call onBuildComplete callback when streaming completes in build mode
+      if (agentMode === 'build' && onBuildComplete) {
+        console.log('[ReplitAgentPanelV3] Streaming complete, calling onBuildComplete');
+        onBuildComplete();
+      }
+      
     } catch (error) {
       console.error('AI chat error:', error);
       
@@ -904,6 +978,11 @@ export function ReplitAgentPanelV3({
       setActiveThinking([]);
     } finally {
       setIsWorking(false);
+      // Call onBuildComplete callback when build/execution finishes (for IDE integration)
+      if (agentMode === 'build' && onBuildComplete) {
+        console.log('[ReplitAgentPanelV3] Build complete, calling onBuildComplete callback');
+        onBuildComplete();
+      }
     }
   };
 

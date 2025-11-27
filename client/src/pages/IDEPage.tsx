@@ -32,7 +32,7 @@ import { QuickFileSearch } from '@/components/ide/QuickFileSearch';
 import { KeyboardShortcutsOverlay } from '@/components/ide/KeyboardShortcutsOverlay';
 import { AgentActionsPanel } from '@/components/ide/AgentActionsPanel';
 import { ToolsPanel } from '@/components/ide/ToolsPanel';
-import { ReplitAgent } from '@/components/ReplitAgent';
+import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
 import { AutonomousWorkspaceViewer } from '@/components/ide/AutonomousWorkspaceViewer';
 import { ReplitFileExplorer } from '@/components/editor/ReplitFileExplorer';
 import { ReplitMonacoEditor } from '@/components/editor/ReplitMonacoEditor';
@@ -616,12 +616,13 @@ export default function IDEPage() {
               </TabsList>
               
               <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden">
-                <ReplitAgent
+                <ReplitAgentPanelV3
                   projectId={projectId}
                   sessionId={agentSessionId}
-                  conversationId={agentConversationId}
+                  externalConversationId={agentConversationId}
                   initialPrompt={agentInitialPrompt || undefined}
                   autoStart={!!bootstrapToken || autoStartAgent}
+                  mode="desktop"
                   onBuildComplete={async () => {
                     // REAL: Auto-start preview when build completes (Task 12)
                     setActiveTab('preview');
