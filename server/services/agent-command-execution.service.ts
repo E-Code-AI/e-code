@@ -279,7 +279,7 @@ export class AgentCommandExecutionService extends EventEmitter {
       // Spawn options with resource limits
       const spawnOptions: SpawnOptions = {
         cwd: options.cwd,
-        env: options.env,
+        env: options.env as NodeJS.ProcessEnv,
         shell: false, // Don't use shell for security
         windowsHide: true
       };
@@ -458,7 +458,7 @@ export class AgentCommandExecutionService extends EventEmitter {
   ) {
     await db.insert(agentAuditTrail).values({
       sessionId,
-      userId,
+      userId: parseInt(userId, 10) || 0,
       action,
       resourceType: 'command',
       resourceId: command,
