@@ -65,16 +65,18 @@ export function RunButton({
   // Start project execution - REAL BACKEND
   const runProjectMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/runtime/start`, {
+      // apiRequest already returns parsed JSON and throws on error
+      const data = await apiRequest<{
+        success: boolean;
+        executionId?: string;
+        url?: string;
+        error?: string;
+      }>('POST', `/api/runtime/start`, {
         projectId,
         mainFile: undefined, // Will use auto-detection
         timeout: 30000 // 30 seconds timeout
       });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to start runtime');
-      }
-      return res.json();
+      return data;
     },
     onSuccess: async (data) => {
       // Store execution ID for stopping later
@@ -105,15 +107,15 @@ export function RunButton({
   const stopProjectMutation = useMutation({
     mutationFn: async () => {
       const executionId = (window as any).__currentExecutionId || localExecutionId;
-      const res = await apiRequest('POST', `/api/runtime/stop`, {
+      // apiRequest already returns parsed JSON and throws on error
+      const data = await apiRequest<{
+        success: boolean;
+        error?: string;
+      }>('POST', `/api/runtime/stop`, {
         projectId,
         executionId
       });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to stop runtime');
-      }
-      return res.json();
+      return data;
     },
     onSuccess: async () => {
       // Clear execution ID
