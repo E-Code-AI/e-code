@@ -209,8 +209,20 @@ export async function startProject(
           
           if (compileResult.exitCode !== 0) {
             logs.push(`Compilation error: ${compileResult.stderr}`);
-            activeRuntimes.get(projectId)!.status = 'error';
-            activeRuntimes.get(projectId)!.error = compileResult.stderr;
+            
+            // CRITICAL FIX: Clean up on compilation failure to allow re-runs
+            activeRuntimes.delete(projectId);
+            
+            // Clean up project directory even on compile failure
+            try {
+              if (fs.existsSync(projectDir)) {
+                fs.rmSync(projectDir, { recursive: true, force: true });
+                logger.info(`Cleaned up project directory after compile error: ${projectDir}`);
+              }
+            } catch (cleanupErr) {
+              logger.warn(`Failed to cleanup project directory after compile error: ${projectDir}`);
+            }
+            
             return {
               success: false,
               status: 'error',
