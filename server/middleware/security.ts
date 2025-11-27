@@ -385,7 +385,16 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
   next();
 };
 
-// SQL injection prevention (for raw queries)
+/**
+ * SQL injection prevention (for raw queries)
+ * 
+ * @deprecated This function is NOT recommended for production use.
+ * Drizzle ORM automatically parameterizes all queries, providing robust SQL injection protection.
+ * This function exists only for edge cases involving raw SQL (which should be avoided).
+ * 
+ * SECURITY NOTE: Regex-based sanitization is inherently bypassable with encoding tricks.
+ * Always use parameterized queries via Drizzle ORM instead.
+ */
 export const preventSQLInjection = (query: string): string => {
   // Basic SQL injection patterns
   const dangerousPatterns = [
