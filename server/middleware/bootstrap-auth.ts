@@ -49,8 +49,15 @@ export const bootstrapAuth = async (req: Request, res: Response, next: NextFunct
       projectId: req.params.id 
     });
     
-    // Verify JWT
-    const secret = process.env.JWT_SECRET || 'ecode-platform-bootstrap-secret-key';
+    // Verify JWT - SECURITY: No fallback secret, must be configured
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      logger.error('[Bootstrap Auth] SECURITY: JWT_SECRET not configured');
+      return res.status(500).json({
+        error: 'Server configuration error',
+        message: 'Authentication service is not properly configured.'
+      });
+    }
     const decoded = jwt.verify(bootstrapToken, secret) as BootstrapTokenPayload;
     
     // Validate token age (max 24 hours)

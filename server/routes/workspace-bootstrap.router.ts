@@ -386,7 +386,10 @@ function getWebSocketBaseUrl(req: Request): string {
  * Token is valid for 24 hours
  */
 function generateBootstrapToken(payload: BootstrapTokenPayload): string {
-  const secret = process.env.JWT_SECRET || 'ecode-platform-bootstrap-secret-key';
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('[Bootstrap Token] SECURITY: JWT_SECRET not configured');
+  }
   
   return jwt.sign(
     payload,
@@ -404,7 +407,11 @@ function generateBootstrapToken(payload: BootstrapTokenPayload): string {
  */
 function verifyBootstrapToken(token: string): BootstrapTokenPayload | null {
   try {
-    const secret = process.env.JWT_SECRET || 'ecode-platform-bootstrap-secret-key';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      logger.error('[Bootstrap Token] SECURITY: JWT_SECRET not configured');
+      return null;
+    }
     const decoded = jwt.verify(token, secret) as BootstrapTokenPayload;
     
     // Additional validation: token not too old

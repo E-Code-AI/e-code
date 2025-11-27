@@ -107,8 +107,15 @@ export class ProjectsRouter {
     // ✅ FIX (Nov 24, 2025): Validate bootstrap token and enforce project-specific access
     if (bootstrapToken) {
       try {
-        // Decode and verify JWT token with shared secret (with development fallback)
-        const jwtSecret = process.env.JWT_SECRET || 'ecode-platform-bootstrap-secret-key';
+        // Decode and verify JWT token - SECURITY: No fallback secret
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+          console.error('[ensureProjectAccess] SECURITY: JWT_SECRET not configured');
+          return res.status(500).json({
+            message: "Server configuration error",
+            code: "CONFIG_ERROR"
+          });
+        }
         
         const decoded = jwt.verify(bootstrapToken as string, jwtSecret) as {
           projectId: string;
