@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: mobileSpacing.xl,
-    backgroundColor: mobileColors.background.primary
+    backgroundColor: mobileColors.background
   },
   icon: {
     fontSize: 64,
@@ -79,20 +79,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: mobileTypography.fontSize.xl,
     fontWeight: '700',
-    color: mobileColors.text.primary,
+    color: mobileColors.text,
     marginBottom: mobileSpacing.sm,
     textAlign: 'center'
   },
   message: {
     fontSize: mobileTypography.fontSize.base,
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     textAlign: 'center',
     marginBottom: mobileSpacing.xl
   },
   button: {
     paddingHorizontal: mobileSpacing.xl,
     paddingVertical: mobileSpacing.md,
-    backgroundColor: mobileColors.primary.default,
+    backgroundColor: mobileColors.primary,
     borderRadius: mobileBorderRadius.lg
   },
   buttonText: {
