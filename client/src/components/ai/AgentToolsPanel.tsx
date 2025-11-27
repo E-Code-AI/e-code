@@ -40,6 +40,8 @@ interface AgentToolsPanelProps {
   compact?: boolean;
 }
 
+const STORAGE_KEY = 'agent-tools-panel-collapsed';
+
 export function AgentToolsPanel({
   projectId,
   onViewVideoReplays,
@@ -49,7 +51,20 @@ export function AgentToolsPanel({
   videoReplayCount: externalVideoReplayCount,
   compact = false,
 }: AgentToolsPanelProps) {
-  const [isOpen, setIsOpen] = useState(!compact);
+  // Initialize from localStorage, default to open unless compact mode
+  const [isOpen, setIsOpen] = useState(() => {
+    if (compact) return false;
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored !== null) {
+        return stored === 'open';
+      }
+    } catch (e) {
+      // localStorage not available
+    }
+    return true; // default open
+  });
+  
   const [localSettings, setLocalSettings] = useState<AgentToolsSettings>({
     maxAutonomy: false,
     appTesting: true,
@@ -57,6 +72,16 @@ export function AgentToolsPanel({
     highPowerModels: false,
     webSearch: true,
   });
+  
+  // Persist collapsed state to localStorage
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+    try {
+      localStorage.setItem(STORAGE_KEY, open ? 'open' : 'collapsed');
+    } catch (e) {
+      // localStorage not available
+    }
+  }, []);
 
   const hookData = useAgentTools(projectId);
   
@@ -124,7 +149,7 @@ export function AgentToolsPanel({
 
   return (
     <div className={cn("bg-card border rounded-lg", className)}>
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Collapsible open={isOpen} onOpenChange={handleOpenChange}>
         <CollapsibleTrigger asChild>
           <Button
             variant="ghost"

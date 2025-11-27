@@ -198,13 +198,32 @@ export function useAgentTools(projectId?: number) {
   // Update preferences mutation
   const updatePreferencesMutation = useMutation({
     mutationFn: async (updates: Partial<AgentPreferences>) => {
+      console.log('[useAgentTools] Updating preferences:', updates);
       return apiRequest<AgentPreferences>("PUT", "/api/agent/preferences", updates);
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      console.log('[useAgentTools] Preferences updated successfully:', data);
       queryClient.invalidateQueries({ queryKey: ['/api/agent/preferences'] });
       queryClient.invalidateQueries({ queryKey: ['/api/agent/effective-model'] });
+      
+      // Show success toast for specific settings
+      const changedSetting = Object.keys(variables)[0];
+      if (changedSetting) {
+        const settingNames: Record<string, string> = {
+          extendedThinking: 'Extended Thinking',
+          highPowerMode: 'High Power Models',
+          autoWebSearch: 'Web Search',
+        };
+        const name = settingNames[changedSetting] || changedSetting;
+        const value = variables[changedSetting as keyof typeof variables];
+        toast({
+          title: `${name} ${value ? 'enabled' : 'disabled'}`,
+          description: `Setting updated successfully`,
+        });
+      }
     },
     onError: (error: Error) => {
+      console.error('[useAgentTools] Failed to update preferences:', error);
       toast({
         title: "Failed to update settings",
         description: error.message,
