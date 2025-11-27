@@ -9,7 +9,20 @@ import { eq, and } from 'drizzle-orm';
 import { storage } from '../storage';
 
 const logger = createLogger('background-testing-ws');
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+
+/**
+ * SECURITY: Get JWT secret - fails fast if not configured
+ */
+function getJWTSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('[SECURITY] JWT_SECRET environment variable is not configured');
+  }
+  return secret;
+}
+
+// Lazy-evaluated JWT secret (validated on first use)
+const getSecret = () => getJWTSecret();
 
 /**
  * 🔥 SECURITY IMPLEMENTATION: Authenticated WebSocket with project access control
@@ -38,7 +51,7 @@ async function handleAuth(ws: AuthenticatedWebSocket, data: any) {
     // 🔥 SECURITY CRITICAL: Verify JWT token (not just split on ':')
     let decoded: any;
     try {
-      decoded = jwt.verify(data.token, JWT_SECRET);
+      decoded = jwt.verify(data.token, getSecret());
     } catch (jwtError) {
       logger.warn('JWT verification failed:', jwtError);
       ws.send(JSON.stringify({

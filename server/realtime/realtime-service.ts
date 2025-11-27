@@ -40,8 +40,12 @@ export class RealtimeService {
           return next(new Error('Authentication required'));
         }
         
-        // Verify JWT token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret') as any;
+        // Verify JWT token - SECURITY: No fallback secret
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+          return next(new Error('Server configuration error: JWT_SECRET not set'));
+        }
+        const decoded = jwt.verify(token, jwtSecret) as any;
         socket.data.userId = decoded.userId;
         socket.data.projectId = socket.handshake.query.projectId;
         

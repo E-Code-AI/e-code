@@ -2,8 +2,29 @@ import { randomBytes, createHash } from 'crypto';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key-change-in-production';
+/**
+ * SECURITY: Get JWT secret - fails fast if not configured
+ * Never use hardcoded fallbacks in production
+ */
+function getJWTSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('[SECURITY] JWT_SECRET environment variable is not configured');
+  }
+  return secret;
+}
+
+function getJWTRefreshSecret(): string {
+  const secret = process.env.JWT_REFRESH_SECRET;
+  if (!secret) {
+    throw new Error('[SECURITY] JWT_REFRESH_SECRET environment variable is not configured');
+  }
+  return secret;
+}
+
+// Legacy exports for compatibility (deprecated - use getJWTSecret() instead)
+const JWT_SECRET = process.env.JWT_SECRET || '';
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || '';
 
 // Generate random tokens
 export function generateToken(length: number = 32): string {
