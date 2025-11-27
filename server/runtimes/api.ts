@@ -9,6 +9,7 @@ import * as runtimeManager from './runtime-manager';
 import * as runtimeHealth from './runtime-health';
 import { createLogger } from '../utils/logger';
 import * as os from 'os';
+import { randomUUID } from 'crypto';
 
 const logger = createLogger('runtime-api');
 
@@ -149,25 +150,27 @@ export function getLanguageRecommendations(dependencies: any): string[] {
  * Start project runtime
  */
 export async function startProjectRuntime(req: Request, res: Response) {
+  const executionId = randomUUID(); // Generate unique execution ID for tracking (outside try for catch access)
+  
   try {
     const projectId = req.params.id; // Keep as string (UUID)
     
     if (!projectId) {
-      return res.status(400).json({ message: 'Invalid project ID' });
+      return res.status(400).json({ message: 'Invalid project ID', executionId });
     }
     
-    logger.info(`Starting runtime for project ${projectId}`);
+    logger.info(`Starting runtime for project ${projectId}, executionId: ${executionId}`);
     
     // Get project details
     const project = await storage.getProject(projectId);
     if (!project) {
-      return res.status(404).json({ message: 'Project not found' });
+      return res.status(404).json({ message: 'Project not found', executionId });
     }
     
     // Get project files
     const files = await storage.getFilesByProjectId(projectId);
     if (!files.length) {
-      return res.status(400).json({ message: 'No files found in project' });
+      return res.status(400).json({ message: 'No files found in project', executionId });
     }
     
     // Get options from request
@@ -190,10 +193,40 @@ export async function startProjectRuntime(req: Request, res: Response) {
     // Start the project
     const result = await runtimeManager.startProject(project, files, options);
     
+    // Save execution logs to terminal logs database for display in console
+    const userId = (req as any).user?.id;
+    if (result.logs && result.logs.length > 0 && userId) {
+      try {
+        // Clear previous logs for this execution
+        await storage.clearTerminalLogs(projectId);
+        
+        // Save each log entry
+        for (const logMessage of result.logs) {
+          const logType = logMessage.includes('[ERROR]') ? 'error' 
+            : logMessage.includes('---') ? 'info'
+            : 'log';
+          
+          await storage.createTerminalLog({
+            projectId,
+            userId,
+            type: logType,
+            message: logMessage.replace(/^\[ERROR\]\s*/, ''),
+            source: 'runtime'
+          });
+        }
+        logger.info(`Saved ${result.logs.length} runtime logs for project ${projectId}`);
+      } catch (logError) {
+        logger.warn(`Failed to save runtime logs: ${logError}`);
+        // Don't fail the request if log saving fails
+      }
+    }
+    
     if (!result.success) {
       return res.status(500).json({
         message: 'Failed to start project runtime',
-        error: result.error
+        error: result.error,
+        logs: result.logs,
+        executionId // Include for error tracking
       });
     }
     
@@ -202,7 +235,8 @@ export async function startProjectRuntime(req: Request, res: Response) {
       containerId: result.containerId,
       port: result.port,
       url: `http://localhost:${result.port}`,
-      logs: result.logs
+      logs: result.logs,
+      executionId // Include for WebSocket subscription
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -210,7 +244,8 @@ export async function startProjectRuntime(req: Request, res: Response) {
     
     res.status(500).json({
       message: 'Failed to start project runtime',
-      error: errorMessage
+      error: errorMessage,
+      executionId // Include even in catch for error tracking
     });
   }
 }
