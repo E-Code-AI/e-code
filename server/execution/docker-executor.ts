@@ -12,7 +12,7 @@ import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
 import { Project, File } from '@shared/schema';
 import Docker from 'dockerode';
-import * as tar from 'tar';
+import * as tarStream from 'tar-stream';
 import { Readable } from 'stream';
 
 const logger = createLogger('docker-executor');
@@ -214,37 +214,46 @@ export class DockerExecutor extends EventEmitter {
   }
 
   private async createProjectTar(files: File[]): Promise<Buffer> {
-    const tarStream = tar.create({
-      gzip: false
-    });
-
-    const entries: Array<{ name: string; content: string }> = [];
+    const entries: Array<{ name: string; content: Buffer }> = [];
     
     for (const file of files) {
-      if (!file.isFolder && file.content) {
+      if (!file.isDirectory && file.content) {
         entries.push({
           name: file.name,
-          content: file.content
+          content: Buffer.from(file.content, 'utf8')
         });
       }
     }
 
-    // Create tar buffer
-    const chunks: Buffer[] = [];
-    
     return new Promise((resolve, reject) => {
-      const pack = tar.pack();
+      const pack = tarStream.pack();
+      const chunks: Buffer[] = [];
       
-      // Add each file to the tar
-      for (const entry of entries) {
-        pack.entry({ name: entry.name }, entry.content);
-      }
-      
-      pack.finalize();
-      
-      pack.on('data', (chunk) => chunks.push(chunk));
+      pack.on('data', (chunk: Buffer) => chunks.push(chunk));
       pack.on('end', () => resolve(Buffer.concat(chunks)));
       pack.on('error', reject);
+      
+      // Add each file sequentially using buffer form of pack.entry
+      const addEntry = (index: number) => {
+        if (index >= entries.length) {
+          pack.finalize();
+          return;
+        }
+        
+        const { name, content } = entries[index];
+        // Use buffer form: pack.entry(header, buffer, callback)
+        // This synchronously writes buffer and calls callback when done
+        pack.entry({ name, size: content.length }, content, (err) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          // Schedule next entry to avoid stack overflow for large file counts
+          setImmediate(() => addEntry(index + 1));
+        });
+      };
+      
+      addEntry(0);
     });
   }
 
@@ -343,7 +352,7 @@ export class DockerExecutor extends EventEmitter {
       }
       
       // Clean up stats stream
-      statsStream.destroy();
+      (statsStream as any).destroy?.();
       
       // Remove from active containers
       this.activeContainers.delete(containerId);
