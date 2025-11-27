@@ -130,7 +130,7 @@ const FileManagerScreen: React.FC<FileManagerScreenProps> = ({ navigation, proje
 
       {loading ? (
         <View style={styles.loader}>
-          <ActivityIndicator size="large" color={mobileColors.primary.default} />
+          <ActivityIndicator size="large" color={mobileColors.primary} />
         </View>
       ) : files.length > 0 ? (
         <FlatList
@@ -161,21 +161,21 @@ const FileManagerScreen: React.FC<FileManagerScreenProps> = ({ navigation, proje
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: mobileColors.background.primary
+    backgroundColor: mobileColors.background
   },
   pathBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: mobileSpacing.md,
     paddingVertical: mobileSpacing.sm,
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderBottomWidth: 1,
-    borderBottomColor: mobileColors.border.default,
+    borderBottomColor: mobileColors.border,
     gap: mobileSpacing.xs
   },
   pathText: {
     fontSize: mobileTypography.fontSize.sm,
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     fontFamily: 'monospace'
   },
   loader: {
@@ -189,12 +189,12 @@ const styles = StyleSheet.create({
   fileItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderRadius: mobileBorderRadius.md,
     padding: mobileSpacing.md,
     marginBottom: mobileSpacing.sm,
     borderWidth: 1,
-    borderColor: mobileColors.border.default
+    borderColor: mobileColors.border
   },
   fileIcon: {
     fontSize: 24,
@@ -206,17 +206,17 @@ const styles = StyleSheet.create({
   fileName: {
     fontSize: mobileTypography.fontSize.base,
     fontWeight: '600',
-    color: mobileColors.text.primary,
+    color: mobileColors.text,
     marginBottom: 2
   },
   fileSize: {
     fontSize: mobileTypography.fontSize.xs,
-    color: mobileColors.text.tertiary,
+    color: mobileColors.textMuted,
     fontFamily: 'monospace'
   },
   fileArrow: {
     fontSize: 24,
-    color: mobileColors.text.tertiary,
+    color: mobileColors.textMuted,
     fontWeight: '300'
   },
   emptyState: {
@@ -231,20 +231,20 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: mobileTypography.fontSize.lg,
     fontWeight: '600',
-    color: mobileColors.text.primary
+    color: mobileColors.text
   },
   actionBar: {
     flexDirection: 'row',
     gap: mobileSpacing.sm,
     padding: mobileSpacing.md,
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderTopWidth: 1,
-    borderTopColor: mobileColors.border.default
+    borderTopColor: mobileColors.border
   },
   actionButton: {
     flex: 1,
     paddingVertical: mobileSpacing.sm,
-    backgroundColor: mobileColors.primary.default,
+    backgroundColor: mobileColors.primary,
     borderRadius: mobileBorderRadius.md,
     alignItems: 'center'
   },

@@ -234,7 +234,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, user, token }
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: mobileColors.background.primary
+    backgroundColor: mobileColors.background
   },
   content: {
     padding: mobileSpacing.md,
@@ -252,17 +252,17 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderWidth: 3,
-    borderColor: mobileColors.border.default
+    borderColor: mobileColors.border
   },
   avatarPlaceholder: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: mobileColors.primary.default,
+    backgroundColor: mobileColors.primary,
     borderWidth: 3,
-    borderColor: mobileColors.border.default,
+    borderColor: mobileColors.border,
     alignItems: 'center',
     justifyContent: 'center'
   },
@@ -278,11 +278,11 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: mobileColors.primary.default,
+    backgroundColor: mobileColors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: mobileColors.background.primary
+    borderColor: mobileColors.background
   },
   avatarEditText: {
     fontSize: 16,
@@ -291,21 +291,21 @@ const styles = StyleSheet.create({
   editButton: {
     paddingHorizontal: mobileSpacing.lg,
     paddingVertical: mobileSpacing.sm,
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderRadius: mobileBorderRadius.full,
     borderWidth: 1,
-    borderColor: mobileColors.border.default
+    borderColor: mobileColors.border
   },
   editButtonText: {
     fontSize: mobileTypography.fontSize.sm,
     fontWeight: '600',
-    color: mobileColors.text.primary
+    color: mobileColors.text
   },
   section: {
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderRadius: mobileBorderRadius.lg,
     borderWidth: 1,
-    borderColor: mobileColors.border.default,
+    borderColor: mobileColors.border,
     padding: mobileSpacing.md,
     marginBottom: mobileSpacing.lg
   },
@@ -315,22 +315,22 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: mobileTypography.fontSize.sm,
     fontWeight: '600',
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     marginBottom: mobileSpacing.xs
   },
   fieldInput: {
-    backgroundColor: mobileColors.background.primary,
+    backgroundColor: mobileColors.background,
     borderWidth: 1,
-    borderColor: mobileColors.border.default,
+    borderColor: mobileColors.border,
     borderRadius: mobileBorderRadius.md,
     paddingHorizontal: mobileSpacing.md,
     paddingVertical: mobileSpacing.sm,
     fontSize: mobileTypography.fontSize.base,
-    color: mobileColors.text.primary
+    color: mobileColors.text
   },
   fieldInputDisabled: {
-    backgroundColor: mobileColors.background.secondary,
-    borderColor: mobileColors.border.subtle
+    backgroundColor: mobileColors.surfaceSecondary,
+    borderColor: mobileColors.border
   },
   fieldInputMultiline: {
     height: 100,
@@ -338,25 +338,25 @@ const styles = StyleSheet.create({
   },
   fieldValue: {
     fontSize: mobileTypography.fontSize.base,
-    color: mobileColors.text.primary
+    color: mobileColors.text
   },
   fieldHint: {
     fontSize: mobileTypography.fontSize.xs,
-    color: mobileColors.text.tertiary,
+    color: mobileColors.textMuted,
     marginTop: mobileSpacing.xs
   },
   statsSection: {
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderRadius: mobileBorderRadius.lg,
     borderWidth: 1,
-    borderColor: mobileColors.border.default,
+    borderColor: mobileColors.border,
     padding: mobileSpacing.md,
     marginBottom: mobileSpacing.lg
   },
   sectionTitle: {
     fontSize: mobileTypography.fontSize.sm,
     fontWeight: '700',
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: mobileSpacing.md
@@ -367,22 +367,22 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: mobileColors.background.primary,
+    backgroundColor: mobileColors.background,
     borderRadius: mobileBorderRadius.md,
     borderWidth: 1,
-    borderColor: mobileColors.border.default,
+    borderColor: mobileColors.border,
     padding: mobileSpacing.md,
     alignItems: 'center'
   },
   statValue: {
     fontSize: 24,
     fontWeight: '700',
-    color: mobileColors.primary.default,
+    color: mobileColors.primary,
     marginBottom: 4
   },
   statLabel: {
     fontSize: mobileTypography.fontSize.sm,
-    color: mobileColors.text.secondary
+    color: mobileColors.textSecondary
   },
   actions: {
     flexDirection: 'row',
@@ -397,12 +397,12 @@ const styles = StyleSheet.create({
     minHeight: 48
   },
   buttonPrimary: {
-    backgroundColor: mobileColors.primary.default
+    backgroundColor: mobileColors.primary
   },
   buttonSecondary: {
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderWidth: 1,
-    borderColor: mobileColors.border.default
+    borderColor: mobileColors.border
   },
   buttonTextPrimary: {
     fontSize: mobileTypography.fontSize.base,
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
   buttonTextSecondary: {
     fontSize: mobileTypography.fontSize.base,
     fontWeight: '600',
-    color: mobileColors.text.primary
+    color: mobileColors.text
   }
 });
 

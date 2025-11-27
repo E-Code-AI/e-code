@@ -144,24 +144,24 @@ const HelpScreen: React.FC<HelpScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: mobileColors.background.primary
+    backgroundColor: mobileColors.background
   },
   content: {
     padding: mobileSpacing.md,
     paddingBottom: mobileSpacing.xl
   },
   section: {
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderRadius: mobileBorderRadius.lg,
     borderWidth: 1,
-    borderColor: mobileColors.border.default,
+    borderColor: mobileColors.border,
     padding: mobileSpacing.md,
     marginBottom: mobileSpacing.lg
   },
   sectionTitle: {
     fontSize: mobileTypography.fontSize.sm,
     fontWeight: '700',
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: mobileSpacing.md
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: mobileSpacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: mobileColors.border.subtle
+    borderBottomColor: mobileColors.border
   },
   linkIcon: {
     fontSize: 24,
@@ -183,47 +183,47 @@ const styles = StyleSheet.create({
   linkTitle: {
     fontSize: mobileTypography.fontSize.base,
     fontWeight: '600',
-    color: mobileColors.text.primary,
+    color: mobileColors.text,
     marginBottom: 2
   },
   linkSubtitle: {
     fontSize: mobileTypography.fontSize.sm,
-    color: mobileColors.text.secondary
+    color: mobileColors.textSecondary
   },
   linkArrow: {
     fontSize: 24,
-    color: mobileColors.text.tertiary,
+    color: mobileColors.textMuted,
     fontWeight: '300'
   },
   faqItem: {
     paddingVertical: mobileSpacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: mobileColors.border.subtle
+    borderBottomColor: mobileColors.border
   },
   faqQuestion: {
     fontSize: mobileTypography.fontSize.base,
     fontWeight: '600',
-    color: mobileColors.text.primary,
+    color: mobileColors.text,
     marginBottom: mobileSpacing.xs
   },
   faqAnswer: {
     fontSize: mobileTypography.fontSize.sm,
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     lineHeight: 20
   },
   supportButton: {
     paddingVertical: mobileSpacing.md,
-    backgroundColor: mobileColors.background.primary,
+    backgroundColor: mobileColors.background,
     borderRadius: mobileBorderRadius.md,
     borderWidth: 1,
-    borderColor: mobileColors.border.default,
+    borderColor: mobileColors.border,
     alignItems: 'center',
     marginBottom: mobileSpacing.sm
   },
   supportButtonText: {
     fontSize: mobileTypography.fontSize.base,
     fontWeight: '600',
-    color: mobileColors.text.primary
+    color: mobileColors.text
   },
   footer: {
     alignItems: 'center',
@@ -233,12 +233,12 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: mobileTypography.fontSize.sm,
     fontWeight: '600',
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     marginBottom: 4
   },
   footerSubtext: {
     fontSize: mobileTypography.fontSize.xs,
-    color: mobileColors.text.tertiary
+    color: mobileColors.textMuted
   }
 });
 

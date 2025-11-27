@@ -170,7 +170,7 @@ const TemplatesScreen: React.FC<TemplatesScreenProps> = ({ navigation, token }) 
 
       {loading ? (
         <View style={styles.loader}>
-          <ActivityIndicator size="large" color={mobileColors.primary.default} />
+          <ActivityIndicator size="large" color={mobileColors.primary} />
         </View>
       ) : (
         <FlatList
@@ -187,13 +187,13 @@ const TemplatesScreen: React.FC<TemplatesScreenProps> = ({ navigation, token }) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: mobileColors.background.primary
+    backgroundColor: mobileColors.background
   },
   categoriesBar: {
     paddingVertical: mobileSpacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: mobileColors.border.default,
-    backgroundColor: mobileColors.background.secondary
+    borderBottomColor: mobileColors.border,
+    backgroundColor: mobileColors.surfaceSecondary
   },
   categoriesList: {
     paddingHorizontal: mobileSpacing.md,
@@ -203,18 +203,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: mobileSpacing.md,
     paddingVertical: mobileSpacing.sm,
     borderRadius: mobileBorderRadius.full,
-    backgroundColor: mobileColors.background.primary,
+    backgroundColor: mobileColors.background,
     borderWidth: 1,
-    borderColor: mobileColors.border.default
+    borderColor: mobileColors.border
   },
   categoryChipActive: {
-    backgroundColor: mobileColors.primary.default,
-    borderColor: mobileColors.primary.default
+    backgroundColor: mobileColors.primary,
+    borderColor: mobileColors.primary
   },
   categoryText: {
     fontSize: mobileTypography.fontSize.sm,
     fontWeight: '600',
-    color: mobileColors.text.primary,
+    color: mobileColors.text,
     textTransform: 'capitalize'
   },
   categoryTextActive: {
@@ -230,12 +230,12 @@ const styles = StyleSheet.create({
   },
   templateItem: {
     flexDirection: 'row',
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderRadius: mobileBorderRadius.lg,
     padding: mobileSpacing.md,
     marginBottom: mobileSpacing.sm,
     borderWidth: 1,
-    borderColor: mobileColors.border.default
+    borderColor: mobileColors.border
   },
   templateIcon: {
     fontSize: 48,
@@ -253,28 +253,28 @@ const styles = StyleSheet.create({
   templateName: {
     fontSize: mobileTypography.fontSize.base,
     fontWeight: '600',
-    color: mobileColors.text.primary,
+    color: mobileColors.text,
     flex: 1
   },
   languageBadge: {
     paddingHorizontal: mobileSpacing.sm,
     paddingVertical: 2,
-    backgroundColor: mobileColors.primary.default + '20',
+    backgroundColor: mobileColors.primary + '20',
     borderRadius: mobileBorderRadius.full
   },
   languageText: {
     fontSize: mobileTypography.fontSize.xs,
     fontWeight: '600',
-    color: mobileColors.primary.default
+    color: mobileColors.primary
   },
   templateDescription: {
     fontSize: mobileTypography.fontSize.sm,
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     marginBottom: 4
   },
   templateDownloads: {
     fontSize: mobileTypography.fontSize.xs,
-    color: mobileColors.text.tertiary
+    color: mobileColors.textMuted
   }
 });
 

@@ -123,7 +123,7 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation, t
       case 'error':
         return '#ef4444';
       default:
-        return mobileColors.text.secondary;
+        return mobileColors.textSecondary;
     }
   };
 
@@ -184,7 +184,7 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation, t
 
       {loading ? (
         <View style={styles.loader}>
-          <ActivityIndicator size="large" color={mobileColors.primary.default} />
+          <ActivityIndicator size="large" color={mobileColors.primary} />
         </View>
       ) : notifications.length > 0 ? (
         <FlatList
@@ -195,7 +195,7 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation, t
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={mobileColors.primary.default}
+              tintColor={mobileColors.primary}
             />
           }
           contentContainerStyle={styles.list}
@@ -216,7 +216,7 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation, t
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: mobileColors.background.primary
+    backgroundColor: mobileColors.background
   },
   actionBar: {
     flexDirection: 'row',
@@ -224,19 +224,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: mobileSpacing.md,
     paddingVertical: mobileSpacing.sm,
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderBottomWidth: 1,
-    borderBottomColor: mobileColors.border.default
+    borderBottomColor: mobileColors.border
   },
   unreadCount: {
     fontSize: mobileTypography.fontSize.sm,
     fontWeight: '600',
-    color: mobileColors.text.secondary
+    color: mobileColors.textSecondary
   },
   markAllButton: {
     fontSize: mobileTypography.fontSize.sm,
     fontWeight: '600',
-    color: mobileColors.primary.default
+    color: mobileColors.primary
   },
   loader: {
     flex: 1,
@@ -248,16 +248,16 @@ const styles = StyleSheet.create({
   },
   notificationItem: {
     flexDirection: 'row',
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderRadius: mobileBorderRadius.lg,
     padding: mobileSpacing.md,
     marginBottom: mobileSpacing.sm,
     borderWidth: 1,
-    borderColor: mobileColors.border.default
+    borderColor: mobileColors.border
   },
   notificationItemUnread: {
-    backgroundColor: mobileColors.background.secondary,
-    borderColor: mobileColors.primary.default,
+    backgroundColor: mobileColors.surfaceSecondary,
+    borderColor: mobileColors.primary,
     borderWidth: 1.5
   },
   notificationIcon: {
@@ -285,16 +285,16 @@ const styles = StyleSheet.create({
   notificationTitle: {
     fontSize: mobileTypography.fontSize.base,
     fontWeight: '600',
-    color: mobileColors.text.primary,
+    color: mobileColors.text,
     flex: 1
   },
   notificationTime: {
     fontSize: mobileTypography.fontSize.xs,
-    color: mobileColors.text.tertiary
+    color: mobileColors.textMuted
   },
   notificationMessage: {
     fontSize: mobileTypography.fontSize.sm,
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     lineHeight: 18
   },
   unreadDot: {
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: mobileColors.primary.default
+    backgroundColor: mobileColors.primary
   },
   emptyState: {
     flex: 1,
@@ -319,12 +319,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: mobileTypography.fontSize.lg,
     fontWeight: '600',
-    color: mobileColors.text.primary,
+    color: mobileColors.text,
     marginBottom: mobileSpacing.xs
   },
   emptySubtitle: {
     fontSize: mobileTypography.fontSize.base,
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     textAlign: 'center'
   }
 });

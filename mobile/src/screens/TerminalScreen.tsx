@@ -26,7 +26,7 @@ const TerminalScreen: React.FC<TerminalScreenProps> = ({ route, token }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: mobileColors.background.primary
+    backgroundColor: mobileColors.background
   }
 });
 

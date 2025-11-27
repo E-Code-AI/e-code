@@ -156,7 +156,7 @@ const CollaborationScreen: React.FC<CollaborationScreenProps> = ({ projectId, to
     <View style={styles.container}>
       {loading ? (
         <View style={styles.loader}>
-          <ActivityIndicator size="large" color={mobileColors.primary.default} />
+          <ActivityIndicator size="large" color={mobileColors.primary} />
         </View>
       ) : (
         <FlatList
@@ -177,7 +177,7 @@ const CollaborationScreen: React.FC<CollaborationScreenProps> = ({ projectId, to
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: mobileColors.background.primary
+    backgroundColor: mobileColors.background
   },
   loader: {
     flex: 1,
@@ -189,12 +189,12 @@ const styles = StyleSheet.create({
   },
   collaboratorItem: {
     flexDirection: 'row',
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderRadius: mobileBorderRadius.lg,
     padding: mobileSpacing.md,
     marginBottom: mobileSpacing.sm,
     borderWidth: 1,
-    borderColor: mobileColors.border.default
+    borderColor: mobileColors.border
   },
   avatarContainer: {
     position: 'relative',
@@ -204,13 +204,13 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: mobileColors.background.primary
+    backgroundColor: mobileColors.background
   },
   avatarPlaceholder: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: mobileColors.primary.default,
+    backgroundColor: mobileColors.primary,
     alignItems: 'center',
     justifyContent: 'center'
   },
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: mobileColors.background.secondary
+    borderColor: mobileColors.surfaceSecondary
   },
   collaboratorInfo: {
     flex: 1
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   collaboratorName: {
     fontSize: mobileTypography.fontSize.base,
     fontWeight: '600',
-    color: mobileColors.text.primary
+    color: mobileColors.text
   },
   roleBadge: {
     paddingHorizontal: mobileSpacing.sm,
@@ -255,17 +255,17 @@ const styles = StyleSheet.create({
   },
   collaboratorUsername: {
     fontSize: mobileTypography.fontSize.sm,
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     marginBottom: 2
   },
   lastActive: {
     fontSize: mobileTypography.fontSize.xs,
-    color: mobileColors.text.tertiary
+    color: mobileColors.textMuted
   },
   inviteButton: {
     margin: mobileSpacing.md,
     paddingVertical: mobileSpacing.md,
-    backgroundColor: mobileColors.primary.default,
+    backgroundColor: mobileColors.primary,
     borderRadius: mobileBorderRadius.lg,
     alignItems: 'center'
   },

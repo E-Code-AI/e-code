@@ -297,23 +297,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: mobileColors.background.primary
+    backgroundColor: mobileColors.background
   },
   content: {
     padding: mobileSpacing.md
   },
   section: {
     marginBottom: mobileSpacing.lg,
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderRadius: mobileBorderRadius.lg,
     borderWidth: 1,
-    borderColor: mobileColors.border.default,
+    borderColor: mobileColors.border,
     overflow: 'hidden'
   },
   sectionTitle: {
     fontSize: mobileTypography.fontSize.sm,
     fontWeight: '700',
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     paddingHorizontal: mobileSpacing.md,
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: mobileSpacing.md,
     paddingVertical: mobileSpacing.md,
     borderTopWidth: 1,
-    borderTopColor: mobileColors.border.default
+    borderTopColor: mobileColors.border
   },
   settingInfo: {
     flex: 1,
@@ -336,12 +336,12 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: mobileTypography.fontSize.base,
     fontWeight: '600',
-    color: mobileColors.text.primary,
+    color: mobileColors.text,
     marginBottom: 4
   },
   settingDescription: {
     fontSize: mobileTypography.fontSize.sm,
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     lineHeight: 18
   },
   actionItem: {
@@ -351,20 +351,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: mobileSpacing.md,
     paddingVertical: mobileSpacing.md,
     borderTopWidth: 1,
-    borderTopColor: mobileColors.border.default
+    borderTopColor: mobileColors.border
   },
   actionLabel: {
     fontSize: mobileTypography.fontSize.base,
     fontWeight: '600',
-    color: mobileColors.text.primary
+    color: mobileColors.text
   },
   actionValue: {
     fontSize: mobileTypography.fontSize.base,
-    color: mobileColors.text.secondary
+    color: mobileColors.textSecondary
   },
   actionArrow: {
     fontSize: 24,
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     fontWeight: '300'
   },
   dangerTitle: {
@@ -386,12 +386,12 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: mobileTypography.fontSize.sm,
     fontWeight: '600',
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     marginBottom: 4
   },
   footerSubtext: {
     fontSize: mobileTypography.fontSize.xs,
-    color: mobileColors.text.tertiary
+    color: mobileColors.textMuted
   }
 });
 
