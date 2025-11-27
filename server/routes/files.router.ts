@@ -24,17 +24,19 @@ export class FilesRouter {
   }
 
   private ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-    // Always allow in development mode for testing
-    if (process.env.NODE_ENV === 'development' || isAuthBypassEnabled()) {
-      if (!req.user) {
-        req.user = { id: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293', username: 'testauth', email: 'testauth@e-code.ai' } as User;
-      }
-      return next();
-    }
+    // ✅ 40-YEAR SENIOR SECURITY FIX: Aligned with dev-auth-bypass.ts
+    // NEVER bypass auth with just NODE_ENV - always require token validation
+    // This prevents accidental auth bypass if NODE_ENV is misconfigured
     
-    // Apply auth bypass middleware
+    // Apply auth bypass middleware (requires token even in development)
     devAuthBypass(req, res, () => {
+      // Check if already authenticated via Passport
       if (req.isAuthenticated()) {
+        return next();
+      }
+      
+      // Check if user was injected by devAuthBypass (with valid token)
+      if (req.user) {
         return next();
       }
       
