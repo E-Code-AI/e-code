@@ -17,7 +17,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 
   return (
     <View style={containerStyle}>
-      <ActivityIndicator size={size} color={mobileColors.primary.default} />
+      <ActivityIndicator size={size} color={mobileColors.primary} />
       {text && <Text style={styles.text}>{text}</Text>}
     </View>
   );
@@ -33,12 +33,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: mobileColors.background.primary
+    backgroundColor: mobileColors.background
   },
   text: {
     marginTop: mobileSpacing.md,
     fontSize: mobileTypography.fontSize.sm,
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     textAlign: 'center'
   }
 });
