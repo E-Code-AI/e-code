@@ -348,6 +348,15 @@ app.get('/api/cors-health', async (_req, res) => {
       console.error('[WORKING SERVER] Failed to register templates routes:', error);
     }
 
+    // ✅ SEO SITEMAP: Dynamic sitemap.xml generation
+    try {
+      const sitemapRouter = (await import('./routes/sitemap.router')).default;
+      app.use(sitemapRouter);
+      console.log('[SEO] Sitemap routes registered at /sitemap.xml, /sitemap-index.xml, /sitemap-blog.xml');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register sitemap routes:', error);
+    }
+
     // ✅ CHECKPOINTS & ROLLBACK SYSTEM: Checkpoint routes with atomic transactions
     try {
       const checkpointsRouter = (await import('./routes/checkpoints.router')).default;

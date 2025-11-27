@@ -61,6 +61,7 @@ const AdminBilling = lazy(() => import("@/pages/AdminBilling"));
 const AdminAIModels = lazy(() => import("@/pages/admin/AIModels"));
 const AdminFormRequests = lazy(() => import("@/pages/admin/FormRequests"));
 const AdminAIOptimization = lazy(() => import("@/pages/admin/AIOptimizationDashboard"));
+const AdminSEOManagement = lazy(() => import("@/pages/admin/SEOManagement"));
 const AdminMonitoring = lazy(() => import("@/pages/admin/AdminMonitoring"));
 const PitchDeck = lazy(() => import("@/pages/admin/PitchDeck"));
 const ChatGPTAdmin = lazy(() => import("@/pages/ChatGPTAdmin"));
@@ -177,6 +178,20 @@ const GameBuilder = lazy(() => import("@/pages/solutions/GameBuilder"));
 const DashboardBuilder = lazy(() => import("@/pages/solutions/DashboardBuilder"));
 const ChatbotBuilder = lazy(() => import("@/pages/solutions/ChatbotBuilder"));
 const InternalAIBuilder = lazy(() => import("@/pages/solutions/InternalAIBuilder"));
+const Enterprise = lazy(() => import("@/pages/solutions/Enterprise"));
+const Startups = lazy(() => import("@/pages/solutions/Startups"));
+const Freelancers = lazy(() => import("@/pages/solutions/Freelancers"));
+
+// Resources pages
+const Tutorials = lazy(() => import("@/pages/resources/Tutorials"));
+const Changelog = lazy(() => import("@/pages/resources/Changelog"));
+const CaseStudies = lazy(() => import("@/pages/resources/CaseStudies"));
+const HelpCenter = lazy(() => import("@/pages/resources/HelpCenter"));
+
+// Company pages
+const Contact = lazy(() => import("@/pages/Contact"));
+const Accessibility = lazy(() => import("@/pages/Accessibility"));
+
 const PreviewWithDevTools = lazy(() => import("@/pages/PreviewWithDevTools"));
 
 // DEPRECATED: Standalone code generation page - use autonomous workspace instead
@@ -397,6 +412,19 @@ function AppContent() {
           <Route path="/solutions/dashboard-builder" component={DashboardBuilder} />
           <Route path="/solutions/chatbot-builder" component={ChatbotBuilder} />
           <Route path="/solutions/internal-ai-builder" component={InternalAIBuilder} />
+          <Route path="/solutions/enterprise" component={Enterprise} />
+          <Route path="/solutions/startups" component={Startups} />
+          <Route path="/solutions/freelancers" component={Freelancers} />
+
+          {/* Resources pages */}
+          <Route path="/tutorials" component={Tutorials} />
+          <Route path="/changelog" component={Changelog} />
+          <Route path="/case-studies" component={CaseStudies} />
+          <Route path="/help-center" component={HelpCenter} />
+
+          {/* Company pages */}
+          <Route path="/contact" component={Contact} />
+          <Route path="/accessibility" component={Accessibility} />
 
           <Route path="/mobile" component={MobileMarketingPage} />
           <Route path="/mobile-workspace/:projectId" component={MobileWorkspace} />
@@ -909,6 +937,11 @@ function AppContent() {
           <ProtectedRoute path="/admin/ai-optimization" component={() => (
             <ReplitLayout showSidebar={false}>
               <AdminAIOptimization />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/admin/seo" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <AdminSEOManagement />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/admin/monitoring" component={() => (
