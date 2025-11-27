@@ -34,16 +34,27 @@ interface Room {
 export class VoiceVideoService extends EventEmitter {
   private rooms: Map<string, Room> = new Map();
   private peerSocketMap: Map<WebSocket, string> = new Map();
-  private turnServers = [
-    {
-      urls: ['stun:stun.l.google.com:19302'],
-    },
-    {
-      urls: ['turn:turn.e-code.com:3478'],
-      username: 'ecode',
-      credential: process.env.TURN_SECRET || 'default-turn-secret',
-    },
-  ];
+  private getTurnServers() {
+    const turnSecret = process.env.TURN_SECRET;
+    const servers: Array<{urls: string[]; username?: string; credential?: string}> = [
+      {
+        urls: ['stun:stun.l.google.com:19302'],
+      },
+    ];
+    
+    // Only add TURN server if credential is configured
+    if (turnSecret) {
+      servers.push({
+        urls: ['turn:turn.e-code.com:3478'],
+        username: 'ecode',
+        credential: turnSecret,
+      });
+    }
+    
+    return servers;
+  }
+  
+  private turnServers = this.getTurnServers();
 
   constructor() {
     super();

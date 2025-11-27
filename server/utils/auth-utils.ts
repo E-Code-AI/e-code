@@ -22,9 +22,7 @@ function getJWTRefreshSecret(): string {
   return secret;
 }
 
-// Legacy exports for compatibility (deprecated - use getJWTSecret() instead)
-const JWT_SECRET = process.env.JWT_SECRET || '';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || '';
+// NOTE: Legacy constants removed - all code now uses getJWTSecret() and getJWTRefreshSecret()
 
 // Generate random tokens
 export function generateToken(length: number = 32): string {
@@ -76,11 +74,11 @@ export function validatePassword(password: string): { valid: boolean; errors: st
   };
 }
 
-// JWT token generation and verification
+// JWT token generation and verification - SECURITY: Use fail-fast secret getters
 export function generateAccessToken(userId: number, username: string): string {
   return jwt.sign(
     { userId, username, type: 'access' },
-    JWT_SECRET,
+    getJWTSecret(),
     { expiresIn: '15m' }
   );
 }
@@ -88,14 +86,14 @@ export function generateAccessToken(userId: number, username: string): string {
 export function generateRefreshToken(userId: number): string {
   return jwt.sign(
     { userId, type: 'refresh' },
-    JWT_REFRESH_SECRET,
+    getJWTRefreshSecret(),
     { expiresIn: '7d' }
   );
 }
 
 export function verifyAccessToken(token: string): { userId: number; username: string } {
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as any;
+    const payload = jwt.verify(token, getJWTSecret()) as any;
     if (payload.type !== 'access') {
       throw new Error('Invalid token type');
     }
@@ -107,7 +105,7 @@ export function verifyAccessToken(token: string): { userId: number; username: st
 
 export function verifyRefreshToken(token: string): { userId: number } {
   try {
-    const payload = jwt.verify(token, JWT_REFRESH_SECRET) as any;
+    const payload = jwt.verify(token, getJWTRefreshSecret()) as any;
     if (payload.type !== 'refresh') {
       throw new Error('Invalid token type');
     }

@@ -14,10 +14,15 @@ import bcrypt from "bcrypt";
 export function setupPassportAuth(app: Application) {
   const storage = getStorage();
   
-  // Session configuration
+  // Session configuration - SECURITY: No fallback secret
+  const sessionSecret = process.env.SESSION_SECRET;
+  if (!sessionSecret) {
+    throw new Error('[SECURITY] SESSION_SECRET environment variable must be configured');
+  }
+  
   app.use(session({
     store: sessionStore,
-    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     rolling: true,

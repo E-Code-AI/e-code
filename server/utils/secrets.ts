@@ -14,14 +14,21 @@ export class SecretManager {
   private salt: string = 'e-code-platform-salt';
   
   constructor() {
-    const encryptionKey = process.env.ENCRYPTION_KEY || process.env.SECRET_KEY || 'default-dev-key-change-in-production';
+    // SECURITY: Require encryption key in production, allow dev fallback only in development
+    const encryptionKey = process.env.ENCRYPTION_KEY || process.env.SECRET_KEY;
     
-    if (encryptionKey === 'default-dev-key-change-in-production' && process.env.NODE_ENV === 'production') {
-      logger.error('Using default encryption key in production - this is insecure!');
+    if (!encryptionKey) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('[SECURITY] ENCRYPTION_KEY or SECRET_KEY environment variable must be set in production');
+      }
+      // Development only: use random key per session (data won't persist across restarts)
+      logger.warn('[SECURITY] No ENCRYPTION_KEY set - using random key for development only');
     }
     
+    const keyToUse = encryptionKey || crypto.randomBytes(32).toString('hex');
+    
     // Derive key from password
-    this.key = crypto.scryptSync(encryptionKey, this.salt, 32);
+    this.key = crypto.scryptSync(keyToUse, this.salt, 32);
   }
   
   /**
