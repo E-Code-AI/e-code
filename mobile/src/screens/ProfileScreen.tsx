@@ -110,7 +110,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, user, token }
               value={displayName}
               onChangeText={setDisplayName}
               placeholder="Enter your display name"
-              placeholderTextColor={mobileColors.text.tertiary}
+              placeholderTextColor={mobileColors.textMuted}
               autoCapitalize="words"
             />
           ) : (
@@ -136,7 +136,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, user, token }
               value={bio}
               onChangeText={setBio}
               placeholder="Tell us about yourself"
-              placeholderTextColor={mobileColors.text.tertiary}
+              placeholderTextColor={mobileColors.textMuted}
               multiline
               numberOfLines={4}
               textAlignVertical="top"
@@ -156,7 +156,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, user, token }
               value={location}
               onChangeText={setLocation}
               placeholder="City, Country"
-              placeholderTextColor={mobileColors.text.tertiary}
+              placeholderTextColor={mobileColors.textMuted}
             />
           ) : (
             <View style={[styles.fieldInput, styles.fieldInputDisabled]}>
@@ -173,7 +173,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, user, token }
               value={website}
               onChangeText={setWebsite}
               placeholder="https://example.com"
-              placeholderTextColor={mobileColors.text.tertiary}
+              placeholderTextColor={mobileColors.textMuted}
               keyboardType="url"
               autoCapitalize="none"
             />

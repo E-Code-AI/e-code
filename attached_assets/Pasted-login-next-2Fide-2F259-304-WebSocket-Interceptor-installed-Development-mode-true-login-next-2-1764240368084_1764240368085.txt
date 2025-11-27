@@ -1,0 +1,72 @@
+login?next=%2Fide%2F259:304 [WebSocket] Interceptor installed (Development mode: true)
+login?next=%2Fide%2F259:280 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:/?token=_ZKCa0JPUHhi isAgent: false isViteHMR: true isDev: true
+login?next=%2Fide%2F259:287 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:/?token=_ZKCa0JPUHhi
+login?next=%2Fide%2F259:291 WebSocket connection to 'wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/?token=_ZKCa0JPUHhi' failed: 
+construct @ login?next=%2Fide%2F259:291
+createConnection @ client:745
+connect @ client:411
+connect @ client:751
+connect @ client:289
+connect @ client:373
+(anonyme) @ client:823
+login?next=%2Fide%2F259:280 [WebSocket] Connection attempt: wss://localhost:5173/?token=_ZKCa0JPUHhi isAgent: false isViteHMR: true isDev: true
+login?next=%2Fide%2F259:287 [WebSocket] ✅ Allowing real connection: wss://localhost:5173/?token=_ZKCa0JPUHhi
+login?next=%2Fide%2F259:291 WebSocket connection to 'wss://localhost:5173/?token=_ZKCa0JPUHhi' failed: 
+construct @ login?next=%2Fide%2F259:291
+createConnection @ client:755
+connect @ client:411
+connect @ client:759
+client:765 [vite] failed to connect to websocket.
+your current setup:
+  (browser) f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/ <--[HTTP]--> localhost:5173/ (server)
+  (browser) f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:/ <--[WebSocket (failing)]--> localhost:5173/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+connect @ client:765
+await in connect
+connect @ client:289
+connect @ client:373
+(anonyme) @ client:823
+chunk-JBYBNA4T.js?v=13a065a6:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+queryClient.ts:150  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/api/me 401 (Unauthorized)
+(anonyme) @ queryClient.ts:150
+fetchFn @ @tanstack_react-query.js?v=13a065a6:1066
+run @ @tanstack_react-query.js?v=13a065a6:776
+start @ @tanstack_react-query.js?v=13a065a6:818
+fetch @ @tanstack_react-query.js?v=13a065a6:1113
+#executeFetch @ @tanstack_react-query.js?v=13a065a6:1432
+onSubscribe @ @tanstack_react-query.js?v=13a065a6:1305
+subscribe @ @tanstack_react-query.js?v=13a065a6:19
+(anonyme) @ @tanstack_react-query.js?v=13a065a6:3243
+subscribeToStore @ chunk-JBYBNA4T.js?v=13a065a6:12032
+commitHookEffectListMount @ chunk-JBYBNA4T.js?v=13a065a6:16963
+commitPassiveMountOnFiber @ chunk-JBYBNA4T.js?v=13a065a6:18206
+commitPassiveMountEffects_complete @ chunk-JBYBNA4T.js?v=13a065a6:18179
+commitPassiveMountEffects_begin @ chunk-JBYBNA4T.js?v=13a065a6:18169
+commitPassiveMountEffects @ chunk-JBYBNA4T.js?v=13a065a6:18159
+flushPassiveEffectsImpl @ chunk-JBYBNA4T.js?v=13a065a6:19543
+flushPassiveEffects @ chunk-JBYBNA4T.js?v=13a065a6:19500
+(anonyme) @ chunk-JBYBNA4T.js?v=13a065a6:19381
+workLoop @ chunk-JBYBNA4T.js?v=13a065a6:197
+flushWork @ chunk-JBYBNA4T.js?v=13a065a6:176
+performWorkUntilDeadline @ chunk-JBYBNA4T.js?v=13a065a6:384
+network-optimization.ts:212  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/api/projects 401 (Unauthorized)
+executeRequest @ network-optimization.ts:212
+request @ network-optimization.ts:75
+(anonyme) @ network-optimization.ts:421
+(anonyme) @ network-optimization.ts:421
+requestIdleCallback
+prefetch @ network-optimization.ts:420
+prefetchResources @ network-optimization.ts:442
+(anonyme) @ App.tsx:301
+commitHookEffectListMount @ chunk-JBYBNA4T.js?v=13a065a6:16963
+commitPassiveMountOnFiber @ chunk-JBYBNA4T.js?v=13a065a6:18206
+commitPassiveMountEffects_complete @ chunk-JBYBNA4T.js?v=13a065a6:18179
+commitPassiveMountEffects_begin @ chunk-JBYBNA4T.js?v=13a065a6:18169
+commitPassiveMountEffects @ chunk-JBYBNA4T.js?v=13a065a6:18159
+flushPassiveEffectsImpl @ chunk-JBYBNA4T.js?v=13a065a6:19543
+flushPassiveEffects @ chunk-JBYBNA4T.js?v=13a065a6:19500
+(anonyme) @ chunk-JBYBNA4T.js?v=13a065a6:19381
+workLoop @ chunk-JBYBNA4T.js?v=13a065a6:197
+flushWork @ chunk-JBYBNA4T.js?v=13a065a6:176
+performWorkUntilDeadline @ chunk-JBYBNA4T.js?v=13a065a6:384
+manifest.json:1 Manifest: found icon with no valid purpose; ignoring it.

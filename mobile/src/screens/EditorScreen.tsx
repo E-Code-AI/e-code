@@ -56,7 +56,7 @@ function getLanguageFromFileName(fileName: string): string {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: mobileColors.background.primary
+    backgroundColor: mobileColors.background
   }
 });
 
