@@ -208,15 +208,63 @@ router.get('/api/runtime/dependencies', getRuntimeDependencies);
 
 // ===============================
 // Direct Code Execution Routes (No Docker Required)
+// SECURITY: These endpoints are gated by feature flag and rate limiting
 // ===============================
+
+// Feature flag for direct execution (disabled in production by default)
+const ENABLE_DIRECT_EXECUTION = process.env.ENABLE_DIRECT_EXECUTION === 'true' || 
+                                process.env.NODE_ENV === 'development';
+
+// Rate limiting: Track executions per user
+const executionRateLimits = new Map<number, { count: number; resetTime: number }>();
+const MAX_EXECUTIONS_PER_MINUTE = 10;
+const RATE_LIMIT_WINDOW_MS = 60000;
+
+function checkRateLimit(userId: number): boolean {
+  const now = Date.now();
+  const limit = executionRateLimits.get(userId);
+  
+  if (!limit || now > limit.resetTime) {
+    executionRateLimits.set(userId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  
+  if (limit.count >= MAX_EXECUTIONS_PER_MINUTE) {
+    return false;
+  }
+  
+  limit.count++;
+  return true;
+}
 
 /**
  * POST /api/execute
  * Execute code directly without Docker
+ * SECURITY: Requires authentication, rate limited, feature-flagged
  * Body: { language: string, code: string, projectId?: string }
  */
 router.post('/api/execute', ensureAuthenticated, async (req, res) => {
   try {
+    const userId = (req as any).user?.id;
+    
+    // Feature flag check
+    if (!ENABLE_DIRECT_EXECUTION) {
+      logger.warn(`Direct execution disabled. User ${userId} attempted to use /api/execute`);
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Direct code execution is currently disabled in production. Use container-based execution instead.' 
+      });
+    }
+    
+    // Rate limit check
+    if (!checkRateLimit(userId)) {
+      logger.warn(`Rate limit exceeded for user ${userId} on /api/execute`);
+      return res.status(429).json({ 
+        success: false, 
+        error: `Rate limit exceeded. Maximum ${MAX_EXECUTIONS_PER_MINUTE} executions per minute.` 
+      });
+    }
+    
     const { language, code, projectId } = req.body;
     
     if (!language || typeof language !== 'string') {
@@ -233,7 +281,8 @@ router.post('/api/execute', ensureAuthenticated, async (req, res) => {
       });
     }
     
-    logger.info(`Direct code execution: ${language}, project: ${projectId || 'none'}`);
+    // Audit log
+    logger.info(`[AUDIT] Direct code execution: userId=${userId}, language=${language}, project=${projectId || 'none'}, codeSize=${code.length}`);
     
     const result = await codeExecutor.execute(language, code, {
       timeout: 30000,
@@ -264,6 +313,7 @@ router.post('/api/execute', ensureAuthenticated, async (req, res) => {
 /**
  * POST /api/projects/:id/execute-direct
  * Execute code directly for a project without Docker
+ * SECURITY: Requires authentication, rate limited, feature-flagged
  * Body: { language: string, code: string }
  */
 router.post('/api/projects/:id/execute-direct', ensureAuthenticated, async (req, res, next) => {
@@ -275,6 +325,24 @@ router.post('/api/projects/:id/execute-direct', ensureAuthenticated, async (req,
       const userId = (req as any).user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      // Feature flag check
+      if (!ENABLE_DIRECT_EXECUTION) {
+        logger.warn(`Direct execution disabled. User ${userId} attempted to use /api/projects/${projectId}/execute-direct`);
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Direct code execution is currently disabled in production. Use container-based execution instead.' 
+        });
+      }
+      
+      // Rate limit check
+      if (!checkRateLimit(userId)) {
+        logger.warn(`Rate limit exceeded for user ${userId} on /api/projects/${projectId}/execute-direct`);
+        return res.status(429).json({ 
+          success: false, 
+          error: `Rate limit exceeded. Maximum ${MAX_EXECUTIONS_PER_MINUTE} executions per minute.` 
+        });
       }
       
       const project = await storage.getProject(projectId);
@@ -301,7 +369,8 @@ router.post('/api/projects/:id/execute-direct', ensureAuthenticated, async (req,
       
       const detectedLanguage = language || project.language || 'javascript';
       
-      logger.info(`Project ${projectId} direct execution: ${detectedLanguage}`);
+      // Audit log
+      logger.info(`[AUDIT] Project direct execution: userId=${userId}, projectId=${projectId}, language=${detectedLanguage}, codeSize=${code.length}`);
       
       const result = await codeExecutor.execute(detectedLanguage, code, {
         timeout: 30000,
