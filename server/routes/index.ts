@@ -201,6 +201,7 @@ export class MainRouter {
     app.use('/api', tierRateLimiters.api, aiRouter);
     
     // AI Usage Metering routes (Pay-As-You-Go billing endpoints)
+    app.use('/api/usage', tierRateLimiters.api, aiUsageRouter);
     app.use('/api/ai/usage', tierRateLimiters.api, aiUsageRouter);
     app.use('/api/admin/ai-usage', tierRateLimiters.api, aiUsageRouter);
     
