@@ -1,0 +1,92 @@
+VM5180 login:107 [WebSocket] Interceptor installed (Development mode: true)
+VM5180 login:83 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:/?token=Mv1QUh0ZnVJs isAgent: false isViteHMR: true isDev: true
+VM5180 login:90 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:/?token=Mv1QUh0ZnVJs
+VM5180 login:94 WebSocket connection to 'wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/?token=Mv1QUh0ZnVJs' failed: 
+construct @ VM5180 login:94
+VM5180 login:83 [WebSocket] Connection attempt: wss://localhost:5173/?token=Mv1QUh0ZnVJs isAgent: false isViteHMR: true isDev: true
+VM5180 login:90 [WebSocket] ✅ Allowing real connection: wss://localhost:5173/?token=Mv1QUh0ZnVJs
+VM5180 login:94 WebSocket connection to 'wss://localhost:5173/?token=Mv1QUh0ZnVJs' failed: 
+construct @ VM5180 login:94
+client:765 [vite] failed to connect to websocket.
+your current setup:
+  (browser) f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/ <--[HTTP]--> localhost:5173/ (server)
+  (browser) f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:/ <--[WebSocket (failing)]--> localhost:5173/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+connect @ client:765
+chunk-JBYBNA4T.js?v=13a065a6:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+/api/me:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+/api/projects:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+manifest.json:1 Manifest: found icon with no valid purpose; ignoring it.
+/api/notifications:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+/api/notifications:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+/api/notifications:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+AutonomousWorkspaceViewer.tsx:67 🚀🚀🚀 [AutonomousWorkspace] COMPONENT MOUNTED
+AutonomousWorkspaceViewer.tsx:68 🚀🚀🚀 [AutonomousWorkspace] Token: NULL
+AutonomousWorkspaceViewer.tsx:69 🚀🚀🚀 [AutonomousWorkspace] ProjectId: 259
+AutonomousWorkspaceViewer.tsx:70 🚀🚀🚀 [AutonomousWorkspace] isOpen will be: false
+AutonomousWorkspaceViewer.tsx:76 ❌❌❌ NO BOOTSTRAP TOKEN - MODAL WILL NOT OPEN!
+AutonomousWorkspaceViewer @ AutonomousWorkspaceViewer.tsx:76
+renderWithHooks @ chunk-JBYBNA4T.js?v=13a065a6:11596
+mountIndeterminateComponent @ chunk-JBYBNA4T.js?v=13a065a6:14974
+beginWork @ chunk-JBYBNA4T.js?v=13a065a6:15962
+beginWork$1 @ chunk-JBYBNA4T.js?v=13a065a6:19806
+performUnitOfWork @ chunk-JBYBNA4T.js?v=13a065a6:19251
+workLoopSync @ chunk-JBYBNA4T.js?v=13a065a6:19190
+renderRootSync @ chunk-JBYBNA4T.js?v=13a065a6:19169
+performSyncWorkOnRoot @ chunk-JBYBNA4T.js?v=13a065a6:18927
+flushSyncCallbacks @ chunk-JBYBNA4T.js?v=13a065a6:9166
+(anonyme) @ chunk-JBYBNA4T.js?v=13a065a6:18677
+setTimeout
+systemSetTimeoutZero @ @tanstack_react-query.js?v=13a065a6:95
+flush @ @tanstack_react-query.js?v=13a065a6:597
+batch @ @tanstack_react-query.js?v=13a065a6:615
+#dispatch @ @tanstack_react-query.js?v=13a065a6:1222
+setData @ @tanstack_react-query.js?v=13a065a6:904
+fetch @ @tanstack_react-query.js?v=13a065a6:1122
+AutonomousWorkspaceViewer.tsx:83 [AutonomousWorkspace] isOpen changed to: false
+AutonomousWorkspaceViewer.tsx:135 🔌🔌🔌 [AutonomousWorkspace] WebSocket useEffect TRIGGERED
+AutonomousWorkspaceViewer.tsx:136 🔌🔌🔌 [AutonomousWorkspace] bootstrapToken: NULL
+AutonomousWorkspaceViewer.tsx:137 🔌🔌🔌 [AutonomousWorkspace] isOpen: false
+AutonomousWorkspaceViewer.tsx:140 ❌❌❌ [AutonomousWorkspace] GUARD CLAUSE BLOCKED CONNECTION
+(anonyme) @ AutonomousWorkspaceViewer.tsx:140
+commitHookEffectListMount @ chunk-JBYBNA4T.js?v=13a065a6:16963
+commitPassiveMountOnFiber @ chunk-JBYBNA4T.js?v=13a065a6:18206
+commitPassiveMountEffects_complete @ chunk-JBYBNA4T.js?v=13a065a6:18179
+commitPassiveMountEffects_begin @ chunk-JBYBNA4T.js?v=13a065a6:18169
+commitPassiveMountEffects @ chunk-JBYBNA4T.js?v=13a065a6:18159
+flushPassiveEffectsImpl @ chunk-JBYBNA4T.js?v=13a065a6:19543
+flushPassiveEffects @ chunk-JBYBNA4T.js?v=13a065a6:19500
+commitRootImpl @ chunk-JBYBNA4T.js?v=13a065a6:19469
+commitRoot @ chunk-JBYBNA4T.js?v=13a065a6:19330
+performSyncWorkOnRoot @ chunk-JBYBNA4T.js?v=13a065a6:18948
+flushSyncCallbacks @ chunk-JBYBNA4T.js?v=13a065a6:9166
+(anonyme) @ chunk-JBYBNA4T.js?v=13a065a6:18677
+setTimeout
+systemSetTimeoutZero @ @tanstack_react-query.js?v=13a065a6:95
+flush @ @tanstack_react-query.js?v=13a065a6:597
+batch @ @tanstack_react-query.js?v=13a065a6:615
+#dispatch @ @tanstack_react-query.js?v=13a065a6:1222
+setData @ @tanstack_react-query.js?v=13a065a6:904
+fetch @ @tanstack_react-query.js?v=13a065a6:1122
+AutonomousWorkspaceViewer.tsx:141 ❌❌❌ [AutonomousWorkspace] bootstrapToken? false isOpen? false
+(anonyme) @ AutonomousWorkspaceViewer.tsx:141
+commitHookEffectListMount @ chunk-JBYBNA4T.js?v=13a065a6:16963
+commitPassiveMountOnFiber @ chunk-JBYBNA4T.js?v=13a065a6:18206
+commitPassiveMountEffects_complete @ chunk-JBYBNA4T.js?v=13a065a6:18179
+commitPassiveMountEffects_begin @ chunk-JBYBNA4T.js?v=13a065a6:18169
+commitPassiveMountEffects @ chunk-JBYBNA4T.js?v=13a065a6:18159
+flushPassiveEffectsImpl @ chunk-JBYBNA4T.js?v=13a065a6:19543
+flushPassiveEffects @ chunk-JBYBNA4T.js?v=13a065a6:19500
+commitRootImpl @ chunk-JBYBNA4T.js?v=13a065a6:19469
+commitRoot @ chunk-JBYBNA4T.js?v=13a065a6:19330
+performSyncWorkOnRoot @ chunk-JBYBNA4T.js?v=13a065a6:18948
+flushSyncCallbacks @ chunk-JBYBNA4T.js?v=13a065a6:9166
+(anonyme) @ chunk-JBYBNA4T.js?v=13a065a6:18677
+setTimeout
+systemSetTimeoutZero @ @tanstack_react-query.js?v=13a065a6:95
+flush @ @tanstack_react-query.js?v=13a065a6:597
+batch @ @tanstack_react-query.js?v=13a065a6:615
+#dispatch @ @tanstack_react-query.js?v=13a065a6:1222
+setData @ @tanstack_react-query.js?v=13a065a6:904
+fetch @ @tanstack_react-query.js?v=13a065a6:1122
+Impossible de trouver le nœud sur la page actuelle.
