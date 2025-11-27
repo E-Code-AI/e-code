@@ -48,6 +48,70 @@ Key AI Agent Enhancements include structured XML-based system prompts, a reposit
 ### Feature Specifications
 Core features include a Monaco Code Editor with advanced enhancements, an interactive terminal (xterm.js), file management, real-time collaboration, authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager, a Logs Viewer, and a Debugger UI. The UI is responsive across devices. Autonomous workspace creation involves a Bootstrap API call, AI plan generation, WebSocket-based real-time progress, autonomous execution, and a live preview. PWA features and Electron desktop support are included.
 
+**Code Execution System (Verified Working - Nov 2025):**
+The platform provides real, process-based code execution without Docker dependency, leveraging native Nix-managed language runtimes available on Replit.
+
+**Available Runtimes (Confirmed on Replit VM):**
+- Python 3.11.13 ✅
+- Node.js v20.19.3 ✅
+- Go 1.22.3 ✅
+- GCC/G++ (Nix-managed) ✅
+- Java, Rust, PHP (available via Nix)
+
+**Core Execution Components:**
+| Component | File | Description |
+|-----------|------|-------------|
+| CodeExecutor | `server/execution/executor.ts` | Multi-language execution using `spawn(shell:false)` - supports JS, Python, C++, C, Go, Java, Rust, PHP |
+| VM Sandbox | `server/execution/sandbox.ts` | JavaScript sandboxed execution via Node vm module |
+| Multi-Language Executor | `server/sandbox/sandbox-executor.ts` | 10 language support with isolated temp directories |
+| Process Isolation | `server/isolation/process-isolation.ts` | Port pools, memory limits, DB namespaces |
+| Command Execution | `server/services/agent-command-execution.service.ts` | Security validation, streaming output, command whitelist |
+| Runtime Manager | `server/runtimes/runtime-manager.ts` | Fallback to direct execution, command whitelist enforcement |
+
+**Runtime API Endpoints (Full REST API):**
+| Endpoint | Method | Description | Auth Required |
+|----------|--------|-------------|---------------|
+| `/api/projects/:id/runtime/start` | POST | Start project runtime | Yes |
+| `/api/projects/:id/runtime/stop` | POST | Stop project runtime | Yes |
+| `/api/projects/:id/runtime/execute` | POST | Execute command in runtime | Yes |
+| `/api/projects/:id/runtime` | GET | Get runtime status | Yes |
+| `/api/projects/:id/runtime/logs` | GET | Get runtime logs | Yes |
+| `/api/runtime/start` | POST | Start runtime (body: projectId) | Yes |
+| `/api/runtime/stop` | POST | Stop runtime | Yes |
+| `/api/runtime/:projectId` | GET | Get runtime status | Yes |
+| `/api/runtime/:projectId/start` | POST | Start runtime | Yes |
+| `/api/runtime/:projectId/stop` | POST | Stop runtime | Yes |
+| `/api/runtime/:projectId/execute` | POST | Execute command | Yes |
+| `/api/runtime/:projectId/logs` | GET | Get logs | Yes |
+| `/api/runtime/dependencies` | GET | Get runtime dependencies | No |
+| `/api/execute` | POST | Direct code execution | Yes + Feature Flag |
+| `/api/projects/:id/execute-direct` | POST | Direct project execution | Yes + Feature Flag |
+| `/api/execute/languages` | GET | List supported languages | No |
+
+**Security Architecture:**
+- **Feature Flag:** `ENABLE_DIRECT_EXECUTION` - disabled by default everywhere, requires explicit `true` to enable
+- **Rate Limiting:** 10 executions per minute per user on `/api/execute*` endpoints
+- **Audit Logging:** All executions logged with userId, language, projectId, code size
+- **Shell Injection Prevention:** Uses `spawn(shell:false)` with args array instead of shell commands
+- **Command Whitelist:** Runtime-manager only allows: `ls`, `pwd`, `echo`, `cat`, `head`, `tail`, `wc`, `npm`, `node`, `npx`, `python`, `python3`, `pip`, `go`, `gcc`, `g++`, `make`, `git`, `which`, `env`, `printenv`
+
+**Deployment Configuration:**
+```bash
+# Environment Variables for Replit VM
+ENABLE_DIRECT_EXECUTION=true  # Enable for development/testing only
+NODE_ENV=production           # Feature flag respects this
+```
+
+**Frontend Integration:**
+- `client/src/hooks/useRuntime.ts` - React hook for runtime management
+- `client/src/components/RunButton.tsx` - Start/Stop button with status polling
+- `client/src/components/editor/ReplitOutputPanel.tsx` - WebSocket-based output streaming
+
+**Future Enhancements (Production Sandboxing):**
+- OS-level sandboxing (seccomp filters, containers, or VM isolation)
+- Admin role-based access control for execute endpoints
+- Automated security regression tests
+
 **Centralized Logging System (Fortune 500 Standard - Nov 2025):**
 - **Backend Logger:** `server/logging/centralized-logger.ts` - Winston-based with request context via AsyncLocalStorage, correlation IDs, per-service caching, multi-transport (console + daily rotation files)
 - **Request Context:** `server/logging/request-context.ts` - AsyncLocalStorage for request-scoped tracking (requestId, correlationId, userId, startTime)
