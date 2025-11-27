@@ -39,8 +39,35 @@ interface Usage {
   collaborators: { used: number; limit: number; unit: 'users' };
 }
 
+interface StripePlan {
+  id: string;
+  name: string;
+  tier: 'free' | 'core' | 'teams' | 'enterprise';
+  price: number;
+  interval: 'month' | 'year';
+  creditsMonthly: number;
+  features: string[];
+  limits: {
+    projects: number;
+    collaborators: number;
+    storage: number;
+    cpuHours: number;
+    deployments: number;
+  };
+  allowances: {
+    vcpus: number;
+    ramGb: number;
+    storageGb: number;
+    bandwidthGb: number;
+    developmentMinutes: number;
+    publicApps: number;
+    privateApps: number;
+    collaborators: number;
+  };
+}
+
 interface Plan {
-  id: 'free' | 'hacker' | 'pro' | 'teams';
+  id: string;
   name: string;
   price: number;
   interval: 'month' | 'year';
@@ -54,97 +81,64 @@ interface Plan {
   };
   badge?: string;
   popular?: boolean;
+  tier?: string;
+  stripePriceId?: string;
 }
 
-const PLANS: Plan[] = [
+const convertStripePlanToLegacy = (stripePlan: StripePlan): Plan => {
+  const tierBadges: Record<string, string | undefined> = {
+    free: undefined,
+    core: 'Most Popular',
+    teams: 'Enterprise',
+    enterprise: 'Custom'
+  };
+
+  return {
+    id: stripePlan.id,
+    name: stripePlan.name,
+    price: stripePlan.price,
+    interval: stripePlan.interval,
+    features: stripePlan.features,
+    limits: {
+      compute: stripePlan.allowances.developmentMinutes === -1 ? -1 : stripePlan.allowances.developmentMinutes / 60,
+      storage: stripePlan.allowances.storageGb,
+      bandwidth: stripePlan.allowances.bandwidthGb,
+      privateRepls: stripePlan.allowances.privateApps,
+      collaborators: stripePlan.allowances.collaborators
+    },
+    badge: tierBadges[stripePlan.tier],
+    popular: stripePlan.tier === 'core',
+    tier: stripePlan.tier,
+    stripePriceId: stripePlan.id
+  };
+};
+
+const FALLBACK_PLANS: Plan[] = [
   {
     id: 'free',
-    name: 'Free',
+    name: 'Starter',
     price: 0,
     interval: 'month',
-    features: [
-      'Unlimited public Repls',
-      '500 MB storage',
-      '10 GB bandwidth/month',
-      'Basic compute power',
-      'Community support'
-    ],
-    limits: {
-      compute: 10,
-      storage: 0.5,
-      bandwidth: 10,
-      privateRepls: 0,
-      collaborators: 0
-    }
+    features: ['Replit Agent trial included', '10 development apps', 'Public apps only', 'Limited build time'],
+    limits: { compute: 20, storage: 1, bandwidth: 1, privateRepls: 0, collaborators: 1 }
   },
   {
-    id: 'hacker',
-    name: 'Hacker',
-    price: 7,
+    id: 'core',
+    name: 'Core',
+    price: 25,
     interval: 'month',
-    features: [
-      'Everything in Free',
-      'Unlimited private Repls',
-      '5 GB storage',
-      '50 GB bandwidth/month',
-      '2x compute power',
-      'Email support',
-      'Custom domains'
-    ],
-    limits: {
-      compute: 20,
-      storage: 5,
-      bandwidth: 50,
-      privateRepls: -1,
-      collaborators: 5
-    },
+    features: ['Full Replit Agent access', '$25 of monthly credits', 'Private and public apps', 'Access to latest models'],
+    limits: { compute: -1, storage: 50, bandwidth: 100, privateRepls: -1, collaborators: 3 },
     badge: 'Most Popular',
     popular: true
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: 20,
-    interval: 'month',
-    features: [
-      'Everything in Hacker',
-      '20 GB storage',
-      '100 GB bandwidth/month',
-      '4x compute power',
-      'Priority support',
-      'Advanced analytics',
-      'Team collaboration'
-    ],
-    limits: {
-      compute: 40,
-      storage: 20,
-      bandwidth: 100,
-      privateRepls: -1,
-      collaborators: 10
-    }
   },
   {
     id: 'teams',
     name: 'Teams',
     price: 40,
     interval: 'month',
-    features: [
-      'Everything in Pro',
-      '100 GB storage',
-      '500 GB bandwidth/month',
-      '8x compute power',
-      'Dedicated support',
-      'SSO & SAML',
-      'Admin dashboard',
-      'Unlimited collaborators'
-    ],
-    limits: {
-      compute: 80,
-      storage: 100,
-      bandwidth: 500,
-      privateRepls: -1,
-      collaborators: -1
-    },
+    features: ['Everything in Core', 'Team collaboration', 'Priority support', 'SSO & SAML'],
+    limits: { compute: -1, storage: 100, bandwidth: 500, privateRepls: -1, collaborators: -1 },
     badge: 'Enterprise'
   }
 ];
@@ -152,17 +146,63 @@ const PLANS: Plan[] = [
 export function BillingSystem({ userId, className }: BillingSystemProps) {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [usage, setUsage] = useState<Usage | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<Plan['id']>('hacker');
+  const [allStripePlans, setAllStripePlans] = useState<StripePlan[]>([]);
+  const [plansLoading, setPlansLoading] = useState(true);
+  const [selectedTier, setSelectedTier] = useState<string>('core');
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
   const { toast } = useToast();
 
+  const getPlansForDisplay = (): Plan[] => {
+    if (allStripePlans.length === 0) return FALLBACK_PLANS;
+    
+    const tierOrder = ['free', 'core', 'teams', 'enterprise'];
+    const displayPlans: Plan[] = [];
+    
+    for (const tier of tierOrder) {
+      const planForTier = allStripePlans.find(p => 
+        p.tier === tier && (p.tier === 'free' || p.interval === billingInterval)
+      );
+      if (planForTier) {
+        displayPlans.push(convertStripePlanToLegacy(planForTier));
+      }
+    }
+    
+    return displayPlans.length > 0 ? displayPlans : FALLBACK_PLANS;
+  };
+
+  const getSelectedPlanId = (): string => {
+    const plansForInterval = getPlansForDisplay();
+    const selectedPlan = plansForInterval.find(p => p.tier === selectedTier);
+    return selectedPlan?.id || plansForInterval[0]?.id || 'core';
+  };
+
   useEffect(() => {
+    loadAllPlans();
     loadSubscription();
     loadUsage();
   }, [userId]);
+
+  const loadAllPlans = async () => {
+    setPlansLoading(true);
+    try {
+      const response = await fetch('/api/payments/plans');
+      if (response.ok) {
+        const stripePlans: StripePlan[] = await response.json();
+        setAllStripePlans(stripePlans);
+      }
+    } catch (error) {
+      console.error('Failed to load plans from API:', error);
+      setAllStripePlans([]);
+    } finally {
+      setPlansLoading(false);
+    }
+  };
+
+  const plans = getPlansForDisplay();
+  const selectedPlan = getSelectedPlanId();
 
   const loadSubscription = async () => {
     try {
@@ -208,16 +248,17 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
     }
   };
 
-  const handleUpgrade = async (planId: Plan['id']) => {
-    setSelectedPlan(planId);
+  const handleUpgrade = async (tier: string) => {
+    setSelectedTier(tier);
     setShowUpgradeDialog(true);
   };
 
   const handleSubscribe = async () => {
     setIsLoading(true);
+    const stripePriceId = getSelectedPlanId();
     try {
       const response = await apiRequest('POST', '/api/billing/subscribe', {
-        planId: selectedPlan,
+        planId: stripePriceId,
         interval: billingInterval
       });
 
@@ -269,9 +310,6 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
   };
 
   const getPlanPrice = (plan: Plan) => {
-    if (billingInterval === 'year') {
-      return Math.floor(plan.price * 10); // 20% discount for annual
-    }
     return plan.price;
   };
 
@@ -408,7 +446,12 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
 
               {/* Plans Grid */}
               <div className="grid gap-4 md:grid-cols-2">
-                {PLANS.map((plan) => (
+                {plansLoading ? (
+                  <div className="col-span-2 flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                    <span>Loading plans...</span>
+                  </div>
+                ) : plans.map((plan) => (
                   <Card 
                     key={plan.id}
                     className={`relative ${plan.popular ? 'border-primary' : ''} ${
@@ -450,11 +493,12 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
                       
                       <Button
                         className="w-full"
-                        variant={subscription?.plan === plan.id ? 'outline' : 'default'}
-                        disabled={subscription?.plan === plan.id || plan.price === 0}
-                        onClick={() => handleUpgrade(plan.id)}
+                        variant={subscription?.plan === plan.tier ? 'outline' : 'default'}
+                        disabled={subscription?.plan === plan.tier || plan.price === 0}
+                        onClick={() => handleUpgrade(plan.tier || 'core')}
+                        data-testid={`plan-select-${plan.tier}`}
                       >
-                        {subscription?.plan === plan.id 
+                        {subscription?.plan === plan.tier 
                           ? 'Current Plan' 
                           : plan.price === 0 
                           ? 'Free Forever' 
@@ -467,7 +511,7 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
               </div>
             </TabsContent>
 
-            <TabsContent value="usage" className="space-y-4">
+            <TabsContent value="usage" className="space-y-4" data-testid="usage-tab">
               <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription>
@@ -540,13 +584,14 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
           
           <ScrollArea className="max-h-[500px] pr-4">
             <div className="space-y-4">
-              {PLANS.filter(p => p.id !== 'free').map((plan) => (
+              {plans.filter(p => p.price !== 0).map((plan) => (
                 <Card 
                   key={plan.id}
                   className={`cursor-pointer transition-colors ${
-                    selectedPlan === plan.id ? 'border-primary' : ''
+                    selectedTier === plan.tier ? 'border-primary' : ''
                   }`}
-                  onClick={() => setSelectedPlan(plan.id)}
+                  onClick={() => setSelectedTier(plan.tier || 'core')}
+                  data-testid={`upgrade-plan-${plan.tier}`}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
