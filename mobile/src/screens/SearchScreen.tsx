@@ -119,7 +119,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, token }) => {
           value={query}
           onChangeText={setQuery}
           placeholder="Search projects, files, users..."
-          placeholderTextColor={mobileColors.text.tertiary}
+          placeholderTextColor={mobileColors.textMuted}
           autoFocus
           autoCapitalize="none"
           autoCorrect={false}
@@ -133,7 +133,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, token }) => {
 
       {loading && (
         <View style={styles.loader}>
-          <ActivityIndicator size="small" color={mobileColors.primary.default} />
+          <ActivityIndicator size="small" color={mobileColors.primary} />
         </View>
       )}
 
@@ -178,18 +178,18 @@ const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, token }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: mobileColors.background.primary
+    backgroundColor: mobileColors.background
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderRadius: mobileBorderRadius.lg,
     margin: mobileSpacing.md,
     paddingHorizontal: mobileSpacing.md,
     paddingVertical: mobileSpacing.sm,
     borderWidth: 1,
-    borderColor: mobileColors.border.default
+    borderColor: mobileColors.border
   },
   searchIcon: {
     fontSize: 20,
@@ -198,12 +198,12 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: mobileTypography.fontSize.base,
-    color: mobileColors.text.primary,
+    color: mobileColors.text,
     paddingVertical: mobileSpacing.xs
   },
   clearButton: {
     fontSize: 20,
-    color: mobileColors.text.tertiary,
+    color: mobileColors.textMuted,
     paddingHorizontal: mobileSpacing.sm
   },
   loader: {
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: mobileTypography.fontSize.sm,
     fontWeight: '700',
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: mobileSpacing.md
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: mobileSpacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: mobileColors.border.subtle
+    borderBottomColor: mobileColors.border
   },
   recentIcon: {
     fontSize: 18,
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   },
   recentText: {
     fontSize: mobileTypography.fontSize.base,
-    color: mobileColors.text.primary
+    color: mobileColors.text
   },
   results: {
     padding: mobileSpacing.md
@@ -242,12 +242,12 @@ const styles = StyleSheet.create({
   resultItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderRadius: mobileBorderRadius.md,
     padding: mobileSpacing.md,
     marginBottom: mobileSpacing.sm,
     borderWidth: 1,
-    borderColor: mobileColors.border.default
+    borderColor: mobileColors.border
   },
   resultIcon: {
     fontSize: 24,
@@ -259,16 +259,16 @@ const styles = StyleSheet.create({
   resultTitle: {
     fontSize: mobileTypography.fontSize.base,
     fontWeight: '600',
-    color: mobileColors.text.primary,
+    color: mobileColors.text,
     marginBottom: 2
   },
   resultSubtitle: {
     fontSize: mobileTypography.fontSize.sm,
-    color: mobileColors.text.secondary
+    color: mobileColors.textSecondary
   },
   resultArrow: {
     fontSize: 24,
-    color: mobileColors.text.tertiary,
+    color: mobileColors.textMuted,
     fontWeight: '300'
   },
   emptyState: {
@@ -284,12 +284,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: mobileTypography.fontSize.lg,
     fontWeight: '600',
-    color: mobileColors.text.primary,
+    color: mobileColors.text,
     marginBottom: mobileSpacing.xs
   },
   emptySubtitle: {
     fontSize: mobileTypography.fontSize.base,
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     textAlign: 'center'
   }
 });
