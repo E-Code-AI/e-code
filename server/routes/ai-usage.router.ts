@@ -5,12 +5,151 @@
 
 import { Router } from 'express';
 import { db } from '../db';
-import { aiUsageMetering, users, subscriptions } from '@shared/schema';
+import { aiUsageMetering, users } from '@shared/schema';
 import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('ai-usage-router');
 const router = Router();
+
+/**
+ * GET /api/usage/current
+ * Get current usage summary for authenticated user (Replit Agent 3 style)
+ */
+router.get('/current', async (req, res) => {
+  try {
+    // Return default usage for non-authenticated users
+    if (!req.user) {
+      return res.json({
+        credits: {
+          remaining: 1000,
+          used: 0,
+          total: 1000,
+          percentUsed: 0,
+        },
+        currentPeriod: {
+          startDate: new Date().toISOString(),
+          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          daysRemaining: 30,
+        },
+        breakdown: {
+          agentMessages: 0,
+          thinkingTokens: 0,
+          highPowerUsage: 0,
+          webSearches: 0,
+        },
+        tier: 'free' as const,
+      });
+    }
+
+    const userId = req.user.id.toString();
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    const daysRemaining = Math.ceil((endOfMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Get usage for current month
+    const usage = await db
+      .select()
+      .from(aiUsageMetering)
+      .where(
+        and(
+          eq(aiUsageMetering.userId, userId),
+          gte(aiUsageMetering.createdAt, startOfMonth),
+          lte(aiUsageMetering.createdAt, endOfMonth)
+        )
+      );
+
+    // Get user subscription tier from users table
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, parseInt(userId)))
+      .limit(1);
+
+    // Calculate totals
+    let totalTokens = 0;
+    let agentMessages = 0;
+    let thinkingTokens = 0;
+    let highPowerUsage = 0;
+    let webSearches = 0;
+
+    usage.forEach((record) => {
+      totalTokens += record.tokensTotal;
+      agentMessages += 1;
+      
+      // Track thinking tokens and high power usage based on model
+      if (record.model.includes('thinking') || record.model.includes('opus')) {
+        thinkingTokens += record.tokensTotal;
+      }
+      if (record.model.includes('opus') || record.model.includes('gpt-5') || record.model.includes('gemini-2.5-pro')) {
+        highPowerUsage += 1;
+      }
+    });
+
+    // Determine tier and credits based on user subscription
+    let tier: 'free' | 'pro' | 'enterprise' = 'free';
+    let totalCredits = 1000; // Free tier default
+
+    if (user?.subscriptionTier) {
+      if (user.subscriptionTier === 'enterprise' || user.subscriptionTier === 'teams') {
+        tier = 'enterprise';
+        totalCredits = 100000;
+      } else if (user.subscriptionTier === 'core') {
+        tier = 'pro';
+        totalCredits = 10000;
+      }
+    }
+
+    const usedCredits = Math.floor(totalTokens / 100); // 100 tokens = 1 credit
+    const remainingCredits = Math.max(0, totalCredits - usedCredits);
+    const percentUsed = Math.min(100, Math.floor((usedCredits / totalCredits) * 100));
+
+    res.json({
+      credits: {
+        remaining: remainingCredits,
+        used: usedCredits,
+        total: totalCredits,
+        percentUsed,
+      },
+      currentPeriod: {
+        startDate: startOfMonth.toISOString(),
+        endDate: endOfMonth.toISOString(),
+        daysRemaining,
+      },
+      breakdown: {
+        agentMessages,
+        thinkingTokens,
+        highPowerUsage,
+        webSearches,
+      },
+      tier,
+    });
+  } catch (error) {
+    logger.error('Failed to fetch current usage', { error });
+    // Return safe defaults on error
+    res.json({
+      credits: {
+        remaining: 1000,
+        used: 0,
+        total: 1000,
+        percentUsed: 0,
+      },
+      currentPeriod: {
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        daysRemaining: 30,
+      },
+      breakdown: {
+        agentMessages: 0,
+        thinkingTokens: 0,
+        highPowerUsage: 0,
+        webSearches: 0,
+      },
+      tier: 'free' as const,
+    });
+  }
+});
 
 /**
  * GET /api/ai/usage/monthly
@@ -271,7 +410,10 @@ router.get('/admin/stats', async (req, res) => {
       stats.byTier[record.userTier].cost += parseFloat(record.costUsd);
 
       // By status
-      stats.byStatus[record.status] += 1;
+      const status = record.status as keyof typeof stats.byStatus;
+      if (status in stats.byStatus) {
+        stats.byStatus[status] += 1;
+      }
     });
 
     res.json({
