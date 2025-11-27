@@ -12,7 +12,7 @@ import * as nixManager from './nix-manager';
 import { createLogger } from '../utils/logger';
 import { Project, File } from '@shared/schema';
 import { CodeExecutor } from '../execution/executor';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
@@ -406,32 +406,86 @@ export async function executeCommand(projectId: string, command: string): Promis
     if (runtime.directExecutionMode) {
       logger.info(`Using direct execution for project ${projectId}`);
       
-      // Use CodeExecutor for safe, sandboxed execution
-      const language = runtime.language || 'javascript';
+      // Parse command into base command and args
+      const parts = command.trim().split(/\s+/);
+      const baseCommand = parts[0];
+      const args = parts.slice(1);
       
-      // Validate command against whitelist of safe commands
-      const safeCommands = ['node', 'python3', 'python', 'go', 'npm', 'npx', 'ls', 'cat', 'pwd', 'echo'];
-      const baseCommand = command.trim().split(/\s+/)[0];
+      // Validate command against strict whitelist of safe terminal commands
+      const SAFE_COMMANDS: Record<string, string> = {
+        'node': 'node',
+        'python3': 'python3',
+        'python': 'python3',
+        'go': 'go',
+        'npm': 'npm',
+        'npx': 'npx',
+        'ls': 'ls',
+        'cat': 'cat',
+        'pwd': 'pwd',
+        'echo': 'echo',
+        'mkdir': 'mkdir',
+        'touch': 'touch'
+      };
       
-      if (!safeCommands.includes(baseCommand)) {
+      const safeCmd = SAFE_COMMANDS[baseCommand];
+      if (!safeCmd) {
         logger.warn(`Blocked unsafe command: ${baseCommand}`);
         return {
           success: false,
-          output: `Command '${baseCommand}' is not allowed. Use the code executor for running code.`
+          output: `Command '${baseCommand}' is not allowed. Allowed: ${Object.keys(SAFE_COMMANDS).join(', ')}`
         };
       }
       
       try {
-        // Use CodeExecutor for code execution
-        const result = await codeExecutor.execute(language, command, {
-          timeout: 30000,
-          maxMemory: 128 * 1024 * 1024
+        // Use spawn directly for terminal commands (not code execution)
+        const result = await new Promise<{ success: boolean; output: string }>((resolve) => {
+          let stdout = '';
+          let stderr = '';
+          
+          const proc = spawn(safeCmd, args, {
+            cwd: runtime.projectDir || process.cwd(),
+            env: {
+              ...process.env,
+              SANDBOX_EXECUTION: 'true'
+            },
+            shell: false // CRITICAL: No shell interpretation
+          });
+          
+          proc.stdout.on('data', (data) => {
+            stdout += data.toString();
+          });
+          
+          proc.stderr.on('data', (data) => {
+            stderr += data.toString();
+          });
+          
+          // Timeout after 30 seconds
+          const timeout = setTimeout(() => {
+            proc.kill('SIGTERM');
+            resolve({
+              success: false,
+              output: 'Command timed out'
+            });
+          }, 30000);
+          
+          proc.on('close', (code) => {
+            clearTimeout(timeout);
+            resolve({
+              success: code === 0,
+              output: stdout + (stderr ? '\n' + stderr : '')
+            });
+          });
+          
+          proc.on('error', (err) => {
+            clearTimeout(timeout);
+            resolve({
+              success: false,
+              output: err.message
+            });
+          });
         });
         
-        return {
-          success: result.exitCode === 0,
-          output: result.output + (result.error ? '\n' + result.error : '')
-        };
+        return result;
       } catch (execError: any) {
         return {
           success: false,
