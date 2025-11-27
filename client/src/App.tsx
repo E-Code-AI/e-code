@@ -293,12 +293,18 @@ function AppContent() {
       addImagePreloadLinks(criticalImages);
     }
     
-    // Prefetch common API endpoints (skip auth endpoint to avoid 401 console noise for anonymous users)
-    const commonEndpoints = [
-      '/api/projects',
-      '/api/monitoring/health/summary', // Use summary endpoint (always 200)
-    ];
-    prefetchResources(commonEndpoints).catch(console.error);
+    // Prefetch common API endpoints only on authenticated pages
+    // Skip on public pages (login, register, landing) to avoid 401 console noise
+    const publicPaths = ['/', '/login', '/register', '/auth', '/pricing', '/features', '/about', '/docs', '/blog', '/terms', '/privacy', '/status', '/contact-sales', '/careers'];
+    const isPublicPage = publicPaths.some(path => window.location.pathname === path || window.location.pathname.startsWith('/blog/'));
+    
+    if (!isPublicPage) {
+      const commonEndpoints = [
+        '/api/projects',
+        '/api/monitoring/health/summary',
+      ];
+      prefetchResources(commonEndpoints).catch(() => {});
+    }
     
     // Mark performance milestones
     performanceMonitor.mark('app-init');
