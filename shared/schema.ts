@@ -559,7 +559,7 @@ export const communityPosts = pgTable("community_posts", {
   id: serial("id").primaryKey(),
   title: varchar("title").notNull(),
   content: text("content").notNull(),
-  authorId: varchar("author_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  authorId: integer("author_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   categoryId: varchar("category_id").notNull().references(() => communityCategories.id),
   tags: jsonb("tags").$type<string[]>().default([]),
   projectUrl: text("project_url"),
@@ -573,7 +573,7 @@ export const communityPosts = pgTable("community_posts", {
 
 export const communityPostLikes = pgTable("community_post_likes", {
   postId: integer("post_id").notNull().references(() => communityPosts.id, { onDelete: 'cascade' }),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.postId, table.userId] }),
@@ -581,7 +581,7 @@ export const communityPostLikes = pgTable("community_post_likes", {
 
 export const communityPostBookmarks = pgTable("community_post_bookmarks", {
   postId: integer("post_id").notNull().references(() => communityPosts.id, { onDelete: 'cascade' }),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.postId, table.userId] }),
@@ -590,7 +590,7 @@ export const communityPostBookmarks = pgTable("community_post_bookmarks", {
 export const communityComments = pgTable("community_comments", {
   id: serial("id").primaryKey(),
   postId: integer("post_id").notNull().references(() => communityPosts.id, { onDelete: 'cascade' }),
-  authorId: varchar("author_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  authorId: integer("author_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   content: text("content").notNull(),
   parentCommentId: integer("parent_comment_id"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -598,8 +598,8 @@ export const communityComments = pgTable("community_comments", {
 });
 
 export const communityFollows = pgTable("community_follows", {
-  followerId: varchar("follower_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  followeeId: varchar("followee_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  followerId: integer("follower_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  followeeId: integer("followee_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.followerId, table.followeeId] }),
@@ -754,7 +754,7 @@ export const teams = pgTable("teams", {
 export const teamMembers = pgTable("team_members", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   teamId: integer("team_id").notNull().references(() => teams.id, { onDelete: 'cascade' }),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   role: roleEnum("role").notNull().default('member'),
   joinedAt: timestamp("joined_at").notNull().defaultNow(),
 });
@@ -3310,7 +3310,7 @@ export type InsertSystemSetting = z.infer<typeof insertSystemSettingSchema>;
 // Rate Limit Violations Tracking (Fortune 500 Monitoring)
 export const rateLimitViolations = pgTable("rate_limit_violations", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id, { onDelete: 'set null' }),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'set null' }),
   ip: varchar("ip").notNull(),
   endpoint: text("endpoint").notNull(),
   method: varchar("method", { length: 10 }).notNull(),
@@ -3335,7 +3335,7 @@ export type InsertRateLimitViolation = z.infer<typeof insertRateLimitViolationSc
 // Tracks every AI request for Stripe metered billing
 export const aiUsageMetering = pgTable("ai_usage_metering", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
   
   // Request details
   endpoint: varchar("endpoint").notNull(), // '/api/agent/chat/stream', '/api/ai/completions'
