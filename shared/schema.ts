@@ -3388,7 +3388,7 @@ export type InsertAiUsageMetering = z.infer<typeof insertAiUsageMeteringSchema>;
 export const aiStripeUsageQueue = pgTable("ai_stripe_usage_queue", {
   id: serial("id").primaryKey(),
   meteringId: integer("metering_id").notNull(), // Reference to ai_usage_metering.id
-  userId: varchar("user_id").notNull(),
+  userId: integer("user_id").notNull().references(() => users.id),
   subscriptionId: varchar("subscription_id"),
   costUsd: decimal("cost_usd", { precision: 10, scale: 6 }).notNull(),
   attempts: integer("attempts").default(0).notNull(),
