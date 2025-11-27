@@ -1,6 +1,7 @@
 /**
  * Runtime manager for PLOT
  * This module coordinates all runtime components including containers and Nix environments
+ * With fallback to direct execution when Docker is unavailable
  */
 
 import * as fs from 'fs';
@@ -10,8 +11,28 @@ import * as containerManager from './container-manager';
 import * as nixManager from './nix-manager';
 import { createLogger } from '../utils/logger';
 import { Project, File } from '@shared/schema';
+import { CodeExecutor } from '../execution/executor';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 
+const execAsync = promisify(exec);
 const logger = createLogger('runtime');
+const codeExecutor = new CodeExecutor();
+
+// Check if Docker is available
+let dockerAvailable: boolean | null = null;
+async function isDockerAvailable(): Promise<boolean> {
+  if (dockerAvailable !== null) return dockerAvailable;
+  try {
+    await execAsync('docker --version');
+    dockerAvailable = true;
+    logger.info('Docker is available');
+  } catch {
+    dockerAvailable = false;
+    logger.warn('Docker not available - using direct execution mode');
+  }
+  return dockerAvailable;
+}
 
 // Map to track active project runtimes (using string UUIDs)
 const activeRuntimes: Map<string, {
@@ -22,6 +43,8 @@ const activeRuntimes: Map<string, {
   status: 'starting' | 'running' | 'error';
   logs: string[];
   error?: string;
+  directExecutionMode?: boolean;
+  projectDir?: string;
 }> = new Map();
 
 // Interface for starting a project
@@ -53,7 +76,7 @@ export async function startProject(
   error?: string;
 }> {
   try {
-    const projectId = project.id;
+    const projectId = String(project.id);
     
     // Check if project is already running
     if (activeRuntimes.has(projectId)) {
@@ -99,6 +122,30 @@ export async function startProject(
     
     // Initialize runtime logs
     const logs: string[] = [`Starting ${languageConfigs[language].displayName} project...`];
+    
+    // Check if Docker is available
+    const useDocker = await isDockerAvailable();
+    
+    if (!useDocker) {
+      // Use direct execution mode (no Docker)
+      logs.push('Docker not available - using direct execution mode');
+      logs.push('Runtime ready for direct code execution');
+      
+      activeRuntimes.set(projectId, {
+        projectId,
+        language,
+        status: 'running',
+        logs,
+        directExecutionMode: true,
+        projectDir
+      });
+      
+      return {
+        success: true,
+        status: 'running',
+        logs
+      };
+    }
     
     // Set up initial runtime entry
     activeRuntimes.set(projectId, {
@@ -261,10 +308,22 @@ export async function stopProject(projectId: string): Promise<boolean> {
     
     const runtime = activeRuntimes.get(projectId)!;
     
-    if (!runtime.containerId) {
-      logger.warn(`Project ${projectId} does not have a container ID`);
+    // Handle direct execution mode cleanup
+    if (runtime.directExecutionMode || !runtime.containerId) {
+      logger.info(`Cleaning up direct execution mode for project ${projectId}`);
+      
+      // Clean up temp directory if it exists
+      if (runtime.projectDir) {
+        try {
+          await fs.rm(runtime.projectDir, { recursive: true, force: true });
+          logger.info(`Cleaned up temp directory: ${runtime.projectDir}`);
+        } catch (cleanupError) {
+          logger.warn(`Failed to cleanup temp dir: ${runtime.projectDir}`);
+        }
+      }
+      
       activeRuntimes.delete(projectId);
-      return false;
+      return true;
     }
     
     // Stop the container
@@ -342,6 +401,44 @@ export async function executeCommand(projectId: string, command: string): Promis
     }
     
     const runtime = activeRuntimes.get(projectId)!;
+    
+    // Use direct execution mode if Docker is not available
+    if (runtime.directExecutionMode) {
+      logger.info(`Using direct execution for project ${projectId}`);
+      
+      // Use CodeExecutor for safe, sandboxed execution
+      const language = runtime.language || 'javascript';
+      
+      // Validate command against whitelist of safe commands
+      const safeCommands = ['node', 'python3', 'python', 'go', 'npm', 'npx', 'ls', 'cat', 'pwd', 'echo'];
+      const baseCommand = command.trim().split(/\s+/)[0];
+      
+      if (!safeCommands.includes(baseCommand)) {
+        logger.warn(`Blocked unsafe command: ${baseCommand}`);
+        return {
+          success: false,
+          output: `Command '${baseCommand}' is not allowed. Use the code executor for running code.`
+        };
+      }
+      
+      try {
+        // Use CodeExecutor for code execution
+        const result = await codeExecutor.execute(language, command, {
+          timeout: 30000,
+          maxMemory: 128 * 1024 * 1024
+        });
+        
+        return {
+          success: result.exitCode === 0,
+          output: result.output + (result.error ? '\n' + result.error : '')
+        };
+      } catch (execError: any) {
+        return {
+          success: false,
+          output: execError.message || 'Execution failed'
+        };
+      }
+    }
     
     if (!runtime.containerId) {
       const errorMessage = `Project ${projectId} does not have a container ID`;

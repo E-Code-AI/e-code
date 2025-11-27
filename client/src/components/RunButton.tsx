@@ -141,9 +141,9 @@ export function RunButton({
 
   const handleClick = () => {
     if (isRunning) {
-      stopProjectMutation.mutate();
+      stopProjectMutation.mutate(undefined);
     } else {
-      runProjectMutation.mutate();
+      runProjectMutation.mutate(undefined);
     }
   };
 

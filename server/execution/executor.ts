@@ -1,10 +1,7 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { spawn, execSync } from 'child_process';
+import { writeFileSync, mkdirSync, existsSync, rmSync } from 'fs';
 import path from 'path';
 import os from 'os';
-
-const execAsync = promisify(exec);
 
 export interface ExecutionOptions {
   timeout?: number;
@@ -21,6 +18,30 @@ export interface ExecutionResult {
   exitCode: number;
 }
 
+// Per-language execution adapter - returns command and args without shell parsing
+interface LanguageAdapter {
+  cmd: string;
+  args: string[];
+  entryFile: string;
+  compileCmd?: string;
+  compileArgs?: string[];
+}
+
+// Allowed languages for validation
+const ALLOWED_LANGUAGES = new Set([
+  'javascript', 'js',
+  'python', 'python3',
+  'go',
+  'cpp', 'c++',
+  'c',
+  'java',
+  'rust',
+  'php'
+]);
+
+// Maximum code size (1MB)
+const MAX_CODE_SIZE = 1024 * 1024;
+
 export class CodeExecutor {
   private tempDir: string;
 
@@ -31,18 +52,58 @@ export class CodeExecutor {
     }
   }
 
+  /**
+   * Validate execution request before processing
+   */
+  private validateRequest(language: string, code: string): { valid: boolean; error?: string } {
+    // Validate language
+    if (!language || typeof language !== 'string') {
+      return { valid: false, error: 'Language is required' };
+    }
+    
+    const normalizedLang = language.toLowerCase().trim();
+    if (!ALLOWED_LANGUAGES.has(normalizedLang)) {
+      return { valid: false, error: `Unsupported language: ${language}. Supported: javascript, python, go, cpp, c, java, rust, php` };
+    }
+
+    // Validate code
+    if (!code || typeof code !== 'string') {
+      return { valid: false, error: 'Code is required' };
+    }
+
+    // Check code size
+    if (code.length > MAX_CODE_SIZE) {
+      return { valid: false, error: `Code size exceeds maximum (${MAX_CODE_SIZE} bytes)` };
+    }
+
+    return { valid: true };
+  }
+
   async execute(language: string, code: string, options: ExecutionOptions = {}): Promise<ExecutionResult> {
     const startTime = Date.now();
     const timeout = options.timeout || 30000; // 30 seconds default
-    const maxMemory = options.maxMemory || 128 * 1024 * 1024; // 128MB default
+    
+    // Validate request first
+    const validation = this.validateRequest(language, code);
+    if (!validation.valid) {
+      return {
+        output: '',
+        error: validation.error,
+        executionTime: 0,
+        memoryUsed: 0,
+        exitCode: 1
+      };
+    }
+
+    let execDir: string | null = null;
 
     try {
       // Create execution directory
       const execId = `exec-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const execDir = path.join(this.tempDir, execId);
+      execDir = path.join(this.tempDir, execId);
       mkdirSync(execDir, { recursive: true });
 
-      // Write files
+      // Write additional files if provided
       if (options.files) {
         for (const [fileName, content] of Object.entries(options.files)) {
           const filePath = path.join(execDir, fileName);
@@ -54,18 +115,40 @@ export class CodeExecutor {
         }
       }
 
-      // Get execution command and main file
-      const { command, mainFile } = this.getExecutionCommand(language, code, execDir);
+      // Get language adapter (cmd, args, entryFile)
+      const adapter = this.getLanguageAdapter(language);
       
       // Write main file
-      writeFileSync(path.join(execDir, mainFile), code);
+      writeFileSync(path.join(execDir, adapter.entryFile), code);
 
-      // Execute code
-      const result = await this.runCommand(command, execDir, {
-        timeout,
-        maxMemory,
-        input: options.input
-      });
+      // Compile if needed (for compiled languages)
+      if (adapter.compileCmd && adapter.compileArgs) {
+        const compileResult = await this.runProcess(
+          adapter.compileCmd,
+          adapter.compileArgs,
+          execDir,
+          { timeout: timeout / 2 }
+        );
+        
+        if (compileResult.exitCode !== 0) {
+          const executionTime = Date.now() - startTime;
+          return {
+            output: compileResult.stdout,
+            error: compileResult.stderr || 'Compilation failed',
+            executionTime,
+            memoryUsed: 0,
+            exitCode: compileResult.exitCode
+          };
+        }
+      }
+
+      // Execute code using spawn (no shell interpretation)
+      const result = await this.runProcess(
+        adapter.cmd,
+        adapter.args,
+        execDir,
+        { timeout, input: options.input }
+      );
 
       const executionTime = Date.now() - startTime;
 
@@ -73,8 +156,8 @@ export class CodeExecutor {
         output: result.stdout,
         error: result.stderr || undefined,
         executionTime,
-        memoryUsed: result.memoryUsed || 0,
-        exitCode: result.exitCode || 0
+        memoryUsed: 0,
+        exitCode: result.exitCode
       };
 
     } catch (error: any) {
@@ -87,60 +170,91 @@ export class CodeExecutor {
         memoryUsed: 0,
         exitCode: 1
       };
+    } finally {
+      // Cleanup execution directory
+      if (execDir && existsSync(execDir)) {
+        try {
+          rmSync(execDir, { recursive: true, force: true });
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
     }
   }
 
-  private getExecutionCommand(language: string, code: string, execDir: string): { command: string; mainFile: string } {
-    switch (language.toLowerCase()) {
+  /**
+   * Get language adapter with command and args array
+   * Using args array prevents shell metacharacter injection
+   */
+  private getLanguageAdapter(language: string): LanguageAdapter {
+    const normalizedLang = language.toLowerCase().trim();
+    
+    switch (normalizedLang) {
       case 'javascript':
       case 'js':
         return {
-          command: 'node main.js',
-          mainFile: 'main.js'
+          cmd: 'node',
+          args: ['main.js'],
+          entryFile: 'main.js'
         };
       
       case 'python':
       case 'python3':
         return {
-          command: 'python3 main.py',
-          mainFile: 'main.py'
+          cmd: 'python3',
+          args: ['main.py'],
+          entryFile: 'main.py'
         };
       
       case 'java':
         return {
-          command: 'javac Main.java && java Main',
-          mainFile: 'Main.java'
+          cmd: 'java',
+          args: ['Main'],
+          entryFile: 'Main.java',
+          compileCmd: 'javac',
+          compileArgs: ['Main.java']
         };
       
       case 'cpp':
       case 'c++':
         return {
-          command: 'g++ -o main main.cpp && ./main',
-          mainFile: 'main.cpp'
+          cmd: './main',
+          args: [],
+          entryFile: 'main.cpp',
+          compileCmd: 'g++',
+          compileArgs: ['-o', 'main', 'main.cpp']
         };
       
       case 'c':
         return {
-          command: 'gcc -o main main.c && ./main',
-          mainFile: 'main.c'
+          cmd: './main',
+          args: [],
+          entryFile: 'main.c',
+          compileCmd: 'gcc',
+          compileArgs: ['-o', 'main', 'main.c']
         };
       
       case 'go':
         return {
-          command: 'go run main.go',
-          mainFile: 'main.go'
+          cmd: 'go',
+          args: ['run', 'main.go'],
+          entryFile: 'main.go'
         };
       
       case 'rust':
         return {
-          command: 'rustc main.rs && ./main',
-          mainFile: 'main.rs'
+          cmd: './main',
+          args: [],
+          entryFile: 'main.rs',
+          compileCmd: 'rustc',
+          compileArgs: ['main.rs', '-o', 'main']
         };
       
       case 'php':
         return {
-          command: 'php main.php',
-          mainFile: 'main.php'
+          cmd: 'php',
+          args: ['main.php'],
+          entryFile: 'main.php'
         };
       
       default:
@@ -148,48 +262,94 @@ export class CodeExecutor {
     }
   }
 
-  private async runCommand(
-    command: string, 
-    cwd: string, 
-    options: { timeout: number; maxMemory: number; input?: string }
-  ): Promise<{ stdout: string; stderr: string; exitCode: number; memoryUsed: number }> {
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), options.timeout);
+  /**
+   * Run a process using spawn (not exec) to prevent shell injection
+   */
+  private runProcess(
+    cmd: string,
+    args: string[],
+    cwd: string,
+    options: { timeout: number; input?: string }
+  ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+    return new Promise((resolve, reject) => {
+      let stdout = '';
+      let stderr = '';
+      let killed = false;
 
-    try {
-      const { stdout, stderr } = await execAsync(command, {
+      // Use spawn with shell: false to prevent shell metacharacter interpretation
+      const proc = spawn(cmd, args, {
         cwd,
-        signal: controller.signal,
-        maxBuffer: 1024 * 1024 * 10, // 10MB buffer
         env: {
           ...process.env,
-          NODE_ENV: 'sandbox'
+          SANDBOX_EXECUTION: 'true',
+          HOME: cwd, // Restrict HOME to execution directory
+          TMPDIR: cwd
+        },
+        shell: false, // CRITICAL: Do not use shell - prevents injection
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+
+      // Set timeout
+      const timeoutId = setTimeout(() => {
+        killed = true;
+        proc.kill('SIGTERM');
+        // Force kill after 5 seconds if SIGTERM doesn't work
+        setTimeout(() => proc.kill('SIGKILL'), 5000);
+      }, options.timeout);
+
+      // Collect stdout
+      proc.stdout.on('data', (data) => {
+        stdout += data.toString();
+        // Limit output size to prevent memory issues
+        if (stdout.length > 10 * 1024 * 1024) {
+          killed = true;
+          proc.kill('SIGTERM');
         }
       });
 
-      clearTimeout(timeoutId);
+      // Collect stderr
+      proc.stderr.on('data', (data) => {
+        stderr += data.toString();
+        // Limit error size
+        if (stderr.length > 10 * 1024 * 1024) {
+          killed = true;
+          proc.kill('SIGTERM');
+        }
+      });
 
-      return {
-        stdout: stdout.toString(),
-        stderr: stderr.toString(),
-        exitCode: 0,
-        memoryUsed: 0 // Would need process monitoring for accurate memory usage
-      };
+      // Handle process exit
+      proc.on('close', (code) => {
+        clearTimeout(timeoutId);
+        
+        if (killed && code === null) {
+          resolve({
+            stdout,
+            stderr: stderr || 'Execution timed out or output exceeded limit',
+            exitCode: 124 // Standard timeout exit code
+          });
+        } else {
+          resolve({
+            stdout,
+            stderr,
+            exitCode: code ?? 1
+          });
+        }
+      });
 
-    } catch (error: any) {
-      clearTimeout(timeoutId);
-      
-      if (error.signal === 'SIGTERM') {
-        throw new Error('Execution timed out');
+      // Handle spawn errors
+      proc.on('error', (err) => {
+        clearTimeout(timeoutId);
+        reject(err);
+      });
+
+      // Write input if provided
+      if (options.input) {
+        proc.stdin.write(options.input);
       }
-      
-      return {
-        stdout: error.stdout?.toString() || '',
-        stderr: error.stderr?.toString() || error.message,
-        exitCode: error.code || 1,
-        memoryUsed: 0
-      };
-    }
+      proc.stdin.end();
+    });
   }
 }
+
+// Export singleton instance for convenience
+export const codeExecutor = new CodeExecutor();
