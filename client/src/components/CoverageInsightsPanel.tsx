@@ -39,7 +39,7 @@ const SAMPLE_FILES: CoverageFile[] = [
   { path: 'server/routes.ts', lines: 81, delta: 2 },
   { path: 'server/services/runtime-manager.ts', lines: 76, delta: -6 },
   { path: 'sdk/runtime/client.ts', lines: 73, delta: 1 },
-  { path: 'client/src/components/ReplitAgentV2.tsx', lines: 70, delta: 5 },
+  { path: 'client/src/components/ai/ReplitAgentPanelV3.tsx', lines: 70, delta: 5 },
   { path: 'client/src/components/DeploymentPanel.tsx', lines: 66, delta: 0 },
   { path: 'client/src/components/ReplitWorkflows.tsx', lines: 64, delta: -3 },
   { path: 'server/ai/advanced-ai-service.ts', lines: 62, delta: 4 },

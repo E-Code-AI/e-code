@@ -644,6 +644,11 @@ function AppContent() {
               <Notifications />
             </ReplitLayout>
           )} />
+          <ProtectedRoute path="/settings/billing" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Usage />
+            </ReplitLayout>
+          )} />
           {placeholderRoutes
             .filter((route) => !route.path.startsWith("/teams"))
             .map((route) => (

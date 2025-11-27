@@ -18,8 +18,9 @@ COPY tsconfig.json ./
 COPY drizzle.config.ts ./
 
 # Install ALL dependencies (build + runtime)
-# Using npm ci for reproducible builds (requires package-lock.json)
-RUN npm ci --omit=optional && \
+# Using npm install with --ignore-scripts to skip native rebuilds
+RUN npm install --omit=optional --ignore-scripts && \
+    npm rebuild bcrypt --build-from-source && \
     npm cache clean --force && \
     rm -rf ~/.npm /tmp/*
 
@@ -50,8 +51,8 @@ WORKDIR /app
 COPY --from=builder /app/package*.json ./
 
 # Install ONLY production dependencies (this is the key size optimization)
-# Using npm ci for reproducible builds
-RUN npm ci --only=production --omit=optional --omit=dev && \
+RUN npm install --omit=optional --omit=dev --ignore-scripts && \
+    npm rebuild bcrypt --build-from-source && \
     npm cache clean --force && \
     rm -rf ~/.npm /tmp/* /root/.npm
 

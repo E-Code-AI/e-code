@@ -2,6 +2,7 @@
  * ProgressPanel - Replit-style Progress Tab for Tools Dock
  * Shows real-time agent activity feed with file navigation
  * Identical to Replit's Progress tab in the Tools dock
+ * Supports WebSocket activity stream for inline chat + Progress dock dual display
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -9,7 +10,8 @@ import { useQuery } from '@tanstack/react-query';
 import { 
   Activity, FileCode, Terminal, Search, Database,
   CheckCircle2, XCircle, Clock, ChevronRight, ChevronDown,
-  Loader2, RefreshCw, Filter, ExternalLink, Play, Pause
+  Loader2, RefreshCw, Filter, ExternalLink, Play, Pause,
+  Brain, Wrench, FileEdit, FilePlus, FileX, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,16 +24,24 @@ import {
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import type { 
+  ActivityEvent as StreamActivityEvent,
+  ThinkingStep,
+  ToolExecutionEvent,
+  FileChangeEvent 
+} from '@shared/types/agent-activity.types';
 
 interface ActivityEvent {
   id: string;
-  type: 'file_create' | 'file_update' | 'file_delete' | 'command' | 'search' | 'database' | 'test' | 'deploy';
+  type: 'file_create' | 'file_update' | 'file_delete' | 'command' | 'search' | 'database' | 'test' | 'deploy' | 'thinking' | 'tool';
   description: string;
   details?: string;
   filePath?: string;
   status: 'pending' | 'running' | 'completed' | 'failed';
   timestamp: Date;
   duration?: number;
+  thinkingSteps?: ThinkingStep[];
+  toolName?: string;
 }
 
 interface ProgressPanelProps {
@@ -39,14 +49,21 @@ interface ProgressPanelProps {
   sessionId?: string;
   onFileNavigate?: (filePath: string) => void;
   isLive?: boolean;
+  streamEvents?: StreamActivityEvent[];
+  isThinking?: boolean;
+  thinkingSteps?: ThinkingStep[];
+  toolExecutions?: ToolExecutionEvent[];
+  fileChanges?: FileChangeEvent[];
 }
 
 const getEventIcon = (type: ActivityEvent['type']) => {
   switch (type) {
     case 'file_create':
+      return FilePlus;
     case 'file_update':
+      return FileEdit;
     case 'file_delete':
-      return FileCode;
+      return FileX;
     case 'command':
       return Terminal;
     case 'search':
@@ -57,6 +74,10 @@ const getEventIcon = (type: ActivityEvent['type']) => {
       return Activity;
     case 'deploy':
       return ExternalLink;
+    case 'thinking':
+      return Brain;
+    case 'tool':
+      return Wrench;
     default:
       return Activity;
   }
@@ -166,7 +187,12 @@ export function ProgressPanel({
   projectId, 
   sessionId,
   onFileNavigate,
-  isLive = true 
+  isLive = true,
+  streamEvents,
+  isThinking: externalIsThinking,
+  thinkingSteps: externalThinkingSteps,
+  toolExecutions,
+  fileChanges
 }: ProgressPanelProps) {
   const [filter, setFilter] = useState('');
   const [isPaused, setIsPaused] = useState(false);
@@ -205,9 +231,93 @@ export function ProgressPanel({
     }
   }, [actionsData]);
 
+  // Integrate WebSocket stream events into local events
+  useEffect(() => {
+    if (!streamEvents?.length) return;
+    
+    // Transform stream events to ActivityEvents
+    const streamToLocalEvents: ActivityEvent[] = [];
+    
+    streamEvents.forEach(streamEvent => {
+      switch (streamEvent.type) {
+        case 'thinking_start':
+          streamToLocalEvents.push({
+            id: streamEvent.id,
+            type: 'thinking',
+            description: 'Agent is thinking...',
+            status: 'running',
+            timestamp: new Date(streamEvent.timestamp),
+          });
+          break;
+        case 'thinking_end':
+          // Update existing thinking event to completed
+          break;
+        case 'tool_start':
+          if ('toolName' in streamEvent.payload) {
+            streamToLocalEvents.push({
+              id: streamEvent.id,
+              type: 'tool',
+              description: `Running ${(streamEvent.payload as ToolExecutionEvent).toolName}`,
+              toolName: (streamEvent.payload as ToolExecutionEvent).toolName,
+              status: 'running',
+              timestamp: new Date(streamEvent.timestamp),
+            });
+          }
+          break;
+        case 'tool_complete':
+          // Tool completed events handled via toolExecutions prop
+          break;
+        case 'file_create':
+        case 'file_edit':
+        case 'file_delete':
+          if ('filePath' in streamEvent.payload) {
+            const fileEvent = streamEvent.payload as FileChangeEvent;
+            streamToLocalEvents.push({
+              id: streamEvent.id,
+              type: fileEvent.operation === 'create' ? 'file_create' : 
+                    fileEvent.operation === 'edit' ? 'file_update' : 'file_delete',
+              description: `${fileEvent.operation === 'create' ? 'Created' : 
+                           fileEvent.operation === 'edit' ? 'Modified' : 'Deleted'} ${fileEvent.filePath}`,
+              filePath: fileEvent.filePath,
+              status: 'completed',
+              timestamp: new Date(streamEvent.timestamp),
+            });
+          }
+          break;
+      }
+    });
+    
+    // Merge with existing events (avoiding duplicates)
+    setEvents(prev => {
+      const existingIds = new Set(prev.map(e => e.id));
+      const newEvents = streamToLocalEvents.filter(e => !existingIds.has(e.id));
+      return [...prev, ...newEvents].sort((a, b) => 
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
+    });
+  }, [streamEvents]);
+
+  // Update tool execution statuses from props
+  useEffect(() => {
+    if (!toolExecutions?.length) return;
+    
+    setEvents(prev => prev.map(event => {
+      if (event.type !== 'tool') return event;
+      const toolExec = toolExecutions.find(t => t.id === event.id);
+      if (!toolExec) return event;
+      return {
+        ...event,
+        status: toolExec.status === 'success' ? 'completed' : 
+                toolExec.status === 'error' ? 'failed' : 
+                toolExec.status === 'running' ? 'running' : 'pending',
+        duration: toolExec.duration,
+      };
+    }));
+  }, [toolExecutions]);
+
   // Demo events if no real data
   useEffect(() => {
-    if (!actionsData?.rows?.length && !isLoading) {
+    if (!actionsData?.rows?.length && !isLoading && !streamEvents?.length) {
       setEvents([
         {
           id: 'demo-1',
@@ -237,7 +347,7 @@ export function ProgressPanel({
         },
       ]);
     }
-  }, [actionsData, isLoading]);
+  }, [actionsData, isLoading, streamEvents]);
 
   // Filter events
   const filteredEvents = filter
@@ -309,6 +419,21 @@ export function ProgressPanel({
             </Button>
           </div>
         </div>
+
+        {/* Thinking indicator */}
+        {externalIsThinking && (
+          <div className="flex items-center gap-2 mb-2 p-2 bg-purple-50 dark:bg-purple-950/30 rounded-md border border-purple-200 dark:border-purple-800">
+            <Brain className="h-4 w-4 text-purple-600 dark:text-purple-400 animate-pulse" />
+            <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
+              Agent is thinking...
+            </span>
+            {externalThinkingSteps && externalThinkingSteps.length > 0 && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                Step {externalThinkingSteps.length}
+              </Badge>
+            )}
+          </div>
+        )}
 
         {/* Stats bar */}
         <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">

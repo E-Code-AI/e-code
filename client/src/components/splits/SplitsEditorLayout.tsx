@@ -6,7 +6,7 @@ import { ReplitToolDock } from '../editor/ReplitToolDock';
 import { ReplitFileSidebar } from '../editor/ReplitFileSidebar';
 import { ReplitSearchPanel } from '../editor/ReplitSearchPanel';
 import { ReplitSettingsPanel } from '../editor/ReplitSettingsPanel';
-import { ReplitAgentPanel } from '../editor/ReplitAgentPanel';
+import { ReplitAgentPanelV3 } from '../ai/ReplitAgentPanelV3';
 import { ReplitGitPanel } from '../editor/ReplitGitPanel';
 import { ReplitDebuggerPanel } from '../editor/ReplitDebuggerPanel';
 import { ReplitTestingPanel } from '../editor/ReplitTestingPanel';
@@ -142,7 +142,7 @@ export function SplitsEditorLayout({
       case 'secrets':
         return <ReplitSecretsPanel projectId={projectId} />;
       case 'agent':
-        return <ReplitAgentPanel projectId={projectId} />;
+        return <ReplitAgentPanelV3 projectId={projectId || '1'} className="h-full" />;
       case 'settings':
         return <ReplitSettingsPanel />;
       default:

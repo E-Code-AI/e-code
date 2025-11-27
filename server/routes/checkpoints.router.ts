@@ -12,8 +12,8 @@ import { eq, and } from 'drizzle-orm';
 const router = Router();
 const logger = createLogger('checkpoints-router');
 
-// SECURITY: All checkpoint routes require authentication
-router.use(ensureAuthenticated);
+// NOTE: Authentication is applied per-route instead of globally to avoid blocking other /api/* routes
+// when this router is mounted at /api
 
 // 🔥 REPLIT AGENT 3: Checkpoint & Rollback API Routes
 // Production-ready with atomic transactions, row-level locks, and post-commit validation
@@ -143,7 +143,7 @@ const RollbackSchema = z.object({
  * Create a new checkpoint with atomic transaction + row-level lock
  * SECURITY: Requires authentication, CSRF protection, and project ownership verification
  */
-router.post('/checkpoints', csrfProtection, async (req: Request, res: Response) => {
+router.post('/checkpoints', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
     const data = CreateCheckpointSchema.parse(req.body);
@@ -195,7 +195,7 @@ router.post('/checkpoints', csrfProtection, async (req: Request, res: Response) 
  * Get checkpoint details by ID
  * SECURITY: Requires authentication and checkpoint ownership verification
  */
-router.get('/checkpoints/:id', async (req: Request, res: Response) => {
+router.get('/checkpoints/:id', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
     const checkpointId = parseInt(req.params.id, 10);
@@ -243,7 +243,7 @@ router.get('/checkpoints/:id', async (req: Request, res: Response) => {
  * List all checkpoints for a project
  * SECURITY: Requires authentication and project ownership
  */
-router.get('/projects/:projectId/checkpoints', ensureProjectAccess, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/checkpoints', ensureAuthenticated, ensureProjectAccess, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId, 10);
     const limit = parseInt(req.query.limit as string, 10) || 20;
@@ -276,7 +276,7 @@ router.get('/projects/:projectId/checkpoints', ensureProjectAccess, async (req: 
  * Restore a checkpoint (files, database, environment)
  * SECURITY: Requires authentication, CSRF protection, and checkpoint ownership
  */
-router.post('/checkpoints/:id/restore', csrfProtection, async (req: Request, res: Response) => {
+router.post('/checkpoints/:id/restore', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
     const checkpointId = parseInt(req.params.id, 10);
@@ -340,7 +340,7 @@ router.post('/checkpoints/:id/restore', csrfProtection, async (req: Request, res
  * Rollback to a previous checkpoint
  * SECURITY: Requires authentication, CSRF protection, and checkpoint ownership
  */
-router.post('/checkpoints/rollback', csrfProtection, async (req: Request, res: Response) => {
+router.post('/checkpoints/rollback', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
     const data = RollbackSchema.parse({
@@ -396,7 +396,7 @@ router.post('/checkpoints/rollback', csrfProtection, async (req: Request, res: R
  * Rollforward to a future checkpoint
  * SECURITY: Requires authentication, CSRF protection, and checkpoint ownership
  */
-router.post('/checkpoints/rollforward', csrfProtection, async (req: Request, res: Response) => {
+router.post('/checkpoints/rollforward', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
     const data = RollbackSchema.parse({
@@ -452,7 +452,7 @@ router.post('/checkpoints/rollforward', csrfProtection, async (req: Request, res
  * Get checkpoint tree structure for visualization
  * SECURITY: Requires authentication and project ownership
  */
-router.get('/projects/:projectId/checkpoints/tree', ensureProjectAccess, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/checkpoints/tree', ensureAuthenticated, ensureProjectAccess, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId, 10);
 
@@ -484,7 +484,7 @@ router.get('/projects/:projectId/checkpoints/tree', ensureProjectAccess, async (
  * Get backward/forward navigation options from current checkpoint
  * SECURITY: Requires authentication and project ownership
  */
-router.get('/projects/:projectId/checkpoints/navigation', ensureProjectAccess, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/checkpoints/navigation', ensureAuthenticated, ensureProjectAccess, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId, 10);
 

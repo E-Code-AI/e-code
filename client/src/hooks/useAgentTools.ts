@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { AiModel } from "@shared/schema";
 
 export interface AgentToolsSettings {
@@ -72,6 +72,42 @@ interface VideoReplaysResponse {
   count: number;
 }
 
+interface SearchResult {
+  title: string;
+  url: string;
+  snippet: string;
+  source: string;
+  publishedDate?: string;
+}
+
+interface WebSearchResponse {
+  query: string;
+  results: SearchResult[];
+  totalResults: number;
+  searchTime: number;
+}
+
+interface TestSession {
+  id: string;
+  projectId: number;
+  status: 'pending' | 'running' | 'passed' | 'failed';
+  testPlan: string;
+  testName?: string;
+  results?: any;
+  duration?: number;
+  videoUrl?: string;
+  createdAt: string;
+  completedAt?: string;
+}
+
+interface ToolsStatusResponse {
+  webSearch: { enabled: boolean; status: string; provider: string };
+  appTesting: { enabled: boolean; status: string; videoRecording: boolean; provider: string };
+  extendedThinking: { enabled: boolean; status: string; models: string[] };
+  highPowerModels: { enabled: boolean; status: string; models: string[] };
+  maxAutonomy: { enabled: boolean; status: string; maxDuration: number };
+}
+
 const DEFAULT_SETTINGS: AgentToolsSettings = {
   maxAutonomy: false,
   appTesting: true,
@@ -81,12 +117,16 @@ const DEFAULT_SETTINGS: AgentToolsSettings = {
 };
 
 /**
- * Hook to manage Agent Tools settings with real API integration
- * Connects to backend preferences and model selection
+ * Comprehensive hook for Agent Tools with full backend integration
+ * Manages all 5 toggles: Max Autonomy, App Testing, Extended Thinking, High Power Models, Web Search
  */
 export function useAgentTools(projectId?: number) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  
+  // Local state for session-based toggles (not persisted to DB)
+  const [localMaxAutonomy, setLocalMaxAutonomy] = useState(false);
+  const [localAppTesting, setLocalAppTesting] = useState(true);
 
   // Fetch user preferences from backend
   const preferencesQuery = useQuery<AgentPreferences>({
@@ -107,30 +147,53 @@ export function useAgentTools(projectId?: number) {
     staleTime: 10000,
   });
 
-  // Fetch video replays for project
+  // Fetch tools status
+  const toolsStatusQuery = useQuery<ToolsStatusResponse>({
+    queryKey: ['/api/agent/tools/status'],
+    staleTime: 60000,
+  });
+
+  // Fetch video replays for project - using /tools/ path
   const videoReplaysQuery = useQuery<VideoReplaysResponse>({
-    queryKey: ['/api/agent/testing/replays', projectId],
+    queryKey: ['/api/agent/tools/testing/replays', projectId],
     queryFn: async () => {
       if (!projectId) return { replays: [], count: 0 };
-      return apiRequest<VideoReplaysResponse>("GET", `/api/agent/testing/replays?projectId=${projectId}`);
+      return apiRequest<VideoReplaysResponse>("GET", `/api/agent/tools/testing/replays?projectId=${projectId}`);
     },
     enabled: !!projectId,
     staleTime: 30000,
   });
 
+  // Fetch test sessions
+  const testSessionsQuery = useQuery<{ sessions: TestSession[]; count: number }>({
+    queryKey: ['/api/agent/testing/sessions', projectId],
+    queryFn: async () => {
+      if (!projectId) return { sessions: [], count: 0 };
+      return apiRequest<{ sessions: TestSession[]; count: number }>("GET", `/api/agent/testing/sessions?projectId=${projectId}`);
+    },
+    enabled: !!projectId,
+    staleTime: 10000,
+  });
+
   // Convert backend preferences to AgentToolsSettings
   const settings = useMemo((): AgentToolsSettings => {
     const prefs = preferencesQuery.data;
-    if (!prefs) return DEFAULT_SETTINGS;
+    if (!prefs) {
+      return {
+        ...DEFAULT_SETTINGS,
+        maxAutonomy: localMaxAutonomy,
+        appTesting: localAppTesting,
+      };
+    }
 
     return {
-      maxAutonomy: false, // Max autonomy is session-based, not a preference
-      appTesting: true, // App testing is always enabled by default
+      maxAutonomy: localMaxAutonomy,
+      appTesting: localAppTesting,
       extendedThinking: prefs.extendedThinking || false,
       highPowerModels: prefs.highPowerMode || false,
       webSearch: prefs.autoWebSearch ?? true,
     };
-  }, [preferencesQuery.data]);
+  }, [preferencesQuery.data, localMaxAutonomy, localAppTesting]);
 
   // Update preferences mutation
   const updatePreferencesMutation = useMutation({
@@ -150,8 +213,57 @@ export function useAgentTools(projectId?: number) {
     },
   });
 
+  // Web search mutation
+  const webSearchMutation = useMutation({
+    mutationFn: async (query: string) => {
+      return apiRequest<WebSearchResponse>("POST", "/api/agent/tools/web-search", { query });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Search failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Start test mutation
+  const startTestMutation = useMutation({
+    mutationFn: async (params: { projectId: number; testPlan: string; testName?: string; recordVideo?: boolean }) => {
+      return apiRequest<{ sessionId: string; recordingId: number; status: string; message: string }>(
+        "POST", 
+        "/api/agent/tools/testing/start", 
+        params
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/agent/testing/sessions', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/agent/tools/testing/replays', projectId] });
+      toast({
+        title: "Test started",
+        description: "Browser test is now running",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to start test",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Handle settings changes
   const updateSettings = useCallback((newSettings: AgentToolsSettings) => {
+    // Handle local toggles
+    if (newSettings.maxAutonomy !== settings.maxAutonomy) {
+      setLocalMaxAutonomy(newSettings.maxAutonomy);
+    }
+    if (newSettings.appTesting !== settings.appTesting) {
+      setLocalAppTesting(newSettings.appTesting);
+    }
+
+    // Handle backend-persisted toggles
     const updates: Partial<AgentPreferences> = {};
 
     if (newSettings.extendedThinking !== settings.extendedThinking) {
@@ -172,13 +284,6 @@ export function useAgentTools(projectId?: number) {
   // Toggle individual setting
   const toggleSetting = useCallback((key: keyof AgentToolsSettings) => {
     const newSettings = { ...settings, [key]: !settings[key] };
-    
-    // Max autonomy and app testing are special - they don't persist as preferences
-    if (key === 'maxAutonomy' || key === 'appTesting') {
-      // These are handled separately via session management
-      return newSettings;
-    }
-    
     updateSettings(newSettings);
     return newSettings;
   }, [settings, updateSettings]);
@@ -203,6 +308,29 @@ export function useAgentTools(projectId?: number) {
     return modelsQuery.data?.models.filter(m => m.category === category) || [];
   }, [modelsQuery.data]);
 
+  // Perform web search
+  const performWebSearch = useCallback((query: string) => {
+    return webSearchMutation.mutateAsync(query);
+  }, [webSearchMutation]);
+
+  // Start a test
+  const startTest = useCallback((testPlan: string, testName?: string) => {
+    if (!projectId) {
+      toast({
+        title: "Cannot start test",
+        description: "No project selected",
+        variant: "destructive",
+      });
+      return Promise.reject(new Error("No project selected"));
+    }
+    return startTestMutation.mutateAsync({ 
+      projectId, 
+      testPlan, 
+      testName,
+      recordVideo: localAppTesting 
+    });
+  }, [projectId, startTestMutation, localAppTesting, toast]);
+
   return {
     // Settings
     settings,
@@ -225,6 +353,10 @@ export function useAgentTools(projectId?: number) {
     effectiveModel: effectiveModelQuery.data?.effectiveModel,
     effectiveModelInfo: effectiveModelQuery.data?.modelInfo,
     
+    // Tools status
+    toolsStatus: toolsStatusQuery.data,
+    isLoadingToolsStatus: toolsStatusQuery.isLoading,
+    
     // Model helpers
     setPreferredModel,
     getModelInfo,
@@ -236,24 +368,38 @@ export function useAgentTools(projectId?: number) {
     videoReplayCount: videoReplaysQuery.data?.count || 0,
     isLoadingVideoReplays: videoReplaysQuery.isLoading,
     
+    // Test sessions
+    testSessions: testSessionsQuery.data?.sessions || [],
+    testSessionCount: testSessionsQuery.data?.count || 0,
+    isLoadingTestSessions: testSessionsQuery.isLoading,
+    
+    // Actions
+    performWebSearch,
+    isSearching: webSearchMutation.isPending,
+    searchResults: webSearchMutation.data?.results || [],
+    lastSearchQuery: webSearchMutation.data?.query,
+    
+    startTest,
+    isStartingTest: startTestMutation.isPending,
+    
     // Refetch
     refetchPreferences: preferencesQuery.refetch,
     refetchModels: modelsQuery.refetch,
     refetchVideoReplays: videoReplaysQuery.refetch,
+    refetchTestSessions: testSessionsQuery.refetch,
+    refetchToolsStatus: toolsStatusQuery.refetch,
   };
 }
 
 /**
  * Hook for extended thinking streaming
  */
-export function useExtendedThinking(sessionId?: string) {
-  const queryClient = useQueryClient();
-  
-  // Fetch thinking steps for a session
+export function useExtendedThinking(conversationId?: number) {
+  // Fetch thinking steps for a conversation - using /tools/ path
   const thinkingQuery = useQuery({
-    queryKey: ['/api/agent/thinking', sessionId],
+    queryKey: ['/api/agent/tools/thinking', conversationId],
     queryFn: async () => {
-      if (!sessionId) return { steps: [], isThinking: false };
+      if (!conversationId) return { steps: [], isThinking: false };
       return apiRequest<{
         steps: Array<{
           id: string;
@@ -265,9 +411,9 @@ export function useExtendedThinking(sessionId?: string) {
           duration?: number;
         }>;
         isThinking: boolean;
-      }>("GET", `/api/agent/thinking/${sessionId}`);
+      }>("GET", `/api/agent/tools/thinking/${conversationId}`);
     },
-    enabled: !!sessionId,
+    enabled: !!conversationId,
     refetchInterval: (query) => {
       return query.state.data?.isThinking ? 1000 : false;
     },
@@ -284,25 +430,14 @@ export function useExtendedThinking(sessionId?: string) {
 }
 
 /**
- * Hook for web search functionality
+ * Standalone hook for web search functionality
  */
 export function useWebSearch() {
   const { toast } = useToast();
   
   const searchMutation = useMutation({
     mutationFn: async (query: string) => {
-      return apiRequest<{
-        query: string;
-        results: Array<{
-          title: string;
-          url: string;
-          snippet: string;
-          source: string;
-          publishedDate?: string;
-        }>;
-        totalResults: number;
-        searchTime: number;
-      }>("POST", "/api/agent/web-search", { query });
+      return apiRequest<WebSearchResponse>("POST", "/api/agent/tools/web-search", { query });
     },
     onError: (error: Error) => {
       toast({
@@ -313,17 +448,25 @@ export function useWebSearch() {
     },
   });
 
+  // Fetch search history
+  const historyQuery = useQuery({
+    queryKey: ['/api/agent/tools/web-search'],
+    staleTime: 60000,
+  });
+
   return {
     search: searchMutation.mutate,
     searchAsync: searchMutation.mutateAsync,
     results: searchMutation.data?.results || [],
     isSearching: searchMutation.isPending,
     error: searchMutation.error,
+    history: historyQuery.data,
+    isLoadingHistory: historyQuery.isLoading,
   };
 }
 
 /**
- * Hook for app testing functionality
+ * Standalone hook for app testing functionality
  */
 export function useAppTesting(projectId?: number) {
   const queryClient = useQueryClient();
@@ -335,17 +478,7 @@ export function useAppTesting(projectId?: number) {
     queryFn: async () => {
       if (!projectId) return { sessions: [], count: 0 };
       return apiRequest<{
-        sessions: Array<{
-          id: string;
-          projectId: number;
-          status: 'pending' | 'running' | 'passed' | 'failed';
-          testPlan: string;
-          results?: any;
-          duration?: number;
-          videoUrl?: string;
-          createdAt: string;
-          completedAt?: string;
-        }>;
+        sessions: TestSession[];
         count: number;
       }>("GET", `/api/agent/testing/sessions?projectId=${projectId}`);
     },
@@ -353,17 +486,30 @@ export function useAppTesting(projectId?: number) {
     staleTime: 10000,
   });
 
+  // Fetch video replays
+  const replaysQuery = useQuery<VideoReplaysResponse>({
+    queryKey: ['/api/agent/tools/testing/replays', projectId],
+    queryFn: async () => {
+      if (!projectId) return { replays: [], count: 0 };
+      return apiRequest<VideoReplaysResponse>("GET", `/api/agent/tools/testing/replays?projectId=${projectId}`);
+    },
+    enabled: !!projectId,
+    staleTime: 30000,
+  });
+
   // Start a new test
   const startTestMutation = useMutation({
-    mutationFn: async (params: { projectId: number; testPlan: string; recordVideo?: boolean }) => {
+    mutationFn: async (params: { projectId: number; testPlan: string; testName?: string; recordVideo?: boolean }) => {
       return apiRequest<{
         sessionId: string;
+        recordingId: number;
         status: string;
         message: string;
-      }>("POST", "/api/agent/testing/start", params);
+      }>("POST", "/api/agent/tools/testing/start", params);
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['/api/agent/testing/sessions', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/agent/tools/testing/replays', projectId] });
       toast({
         title: "Test started",
         description: `Test session ${response.sessionId} is running`,
@@ -383,10 +529,15 @@ export function useAppTesting(projectId?: number) {
     sessionCount: testSessionsQuery.data?.count || 0,
     isLoading: testSessionsQuery.isLoading,
     
+    replays: replaysQuery.data?.replays || [],
+    replayCount: replaysQuery.data?.count || 0,
+    isLoadingReplays: replaysQuery.isLoading,
+    
     startTest: startTestMutation.mutate,
     startTestAsync: startTestMutation.mutateAsync,
     isStartingTest: startTestMutation.isPending,
     
     refetch: testSessionsQuery.refetch,
+    refetchReplays: replaysQuery.refetch,
   };
 }

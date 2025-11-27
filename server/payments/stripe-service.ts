@@ -579,8 +579,44 @@ export class StripePaymentService {
   }
 
   private async saveUsageRecord(record: UsageRecord): Promise<void> {
-    // Save to database
-    // In production, this would use a proper database table
+    try {
+      // Import db and schema
+      const { db } = await import('../db');
+      const { usageTracking } = await import('../../shared/schema');
+      
+      // Calculate billing period (first and last day of current month)
+      const now = new Date();
+      const billingPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const billingPeriodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      
+      // Map metric names to database values
+      const metricMap: Record<string, { type: string; unit: string }> = {
+        cpu_hours: { type: 'compute', unit: 'hours' },
+        storage: { type: 'storage', unit: 'GB' },
+        bandwidth: { type: 'bandwidth', unit: 'GB' },
+        deployments: { type: 'deployment', unit: 'count' },
+        ai_tokens: { type: 'ai_usage', unit: 'tokens' },
+        database: { type: 'database', unit: 'GB' },
+      };
+      
+      const metricInfo = metricMap[record.metric] || { type: record.metric, unit: 'units' };
+      
+      // Insert usage record into database
+      await db.insert(usageTracking).values({
+        userId: record.userId,
+        metricType: metricInfo.type,
+        value: String(record.quantity),
+        unit: metricInfo.unit,
+        timestamp: record.timestamp,
+        billingPeriodStart,
+        billingPeriodEnd,
+      });
+      
+      console.log(`[Usage] Saved ${record.quantity} ${metricInfo.type} for user ${record.userId}`);
+    } catch (error) {
+      console.error('[Usage] Failed to save usage record:', error);
+      // Don't throw - we don't want to break the main flow if DB save fails
+    }
   }
 
   private async getUsageRecords(
@@ -588,9 +624,33 @@ export class StripePaymentService {
     startDate: Date, 
     endDate: Date
   ): Promise<UsageRecord[]> {
-    // Fetch from database
-    // In production, this would query a proper database table
-    return [];
+    try {
+      const { db } = await import('../db');
+      const { usageTracking } = await import('../../shared/schema');
+      const { and, eq, gte, lte } = await import('drizzle-orm');
+      
+      const records = await db
+        .select()
+        .from(usageTracking)
+        .where(
+          and(
+            eq(usageTracking.userId, userId),
+            gte(usageTracking.timestamp, startDate),
+            lte(usageTracking.timestamp, endDate)
+          )
+        );
+      
+      // Map database records to UsageRecord type
+      return records.map(r => ({
+        userId: r.userId,
+        metric: r.metricType as any,
+        quantity: parseFloat(r.value.toString()),
+        timestamp: r.timestamp || new Date(),
+      }));
+    } catch (error) {
+      console.error('[Usage] Failed to fetch usage records:', error);
+      return [];
+    }
   }
 
   getPlans(): SubscriptionPlan[] {

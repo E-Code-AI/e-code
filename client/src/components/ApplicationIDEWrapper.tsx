@@ -8,7 +8,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { Button } from '@/components/ui/button';
 import FileExplorer from '@/components/FileExplorer';
 import CodeEditor from '@/components/CodeEditor';
-import { ReplitAgent } from '@/components/ReplitAgent';
+import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
 import { ReplitConsole } from '@/components/editor/ReplitConsole';
 import { RunButton } from '@/components/RunButton';
 import { WebPreview } from '@/components/WebPreview';
@@ -320,9 +320,10 @@ export function ApplicationIDEWrapper({
                     </Button>
                   </div>
                   <div className="flex-1 overflow-hidden">
-                    <ReplitAgent
+                    <ReplitAgentPanelV3
                       projectId={projectId}
                       selectedCode=""
+                      className="h-full"
                     />
                   </div>
                 </div>

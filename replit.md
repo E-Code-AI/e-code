@@ -26,6 +26,25 @@ The frontend uses React 18, TypeScript, Vite, TanStack Query, and Wouter. The ba
 
 Key AI Agent Enhancements include structured XML-based system prompts, a repository overview service, a context window manager with token optimization and long-term memory, a unified AI provider system with multi-provider fallback, and AI-powered inline code actions within the Monaco Editor. A Checkpoints & Rollback System ensures atomic transactions. A Background Auto-Testing System uses Playwright. Max Autonomy Mode enables extended autonomous sessions with AI task decomposition, auto-execution, ETA estimation, and cost tracking, integrated with auto-checkpointing, auto-testing, and auto-rollback. A Templates Marketplace and a Bounties Marketplace with Stripe integration are included. Context Window Enhancements provide separate dev/prod database connections, screenshot capture, and AI memory retention. The Agent Activity Dashboard provides real-time activity components, AG Grid Enterprise components for session history and metrics, and IDE integration for inline activity and mode selection. Mobile code editing components include a joystick for navigation and a custom coding keyboard. A critical authentication flow ensures seamless user experience from homepage "BUILD" to workspace creation.
 
+**Unified Agent System (ReplitAgentPanelV3 - Consolidated Nov 2025):**
+- **Single Component:** `client/src/components/ai/ReplitAgentPanelV3.tsx` - unified agent for all platforms (web, desktop, mobile, responsive)
+- **Legacy Components Removed:** ReplitAgent.tsx, ReplitAgentV2.tsx, ReplitAgentChat.tsx, editor/ReplitAgentPanel.tsx - all deleted
+- **Used In:** IDEPage.tsx, Editor.tsx, MobileIDEView.tsx, MobileWorkspace.tsx, EditorWorkspace.tsx, ApplicationIDEWrapper.tsx, ReplitEditorLayout.tsx, SplitsEditorLayout.tsx, SplitsEditorLayoutV2.tsx
+- **Features:** Build/Plan modes, streaming responses, tool executions inline, thinking display, context injection, Max Autonomy integration, extended thinking support
+- **Props:** projectId (string|number), selectedFile, selectedCode, initialPrompt, autoStart, onBuildComplete, sessionId, conversationId, websocket, className
+
+**Agent Tools Panel (Replit Agent 3 Parity - Updated Nov 2025):**
+- **Backend Endpoints (100% Complete):** All 6 endpoints at `/api/agent/tools/*` - web-search (GET/POST), testing/replays (GET), testing/start (POST), thinking/:id (GET), status (GET)
+- **useAgentTools Hook:** 5 toggles (maxAutonomy, appTesting, extendedThinking, highPowerModels, webSearch), action functions (performWebSearch, startTest), queries for preferences/models/replays/sessions/status
+- **UI Features:** Collapsible panel with responsive design, loading skeletons, status indicators, data-testid coverage
+- **Replit Design Requirements:**
+  - Chat toolbar toggles (Extended Thinking, High Power, Web Search icons)
+  - Element Selector (click-to-edit visual UI picker)
+  - Progress Tab as separate dock panel with real-time activity feed
+  - Video Replays viewer for test sessions
+  - Usage tracking icon with credits display
+  - Mobile-optimized touch targets (min 44px)
+
 ### Feature Specifications
 Core features include a Monaco Code Editor with advanced enhancements, an interactive terminal (xterm.js), file management, real-time collaboration, authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager, a Logs Viewer, and a Debugger UI. The UI is responsive across devices. Autonomous workspace creation involves a Bootstrap API call, AI plan generation, WebSocket-based real-time progress, autonomous execution, and a live preview. PWA features and Electron desktop support are included.
 

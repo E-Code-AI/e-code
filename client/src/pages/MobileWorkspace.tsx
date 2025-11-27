@@ -12,8 +12,8 @@ import { MobileSecretsPanel } from '@/components/mobile/MobileSecretsPanel';
 import { MobilePackagesPanel } from '@/components/mobile/MobilePackagesPanel';
 import { MobileGitPanel } from '@/components/mobile/MobileGitPanel';
 import { MobileDebugPanel } from '@/components/mobile/MobileDebugPanel';
+import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Sheet,
   SheetContent,
@@ -24,12 +24,7 @@ import {
   ArrowLeft, 
   RefreshCw, 
   Share2, 
-  MoreVertical,
-  Paperclip,
-  Mic,
-  Settings,
-  Send,
-  Loader2
+  MoreVertical
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -50,8 +45,6 @@ export default function MobileWorkspace() {
   
   const [activeTab, setActiveTab] = useState<MobileTab>('preview');
   const [toolsSheetOpen, setToolsSheetOpen] = useState(false);
-  const [agentStatus, setAgentStatus] = useState<'idle' | 'working' | 'done'>('working');
-  const [agentInput, setAgentInput] = useState('');
   const [isFilesOpen, setIsFilesOpen] = useState(false);
   const [selectedFileId, setSelectedFileId] = useState<number | undefined>();
   const [activeTool, setActiveTool] = useState<string | null>(null);
@@ -85,101 +78,11 @@ export default function MobileWorkspace() {
       case 'agent':
       case 'more':
         return (
-          <div className="flex-1 flex flex-col bg-background">
-            {/* Agent Output Area */}
-            <div className="flex-1 flex items-center justify-center p-6">
-              {agentStatus === 'working' && (
-                <div className="flex flex-col items-center gap-4">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <div className="flex items-center gap-2 text-sm text-primary">
-                    <div className="flex items-center gap-1">
-                      <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                      <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse delay-75" />
-                      <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse delay-150" />
-                    </div>
-                    <span className="font-medium">Working..</span>
-                  </div>
-                </div>
-              )}
-              {agentStatus === 'idle' && (
-                <p className="text-sm text-muted-foreground text-center">
-                  Agent is ready. Type a command below to get started.
-                </p>
-              )}
-            </div>
-
-            {/* Agent Input (Fixed at bottom, above tabs) */}
-            <div className="border-t bg-background p-4 pb-20 space-y-3">
-              {/* Status indicator */}
-              {agentStatus === 'working' && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    <span>Working..</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Input Area */}
-              <div className="relative">
-                <Input
-                  placeholder="Make, test, iterate..."
-                  value={agentInput}
-                  onChange={(e) => setAgentInput(e.target.value)}
-                  className="pr-32 py-6 text-base"
-                  data-testid="input-agent-prompt"
-                />
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground"
-                    data-testid="button-attach"
-                  >
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground"
-                    data-testid="button-voice"
-                  >
-                    <Mic className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground"
-                    data-testid="button-settings"
-                  >
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    className="h-8 w-8 bg-primary hover:bg-primary/90"
-                    disabled={!agentInput.trim()}
-                    data-testid="button-send"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Build Button */}
-              <Button
-                variant="outline"
-                className="w-full gap-2"
-                data-testid="button-build"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="h-5 w-5 rounded border border-current flex items-center justify-center">
-                    <span className="text-[10px] font-bold">B</span>
-                  </div>
-                  <span>Build</span>
-                </div>
-                <span className="ml-auto text-muted-foreground">▼</span>
-              </Button>
-            </div>
+          <div className="flex-1 flex flex-col bg-background pb-16">
+            <ReplitAgentPanelV3 
+              projectId={projectId}
+              className="h-full"
+            />
           </div>
         );
       

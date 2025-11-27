@@ -40,6 +40,14 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThinkingDisplay, ThinkingDisplayCompact, ThinkingStep } from './ThinkingDisplay';
 import { ToolExecutionList, ToolExecutionProps } from './ToolExecutionDisplay';
 import { MessageMetadataFooter } from './MessageMetadataFooter';
+import { 
+  TaskMessage, 
+  ActionMessage, 
+  RichMessageContent,
+  type Task,
+  type Action,
+  type FileDiff
+} from '@/components/agent/messages';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useWorkflowManager } from '@/hooks/use-workflow-manager';
@@ -56,7 +64,10 @@ import { MaxAutonomyProgress, MaxAutonomyStartForm } from './MaxAutonomyProgress
 import { useMaxAutonomy } from '@/hooks/useMaxAutonomy';
 import { AgentToolsPanel, type AgentToolsSettings } from './AgentToolsPanel';
 import { ElementEditor, type ElementSelection } from './ElementEditor';
-import { History, X, MousePointer2 } from 'lucide-react';
+import { ChatToolbar, ChatToolbarMobile } from './ChatToolbar';
+import { UsageTrackingIcon } from './UsageTrackingIcon';
+import { VideoReplayViewer } from './VideoReplayViewer';
+import { History, X, MousePointer2, Coins } from 'lucide-react';
 
 interface ToolExecution {
   id: string;
@@ -100,6 +111,14 @@ interface Message {
     designPreviewUrl?: string;
     buildChoice?: 'full' | 'design';
   };
+  tasks?: Task[];
+  actions?: Action[];
+  checkpoint?: {
+    id: string;
+    name: string;
+    diff: FileDiff[];
+    rollbackAvailable: boolean;
+  };
   metadata?: {
     model?: string;
     provider?: string;
@@ -130,13 +149,30 @@ interface ReplitAgentPanelV3Props {
   className?: string;
   onMinimize?: () => void;
   mode?: 'desktop' | 'tablet' | 'mobile';
+  // Props from ReplitAgent for compatibility during consolidation
+  selectedFile?: string;
+  selectedCode?: string;
+  initialPrompt?: string | null;
+  websocket?: WebSocket | null;
+  onBuildComplete?: () => void;
+  sessionId?: string | null;
+  externalConversationId?: number | null;
+  autoStart?: boolean;
 }
 
 export function ReplitAgentPanelV3({ 
   projectId, 
   className,
   onMinimize,
-  mode = 'desktop'
+  mode = 'desktop',
+  selectedFile,
+  selectedCode,
+  initialPrompt,
+  websocket: externalWebsocket,
+  onBuildComplete,
+  sessionId: externalSessionId,
+  externalConversationId,
+  autoStart = false
 }: ReplitAgentPanelV3Props) {
   // AI Model preference hook
   const { modelId, provider, supportsExtendedThinking: modelSupportsExtendedThinking, model, setPreferredModel } = useAgentModelPreference();
@@ -189,6 +225,7 @@ export function ReplitAgentPanelV3({
   ]);
   
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [videoReplayViewerOpen, setVideoReplayViewerOpen] = useState(false);
   
   // Agent Tools Panel settings (Replit Agent 3 exact toggles)
   const [agentToolsSettings, setAgentToolsSettings] = useState<AgentToolsSettings>({
@@ -212,6 +249,13 @@ export function ReplitAgentPanelV3({
   // Bootstrap conversation on mount
   useEffect(() => {
     const bootstrapConversation = async () => {
+      // Use external conversation ID if provided
+      if (externalConversationId) {
+        setConversationId(externalConversationId);
+        console.log('[ReplitAgentPanelV3] Using external conversationId:', externalConversationId);
+        return;
+      }
+      
       try {
         const response = await apiRequest('POST', '/api/agent/conversation', {
           projectId: projectId.toString()
@@ -230,7 +274,46 @@ export function ReplitAgentPanelV3({
     };
 
     bootstrapConversation();
-  }, [projectId, toast]);
+  }, [projectId, toast, externalConversationId]);
+
+  // Track whether initial prompt has been processed (idempotent guard)
+  const initialPromptProcessedRef = useRef(false);
+  const contextInjectedRef = useRef<string | null>(null);
+  
+  // Handle initial prompt (from workspace bootstrap flow) - with idempotent check
+  useEffect(() => {
+    if (initialPrompt && conversationId && !isWorking && !initialPromptProcessedRef.current) {
+      console.log('[ReplitAgentPanelV3] Processing initial prompt:', initialPrompt.substring(0, 50) + '...');
+      initialPromptProcessedRef.current = true;
+      setInput(initialPrompt);
+      // Auto-start if requested
+      if (autoStart) {
+        setTimeout(() => {
+          const form = document.querySelector('form[data-testid="chat-form"]') as HTMLFormElement;
+          if (form) {
+            form.requestSubmit();
+          }
+        }, 500);
+      }
+    }
+  }, [initialPrompt, conversationId, autoStart, isWorking]);
+
+  // Handle selected file/code context injection - with idempotent check using content hash
+  useEffect(() => {
+    if (!selectedFile || !selectedCode) return;
+    
+    // Create a unique key using file name and content length + first/last chars for better uniqueness
+    const codeHash = `${selectedCode.length}-${selectedCode.substring(0, 50)}-${selectedCode.substring(selectedCode.length - 50)}`;
+    const contextKey = `${selectedFile}:${codeHash}`;
+    
+    if (contextInjectedRef.current !== contextKey) {
+      console.log('[ReplitAgentPanelV3] Context injection:', selectedFile);
+      contextInjectedRef.current = contextKey;
+      // Add context to the input
+      const contextPrefix = `\n\n[Context: ${selectedFile}]\n\`\`\`\n${selectedCode.substring(0, 500)}${selectedCode.length > 500 ? '...' : ''}\n\`\`\`\n\n`;
+      setInput(prev => prev ? prev + contextPrefix : contextPrefix);
+    }
+  }, [selectedFile, selectedCode]);
 
   // Max Autonomy hook
   const projectIdNum = typeof projectId === 'string' ? parseInt(projectId) : projectId;
@@ -298,6 +381,7 @@ export function ReplitAgentPanelV3({
   
   // Handler for viewing video replays
   const handleViewVideoReplays = useCallback(() => {
+    setVideoReplayViewerOpen(true);
     toast({
       title: "Video Replays",
       description: "Opening test session recordings..."
@@ -600,6 +684,11 @@ export function ReplitAgentPanelV3({
             setActiveThinking([]);
           } finally {
             setIsWorking(false);
+            // Call onBuildComplete callback when bootstrap build finishes
+            if (onBuildComplete) {
+              console.log('[ReplitAgentPanelV3] Bootstrap build complete, calling onBuildComplete');
+              onBuildComplete();
+            }
           }
         })();
       }, 1000); // 1 second delay for smooth UX
@@ -866,6 +955,12 @@ export function ReplitAgentPanelV3({
       setStreamingContent('');
       setActiveThinking([]);
       
+      // Call onBuildComplete callback when streaming completes in build mode
+      if (agentMode === 'build' && onBuildComplete) {
+        console.log('[ReplitAgentPanelV3] Streaming complete, calling onBuildComplete');
+        onBuildComplete();
+      }
+      
     } catch (error) {
       console.error('AI chat error:', error);
       
@@ -883,6 +978,11 @@ export function ReplitAgentPanelV3({
       setActiveThinking([]);
     } finally {
       setIsWorking(false);
+      // Call onBuildComplete callback when build/execution finishes (for IDE integration)
+      if (agentMode === 'build' && onBuildComplete) {
+        console.log('[ReplitAgentPanelV3] Build complete, calling onBuildComplete callback');
+        onBuildComplete();
+      }
     }
   };
 
@@ -916,6 +1016,32 @@ export function ReplitAgentPanelV3({
       description: 'Message copied to clipboard',
     });
   };
+
+  const handleApproveAction = useCallback((action: Action) => {
+    toast({
+      title: 'Action Approved',
+      description: `${action.type}: ${action.description}`,
+    });
+    setMessages(prev => prev.map(msg => ({
+      ...msg,
+      actions: msg.actions?.map(a => 
+        a.id === action.id ? { ...a, status: 'approved' as const } : a
+      )
+    })));
+  }, [toast]);
+
+  const handleRejectAction = useCallback((action: Action) => {
+    toast({
+      title: 'Action Rejected',
+      description: `${action.type}: ${action.description}`,
+    });
+    setMessages(prev => prev.map(msg => ({
+      ...msg,
+      actions: msg.actions?.map(a => 
+        a.id === action.id ? { ...a, status: 'rejected' as const } : a
+      )
+    })));
+  }, [toast]);
 
   const isCompactMode = mode === 'mobile' || mode === 'tablet';
 
@@ -1080,6 +1206,9 @@ export function ReplitAgentPanelV3({
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Usage Tracking - Replit Agent 3 style credits icon */}
+            <UsageTrackingIcon />
+
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -1163,7 +1292,7 @@ export function ReplitAgentPanelV3({
                   </div>
                 )}
 
-                {/* Message bubble */}
+                {/* Message bubble with Rich Content */}
                 <div 
                   className={cn(
                     "rounded-lg px-3 py-2 relative group",
@@ -1173,9 +1302,13 @@ export function ReplitAgentPanelV3({
                   )}
                   data-testid={`message-content-${message.id}`}
                 >
-                  <p className="text-sm whitespace-pre-wrap break-words" data-testid={`message-text-${message.id}`}>
-                    {message.content}
-                  </p>
+                  {message.role === 'assistant' && message.content ? (
+                    <RichMessageContent content={message.content} />
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap break-words" data-testid={`message-text-${message.id}`}>
+                      {message.content}
+                    </p>
+                  )}
 
                   {/* Copy button */}
                   <Button
@@ -1188,6 +1321,24 @@ export function ReplitAgentPanelV3({
                     <Copy className="h-3 w-3" />
                   </Button>
                 </div>
+
+                {/* Tasks - Inline task checklist like Replit */}
+                {message.tasks && message.tasks.length > 0 && (
+                  <div className="w-full mt-2" data-testid={`tasks-${message.id}`}>
+                    <TaskMessage tasks={message.tasks} />
+                  </div>
+                )}
+
+                {/* Actions - Inline approve/reject like Replit */}
+                {message.actions && message.actions.length > 0 && (
+                  <div className="w-full mt-2" data-testid={`actions-${message.id}`}>
+                    <ActionMessage 
+                      actions={message.actions}
+                      onApprove={(action) => handleApproveAction(action)}
+                      onReject={(action) => handleRejectAction(action)}
+                    />
+                  </div>
+                )}
 
                 {/* Tool Executions - inline in chat like Replit */}
                 {message.toolExecutions && message.toolExecutions.length > 0 && (
@@ -1320,7 +1471,7 @@ export function ReplitAgentPanelV3({
             />
           )}
           
-          {/* Chat input */}
+          {/* Chat input with inline toolbar */}
           <div className="relative">
             <Textarea
               ref={textareaRef}
@@ -1347,12 +1498,39 @@ export function ReplitAgentPanelV3({
             </Button>
           </div>
           
+          {/* Chat Toolbar - Replit Agent 3 inline icons for quick toggle access */}
+          {isCompactMode ? (
+            <ChatToolbarMobile
+              extendedThinking={agentToolsSettings.extendedThinking}
+              highPowerModels={agentToolsSettings.highPowerModels}
+              webSearch={agentToolsSettings.webSearch}
+              onToggleExtendedThinking={() => handleAgentToolsChange({ ...agentToolsSettings, extendedThinking: !agentToolsSettings.extendedThinking })}
+              onToggleHighPowerModels={() => handleAgentToolsChange({ ...agentToolsSettings, highPowerModels: !agentToolsSettings.highPowerModels })}
+              onToggleWebSearch={() => handleAgentToolsChange({ ...agentToolsSettings, webSearch: !agentToolsSettings.webSearch })}
+              isUpdating={false}
+            />
+          ) : (
+            <ChatToolbar
+              extendedThinking={agentToolsSettings.extendedThinking}
+              highPowerModels={agentToolsSettings.highPowerModels}
+              webSearch={agentToolsSettings.webSearch}
+              onToggleExtendedThinking={() => handleAgentToolsChange({ ...agentToolsSettings, extendedThinking: !agentToolsSettings.extendedThinking })}
+              onToggleHighPowerModels={() => handleAgentToolsChange({ ...agentToolsSettings, highPowerModels: !agentToolsSettings.highPowerModels })}
+              onToggleWebSearch={() => handleAgentToolsChange({ ...agentToolsSettings, webSearch: !agentToolsSettings.webSearch })}
+              onToggleElementSelector={() => setElementEditorActive(!elementEditorActive)}
+              elementSelectorActive={elementEditorActive}
+              isUpdating={false}
+            />
+          )}
+          
           {/* Agent Tools Panel - Replit Agent 3 toggles: Max Autonomy, App Testing, Extended Thinking, High Power Models, Web Search */}
           <AgentToolsPanel
+            projectId={projectIdNum}
             settings={agentToolsSettings}
             onSettingsChange={handleAgentToolsChange}
             onViewVideoReplays={handleViewVideoReplays}
             videoReplayCount={videoReplayCount}
+            compact={mode !== 'desktop'}
           />
         </div>
         
@@ -1405,6 +1583,13 @@ export function ReplitAgentPanelV3({
         open={historyModalOpen}
         onOpenChange={setHistoryModalOpen}
         projectId={typeof projectId === 'number' ? projectId : parseInt(projectId as string, 10) || undefined}
+      />
+      
+      {/* Video Replay Viewer - For viewing test session recordings */}
+      <VideoReplayViewer
+        open={videoReplayViewerOpen}
+        onOpenChange={setVideoReplayViewerOpen}
+        projectId={projectIdNum}
       />
     </div>
   );

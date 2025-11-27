@@ -5,6 +5,19 @@ yarn-error.log*
 yarn.lock
 pnpm-lock.yaml
 
+# Caches (CRITICAL - can be huge)
+.cache/
+.npm/
+.yarn/
+**/.cache/
+**/node_modules/.cache/
+
+# Go build cache
+.cache/go-build/
+
+# Playwright cache (can be 500MB+)
+.cache/ms-playwright/
+
 # Git and version control
 .git/
 .gitignore
@@ -68,6 +81,8 @@ PRODUCTION_READINESS.md
 audit-report.md
 CHANGELOG*
 LICENSE*
+✅_*.md
+STRIPE_SECURITY.md
 
 # Development configuration
 tsconfig.check.json
