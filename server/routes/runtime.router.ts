@@ -211,9 +211,9 @@ router.get('/api/runtime/dependencies', getRuntimeDependencies);
 // SECURITY: These endpoints are gated by feature flag and rate limiting
 // ===============================
 
-// Feature flag for direct execution (disabled in production by default)
-const ENABLE_DIRECT_EXECUTION = process.env.ENABLE_DIRECT_EXECUTION === 'true' || 
-                                process.env.NODE_ENV === 'development';
+// Feature flag for direct execution (DISABLED by default everywhere - explicit opt-in required)
+// SECURITY: Direct execution allows code to run without sandboxing. Enable only for admin testing.
+const ENABLE_DIRECT_EXECUTION = process.env.ENABLE_DIRECT_EXECUTION === 'true';
 
 // Rate limiting: Track executions per user
 const executionRateLimits = new Map<number, { count: number; resetTime: number }>();
