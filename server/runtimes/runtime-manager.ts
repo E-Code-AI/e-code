@@ -129,8 +129,12 @@ export async function startProject(
     if (!useDocker) {
       // Use direct execution mode (no Docker)
       logs.push('Docker not available - using direct execution mode');
-      logs.push('Runtime ready for direct code execution');
       
+      // Get language config for run command
+      const config = languageConfigs[language];
+      const runCommand = config.runCommand;
+      
+      // Set up runtime first
       activeRuntimes.set(projectId, {
         projectId,
         language,
@@ -140,11 +144,176 @@ export async function startProject(
         projectDir
       });
       
-      return {
-        success: true,
-        status: 'running',
-        logs
-      };
+      // Auto-execute the main file
+      logs.push(`Executing: ${runCommand}`);
+      
+      try {
+        // Parse the run command
+        const parts = runCommand.split(/\s+/);
+        const baseCmd = parts[0];
+        const args = parts.slice(1);
+        
+        // Map command names to actual paths
+        const cmdMap: Record<string, string> = {
+          'python': 'python3',
+          'python3': 'python3',
+          'node': 'node',
+          'go': 'go',
+          'ruby': 'ruby',
+          'rustc': 'rustc',
+          'cargo': 'cargo',
+          'java': 'java',
+          'javac': 'javac',
+          'php': 'php',
+          'gcc': 'gcc',
+          'g++': 'g++'
+        };
+        
+        const actualCmd = cmdMap[baseCmd] || baseCmd;
+        
+        // Handle compilation for compiled languages
+        if (config.compilerCommand) {
+          const compileParts = config.compilerCommand.split(/\s+/);
+          const compileCmd = cmdMap[compileParts[0]] || compileParts[0];
+          const compileArgs = compileParts.slice(1);
+          
+          logs.push(`Compiling: ${config.compilerCommand}`);
+          
+          const compileResult = await new Promise<{ stdout: string; stderr: string; exitCode: number }>((resolve) => {
+            let stdout = '';
+            let stderr = '';
+            
+            const proc = spawn(compileCmd, compileArgs, {
+              cwd: projectDir,
+              shell: false
+            });
+            
+            proc.stdout.on('data', (data) => { stdout += data.toString(); });
+            proc.stderr.on('data', (data) => { stderr += data.toString(); });
+            
+            const timeout = setTimeout(() => {
+              proc.kill('SIGTERM');
+              resolve({ stdout, stderr: stderr + '\nCompilation timed out', exitCode: 124 });
+            }, 30000);
+            
+            proc.on('close', (code) => {
+              clearTimeout(timeout);
+              resolve({ stdout, stderr, exitCode: code || 0 });
+            });
+            
+            proc.on('error', (err) => {
+              clearTimeout(timeout);
+              resolve({ stdout, stderr: err.message, exitCode: 1 });
+            });
+          });
+          
+          if (compileResult.exitCode !== 0) {
+            logs.push(`Compilation error: ${compileResult.stderr}`);
+            activeRuntimes.get(projectId)!.status = 'error';
+            activeRuntimes.get(projectId)!.error = compileResult.stderr;
+            return {
+              success: false,
+              status: 'error',
+              logs,
+              error: compileResult.stderr
+            };
+          }
+          
+          logs.push('Compilation successful');
+        }
+        
+        // Execute the main file
+        const execResult = await new Promise<{ stdout: string; stderr: string; exitCode: number }>((resolve) => {
+          let stdout = '';
+          let stderr = '';
+          
+          const proc = spawn(actualCmd, args, {
+            cwd: projectDir,
+            env: { ...process.env, SANDBOX_EXECUTION: 'true' },
+            shell: false
+          });
+          
+          proc.stdout.on('data', (data) => {
+            const line = data.toString();
+            stdout += line;
+            logs.push(line.trim());
+          });
+          
+          proc.stderr.on('data', (data) => {
+            const line = data.toString();
+            stderr += line;
+            logs.push(`[ERROR] ${line.trim()}`);
+          });
+          
+          const timeout = setTimeout(() => {
+            proc.kill('SIGTERM');
+            resolve({ stdout, stderr: stderr + '\nExecution timed out (30s limit)', exitCode: 124 });
+          }, 30000);
+          
+          proc.on('close', (code) => {
+            clearTimeout(timeout);
+            resolve({ stdout, stderr, exitCode: code || 0 });
+          });
+          
+          proc.on('error', (err) => {
+            clearTimeout(timeout);
+            resolve({ stdout, stderr: err.message, exitCode: 1 });
+          });
+        });
+        
+        if (execResult.exitCode === 0) {
+          logs.push(`\n--- Execution completed successfully ---`);
+        } else {
+          logs.push(`\n--- Execution failed (exit code: ${execResult.exitCode}) ---`);
+          if (execResult.stderr) {
+            logs.push(execResult.stderr);
+          }
+        }
+        
+        // CRITICAL FIX: Clear runtime after execution completes to allow re-runs
+        // For direct execution mode (single-shot scripts), we don't keep "running" state
+        // because the process has already finished. This allows subsequent Run clicks to work.
+        activeRuntimes.delete(projectId);
+        
+        // Clean up project directory after execution
+        try {
+          if (fs.existsSync(projectDir)) {
+            fs.rmSync(projectDir, { recursive: true, force: true });
+            logger.info(`Cleaned up project directory: ${projectDir}`);
+          }
+        } catch (cleanupErr) {
+          logger.warn(`Failed to cleanup project directory: ${projectDir}`);
+        }
+        
+        return {
+          success: execResult.exitCode === 0,
+          status: 'running', // Return running to indicate it just ran successfully
+          logs
+        };
+        
+      } catch (execError: any) {
+        const errorMessage = execError.message || 'Execution failed';
+        logs.push(`Execution error: ${errorMessage}`);
+        
+        // Clear runtime even on error to allow retries
+        activeRuntimes.delete(projectId);
+        
+        // Clean up project directory
+        try {
+          if (fs.existsSync(projectDir)) {
+            fs.rmSync(projectDir, { recursive: true, force: true });
+          }
+        } catch (cleanupErr) {
+          // Ignore cleanup errors
+        }
+        
+        return {
+          success: false,
+          status: 'error',
+          logs,
+          error: errorMessage
+        };
+      }
     }
     
     // Set up initial runtime entry
