@@ -40,6 +40,14 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThinkingDisplay, ThinkingDisplayCompact, ThinkingStep } from './ThinkingDisplay';
 import { ToolExecutionList, ToolExecutionProps } from './ToolExecutionDisplay';
 import { MessageMetadataFooter } from './MessageMetadataFooter';
+import { 
+  TaskMessage, 
+  ActionMessage, 
+  RichMessageContent,
+  type Task,
+  type Action,
+  type FileDiff
+} from '@/components/agent/messages';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useWorkflowManager } from '@/hooks/use-workflow-manager';
@@ -102,6 +110,14 @@ interface Message {
     taskList?: string[];
     designPreviewUrl?: string;
     buildChoice?: 'full' | 'design';
+  };
+  tasks?: Task[];
+  actions?: Action[];
+  checkpoint?: {
+    id: string;
+    name: string;
+    diff: FileDiff[];
+    rollbackAvailable: boolean;
   };
   metadata?: {
     model?: string;
@@ -922,6 +938,32 @@ export function ReplitAgentPanelV3({
     });
   };
 
+  const handleApproveAction = useCallback((action: Action) => {
+    toast({
+      title: 'Action Approved',
+      description: `${action.type}: ${action.description}`,
+    });
+    setMessages(prev => prev.map(msg => ({
+      ...msg,
+      actions: msg.actions?.map(a => 
+        a.id === action.id ? { ...a, status: 'approved' as const } : a
+      )
+    })));
+  }, [toast]);
+
+  const handleRejectAction = useCallback((action: Action) => {
+    toast({
+      title: 'Action Rejected',
+      description: `${action.type}: ${action.description}`,
+    });
+    setMessages(prev => prev.map(msg => ({
+      ...msg,
+      actions: msg.actions?.map(a => 
+        a.id === action.id ? { ...a, status: 'rejected' as const } : a
+      )
+    })));
+  }, [toast]);
+
   const isCompactMode = mode === 'mobile' || mode === 'tablet';
 
   return (
@@ -1171,7 +1213,7 @@ export function ReplitAgentPanelV3({
                   </div>
                 )}
 
-                {/* Message bubble */}
+                {/* Message bubble with Rich Content */}
                 <div 
                   className={cn(
                     "rounded-lg px-3 py-2 relative group",
@@ -1181,9 +1223,13 @@ export function ReplitAgentPanelV3({
                   )}
                   data-testid={`message-content-${message.id}`}
                 >
-                  <p className="text-sm whitespace-pre-wrap break-words" data-testid={`message-text-${message.id}`}>
-                    {message.content}
-                  </p>
+                  {message.role === 'assistant' && message.content ? (
+                    <RichMessageContent content={message.content} />
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap break-words" data-testid={`message-text-${message.id}`}>
+                      {message.content}
+                    </p>
+                  )}
 
                   {/* Copy button */}
                   <Button
@@ -1196,6 +1242,24 @@ export function ReplitAgentPanelV3({
                     <Copy className="h-3 w-3" />
                   </Button>
                 </div>
+
+                {/* Tasks - Inline task checklist like Replit */}
+                {message.tasks && message.tasks.length > 0 && (
+                  <div className="w-full mt-2" data-testid={`tasks-${message.id}`}>
+                    <TaskMessage tasks={message.tasks} />
+                  </div>
+                )}
+
+                {/* Actions - Inline approve/reject like Replit */}
+                {message.actions && message.actions.length > 0 && (
+                  <div className="w-full mt-2" data-testid={`actions-${message.id}`}>
+                    <ActionMessage 
+                      actions={message.actions}
+                      onApprove={(action) => handleApproveAction(action)}
+                      onReject={(action) => handleRejectAction(action)}
+                    />
+                  </div>
+                )}
 
                 {/* Tool Executions - inline in chat like Replit */}
                 {message.toolExecutions && message.toolExecutions.length > 0 && (
