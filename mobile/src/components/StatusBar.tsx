@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: mobileSpacing.md,
     paddingVertical: mobileSpacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: mobileColors.border.subtle
+    borderBottomColor: mobileColors.border
   },
   icon: {
     fontSize: 16,
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: mobileTypography.fontSize.xs,
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     marginTop: 2
   }
 });

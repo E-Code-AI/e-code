@@ -65,12 +65,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onPress }) =>
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: mobileColors.background.secondary,
+    backgroundColor: mobileColors.surfaceSecondary,
     borderRadius: mobileBorderRadius.lg,
     padding: mobileSpacing.md,
     marginBottom: mobileSpacing.sm,
     borderWidth: 1,
-    borderColor: mobileColors.border.default
+    borderColor: mobileColors.border
   },
   header: {
     flexDirection: 'row',
@@ -82,10 +82,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: mobileTypography.fontSize.lg,
     fontWeight: '600',
-    color: mobileColors.text.primary
+    color: mobileColors.text
   },
   languageBadge: {
-    backgroundColor: mobileColors.primary.default + '30',
+    backgroundColor: mobileColors.primary + '30',
     paddingHorizontal: mobileSpacing.sm,
     paddingVertical: 4,
     borderRadius: mobileBorderRadius.full,
@@ -94,11 +94,11 @@ const styles = StyleSheet.create({
   languageText: {
     fontSize: mobileTypography.fontSize.xs,
     fontWeight: '600',
-    color: mobileColors.primary.default
+    color: mobileColors.primary
   },
   description: {
     fontSize: mobileTypography.fontSize.sm,
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     lineHeight: 18,
     marginBottom: mobileSpacing.sm
   },
@@ -109,6 +109,6 @@ const styles = StyleSheet.create({
   },
   meta: {
     fontSize: mobileTypography.fontSize.xs,
-    color: mobileColors.text.tertiary
+    color: mobileColors.textMuted
   }
 });

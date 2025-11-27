@@ -129,19 +129,19 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: mobileColors.background.primary
+    backgroundColor: mobileColors.background
   },
   header: {
     paddingHorizontal: mobileSpacing.md,
     paddingVertical: mobileSpacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: mobileColors.border.default,
-    backgroundColor: mobileColors.background.secondary
+    borderBottomColor: mobileColors.border,
+    backgroundColor: mobileColors.surfaceSecondary
   },
   headerText: {
     fontSize: mobileTypography.fontSize.sm,
     fontWeight: '700',
-    color: mobileColors.text.secondary,
+    color: mobileColors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5
   },
@@ -154,12 +154,12 @@ const styles = StyleSheet.create({
     paddingVertical: mobileSpacing.sm,
     paddingRight: mobileSpacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: mobileColors.border.subtle
+    borderBottomColor: mobileColors.border
   },
   fileItemSelected: {
-    backgroundColor: mobileColors.primary.default + '20',
+    backgroundColor: mobileColors.primary + '20',
     borderLeftWidth: 3,
-    borderLeftColor: mobileColors.primary.default
+    borderLeftColor: mobileColors.primary
   },
   fileIcon: {
     fontSize: 18,
@@ -169,16 +169,16 @@ const styles = StyleSheet.create({
   fileName: {
     flex: 1,
     fontSize: mobileTypography.fontSize.sm,
-    color: mobileColors.text.primary,
+    color: mobileColors.text,
     fontFamily: 'monospace'
   },
   fileNameSelected: {
-    color: mobileColors.primary.default,
+    color: mobileColors.primary,
     fontWeight: '600'
   },
   dirArrow: {
     fontSize: 12,
-    color: mobileColors.text.tertiary,
+    color: mobileColors.textMuted,
     marginLeft: mobileSpacing.xs
   }
 });
