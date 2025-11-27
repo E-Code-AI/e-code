@@ -301,16 +301,15 @@ router.get('/github/callback', async (req, res) => {
       });
     }
     
-    // Store GitHub token for the user
-    const st = storage as any; // Temporarily cast to bypass TypeScript error
-    await st.storeGitHubToken(user.id, {
-      accessToken: access_token,
-      githubId: githubUser.id,
-      githubUsername: githubUser.login,
-      githubEmail: primaryEmail,
-      githubAvatarUrl: githubUser.avatar_url,
-      connectedAt: new Date()
-    });
+    // Update user with GitHub info
+    try {
+      await storage.updateUser(String(user.id), {
+        githubUsername: githubUser.login,
+        avatarUrl: githubUser.avatar_url
+      });
+    } catch (err) {
+      console.warn('Failed to update user with GitHub info:', err);
+    }
 
     // Log the user in
     req.login(user, (err) => {

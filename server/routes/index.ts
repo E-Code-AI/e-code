@@ -64,6 +64,7 @@ import maxAutonomyRouter from "./max-autonomy.router";
 import { bountiesRouter } from "./bounties.router";
 import agentGridRouter from "./agent-grid.router";
 import createAgentToolsRouter from "./agent-tools.router";
+import { authCompleteRouter } from "./auth-complete";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -109,6 +110,9 @@ export class MainRouter {
     
     // Authentication routes (already have auth-specific rate limiting)
     app.use(this.authRouter.getRouter());
+    
+    // OAuth authentication routes (GitHub, Google, etc.)
+    app.use('/api/auth', tierRateLimiters.auth, authCompleteRouter);
     
     // Apply tier-based rate limiting to all API routes (Fortune 500 requirement)
     // Free: 100 req/min, Pro: 1000 req/min, Enterprise: 10000 req/min

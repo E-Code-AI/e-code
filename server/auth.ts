@@ -35,7 +35,7 @@ declare module 'express-session' {
   interface SessionData {
     userAgent?: string;
     ipAddress?: string;
-    userId?: string; // Changed from number to string to match UUID
+    userId?: number | string; // Compatible with both serial (number) and string IDs
     lastActivityAt?: string;
   }
 }

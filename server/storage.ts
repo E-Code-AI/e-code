@@ -46,6 +46,7 @@ import {
   Bounty, InsertBounty,
   BountySubmission, InsertBountySubmission,
   BountyReview, InsertBountyReview,
+  UserId, normalizeUserId,
 
   projects, files, users, apiKeys, codeReviews,
   emailVerificationTokens, passwordResetTokens,
@@ -185,9 +186,6 @@ const DEFAULT_NOTIFICATION_PREFERENCES: {
   },
   frequency: 'instant',
 };
-
-const normalizeUserId = (userId: string | number): string =>
-  typeof userId === 'string' ? userId : String(userId);
 
 const normalizePreferenceSection = (
   keys: readonly string[],

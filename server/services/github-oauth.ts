@@ -208,27 +208,44 @@ export class GitHubOAuthService {
     };
   }
 
-  // Store GitHub token for user
+  // In-memory token storage (for session-based OAuth flows)
+  // In production, tokens should be stored in database via user update
+  private tokenCache: Map<number, { accessToken: string; githubUser: GitHubUser }> = new Map();
+
+  // Store GitHub token for user (in memory for session, and update user profile)
   async storeUserToken(userId: number, accessToken: string, githubUser: GitHubUser): Promise<void> {
-    await storage.storeGitHubToken(userId, {
-      accessToken: accessToken,
-      githubId: githubUser.id,
-      githubUsername: githubUser.login,
-      githubEmail: githubUser.email || '',
-      githubAvatarUrl: githubUser.avatar_url,
-      connectedAt: new Date()
-    });
+    // Store in memory cache
+    this.tokenCache.set(userId, { accessToken, githubUser });
+    
+    // Update user profile with GitHub info
+    try {
+      await storage.updateUser(String(userId), {
+        githubUsername: githubUser.login,
+        avatarUrl: githubUser.avatar_url || undefined
+      });
+    } catch (error) {
+      console.warn('[GitHubOAuthService] Failed to update user profile:', error);
+    }
   }
 
   // Get stored GitHub token
   async getUserToken(userId: number): Promise<string | null> {
-    const tokenData = await storage.getGitHubToken(userId);
-    return tokenData?.accessToken || null;
+    const cached = this.tokenCache.get(userId);
+    return cached?.accessToken || null;
   }
 
   // Remove GitHub connection
   async disconnectUser(userId: number): Promise<void> {
-    await storage.removeGitHubToken(userId);
+    this.tokenCache.delete(userId);
+    
+    // Clear GitHub username from user profile
+    try {
+      await storage.updateUser(String(userId), {
+        githubUsername: null
+      });
+    } catch (error) {
+      console.warn('[GitHubOAuthService] Failed to clear GitHub connection:', error);
+    }
   }
 
   // Middleware to check GitHub authentication

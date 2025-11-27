@@ -119,10 +119,23 @@ export default function Login() {
   };
 
   const handleSocialLogin = (provider: string) => {
-    toast({
-      title: "Coming Soon",
-      description: `${provider} login will be available soon!`,
-    });
+    const providerRoutes: Record<string, string> = {
+      'GitHub': '/api/auth/github',
+      'Google': '/api/auth/google',
+      'Twitter': '/api/auth/twitter',
+      'Apple': '/api/auth/apple'
+    };
+    
+    const route = providerRoutes[provider];
+    if (route) {
+      // Redirect to OAuth endpoint which will handle the OAuth flow
+      window.location.href = route;
+    } else {
+      toast({
+        title: "Coming Soon",
+        description: `${provider} login will be available soon!`,
+      });
+    }
   };
 
   return (
