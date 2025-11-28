@@ -34,6 +34,7 @@ import { MobileTerminal } from '@/components/mobile/MobileTerminal';
 import { MobilePreviewPanel } from '@/components/mobile/MobilePreviewPanel';
 import { MobileCollaborationPanel } from '@/components/mobile/MobileCollaborationPanel';
 import { useToast } from '@/hooks/use-toast';
+import { ToastProvider as DesignSystemToastProvider } from '@/design-system';
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 
 export type TabletPanel = 'editor' | 'terminal' | 'preview';
@@ -262,16 +263,17 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
   );
   
   return (
-    <div
-      className={cn(
-        'flex h-screen w-screen overflow-hidden bg-background',
-        'touch-manipulation select-none',
-        className
-      )}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      data-testid="tablet-ide-view"
-    >
+    <DesignSystemToastProvider>
+      <div
+        className={cn(
+          'flex h-screen w-screen overflow-hidden bg-background',
+          'touch-manipulation select-none',
+          className
+        )}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        data-testid="tablet-ide-view"
+      >
       {/* Sliding Drawer Navigation */}
       <AnimatePresence>
         {drawerOpen && (
@@ -469,10 +471,11 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
       
       {/* Collaboration Panel */}
       <MobileCollaborationPanel
-        projectId={projectId}
+        projectId={parseInt(projectId, 10) || 0}
         isOpen={isCollaborationOpen}
         onClose={() => setIsCollaborationOpen(false)}
       />
-    </div>
+      </div>
+    </DesignSystemToastProvider>
   );
 }
