@@ -23,6 +23,7 @@ interface MobileMoreMenuProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenFiles?: () => void;
+  onOpenCollaboration?: () => void;
   problemsCount?: number;
   className?: string;
 }
@@ -46,6 +47,7 @@ export function MobileMoreMenu({
   isOpen,
   onClose,
   onOpenFiles,
+  onOpenCollaboration,
   problemsCount = 0,
   className 
 }: MobileMoreMenuProps) {
@@ -160,7 +162,11 @@ export function MobileMoreMenu({
   };
 
   const handleInviteUsers = () => {
-    toast({ title: 'Invite Users', description: 'Opening invite dialog...' });
+    if (onOpenCollaboration) {
+      onOpenCollaboration();
+    } else {
+      toast({ title: 'Invite Users', description: 'Opening invite dialog...' });
+    }
     onClose();
   };
 
