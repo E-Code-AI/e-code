@@ -145,8 +145,8 @@ export class FilesRouter {
           const fileId = parseInt(fileIdentifier, 10);
           file = await this.storage.getFile(fileId);
           
-          // Verify file belongs to this project
-          if (file && file.projectId !== projectId) {
+          // Verify file belongs to this project (compare as strings for type safety)
+          if (file && String(file.projectId) !== projectId) {
             file = null; // Security: don't leak files from other projects
           }
         } else {
@@ -233,11 +233,13 @@ export class FilesRouter {
         const existingFile = await this.getFileByPath(projectId, validatedData.path);
         
         if (existingFile) {
-          // Update file with content and language
-          const updatedFile = await this.storage.updateFile(existingFile.id, {
-            content: validatedData.content,
-            language: validatedData.language
+          // Update file content
+          await this.storage.updateFile(existingFile.id, {
+            content: validatedData.content || ''
           });
+          
+          // Get updated file for response
+          const updatedFile = await this.storage.getFile(existingFile.id);
           
           // AUDIT: Log successful update
           const userId = (req.user as any)?.id || 'unknown';
@@ -245,7 +247,7 @@ export class FilesRouter {
             userId,
             projectId,
             { type: 'edit_file', path: validatedData.path, content: validatedData.content || '' },
-            { success: true, fileId: updatedFile?.id ? String(updatedFile.id) : undefined }
+            { success: true, fileId: String(existingFile.id) }
           );
           
           // ✅ 40-YEAR SENIOR FIX: Wrap response in { file } envelope (test contract)
@@ -559,10 +561,17 @@ export class FilesRouter {
     });
 
     // Create folder
-    this.router.post("/api/projects/:projectId/folders", this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
+    this.router.post("/api/projects/:projectId/folders", this.ensureAuthenticated, this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
       try {
-        const projectId = req.params.projectId;
+        const projectId = parseInt(req.params.projectId, 10);
         const { path: folderPath } = req.body;
+        
+        if (isNaN(projectId)) {
+          return res.status(400).json({
+            message: "Invalid project ID",
+            code: "INVALID_PROJECT_ID"
+          });
+        }
         
         if (!folderPath || folderPath.includes('..')) {
           return res.status(400).json({
@@ -571,7 +580,7 @@ export class FilesRouter {
           });
         }
 
-        // ✅ FIX: Create placeholder file without 'language' field
+        // Create placeholder file to represent the folder
         const file = await this.storage.createFile({
           projectId,
           name: '.gitkeep',
@@ -586,6 +595,62 @@ export class FilesRouter {
         res.status(500).json({ 
           message: "Failed to create folder",
           code: "CREATE_ERROR"
+        });
+      }
+    });
+
+    // Rename file/folder
+    this.router.patch("/api/projects/:projectId/files/rename", this.ensureAuthenticated, this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
+      try {
+        const projectId = req.params.projectId;
+        const { oldPath, newPath } = req.body;
+        
+        if (!oldPath || !newPath) {
+          return res.status(400).json({
+            message: "Both oldPath and newPath are required",
+            code: "MISSING_PATHS"
+          });
+        }
+        
+        // Security: validate paths
+        const { aiSecurityService } = await import('../services/ai-security.service');
+        const oldPathValidation = aiSecurityService.validatePath(oldPath);
+        const newPathValidation = aiSecurityService.validatePath(newPath);
+        
+        if (!oldPathValidation.valid || !newPathValidation.valid) {
+          return res.status(400).json({
+            message: "Invalid path",
+            code: "SECURITY_PATH_BLOCKED"
+          });
+        }
+        
+        // Get the file to rename
+        const file = await this.getFileByPath(projectId, oldPathValidation.sanitized!);
+        if (!file) {
+          return res.status(404).json({
+            message: "File not found",
+            code: "FILE_NOT_FOUND"
+          });
+        }
+        
+        // Extract new name from new path
+        const newName = newPathValidation.sanitized!.split('/').pop() || newPathValidation.sanitized!;
+        
+        // Update the file with new path and name
+        await this.storage.updateFile(file.id, {
+          path: newPathValidation.sanitized!,
+          name: newName
+        });
+        
+        // Get updated file for response
+        const updatedFile = await this.storage.getFile(file.id);
+        
+        res.json({ message: "File renamed successfully", file: updatedFile });
+      } catch (error) {
+        console.error('Error renaming file:', error);
+        res.status(500).json({ 
+          message: "Failed to rename file",
+          code: "RENAME_ERROR"
         });
       }
     });
