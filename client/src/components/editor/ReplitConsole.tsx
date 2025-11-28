@@ -1,21 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Trash2, Copy, Download, Search } from 'lucide-react';
+import { Trash2, Copy, Download, Terminal, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { useRuntimeLogs, RuntimeLogEntry } from '@/hooks/useRuntimeLogs';
 
 interface ConsoleLog {
-  id: number;
-  type: 'info' | 'error' | 'warn' | 'log' | 'debug';
+  id: string;
+  type: 'info' | 'error' | 'warn' | 'log' | 'debug' | 'stdout' | 'stderr' | 'system' | 'exit';
   message: string;
   timestamp: Date;
   stack?: string;
 }
 
 interface ReplitConsoleProps {
-  projectId: string | number; // Support both UUID strings and numeric IDs
+  projectId: string | number;
   isRunning?: boolean;
   executionId?: string;
   className?: string;
@@ -27,50 +26,38 @@ export function ReplitConsole({ projectId, isRunning, executionId, className }: 
   const scrollRef = useRef<HTMLDivElement>(null);
   const autoScrollRef = useRef(true);
 
-  // Fetch initial logs - REAL BACKEND
-  const { data: initialLogs } = useQuery<ConsoleLog[]>({
-    queryKey: [`/api/terminal/logs?projectId=${projectId}`],
-    enabled: Boolean(projectId), // Support both UUID strings and numeric IDs
+  const handleLog = useCallback((log: RuntimeLogEntry) => {
+    const consoleLog: ConsoleLog = {
+      id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      type: log.type === 'stderr' ? 'error' : log.type === 'exit' ? 'info' : log.type,
+      message: log.content,
+      timestamp: new Date(log.timestamp),
+    };
+    
+    setLogs(prev => [...prev, consoleLog]);
+    
+    if (autoScrollRef.current && scrollRef.current) {
+      setTimeout(() => {
+        scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 10);
+    }
+  }, []);
+
+  const { isConnected, isComplete, exitCode, connect, disconnect, clearLogs: clearWsLogs } = useRuntimeLogs({
+    projectId,
+    executionId,
+    enabled: Boolean(isRunning && executionId),
+    onLog: handleLog,
   });
 
-  // WebSocket connection for real-time logs
   useEffect(() => {
-    if (!isRunning || !executionId) return;
-
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}/api/terminal/ws?projectId=${projectId}&executionId=${executionId}`);
-    
-    ws.onmessage = (event) => {
-      const log = JSON.parse(event.data);
-      setLogs(prev => [...prev, {
-        ...log,
-        id: `${Date.now()}_${performance.now()}`,
-        timestamp: new Date(log.timestamp)
-      }]);
-      
-      if (autoScrollRef.current) {
-        scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    return () => {
-      ws.close();
-    };
-  }, [projectId, isRunning, executionId]);
-
-  // Initialize with any existing logs (normalize timestamps from JSON)
-  useEffect(() => {
-    if (initialLogs) {
-      setLogs(initialLogs.map(log => ({
-        ...log,
-        timestamp: new Date(log.timestamp)
-      })));
+    if (isRunning && executionId) {
+      setLogs([]);
+      connect(executionId);
+    } else if (!isRunning) {
+      disconnect();
     }
-  }, [initialLogs]);
+  }, [isRunning, executionId, connect, disconnect]);
 
   const filteredLogs = logs.filter(log => {
     if (filter === 'all') return true;
@@ -79,6 +66,7 @@ export function ReplitConsole({ projectId, isRunning, executionId, className }: 
 
   const clearLogs = () => {
     setLogs([]);
+    clearWsLogs();
   };
 
   const copyLogs = () => {
@@ -104,11 +92,23 @@ export function ReplitConsole({ projectId, isRunning, executionId, className }: 
 
   const getLogColor = (type: ConsoleLog['type']) => {
     switch (type) {
-      case 'error': return 'text-status-critical';
-      case 'warn': return 'text-status-warning';
-      case 'info': return 'text-status-info';
-      case 'debug': return 'text-muted-foreground';
-      default: return 'text-[var(--ecode-text)]';
+      case 'error':
+      case 'stderr':
+        return 'text-red-500';
+      case 'warn': 
+        return 'text-yellow-500';
+      case 'info':
+      case 'system':
+        return 'text-blue-500';
+      case 'debug': 
+        return 'text-muted-foreground';
+      case 'stdout':
+      case 'log':
+        return 'text-foreground';
+      case 'exit':
+        return 'text-green-500';
+      default: 
+        return 'text-foreground';
     }
   };
 
@@ -116,6 +116,41 @@ export function ReplitConsole({ projectId, isRunning, executionId, className }: 
     <div className={cn("flex flex-col h-full bg-[var(--ecode-background)]", className)}>
       {/* Console Header */}
       <div className="h-8 flex items-center justify-between px-2 border-b border-[var(--ecode-border)]">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs font-medium">Console</span>
+          </div>
+          
+          {isRunning && (
+            <div className="flex items-center gap-1">
+              <div className={cn(
+                "w-2 h-2 rounded-full animate-pulse",
+                isConnected ? "bg-green-500" : "bg-yellow-500"
+              )} />
+              <span className="text-xs text-muted-foreground">
+                {isConnected ? 'Live' : 'Connecting...'}
+              </span>
+            </div>
+          )}
+          
+          {isComplete && exitCode !== null && (
+            <div className="flex items-center gap-1">
+              {exitCode === 0 ? (
+                <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+              ) : (
+                <XCircle className="h-3.5 w-3.5 text-red-500" />
+              )}
+              <span className={cn(
+                "text-xs",
+                exitCode === 0 ? "text-green-500" : "text-red-500"
+              )}>
+                Exit: {exitCode}
+              </span>
+            </div>
+          )}
+        </div>
+        
         <div className="flex items-center gap-1">
           <Button
             variant={filter === 'all' ? 'secondary' : 'ghost'}
@@ -131,26 +166,18 @@ export function ReplitConsole({ projectId, isRunning, executionId, className }: 
             className="h-6 px-2 text-xs"
             onClick={() => setFilter('error')}
           >
-            Errors ({logs.filter(l => l.type === 'error').length})
+            Errors ({logs.filter(l => l.type === 'error' || l.type === 'stderr').length})
           </Button>
-          <Button
-            variant={filter === 'warn' ? 'secondary' : 'ghost'}
-            size="sm"
-            className="h-6 px-2 text-xs"
-            onClick={() => setFilter('warn')}
-          >
-            Warnings ({logs.filter(l => l.type === 'warn').length})
-          </Button>
-        </div>
-        
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={clearLogs}>
+          
+          <div className="w-px h-4 bg-border mx-1" />
+          
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={clearLogs} title="Clear logs">
             <Trash2 className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copyLogs}>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copyLogs} title="Copy logs">
             <Copy className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={downloadLogs}>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={downloadLogs} title="Download logs">
             <Download className="h-3 w-3" />
           </Button>
         </div>
