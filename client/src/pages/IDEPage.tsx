@@ -73,6 +73,8 @@ import { AIAssistant } from '@/components/AIAssistant';
 import { BillingSystem } from '@/components/BillingSystem';
 import { ExtensionsMarketplace } from '@/components/ExtensionsMarketplace';
 import { CollaborationPresence } from '@/components/editor/CollaborationPresence';
+import { CollaborationPanel } from '@/components/CollaborationPanel';
+import { RealTimeCollaborators } from '@/components/RealTimeCollaborators';
 import { TestRunner } from '@/components/TestRunner';
 import { Shell } from '@/components/Shell';
 
@@ -781,12 +783,29 @@ export default function IDEPage() {
         />
       )}
       
-      {/* Collaboration Presence Modal */}
+      {/* Collaboration Panel Modal */}
       {showCollaboration && user && (
-        <CollaborationPresence
-          projectId={parseInt(projectId, 10)}
-          currentUserId={user.id}
-        />
+        <div className="fixed inset-y-0 right-0 w-80 z-50 shadow-xl border-l bg-background" data-testid="collab-panel">
+          <div className="flex items-center justify-between p-2 border-b">
+            <span className="font-medium text-sm">Collaboration</span>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setShowCollaboration(false)}
+              className="h-7 w-7"
+              data-testid="close-collab-panel"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <CollaborationPanel
+            projectId={parseInt(projectId, 10)}
+            projectName={project?.name}
+            currentUser={user}
+            currentFile={selectedFileId ? files.find(f => f.id === selectedFileId)?.name : undefined}
+            className="h-[calc(100%-48px)]"
+          />
+        </div>
       )}
       
       {/* Keyboard Utilities */}

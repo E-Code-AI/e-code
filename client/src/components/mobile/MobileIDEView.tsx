@@ -7,6 +7,7 @@ import { LazyMobileCodeEditor } from './LazyMobileCodeEditor';
 import { EnhancedMobileTerminal } from './EnhancedMobileTerminal';
 import { MobilePreviewPanel } from './MobilePreviewPanel';
 import { MobileMoreMenu } from './MobileMoreMenu';
+import { MobileCollaborationPanel } from './MobileCollaborationPanel';
 import { ReplitBottomTabs } from './ReplitBottomTabs';
 import { MobileFAB } from './MobileFAB';
 import { useTabPersistence, useFileBrowserPersistence } from '@/hooks/use-mobile-persistence';
@@ -44,6 +45,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isFilesOpen, setIsFilesOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [isCollaborationOpen, setIsCollaborationOpen] = useState(false);
   
   // Keyboard utilities feature flags
   const [enableShortcutHint, setEnableShortcutHint] = useState(() => {
@@ -242,6 +244,14 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         isOpen={isMoreMenuOpen}
         onClose={() => setIsMoreMenuOpen(false)}
         onOpenFiles={handleOpenFiles}
+        onOpenCollaboration={() => setIsCollaborationOpen(true)}
+      />
+      
+      {/* Collaboration Panel */}
+      <MobileCollaborationPanel
+        projectId={parseInt(normalizedProjectId, 10) || 0}
+        isOpen={isCollaborationOpen}
+        onClose={() => setIsCollaborationOpen(false)}
       />
       
       {/* Keyboard Utilities (work with external keyboards on mobile) */}

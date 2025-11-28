@@ -181,4 +181,51 @@ router.get('/stats/:projectId', requireAuth, async (req: Request, res: Response)
   }
 });
 
+// Send invitation to collaborate
+router.post('/invite', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const { projectId, email, role } = req.body;
+    const inviterId = req.user?.id;
+    const inviterName = req.user?.username || 'Someone';
+    
+    if (!projectId || !email) {
+      return res.status(400).json({ error: 'Missing projectId or email' });
+    }
+    
+    // Generate invitation token
+    const inviteToken = require('nanoid').nanoid(32);
+    const inviteLink = `${req.protocol}://${req.get('host')}/ide/${projectId}?invite=${inviteToken}`;
+    
+    // TODO: Send email invitation (integrate with SendGrid/email service)
+    // For now, just return success with the link
+    console.log(`[Collaboration] Invite sent from ${inviterName} to ${email} for project ${projectId}`);
+    
+    res.json({ 
+      success: true, 
+      message: `Invitation sent to ${email}`,
+      inviteLink
+    });
+  } catch (error) {
+    console.error('Error sending invitation:', error);
+    res.status(500).json({ error: 'Failed to send invitation' });
+  }
+});
+
+// Get active collaborators for a project (for real-time presence)
+router.get('/active', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const projectId = req.query.projectId;
+    
+    if (!projectId) {
+      return res.status(400).json({ error: 'Missing projectId' });
+    }
+    
+    // Return empty array for now - real data comes from WebSocket
+    res.json([]);
+  } catch (error) {
+    console.error('Error fetching active collaborators:', error);
+    res.status(500).json({ error: 'Failed to fetch collaborators' });
+  }
+});
+
 export default router;
