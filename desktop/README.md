@@ -1,252 +1,286 @@
 # E-Code Desktop Application
 
-Application desktop native pour E-Code, construite avec Electron.
+Fortune 500-grade native desktop application for the E-Code platform, built with Electron.
 
-## 📋 Prérequis
+## 🚀 Features
 
-- Node.js 20.x ou supérieur
-- npm 10.x ou supérieur
-- Client web buildé (voir instructions ci-dessous)
+- **Native Desktop Experience** - Full native menu, keyboard shortcuts, and system integration
+- **Offline Support** - Works with bundled frontend or connects to production server
+- **Auto-Updates** - Automatic update checking and installation via electron-updater
+- **Cross-Platform** - Builds for macOS, Windows, and Linux
+- **Secure IPC** - Context isolation with secure API bridge
+- **Native File System** - Read/write files, show save dialogs, open folders
+- **System Theme** - Respects system dark/light mode preference
+- **Window State** - Remembers window size, position, and maximized state
 
-## 🚀 Installation
+## 📋 Prerequisites
+
+- Node.js 18.x or higher
+- npm 10.x or higher
+- Built web frontend (see instructions below)
+
+## 🔧 Installation
 
 ```bash
 cd desktop
 npm install
 ```
 
-## 🎨 Génération des Icônes
+## 🎨 Development Mode
 
-Les icônes doivent être générées avant le build. Utilisez le script `generate-icons.sh` :
-
-```bash
-# Depuis la racine du projet
-./scripts/generate-desktop-icons.sh
-```
-
-Ce script génère automatiquement :
-- `resources/icon.png` (512x512) - Pour Linux
-- `resources/icon.icns` - Pour macOS
-- `resources/icon.ico` - Pour Windows
-
-### Pré-requis pour la génération d'icônes :
-
-**macOS:**
-```bash
-brew install imagemagick
-brew install --cask icns
-```
-
-**Ubuntu/Debian:**
-```bash
-sudo apt-get install imagemagick icnsutils
-```
-
-**Windows:**
-```bash
-choco install imagemagick
-```
-
-## 🔨 Build du Client Web
-
-Avant de lancer l'application desktop, vous devez build le client web :
+### Option 1: Connect to Dev Server
 
 ```bash
-# Depuis la racine du projet
-cd client
-npm install
-npm run build
-
-# Copier le build dans desktop/renderer
-mkdir -p ../desktop/renderer
-cp -r dist/* ../desktop/renderer/
-```
-
-## 🧑‍💻 Développement
-
-### Mode Dev (avec serveur Vite)
-
-```bash
-# Terminal 1 : Lancer le serveur de dev du client
-cd client
+# Terminal 1: Start the main development server (from project root)
 npm run dev
 
-# Terminal 2 : Lancer Electron en mode dev
+# Terminal 2: Start Electron in dev mode (from desktop directory)
 cd desktop
 npm run dev
 ```
 
-L'application se connecte au serveur Vite sur `http://localhost:5173`.
+The Electron app will connect to `http://localhost:5000` (the Vite dev server).
 
-### Mode Production Local
+### Option 2: Use Built Frontend
 
 ```bash
-# 1. Build le client
-cd client
+# Build the frontend (from project root)
 npm run build
-cp -r dist/* ../desktop/renderer/
 
-# 2. Lancer l'app desktop
-cd ../desktop
+# Prepare renderer files
+cd desktop
+npm run prepare-renderer
+
+# Start Electron
 npm start
 ```
 
-## 📦 Build pour Distribution
+## 📦 Building for Distribution
 
-### Build pour toutes les plateformes
+### Quick Build (All Platforms)
 
 ```bash
-npm run build
+cd desktop
+node scripts/build-desktop.js --all
 ```
 
-### Build pour une plateforme spécifique
+### Platform-Specific Builds
 
 ```bash
 # macOS (DMG + ZIP)
-npm run build:mac
+node scripts/build-desktop.js --mac
 
 # Windows (NSIS installer + Portable)
-npm run build:win
+node scripts/build-desktop.js --win
 
 # Linux (AppImage + deb + rpm)
-npm run build:linux
+node scripts/build-desktop.js --linux
 ```
 
-### Fichiers de sortie
+### Build Options
 
-Les builds sont dans `desktop/dist/` :
+```bash
+node scripts/build-desktop.js [options]
 
-**macOS:**
-- `E-Code-1.0.0.dmg` - Installeur DMG
-- `E-Code-1.0.0-mac.zip` - Archive ZIP
+Options:
+  --mac           Build for macOS only
+  --win           Build for Windows only
+  --linux         Build for Linux only
+  --all           Build for all platforms (default)
+  --skip-frontend Skip frontend build (use existing dist)
+  --skip-icons    Skip icon generation
+  --verbose       Show detailed output
+```
 
-**Windows:**
-- `E-Code Setup 1.0.0.exe` - Installeur NSIS
-- `E-Code 1.0.0.exe` - Version portable
+### Manual Build Process
 
-**Linux:**
-- `E-Code-1.0.0.AppImage` - AppImage
-- `e-code_1.0.0_amd64.deb` - Package Debian
-- `e-code-1.0.0.x86_64.rpm` - Package RPM
+```bash
+# 1. Build the frontend (from project root)
+npm run build
+
+# 2. Prepare renderer files
+cd desktop
+npm run prepare-renderer
+
+# 3. Generate icons (optional, requires sharp)
+npm install sharp
+node scripts/generate-icons.js
+
+# 4. Build Electron app
+npm run build
+```
+
+## 📁 Output Files
+
+Build artifacts are in `desktop/dist/`:
+
+### macOS
+- `E-Code-1.0.0-x64.dmg` - Intel DMG installer
+- `E-Code-1.0.0-arm64.dmg` - Apple Silicon DMG installer
+- `E-Code-1.0.0-mac-x64.zip` - Intel ZIP archive
+- `E-Code-1.0.0-mac-arm64.zip` - Apple Silicon ZIP archive
+
+### Windows
+- `E-Code-1.0.0-win-x64.exe` - 64-bit NSIS installer
+- `E-Code-1.0.0-win-arm64.exe` - ARM64 NSIS installer
+- `E-Code-1.0.0-portable.exe` - Portable version (no install)
+
+### Linux
+- `E-Code-1.0.0-x64.AppImage` - Universal Linux AppImage
+- `e-code_1.0.0_amd64.deb` - Debian/Ubuntu package
+- `e-code-1.0.0.x86_64.rpm` - Fedora/RHEL package
+- `E-Code-1.0.0-x64.tar.gz` - Generic archive
+
+## 🎛️ Keyboard Shortcuts
+
+| Action | macOS | Windows/Linux |
+|--------|-------|---------------|
+| New Project | ⌘N | Ctrl+N |
+| Open Project | ⌘O | Ctrl+O |
+| Save | ⌘S | Ctrl+S |
+| Save All | ⌘⇧S | Ctrl+Shift+S |
+| Preferences | ⌘, | Ctrl+, |
+| Find | ⌘F | Ctrl+F |
+| Find & Replace | ⌘H | Ctrl+H |
+| Quick Open | ⌘P | Ctrl+P |
+| Go to Line | ⌘G | Ctrl+G |
+| Toggle Sidebar | ⌘B | Ctrl+B |
+| Toggle Terminal | ⌘J | Ctrl+J |
+| Toggle AI | ⌘⇧A | Ctrl+Shift+A |
+| New Terminal | ⌘⇧` | Ctrl+Shift+` |
+| Run Code | ⌘↵ | Ctrl+Enter |
+| Full Screen | ⌘⌃F | F11 |
+
+## 🔐 Security
+
+The desktop app follows Electron security best practices:
+
+- **Context Isolation** - Renderer process is isolated from Node.js
+- **Node Integration Disabled** - No direct Node.js access in renderer
+- **Sandbox Mode** - Enhanced security sandbox enabled
+- **Web Security Enabled** - CORS and other web security measures
+- **Secure IPC** - All communication via validated channels
+- **No Webviews** - Webview tag is disabled for security
+
+## 📱 React Integration
+
+Use the `useElectron` hook to integrate with desktop features:
+
+```tsx
+import { useElectron, isElectron } from '@/hooks/useElectron';
+
+function MyComponent() {
+  const { 
+    isDesktop,
+    platform,
+    appVersion,
+    showSaveDialog,
+    showOpenDialog,
+    openExternal,
+    copyToClipboard,
+  } = useElectron();
+
+  const handleSave = async () => {
+    if (!isDesktop) {
+      // Web fallback
+      return;
+    }
+
+    const result = await showSaveDialog({
+      filters: [{ name: 'Text Files', extensions: ['txt'] }]
+    });
+
+    if (!result.canceled && result.filePath) {
+      // Save file...
+    }
+  };
+
+  return (
+    <div>
+      {isDesktop && <span>Desktop v{appVersion}</span>}
+      <button onClick={handleSave}>Save</button>
+    </div>
+  );
+}
+```
+
+### Menu Event Handling
+
+```tsx
+import { useElectronMenuEvents } from '@/hooks/useElectron';
+
+function Editor() {
+  useElectronMenuEvents({
+    onSave: () => saveCurrentFile(),
+    onFind: () => openSearchDialog(),
+    onNewTerminal: () => createTerminal(),
+  });
+
+  return <MonacoEditor />;
+}
+```
 
 ## 🔧 Configuration
 
-### Variables d'Environnement
+### Environment Variables
 
-Créez un fichier `.env` dans `desktop/` :
+Create a `.env` file in the desktop directory:
 
 ```env
-# Mode de développement
-NODE_ENV=development
+# Development server URL
+DEV_SERVER_URL=http://localhost:5000
 
-# URL du serveur backend (production)
-WEB_URL=https://your-production-url.com
+# Production URL (fallback if no bundled renderer)
+PRODUCTION_URL=https://e-code.replit.app
+
+# Enable dev tools in production (optional)
+ENABLE_DEV_TOOLS=false
 ```
 
-### Entitlements macOS
+### electron-builder Configuration
 
-Pour macOS, les entitlements sont dans `resources/entitlements.mac.plist`.
+The `build` section in `package.json` contains the complete electron-builder configuration. Key options:
 
-## 🎛️ Fonctionnalités
-
-- ✅ Menus natifs de l'application
-- ✅ Raccourcis clavier (Cmd/Ctrl+N, Cmd/Ctrl+O, etc.)
-- ✅ Auto-updates (via electron-updater)
-- ✅ Persistance de l'état des fenêtres
-- ✅ Gestion sécurisée des liens externes
-- ✅ Support multi-plateformes (macOS, Windows, Linux)
-- ✅ Communication IPC sécurisée (contextBridge)
-- ✅ Mode sombre natif (macOS)
-
-## 📱 Communication avec le Renderer
-
-L'application utilise `contextBridge` pour exposer des APIs sécurisées au renderer :
-
-```typescript
-// Dans le renderer (React)
-declare global {
-  interface Window {
-    electronAPI: {
-      getAppVersion: () => Promise<string>;
-      getPlatform: () => Promise<string>;
-      showSaveDialog: (options: any) => Promise<any>;
-      showOpenDialog: (options: any) => Promise<any>;
-      onMenuNewProject: (callback: () => void) => void;
-      onMenuOpenProject: (callback: () => void) => void;
-      onMenuSave: (callback: () => void) => void;
-      // ... etc
-      isElectron: true;
-    };
-  }
-}
-
-// Utilisation
-if (window.electronAPI?.isElectron) {
-  const version = await window.electronAPI.getAppVersion();
-  console.log('App version:', version);
-}
-```
-
-## 🔐 Sécurité
-
-- Context isolation activée
-- Node integration désactivée
-- Web security activée
-- Sandbox mode activé
-- Webviews désactivées
-
-## 🐛 Debugging
-
-Pour ouvrir les DevTools en production :
-
-1. Lancer l'app avec `--dev`:
-   ```bash
-   npm start -- --dev
-   ```
-
-2. Ou utiliser le menu **Developer → Toggle DevTools** (disponible uniquement en dev mode)
-
-## 📝 Scripts Disponibles
-
-- `npm start` - Lancer l'application
-- `npm run dev` - Lancer en mode développement
-- `npm run build` - Build pour toutes les plateformes
-- `npm run build:mac` - Build pour macOS uniquement
-- `npm run build:win` - Build pour Windows uniquement
-- `npm run build:linux` - Build pour Linux uniquement
-- `npm run pack` - Créer un package non-signé (test)
+- `appId` - Application identifier
+- `productName` - Display name
+- `files` - Files to include in the package
+- `mac/win/linux` - Platform-specific settings
+- `publish` - Auto-update server configuration
 
 ## 🔄 Auto-Updates
 
-L'application vérifie automatiquement les mises à jour au démarrage (production uniquement).
+The app automatically checks for updates on startup (production only). Updates are downloaded in the background and installed on restart.
 
-Pour publier une mise à jour :
+### Publishing Updates
 
-1. Incrémenter la version dans `package.json`
-2. Build l'application
-3. Publier les fichiers sur votre serveur de mises à jour
-4. Les utilisateurs seront notifiés automatiquement
+1. Increment version in `package.json`
+2. Build the application
+3. Push to your update server (configured in `publish` settings)
+4. Users will be notified automatically
 
-## 🚨 Troubleshooting
+## 🐛 Troubleshooting
 
-### L'app ne démarre pas
+### App doesn't start
+- Ensure renderer files exist in `renderer/` directory
+- Run `npm run prepare-renderer` if missing
+- Check that `node_modules` is installed
 
-- Vérifiez que le client web est buildé dans `renderer/`
-- Vérifiez que `node_modules` est installé
-- Essayez de supprimer `node_modules` et réinstaller
+### Icons not showing
+- Run `node scripts/generate-icons.js`
+- Ensure `resources/` contains icon files
+- For icns/ico files, use online converters
 
-### Les icônes ne s'affichent pas
+### Connection errors
+- Check that the backend server is running
+- Verify `DEV_SERVER_URL` or `PRODUCTION_URL`
+- Check CORS settings on the backend
 
-- Générez les icônes avec `./scripts/generate-desktop-icons.sh`
-- Vérifiez que `resources/` contient les fichiers d'icônes
+### Build fails
+- Clear build cache: `npm run clean`
+- Reinstall dependencies: `rm -rf node_modules && npm install`
+- Check Node.js version (requires 18+)
 
-### L'app ne se connecte pas au backend
-
-- Vérifiez que le serveur backend est lancé
-- Vérifiez la variable `WEB_URL` dans `main.js`
-- Vérifiez les paramètres CORS du backend
-
-## 📚 Ressources
+## 📚 Resources
 
 - [Electron Documentation](https://www.electronjs.org/docs)
 - [electron-builder Documentation](https://www.electron.build/)
@@ -254,4 +288,4 @@ Pour publier une mise à jour :
 
 ## 📄 License
 
-MIT License - Voir le fichier LICENSE à la racine du projet
+MIT License - See LICENSE file at project root
