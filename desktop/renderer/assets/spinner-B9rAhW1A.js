@@ -1,0 +1,1 @@
+import{j as r,b6 as a}from"./index-BQTdcdnQ.js";function i({size:s="md",className:e,...n}){const o={sm:"h-4 w-4 border-2",md:"h-8 w-8 border-3",lg:"h-12 w-12 border-4"};return r.jsx("div",{className:a("animate-spin rounded-full border-solid border-primary border-t-transparent",o[s],e),...n,children:r.jsx("span",{className:"sr-only",children:"Loading..."})})}export{i as S};

@@ -1,0 +1,1 @@
+import{bi as a,r as t,bj as u,bk as c}from"./index-BQTdcdnQ.js";function i(o){const e=a(()=>c(o)),{isStatic:s}=t.useContext(u);if(s){const[,n]=t.useState(o);t.useEffect(()=>e.on("change",n),[])}return e}export{i as u};

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: ws: wss: https:; img-src 'self' data: blob: https:; font-src 'self' data: https:;">
+    <base href="./">
+    <style data-vite-theme="" data-inject-first="">:root {
+      --background: 0 0% 100%;
+--foreground: 20 14.3% 4.1%;
+--muted: 60 4.8% 95.9%;
+--muted-foreground: 25 5.3% 44.7%;
+--popover: 0 0% 100%;
+--popover-foreground: 20 14.3% 4.1%;
+--card: 0 0% 100%;
+--card-foreground: 20 14.3% 4.1%;
+--border: 20 5.9% 90%;
+--input: 20 5.9% 90%;
+--primary: 23 94% 49%;
+--primary-foreground: 17 100% 99%;
+--secondary: 60 4.8% 95.9%;
+--secondary-foreground: 24 9.8% 10%;
+--accent: 60 4.8% 95.9%;
+--accent-foreground: 24 9.8% 10%;
+--destructive: 0 84.2% 60.2%;
+--destructive-foreground: 60 9.1% 97.8%;
+--ring: 20 14.3% 4.1%;
+--radius: 8rem;
+  }
+  .dark {
+      --background: 240 10% 3.9%;
+--foreground: 0 0% 98%;
+--muted: 240 3.7% 15.9%;
+--muted-foreground: 240 5% 64.9%;
+--popover: 240 10% 3.9%;
+--popover-foreground: 0 0% 98%;
+--card: 240 10% 3.9%;
+--card-foreground: 0 0% 98%;
+--border: 240 3.7% 15.9%;
+--input: 240 3.7% 15.9%;
+--primary: 23 94% 49%;
+--primary-foreground: 17 100% 99%;
+--secondary: 240 3.7% 15.9%;
+--secondary-foreground: 0 0% 98%;
+--accent: 240 3.7% 15.9%;
+--accent-foreground: 0 0% 98%;
+--destructive: 0 62.8% 30.6%;
+--destructive-foreground: 0 0% 98%;
+--ring: 240 4.9% 83.9%;
+--radius: 8rem;
+  }</style>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>E-Code - Code, Create, and Learn Together</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" href="/favicon.ico" type="image/x-icon" />
+    <meta name="description" content="E-Code is where people create software, learn to code, and build their ideas. With zero setup and instant collaboration." />
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#F26207">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    <!-- Removed deprecated apple-mobile-web-app-capable meta tag -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="E-Code">
+    
+    <!-- Additional PWA optimizations -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- IBM Plex Fonts - Replit Style -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="dns-prefetch" href="https://api.anthropic.com">
+    <link rel="dns-prefetch" href="https://api.openai.com">
+    <script type="module" crossorigin src="/assets/index-BQTdcdnQ.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-B6V-8Xu3.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // Critical fix for WebSocket issues in development
+      // Suppresses connection errors and fixes undefined port issues
+      (function() {
+        if (typeof window === 'undefined' || !window.WebSocket) return;
+        
+        const isDevelopment = window.location.hostname === 'localhost' || 
+                              window.location.hostname.includes('replit.dev') ||
+                              window.location.port === '5173';
+        
+        const OriginalWebSocket = window.WebSocket;
+        
+        // Create a mock WebSocket that fails silently in development
+        class MockWebSocket {
+          constructor(url, protocols) {
+            this.url = url;
+            this.protocols = protocols;
+            this.readyState = WebSocket.CONNECTING;
+            this._eventListeners = {};
+            
+            // Silently fail in development
+            setTimeout(() => {
+              this.readyState = WebSocket.CLOSED;
+              if (this.onclose) {
+                this.onclose({ code: 1000, reason: 'Development mode - WebSocket disabled' });
+              }
+            }, 0);
+          }
+          
+          send(data) {
+            // Suppress send in development
+          }
+          
+          close() {
+            this.readyState = WebSocket.CLOSED;
+          }
+          
+          addEventListener(type, listener) {
+            if (!this._eventListeners[type]) {
+              this._eventListeners[type] = [];
+            }
+            this._eventListeners[type].push(listener);
+          }
+          
+          removeEventListener(type, listener) {
+            if (this._eventListeners[type]) {
+              this._eventListeners[type] = this._eventListeners[type].filter(l => l !== listener);
+            }
+          }
+        }
+        
+        // Static properties
+        MockWebSocket.CONNECTING = OriginalWebSocket.CONNECTING;
+        MockWebSocket.OPEN = OriginalWebSocket.OPEN;
+        MockWebSocket.CLOSING = OriginalWebSocket.CLOSING;
+        MockWebSocket.CLOSED = OriginalWebSocket.CLOSED;
+        
+        // Only use MockWebSocket in development for non-HMR connections
+        const ProxyWebSocket = new Proxy(OriginalWebSocket, {
+          construct: function(target, args) {
+            let url = args[0];
+            const protocols = args[1];
+            
+            // Fix URLs with undefined port
+            if (typeof url === 'string') {
+              if (url.includes(':undefined') || url.includes('localhost:undefined')) {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const host = window.location.host;
+                
+                if (url.includes('localhost:undefined')) {
+                  const match = url.match(/localhost:undefined(.*)/);
+                  const pathAndQuery = match ? match[1] : '';
+                  url = protocol + '//' + host + pathAndQuery;
+                } else if (url.includes(':undefined')) {
+                  url = url.replace(':undefined', ':' + (window.location.port || '5000'));
+                }
+              }
+              
+              // In development, use MockWebSocket for non-Vite connections
+              // CRITICAL: Allow /ws/agent for autonomous workspace creation
+              const isViteHMR = url.includes('/@vite') || url.includes('__vite') || url.includes('?token=');
+              const isAgentWebSocket = url.includes('/ws/agent') || url.includes('/api/terminal/ws');
+              console.log('[WebSocket] Connection attempt:', url, 'isAgent:', isAgentWebSocket, 'isViteHMR:', isViteHMR, 'isDev:', isDevelopment);
+              
+              if (isDevelopment && !isViteHMR && !isAgentWebSocket) {
+                console.log('[WebSocket] Suppressed connection in development:', url);
+                return new MockWebSocket(url, protocols);
+              }
+              
+              console.log('[WebSocket] ✅ Allowing real connection:', url);
+            }
+            
+            // Create real WebSocket for production or Vite HMR
+            return new target(url, protocols);
+          }
+        });
+        
+        // Copy static properties
+        ProxyWebSocket.CONNECTING = OriginalWebSocket.CONNECTING;
+        ProxyWebSocket.OPEN = OriginalWebSocket.OPEN;
+        ProxyWebSocket.CLOSING = OriginalWebSocket.CLOSING;
+        ProxyWebSocket.CLOSED = OriginalWebSocket.CLOSED;
+        
+        // Replace the global WebSocket
+        window.WebSocket = ProxyWebSocket;
+        
+        console.log('[WebSocket] Interceptor installed (Development mode: ' + isDevelopment + ')');
+      })();
+    </script>
+  </body>
+</html>
