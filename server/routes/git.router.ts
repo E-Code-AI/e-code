@@ -255,4 +255,307 @@ router.post('/pull', ensureAuthenticated, csrfProtection, async (req: Request, r
   }
 });
 
+interface GitBranchInfo {
+  name: string;
+  current: boolean;
+  lastCommit: {
+    hash: string;
+    message: string;
+    author: string;
+    date: string;
+  };
+  ahead: number;
+  behind: number;
+  isRemote: boolean;
+  trackingBranch?: string;
+}
+
+async function parseBranchInfo(branchLine: string, currentBranch: string): Promise<GitBranchInfo | null> {
+  try {
+    const isCurrent = branchLine.startsWith('*');
+    const rawName = branchLine.replace(/^\*?\s+/, '').trim();
+    
+    if (!rawName || rawName.startsWith('(HEAD detached')) {
+      return null;
+    }
+    
+    const isRemote = rawName.startsWith('remotes/');
+    const name = isRemote ? rawName.replace('remotes/', '') : rawName;
+    
+    // Get last commit info
+    const logResult = await execa('git', ['log', '-1', '--format=%H|%s|%an|%aI', name], { 
+      cwd: PROJECT_ROOT,
+      reject: false
+    });
+    
+    const [hash = '', message = '', author = '', dateStr = ''] = (logResult.stdout || '').split('|');
+    
+    // Get ahead/behind count relative to tracking branch
+    let ahead = 0, behind = 0;
+    try {
+      const countResult = await execa('git', ['rev-list', '--left-right', '--count', `${name}...origin/${name}`], {
+        cwd: PROJECT_ROOT,
+        reject: false
+      });
+      if (countResult.stdout) {
+        const parts = countResult.stdout.split('\t');
+        ahead = parseInt(parts[0], 10) || 0;
+        behind = parseInt(parts[1], 10) || 0;
+      }
+    } catch {
+      // No tracking branch
+    }
+    
+    return {
+      name,
+      current: name === currentBranch,
+      lastCommit: {
+        hash: hash.substring(0, 7),
+        message,
+        author,
+        date: dateStr
+      },
+      ahead,
+      behind,
+      isRemote,
+      trackingBranch: isRemote ? undefined : `origin/${name}`
+    };
+  } catch {
+    return null;
+  }
+}
+
+router.get('/branches', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const isRepo = await ensureGitRepo();
+    if (!isRepo) {
+      await initGitRepo();
+    }
+
+    // Get current branch
+    const { stdout: currentBranch } = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: PROJECT_ROOT });
+    
+    // Get all branches (local and remote)
+    const { stdout: branchOutput } = await execa('git', ['branch', '-a'], { cwd: PROJECT_ROOT });
+    
+    const branchLines = branchOutput.split('\n').filter(Boolean);
+    const branches: GitBranchInfo[] = [];
+    
+    for (const line of branchLines) {
+      const info = await parseBranchInfo(line, currentBranch.trim());
+      if (info) {
+        branches.push(info);
+      }
+    }
+    
+    res.json({ branches });
+  } catch (error: any) {
+    console.error('[Git] Branches error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/branches', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+  try {
+    const { name, startPoint } = req.body;
+    
+    if (!name || typeof name !== 'string' || name.trim() === '') {
+      return res.status(400).json({ error: 'Branch name required' });
+    }
+    
+    // Validate branch name (no spaces, special chars)
+    if (!/^[a-zA-Z0-9_\-\/]+$/.test(name)) {
+      return res.status(400).json({ error: 'Invalid branch name' });
+    }
+    
+    const isRepo = await ensureGitRepo();
+    if (!isRepo) {
+      return res.status(400).json({ error: 'Not a git repository' });
+    }
+    
+    const args = ['checkout', '-b', name];
+    if (startPoint) {
+      args.push(startPoint);
+    }
+    
+    await execa('git', args, { cwd: PROJECT_ROOT });
+    
+    res.json({ success: true, branch: name });
+  } catch (error: any) {
+    console.error('[Git] Create branch error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.delete('/branches/:name(*)', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+  try {
+    const { name } = req.params;
+    const { force } = req.query;
+    
+    if (!name) {
+      return res.status(400).json({ error: 'Branch name required' });
+    }
+    
+    const isRepo = await ensureGitRepo();
+    if (!isRepo) {
+      return res.status(400).json({ error: 'Not a git repository' });
+    }
+    
+    // Prevent deleting current branch
+    const { stdout: currentBranch } = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: PROJECT_ROOT });
+    if (name === currentBranch.trim()) {
+      return res.status(400).json({ error: 'Cannot delete current branch' });
+    }
+    
+    const args = ['branch', force === 'true' ? '-D' : '-d', name];
+    await execa('git', args, { cwd: PROJECT_ROOT });
+    
+    res.json({ success: true, deleted: name });
+  } catch (error: any) {
+    console.error('[Git] Delete branch error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/checkout', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+  try {
+    const { branch } = req.body;
+    
+    if (!branch || typeof branch !== 'string') {
+      return res.status(400).json({ error: 'Branch name required' });
+    }
+    
+    const isRepo = await ensureGitRepo();
+    if (!isRepo) {
+      return res.status(400).json({ error: 'Not a git repository' });
+    }
+    
+    await execa('git', ['checkout', branch], { cwd: PROJECT_ROOT });
+    
+    res.json({ success: true, branch });
+  } catch (error: any) {
+    console.error('[Git] Checkout error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/merge', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+  try {
+    const { branch, message } = req.body;
+    
+    if (!branch || typeof branch !== 'string') {
+      return res.status(400).json({ error: 'Branch name required' });
+    }
+    
+    const isRepo = await ensureGitRepo();
+    if (!isRepo) {
+      return res.status(400).json({ error: 'Not a git repository' });
+    }
+    
+    const args = ['merge', branch];
+    if (message) {
+      args.push('-m', message);
+    }
+    
+    const { stdout } = await execa('git', args, { cwd: PROJECT_ROOT });
+    
+    res.json({ success: true, output: stdout });
+  } catch (error: any) {
+    console.error('[Git] Merge error:', error);
+    // Check for merge conflicts
+    if (error.message?.includes('CONFLICT')) {
+      return res.status(409).json({ 
+        error: 'Merge conflict', 
+        conflicts: error.stdout?.match(/CONFLICT.*/g) || [],
+        output: error.stdout 
+      });
+    }
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/log', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const { limit = '20', branch } = req.query;
+    
+    const isRepo = await ensureGitRepo();
+    if (!isRepo) {
+      return res.status(400).json({ error: 'Not a git repository' });
+    }
+    
+    const args = ['log', '--format=%H|%s|%an|%aI', `-${limit}`];
+    if (branch && typeof branch === 'string') {
+      args.push(branch);
+    }
+    
+    const { stdout } = await execa('git', args, { cwd: PROJECT_ROOT });
+    
+    const commits = stdout.split('\n').filter(Boolean).map(line => {
+      const [hash, message, author, date] = line.split('|');
+      return {
+        hash,
+        shortHash: hash.substring(0, 7),
+        message,
+        author,
+        date
+      };
+    });
+    
+    res.json({ commits });
+  } catch (error: any) {
+    console.error('[Git] Log error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/remotes', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const isRepo = await ensureGitRepo();
+    if (!isRepo) {
+      return res.status(400).json({ error: 'Not a git repository' });
+    }
+    
+    const { stdout } = await execa('git', ['remote', '-v'], { cwd: PROJECT_ROOT });
+    
+    const remotes: { name: string; url: string; type: 'fetch' | 'push' }[] = [];
+    stdout.split('\n').filter(Boolean).forEach(line => {
+      const match = line.match(/^(\S+)\s+(\S+)\s+\((fetch|push)\)$/);
+      if (match) {
+        remotes.push({
+          name: match[1],
+          url: match[2],
+          type: match[3] as 'fetch' | 'push'
+        });
+      }
+    });
+    
+    res.json({ remotes });
+  } catch (error: any) {
+    console.error('[Git] Remotes error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/remotes', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+  try {
+    const { name, url } = req.body;
+    
+    if (!name || !url) {
+      return res.status(400).json({ error: 'Remote name and URL required' });
+    }
+    
+    const isRepo = await ensureGitRepo();
+    if (!isRepo) {
+      return res.status(400).json({ error: 'Not a git repository' });
+    }
+    
+    await execa('git', ['remote', 'add', name, url], { cwd: PROJECT_ROOT });
+    
+    res.json({ success: true, remote: { name, url } });
+  } catch (error: any) {
+    console.error('[Git] Add remote error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export const GitRouter = router;
