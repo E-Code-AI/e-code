@@ -137,12 +137,31 @@ export async function startProject(projectId: number, userId?: number): Promise<
     }
     
     // Get project files
-    const files = await storage.getFilesByProject(projectId);
+    let files = await storage.getFilesByProject(projectId);
+    
+    // If no files exist, create default files based on project language
     if (!files.length) {
-      return {
-        success: false,
-        error: 'No files found in project'
-      };
+      const project = await storage.getProject(projectId);
+      const language = (project?.language || 'javascript');
+      
+      // Create a default index.js file
+      await storage.createFile({
+        projectId: String(projectId),
+        path: 'index.js',
+        content: `// Welcome to your new project!
+console.log('Hello, World!');
+`
+      });
+      
+      // Reload files
+      files = await storage.getFilesByProject(projectId);
+      
+      if (!files.length) {
+        return {
+          success: false,
+          error: 'Failed to create default project files'
+        };
+      }
     }
     
     // Get project owner if not provided

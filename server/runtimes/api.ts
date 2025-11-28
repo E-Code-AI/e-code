@@ -168,9 +168,32 @@ export async function startProjectRuntime(req: Request, res: Response) {
     }
     
     // Get project files
-    const files = await storage.getFilesByProjectId(projectId);
+    let files = await storage.getFilesByProjectId(projectId);
+    
+    // If no files exist, create default files based on project language
     if (!files.length) {
-      return res.status(400).json({ message: 'No files found in project', executionId });
+      const language = (project.language || 'javascript') as any;
+      const defaultFiles = runtimeManager.createDefaultProject(language);
+      
+      // Create default files in storage
+      for (const file of defaultFiles) {
+        if (!file.isFolder) {
+          await storage.createFile({
+            projectId: projectId,
+            path: file.name,
+            content: file.content || ''
+          });
+        }
+      }
+      
+      // Reload files after creation
+      files = await storage.getFilesByProjectId(projectId);
+      
+      if (!files.length) {
+        return res.status(500).json({ message: 'Failed to create default project files', executionId });
+      }
+      
+      logger.info(`Created default files for project ${projectId}`);
     }
     
     // Get options from request

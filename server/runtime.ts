@@ -53,12 +53,36 @@ export async function startProject(projectId: string): Promise<{
     }
     
     // Get project files
-    const files = await storage.getFilesByProject(projectId);
+    let files = await storage.getFilesByProject(projectId);
+    
+    // If no files exist, create default files based on project language
     if (!files.length) {
-      return {
-        success: false,
-        error: 'No files found in project'
-      };
+      const language = (project.language || 'javascript') as Language;
+      const defaultFiles = getDefaultProjectFiles(language);
+      
+      // Create default files in storage
+      for (const file of defaultFiles) {
+        if (!file.isFolder) {
+          await storage.createFile({
+            projectId: projectId,
+            path: file.name,
+            content: file.content || ''
+          });
+        }
+      }
+      
+      // Reload files after creation
+      files = await storage.getFilesByProject(projectId);
+      
+      // If still no files, return error
+      if (!files.length) {
+        return {
+          success: false,
+          error: 'Failed to create default project files'
+        };
+      }
+      
+      log(`Created default files for project ${projectId}`, 'runtime');
     }
 
     // Init logs if not existing
