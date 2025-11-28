@@ -33,7 +33,7 @@ interface PreviewInstance {
 export class PreviewService {
   private previews: Map<string, PreviewInstance> = new Map();
   private basePort = 8000;
-  private healthCheckInterval: NodeJS.Timeout;
+  public healthCheckInterval: NodeJS.Timeout | null = null;
   private allocatedPorts: Set<number> = new Set();
 
   constructor() {
@@ -105,9 +105,13 @@ export class PreviewService {
         pathRewrite: {
           [`^/preview/${projectId}/${port}`]: ''
         },
-        onError: (err: any, req: any, res: any) => {
-          logger.error(`Preview proxy error for project ${projectId} port ${port}:`, err);
-          res.status(502).json({ error: 'Preview server error' });
+        on: {
+          error: (err: any, req: any, res: any) => {
+            logger.error(`Preview proxy error for project ${projectId} port ${port}:`, err);
+            if (res && typeof res.status === 'function') {
+              res.status(502).json({ error: 'Preview server error' });
+            }
+          }
         }
       });
       
@@ -131,9 +135,13 @@ export class PreviewService {
         pathRewrite: {
           [`^/preview/${projectId}`]: ''
         },
-        onError: (err: any, req: any, res: any) => {
-          logger.error(`Preview proxy error for project ${projectId}:`, err);
-          res.status(502).json({ error: 'Preview server error' });
+        on: {
+          error: (err: any, req: any, res: any) => {
+            logger.error(`Preview proxy error for project ${projectId}:`, err);
+            if (res && typeof res.status === 'function') {
+              res.status(502).json({ error: 'Preview server error' });
+            }
+          }
         }
       });
       
@@ -362,20 +370,20 @@ export class PreviewService {
       return;
     }
 
-    const process = spawn(startCommand[0], startCommand.slice(1), {
+    const childProcess = spawn(startCommand[0], startCommand.slice(1), {
       cwd: previewPath,
       env: { 
-        ...process.env, 
+        ...globalThis.process.env, 
         PORT: port.toString(),
         VITE_PORT: port.toString(),
         DEV_SERVER_PORT: port.toString()
       }
     });
 
-    this.setupProcessHandlers(preview, process, port, `${frameworkInfo.type} dev server`);
+    this.setupProcessHandlers(preview, childProcess, port, `${frameworkInfo.type} dev server`);
     
     preview.ports.push(port);
-    preview.processes.set(port, process);
+    preview.processes.set(port, childProcess);
     preview.healthChecks.set(port, false);
     preview.exposedServices.push({
       port,
@@ -388,7 +396,7 @@ export class PreviewService {
       const apiPort = port + 1000; // API on different port
       const apiProcess = spawn('npm', ['run', frameworkInfo.packageJson.scripts?.api ? 'api' : 'server'], {
         cwd: previewPath,
-        env: { ...process.env, PORT: apiPort.toString() }
+        env: { ...globalThis.process.env, PORT: apiPort.toString() }
       });
 
       this.setupProcessHandlers(preview, apiProcess, apiPort, 'API Server');
@@ -422,15 +430,15 @@ export class PreviewService {
       startCommand = ['node', mainFile];
     }
 
-    const process = spawn(startCommand[0], startCommand.slice(1), {
+    const nodeProcess = spawn(startCommand[0], startCommand.slice(1), {
       cwd: previewPath,
-      env: { ...process.env, PORT: port.toString() }
+      env: { ...globalThis.process.env, PORT: port.toString() }
     });
 
-    this.setupProcessHandlers(preview, process, port, 'Node.js Server');
+    this.setupProcessHandlers(preview, nodeProcess, port, 'Node.js Server');
     
     preview.ports.push(port);
-    preview.processes.set(port, process);
+    preview.processes.set(port, nodeProcess);
     preview.healthChecks.set(port, false);
     preview.exposedServices.push({
       port,
@@ -454,15 +462,15 @@ export class PreviewService {
       throw new Error('No main Python file found (main.py, app.py, or server.py)');
     }
 
-    const process = spawn('python', [mainFile.name], {
+    const pythonProcess = spawn('python', [mainFile.name], {
       cwd: previewPath,
-      env: { ...process.env, PORT: port.toString() }
+      env: { ...globalThis.process.env, PORT: port.toString() }
     });
 
-    this.setupProcessHandlers(preview, process, port, 'Python Server');
+    this.setupProcessHandlers(preview, pythonProcess, port, 'Python Server');
     
     preview.ports.push(port);
-    preview.processes.set(port, process);
+    preview.processes.set(port, pythonProcess);
     preview.healthChecks.set(port, false);
     preview.exposedServices.push({
       port,
@@ -475,14 +483,14 @@ export class PreviewService {
     const port = preview.primaryPort;
     preview.logs.push('Starting static file server...');
     
-    const process = spawn('npx', ['http-server', '-p', port.toString(), '-a', 'localhost', '--cors'], {
+    const staticProcess = spawn('npx', ['http-server', '-p', port.toString(), '-a', 'localhost', '--cors'], {
       cwd: previewPath
     });
 
-    this.setupProcessHandlers(preview, process, port, 'Static Server');
+    this.setupProcessHandlers(preview, staticProcess, port, 'Static Server');
     
     preview.ports.push(port);
-    preview.processes.set(port, process);
+    preview.processes.set(port, staticProcess);
     preview.healthChecks.set(port, false);
     preview.exposedServices.push({
       port,

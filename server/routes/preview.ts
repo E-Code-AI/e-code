@@ -78,9 +78,9 @@ router.get('/url', ensureAuthenticated, async (req, res) => {
     
     // Check if project has runnable files
     const files = await storage.getFilesByProject(projectId);
-    const hasHtmlFile = files.some(f => f.name.endsWith('.html') && !f.isFolder);
-    const hasPackageJson = files.some(f => f.name === 'package.json' && !f.isFolder);
-    const hasPythonFiles = files.some(f => f.name.endsWith('.py') && !f.isFolder);
+    const hasHtmlFile = files.some(f => f.name.endsWith('.html') && !f.isDirectory);
+    const hasPackageJson = files.some(f => f.name === 'package.json' && !f.isDirectory);
+    const hasPythonFiles = files.some(f => f.name.endsWith('.py') && !f.isDirectory);
     
     if (!hasHtmlFile && !hasPackageJson && !hasPythonFiles) {
       // No runnable files, return null URL
@@ -146,11 +146,11 @@ router.get('/projects/:id/preview/:filepath(*)', ensureAuthenticated, ensureProj
     const files = await storage.getFilesByProject(projectId);
     
     // Find the requested file
-    const file = files.find(f => f.name === filepath && !f.isFolder);
+    const file = files.find(f => f.name === filepath && !f.isDirectory);
     
     if (!file) {
       // Try to find index.html as default
-      const indexFile = files.find(f => f.name === 'index.html' && !f.isFolder);
+      const indexFile = files.find(f => f.name === 'index.html' && !f.isDirectory);
       if (indexFile) {
         res.type('html').send(indexFile.content || '');
         return;
@@ -231,9 +231,9 @@ router.get('/projects/:id/preview-url', ensureAuthenticated, ensureProjectAccess
     
     // Check if it's an HTML project or has runnable code
     const files = await storage.getFilesByProject(projectId);
-    const hasHtmlFile = files.some(f => f.name.endsWith('.html') && !f.isFolder);
-    const hasPackageJson = files.some(f => f.name === 'package.json' && !f.isFolder);
-    const hasPythonFiles = files.some(f => f.name.endsWith('.py') && !f.isFolder);
+    const hasHtmlFile = files.some(f => f.name.endsWith('.html') && !f.isDirectory);
+    const hasPackageJson = files.some(f => f.name === 'package.json' && !f.isDirectory);
+    const hasPythonFiles = files.some(f => f.name.endsWith('.py') && !f.isDirectory);
     
     if (!hasHtmlFile && !hasPackageJson && !hasPythonFiles) {
       return res.status(400).json({ error: 'No runnable files found in project' });

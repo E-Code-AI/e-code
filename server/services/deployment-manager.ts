@@ -112,7 +112,15 @@ export class DeploymentManager {
     }
 
     // Create deployment record in database
-    const numericProjectId = typeof config.projectId === 'string' ? parseInt(config.projectId, 10) : config.projectId;
+    // Projects use serial integer IDs, but API may receive them as strings
+    const numericProjectId = typeof config.projectId === 'string' 
+      ? parseInt(config.projectId, 10) 
+      : config.projectId;
+    
+    if (isNaN(numericProjectId)) {
+      throw new Error(`Invalid project ID: ${config.projectId}. Project IDs must be numeric.`);
+    }
+    
     const dbDeployment = await storage.createDeployment({
       projectId: numericProjectId,
       type: config.type,
