@@ -32,6 +32,7 @@ import { TabletDrawerContent } from './TabletDrawerContent';
 import { LazyMobileCodeEditor } from '@/components/mobile/LazyMobileCodeEditor';
 import { MobileTerminal } from '@/components/mobile/MobileTerminal';
 import { MobilePreviewPanel } from '@/components/mobile/MobilePreviewPanel';
+import { MobileCollaborationPanel } from '@/components/mobile/MobileCollaborationPanel';
 import { useToast } from '@/hooks/use-toast';
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 
@@ -52,6 +53,7 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
   const [drawerOpen, setDrawerOpen] = useDrawerPersistence(projectId);
   const [rightPanel, setRightPanel] = usePanelPersistence(projectId, layout.canSplitView);
   const [selectedFileId, setSelectedFileId] = useTabletFilePersistence(projectId);
+  const [isCollaborationOpen, setIsCollaborationOpen] = useState(false);
   const { 
     editorPanelSize, 
     setEditorPanelSize, 
@@ -319,6 +321,7 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
                 onOpenPackages={handleOpenPackages}
                 onOpenDebugger={handleOpenDebugger}
                 onOpenSettings={handleOpenSettings}
+                onOpenCollaboration={() => setIsCollaborationOpen(true)}
               />
             </div>
           </motion.div>
@@ -463,6 +466,13 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
       {/* Keyboard Utilities (work with external keyboards on tablet) */}
       {enableShortcutHint && <ShortcutHint />}
       {enableShortcutTester && <ShortcutTester />}
+      
+      {/* Collaboration Panel */}
+      <MobileCollaborationPanel
+        projectId={projectId}
+        isOpen={isCollaborationOpen}
+        onClose={() => setIsCollaborationOpen(false)}
+      />
     </div>
   );
 }
