@@ -36,11 +36,13 @@ RUN npm run build
 # ============================================
 FROM node:18-alpine AS deps
 
+RUN apk add --no-cache python3 make g++
+
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install --omit=optional --omit=dev --ignore-scripts && \
+RUN npm install --omit=optional --omit=dev && \
     npm cache clean --force && \
     rm -rf ~/.npm /tmp/* && \
     find node_modules -name "*.md" -delete && \
@@ -116,8 +118,7 @@ RUN npm install --omit=optional --omit=dev --ignore-scripts && \
     rm -rf node_modules/monaco-editor/esm/vs/basic-languages/tcl && \
     rm -rf node_modules/monaco-editor/esm/vs/basic-languages/twig && \
     rm -rf node_modules/monaco-editor/esm/vs/basic-languages/vb && \
-    rm -rf node_modules/monaco-editor/esm/vs/basic-languages/wgsl && \
-    rm -rf node_modules/monaco-editor/esm/vs/basic-languages/test
+    rm -rf node_modules/monaco-editor/esm/vs/basic-languages/wgsl
 
 # ============================================
 # Stage 3: Runtime - Minimal production image

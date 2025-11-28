@@ -133,9 +133,7 @@ dist/public/*.map
 Jenkinsfile
 azure-pipelines.yml
 .circleci/
-Dockerfile
 docker-compose*
-.dockerignore
 
 # Replit specific
 .replit
@@ -210,7 +208,6 @@ node_modules/monaco-editor/esm/vs/basic-languages/tcl/
 node_modules/monaco-editor/esm/vs/basic-languages/twig/
 node_modules/monaco-editor/esm/vs/basic-languages/vb/
 node_modules/monaco-editor/esm/vs/basic-languages/wgsl/
-node_modules/monaco-editor/esm/vs/basic-languages/xml/
 node_modules/monaco-editor/esm/vs/basic-languages/test/
 
 # Monaco ESM duplicate files
