@@ -38,6 +38,7 @@ import {
   Monitor,
   Bell,
   Clock,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
@@ -75,6 +76,9 @@ interface TopNavBarProps {
   onAddTool?: (toolId: string) => void;
   showFileExplorer: boolean;
   onToggleFileExplorer: () => void;
+  showCollaboration?: boolean;
+  onToggleCollaboration?: () => void;
+  collaboratorCount?: number;
 }
 
 export function TopNavBar({
@@ -92,7 +96,10 @@ export function TopNavBar({
   availableTools,
   onAddTool,
   showFileExplorer,
-  onToggleFileExplorer
+  onToggleFileExplorer,
+  showCollaboration,
+  onToggleCollaboration,
+  collaboratorCount = 0
 }: TopNavBarProps) {
   const { user, logoutMutation } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -210,6 +217,27 @@ export function TopNavBar({
       
       {/* Right Actions */}
       <div className="flex items-center gap-1.5">
+        {/* Collaboration Toggle */}
+        {onToggleCollaboration && (
+          <Button
+            variant={showCollaboration ? "secondary" : "ghost"}
+            size="sm"
+            onClick={onToggleCollaboration}
+            data-testid="button-toggle-collaboration"
+            className={cn(
+              "h-7 px-2 gap-1.5",
+              showCollaboration && "bg-primary/10"
+            )}
+          >
+            <Users className="h-3.5 w-3.5" />
+            {collaboratorCount > 0 && (
+              <Badge variant="secondary" className="h-4 px-1 text-[10px] font-medium">
+                {collaboratorCount}
+              </Badge>
+            )}
+          </Button>
+        )}
+        
         {/* File Explorer Toggle */}
         <Button
           variant="ghost"
