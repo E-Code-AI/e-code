@@ -1,4 +1,4 @@
-type LanguageId = 'javascript' | 'typescript' | 'html' | 'css' | 'json' | 'python' | 'markdown' | 'sql' | 'yaml' | 'xml' | 'go' | 'rust' | 'java' | 'cpp' | 'csharp' | 'php' | 'ruby' | 'shell';
+type LanguageId = 'javascript' | 'typescript' | 'html' | 'css' | 'json' | 'python' | 'markdown' | 'sql' | 'yaml' | 'go' | 'rust' | 'java' | 'cpp' | 'csharp' | 'php' | 'ruby' | 'shell' | 'xml';
 
 const loadedLanguages = new Set<string>();
 
