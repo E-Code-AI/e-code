@@ -15,12 +15,13 @@ interface ConsoleLog {
 
 interface ReplitConsoleProps {
   projectId: string | number;
+  userId?: string | number;
   isRunning?: boolean;
   executionId?: string;
   className?: string;
 }
 
-export function ReplitConsole({ projectId, isRunning, executionId, className }: ReplitConsoleProps) {
+export function ReplitConsole({ projectId, userId, isRunning, executionId, className }: ReplitConsoleProps) {
   const [logs, setLogs] = useState<ConsoleLog[]>([]);
   const [filter, setFilter] = useState<'all' | 'error' | 'warn' | 'info'>('all');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -45,6 +46,7 @@ export function ReplitConsole({ projectId, isRunning, executionId, className }: 
 
   const { isConnected, isComplete, exitCode, connect, disconnect, clearLogs: clearWsLogs } = useRuntimeLogs({
     projectId,
+    userId,
     executionId,
     enabled: Boolean(isRunning && executionId),
     onLog: handleLog,
