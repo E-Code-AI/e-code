@@ -5,13 +5,15 @@
  */
 
 import { WebSocketServer, WebSocket } from 'ws';
-import { Server } from 'http';
+import { Server, IncomingMessage } from 'http';
+import { Socket } from 'net';
 import * as pty from 'node-pty';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
 import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
+import { markSocketAsHandled } from '../websocket/upgrade-guard';
 
 const logger = createLogger('pty-terminal');
 
@@ -36,8 +38,7 @@ export class PTYTerminalService {
 
   setup(server: Server): void {
     this.wss = new WebSocketServer({
-      server,
-      path: '/api/terminal/ws',
+      noServer: true,
       perMessageDeflate: {
         zlibDeflateOptions: { chunkSize: 1024, memLevel: 7, level: 3 },
         zlibInflateOptions: { chunkSize: 10 * 1024 },
@@ -47,6 +48,28 @@ export class PTYTerminalService {
         concurrencyLimit: 10,
         threshold: 1024
       }
+    });
+
+    server.on('upgrade', (request: IncomingMessage, socket: Socket, head: Buffer) => {
+      let pathname: string;
+      
+      try {
+        pathname = new URL(request.url || '', `http://${request.headers.host || 'localhost'}`).pathname;
+      } catch (error) {
+        logger.warn('Failed to parse URL for terminal upgrade, ignoring request');
+        return;
+      }
+      
+      if (pathname !== '/api/terminal/ws') {
+        return;
+      }
+      
+      markSocketAsHandled(request, socket);
+      logger.debug(`Terminal WebSocket upgrade accepted for ${pathname}`);
+      
+      this.wss!.handleUpgrade(request, socket, head, (ws) => {
+        this.wss!.emit('connection', ws, request);
+      });
     });
 
     logger.info('PTY Terminal WebSocket server initialized at /api/terminal/ws');
