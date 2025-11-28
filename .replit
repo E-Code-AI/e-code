@@ -73,12 +73,20 @@ localPort = 38963
 externalPort = 3003
 
 [[ports]]
+localPort = 40191
+externalPort = 6800
+
+[[ports]]
 localPort = 40251
 externalPort = 5173
 
 [[ports]]
 localPort = 41021
 externalPort = 3002
+
+[[ports]]
+localPort = 41247
+externalPort = 8000
 
 [[ports]]
 localPort = 44163
@@ -149,3 +157,5 @@ FEATURE_AI_UX_PAUSE_RESUME = "true"
 
 [userenv.development]
 ENABLE_DIRECT_EXECUTION = "true"
+TESTING_STRIPE_SECRET_KEY = "sk_test_51QPg0B2VSIgdqPLPR7HBpKWbq4x5BJKOrNCFDTGDgOYZmF1HLgKuYccJjAaHTJSiAT19vjsfS9YUNQlIktRgeMZW00ARQIirpq"
+TESTING_VITE_STRIPE_PUBLIC_KEY = "pk_test_51QPg0B2VSIgdqPLPngii8d0mAYVtYtaHQZSaCDkJCHZVJxjRNW002YDpBWCBMzsynpUZsaky0cPGOwnXwUoaksjD00asCttkC4"
