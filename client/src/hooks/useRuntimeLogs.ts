@@ -16,6 +16,7 @@ export interface RuntimeLogEntry {
 
 export interface UseRuntimeLogsOptions {
   projectId: string | number;
+  userId?: string | number;
   executionId?: string;
   enabled?: boolean;
   onLog?: (log: RuntimeLogEntry) => void;
@@ -39,6 +40,7 @@ export interface UseRuntimeLogsResult {
 export function useRuntimeLogs(options: UseRuntimeLogsOptions): UseRuntimeLogsResult {
   const {
     projectId,
+    userId,
     executionId: initialExecutionId,
     enabled = true,
     onLog,
@@ -86,48 +88,61 @@ export function useRuntimeLogs(options: UseRuntimeLogsOptions): UseRuntimeLogsRe
     clearLogs();
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/api/runtime/logs/ws`;
+    const params = new URLSearchParams({
+      projectId: String(projectId),
+      userId: String(userId || 'anonymous'),
+    });
+    if (executionIdRef.current) {
+      params.set('executionId', executionIdRef.current);
+    }
+    const wsUrl = `${protocol}//${window.location.host}/api/runtime/logs/ws?${params.toString()}`;
     
+    console.log('[RuntimeLogs] Connecting to:', wsUrl);
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {
+      console.log('[RuntimeLogs] Connected');
       setIsConnected(true);
       onConnect?.();
-
-      ws.send(JSON.stringify({
-        type: 'subscribe',
-        projectId: String(projectId),
-        executionId: executionIdRef.current,
-      }));
     };
 
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        console.log('[RuntimeLogs] Message:', data);
         
-        if (data.type === 'subscribed') {
+        if (data.type === 'initial' && Array.isArray(data.logs)) {
+          const entries: RuntimeLogEntry[] = data.logs.map((log: any) => ({
+            type: log.type || 'stdout',
+            content: log.message || '',
+            timestamp: log.timestamp || Date.now(),
+            executionId: log.executionId,
+          }));
+          setLogs(prev => [...prev, ...entries]);
+          entries.forEach(entry => onLog?.(entry));
           return;
         }
         
-        if (data.type === 'log' || data.type === 'output') {
+        if (data.type === 'log' && data.log) {
           const logEntry: RuntimeLogEntry = {
-            type: data.logType || 'stdout',
-            content: data.content || data.data || '',
-            timestamp: data.timestamp || Date.now(),
-            executionId: data.executionId,
+            type: data.log.type || 'stdout',
+            content: data.log.message || '',
+            timestamp: data.log.timestamp || Date.now(),
+            executionId: data.log.executionId,
           };
           
           setLogs(prev => [...prev, logEntry]);
           onLog?.(logEntry);
+          return;
         }
         
         if (data.type === 'exit') {
           const exitEntry: RuntimeLogEntry = {
             type: 'exit',
-            content: `Process exited with code ${data.exitCode} (${data.executionTime}ms)`,
-            timestamp: data.timestamp || Date.now(),
-            executionId: data.executionId,
+            content: data.log?.message || `Process exited with code ${data.exitCode}`,
+            timestamp: data.log?.timestamp || Date.now(),
+            executionId: data.log?.executionId,
             exitCode: data.exitCode,
             executionTime: data.executionTime,
           };
@@ -137,6 +152,7 @@ export function useRuntimeLogs(options: UseRuntimeLogsOptions): UseRuntimeLogsRe
           setExitCode(data.exitCode);
           setExecutionTime(data.executionTime);
           onExit?.(data.exitCode, data.executionTime);
+          return;
         }
 
         if (data.type === 'error') {
@@ -146,6 +162,11 @@ export function useRuntimeLogs(options: UseRuntimeLogsOptions): UseRuntimeLogsRe
             timestamp: Date.now(),
           };
           setLogs(prev => [...prev, errorEntry]);
+          return;
+        }
+
+        if (data.type === 'pong') {
+          return;
         }
       } catch (err) {
         console.error('[RuntimeLogs] Failed to parse message:', err);
@@ -157,12 +178,13 @@ export function useRuntimeLogs(options: UseRuntimeLogsOptions): UseRuntimeLogsRe
       onError?.(event);
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      console.log('[RuntimeLogs] Disconnected:', event.code, event.reason);
       setIsConnected(false);
       wsRef.current = null;
       onDisconnect?.();
     };
-  }, [projectId, disconnect, clearLogs, onConnect, onLog, onExit, onError, onDisconnect]);
+  }, [projectId, userId, disconnect, clearLogs, onConnect, onLog, onExit, onError, onDisconnect]);
 
   useEffect(() => {
     executionIdRef.current = initialExecutionId;
