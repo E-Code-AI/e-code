@@ -14,7 +14,8 @@ import {
   Rocket,
   Code2,
   GitBranch,
-  Package
+  Package,
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MobileFileExplorer } from '@/components/mobile/MobileFileExplorer';
@@ -31,6 +32,7 @@ interface TabletDrawerContentProps {
   onOpenPackages?: () => void;
   onOpenDebugger?: () => void;
   onOpenSettings?: () => void;
+  onOpenCollaboration?: () => void;
 }
 
 type DrawerTab = 'files' | 'tools';
@@ -45,7 +47,8 @@ export function TabletDrawerContent({
   onOpenTerminal,
   onOpenPackages,
   onOpenDebugger,
-  onOpenSettings
+  onOpenSettings,
+  onOpenCollaboration
 }: TabletDrawerContentProps) {
   const [activeTab, setActiveTab] = useState<DrawerTab>('files');
 
@@ -103,6 +106,7 @@ export function TabletDrawerContent({
             onOpenPackages={onOpenPackages}
             onOpenDebugger={onOpenDebugger}
             onOpenSettings={onOpenSettings}
+            onOpenCollaboration={onOpenCollaboration}
           />
         )}
       </div>
@@ -121,6 +125,7 @@ interface ToolsPanelProps {
   onOpenPackages?: () => void;
   onOpenDebugger?: () => void;
   onOpenSettings?: () => void;
+  onOpenCollaboration?: () => void;
 }
 
 function ToolsPanel({
@@ -130,7 +135,8 @@ function ToolsPanel({
   onOpenTerminal,
   onOpenPackages,
   onOpenDebugger,
-  onOpenSettings
+  onOpenSettings,
+  onOpenCollaboration
 }: ToolsPanelProps) {
   const tools = [
     {
@@ -181,6 +187,13 @@ function ToolsPanel({
       icon: Settings,
       description: 'Configure workspace',
       action: onOpenSettings || (() => console.warn('Settings handler not provided')),
+    },
+    {
+      id: 'collaboration',
+      name: 'Collaborate',
+      icon: Users,
+      description: 'Invite others to code together',
+      action: onOpenCollaboration || (() => console.warn('Collaboration handler not provided')),
     },
   ];
 
