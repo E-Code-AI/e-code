@@ -65,6 +65,7 @@ import { bountiesRouter } from "./bounties.router";
 import agentGridRouter from "./agent-grid.router";
 import createAgentToolsRouter from "./agent-tools.router";
 import { authCompleteRouter } from "./auth-complete";
+import placeholderRouter from "./placeholder.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -91,6 +92,9 @@ export class MainRouter {
   registerRoutes(app: Application): void {
     // Health check routes (no auth required)
     app.use(this.healthRouter.getRouter());
+    
+    // Placeholder image routes (no auth required - used for avatars and product images)
+    app.use(placeholderRouter);
     
     // Load testing routes (admin only - Fortune 500 requirement)
     app.use(this.loadTestingRouter.getRouter());
