@@ -177,7 +177,8 @@ export async function startProjectRuntime(req: Request, res: Response) {
     const options: runtimeManager.StartProjectOptions = {
       useNix: req.body.useNix === true,
       port: req.body.port,
-      environmentVariables: req.body.environmentVariables
+      environmentVariables: req.body.environmentVariables,
+      executionId // Pass executionId for real-time streaming
     };
     
     // If Nix is requested, add Nix options
@@ -190,7 +191,7 @@ export async function startProjectRuntime(req: Request, res: Response) {
       };
     }
     
-    // Start the project
+    // Start the project with real-time streaming enabled
     const result = await runtimeManager.startProject(project, files, options);
     
     // Save execution logs to terminal logs database for display in console

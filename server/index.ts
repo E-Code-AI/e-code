@@ -212,6 +212,19 @@ app.get('/api/cors-health', async (_req, res) => {
       console.error('[WORKING SERVER] Failed to setup Build Logs WebSocket:', error);
     }
     
+    // Setup Runtime Logs WebSocket server for real-time execution output streaming
+    try {
+      const { initRuntimeLogsService } = await import("./services/RuntimeLogsService");
+      const runtimeLogsService = initRuntimeLogsService(storage);
+      runtimeLogsService.setup(httpServer);
+      
+      // Make runtime logs service available globally for routes
+      (global as any).runtimeLogsService = runtimeLogsService;
+      console.log('[RuntimeLogs] WebSocket server initialized at /api/runtime/logs/ws');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to setup Runtime Logs WebSocket:', error);
+    }
+    
     // Setup Test Runs WebSocket server for real-time test result streaming
     try {
       const { setupTestRunsWebSocket } = await import("./services/TestRunsService");
