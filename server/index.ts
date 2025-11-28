@@ -137,15 +137,23 @@ app.get('/api/cors-health', async (_req, res) => {
   }
 
   try {
-    // Setup Terminal WebSocket server for real-time terminal/console streaming
-    // NOTE: Docker-based terminal (server/terminal/real-terminal.ts) exists but NOT usable on Replit Cloud Run
-    // Replit Cloud Run does not expose Docker daemon, so containers cannot be created
-    // Using local bash terminal for Replit deployment
-    const { setupTerminalWebsocket } = await import("./terminal");
-    setupTerminalWebsocket(httpServer);
-    console.log('[Terminal] Using local bash terminal (Replit Cloud Run compatible)');
+    // Setup PTY Terminal WebSocket server for real-time terminal access
+    // Uses node-pty for real shell interaction (Replit Cloud Run compatible)
+    const { initPTYTerminalService } = await import("./terminal/pty-terminal-service");
+    const ptyTerminalService = initPTYTerminalService();
+    ptyTerminalService.setup(httpServer);
+    console.log('[Terminal] PTY Terminal service initialized at /api/terminal/ws');
   } catch (error) {
-    console.error('[WORKING SERVER] Failed to setup terminal WebSocket:', error);
+    console.error('[WORKING SERVER] Failed to setup PTY Terminal WebSocket:', error);
+    
+    // Fallback to simulated terminal if PTY fails
+    try {
+      const { setupTerminalWebsocket } = await import("./terminal");
+      setupTerminalWebsocket(httpServer);
+      console.log('[Terminal] Fallback to simulated terminal');
+    } catch (fallbackError) {
+      console.error('[WORKING SERVER] Fallback terminal also failed:', fallbackError);
+    }
   }
 
   try {
