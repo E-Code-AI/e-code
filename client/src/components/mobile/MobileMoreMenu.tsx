@@ -5,7 +5,7 @@ import {
   Bug, Play, Pause, Target,
   AlertTriangle, AlertCircle, Info, CheckCircle,
   Settings, Palette, Key, Database,
-  Share2, Link, Users, Download,
+  Share2, Link, Users, Download, UserPlus, MessageSquare, Radio,
   ChevronRight, X,
   Globe, Package, TestTube, Search,
   FileText, Server, Shield, Variable,
@@ -170,6 +170,32 @@ export function MobileMoreMenu({
     onClose();
   };
 
+  // Collaboration handlers
+  const handleOpenCollabPanel = () => {
+    if (onOpenCollaboration) {
+      onOpenCollaboration();
+    } else {
+      toast({ title: 'Collaboration', description: 'Opening collaboration panel...' });
+    }
+    onClose();
+  };
+
+  const handleCollabChat = () => {
+    if (onOpenCollaboration) {
+      onOpenCollaboration();
+    }
+    toast({ title: 'Team Chat', description: 'Opening team chat...' });
+    onClose();
+  };
+
+  const handleActiveUsers = () => {
+    if (onOpenCollaboration) {
+      onOpenCollaboration();
+    }
+    toast({ title: 'Active Users', description: 'Viewing active collaborators...' });
+    onClose();
+  };
+
   const handleExport = () => {
     toast({ title: 'Export', description: 'Preparing project export...' });
     onClose();
@@ -245,6 +271,16 @@ export function MobileMoreMenu({
         { id: 'files-explorer', label: 'File Explorer', icon: FolderOpen, onClick: handleOpenFiles },
         { id: 'files-new', label: 'New File', icon: FilePlus, onClick: handleNewFile },
         { id: 'files-recent', label: 'Recent Files', icon: FileCode, onClick: handleOpenRecent },
+      ],
+    },
+    {
+      title: 'Collaboration',
+      icon: Users,
+      items: [
+        { id: 'collab-panel', label: 'Collaboration Panel', icon: Users, onClick: handleOpenCollabPanel },
+        { id: 'collab-active', label: 'Active Collaborators', icon: Radio, onClick: handleActiveUsers },
+        { id: 'collab-chat', label: 'Team Chat', icon: MessageSquare, onClick: handleCollabChat },
+        { id: 'collab-invite', label: 'Invite Users', icon: UserPlus, onClick: handleInviteUsers },
       ],
     },
     {
