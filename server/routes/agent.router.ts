@@ -232,7 +232,7 @@ router.post('/conversation/:id/mode', async (req, res) => {
 router.post('/sessions', ensureAdmin, async (req, res) => {
   try {
     const { projectId, model } = req.body;
-    const userId = req.user!.id;
+    const userId = String(req.user!.id);
 
     const session = await agentOrchestrator.createSession(userId, projectId, model);
     res.json({ success: true, session });
@@ -245,7 +245,7 @@ router.post('/sessions', ensureAdmin, async (req, res) => {
 // Get active sessions
 router.get('/sessions', ensureAdmin, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = String(req.user!.id);
     const sessions = await agentOrchestrator.getActiveSessions(userId);
     res.json({ sessions });
   } catch (error: any) {
@@ -258,7 +258,7 @@ router.post('/sessions/:sessionId/execute', ensureAdmin, async (req, res) => {
   try {
     const { sessionId } = req.params;
     const { messages } = req.body;
-    const userId = req.user!.id;
+    const userId = String(req.user!.id);
 
     const result = await agentOrchestrator.executeAgent(sessionId, messages, userId);
     res.json(result);
@@ -273,7 +273,7 @@ router.post('/sessions/:sessionId/stream', ensureAdmin, async (req, res) => {
   try {
     const { sessionId } = req.params;
     const { prompt } = req.body;
-    const userId = req.user!.id;
+    const userId = String(req.user!.id);
 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -308,7 +308,7 @@ router.post('/sessions/:sessionId/close', ensureAdmin, async (req, res) => {
 router.post('/files/read', ensureAdmin, async (req, res) => {
   try {
     const { sessionId, path } = req.body;
-    const userId = req.user!.id;
+    const userId = String(req.user!.id);
 
     const result = await agentFileOperations.readFile(sessionId, path, userId);
     res.json(result);
@@ -320,7 +320,7 @@ router.post('/files/read', ensureAdmin, async (req, res) => {
 router.post('/files/write', ensureAdmin, async (req, res) => {
   try {
     const { sessionId, path, content } = req.body;
-    const userId = req.user!.id;
+    const userId = String(req.user!.id);
 
     const result = await agentFileOperations.createOrUpdateFile(sessionId, path, content, userId);
     res.json({ success: true, operation: result });
@@ -332,7 +332,7 @@ router.post('/files/write', ensureAdmin, async (req, res) => {
 router.post('/files/delete', ensureAdmin, async (req, res) => {
   try {
     const { sessionId, path } = req.body;
-    const userId = req.user!.id;
+    const userId = String(req.user!.id);
 
     const result = await agentFileOperations.deleteFile(sessionId, path, userId);
     res.json({ success: true, operation: result });
@@ -366,7 +366,7 @@ router.get('/files/history/:sessionId', ensureAdmin, async (req, res) => {
 router.post('/commands/execute', ensureAdmin, async (req, res) => {
   try {
     const { sessionId, command, args, options } = req.body;
-    const userId = req.user!.id;
+    const userId = String(req.user!.id);
 
     const result = await agentCommandExecution.executeCommand(
       sessionId,
@@ -416,7 +416,7 @@ router.get('/tools', ensureAdmin, async (req, res) => {
 router.post('/tools/execute', ensureAdmin, async (req, res) => {
   try {
     const { toolName, input, sessionId } = req.body;
-    const userId = req.user!.id;
+    const userId = String(req.user!.id);
 
     const context = {
       sessionId,
@@ -445,15 +445,17 @@ router.get('/tools/history/:sessionId', ensureAdmin, async (req, res) => {
 // Workflow execution
 router.post('/workflows/create', ensureAdmin, async (req, res) => {
   try {
-    const { sessionId, name, description, steps } = req.body;
-    const userId = req.user!.id;
+    const { sessionId, projectId, name, description, steps, initialVariables } = req.body;
+    const userId = String(req.user!.id);
 
     const workflow = await agentWorkflowEngine.executeWorkflow(
       sessionId,
+      projectId,
       name,
       description,
       steps,
-      userId
+      userId,
+      initialVariables || {}
     );
     res.json({ workflow });
   } catch (error: any) {
@@ -496,7 +498,7 @@ router.post('/workflows/:workflowId/restore', ensureAdmin, async (req, res) => {
   try {
     const { workflowId } = req.params;
     const { checkpointIndex } = req.body;
-    const userId = req.user!.id;
+    const userId = String(req.user!.id);
 
     await agentWorkflowEngine.restoreFromCheckpoint(workflowId, checkpointIndex, userId);
     res.json({ success: true });
