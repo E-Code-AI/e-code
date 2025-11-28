@@ -15,17 +15,17 @@ export default {
 
   // Test directories
   roots: [
-    '<rootDir>/server',
-    '<rootDir>/test/unit',
-    '<rootDir>/test/integration'
+    '<rootDir>/tests/backend',
+    '<rootDir>/tests/integration',
+    '<rootDir>/tests/e2e'
   ],
 
   // Test patterns
   testMatch: [
     '**/__tests__/**/*.test.ts',
     '**/__tests__/**/*.spec.ts',
-    '**/test/unit/**/*.test.ts',
-    '**/test/integration/**/*.test.ts'
+    '**/tests/**/*.spec.ts',
+    '**/tests/**/*.test.ts'
   ],
 
   // Coverage configuration (FORTUNE 500 STANDARDS)
@@ -38,7 +38,7 @@ export default {
     '!server/**/types/**'
   ],
 
-  coverageThresholds: {
+  coverageThreshold: {
     global: {
       statements: 80,
       branches: 75,
@@ -81,11 +81,10 @@ export default {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/server/$1',
     '^@shared/(.*)$': '<rootDir>/shared/$1',
-    '^@test/(.*)$': '<rootDir>/test/$1'
+    '^@test/(.*)$': '<rootDir>/tests/$1'
   },
 
-  // Setup files
-  setupFilesAfterEnv: ['<rootDir>/test/setup/jest.setup.ts'],
+  // Setup files - commented out since we don't need it yet  // setupFilesAfterEnv: ['<rootDir>/tests/setup/jest.setup.ts'],
 
   // Globals
   globals: {
@@ -116,15 +115,15 @@ export default {
 
   // Reporters
   reporters: [
-    'default',
-    ['jest-junit', {
-      outputDirectory: './test-results',
-      outputName: 'junit.xml',
-      classNameTemplate: '{classname}',
-      titleTemplate: '{title}',
-      ancestorSeparator: ' › ',
-      usePathForSuiteName: true
-    }]
+    'default'
+    // ['jest-junit', {
+    //   outputDirectory: './test-results',
+    //   outputName: 'junit.xml',
+    //   classNameTemplate: '{classname}',
+    //   titleTemplate: '{title}',
+    //   ancestorSeparator: ' › ',
+    //   usePathForSuiteName: true
+    // }]
   ],
 
   // Max workers for parallel execution

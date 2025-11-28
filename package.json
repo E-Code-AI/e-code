@@ -297,6 +297,7 @@
     "vitest": "^4.0.8"
   },
   "optionalDependencies": {
+    "@rollup/rollup-darwin-arm64": "^4.53.3",
     "bufferutil": "^4.0.8"
   }
 }
