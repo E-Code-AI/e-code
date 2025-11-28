@@ -176,9 +176,9 @@ export function ReplitTerminal({
     terminal.writeln("\x1b[1;32m╰─────────────────────────────────────────╯\x1b[0m");
     terminal.writeln("");
 
-    // Configuration WebSocket
+    // Configuration WebSocket - Use /api/terminal/ws endpoint
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/terminal?projectId=${projectId}`;
+    const wsUrl = `${protocol}//${window.location.host}/api/terminal/ws?projectId=${projectId}`;
     
     const connectWebSocket = () => {
       const ws = new WebSocket(wsUrl);
