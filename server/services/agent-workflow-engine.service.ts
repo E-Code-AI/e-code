@@ -789,7 +789,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
   ) {
     await db.insert(agentAuditTrail).values({
       sessionId,
-      userId,
+      userId: parseInt(userId, 10),
       action,
       resourceType: 'workflow',
       resourceId: workflowId,

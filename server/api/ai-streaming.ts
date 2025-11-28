@@ -69,10 +69,13 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
   } = req.body;
   
   const userId = (req as any).user?.id;
+  const requestStartTime = Date.now();
+  let tokensInput = 0;
+  let tokensOutput = 0;
+  let agentMode: 'plan' | 'build' | 'edit' = 'build';
   
   try {
     // PLAN MODE ENFORCEMENT: Check agent mode from database
-    let agentMode: 'plan' | 'build' = 'build';
     let enforcedTools: any[] | undefined = undefined; // undefined = use defaults, [] = explicitly none
     let modeSystemPrompt = '';
     
@@ -168,9 +171,6 @@ You are in BUILD MODE. You can execute actions like creating files, running comm
     });
     
     let fullResponse = '';
-    let tokensInput = 0;
-    let tokensOutput = 0;
-    const requestStartTime = Date.now();
     
     // ✅ Stream based on provider and CAPTURE token usage for billing
     let usage: { tokensInput: number; tokensOutput: number } | undefined;
