@@ -687,6 +687,13 @@ ipcMain.handle('set-theme-source', (event, source) => {
   store.set('theme', source);
 });
 
+// Listen for native theme changes and notify renderer
+nativeTheme.on('updated', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('theme-changed', nativeTheme.shouldUseDarkColors ? 'dark' : 'light');
+  }
+});
+
 // File dialogs
 ipcMain.handle('show-save-dialog', async (event, options) => {
   return await dialog.showSaveDialog(mainWindow, options);
