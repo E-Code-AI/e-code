@@ -368,7 +368,7 @@ router.post('/:id/reveal', async (req, res) => {
 
     // Audit log for security
     logger.warn('Secret revealed', {
-      userId: req.user.id,
+      userId,
       envVarId: id,
       key: envVar.key,
       projectId: envVar.projectId,
