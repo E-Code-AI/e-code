@@ -65,7 +65,7 @@ export default function SolarTechStoreApp() {
       originalPrice: 349.99,
       rating: 4.8,
       reviews: 247,
-      image: '/api/placeholder/300x200',
+      image: '/api/placeholder/300/200?type=product',
       description: 'High-efficiency monocrystalline solar panel with exceptional performance in low-light conditions.',
       specifications: {
         'Power Output': '400W',
@@ -89,7 +89,7 @@ export default function SolarTechStoreApp() {
       price: 1299.99,
       rating: 4.6,
       reviews: 89,
-      image: '/api/placeholder/300x200',
+      image: '/api/placeholder/300/200?type=product',
       description: 'Advanced string inverter with built-in monitoring and rapid shutdown capabilities.',
       specifications: {
         'AC Power Output': '5000W',
@@ -113,7 +113,7 @@ export default function SolarTechStoreApp() {
       price: 7999.99,
       rating: 4.9,
       reviews: 156,
-      image: '/api/placeholder/300x200',
+      image: '/api/placeholder/300/200?type=product',
       description: 'High-capacity lithium iron phosphate battery system for residential energy storage.',
       specifications: {
         'Capacity': '10kWh',
@@ -138,7 +138,7 @@ export default function SolarTechStoreApp() {
       originalPrice: 15999.99,
       rating: 4.7,
       reviews: 72,
-      image: '/api/placeholder/300x200',
+      image: '/api/placeholder/300/200?type=product',
       description: 'Complete residential solar kit including panels, inverter, mounting hardware, and monitoring.',
       specifications: {
         'System Size': '8kW',
@@ -162,7 +162,7 @@ export default function SolarTechStoreApp() {
       price: 199.99,
       rating: 4.5,
       reviews: 134,
-      image: '/api/placeholder/300x200',
+      image: '/api/placeholder/300/200?type=product',
       description: 'Heavy-duty aluminum mounting rails and stainless steel hardware for secure panel installation.',
       specifications: {
         'Material': 'Anodized Aluminum Rails',

@@ -31,13 +31,13 @@ export function MobileProfile() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   
-  // Mock user data
+  // Mock user data - uses avatar API for dynamic initials-based avatar
   const user = {
     name: "John Developer",
     username: "@johnddev",
     email: "john@example.com",
-    avatar: "/api/placeholder/100/100",
-    coverImage: "/api/placeholder/400/200",
+    avatar: "/api/avatar/John%20Developer/100",
+    coverImage: null, // Using gradient instead of placeholder
     bio: "Full-stack developer passionate about creating amazing web experiences",
     joinedDate: "January 2024",
   };
