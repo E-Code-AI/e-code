@@ -5,8 +5,10 @@
  * Provides seamless integration between React and Electron desktop features
  */
 
+/// <reference path="../types/electron.d.ts" />
+
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { ElectronAPI, ElectronDialogOptions, ThemeSource } from '@/types/electron';
+import type { ElectronAPI, ElectronDialogOptions, ThemeSource } from '../types/electron';
 
 // Type guard for Electron environment
 export function isElectron(): boolean {
