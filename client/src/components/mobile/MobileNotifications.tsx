@@ -53,7 +53,7 @@ export function MobileNotifications() {
       description: 'Sarah Chen started following you',
       timestamp: new Date(Date.now() - 60000),
       read: false,
-      user: { name: 'Sarah Chen', avatar: '/api/placeholder/40/40' },
+      user: { name: 'Sarah Chen', avatar: '/api/avatar/Sarah%20Chen/40' },
     },
     {
       id: '2',
@@ -71,7 +71,7 @@ export function MobileNotifications() {
       description: 'Alex mentioned you in "Building a REST API"',
       timestamp: new Date(Date.now() - 7200000),
       read: true,
-      user: { name: 'Alex', avatar: '/api/placeholder/40/40' },
+      user: { name: 'Alex', avatar: '/api/avatar/Alex/40' },
       projectName: 'Building a REST API',
     },
     {
