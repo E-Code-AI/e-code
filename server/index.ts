@@ -171,14 +171,27 @@ app.get('/api/cors-health', async (_req, res) => {
   }
 
   try {
-    // Setup Collaboration WebSocket server for real-time collaborative editing
+    // Setup Collaboration WebSocket server for real-time collaborative editing (Yjs)
     const { CollaborationServer } = await import("./collaboration/collaboration-server");
     const collaborationServer = new CollaborationServer(httpServer);
     
     // Make collaboration server available globally
     (global as any).collaborationServer = collaborationServer;
+    console.log('[Collaboration] Yjs document sync server initialized at /collaboration');
   } catch (error) {
     console.error('[WORKING SERVER] Failed to setup Collaboration WebSocket:', error);
+  }
+
+  try {
+    // Setup Unified Collaboration Service (Socket.io for presence, chat, cursors)
+    const { initializeCollaborationService } = await import("./collaboration/unified-collaboration-service");
+    const unifiedCollabService = initializeCollaborationService(httpServer);
+    
+    // Make unified collaboration service available globally
+    (global as any).unifiedCollaborationService = unifiedCollabService;
+    console.log('[Collaboration] Unified collaboration service initialized (presence/chat/cursors)');
+  } catch (error) {
+    console.error('[WORKING SERVER] Failed to setup Unified Collaboration Service:', error);
   }
 
   try {

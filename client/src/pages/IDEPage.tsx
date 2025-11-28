@@ -594,6 +594,9 @@ export default function IDEPage() {
         onAddTool={handleAddTool}
         showFileExplorer={showFileExplorer}
         onToggleFileExplorer={() => setShowFileExplorer((prev: boolean) => !prev)}
+        showCollaboration={showCollaboration}
+        onToggleCollaboration={() => setShowCollaboration((prev: boolean) => !prev)}
+        collaboratorCount={0}
       />
       
       {/* 3-Panel Layout */}
