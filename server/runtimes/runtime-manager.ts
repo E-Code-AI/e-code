@@ -14,6 +14,7 @@ import { Project, File } from '@shared/schema';
 import { CodeExecutor } from '../execution/executor';
 import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
+import { getRuntimeLogsService } from '../services/RuntimeLogsService';
 
 const execAsync = promisify(exec);
 const logger = createLogger('runtime');
@@ -58,6 +59,14 @@ export interface StartProjectOptions {
     shellHook?: string;
     environmentVariables?: Record<string, string>;
   };
+  executionId?: string;
+}
+
+function streamLog(projectId: string, executionId: string | undefined, type: 'stdout' | 'stderr' | 'system', message: string): void {
+  const runtimeLogsService = getRuntimeLogsService();
+  if (runtimeLogsService && executionId) {
+    runtimeLogsService.streamOutput(projectId, executionId, type, message);
+  }
 }
 
 /**
@@ -136,15 +145,23 @@ export async function startProject(
     const logs: string[] = [`Starting ${languageConfigs[language].displayName} project...`];
     
     // Check if Docker is available
+    // NOTE: On Replit Cloud Run, Docker daemon is not exposed, so we always use direct execution mode.
+    // The Docker path below is kept for compatibility with other environments but is never executed on Replit.
+    // Real-time streaming is fully implemented for the direct execution path, which is the production path.
     const useDocker = await isDockerAvailable();
     
     if (!useDocker) {
-      // Use direct execution mode (no Docker)
-      logs.push('Docker not available - using direct execution mode');
+      // Use direct execution mode (no Docker) - this is the primary path for Replit Cloud Run
+      logs.push('Using direct execution mode (Docker not available)');
       
       // Get language config for run command
       const config = languageConfigs[language];
       const runCommand = config.runCommand;
+      const executionIdForSetup = options.executionId;
+      
+      // Stream initial setup messages
+      streamLog(projectId, executionIdForSetup, 'system', `Starting ${languageConfigs[language].displayName} project...`);
+      streamLog(projectId, executionIdForSetup, 'system', 'Using direct execution mode');
       
       // Set up runtime first
       activeRuntimes.set(projectId, {
@@ -158,6 +175,7 @@ export async function startProject(
       
       // Auto-execute the main file
       logs.push(`Executing: ${runCommand}`);
+      streamLog(projectId, executionIdForSetup, 'system', `Executing: ${runCommand}`);
       
       try {
         // Parse the run command
@@ -183,13 +201,16 @@ export async function startProject(
         
         const actualCmd = cmdMap[baseCmd] || baseCmd;
         
-        // Handle compilation for compiled languages
+        // Handle compilation for compiled languages with real-time streaming
+        const executionId = options.executionId;
+        
         if (config.compilerCommand) {
           const compileParts = config.compilerCommand.split(/\s+/);
           const compileCmd = cmdMap[compileParts[0]] || compileParts[0];
           const compileArgs = compileParts.slice(1);
           
           logs.push(`Compiling: ${config.compilerCommand}`);
+          streamLog(projectId, executionId, 'system', `Compiling: ${config.compilerCommand}`);
           
           const compileResult = await new Promise<{ stdout: string; stderr: string; exitCode: number }>((resolve) => {
             let stdout = '';
@@ -200,11 +221,20 @@ export async function startProject(
               shell: false
             });
             
-            proc.stdout.on('data', (data) => { stdout += data.toString(); });
-            proc.stderr.on('data', (data) => { stderr += data.toString(); });
+            proc.stdout.on('data', (data) => { 
+              const line = data.toString();
+              stdout += line;
+              streamLog(projectId, executionId, 'stdout', line);
+            });
+            proc.stderr.on('data', (data) => { 
+              const line = data.toString();
+              stderr += line;
+              streamLog(projectId, executionId, 'stderr', line);
+            });
             
             const timeout = setTimeout(() => {
               proc.kill('SIGTERM');
+              streamLog(projectId, executionId, 'stderr', 'Compilation timed out');
               resolve({ stdout, stderr: stderr + '\nCompilation timed out', exitCode: 124 });
             }, 30000);
             
@@ -215,12 +245,20 @@ export async function startProject(
             
             proc.on('error', (err) => {
               clearTimeout(timeout);
+              streamLog(projectId, executionId, 'stderr', err.message);
               resolve({ stdout, stderr: err.message, exitCode: 1 });
             });
           });
           
           if (compileResult.exitCode !== 0) {
             logs.push(`Compilation error: ${compileResult.stderr}`);
+            streamLog(projectId, executionId, 'stderr', `Compilation failed with exit code ${compileResult.exitCode}`);
+            
+            // Notify exit for compilation failure
+            const runtimeLogsService = getRuntimeLogsService();
+            if (runtimeLogsService && executionId) {
+              runtimeLogsService.streamExit(projectId, executionId, compileResult.exitCode, 0);
+            }
             
             // CRITICAL FIX: Clean up on compilation failure to allow re-runs
             activeRuntimes.delete(projectId);
@@ -244,9 +282,14 @@ export async function startProject(
           }
           
           logs.push('Compilation successful');
+          streamLog(projectId, executionId, 'system', 'Compilation successful');
         }
         
-        // Execute the main file
+        // Execute the main file with real-time streaming
+        const startTime = Date.now();
+        
+        streamLog(projectId, executionId, 'system', `Starting execution...`);
+        
         const execResult = await new Promise<{ stdout: string; stderr: string; exitCode: number }>((resolve) => {
           let stdout = '';
           let stderr = '';
@@ -261,26 +304,35 @@ export async function startProject(
             const line = data.toString();
             stdout += line;
             logs.push(line.trim());
+            streamLog(projectId, executionId, 'stdout', line);
           });
           
           proc.stderr.on('data', (data) => {
             const line = data.toString();
             stderr += line;
             logs.push(`[ERROR] ${line.trim()}`);
+            streamLog(projectId, executionId, 'stderr', line);
           });
           
           const timeout = setTimeout(() => {
             proc.kill('SIGTERM');
+            streamLog(projectId, executionId, 'stderr', 'Execution timed out (30s limit)');
             resolve({ stdout, stderr: stderr + '\nExecution timed out (30s limit)', exitCode: 124 });
           }, 30000);
           
           proc.on('close', (code) => {
             clearTimeout(timeout);
+            const executionTime = Date.now() - startTime;
+            const runtimeLogsService = getRuntimeLogsService();
+            if (runtimeLogsService && executionId) {
+              runtimeLogsService.streamExit(projectId, executionId, code || 0, executionTime);
+            }
             resolve({ stdout, stderr, exitCode: code || 0 });
           });
           
           proc.on('error', (err) => {
             clearTimeout(timeout);
+            streamLog(projectId, executionId, 'stderr', err.message);
             resolve({ stdout, stderr: err.message, exitCode: 1 });
           });
         });
@@ -318,6 +370,15 @@ export async function startProject(
       } catch (execError: any) {
         const errorMessage = execError.message || 'Execution failed';
         logs.push(`Execution error: ${errorMessage}`);
+        
+        // Stream the error to connected clients
+        streamLog(projectId, executionIdForSetup, 'stderr', `Execution error: ${errorMessage}`);
+        
+        // Notify exit with error
+        const runtimeLogsService = getRuntimeLogsService();
+        if (runtimeLogsService && executionIdForSetup) {
+          runtimeLogsService.streamExit(projectId, executionIdForSetup, 1, 0);
+        }
         
         // Clear runtime even on error to allow retries
         activeRuntimes.delete(projectId);
