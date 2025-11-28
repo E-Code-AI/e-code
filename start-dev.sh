@@ -79,11 +79,11 @@ check_port() {
 }
 
 # Check ports
-check_port 5000 || true
+check_port 5001 || true
 check_port 5173 || true
 
 echo ""
-echo -e "${GREEN}🔧 Backend Server${NC} - Starting on port 5000..."
+echo -e "${GREEN}🔧 Backend Server${NC} - Starting on port 5001..."
 echo -e "${GREEN}🎨 Frontend Server${NC} - Starting on port 5173..."
 echo ""
 
@@ -92,7 +92,7 @@ mkdir -p logs
 
 # Start backend in background
 echo "📝 Backend logs: logs/backend.log"
-npm run dev > logs/backend.log 2>&1 &
+PORT=5001 npm run dev > logs/backend.log 2>&1 &
 BACKEND_PID=$!
 
 # Wait a bit for backend to start
@@ -106,22 +106,22 @@ if ! kill -0 $BACKEND_PID 2>/dev/null; then
 fi
 
 # Start frontend in background
-echo "📝 Frontend logs: logs/frontend.log"
-cd client
-npm run dev > ../logs/frontend.log 2>&1 &
-FRONTEND_PID=$!
-cd ..
+# echo "📝 Frontend logs: logs/frontend.log"
+# cd client
+# npm run dev > ../logs/frontend.log 2>&1 &
+# FRONTEND_PID=$!
+# cd ..
 
 # Wait for frontend to start
-sleep 3
+# sleep 3
 
 # Check if frontend started successfully
-if ! kill -0 $FRONTEND_PID 2>/dev/null; then
-  echo -e "${RED}❌ Frontend failed to start. Check logs/frontend.log${NC}"
-  tail -20 logs/frontend.log
-  kill $BACKEND_PID 2>/dev/null || true
-  exit 1
-fi
+# if ! kill -0 $FRONTEND_PID 2>/dev/null; then
+#   echo -e "${RED}❌ Frontend failed to start. Check logs/frontend.log${NC}"
+#   tail -20 logs/frontend.log
+#   kill $BACKEND_PID 2>/dev/null || true
+#   exit 1
+# fi
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -129,17 +129,17 @@ echo -e "${GREEN}✨ E-Code Platform Started Successfully!${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "🌐 Frontend:  http://localhost:5173"
-echo "⚙️  Backend:   http://localhost:5000"
-echo "📚 API Docs:  http://localhost:5000/api-docs"
-echo "🏥 Health:    http://localhost:5000/health"
+echo "⚙️  Backend:   http://localhost:5001"
+echo "📚 API Docs:  http://localhost:5001/api-docs"
+echo "🏥 Health:    http://localhost:5001/health"
 echo ""
 echo "📊 Process IDs:"
 echo "   Backend:  $BACKEND_PID"
-echo "   Frontend: $FRONTEND_PID"
+#   Frontend: $FRONTEND_PID
 echo ""
 echo "📝 Logs:"
 echo "   Backend:  tail -f logs/backend.log"
-echo "   Frontend: tail -f logs/frontend.log"
+#   Frontend: tail -f logs/frontend.log
 echo ""
 echo "🛑 To stop: Press Ctrl+C or run: kill $BACKEND_PID $FRONTEND_PID"
 echo ""
@@ -150,7 +150,7 @@ cleanup() {
   echo ""
   echo "🛑 Shutting down E-Code Platform..."
   kill $BACKEND_PID 2>/dev/null || true
-  kill $FRONTEND_PID 2>/dev/null || true
+#   kill $FRONTEND_PID 2>/dev/null || true
   echo "✅ Shutdown complete"
   exit 0
 }
