@@ -65,6 +65,18 @@ function getDeviceId(): string {
   return deviceId;
 }
 
+// ============================================
+// ENTERPRISE-GRADE RECONNECTION CONFIG
+// Fortune 500 reliability for WebSocket connections
+// ============================================
+const RECONNECT_CONFIG = {
+  initialDelayMs: 1000,
+  maxDelayMs: 30000,
+  maxRetries: 10,
+  backoffMultiplier: 2,
+  jitterFactor: 0.3, // Add randomness to prevent thundering herd
+};
+
 export function useAgentWebSocket({
   projectId,
   sessionId,
@@ -88,26 +100,97 @@ export function useAgentWebSocket({
   const [isThinking, setIsThinking] = useState(false);
   const activityHistoryRef = useRef<ActivityEvent[]>([]);
   
+  // Reconnection state
+  const [reconnectAttempt, setReconnectAttempt] = useState(0);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'reconnecting'>('disconnected');
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastEventTimestampRef = useRef<number>(Date.now());
+  
+  // Calculate reconnection delay with exponential backoff and jitter
+  const calculateReconnectDelay = useCallback((attempt: number): number => {
+    const { initialDelayMs, maxDelayMs, backoffMultiplier, jitterFactor } = RECONNECT_CONFIG;
+    const exponentialDelay = Math.min(
+      initialDelayMs * Math.pow(backoffMultiplier, attempt),
+      maxDelayMs
+    );
+    const jitter = exponentialDelay * jitterFactor * Math.random();
+    return exponentialDelay + jitter;
+  }, []);
+
+  // Schedule a reconnection attempt
+  const scheduleReconnect = useCallback(() => {
+    if (reconnectAttempt >= RECONNECT_CONFIG.maxRetries) {
+      console.error('[WebSocket] Max reconnection attempts reached');
+      setConnectionStatus('disconnected');
+      setError(new Error(`Connection failed after ${RECONNECT_CONFIG.maxRetries} attempts`));
+      return;
+    }
+
+    const delay = calculateReconnectDelay(reconnectAttempt);
+    console.log(`[WebSocket] Scheduling reconnect attempt ${reconnectAttempt + 1} in ${Math.round(delay)}ms`);
+    setConnectionStatus('reconnecting');
+
+    reconnectTimeoutRef.current = setTimeout(() => {
+      setReconnectAttempt(prev => prev + 1);
+      connect();
+    }, delay);
+  }, [reconnectAttempt, calculateReconnectDelay]);
+
+  // Request state reconciliation from server after reconnect
+  const requestStateReconciliation = useCallback((ws: WebSocket) => {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'reconcile',
+        lastEventTimestamp: lastEventTimestampRef.current,
+        deviceId: currentDeviceId
+      }));
+      console.log('[WebSocket] Requested state reconciliation');
+    }
+  }, [currentDeviceId]);
+
   const connect = useCallback(() => {
     if (!enabled || !sessionId) {
       return null;
     }
+
+    // Clear any pending reconnection
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
+    // Close existing connection if any
+    if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
+      wsRef.current.close();
+    }
     
     try {
+      setConnectionStatus('connecting');
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
       const wsUrl = `${protocol}//${host}/ws/agent?projectId=${projectId}&sessionId=${sessionId}&deviceId=${currentDeviceId}&deviceType=${currentDeviceType}`;
       
       const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
       
       ws.onopen = () => {
+        console.log('[WebSocket] Connected successfully');
         setIsConnected(true);
+        setConnectionStatus('connected');
         setError(null);
+        setReconnectAttempt(0); // Reset retry counter on successful connection
+
+        // Request state reconciliation if this was a reconnection
+        if (reconnectAttempt > 0) {
+          requestStateReconciliation(ws);
+        }
       };
       
       ws.onmessage = (event) => {
         try {
           const update: AgentProgressUpdate = JSON.parse(event.data);
+          lastEventTimestampRef.current = Date.now(); // Track last event for reconciliation
           
           // Handle presence updates separately
           if (update.type === 'connected') {
@@ -226,29 +309,57 @@ export function useAgentWebSocket({
       };
       
       ws.onerror = (event) => {
+        console.error('[WebSocket] Connection error', event);
         setError(new Error('WebSocket connection error'));
         setIsConnected(false);
       };
       
-      ws.onclose = () => {
+      ws.onclose = (event) => {
+        console.log('[WebSocket] Connection closed', { code: event.code, reason: event.reason });
         setIsConnected(false);
+        wsRef.current = null;
+        
+        // Only attempt reconnect if not a clean close and still enabled
+        if (enabled && event.code !== 1000) {
+          scheduleReconnect();
+        } else {
+          setConnectionStatus('disconnected');
+        }
       };
       
       return ws;
     } catch (err) {
+      console.error('[WebSocket] Failed to create connection', err);
       setError(err as Error);
+      setConnectionStatus('disconnected');
+      scheduleReconnect();
       return null;
     }
-  }, [enabled, projectId, sessionId, currentDeviceId, currentDeviceType, onUpdate]);
+  }, [enabled, projectId, sessionId, currentDeviceId, currentDeviceType, onUpdate, onActivity, reconnectAttempt, scheduleReconnect, requestStateReconciliation]);
   
+  // Initial connection and cleanup
   useEffect(() => {
-    const ws = connect();
+    connect();
     
     return () => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.close();
+      // Clear reconnection timer
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      
+      // Close WebSocket
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.close(1000, 'Component unmounted');
       }
     };
+  }, [connect]);
+
+  // Manual reconnect function for UI
+  const manualReconnect = useCallback(() => {
+    setReconnectAttempt(0);
+    setError(null);
+    connect();
   }, [connect]);
   
   // Prefer server's authoritative total, fall back to local count
@@ -270,6 +381,9 @@ export function useAgentWebSocket({
     isConnected,
     lastUpdate,
     error,
+    connectionStatus, // 'connecting' | 'connected' | 'disconnected' | 'reconnecting'
+    reconnectAttempt,
+    manualReconnect, // Function to manually trigger reconnection
     
     // Device presence
     connectedDevices,
