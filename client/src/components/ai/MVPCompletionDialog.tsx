@@ -16,6 +16,9 @@ export function MVPCompletionDialog({
   onContinueBuilding,
   isProcessing = false 
 }: MVPCompletionDialogProps) {
+  // ✅ FIX (Nov 30, 2025): Add null safety for bootstrap session loading
+  const safeTaskList = taskList || [];
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -35,16 +38,16 @@ export function MVPCompletionDialog({
           </div>
 
           {/* Task List Preview */}
-          {taskList.length > 0 && (
+          {safeTaskList.length > 0 && (
             <div className="mb-4 p-4 rounded-lg bg-white/50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-2 mb-3">
                 <ListChecks className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 <h4 className="font-semibold text-gray-900 dark:text-gray-100">
-                  Task List ({taskList.length} items)
+                  Task List ({safeTaskList.length} items)
                 </h4>
               </div>
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {taskList.slice(0, 5).map((task, index) => (
+                {safeTaskList.slice(0, 5).map((task, index) => (
                   <div 
                     key={index}
                     className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300"
@@ -55,9 +58,9 @@ export function MVPCompletionDialog({
                     <span>{task}</span>
                   </div>
                 ))}
-                {taskList.length > 5 && (
+                {safeTaskList.length > 5 && (
                   <p className="text-xs text-gray-500 dark:text-gray-500 italic pl-4">
-                    +{taskList.length - 5} more tasks...
+                    +{safeTaskList.length - 5} more tasks...
                   </p>
                 )}
               </div>

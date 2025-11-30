@@ -262,7 +262,7 @@ export function ToolExecutionList({
 
   const stats = useMemo(() => {
     const counts = { files: 0, commands: 0, search: 0, errors: 0, success: 0, running: 0 };
-    toolExecutions.forEach(exec => {
+    (toolExecutions || []).forEach(exec => {
       const category = toolCategories[exec.tool] || 'commands';
       if (category === 'files') counts.files++;
       else if (category === 'commands') counts.commands++;
@@ -280,17 +280,18 @@ export function ToolExecutionList({
   }, [toolExecutions]);
 
   const filteredExecutions = useMemo(() => {
-    if (filter === 'all') return toolExecutions;
+    const safeExecutions = toolExecutions || [];
+    if (filter === 'all') return safeExecutions;
     if (filter === 'errors') {
-      return toolExecutions.filter(exec => 
+      return safeExecutions.filter(exec => 
         exec.status === 'error' || (exec.status === 'complete' && !exec.success)
       );
     }
-    return toolExecutions.filter(exec => toolCategories[exec.tool] === filter);
+    return safeExecutions.filter(exec => toolCategories[exec.tool] === filter);
   }, [toolExecutions, filter]);
 
   const visibleExecutions = showAll ? filteredExecutions : filteredExecutions.slice(0, maxVisible);
-  const hasMore = filteredExecutions.length > maxVisible && !showAll;
+  const hasMore = (filteredExecutions || []).length > maxVisible && !showAll;
 
   if (!toolExecutions || toolExecutions.length === 0) {
     return null;

@@ -57,11 +57,14 @@ const ACTION_CONFIG: Record<ActionType, { icon: typeof FileText; label: string; 
 };
 
 export function ActionMessage({ actions, onApprove, onReject, className }: ActionMessageProps) {
-  if (actions.length === 0) return null;
+  // ✅ FIX (Nov 30, 2025): Add null safety for bootstrap session loading
+  const safeActions = actions || [];
+  
+  if (safeActions.length === 0) return null;
 
   return (
     <div className={cn("space-y-2", className)} data-testid="action-message">
-      {actions.map((action) => {
+      {safeActions.map((action) => {
         const config = ACTION_CONFIG[action.type];
         const Icon = config.icon;
         const isPending = action.status === 'pending';

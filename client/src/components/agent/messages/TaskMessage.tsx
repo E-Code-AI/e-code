@@ -56,6 +56,9 @@ const STATUS_CONFIG: Record<TaskStatus, { icon: typeof Circle; label: string; co
 };
 
 export function TaskMessage({ tasks, className }: TaskMessageProps) {
+  // ✅ FIX (Nov 30, 2025): Add null safety for bootstrap session loading
+  const safeTasks = tasks || [];
+  
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
 
   const toggleTask = (taskId: string) => {
@@ -68,10 +71,10 @@ export function TaskMessage({ tasks, className }: TaskMessageProps) {
     setExpandedTasks(newExpanded);
   };
 
-  if (tasks.length === 0) return null;
+  if (safeTasks.length === 0) return null;
 
-  const completedTasks = tasks.filter(t => t.status === 'completed').length;
-  const totalTasks = tasks.length;
+  const completedTasks = safeTasks.filter(t => t.status === 'completed').length;
+  const totalTasks = safeTasks.length;
   const overallProgress = (completedTasks / totalTasks) * 100;
 
   return (
@@ -93,7 +96,7 @@ export function TaskMessage({ tasks, className }: TaskMessageProps) {
 
       {/* Individual Tasks */}
       <div className="space-y-2">
-        {tasks.map((task) => {
+        {safeTasks.map((task) => {
           const config = STATUS_CONFIG[task.status];
           const Icon = config.icon;
           const isExpanded = expandedTasks.has(task.id);

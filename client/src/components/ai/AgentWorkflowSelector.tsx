@@ -15,6 +15,8 @@ export function AgentWorkflowSelector({
   onBuildChoice,
   isProcessing = false 
 }: AgentWorkflowSelectorProps) {
+  // ✅ FIX (Nov 30, 2025): Add null safety for bootstrap session loading
+  const safeFeatureList = featureList || [];
   const [selectedOption, setSelectedOption] = useState<'full' | 'design' | null>(null);
 
   return (
@@ -32,7 +34,7 @@ export function AgentWorkflowSelector({
           
           {/* Feature List */}
           <div className="space-y-2 mb-6">
-            {featureList.map((feature, index) => (
+            {safeFeatureList.map((feature, index) => (
               <div 
                 key={index}
                 className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300"
