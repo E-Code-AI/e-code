@@ -145,12 +145,28 @@ const DANGEROUS_PATTERNS = [
 ];
 
 const ALLOWED_EXTENSIONS = [
-  '.js', '.jsx', '.ts', '.tsx',
-  '.json', '.md', '.txt', '.html', '.css',
-  '.py', '.java', '.cpp', '.c', '.go', '.rs',
-  '.sh', '.yml', '.yaml', '.toml', '.sql',
-  '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico',
-  '.woff', '.woff2', '.ttf', '.eot'
+  // JavaScript/TypeScript
+  '.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.json', '.jsonc',
+  // Web
+  '.html', '.htm', '.css', '.scss', '.sass', '.less', '.styl',
+  // Images and media
+  '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico', '.bmp', '.avif',
+  // Fonts
+  '.woff', '.woff2', '.ttf', '.eot', '.otf',
+  // Frameworks
+  '.vue', '.svelte', '.astro',
+  // Documentation
+  '.md', '.mdx', '.txt', '.rst',
+  // Config files
+  '.yml', '.yaml', '.toml', '.xml', '.ini', '.cfg', '.conf',
+  '.gitignore', '.gitattributes', '.editorconfig', '.prettierrc', '.eslintrc',
+  '.babelrc', '.nvmrc', '.npmrc', '.yarnrc',
+  // Backend languages
+  '.py', '.java', '.cpp', '.c', '.h', '.hpp', '.go', '.rs', '.rb', '.php', '.sh', '.bash', '.zsh',
+  '.sql', '.graphql', '.gql', '.prisma',
+  // Other
+  '.map', '.lock', '.log', '.csv', '.tsv', '.ejs', '.hbs', '.pug', '.njk',
+  '.dockerfile', '.dockerignore', '.makefile', '.cmake'
 ];
 
 export interface PathValidationResult {

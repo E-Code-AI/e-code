@@ -1,0 +1,3 @@
+Exclude build output, dependency folders, and potentially generated files from linting. Typically ignore dist, node_modules, and coverage directories.
+
+TODO: Implement file content based on outline

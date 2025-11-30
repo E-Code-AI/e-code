@@ -1,0 +1,4 @@
+{
+  "description": "Provide a separate TypeScript configuration for Node-based scripts like the dev server or build scripts. Target a recent Node version and configure CommonJS or ESM as appropriate for the server environment.",
+  "todo": "Configure based on outline"
+}

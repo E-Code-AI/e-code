@@ -1,0 +1,3 @@
+Specify files and directories that Prettier should not format, such as build artifacts and dependency folders. May mirror .eslintignore with dist and node_modules.
+
+TODO: Implement file content based on outline
