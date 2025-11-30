@@ -1,0 +1,3 @@
+Specifies intentionally untracked files and directories that Git should ignore, such as node_modules, build artifacts, and development logs.
+
+TODO: Implement file content based on outline

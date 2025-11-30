@@ -1,0 +1,4 @@
+{
+  "description": "Optional TypeScript configuration extending the base tsconfig for Node-related tooling if needed (e.g., Webpack config typing). Configure module type and exclude frontend-only files.",
+  "todo": "Configure based on outline"
+}

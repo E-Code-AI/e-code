@@ -1,0 +1,3 @@
+Create a .gitignore file to exclude node_modules, build artifacts, and other non-source files from version control. This keeps the repository clean and focused on source and configuration files.
+
+TODO: Implement file content based on outline

@@ -57,6 +57,23 @@ class AgentContentGeneratorService {
   }
 
   /**
+   * Generate file content from path and description (no outline provided)
+   * ✅ NEW (Nov 30, 2025): Handle cases where AI only provides path and description
+   */
+  async generateFileContent(params: { path: string; description: string; language?: string }): Promise<GeneratedFile> {
+    logger.info(`[ContentGenerator] Generating content from description for ${params.path}`);
+    
+    // Create a pseudo-outline from the description and use existing generation logic
+    const outline: FileOutline = {
+      path: params.path,
+      outline: params.description,
+      language: params.language
+    };
+    
+    return this.expandOutline(outline);
+  }
+
+  /**
    * Template-based content generation
    * Matches file paths and outline descriptions to generate appropriate content
    * ✅ FIX (Nov 23, 2025): Use endsWith() for path matching to handle subdirectories

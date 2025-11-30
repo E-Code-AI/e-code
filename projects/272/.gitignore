@@ -1,0 +1,3 @@
+Ignore Node.js and build artifacts such as node_modules, dist, coverage, and temporary/editor-specific files. Ensure only relevant source and configuration files are tracked in version control.
+
+TODO: Implement file content based on outline
