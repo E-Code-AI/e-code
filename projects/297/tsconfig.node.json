@@ -1,0 +1,4 @@
+{
+  "description": "Configure TypeScript settings specifically for Node.js environment files, like vite.config.ts, ensuring correct module resolution and types.",
+  "todo": "Configure based on outline"
+}

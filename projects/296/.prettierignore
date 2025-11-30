@@ -1,0 +1,3 @@
+Specify files and directories that should be excluded from Prettier formatting, such as build outputs, coverage, and lock files. Keep patterns in sync with ESLint ignore where appropriate.
+
+TODO: Implement file content based on outline

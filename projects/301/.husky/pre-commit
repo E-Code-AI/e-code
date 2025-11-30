@@ -1,0 +1,3 @@
+Husky hook script that runs lint-staged before each commit. Ensures staged files are linted and formatted prior to being committed.
+
+TODO: Implement file content based on outline

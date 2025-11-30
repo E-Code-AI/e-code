@@ -1,0 +1,4 @@
+{
+  "description": "TypeScript configuration tailored for Node-based tooling files (like Vite config, Vitest config, and ESLint config). Ensures correct module resolution and types for Node.js and Vite environments.",
+  "todo": "Configure based on outline"
+}

@@ -1,0 +1,3 @@
+List paths and file patterns to exclude from linting, such as build output directories, dependency folders, and configuration artifacts. Keep it minimal but sufficient to avoid noise.
+
+TODO: Implement file content based on outline
