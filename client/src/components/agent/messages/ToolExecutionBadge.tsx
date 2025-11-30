@@ -93,11 +93,14 @@ interface ToolExecutionListProps {
 }
 
 export function ToolExecutionList({ tools }: ToolExecutionListProps) {
-  if (tools.length === 0) return null;
+  // ✅ FIX (Nov 30, 2025): Add null safety for bootstrap session loading
+  const safeTools = tools || [];
+  
+  if (safeTools.length === 0) return null;
 
   return (
     <div className="flex flex-wrap gap-2 my-3 max-w-full">
-      {tools.map((tool) => (
+      {safeTools.map((tool) => (
         <ToolExecutionBadge
           key={tool.id}
           tool={tool.tool}

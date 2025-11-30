@@ -48,8 +48,11 @@ export function ThinkingDisplay({
   onStepClick,
   mode = 'detailed'
 }: ThinkingDisplayProps) {
+  // ✅ FIX (Nov 30, 2025): Add null safety for bootstrap session loading
+  const safeSteps = steps || [];
+  
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(
-    new Set(steps.filter(s => s.status === 'active').map(s => s.id))
+    new Set(safeSteps.filter(s => s.status === 'active').map(s => s.id))
   );
 
   const toggleStep = (stepId: string) => {
@@ -65,7 +68,7 @@ export function ThinkingDisplay({
     onStepClick?.(stepId);
   };
 
-  if (steps.length === 0 && !isActive) {
+  if (safeSteps.length === 0 && !isActive) {
     return null;
   }
 
@@ -96,9 +99,9 @@ export function ThinkingDisplay({
               </Badge>
             )}
           </div>
-          {mode === 'detailed' && steps.length > 0 && (
+          {mode === 'detailed' && safeSteps.length > 0 && (
             <span className="text-xs text-muted-foreground" data-testid="thinking-progress">
-              {steps.filter(s => s.status === 'complete').length} / {steps.length} steps
+              {safeSteps.filter(s => s.status === 'complete').length} / {safeSteps.length} steps
             </span>
           )}
         </div>
@@ -106,7 +109,7 @@ export function ThinkingDisplay({
 
       {/* Steps */}
       <div className="divide-y divide-border">
-        {steps.map((step, index) => {
+        {safeSteps.map((step, index) => {
           const isExpanded = expandedSteps.has(step.id);
           const Icon = STEP_ICONS[step.type];
           const iconColor = STEP_COLORS[step.type];
@@ -218,7 +221,7 @@ export function ThinkingDisplay({
               )}
 
               {/* Visual Breakpoint Line */}
-              {index < steps.length - 1 && (
+              {index < safeSteps.length - 1 && (
                 <div className="pl-[52px]">
                   <div className={cn(
                     "w-0.5 h-2 ml-[11px]",
@@ -232,7 +235,7 @@ export function ThinkingDisplay({
       </div>
 
       {/* Active Indicator */}
-      {isActive && steps.length === 0 && (
+      {isActive && safeSteps.length === 0 && (
         <div className="px-4 py-8 text-center space-y-2" data-testid="thinking-initializing">
           <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto" data-testid="thinking-loader" />
           <p className="text-sm text-muted-foreground" data-testid="thinking-init-message">Initializing thinking process...</p>
@@ -244,8 +247,10 @@ export function ThinkingDisplay({
 
 // Compact version for mobile/tablet
 export function ThinkingDisplayCompact({ steps, isActive, className }: ThinkingDisplayProps) {
-  const activeStep = steps.find(s => s.status === 'active');
-  const completedCount = steps.filter(s => s.status === 'complete').length;
+  // ✅ FIX (Nov 30, 2025): Add null safety for bootstrap session loading
+  const safeSteps = steps || [];
+  const activeStep = safeSteps.find(s => s.status === 'active');
+  const completedCount = safeSteps.filter(s => s.status === 'complete').length;
 
   return (
     <div 
@@ -264,7 +269,7 @@ export function ThinkingDisplayCompact({ steps, isActive, className }: ThinkingD
         )}
         <div className="flex-1 min-w-0">
           <p className="text-xs font-medium truncate" data-testid="thinking-compact-text">
-            {activeStep ? activeStep.title : `Thinking (${completedCount}/${steps.length})`}
+            {activeStep ? activeStep.title : `Thinking (${completedCount}/${safeSteps.length})`}
           </p>
         </div>
         {isActive && (

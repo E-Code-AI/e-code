@@ -238,7 +238,7 @@ export function ProgressPanel({
     // Transform stream events to ActivityEvents
     const streamToLocalEvents: ActivityEvent[] = [];
     
-    streamEvents.forEach(streamEvent => {
+    (streamEvents || []).forEach(streamEvent => {
       switch (streamEvent.type) {
         case 'thinking_start':
           streamToLocalEvents.push({

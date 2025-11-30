@@ -249,31 +249,35 @@ router.post('/bootstrap', async (req: Request, res: Response) => {
     
     logger.info(`[Bootstrap] HTTP response sent - starting autonomous workspace creation for prompt: "${prompt.substring(0, 50)}..."`);
     
+    // ✅ DEBUG (Nov 30, 2025): Log before invoking startAutonomousWorkspace
+    console.log(`[Bootstrap] 🎯 INVOKING startAutonomousWorkspace for session ${session.id}`);
+    
     // 9. ✅ FIRE-AND-FORGET: Detach autonomous workspace creation to prevent Express from waiting
-    // The startAutonomousWorkspace method handles:
-    // - Idempotency check (prevent double starts)
-    // - Plan generation with multi-provider fallback
-    // - Plan storage to database
-    // - Workflow execution
-    // - WebSocket streaming of all events
-    // NOTE: No conditional - autonomous workspace creation is ALWAYS triggered
-    void agentOrchestrator.startAutonomousWorkspace({
-      sessionId: session.id,
-      projectId: String(project.id),
-      userId: String(userId),
-      prompt: prompt,
-      options: {
-        language: options.language || 'typescript',
-        framework: options.framework || 'react'
-      }
-    }).catch(error => {
-      logger.error(`[Bootstrap] ❌ Autonomous workspace creation failed:`, {
-        message: error.message,
-        projectId: project.id,
+    // Use setImmediate to ensure the fire-and-forget runs in the next tick
+    setImmediate(() => {
+      console.log(`[Bootstrap] 🚀 setImmediate callback executing for session ${session.id}`);
+      
+      agentOrchestrator.startAutonomousWorkspace({
         sessionId: session.id,
-        stack: error.stack
+        projectId: String(project.id),
+        userId: String(userId),
+        prompt: prompt,
+        options: {
+          language: options.language || 'typescript',
+          framework: options.framework || 'react'
+        }
+      }).then(() => {
+        console.log(`[Bootstrap] ✅ startAutonomousWorkspace COMPLETED for session ${session.id}`);
+      }).catch(error => {
+        console.error(`[Bootstrap] ❌ startAutonomousWorkspace FAILED:`, error);
+        logger.error(`[Bootstrap] ❌ Autonomous workspace creation failed:`, {
+          message: error.message,
+          projectId: project.id,
+          sessionId: session.id,
+          stack: error.stack
+        });
+        // Error already broadcasted via WebSocket in startAutonomousWorkspace
       });
-      // Error already broadcasted via WebSocket in startAutonomousWorkspace
     });
     
     logger.info(`[Bootstrap] ✅ Autonomous workspace creation started in background`, {

@@ -132,16 +132,19 @@ interface MultiFileDiffProps {
 }
 
 export function MultiFileDiff({ diffs }: MultiFileDiffProps) {
-  if (diffs.length === 0) return null;
+  // ✅ FIX (Nov 30, 2025): Add null safety for bootstrap session loading
+  const safeDiffs = diffs || [];
+  
+  if (safeDiffs.length === 0) return null;
 
-  const totalAdded = diffs.reduce((sum, d) => sum + d.linesAdded, 0);
-  const totalRemoved = diffs.reduce((sum, d) => sum + d.linesRemoved, 0);
+  const totalAdded = safeDiffs.reduce((sum, d) => sum + d.linesAdded, 0);
+  const totalRemoved = safeDiffs.reduce((sum, d) => sum + d.linesRemoved, 0);
 
   return (
     <div className="space-y-2 my-3">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-[var(--ecode-text)]">
-          {diffs.length} {diffs.length === 1 ? 'file' : 'files'} changed
+          {safeDiffs.length} {safeDiffs.length === 1 ? 'file' : 'files'} changed
         </span>
         <div className="flex items-center gap-2">
           <span className="text-xs text-green-600 dark:text-green-400">
@@ -153,7 +156,7 @@ export function MultiFileDiff({ diffs }: MultiFileDiffProps) {
         </div>
       </div>
       
-      {diffs.map((diff, i) => (
+      {safeDiffs.map((diff, i) => (
         <FileDiffViewer key={i} diff={diff} />
       ))}
     </div>

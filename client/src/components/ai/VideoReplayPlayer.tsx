@@ -63,6 +63,9 @@ export function VideoReplayPlayer({
   onClose,
   className
 }: VideoReplayPlayerProps) {
+  // ✅ FIX (Nov 30, 2025): Add null safety for testSteps at component level
+  const safeTestSteps = testSteps || [];
+  
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -80,7 +83,7 @@ export function VideoReplayPlayer({
       setCurrentTime(video.currentTime);
       
       // Find active step based on current time
-      const currentStep = testSteps
+      const currentStep = safeTestSteps
         .filter(s => s.timestamp <= video.currentTime)
         .pop();
       if (currentStep) {
@@ -90,7 +93,7 @@ export function VideoReplayPlayer({
 
     video.addEventListener('timeupdate', handleTimeUpdate);
     return () => video.removeEventListener('timeupdate', handleTimeUpdate);
-  }, [testSteps]);
+  }, [safeTestSteps]);
 
   // Play/Pause toggle
   const togglePlay = useCallback(() => {
@@ -232,14 +235,14 @@ export function VideoReplayPlayer({
               <Clock className="h-3 w-3" />
               <span>Test Steps</span>
               <Badge variant="secondary" className="text-[10px] ml-auto">
-                {testSteps.length}
+                {safeTestSteps.length}
               </Badge>
             </div>
           </div>
           
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-1">
-              {testSteps.map((step, index) => (
+              {safeTestSteps.map((step, index) => (
                 <button
                   key={step.id}
                   onClick={() => jumpToStep(step)}

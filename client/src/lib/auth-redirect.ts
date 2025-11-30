@@ -19,12 +19,21 @@ function isAuthPage(path: string): boolean {
 }
 
 /**
+ * Check if current URL has a bootstrap token (for anonymous workspace access)
+ */
+function hasBootstrapToken(): boolean {
+  const params = new URLSearchParams(window.location.search);
+  return params.has('bootstrap') && params.get('bootstrap')!.length > 0;
+}
+
+/**
  * Handle 401 Unauthorized responses by redirecting to login
  * 
  * Features:
  * - Debounced to prevent multiple redirects
  * - Preserves current URL as "next" parameter for post-login redirect
  * - Skips redirect if already on auth pages
+ * - Skips redirect if URL has bootstrap token (anonymous workspace sessions)
  * - Silent operation - no console errors
  * 
  * @param originUrl - The URL that triggered the 401 (for debugging)
@@ -36,6 +45,14 @@ export function handleUnauthorized(originUrl?: string): boolean {
   
   // Skip if already on an auth page
   if (isAuthPage(currentPath)) {
+    return false;
+  }
+  
+  // ✅ FIX (Nov 30, 2025): Skip redirect for bootstrap token sessions
+  // Bootstrap tokens allow anonymous users to access workspaces without authentication
+  // The server validates the token separately - client-side redirect would break this flow
+  if (hasBootstrapToken()) {
+    console.debug('[Auth] Skipping 401 redirect - bootstrap token present in URL');
     return false;
   }
   

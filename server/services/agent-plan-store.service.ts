@@ -22,12 +22,16 @@ class AgentPlanStoreService {
    */
   async storePlan(sessionId: string, projectId: number, plan: any): Promise<AgentPlan> {
     try {
+      // ✅ FIX (Nov 30, 2025): Ensure planId is NEVER null to prevent NOT NULL constraint violation
+      // The plan.id may be missing from some plan generators, so we generate a unique fallback
+      const safePlanId = plan.id || `plan-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
       const planData: InsertAgentPlan = {
         sessionId,
         projectId,
-        planId: plan.id,
+        planId: safePlanId,
         goal: plan.goal || plan.prompt || 'Autonomous execution',
-        tasks: plan.tasks,
+        tasks: plan.tasks || [],  // Also ensure tasks is never null
         estimatedTime: plan.estimatedTime,
         status: 'pending',
         totalTokens: plan.totalTokens || 0,
@@ -36,7 +40,7 @@ class AgentPlanStoreService {
           provider: plan.provider,
           fallbackChain: plan.fallbackChain,
           generationTimeMs: plan.generationTimeMs,
-          taskCount: plan.tasks.length
+          taskCount: (plan.tasks || []).length
         }
       };
 
@@ -44,15 +48,15 @@ class AgentPlanStoreService {
         .values(planData)
         .returning();
 
-      logger.info(`[Store] Stored plan ${plan.id} with ${plan.tasks.length} tasks`, {
-        planId: plan.id,
+      logger.info(`[Store] Stored plan ${safePlanId} with ${(plan.tasks || []).length} tasks`, {
+        planId: safePlanId,
         sessionId,
-        taskCount: plan.tasks.length
+        taskCount: (plan.tasks || []).length
       });
 
       return insertedPlan;
     } catch (error: any) {
-      logger.error(`[Store] Failed to store plan ${plan.id}:`, error);
+      logger.error(`[Store] Failed to store plan:`, { planId: plan?.id, sessionId, error });
       throw error;
     }
   }

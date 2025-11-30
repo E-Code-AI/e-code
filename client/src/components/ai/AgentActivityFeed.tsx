@@ -247,7 +247,7 @@ export function AgentActivityFeed({
 
   const counts = useMemo(() => {
     const c = { files: 0, commands: 0, errors: 0 };
-    events.forEach(e => {
+    (events || []).forEach(e => {
       const cat = eventCategories[e.type] || 'commands';
       if (cat === 'files') c.files++;
       else if (cat === 'commands') c.commands++;
@@ -257,19 +257,20 @@ export function AgentActivityFeed({
   }, [events]);
 
   const filteredEvents = useMemo(() => {
-    let filtered = events;
+    const safeEvents = events || [];
+    let filtered = safeEvents;
     if (filter === 'files') {
-      filtered = events.filter(e => eventCategories[e.type] === 'files');
+      filtered = safeEvents.filter(e => eventCategories[e.type] === 'files');
     } else if (filter === 'commands') {
-      filtered = events.filter(e => eventCategories[e.type] === 'commands');
+      filtered = safeEvents.filter(e => eventCategories[e.type] === 'commands');
     } else if (filter === 'errors') {
-      filtered = events.filter(e => e.type === 'error' || e.status === 'error');
+      filtered = safeEvents.filter(e => e.type === 'error' || e.status === 'error');
     }
     return filtered.slice(0, maxEvents);
   }, [events, filter, maxEvents]);
 
   const filterButtons = [
-    { id: 'all' as const, label: 'All', count: events.length },
+    { id: 'all' as const, label: 'All', count: (events || []).length },
     { id: 'files' as const, label: 'Files', count: counts.files },
     { id: 'commands' as const, label: 'Commands', count: counts.commands },
     { id: 'errors' as const, label: 'Errors', count: counts.errors },

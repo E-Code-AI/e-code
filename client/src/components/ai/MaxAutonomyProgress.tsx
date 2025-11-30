@@ -97,6 +97,9 @@ export function MaxAutonomyProgress({
     isStoppingSession
   } = useMaxAutonomy(sessionId, projectId);
 
+  // ✅ FIX (Nov 30, 2025): Add null safety for tasks during session loading
+  const safeTasks = tasks || [];
+  
   const isActive = session?.status === 'active';
   const isPaused = session?.status === 'paused';
   const isTerminal = ['completed', 'failed', 'cancelled'].includes(session?.status || '');
@@ -108,14 +111,14 @@ export function MaxAutonomyProgress({
   }, [progress]);
 
   const currentTask = useMemo(() => {
-    if (!progress?.currentTaskId || !tasks.length) return null;
-    return tasks.find(t => t.id === progress.currentTaskId);
-  }, [progress?.currentTaskId, tasks]);
+    if (!progress?.currentTaskId || !safeTasks.length) return null;
+    return safeTasks.find(t => t.id === progress.currentTaskId);
+  }, [progress?.currentTaskId, safeTasks]);
 
   const visibleTasks = useMemo(() => {
-    if (showAllTasks) return tasks;
-    return tasks.slice(0, 5);
-  }, [tasks, showAllTasks]);
+    if (showAllTasks) return safeTasks;
+    return safeTasks.slice(0, 5);
+  }, [safeTasks, showAllTasks]);
 
   if (isLoadingSession) {
     return (
@@ -284,11 +287,11 @@ export function MaxAutonomyProgress({
               </div>
             )}
 
-            {tasks.length > 0 && (
+            {safeTasks.length > 0 && (
               <div className="space-y-1.5">
                 <div className="text-xs font-medium text-muted-foreground flex items-center justify-between">
-                  <span>Tasks ({tasks.length})</span>
-                  {tasks.length > 5 && (
+                  <span>Tasks ({safeTasks.length})</span>
+                  {safeTasks.length > 5 && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -296,7 +299,7 @@ export function MaxAutonomyProgress({
                       onClick={() => setShowAllTasks(!showAllTasks)}
                       data-testid="button-toggle-tasks"
                     >
-                      {showAllTasks ? 'Show less' : `Show all (${tasks.length})`}
+                      {showAllTasks ? 'Show less' : `Show all (${safeTasks.length})`}
                     </Button>
                   )}
                 </div>

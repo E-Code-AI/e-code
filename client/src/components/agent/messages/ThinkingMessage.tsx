@@ -25,9 +25,12 @@ const STEP_TYPE_CONFIG = {
 };
 
 export function ThinkingMessage({ steps, isStreaming, totalTokens, thinkingTime }: ThinkingMessageProps) {
+  // ✅ FIX (Nov 30, 2025): Add null safety for bootstrap session loading
+  const safeSteps = steps || [];
+  
   const [isExpanded, setIsExpanded] = useState(true);
   
-  if (steps.length === 0 && !isStreaming) return null;
+  if (safeSteps.length === 0 && !isStreaming) return null;
 
   return (
     <div className="rounded-lg border border-[var(--ecode-border)] bg-[var(--ecode-surface)] overflow-hidden" data-testid="thinking-message">
@@ -63,9 +66,9 @@ export function ThinkingMessage({ steps, isStreaming, totalTokens, thinkingTime 
               {totalTokens} tokens
             </Badge>
           )}
-          {steps.length > 0 && (
+          {safeSteps.length > 0 && (
             <Badge variant="outline" className="text-xs whitespace-nowrap">
-              {steps.filter(s => s.status === 'completed').length}/{steps.length} steps
+              {safeSteps.filter(s => s.status === 'completed').length}/{safeSteps.length} steps
             </Badge>
           )}
         </div>
@@ -74,7 +77,7 @@ export function ThinkingMessage({ steps, isStreaming, totalTokens, thinkingTime 
       {/* Thinking Steps - Collapsible */}
       {isExpanded && (
         <div className="px-4 pb-3 space-y-2 border-t border-[var(--ecode-border)] pt-3">
-          {steps.map((step, index) => {
+          {safeSteps.map((step, index) => {
           const config = STEP_TYPE_CONFIG[step.type];
           const Icon = config.icon;
           
@@ -121,7 +124,7 @@ export function ThinkingMessage({ steps, isStreaming, totalTokens, thinkingTime 
         })}
 
           {/* Streaming Indicator */}
-          {isStreaming && steps.length === 0 && (
+          {isStreaming && safeSteps.length === 0 && (
             <div className="flex items-center gap-3 p-3 rounded-md bg-blue-50 dark:bg-blue-950/10 border border-blue-200 dark:border-blue-800">
               <VibingAnimation />
               <span className="text-sm text-[var(--ecode-text)]">

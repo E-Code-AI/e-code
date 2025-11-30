@@ -306,9 +306,9 @@ export class AgentWorkflowEngineService extends EventEmitter {
           })
           .returning();
         
-        // Also update session status within same transaction
+        // Also update session workflowStatus within same transaction
         await tx.update(agentSessions)
-          .set({ status: 'processing' })
+          .set({ workflowStatus: 'executing' })
           .where(eq(agentSessions.id, sessionId));
         
         return workflow;
