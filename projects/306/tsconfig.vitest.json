@@ -1,0 +1,4 @@
+{
+  "description": "TypeScript configuration dedicated to Vitest tests, extending the base tsconfig but including test files under src/**/*.test.tsx and src/**/*.test.ts. Adjust module settings for Node compatibility and configure types for vitest and @testing-library/jest-dom.",
+  "todo": "Configure based on outline"
+}

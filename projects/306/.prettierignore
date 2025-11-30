@@ -1,0 +1,3 @@
+Ignore patterns for Prettier to avoid formatting build artifacts, lock files, and generated content. Helps keep formatting runs fast and focused on source files.
+
+TODO: Implement file content based on outline
