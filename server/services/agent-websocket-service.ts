@@ -305,7 +305,8 @@ class AgentWebSocketService {
     const devices = this.connections.get(connectionKey);
     
     if (!devices || devices.size === 0) {
-      logger.warn(`No active connections for ${connectionKey}`);
+      // Changed to debug - this is expected during autonomous workspace creation without UI
+      logger.debug(`Cannot broadcast status: No active connections for ${connectionKey}`);
       return;
     }
     
@@ -365,7 +366,8 @@ class AgentWebSocketService {
     const devices = this.connections.get(connectionKey);
 
     if (!devices || devices.size === 0) {
-      logger.warn(`Cannot broadcast ${message.type}: No active connections for ${connectionKey}`);
+      // Changed to debug - this is expected during autonomous workspace creation without UI
+      logger.debug(`Cannot broadcast ${message.type}: No active connections for ${connectionKey}`);
       return;
     }
 

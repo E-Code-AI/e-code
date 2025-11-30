@@ -20,11 +20,27 @@ const FILE_CONFIG = {
   maxFileSize: 10 * 1024 * 1024, // 10MB
   maxFiles: 10,
   allowedExtensions: [
-    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg',
-    '.pdf', '.doc', '.docx', '.txt', '.csv',
-    '.json', '.xml', '.yaml', '.yml',
-    '.js', '.ts', '.jsx', '.tsx', '.css', '.html',
+    // Images
+    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico', '.bmp', '.avif',
+    // Documents
+    '.pdf', '.doc', '.docx', '.txt', '.csv', '.md', '.mdx', '.rst',
+    // Config
+    '.json', '.jsonc', '.xml', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.conf',
+    // Code - JavaScript/TypeScript
+    '.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.css', '.scss', '.sass', '.less',
+    '.html', '.htm',
+    // Frameworks
+    '.vue', '.svelte', '.astro',
+    // Backend
+    '.py', '.java', '.cpp', '.c', '.h', '.hpp', '.go', '.rs', '.rb', '.php',
+    '.sh', '.bash', '.sql', '.graphql', '.gql', '.prisma',
+    // Fonts
+    '.woff', '.woff2', '.ttf', '.eot', '.otf',
+    // Archives
     '.zip', '.tar', '.gz',
+    // Other
+    '.map', '.lock', '.log', '.ejs', '.hbs', '.pug', '.njk',
+    '.gitignore', '.editorconfig', '.prettierrc', '.eslintrc', '.babelrc',
   ],
   allowedMimeTypes: [
     'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',

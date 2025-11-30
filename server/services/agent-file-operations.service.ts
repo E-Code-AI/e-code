@@ -28,9 +28,29 @@ export interface FileOperationEvent {
 export class AgentFileOperationsService extends EventEmitter {
   private readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
   private readonly ALLOWED_EXTENSIONS = [
-    '.js', '.jsx', '.ts', '.tsx', '.json', '.md', '.html', '.css', '.scss',
-    '.py', '.java', '.cpp', '.c', '.go', '.rs', '.rb', '.php', '.sh',
-    '.yml', '.yaml', '.toml', '.xml', '.svg', '.txt', '.env', '.gitignore'
+    // JavaScript/TypeScript
+    '.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.json', '.jsonc',
+    // Web
+    '.html', '.htm', '.css', '.scss', '.sass', '.less', '.styl',
+    // Images and media
+    '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico', '.bmp', '.avif',
+    // Fonts
+    '.woff', '.woff2', '.ttf', '.eot', '.otf',
+    // Frameworks
+    '.vue', '.svelte', '.astro',
+    // Documentation
+    '.md', '.mdx', '.txt', '.rst',
+    // Config files
+    '.yml', '.yaml', '.toml', '.xml', '.ini', '.cfg', '.conf',
+    '.env', '.env.local', '.env.development', '.env.production',
+    '.gitignore', '.gitattributes', '.editorconfig', '.prettierrc', '.eslintrc',
+    '.babelrc', '.nvmrc', '.npmrc', '.yarnrc',
+    // Backend languages
+    '.py', '.java', '.cpp', '.c', '.h', '.hpp', '.go', '.rs', '.rb', '.php', '.sh', '.bash', '.zsh',
+    '.sql', '.graphql', '.gql', '.prisma',
+    // Other
+    '.map', '.lock', '.log', '.csv', '.tsv', '.ejs', '.hbs', '.pug', '.njk',
+    '.dockerfile', '.dockerignore', '.makefile', '.cmake'
   ];
   private fileWatcher?: chokidar.FSWatcher;
   private diffTool = new diff_match_patch();
