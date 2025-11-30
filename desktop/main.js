@@ -620,9 +620,38 @@ function checkForUpdates() {
   autoUpdater.checkForUpdatesAndNotify();
 }
 
-// Auto updater configuration
+// Auto updater configuration with environment-specific channels
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
+autoUpdater.allowDowngrade = false;
+
+// Configure update channel based on environment
+const updateChannel = process.env.UPDATE_CHANNEL || 'latest';
+autoUpdater.channel = updateChannel;
+
+// Configure custom update server if specified
+if (process.env.UPDATE_SERVER_URL) {
+  autoUpdater.setFeedURL({
+    provider: 'generic',
+    url: process.env.UPDATE_SERVER_URL,
+    channel: updateChannel
+  });
+  console.log(`[E-Code Desktop] Using custom update server: ${process.env.UPDATE_SERVER_URL}`);
+} else {
+  // Uses default GitHub releases from package.json publish config
+  console.log(`[E-Code Desktop] Using GitHub releases for updates (channel: ${updateChannel})`);
+}
+
+// Check for updates on startup (non-dev only)
+if (!isDev) {
+  app.whenReady().then(() => {
+    setTimeout(() => {
+      autoUpdater.checkForUpdatesAndNotify().catch(err => {
+        console.log('[E-Code Desktop] Update check failed:', err.message);
+      });
+    }, 5000); // Delay 5s to let app fully initialize
+  });
+}
 
 autoUpdater.on('checking-for-update', () => {
   console.log('[E-Code Desktop] Checking for updates...');
