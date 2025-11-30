@@ -1,0 +1,3 @@
+Specify the Node.js major/minor version to standardize the runtime environment across developers and CI. Keep the file minimal with just the version string.
+
+TODO: Implement file content based on outline

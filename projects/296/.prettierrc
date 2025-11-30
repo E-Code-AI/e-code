@@ -1,0 +1,3 @@
+Configure Prettier formatting rules, including print width, tab width, semicolons, quotes, and trailing commas. Ensure settings align with ESLint via eslint-config-prettier.
+
+TODO: Implement file content based on outline

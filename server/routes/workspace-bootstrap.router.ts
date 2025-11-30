@@ -33,6 +33,27 @@ import jwt from 'jsonwebtoken';
 const logger = createLogger('workspace-bootstrap');
 const router = Router();
 
+// ✅ Idempotency cache for deduplicating concurrent requests
+// Key: idempotency key, Value: { response, timestamp, inProgress }
+interface IdempotencyCacheEntry {
+  response: any;
+  timestamp: number;
+  inProgress: boolean;
+  promise?: Promise<any>;
+}
+const idempotencyCache = new Map<string, IdempotencyCacheEntry>();
+const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+// Cleanup old entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of idempotencyCache.entries()) {
+    if (now - entry.timestamp > IDEMPOTENCY_TTL_MS) {
+      idempotencyCache.delete(key);
+    }
+  }
+}, 60 * 60 * 1000); // Cleanup every hour
+
 // Validation schema for bootstrap request
 // ✅ FIX (Nov 21, 2025): Properly set defaults for nested object
 // Problem: .optional().default({}) created empty object, nested defaults not applied
@@ -89,12 +110,67 @@ interface BootstrapTokenPayload {
 router.post('/bootstrap', async (req: Request, res: Response) => {
   const startTime = Date.now();
   
+  // ✅ Idempotency key support for concurrent request deduplication
+  const idempotencyKey = req.headers['x-idempotency-key'] as string | undefined;
+  
   logger.info(`[Bootstrap] 🚀 POST /bootstrap REQUEST RECEIVED`, { 
     body: req.body,
     hasPrompt: !!req.body?.prompt,
     hasOptions: !!req.body?.options,
-    rawBody: JSON.stringify(req.body)
+    rawBody: JSON.stringify(req.body),
+    idempotencyKey: idempotencyKey || 'none'
   });
+  
+  // Check idempotency cache for duplicate requests
+  if (idempotencyKey) {
+    const cached = idempotencyCache.get(idempotencyKey);
+    
+    if (cached) {
+      // If request is still in progress, wait for it to complete
+      if (cached.inProgress && cached.promise) {
+        logger.info(`[Bootstrap] ⏳ Waiting for in-progress request with idempotency key: ${idempotencyKey}`);
+        try {
+          const result = await cached.promise;
+          logger.info(`[Bootstrap] ✅ Returning cached response for idempotency key: ${idempotencyKey}`);
+          return res.status(200).json(result);
+        } catch (error) {
+          // Original request failed, allow retry
+          idempotencyCache.delete(idempotencyKey);
+        }
+      } else if (cached.response) {
+        // Request already completed, return cached response
+        logger.info(`[Bootstrap] ✅ Returning cached response for idempotency key: ${idempotencyKey}`, {
+          projectId: cached.response.projectId,
+          sessionId: cached.response.sessionId
+        });
+        return res.status(200).json(cached.response);
+      }
+    }
+  }
+  
+  // ✅ Mark request as in-progress for concurrent request handling
+  let bootstrapPromise: Promise<any> | undefined;
+  
+  if (idempotencyKey) {
+    // Create a deferred promise for concurrent requests to wait on
+    let resolvePromise: (value: any) => void;
+    let rejectPromise: (error: any) => void;
+    bootstrapPromise = new Promise((resolve, reject) => {
+      resolvePromise = resolve;
+      rejectPromise = reject;
+    });
+    
+    idempotencyCache.set(idempotencyKey, {
+      response: null,
+      timestamp: Date.now(),
+      inProgress: true,
+      promise: bootstrapPromise
+    });
+    
+    // Store resolve/reject for later use (attach to promise for access)
+    (bootstrapPromise as any)._resolve = resolvePromise!;
+    (bootstrapPromise as any)._reject = rejectPromise!;
+  }
   
   try {
     // 1. Validate request
@@ -225,7 +301,7 @@ router.post('/bootstrap', async (req: Request, res: Response) => {
     
     // 7. ✅ RETURN HTTP RESPONSE IMMEDIATELY (BEFORE background work starts)
     // This guarantees client receives token in <1s and can redirect to IDE
-    res.status(200).json({
+    const responsePayload = {
       success: true,
       projectId: project.id,
       projectSlug: slug,
@@ -240,7 +316,29 @@ router.post('/bootstrap', async (req: Request, res: Response) => {
         sessionCreationMs: 0,
         workflowCreationMs: 0
       }
-    });
+    };
+    
+    // ✅ Store in idempotency cache if key was provided
+    if (idempotencyKey) {
+      // Update cache with final response
+      idempotencyCache.set(idempotencyKey, {
+        response: responsePayload,
+        timestamp: Date.now(),
+        inProgress: false
+      });
+      
+      // Resolve the promise for any waiting concurrent requests
+      if (bootstrapPromise && (bootstrapPromise as any)._resolve) {
+        (bootstrapPromise as any)._resolve(responsePayload);
+      }
+      
+      logger.info(`[Bootstrap] ✅ Cached response for idempotency key: ${idempotencyKey}`, {
+        projectId: project.id,
+        sessionId: session.id
+      });
+    }
+    
+    res.status(200).json(responsePayload);
     
     // 8. ✅ AUTONOMOUS WORKSPACE CREATION (Nov 24, 2025): Fire-and-forget orchestration
     // CRITICAL FIX (Nov 28, 2025): ALWAYS start autonomous workspace - no conditional
@@ -288,6 +386,14 @@ router.post('/bootstrap', async (req: Request, res: Response) => {
   } catch (error: any) {
     const elapsed = Date.now() - startTime;
     logger.error(`[Bootstrap] Failed after ${elapsed}ms:`, error);
+    
+    // ✅ Reject promise and cleanup cache on error
+    if (idempotencyKey) {
+      if (bootstrapPromise && (bootstrapPromise as any)._reject) {
+        (bootstrapPromise as any)._reject(error);
+      }
+      idempotencyCache.delete(idempotencyKey);
+    }
     
     if (error.name === 'ZodError') {
       return res.status(400).json({

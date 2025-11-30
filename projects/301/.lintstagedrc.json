@@ -1,0 +1,4 @@
+{
+  "description": "lint-staged configuration mapping file globs (TypeScript, TSX, CSS, JSON, MD) to ESLint and Prettier commands. Optimizes pre-commit checks to run only on changed files.",
+  "todo": "Configure based on outline"
+}

@@ -1,0 +1,4 @@
+{
+  "description": "Extends the base tsconfig.json with settings specifically for the application source code, such as include/exclude patterns and any app-specific compiler options. Helps keep testing or tooling configs separated if needed.",
+  "todo": "Configure based on outline"
+}

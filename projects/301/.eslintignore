@@ -1,0 +1,3 @@
+Ignore build output, node_modules, and configuration artifacts from ESLint checks. Keeps linting focused on source files.
+
+TODO: Implement file content based on outline

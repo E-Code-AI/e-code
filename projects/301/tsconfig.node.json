@@ -1,0 +1,4 @@
+{
+  "description": "TypeScript configuration specifically for Node-based tooling like Vite config and scripts. Extends the base tsconfig and adjusts module and lib options appropriate for Node.",
+  "todo": "Configure based on outline"
+}
