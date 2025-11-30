@@ -164,25 +164,8 @@ export default function Landing() {
   const handleStartBuilding = async (description: string) => {
     setChatOpen(false);
     
-    // CRITICAL: Check if user is authenticated FIRST (Replit-style flow)
-    if (!user) {
-      // Save prompt for after login
-      sessionStorage.setItem('pendingAppDescription', description);
-      sessionStorage.setItem('triggerBuildOnLanding', 'true');
-      
-      toast({
-        title: 'Sign in to continue',
-        description: 'Your workspace will be created automatically after login.',
-      });
-      
-      // Redirect to login page
-      navigate('/login');
-      return;
-    }
-    
-    // User is authenticated - proceed with workspace creation
-    sessionStorage.setItem('pendingAppDescription', description);
-    
+    // ✅ REPLIT-STYLE FLOW: Call bootstrap API directly - it will create ephemeral user if needed
+    // The backend creates an ephemeral user and establishes a session cookie for anonymous users
     try {
       const requestPayload = {
         prompt: description,
@@ -196,7 +179,7 @@ export default function Landing() {
       const result = await apiRequest('POST', '/api/workspace/bootstrap', requestPayload) as any;
 
       if (result.success) {
-        // Clear pending prompt on success
+        // Clear any pending prompts on success
         sessionStorage.removeItem('pendingAppDescription');
         sessionStorage.removeItem('triggerBuildOnLanding');
         
