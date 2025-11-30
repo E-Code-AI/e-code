@@ -1,0 +1,3 @@
+Specify files and folders to be ignored by Git, such as node_modules, build/dist output, temporary logs, and environment-specific files.
+
+TODO: Implement file content based on outline

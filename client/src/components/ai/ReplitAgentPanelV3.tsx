@@ -157,7 +157,7 @@ interface ReplitAgentPanelV3Props {
   onBuildComplete?: () => void;
   sessionId?: string | null;
   externalConversationId?: number | null;
-  autoStart?: boolean;
+  autoStart?: boolean; // ✅ FIX (Nov 30, 2025): Now defaults to true for auto-launch
 }
 
 export function ReplitAgentPanelV3({ 
@@ -172,7 +172,7 @@ export function ReplitAgentPanelV3({
   onBuildComplete,
   sessionId: externalSessionId,
   externalConversationId,
-  autoStart = false
+  autoStart = true
 }: ReplitAgentPanelV3Props) {
   // AI Model preference hook
   const { modelId, provider, supportsExtendedThinking: modelSupportsExtendedThinking, model, setPreferredModel } = useAgentModelPreference();

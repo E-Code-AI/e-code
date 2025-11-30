@@ -84,6 +84,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
       const session = await this.validateSession(sessionId);
       
       // Create workflow record
+      // operationStatusEnum allows: pending, in_progress, completed, failed, cancelled, rolled_back
       const [workflow] = await db.insert(agentWorkflows)
         .values({
           sessionId,
@@ -407,6 +408,27 @@ export class AgentWorkflowEngineService extends EventEmitter {
       logger.info(`[WorkflowEngine] Expanded outline to content for ${effectiveConfig.path}`);
     }
     
+    // ✅ CRITICAL FIX (Nov 30, 2025): Generate content from description if both content and outline are missing
+    // Some AI plans only provide file path and description, without content or outline
+    if (!effectiveConfig.content && effectiveConfig.operation === 'write') {
+      const { agentContentGenerator } = await import('./agent-content-generator.service');
+      const description = effectiveConfig.description || effectiveConfig.name || `Create file ${effectiveConfig.path}`;
+      try {
+        const generatedFile = await agentContentGenerator.generateFileContent({
+          path: effectiveConfig.path,
+          description,
+          language: effectiveConfig.language
+        });
+        effectiveConfig.content = generatedFile.content;
+        logger.info(`[WorkflowEngine] Generated content from description for ${effectiveConfig.path}`);
+      } catch (genError) {
+        // Fallback to minimal content based on file type
+        const ext = effectiveConfig.path?.split('.').pop()?.toLowerCase() || '';
+        effectiveConfig.content = this.getMinimalFileContent(effectiveConfig.path, ext, description);
+        logger.warn(`[WorkflowEngine] Using minimal fallback content for ${effectiveConfig.path}`);
+      }
+    }
+    
     const { operation, path, content } = this.resolveVariables(effectiveConfig, state);
     
     switch (operation) {
@@ -452,10 +474,59 @@ export class AgentWorkflowEngineService extends EventEmitter {
   ): Promise<any> {
     const { command, args, workingDirectory, timeout } = this.resolveVariables(config, state);
     
+    // ✅ FIX (Nov 30, 2025): Smart command parsing
+    // The AI plan may provide commands in various formats:
+    // 1. Simple: "npm install react-dom" → npm + ["install", "react-dom"]
+    // 2. Composite: "npm install && npm build" → bash -c + ["npm install && npm build"]
+    // 3. Already parsed: command="npm", args=["install", "react-dom"]
+    
+    let executableCommand: string;
+    let commandArgs: string[];
+    
+    if (typeof command === 'string' && (!args || args.length === 0)) {
+      // Check for shell composite commands (&&, ||, ;)
+      const hasShellOperators = /\s+(?:&&|\|\||;)\s+/.test(command);
+      
+      if (hasShellOperators) {
+        // Composite command - execute through bash shell
+        executableCommand = 'bash';
+        commandArgs = ['-c', command];
+        logger.info(`[WorkflowEngine] Composite command detected, executing via shell: "${command}"`);
+      } else if (command.includes(' ')) {
+        // Simple command with args - parse it
+        const parts = command.split(/\s+/).filter(Boolean);
+        executableCommand = parts[0];
+        commandArgs = parts.slice(1);
+        logger.info(`[WorkflowEngine] Parsed command: "${executableCommand}" with args: [${commandArgs.join(', ')}]`);
+      } else {
+        // Single command without args
+        executableCommand = command;
+        commandArgs = [];
+      }
+    } else {
+      executableCommand = command;
+      // ✅ FIX (Nov 30, 2025): Sanitize args array - only accept string primitives
+      // The config object may contain nested objects (environment, resourceLimits, etc.)
+      // which get resolved and included in args, causing "[object Object]" in database
+      commandArgs = (args || [])
+        .filter((arg: any) => arg !== null && arg !== undefined)
+        .map((arg: any) => {
+          if (typeof arg === 'string') return arg;
+          if (typeof arg === 'number' || typeof arg === 'boolean') return String(arg);
+          // Skip objects/arrays - they shouldn't be command arguments
+          return null;
+        })
+        .filter((arg: any): arg is string => arg !== null);
+      
+      if (commandArgs.length !== (args || []).length) {
+        logger.warn(`[WorkflowEngine] Filtered out non-string args: original=${(args || []).length}, sanitized=${commandArgs.length}`);
+      }
+    }
+    
     const result = await agentCommandExecution.executeCommand(
       context.sessionId,
-      command,
-      args || [],
+      executableCommand,
+      commandArgs,
       {
         workingDirectory,
         timeout,
@@ -605,6 +676,51 @@ export class AgentWorkflowEngineService extends EventEmitter {
   }
 
   // Resolve variables in configuration
+  // ✅ Helper (Nov 30, 2025): Generate minimal fallback content for different file types
+  private getMinimalFileContent(filePath: string, ext: string, description: string): string {
+    const filename = filePath?.split('/').pop() || 'file';
+    
+    switch (ext) {
+      case 'json':
+        if (filename === 'package.json') {
+          return JSON.stringify({
+            name: "new-project",
+            version: "1.0.0",
+            description: description,
+            scripts: { start: "node index.js", dev: "node index.js" },
+            dependencies: {}
+          }, null, 2);
+        }
+        return JSON.stringify({ description }, null, 2);
+      
+      case 'ts':
+      case 'tsx':
+        return `// ${description}\n\nexport {};\n`;
+      
+      case 'js':
+      case 'jsx':
+        return `// ${description}\n\nmodule.exports = {};\n`;
+      
+      case 'html':
+        return `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>${filename}</title>\n</head>\n<body>\n  <!-- ${description} -->\n</body>\n</html>`;
+      
+      case 'css':
+        return `/* ${description} */\n\n`;
+      
+      case 'md':
+        return `# ${filename.replace('.md', '')}\n\n${description}\n`;
+      
+      case 'py':
+        return `# ${description}\n\n`;
+      
+      case 'gitignore':
+        return `# ${description}\nnode_modules/\n.env\ndist/\n`;
+      
+      default:
+        return `// ${description}\n`;
+    }
+  }
+
   private resolveVariables(config: any, state: WorkflowState): any {
     if (typeof config === 'string') {
       // Replace variable references like ${variableName}

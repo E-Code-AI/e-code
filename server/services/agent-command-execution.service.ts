@@ -37,6 +37,7 @@ export class AgentCommandExecutionService extends EventEmitter {
   private readonly MAX_OUTPUT_SIZE = 1024 * 1024; // 1MB
   
   // Sandboxed commands whitelist for security
+  // ✅ FIX (Nov 30, 2025): Added 'bash' and 'sh' for composite command execution
   private readonly ALLOWED_COMMANDS = [
     'npm', 'npx', 'node', 'yarn', 'pnpm', 'git', 'tsc', 'tsx',
     'python', 'python3', 'pip', 'pip3',
@@ -47,6 +48,7 @@ export class AgentCommandExecutionService extends EventEmitter {
     'php', 'composer',
     'dotnet', 'nuget',
     'docker', 'docker-compose',
+    'bash', 'sh', // Shell wrappers for composite commands (e.g., "npm install && npm build")
     'curl', 'wget', 'grep', 'sed', 'awk', 'find',
     'ls', 'cat', 'echo', 'pwd', 'cd', 'mkdir', 'rm', 'cp', 'mv',
     'test', 'jest', 'mocha', 'vitest', 'pytest',
@@ -101,23 +103,54 @@ export class AgentCommandExecutionService extends EventEmitter {
         options.workingDirectory || session.context?.workingDirectory || '.'
       );
       
-      const environment = {
+      // ✅ FIX (Nov 30, 2025): Separate execution env (full) from stored env (filtered)
+      // Full environment for actual command execution
+      const fullEnvironment = {
         ...process.env,
         NODE_ENV: 'development',
         CI: 'true', // Run in CI mode to avoid interactive prompts
         ...session.context?.environment,
         ...options.environment
-      };
+      } as Record<string, string>;
+      
+      // Filtered environment for database storage
+      // Include essential keys + PATH (truncated) + npm_config_* for replay capability
+      const ESSENTIAL_ENV_KEYS = [
+        'NODE_ENV', 'CI', 'PWD', 'HOME', 'USER', 'SHELL', 'LANG', 'TERM'
+      ];
+      const storedEnvironment: Record<string, string> = {};
+      
+      // Add essential keys
+      for (const key of ESSENTIAL_ENV_KEYS) {
+        if (fullEnvironment[key]) {
+          storedEnvironment[key] = fullEnvironment[key];
+        }
+      }
+      
+      // Add PATH (truncated to first 2000 chars to avoid DB bloat from Nix paths)
+      if (fullEnvironment['PATH']) {
+        const pathValue = fullEnvironment['PATH'];
+        storedEnvironment['PATH'] = pathValue.length > 2000 
+          ? pathValue.substring(0, 2000) + '...[truncated]'
+          : pathValue;
+      }
+      
+      // Add npm_config_* keys for Node.js reproducibility
+      for (const [key, value] of Object.entries(fullEnvironment)) {
+        if (key.startsWith('npm_config_') && value) {
+          storedEnvironment[key] = value;
+        }
+      }
       
       const timeout = options.timeout || this.DEFAULT_TIMEOUT;
       
-      // Create command execution record
+      // Create command execution record with minimal stored environment
       const [cmdExec] = await db.insert(commandExecutions).values({
         sessionId,
         command,
         arguments: args,
         workingDirectory,
-        environment,
+        environment: storedEnvironment, // Store only essential env vars
         stdin: options.stdin,
         status: 'pending',
         timeout,
@@ -132,14 +165,14 @@ export class AgentCommandExecutionService extends EventEmitter {
         command: `${command} ${args.join(' ')}`
       });
       
-      // Execute command
+      // Execute command with FULL environment
       const result = await this.runCommand(
         cmdExec.id,
         command,
         args,
         {
           cwd: workingDirectory,
-          env: environment,
+          env: fullEnvironment, // Use full env for actual execution
           timeout,
           stdin: options.stdin,
           resourceLimits: options.resourceLimits

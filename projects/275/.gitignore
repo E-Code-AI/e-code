@@ -1,0 +1,3 @@
+Create a .gitignore file to prevent unnecessary files and directories (like node_modules, build artifacts) from being committed to version control.
+
+TODO: Implement file content based on outline
