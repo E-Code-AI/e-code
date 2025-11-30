@@ -213,7 +213,7 @@ export class AIPlanGeneratorService {
       technologies?: string[];
       constraints?: string[];
     }
-  ): AsyncGenerator<{ type: 'chunk' | 'plan' | 'error'; data: any }> {
+  ): AsyncGenerator<{ type: 'chunk' | 'plan' | 'error' | 'warning'; data: any }> {
     try {
       // Get project details
       const project = await this.storage.getProject(projectId);

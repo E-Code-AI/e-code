@@ -216,8 +216,8 @@ export class AgentOrchestratorService extends EventEmitter {
 
     const [session] = await db.insert(agentSessions)
       .values({
-        userId,
-        projectId,
+        userId: Number(userId),
+        projectId: projectId ? Number(projectId) : undefined,
         sessionToken,
         model,
         context: {
@@ -895,7 +895,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
     return await db.select()
       .from(agentSessions)
       .where(and(
-        eq(agentSessions.userId, userId),
+        eq(agentSessions.userId, Number(userId)),
         eq(agentSessions.isActive, true)
       ));
   }
@@ -935,7 +935,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
   ) {
     await db.insert(agentAuditTrail).values({
       sessionId,
-      userId,
+      userId: Number(userId),
       action,
       resourceType: 'agent',
       resourceId: sessionId,
@@ -1270,8 +1270,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       // Mark session as started (prevent race conditions)
       await db.update(agentSessions)
         .set({ 
-          workflowStatus: 'planning',
-          updatedAt: new Date()
+          workflowStatus: 'planning'
         })
         .where(eq(agentSessions.id, sessionId));
       
@@ -1337,8 +1336,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       // Update session status
       await db.update(agentSessions)
         .set({ 
-          workflowStatus: 'executing',
-          updatedAt: new Date()
+          workflowStatus: 'executing'
         })
         .where(eq(agentSessions.id, sessionId));
       
@@ -1492,30 +1490,29 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           {} // initialVariables
         );
         
+        const isSuccess = result.status === 'completed';
         logger.info(`[Autonomous] Workflow execution completed`, { 
           sessionId, 
-          success: result.success,
-          completedSteps: result.completedSteps 
+          status: result.status
         });
         
         // Update session status
         await db.update(agentSessions)
           .set({ 
-            workflowStatus: result.success ? 'completed' : 'failed',
-            updatedAt: new Date()
+            workflowStatus: isSuccess ? 'completed' : 'failed'
           })
           .where(eq(agentSessions.id, sessionId));
         
         // Update plan status
-        await agentPlanStore.updateStatus(sessionId, result.success ? 'completed' : 'failed');
+        await agentPlanStore.updateStatus(sessionId, isSuccess ? 'completed' : 'failed');
         
         // Emit final completion event
         agentWebSocketService.broadcast({
           type: 'status',
           sessionId,
           projectId,
-          status: result.success ? 'completed' : 'failed',
-          message: result.success 
+          status: isSuccess ? 'completed' : 'failed',
+          message: isSuccess 
             ? `✅ Workspace created successfully!`
             : `❌ Workspace creation failed: ${result.error || 'Unknown error'}`,
           result
@@ -1533,8 +1530,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       // Update session status to failed
       await db.update(agentSessions)
         .set({ 
-          workflowStatus: 'failed',
-          updatedAt: new Date()
+          workflowStatus: 'failed'
         })
         .where(eq(agentSessions.id, sessionId))
         .catch(dbErr => logger.error('[Autonomous] Failed to update session status', { dbErr }));
