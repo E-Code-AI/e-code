@@ -55,7 +55,7 @@ function normalizeLayout(root: LayoutNode | null, centerStackHeight: number | nu
   if (!root) return;
   
   function walkAndNormalize(node: LayoutNode, parentSplit: Split | null = null): void {
-    if (isSplit(node)) {
+    if (isSplit(node) && Array.isArray(node.children)) {
       // Check if this split contains center-bottom panel
       node.children.forEach((child, index) => {
         if (isPaneGroup(child) && child.id === 'center-bottom') {
@@ -186,7 +186,7 @@ const findNodeRecursive = (nodeId: string, node: LayoutNode | null): LayoutNode 
   if (!node) return null;
   if (node.id === nodeId) return node;
   
-  if (isSplit(node)) {
+  if (isSplit(node) && Array.isArray(node.children)) {
     for (const child of node.children) {
       const found = findNodeRecursive(nodeId, child);
       if (found) return found;
@@ -200,7 +200,7 @@ const findParentSplitRecursive = (nodeId: string, node: LayoutNode | null, paren
   if (!node) return null;
   if (node.id === nodeId) return parent;
   
-  if (isSplit(node)) {
+  if (isSplit(node) && Array.isArray(node.children)) {
     for (const child of node.children) {
       const found = findParentSplitRecursive(nodeId, child, node);
       if (found) return found;
@@ -213,7 +213,7 @@ const findParentSplitRecursive = (nodeId: string, node: LayoutNode | null, paren
 const removeNodeFromTree = (nodeId: string, node: LayoutNode | null): LayoutNode | null => {
   if (!node) return null;
   
-  if (isSplit(node)) {
+  if (isSplit(node) && Array.isArray(node.children)) {
     const newChildren = node.children.filter(child => child.id !== nodeId);
     
     if (newChildren.length !== node.children.length) {
@@ -299,7 +299,7 @@ const useSplitsStore = create<SplitsStore>()(
           percent: 50,
         };
 
-        if (parent) {
+        if (parent && Array.isArray(parent.children)) {
           // Replace the pane with a new split
           const targetIndex = parent.children.findIndex(child => child.id === paneId);
           if (targetIndex !== -1) {
@@ -336,6 +336,7 @@ const useSplitsStore = create<SplitsStore>()(
         const targetPane = findNodeRecursive(targetPaneId, state.root) as PaneGroup;
         
         if (!sourcePane || !targetPane || !isPaneGroup(sourcePane) || !isPaneGroup(targetPane)) return;
+        if (!Array.isArray(sourcePane.tabs) || !Array.isArray(targetPane.tabs)) return;
         
         const tabIndex = sourcePane.tabs.findIndex(t => t.id === tabId);
         if (tabIndex === -1) return;
@@ -364,7 +365,7 @@ const useSplitsStore = create<SplitsStore>()(
     closeTab: (tabId, paneId) => {
       set((state) => {
         const pane = findNodeRecursive(paneId, state.root) as PaneGroup;
-        if (!pane || !isPaneGroup(pane)) return;
+        if (!pane || !isPaneGroup(pane) || !Array.isArray(pane.tabs)) return;
         
         const tabIndex = pane.tabs.findIndex(t => t.id === tabId);
         if (tabIndex === -1) return;
@@ -386,7 +387,7 @@ const useSplitsStore = create<SplitsStore>()(
     addTab: (paneId, tab, makeActive = true) => {
       set((state) => {
         const pane = findNodeRecursive(paneId, state.root) as PaneGroup;
-        if (!pane || !isPaneGroup(pane)) return;
+        if (!pane || !isPaneGroup(pane) || !Array.isArray(pane.tabs)) return;
         
         // Check if tab already exists
         const existingIndex = pane.tabs.findIndex(t => t.id === tab.id);
@@ -447,9 +448,11 @@ const useSplitsStore = create<SplitsStore>()(
             get().splitPane(dropTarget.targetId, direction, floatingPane.paneGroup);
           } else if (targetNode && isPaneGroup(targetNode) && dropTarget.zone === 'center') {
             // Merge tabs
-            floatingPane.paneGroup.tabs.forEach(tab => {
-              get().addTab(dropTarget.targetId, tab, true);
-            });
+            if (Array.isArray(floatingPane.paneGroup.tabs)) {
+              floatingPane.paneGroup.tabs.forEach(tab => {
+                get().addTab(dropTarget.targetId, tab, true);
+              });
+            }
           }
         } else {
           // Add back as a new pane
@@ -480,7 +483,7 @@ const useSplitsStore = create<SplitsStore>()(
     resizeSplit: (splitId, sizes) => {
       set((state) => {
         const split = findNodeRecursive(splitId, state.root) as Split;
-        if (!split || !isSplit(split)) return;
+        if (!split || !isSplit(split) || !Array.isArray(split.children)) return;
         
         split.children.forEach((child, index) => {
           if (index < sizes.length) {
@@ -503,7 +506,7 @@ const useSplitsStore = create<SplitsStore>()(
         
         // Update parent split siblings
         const parent = get().findParentSplit(paneId);
-        if (!parent) return;
+        if (!parent || !Array.isArray(parent.children)) return;
         
         const childIndex = parent.children.findIndex(child => child.id === paneId);
         if (childIndex === -1) return;
@@ -532,7 +535,7 @@ const useSplitsStore = create<SplitsStore>()(
           
           // Update sibling
           const parent = get().findParentSplit(paneId);
-          if (parent) {
+          if (parent && Array.isArray(parent.children)) {
             const childIndex = parent.children.findIndex(child => child.id === paneId);
             if (childIndex !== -1) {
               const siblingIndex = childIndex === 0 ? 1 : 0;
@@ -547,7 +550,7 @@ const useSplitsStore = create<SplitsStore>()(
           
           // Update sibling
           const parent = get().findParentSplit(paneId);
-          if (parent) {
+          if (parent && Array.isArray(parent.children)) {
             const childIndex = parent.children.findIndex(child => child.id === paneId);
             if (childIndex !== -1) {
               const siblingIndex = childIndex === 0 ? 1 : 0;
@@ -745,7 +748,7 @@ const useSplitsStore = create<SplitsStore>()(
     // Resize
     startResize: (splitId, direction, startPosition) => {
       const split = get().findNode(splitId, get().root) as Split;
-      if (!split || !isSplit(split)) return;
+      if (!split || !isSplit(split) || !Array.isArray(split.children)) return;
       
       set((state) => {
         state.resizeState = {
@@ -765,7 +768,7 @@ const useSplitsStore = create<SplitsStore>()(
         
         if (state.resizeState.resizingId) {
           const split = findNodeRecursive(state.resizeState.resizingId, state.root) as Split;
-          if (!split || !isSplit(split)) return;
+          if (!split || !isSplit(split) || !Array.isArray(split.children)) return;
           
           const delta = currentPosition - state.resizeState.startPosition;
           const totalSize = state.resizeState.direction === 'horizontal' ? window.innerWidth : window.innerHeight;
