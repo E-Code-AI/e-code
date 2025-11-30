@@ -243,9 +243,9 @@ router.post('/bootstrap', async (req: Request, res: Response) => {
     });
     
     // 8. ✅ AUTONOMOUS WORKSPACE CREATION (Nov 24, 2025): Fire-and-forget orchestration
-    // CRITICAL FIX: Replace separate plan generation + execution with unified orchestrator call
-    // SOLUTION: Return bootstrap token immediately (ABOVE), start autonomous workspace in background (BELOW)
-    // Client connects via WebSocket and receives real-time updates
+    // CRITICAL FIX (Nov 28, 2025): ALWAYS start autonomous workspace - no conditional
+    // Production flow MUST create files via agent orchestrator
+    // The autoStart option is now ignored - bootstrap ALWAYS triggers autonomous creation
     
     logger.info(`[Bootstrap] HTTP response sent - starting autonomous workspace creation for prompt: "${prompt.substring(0, 50)}..."`);
     
@@ -256,33 +256,30 @@ router.post('/bootstrap', async (req: Request, res: Response) => {
     // - Plan storage to database
     // - Workflow execution
     // - WebSocket streaming of all events
-    if (options.autoStart) {
-      void agentOrchestrator.startAutonomousWorkspace({
+    // NOTE: No conditional - autonomous workspace creation is ALWAYS triggered
+    void agentOrchestrator.startAutonomousWorkspace({
+      sessionId: session.id,
+      projectId: String(project.id),
+      userId: String(userId),
+      prompt: prompt,
+      options: {
+        language: options.language || 'typescript',
+        framework: options.framework || 'react'
+      }
+    }).catch(error => {
+      logger.error(`[Bootstrap] ❌ Autonomous workspace creation failed:`, {
+        message: error.message,
+        projectId: project.id,
         sessionId: session.id,
-        projectId: String(project.id),
-        userId: String(userId),
-        prompt: prompt,
-        options: {
-          language: options.language || 'typescript',
-          framework: options.framework || 'react'
-        }
-      }).catch(error => {
-        logger.error(`[Bootstrap] ❌ Autonomous workspace creation failed:`, {
-          message: error.message,
-          projectId: project.id,
-          sessionId: session.id,
-          stack: error.stack
-        });
-        // Error already broadcasted via WebSocket in startAutonomousWorkspace
+        stack: error.stack
       });
-      
-      logger.info(`[Bootstrap] ✅ Autonomous workspace creation started in background`, {
-        sessionId: session.id,
-        projectId: project.id
-      });
-    } else {
-      logger.info(`[Bootstrap] Plan ready but autoStart=false - autonomous execution skipped`);
-    }
+      // Error already broadcasted via WebSocket in startAutonomousWorkspace
+    });
+    
+    logger.info(`[Bootstrap] ✅ Autonomous workspace creation started in background`, {
+      sessionId: session.id,
+      projectId: project.id
+    });
     
   } catch (error: any) {
     const elapsed = Date.now() - startTime;
