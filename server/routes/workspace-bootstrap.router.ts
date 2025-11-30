@@ -161,6 +161,7 @@ router.post('/bootstrap', async (req: Request, res: Response) => {
     const user = req.user as User | undefined;
     let userId: number;
     let username: string;
+    let ephemeralUser: User | null = null;
     
     if (user) {
       // Authenticated user
@@ -177,7 +178,7 @@ router.post('/bootstrap', async (req: Request, res: Response) => {
       
       logger.info(`[Bootstrap] Creating ephemeral user for anonymous session`, { ephemeralEmail });
       
-      const [ephemeralUser] = await db.insert(users)
+      const [createdUser] = await db.insert(users)
         .values({
           email: ephemeralEmail,
           username: ephemeralUsername,
@@ -185,9 +186,24 @@ router.post('/bootstrap', async (req: Request, res: Response) => {
         })
         .returning();
       
-      userId = ephemeralUser.id;
+      ephemeralUser = createdUser;
+      userId = createdUser.id;
       username = ephemeralUsername;
       logger.info(`[Bootstrap] Ephemeral user created: ${userId}`, { email: ephemeralEmail });
+      
+      // ✅ CRITICAL FIX (Nov 30, 2025): Log in the ephemeral user via Passport session
+      // This creates a proper session cookie so the user can access /ide/:projectId
+      await new Promise<void>((resolve, reject) => {
+        req.login(createdUser, (err) => {
+          if (err) {
+            logger.error(`[Bootstrap] Failed to login ephemeral user:`, err);
+            reject(err);
+          } else {
+            logger.info(`[Bootstrap] ✅ Ephemeral user logged in via Passport session`);
+            resolve();
+          }
+        });
+      });
     }
     
     console.log('🚀 [Bootstrap] RECEIVED REQUEST from user', userId, 'prompt:', prompt.substring(0, 50));
