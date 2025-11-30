@@ -14,6 +14,7 @@ import { agentCommandExecution } from './agent-command-execution.service';
 import { agentToolFramework } from './agent-tool-framework.service';
 import { OpenAI } from 'openai';
 import { createLogger } from '../utils/logger';
+import { redisIdempotency } from './redis-idempotency.service';
 
 const logger = createLogger('agent-workflow-engine');
 
@@ -105,10 +106,6 @@ interface CircuitBreakerState {
   isOpen: boolean;
 }
 
-// Idempotency token cache (in-memory, should be Redis in production)
-const idempotencyCache = new Map<string, { workflowId: string; timestamp: number }>();
-const IDEMPOTENCY_TTL_MS = 5 * 60 * 1000; // 5 minutes
-
 // Default step timeout - 5 minutes for long-running operations
 const DEFAULT_STEP_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -155,14 +152,15 @@ export class AgentWorkflowEngineService extends EventEmitter {
       );
     }
 
-    // Check idempotency - prevent duplicate workflow creation
-    if (idempotencyKey) {
-      const cached = idempotencyCache.get(idempotencyKey);
-      if (cached && Date.now() - cached.timestamp < IDEMPOTENCY_TTL_MS) {
-        logger.info(`[WorkflowEngine] Returning cached workflow for idempotency key: ${idempotencyKey}`);
+    // ✅ Redis-backed idempotency - distributed deduplication
+    const workflowIdempotencyKey = idempotencyKey ? `workflow:${idempotencyKey}` : undefined;
+    if (workflowIdempotencyKey) {
+      const cached = await redisIdempotency.check(workflowIdempotencyKey);
+      if (cached?.cached) {
+        logger.info(`[WorkflowEngine] Returning Redis-cached workflow for key: ${idempotencyKey}`);
         const [existingWorkflow] = await db.select()
           .from(agentWorkflows)
-          .where(eq(agentWorkflows.id, cached.workflowId));
+          .where(eq(agentWorkflows.id, cached.cached.workflowId));
         if (existingWorkflow) {
           return existingWorkflow;
         }
@@ -314,12 +312,13 @@ export class AgentWorkflowEngineService extends EventEmitter {
         return workflow;
       });
       
-      // Cache idempotency key outside transaction
+      // ✅ Cache in Redis outside transaction (distributed cache)
       if (idempotencyKey && result) {
-        idempotencyCache.set(idempotencyKey, {
-          workflowId: result.id,
-          timestamp: Date.now()
-        });
+        const workflowCacheKey = `workflow:${idempotencyKey}`;
+        const lockId = await redisIdempotency.acquireLock(workflowCacheKey);
+        if (lockId) {
+          await redisIdempotency.complete(workflowCacheKey, lockId, { workflowId: result.id });
+        }
       }
       
       logger.info(`[WorkflowEngine] Workflow created atomically: ${result.id}`);

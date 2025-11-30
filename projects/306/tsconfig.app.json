@@ -1,0 +1,4 @@
+{
+  "description": "Application-specific TypeScript configuration that includes src/**/*.ts,tsx files for compilation and excludes test files. Configure JSX factory for React, module and target appropriate for modern browsers, and settings optimized for IDE features like incremental builds and source maps.",
+  "todo": "Configure based on outline"
+}

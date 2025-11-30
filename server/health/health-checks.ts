@@ -111,6 +111,82 @@ async function checkRedis(): Promise<{ status: 'up' | 'down' | 'degraded'; respo
 }
 
 /**
+ * Check all AI providers health using the provider manager
+ */
+async function checkAIProviders(): Promise<{ 
+  status: 'up' | 'down' | 'degraded'; 
+  responseTime: number; 
+  message?: string;
+  providers?: Record<string, { status: string; configured: boolean }>;
+}> {
+  const startTime = Date.now();
+  
+  try {
+    // Import provider manager dynamically
+    const { aiProviderManager } = await import('../ai/ai-provider-manager');
+    
+    const providerHealth: Record<string, { status: string; configured: boolean }> = {};
+    const availableModels = aiProviderManager.getAvailableModels();
+    
+    // Check each unique provider - count as healthy if it has available models
+    const providers = new Set(availableModels.map(m => m.provider));
+    let configuredCount = providers.size;
+    
+    for (const provider of providers) {
+      providerHealth[provider] = {
+        status: 'configured',
+        configured: true
+      };
+    }
+    
+    // Check for unconfigured providers by checking API keys
+    const providerKeys: Record<string, string> = {
+      openai: 'OPENAI_API_KEY',
+      anthropic: 'ANTHROPIC_API_KEY',
+      gemini: 'GEMINI_API_KEY',
+      xai: 'XAI_API_KEY',
+      moonshot: 'MOONSHOT_API_KEY',
+      groq: 'GROQ_API_KEY'
+    };
+    
+    for (const [providerName, keyName] of Object.entries(providerKeys)) {
+      if (!providers.has(providerName as any)) {
+        providerHealth[providerName] = {
+          status: process.env[keyName] ? 'key_present_not_initialized' : 'not_configured',
+          configured: false
+        };
+      }
+    }
+    
+    const responseTime = Date.now() - startTime;
+    
+    // Determine overall status
+    if (configuredCount === 0) {
+      return {
+        status: 'down',
+        responseTime,
+        message: 'No AI providers available',
+        providers: providerHealth
+      };
+    }
+    
+    // If we have at least one provider, we're good
+    return {
+      status: 'up',
+      responseTime,
+      message: `${configuredCount} AI provider(s) available`,
+      providers: providerHealth
+    };
+  } catch (error: any) {
+    return {
+      status: 'down',
+      responseTime: Date.now() - startTime,
+      message: `AI provider check failed: ${error.message}`
+    };
+  }
+}
+
+/**
  * Check OpenAI API availability
  */
 async function checkOpenAI(): Promise<{ status: 'up' | 'down'; responseTime: number; message?: string }> {
@@ -280,6 +356,7 @@ async function performHealthChecks(deep: boolean = false): Promise<HealthStatus>
 
   // Deep health checks (optional)
   if (deep) {
+    checks.aiProviders = await checkAIProviders();
     checks.openai = await checkOpenAI();
     checks.anthropic = await checkAnthropic();
     checks.disk = await checkDiskSpace();

@@ -1,0 +1,3 @@
+Ignore patterns for ESLint to skip build output (dist), coverage reports, node_modules, and configuration files that do not need linting. Keeps lint results focused on source and test code.
+
+TODO: Implement file content based on outline

@@ -1,0 +1,3 @@
+EditorConfig settings to standardize indentation, line endings, charset, and final newline behavior across IDEs. Provides defaults for all files and overrides for markdown or JSON if needed.
+
+TODO: Implement file content based on outline

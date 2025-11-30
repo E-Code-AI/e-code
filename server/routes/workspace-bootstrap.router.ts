@@ -29,30 +29,10 @@ import { aiProviderManager } from '../ai/ai-provider-manager';
 import { createLogger } from '../utils/logger';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
+import { redisIdempotency } from '../services/redis-idempotency.service';
 
 const logger = createLogger('workspace-bootstrap');
 const router = Router();
-
-// ✅ Idempotency cache for deduplicating concurrent requests
-// Key: idempotency key, Value: { response, timestamp, inProgress }
-interface IdempotencyCacheEntry {
-  response: any;
-  timestamp: number;
-  inProgress: boolean;
-  promise?: Promise<any>;
-}
-const idempotencyCache = new Map<string, IdempotencyCacheEntry>();
-const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
-
-// Cleanup old entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of idempotencyCache.entries()) {
-    if (now - entry.timestamp > IDEMPOTENCY_TTL_MS) {
-      idempotencyCache.delete(key);
-    }
-  }
-}, 60 * 60 * 1000); // Cleanup every hour
 
 // Validation schema for bootstrap request
 // ✅ FIX (Nov 21, 2025): Properly set defaults for nested object
@@ -110,8 +90,9 @@ interface BootstrapTokenPayload {
 router.post('/bootstrap', async (req: Request, res: Response) => {
   const startTime = Date.now();
   
-  // ✅ Idempotency key support for concurrent request deduplication
+  // ✅ Redis-backed idempotency for distributed deduplication (Fortune 500-grade)
   const idempotencyKey = req.headers['x-idempotency-key'] as string | undefined;
+  let lockId: string | null = null;
   
   logger.info(`[Bootstrap] 🚀 POST /bootstrap REQUEST RECEIVED`, { 
     body: req.body,
@@ -121,55 +102,48 @@ router.post('/bootstrap', async (req: Request, res: Response) => {
     idempotencyKey: idempotencyKey || 'none'
   });
   
-  // Check idempotency cache for duplicate requests
+  // Check Redis-backed idempotency cache
   if (idempotencyKey) {
-    const cached = idempotencyCache.get(idempotencyKey);
+    const cached = await redisIdempotency.check(idempotencyKey);
     
-    if (cached) {
-      // If request is still in progress, wait for it to complete
-      if (cached.inProgress && cached.promise) {
-        logger.info(`[Bootstrap] ⏳ Waiting for in-progress request with idempotency key: ${idempotencyKey}`);
-        try {
-          const result = await cached.promise;
-          logger.info(`[Bootstrap] ✅ Returning cached response for idempotency key: ${idempotencyKey}`);
-          return res.status(200).json(result);
-        } catch (error) {
-          // Original request failed, allow retry
-          idempotencyCache.delete(idempotencyKey);
-        }
-      } else if (cached.response) {
-        // Request already completed, return cached response
-        logger.info(`[Bootstrap] ✅ Returning cached response for idempotency key: ${idempotencyKey}`, {
-          projectId: cached.response.projectId,
-          sessionId: cached.response.sessionId
-        });
-        return res.status(200).json(cached.response);
-      }
+    if (cached?.cached) {
+      // Request already completed, return cached response
+      logger.info(`[Bootstrap] ✅ Returning Redis-cached response for key: ${idempotencyKey}`, {
+        projectId: cached.cached.projectId,
+        sessionId: cached.cached.sessionId
+      });
+      return res.status(200).json(cached.cached);
     }
-  }
-  
-  // ✅ Mark request as in-progress for concurrent request handling
-  let bootstrapPromise: Promise<any> | undefined;
-  
-  if (idempotencyKey) {
-    // Create a deferred promise for concurrent requests to wait on
-    let resolvePromise: (value: any) => void;
-    let rejectPromise: (error: any) => void;
-    bootstrapPromise = new Promise((resolve, reject) => {
-      resolvePromise = resolve;
-      rejectPromise = reject;
-    });
     
-    idempotencyCache.set(idempotencyKey, {
-      response: null,
-      timestamp: Date.now(),
-      inProgress: true,
-      promise: bootstrapPromise
-    });
+    if (cached?.inProgress) {
+      // Another instance is processing this request - wait for completion
+      logger.info(`[Bootstrap] ⏳ Waiting for distributed lock on key: ${idempotencyKey}`);
+      const result = await redisIdempotency.waitForCompletion(idempotencyKey, 30000);
+      if (result) {
+        logger.info(`[Bootstrap] ✅ Returning response after wait for key: ${idempotencyKey}`);
+        return res.status(200).json(result);
+      }
+      // Timeout or failure - allow this request to proceed
+      logger.warn(`[Bootstrap] Lock wait timeout, proceeding with new request: ${idempotencyKey}`);
+    }
     
-    // Store resolve/reject for later use (attach to promise for access)
-    (bootstrapPromise as any)._resolve = resolvePromise!;
-    (bootstrapPromise as any)._reject = rejectPromise!;
+    // Acquire distributed lock
+    lockId = await redisIdempotency.acquireLock(idempotencyKey);
+    if (!lockId) {
+      // Failed to acquire lock - another request just started, wait for it
+      logger.info(`[Bootstrap] Lock acquisition failed, waiting for other request: ${idempotencyKey}`);
+      const result = await redisIdempotency.waitForCompletion(idempotencyKey, 30000);
+      if (result) {
+        return res.status(200).json(result);
+      }
+      return res.status(409).json({
+        success: false,
+        error: 'Concurrent request in progress',
+        message: 'Please retry in a few seconds'
+      });
+    }
+    
+    logger.info(`[Bootstrap] 🔒 Distributed lock acquired for key: ${idempotencyKey}`, { lockId });
   }
   
   try {
@@ -318,21 +292,10 @@ router.post('/bootstrap', async (req: Request, res: Response) => {
       }
     };
     
-    // ✅ Store in idempotency cache if key was provided
-    if (idempotencyKey) {
-      // Update cache with final response
-      idempotencyCache.set(idempotencyKey, {
-        response: responsePayload,
-        timestamp: Date.now(),
-        inProgress: false
-      });
-      
-      // Resolve the promise for any waiting concurrent requests
-      if (bootstrapPromise && (bootstrapPromise as any)._resolve) {
-        (bootstrapPromise as any)._resolve(responsePayload);
-      }
-      
-      logger.info(`[Bootstrap] ✅ Cached response for idempotency key: ${idempotencyKey}`, {
+    // ✅ Store in Redis idempotency cache if key was provided
+    if (idempotencyKey && lockId) {
+      await redisIdempotency.complete(idempotencyKey, lockId, responsePayload);
+      logger.info(`[Bootstrap] ✅ Redis cached response for key: ${idempotencyKey}`, {
         projectId: project.id,
         sessionId: session.id
       });
@@ -387,12 +350,9 @@ router.post('/bootstrap', async (req: Request, res: Response) => {
     const elapsed = Date.now() - startTime;
     logger.error(`[Bootstrap] Failed after ${elapsed}ms:`, error);
     
-    // ✅ Reject promise and cleanup cache on error
-    if (idempotencyKey) {
-      if (bootstrapPromise && (bootstrapPromise as any)._reject) {
-        (bootstrapPromise as any)._reject(error);
-      }
-      idempotencyCache.delete(idempotencyKey);
+    // ✅ Release Redis lock and cleanup on error
+    if (idempotencyKey && lockId) {
+      await redisIdempotency.fail(idempotencyKey, lockId);
     }
     
     if (error.name === 'ZodError') {
