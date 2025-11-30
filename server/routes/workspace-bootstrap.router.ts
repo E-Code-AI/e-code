@@ -29,6 +29,7 @@ import { aiProviderManager } from '../ai/ai-provider-manager';
 import { createLogger } from '../utils/logger';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 import { redisIdempotency } from '../services/redis-idempotency.service';
 
 const logger = createLogger('workspace-bootstrap');
@@ -178,11 +179,16 @@ router.post('/bootstrap', async (req: Request, res: Response) => {
       
       logger.info(`[Bootstrap] Creating ephemeral user for anonymous session`, { ephemeralEmail });
       
+      // ✅ SECURITY FIX (Nov 30, 2025): Hash the random password with bcrypt
+      // Even though it's random and unguessable, passwords should always be hashed
+      const randomPassword = crypto.randomBytes(32).toString('hex');
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+      
       const [createdUser] = await db.insert(users)
         .values({
           email: ephemeralEmail,
           username: ephemeralUsername,
-          password: crypto.randomBytes(32).toString('hex'), // Random unguessable password
+          password: hashedPassword,
         })
         .returning();
       
