@@ -118,11 +118,11 @@ export function wrapWebSocketServer(wss: any): any {
   return wss;
 }
 
-// ✅ CRITICAL FIX (Dec 1, 2025): Paths handled by WebSocketServer with { server, path } mode
+// Paths that use { server, path } mode in WebSocketServer
 // These paths are handled internally by ws library and don't use manual socket marking
 // The upgrade guard must skip these to avoid destroying valid connections
+// NOTE: /ws/agent now uses noServer + prependListener + markSocketAsHandled, so it's removed from this list
 const WS_MANAGED_PATHS = new Set([
-  '/ws/agent',              // Agent WebSocket (autonomous workspace)
   '/ws/background-tests',   // Background testing WebSocket
   '/api/runtime/logs/ws',   // Runtime logs WebSocket
 ]);

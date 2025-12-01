@@ -4,7 +4,7 @@ import type { IncomingMessage } from 'http';
 import type { Socket } from 'net';
 import { Server } from 'http';
 import { createLogger } from '../utils/logger';
-import { wrapWebSocketServer } from '../websocket/upgrade-guard';
+import { wrapWebSocketServer, markSocketAsHandled } from '../websocket/upgrade-guard';
 import jwt from 'jsonwebtoken';
 
 const logger = createLogger('agent-websocket-service');
@@ -53,61 +53,86 @@ class AgentWebSocketService {
   private pingInterval: NodeJS.Timeout | null = null;
   
   initialize(server: Server) {
-    // ✅ CRITICAL FIX (Dec 1, 2025): Use { server, path, verifyClient } mode
-    // PROBLEM: noServer + prependListener approach lets Express/Vite middleware
-    // continue processing the HTTP request after handleUpgrade, writing HTML to
-    // the same socket and causing "Invalid frame header" errors.
-    // 
-    // SOLUTION: Use standard { server, path } mode which:
-    // 1. Lets ws library fully own the upgrade process at the HTTP server layer
-    // 2. Completely bypasses Express middleware for this path
-    // 3. Uses verifyClient for token validation before upgrade
-    this.wss = new WebSocketServer({
-      server,
-      path: '/ws/agent',
-      verifyClient: (info, callback) => {
-        try {
-          const url = new URL(info.req.url || '', `http://${info.req.headers.host}`);
-          const projectId = url.searchParams.get('projectId');
-          const sessionId = url.searchParams.get('sessionId');
-          const token = url.searchParams.get('bootstrap');
-          
-          logger.info('[Agent WebSocket] verifyClient: projectId=' + projectId + ', sessionId=' + sessionId + ', hasToken=' + !!token);
-          
-          if (!projectId || !sessionId) {
-            logger.warn('[Agent WebSocket] Missing projectId or sessionId - rejecting');
-            callback(false, 400, 'Missing projectId or sessionId');
-            return;
-          }
-          
-          if (!token) {
-            logger.warn('[Agent WebSocket] No bootstrap token provided - rejecting');
-            callback(false, 401, 'No bootstrap token provided');
-            return;
-          }
-          
-          const decoded = jwt.verify(token, JWT_SECRET) as any;
-          
-          if (decoded.projectId !== projectId || decoded.sessionId !== sessionId) {
-            logger.warn('[Agent WebSocket] Token projectId/sessionId mismatch - rejecting');
-            callback(false, 401, 'Token mismatch');
-            return;
-          }
-          
-          logger.info(`[Agent WebSocket] ✅ Token validated for project ${projectId}, session ${sessionId}`);
-          callback(true);
-        } catch (err) {
-          const errorMsg = err instanceof Error ? err.message : String(err);
-          logger.warn(`[Agent WebSocket] Token validation failed: ${errorMsg}`);
-          callback(false, 401, 'Invalid token: ' + errorMsg);
+    // ✅ CRITICAL FIX (Dec 1, 2025): Use noServer mode with prependListener for priority
+    // PROBLEM: { server, path } mode registers listener AFTER other WS services,
+    // causing race conditions with 13+ upgrade listeners. The ws library's internal
+    // completeUpgrade sometimes fails silently when other handlers interfere.
+    //
+    // SOLUTION: Use noServer + prependListener to run FIRST, before any other handlers.
+    // Mark socket as handled immediately to prevent other handlers from touching it.
+    this.wss = new WebSocketServer({ noServer: true });
+    
+    // 🔍 DEBUG: Add error handlers
+    this.wss.on('error', (err: Error) => {
+      console.error('[Agent WebSocket] WebSocketServer ERROR:', err.message, err.stack);
+    });
+    
+    this.wss.on('wsClientError', (err: Error, socket: any, request: any) => {
+      console.error('[Agent WebSocket] wsClientError:', err.message);
+      console.error('[Agent WebSocket] wsClientError URL:', request?.url);
+    });
+    
+    // Register as FIRST listener using prependListener (runs before all other upgrade handlers)
+    server.prependListener('upgrade', (request: any, socket: any, head: Buffer) => {
+      const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
+      
+      // Only handle /ws/agent path
+      if (pathname !== '/ws/agent') {
+        return;
+      }
+      
+      const url = new URL(request.url || '', `http://${request.headers.host}`);
+      const projectId = url.searchParams.get('projectId');
+      const sessionId = url.searchParams.get('sessionId');
+      const token = url.searchParams.get('bootstrap');
+      
+      logger.info('[Agent WebSocket] Upgrade handler: projectId=' + projectId + ', sessionId=' + sessionId + ', hasToken=' + !!token);
+      
+      // Mark socket as handled IMMEDIATELY to prevent other handlers from interfering
+      markSocketAsHandled(request, socket);
+      
+      // Validate parameters
+      if (!projectId || !sessionId) {
+        logger.warn('[Agent WebSocket] Missing projectId or sessionId - rejecting');
+        socket.write('HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nContent-Length: 30\r\n\r\nMissing projectId or sessionId');
+        socket.destroy();
+        return;
+      }
+      
+      if (!token) {
+        logger.warn('[Agent WebSocket] No bootstrap token provided - rejecting');
+        socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nContent-Length: 26\r\n\r\nNo bootstrap token provided');
+        socket.destroy();
+        return;
+      }
+      
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        
+        if (decoded.projectId !== projectId || decoded.sessionId !== sessionId) {
+          logger.warn('[Agent WebSocket] Token projectId/sessionId mismatch - rejecting');
+          socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nToken mismatch');
+          socket.destroy();
+          return;
         }
+        
+        logger.info(`[Agent WebSocket] ✅ Token validated for project ${projectId}, session ${sessionId}`);
+        
+        // Complete the WebSocket handshake
+        this.wss!.handleUpgrade(request, socket, head, (ws) => {
+          console.log(`[Agent WebSocket] 🎯 UPGRADE COMPLETE! Emitting connection event...`);
+          this.wss!.emit('connection', ws, request);
+        });
+        
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        logger.warn(`[Agent WebSocket] Token validation failed: ${errorMsg}`);
+        socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nContent-Length: 13\r\n\r\nInvalid token');
+        socket.destroy();
       }
     });
     
-    // Wrap for socket handling tracking
-    wrapWebSocketServer(this.wss);
-    
-    logger.info('[Agent WebSocket] Service initialized with { server, path } mode (bypasses Express)');
+    logger.info('[Agent WebSocket] Service initialized with noServer + prependListener mode');
     
     // Start heartbeat for connection health monitoring
     this.startHeartbeat();
