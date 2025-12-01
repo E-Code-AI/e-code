@@ -65,13 +65,12 @@ export function AgentToolsPanel({
     return true; // default open
   });
   
-  const [localSettings, setLocalSettings] = useState<AgentToolsSettings>({
-    maxAutonomy: false,
-    appTesting: true,
-    extendedThinking: false,
-    highPowerModels: false,
-    webSearch: true,
-  });
+  // Simple toggle states for immediate visual feedback
+  const [maxAutonomyOn, setMaxAutonomyOn] = useState(() => externalSettings?.maxAutonomy ?? false);
+  const [appTestingOn, setAppTestingOn] = useState(() => externalSettings?.appTesting ?? true);
+  const [extendedThinkingOn, setExtendedThinkingOn] = useState(() => externalSettings?.extendedThinking ?? false);
+  const [highPowerModelsOn, setHighPowerModelsOn] = useState(() => externalSettings?.highPowerModels ?? false);
+  const [webSearchOn, setWebSearchOn] = useState(() => externalSettings?.webSearch ?? true);
   
   // Persist collapsed state to localStorage
   const handleOpenChange = useCallback((open: boolean) => {
@@ -86,7 +85,6 @@ export function AgentToolsPanel({
   const hookData = useAgentTools(projectId);
   
   const {
-    settings: hookSettings,
     updateSettings: hookUpdateSettings,
     isUpdating,
     isLoadingPreferences,
@@ -98,29 +96,43 @@ export function AgentToolsPanel({
     testSessionCount,
   } = hookData;
   
-  const settings = externalSettings || hookSettings;
+  // Choose which update function to use
   const updateSettings = onSettingsChange || hookUpdateSettings;
   const videoReplayCount = externalVideoReplayCount ?? hookVideoReplayCount;
 
-  useEffect(() => {
-    if (settings) {
-      setLocalSettings(settings);
-    }
-  }, [settings]);
-
+  // Toggle handler - updates local state immediately, then notifies parent
   const handleToggle = useCallback((key: keyof AgentToolsSettings) => {
-    const newSettings = {
-      ...localSettings,
-      [key]: !localSettings[key]
-    };
-    setLocalSettings(newSettings);
+    console.log('[AgentToolsPanel] handleToggle:', key);
     
-    // All toggles now go through updateSettings which handles
-    // local vs persisted toggles internally
+    // Get current state and compute new state
+    const stateMap = {
+      maxAutonomy: { get: maxAutonomyOn, set: setMaxAutonomyOn },
+      appTesting: { get: appTestingOn, set: setAppTestingOn },
+      extendedThinking: { get: extendedThinkingOn, set: setExtendedThinkingOn },
+      highPowerModels: { get: highPowerModelsOn, set: setHighPowerModelsOn },
+      webSearch: { get: webSearchOn, set: setWebSearchOn },
+    };
+    
+    const newValue = !stateMap[key].get;
+    console.log('[AgentToolsPanel] Setting', key, 'to', newValue);
+    
+    // Update local state immediately for visual feedback
+    stateMap[key].set(newValue);
+    
+    // Notify parent with full settings object
+    const newSettings: AgentToolsSettings = {
+      maxAutonomy: key === 'maxAutonomy' ? newValue : maxAutonomyOn,
+      appTesting: key === 'appTesting' ? newValue : appTestingOn,
+      extendedThinking: key === 'extendedThinking' ? newValue : extendedThinkingOn,
+      highPowerModels: key === 'highPowerModels' ? newValue : highPowerModelsOn,
+      webSearch: key === 'webSearch' ? newValue : webSearchOn,
+    };
+    
+    console.log('[AgentToolsPanel] Calling updateSettings with:', newSettings);
     updateSettings(newSettings);
-  }, [localSettings, updateSettings]);
+  }, [maxAutonomyOn, appTestingOn, extendedThinkingOn, highPowerModelsOn, webSearchOn, updateSettings]);
 
-  const activeCount = Object.values(localSettings).filter(Boolean).length;
+  const activeCount = [maxAutonomyOn, appTestingOn, extendedThinkingOn, highPowerModelsOn, webSearchOn].filter(Boolean).length;
 
   if (isLoadingPreferences) {
     return (
@@ -210,7 +222,7 @@ export function AgentToolsPanel({
                   <p className="text-[11px] text-muted-foreground leading-tight">
                     Agent will supervise itself, so you don't have to (runs up to 200 minutes)
                   </p>
-                  {localSettings.maxAutonomy && (
+                  {maxAutonomyOn && (
                     <div className="flex items-center gap-1.5 mt-1">
                       <Clock className="w-3 h-3 text-amber-500" />
                       <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
@@ -222,7 +234,8 @@ export function AgentToolsPanel({
               </div>
               <Switch
                 id="max-autonomy"
-                checked={localSettings.maxAutonomy}
+                key={`max-autonomy-${maxAutonomyOn}`}
+                checked={maxAutonomyOn}
                 onCheckedChange={() => handleToggle('maxAutonomy')}
                 data-testid="toggle-max-autonomy"
                 className="data-[state=checked]:bg-amber-500"
@@ -247,7 +260,7 @@ export function AgentToolsPanel({
                   <p className="text-[11px] text-muted-foreground leading-tight">
                     Agent tests itself using an actual browser, navigating through your app like a real user
                   </p>
-                  {localSettings.appTesting && videoReplayCount > 0 && (
+                  {appTestingOn && videoReplayCount > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -263,7 +276,7 @@ export function AgentToolsPanel({
               </div>
               <Switch
                 id="app-testing"
-                checked={localSettings.appTesting}
+                checked={appTestingOn}
                 onCheckedChange={() => handleToggle('appTesting')}
                 data-testid="toggle-app-testing"
                 className="data-[state=checked]:bg-emerald-500"
@@ -288,7 +301,7 @@ export function AgentToolsPanel({
                   <p className="text-[11px] text-muted-foreground leading-tight">
                     Deeper reasoning for harder problems
                   </p>
-                  {localSettings.extendedThinking && (
+                  {extendedThinkingOn && (
                     <div className="flex items-center gap-1.5 mt-1">
                       <Brain className="w-3 h-3 text-purple-500 animate-pulse" />
                       <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">
@@ -300,7 +313,7 @@ export function AgentToolsPanel({
               </div>
               <Switch
                 id="extended-thinking"
-                checked={localSettings.extendedThinking}
+                checked={extendedThinkingOn}
                 onCheckedChange={() => handleToggle('extendedThinking')}
                 data-testid="toggle-extended-thinking"
                 disabled={isUpdating}
@@ -326,7 +339,7 @@ export function AgentToolsPanel({
                   <p className="text-[11px] text-muted-foreground leading-tight">
                     Uses more sophisticated AI for performance optimizations, integrations, unfamiliar tech
                   </p>
-                  {localSettings.highPowerModels && (
+                  {highPowerModelsOn && (
                     <div className="flex items-center gap-1.5 mt-1">
                       <Sparkles className="w-3 h-3 text-orange-500" />
                       <span className="text-[10px] text-orange-600 dark:text-orange-400 font-medium">
@@ -338,7 +351,7 @@ export function AgentToolsPanel({
               </div>
               <Switch
                 id="high-power-models"
-                checked={localSettings.highPowerModels}
+                checked={highPowerModelsOn}
                 onCheckedChange={() => handleToggle('highPowerModels')}
                 data-testid="toggle-high-power-models"
                 disabled={isUpdating}
@@ -364,7 +377,7 @@ export function AgentToolsPanel({
                   <p className="text-[11px] text-muted-foreground leading-tight">
                     Agent searches the web for up-to-date docs and APIs
                   </p>
-                  {localSettings.webSearch && (
+                  {webSearchOn && (
                     <div className="flex items-center gap-1.5 mt-1">
                       <Globe className="w-3 h-3 text-blue-500" />
                       <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
@@ -376,7 +389,7 @@ export function AgentToolsPanel({
               </div>
               <Switch
                 id="web-search"
-                checked={localSettings.webSearch}
+                checked={webSearchOn}
                 onCheckedChange={() => handleToggle('webSearch')}
                 data-testid="toggle-web-search"
                 disabled={isUpdating}
