@@ -75,6 +75,23 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 
 ## Recent Changes
 
+### Dec 1, 2025 - Agent WebSocket Dual Authentication (CRITICAL)
+**Enhancement:** Extended Agent WebSocket to support both bootstrap token authentication (for autonomous workspace creation) and session cookie authentication (for normal IDE usage).
+
+**Authentication Modes:**
+1. **Bootstrap Token Mode**: Query param `bootstrap=<jwt_token>` for autonomous workspace creation
+2. **Session Cookie Mode**: Uses `ecode.sid` cookie with post-connection validation for normal IDE usage
+
+**Key Implementation Details:**
+- Session cookie name is `ecode.sid` (configured in `server/middleware/passport-setup.ts`)
+- Session validation uses `global.sessionStore.get()` (consistent with LSPService pattern)
+- **Critical Pattern**: Accept WebSocket connection FIRST (synchronously), then validate session asynchronously. Close with code 4001 if validation fails. This avoids async timing issues with `handleUpgrade`.
+
+**Files Modified:**
+- `server/services/agent-websocket-service.ts` - Added `parseCookies()`, `validateSessionCookie()`, dual auth logic
+
+**Status:** Verified working via automated Playwright test - WebSocket connection succeeds with session cookie auth.
+
 ### Dec 1, 2025 - Agent WebSocket 400 Error Fix (CRITICAL)
 **Problem:** Agent WebSocket connections returned HTTP 400 "Bad Request" despite successful JWT token validation. Investigation showed 13+ upgrade listeners from multiple WebSocket services (Terminal, LSP, RuntimeLogs, TestRuns, SecurityScanner, Resources, Agent, BuildLogs) caused race conditions. The ws library's `{ server, path }` mode registered its handler LAST (after server starts listening), allowing other handlers to interfere with the handshake.
 
