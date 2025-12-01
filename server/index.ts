@@ -554,12 +554,22 @@ app.get('/api/cors-health', async (_req, res) => {
   
   // NOW start listening - ONLY after all middleware and routes are registered
   // This prevents the race condition where requests arrive before Vite middleware is ready
+  
+  // 🔍 DEBUG: Log upgrade listeners BEFORE listen
+  console.log('[DEBUG] Before listen - upgrade listeners:', httpServer.listenerCount('upgrade'));
+  console.log('[DEBUG] Upgrade listener functions:', httpServer.listeners('upgrade').map((l: any) => l.name || 'anonymous'));
+  
   httpServer.listen(port, "0.0.0.0", () => {
+    // 🔍 DEBUG: Log upgrade listeners AFTER listen
+    console.log('[DEBUG] After listen - upgrade listeners:', httpServer.listenerCount('upgrade'));
+    console.log('[DEBUG] Upgrade listener functions:', httpServer.listeners('upgrade').map((l: any) => l.name || 'anonymous'));
+    
     // ✅ Re-enable final guard (Nov 20, 2025)  
     // Root cause was Vite HMR, not the guard - guard correctly preserved /ws/agent sockets
     // Now that Vite HMR is on separate port 24678, guard can safely destroy orphan sockets
     httpServer.on('upgrade', installFinalUpgradeGuard);
     
+    console.log('[DEBUG] After guard - upgrade listeners:', httpServer.listenerCount('upgrade'));
     console.log('[Upgrade Guard] Final catch-all guard registered for orphan socket cleanup');
   });
 })();

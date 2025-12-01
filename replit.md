@@ -75,6 +75,35 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 
 ## Recent Changes
 
+### Dec 1, 2025 - Agent WebSocket 400 Error Fix (CRITICAL)
+**Problem:** Agent WebSocket connections returned HTTP 400 "Bad Request" despite successful JWT token validation. Investigation showed 13+ upgrade listeners from multiple WebSocket services (Terminal, LSP, RuntimeLogs, TestRuns, SecurityScanner, Resources, Agent, BuildLogs) caused race conditions. The ws library's `{ server, path }` mode registered its handler LAST (after server starts listening), allowing other handlers to interfere with the handshake.
+
+**Root Cause:** The ws library's internal `completeUpgrade` was silently failing when other upgrade listeners were also processing the same event, even though they returned early for non-matching paths.
+
+**Solution:** Switched from `{ server, path }` mode to `noServer` + `prependListener` pattern:
+1. Use `WebSocketServer({ noServer: true })` for manual upgrade control
+2. Register upgrade handler via `server.prependListener('upgrade', ...)` to run FIRST (before all 13+ other handlers)
+3. Call `markSocketAsHandled(request, socket)` immediately to prevent interference from other handlers
+4. Manually call `wss.handleUpgrade()` with full control over the process
+
+**Files Modified:**
+- `server/services/agent-websocket-service.ts` - Complete rewrite of initialize() method
+- `server/websocket/upgrade-guard.ts` - Removed `/ws/agent` from WS_MANAGED_PATHS (now uses socket marking)
+
+**Architecture Pattern (for future WebSocket services):**
+```typescript
+// For services needing priority in upgrade handling:
+server.prependListener('upgrade', (request, socket, head) => {
+  if (pathname !== '/my/path') return;
+  markSocketAsHandled(request, socket);  // Immediately claim the socket
+  wss.handleUpgrade(request, socket, head, (ws) => {
+    wss.emit('connection', ws, request);
+  });
+});
+```
+
+**Status:** Verified working via automated test - WebSocket handshake completes successfully with proper 101 response.
+
 ### Dec 1, 2025 - IDE-Database File Sync Fix
 **Problem:** Agent workflow was creating files in `./projects/{id}/` directories but they weren't visible in the IDE. Root cause: the file operations service only wrote to the filesystem, not the `files` database table that the IDE reads from.
 
