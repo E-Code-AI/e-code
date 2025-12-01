@@ -39,7 +39,7 @@ interface AutonomousWorkspaceViewerProps {
 }
 
 interface AgentMessage {
-  type: 'task_start' | 'task_progress' | 'task_complete' | 'file_created' | 'build_log' | 'error' | 'complete';
+  type: 'task_start' | 'task_progress' | 'task_complete' | 'file_created' | 'build_log' | 'error' | 'complete' | 'status' | 'plan_chunk' | 'plan_generated';
   data?: any;
   message?: string;
   taskId?: string;
@@ -49,6 +49,8 @@ interface AgentMessage {
   content?: string;
   level?: 'info' | 'warn' | 'error';
   timestamp?: string;
+  status?: string;
+  plan?: any;
 }
 
 interface Task {
@@ -89,6 +91,9 @@ export function AutonomousWorkspaceViewer({
   const [currentTask, setCurrentTask] = useState<string>('Initializing workspace...');
   const [isComplete, setIsComplete] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [planText, setPlanText] = useState<string>('');
+  const [phase, setPhase] = useState<'planning' | 'executing' | 'complete'>('planning');
+  const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   
   const wsRef = useRef<WebSocket | null>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
@@ -286,6 +291,42 @@ export function AutonomousWorkspaceViewer({
     console.log('[AutonomousWorkspace] Message:', message);
 
     switch (message.type) {
+      case 'status':
+        if (message.status === 'planning') {
+          setPhase('planning');
+          setCurrentTask('Generating execution plan...');
+          addLog('🧠 AI is analyzing your request...');
+        } else if (message.status === 'executing') {
+          setPhase('executing');
+          setCurrentTask('Executing plan...');
+        }
+        if (message.message) {
+          addLog(`📌 ${message.message}`);
+        }
+        break;
+
+      case 'plan_chunk':
+        if (message.data?.content) {
+          setPlanText(prev => prev + message.data.content);
+        }
+        break;
+
+      case 'plan_generated':
+        if (message.plan) {
+          setGeneratedPlan(message.plan);
+          const taskCount = message.plan.tasks?.length || 0;
+          addLog(`📋 Plan generated with ${taskCount} tasks`);
+          if (message.plan.summary) {
+            addLog(`📝 ${message.plan.summary}`);
+          }
+          if (message.plan.technologies?.length) {
+            addLog(`🔧 Technologies: ${message.plan.technologies.join(', ')}`);
+          }
+          setPlanText('');
+          setPhase('executing');
+        }
+        break;
+
       case 'task_start':
         if (message.taskId && message.taskName) {
           setTasks(prev => [...prev, {
@@ -295,6 +336,8 @@ export function AutonomousWorkspaceViewer({
           }]);
           setCurrentTask(message.taskName);
           addLog(`🚀 Starting: ${message.taskName}`);
+        } else if (message.message) {
+          addLog(`🚀 ${message.message}`);
         }
         break;
 
@@ -324,7 +367,9 @@ export function AutonomousWorkspaceViewer({
           setTasks(currentTasks => {
             const completed = currentTasks.filter(t => t.status === 'completed').length;
             const total = currentTasks.length;
-            setOverallProgress((completed / total) * 100);
+            if (total > 0) {
+              setOverallProgress((completed / total) * 100);
+            }
             return currentTasks;
           });
         }
@@ -352,6 +397,7 @@ export function AutonomousWorkspaceViewer({
 
       case 'complete':
         setIsComplete(true);
+        setPhase('complete');
         setOverallProgress(100);
         setCurrentTask('Workspace ready! 🎉');
         addLog('🎉 Workspace creation complete!');
@@ -433,6 +479,18 @@ export function AutonomousWorkspaceViewer({
           </span>
         </div>
 
+        {/* Phase Indicator */}
+        <div className="flex items-center gap-2">
+          <Badge variant={phase === 'planning' ? 'default' : phase === 'executing' ? 'secondary' : 'outline'}>
+            {phase === 'planning' ? '🧠 Planning' : phase === 'executing' ? '⚡ Executing' : '✅ Complete'}
+          </Badge>
+          {generatedPlan && (
+            <span className="text-xs text-muted-foreground">
+              {generatedPlan.tasks?.length || 0} tasks • {generatedPlan.estimatedTime || 'Calculating...'}
+            </span>
+          )}
+        </div>
+
         {/* Overall Progress */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs sm:text-sm gap-2">
@@ -441,6 +499,42 @@ export function AutonomousWorkspaceViewer({
           </div>
           <Progress value={overallProgress} className="h-2" data-testid="overall-progress" />
         </div>
+
+        {/* Streaming Plan Text (during planning phase) */}
+        {phase === 'planning' && planText && (
+          <div className="space-y-2 min-h-0">
+            <h4 className="text-xs sm:text-sm font-medium flex items-center gap-2">
+              <Code2 className="h-3 w-3 sm:h-4 sm:w-4" />
+              Generating Plan...
+            </h4>
+            <ScrollArea className="h-24 sm:h-32 border rounded-md bg-muted/50 font-mono text-[10px] sm:text-xs">
+              <div className="p-2 sm:p-3 text-muted-foreground whitespace-pre-wrap">
+                {planText}
+                <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-0.5" />
+              </div>
+            </ScrollArea>
+          </div>
+        )}
+
+        {/* Generated Plan Summary */}
+        {generatedPlan && phase !== 'planning' && (
+          <div className="space-y-2 min-h-0">
+            <h4 className="text-xs sm:text-sm font-medium flex items-center gap-2">
+              <FileCode className="h-3 w-3 sm:h-4 sm:w-4" />
+              Execution Plan
+            </h4>
+            <div className="text-xs text-muted-foreground border rounded-md p-2 bg-muted/30">
+              <p className="font-medium text-foreground">{generatedPlan.summary}</p>
+              {generatedPlan.technologies?.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {generatedPlan.technologies.slice(0, 6).map((tech: string, i: number) => (
+                    <Badge key={i} variant="outline" className="text-[10px]">{tech}</Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Tasks List */}
         {tasks.length > 0 && (
