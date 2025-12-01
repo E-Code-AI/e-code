@@ -1,45 +1,143 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Globe, RefreshCw, ExternalLink, Maximize2, X } from 'lucide-react';
+import { Globe, RefreshCw, ExternalLink, Play, Square, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface PreviewPanelProps {
   projectId: string;
-  isRunning: boolean;
+  isRunning?: boolean;
+  autoStart?: boolean;
 }
 
-export function PreviewPanel({ projectId, isRunning }: PreviewPanelProps) {
-  const [previewUrl, setPreviewUrl] = useState('');
+interface PreviewStatus {
+  previewUrl: string | null;
+  status: 'running' | 'stopped' | 'starting' | 'error' | 'static' | 'no_runnable_files';
+  message?: string;
+  runId?: string;
+  ports?: number[];
+  primaryPort?: number;
+  services?: Array<{ port: number; name: string; path?: string }>;
+  frameworkType?: string;
+}
+
+export function PreviewPanel({ projectId, isRunning: externalIsRunning, autoStart = true }: PreviewPanelProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  useEffect(() => {
-    if (isRunning) {
-      // Generate preview URL based on Replit domains
-      const url = `https://${projectId}.replit.dev`;
-      setPreviewUrl(url);
-      setError(null);
-    } else {
-      setPreviewUrl('');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Query preview status
+  const { data: previewStatus, isLoading: isStatusLoading, refetch: refetchStatus } = useQuery<PreviewStatus>({
+    queryKey: ['/api/preview/url', projectId],
+    queryFn: async () => {
+      const response = await fetch(`/api/preview/url?projectId=${projectId}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to get preview status');
+      }
+      return response.json();
+    },
+    enabled: !!projectId,
+    refetchInterval: (query) => {
+      // Poll more frequently when starting, less when running
+      const data = query.state.data;
+      if (data?.status === 'starting') return 2000;
+      if (data?.status === 'running') return 10000;
+      return false;
     }
-  }, [isRunning, projectId]);
-  
-  const handleRefresh = () => {
+  });
+
+  // Start preview mutation
+  const startPreviewMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Preview starting...', description: 'Your app is being built and started.' });
+      // Refetch status after a delay to allow startup
+      setTimeout(() => refetchStatus(), 2000);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Failed to start preview', 
+        description: error.message || 'An error occurred',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Stop preview mutation
+  const stopPreviewMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`, {});
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Preview stopped' });
+      refetchStatus();
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Failed to stop preview', 
+        description: error.message || 'An error occurred',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Auto-start preview when component mounts if there are runnable files
+  useEffect(() => {
+    if (autoStart && previewStatus && 
+        previewStatus.status === 'stopped') {
+      // Auto-start only for projects with runnable files (not 'no_runnable_files')
+      startPreviewMutation.mutate(undefined);
+    }
+  }, [autoStart, previewStatus?.status]);
+
+  const handleRefresh = useCallback(() => {
     setIsLoading(true);
     const iframe = document.getElementById('preview-iframe') as HTMLIFrameElement;
-    if (iframe) {
-      iframe.src = iframe.src;
+    if (iframe && previewStatus?.previewUrl) {
+      iframe.src = previewStatus.previewUrl;
     }
+    refetchStatus();
     setTimeout(() => setIsLoading(false), 1000);
-  };
-  
-  const handleOpenInNewTab = () => {
-    if (previewUrl) {
-      window.open(previewUrl, '_blank');
+  }, [previewStatus?.previewUrl, refetchStatus]);
+
+  const handleOpenInNewTab = useCallback(() => {
+    if (previewStatus?.previewUrl) {
+      // For relative URLs, construct full URL
+      const url = previewStatus.previewUrl.startsWith('http') 
+        ? previewStatus.previewUrl 
+        : `${window.location.origin}${previewStatus.previewUrl}`;
+      window.open(url, '_blank');
     }
-  };
-  
+  }, [previewStatus?.previewUrl]);
+
+  const handleStartPreview = useCallback(() => {
+    startPreviewMutation.mutate(undefined);
+  }, [startPreviewMutation]);
+
+  const handleStopPreview = useCallback(() => {
+    stopPreviewMutation.mutate(undefined);
+  }, [stopPreviewMutation]);
+
+  const isPreviewRunning = previewStatus?.status === 'running' || previewStatus?.status === 'static';
+  const isPreviewStarting = previewStatus?.status === 'starting' || startPreviewMutation.isPending;
+  const canShowPreview = isPreviewRunning && previewStatus?.previewUrl;
+
+  // Get display URL for the toolbar
+  const displayUrl = previewStatus?.previewUrl 
+    ? (previewStatus.previewUrl.startsWith('http') 
+        ? previewStatus.previewUrl 
+        : `${window.location.origin}${previewStatus.previewUrl}`)
+    : '';
+
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Toolbar */}
@@ -47,18 +145,57 @@ export function PreviewPanel({ projectId, isRunning }: PreviewPanelProps) {
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <Globe className="h-4 w-4 shrink-0" />
           <span className="text-sm font-medium">Preview</span>
-          {isRunning && (
-            <Badge variant="secondary" className="text-xs">
+          {isPreviewRunning && (
+            <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
               Running
+            </Badge>
+          )}
+          {isPreviewStarting && (
+            <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">
+              Starting...
+            </Badge>
+          )}
+          {previewStatus?.frameworkType && (
+            <Badge variant="outline" className="text-xs">
+              {previewStatus.frameworkType}
             </Badge>
           )}
         </div>
         
         <div className="flex items-center gap-1">
-          {previewUrl && (
+          {/* Start/Stop buttons */}
+          {!isPreviewRunning && !isPreviewStarting && previewStatus?.status !== 'no_runnable_files' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleStartPreview}
+              disabled={startPreviewMutation.isPending}
+              data-testid="button-start-preview"
+              className="h-7 px-2 gap-1"
+            >
+              <Play className="h-3.5 w-3.5" />
+              <span className="text-xs">Run</span>
+            </Button>
+          )}
+          
+          {(isPreviewRunning || isPreviewStarting) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleStopPreview}
+              disabled={stopPreviewMutation.isPending}
+              data-testid="button-stop-preview"
+              className="h-7 px-2 gap-1"
+            >
+              <Square className="h-3.5 w-3.5" />
+              <span className="text-xs">Stop</span>
+            </Button>
+          )}
+          
+          {canShowPreview && (
             <>
-              <div className="text-xs text-muted-foreground truncate max-w-[200px]">
-                {previewUrl}
+              <div className="text-xs text-muted-foreground truncate max-w-[150px] hidden sm:block">
+                {displayUrl}
               </div>
               <Button
                 variant="ghost"
@@ -86,36 +223,60 @@ export function PreviewPanel({ projectId, isRunning }: PreviewPanelProps) {
       
       {/* Preview Content */}
       <div className="flex-1 relative bg-background dark:bg-background">
-        {!isRunning ? (
+        {isStatusLoading ? (
+          <div className="h-full flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : isPreviewStarting ? (
+          <div className="h-full flex items-center justify-center text-center p-8">
+            <div>
+              <Loader2 className="h-16 w-16 mx-auto mb-4 animate-spin text-primary" />
+              <h3 className="text-lg font-semibold mb-2">Starting preview...</h3>
+              <p className="text-sm text-muted-foreground">
+                Building and starting your application. This may take a moment.
+              </p>
+            </div>
+          </div>
+        ) : previewStatus?.status === 'no_runnable_files' ? (
+          <div className="h-full flex items-center justify-center text-center p-8">
+            <div>
+              <Globe className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <h3 className="text-lg font-semibold mb-2">No preview available</h3>
+              <p className="text-sm text-muted-foreground">
+                Add an HTML file or package.json to preview your project.
+              </p>
+            </div>
+          </div>
+        ) : !isPreviewRunning ? (
           <div className="h-full flex items-center justify-center text-center p-8">
             <div>
               <Globe className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
               <h3 className="text-lg font-semibold mb-2">Preview not running</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-4">
                 Click the Run button to start your project and see a live preview.
               </p>
-            </div>
-          </div>
-        ) : error ? (
-          <div className="h-full flex items-center justify-center text-center p-8">
-            <div>
-              <X className="h-16 w-16 mx-auto mb-4 text-destructive opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">Preview failed to load</h3>
-              <p className="text-sm text-muted-foreground">{error}</p>
-              <Button onClick={handleRefresh} className="mt-4" size="sm">
-                Try again
+              <Button onClick={handleStartPreview} disabled={startPreviewMutation.isPending}>
+                <Play className="h-4 w-4 mr-2" />
+                Start Preview
               </Button>
             </div>
           </div>
-        ) : (
+        ) : previewStatus?.previewUrl ? (
           <iframe
             id="preview-iframe"
-            src={previewUrl}
+            src={previewStatus.previewUrl}
             className="w-full h-full border-0"
             title="Project Preview"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"
-            onError={() => setError('Failed to load preview')}
+            sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"
+            data-testid="iframe-preview"
           />
+        ) : (
+          <div className="h-full flex items-center justify-center text-center p-8">
+            <div>
+              <Loader2 className="h-16 w-16 mx-auto mb-4 animate-spin text-primary" />
+              <h3 className="text-lg font-semibold mb-2">Loading preview...</h3>
+            </div>
+          </div>
         )}
       </div>
     </div>
