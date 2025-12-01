@@ -3456,7 +3456,7 @@ export type InsertAiStripeUsageQueue = z.infer<typeof insertAiStripeUsageQueueSc
 // ============================================
 
 export const maxAutonomySessionStatusEnum = pgEnum('max_autonomy_session_status', [
-  'pending', 'active', 'paused', 'completed', 'failed', 'cancelled'
+  'pending', 'running', 'paused', 'completed', 'failed', 'cancelled'
 ]);
 
 export const maxAutonomyTaskStatusEnum = pgEnum('max_autonomy_task_status', [
