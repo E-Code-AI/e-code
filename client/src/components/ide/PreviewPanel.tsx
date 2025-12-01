@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Globe, RefreshCw, ExternalLink, Play, Square, Loader2 } from 'lucide-react';
@@ -25,9 +25,9 @@ interface PreviewStatus {
 }
 
 export function PreviewPanel({ projectId, isRunning: externalIsRunning, autoStart = true }: PreviewPanelProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const hasAttemptedAutoStart = useRef(false);
 
   // Query preview status
   const { data: previewStatus, isLoading: isStatusLoading, refetch: refetchStatus } = useQuery<PreviewStatus>({
@@ -91,22 +91,25 @@ export function PreviewPanel({ projectId, isRunning: externalIsRunning, autoStar
   });
 
   // Auto-start preview when component mounts if there are runnable files
+  // ✅ FIX (Dec 1, 2025): Use ref flag to prevent infinite re-triggering if backend rejects
   useEffect(() => {
     if (autoStart && previewStatus && 
-        previewStatus.status === 'stopped') {
-      // Auto-start only for projects with runnable files (not 'no_runnable_files')
+        previewStatus.status === 'stopped' && 
+        !hasAttemptedAutoStart.current) {
+      hasAttemptedAutoStart.current = true;
       startPreviewMutation.mutate(undefined);
     }
   }, [autoStart, previewStatus?.status]);
 
+  // ✅ FIX (Dec 1, 2025): Add cache-busting timestamp to prevent stale content
   const handleRefresh = useCallback(() => {
-    setIsLoading(true);
     const iframe = document.getElementById('preview-iframe') as HTMLIFrameElement;
     if (iframe && previewStatus?.previewUrl) {
-      iframe.src = previewStatus.previewUrl;
+      const url = new URL(previewStatus.previewUrl, window.location.origin);
+      url.searchParams.set('_t', Date.now().toString());
+      iframe.src = url.toString();
     }
     refetchStatus();
-    setTimeout(() => setIsLoading(false), 1000);
   }, [previewStatus?.previewUrl, refetchStatus]);
 
   const handleOpenInNewTab = useCallback(() => {
@@ -130,6 +133,8 @@ export function PreviewPanel({ projectId, isRunning: externalIsRunning, autoStar
   const isPreviewRunning = previewStatus?.status === 'running' || previewStatus?.status === 'static';
   const isPreviewStarting = previewStatus?.status === 'starting' || startPreviewMutation.isPending;
   const canShowPreview = isPreviewRunning && previewStatus?.previewUrl;
+  // ✅ FIX (Dec 1, 2025): Use mutation.isPending for loading state instead of local timeout
+  const isRefreshing = startPreviewMutation.isPending || stopPreviewMutation.isPending;
 
   // Get display URL for the toolbar
   const displayUrl = previewStatus?.previewUrl 
@@ -201,11 +206,11 @@ export function PreviewPanel({ projectId, isRunning: externalIsRunning, autoStar
                 variant="ghost"
                 size="sm"
                 onClick={handleRefresh}
-                disabled={isLoading}
+                disabled={isRefreshing}
                 data-testid="button-refresh-preview"
                 className="h-7 w-7 p-0"
               >
-                <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
+                <RefreshCw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} />
               </Button>
               <Button
                 variant="ghost"

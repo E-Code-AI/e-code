@@ -95,6 +95,23 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
         console.log(`[Vite HMR] Dedicated WebSocket server listening on port ${VITE_HMR_PORT}`);
       });
       
+      // ✅ CRITICAL FIX (Dec 1, 2025): Add early guard middleware for WebSocket paths
+      // PROBLEM: Vite's catch-all middleware processes WebSocket upgrade requests BEFORE
+      // the upgrade event handler completes, writing HTML responses that cause "Invalid frame header"
+      // errors on the client and 1006 disconnections.
+      // SOLUTION: Add middleware that detects WebSocket upgrade requests to /ws/* paths
+      // and returns early without any response, allowing the upgrade handler to complete.
+      app.use((req, res, next) => {
+        // Check if this is a WebSocket upgrade request to our WebSocket paths
+        if (req.headers.upgrade?.toLowerCase() === 'websocket' && 
+            req.originalUrl.startsWith('/ws/')) {
+          // Don't respond at all - the upgrade handler will handle this
+          // Just return without calling next() to prevent Vite from processing
+          return;
+        }
+        next();
+      });
+      
       // WORKAROUND: Monkeypatch app.use to prevent Vite's catch-all from capturing API routes
       // This is necessary because server/vite.ts is forbidden from editing
       // Save original app.use method

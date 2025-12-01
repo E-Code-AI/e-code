@@ -118,6 +118,15 @@ export function wrapWebSocketServer(wss: any): any {
   return wss;
 }
 
+// ✅ CRITICAL FIX (Dec 1, 2025): Paths handled by WebSocketServer with { server, path } mode
+// These paths are handled internally by ws library and don't use manual socket marking
+// The upgrade guard must skip these to avoid destroying valid connections
+const WS_MANAGED_PATHS = new Set([
+  '/ws/agent',              // Agent WebSocket (autonomous workspace)
+  '/ws/background-tests',   // Background testing WebSocket
+  '/api/runtime/logs/ws',   // Runtime logs WebSocket
+]);
+
 /**
  * Final catch-all upgrade guard that destroys untagged sockets
  * 
@@ -135,6 +144,13 @@ export function installFinalUpgradeGuard(
   socket: Socket
 ): void {
   const pathname = extractPathname(request);
+  
+  // ✅ CRITICAL FIX (Dec 1, 2025): Skip paths managed by WebSocketServer { server, path } mode
+  // These services use ws library's built-in upgrade handling which doesn't mark sockets
+  if (WS_MANAGED_PATHS.has(pathname)) {
+    logger.debug(`[Upgrade Guard] Skipping ${pathname} - managed by ws library`);
+    return;
+  }
   
   // ✅ DEBUG LOGGING (Nov 20, 2025): Track socket handling lifecycle
   logger.debug(`[Upgrade Guard] Checking socket for ${pathname} (remoteAddress: ${socket.remoteAddress})`);

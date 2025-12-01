@@ -66,24 +66,7 @@ export function AutonomousWorkspaceViewer({
   onComplete,
   onError
 }: AutonomousWorkspaceViewerProps) {
-  console.log('🚀🚀🚀 [AutonomousWorkspace] COMPONENT MOUNTED');
-  console.log('🚀🚀🚀 [AutonomousWorkspace] Token:', bootstrapToken ? bootstrapToken.substring(0, 30) + '...' : 'NULL');
-  console.log('🚀🚀🚀 [AutonomousWorkspace] ProjectId:', projectId);
-  console.log('🚀🚀🚀 [AutonomousWorkspace] isOpen will be:', !!bootstrapToken);
-  
-  // CRITICAL DEBUG: Alert if token is present
-  if (bootstrapToken) {
-    console.error('🎉🎉🎉 BOOTSTRAP TOKEN DETECTED - MODAL SHOULD OPEN!');
-  } else {
-    console.error('❌❌❌ NO BOOTSTRAP TOKEN - MODAL WILL NOT OPEN!');
-  }
-  
   const [isOpen, setIsOpen] = useState(!!bootstrapToken);
-  
-  // Debug: Log when isOpen changes
-  useEffect(() => {
-    console.log('[AutonomousWorkspace] isOpen changed to:', isOpen);
-  }, [isOpen]);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error' | 'closed'>('connecting');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
@@ -99,6 +82,8 @@ export function AutonomousWorkspaceViewer({
   const logsEndRef = useRef<HTMLDivElement>(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
+  // ✅ FIX (Dec 1, 2025): Track reconnect timer to clear on successful connection
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // ✅ FIX (Dec 1, 2025): Use refs for callbacks to prevent WebSocket reconnection on re-renders
   const onCompleteRef = useRef(onComplete);
@@ -147,17 +132,10 @@ export function AutonomousWorkspaceViewer({
 
   // Connect to WebSocket
   useEffect(() => {
-    console.log('🔌🔌🔌 [AutonomousWorkspace] WebSocket useEffect TRIGGERED');
-    console.log('🔌🔌🔌 [AutonomousWorkspace] bootstrapToken:', bootstrapToken ? 'EXISTS' : 'NULL');
-    console.log('🔌🔌🔌 [AutonomousWorkspace] isOpen:', isOpen);
-    
     if (!bootstrapToken || !isOpen) {
-      console.error('❌❌❌ [AutonomousWorkspace] GUARD CLAUSE BLOCKED CONNECTION');
-      console.error('❌❌❌ [AutonomousWorkspace] bootstrapToken?', !!bootstrapToken, 'isOpen?', isOpen);
       return;
     }
 
-    console.log('✅✅✅ [AutonomousWorkspace] PASSED GUARD CLAUSE - CONNECTING...');
     const tokenData = decodeToken(bootstrapToken);
     if (!tokenData) {
       setErrorMessage('Invalid bootstrap token');
@@ -172,26 +150,10 @@ export function AutonomousWorkspaceViewer({
       // ✅ FIX (Nov 24, 2025): Include bootstrap token for anonymous user authentication
       const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${tokenData.projectId}&sessionId=${tokenData.sessionId}&bootstrap=${encodeURIComponent(bootstrapToken)}`;
       
-      console.log('[AutonomousWorkspace] Connecting to WebSocket:', wsUrl);
-      console.log('[AutonomousWorkspace] WebSocket URL details:', {
-        protocol,
-        host: window.location.host,
-        projectId: tokenData.projectId,
-        sessionId: tokenData.sessionId,
-        bootstrapLength: bootstrapToken.length
-      });
-      
       let ws: WebSocket;
       try {
         ws = new WebSocket(wsUrl);
-        console.log('[AutonomousWorkspace] ✅ WebSocket constructor succeeded');
       } catch (error) {
-        console.error('[AutonomousWorkspace] ❌ WebSocket constructor FAILED:', error);
-        console.error('[AutonomousWorkspace] Error details:', {
-          name: (error as Error).name,
-          message: (error as Error).message,
-          stack: (error as Error).stack
-        });
         setConnectionStatus('error');
         addLog(`❌ Failed to create WebSocket: ${(error as Error).message}`);
         setErrorMessage(`WebSocket construction failed: ${(error as Error).message}`);
@@ -201,9 +163,13 @@ export function AutonomousWorkspaceViewer({
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('[AutonomousWorkspace] WebSocket connected');
         setConnectionStatus('connected');
         reconnectAttempts.current = 0;
+        // ✅ FIX (Dec 1, 2025): Clear reconnect timer on successful connection to prevent duplicate sockets
+        if (reconnectTimerRef.current) {
+          clearTimeout(reconnectTimerRef.current);
+          reconnectTimerRef.current = null;
+        }
         addLog('✅ Connected to AI Agent workspace builder');
       };
 
@@ -212,60 +178,28 @@ export function AutonomousWorkspaceViewer({
           const message: AgentMessage = JSON.parse(event.data);
           handleAgentMessage(message);
         } catch (e) {
-          console.error('[AutonomousWorkspace] Failed to parse message:', e);
           addLog(`❌ Parse error: ${e}`);
         }
       };
 
-      ws.onerror = (error) => {
-        console.error('[AutonomousWorkspace] ❌ WebSocket ERROR event:', error);
-        console.error('[AutonomousWorkspace] Error event details:', {
-          type: error.type,
-          target: error.target,
-          currentTarget: error.currentTarget,
-          eventPhase: error.eventPhase,
-          bubbles: error.bubbles,
-          cancelable: error.cancelable,
-          defaultPrevented: error.defaultPrevented,
-          composed: error.composed,
-          isTrusted: error.isTrusted,
-          timeStamp: error.timeStamp
-        });
-        console.error('[AutonomousWorkspace] WebSocket readyState:', ws.readyState);
-        console.error('[AutonomousWorkspace] WebSocket url:', ws.url);
-        
+      ws.onerror = (event) => {
         setConnectionStatus('error');
-        addLog('❌ Connection error - check console for details');
+        // ✅ FIX (Dec 1, 2025): Log more details about WebSocket errors
+        // Browser WebSocket error events don't expose much detail, but we can log state
+        const wsState = ws.readyState;
+        const stateNames = ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'];
+        addLog(`❌ Connection error (state: ${stateNames[wsState] || wsState})`);
       };
 
       ws.onclose = (event) => {
-        console.log('[AutonomousWorkspace] ❌ WebSocket CLOSE event:', {
-          code: event.code,
-          reason: event.reason,
-          wasClean: event.wasClean,
-          type: event.type,
-          timeStamp: event.timeStamp
-        });
-        console.log('[AutonomousWorkspace] Close code meanings:', {
-          1000: 'Normal closure',
-          1001: 'Going away (page navigation)',
-          1002: 'Protocol error',
-          1003: 'Unsupported data',
-          1006: 'Abnormal closure (no close frame)',
-          1007: 'Invalid frame payload',
-          1008: 'Policy violation',
-          1009: 'Message too big',
-          1010: 'Mandatory extension',
-          1011: 'Internal server error',
-          1015: 'TLS handshake failure'
-        });
         setConnectionStatus('closed');
         
         // Attempt reconnection if not graceful close
         if (event.code !== 1000 && reconnectAttempts.current < maxReconnectAttempts && !isComplete) {
           reconnectAttempts.current++;
           addLog(`🔄 Reconnecting... (Attempt ${reconnectAttempts.current}/${maxReconnectAttempts})`);
-          setTimeout(connectWebSocket, 2000 * reconnectAttempts.current); // Exponential backoff
+          // ✅ FIX (Dec 1, 2025): Store timer reference for cleanup
+          reconnectTimerRef.current = setTimeout(connectWebSocket, 2000 * reconnectAttempts.current);
         } else if (reconnectAttempts.current >= maxReconnectAttempts) {
           addLog('❌ Max reconnection attempts reached');
           setErrorMessage('Connection lost. Please refresh the page.');
@@ -278,6 +212,11 @@ export function AutonomousWorkspaceViewer({
 
     // Cleanup on unmount
     return () => {
+      // ✅ FIX (Dec 1, 2025): Clear reconnect timer on cleanup
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
       if (wsRef.current) {
         wsRef.current.close(1000, 'Component unmounting');
         wsRef.current = null;
@@ -288,11 +227,20 @@ export function AutonomousWorkspaceViewer({
 
   // Handle agent messages
   const handleAgentMessage = (message: AgentMessage) => {
-    console.log('[AutonomousWorkspace] Message:', message);
-
     switch (message.type) {
+      // ✅ FIX (Dec 1, 2025): Handle 'connected' message from server
+      case 'connected':
+        addLog('🔌 Connected to AI agent');
+        break;
+
       case 'status':
-        if (message.status === 'planning') {
+        // ✅ FIX (Dec 1, 2025): Handle 'waiting_for_plan' status gracefully
+        // This happens when WebSocket connects before plan generation starts (race condition fix)
+        if (message.status === 'waiting_for_plan') {
+          setPhase('connecting');
+          setCurrentTask('Connecting to AI...');
+          addLog('⏳ Waiting for AI to begin planning...');
+        } else if (message.status === 'planning') {
           setPhase('planning');
           setCurrentTask('Generating execution plan...');
           addLog('🧠 AI is analyzing your request...');
@@ -300,7 +248,7 @@ export function AutonomousWorkspaceViewer({
           setPhase('executing');
           setCurrentTask('Executing plan...');
         }
-        if (message.message) {
+        if (message.message && message.status !== 'waiting_for_plan') {
           addLog(`📌 ${message.message}`);
         }
         break;
@@ -322,7 +270,7 @@ export function AutonomousWorkspaceViewer({
           if (message.plan.technologies?.length) {
             addLog(`🔧 Technologies: ${message.plan.technologies.join(', ')}`);
           }
-          setPlanText('');
+          // ✅ FIX (Dec 1, 2025): Don't reset planText - preserve streaming plan history through phase transitions
           setPhase('executing');
         }
         break;

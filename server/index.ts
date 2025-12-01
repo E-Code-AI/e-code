@@ -23,7 +23,6 @@ import { legacyRateLimiters, dynamicRateLimiter, logRateLimitViolations } from '
 import { tierRateLimiters } from './middleware/tier-rate-limiter';
 import { monitoringMiddleware } from './services/monitoring.service';
 import { sanitizeInput } from './middleware/input-validation';
-import jwt from 'jsonwebtoken'; // ✅ FIX: Import at top to avoid hot-path dynamic import delay
 import { loggingMiddleware, securityLoggingMiddleware, performanceLoggingMiddleware } from './logging/logging-middleware';
 import { createCentralizedLogger } from './logging/centralized-logger';
 
@@ -69,8 +68,27 @@ app.use(dynamicRateLimiter);
 // PORT is set by Docker (3000) or Cloud Run, fallback to 5000 for local development
 const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
 
-// Create HTTP server (but don't listen yet - wait until after all middleware is registered)
-const httpServer = createServer(app);
+// ✅ CRITICAL FIX (Dec 1, 2025): Wrap createServer to bypass Express for WebSocket upgrades
+// PROBLEM: Even with upgrade guards, Express middleware (especially Vite's catch-all) still
+// processes WebSocket upgrade requests and writes HTML responses to the socket, causing
+// "Invalid frame header" errors and 1006 disconnections.
+// SOLUTION: Short-circuit WebSocket upgrade requests at the HTTP server level BEFORE
+// Express ever sees them. This completely prevents Express from corrupting WebSocket sockets.
+const httpServer = createServer((req, res) => {
+  // Check if this is a WebSocket upgrade request to our agent endpoint
+  const isWsUpgrade = req.headers.upgrade?.toLowerCase() === 'websocket';
+  const isAgentPath = req.url?.startsWith('/ws/agent');
+  
+  if (isWsUpgrade && isAgentPath) {
+    // DO NOT pass to Express - the 'upgrade' event handler will process this
+    // Return without calling app() to prevent any Express middleware from running
+    console.log('[HTTP Server] Bypassing Express for WebSocket upgrade:', req.url);
+    return;
+  }
+  
+  // All other requests go through Express normally
+  app(req, res);
+});
 
 // Increase max listeners to prevent warnings (we have multiple WebSocket services + Vite HMR)
 // Agent WS, Terminal WS, LSP WS, Collaboration WS, WebRTC, Vite HMR, etc.
@@ -524,257 +542,15 @@ app.get('/api/cors-health', async (_req, res) => {
     console.warn('[WORKING SERVER] Pay-as-you-go worker initialization failed (non-critical):', error.message);
   }
 
-  // ✅ PRODUCTION-READY FIX (Nov 20, 2025): kUpgradeHandled pattern for safe WebSocket management
-  // Prevents orphan socket leaks while maintaining compatibility with all WebSocket services
+  // ✅ CRITICAL FIX (Dec 1, 2025): Removed manual handleAgentUpgrade flow
+  // The agent WebSocket now uses the standard { server, path, verifyClient } pattern
+  // in agent-websocket-service.ts, which automatically short-circuits Express/Vite
   // 
-  // Architecture:
-  // 1. Agent upgrade handler uses prependListener to run first
-  // 2. Mark socket as handled IMMEDIATELY before handleUpgrade (critical timing)
-  // 3. Final catch-all guard destroys untagged sockets after deferred check
+  // Previous noServer mode with manual handleUpgrade leaked requests back to Express,
+  // causing Vite to write HTML after the WebSocket handshake (resulting in "Invalid 
+  // frame header" errors with 1006 closures)
   
-  const { installFinalUpgradeGuard, markSocketAsHandled } = await import('./websocket/upgrade-guard');
-  
-  // Agent WebSocket manual upgrade handler (runs FIRST due to prependListener)
-  // 🔥 FORTUNE 500 FIX v4 (Nov 21, 2025): Production-ready cached validation
-  // 
-  // Fixes Three Critical Production Blockers:
-  // 1. DoS vulnerability: Cached validation eliminates blocking database queries on hot path
-  // 2. HTTP framing issues: ServerResponse facade ensures proper response delivery across Node versions
-  // 3. Multi-device regression: Restored deviceId/deviceType validation via metadata
-  // 
-  // Architecture:
-  // - AgentSessionCache: Redis primary + in-memory fallback (60-80% load reduction, <1ms cache hits)
-  // - HttpUpgradeResponder: ServerResponse framing for reliable error delivery
-  // - Non-blocking pattern: socket.pause() → async validate → socket.resume() → upgrade
-  // 
-  // Performance: Cache hit <1ms, Cache miss <50ms (vs 50-200ms direct DB query)
-  // Security: Multi-layered validation (session active, project ownership, device matching)
-  async function handleAgentUpgrade(request: any, socket: any, head: any) {
-    // ✅ CRITICAL: Pause socket IMMEDIATELY to prevent GC during async validation
-    socket.pause();
-    
-    const agentWss = (global as any).agentWebSocketService?.wss;
-    
-    if (!agentWss) {
-      console.error('[WebSocket Upgrade] Agent WebSocket service not initialized');
-      socket.resume(); // Resume before error response
-      
-      const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
-      HttpUpgradeResponder.sendError(
-        request,
-        socket,
-        HttpUpgradeResponder.ErrorResponses.SERVICE_UNAVAILABLE('WebSocket service')
-      );
-      return;
-    }
-    
-    try {
-      // Parse query params for validation
-      const url = new URL(request.url!, `http://${request.headers.host || 'localhost'}`);
-      const projectId = url.searchParams.get('projectId'); // Allow null for shared sessions
-      const sessionId = url.searchParams.get('sessionId');
-      const deviceId = url.searchParams.get('deviceId') || undefined;
-      const deviceType = url.searchParams.get('deviceType') || undefined;
-      // ✅ FIX (Nov 24, 2025): Support bootstrap token authentication for anonymous users
-      const bootstrapToken = url.searchParams.get('bootstrap');
-      
-      // ✅ PRODUCTION FIX: Only sessionId is required (projectId can be null for shared sessions)
-      if (!sessionId) {
-        console.warn('[WebSocket Upgrade] Rejecting - missing sessionId');
-        socket.resume(); // Resume before error response
-        
-        const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
-        HttpUpgradeResponder.sendError(
-          request,
-          socket,
-          HttpUpgradeResponder.ErrorResponses.BAD_REQUEST('Missing sessionId')
-        );
-        return;
-      }
-      
-      // ✅ FIX (Nov 24, 2025): Support bootstrap token authentication for anonymous users
-      if (bootstrapToken) {
-        try {
-          // ✅ CRITICAL FIX: Use static import (at top of file) to avoid hot-path delay
-          // Dynamic import was causing socket timeout during async operation
-          const jwtSecret = process.env.JWT_SECRET;
-          
-          if (!jwtSecret) {
-            console.error('[WebSocket Upgrade] JWT_SECRET not configured');
-            socket.resume();
-            const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
-            HttpUpgradeResponder.sendError(
-              request,
-              socket,
-              HttpUpgradeResponder.ErrorResponses.INTERNAL_ERROR('JWT configuration error')
-            );
-            return;
-          }
-          
-          // Verify JWT signature and decode payload (synchronous operation, no await needed)
-          const decoded = jwt.verify(bootstrapToken, jwtSecret) as {
-            projectId: string;
-            sessionId: string;
-            userId: number;
-          };
-          
-          // Validate token matches requested project and session
-          const tokenProjectId = String(decoded.projectId);
-          const tokenSessionId = String(decoded.sessionId);
-          const actualProjectId = String(projectId);
-          const actualSessionId = String(sessionId);
-          
-          if (tokenProjectId !== actualProjectId || tokenSessionId !== actualSessionId) {
-            console.warn('[WebSocket Upgrade] Bootstrap token mismatch:', {
-              tokenProjectId,
-              actualProjectId,
-              tokenSessionId,
-              actualSessionId
-            });
-            socket.resume();
-            const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
-            HttpUpgradeResponder.sendError(
-              request,
-              socket,
-              HttpUpgradeResponder.ErrorResponses.FORBIDDEN('Bootstrap token invalid for this session')
-            );
-            return;
-          }
-          
-          console.log(`[WebSocket Upgrade] ✅ Validated bootstrap token for project ${projectId}, session ${sessionId}`);
-          // Skip session cache validation for bootstrap users - token is sufficient
-        } catch (error: any) {
-          console.error('[WebSocket Upgrade] Bootstrap token validation failed:', error.message);
-          socket.resume();
-          const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
-          HttpUpgradeResponder.sendError(
-            request,
-            socket,
-            HttpUpgradeResponder.ErrorResponses.UNAUTHORIZED('Invalid or expired bootstrap token')
-          );
-          return;
-        }
-      } else {
-        // ✅ PRODUCTION FIX: Cached validation for authenticated users
-        // Uses AgentSessionCache with Redis primary + in-memory fallback
-        // Cache hit: <1ms (vs 50-200ms database query)
-        const { agentSessionCache } = await import('./services/agent-session-cache.service');
-        
-        const validation = await agentSessionCache.validateSession({
-          sessionId,
-          projectId,
-          deviceId,
-          deviceType,
-        });
-        
-        // ✅ PRODUCTION FIX: Verify validation AND session data existence
-        if (!validation.valid || !validation.session) {
-          console.warn(`[WebSocket Upgrade] Rejecting - ${validation.error || 'Missing session data'} (${validation.source}, ${validation.latencyMs}ms)`);
-          socket.resume(); // Resume before error response
-          
-          const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
-          
-          // Map validation error to appropriate HTTP status
-          if (validation.error?.includes('not found')) {
-            HttpUpgradeResponder.sendError(
-              request,
-              socket,
-              HttpUpgradeResponder.ErrorResponses.UNAUTHORIZED('Invalid or inactive session')
-            );
-          } else if (validation.error?.includes('mismatch')) {
-            HttpUpgradeResponder.sendError(
-              request,
-              socket,
-              HttpUpgradeResponder.ErrorResponses.FORBIDDEN('Project ID or device mismatch')
-            );
-          } else {
-            HttpUpgradeResponder.sendError(
-              request,
-              socket,
-              HttpUpgradeResponder.ErrorResponses.UNAUTHORIZED(validation.error || 'Session validation failed')
-            );
-          }
-          return;
-        }
-        
-        console.log(`[WebSocket Upgrade] ✅ Validated session ${sessionId} for project ${projectId || 'shared'} (${validation.source} cache, ${validation.latencyMs}ms)`);
-      }
-      
-      // ✅ CRITICAL: Mark socket BEFORE handleUpgrade to prevent guard from destroying it
-      markSocketAsHandled(request, socket);
-      
-      console.log(`[WebSocket Upgrade] 📡 About to call handleUpgrade for ${sessionId}`);
-      console.log(`[WebSocket Upgrade] 🔍 Socket state before handleUpgrade:`, {
-        destroyed: socket.destroyed,
-        readableEnded: socket.readableEnded,
-        writableEnded: socket.writableEnded,
-        readable: socket.readable,
-        writable: socket.writable
-      });
-      
-      // ✅ CRITICAL: Resume socket and call handleUpgrade AFTER validation completes
-      // This prevents the ws library from timing out the handshake
-      socket.resume();
-      
-      try {
-        agentWss.handleUpgrade(request, socket, head, (ws: any) => {
-          console.log(`[WebSocket Upgrade] 🔌 handleUpgrade callback executing for ${sessionId}, ws.readyState:`, ws.readyState);
-          console.log(`[WebSocket Upgrade] 📤 About to emit 'connection' event...`);
-          agentWss.emit('connection', ws, request);
-          console.log(`[WebSocket Upgrade] ✅ 'connection' event emitted successfully`);
-        });
-        console.log(`[WebSocket Upgrade] ⏳ handleUpgrade called, waiting for callback...`);
-      } catch (upgradeError: any) {
-        console.error(`[WebSocket Upgrade] ❌ handleUpgrade threw error:`, upgradeError);
-        console.error(`[WebSocket Upgrade] Error details:`, {
-          message: upgradeError.message,
-          stack: upgradeError.stack,
-          code: upgradeError.code
-        });
-      }
-      
-    } catch (error: any) {
-      console.error(`[WebSocket Upgrade] Validation error:`, error);
-      socket.resume(); // Resume before error response
-      
-      const { HttpUpgradeResponder } = await import('./websocket/http-upgrade-responder');
-      HttpUpgradeResponder.sendError(
-        request,
-        socket,
-        HttpUpgradeResponder.ErrorResponses.INTERNAL_ERROR(error.message || 'Unknown error')
-      );
-    }
-  }
-
-  httpServer.prependListener('upgrade', (request, socket, head) => {
-    let pathname: string;
-    
-    // Safe URL parsing with fallback for malformed headers
-    try {
-      pathname = new URL(request.url!, `http://${request.headers.host || 'localhost'}`).pathname;
-    } catch (error) {
-      console.error('[WebSocket Upgrade] Malformed upgrade request:', error);
-      socket.destroy();
-      return;
-    }
-    
-    // Only handle /ws/agent upgrades, let other listeners handle their own paths
-    if (pathname !== '/ws/agent') {
-      return; // Let other upgrade listeners process this request
-    }
-    
-    // ✅ CRITICAL FIX (Nov 24, 2025): Mark socket SYNCHRONOUSLY to prevent race condition!
-    // The Upgrade Guard's setImmediate runs before async validation completes,
-    // causing sockets to be destroyed. Marking synchronously prevents this.
-    markSocketAsHandled(request, socket);
-    
-    // Route /ws/agent upgrades to async validation + upgrade handler
-    // ✅ CRITICAL: Don't await here - let validation run async to prevent blocking other upgrades
-    handleAgentUpgrade(request, socket, head).catch((error) => {
-      console.error('[WebSocket Upgrade] Unhandled error in handleAgentUpgrade:', error);
-      socket.destroy();
-    });
-  });
+  const { installFinalUpgradeGuard } = await import('./websocket/upgrade-guard');
   
   // NOW start listening - ONLY after all middleware and routes are registered
   // This prevents the race condition where requests arrive before Vite middleware is ready
