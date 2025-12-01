@@ -3,6 +3,12 @@
 ## Overview
 E-Code is a collaborative web-based IDE with AI assistance, designed for rapid prototyping, education, and enterprise use. It aims to provide a scalable platform with multi-provider AI model selection, real-time collaboration, and robust security. A key ambition is to enable autonomous workspace generation from natural language prompts, leading to live previews with streaming progress, thereby creating a comprehensive, AI-powered development environment that streamlines coding and enhances learning. The platform seeks to be an enterprise-grade solution with significant market potential.
 
+## 👑 Admin Credentials (ALWAYS USE)
+- **Email:** `admin@e-code.ai`
+- **Password:** `admin123`
+
+**Note:** The "Use Admin" button on the /auth page auto-fills these credentials.
+
 ## User Preferences
 - **Communication:** Simple, everyday language
 - **Code Style:** TypeScript with strict typing

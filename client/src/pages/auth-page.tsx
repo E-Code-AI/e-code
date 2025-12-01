@@ -89,30 +89,11 @@ export default function AuthPage() {
               Sign in to your account or create a new one to get started.
             </CardDescription>
             <div className="mt-2 p-2 sm:p-3 bg-muted rounded-md text-xs sm:text-sm">
-              <p className="mb-1"><strong>Demo accounts:</strong></p>
+              <p className="mb-1"><strong>Admin Account:</strong></p>
               <div className="flex flex-col gap-2 mt-2">
                 <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2">
                   <div className="text-[10px] xs:text-xs sm:text-sm">
-                    <span>Email: <code className="bg-slate-700 px-1 rounded">admin@replit.com</code></span><br/>
-                    <span>Password: <code className="bg-slate-700 px-1 rounded">admin</code></span>
-                  </div>
-                  <Button 
-                    variant="secondary" 
-                    size="sm" 
-                    className="min-h-[44px] text-xs sm:text-sm px-3"
-                    onClick={() => {
-                      loginForm.setValue('email', 'admin@replit.com');
-                      loginForm.setValue('password', 'admin');
-                      setActiveTab('login');
-                    }}
-                    data-testid="button-use-admin"
-                  >
-                    Use Admin
-                  </Button>
-                </div>
-                <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2 mt-1">
-                  <div className="text-[10px] xs:text-xs sm:text-sm">
-                    <span>Email: <code className="bg-slate-700 px-1 rounded">test@ecode.com</code></span><br/>
+                    <span>Email: <code className="bg-slate-700 px-1 rounded">admin@e-code.ai</code></span><br/>
                     <span>Password: <code className="bg-slate-700 px-1 rounded">admin123</code></span>
                   </div>
                   <Button 
@@ -120,13 +101,13 @@ export default function AuthPage() {
                     size="sm" 
                     className="min-h-[44px] text-xs sm:text-sm px-3"
                     onClick={() => {
-                      loginForm.setValue('email', 'test@ecode.com');
+                      loginForm.setValue('email', 'admin@e-code.ai');
                       loginForm.setValue('password', 'admin123');
                       setActiveTab('login');
                     }}
-                    data-testid="button-use-demo"
+                    data-testid="button-use-admin"
                   >
-                    Use Demo
+                    Use Admin
                   </Button>
                 </div>
               </div>
