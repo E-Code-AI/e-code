@@ -193,7 +193,42 @@ class AgentWebSocketService {
 
               logger.info(`[Agent WebSocket] ✅ Workflow execution started for session ${sessionId}`);
             } else {
-              logger.info(`[Agent WebSocket] Workflow already exists for session ${sessionId}, status: ${existingWorkflows[0].status}`);
+              const workflow = existingWorkflows[0];
+              logger.info(`[Agent WebSocket] Workflow already exists for session ${sessionId}, status: ${workflow.status}`);
+              
+              // ✅ FIX (Dec 1, 2025): Send workflow status to client when already complete
+              // PROBLEM: Client was left waiting with no response when workflow was already done
+              // SOLUTION: Send completion/failure status immediately so UI can update
+              if (workflow.status === 'completed') {
+                ws.send(JSON.stringify({
+                  type: 'complete',
+                  sessionId,
+                  projectId,
+                  message: 'Workspace creation completed successfully!',
+                  workflowId: workflow.id
+                }));
+                logger.info(`[Agent WebSocket] ✅ Sent 'complete' event to client for session ${sessionId}`);
+              } else if (workflow.status === 'failed') {
+                ws.send(JSON.stringify({
+                  type: 'error',
+                  sessionId,
+                  projectId,
+                  message: workflow.error || 'Workspace creation failed',
+                  workflowId: workflow.id
+                }));
+                logger.info(`[Agent WebSocket] ❌ Sent 'error' event to client for session ${sessionId}`);
+              } else if (workflow.status === 'in_progress') {
+                ws.send(JSON.stringify({
+                  type: 'status',
+                  sessionId,
+                  projectId,
+                  message: 'Workspace creation in progress...',
+                  status: 'in_progress',
+                  progress: workflow.progress || 0,
+                  workflowId: workflow.id
+                }));
+                logger.info(`[Agent WebSocket] 🔄 Sent 'in_progress' status to client for session ${sessionId}`);
+              }
             }
           } else {
             logger.warn(`[Agent WebSocket] NO plan found for session ${sessionId}! Plan generation may have failed.`);

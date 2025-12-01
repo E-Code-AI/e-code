@@ -7,7 +7,7 @@
  * implementing the exact layout specified by the user.
  */
 
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
@@ -192,7 +192,8 @@ export default function IDEPage() {
   }, [promptParam, projectId]);
   
   // Handle autonomous workspace viewer completion
-  const handleWorkspaceComplete = () => {
+  // ✅ FIX (Dec 1, 2025): Memoize callbacks to prevent WebSocket reconnection on re-renders
+  const handleWorkspaceComplete = useCallback(() => {
     // Remove bootstrap token from URL
     const url = new URL(window.location.href);
     url.searchParams.delete('bootstrap');
@@ -206,15 +207,15 @@ export default function IDEPage() {
       title: "Workspace Ready!",
       description: "Your AI-powered workspace has been created successfully.",
     });
-  };
+  }, [projectId, toast]);
   
-  const handleWorkspaceError = (error: string) => {
+  const handleWorkspaceError = useCallback((error: string) => {
     toast({
       title: "Workspace Creation Failed",
       description: error,
       variant: "destructive",
     });
-  };
+  }, [toast]);
   
   // Load persisted state on mount with validation
   const persistedState = loadPersistedState(projectId);
