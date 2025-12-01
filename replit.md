@@ -72,3 +72,20 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 ### Authentication Providers
 - **Replit Auth:** Google, GitHub, Twitter/X, Apple, email/password
 - **Custom Email/Password**
+
+## Recent Changes
+
+### Dec 1, 2025 - IDE-Database File Sync Fix
+**Problem:** Agent workflow was creating files in `./projects/{id}/` directories but they weren't visible in the IDE. Root cause: the file operations service only wrote to the filesystem, not the `files` database table that the IDE reads from.
+
+**Solution:** 
+1. Updated `server/services/agent-file-operations.service.ts` to insert file records into the `files` database table when creating files
+2. Added `projectId` to session context in `server/services/agent-orchestrator.service.ts`
+3. Implemented path normalization to handle format inconsistencies (leading `./` or `/`)
+4. Added parent directory creation for nested file structures
+
+**Files Modified:**
+- `server/services/agent-file-operations.service.ts`
+- `server/services/agent-orchestrator.service.ts`
+
+**Status:** Verified working via e2e test - files now appear in IDE file tree after autonomous workspace creation.
