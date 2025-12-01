@@ -1,10 +1,16 @@
 // WebSocket service for real-time agent progress updates
 import { WebSocketServer, WebSocket } from 'ws';
+import type { IncomingMessage } from 'http';
+import type { Socket } from 'net';
 import { Server } from 'http';
 import { createLogger } from '../utils/logger';
-import { markSocketAsHandled } from '../websocket/upgrade-guard';
+import { wrapWebSocketServer } from '../websocket/upgrade-guard';
+import jwt from 'jsonwebtoken';
 
 const logger = createLogger('agent-websocket-service');
+
+// JWT secret for bootstrap tokens (must match workspace-bootstrap.router.ts)
+const JWT_SECRET = process.env.JWT_SECRET || 'e-code-jwt-secret-key-2024';
 
 interface AgentProgressUpdate {
   type: 'step' | 'summary' | 'error' | 'complete';
@@ -42,27 +48,72 @@ interface DeviceConnection {
 }
 
 class AgentWebSocketService {
-  public wss: WebSocketServer | null = null; // Public for manual upgrade handling
+  public wss: WebSocketServer | null = null;
   private connections = new Map<string, Set<DeviceConnection>>();
   private pingInterval: NodeJS.Timeout | null = null;
   
   initialize(server: Server) {
-    // ✅ CRITICAL FIX (Nov 20, 2025): Use noServer mode to prevent Vite catch-all from intercepting
-    // Standard server+path mode doesn't work when Vite has a catch-all middleware
-    this.wss = new WebSocketServer({ noServer: true });
+    // ✅ CRITICAL FIX (Dec 1, 2025): Use { server, path, verifyClient } mode
+    // PROBLEM: noServer + prependListener approach lets Express/Vite middleware
+    // continue processing the HTTP request after handleUpgrade, writing HTML to
+    // the same socket and causing "Invalid frame header" errors.
+    // 
+    // SOLUTION: Use standard { server, path } mode which:
+    // 1. Lets ws library fully own the upgrade process at the HTTP server layer
+    // 2. Completely bypasses Express middleware for this path
+    // 3. Uses verifyClient for token validation before upgrade
+    this.wss = new WebSocketServer({
+      server,
+      path: '/ws/agent',
+      verifyClient: (info, callback) => {
+        try {
+          const url = new URL(info.req.url || '', `http://${info.req.headers.host}`);
+          const projectId = url.searchParams.get('projectId');
+          const sessionId = url.searchParams.get('sessionId');
+          const token = url.searchParams.get('bootstrap');
+          
+          logger.info('[Agent WebSocket] verifyClient: projectId=' + projectId + ', sessionId=' + sessionId + ', hasToken=' + !!token);
+          
+          if (!projectId || !sessionId) {
+            logger.warn('[Agent WebSocket] Missing projectId or sessionId - rejecting');
+            callback(false, 400, 'Missing projectId or sessionId');
+            return;
+          }
+          
+          if (!token) {
+            logger.warn('[Agent WebSocket] No bootstrap token provided - rejecting');
+            callback(false, 401, 'No bootstrap token provided');
+            return;
+          }
+          
+          const decoded = jwt.verify(token, JWT_SECRET) as any;
+          
+          if (decoded.projectId !== projectId || decoded.sessionId !== sessionId) {
+            logger.warn('[Agent WebSocket] Token projectId/sessionId mismatch - rejecting');
+            callback(false, 401, 'Token mismatch');
+            return;
+          }
+          
+          logger.info(`[Agent WebSocket] ✅ Token validated for project ${projectId}, session ${sessionId}`);
+          callback(true);
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          logger.warn(`[Agent WebSocket] Token validation failed: ${errorMsg}`);
+          callback(false, 401, 'Invalid token: ' + errorMsg);
+        }
+      }
+    });
     
-    logger.info('[Agent WebSocket] Service initialized (noServer mode for Vite compatibility)');
+    // Wrap for socket handling tracking
+    wrapWebSocketServer(this.wss);
+    
+    logger.info('[Agent WebSocket] Service initialized with { server, path } mode (bypasses Express)');
     
     // Start heartbeat for connection health monitoring
     this.startHeartbeat();
     
     this.wss.on('connection', (ws, req) => {
-      console.log(`[Agent WebSocket] 🎯 CONNECTION EVENT RECEIVED! remoteAddress: ${req.socket.remoteAddress}, URL: ${req.url}, ws.readyState: ${ws.readyState}`);
-      
-      // ✅ CRITICAL FIX (Nov 20, 2025): Re-mark socket in connection handler as fallback
-      // The ws library may null out request.socket during handleUpgrade, losing the tag from prependListener
-      // This ensures the socket is marked even if the upgrade handler's tag was lost
-      markSocketAsHandled(req);
+      console.log(`[Agent WebSocket] 🎯 CONNECTION ESTABLISHED! URL: ${req.url}, ws.readyState: ${ws.readyState}`);
       
       logger.info(`[Agent WebSocket] New connection attempt from ${req.socket.remoteAddress} - URL: ${req.url}`);
       
@@ -231,12 +282,17 @@ class AgentWebSocketService {
               }
             }
           } else {
-            logger.warn(`[Agent WebSocket] NO plan found for session ${sessionId}! Plan generation may have failed.`);
+            // ✅ FIX (Dec 1, 2025): Plan may not exist yet due to race condition
+            // Bootstrap endpoint returns token immediately, then fires setImmediate for plan generation
+            // Client WebSocket connects before setImmediate runs, finds no plan yet
+            // This is NOT an error - just a timing issue. Send 'status' instead of 'error'
+            logger.info(`[Agent WebSocket] No plan found yet for session ${sessionId} - waiting for plan generation to start...`);
 
-            // Send notification to client that plan is missing
+            // Send status notification (not error) - plan generation will stream events when ready
             ws.send(JSON.stringify({
-              type: 'error',
-              message: 'Plan generation is still in progress or failed. Please wait...',
+              type: 'status',
+              status: 'waiting_for_plan',
+              message: 'Connecting to AI... Plan generation will begin shortly.',
               sessionId,
               projectId
             }));
@@ -290,6 +346,79 @@ class AgentWebSocketService {
     });
   }
 
+  // ✅ CRITICAL FIX (Dec 1, 2025): verifyClient validates bootstrap tokens/sessions BEFORE WebSocket upgrade
+  // This replaces the complex manual handleUpgrade flow that leaked requests to Express/Vite
+  private verifyClient(
+    info: { origin: string; req: IncomingMessage; secure: boolean },
+    callback: (res: boolean, code?: number, message?: string) => void
+  ) {
+    try {
+      const url = new URL(info.req.url!, `http://${info.req.headers.host}`);
+      const projectId = url.searchParams.get('projectId');
+      const sessionId = url.searchParams.get('sessionId');
+      // ✅ CRITICAL FIX (Dec 1, 2025): Frontend sends 'bootstrap', not 'bootstrapToken'
+      const bootstrapToken = url.searchParams.get('bootstrap') || url.searchParams.get('bootstrapToken');
+      
+      logger.info(`[Agent WebSocket] verifyClient: projectId=${projectId}, sessionId=${sessionId}, hasToken=${!!bootstrapToken}`);
+      
+      // Require projectId and sessionId
+      if (!projectId || !sessionId) {
+        logger.warn(`[Agent WebSocket] Rejecting connection - missing projectId or sessionId`);
+        callback(false, 400, 'Missing projectId or sessionId');
+        return;
+      }
+      
+      // For bootstrap connections, validate the JWT token
+      if (bootstrapToken) {
+        try {
+          const decoded = jwt.verify(bootstrapToken, JWT_SECRET) as {
+            type: string;
+            projectId: number;
+            sessionId: string;
+            userId: number;
+            exp?: number;
+          };
+          
+          // Validate token claims
+          if (decoded.type !== 'agent_bootstrap') {
+            logger.warn(`[Agent WebSocket] Invalid token type: ${decoded.type}`);
+            callback(false, 401, 'Invalid token type');
+            return;
+          }
+          
+          if (decoded.sessionId !== sessionId) {
+            logger.warn(`[Agent WebSocket] Session ID mismatch: token=${decoded.sessionId}, param=${sessionId}`);
+            callback(false, 403, 'Session ID mismatch');
+            return;
+          }
+          
+          if (decoded.projectId.toString() !== projectId) {
+            logger.warn(`[Agent WebSocket] Project ID mismatch: token=${decoded.projectId}, param=${projectId}`);
+            callback(false, 403, 'Project ID mismatch');
+            return;
+          }
+          
+          logger.info(`[Agent WebSocket] ✅ Bootstrap token validated for project ${projectId}, session ${sessionId}`);
+          callback(true);
+          return;
+        } catch (error: any) {
+          logger.warn(`[Agent WebSocket] Bootstrap token validation failed: ${error.message}`);
+          callback(false, 401, 'Invalid or expired bootstrap token');
+          return;
+        }
+      }
+      
+      // For non-bootstrap connections, we'll validate session in the connection handler
+      // This is a fallback for authenticated users who don't have a bootstrap token
+      logger.info(`[Agent WebSocket] Allowing connection without bootstrap token (will validate session later)`);
+      callback(true);
+      
+    } catch (error: any) {
+      logger.error(`[Agent WebSocket] verifyClient error: ${error.message}`);
+      callback(false, 500, 'Internal server error');
+    }
+  }
+  
   // Heartbeat to detect stale connections
   // ✅ FIX (Nov 20, 2025): Browser WebSocket clients don't support manual pong API
   // Sending ws.ping() causes ws library to close connections with code 1006

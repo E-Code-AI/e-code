@@ -55,6 +55,7 @@ const bootstrapRequestSchema = z.object({
 
 // Bootstrap token payload
 interface BootstrapTokenPayload {
+  type?: 'agent_bootstrap'; // For WebSocket verifyClient validation
   projectId: string;
   conversationId: string;
   sessionId: string;
@@ -235,7 +236,9 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     const workspaceUrl = `${getWebSocketBaseUrl(req)}/ws/agent?projectId=${project.id}&sessionId=${session.id}`;
     
     // 6. Generate bootstrap token (JWT)
+    // ✅ CRITICAL FIX (Dec 1, 2025): Include 'type' field for WebSocket verifyClient validation
     const bootstrapToken = generateBootstrapToken({
+      type: 'agent_bootstrap', // Required for WebSocket authentication
       projectId: String(project.id),
       conversationId: session.id, // Use session ID as conversation ID initially
       sessionId: session.id,
