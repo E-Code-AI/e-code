@@ -29,7 +29,6 @@ import { aiProviderManager } from '../ai/ai-provider-manager';
 import { createLogger } from '../utils/logger';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
 import { redisIdempotency } from '../services/redis-idempotency.service';
 
 const logger = createLogger('workspace-bootstrap');
@@ -69,7 +68,7 @@ interface BootstrapTokenPayload {
  * Main orchestration endpoint - creates complete workspace with AI agent auto-started
  * 
  * Flow:
- * 1. Validate request (authentication optional for guest access)
+ * 1. Validate request (AUTHENTICATION REQUIRED - Replit-identical)
  * 2. Create project in database
  * 3. Generate AI plan (streamed via SSE in separate endpoint)
  * 4. Create agent session
@@ -83,13 +82,17 @@ interface BootstrapTokenPayload {
  * - IDE parses token and subscribes to WebSocket
  * - Agent streams progress in real-time
  * 
- * ✅ FIX (Nov 24, 2025): Support anonymous guest access for "No credit card required" promise
- * - Removed ensureAuthenticated requirement
- * - Anonymous users get guest project with temporary ownership
- * - Removed csrfProtection to allow anonymous POST requests without session cookies
+ * ✅ REPLIT-IDENTICAL (Dec 1, 2025): Authentication required before workspace creation
+ * - ensureAuthenticated middleware enforces 401 for unauthenticated requests
+ * - Frontend redirects anonymous users to /auth first
+ * - After login, frontend resumes workspace creation with saved prompt
+ * - CSRF protection enabled for security (defense in depth)
  */
-router.post('/bootstrap', async (req: Request, res: Response) => {
+router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
   const startTime = Date.now();
+  
+  // ✅ REPLIT-IDENTICAL: This route now requires authentication (enforced by ensureAuthenticated middleware)
+  // Anonymous users are rejected with 401 and must login first before calling this endpoint
   
   // ✅ Redis-backed idempotency for distributed deduplication (Fortune 500-grade)
   const idempotencyKey = req.headers['x-idempotency-key'] as string | undefined;
@@ -158,59 +161,12 @@ router.post('/bootstrap', async (req: Request, res: Response) => {
       framework: options.framework
     });
     
-    // Support both authenticated and anonymous users
-    const user = req.user as User | undefined;
-    let userId: number;
-    let username: string;
-    let ephemeralUser: User | null = null;
-    
-    if (user) {
-      // Authenticated user
-      userId = user.id;
-      username = user.username || 'user';
-      logger.info(`[Bootstrap] Authenticated user ${userId}`, { username });
-    } else {
-      // ✅ SECURITY FIX (Nov 24, 2025): Create unique ephemeral user for each anonymous session
-      // Problem: Shared guest account allowed cross-user data access (multi-tenant leak)
-      // Solution: Each anonymous workspace gets its own isolated user with unique email
-      const ephemeralId = crypto.randomUUID();
-      const ephemeralEmail = `guest-${ephemeralId}@ecode.platform`;
-      const ephemeralUsername = `guest-${ephemeralId.substring(0, 8)}`;
-      
-      logger.info(`[Bootstrap] Creating ephemeral user for anonymous session`, { ephemeralEmail });
-      
-      // ✅ SECURITY FIX (Nov 30, 2025): Hash the random password with bcrypt
-      // Even though it's random and unguessable, passwords should always be hashed
-      const randomPassword = crypto.randomBytes(32).toString('hex');
-      const hashedPassword = await bcrypt.hash(randomPassword, 10);
-      
-      const [createdUser] = await db.insert(users)
-        .values({
-          email: ephemeralEmail,
-          username: ephemeralUsername,
-          password: hashedPassword,
-        })
-        .returning();
-      
-      ephemeralUser = createdUser;
-      userId = createdUser.id;
-      username = ephemeralUsername;
-      logger.info(`[Bootstrap] Ephemeral user created: ${userId}`, { email: ephemeralEmail });
-      
-      // ✅ CRITICAL FIX (Nov 30, 2025): Log in the ephemeral user via Passport session
-      // This creates a proper session cookie so the user can access /ide/:projectId
-      await new Promise<void>((resolve, reject) => {
-        req.login(createdUser, (err) => {
-          if (err) {
-            logger.error(`[Bootstrap] Failed to login ephemeral user:`, err);
-            reject(err);
-          } else {
-            logger.info(`[Bootstrap] ✅ Ephemeral user logged in via Passport session`);
-            resolve();
-          }
-        });
-      });
-    }
+    // ✅ REPLIT-IDENTICAL: User must be authenticated (enforced by ensureAuthenticated middleware)
+    // req.user is guaranteed to exist at this point
+    const user = req.user as User;
+    const userId = user.id;
+    const username = user.username || 'user';
+    logger.info(`[Bootstrap] Authenticated user ${userId}`, { username });
     
     console.log('🚀 [Bootstrap] RECEIVED REQUEST from user', userId, 'prompt:', prompt.substring(0, 50));
     logger.info(`[Bootstrap] Starting workspace creation for user ${userId}`, { prompt, options });
