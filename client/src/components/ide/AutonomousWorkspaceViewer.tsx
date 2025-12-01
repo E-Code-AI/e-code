@@ -11,7 +11,7 @@
  * - Auto-closes on completion
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -94,6 +94,16 @@ export function AutonomousWorkspaceViewer({
   const logsEndRef = useRef<HTMLDivElement>(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
+  
+  // ✅ FIX (Dec 1, 2025): Use refs for callbacks to prevent WebSocket reconnection on re-renders
+  const onCompleteRef = useRef(onComplete);
+  const onErrorRef = useRef(onError);
+  
+  // Keep refs updated
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+    onErrorRef.current = onError;
+  }, [onComplete, onError]);
 
   // Auto-scroll logs to bottom
   useEffect(() => {
@@ -147,7 +157,7 @@ export function AutonomousWorkspaceViewer({
     if (!tokenData) {
       setErrorMessage('Invalid bootstrap token');
       setConnectionStatus('error');
-      onError?.('Invalid bootstrap token');
+      onErrorRef.current?.('Invalid bootstrap token');
       return;
     }
 
@@ -254,7 +264,7 @@ export function AutonomousWorkspaceViewer({
         } else if (reconnectAttempts.current >= maxReconnectAttempts) {
           addLog('❌ Max reconnection attempts reached');
           setErrorMessage('Connection lost. Please refresh the page.');
-          onError?.('Connection lost');
+          onErrorRef.current?.('Connection lost');
         }
       };
     };
@@ -268,7 +278,8 @@ export function AutonomousWorkspaceViewer({
         wsRef.current = null;
       }
     };
-  }, [bootstrapToken, isOpen, onError]);
+    // ✅ FIX (Dec 1, 2025): Removed onError from dependencies - using ref instead
+  }, [bootstrapToken, isOpen]);
 
   // Handle agent messages
   const handleAgentMessage = (message: AgentMessage) => {
@@ -336,7 +347,7 @@ export function AutonomousWorkspaceViewer({
         const errorMsg = message.message || 'Unknown error occurred';
         setErrorMessage(errorMsg);
         addLog(`❌ Error: ${errorMsg}`);
-        onError?.(errorMsg);
+        onErrorRef.current?.(errorMsg);
         break;
 
       case 'complete':
@@ -364,7 +375,7 @@ export function AutonomousWorkspaceViewer({
     if (wsRef.current) {
       wsRef.current.close(1000, 'User closed dialog');
     }
-    onComplete?.();
+    onCompleteRef.current?.();
   };
 
   if (!bootstrapToken) return null;

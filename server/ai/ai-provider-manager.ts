@@ -331,9 +331,12 @@ export class AIProviderManager {
       try {
         this.providers.set('gemini', AIProviderFactory.create('gemini', process.env.GEMINI_API_KEY));
         this.geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        console.log('[AI Provider Manager] ✓ Gemini provider initialized');
       } catch (error) {
-        console.warn('Failed to initialize Gemini provider:', error);
+        console.warn('[AI Provider Manager] Failed to initialize Gemini provider:', error);
       }
+    } else {
+      console.warn('[AI Provider Manager] Gemini API key not found in environment');
     }
     
     // xAI (Grok)
