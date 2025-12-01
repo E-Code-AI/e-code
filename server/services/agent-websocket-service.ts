@@ -73,6 +73,7 @@ class AgentWebSocketService {
     });
     
     // Register as FIRST listener using prependListener (runs before all other upgrade handlers)
+    // CRITICAL: Cannot use async/await here - must stay synchronous to prevent race conditions
     server.prependListener('upgrade', (request: any, socket: any, head: Buffer) => {
       const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
       
@@ -86,7 +87,12 @@ class AgentWebSocketService {
       const sessionId = url.searchParams.get('sessionId');
       const token = url.searchParams.get('bootstrap');
       
-      logger.info('[Agent WebSocket] Upgrade handler: projectId=' + projectId + ', sessionId=' + sessionId + ', hasToken=' + !!token);
+      // Parse cookies for session-based auth
+      // Note: Session cookie name is 'ecode.sid' (configured in server/middleware/passport-setup.ts)
+      const cookies = this.parseCookies(request.headers.cookie || '');
+      const hasSessionCookie = !!cookies['ecode.sid'];
+      
+      logger.info('[Agent WebSocket] Upgrade handler: projectId=' + projectId + ', sessionId=' + sessionId + ', hasToken=' + !!token + ', hasSessionCookie=' + hasSessionCookie);
       
       // Mark socket as handled IMMEDIATELY to prevent other handlers from interfering
       markSocketAsHandled(request, socket);
@@ -99,37 +105,75 @@ class AgentWebSocketService {
         return;
       }
       
-      if (!token) {
-        logger.warn('[Agent WebSocket] No bootstrap token provided - rejecting');
-        socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nContent-Length: 26\r\n\r\nNo bootstrap token provided');
-        socket.destroy();
-        return;
-      }
+      // TWO authentication modes:
+      // 1. Bootstrap token (for autonomous workspace creation)
+      // 2. Session cookie (for normal IDE usage)
       
-      try {
-        const decoded = jwt.verify(token, JWT_SECRET) as any;
-        
-        if (decoded.projectId !== projectId || decoded.sessionId !== sessionId) {
-          logger.warn('[Agent WebSocket] Token projectId/sessionId mismatch - rejecting');
-          socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nToken mismatch');
+      if (token) {
+        // Mode 1: Bootstrap token authentication (synchronous)
+        try {
+          const decoded = jwt.verify(token, JWT_SECRET) as any;
+          
+          if (decoded.projectId !== projectId || decoded.sessionId !== sessionId) {
+            logger.warn('[Agent WebSocket] Token projectId/sessionId mismatch - rejecting');
+            socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nToken mismatch');
+            socket.destroy();
+            return;
+          }
+          
+          logger.info(`[Agent WebSocket] ✅ Token validated for project ${projectId}, session ${sessionId}`);
+          
+          // Complete the WebSocket handshake
+          this.wss!.handleUpgrade(request, socket, head, (ws) => {
+            console.log(`[Agent WebSocket] 🎯 UPGRADE COMPLETE! Emitting connection event...`);
+            this.wss!.emit('connection', ws, request);
+          });
+          return;
+          
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          logger.warn(`[Agent WebSocket] Token validation failed: ${errorMsg}`);
+          socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nContent-Length: 13\r\n\r\nInvalid token');
           socket.destroy();
           return;
         }
-        
-        logger.info(`[Agent WebSocket] ✅ Token validated for project ${projectId}, session ${sessionId}`);
-        
-        // Complete the WebSocket handshake
-        this.wss!.handleUpgrade(request, socket, head, (ws) => {
-          console.log(`[Agent WebSocket] 🎯 UPGRADE COMPLETE! Emitting connection event...`);
-          this.wss!.emit('connection', ws, request);
-        });
-        
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        logger.warn(`[Agent WebSocket] Token validation failed: ${errorMsg}`);
-        socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nContent-Length: 13\r\n\r\nInvalid token');
-        socket.destroy();
       }
+      
+      // Mode 2: Session cookie authentication (for normal IDE usage)
+      // ARCHITECTURE: Accept the connection FIRST (synchronously), then validate
+      // and close if validation fails. This avoids async timing issues with handleUpgrade.
+      if (hasSessionCookie) {
+        logger.info(`[Agent WebSocket] Session cookie present - completing upgrade first, then validating`);
+        
+        // Complete the WebSocket handshake SYNCHRONOUSLY
+        this.wss!.handleUpgrade(request, socket, head, (ws) => {
+          console.log(`[Agent WebSocket] 🎯 UPGRADE COMPLETE (session auth pending validation)!`);
+          
+          // Now validate the session asynchronously
+          this.validateSessionCookie(cookies['ecode.sid'], projectId)
+            .then((userId) => {
+              if (userId) {
+                logger.info(`[Agent WebSocket] ✅ Session validated for user ${userId}, project ${projectId}, session ${sessionId}`);
+                // Emit connection event to complete setup
+                this.wss!.emit('connection', ws, request);
+              } else {
+                logger.warn('[Agent WebSocket] Session validation returned null user - closing connection');
+                ws.close(4001, 'Session validation failed');
+              }
+            })
+            .catch((err) => {
+              const errorMsg = err instanceof Error ? err.message : String(err);
+              logger.warn(`[Agent WebSocket] Session validation failed: ${errorMsg} - closing connection`);
+              ws.close(4001, 'Session validation failed');
+            });
+        });
+        return;
+      }
+      
+      // No valid authentication found
+      logger.warn('[Agent WebSocket] No valid authentication (no token, no session cookie) - rejecting');
+      socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nContent-Length: 42\r\n\r\nAuthentication required (token or session)');
+      socket.destroy();
     });
     
     logger.info('[Agent WebSocket] Service initialized with noServer + prependListener mode');
@@ -486,6 +530,95 @@ class AgentWebSocketService {
     });
     
     logger.debug(`[Presence] Broadcasted ${message.type} to ${sentCount} devices on ${connectionKey}`);
+  }
+  
+  // Parse cookies from cookie header string
+  private parseCookies(cookieHeader: string): Record<string, string> {
+    const cookies: Record<string, string> = {};
+    if (!cookieHeader) return cookies;
+    
+    cookieHeader.split(';').forEach((cookie) => {
+      const [name, ...valueParts] = cookie.trim().split('=');
+      if (name) {
+        cookies[name.trim()] = valueParts.join('=');
+      }
+    });
+    
+    return cookies;
+  }
+  
+  // Validate session cookie and check project access
+  // Uses the session store directly (like LSPService) instead of database queries
+  private async validateSessionCookie(sessionCookie: string, projectId: string): Promise<number | null> {
+    try {
+      // Decode the session cookie (it's URL encoded and signed)
+      // Format: s%3A<sessionId>.<signature> -> s:<sessionId>.<signature>
+      const decodedCookie = decodeURIComponent(sessionCookie);
+      
+      // Remove the 's:' prefix and signature (format: s:sessionId.signature)
+      const actualSessionId = decodedCookie.split('.')[0].replace('s:', '');
+      
+      if (!actualSessionId) {
+        logger.warn('[Agent WebSocket] Could not extract session ID from cookie');
+        return null;
+      }
+      
+      logger.debug(`[Agent WebSocket] Extracted session ID: ${actualSessionId.substring(0, 10)}...`);
+      
+      // Use the session store directly (global variable set during app initialization)
+      const sessionStore = (global as any).sessionStore;
+      if (!sessionStore) {
+        logger.error('[Agent WebSocket] Session store not available');
+        return null;
+      }
+      
+      // Get session data from store
+      const session = await new Promise<any>((resolve, reject) => {
+        sessionStore.get(actualSessionId, (err: Error | null, session: any) => {
+          if (err) reject(err);
+          else resolve(session);
+        });
+      });
+      
+      if (!session || !session.passport || !session.passport.user) {
+        logger.warn('[Agent WebSocket] Invalid or expired session');
+        return null;
+      }
+      
+      const userId = session.passport.user;
+      logger.debug(`[Agent WebSocket] Session found for user: ${userId}`);
+      
+      // Verify user has access to this project
+      const { db } = await import('../db');
+      const { projects } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      const projectRows = await db.select()
+        .from(projects)
+        .where(eq(projects.id, parseInt(projectId, 10)))
+        .limit(1);
+      
+      if (!projectRows.length) {
+        logger.warn(`[Agent WebSocket] Project ${projectId} not found`);
+        return null;
+      }
+      
+      const project = projectRows[0];
+      
+      // Check if user owns the project or is a collaborator
+      // For now, just check ownership (can expand to collaborators later)
+      if (project.ownerId !== userId) {
+        logger.warn(`[Agent WebSocket] User ${userId} does not have access to project ${projectId}`);
+        return null;
+      }
+      
+      return userId;
+      
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      logger.error(`[Agent WebSocket] Session validation error: ${errorMsg}`);
+      return null;
+    }
   }
   
   // Send progress update to ALL connected devices for a session
