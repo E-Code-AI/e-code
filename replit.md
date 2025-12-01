@@ -135,3 +135,28 @@ server.prependListener('upgrade', (request, socket, head) => {
 - `server/services/agent-orchestrator.service.ts`
 
 **Status:** Verified working via e2e test - files now appear in IDE file tree after autonomous workspace creation.
+
+### Dec 1, 2025 - Max Autonomy Mode Database Schema Fix
+**Problem:** Max Autonomy session creation failed with two database errors:
+1. `dependencies` column type mismatch: Schema defined JSONB but database had TEXT[]
+2. Enum value mismatch: Code used "active" but database enum only had "running"
+
+**Solution:**
+1. Converted `dependencies` column from TEXT[] to JSONB in database
+2. Aligned enum values - changed "active" to "running" in both TypeScript schema and service code
+
+**Files Modified:**
+- `shared/schema.ts` - Changed `maxAutonomySessionStatusEnum` from 'active' to 'running'
+- `server/services/max-autonomy-service.ts` - Changed all 'active' references to 'running' (5 occurrences)
+
+**Database Changes (via SQL):**
+```sql
+ALTER TABLE max_autonomy_tasks DROP COLUMN dependencies, ADD COLUMN dependencies JSONB DEFAULT '[]'::jsonb;
+```
+
+**Key Pattern:** When defining JSONB array columns in Drizzle schema, ensure the database column is actually JSONB, not TEXT[]:
+```typescript
+dependencies: jsonb('dependencies').$type<string[]>().default([]),
+```
+
+**Status:** Verified working via automated Playwright test - Max Autonomy sessions now create successfully with status "running".

@@ -247,7 +247,7 @@ class MaxAutonomyService extends EventEmitter {
     
     await db.update(maxAutonomySessions)
       .set({
-        status: 'active',
+        status: 'running',
         startedAt: new Date(),
         updatedAt: new Date()
       })
@@ -274,7 +274,7 @@ class MaxAutonomyService extends EventEmitter {
           .from(maxAutonomySessions)
           .where(eq(maxAutonomySessions.id, sessionId));
         
-        if (!currentSession || currentSession.status !== 'active') {
+        if (!currentSession || currentSession.status !== 'running') {
           return;
         }
         
@@ -564,7 +564,7 @@ class MaxAutonomyService extends EventEmitter {
       .from(maxAutonomySessions)
       .where(and(
         eq(maxAutonomySessions.projectId, data.projectId),
-        eq(maxAutonomySessions.status, 'active')
+        eq(maxAutonomySessions.status, 'running')
       ));
     
     for (const session of sessions) {
@@ -595,7 +595,7 @@ class MaxAutonomyService extends EventEmitter {
       .from(maxAutonomySessions)
       .where(and(
         eq(maxAutonomySessions.projectId, data.projectId),
-        eq(maxAutonomySessions.status, 'active')
+        eq(maxAutonomySessions.status, 'running')
       ));
     
     for (const session of sessions) {
@@ -674,7 +674,7 @@ class MaxAutonomyService extends EventEmitter {
     
     await db.update(maxAutonomySessions)
       .set({
-        status: 'active',
+        status: 'running',
         resumedAt: new Date(),
         updatedAt: new Date()
       })
