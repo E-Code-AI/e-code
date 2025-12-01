@@ -164,8 +164,24 @@ export default function Landing() {
   const handleStartBuilding = async (description: string) => {
     setChatOpen(false);
     
-    // ✅ REPLIT-STYLE FLOW: Call bootstrap API directly - it will create ephemeral user if needed
-    // The backend creates an ephemeral user and establishes a session cookie for anonymous users
+    // ✅ REPLIT-IDENTICAL FLOW: Require login before workspace creation
+    // If user is not logged in, save prompt and redirect to login page
+    if (!user) {
+      // Save the prompt so we can resume after login
+      sessionStorage.setItem('pendingAppDescription', description);
+      sessionStorage.setItem('triggerBuildOnLanding', 'true');
+      
+      toast({
+        title: 'Sign in required',
+        description: 'Please sign in to create your workspace',
+      });
+      
+      // Redirect to auth page
+      navigate('/auth');
+      return;
+    }
+    
+    // User is authenticated - proceed with workspace creation
     try {
       const requestPayload = {
         prompt: description,
