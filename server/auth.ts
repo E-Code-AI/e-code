@@ -132,12 +132,19 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   // Setup local strategy for username/password authentication
+  // Supports login with either username OR email
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
+    new LocalStrategy(async (usernameOrEmail, password, done) => {
       try {
-        const user = await storage.getUserByUsername(username);
+        // Try to find user by username first, then by email
+        let user = await storage.getUserByUsername(usernameOrEmail);
         if (!user) {
-          return done(null, false, { message: "Incorrect username" });
+          // If not found by username, try by email
+          user = await storage.getUserByEmail(usernameOrEmail);
+        }
+        
+        if (!user) {
+          return done(null, false, { message: "Incorrect email or password" });
         }
         
         // Handle null password
@@ -147,7 +154,7 @@ export function setupAuth(app: Express) {
         
         const isValidPassword = await comparePasswords(password, user.password);
         if (!isValidPassword) {
-          return done(null, false, { message: "Incorrect password" });
+          return done(null, false, { message: "Incorrect email or password" });
         }
         
         // Return the user directly - Express.User now extends our schema User type
@@ -257,16 +264,25 @@ export function setupAuth(app: Express) {
 
   const loginHandler = async (req: Request, res: Response, next: NextFunction) => {
     // Rate limiting handled by middleware
-    const { username, password } = req.body;
+    // Support both "username" and "email" field names for flexibility
+    const usernameOrEmail = req.body.username || req.body.email;
+    const password = req.body.password;
     const ipAddress = req.ip || "unknown";
     const userAgent = req.headers["user-agent"];
 
-    if (!username || !password) {
-      return res.status(400).json({ message: "Username and password are required" });
+    if (!usernameOrEmail || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
     try {
-      const user = await storage.getUserByUsername(username);
+      // Try to find user by username first, then by email (for logging purposes)
+      let user = await storage.getUserByUsername(usernameOrEmail);
+      if (!user) {
+        user = await storage.getUserByEmail(usernameOrEmail);
+      }
+
+      // Set the username field for Passport's LocalStrategy (it defaults to reading 'username' field)
+      req.body.username = usernameOrEmail;
 
       passport.authenticate("local", async (err: any, authenticatedUser: Express.User | false, info: { message: string }) => {
           if (err) return next(err);
