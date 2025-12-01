@@ -6,11 +6,15 @@ import {
   fileOperations,
   agentSessions,
   agentAuditTrail,
+  files,
   type FileOperation,
   type InsertFileOperation,
   type AgentSession
 } from '@shared/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('file-ops');
 import { diff_match_patch } from 'diff-match-patch';
 import * as chokidar from 'chokidar';
 import { EventEmitter } from 'events';
@@ -136,6 +140,69 @@ export class AgentFileOperationsService extends EventEmitter {
       
       // Write file
       await fs.writeFile(absolutePath, content, 'utf-8');
+      
+      // ✅ CRITICAL FIX (Dec 1, 2025): Also insert into files table for IDE visibility
+      // Get projectId from session context - cast to access additional properties
+      const contextWithProject = session.context as { projectId?: number } | undefined;
+      const projectId = contextWithProject?.projectId;
+      if (projectId) {
+        try {
+          // Parse file path components
+          const fileName = path.basename(filePath);
+          // Normalize path: remove leading ./ or / for consistency
+          const normalizedPath = filePath.replace(/^\.\//, '').replace(/^\//, '');
+          const fileType = this.getFileType(filePath);
+          const fileSize = Buffer.byteLength(content);
+          
+          // Check if file exists in files table (check both formats)
+          const existingFiles = await db.select()
+            .from(files)
+            .where(and(
+              eq(files.projectId, projectId),
+              sql`(${files.path} = ${normalizedPath} OR ${files.path} = ${'/' + normalizedPath} OR ${files.path} = ${'./' + normalizedPath})`
+            ))
+            .limit(1);
+          
+          const existingFile = existingFiles[0];
+          
+          if (existingFile) {
+            // Update existing file record
+            await db.update(files)
+              .set({
+                content,
+                size: fileSize,
+                updatedAt: new Date()
+              })
+              .where(eq(files.id, existingFile.id));
+            logger.info(`[FileOps] Updated file record in files table: ${normalizedPath}`);
+          } else {
+            // For nested paths, create parent directory records
+            const parentPath = path.dirname(normalizedPath);
+            let parentId: number | null = null;
+            
+            // Only create parent dirs if there's actually a parent (not root level)
+            if (parentPath && parentPath !== '.' && parentPath !== '') {
+              parentId = await this.ensureParentDirectories(projectId, parentPath);
+            }
+            
+            // Insert new file record - use snake_case column names as per actual DB schema
+            await db.insert(files).values({
+              name: fileName,
+              path: normalizedPath,
+              content,
+              projectId,
+              parentId,
+              isDirectory: false,
+              type: fileType,
+              size: fileSize
+            });
+            logger.info(`[FileOps] Inserted file record into files table: ${normalizedPath}`);
+          }
+        } catch (filesTableError: any) {
+          // Log but don't fail - files table sync is secondary to actual file creation
+          logger.warn(`[FileOps] Failed to sync to files table: ${filesTableError.message}`);
+        }
+      }
       
       // Update operation status
       await db.update(fileOperations)
@@ -590,6 +657,86 @@ export class AgentFileOperationsService extends EventEmitter {
     };
     
     return mimeTypes[ext] || 'text/plain';
+  }
+
+  // ✅ CRITICAL FIX (Dec 1, 2025): Get file type for IDE files table
+  private getFileType(filePath: string): string {
+    const ext = path.extname(filePath).toLowerCase().slice(1); // Remove leading dot
+    const typeMap: Record<string, string> = {
+      'js': 'javascript',
+      'jsx': 'javascript',
+      'ts': 'typescript',
+      'tsx': 'typescript',
+      'json': 'json',
+      'html': 'html',
+      'css': 'css',
+      'scss': 'scss',
+      'md': 'markdown',
+      'py': 'python',
+      'java': 'java',
+      'cpp': 'cpp',
+      'c': 'c',
+      'go': 'go',
+      'rs': 'rust',
+      'rb': 'ruby',
+      'php': 'php',
+      'sh': 'shell',
+      'yml': 'yaml',
+      'yaml': 'yaml',
+      'xml': 'xml',
+      'svg': 'svg',
+      'txt': 'text'
+    };
+    return typeMap[ext] || 'text';
+  }
+
+  // ✅ CRITICAL FIX (Dec 1, 2025): Ensure parent directories exist in files table
+  private async ensureParentDirectories(projectId: number, dirPath: string): Promise<number | null> {
+    // Normalize and split path
+    const normalizedDirPath = dirPath.replace(/^\.\//, '').replace(/^\//, '');
+    const parts = normalizedDirPath.split('/').filter(p => p && p !== '.');
+    
+    if (parts.length === 0) return null;
+    
+    let currentParentId: number | null = null;
+    let currentPath = '';
+    
+    for (const part of parts) {
+      currentPath = currentPath ? `${currentPath}/${part}` : part;
+      
+      // Check if directory exists (check multiple path formats)
+      const existingDirs = await db.select()
+        .from(files)
+        .where(and(
+          eq(files.projectId, projectId),
+          eq(files.isDirectory, true),
+          sql`(${files.path} = ${currentPath} OR ${files.path} = ${'/' + currentPath} OR ${files.name} = ${part})`
+        ))
+        .limit(1);
+      
+      const existing = existingDirs[0];
+      
+      if (existing) {
+        currentParentId = existing.id;
+      } else {
+        // Create directory entry
+        const inserted = await db.insert(files).values({
+          name: part,
+          path: currentPath,
+          content: '',
+          projectId,
+          parentId: currentParentId,
+          isDirectory: true,
+          type: 'folder',
+          size: 0
+        }).returning();
+        const newDir = inserted[0];
+        currentParentId = newDir.id;
+        logger.info(`[FileOps] Created directory in files table: ${currentPath}`);
+      }
+    }
+    
+    return currentParentId;
   }
 
   private createDiff(oldContent: string, newContent: string): string {

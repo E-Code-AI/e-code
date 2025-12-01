@@ -224,7 +224,9 @@ export class AgentOrchestratorService extends EventEmitter {
           files: [],
           workingDirectory,
           environment: {},
-          capabilities: Object.keys(AGENT_FUNCTIONS)
+          capabilities: Object.keys(AGENT_FUNCTIONS),
+          // ✅ CRITICAL FIX (Dec 1, 2025): Include projectId in context for file operations service
+          projectId: projectId ? Number(projectId) : undefined
         },
         isActive: true,
         autonomousMode
