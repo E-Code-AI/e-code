@@ -8,7 +8,11 @@ import {
 } from "@tanstack/react-query";
 import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+// CRITICAL FIX: Import toast function directly instead of useToast hook
+// useToast subscribes the component to ALL toast state changes, causing
+// AuthProvider (which wraps the entire app) to re-render on every toast.
+// This caused IDEPage and all children to remount when toggles triggered toasts.
+import { toast } from "@/hooks/use-toast";
 
 type AuthContextType = {
   user: SelectUser | null;
@@ -26,7 +30,8 @@ type LoginData = {
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { toast } = useToast();
+  // NOTE: toast is now imported directly at module level (not from useToast hook)
+  // This prevents AuthProvider from re-rendering on every toast in the app
   const {
     data: user,
     error,
