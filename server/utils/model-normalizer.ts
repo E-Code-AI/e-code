@@ -46,20 +46,38 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
 
 /**
  * Normalize model name to valid aiModelEnum value
- * @param modelName - Raw model name from API request or provider default
+ * @param modelName - Raw model name from API request or provider default (can be string or model object)
  * @param provider - Provider name (for fallback)
  * @returns Valid aiModelEnum value guaranteed to pass DB insert
  */
-export function normalizeModelName(modelName: string | undefined, provider: string): string {
+export function normalizeModelName(modelName: string | any | undefined, provider: string): string {
+  // ✅ CRITICAL FIX (Dec 2, 2025): Handle model OBJECTS being passed instead of string IDs
+  // Frontend may pass full model object like {id: "kimi-k2-0711-preview", name: "KIMI K2"...}
+  // Extract the ID if it's an object with an `id` property
+  let normalizedInput: string | undefined = modelName;
+  
+  if (modelName && typeof modelName === 'object') {
+    if ('id' in modelName && typeof modelName.id === 'string') {
+      logger.debug(`Model object detected, extracting id: ${modelName.id}`);
+      normalizedInput = modelName.id;
+    } else if ('modelId' in modelName && typeof modelName.modelId === 'string') {
+      logger.debug(`Model object with modelId detected, extracting: ${modelName.modelId}`);
+      normalizedInput = modelName.modelId;
+    } else {
+      logger.warn(`⚠️ Model object has no valid id/modelId property:`, JSON.stringify(modelName));
+      normalizedInput = undefined;
+    }
+  }
+  
   // Step 1: Handle undefined/null model names
-  if (!modelName) {
+  if (!normalizedInput) {
     logger.warn(`⚠️ Model name is undefined/null, using provider default for ${provider}`);
   }
   
   // Step 2: Try exact match in normalization map (aliases)
-  if (modelName && MODEL_NORMALIZATION_MAP[modelName]) {
-    const normalized = MODEL_NORMALIZATION_MAP[modelName];
-    logger.debug(`Model alias normalized: "${modelName}" → "${normalized}"`);
+  if (normalizedInput && MODEL_NORMALIZATION_MAP[normalizedInput]) {
+    const normalized = MODEL_NORMALIZATION_MAP[normalizedInput];
+    logger.debug(`Model alias normalized: "${normalizedInput}" → "${normalized}"`);
     return normalized;
   }
   
@@ -87,18 +105,18 @@ export function normalizeModelName(modelName: string | undefined, provider: stri
     'kimi-k2-0711-preview', 'kimi-k2-0905-preview', 'kimi-k2-thinking'  // ✅ FIXED
   ];
   
-  if (modelName && validEnumValues.includes(modelName)) {
-    return modelName;
+  if (normalizedInput && validEnumValues.includes(normalizedInput)) {
+    return normalizedInput;
   }
   
   // Step 5: ⚠️ CRITICAL - Unknown model detected! Log + Alert for monitoring
-  if (modelName) {
-    logger.warn(`⚠️ UNKNOWN MODEL DETECTED: "${modelName}" (provider: ${provider}) - Using fallback pricing!`);
-    logger.warn(`ACTION REQUIRED: Add "${modelName}" to MODEL_NORMALIZATION_MAP in server/utils/model-normalizer.ts`);
+  if (normalizedInput) {
+    logger.warn(`⚠️ UNKNOWN MODEL DETECTED: "${normalizedInput}" (provider: ${provider}) - Using fallback pricing!`);
+    logger.warn(`ACTION REQUIRED: Add "${normalizedInput}" to MODEL_NORMALIZATION_MAP in server/utils/model-normalizer.ts`);
     
     // ✅ Send automated alert to Slack/Sentry
     const fallback = providerDefaults[provider.toLowerCase()] || 'gpt-4o';
-    AlertService.unknownModel(modelName, provider, fallback).catch((error) => {
+    AlertService.unknownModel(normalizedInput, provider, fallback).catch((error) => {
       logger.error('Failed to send unknown model alert', { error });
     });
   }

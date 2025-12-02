@@ -2,6 +2,7 @@ import { aiProviderManager } from '../ai/ai-provider-manager';
 import { type IStorage, getStorage } from '../storage';
 import type { Project } from '@shared/schema';
 import { createLogger } from '../utils/logger';
+import { normalizeModelName } from '../utils/model-normalizer';
 
 const logger = createLogger('AIPlanGenerator');
 
@@ -202,6 +203,12 @@ export class AIPlanGeneratorService {
    * Generate a detailed execution plan from a user's prompt
    * PRODUCTION-READY: Automatic multi-provider fallback (OpenAI → Gemini → xAI → Anthropic)
    * Ensures 99.9% uptime by trying multiple providers in sequence
+   * 
+   * @param userId - User ID
+   * @param projectId - Project ID
+   * @param goal - User's natural language prompt
+   * @param context - Additional context for plan generation
+   * @param preferredModel - User's preferred AI model ID (tried FIRST before fallback chain)
    */
   async *generatePlan(
     userId: string,
@@ -212,7 +219,8 @@ export class AIPlanGeneratorService {
       existingFiles?: string[];
       technologies?: string[];
       constraints?: string[];
-    }
+    },
+    preferredModel?: string
   ): AsyncGenerator<{ type: 'chunk' | 'plan' | 'error' | 'warning'; data: any }> {
     try {
       // Get project details
@@ -310,12 +318,29 @@ Remember:
 6. Respond with ONLY valid JSON`;
 
       // ✅ PRODUCTION FIX: Multi-provider fallback chain with JSON parsing retry
-      // Try providers in order: OpenAI → Gemini → xAI → Anthropic
+      // Try providers in order: User's preferred model → Default fallback chain
       // If JSON parsing fails, retry with next provider (critical fix for autonomous IDE)
       let lastError: Error | null = null;
       let successfulPlan: ExecutionPlan | null = null;
 
-      for (const modelId of this.PROVIDER_FALLBACK_CHAIN) {
+      // ✅ USER PREFERENCE FIX (Dec 2, 2025): Use preferred model FIRST
+      // If user selects Kimi, use Kimi first before falling back to other providers
+      // This ensures autonomous workspace creation respects user's AI model choice
+      let fallbackChain = [...this.PROVIDER_FALLBACK_CHAIN];
+      
+      if (preferredModel) {
+        // ✅ ARCHITECT FIX: Normalize preferredModel to ensure it's a valid string ID
+        // Prevents [object Object] from entering the fallback chain
+        const normalizedPreferred = normalizeModelName(preferredModel, 'unknown');
+        
+        // Remove preferred model from fallback chain if it exists (prevent duplicate)
+        fallbackChain = fallbackChain.filter(m => m !== normalizedPreferred);
+        // Insert normalized preferred model at the front
+        fallbackChain.unshift(normalizedPreferred);
+        logger.info(`[generatePlan] Using user's preferred model: ${normalizedPreferred} (fallback: ${fallbackChain.slice(1).join(' → ')})`);
+      }
+
+      for (const modelId of fallbackChain) {
         let fullResponse = '';
         
         try {
