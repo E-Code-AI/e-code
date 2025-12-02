@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +32,8 @@ import {
   GitPullRequest,
   Calendar,
   User,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -43,6 +45,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { apiRequest, queryClient as globalQueryClient } from '@/lib/queryClient';
 
 interface GitBranchInfo {
   name: string;
@@ -59,6 +62,25 @@ interface GitBranchInfo {
   trackingBranch?: string;
 }
 
+interface ApiBranchInfo {
+  name: string;
+  current: boolean;
+  lastCommit: {
+    hash: string;
+    message: string;
+    author: string;
+    date: string;
+  };
+  ahead: number;
+  behind: number;
+  isRemote: boolean;
+  trackingBranch?: string;
+}
+
+interface BranchesResponse {
+  branches: ApiBranchInfo[];
+}
+
 interface BranchManagerProps {
   projectId: string | number;
   onBranchChange?: (branchName: string) => void;
@@ -70,93 +92,26 @@ export function BranchManager({
   onBranchChange,
   className
 }: BranchManagerProps) {
-  const [branches, setBranches] = useState<GitBranchInfo[]>([]);
   const [filteredBranches, setFilteredBranches] = useState<GitBranchInfo[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [newBranchName, setNewBranchName] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Fetch branches
-  useEffect(() => {
-    const fetchBranches = async () => {
-      setIsLoading(true);
+  const { data: branchesData, isLoading, error, refetch } = useQuery<BranchesResponse>({
+    queryKey: ['/api/git/branches'],
+  });
 
-      // TODO: Replace with actual API call
-      // const response = await fetch(`/api/projects/${projectId}/git/branches`);
-      // const data = await response.json();
+  const branches: GitBranchInfo[] = (branchesData?.branches || []).map(branch => ({
+    ...branch,
+    lastCommit: {
+      ...branch.lastCommit,
+      date: new Date(branch.lastCommit.date)
+    }
+  }));
 
-      // Mock data
-      const mockBranches: GitBranchInfo[] = [
-        {
-          name: 'main',
-          current: true,
-          lastCommit: {
-            hash: 'a1b2c3d',
-            message: 'feat: Add AI Agent execution',
-            author: 'Claude AI',
-            date: new Date(Date.now() - 1000 * 60 * 30)
-          },
-          ahead: 0,
-          behind: 0,
-          isRemote: false,
-          trackingBranch: 'origin/main'
-        },
-        {
-          name: 'feature/websocket-integration',
-          current: false,
-          lastCommit: {
-            hash: 'b2c3d4e',
-            message: 'fix: WebSocket connection handling',
-            author: 'Developer',
-            date: new Date(Date.now() - 1000 * 60 * 60 * 2)
-          },
-          ahead: 3,
-          behind: 1,
-          isRemote: false,
-          trackingBranch: 'origin/feature/websocket-integration'
-        },
-        {
-          name: 'develop',
-          current: false,
-          lastCommit: {
-            hash: 'c3d4e5f',
-            message: 'refactor: Improve error handling',
-            author: 'Developer',
-            date: new Date(Date.now() - 1000 * 60 * 60 * 5)
-          },
-          ahead: 0,
-          behind: 2,
-          isRemote: false,
-          trackingBranch: 'origin/develop'
-        },
-        {
-          name: 'hotfix/terminal-crash',
-          current: false,
-          lastCommit: {
-            hash: 'd4e5f6g',
-            message: 'fix: Terminal connection crash',
-            author: 'Developer',
-            date: new Date(Date.now() - 1000 * 60 * 60 * 24)
-          },
-          ahead: 1,
-          behind: 0,
-          isRemote: false
-        }
-      ];
-
-      setBranches(mockBranches);
-      setFilteredBranches(mockBranches);
-      setIsLoading(false);
-    };
-
-    fetchBranches();
-  }, [projectId]);
-
-  // Filter branches
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredBranches(branches);
@@ -173,6 +128,96 @@ export function BranchManager({
     setFilteredBranches(filtered);
   }, [searchQuery, branches]);
 
+  const createBranchMutation = useMutation({
+    mutationFn: async (name: string) => {
+      return apiRequest<{ success: boolean; branch: string }>('POST', '/api/git/branches', { name });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Branch created",
+        description: `Created branch "${data.branch}" successfully`,
+      });
+      setShowCreateDialog(false);
+      setNewBranchName('');
+      queryClient.invalidateQueries({ queryKey: ['/api/git/branches'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to create branch",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const checkoutMutation = useMutation({
+    mutationFn: async (branch: string) => {
+      return apiRequest<{ success: boolean; branch: string }>('POST', '/api/git/checkout', { branch });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Branch switched",
+        description: `Switched to branch "${data.branch}"`,
+      });
+      if (onBranchChange) {
+        onBranchChange(data.branch);
+      }
+      queryClient.invalidateQueries({ queryKey: ['/api/git/branches'] });
+      if ('vibrate' in navigator) {
+        navigator.vibrate(10);
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to switch branch",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const deleteBranchMutation = useMutation({
+    mutationFn: async (branchName: string) => {
+      return apiRequest<{ success: boolean; deleted: string }>('DELETE', `/api/git/branches/${encodeURIComponent(branchName)}?force=true`);
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Branch deleted",
+        description: `Deleted branch "${data.deleted}"`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/git/branches'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to delete branch",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const mergeBranchMutation = useMutation({
+    mutationFn: async (branch: string) => {
+      return apiRequest<{ success: boolean; output: string }>('POST', '/api/git/merge', { branch });
+    },
+    onSuccess: () => {
+      const currentBranch = branches.find(b => b.current);
+      toast({
+        title: "Branch merged",
+        description: `Merge completed successfully into "${currentBranch?.name || 'current branch'}"`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/git/branches'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/git/log'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Merge failed",
+        description: error.message?.includes('conflict') ? "Please resolve conflicts manually" : error.message || "An error occurred",
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleCreateBranch = async () => {
     if (!newBranchName.trim()) {
       toast({
@@ -182,63 +227,11 @@ export function BranchManager({
       });
       return;
     }
-
-    setIsCreating(true);
-
-    try {
-      // TODO: API call to create branch
-      // await fetch(`/api/projects/${projectId}/git/branches`, {
-      //   method: 'POST',
-      //   body: JSON.stringify({ name: newBranchName })
-      // });
-
-      toast({
-        title: "Branch created",
-        description: `Created branch "${newBranchName}" successfully`,
-      });
-
-      setShowCreateDialog(false);
-      setNewBranchName('');
-      // Refresh branches
-    } catch (error) {
-      toast({
-        title: "Failed to create branch",
-        description: error instanceof Error ? error.message : "An error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreating(false);
-    }
+    createBranchMutation.mutate(newBranchName.trim());
   };
 
   const handleCheckoutBranch = async (branchName: string) => {
-    try {
-      // TODO: API call to checkout branch
-      // await fetch(`/api/projects/${projectId}/git/checkout`, {
-      //   method: 'POST',
-      //   body: JSON.stringify({ branch: branchName })
-      // });
-
-      toast({
-        title: "Branch switched",
-        description: `Switched to branch "${branchName}"`,
-      });
-
-      if (onBranchChange) {
-        onBranchChange(branchName);
-      }
-
-      // Haptic feedback
-      if ('vibrate' in navigator) {
-        navigator.vibrate(10);
-      }
-    } catch (error) {
-      toast({
-        title: "Failed to switch branch",
-        description: error instanceof Error ? error.message : "An error occurred",
-        variant: "destructive",
-      });
-    }
+    checkoutMutation.mutate(branchName);
   };
 
   const handleDeleteBranch = async (branchName: string) => {
@@ -250,53 +243,16 @@ export function BranchManager({
       });
       return;
     }
-
-    try {
-      // TODO: API call to delete branch
-      // await fetch(`/api/projects/${projectId}/git/branches/${branchName}`, {
-      //   method: 'DELETE'
-      // });
-
-      toast({
-        title: "Branch deleted",
-        description: `Deleted branch "${branchName}"`,
-      });
-
-      // Refresh branches
-    } catch (error) {
-      toast({
-        title: "Failed to delete branch",
-        description: error instanceof Error ? error.message : "An error occurred",
-        variant: "destructive",
-      });
-    }
+    deleteBranchMutation.mutate(branchName);
   };
 
   const handleMergeBranch = async (branchName: string) => {
-    const currentBranch = branches.find(b => b.current);
-    if (!currentBranch) return;
-
-    try {
-      // TODO: API call to merge branch
-      // await fetch(`/api/projects/${projectId}/git/merge`, {
-      //   method: 'POST',
-      //   body: JSON.stringify({ branch: branchName })
-      // });
-
-      toast({
-        title: "Branch merged",
-        description: `Merged "${branchName}" into "${currentBranch.name}"`,
-      });
-    } catch (error) {
-      toast({
-        title: "Merge conflict",
-        description: "Please resolve conflicts manually",
-        variant: "destructive",
-      });
-    }
+    mergeBranchMutation.mutate(branchName);
   };
 
   const currentBranch = branches.find(b => b.current);
+  const isMutating = createBranchMutation.isPending || checkoutMutation.isPending || 
+                     deleteBranchMutation.isPending || mergeBranchMutation.isPending;
 
   return (
     <Card className={cn("h-full flex flex-col", className)}>
@@ -312,14 +268,15 @@ export function BranchManager({
               size="sm"
               variant="ghost"
               className="h-7 px-2"
-              onClick={() => {/* Refresh */}}
+              onClick={() => refetch()}
+              disabled={isLoading}
             >
-              <RefreshCw className="h-3.5 w-3.5" />
+              <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
             </Button>
 
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
               <DialogTrigger asChild>
-                <Button size="sm" variant="outline" className="h-7 text-xs">
+                <Button size="sm" variant="outline" className="h-7 text-xs" data-testid="button-new-branch">
                   <Plus className="h-3.5 w-3.5 mr-1" />
                   New Branch
                 </Button>
@@ -346,6 +303,7 @@ export function BranchManager({
                           handleCreateBranch();
                         }
                       }}
+                      data-testid="input-branch-name"
                     />
                   </div>
                 </div>
@@ -359,8 +317,10 @@ export function BranchManager({
                   </Button>
                   <Button
                     onClick={handleCreateBranch}
-                    disabled={isCreating || !newBranchName.trim()}
+                    disabled={createBranchMutation.isPending || !newBranchName.trim()}
+                    data-testid="button-create-branch"
                   >
+                    {createBranchMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                     Create Branch
                   </Button>
                 </DialogFooter>
@@ -369,7 +329,6 @@ export function BranchManager({
           </div>
         </div>
 
-        {/* Current branch indicator */}
         {currentBranch && (
           <div className="mt-3 p-2 rounded-lg bg-[var(--ecode-orange)]/10 border border-[var(--ecode-orange)]/20">
             <div className="flex items-center gap-2">
@@ -404,7 +363,6 @@ export function BranchManager({
           </div>
         )}
 
-        {/* Search */}
         <div className="relative mt-3">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -412,6 +370,7 @@ export function BranchManager({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 h-8 text-xs"
+            data-testid="input-search-branches"
           />
         </div>
       </CardHeader>
@@ -419,7 +378,16 @@ export function BranchManager({
       <CardContent className="flex-1 p-0 overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             Loading branches...
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-full text-sm text-muted-foreground">
+            <GitBranch className="h-8 w-8 mb-2 opacity-50" />
+            <p>Failed to load branches</p>
+            <Button size="sm" variant="outline" className="mt-2" onClick={() => refetch()}>
+              Retry
+            </Button>
           </div>
         ) : filteredBranches.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-sm text-muted-foreground">
@@ -435,9 +403,11 @@ export function BranchManager({
                   className={cn(
                     "group p-2 rounded-lg cursor-pointer transition-colors",
                     "hover:bg-muted/50",
-                    branch.current && "bg-muted"
+                    branch.current && "bg-muted",
+                    isMutating && "opacity-50 pointer-events-none"
                   )}
                   onClick={() => !branch.current && handleCheckoutBranch(branch.name)}
+                  data-testid={`branch-item-${branch.name}`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
@@ -482,6 +452,7 @@ export function BranchManager({
                           size="sm"
                           variant="ghost"
                           className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
+                          data-testid={`button-branch-menu-${branch.name}`}
                         >
                           <MoreVertical className="h-3.5 w-3.5" />
                         </Button>

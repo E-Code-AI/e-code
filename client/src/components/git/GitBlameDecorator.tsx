@@ -19,6 +19,21 @@ interface BlameInfo {
   };
 }
 
+interface ApiBlameEntry {
+  line: number;
+  commit: {
+    hash: string;
+    shortHash: string;
+    message: string;
+    author: string;
+    date: string;
+  };
+}
+
+interface BlameResponse {
+  blame: ApiBlameEntry[];
+}
+
 interface GitBlameDecoratorProps {
   editor: monaco.editor.IStandaloneCodeEditor | null;
   filePath: string;
@@ -33,10 +48,10 @@ export function GitBlameDecorator({
   enabled = true
 }: GitBlameDecoratorProps) {
   const [blameData, setBlameData] = useState<BlameInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const decorationsRef = useRef<string[]>([]);
   const { toast } = useToast();
 
-  // Fetch blame data
   useEffect(() => {
     if (!enabled || !filePath) {
       setBlameData([]);
@@ -44,45 +59,47 @@ export function GitBlameDecorator({
     }
 
     const fetchBlameData = async () => {
+      setIsLoading(true);
       try {
-        // TODO: Replace with actual API call
-        // const response = await fetch(`/api/projects/${projectId}/git/blame?file=${filePath}`);
-        // const data = await response.json();
-
-        // Mock data for demonstration
-        const mockBlameData: BlameInfo[] = Array.from({ length: 20 }, (_, i) => ({
-          line: i + 1,
+        const response = await fetch(`/api/git/blame/${encodeURIComponent(filePath)}`, {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          if (response.status === 400) {
+            setBlameData([]);
+            return;
+          }
+          throw new Error('Failed to fetch blame data');
+        }
+        
+        const data: BlameResponse = await response.json();
+        
+        const parsedBlameData: BlameInfo[] = (data.blame || []).map(entry => ({
+          line: entry.line,
           commit: {
-            hash: `a${i}b2c3d4e5f6g7h8i9j0`,
-            shortHash: `a${i}b2c3d`,
-            message: i % 3 === 0
-              ? 'feat: Add new feature'
-              : i % 2 === 0
-              ? 'fix: Bug fix'
-              : 'refactor: Code cleanup',
-            author: i % 2 === 0 ? 'Claude AI' : 'Developer',
-            date: new Date(Date.now() - 1000 * 60 * 60 * 24 * (i + 1))
+            hash: entry.commit.hash,
+            shortHash: entry.commit.shortHash,
+            message: entry.commit.message,
+            author: entry.commit.author,
+            date: new Date(entry.commit.date)
           }
         }));
 
-        setBlameData(mockBlameData);
+        setBlameData(parsedBlameData);
       } catch (error) {
         console.error('Failed to fetch blame data:', error);
-        toast({
-          title: "Failed to load blame data",
-          description: error instanceof Error ? error.message : "An error occurred",
-          variant: "destructive",
-        });
+        setBlameData([]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchBlameData();
   }, [filePath, projectId, enabled, toast]);
 
-  // Apply decorations to editor
   useEffect(() => {
     if (!editor || !enabled || blameData.length === 0) {
-      // Clear decorations if disabled or no data
       if (editor && decorationsRef.current.length > 0) {
         editor.deltaDecorations(decorationsRef.current, []);
         decorationsRef.current = [];
@@ -113,7 +130,6 @@ export function GitBlameDecorator({
 
     decorationsRef.current = editor.deltaDecorations(decorationsRef.current, decorations);
 
-    // Add custom CSS for blame decorations (only once)
     if (!document.getElementById('git-blame-styles')) {
       const style = document.createElement('style');
       style.id = 'git-blame-styles';
@@ -155,7 +171,6 @@ export function GitBlameDecorator({
       document.head.appendChild(style);
     }
 
-    // Cleanup
     return () => {
       if (editor && decorationsRef.current.length > 0) {
         editor.deltaDecorations(decorationsRef.current, []);
@@ -164,7 +179,6 @@ export function GitBlameDecorator({
     };
   }, [editor, blameData, enabled]);
 
-  // This component doesn't render anything visible
   return null;
 }
 
