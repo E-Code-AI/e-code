@@ -103,6 +103,20 @@ import { toast } from "@/hooks/use-toast";
 **Files Modified:**
 - `client/src/components/tablet/TabletIDEView.tsx` - Added Agent panel integration
 
+### Dec 2, 2025 - Kimi Model Support for Autonomous Workspace Creation (CRITICAL)
+**Problem:** When user selected Kimi model and initiated autonomous workspace creation, the server normalized the model to "unknown" provider and fell back to gpt-4o. Server logs showed: "UNKNOWN MODEL DETECTED: [object Object]".
+
+**Root Cause:** Model normalizer received full model OBJECT (e.g., `{id: "kimi-k2-0711-preview", name: "KIMI K2"...}`) instead of string ID.
+
+**Solution (3 files):**
+1. `server/utils/model-normalizer.ts` - Added object handling to extract `.id` or `.modelId` from model objects
+2. `server/services/ai-plan-generator.service.ts` - Added `preferredModel` parameter, uses user's model FIRST before fallback chain
+3. `server/services/agent-orchestrator.service.ts` - Passes `session.model` to plan generator
+
+**Key Pattern:** Always check if input is object before string operations. Extract ID with: `model && typeof model === 'object' && 'id' in model ? model.id : model`
+
+**Verified:** User selecting Kimi model → Bootstrap → Server logs: "Using user's preferred model: kimi-k2-0711-preview" → Plan generation uses Kimi
+
 ### Dec 2, 2025 - UI Cleanup: Extended Thinking Consolidation
 **Problem:** "Extended Thinking" toggle appeared in multiple places (AI Agent header, settings dropdown, Agent Tools panel), causing confusion.
 

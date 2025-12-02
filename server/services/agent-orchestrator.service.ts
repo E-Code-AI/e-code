@@ -1285,10 +1285,16 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         message: 'AI is analyzing your request and generating execution plan...'
       }, projectId);
       
-      logger.info(`[Autonomous] Generating execution plan for session ${sessionId}`);
+      // ✅ USER PREFERENCE FIX (Dec 2, 2025): Get user's preferred AI model from session
+      // This ensures autonomous workspace creation uses the user's selected model (e.g., Kimi)
+      const preferredModel = session.model || undefined;
+      logger.info(`[Autonomous] Generating execution plan for session ${sessionId}`, { 
+        preferredModel: preferredModel || 'default fallback chain'
+      });
       
       // 2. Generate execution plan with AI (with multi-provider fallback)
       // Use async generator to get plan with real-time streaming
+      // ✅ FIX: Pass user's preferred model to plan generator
       let executionPlan: any = null;
       
       for await (const event of aiPlanGenerator.generatePlan(userId, projectId, prompt, {
@@ -1296,7 +1302,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         existingFiles: [],
         technologies: [workspaceOptions?.language || 'typescript', workspaceOptions?.framework || 'react'],
         constraints: []
-      })) {
+      }, preferredModel)) {
         if (event.type === 'chunk') {
           // Stream plan generation progress
           agentWebSocketService.broadcast({
