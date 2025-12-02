@@ -5,9 +5,66 @@ import type { Socket } from 'net';
 import { Server } from 'http';
 import { createLogger } from '../utils/logger';
 import { wrapWebSocketServer, markSocketAsHandled } from '../websocket/upgrade-guard';
+import { isOriginAllowed } from '../utils/origin-validation';
 import jwt from 'jsonwebtoken';
 
 const logger = createLogger('agent-websocket-service');
+
+// WebSocket connection rate limiter (per IP)
+// Prevents connection flooding attacks
+const WS_CONNECTION_LIMITS = {
+  maxConnectionsPerMinute: 30,     // Max new connections per IP per minute
+  maxActiveConnections: 50,        // Max active connections per IP
+  blockDurationMs: 60 * 1000,      // Block duration for violators (1 min)
+};
+
+// Simple in-memory rate limiter for WebSocket connections
+const wsConnectionTracking = new Map<string, { count: number; timestamp: number; active: number }>();
+
+function checkWebSocketRateLimit(ip: string): { allowed: boolean; reason?: string } {
+  const now = Date.now();
+  const tracking = wsConnectionTracking.get(ip);
+  
+  // Skip rate limiting in development
+  if (process.env.NODE_ENV === 'development') {
+    return { allowed: true };
+  }
+  
+  if (!tracking) {
+    wsConnectionTracking.set(ip, { count: 1, timestamp: now, active: 1 });
+    return { allowed: true };
+  }
+  
+  // Reset counter if window has passed
+  if (now - tracking.timestamp > WS_CONNECTION_LIMITS.blockDurationMs) {
+    wsConnectionTracking.set(ip, { count: 1, timestamp: now, active: tracking.active + 1 });
+    return { allowed: true };
+  }
+  
+  // Check connection rate
+  if (tracking.count >= WS_CONNECTION_LIMITS.maxConnectionsPerMinute) {
+    logger.warn(`[Agent WebSocket] Rate limit exceeded for IP: ${ip} (${tracking.count} connections in window)`);
+    return { allowed: false, reason: 'Too many connection attempts' };
+  }
+  
+  // Check active connections
+  if (tracking.active >= WS_CONNECTION_LIMITS.maxActiveConnections) {
+    logger.warn(`[Agent WebSocket] Max active connections exceeded for IP: ${ip} (${tracking.active} active)`);
+    return { allowed: false, reason: 'Too many active connections' };
+  }
+  
+  // Allow and increment
+  tracking.count++;
+  tracking.active++;
+  return { allowed: true };
+}
+
+function decrementActiveConnections(ip: string): void {
+  const tracking = wsConnectionTracking.get(ip);
+  if (tracking && tracking.active > 0) {
+    tracking.active--;
+  }
+}
 
 // JWT secret for bootstrap tokens (must match workspace-bootstrap.router.ts)
 const JWT_SECRET = process.env.JWT_SECRET || 'e-code-jwt-secret-key-2024';
@@ -82,6 +139,29 @@ class AgentWebSocketService {
         return;
       }
       
+      // Mark socket as handled IMMEDIATELY to prevent other handlers from interfering
+      markSocketAsHandled(request, socket);
+      
+      // PRODUCTION SECURITY: Origin validation (prevents CSRF attacks)
+      const origin = request.headers.origin;
+      const host = request.headers.host;
+      if (process.env.NODE_ENV === 'production' && !isOriginAllowed(origin, host)) {
+        logger.warn(`[Agent WebSocket] Origin validation failed - origin: ${origin}, host: ${host}`);
+        socket.write('HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nInvalid origin');
+        socket.destroy();
+        return;
+      }
+      
+      // PRODUCTION SECURITY: Rate limiting (prevents connection flooding)
+      const clientIp = request.socket?.remoteAddress || 'unknown';
+      const rateLimitResult = checkWebSocketRateLimit(clientIp);
+      if (!rateLimitResult.allowed) {
+        logger.warn(`[Agent WebSocket] Rate limit rejected - IP: ${clientIp}, reason: ${rateLimitResult.reason}`);
+        socket.write('HTTP/1.1 429 Too Many Requests\r\nContent-Type: text/plain\r\nContent-Length: 22\r\n\r\nToo many connections');
+        socket.destroy();
+        return;
+      }
+      
       const url = new URL(request.url || '', `http://${request.headers.host}`);
       const projectId = url.searchParams.get('projectId');
       const sessionId = url.searchParams.get('sessionId');
@@ -93,9 +173,6 @@ class AgentWebSocketService {
       const hasSessionCookie = !!cookies['ecode.sid'];
       
       logger.info('[Agent WebSocket] Upgrade handler: projectId=' + projectId + ', sessionId=' + sessionId + ', hasToken=' + !!token + ', hasSessionCookie=' + hasSessionCookie);
-      
-      // Mark socket as handled IMMEDIATELY to prevent other handlers from interfering
-      markSocketAsHandled(request, socket);
       
       // Validate parameters
       if (!projectId || !sessionId) {
@@ -386,6 +463,10 @@ class AgentWebSocketService {
       });
       
       ws.on('close', (code, reason) => {
+        // PRODUCTION SECURITY: Decrement active connection count for rate limiting
+        const clientIp = req.socket?.remoteAddress || 'unknown';
+        decrementActiveConnections(clientIp);
+        
         // Remove this device from the connections
         const connections = this.connections.get(connectionKey);
         if (connections) {
