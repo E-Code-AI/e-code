@@ -339,6 +339,42 @@ export const TOOL_REGISTRY: Record<string, ToolMetadata> = {
     description: 'Manage billing and subscriptions',
     keywords: ['payment', 'subscription'],
   },
+  
+  // Visual Editor (Replit-style)
+  'visual-editor': {
+    id: 'visual-editor',
+    label: 'Visual Editor',
+    icon: Layers,
+    emoji: '🎨',
+    category: 'Development',
+    description: 'Edit UI elements visually with drag-and-drop',
+    badge: 'NEW',
+    keywords: ['design', 'visual', 'drag', 'drop', 'ui', 'wysiwyg'],
+  },
+  
+  // Rewind/History (Replit-style)
+  'rewind': {
+    id: 'rewind',
+    label: 'Rewind',
+    icon: Activity,
+    emoji: '⏪',
+    category: 'Tools',
+    description: 'Time-travel through project history',
+    badge: 'NEW',
+    keywords: ['history', 'undo', 'restore', 'checkpoint', 'backup'],
+  },
+  
+  // Workflows (Replit-style)
+  'workflows': {
+    id: 'workflows',
+    label: 'Workflows',
+    icon: PlayCircle,
+    emoji: '⚡',
+    category: 'Tools',
+    description: 'Save and run development workflows',
+    badge: 'NEW',
+    keywords: ['automation', 'scripts', 'tasks', 'run'],
+  },
 };
 
 /**
