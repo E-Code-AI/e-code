@@ -1,0 +1,4 @@
+{
+  "description": "ESLint configuration extending recommended React and TypeScript rules with proper parser settings",
+  "todo": "Configure based on outline"
+}
