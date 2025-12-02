@@ -59,7 +59,7 @@ export function CommandPalette({
     );
     
     const filteredFiles = files
-      .filter(f => !f.isFolder && f.name.toLowerCase().includes(q))
+      .filter(f => !f.isDirectory && f.name.toLowerCase().includes(q))
       .slice(0, 10)
       .map(f => ({
         id: `file-${f.id}`,
@@ -68,6 +68,7 @@ export function CommandPalette({
         icon: <FileCode className="h-4 w-4" />,
         action: () => onFileSelect?.(f.id),
         category: 'file' as const,
+        shortcut: undefined as string | undefined,
       }));
 
     return [...filteredCommands, ...filteredFiles];
