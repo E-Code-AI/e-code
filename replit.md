@@ -66,3 +66,27 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 ### Authentication Providers
 - **Replit Auth:** Google, GitHub, Twitter/X, Apple, email/password
 - **Custom Email/Password**
+
+## Recent Changes
+
+### Dec 2, 2025 - IDEPage Remount Root Cause Fix (CRITICAL)
+**Problem:** Clicking toggles in the Agent Tools Panel caused the entire IDEPage to unmount and remount, losing all UI state.
+
+**Root Cause:** `AuthProvider` (wraps entire app) called `useToast()` hook which subscribes to ALL toast state changes. Every toast notification caused cascading re-renders through the entire component tree.
+
+**Solution:** Changed `client/src/hooks/use-auth.tsx` from `useToast()` hook to direct `toast` import:
+```typescript
+// BEFORE - subscribes to all toast state:
+import { useToast } from "@/hooks/use-toast";
+const { toast } = useToast();
+
+// AFTER - just calls toast function:
+import { toast } from "@/hooks/use-toast";
+```
+
+**Key Pattern:** Never use `useToast()` hook in provider components that wrap large portions of the app. Import `toast` function directly instead.
+
+**Verified across all platforms:**
+- ✅ Desktop (1920x1080): Multiple toggle clicks work without remount
+- ✅ Mobile (390x844 iPhone): Toggle interactions stable
+- ✅ Tablet (1024x768 iPad): Toast notifications don't cause remount
