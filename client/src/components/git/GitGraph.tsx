@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +21,9 @@ import {
   Hash,
   Copy,
   ExternalLink,
-  Tag
+  Tag,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -41,6 +44,18 @@ interface GitCommitNode {
   isMerge: boolean;
 }
 
+interface ApiCommit {
+  hash: string;
+  shortHash: string;
+  message: string;
+  author: string;
+  date: string;
+}
+
+interface CommitLogResponse {
+  commits: ApiCommit[];
+}
+
 interface GitGraphProps {
   projectId: string | number;
   className?: string;
@@ -54,91 +69,42 @@ export function GitGraph({
   onCommitClick,
   maxCommits = 100
 }: GitGraphProps) {
-  const [commits, setCommits] = useState<GitCommitNode[]>([]);
   const [filteredCommits, setFilteredCommits] = useState<GitCommitNode[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCommit, setSelectedCommit] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
 
-  // Mock data for demonstration (replace with real git API call)
-  useEffect(() => {
-    const fetchGitHistory = async () => {
-      setIsLoading(true);
+  const { data: logData, isLoading, error, refetch } = useQuery<CommitLogResponse>({
+    queryKey: ['/api/git/log', maxCommits],
+    queryFn: async () => {
+      const response = await fetch(`/api/git/log?limit=${maxCommits}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch commit log');
+      }
+      return response.json();
+    }
+  });
 
-      // TODO: Replace with actual API call to /api/projects/:id/git/log
-      // const response = await fetch(`/api/projects/${projectId}/git/log?limit=${maxCommits}`);
-      // const data = await response.json();
+  const commits: GitCommitNode[] = (logData?.commits || []).map((commit, index) => ({
+    hash: commit.hash,
+    shortHash: commit.shortHash,
+    message: commit.message,
+    author: {
+      name: commit.author,
+      email: ''
+    },
+    date: new Date(commit.date),
+    parents: index < (logData?.commits?.length || 0) - 1 
+      ? [logData?.commits[index + 1]?.shortHash || ''] 
+      : [],
+    branches: index === 0 ? ['HEAD'] : [],
+    tags: [],
+    isMerge: commit.message.toLowerCase().includes('merge')
+  }));
 
-      // Mock data
-      const mockCommits: GitCommitNode[] = [
-        {
-          hash: 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0',
-          shortHash: 'a1b2c3d',
-          message: 'feat: Add AI Agent autonomous execution',
-          author: { name: 'Claude AI', email: 'claude@e-code.ai' },
-          date: new Date(Date.now() - 1000 * 60 * 30),
-          parents: ['b2c3d4e'],
-          branches: ['main', 'HEAD'],
-          tags: ['v1.5.0'],
-          isMerge: false
-        },
-        {
-          hash: 'b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1',
-          shortHash: 'b2c3d4e',
-          message: 'feat: Complete AI Agent frontend-backend integration',
-          author: { name: 'Claude AI', email: 'claude@e-code.ai' },
-          date: new Date(Date.now() - 1000 * 60 * 60 * 2),
-          parents: ['c3d4e5f'],
-          branches: [],
-          tags: [],
-          isMerge: false
-        },
-        {
-          hash: 'c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2',
-          shortHash: 'c3d4e5f',
-          message: 'Merge pull request #42 from feature/websocket-integration',
-          author: { name: 'GitHub', email: 'noreply@github.com' },
-          date: new Date(Date.now() - 1000 * 60 * 60 * 5),
-          parents: ['d4e5f6g', 'e5f6g7h'],
-          branches: [],
-          tags: [],
-          isMerge: true
-        },
-        {
-          hash: 'd4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3',
-          shortHash: 'd4e5f6g',
-          message: 'refactor: Improve WebSocket error handling',
-          author: { name: 'Developer', email: 'dev@e-code.ai' },
-          date: new Date(Date.now() - 1000 * 60 * 60 * 24),
-          parents: ['e5f6g7h'],
-          branches: [],
-          tags: [],
-          isMerge: false
-        },
-        {
-          hash: 'e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4',
-          shortHash: 'e5f6g7h',
-          message: 'fix: Resolve terminal connection race condition',
-          author: { name: 'Developer', email: 'dev@e-code.ai' },
-          date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-          parents: ['f6g7h8i'],
-          branches: ['develop'],
-          tags: [],
-          isMerge: false
-        }
-      ];
-
-      setCommits(mockCommits);
-      setFilteredCommits(mockCommits);
-      setIsLoading(false);
-    };
-
-    fetchGitHistory();
-  }, [projectId, maxCommits]);
-
-  // Filter commits based on search
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredCommits(commits);
@@ -155,7 +121,6 @@ export function GitGraph({
     setFilteredCommits(filtered);
   }, [searchQuery, commits]);
 
-  // Draw git graph on canvas
   useEffect(() => {
     if (!canvasRef.current || filteredCommits.length === 0) return;
 
@@ -163,7 +128,6 @@ export function GitGraph({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas size
     const dpr = window.devicePixelRatio || 1;
     const width = 60;
     const height = filteredCommits.length * 50;
@@ -174,16 +138,12 @@ export function GitGraph({
     canvas.style.height = `${height}px`;
 
     ctx.scale(dpr, dpr);
-
-    // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    // Draw commit nodes and lines
     filteredCommits.forEach((commit, index) => {
       const x = 30;
       const y = index * 50 + 25;
 
-      // Draw line to parent (if not first commit)
       if (index > 0) {
         ctx.strokeStyle = commit.isMerge ? '#F99D25' : '#F26207';
         ctx.lineWidth = 2;
@@ -193,13 +153,11 @@ export function GitGraph({
         ctx.stroke();
       }
 
-      // Draw commit node
       ctx.fillStyle = commit.isMerge ? '#F99D25' : '#F26207';
       ctx.beginPath();
       ctx.arc(x, y, commit.isMerge ? 6 : 5, 0, 2 * Math.PI);
       ctx.fill();
 
-      // Draw ring for selected commit
       if (selectedCommit === commit.hash) {
         ctx.strokeStyle = '#F26207';
         ctx.lineWidth = 2;
@@ -216,7 +174,6 @@ export function GitGraph({
       onCommitClick(commit);
     }
 
-    // Haptic feedback
     if ('vibrate' in navigator) {
       navigator.vibrate(5);
     }
@@ -248,12 +205,22 @@ export function GitGraph({
             Git Graph
           </CardTitle>
 
-          <Badge variant="outline" className="text-xs">
-            {filteredCommits.length} commits
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2"
+              onClick={() => refetch()}
+              disabled={isLoading}
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
+            </Button>
+            <Badge variant="outline" className="text-xs">
+              {filteredCommits.length} commits
+            </Badge>
+          </div>
         </div>
 
-        {/* Search */}
         <div className="relative mt-3">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -261,6 +228,7 @@ export function GitGraph({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 h-8 text-xs"
+            data-testid="input-search-commits"
           />
         </div>
       </CardHeader>
@@ -268,7 +236,16 @@ export function GitGraph({
       <CardContent className="flex-1 p-0 overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             Loading git history...
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-full text-sm text-muted-foreground">
+            <GitCommit className="h-8 w-8 mb-2 opacity-50" />
+            <p>Failed to load git history</p>
+            <Button size="sm" variant="outline" className="mt-2" onClick={() => refetch()}>
+              Retry
+            </Button>
           </div>
         ) : filteredCommits.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-sm text-muted-foreground">
@@ -278,12 +255,10 @@ export function GitGraph({
         ) : (
           <ScrollArea className="h-full">
             <div className="flex">
-              {/* Graph Canvas */}
               <div className="flex-shrink-0">
                 <canvas ref={canvasRef} className="block" />
               </div>
 
-              {/* Commits List */}
               <div className="flex-1 px-3 py-2">
                 {filteredCommits.map((commit, index) => (
                   <div
@@ -295,8 +270,8 @@ export function GitGraph({
                     )}
                     style={{ marginTop: index === 0 ? '4px' : '0' }}
                     onClick={() => handleCommitClick(commit)}
+                    data-testid={`commit-item-${commit.shortHash}`}
                   >
-                    {/* Commit message */}
                     <div className="flex items-start gap-2 mb-1">
                       {commit.isMerge && (
                         <GitMerge className="h-3.5 w-3.5 mt-0.5 text-[var(--ecode-yellow)] flex-shrink-0" />
@@ -306,7 +281,6 @@ export function GitGraph({
                       </p>
                     </div>
 
-                    {/* Branches and Tags */}
                     {(commit.branches.length > 0 || commit.tags.length > 0) && (
                       <div className="flex items-center gap-1 mb-1">
                         {commit.branches.map(branch => (
@@ -332,7 +306,6 @@ export function GitGraph({
                       </div>
                     )}
 
-                    {/* Metadata */}
                     <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Avatar className="h-4 w-4">
@@ -359,6 +332,7 @@ export function GitGraph({
                             e.stopPropagation();
                             handleCopyHash(commit.hash);
                           }}
+                          data-testid={`button-copy-hash-${commit.shortHash}`}
                         >
                           <Copy className="h-2.5 w-2.5" />
                         </Button>

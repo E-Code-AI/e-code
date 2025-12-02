@@ -558,4 +558,85 @@ router.post('/remotes', ensureAuthenticated, csrfProtection, async (req: Request
   }
 });
 
+interface BlameEntry {
+  line: number;
+  commit: {
+    hash: string;
+    shortHash: string;
+    message: string;
+    author: string;
+    date: string;
+  };
+}
+
+router.get('/blame/:filePath(*)', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const { filePath } = req.params;
+    
+    if (!filePath) {
+      return res.status(400).json({ error: 'File path required' });
+    }
+    
+    const isRepo = await ensureGitRepo();
+    if (!isRepo) {
+      return res.status(400).json({ error: 'Not a git repository' });
+    }
+    
+    const fullPath = path.join(PROJECT_ROOT, filePath);
+    
+    const { stdout } = await execa('git', ['blame', '--porcelain', filePath], { 
+      cwd: PROJECT_ROOT,
+      reject: false 
+    });
+    
+    if (!stdout) {
+      return res.json({ blame: [] });
+    }
+    
+    const lines = stdout.split('\n');
+    const blameData: BlameEntry[] = [];
+    let currentCommit: any = {};
+    let lineNumber = 0;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      if (/^[0-9a-f]{40}/.test(line)) {
+        const parts = line.split(' ');
+        currentCommit = {
+          hash: parts[0],
+          shortHash: parts[0].substring(0, 7)
+        };
+        lineNumber = parseInt(parts[2], 10);
+      } else if (line.startsWith('author ')) {
+        currentCommit.author = line.substring(7);
+      } else if (line.startsWith('author-time ')) {
+        const timestamp = parseInt(line.substring(12), 10);
+        currentCommit.date = new Date(timestamp * 1000).toISOString();
+      } else if (line.startsWith('summary ')) {
+        currentCommit.message = line.substring(8);
+      } else if (line.startsWith('\t')) {
+        if (currentCommit.hash && lineNumber > 0) {
+          blameData.push({
+            line: lineNumber,
+            commit: {
+              hash: currentCommit.hash,
+              shortHash: currentCommit.shortHash,
+              message: currentCommit.message || '',
+              author: currentCommit.author || 'Unknown',
+              date: currentCommit.date || new Date().toISOString()
+            }
+          });
+        }
+        currentCommit = {};
+      }
+    }
+    
+    res.json({ blame: blameData });
+  } catch (error: any) {
+    console.error('[Git] Blame error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export const GitRouter = router;
