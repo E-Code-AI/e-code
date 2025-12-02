@@ -36,8 +36,11 @@ import { MobileCollaborationPanel } from '@/components/mobile/MobileCollaboratio
 import { useToast } from '@/hooks/use-toast';
 import { ToastProvider as DesignSystemToastProvider } from '@/design-system';
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
+import { AgentToolsPanel } from '@/components/ai/AgentToolsPanel';
+import { useAgentTools } from '@/hooks/useAgentTools';
+import { Bot } from 'lucide-react';
 
-export type TabletPanel = 'editor' | 'terminal' | 'preview';
+export type TabletPanel = 'editor' | 'terminal' | 'preview' | 'agent';
 
 interface TabletIDEViewProps {
   projectId: string; // UUID string from route params
@@ -49,6 +52,10 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
   const { isIPad, isIPadPro, orientation, screenSize } = useTablet();
   const layout = useTabletLayout();
   const { toast } = useToast();
+  
+  // Agent Tools state for tablet
+  const numericProjectId = parseInt(projectId, 10) || 1;
+  const { settings: agentSettings, updateSettings: updateAgentSettings } = useAgentTools(numericProjectId);
   
   // State management with persistence (tablet-8)
   const [drawerOpen, setDrawerOpen] = useDrawerPersistence(projectId);
@@ -148,10 +155,11 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
   
   const handleOpenAIAgent = useCallback(() => {
     setDrawerOpen(false);
+    setRightPanel('agent');
     toast({
       title: '🤖 AI Agent',
-      description: 'Handler ready. Full AI agent panel will be implemented in future phases.',
-      duration: 3000,
+      description: 'Agent Tools panel opened',
+      duration: 2000,
     });
   }, [toast]);
   
@@ -200,43 +208,53 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
     });
   }, [toast]);
   
-  // Single panel switcher (for fallback mode - includes Editor)
+  // Single panel switcher (for fallback mode - includes Editor, Preview, Terminal, Agent)
   const SinglePanelSwitcher = () => (
     <div className="flex items-center gap-1 border-b border-border bg-background/95 backdrop-blur p-1">
       <Button
         variant={rightPanel === 'editor' ? 'default' : 'ghost'}
         size="sm"
         onClick={() => setRightPanel('editor')}
-        className="flex-1 h-12 touch-manipulation"
+        className="flex-1 h-10 touch-manipulation px-2"
         data-testid="button-editor-panel"
       >
-        <Code className="h-5 w-5 mr-2" />
-        Editor
+        <Code className="h-4 w-4 mr-1" />
+        <span className="text-xs">Editor</span>
       </Button>
       <Button
         variant={rightPanel === 'preview' ? 'default' : 'ghost'}
         size="sm"
         onClick={() => setRightPanel('preview')}
-        className="flex-1 h-12 touch-manipulation"
+        className="flex-1 h-10 touch-manipulation px-2"
         data-testid="button-preview-panel"
       >
-        <Monitor className="h-5 w-5 mr-2" />
-        Preview
+        <Monitor className="h-4 w-4 mr-1" />
+        <span className="text-xs">Preview</span>
       </Button>
       <Button
         variant={rightPanel === 'terminal' ? 'default' : 'ghost'}
         size="sm"
         onClick={() => setRightPanel('terminal')}
-        className="flex-1 h-12 touch-manipulation"
+        className="flex-1 h-10 touch-manipulation px-2"
         data-testid="button-terminal-panel"
       >
-        <Terminal className="h-5 w-5 mr-2" />
-        Terminal
+        <Terminal className="h-4 w-4 mr-1" />
+        <span className="text-xs">Terminal</span>
+      </Button>
+      <Button
+        variant={rightPanel === 'agent' ? 'default' : 'ghost'}
+        size="sm"
+        onClick={() => setRightPanel('agent')}
+        className="flex-1 h-10 touch-manipulation px-2"
+        data-testid="button-agent-panel"
+      >
+        <Bot className="h-4 w-4 mr-1" />
+        <span className="text-xs">Agent</span>
       </Button>
     </div>
   );
   
-  // Right panel switcher (for split-view mode - Preview/Terminal only)
+  // Right panel switcher (for split-view mode - Preview/Terminal/Agent)
   const RightPanelSwitcher = () => (
     <div className="flex items-center gap-1 border-b border-border bg-background/95 backdrop-blur p-1">
       <Button
@@ -258,6 +276,16 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
       >
         <Terminal className="h-5 w-5 mr-2" />
         Terminal
+      </Button>
+      <Button
+        variant={rightPanel === 'agent' ? 'default' : 'ghost'}
+        size="sm"
+        onClick={() => setRightPanel('agent')}
+        className="flex-1 h-12 touch-manipulation"
+        data-testid="button-agent-panel"
+      >
+        <Bot className="h-5 w-5 mr-2" />
+        Agent
       </Button>
     </div>
   );
@@ -436,9 +464,18 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
                   <div className="flex-1 overflow-hidden">
                     {rightPanel === 'preview' ? (
                       <MobilePreviewPanel projectId={projectId} />
-                    ) : (
+                    ) : rightPanel === 'terminal' ? (
                       <MobileTerminal projectId={projectId} />
-                    )}
+                    ) : rightPanel === 'agent' ? (
+                      <div className="h-full overflow-y-auto p-4 bg-background">
+                        <AgentToolsPanel
+                          projectId={numericProjectId}
+                          settings={agentSettings}
+                          onSettingsChange={updateAgentSettings}
+                          compact={false}
+                        />
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </ResizablePanel>
@@ -456,9 +493,18 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
                   />
                 ) : rightPanel === 'preview' ? (
                   <MobilePreviewPanel projectId={projectId} />
-                ) : (
+                ) : rightPanel === 'terminal' ? (
                   <MobileTerminal projectId={projectId} />
-                )}
+                ) : rightPanel === 'agent' ? (
+                  <div className="h-full overflow-y-auto p-4 bg-background">
+                    <AgentToolsPanel
+                      projectId={numericProjectId}
+                      settings={agentSettings}
+                      onSettingsChange={updateAgentSettings}
+                      compact={false}
+                    />
+                  </div>
+                ) : null}
               </div>
             </div>
           )}
