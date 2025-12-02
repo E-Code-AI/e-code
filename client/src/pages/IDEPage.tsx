@@ -62,6 +62,13 @@ import { LogsViewerPanel } from '@/components/ide/LogsViewerPanel';
 import { ProgressPanel } from '@/components/ai/ProgressPanel';
 import { VideoReplayPlayer } from '@/components/ai/VideoReplayPlayer';
 
+// Replit-style Visual Editor, Rewind, Resources, Workflows (Dec 2025)
+import { VisualEditorPanel } from '@/components/ide/VisualEditorPanel';
+import { RewindPanel } from '@/components/ide/RewindPanel';
+import { ResourcesPanel } from '@/components/ide/ResourcesPanel';
+import { WorkflowsPanel } from '@/components/ide/WorkflowsPanel';
+import { EnhancedRunButton } from '@/components/ide/EnhancedRunButton';
+
 // Additional missing components from EditorPage
 import { CommandPalette } from '@/components/CommandPalette';
 import { GlobalSearch } from '@/components/GlobalSearch';
@@ -397,6 +404,10 @@ export default function IDEPage() {
     // Replit-style Progress & Video Replay (Nov 2025)
     { id: 'progress', label: 'Progress', icon: '📊' },
     { id: 'video-replay', label: 'Video Replay', icon: '🎬' },
+    // Replit-style Visual Editor, Rewind, Workflows (Dec 2025)
+    { id: 'visual-editor', label: 'Visual Editor', icon: '🎨' },
+    { id: 'rewind', label: 'Rewind', icon: '⏪' },
+    { id: 'workflows', label: 'Workflows', icon: '⚡' },
   ];
   
   // Validate tool registry in development
@@ -574,6 +585,15 @@ export default function IDEPage() {
           testName="No recording selected" 
           testStatus="passed" 
         />;
+      // Replit-style Visual Editor, Rewind, Resources, Workflows (Dec 2025)
+      case 'visual-editor':
+        return <VisualEditorPanel projectId={projectId} />;
+      case 'rewind':
+        return <RewindPanel projectId={projectId} />;
+      case 'resources':
+        return <ResourcesPanel projectId={projectId} />;
+      case 'workflows':
+        return <WorkflowsPanel projectId={projectId} />;
       default:
         if (activeTab.startsWith('file:') && selectedFileId) {
           return (
