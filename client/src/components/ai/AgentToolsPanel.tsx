@@ -1,53 +1,5 @@
-import { useState, useEffect, useCallback, useRef, forwardRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Switch } from '@/components/ui/switch';
-
-// Custom toggle component that bypasses Radix UI Switch issues with controlled state
-interface CustomToggleProps {
-  id?: string;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  disabled?: boolean;
-  className?: string;
-  'data-testid'?: string;
-}
-
-const CustomToggle = forwardRef<HTMLButtonElement, CustomToggleProps>(
-  ({ id, checked, onCheckedChange, disabled, className, 'data-testid': testId }, ref) => {
-    console.log('[CustomToggle] Rendering with checked:', checked, 'testId:', testId);
-    return (
-      <button
-        ref={ref}
-        id={id}
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        data-state={checked ? 'checked' : 'unchecked'}
-        data-testid={testId}
-        disabled={disabled}
-        onClick={() => {
-          console.log('[CustomToggle] Clicked! Current checked:', checked, 'will call onCheckedChange with:', !checked);
-          if (!disabled) onCheckedChange(!checked);
-        }}
-        className={`
-          peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full 
-          border-2 border-transparent transition-colors 
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
-          disabled:cursor-not-allowed disabled:opacity-50
-          ${checked ? className || 'bg-primary' : 'bg-input'}
-        `.replace(/\s+/g, ' ').trim()}
-      >
-        <span
-          data-state={checked ? 'checked' : 'unchecked'}
-          className={`
-            pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 
-            transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}
-          `.replace(/\s+/g, ' ').trim()}
-        />
-      </button>
-    );
-  }
-);
-CustomToggle.displayName = 'CustomToggle';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -113,18 +65,14 @@ export function AgentToolsPanel({
     return true; // default open
   });
   
-  // Use useRef + useState to track pending changes
-  // useRef for immediate reads, useState to trigger re-renders
-  const pendingRef = useRef<Partial<AgentToolsSettings>>({});
-  const [, forceUpdate] = useState(0);
-  
-  // Merge props with pending changes - pending changes take precedence
+  // SIMPLIFIED: Use parent's settings as the source of truth (fully controlled component)
+  // No local pending state - the parent owns all state
   const effectiveSettings: AgentToolsSettings = {
-    maxAutonomy: pendingRef.current.maxAutonomy ?? externalSettings?.maxAutonomy ?? false,
-    appTesting: pendingRef.current.appTesting ?? externalSettings?.appTesting ?? true,
-    extendedThinking: pendingRef.current.extendedThinking ?? externalSettings?.extendedThinking ?? false,
-    highPowerModels: pendingRef.current.highPowerModels ?? externalSettings?.highPowerModels ?? false,
-    webSearch: pendingRef.current.webSearch ?? externalSettings?.webSearch ?? true,
+    maxAutonomy: externalSettings?.maxAutonomy ?? false,
+    appTesting: externalSettings?.appTesting ?? true,
+    extendedThinking: externalSettings?.extendedThinking ?? false,
+    highPowerModels: externalSettings?.highPowerModels ?? false,
+    webSearch: externalSettings?.webSearch ?? true,
   };
   
   // Persist collapsed state to localStorage
@@ -159,27 +107,21 @@ export function AgentToolsPanel({
   
   const videoReplayCount = externalVideoReplayCount ?? hookVideoReplayCount;
 
-  // Toggle handler - sets pending change and notifies parent
+  // Toggle handler - simply notifies parent (fully controlled component)
   const handleToggle = useCallback((key: keyof AgentToolsSettings, newValue: boolean) => {
     console.log('[AgentToolsPanel] handleToggle:', key, '=', newValue);
     
-    // Update ref immediately for instant UI feedback
-    pendingRef.current = { ...pendingRef.current, [key]: newValue };
-    // Force re-render to show new state
-    forceUpdate(n => n + 1);
-    
-    // Notify parent with full settings object
+    // Build new settings object with the toggled value
     const newSettings: AgentToolsSettings = {
-      maxAutonomy: key === 'maxAutonomy' ? newValue : (pendingRef.current.maxAutonomy ?? externalSettings?.maxAutonomy ?? false),
-      appTesting: key === 'appTesting' ? newValue : (pendingRef.current.appTesting ?? externalSettings?.appTesting ?? true),
-      extendedThinking: key === 'extendedThinking' ? newValue : (pendingRef.current.extendedThinking ?? externalSettings?.extendedThinking ?? false),
-      highPowerModels: key === 'highPowerModels' ? newValue : (pendingRef.current.highPowerModels ?? externalSettings?.highPowerModels ?? false),
-      webSearch: key === 'webSearch' ? newValue : (pendingRef.current.webSearch ?? externalSettings?.webSearch ?? true),
+      ...effectiveSettings,
+      [key]: newValue,
     };
     
-    // Notify parent synchronously - no setTimeout needed since we're using ref for local state
+    console.log('[AgentToolsPanel] Notifying parent with:', JSON.stringify(newSettings));
+    
+    // Notify parent - parent owns the state
     updateSettingsRef.current(newSettings);
-  }, [externalSettings]);
+  }, [effectiveSettings]);
 
   // Read from effective settings for rendering
   const maxAutonomyOn = effectiveSettings.maxAutonomy;
@@ -188,7 +130,6 @@ export function AgentToolsPanel({
   const highPowerModelsOn = effectiveSettings.highPowerModels;
   const webSearchOn = effectiveSettings.webSearch;
   
-  console.log('[AgentToolsPanel] Rendering with effectiveSettings:', JSON.stringify(effectiveSettings), 'pendingRef:', JSON.stringify(pendingRef.current));
 
   const activeCount = [maxAutonomyOn, appTestingOn, extendedThinkingOn, highPowerModelsOn, webSearchOn].filter(Boolean).length;
 

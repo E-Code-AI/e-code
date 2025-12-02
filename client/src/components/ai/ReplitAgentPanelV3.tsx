@@ -158,6 +158,9 @@ interface ReplitAgentPanelV3Props {
   sessionId?: string | null;
   externalConversationId?: number | null;
   autoStart?: boolean; // ✅ FIX (Nov 30, 2025): Now defaults to true for auto-launch
+  // Lifted agent tools settings to parent to survive remounts (Dec 2025)
+  agentToolsSettings?: AgentToolsSettings;
+  onAgentToolsSettingsChange?: (settings: AgentToolsSettings) => void;
 }
 
 export function ReplitAgentPanelV3({ 
@@ -172,7 +175,9 @@ export function ReplitAgentPanelV3({
   onBuildComplete,
   sessionId: externalSessionId,
   externalConversationId,
-  autoStart = true
+  autoStart = true,
+  agentToolsSettings: externalAgentToolsSettings,
+  onAgentToolsSettingsChange
 }: ReplitAgentPanelV3Props) {
   // AI Model preference hook
   const { modelId, provider, supportsExtendedThinking: modelSupportsExtendedThinking, model, setPreferredModel } = useAgentModelPreference();
@@ -228,13 +233,39 @@ export function ReplitAgentPanelV3({
   const [videoReplayViewerOpen, setVideoReplayViewerOpen] = useState(false);
   
   // Agent Tools Panel settings (Replit Agent 3 exact toggles)
-  const [agentToolsSettings, setAgentToolsSettings] = useState<AgentToolsSettings>({
+  // Use external settings if provided (lifted state pattern), otherwise use internal state
+  const defaultSettings: AgentToolsSettings = {
     maxAutonomy: false,
     appTesting: true, // ON by default per Replit Agent 3
     extendedThinking: false,
     highPowerModels: false,
     webSearch: false
-  });
+  };
+  
+  const [internalAgentToolsSettings, setInternalAgentToolsSettings] = useState<AgentToolsSettings>(defaultSettings);
+  
+  // Use external settings if provided, otherwise use internal state
+  const agentToolsSettings = externalAgentToolsSettings ?? internalAgentToolsSettings;
+  const setAgentToolsSettings = onAgentToolsSettingsChange ?? setInternalAgentToolsSettings;
+  
+  // Ref to track previous settings for toast comparison (avoids stale closure issues)
+  const agentToolsSettingsRef = useRef<AgentToolsSettings>(agentToolsSettings);
+  
+  // DEBUG: Log every render with current agentToolsSettings
+  console.log('[ReplitAgentPanelV3] RENDER - agentToolsSettings:', JSON.stringify(agentToolsSettings));
+  
+  // DEBUG: Track component mount/unmount
+  useEffect(() => {
+    console.log('[ReplitAgentPanelV3] === COMPONENT MOUNTED ===');
+    return () => {
+      console.log('[ReplitAgentPanelV3] === COMPONENT UNMOUNTED ===');
+    };
+  }, []);
+  
+  // DEBUG: Track when agentToolsSettings actually changes
+  useEffect(() => {
+    console.log('[ReplitAgentPanelV3] STATE CHANGED - agentToolsSettings is now:', JSON.stringify(agentToolsSettings));
+  }, [agentToolsSettings]);
   
   // Element Editor state
   const [elementEditorActive, setElementEditorActive] = useState(false);
@@ -324,49 +355,56 @@ export function ReplitAgentPanelV3({
   } = useMaxAutonomy(autonomySessionId, projectIdNum);
 
   // Handler for agent tools settings changes (Replit Agent 3 toggles)
+  // State is now lifted to parent (IDEPage) to survive remounts
   const handleAgentToolsChange = useCallback((newSettings: AgentToolsSettings) => {
-    setAgentToolsSettings(newSettings);
+    console.log('[ReplitAgentPanelV3] handleAgentToolsChange CALLED with:', JSON.stringify(newSettings));
     
-    // Handle Max Autonomy toggle
-    if (newSettings.maxAutonomy && !agentToolsSettings.maxAutonomy) {
+    // Get previous settings from ref for toast comparison
+    const prevSettings = agentToolsSettingsRef.current;
+    
+    // Update ref to track current settings
+    agentToolsSettingsRef.current = newSettings;
+    
+    // Update state (either parent's state via callback or internal state)
+    setAgentToolsSettings(newSettings);
+    console.log('[ReplitAgentPanelV3] handleAgentToolsChange - setAgentToolsSettings called');
+    
+    // Show toasts for newly enabled features
+    if (newSettings.maxAutonomy && !prevSettings.maxAutonomy) {
       toast({
         title: "Max Autonomy Enabled",
         description: "Agent will supervise itself for up to 200 minutes"
       });
     }
     
-    // Handle App Testing toggle
-    if (newSettings.appTesting && !agentToolsSettings.appTesting) {
+    if (newSettings.appTesting && !prevSettings.appTesting) {
       toast({
         title: "App Testing Enabled",
         description: "Agent will test using browser automation with video replays"
       });
     }
     
-    // Handle Extended Thinking toggle
-    if (newSettings.extendedThinking && !agentToolsSettings.extendedThinking) {
+    if (newSettings.extendedThinking && !prevSettings.extendedThinking) {
       toast({
         title: "Extended Thinking Enabled",
         description: "Deeper reasoning for harder problems"
       });
     }
     
-    // Handle High Power Models toggle
-    if (newSettings.highPowerModels && !agentToolsSettings.highPowerModels) {
+    if (newSettings.highPowerModels && !prevSettings.highPowerModels) {
       toast({
         title: "High Power Models Enabled",
         description: "Using sophisticated AI for complex tasks"
       });
     }
     
-    // Handle Web Search toggle
-    if (newSettings.webSearch && !agentToolsSettings.webSearch) {
+    if (newSettings.webSearch && !prevSettings.webSearch) {
       toast({
         title: "Web Search Enabled",
         description: "Agent can search the web for docs and APIs"
       });
     }
-  }, [agentToolsSettings, toast]);
+  }, [setAgentToolsSettings, toast]);
   
   // Handler for Element Editor save
   const handleElementSave = useCallback((changes: Partial<ElementSelection['styles']> & { text?: string }) => {
