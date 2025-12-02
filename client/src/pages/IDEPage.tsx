@@ -120,6 +120,14 @@ const savePersistedState = (projectId: string, state: any) => {
 };
 
 export default function IDEPage() {
+  // DEBUG: Track IDEPage mount/unmount
+  useEffect(() => {
+    console.log('[IDEPage] === COMPONENT MOUNTED ===');
+    return () => {
+      console.log('[IDEPage] === COMPONENT UNMOUNTED ===');
+    };
+  }, []);
+  
   const params = useParams();
   const [, navigate] = useLocation();
   const { user } = useAuth();
@@ -240,6 +248,51 @@ export default function IDEPage() {
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
   const [showQuickFileSearch, setShowQuickFileSearch] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  
+  // Lift Agent Tools settings to parent level with sessionStorage persistence to survive remounts
+  const getStoredAgentToolsSettings = () => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const stored = sessionStorage.getItem(`agent-tools-settings-${projectId}`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        console.log('[IDEPage] Loaded agentToolsSettings from sessionStorage:', stored);
+        return parsed;
+      }
+    } catch (e) {
+      console.error('[IDEPage] Failed to load agentToolsSettings from sessionStorage:', e);
+    }
+    return null;
+  };
+  
+  const defaultAgentToolsSettings = {
+    maxAutonomy: false,
+    appTesting: true, // ON by default per Replit Agent 3
+    extendedThinking: false,
+    highPowerModels: false,
+    webSearch: false
+  };
+  
+  const [agentToolsSettings, setAgentToolsSettingsInternal] = useState(() => {
+    return getStoredAgentToolsSettings() || defaultAgentToolsSettings;
+  });
+  
+  // Wrapper that persists to sessionStorage
+  const setAgentToolsSettings = useCallback((newSettings: typeof defaultAgentToolsSettings) => {
+    console.log('[IDEPage] setAgentToolsSettings called with:', JSON.stringify(newSettings));
+    setAgentToolsSettingsInternal(newSettings);
+    try {
+      sessionStorage.setItem(`agent-tools-settings-${projectId}`, JSON.stringify(newSettings));
+      console.log('[IDEPage] Saved agentToolsSettings to sessionStorage');
+    } catch (e) {
+      console.error('[IDEPage] Failed to save agentToolsSettings to sessionStorage:', e);
+    }
+  }, [projectId]);
+  
+  // DEBUG: Track agentToolsSettings changes in parent
+  useEffect(() => {
+    console.log('[IDEPage] agentToolsSettings changed:', JSON.stringify(agentToolsSettings));
+  }, [agentToolsSettings]);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [showReplitDB, setShowReplitDB] = useState(false);
@@ -621,7 +674,7 @@ export default function IDEPage() {
                 </TabsTrigger>
               </TabsList>
               
-              <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden">
+              <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden" forceMount>
                 <ReplitAgentPanelV3
                   projectId={projectId}
                   sessionId={agentSessionId}
@@ -629,6 +682,8 @@ export default function IDEPage() {
                   initialPrompt={agentInitialPrompt || undefined}
                   autoStart={!!bootstrapToken || autoStartAgent}
                   mode="desktop"
+                  agentToolsSettings={agentToolsSettings}
+                  onAgentToolsSettingsChange={setAgentToolsSettings}
                   onBuildComplete={async () => {
                     // REAL: Auto-start preview when build completes (Task 12)
                     setActiveTab('preview');
