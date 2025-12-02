@@ -69,6 +69,29 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 
 ## Recent Changes
 
+### Dec 2, 2025 - AI-Based Code Generation for Autonomous Workspace (CRITICAL)
+**Problem:** Autonomous workspace creation generated skeleton/placeholder files with "TODO: Implement component based on outline" instead of actual working code.
+
+**Root Cause:** `AgentContentGeneratorService.expandOutline()` only used template-based generation and fell back to placeholders for custom components without calling any AI provider.
+
+**Solution (server/services/agent-content-generator.service.ts):**
+1. Added lazy-loaded AI provider manager integration
+2. Detect placeholder content (contains "TODO: Implement", "TODO: Add", "TODO: Configure")
+3. For placeholder content, call AI to generate real code using multi-model fallback
+4. Fallback chain: `['gpt-5.1', 'gpt-4o', 'claude-sonnet-4-5-20250929', 'gemini-2-5-flash']`
+
+**Key Code Pattern:**
+```typescript
+const isPlaceholder = templateContent.includes('TODO: Implement') || 
+                     templateContent.includes('TODO: Add');
+if (isPlaceholder) {
+  const aiContent = await this.generateWithAI(outline);
+  if (aiContent) return { path, content: aiContent, language };
+}
+```
+
+**Verified:** Bootstrap → Counter component → 3833 chars of working TypeScript with useState, useCallback, full button implementation (vs previous ~300 char placeholder)
+
 ### Dec 2, 2025 - IDEPage Remount Root Cause Fix (CRITICAL)
 **Problem:** Clicking toggles in the Agent Tools Panel caused the entire IDEPage to unmount and remount, losing all UI state.
 

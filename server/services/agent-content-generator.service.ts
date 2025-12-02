@@ -4,9 +4,13 @@
  * 
  * CRITICAL: This service materializes outline-based file descriptors from fallback plans
  * into actual, runnable file content that can be written to disk.
+ * 
+ * ✅ FIX (Dec 2, 2025): Added AI-based code generation for custom components.
+ * When no template matches, uses AI provider to generate actual working code.
  */
 
 import { createLogger } from '../utils/logger';
+import type { AIProviderManager } from '../ai/ai-provider-manager';
 
 const logger = createLogger('agent-content-generator');
 
@@ -24,26 +28,170 @@ export interface GeneratedFile {
 
 /**
  * Generate concrete file content from outline descriptions
- * Used when AI providers fail and fallback plan provides only outlines
+ * Uses template-based generation for common file types, AI generation for custom files
  */
 class AgentContentGeneratorService {
+  private aiProviderManager: AIProviderManager | null = null;
+  
+  /**
+   * Lazy-load AI provider manager to avoid circular dependencies
+   */
+  private async getAIProvider(): Promise<AIProviderManager | null> {
+    if (!this.aiProviderManager) {
+      try {
+        const { aiProviderManager } = await import('../ai/ai-provider-manager');
+        this.aiProviderManager = aiProviderManager;
+      } catch (error) {
+        logger.warn('[ContentGenerator] Could not load AI provider manager', error);
+        return null;
+      }
+    }
+    return this.aiProviderManager;
+  }
+  
   /**
    * Expand a file outline into concrete content
-   * Uses template-based generation for common file types
+   * Uses template-based generation for common file types, AI for custom files
+   * ✅ FIX (Dec 2, 2025): Call AI provider for non-template files instead of placeholders
    */
   async expandOutline(outline: FileOutline): Promise<GeneratedFile> {
     logger.info(`[ContentGenerator] Expanding outline for ${outline.path}`, {
       language: outline.language
     });
 
-    // Match outline to template based on file path and description
-    const content = this.generateContentFromOutline(outline);
+    // First, try template-based generation for common file types
+    const templateContent = this.generateContentFromOutline(outline);
+    
+    // Check if this is placeholder content that needs AI generation
+    const isPlaceholder = templateContent.includes('TODO: Implement') || 
+                         templateContent.includes('TODO: Add') ||
+                         templateContent.includes('TODO: Configure');
+    
+    if (isPlaceholder) {
+      logger.info(`[ContentGenerator] Template returned placeholder for ${outline.path}, trying AI generation`);
+      
+      // Try AI-based code generation
+      const aiContent = await this.generateWithAI(outline);
+      if (aiContent) {
+        logger.info(`[ContentGenerator] AI generated ${aiContent.length} chars for ${outline.path}`);
+        return {
+          path: outline.path,
+          content: aiContent,
+          language: outline.language
+        };
+      }
+      
+      // AI failed, use template placeholder as fallback
+      logger.warn(`[ContentGenerator] AI generation failed for ${outline.path}, using placeholder`);
+    }
 
     return {
       path: outline.path,
-      content,
+      content: templateContent,
       language: outline.language
     };
+  }
+  
+  /**
+   * ✅ NEW (Dec 2, 2025): Generate file content using AI provider
+   * Creates working code from outline description
+   */
+  private async generateWithAI(outline: FileOutline): Promise<string | null> {
+    try {
+      const aiProvider = await this.getAIProvider();
+      if (!aiProvider) {
+        return null;
+      }
+      
+      const { path, outline: description, language } = outline;
+      const fileName = path.split('/').pop() || 'file';
+      const ext = fileName.split('.').pop()?.toLowerCase() || '';
+      
+      // Determine the type of code to generate
+      let codeType = 'code';
+      if (ext === 'tsx' || ext === 'jsx') {
+        codeType = 'React component';
+      } else if (ext === 'ts' || ext === 'js') {
+        codeType = 'TypeScript/JavaScript module';
+      } else if (ext === 'css') {
+        codeType = 'CSS styles';
+      } else if (ext === 'py') {
+        codeType = 'Python module';
+      } else if (ext === 'go') {
+        codeType = 'Go code';
+      }
+      
+      const systemPrompt = `You are an expert developer that generates complete, production-ready code files. 
+IMPORTANT RULES:
+- Generate ONLY the raw code - no explanations, no markdown code blocks
+- The code must be complete, functional, and production-ready
+- Include all necessary imports at the top
+- Include proper TypeScript types if applicable
+- Follow modern best practices and coding conventions
+- Start with the first line of actual code (import, declaration, or content)`;
+      
+      const userPrompt = `Generate a complete, working ${codeType} file for: ${path}
+
+REQUIREMENTS FROM DESIGN OUTLINE:
+${description}
+
+IMPORTANT:
+- Output ONLY the raw ${ext.toUpperCase()} code
+- NO markdown formatting, NO code blocks, NO explanations
+- Start immediately with the first import or declaration
+
+Generate the complete ${fileName} file:`;
+
+      logger.info(`[ContentGenerator] Requesting AI to generate ${path}`);
+      
+      const messages = [
+        { role: 'system' as const, content: systemPrompt },
+        { role: 'user' as const, content: userPrompt }
+      ];
+      
+      // Try multiple models with fallback for code generation
+      const fallbackModels = ['gpt-5.1', 'gpt-4o', 'claude-sonnet-4-5-20250929', 'gemini-2-5-flash'];
+      let result: string | null = null;
+      
+      for (const modelId of fallbackModels) {
+        try {
+          logger.debug(`[ContentGenerator] Trying model ${modelId} for ${path}`);
+          result = await aiProvider.generateChat(modelId, messages, {
+            max_tokens: 2000,
+            temperature: 0.2
+          });
+          if (result && result.trim().length > 20) {
+            logger.info(`[ContentGenerator] Successfully generated code with ${modelId}`);
+            break;
+          }
+        } catch (modelError: any) {
+          logger.warn(`[ContentGenerator] Model ${modelId} failed: ${modelError.message}`);
+          continue;
+        }
+      }
+      
+      if (result && result.trim().length > 20) {
+        // Clean up any markdown code blocks that might have been included
+        let cleanedContent = result.trim();
+        
+        // Remove markdown code block wrappers if present
+        if (cleanedContent.startsWith('```')) {
+          const lines = cleanedContent.split('\n');
+          lines.shift(); // Remove opening ```
+          if (lines[lines.length - 1] === '```') {
+            lines.pop(); // Remove closing ```
+          }
+          cleanedContent = lines.join('\n');
+        }
+        
+        return cleanedContent;
+      }
+      
+      return null;
+    } catch (error: any) {
+      logger.error(`[ContentGenerator] AI generation error for ${outline.path}:`, error.message);
+      return null;
+    }
   }
 
   /**
