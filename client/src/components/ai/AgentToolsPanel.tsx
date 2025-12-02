@@ -1,5 +1,53 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, forwardRef } from 'react';
 import { Switch } from '@/components/ui/switch';
+
+// Custom toggle component that bypasses Radix UI Switch issues with controlled state
+interface CustomToggleProps {
+  id?: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  disabled?: boolean;
+  className?: string;
+  'data-testid'?: string;
+}
+
+const CustomToggle = forwardRef<HTMLButtonElement, CustomToggleProps>(
+  ({ id, checked, onCheckedChange, disabled, className, 'data-testid': testId }, ref) => {
+    console.log('[CustomToggle] Rendering with checked:', checked, 'testId:', testId);
+    return (
+      <button
+        ref={ref}
+        id={id}
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        data-state={checked ? 'checked' : 'unchecked'}
+        data-testid={testId}
+        disabled={disabled}
+        onClick={() => {
+          console.log('[CustomToggle] Clicked! Current checked:', checked, 'will call onCheckedChange with:', !checked);
+          if (!disabled) onCheckedChange(!checked);
+        }}
+        className={`
+          peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full 
+          border-2 border-transparent transition-colors 
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
+          disabled:cursor-not-allowed disabled:opacity-50
+          ${checked ? className || 'bg-primary' : 'bg-input'}
+        `.replace(/\s+/g, ' ').trim()}
+      >
+        <span
+          data-state={checked ? 'checked' : 'unchecked'}
+          className={`
+            pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 
+            transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}
+          `.replace(/\s+/g, ' ').trim()}
+        />
+      </button>
+    );
+  }
+);
+CustomToggle.displayName = 'CustomToggle';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -65,12 +113,19 @@ export function AgentToolsPanel({
     return true; // default open
   });
   
-  // Simple toggle states for immediate visual feedback
-  const [maxAutonomyOn, setMaxAutonomyOn] = useState(() => externalSettings?.maxAutonomy ?? false);
-  const [appTestingOn, setAppTestingOn] = useState(() => externalSettings?.appTesting ?? true);
-  const [extendedThinkingOn, setExtendedThinkingOn] = useState(() => externalSettings?.extendedThinking ?? false);
-  const [highPowerModelsOn, setHighPowerModelsOn] = useState(() => externalSettings?.highPowerModels ?? false);
-  const [webSearchOn, setWebSearchOn] = useState(() => externalSettings?.webSearch ?? true);
+  // Use useRef + useState to track pending changes
+  // useRef for immediate reads, useState to trigger re-renders
+  const pendingRef = useRef<Partial<AgentToolsSettings>>({});
+  const [, forceUpdate] = useState(0);
+  
+  // Merge props with pending changes - pending changes take precedence
+  const effectiveSettings: AgentToolsSettings = {
+    maxAutonomy: pendingRef.current.maxAutonomy ?? externalSettings?.maxAutonomy ?? false,
+    appTesting: pendingRef.current.appTesting ?? externalSettings?.appTesting ?? true,
+    extendedThinking: pendingRef.current.extendedThinking ?? externalSettings?.extendedThinking ?? false,
+    highPowerModels: pendingRef.current.highPowerModels ?? externalSettings?.highPowerModels ?? false,
+    webSearch: pendingRef.current.webSearch ?? externalSettings?.webSearch ?? true,
+  };
   
   // Persist collapsed state to localStorage
   const handleOpenChange = useCallback((open: boolean) => {
@@ -96,41 +151,44 @@ export function AgentToolsPanel({
     testSessionCount,
   } = hookData;
   
-  // Choose which update function to use
-  const updateSettings = onSettingsChange || hookUpdateSettings;
+  // Choose which update function to use - but store in ref to avoid re-render loops
+  const updateSettingsRef = useRef(onSettingsChange || hookUpdateSettings);
+  useEffect(() => {
+    updateSettingsRef.current = onSettingsChange || hookUpdateSettings;
+  }, [onSettingsChange, hookUpdateSettings]);
+  
   const videoReplayCount = externalVideoReplayCount ?? hookVideoReplayCount;
 
-  // Toggle handler - updates local state immediately, then notifies parent
-  const handleToggle = useCallback((key: keyof AgentToolsSettings) => {
-    console.log('[AgentToolsPanel] handleToggle:', key);
+  // Toggle handler - sets pending change and notifies parent
+  const handleToggle = useCallback((key: keyof AgentToolsSettings, newValue: boolean) => {
+    console.log('[AgentToolsPanel] handleToggle:', key, '=', newValue);
     
-    // Get current state and compute new state
-    const stateMap = {
-      maxAutonomy: { get: maxAutonomyOn, set: setMaxAutonomyOn },
-      appTesting: { get: appTestingOn, set: setAppTestingOn },
-      extendedThinking: { get: extendedThinkingOn, set: setExtendedThinkingOn },
-      highPowerModels: { get: highPowerModelsOn, set: setHighPowerModelsOn },
-      webSearch: { get: webSearchOn, set: setWebSearchOn },
-    };
-    
-    const newValue = !stateMap[key].get;
-    console.log('[AgentToolsPanel] Setting', key, 'to', newValue);
-    
-    // Update local state immediately for visual feedback
-    stateMap[key].set(newValue);
+    // Update ref immediately for instant UI feedback
+    pendingRef.current = { ...pendingRef.current, [key]: newValue };
+    // Force re-render to show new state
+    forceUpdate(n => n + 1);
     
     // Notify parent with full settings object
     const newSettings: AgentToolsSettings = {
-      maxAutonomy: key === 'maxAutonomy' ? newValue : maxAutonomyOn,
-      appTesting: key === 'appTesting' ? newValue : appTestingOn,
-      extendedThinking: key === 'extendedThinking' ? newValue : extendedThinkingOn,
-      highPowerModels: key === 'highPowerModels' ? newValue : highPowerModelsOn,
-      webSearch: key === 'webSearch' ? newValue : webSearchOn,
+      maxAutonomy: key === 'maxAutonomy' ? newValue : (pendingRef.current.maxAutonomy ?? externalSettings?.maxAutonomy ?? false),
+      appTesting: key === 'appTesting' ? newValue : (pendingRef.current.appTesting ?? externalSettings?.appTesting ?? true),
+      extendedThinking: key === 'extendedThinking' ? newValue : (pendingRef.current.extendedThinking ?? externalSettings?.extendedThinking ?? false),
+      highPowerModels: key === 'highPowerModels' ? newValue : (pendingRef.current.highPowerModels ?? externalSettings?.highPowerModels ?? false),
+      webSearch: key === 'webSearch' ? newValue : (pendingRef.current.webSearch ?? externalSettings?.webSearch ?? true),
     };
     
-    console.log('[AgentToolsPanel] Calling updateSettings with:', newSettings);
-    updateSettings(newSettings);
-  }, [maxAutonomyOn, appTestingOn, extendedThinkingOn, highPowerModelsOn, webSearchOn, updateSettings]);
+    // Notify parent synchronously - no setTimeout needed since we're using ref for local state
+    updateSettingsRef.current(newSettings);
+  }, [externalSettings]);
+
+  // Read from effective settings for rendering
+  const maxAutonomyOn = effectiveSettings.maxAutonomy;
+  const appTestingOn = effectiveSettings.appTesting;
+  const extendedThinkingOn = effectiveSettings.extendedThinking;
+  const highPowerModelsOn = effectiveSettings.highPowerModels;
+  const webSearchOn = effectiveSettings.webSearch;
+  
+  console.log('[AgentToolsPanel] Rendering with effectiveSettings:', JSON.stringify(effectiveSettings), 'pendingRef:', JSON.stringify(pendingRef.current));
 
   const activeCount = [maxAutonomyOn, appTestingOn, extendedThinkingOn, highPowerModelsOn, webSearchOn].filter(Boolean).length;
 
@@ -234,9 +292,8 @@ export function AgentToolsPanel({
               </div>
               <Switch
                 id="max-autonomy"
-                key={`max-autonomy-${maxAutonomyOn}`}
                 checked={maxAutonomyOn}
-                onCheckedChange={() => handleToggle('maxAutonomy')}
+                onCheckedChange={(checked) => handleToggle('maxAutonomy', checked)}
                 data-testid="toggle-max-autonomy"
                 className="data-[state=checked]:bg-amber-500"
               />
@@ -277,7 +334,7 @@ export function AgentToolsPanel({
               <Switch
                 id="app-testing"
                 checked={appTestingOn}
-                onCheckedChange={() => handleToggle('appTesting')}
+                onCheckedChange={(checked) => handleToggle('appTesting', checked)}
                 data-testid="toggle-app-testing"
                 className="data-[state=checked]:bg-emerald-500"
               />
@@ -314,7 +371,7 @@ export function AgentToolsPanel({
               <Switch
                 id="extended-thinking"
                 checked={extendedThinkingOn}
-                onCheckedChange={() => handleToggle('extendedThinking')}
+                onCheckedChange={(checked) => handleToggle('extendedThinking', checked)}
                 data-testid="toggle-extended-thinking"
                 disabled={isUpdating}
                 className="data-[state=checked]:bg-purple-500"
@@ -352,7 +409,7 @@ export function AgentToolsPanel({
               <Switch
                 id="high-power-models"
                 checked={highPowerModelsOn}
-                onCheckedChange={() => handleToggle('highPowerModels')}
+                onCheckedChange={(checked) => handleToggle('highPowerModels', checked)}
                 data-testid="toggle-high-power-models"
                 disabled={isUpdating}
                 className="data-[state=checked]:bg-orange-500"
@@ -390,7 +447,7 @@ export function AgentToolsPanel({
               <Switch
                 id="web-search"
                 checked={webSearchOn}
-                onCheckedChange={() => handleToggle('webSearch')}
+                onCheckedChange={(checked) => handleToggle('webSearch', checked)}
                 data-testid="toggle-web-search"
                 disabled={isUpdating}
                 className="data-[state=checked]:bg-blue-500"
