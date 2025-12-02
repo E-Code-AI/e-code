@@ -102,3 +102,14 @@ import { toast } from "@/hooks/use-toast";
 
 **Files Modified:**
 - `client/src/components/tablet/TabletIDEView.tsx` - Added Agent panel integration
+
+### Dec 2, 2025 - UI Cleanup: Extended Thinking Consolidation
+**Problem:** "Extended Thinking" toggle appeared in multiple places (AI Agent header, settings dropdown, Agent Tools panel), causing confusion.
+
+**Solution:** Removed duplicate toggles, keeping Extended Thinking only in the Agent Tools panel:
+1. Removed Extended Thinking toggle from AI Agent header
+2. Removed "Capabilities" section from settings dropdown (now shows "Configure capabilities in Agent Tools panel below")
+3. Agent Tools panel is now the single source of truth for all capability toggles
+
+**Files Modified:**
+- `client/src/components/ai/ReplitAgentPanelV3.tsx` - Removed header toggle and capabilities dropdown section

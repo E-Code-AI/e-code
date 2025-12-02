@@ -1112,45 +1112,6 @@ export function ReplitAgentPanelV3({
               onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
               data-testid="current-model-chip"
             />
-            
-            {/* Extended Thinking Toggle - Always visible, disabled when model doesn't support */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-accent/50 transition-colors">
-                    <Label 
-                      htmlFor="extended-thinking-header-toggle" 
-                      className={cn(
-                        "text-xs cursor-pointer flex items-center gap-1.5",
-                        !modelSupportsExtendedThinking && "opacity-50"
-                      )}
-                    >
-                      <Brain className="h-3 w-3" />
-                      <span>Extended Thinking</span>
-                      {!modelSupportsExtendedThinking && (
-                        <AlertCircle className="h-3 w-3 text-yellow-500" />
-                      )}
-                    </Label>
-                    <Switch
-                      id="extended-thinking-header-toggle"
-                      checked={capabilities.find(c => c.id === 'extended_thinking')?.enabled || false}
-                      disabled={!modelSupportsExtendedThinking}
-                      onCheckedChange={(checked) => {
-                        setCapabilities(prev => prev.map(cap =>
-                          cap.id === 'extended_thinking' ? { ...cap, enabled: checked } : cap
-                        ));
-                      }}
-                      data-testid="toggle-extended-thinking"
-                    />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {modelSupportsExtendedThinking 
-                    ? "Deep reasoning with visible thought process" 
-                    : `Current model doesn't support Extended Thinking. Select a compatible model (e.g., Claude Sonnet) to enable.`}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
           </div>
           <div className="flex items-center gap-1">
             {isWorking && (
@@ -1191,50 +1152,9 @@ export function ReplitAgentPanelV3({
                     className="mb-2" 
                     onModelChange={(newModelId) => setPreferredModel(newModelId)}
                   />
-                  
-                  <div className="font-medium text-xs text-muted-foreground uppercase tracking-wide pt-1">Capabilities</div>
-                  {capabilities.map(capability => {
-                    const Icon = capability.icon;
-                    const isDisabled = capability.id === 'extended_thinking' && !modelSupportsExtendedThinking;
-                    
-                    return (
-                      <div key={capability.id} className="flex items-center justify-between gap-2 py-1" data-testid={`capability-${capability.id}`}>
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" data-testid={`capability-icon-${capability.id}`} />
-                          <div className="flex items-center gap-1 min-w-0">
-                            <Label htmlFor={capability.id} className={cn("text-xs font-medium cursor-pointer truncate", isDisabled && "opacity-50")} data-testid={`capability-label-${capability.id}`}>
-                              {capability.label}
-                            </Label>
-                            {capability.badge && (
-                              <Badge variant="secondary" className="text-[10px] px-1 py-0 shrink-0" data-testid={`capability-badge-${capability.id}`}>
-                                {capability.badge}
-                              </Badge>
-                            )}
-                            {isDisabled && (
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <AlertCircle className="h-3 w-3 text-yellow-500 shrink-0" />
-                                  </TooltipTrigger>
-                                  <TooltipContent className="max-w-[200px] text-xs">
-                                    Model doesn't support Extended Thinking
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            )}
-                          </div>
-                        </div>
-                        <Switch
-                          id={capability.id}
-                          checked={capability.enabled}
-                          onCheckedChange={() => toggleCapability(capability.id)}
-                          disabled={isDisabled}
-                          className="scale-90"
-                          data-testid={`switch-${capability.id}`}
-                        />
-                      </div>
-                    );
-                  })}
+                  <p className="text-xs text-muted-foreground">
+                    Configure capabilities in Agent Tools panel below
+                  </p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleClearChat} className="text-destructive" data-testid="dropdown-clear-chat">
