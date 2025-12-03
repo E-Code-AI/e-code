@@ -1,8 +1,33 @@
-import { useState } from "react";
-import { ReplitMonacoEditor } from "./ReplitMonacoEditor";
+import React, { useState, Suspense } from "react";
 import { ReplitFileExplorer } from "../files/ReplitFileExplorer";
-import { ReplitTerminal } from "../terminal/ReplitTerminal";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { Loader2 } from "lucide-react";
+
+const ReplitMonacoEditor = React.lazy(() => 
+  import("./ReplitMonacoEditor").then(module => ({ default: module.ReplitMonacoEditor }))
+);
+
+const ReplitTerminal = React.lazy(() => 
+  import("../terminal/ReplitTerminal").then(module => ({ default: module.ReplitTerminal }))
+);
+
+const EditorFallback = () => (
+  <div className="h-full flex items-center justify-center bg-[var(--ecode-editor-bg)]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="h-6 w-6 animate-spin text-[var(--ecode-accent)]" />
+      <p className="text-sm text-[var(--ecode-text-secondary)]">Loading editor...</p>
+    </div>
+  </div>
+);
+
+const TerminalFallback = () => (
+  <div className="h-full flex items-center justify-center bg-[var(--ecode-editor-bg)]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="h-5 w-5 animate-spin text-[var(--ecode-accent)]" />
+      <p className="text-xs text-[var(--ecode-text-secondary)]">Loading terminal...</p>
+    </div>
+  </div>
+);
 
 interface FileNode {
   id: number;
@@ -87,15 +112,17 @@ export function AdvancedEditorIntegration({
             <ResizablePanel defaultSize={showTerminal ? 65 : 100}>
               <div className="h-full bg-[var(--ecode-editor-bg)]">
                 {selectedFile ? (
-                  <ReplitMonacoEditor
-                    projectId={projectId}
-                    fileId={selectedFile.id}
-                    onRunCode={handleRunCode}
-                    onStopCode={handleStopCode}
-                    isRunning={isRunning}
-                    theme="dark"
-                    showCollaborators={true}
-                  />
+                  <Suspense fallback={<EditorFallback />}>
+                    <ReplitMonacoEditor
+                      projectId={projectId}
+                      fileId={selectedFile.id}
+                      onRunCode={handleRunCode}
+                      onStopCode={handleStopCode}
+                      isRunning={isRunning}
+                      theme="dark"
+                      showCollaborators={true}
+                    />
+                  </Suspense>
                 ) : (
                   <div className="h-full flex items-center justify-center">
                     <div className="text-center">
@@ -119,13 +146,15 @@ export function AdvancedEditorIntegration({
               <>
                 <ResizableHandle className="bg-[var(--ecode-border)] hover:bg-[var(--ecode-accent)]/50" />
                 <ResizablePanel defaultSize={35} minSize={25}>
-                  <ReplitTerminal
-                    projectId={projectId}
-                    className="h-full"
-                    onCommandExecute={handleCommandExecute}
-                    theme="dark"
-                    allowMultipleSessions={true}
-                  />
+                  <Suspense fallback={<TerminalFallback />}>
+                    <ReplitTerminal
+                      projectId={projectId}
+                      className="h-full"
+                      onCommandExecute={handleCommandExecute}
+                      theme="dark"
+                      allowMultipleSessions={true}
+                    />
+                  </Suspense>
                 </ResizablePanel>
               </>
             )}

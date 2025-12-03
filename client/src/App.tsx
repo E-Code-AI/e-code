@@ -195,7 +195,9 @@ import { ReplitLayout } from "@/components/layout/ReplitLayout";
 import { LazyShellWidgets } from "@/components/LazyShellWidgets";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { ApplicationIDEWrapper } from "@/components/ApplicationIDEWrapper";
+
+// Heavy component - LAZY LOADED for bundle optimization (imports Monaco/CodeEditor)
+const ApplicationIDEWrapper = lazy(() => import("@/components/ApplicationIDEWrapper").then(mod => ({ default: mod.ApplicationIDEWrapper })));
 const FeaturePlaceholder = lazy(() => import("@/pages/FeaturePlaceholder"));
 
 const placeholderRoutes = [

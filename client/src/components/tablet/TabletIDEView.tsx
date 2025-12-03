@@ -4,7 +4,7 @@
  * Supports iPad, Surface, and Android tablets with touch-first interactions
  */
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft,
@@ -17,6 +17,12 @@ import {
   Settings,
   PanelLeftClose,
   PanelLeftOpen,
+  Loader2,
+  Bot,
+  Rocket,
+  GitBranch,
+  Package,
+  Key,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -30,7 +36,6 @@ import {
 } from '@/hooks/use-tablet-persistence';
 import { TabletDrawerContent } from './TabletDrawerContent';
 import { LazyMobileCodeEditor } from '@/components/mobile/LazyMobileCodeEditor';
-import { MobileTerminal } from '@/components/mobile/MobileTerminal';
 import { MobilePreviewPanel } from '@/components/mobile/MobilePreviewPanel';
 import { MobileCollaborationPanel } from '@/components/mobile/MobileCollaborationPanel';
 import { useToast } from '@/hooks/use-toast';
@@ -38,13 +43,25 @@ import { ToastProvider as DesignSystemToastProvider } from '@/design-system';
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 import { AgentToolsPanel } from '@/components/ai/AgentToolsPanel';
 import { useAgentTools } from '@/hooks/useAgentTools';
-import { Bot, Rocket, GitBranch, Package, Key } from 'lucide-react';
 import { ReplitDeploymentPanel } from '@/components/ide/ReplitDeploymentPanel';
 import { ReplitPublishButton } from '@/components/ide/ReplitPublishButton';
 import { GitPanel } from '@/components/ide/GitPanel';
 import { ReplitPackagesPanel } from '@/components/editor/ReplitPackagesPanel';
 import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
 import { ReplitSecretsPanel } from '@/components/editor/ReplitSecretsPanel';
+
+const MobileTerminal = React.lazy(() => 
+  import('@/components/mobile/MobileTerminal').then(module => ({ default: module.MobileTerminal }))
+);
+
+const TerminalFallback = () => (
+  <div className="h-full flex items-center justify-center bg-background">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+      <p className="text-xs text-muted-foreground">Loading terminal...</p>
+    </div>
+  </div>
+);
 
 export type TabletPanel = 'editor' | 'terminal' | 'preview' | 'agent' | 'deploy' | 'git' | 'packages' | 'secrets' | 'settings';
 
@@ -501,7 +518,9 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
                     {rightPanel === 'preview' ? (
                       <MobilePreviewPanel projectId={projectId} />
                     ) : rightPanel === 'terminal' ? (
-                      <MobileTerminal projectId={projectId} />
+                      <Suspense fallback={<TerminalFallback />}>
+                        <MobileTerminal projectId={projectId} />
+                      </Suspense>
                     ) : rightPanel === 'agent' ? (
                       <div className="h-full overflow-y-auto p-4 bg-background">
                         <AgentToolsPanel
@@ -540,7 +559,9 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
                 ) : rightPanel === 'preview' ? (
                   <MobilePreviewPanel projectId={projectId} />
                 ) : rightPanel === 'terminal' ? (
-                  <MobileTerminal projectId={projectId} />
+                  <Suspense fallback={<TerminalFallback />}>
+                    <MobileTerminal projectId={projectId} />
+                  </Suspense>
                 ) : rightPanel === 'agent' ? (
                   <div className="h-full overflow-y-auto p-4 bg-background">
                     <AgentToolsPanel

@@ -100,7 +100,6 @@ playwright.config.*
 vite.config.ts.timestamp*
 
 # Development-only directories (CRITICAL - save >3GB)
-dokploy/
 sdk/
 vscode-extension/
 cli/

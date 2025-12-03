@@ -1,7 +1,17 @@
-import React, { useState } from 'react';
-import Terminal from './Terminal';
+import React, { useState, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
-import { TerminalSquare, ChevronUp, ChevronDown } from 'lucide-react';
+import { TerminalSquare, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
+
+const Terminal = React.lazy(() => import('./Terminal'));
+
+const TerminalLoadingFallback = () => (
+  <div className="h-full flex items-center justify-center bg-slate-950">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+      <p className="text-xs text-muted-foreground">Loading terminal...</p>
+    </div>
+  </div>
+);
 
 interface TerminalPanelProps {
   projectId: number;
@@ -44,13 +54,15 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({
         </div>
       ) : (
         <div className={`terminal-wrapper ${isMaximized ? 'z-50 fixed inset-0' : ''}`}>
-          <Terminal
-            project={{ id: projectId }}
-            onClose={toggleTerminal}
-            minimized={false}
-            onMinimize={() => setIsMaximized(false)}
-            onMaximize={() => setIsMaximized(true)}
-          />
+          <Suspense fallback={<TerminalLoadingFallback />}>
+            <Terminal
+              project={{ id: projectId }}
+              onClose={toggleTerminal}
+              minimized={false}
+              onMinimize={() => setIsMaximized(false)}
+              onMaximize={() => setIsMaximized(true)}
+            />
+          </Suspense>
         </div>
       )}
     </div>

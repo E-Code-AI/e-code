@@ -1,10 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence, useMotionValue, PanInfo } from 'framer-motion';
 import { Code, Terminal, Monitor, MoreHorizontal, Sparkles, Rocket, Loader2, CheckCircle, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EnhancedMobileFileExplorer } from './EnhancedMobileFileExplorer';
 import { LazyMobileCodeEditor } from './LazyMobileCodeEditor';
-import { EnhancedMobileTerminal } from './EnhancedMobileTerminal';
 import { MobilePreviewPanel } from './MobilePreviewPanel';
 import { MobileMoreMenu } from './MobileMoreMenu';
 import { MobileCollaborationPanel } from './MobileCollaborationPanel';
@@ -25,6 +24,19 @@ import { ReplitDeploymentPanel } from '@/components/ide/ReplitDeploymentPanel';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { toast } from '@/hooks/use-toast';
+
+const EnhancedMobileTerminal = React.lazy(() => 
+  import('./EnhancedMobileTerminal').then(module => ({ default: module.EnhancedMobileTerminal }))
+);
+
+const TerminalFallback = () => (
+  <div className="h-full flex items-center justify-center bg-[#1e1e1e]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+      <p className="text-xs text-muted-foreground">Loading terminal...</p>
+    </div>
+  </div>
+);
 
 export type MobilePanelType = 'git' | 'packages' | 'secrets' | 'database' | 'settings' | 'debug' | null;
 
@@ -454,7 +466,9 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
               )}
               
               {activeTab === 'terminal' && (
-                <EnhancedMobileTerminal projectId={projectId} />
+                <Suspense fallback={<TerminalFallback />}>
+                  <EnhancedMobileTerminal projectId={projectId} />
+                </Suspense>
               )}
               
               {activeTab === 'preview' && (

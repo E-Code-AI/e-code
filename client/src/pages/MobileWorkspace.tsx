@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useParams } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
 import { ReplitBottomTabs } from '@/components/mobile/ReplitBottomTabs';
 import { ReplitToolsSheet } from '@/components/mobile/ReplitToolsSheet';
 import { MobileFileExplorer } from '@/components/mobile/MobileFileExplorer';
 import { LazyMobileCodeEditor } from '@/components/mobile/LazyMobileCodeEditor';
-import { MobileTerminal } from '@/components/mobile/MobileTerminal';
 import { MobilePreviewPanel } from '@/components/mobile/MobilePreviewPanel';
 import { MobileDatabasePanel } from '@/components/mobile/MobileDatabasePanel';
 import { MobileSecretsPanel } from '@/components/mobile/MobileSecretsPanel';
@@ -24,9 +23,23 @@ import {
   ArrowLeft, 
   RefreshCw, 
   Share2, 
-  MoreVertical
+  MoreVertical,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+const MobileTerminal = React.lazy(() => 
+  import('@/components/mobile/MobileTerminal').then(module => ({ default: module.MobileTerminal }))
+);
+
+const TerminalFallback = () => (
+  <div className="h-full flex items-center justify-center bg-background">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+      <p className="text-xs text-muted-foreground">Loading terminal...</p>
+    </div>
+  </div>
+);
 
 type MobileTab = 'agent' | 'files' | 'code' | 'terminal' | 'preview' | 'more';
 
@@ -104,11 +117,13 @@ export default function MobileWorkspace() {
       
       case 'terminal':
         return (
-          <MobileTerminal 
-            projectId={projectId}
-            sessionId={`mobile-${projectId}`}
-            className="h-full"
-          />
+          <Suspense fallback={<TerminalFallback />}>
+            <MobileTerminal 
+              projectId={projectId}
+              sessionId={`mobile-${projectId}`}
+              className="h-full"
+            />
+          </Suspense>
         );
       
       case 'preview':

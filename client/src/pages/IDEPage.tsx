@@ -25,66 +25,70 @@ import { Brain, Zap, X, Layers, Rocket } from 'lucide-react';
 import { ECodeLoading } from '@/components/ECodeLoading';
 import { Button } from '@/components/ui/button';
 
-// Reuse existing components
+// Core lightweight components (static imports)
 import { TopNavBar } from '@/components/ide/TopNavBar';
 import { StatusBar } from '@/components/ide/StatusBar';
 import { QuickFileSearch } from '@/components/ide/QuickFileSearch';
 import { KeyboardShortcutsOverlay } from '@/components/ide/KeyboardShortcutsOverlay';
-import { AgentActionsPanel } from '@/components/ide/AgentActionsPanel';
-import { ToolsPanel } from '@/components/ide/ToolsPanel';
-import { ReplitDeploymentPanel } from '@/components/ide/ReplitDeploymentPanel';
-import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
-import { AutonomousWorkspaceViewer } from '@/components/ide/AutonomousWorkspaceViewer';
 import { ReplitFileExplorer } from '@/components/editor/ReplitFileExplorer';
-import { ReplitMonacoEditor } from '@/components/editor/ReplitMonacoEditor';
-import { ResponsiveWebPreview } from '@/components/editor/ResponsiveWebPreview';
-import { ReplitConsole } from '@/components/editor/ReplitConsole';
-import { ReplitGitPanel } from '@/components/editor/ReplitGitPanel';
-import { DatabasePanel } from '@/components/ide/DatabasePanel';
-import { ReplitTerminalPanel } from '@/components/editor/ReplitTerminalPanel';
-import { SecretsPanel } from '@/components/ide/SecretsPanel';
-import { ReplitPackagesPanel } from '@/components/editor/ReplitPackagesPanel';
-import { ReplitTestingPanel } from '@/components/editor/ReplitTestingPanel';
-import { ReplitProblemsPanel } from '@/components/editor/ReplitProblemsPanel';
-import { ReplitSearchPanel } from '@/components/editor/ReplitSearchPanel';
-import { ReplitDebuggerPanel } from '@/components/editor/ReplitDebuggerPanel';
-import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
-import { ReplitOutputPanel } from '@/components/editor/ReplitOutputPanel';
-import { ReplitResourcesPanel } from '@/components/editor/ReplitResourcesPanel';
-import { ReplitSecurityPanel } from '@/components/editor/ReplitSecurityPanel';
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 
-// Priority 1 IDE Features (Production-ready)
-import { EnvVarsManager } from '@/components/ide/EnvVarsManager';
-import { GlobalSearchPanel } from '@/components/ide/GlobalSearchPanel';
-import { LogsViewerPanel } from '@/components/ide/LogsViewerPanel';
+// Heavy components - LAZY LOADED for bundle optimization
+const ReplitMonacoEditor = lazy(() => import('@/components/editor/ReplitMonacoEditor').then(mod => ({ default: mod.ReplitMonacoEditor })));
+const ReplitTerminalPanel = lazy(() => import('@/components/editor/ReplitTerminalPanel').then(mod => ({ default: mod.ReplitTerminalPanel })));
+const ReplitDeploymentPanel = lazy(() => import('@/components/ide/ReplitDeploymentPanel').then(mod => ({ default: mod.ReplitDeploymentPanel })));
+const ReplitAgentPanelV3 = lazy(() => import('@/components/ai/ReplitAgentPanelV3').then(mod => ({ default: mod.ReplitAgentPanelV3 })));
+const AutonomousWorkspaceViewer = lazy(() => import('@/components/ide/AutonomousWorkspaceViewer').then(mod => ({ default: mod.AutonomousWorkspaceViewer })));
+const ReplitGitPanel = lazy(() => import('@/components/editor/ReplitGitPanel').then(mod => ({ default: mod.ReplitGitPanel })));
+const DatabasePanel = lazy(() => import('@/components/ide/DatabasePanel').then(mod => ({ default: mod.DatabasePanel })));
+const ReplitConsole = lazy(() => import('@/components/editor/ReplitConsole').then(mod => ({ default: mod.ReplitConsole })));
+const ResponsiveWebPreview = lazy(() => import('@/components/editor/ResponsiveWebPreview').then(mod => ({ default: mod.ResponsiveWebPreview })));
 
-// Replit-style Progress & Video Replay (Nov 2025)
-import { ProgressPanel } from '@/components/ai/ProgressPanel';
-import { VideoReplayPlayer } from '@/components/ai/VideoReplayPlayer';
+// Secondary panels - lazy loaded
+const AgentActionsPanel = lazy(() => import('@/components/ide/AgentActionsPanel').then(mod => ({ default: mod.AgentActionsPanel })));
+const ToolsPanel = lazy(() => import('@/components/ide/ToolsPanel').then(mod => ({ default: mod.ToolsPanel })));
+const SecretsPanel = lazy(() => import('@/components/ide/SecretsPanel').then(mod => ({ default: mod.SecretsPanel })));
+const ReplitPackagesPanel = lazy(() => import('@/components/editor/ReplitPackagesPanel').then(mod => ({ default: mod.ReplitPackagesPanel })));
+const ReplitTestingPanel = lazy(() => import('@/components/editor/ReplitTestingPanel').then(mod => ({ default: mod.ReplitTestingPanel })));
+const ReplitProblemsPanel = lazy(() => import('@/components/editor/ReplitProblemsPanel').then(mod => ({ default: mod.ReplitProblemsPanel })));
+const ReplitSearchPanel = lazy(() => import('@/components/editor/ReplitSearchPanel').then(mod => ({ default: mod.ReplitSearchPanel })));
+const ReplitDebuggerPanel = lazy(() => import('@/components/editor/ReplitDebuggerPanel').then(mod => ({ default: mod.ReplitDebuggerPanel })));
+const ReplitSettingsPanel = lazy(() => import('@/components/editor/ReplitSettingsPanel').then(mod => ({ default: mod.ReplitSettingsPanel })));
+const ReplitOutputPanel = lazy(() => import('@/components/editor/ReplitOutputPanel').then(mod => ({ default: mod.ReplitOutputPanel })));
+const ReplitResourcesPanel = lazy(() => import('@/components/editor/ReplitResourcesPanel').then(mod => ({ default: mod.ReplitResourcesPanel })));
+const ReplitSecurityPanel = lazy(() => import('@/components/editor/ReplitSecurityPanel').then(mod => ({ default: mod.ReplitSecurityPanel })));
 
-// Replit-style Visual Editor, Rewind, Resources, Workflows (Dec 2025)
-import { VisualEditorPanel } from '@/components/ide/VisualEditorPanel';
-import { RewindPanel } from '@/components/ide/RewindPanel';
-import { ResourcesPanel } from '@/components/ide/ResourcesPanel';
-import { WorkflowsPanel } from '@/components/ide/WorkflowsPanel';
-import { EnhancedRunButton } from '@/components/ide/EnhancedRunButton';
+// Priority 1 IDE Features - lazy loaded
+const EnvVarsManager = lazy(() => import('@/components/ide/EnvVarsManager').then(mod => ({ default: mod.EnvVarsManager })));
+const GlobalSearchPanel = lazy(() => import('@/components/ide/GlobalSearchPanel').then(mod => ({ default: mod.GlobalSearchPanel })));
+const LogsViewerPanel = lazy(() => import('@/components/ide/LogsViewerPanel').then(mod => ({ default: mod.LogsViewerPanel })));
 
-// Additional missing components from EditorPage
-import { CommandPalette } from '@/components/CommandPalette';
-import { GlobalSearch } from '@/components/GlobalSearch';
-import { EnvironmentVariables } from '@/components/EnvironmentVariables';
-import { DatabaseBrowser } from '@/components/DatabaseBrowser';
-import { ReplitDB } from '@/components/ReplitDB';
-import { ImportExport } from '@/components/ImportExport';
-import { AIAssistant } from '@/components/AIAssistant';
-import { BillingSystem } from '@/components/BillingSystem';
-import { ExtensionsMarketplace } from '@/components/ExtensionsMarketplace';
-import { CollaborationPresence } from '@/components/editor/CollaborationPresence';
-import { CollaborationPanel } from '@/components/CollaborationPanel';
-import { RealTimeCollaborators } from '@/components/RealTimeCollaborators';
-import { TestRunner } from '@/components/TestRunner';
-import { Shell } from '@/components/Shell';
+// Replit-style Progress & Video Replay - lazy loaded
+const ProgressPanel = lazy(() => import('@/components/ai/ProgressPanel').then(mod => ({ default: mod.ProgressPanel })));
+const VideoReplayPlayer = lazy(() => import('@/components/ai/VideoReplayPlayer').then(mod => ({ default: mod.VideoReplayPlayer })));
+
+// Replit-style Visual Editor, Rewind, Resources, Workflows - lazy loaded
+const VisualEditorPanel = lazy(() => import('@/components/ide/VisualEditorPanel').then(mod => ({ default: mod.VisualEditorPanel })));
+const RewindPanel = lazy(() => import('@/components/ide/RewindPanel').then(mod => ({ default: mod.RewindPanel })));
+const ResourcesPanel = lazy(() => import('@/components/ide/ResourcesPanel').then(mod => ({ default: mod.ResourcesPanel })));
+const WorkflowsPanel = lazy(() => import('@/components/ide/WorkflowsPanel').then(mod => ({ default: mod.WorkflowsPanel })));
+const EnhancedRunButton = lazy(() => import('@/components/ide/EnhancedRunButton').then(mod => ({ default: mod.EnhancedRunButton })));
+
+// Additional components - lazy loaded
+const CommandPalette = lazy(() => import('@/components/CommandPalette').then(mod => ({ default: mod.CommandPalette })));
+const GlobalSearch = lazy(() => import('@/components/GlobalSearch').then(mod => ({ default: mod.GlobalSearch })));
+const EnvironmentVariables = lazy(() => import('@/components/EnvironmentVariables').then(mod => ({ default: mod.EnvironmentVariables })));
+const DatabaseBrowser = lazy(() => import('@/components/DatabaseBrowser').then(mod => ({ default: mod.DatabaseBrowser })));
+const ReplitDB = lazy(() => import('@/components/ReplitDB').then(mod => ({ default: mod.ReplitDB })));
+const ImportExport = lazy(() => import('@/components/ImportExport').then(mod => ({ default: mod.ImportExport })));
+const AIAssistant = lazy(() => import('@/components/AIAssistant').then(mod => ({ default: mod.AIAssistant })));
+const BillingSystem = lazy(() => import('@/components/BillingSystem').then(mod => ({ default: mod.BillingSystem })));
+const ExtensionsMarketplace = lazy(() => import('@/components/ExtensionsMarketplace').then(mod => ({ default: mod.ExtensionsMarketplace })));
+const CollaborationPresence = lazy(() => import('@/components/editor/CollaborationPresence').then(mod => ({ default: mod.CollaborationPresence })));
+const CollaborationPanel = lazy(() => import('@/components/CollaborationPanel').then(mod => ({ default: mod.CollaborationPanel })));
+const RealTimeCollaborators = lazy(() => import('@/components/RealTimeCollaborators').then(mod => ({ default: mod.RealTimeCollaborators })));
+const TestRunner = lazy(() => import('@/components/TestRunner').then(mod => ({ default: mod.TestRunner })));
+const Shell = lazy(() => import('@/components/Shell').then(mod => ({ default: mod.Shell })));
 
 // Lazy load for performance (heavy components)
 const DeploymentManager = lazy(() => import('@/components/DeploymentManager').then(module => ({ default: module.DeploymentManager })));

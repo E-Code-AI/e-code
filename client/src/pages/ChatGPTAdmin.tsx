@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -26,7 +26,17 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { io, Socket } from 'socket.io-client';
 import { format } from 'date-fns';
-import MonacoEditor from '@monaco-editor/react';
+
+const MonacoEditor = React.lazy(() => import('@monaco-editor/react'));
+
+const MonacoFallback = () => (
+  <div className="h-full flex items-center justify-center bg-muted/30">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      <p className="text-sm text-muted-foreground">Loading editor...</p>
+    </div>
+  </div>
+);
 
 interface AgentSession {
   id: string;
@@ -723,17 +733,19 @@ export default function ChatGPTAdmin() {
                           Save
                         </Button>
                       </div>
-                      <MonacoEditor
-                        value={fileContent}
-                        onChange={(value) => setFileContent(value || '')}
-                        language="typescript"
-                        theme="vs-dark"
-                        options={{
-                          minimap: { enabled: false },
-                          fontSize: 14,
-                          lineNumbers: 'on',
-                        }}
-                      />
+                      <Suspense fallback={<MonacoFallback />}>
+                        <MonacoEditor
+                          value={fileContent}
+                          onChange={(value) => setFileContent(value || '')}
+                          language="typescript"
+                          theme="vs-dark"
+                          options={{
+                            minimap: { enabled: false },
+                            fontSize: 14,
+                            lineNumbers: 'on',
+                          }}
+                        />
+                      </Suspense>
                     </>
                   ) : (
                     <div className="flex-1 flex items-center justify-center text-muted-foreground">
