@@ -4,7 +4,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { storage } from '../storage';
 import { billingService } from './billing-service';
-import { deploymentWebSocketService, DeploymentStatusType } from './deployment-websocket-service';
+import { deploymentWebSocketService, DeploymentStatusType, UIStatusType, translateStatusToUI } from './deployment-websocket-service';
 
 export interface DeploymentConfig {
   id: string;

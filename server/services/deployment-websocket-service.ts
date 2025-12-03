@@ -66,8 +66,66 @@ function decrementActiveConnections(ip: string): void {
   }
 }
 
-// Deployment status types (must match deployment-manager.ts)
+// Internal deployment status types (used by deployment-manager.ts)
 export type DeploymentStatusType = 'pending' | 'building' | 'deploying' | 'active' | 'failed' | 'stopped';
+
+// UI-friendly status types (used by frontend)
+export type UIStatusType = 'idle' | 'publishing' | 'live' | 'failed' | 'needs-republish';
+
+/**
+ * Translates internal deployment status to UI-friendly status
+ * Maps: pending|building|deploying → publishing
+ *       active → live
+ *       failed → failed
+ *       stopped → idle
+ */
+export function translateStatusToUI(
+  internalStatus: DeploymentStatusType,
+  lastCodeChange?: Date | string | null,
+  deployedAt?: Date | string | null
+): UIStatusType {
+  switch (internalStatus) {
+    case 'pending':
+    case 'building':
+    case 'deploying':
+      return 'publishing';
+    case 'active':
+      if (lastCodeChange && deployedAt) {
+        const codeChangeTime = typeof lastCodeChange === 'string' ? new Date(lastCodeChange).getTime() : lastCodeChange.getTime();
+        const deployedTime = typeof deployedAt === 'string' ? new Date(deployedAt).getTime() : deployedAt.getTime();
+        if (codeChangeTime > deployedTime) {
+          return 'needs-republish';
+        }
+      }
+      return 'live';
+    case 'failed':
+      return 'failed';
+    case 'stopped':
+      return 'idle';
+    default:
+      return 'idle';
+  }
+}
+
+/**
+ * Translates UI-friendly status back to internal status (for backward compatibility)
+ */
+export function translateStatusFromUI(uiStatus: UIStatusType): DeploymentStatusType {
+  switch (uiStatus) {
+    case 'publishing':
+      return 'deploying';
+    case 'live':
+      return 'active';
+    case 'needs-republish':
+      return 'active';
+    case 'failed':
+      return 'failed';
+    case 'idle':
+      return 'stopped';
+    default:
+      return 'stopped';
+  }
+}
 
 // WebSocket message types
 export interface DeploymentWebSocketMessage {
@@ -75,7 +133,9 @@ export interface DeploymentWebSocketMessage {
   deploymentId: string;
   data?: {
     status?: DeploymentStatusType;
+    uiStatus?: UIStatusType;
     previousStatus?: DeploymentStatusType;
+    previousUiStatus?: UIStatusType;
     log?: string;
     timestamp?: string;
     url?: string;
@@ -400,14 +460,19 @@ class DeploymentWebSocketService extends EventEmitter {
   
   // ===== Public API for DeploymentManager to call =====
   
-  // Broadcast status change to all subscribers
+  // Broadcast status change to all subscribers with UI-friendly status translation
   broadcastStatusChange(deploymentId: string, status: DeploymentStatusType, previousStatus?: DeploymentStatusType, url?: string) {
+    const uiStatus = translateStatusToUI(status);
+    const previousUiStatus = previousStatus ? translateStatusToUI(previousStatus) : undefined;
+    
     this.broadcastToDeployment(deploymentId, {
       type: 'status_change',
       deploymentId,
       data: {
         status,
+        uiStatus,
         previousStatus,
+        previousUiStatus,
         url,
         timestamp: new Date().toISOString(),
       },
