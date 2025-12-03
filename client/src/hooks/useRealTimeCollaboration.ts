@@ -90,7 +90,7 @@ export function useRealTimeCollaboration({ projectId, autoConnect = true }: UseR
         projectId: projectId.toString(),
         odUserId: user.id.toString(),
         username: user.username || 'Anonymous',
-        avatar: user.avatar
+        avatar: user.avatarUrl || undefined
       },
       transports: ['websocket', 'polling'],
       reconnection: true,
