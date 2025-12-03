@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState, useRef, Suspense } from "react";
 import { useParams } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -8,7 +8,6 @@ import { apiRequest } from "@/lib/queryClient";
 import TopNavbar from "@/components/TopNavbar";
 import { ReplitEditorLayout } from "@/components/editor/ReplitEditorLayout";
 import { ReplitFileSidebar } from "@/components/editor/ReplitFileSidebar";
-import { ReplitCodeEditor } from "@/components/editor/ReplitCodeEditor";
 import { ReplitAgentPanelV3 } from "@/components/ai/ReplitAgentPanelV3";
 import { WebPreview } from "@/components/WebPreview";
 import { ReplitConsole } from "@/components/editor/ReplitConsole";
@@ -16,7 +15,20 @@ import { ReplitDB } from "@/components/ReplitDB";
 import { NixConfig } from "@/components/NixConfig";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
 import { ShortcutHint, ShortcutTester } from "@/components/utilities";
-import { Bot, Database, Globe, Package } from "lucide-react";
+import { Bot, Database, Globe, Package, Loader2 } from "lucide-react";
+
+const ReplitCodeEditor = React.lazy(() => 
+  import("@/components/editor/ReplitCodeEditor").then(module => ({ default: module.ReplitCodeEditor }))
+);
+
+const EditorFallback = () => (
+  <div className="h-full flex items-center justify-center bg-muted/30">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      <p className="text-sm text-muted-foreground">Loading editor...</p>
+    </div>
+  </div>
+);
 
 type EditorProps = {
   projectId?: string | null;
@@ -575,12 +587,14 @@ export default function Editor(props: EditorProps = {}) {
           />
         }
         centerPanel={
-          <ReplitCodeEditor
-            files={files}
-            activeFile={activeFile}
-            onFileUpdate={handleFileUpdate}
-            className="h-full"
-          />
+          <Suspense fallback={<EditorFallback />}>
+            <ReplitCodeEditor
+              files={files}
+              activeFile={activeFile}
+              onFileUpdate={handleFileUpdate}
+              className="h-full"
+            />
+          </Suspense>
         }
         bottomPanel={bottomPanel}
         rightPanels={rightPanels}

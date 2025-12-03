@@ -1,8 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Terminal as XTerm } from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
-import { WebLinksAddon } from 'xterm-addon-web-links';
-import 'xterm/css/xterm.css';
+import React, { useEffect, useRef, useState, useCallback, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -43,83 +39,141 @@ import {
   History,
   Palette,
   Split,
-  Command
+  Command,
+  Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ReplitHeader } from '@/components/layout/ReplitHeader';
 import { ECodeLoading } from '@/components/ECodeLoading';
 
+const themes = {
+  default: {
+    background: '#1e1e1e',
+    foreground: '#d4d4d4',
+    cursor: '#d4d4d4',
+    black: '#000000',
+    red: '#cd3131',
+    green: '#0dbc79',
+    yellow: '#e5e510',
+    blue: '#2472c8',
+    magenta: '#bc3fbc',
+    cyan: '#11a8cd',
+    white: '#e5e5e5',
+    brightBlack: '#666666',
+    brightRed: '#f14c4c',
+    brightGreen: '#23d18b',
+    brightYellow: '#f5f543',
+    brightBlue: '#3b8eea',
+    brightMagenta: '#d670d6',
+    brightCyan: '#29b8db',
+    brightWhite: '#e5e5e5'
+  },
+  monokai: {
+    background: '#272822',
+    foreground: '#f8f8f2',
+    cursor: '#f8f8f2',
+    black: '#272822',
+    red: '#f92672',
+    green: '#a6e22e',
+    yellow: '#f4bf75',
+    blue: '#66d9ef',
+    magenta: '#ae81ff',
+    cyan: '#a1efe4',
+    white: '#f8f8f2',
+    brightBlack: '#75715e',
+    brightRed: '#f92672',
+    brightGreen: '#a6e22e',
+    brightYellow: '#f4bf75',
+    brightBlue: '#66d9ef',
+    brightMagenta: '#ae81ff',
+    brightCyan: '#a1efe4',
+    brightWhite: '#f9f8f5'
+  }
+};
+
 interface ShellSession {
   id: string;
   name: string;
-  terminal: XTerm;
-  fitAddon: FitAddon;
+  terminal: any;
+  fitAddon: any;
   websocket?: WebSocket;
   cwd: string;
   history: string[];
   historyIndex: number;
 }
 
-export default function Shell() {
+interface XTermModules {
+  Terminal: any;
+  FitAddon: any;
+  WebLinksAddon: any;
+}
+
+const TerminalLoadingFallback = () => (
+  <div className="flex-1 bg-[#1e1e1e] flex items-center justify-center">
+    <div className="flex flex-col items-center gap-3">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <p className="text-sm text-muted-foreground">Loading terminal...</p>
+    </div>
+  </div>
+);
+
+function ShellContent() {
   const [sessions, setSessions] = useState<ShellSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState('default');
   const [fontSize, setFontSize] = useState(14);
+  const [xtermModules, setXtermModules] = useState<XTermModules | null>(null);
   const terminalRefs = useRef<{ [key: string]: HTMLDivElement }>({});
   const { toast } = useToast();
 
-  const themes = {
-    default: {
-      background: '#1e1e1e',
-      foreground: '#d4d4d4',
-      cursor: '#d4d4d4',
-      black: '#000000',
-      red: '#cd3131',
-      green: '#0dbc79',
-      yellow: '#e5e510',
-      blue: '#2472c8',
-      magenta: '#bc3fbc',
-      cyan: '#11a8cd',
-      white: '#e5e5e5',
-      brightBlack: '#666666',
-      brightRed: '#f14c4c',
-      brightGreen: '#23d18b',
-      brightYellow: '#f5f543',
-      brightBlue: '#3b8eea',
-      brightMagenta: '#d670d6',
-      brightCyan: '#29b8db',
-      brightWhite: '#e5e5e5'
-    },
-    monokai: {
-      background: '#272822',
-      foreground: '#f8f8f2',
-      cursor: '#f8f8f2',
-      black: '#272822',
-      red: '#f92672',
-      green: '#a6e22e',
-      yellow: '#f4bf75',
-      blue: '#66d9ef',
-      magenta: '#ae81ff',
-      cyan: '#a1efe4',
-      white: '#f8f8f2',
-      brightBlack: '#75715e',
-      brightRed: '#f92672',
-      brightGreen: '#a6e22e',
-      brightYellow: '#f4bf75',
-      brightBlue: '#66d9ef',
-      brightMagenta: '#ae81ff',
-      brightCyan: '#a1efe4',
-      brightWhite: '#f9f8f5'
-    }
-  };
+  useEffect(() => {
+    let mounted = true;
+    
+    const loadXterm = async () => {
+      try {
+        const [xtermModule, fitAddonModule, webLinksAddonModule] = await Promise.all([
+          import('xterm'),
+          import('xterm-addon-fit'),
+          import('xterm-addon-web-links')
+        ]);
+        
+        await import('xterm/css/xterm.css');
+        
+        if (mounted) {
+          setXtermModules({
+            Terminal: xtermModule.Terminal,
+            FitAddon: fitAddonModule.FitAddon,
+            WebLinksAddon: webLinksAddonModule.WebLinksAddon
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load xterm:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load terminal. Please refresh the page.',
+          variant: 'destructive'
+        });
+      }
+    };
+    
+    loadXterm();
+    
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const createNewSession = useCallback((name?: string) => {
+    if (!xtermModules) return null;
+    
+    const { Terminal, FitAddon, WebLinksAddon } = xtermModules;
+    
     const sessionId = `shell-${Date.now()}`;
     const sessionName = name || `Shell ${sessions.length + 1}`;
     
-    const terminal = new XTerm({
+    const terminal = new Terminal({
       theme: themes[selectedTheme as keyof typeof themes],
       fontSize,
       fontFamily: 'Menlo, Monaco, "Courier New", monospace',
@@ -146,11 +200,10 @@ export default function Shell() {
     setSessions(prev => [...prev, newSession]);
     setActiveSessionId(sessionId);
     
-    // Connect to WebSocket after state update
     setTimeout(() => connectWebSocket(sessionId), 0);
     
     return sessionId;
-  }, [sessions.length, selectedTheme, fontSize]);
+  }, [sessions.length, selectedTheme, fontSize, xtermModules]);
 
   const connectWebSocket = (sessionId: string) => {
     const session = sessions.find(s => s.id === sessionId);
@@ -178,8 +231,7 @@ export default function Shell() {
       session.terminal.write('\r\n\x1b[31mConnection closed.\x1b[0m\r\n');
     };
 
-    // Handle terminal input
-    session.terminal.onData((data) => {
+    session.terminal.onData((data: string) => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(data);
       }
@@ -241,15 +293,13 @@ export default function Shell() {
   };
 
   useEffect(() => {
-    // Create initial session
-    if (sessions.length === 0) {
+    if (xtermModules && sessions.length === 0) {
       createNewSession('Main Shell');
       setIsLoading(false);
     }
-  }, []);
+  }, [xtermModules, sessions.length, createNewSession]);
 
   useEffect(() => {
-    // Attach terminals to DOM
     sessions.forEach(session => {
       const container = terminalRefs.current[session.id];
       if (container && !container.hasChildNodes()) {
@@ -260,7 +310,6 @@ export default function Shell() {
   }, [sessions, activeSessionId]);
 
   useEffect(() => {
-    // Handle resize
     const handleResize = () => {
       sessions.forEach(session => {
         if (session.fitAddon) {
@@ -273,15 +322,11 @@ export default function Shell() {
     return () => window.removeEventListener('resize', handleResize);
   }, [sessions]);
 
-  if (isLoading) {
+  if (!xtermModules || isLoading) {
     return (
       <div className="min-h-screen bg-[var(--ecode-background)] flex flex-col">
         <ReplitHeader />
-        <div className="flex-1 relative">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <ECodeLoading size="lg" text="Loading Shell..." />
-          </div>
-        </div>
+        <TerminalLoadingFallback />
       </div>
     );
   }
@@ -291,7 +336,6 @@ export default function Shell() {
       <ReplitHeader />
       
       <div className="flex-1 flex flex-col">
-        {/* Shell Header */}
         <div className="bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] px-4 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -300,7 +344,6 @@ export default function Shell() {
                 <h1 className="text-lg font-semibold text-[var(--ecode-text)]">Shell</h1>
               </div>
               
-              {/* Session Tabs */}
               <Tabs value={activeSessionId} onValueChange={setActiveSessionId}>
                 <TabsList className="h-8 bg-[var(--ecode-background)]">
                   {sessions.map(session => (
@@ -337,7 +380,6 @@ export default function Shell() {
               </Tabs>
             </div>
 
-            {/* Shell Actions */}
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
@@ -416,7 +458,6 @@ export default function Shell() {
           </div>
         </div>
 
-        {/* Shell Info Bar */}
         <div className="bg-[var(--ecode-surface-secondary)] border-b border-[var(--ecode-border)] px-4 py-2">
           <div className="flex items-center justify-between text-xs text-[var(--ecode-text-secondary)]">
             <div className="flex items-center gap-4">
@@ -446,7 +487,6 @@ export default function Shell() {
           </div>
         </div>
 
-        {/* Terminal Container */}
         <div className="flex-1 bg-[#1e1e1e] p-4">
           {sessions.map(session => (
             <div
@@ -460,7 +500,6 @@ export default function Shell() {
           ))}
         </div>
 
-        {/* Shell Status Bar */}
         <div className="bg-[var(--ecode-surface)] border-t border-[var(--ecode-border)] px-4 py-1">
           <div className="flex items-center justify-between text-xs text-[var(--ecode-text-secondary)]">
             <div className="flex items-center gap-4">
@@ -478,5 +517,18 @@ export default function Shell() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Shell() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[var(--ecode-background)] flex flex-col">
+        <ReplitHeader />
+        <TerminalLoadingFallback />
+      </div>
+    }>
+      <ShellContent />
+    </Suspense>
   );
 }

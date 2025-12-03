@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -8,7 +8,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMediaQuery, useIsDesktop } from '@/hooks/use-media-query';
@@ -21,11 +22,23 @@ import { ReplitGitPanel } from './ReplitGitPanel';
 import { ReplitDatabasePanel } from './ReplitDatabasePanel';
 import { ReplitPackagesPanel } from './ReplitPackagesPanel';
 import { ReplitSettingsPanel } from './ReplitSettingsPanel';
-import { ReplitTerminalPanel } from './ReplitTerminalPanel';
 import { ReplitSecretsPanel } from './ReplitSecretsPanel';
 import { ReplitThemesPanel } from './ReplitThemesPanel';
 import { ReplitDebuggerPanel } from './ReplitDebuggerPanel';
 import { ReplitHistoryPanel } from './ReplitHistoryPanel';
+
+const ReplitTerminalPanel = React.lazy(() => 
+  import('./ReplitTerminalPanel').then(module => ({ default: module.ReplitTerminalPanel }))
+);
+
+const TerminalFallback = () => (
+  <div className="h-full flex items-center justify-center bg-background">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+      <p className="text-xs text-muted-foreground">Loading terminal...</p>
+    </div>
+  </div>
+);
 // Lazy load Splits to avoid bundling with non-editor pages
 // Using V2 with SplitsLayout + Floating Panes support
 const SplitsEditorLayout = React.lazy(() => 
@@ -184,7 +197,11 @@ export function ReplitEditorLayout({
       case 'settings':
         return <ReplitSettingsPanel projectId={projectId} />;
       case 'terminal':
-        return <ReplitTerminalPanel projectId={projectId} />;
+        return (
+          <Suspense fallback={<TerminalFallback />}>
+            <ReplitTerminalPanel projectId={projectId} />
+          </Suspense>
+        );
       case 'preview':
         return (
           <div className="p-4 text-center text-muted-foreground">
