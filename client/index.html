@@ -110,12 +110,16 @@
               }
               
               // In development, use MockWebSocket for non-Vite connections
-              // CRITICAL: Allow /ws/agent for autonomous workspace creation
+              // CRITICAL: Allow essential WebSocket paths for core functionality
               const isViteHMR = url.includes('/@vite') || url.includes('__vite') || url.includes('?token=');
-              const isAgentWebSocket = url.includes('/ws/agent') || url.includes('/api/terminal/ws');
-              console.log('[WebSocket] Connection attempt:', url, 'isAgent:', isAgentWebSocket, 'isViteHMR:', isViteHMR, 'isDev:', isDevelopment);
+              const isEssentialWebSocket = url.includes('/ws/agent') || 
+                                           url.includes('/api/terminal/ws') ||
+                                           url.includes('/ws/collaboration') ||
+                                           url.includes('/ws/background-tests') ||
+                                           url.includes('/api/runtime/logs/ws');
+              console.log('[WebSocket] Connection attempt:', url, 'isEssential:', isEssentialWebSocket, 'isViteHMR:', isViteHMR, 'isDev:', isDevelopment);
               
-              if (isDevelopment && !isViteHMR && !isAgentWebSocket) {
+              if (isDevelopment && !isViteHMR && !isEssentialWebSocket) {
                 console.log('[WebSocket] Suppressed connection in development:', url);
                 return new MockWebSocket(url, protocols);
               }
