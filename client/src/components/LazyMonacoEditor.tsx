@@ -1,16 +1,13 @@
 /**
- * LazyMonacoEditor - Lazy loaded Monaco Editor wrapper.
- * 
- * This component does NOT import from 'monaco-editor' or '@monaco-editor/react'.
- * Monaco is loaded via CDN script in index.html.
+ * LazyMonacoEditor - Lazy loaded CodeMirror 6 Editor wrapper.
+ * Migrated from Monaco to CodeMirror 6 for better bundle size.
  */
 
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { initMonaco, isMonacoInitialized, getMonaco } from '@/lib/monaco-cdn-loader';
 
-const ExternalMonacoEditor = lazy(() => 
-  import('@/components/editor/ExternalMonacoEditor').then(mod => ({ default: mod.ExternalMonacoEditor }))
+const CM6Editor = lazy(() => 
+  import('@/components/editor/CM6Editor').then(mod => ({ default: mod.CM6Editor }))
 );
 
 interface LazyMonacoEditorProps {
@@ -50,61 +47,28 @@ const EditorSkeleton = () => (
   </div>
 );
 
-function MonacoConfigurer({ children }: { children: React.ReactNode }) {
-  const [isReady, setIsReady] = useState(isMonacoInitialized());
-
-  useEffect(() => {
-    if (!isReady) {
-      initMonaco().then((monaco) => {
-        monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-          noSemanticValidation: false,
-          noSyntaxValidation: false,
-        });
-        
-        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-          target: monaco.languages.typescript.ScriptTarget.Latest,
-          allowNonTsExtensions: true,
-          moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
-          module: monaco.languages.typescript.ModuleKind.CommonJS,
-          noEmit: true,
-          esModuleInterop: true,
-          jsx: monaco.languages.typescript.JsxEmit.React,
-          reactNamespace: 'React',
-          allowJs: true,
-          typeRoots: ['node_modules/@types'],
-        });
-        
-        setIsReady(true);
-      }).catch(console.error);
-    }
-  }, [isReady]);
-
-  if (!isReady) {
-    return <EditorSkeleton />;
-  }
-
-  return <>{children}</>;
-}
-
-export function LazyMonacoEditor({ file, onChange, onSelectionChange, collaboration }: LazyMonacoEditorProps) {
+export function LazyMonacoEditor({ file, onChange, onSelectionChange }: LazyMonacoEditorProps) {
   return (
-    <MonacoConfigurer>
-      <Suspense fallback={<EditorSkeleton />}>
-        <ExternalMonacoEditor
-          value={file?.content || ''}
-          language={file?.language || 'javascript'}
-          onChange={(value) => onChange(value || '')}
-          onMount={(editor) => {
-            if (onSelectionChange) {
-              editor.onDidChangeCursorSelection((e) => {
-                const selection = editor.getModel()?.getValueInRange(e.selection);
-                onSelectionChange(selection);
-              });
-            }
-          }}
-          height="100%"
-        />
-      </Suspense>
-    </MonacoConfigurer>
+    <Suspense fallback={<EditorSkeleton />}>
+      <CM6Editor
+        value={file?.content || ''}
+        language={file?.language || 'javascript'}
+        onChange={onChange}
+        onMount={(view) => {
+          if (onSelectionChange) {
+            view.dom.addEventListener('mouseup', () => {
+              const { from, to } = view.state.selection.main;
+              if (from !== to) {
+                const selected = view.state.sliceDoc(from, to);
+                onSelectionChange(selected);
+              } else {
+                onSelectionChange(undefined);
+              }
+            });
+          }
+        }}
+        height="100%"
+      />
+    </Suspense>
   );
 }
