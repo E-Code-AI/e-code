@@ -37,7 +37,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import Monaco from '@monaco-editor/react';
+import { ExternalMonacoEditor } from '@/components/editor/ExternalMonacoEditor';
 
 interface JSONNode {
   key: string;
@@ -451,7 +451,7 @@ export function ReplitJSONEditor({
               )}
             </ScrollArea>
           ) : (
-            <Monaco
+            <ExternalMonacoEditor
               language="json"
               value={jsonString}
               onChange={handleCodeChange}

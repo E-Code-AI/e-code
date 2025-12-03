@@ -1,6 +1,6 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Editor } from '@monaco-editor/react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import type * as Monaco from 'monaco-editor';
+import { getMonaco, initMonaco } from '@/lib/monaco-cdn-loader';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMediaQuery } from '@/hooks/use-media-query';
@@ -162,16 +162,6 @@ export function MultiEditorManager({
     });
   }, []);
 
-  // Handle Monaco initialization
-  const handleEditorMount = useCallback(
-    (editor: Monaco.editor.IStandaloneCodeEditor, monaco: typeof Monaco) => {
-      monacoRef.current = monaco;
-      setIsLoading(false);
-      setIsMonacoReady(true); // Trigger effect to create editors
-    },
-    []
-  );
-
   // Manage editor instances when tabs change OR Monaco becomes ready
   useEffect(() => {
     if (!monacoRef.current || !isMonacoReady) return;
@@ -238,30 +228,38 @@ export function MultiEditorManager({
     };
   }, []);
 
-  // Use a hidden editor to initialize Monaco
-  // Once initialized, we'll create actual editor instances
+  useEffect(() => {
+    let cancelled = false;
+    
+    if (isLoading) {
+      initMonaco()
+        .then((monaco) => {
+          if (!cancelled) {
+            monacoRef.current = monaco;
+            setIsLoading(false);
+            setIsMonacoReady(true);
+          }
+        })
+        .catch((error) => {
+          console.error('[MultiEditorManager] Failed to initialize Monaco:', error);
+        });
+    }
+    
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoading]);
+
   return (
     <div className={cn('relative h-full w-full', className)}>
-      {/* Hidden initialization editor */}
       {isLoading && (
-        <div className="absolute inset-0 z-10">
-          <Editor
-            height="100%"
-            language="javascript"
-            value=""
-            theme="vs-dark"
-            onMount={handleEditorMount}
-            loading={
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center space-y-2">
-                  <Skeleton className="h-4 w-32 mx-auto" />
-                  <p className="text-sm text-[var(--ecode-text-muted)]">
-                    Initializing editors...
-                  </p>
-                </div>
-              </div>
-            }
-          />
+        <div className="absolute inset-0 z-10 flex items-center justify-center">
+          <div className="text-center space-y-2">
+            <Skeleton className="h-4 w-32 mx-auto" />
+            <p className="text-sm text-[var(--ecode-text-muted)]">
+              Initializing editors...
+            </p>
+          </div>
         </div>
       )}
 

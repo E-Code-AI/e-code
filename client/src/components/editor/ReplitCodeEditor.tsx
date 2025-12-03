@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Editor } from '@monaco-editor/react';
+import { useState, useRef, useEffect } from 'react';
+import { ExternalMonacoEditor } from '@/components/editor/ExternalMonacoEditor';
 import { Button } from '@/components/ui/button';
 import { X, ChevronDown, AlertCircle, RefreshCw, Sparkles, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';

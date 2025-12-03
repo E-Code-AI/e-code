@@ -26,8 +26,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { io, Socket } from 'socket.io-client';
 import { format } from 'date-fns';
-
-const MonacoEditor = React.lazy(() => import('@monaco-editor/react'));
+import { ExternalMonacoEditor } from '@/components/editor/ExternalMonacoEditor';
 
 const MonacoFallback = () => (
   <div className="h-full flex items-center justify-center bg-muted/30">
@@ -734,7 +733,7 @@ export default function ChatGPTAdmin() {
                         </Button>
                       </div>
                       <Suspense fallback={<MonacoFallback />}>
-                        <MonacoEditor
+                        <ExternalMonacoEditor
                           value={fileContent}
                           onChange={(value) => setFileContent(value || '')}
                           language="typescript"
