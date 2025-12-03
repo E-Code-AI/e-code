@@ -1,4 +1,4 @@
-export * from './LazyMonacoEditor';
+export * from './LazyCM6Editor';
 export * from './LazyTerminal';
 export * from './LazyAgGrid';
 export * from './LazyCharts';

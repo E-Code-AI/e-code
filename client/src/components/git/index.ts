@@ -7,9 +7,14 @@ export { VisualDiffEditor } from './VisualDiffEditor';
 export { GitGraph } from './GitGraph';
 export { MergeConflictResolver } from './MergeConflictResolver';
 export { BranchManager } from './BranchManager';
-export { GitBlameDecorator, useGitBlame } from './GitBlameDecorator';
+export { 
+  GitBlameDecorator, 
+  useGitBlame, 
+  getBlameExtensions, 
+  updateBlameData, 
+  clearBlameData 
+} from './GitBlameDecorator';
 
 export type { GitCommitNode } from './GitGraph';
 export type { ConflictBlock, ConflictFile } from './MergeConflictResolver';
 export type { GitBranchInfo } from './BranchManager';
-export type { BlameInfo } from './GitBlameDecorator';
