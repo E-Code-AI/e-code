@@ -38,9 +38,14 @@ import { ToastProvider as DesignSystemToastProvider } from '@/design-system';
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 import { AgentToolsPanel } from '@/components/ai/AgentToolsPanel';
 import { useAgentTools } from '@/hooks/useAgentTools';
-import { Bot } from 'lucide-react';
+import { Bot, Rocket, GitBranch, Package, Key } from 'lucide-react';
+import { DeploymentPanel } from '@/components/ide/DeploymentPanel';
+import { GitPanel } from '@/components/ide/GitPanel';
+import { ReplitPackagesPanel } from '@/components/editor/ReplitPackagesPanel';
+import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
+import { ReplitSecretsPanel } from '@/components/editor/ReplitSecretsPanel';
 
-export type TabletPanel = 'editor' | 'terminal' | 'preview' | 'agent';
+export type TabletPanel = 'editor' | 'terminal' | 'preview' | 'agent' | 'deploy' | 'git' | 'packages' | 'secrets' | 'settings';
 
 interface TabletIDEViewProps {
   projectId: string; // UUID string from route params
@@ -165,47 +170,71 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
   
   const handleOpenDeploy = useCallback(() => {
     setDrawerOpen(false);
-    toast({
-      title: '🚀 Deploy',
-      description: 'Handler ready. Deployment configuration panel will be implemented in future phases.',
-      duration: 3000,
-    });
+    setTimeout(() => {
+      setRightPanel('deploy');
+      toast({
+        title: 'Deployments',
+        description: 'Deploy your app to production',
+        duration: 2000,
+      });
+    }, 100);
   }, [toast]);
   
   const handleOpenGit = useCallback(() => {
     setDrawerOpen(false);
-    toast({
-      title: '🌿 Source Control',
-      description: 'Handler ready. Git integration panel will be implemented in future phases.',
-      duration: 3000,
-    });
+    setTimeout(() => {
+      setRightPanel('git');
+      toast({
+        title: 'Source Control',
+        description: 'Manage your Git repository',
+        duration: 2000,
+      });
+    }, 100);
   }, [toast]);
   
   const handleOpenPackages = useCallback(() => {
     setDrawerOpen(false);
-    toast({
-      title: '📦 Packages',
-      description: 'Handler ready. Package manager panel will be implemented in future phases.',
-      duration: 3000,
-    });
+    setTimeout(() => {
+      setRightPanel('packages');
+      toast({
+        title: 'Packages',
+        description: 'Manage project dependencies',
+        duration: 2000,
+      });
+    }, 100);
+  }, [toast]);
+  
+  const handleOpenSecrets = useCallback(() => {
+    setDrawerOpen(false);
+    setTimeout(() => {
+      setRightPanel('secrets');
+      toast({
+        title: 'Secrets',
+        description: 'Manage environment variables',
+        duration: 2000,
+      });
+    }, 100);
   }, [toast]);
   
   const handleOpenDebugger = useCallback(() => {
     setDrawerOpen(false);
     toast({
-      title: '🐛 Debugger',
-      description: 'Handler ready. Debugger panel will be implemented in future phases.',
-      duration: 3000,
+      title: 'Debugger',
+      description: 'Debug panel coming soon',
+      duration: 2000,
     });
   }, [toast]);
   
   const handleOpenSettings = useCallback(() => {
     setDrawerOpen(false);
-    toast({
-      title: '⚙️ Settings',
-      description: 'Handler ready. Settings panel will be implemented in future phases.',
-      duration: 3000,
-    });
+    setTimeout(() => {
+      setRightPanel('settings');
+      toast({
+        title: 'Settings',
+        description: 'Configure your IDE',
+        duration: 2000,
+      });
+    }, 100);
   }, [toast]);
   
   // Single panel switcher (for fallback mode - includes Editor, Preview, Terminal, Agent)
@@ -475,6 +504,16 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
                           compact={false}
                         />
                       </div>
+                    ) : rightPanel === 'deploy' ? (
+                      <DeploymentPanel projectId={projectId} className="h-full" />
+                    ) : rightPanel === 'git' ? (
+                      <GitPanel projectId={projectId} />
+                    ) : rightPanel === 'packages' ? (
+                      <ReplitPackagesPanel />
+                    ) : rightPanel === 'secrets' ? (
+                      <ReplitSecretsPanel />
+                    ) : rightPanel === 'settings' ? (
+                      <ReplitSettingsPanel />
                     ) : null}
                   </div>
                 </div>
@@ -504,6 +543,16 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
                       compact={false}
                     />
                   </div>
+                ) : rightPanel === 'deploy' ? (
+                  <DeploymentPanel projectId={projectId} className="h-full" />
+                ) : rightPanel === 'git' ? (
+                  <GitPanel projectId={projectId} />
+                ) : rightPanel === 'packages' ? (
+                  <ReplitPackagesPanel />
+                ) : rightPanel === 'secrets' ? (
+                  <ReplitSecretsPanel />
+                ) : rightPanel === 'settings' ? (
+                  <ReplitSettingsPanel />
                 ) : null}
               </div>
             </div>
