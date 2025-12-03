@@ -46,7 +46,7 @@ export class AgentFileOperationsService extends EventEmitter {
     '.md', '.mdx', '.txt', '.rst',
     // Config files
     '.yml', '.yaml', '.toml', '.xml', '.ini', '.cfg', '.conf',
-    '.env', '.env.local', '.env.development', '.env.production',
+    '.env', '.local', '.development', '.production', '.staging', '.test', '.example',
     '.gitignore', '.gitattributes', '.editorconfig', '.prettierrc', '.eslintrc',
     '.babelrc', '.nvmrc', '.npmrc', '.yarnrc',
     // Backend languages
@@ -55,6 +55,15 @@ export class AgentFileOperationsService extends EventEmitter {
     // Other
     '.map', '.lock', '.log', '.csv', '.tsv', '.ejs', '.hbs', '.pug', '.njk',
     '.dockerfile', '.dockerignore', '.makefile', '.cmake'
+  ];
+  
+  // Special files that don't have standard extensions
+  private readonly ALLOWED_SPECIAL_FILES = [
+    '.env', '.env.local', '.env.development', '.env.production', '.env.staging', '.env.test', '.env.example',
+    '.gitignore', '.gitattributes', '.editorconfig', '.prettierrc', '.eslintrc', '.babelrc',
+    '.nvmrc', '.npmrc', '.yarnrc', 'Dockerfile', 'Makefile', 'CMakeLists.txt',
+    'package.json', 'tsconfig.json', 'tailwind.config.js', 'vite.config.ts',
+    'next.config.js', 'next.config.mjs', 'postcss.config.js', 'webpack.config.js'
   ];
   private fileWatcher?: chokidar.FSWatcher;
   private diffTool = new diff_match_patch();
@@ -600,10 +609,33 @@ export class AgentFileOperationsService extends EventEmitter {
       throw new Error('Invalid file path');
     }
     
-    // Check extension
+    // Get the file name (without directories)
+    const fileName = path.basename(filePath).toLowerCase();
+    
+    // ✅ CRITICAL FIX (Dec 3, 2025): Smart extension handling for dotfiles and compound extensions
+    // Check if it's a special file that's always allowed
+    if (this.ALLOWED_SPECIAL_FILES.some(f => fileName === f.toLowerCase() || fileName.endsWith(f.toLowerCase()))) {
+      return; // Valid
+    }
+    
+    // For dotfiles like .env.local, check if the base is .env
+    if (fileName.startsWith('.env')) {
+      return; // All .env variants are allowed
+    }
+    
+    // Standard extension check
     const ext = path.extname(filePath).toLowerCase();
     if (ext && !this.ALLOWED_EXTENSIONS.includes(ext)) {
       throw new Error(`File extension not allowed: ${ext}`);
+    }
+    
+    // Handle files with no extension (like Dockerfile, Makefile, etc.)
+    if (!ext && !this.ALLOWED_SPECIAL_FILES.includes(fileName)) {
+      // Allow common extensionless config files
+      const allowedNoExt = ['dockerfile', 'makefile', 'procfile', 'gemfile', 'rakefile', 'readme', 'license', 'changelog'];
+      if (!allowedNoExt.includes(fileName)) {
+        throw new Error(`File without allowed extension: ${fileName}`);
+      }
     }
   }
 
