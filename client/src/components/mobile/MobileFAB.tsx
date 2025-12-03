@@ -35,7 +35,7 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
     enabled: !!projectId,
   });
 
-  const status = runtimeStatus?.status || 'stopped';
+  const status: RuntimeStatus['status'] = runtimeStatus?.status || 'stopped';
   const isRunning = runtimeStatus?.isRunning || false;
 
   // Start project execution mutation
@@ -117,10 +117,10 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
     triggerHaptic(10);
 
     if (isRunning) {
-      stopMutation.mutate();
+      stopMutation.mutate(undefined);
       triggerHaptic([10, 50, 10]);
     } else {
-      startMutation.mutate();
+      startMutation.mutate(undefined);
       triggerHaptic([10, 50, 10]);
     }
   };
@@ -135,7 +135,10 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
 
   // Determine FAB appearance based on state
   const getButtonState = () => {
-    if (status === 'error') {
+    // Check status directly to avoid type narrowing issues
+    const currentStatus = status as string;
+    
+    if (currentStatus === 'error') {
       return {
         icon: AlertCircle,
         bgColor: 'bg-red-500 hover:bg-red-600 active:bg-red-700',
@@ -144,7 +147,7 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
       };
     }
     
-    if (isLoading || status === 'starting') {
+    if (isLoading || currentStatus === 'starting') {
       return {
         icon: Loader2,
         bgColor: 'bg-blue-500',
@@ -154,7 +157,7 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
       };
     }
     
-    if (isRunning || status === 'running') {
+    if (isRunning || currentStatus === 'running') {
       return {
         icon: Square,
         bgColor: 'bg-red-500 hover:bg-red-600 active:bg-red-700',

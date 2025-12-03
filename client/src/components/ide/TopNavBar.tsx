@@ -44,6 +44,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { WorkspaceSettings } from '@/components/WorkspaceSettings';
 import { AddTabMenu } from './AddTabMenu';
+import { ReplitPublishButton } from './ReplitPublishButton';
 import { useTheme } from '@/components/ThemeProvider';
 import { useLocation } from 'wouter';
 
@@ -64,6 +65,7 @@ interface TopNavBarProps {
   projectName: string;
   projectSlug: string;
   ownerUsername: string;
+  projectId: string;
   isDeployed: boolean;
   onRun: () => void;
   isRunning: boolean;
@@ -79,12 +81,15 @@ interface TopNavBarProps {
   showCollaboration?: boolean;
   onToggleCollaboration?: () => void;
   collaboratorCount?: number;
+  onOpenDeployLogs?: () => void;
+  onOpenDeployAnalytics?: () => void;
 }
 
 export function TopNavBar({
   projectName,
   projectSlug,
   ownerUsername,
+  projectId,
   isDeployed,
   onRun,
   isRunning,
@@ -99,7 +104,9 @@ export function TopNavBar({
   onToggleFileExplorer,
   showCollaboration,
   onToggleCollaboration,
-  collaboratorCount = 0
+  collaboratorCount = 0,
+  onOpenDeployLogs,
+  onOpenDeployAnalytics,
 }: TopNavBarProps) {
   const { user, logoutMutation } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -274,6 +281,13 @@ export function TopNavBar({
             </>
           )}
         </Button>
+        
+        {/* Publish Button */}
+        <ReplitPublishButton
+          projectId={projectId}
+          onOpenLogs={onOpenDeployLogs}
+          onOpenAnalytics={onOpenDeployAnalytics}
+        />
         
         {/* Theme Switcher */}
         <DropdownMenu>

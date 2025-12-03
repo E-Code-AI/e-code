@@ -1,8 +1,8 @@
-import { Code2, Terminal as TerminalIcon, Monitor, MoreHorizontal, Sparkles } from 'lucide-react';
+import { Code2, Terminal as TerminalIcon, Monitor, MoreHorizontal, Sparkles, Rocket } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type MobileTab = 'agent' | 'code' | 'terminal' | 'preview' | 'more';
+type MobileTab = 'agent' | 'code' | 'terminal' | 'preview' | 'deploy' | 'more';
 
 interface Tab {
   id: MobileTab;
@@ -24,6 +24,7 @@ export function ReplitBottomTabs({
     { id: 'code', icon: Code2, label: 'Code' },
     { id: 'terminal', icon: TerminalIcon, label: 'Shell' },
     { id: 'preview', icon: Monitor, label: 'Web' },
+    { id: 'deploy', icon: Rocket, label: 'Deploy' },
     { id: 'more', icon: MoreHorizontal, label: 'More' },
   ];
 
