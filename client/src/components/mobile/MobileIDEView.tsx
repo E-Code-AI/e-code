@@ -8,11 +8,20 @@ import { EnhancedMobileTerminal } from './EnhancedMobileTerminal';
 import { MobilePreviewPanel } from './MobilePreviewPanel';
 import { MobileMoreMenu } from './MobileMoreMenu';
 import { MobileCollaborationPanel } from './MobileCollaborationPanel';
+import { MobileGitPanel } from './MobileGitPanel';
+import { MobilePackagesPanel } from './MobilePackagesPanel';
+import { MobileSecretsPanel } from './MobileSecretsPanel';
+import { MobileDatabasePanel } from './MobileDatabasePanel';
+import { MobileDebugPanel } from './MobileDebugPanel';
+import { MobileSlidePanel } from './MobileSlidePanel';
 import { ReplitBottomTabs } from './ReplitBottomTabs';
 import { MobileFAB } from './MobileFAB';
 import { useTabPersistence, useFileBrowserPersistence } from '@/hooks/use-mobile-persistence';
 import { ReplitAgentPanelV3 } from '../ai/ReplitAgentPanelV3';
+import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
+
+export type MobilePanelType = 'git' | 'packages' | 'secrets' | 'database' | 'settings' | 'debug' | null;
 
 export type MobileTab = 'agent' | 'code' | 'terminal' | 'preview' | 'more';
 
@@ -46,6 +55,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
   const [isFilesOpen, setIsFilesOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isCollaborationOpen, setIsCollaborationOpen] = useState(false);
+  const [activePanel, setActivePanel] = useState<MobilePanelType>(null);
   
   // Keyboard utilities feature flags
   const [enableShortcutHint, setEnableShortcutHint] = useState(() => {
@@ -138,6 +148,16 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
   const handleOpenFiles = () => {
     setIsFilesOpen(true);
     setIsMoreMenuOpen(false);
+  };
+  
+  // Panel handlers - open real slide panels instead of toasts
+  const handleOpenPanel = (panel: MobilePanelType) => {
+    setActivePanel(panel);
+    setIsMoreMenuOpen(false);
+  };
+  
+  const handleClosePanel = () => {
+    setActivePanel(null);
   };
   
   // File selection handler with persistence
@@ -245,6 +265,12 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         onClose={() => setIsMoreMenuOpen(false)}
         onOpenFiles={handleOpenFiles}
         onOpenCollaboration={() => setIsCollaborationOpen(true)}
+        onOpenGit={() => handleOpenPanel('git')}
+        onOpenPackages={() => handleOpenPanel('packages')}
+        onOpenSecrets={() => handleOpenPanel('secrets')}
+        onOpenDatabase={() => handleOpenPanel('database')}
+        onOpenSettings={() => handleOpenPanel('settings')}
+        onOpenDebug={() => handleOpenPanel('debug')}
       />
       
       {/* Collaboration Panel */}
@@ -253,6 +279,62 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         isOpen={isCollaborationOpen}
         onClose={() => setIsCollaborationOpen(false)}
       />
+      
+      {/* Git Panel */}
+      <MobileSlidePanel
+        isOpen={activePanel === 'git'}
+        onClose={handleClosePanel}
+        title="Git"
+      >
+        <MobileGitPanel projectId={normalizedProjectId} className="h-full" />
+      </MobileSlidePanel>
+      
+      {/* Packages Panel */}
+      <MobileSlidePanel
+        isOpen={activePanel === 'packages'}
+        onClose={handleClosePanel}
+        title="Packages"
+      >
+        <MobilePackagesPanel projectId={normalizedProjectId} className="h-full" />
+      </MobileSlidePanel>
+      
+      {/* Secrets Panel */}
+      <MobileSlidePanel
+        isOpen={activePanel === 'secrets'}
+        onClose={handleClosePanel}
+        title="Secrets & Environment"
+      >
+        <MobileSecretsPanel projectId={normalizedProjectId} className="h-full" />
+      </MobileSlidePanel>
+      
+      {/* Database Panel */}
+      <MobileSlidePanel
+        isOpen={activePanel === 'database'}
+        onClose={handleClosePanel}
+        title="Database"
+      >
+        <MobileDatabasePanel projectId={normalizedProjectId} className="h-full" />
+      </MobileSlidePanel>
+      
+      {/* Settings Panel */}
+      <MobileSlidePanel
+        isOpen={activePanel === 'settings'}
+        onClose={handleClosePanel}
+        title="Settings"
+      >
+        <div className="h-full overflow-y-auto p-4">
+          <ReplitSettingsPanel />
+        </div>
+      </MobileSlidePanel>
+      
+      {/* Debug Panel */}
+      <MobileSlidePanel
+        isOpen={activePanel === 'debug'}
+        onClose={handleClosePanel}
+        title="Debugger"
+      >
+        <MobileDebugPanel projectId={normalizedProjectId} className="h-full" />
+      </MobileSlidePanel>
       
       {/* Keyboard Utilities (work with external keyboards on mobile) */}
       {enableShortcutHint && <ShortcutHint />}
