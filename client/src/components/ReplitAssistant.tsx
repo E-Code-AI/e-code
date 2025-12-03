@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Sparkles, Send, X, Copy, Check, ChevronDown, ChevronUp,
@@ -14,8 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { LightSyntaxHighlighter, darkStyle } from '@/components/ui/LightSyntaxHighlighter';
 
 interface ReplitAssistantProps {
   projectId: number;
@@ -342,18 +341,17 @@ export function ReplitAssistant({
                                     )}
                                   </div>
                                 </div>
-                                <SyntaxHighlighter
+                                <LightSyntaxHighlighter
                                   language={language}
-                                  style={oneDark}
+                                  style={darkStyle}
                                   customStyle={{
                                     margin: 0,
                                     borderRadius: '0 0 0.375rem 0.375rem',
                                     fontSize: '0.75rem'
                                   }}
-                                  {...props}
                                 >
                                   {code}
-                                </SyntaxHighlighter>
+                                </LightSyntaxHighlighter>
                               </div>
                             );
                           }

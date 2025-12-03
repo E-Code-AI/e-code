@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAI } from '@/hooks/useAI';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -22,8 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Sparkles, MessageSquare, Code, GitCompare, FileText, TestTube } from 'lucide-react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { LightSyntaxHighlighter, darkStyle } from '@/components/ui/LightSyntaxHighlighter';
 import { Markdown } from '@/components/ui/markdown';
 
 interface AIToolProps {
@@ -292,13 +291,13 @@ const AIPanel: React.FC<AIToolProps> = ({
               <ScrollArea className="flex-1 border rounded-md">
                 <div className="p-4">
                   {result ? (
-                    <SyntaxHighlighter
+                    <LightSyntaxHighlighter
                       language={language}
-                      style={vscDarkPlus}
+                      style={darkStyle}
                       customStyle={{ margin: 0, background: 'transparent' }}
                     >
                       {result}
-                    </SyntaxHighlighter>
+                    </LightSyntaxHighlighter>
                   ) : (
                     <p className="text-sm text-muted-foreground italic">
                       Code completion will appear here...
@@ -450,13 +449,13 @@ const AIPanel: React.FC<AIToolProps> = ({
               <ScrollArea className="flex-1 border rounded-md">
                 <div className="p-4">
                   {result ? (
-                    <SyntaxHighlighter
+                    <LightSyntaxHighlighter
                       language={toLanguage}
-                      style={vscDarkPlus}
+                      style={darkStyle}
                       customStyle={{ margin: 0, background: 'transparent' }}
                     >
                       {result}
-                    </SyntaxHighlighter>
+                    </LightSyntaxHighlighter>
                   ) : (
                     <p className="text-sm text-muted-foreground italic">
                       Converted code will appear here...
@@ -544,13 +543,13 @@ const AIPanel: React.FC<AIToolProps> = ({
               <ScrollArea className="flex-1 border rounded-md">
                 <div className="p-4">
                   {result ? (
-                    <SyntaxHighlighter
+                    <LightSyntaxHighlighter
                       language={language}
-                      style={vscDarkPlus}
+                      style={darkStyle}
                       customStyle={{ margin: 0, background: 'transparent' }}
                     >
                       {result}
-                    </SyntaxHighlighter>
+                    </LightSyntaxHighlighter>
                   ) : (
                     <p className="text-sm text-muted-foreground italic">
                       Documented code will appear here...
@@ -649,13 +648,13 @@ const AIPanel: React.FC<AIToolProps> = ({
               <ScrollArea className="flex-1 border rounded-md">
                 <div className="p-4">
                   {result ? (
-                    <SyntaxHighlighter
+                    <LightSyntaxHighlighter
                       language={language}
-                      style={vscDarkPlus}
+                      style={darkStyle}
                       customStyle={{ margin: 0, background: 'transparent' }}
                     >
                       {result}
-                    </SyntaxHighlighter>
+                    </LightSyntaxHighlighter>
                   ) : (
                     <p className="text-sm text-muted-foreground italic">
                       Test code will appear here...
