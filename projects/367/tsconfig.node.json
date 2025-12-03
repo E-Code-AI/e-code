@@ -1,0 +1,4 @@
+{
+  "description": "TypeScript configuration for Vite and build tools, extending base tsconfig",
+  "todo": "Configure based on outline"
+}
