@@ -15,7 +15,6 @@
 |---------|--------|--------|
 | `Dockerfile` | 81 | ✅ Existe |
 | `.dockerignore` | 226 | ✅ Existe |
-| `dokploy/` | - | ✅ **SUPPRIMÉ** (761MB libérés) |
 
 ---
 
@@ -82,7 +81,7 @@ ENV NODE_OPTIONS=$NODE_OPTIONS
 **Problem:** Bloated Docker image preventing deployment to production
 
 **Root Causes:**
-- Dev directories copied into build context: `dokploy/` (800MB), `sdk/`, `cli/`, `vscode-extension/`, `github-copilot-extension/`
+- Dev directories copied into build context: `sdk/`, `cli/`, `vscode-extension/`, `github-copilot-extension/`
 - All dependencies (dev + prod) in final image
 - No build stage separation
 - Source code copied to runtime stage
@@ -93,7 +92,6 @@ ENV NODE_OPTIONS=$NODE_OPTIONS
 **File:** `.dockerignore`  
 **Added Exclusions:**
 ```
-dokploy/              # ~800 MB
 sdk/                  # ~400 MB
 cli/                  # ~200 MB
 vscode-extension/     # ~150 MB
@@ -102,7 +100,7 @@ test/, tests/         # ~50 MB
 mobile/               # ~100 MB
 ```
 
-**Impact:** ~1.8-2 GB excluded from build context
+**Impact:** ~1 GB excluded from build context
 
 #### B. Multi-Stage Build
 **File:** `Dockerfile`
@@ -131,7 +129,6 @@ mobile/               # ~100 MB
 ```json
 "exclude": [
   "mobile/",
-  "dokploy/", 
   "sdk/",
   "cli/",
   "vscode-extension/",
@@ -187,7 +184,7 @@ FROM node:18-alpine
 ENV NODE_OPTIONS=--max-old-space-size=4096
 COPY package*.json tsconfig.json drizzle.config.ts ./
 RUN npm ci --omit=optional              # Reproducible install
-COPY client/ server/ shared/ types/ ./  # Only source (not test/, dokploy/, etc.)
+COPY client/ server/ shared/ types/ ./  # Only source (not test/, etc.)
 RUN npm run build                       # Build with 4GB heap
 
 # Stage 2: Runtime  

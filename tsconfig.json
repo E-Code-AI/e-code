@@ -9,7 +9,6 @@
     "test/**",
     "tests/**",
     "mobile/**",
-    "dokploy/**",
     "vscode-extension/**",
     "sdk/**",
     "cli/**",
