@@ -66,6 +66,7 @@ import agentGridRouter from "./agent-grid.router";
 import createAgentToolsRouter from "./agent-tools.router";
 import { authCompleteRouter } from "./auth-complete";
 import placeholderRouter from "./placeholder.router";
+import analyticsRouter from "./analytics.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -288,6 +289,9 @@ export class MainRouter {
     
     // Agent Grid routes (Phase 2 - AG Grid Dashboard)
     app.use('/api/agent-grid', tierRateLimiters.api, agentGridRouter);
+    
+    // Analytics routes (real-time analytics and metrics)
+    app.use(tierRateLimiters.api, analyticsRouter);
   }
   
   /**
