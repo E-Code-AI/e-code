@@ -75,11 +75,13 @@ const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
 // SOLUTION: Short-circuit WebSocket upgrade requests at the HTTP server level BEFORE
 // Express ever sees them. This completely prevents Express from corrupting WebSocket sockets.
 const httpServer = createServer((req, res) => {
-  // Check if this is a WebSocket upgrade request to our agent endpoint
+  // Check if this is a WebSocket upgrade request to managed endpoints
   const isWsUpgrade = req.headers.upgrade?.toLowerCase() === 'websocket';
   const isAgentPath = req.url?.startsWith('/ws/agent');
+  const isCollaborationPath = req.url?.startsWith('/ws/collaboration');
+  const isSocketIOPath = req.url?.startsWith('/socket.io');
   
-  if (isWsUpgrade && isAgentPath) {
+  if (isWsUpgrade && (isAgentPath || isCollaborationPath || isSocketIOPath)) {
     // DO NOT pass to Express - the 'upgrade' event handler will process this
     // Return without calling app() to prevent any Express middleware from running
     console.log('[HTTP Server] Bypassing Express for WebSocket upgrade:', req.url);
@@ -93,6 +95,13 @@ const httpServer = createServer((req, res) => {
 // Increase max listeners to prevent warnings (we have multiple WebSocket services + Vite HMR)
 // Agent WS, Terminal WS, LSP WS, Collaboration WS, WebRTC, Vite HMR, etc.
 httpServer.setMaxListeners(20);
+
+// 🔍 DEBUG: Log ALL WebSocket upgrade requests early to trace what's happening
+httpServer.prependListener('upgrade', (request, socket, head) => {
+  const url = new URL(request.url!, `http://${request.headers.host || 'localhost'}`);
+  console.log(`[HTTP Server] Upgrade request received: ${url.pathname} from ${request.headers.origin || 'unknown'}`);
+  console.log(`[HTTP Server] Headers: upgrade=${request.headers.upgrade}, connection=${request.headers.connection}`);
+});
 
 // Health check endpoint for deployment health checks
 // Note: Root '/' is handled by Vite middleware (dev) or serveStatic (prod) to serve the React app

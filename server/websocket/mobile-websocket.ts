@@ -121,8 +121,8 @@ export class MobileWebSocketService {
       'default': 'I can help you with coding questions, debugging, optimization, and best practices.'
     };
 
-    const keyword = Object.keys(responses).find(k => message.toLowerCase().includes(k));
-    return responses[keyword] || responses.default;
+    const keyword = Object.keys(responses).find(k => message.toLowerCase().includes(k)) as keyof typeof responses | undefined;
+    return keyword ? responses[keyword] : responses.default;
   }
 }
 
