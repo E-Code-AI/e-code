@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from "react";
-import type * as monaco from 'monaco-editor';
-import { getMonaco, type Monaco } from "@/lib/monaco-cdn-loader";
-import { setupMonacoTheme, getMonacoEditorOptions } from "@/lib/monaco-setup";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { EditorView } from '@codemirror/view';
+import { CM6Editor } from "@/components/editor/CM6Editor";
 import { File } from "@shared/schema";
-import { Search, XCircle, Maximize2, Minimize2, Code, Settings, Share2, Save, CheckCircle } from "lucide-react";
+import { Search, Maximize2, Minimize2, Settings, Share2, Save, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ShareSnippetDialog } from "@/components/ShareSnippetDialog";
@@ -53,36 +52,23 @@ interface CodeEditorProps {
     isConnected: boolean;
     followingUserId: number | null;
     followUser: (userId: number) => void;
-    setEditor?: (editor: monaco.editor.IStandaloneCodeEditor | null) => void;
-    setModel?: (model: monaco.editor.ITextModel | null) => void;
+    setEditor?: (editor: EditorView | null) => void;
+    setModel?: (model: unknown | null) => void;
   };
 }
 
 const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEditorProps) => {
-  const editorRef = useRef<HTMLDivElement>(null);
-  const monacoEditorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
-  const [editorDimensions, setEditorDimensions] = useState({
-    lineHeight: 21,
-    charWidth: 8.4,
-  });
-  const [editorElement, setEditorElement] = useState<HTMLElement | null>(null);
+  const editorViewRef = useRef<EditorView | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
   const [editorSettings, setEditorSettings] = useState({
     fontSize: 14,
     tabSize: 2,
     wordWrap: true,
-    minimap: true,
-    theme: 'replitDark',
-    renderWhitespace: 'selection',
-    bracketPairColorization: true,
-    formatOnPaste: true,
-    formatOnType: false,
-    lineNumbers: true,
-    folding: true,
+    theme: 'dark' as 'dark' | 'light',
     autoSave: true,
     autoSaveDelay: 2000,
   });
-  const [searchOpen, setSearchOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareData, setShareData] = useState<{
     code: string;
@@ -93,125 +79,58 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Update editor when settings change
-  const updateEditorSettings = () => {
-    if (monacoEditorRef.current) {
-      // Update settings that can be changed in real-time
-      monacoEditorRef.current.updateOptions({
-        fontSize: editorSettings.fontSize,
-        tabSize: editorSettings.tabSize,
-        wordWrap: editorSettings.wordWrap ? 'on' : 'off',
-        minimap: {
-          enabled: editorSettings.minimap,
-        },
-        theme: editorSettings.theme,
-        renderWhitespace: editorSettings.renderWhitespace as 'none' | 'boundary' | 'selection' | 'trailing' | 'all',
-        bracketPairColorization: {
-          enabled: editorSettings.bracketPairColorization,
-        },
-        formatOnPaste: editorSettings.formatOnPaste,
-        formatOnType: editorSettings.formatOnType,
-        lineNumbers: editorSettings.lineNumbers ? 'on' : 'off',
-        folding: editorSettings.folding,
-      });
-      
-      const monacoInstance = getMonaco();
-      if (!monacoInstance) return;
-      
-      // Update font info measurements for cursor positioning
-      const fontInfo = monacoEditorRef.current.getOption(monacoInstance.editor.EditorOption.fontInfo);
-      setEditorDimensions({
-        lineHeight: fontInfo.lineHeight,
-        charWidth: fontInfo.typicalHalfwidthCharacterWidth,
-      });
-    }
-  };
-  
-  // Toggle search widget
-  const toggleSearch = () => {
-    if (monacoEditorRef.current) {
-      if (!searchOpen) {
-        // Open search widget
-        const findAction = monacoEditorRef.current.getAction('actions.find');
-        if (findAction) {
-          findAction.run();
-        }
-      } else {
-        // Close search widget
-        monacoEditorRef.current.trigger('', 'closeFindWidget', null);
-      }
-      setSearchOpen(!searchOpen);
-    }
-  };
-  
-  // Toggle fullscreen mode
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
-    // Need to tell Monaco to resize after changing to fullscreen
-    setTimeout(() => {
-      if (monacoEditorRef.current) {
-        monacoEditorRef.current.layout();
-      }
-    }, 100);
   };
 
-  // Handle sharing selected code
   const handleShare = () => {
-    if (!monacoEditorRef.current) return;
+    if (!editorViewRef.current) return;
     
-    const selection = monacoEditorRef.current.getSelection();
-    const model = monacoEditorRef.current.getModel();
+    const view = editorViewRef.current;
+    const state = view.state;
+    const selection = state.selection.main;
     
-    if (!selection || !model) return;
-    
-    // Get selected text or entire file content if nothing selected
     let code = "";
     let lineStart = 1;
-    let lineEnd = model.getLineCount();
+    let lineEnd = state.doc.lines;
     
-    if (!selection.isEmpty()) {
-      code = model.getValueInRange(selection);
-      lineStart = selection.startLineNumber;
-      lineEnd = selection.endLineNumber;
+    if (!selection.empty) {
+      code = state.sliceDoc(selection.from, selection.to);
+      lineStart = state.doc.lineAt(selection.from).number;
+      lineEnd = state.doc.lineAt(selection.to).number;
     } else {
-      code = model.getValue();
+      code = state.doc.toString();
     }
     
     setShareData({ code, lineStart, lineEnd });
     setShareDialogOpen(true);
   };
   
-  // Auto-save functionality
-  const handleAutoSave = useRef((content: string) => {
+  const handleAutoSave = useCallback((content: string) => {
     if (!editorSettings.autoSave) return;
     
-    // Clear existing timeout
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
     }
     
-    // Set new timeout for auto-save
     autoSaveTimeoutRef.current = setTimeout(() => {
       saveFile(content);
     }, editorSettings.autoSaveDelay);
-  }).current;
+  }, [editorSettings.autoSave, editorSettings.autoSaveDelay]);
   
-  // Save file function
   const saveFile = async (content?: string) => {
     if (!file.id || isSaving) return;
     
     setIsSaving(true);
     try {
-      const fileContent = content ?? monacoEditorRef.current?.getValue() ?? file.content;
+      const fileContent = content ?? editorViewRef.current?.state.doc.toString() ?? file.content;
       
-      // Update file via API
       const response = await apiRequest('PATCH', `/api/files/${file.id}`, {
         content: fileContent,
       });
       
       if (response.ok) {
         setLastSaved(new Date());
-        // Clear timeout after successful save
         if (autoSaveTimeoutRef.current) {
           clearTimeout(autoSaveTimeoutRef.current);
           autoSaveTimeoutRef.current = null;
@@ -223,160 +142,84 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
       setIsSaving(false);
     }
   };
-  
-  useEffect(() => {
-    const monacoInstance = getMonaco();
-    if (!monacoInstance) {
-      console.warn('[Monaco] Monaco not yet initialized');
-      return;
+
+  const handleChange = useCallback((newValue: string) => {
+    onChange(newValue);
+    handleAutoSave(newValue);
+    
+    apiRequest('POST', `/api/realtime/${file.projectId}/file-change`, {
+      fileId: file.id,
+      path: file.path,
+      content: newValue
+    }).catch(console.error);
+  }, [onChange, handleAutoSave, file.projectId, file.id, file.path]);
+
+  const handleEditorMount = useCallback((view: EditorView) => {
+    editorViewRef.current = view;
+    
+    if (collaboration?.setEditor) {
+      collaboration.setEditor(view);
     }
     
-    // Setup Monaco themes and snippets
-    setupMonacoTheme(monacoInstance);
-    
-    // Initialize Monaco editor
-    if (editorRef.current && !monacoEditorRef.current) {
-      // Get editor options with our settings
-      const options = getMonacoEditorOptions({
-        theme: editorSettings.theme,
-        fontSize: editorSettings.fontSize,
-        tabSize: editorSettings.tabSize,
-        wordWrap: editorSettings.wordWrap ? 'on' : 'off',
-        minimap: editorSettings.minimap,
-        bracketPairColorization: editorSettings.bracketPairColorization,
-        formatOnPaste: editorSettings.formatOnPaste,
-        formatOnType: editorSettings.formatOnType,
-        renderWhitespace: editorSettings.renderWhitespace as 'none' | 'boundary' | 'selection' | 'trailing' | 'all',
-        lineNumbers: editorSettings.lineNumbers ? 'on' : 'off',
-        // folding is added directly in the create options below
+    const updateCursorPosition = () => {
+      const state = view.state;
+      const pos = state.selection.main.head;
+      const line = state.doc.lineAt(pos);
+      setCursorPosition({
+        line: line.number,
+        column: pos - line.from + 1,
       });
       
-      // Create editor instance
-      monacoEditorRef.current = monacoInstance.editor.create(editorRef.current, {
-        ...options,
-        value: file.content || '',
-        language: getLanguageFromFilename(file.name),
-      });
-      
-      // Add event listener for content changes
-      monacoEditorRef.current.onDidChangeModelContent((e) => {
-        const newValue = monacoEditorRef.current?.getValue() || '';
-        onChange(newValue);
-        
-        // Trigger auto-save
-        handleAutoSave(newValue);
-        
-        // Broadcast file change to real-time service
-        apiRequest('POST', `/api/realtime/${file.projectId}/file-change`, {
-          fileId: file.id,
-          path: file.path,
-          content: newValue
-        }).catch(console.error);
-      });
-      
-      // Add event listener for selection changes
-      monacoEditorRef.current.onDidChangeCursorSelection((e) => {
-        if (onSelectionChange && monacoEditorRef.current) {
-          const selection = monacoEditorRef.current.getSelection();
-          const model = monacoEditorRef.current.getModel();
-          
-          if (selection && model && !selection.isEmpty()) {
-            const selectedText = model.getValueInRange(selection);
-            onSelectionChange(selectedText);
-          } else {
-            onSelectionChange(undefined);
-          }
+      if (onSelectionChange) {
+        const selection = state.selection.main;
+        if (!selection.empty) {
+          const selectedText = state.sliceDoc(selection.from, selection.to);
+          onSelectionChange(selectedText);
+        } else {
+          onSelectionChange(undefined);
         }
-      });
-      
-      // Pass editor instance to collaboration if available
-      if (collaboration?.setEditor) {
-        collaboration.setEditor(monacoEditorRef.current);
-      }
-      if (collaboration?.setModel) {
-        collaboration.setModel(monacoEditorRef.current.getModel());
-      }
-      
-      // Get dimensions for cursor positioning
-      const fontInfo = monacoEditorRef.current.getOption(monacoInstance.editor.EditorOption.fontInfo);
-      setEditorDimensions({
-        lineHeight: fontInfo.lineHeight,
-        charWidth: fontInfo.typicalHalfwidthCharacterWidth,
-      });
-      
-      // Get the dom node for cursor rendering
-      setTimeout(() => {
-        if (editorRef.current) {
-          setEditorElement(
-            editorRef.current.querySelector('.monaco-editor .monaco-scrollable-element .lines-content') as HTMLElement
-          );
-        }
-      }, 100);
-      
-      // Add keyboard shortcuts
-      // Ctrl/Cmd+F for search (already provided by Monaco)
-      
-      // Ctrl/Cmd+S to save
-      monacoEditorRef.current.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS, () => {
-        saveFile();
-      });
-      
-      // Ctrl/Cmd+/ to toggle line comment
-      monacoEditorRef.current.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Slash, () => {
-        monacoEditorRef.current?.trigger('keyboard', 'editor.action.commentLine', {});
-      });
-      
-      // Ctrl/Cmd+Shift+A to toggle block comment
-      monacoEditorRef.current.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyMod.Shift | monacoInstance.KeyCode.KeyA, () => {
-        monacoEditorRef.current?.trigger('keyboard', 'editor.action.blockComment', {});
-      });
-      
-      // Add keyboard shortcut for search (Cmd+F / Ctrl+F) - custom handling
-      monacoEditorRef.current.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyF, () => {
-        toggleSearch();
-      });
-      
-      // Listen for search widget changes
-      monacoEditorRef.current.onDidFocusEditorWidget(() => {
-        // Check if search widget is visible
-        const findDomNode = document.querySelector('.monaco-editor .find-widget');
-        if (findDomNode) {
-          setSearchOpen(true);
-        }
-      });
-    }
-    
-    // Cleanup
-    return () => {
-      if (monacoEditorRef.current) {
-        monacoEditorRef.current.dispose();
-        monacoEditorRef.current = null;
       }
     };
-  }, []); // Initialize once
-  
-  // Update editor settings when they change
+    
+    updateCursorPosition();
+    
+    view.dom.addEventListener('keyup', updateCursorPosition);
+    view.dom.addEventListener('mouseup', updateCursorPosition);
+  }, [collaboration, onSelectionChange]);
+
+  const handleSearch = useCallback(() => {
+    if (!editorViewRef.current) return;
+    
+    const view = editorViewRef.current;
+    view.focus();
+    const event = new KeyboardEvent('keydown', {
+      key: 'f',
+      ctrlKey: navigator.platform.includes('Mac') ? false : true,
+      metaKey: navigator.platform.includes('Mac') ? true : false,
+      bubbles: true,
+    });
+    view.dom.dispatchEvent(event);
+  }, []);
+
   useEffect(() => {
-    updateEditorSettings();
-  }, [editorSettings]);
-  
-  // Update content when file changes
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        saveFile();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   useEffect(() => {
-    if (monacoEditorRef.current) {
-      const currentValue = monacoEditorRef.current.getValue();
-      // Only update if content actually changed to avoid cursor position reset
-      if (currentValue !== file.content && file.content !== undefined) {
-        monacoEditorRef.current.setValue(file.content || '');
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
       }
-      
-      // Update language if file extension changed
-      const model = monacoEditorRef.current.getModel();
-      const monacoInstance = getMonaco();
-      if (model && monacoInstance) {
-        monacoInstance.editor.setModelLanguage(model, getLanguageFromFilename(file.name));
-      }
-    }
-  }, [file.name, file.content]);
+    };
+  }, []);
   
   return (
     <div 
@@ -424,11 +267,8 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  onClick={toggleSearch}
-                  className={cn(
-                    "h-8 w-8",
-                    searchOpen && "bg-accent text-accent-foreground"
-                  )}
+                  onClick={handleSearch}
+                  className="h-8 w-8"
                 >
                   <Search className="h-4 w-4" />
                 </Button>
@@ -461,7 +301,7 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
                         </Label>
                         <Select 
                           value={editorSettings.theme} 
-                          onValueChange={(value) => setEditorSettings({
+                          onValueChange={(value: 'dark' | 'light') => setEditorSettings({
                             ...editorSettings,
                             theme: value
                           })}
@@ -470,8 +310,8 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
                             <SelectValue placeholder="Select theme" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="replitDark">Dark</SelectItem>
-                            <SelectItem value="replitLight">Light</SelectItem>
+                            <SelectItem value="dark">Dark</SelectItem>
+                            <SelectItem value="light">Light</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -537,35 +377,18 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
                         </div>
                       </div>
                       
-                      {/* Minimap */}
+                      {/* Auto-save toggle */}
                       <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="minimap" className="text-right">
-                          Minimap
+                        <Label htmlFor="autoSave" className="text-right">
+                          Auto Save
                         </Label>
                         <div className="col-span-3 flex items-center">
                           <Switch
-                            id="minimap"
-                            checked={editorSettings.minimap}
+                            id="autoSave"
+                            checked={editorSettings.autoSave}
                             onCheckedChange={(value) => setEditorSettings({
                               ...editorSettings,
-                              minimap: value
-                            })}
-                          />
-                        </div>
-                      </div>
-                      
-                      {/* Bracket pair colorization */}
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="bracketPair" className="text-right">
-                          Bracket Colors
-                        </Label>
-                        <div className="col-span-3 flex items-center">
-                          <Switch
-                            id="bracketPair"
-                            checked={editorSettings.bracketPairColorization}
-                            onCheckedChange={(value) => setEditorSettings({
-                              ...editorSettings,
-                              bracketPairColorization: value
+                              autoSave: value
                             })}
                           />
                         </div>
@@ -625,10 +448,20 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
       </div>
       
       {/* Main editor area */}
-      <div className="flex-1 relative overflow-hidden">
-        <div 
-          ref={editorRef} 
-          className="h-full w-full"
+      <div 
+        className="flex-1 relative overflow-hidden"
+        style={{ fontSize: `${editorSettings.fontSize}px` }}
+      >
+        <CM6Editor
+          value={file.content || ''}
+          language={getLanguageFromFilename(file.name)}
+          onChange={handleChange}
+          onMount={handleEditorMount}
+          theme={editorSettings.theme}
+          tabSize={editorSettings.tabSize}
+          lineWrapping={editorSettings.wordWrap}
+          height="100%"
+          className="h-full"
         />
         
         {/* Collaborators indicator */}
@@ -654,10 +487,10 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
       <div className="h-6 border-t border-border bg-background/50 flex items-center px-2 text-xs text-muted-foreground">
         <div className="flex-1 flex items-center space-x-4">
           <div>
-            Line: {monacoEditorRef.current && monacoEditorRef.current.getPosition()?.lineNumber || 1}
+            Line: {cursorPosition.line}
           </div>
           <div>
-            Column: {monacoEditorRef.current && monacoEditorRef.current.getPosition()?.column || 1}
+            Column: {cursorPosition.column}
           </div>
           <div>
             Tab Size: {editorSettings.tabSize}
@@ -684,7 +517,6 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
   );
 };
 
-// Format time ago helper
 function getTimeAgo(date: Date): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -701,7 +533,6 @@ function getTimeAgo(date: Date): string {
 function getLanguageFromFilename(filename: string): string {
   const extension = filename.split('.').pop()?.toLowerCase() || '';
   
-  // Map extensions to Monaco editor language identifiers
   const languageMap: Record<string, string> = {
     'js': 'javascript',
     'jsx': 'javascript',
@@ -723,7 +554,7 @@ function getLanguageFromFilename(filename: string): string {
     'sh': 'shell',
     'yaml': 'yaml',
     'yml': 'yaml',
-    'toml': 'ini',
+    'toml': 'toml',
     'ini': 'ini',
   };
   
