@@ -66,11 +66,15 @@ interface ReplitDeploymentPanelProps {
   defaultTab?: 'deploy' | 'logs' | 'analytics';
 }
 
+type InternalStatus = 'pending' | 'building' | 'deploying' | 'deployed' | 'active' | 'failed' | 'stopped';
+type UIStatus = 'idle' | 'publishing' | 'live' | 'failed' | 'needs-republish';
+
 interface Deployment {
   id: string;
   deploymentId?: string;
   projectId: string;
-  status: 'pending' | 'building' | 'deploying' | 'deployed' | 'active' | 'failed' | 'stopped';
+  status: InternalStatus;
+  uiStatus?: UIStatus;
   url?: string;
   domain?: string;
   customDomain?: string;
@@ -79,8 +83,35 @@ interface Deployment {
   type?: string;
   createdAt: string;
   updatedAt?: string;
+  deployedAt?: string;
+  lastCodeChange?: string;
   buildLogs?: string[];
   deploymentLogs?: string[];
+}
+
+function translateStatusToUI(internalStatus: string, lastCodeChange?: string, deployedAt?: string): UIStatus {
+  switch (internalStatus) {
+    case 'pending':
+    case 'building':
+    case 'deploying':
+      return 'publishing';
+    case 'active':
+    case 'deployed':
+      if (lastCodeChange && deployedAt) {
+        const codeChangeTime = new Date(lastCodeChange).getTime();
+        const deployedTime = new Date(deployedAt).getTime();
+        if (codeChangeTime > deployedTime) {
+          return 'needs-republish';
+        }
+      }
+      return 'live';
+    case 'failed':
+      return 'failed';
+    case 'stopped':
+      return 'idle';
+    default:
+      return 'idle';
+  }
 }
 
 interface LogEntry {
@@ -220,10 +251,13 @@ export function ReplitDeploymentPanel({
             setLogs(prev => [...prev, newLog]);
           } else if (message.type === 'status_change') {
             refetchDeployment();
-            if (message.data?.status === 'deployed' || message.data?.status === 'active') {
+            const uiStatus = message.data?.uiStatus || translateStatusToUI(message.data?.status || '');
+            const internalStatus = message.data?.status;
+            
+            if (uiStatus === 'live' || internalStatus === 'deployed' || internalStatus === 'active') {
               setIsDeploying(false);
               toast({ title: 'Deployment successful', description: 'Your app is now live!' });
-            } else if (message.data?.status === 'failed') {
+            } else if (uiStatus === 'failed' || internalStatus === 'failed') {
               setIsDeploying(false);
               toast({ 
                 title: 'Deployment failed', 
@@ -399,15 +433,20 @@ export function ReplitDeploymentPanel({
     switch (status) {
       case 'deployed':
       case 'active':
+      case 'live':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'building':
       case 'deploying':
       case 'pending':
+      case 'publishing':
         return <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />;
       case 'failed':
         return <XCircle className="h-4 w-4 text-red-500" />;
       case 'stopped':
+      case 'idle':
         return <Square className="h-4 w-4 text-gray-500" />;
+      case 'needs-republish':
+        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
       default:
         return <Clock className="h-4 w-4 text-yellow-500" />;
     }
@@ -417,13 +456,24 @@ export function ReplitDeploymentPanel({
     const variants: Record<string, string> = {
       deployed: 'bg-green-500/10 text-green-500 border-green-500/20',
       active: 'bg-green-500/10 text-green-500 border-green-500/20',
+      live: 'bg-green-500/10 text-green-500 border-green-500/20',
       building: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
       deploying: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+      publishing: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
       pending: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
       failed: 'bg-red-500/10 text-red-500 border-red-500/20',
       stopped: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
+      idle: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
+      'needs-republish': 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
     };
     return variants[status] || variants.pending;
+  };
+  
+  const getDisplayStatus = (deployment: Deployment): string => {
+    if (deployment.uiStatus) {
+      return deployment.uiStatus;
+    }
+    return translateStatusToUI(deployment.status, deployment.lastCodeChange, deployment.deployedAt);
   };
 
   const getLogLevelClass = (level: string) => {
@@ -508,8 +558,11 @@ export function ReplitDeploymentPanel({
 
   const deployment = latestDeployment?.deployment;
   const deploymentId = deployment?.deploymentId || deployment?.id;
-  const isActive = deployment?.status === 'deployed' || deployment?.status === 'active';
-  const isInProgress = deployment?.status === 'building' || deployment?.status === 'deploying' || deployment?.status === 'pending';
+  const displayStatus = deployment ? getDisplayStatus(deployment) : 'idle';
+  const isActive = displayStatus === 'live' || displayStatus === 'needs-republish' || 
+    deployment?.status === 'deployed' || deployment?.status === 'active';
+  const isInProgress = displayStatus === 'publishing' || 
+    deployment?.status === 'building' || deployment?.status === 'deploying' || deployment?.status === 'pending';
 
   return (
     <Card className={cn('h-full flex flex-col overflow-hidden', className)} data-testid="replit-deployment-panel">
@@ -560,14 +613,14 @@ export function ReplitDeploymentPanel({
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                         <div className="flex items-center gap-2">
-                          {getStatusIcon(deployment.status)}
+                          {getStatusIcon(displayStatus)}
                           <span className="font-medium text-sm sm:text-base">Current Deployment</span>
                         </div>
                         <Badge 
-                          className={getStatusBadgeClass(deployment.status)}
+                          className={getStatusBadgeClass(displayStatus)}
                           data-testid="status-badge"
                         >
-                          {deployment.status}
+                          {displayStatus}
                         </Badge>
                       </div>
 

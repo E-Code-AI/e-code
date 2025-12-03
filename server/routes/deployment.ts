@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { deploymentManager } from '../services/deployment-manager.js';
 import { storage } from '../storage';
 import { ensureAuthenticated } from '../middleware/auth';
+import { translateStatusToUI, UIStatusType, DeploymentStatusType } from '../services/deployment-websocket-service';
 
 const router = Router();
 
@@ -691,7 +692,7 @@ router.post('/api/projects/:projectId/republish', ensureAuthenticated, async (re
   }
 });
 
-// GET /api/projects/:projectId/publish/status - Returns publish status
+// GET /api/projects/:projectId/publish/status - Returns publish status with UI-friendly status
 router.get('/api/projects/:projectId/publish/status', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
@@ -710,8 +711,12 @@ router.get('/api/projects/:projectId/publish/status', ensureAuthenticated, async
     const deployments = await storage.getProjectDeployments(projectId);
     const productionDeployments = deployments.filter(d => d.environment === 'production');
     
-    // Find active production deployment
+    // Find active or in-progress production deployment
     const activeDeployment = productionDeployments.find(d => d.status === 'active');
+    const inProgressDeployment = productionDeployments.find(d => 
+      d.status === 'pending' || d.status === 'building' || d.status === 'deploying'
+    );
+    const failedDeployment = productionDeployments.find(d => d.status === 'failed');
     
     // Get latest deployment (regardless of status)
     const latestDeployment = productionDeployments.sort((a, b) => {
@@ -720,27 +725,52 @@ router.get('/api/projects/:projectId/publish/status', ensureAuthenticated, async
       return dateB - dateA;
     })[0];
 
-    const isPublished = !!activeDeployment;
+    // Get live status from deployment manager if available
+    let liveStatus = null;
+    if (latestDeployment?.deploymentId) {
+      liveStatus = await deploymentManager.getDeployment(latestDeployment.deploymentId);
+    }
 
+    // Determine the current deployment to use for status
+    const currentDeployment = inProgressDeployment || activeDeployment || failedDeployment || latestDeployment;
+    
+    // Get internal status
+    const internalStatus = (liveStatus?.status || currentDeployment?.status || 'stopped') as DeploymentStatusType;
+    
+    // Get project's last update time as lastCodeChange indicator
+    const lastCodeChange = project.updatedAt || project.createdAt;
+    const deployedAt = currentDeployment?.updatedAt || currentDeployment?.createdAt || liveStatus?.lastDeployedAt;
+    
+    // Translate to UI-friendly status
+    const uiStatus = translateStatusToUI(internalStatus, lastCodeChange, deployedAt);
+
+    // Prepare response in format expected by ReplitPublishButton
     res.json({
+      status: uiStatus,
+      url: activeDeployment?.url || liveStatus?.url || null,
+      deployedAt: deployedAt ? new Date(deployedAt).toISOString() : null,
+      lastCodeChange: lastCodeChange ? new Date(lastCodeChange).toISOString() : null,
+      errorMessage: internalStatus === 'failed' ? 'Deployment failed. Check logs for details.' : null,
       success: true,
       publish: {
-        isPublished,
+        isPublished: !!activeDeployment,
         url: activeDeployment?.url || null,
         customDomain: activeDeployment?.customDomain || null,
-        lastDeployedAt: activeDeployment?.updatedAt || activeDeployment?.createdAt || null,
+        lastDeployedAt: deployedAt || null,
         publishedAt: activeDeployment?.createdAt || null,
-        deployment: activeDeployment ? {
-          id: activeDeployment.deploymentId,
-          status: activeDeployment.status,
-          type: activeDeployment.type,
-          environment: activeDeployment.environment,
-          createdAt: activeDeployment.createdAt,
-          updatedAt: activeDeployment.updatedAt
+        deployment: currentDeployment ? {
+          id: currentDeployment.deploymentId,
+          status: internalStatus,
+          uiStatus: uiStatus,
+          type: currentDeployment.type,
+          environment: currentDeployment.environment,
+          createdAt: currentDeployment.createdAt,
+          updatedAt: currentDeployment.updatedAt
         } : null,
         latestDeployment: latestDeployment ? {
           id: latestDeployment.deploymentId,
           status: latestDeployment.status,
+          uiStatus: translateStatusToUI(latestDeployment.status as DeploymentStatusType),
           type: latestDeployment.type,
           createdAt: latestDeployment.createdAt
         } : null,
@@ -758,7 +788,7 @@ router.get('/api/projects/:projectId/publish/status', ensureAuthenticated, async
   }
 });
 
-// GET /api/projects/:projectId/deployment/latest - Returns the latest deployment
+// GET /api/projects/:projectId/deployment/latest - Returns the latest deployment with UI-friendly status
 router.get('/api/projects/:projectId/deployment/latest', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
@@ -795,6 +825,12 @@ router.get('/api/projects/:projectId/deployment/latest', ensureAuthenticated, as
     
     // Try to get real-time status from deploymentManager
     const liveStatus = await deploymentManager.getDeployment(latestDeployment.deploymentId);
+    
+    // Get internal status and translate to UI status
+    const internalStatus = (liveStatus?.status || latestDeployment.status || 'stopped') as DeploymentStatusType;
+    const lastCodeChange = project.updatedAt || project.createdAt;
+    const deployedAt = latestDeployment.updatedAt || latestDeployment.createdAt || liveStatus?.lastDeployedAt;
+    const uiStatus = translateStatusToUI(internalStatus, lastCodeChange, deployedAt);
 
     res.json({
       success: true,
@@ -804,7 +840,8 @@ router.get('/api/projects/:projectId/deployment/latest', ensureAuthenticated, as
         projectId: latestDeployment.projectId,
         type: latestDeployment.type,
         environment: latestDeployment.environment,
-        status: liveStatus?.status || latestDeployment.status,
+        status: internalStatus,
+        uiStatus: uiStatus,
         url: liveStatus?.url || latestDeployment.url,
         customDomain: latestDeployment.customDomain,
         buildLogs: latestDeployment.buildLogs,
@@ -812,6 +849,8 @@ router.get('/api/projects/:projectId/deployment/latest', ensureAuthenticated, as
         metadata: latestDeployment.metadata,
         createdAt: latestDeployment.createdAt,
         updatedAt: latestDeployment.updatedAt,
+        deployedAt: deployedAt,
+        lastCodeChange: lastCodeChange,
         metrics: liveStatus?.metrics || null
       }
     });
