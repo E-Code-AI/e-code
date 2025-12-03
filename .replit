@@ -37,7 +37,6 @@ packages = [
 
 [deployment]
 deploymentTarget = "gce"
-build = ["sh", "-c", "npm ci --omit=dev && npm run build"]
 run = ["sh", "-c", "npm run start"]
 ignorePorts = false
 
