@@ -4,6 +4,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { storage } from '../storage';
 import { billingService } from './billing-service';
+import { deploymentWebSocketService, DeploymentStatusType } from './deployment-websocket-service';
 
 export interface DeploymentConfig {
   id: string;
@@ -79,6 +80,42 @@ export class DeploymentManager {
       await fs.mkdir(this.baseDeploymentPath, { recursive: true });
     } catch (error) {
       console.error('Failed to create deployment directory:', error);
+    }
+  }
+
+  // Helper to broadcast status change via WebSocket
+  private broadcastStatusChange(deploymentId: string, status: DeploymentStatusType, previousStatus?: DeploymentStatusType, url?: string) {
+    try {
+      deploymentWebSocketService.broadcastStatusChange(deploymentId, status, previousStatus, url);
+    } catch (error) {
+      console.error(`[DeploymentManager] Failed to broadcast status change for ${deploymentId}:`, error);
+    }
+  }
+
+  // Helper to broadcast build log via WebSocket
+  private broadcastBuildLog(deploymentId: string, log: string) {
+    try {
+      deploymentWebSocketService.broadcastBuildLog(deploymentId, log);
+    } catch (error) {
+      console.error(`[DeploymentManager] Failed to broadcast build log for ${deploymentId}:`, error);
+    }
+  }
+
+  // Helper to broadcast deployment log via WebSocket
+  private broadcastDeployLog(deploymentId: string, log: string) {
+    try {
+      deploymentWebSocketService.broadcastDeployLog(deploymentId, log);
+    } catch (error) {
+      console.error(`[DeploymentManager] Failed to broadcast deploy log for ${deploymentId}:`, error);
+    }
+  }
+
+  // Helper to broadcast error via WebSocket
+  private broadcastError(deploymentId: string, error: string) {
+    try {
+      deploymentWebSocketService.broadcastError(deploymentId, error);
+    } catch (error) {
+      console.error(`[DeploymentManager] Failed to broadcast error for ${deploymentId}:`, error);
     }
   }
 
@@ -262,20 +299,41 @@ export class DeploymentManager {
       // Set timeout for the entire deployment process
       const deploymentTimeout = setTimeout(() => {
         if (deployment.status !== 'active') {
+          const previousStatus = deployment.status;
           deployment.status = 'failed';
-          deployment.deploymentLog.push('❌ Deployment timeout - process took too long');
+          const timeoutLog = '❌ Deployment timeout - process took too long';
+          deployment.deploymentLog.push(timeoutLog);
+          this.broadcastStatusChange(deploymentId, 'failed', previousStatus as DeploymentStatusType);
+          this.broadcastDeployLog(deploymentId, timeoutLog);
+          this.broadcastError(deploymentId, timeoutLog);
         }
       }, 300000); // 5 minutes timeout
 
+      // Status: pending -> building
+      const buildingLog = '🔨 Starting build process...';
       deployment.status = 'building';
-      deployment.buildLog.push('🔨 Starting build process...');
-      await this.buildProject(deploymentId, config);
-      deployment.buildLog.push('✅ Build completed successfully');
+      deployment.buildLog.push(buildingLog);
+      this.broadcastStatusChange(deploymentId, 'building', 'pending');
+      this.broadcastBuildLog(deploymentId, buildingLog);
       
+      await this.buildProject(deploymentId, config);
+      
+      const buildCompleteLog = '✅ Build completed successfully';
+      deployment.buildLog.push(buildCompleteLog);
+      this.broadcastBuildLog(deploymentId, buildCompleteLog);
+      
+      // Status: building -> deploying
+      const deployingLog = '🚀 Starting deployment...';
       deployment.status = 'deploying';
-      deployment.deploymentLog.push('🚀 Starting deployment...');
+      deployment.deploymentLog.push(deployingLog);
+      this.broadcastStatusChange(deploymentId, 'deploying', 'building');
+      this.broadcastDeployLog(deploymentId, deployingLog);
+      
       await this.deployProject(deploymentId, config);
-      deployment.deploymentLog.push('✅ Deployment completed successfully');
+      
+      const deployCompleteLog = '✅ Deployment completed successfully';
+      deployment.deploymentLog.push(deployCompleteLog);
+      this.broadcastDeployLog(deploymentId, deployCompleteLog);
       
       clearTimeout(deploymentTimeout);
       
@@ -320,15 +378,19 @@ export class DeploymentManager {
         } catch (retryError) {
           console.error(`❌ Database update retry also failed for ${deploymentId}:`, retryError);
           // Log the failure but continue - the deployment is technically successful
-          deployment.deploymentLog.push('⚠️ Warning: Database status update failed, but deployment is active');
+          const dbWarningLog = '⚠️ Warning: Database status update failed, but deployment is active';
+          deployment.deploymentLog.push(dbWarningLog);
+          this.broadcastDeployLog(deploymentId, dbWarningLog);
         }
       }
       
       if (dbUpdateSuccess) {
-        deployment.deploymentLog.push('✅ Database status synchronized successfully');
+        const dbSuccessLog = '✅ Database status synchronized successfully';
+        deployment.deploymentLog.push(dbSuccessLog);
+        this.broadcastDeployLog(deploymentId, dbSuccessLog);
       }
 
-      // NOW mark as active in memory
+      // NOW mark as active in memory and broadcast final status
       deployment.status = 'active';
       deployment.lastDeployedAt = new Date();
       
@@ -340,11 +402,19 @@ export class DeploymentManager {
         uptime: 100
       };
 
-      deployment.deploymentLog.push(`🎉 Your app is live at ${deployment.url || deployment.customUrl}`);
+      const liveLog = `🎉 Your app is live at ${deployment.url || deployment.customUrl}`;
+      deployment.deploymentLog.push(liveLog);
+      this.broadcastStatusChange(deploymentId, 'active', 'deploying', deployment.url || deployment.customUrl);
+      this.broadcastDeployLog(deploymentId, liveLog);
 
-    } catch (error) {
+    } catch (error: any) {
+      const previousStatus = deployment.status;
       deployment.status = 'failed';
-      deployment.deploymentLog.push(`❌ Deployment failed: ${error.message || error}`);
+      const errorLog = `❌ Deployment failed: ${error.message || error}`;
+      deployment.deploymentLog.push(errorLog);
+      this.broadcastStatusChange(deploymentId, 'failed', previousStatus as DeploymentStatusType);
+      this.broadcastDeployLog(deploymentId, errorLog);
+      this.broadcastError(deploymentId, errorLog);
       
       // Update database with failure
       const numericDeploymentId = parseInt(deploymentId, 10);
@@ -367,13 +437,19 @@ export class DeploymentManager {
     const buildSteps = this.getBuildSteps(config);
     
     for (const step of buildSteps) {
-      deployment.buildLog.push(`🔨 ${step.description}`);
+      const stepLog = `🔨 ${step.description}`;
+      deployment.buildLog.push(stepLog);
+      this.broadcastBuildLog(deploymentId, stepLog);
       
       try {
         await this.executeCommand(step.command, projectPath);
-        deployment.buildLog.push(`✅ ${step.description} completed`);
-      } catch (error) {
-        deployment.buildLog.push(`❌ ${step.description} failed: ${error}`);
+        const successLog = `✅ ${step.description} completed`;
+        deployment.buildLog.push(successLog);
+        this.broadcastBuildLog(deploymentId, successLog);
+      } catch (error: any) {
+        const errorLog = `❌ ${step.description} failed: ${error}`;
+        deployment.buildLog.push(errorLog);
+        this.broadcastBuildLog(deploymentId, errorLog);
         throw error;
       }
     }
@@ -434,51 +510,57 @@ export class DeploymentManager {
     const deployment = this.deployments.get(deploymentId);
     if (!deployment) throw new Error('Deployment not found');
 
+    const pushAndBroadcast = (log: string) => {
+      deployment.deploymentLog.push(log);
+      this.broadcastDeployLog(deploymentId, log);
+    };
+
     try {
       // For Reserved VM, simplify the deployment process
       if (config.type === 'reserved-vm') {
-        deployment.deploymentLog.push('🖥️  Provisioning Reserved VM instance...');
+        pushAndBroadcast('🖥️  Provisioning Reserved VM instance...');
         
         // Simulate VM provisioning
         await new Promise(resolve => setTimeout(resolve, 2000));
-        deployment.deploymentLog.push('✅ Reserved VM instance provisioned');
+        pushAndBroadcast('✅ Reserved VM instance provisioned');
         
         // Deploy to primary region
         const primaryRegion = config.regions[0] || 'us-east-1';
-        deployment.deploymentLog.push(`🌍 Deploying to ${primaryRegion}...`);
+        pushAndBroadcast(`🌍 Deploying to ${primaryRegion}...`);
         await this.deployToRegion(deploymentId, primaryRegion, config);
-        deployment.deploymentLog.push(`✅ Successfully deployed to ${primaryRegion}`);
+        pushAndBroadcast(`✅ Successfully deployed to ${primaryRegion}`);
         
         // Setup basic health monitoring
-        deployment.deploymentLog.push('🔍 Configuring health monitoring...');
+        pushAndBroadcast('🔍 Configuring health monitoring...');
         await new Promise(resolve => setTimeout(resolve, 1000));
-        deployment.deploymentLog.push('✅ Health monitoring active');
+        pushAndBroadcast('✅ Health monitoring active');
         
         return;
       }
 
       // Deploy to specified regions for other deployment types
       for (const region of config.regions) {
-        deployment.deploymentLog.push(`🌍 Deploying to region: ${region}`);
+        pushAndBroadcast(`🌍 Deploying to region: ${region}`);
         await this.deployToRegion(deploymentId, region, config);
-        deployment.deploymentLog.push(`✅ Successfully deployed to ${region}`);
+        pushAndBroadcast(`✅ Successfully deployed to ${region}`);
       }
 
       // Configure health checks
       if (config.healthCheck) {
-        deployment.deploymentLog.push('🔍 Setting up health checks...');
+        pushAndBroadcast('🔍 Setting up health checks...');
         await this.setupHealthChecks(deploymentId, config.healthCheck);
-        deployment.deploymentLog.push('✅ Health checks configured');
+        pushAndBroadcast('✅ Health checks configured');
       }
-    } catch (error) {
-      deployment.deploymentLog.push(`❌ Deployment failed: ${error.message}`);
+    } catch (error: any) {
+      const errorLog = `❌ Deployment failed: ${error.message}`;
+      pushAndBroadcast(errorLog);
       throw error;
     }
 
     // Setup monitoring
-    deployment.deploymentLog.push('📊 Setting up monitoring and alerts...');
+    pushAndBroadcast('📊 Setting up monitoring and alerts...');
     await this.setupMonitoring(deploymentId, config);
-    deployment.deploymentLog.push('✅ Monitoring configured');
+    pushAndBroadcast('✅ Monitoring configured');
   }
 
   private async deployToRegion(deploymentId: string, region: string, config: DeploymentConfig): Promise<void> {

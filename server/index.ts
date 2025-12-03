@@ -310,6 +310,19 @@ app.get('/api/cors-health', async (_req, res) => {
       console.error('[WORKING SERVER] Failed to setup Agent WebSocket:', error);
     }
     
+    // Setup Deployment WebSocket server for real-time deployment logs and status updates
+    // ✅ CRITICAL: This MUST be initialized BEFORE Vite to ensure proper WebSocket routing
+    try {
+      const { deploymentWebSocketService } = await import("./services/deployment-websocket-service");
+      deploymentWebSocketService.initialize(httpServer);
+      
+      // Make deployment websocket service available globally for routes
+      (global as any).deploymentWebSocketService = deploymentWebSocketService;
+      console.log('[Deployment WebSocket] Service initialized at /ws/deployments');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to setup Deployment WebSocket:', error);
+    }
+    
     // Make session store available globally for WebSocket authentication
     (global as any).sessionStore = sessionStore;
     
