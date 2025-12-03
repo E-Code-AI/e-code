@@ -39,7 +39,8 @@ import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 import { AgentToolsPanel } from '@/components/ai/AgentToolsPanel';
 import { useAgentTools } from '@/hooks/useAgentTools';
 import { Bot, Rocket, GitBranch, Package, Key } from 'lucide-react';
-import { DeploymentPanel } from '@/components/ide/DeploymentPanel';
+import { ReplitDeploymentPanel } from '@/components/ide/ReplitDeploymentPanel';
+import { ReplitPublishButton } from '@/components/ide/ReplitPublishButton';
 import { GitPanel } from '@/components/ide/GitPanel';
 import { ReplitPackagesPanel } from '@/components/editor/ReplitPackagesPanel';
 import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
@@ -420,6 +421,12 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
             </span>
           </div>
           
+          <ReplitPublishButton
+            projectId={projectId}
+            onOpenLogs={() => setRightPanel('deploy')}
+            onOpenAnalytics={() => setRightPanel('deploy')}
+          />
+          
           <Button
             variant="ghost"
             size="icon"
@@ -505,7 +512,7 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
                         />
                       </div>
                     ) : rightPanel === 'deploy' ? (
-                      <DeploymentPanel projectId={projectId} className="h-full" />
+                      <ReplitDeploymentPanel projectId={projectId} className="h-full" />
                     ) : rightPanel === 'git' ? (
                       <GitPanel projectId={projectId} />
                     ) : rightPanel === 'packages' ? (
@@ -544,7 +551,7 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
                     />
                   </div>
                 ) : rightPanel === 'deploy' ? (
-                  <DeploymentPanel projectId={projectId} className="h-full" />
+                  <ReplitDeploymentPanel projectId={projectId} className="h-full" />
                 ) : rightPanel === 'git' ? (
                   <GitPanel projectId={projectId} />
                 ) : rightPanel === 'packages' ? (

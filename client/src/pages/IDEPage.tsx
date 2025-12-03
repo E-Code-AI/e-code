@@ -21,7 +21,7 @@ import {
   ResizablePanelGroup 
 } from '@/components/ui/resizable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Brain, Zap, X, Layers } from 'lucide-react';
+import { Brain, Zap, X, Layers, Rocket } from 'lucide-react';
 import { ECodeLoading } from '@/components/ECodeLoading';
 import { Button } from '@/components/ui/button';
 
@@ -32,6 +32,7 @@ import { QuickFileSearch } from '@/components/ide/QuickFileSearch';
 import { KeyboardShortcutsOverlay } from '@/components/ide/KeyboardShortcutsOverlay';
 import { AgentActionsPanel } from '@/components/ide/AgentActionsPanel';
 import { ToolsPanel } from '@/components/ide/ToolsPanel';
+import { ReplitDeploymentPanel } from '@/components/ide/ReplitDeploymentPanel';
 import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
 import { AutonomousWorkspaceViewer } from '@/components/ide/AutonomousWorkspaceViewer';
 import { ReplitFileExplorer } from '@/components/editor/ReplitFileExplorer';
@@ -304,6 +305,19 @@ export default function IDEPage() {
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [showReplitDB, setShowReplitDB] = useState(false);
   const [showCollaboration, setShowCollaboration] = useState(false);
+  
+  // Deployment panel state - controlled by TopNavBar Publish button dropdown
+  const [deploymentTab, setDeploymentTab] = useState<'deploy' | 'logs' | 'analytics' | null>(null);
+  
+  // Left panel tab state - controlled to allow switching from TopNavBar actions
+  const [leftPanelTab, setLeftPanelTab] = useState<string>('agent');
+  
+  // Effect to switch to deployment tab when triggered from Publish button dropdown
+  useEffect(() => {
+    if (deploymentTab) {
+      setLeftPanelTab('deployment');
+    }
+  }, [deploymentTab]);
   
   // Keyboard utilities feature flags (SSR-safe)
   const [enableShortcutHint, setEnableShortcutHint] = useState(() => {
@@ -657,6 +671,7 @@ export default function IDEPage() {
         projectName={project.name}
         projectSlug={project.slug || String(project.id)}
         ownerUsername={user?.username || ''}
+        projectId={projectId}
         isDeployed={false}
         onRun={handleRunStop}
         isRunning={isRunning}
@@ -671,6 +686,8 @@ export default function IDEPage() {
         showCollaboration={showCollaboration}
         onToggleCollaboration={() => setShowCollaboration((prev: boolean) => !prev)}
         collaboratorCount={0}
+        onOpenDeployLogs={() => setDeploymentTab('logs')}
+        onOpenDeployAnalytics={() => setDeploymentTab('analytics')}
       />
       
       {/* 3-Panel Layout */}
@@ -678,7 +695,7 @@ export default function IDEPage() {
         {/* LEFT: AI Agent Panel (30%) */}
         <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
           <div className="h-full flex flex-col border-r">
-            <Tabs defaultValue="agent" className="h-full flex flex-col">
+            <Tabs value={leftPanelTab} onValueChange={setLeftPanelTab} className="h-full flex flex-col">
               <TabsList className="w-full justify-start rounded-none border-b">
                 <TabsTrigger value="agent" className="gap-2" data-testid="tab-agent">
                   <Brain className="h-4 w-4" />
@@ -691,6 +708,15 @@ export default function IDEPage() {
                 <TabsTrigger value="tools" className="gap-2" data-testid="tab-tools">
                   <Layers className="h-4 w-4" />
                   Tools
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="deployment" 
+                  className="gap-2" 
+                  data-testid="tab-deployment"
+                  onClick={() => setDeploymentTab('deploy')}
+                >
+                  <Rocket className="h-4 w-4" />
+                  Deploy
                 </TabsTrigger>
               </TabsList>
               
@@ -749,6 +775,13 @@ export default function IDEPage() {
                   availableTools={availableTools}
                   onSelectTool={handleAddTool}
                   activeTabs={tabs.map(t => t.id)}
+                />
+              </TabsContent>
+              
+              <TabsContent value="deployment" className="flex-1 mt-0 overflow-hidden">
+                <ReplitDeploymentPanel
+                  projectId={projectId}
+                  defaultTab={deploymentTab || 'deploy'}
                 />
               </TabsContent>
             </Tabs>
