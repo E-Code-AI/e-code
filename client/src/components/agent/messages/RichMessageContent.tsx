@@ -5,8 +5,7 @@
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { LightSyntaxHighlighter, darkStyle } from '@/components/ui/LightSyntaxHighlighter';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Copy, Check } from 'lucide-react';
@@ -129,9 +128,9 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
                 </div>
                 <div className="border border-t-0 border-[var(--ecode-border)] rounded-b-lg overflow-hidden max-w-full">
                   <div className="overflow-x-auto max-w-full">
-                    <SyntaxHighlighter
+                    <LightSyntaxHighlighter
                       language={language}
-                      style={vscDarkPlus}
+                      style={darkStyle}
                       customStyle={{
                         margin: 0,
                         padding: '12px',
@@ -141,14 +140,9 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
                         maxWidth: '100%',
                         overflowX: 'auto'
                       }}
-                      codeTagProps={{
-                        style: {
-                          fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace'
-                        }
-                      }}
                     >
                       {codeString}
-                    </SyntaxHighlighter>
+                    </LightSyntaxHighlighter>
                   </div>
                 </div>
               </div>

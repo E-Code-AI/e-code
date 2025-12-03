@@ -7,8 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Copy, ExternalLink, Code2, User, Calendar, Eye, FileCode, Home } from "lucide-react";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { LightSyntaxHighlighter, darkStyle } from "@/components/ui/LightSyntaxHighlighter";
 
 interface CodeSnippet {
   id: number;
@@ -255,19 +254,18 @@ export default function SharedSnippet() {
               </div>
               
               <div className="pl-12 overflow-x-auto">
-                <SyntaxHighlighter
+                <LightSyntaxHighlighter
                   language={snippet.language}
-                  style={oneDark}
+                  style={darkStyle}
                   customStyle={{
                     margin: 0,
                     padding: "1rem",
                     background: "transparent",
                     fontSize: "0.875rem",
                   }}
-                  showLineNumbers={false}
                 >
                   {snippet.code}
-                </SyntaxHighlighter>
+                </LightSyntaxHighlighter>
               </div>
             </div>
           </Card>
