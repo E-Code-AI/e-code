@@ -11,7 +11,8 @@
  */
 
 import { useEffect, useRef, memo } from 'react';
-import * as monaco from 'monaco-editor';
+import type * as monaco from 'monaco-editor';
+import { getMonaco } from '@/lib/monaco-cdn-loader';
 import { Collaborator } from '@/hooks/useRealTimeCollaboration';
 
 interface CollaboratorCursorsProps {
@@ -98,6 +99,9 @@ export const CollaboratorCursors = memo(function CollaboratorCursors({
     const model = editor.getModel();
     if (!model) return;
 
+    const monacoInstance = getMonaco();
+    if (!monacoInstance) return;
+
     const newDecorations: monaco.editor.IModelDeltaDecoration[] = [];
 
     collaborators.forEach((collaborator) => {
@@ -105,7 +109,7 @@ export const CollaboratorCursors = memo(function CollaboratorCursors({
 
       if (cursor) {
         newDecorations.push({
-          range: new monaco.Range(
+          range: new monacoInstance.Range(
             cursor.lineNumber,
             cursor.column,
             cursor.lineNumber,
@@ -113,18 +117,18 @@ export const CollaboratorCursors = memo(function CollaboratorCursors({
           ),
           options: {
             className: 'collaborator-cursor',
-            stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+            stickiness: monacoInstance.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
             beforeContentClassName: `collaborator-cursor-line`,
             hoverMessage: { value: `**${username}**` },
             overviewRuler: {
               color: color,
-              position: monaco.editor.OverviewRulerLane.Right
+              position: monacoInstance.editor.OverviewRulerLane.Right
             }
           }
         });
 
         newDecorations.push({
-          range: new monaco.Range(
+          range: new monacoInstance.Range(
             cursor.lineNumber,
             cursor.column,
             cursor.lineNumber,
@@ -135,7 +139,7 @@ export const CollaboratorCursors = memo(function CollaboratorCursors({
               content: '',
               inlineClassName: `collaborator-cursor-indicator-${odUserId}`
             },
-            stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges
+            stickiness: monacoInstance.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges
           }
         });
       }
@@ -145,7 +149,7 @@ export const CollaboratorCursors = memo(function CollaboratorCursors({
         selection.startColumn !== selection.endColumn
       )) {
         newDecorations.push({
-          range: new monaco.Range(
+          range: new monacoInstance.Range(
             selection.startLineNumber,
             selection.startColumn,
             selection.endLineNumber,
@@ -153,14 +157,14 @@ export const CollaboratorCursors = memo(function CollaboratorCursors({
           ),
           options: {
             className: 'collaborator-selection',
-            stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+            stickiness: monacoInstance.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
             minimap: {
               color: color,
-              position: monaco.editor.MinimapPosition.Inline
+              position: monacoInstance.editor.MinimapPosition.Inline
             },
             overviewRuler: {
               color: color,
-              position: monaco.editor.OverviewRulerLane.Full
+              position: monacoInstance.editor.OverviewRulerLane.Full
             }
           }
         });

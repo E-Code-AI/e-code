@@ -1,7 +1,7 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
-import * as monaco from 'monaco-editor';
+import type * as monaco from 'monaco-editor';
 
 export class CollaborationProvider {
   private doc: Y.Doc;

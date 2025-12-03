@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import * as monaco from 'monaco-editor';
+import type * as monaco from 'monaco-editor';
 import { CollaborationProvider } from '@/utils/collaboration-provider';
 import { useAuth } from '@/hooks/use-auth';
+import { getMonaco } from '@/lib/monaco-cdn-loader';
 
 interface Collaborator {
   clientId: number;
@@ -139,6 +140,9 @@ export function useYjsCollaboration({
     model: monaco.editor.ITextModel,
     users: Collaborator[]
   ) => {
+    const monacoInstance = getMonaco();
+    if (!monacoInstance) return;
+    
     // Clear previous decorations
     decorationsRef.current = editor.deltaDecorations(
       decorationsRef.current,
@@ -154,7 +158,7 @@ export function useYjsCollaboration({
 
       // Add cursor decoration
       newDecorations.push({
-        range: new monaco.Range(
+        range: new monacoInstance.Range(
           position.lineNumber,
           position.column,
           position.lineNumber,
@@ -163,7 +167,7 @@ export function useYjsCollaboration({
         options: {
           className: 'yjs-cursor',
           hoverMessage: { value: user.username },
-          stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+          stickiness: monacoInstance.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
           afterContentClassName: `yjs-cursor-head yjs-cursor-${user.userId}`,
           after: {
             content: ' ',
@@ -175,7 +179,7 @@ export function useYjsCollaboration({
       // Add selection decoration if exists
       if (selection) {
         newDecorations.push({
-          range: new monaco.Range(
+          range: new monacoInstance.Range(
             selection.startLineNumber,
             selection.startColumn,
             selection.endLineNumber,
@@ -187,11 +191,11 @@ export function useYjsCollaboration({
             beforeContentClassName: 'yjs-selection-before',
             afterContentClassName: 'yjs-selection-after',
             inlineClassNameAffectsLetterSpacing: true,
-            stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+            stickiness: monacoInstance.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
             isWholeLine: false,
             minimap: {
               color: user.color,
-              position: monaco.editor.MinimapPosition.Inline
+              position: monacoInstance.editor.MinimapPosition.Inline
             }
           }
         });

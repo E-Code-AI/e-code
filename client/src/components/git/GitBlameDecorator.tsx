@@ -4,7 +4,8 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import * as monaco from 'monaco-editor';
+import type * as monaco from 'monaco-editor';
+import { getMonaco } from '@/lib/monaco-cdn-loader';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 

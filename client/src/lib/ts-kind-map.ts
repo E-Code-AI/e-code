@@ -10,7 +10,41 @@
  * - Monaco Editor SymbolKind enum (26 values: 0-25)
  */
 
-import * as monaco from 'monaco-editor';
+import type * as monaco from 'monaco-editor';
+import { getMonaco, type Monaco } from './monaco-cdn-loader';
+
+/**
+ * Symbol kind numeric values (matching Monaco SymbolKind enum)
+ * Using constants to avoid runtime dependency on Monaco
+ */
+export const SymbolKindValues = {
+  File: 0,
+  Module: 1,
+  Namespace: 2,
+  Package: 3,
+  Class: 4,
+  Method: 5,
+  Property: 6,
+  Field: 7,
+  Constructor: 8,
+  Enum: 9,
+  Interface: 10,
+  Function: 11,
+  Variable: 12,
+  Constant: 13,
+  String: 14,
+  Number: 15,
+  Boolean: 16,
+  Array: 17,
+  Object: 18,
+  Key: 19,
+  Null: 20,
+  EnumMember: 21,
+  Struct: 22,
+  Event: 23,
+  Operator: 24,
+  TypeParameter: 25,
+} as const;
 
 /**
  * Comprehensive mapping of TypeScript ScriptElementKind values to Monaco SymbolKind.
@@ -22,204 +56,204 @@ export const TS_KIND_TO_MONACO_SYMBOL: Record<string, number> = {
   // ============================================================================
   
   // Classes
-  'class': monaco.languages.SymbolKind.Class,
-  'classElement': monaco.languages.SymbolKind.Class,
-  'class element': monaco.languages.SymbolKind.Class,
-  'localClass': monaco.languages.SymbolKind.Class,
-  'localClassElement': monaco.languages.SymbolKind.Class,
-  'local class': monaco.languages.SymbolKind.Class,
-  'local class element': monaco.languages.SymbolKind.Class,
+  'class': SymbolKindValues.Class,
+  'classElement': SymbolKindValues.Class,
+  'class element': SymbolKindValues.Class,
+  'localClass': SymbolKindValues.Class,
+  'localClassElement': SymbolKindValues.Class,
+  'local class': SymbolKindValues.Class,
+  'local class element': SymbolKindValues.Class,
   
   // Interfaces & Types
-  'interface': monaco.languages.SymbolKind.Interface,
-  'interfaceElement': monaco.languages.SymbolKind.Interface,
-  'interface element': monaco.languages.SymbolKind.Interface,
-  'type': monaco.languages.SymbolKind.Interface,
-  'typeElement': monaco.languages.SymbolKind.Interface,
-  'type element': monaco.languages.SymbolKind.Interface,
-  'typeAlias': monaco.languages.SymbolKind.Interface,
-  'type alias': monaco.languages.SymbolKind.Interface,
+  'interface': SymbolKindValues.Interface,
+  'interfaceElement': SymbolKindValues.Interface,
+  'interface element': SymbolKindValues.Interface,
+  'type': SymbolKindValues.Interface,
+  'typeElement': SymbolKindValues.Interface,
+  'type element': SymbolKindValues.Interface,
+  'typeAlias': SymbolKindValues.Interface,
+  'type alias': SymbolKindValues.Interface,
   
   // Enums
-  'enum': monaco.languages.SymbolKind.Enum,
-  'enumElement': monaco.languages.SymbolKind.Enum,
-  'enum element': monaco.languages.SymbolKind.Enum,
-  'enumMember': monaco.languages.SymbolKind.EnumMember,
-  'enumMemberElement': monaco.languages.SymbolKind.EnumMember,
-  'enum member': monaco.languages.SymbolKind.EnumMember,
-  'enum member element': monaco.languages.SymbolKind.EnumMember,
+  'enum': SymbolKindValues.Enum,
+  'enumElement': SymbolKindValues.Enum,
+  'enum element': SymbolKindValues.Enum,
+  'enumMember': SymbolKindValues.EnumMember,
+  'enumMemberElement': SymbolKindValues.EnumMember,
+  'enum member': SymbolKindValues.EnumMember,
+  'enum member element': SymbolKindValues.EnumMember,
   
   // ============================================================================
   // MODULES & NAMESPACES
   // ============================================================================
   
-  'module': monaco.languages.SymbolKind.Module,
-  'moduleElement': monaco.languages.SymbolKind.Module,
-  'module element': monaco.languages.SymbolKind.Module,
-  'namespace': monaco.languages.SymbolKind.Namespace,
-  'script': monaco.languages.SymbolKind.Module,
-  'scriptElement': monaco.languages.SymbolKind.Module,
-  'script element': monaco.languages.SymbolKind.Module,
-  'externalModuleName': monaco.languages.SymbolKind.Module,
-  'external module name': monaco.languages.SymbolKind.Module,
-  'directory': monaco.languages.SymbolKind.Module,
+  'module': SymbolKindValues.Module,
+  'moduleElement': SymbolKindValues.Module,
+  'module element': SymbolKindValues.Module,
+  'namespace': SymbolKindValues.Namespace,
+  'script': SymbolKindValues.Module,
+  'scriptElement': SymbolKindValues.Module,
+  'script element': SymbolKindValues.Module,
+  'externalModuleName': SymbolKindValues.Module,
+  'external module name': SymbolKindValues.Module,
+  'directory': SymbolKindValues.Module,
   
   // ============================================================================
   // FUNCTIONS & METHODS
   // ============================================================================
   
   // Functions
-  'function': monaco.languages.SymbolKind.Function,
-  'functionElement': monaco.languages.SymbolKind.Function,
-  'function element': monaco.languages.SymbolKind.Function,
-  'localFunction': monaco.languages.SymbolKind.Function,
-  'localFunctionElement': monaco.languages.SymbolKind.Function,
-  'local function': monaco.languages.SymbolKind.Function,
-  'local function element': monaco.languages.SymbolKind.Function,
+  'function': SymbolKindValues.Function,
+  'functionElement': SymbolKindValues.Function,
+  'function element': SymbolKindValues.Function,
+  'localFunction': SymbolKindValues.Function,
+  'localFunctionElement': SymbolKindValues.Function,
+  'local function': SymbolKindValues.Function,
+  'local function element': SymbolKindValues.Function,
   
   // Methods
-  'method': monaco.languages.SymbolKind.Method,
-  'memberFunction': monaco.languages.SymbolKind.Method,
-  'memberFunctionElement': monaco.languages.SymbolKind.Method,
-  'member function': monaco.languages.SymbolKind.Method,
-  'member function element': monaco.languages.SymbolKind.Method,
+  'method': SymbolKindValues.Method,
+  'memberFunction': SymbolKindValues.Method,
+  'memberFunctionElement': SymbolKindValues.Method,
+  'member function': SymbolKindValues.Method,
+  'member function element': SymbolKindValues.Method,
   
   // Constructors
-  'constructor': monaco.languages.SymbolKind.Constructor,
-  'constructorImplementation': monaco.languages.SymbolKind.Constructor,
-  'constructorImplementationElement': monaco.languages.SymbolKind.Constructor,
-  'constructor implementation': monaco.languages.SymbolKind.Constructor,
-  'constructor implementation element': monaco.languages.SymbolKind.Constructor,
+  'constructor': SymbolKindValues.Constructor,
+  'constructorImplementation': SymbolKindValues.Constructor,
+  'constructorImplementationElement': SymbolKindValues.Constructor,
+  'constructor implementation': SymbolKindValues.Constructor,
+  'constructor implementation element': SymbolKindValues.Constructor,
   
   // Accessors (VS Code treats as properties)
-  'getter': monaco.languages.SymbolKind.Property,
-  'setter': monaco.languages.SymbolKind.Property,
-  'getAccessor': monaco.languages.SymbolKind.Property,
-  'setAccessor': monaco.languages.SymbolKind.Property,
-  'get accessor': monaco.languages.SymbolKind.Property,
-  'set accessor': monaco.languages.SymbolKind.Property,
-  'memberGetAccessor': monaco.languages.SymbolKind.Property,
-  'memberSetAccessor': monaco.languages.SymbolKind.Property,
-  'memberGetAccessorElement': monaco.languages.SymbolKind.Property,
-  'memberSetAccessorElement': monaco.languages.SymbolKind.Property,
-  'member get accessor': monaco.languages.SymbolKind.Property,
-  'member set accessor': monaco.languages.SymbolKind.Property,
-  'member get accessor element': monaco.languages.SymbolKind.Property,
-  'member set accessor element': monaco.languages.SymbolKind.Property,
-  'accessor': monaco.languages.SymbolKind.Property,
-  'memberAccessorVariable': monaco.languages.SymbolKind.Property,
-  'memberAccessorVariableElement': monaco.languages.SymbolKind.Property,
-  'member accessor variable': monaco.languages.SymbolKind.Property,
-  'member accessor variable element': monaco.languages.SymbolKind.Property,
+  'getter': SymbolKindValues.Property,
+  'setter': SymbolKindValues.Property,
+  'getAccessor': SymbolKindValues.Property,
+  'setAccessor': SymbolKindValues.Property,
+  'get accessor': SymbolKindValues.Property,
+  'set accessor': SymbolKindValues.Property,
+  'memberGetAccessor': SymbolKindValues.Property,
+  'memberSetAccessor': SymbolKindValues.Property,
+  'memberGetAccessorElement': SymbolKindValues.Property,
+  'memberSetAccessorElement': SymbolKindValues.Property,
+  'member get accessor': SymbolKindValues.Property,
+  'member set accessor': SymbolKindValues.Property,
+  'member get accessor element': SymbolKindValues.Property,
+  'member set accessor element': SymbolKindValues.Property,
+  'accessor': SymbolKindValues.Property,
+  'memberAccessorVariable': SymbolKindValues.Property,
+  'memberAccessorVariableElement': SymbolKindValues.Property,
+  'member accessor variable': SymbolKindValues.Property,
+  'member accessor variable element': SymbolKindValues.Property,
   
   // ============================================================================
   // PROPERTIES & FIELDS
   // ============================================================================
   
-  'property': monaco.languages.SymbolKind.Property,
-  'memberVariable': monaco.languages.SymbolKind.Property,
-  'memberVariableElement': monaco.languages.SymbolKind.Property,
-  'member variable': monaco.languages.SymbolKind.Property,
-  'member variable element': monaco.languages.SymbolKind.Property,
-  'field': monaco.languages.SymbolKind.Field,
+  'property': SymbolKindValues.Property,
+  'memberVariable': SymbolKindValues.Property,
+  'memberVariableElement': SymbolKindValues.Property,
+  'member variable': SymbolKindValues.Property,
+  'member variable element': SymbolKindValues.Property,
+  'field': SymbolKindValues.Field,
   
   // JSX
-  'JSX attribute': monaco.languages.SymbolKind.Property,
-  'JSXAttribute': monaco.languages.SymbolKind.Property,
-  'jsxAttribute': monaco.languages.SymbolKind.Property,
+  'JSX attribute': SymbolKindValues.Property,
+  'JSXAttribute': SymbolKindValues.Property,
+  'jsxAttribute': SymbolKindValues.Property,
   
   // ============================================================================
   // VARIABLES & CONSTANTS
   // ============================================================================
   
-  'var': monaco.languages.SymbolKind.Variable,
-  'variable': monaco.languages.SymbolKind.Variable,
-  'variableElement': monaco.languages.SymbolKind.Variable,
-  'variable element': monaco.languages.SymbolKind.Variable,
-  'localVar': monaco.languages.SymbolKind.Variable,
-  'localVariable': monaco.languages.SymbolKind.Variable,
-  'localVariableElement': monaco.languages.SymbolKind.Variable,
-  'local var': monaco.languages.SymbolKind.Variable,
-  'local variable': monaco.languages.SymbolKind.Variable,
-  'local variable element': monaco.languages.SymbolKind.Variable,
+  'var': SymbolKindValues.Variable,
+  'variable': SymbolKindValues.Variable,
+  'variableElement': SymbolKindValues.Variable,
+  'variable element': SymbolKindValues.Variable,
+  'localVar': SymbolKindValues.Variable,
+  'localVariable': SymbolKindValues.Variable,
+  'localVariableElement': SymbolKindValues.Variable,
+  'local var': SymbolKindValues.Variable,
+  'local variable': SymbolKindValues.Variable,
+  'local variable element': SymbolKindValues.Variable,
   
-  'let': monaco.languages.SymbolKind.Variable,
-  'letElement': monaco.languages.SymbolKind.Variable,
-  'let element': monaco.languages.SymbolKind.Variable,
+  'let': SymbolKindValues.Variable,
+  'letElement': SymbolKindValues.Variable,
+  'let element': SymbolKindValues.Variable,
   
-  'const': monaco.languages.SymbolKind.Constant,
-  'constElement': monaco.languages.SymbolKind.Constant,
-  'const element': monaco.languages.SymbolKind.Constant,
+  'const': SymbolKindValues.Constant,
+  'constElement': SymbolKindValues.Constant,
+  'const element': SymbolKindValues.Constant,
   
-  'parameter': monaco.languages.SymbolKind.Variable,
-  'parameterElement': monaco.languages.SymbolKind.Variable,
-  'parameter element': monaco.languages.SymbolKind.Variable,
+  'parameter': SymbolKindValues.Variable,
+  'parameterElement': SymbolKindValues.Variable,
+  'parameter element': SymbolKindValues.Variable,
   
   // Type Parameters
-  'typeParameter': monaco.languages.SymbolKind.TypeParameter,
-  'typeParameterElement': monaco.languages.SymbolKind.TypeParameter,
-  'type parameter': monaco.languages.SymbolKind.TypeParameter,
-  'type parameter element': monaco.languages.SymbolKind.TypeParameter,
+  'typeParameter': SymbolKindValues.TypeParameter,
+  'typeParameterElement': SymbolKindValues.TypeParameter,
+  'type parameter': SymbolKindValues.TypeParameter,
+  'type parameter element': SymbolKindValues.TypeParameter,
   
   // ============================================================================
   // SIGNATURES (VS Code maps all to Method for consistency)
   // ============================================================================
   
-  'call': monaco.languages.SymbolKind.Method,
-  'callSignature': monaco.languages.SymbolKind.Method,
-  'callSignatureElement': monaco.languages.SymbolKind.Method,
-  'call signature': monaco.languages.SymbolKind.Method,
-  'call signature element': monaco.languages.SymbolKind.Method,
+  'call': SymbolKindValues.Method,
+  'callSignature': SymbolKindValues.Method,
+  'callSignatureElement': SymbolKindValues.Method,
+  'call signature': SymbolKindValues.Method,
+  'call signature element': SymbolKindValues.Method,
   
-  'index': monaco.languages.SymbolKind.Method,
-  'indexSignature': monaco.languages.SymbolKind.Method,
-  'indexSignatureElement': monaco.languages.SymbolKind.Method,
-  'index signature': monaco.languages.SymbolKind.Method,
-  'index signature element': monaco.languages.SymbolKind.Method,
+  'index': SymbolKindValues.Method,
+  'indexSignature': SymbolKindValues.Method,
+  'indexSignatureElement': SymbolKindValues.Method,
+  'index signature': SymbolKindValues.Method,
+  'index signature element': SymbolKindValues.Method,
   
-  'construct': monaco.languages.SymbolKind.Method,
-  'constructSignature': monaco.languages.SymbolKind.Method,
-  'constructSignatureElement': monaco.languages.SymbolKind.Method,
-  'construct signature': monaco.languages.SymbolKind.Method,
-  'construct signature element': monaco.languages.SymbolKind.Method,
+  'construct': SymbolKindValues.Method,
+  'constructSignature': SymbolKindValues.Method,
+  'constructSignatureElement': SymbolKindValues.Method,
+  'construct signature': SymbolKindValues.Method,
+  'construct signature element': SymbolKindValues.Method,
   
   // ============================================================================
   // PRIMITIVES & SPECIAL TYPES
   // ============================================================================
   
-  'string': monaco.languages.SymbolKind.String,
-  'number': monaco.languages.SymbolKind.Number,
-  'boolean': monaco.languages.SymbolKind.Boolean,
-  'array': monaco.languages.SymbolKind.Array,
-  'object': monaco.languages.SymbolKind.Object,
+  'string': SymbolKindValues.String,
+  'number': SymbolKindValues.Number,
+  'boolean': SymbolKindValues.Boolean,
+  'array': SymbolKindValues.Array,
+  'object': SymbolKindValues.Object,
   
   // ============================================================================
   // MISCELLANEOUS
   // ============================================================================
   
   // Keywords & Special
-  'keyword': monaco.languages.SymbolKind.Key,
-  'warning': monaco.languages.SymbolKind.Variable,
-  'unknown': monaco.languages.SymbolKind.Variable,
+  'keyword': SymbolKindValues.Key,
+  'warning': SymbolKindValues.Variable,
+  'unknown': SymbolKindValues.Variable,
   
   // Aliases & Labels
-  'alias': monaco.languages.SymbolKind.Variable,
-  'label': monaco.languages.SymbolKind.Variable,
+  'alias': SymbolKindValues.Variable,
+  'label': SymbolKindValues.Variable,
   
   // Primitives
-  'primitiveType': monaco.languages.SymbolKind.Variable,
-  'primitive type': monaco.languages.SymbolKind.Variable,
+  'primitiveType': SymbolKindValues.Variable,
+  'primitive type': SymbolKindValues.Variable,
   
   // JSDoc Link Components
-  'link': monaco.languages.SymbolKind.String,
-  'linkName': monaco.languages.SymbolKind.String,
-  'link name': monaco.languages.SymbolKind.String,
-  'linkText': monaco.languages.SymbolKind.String,
-  'link text': monaco.languages.SymbolKind.String,
+  'link': SymbolKindValues.String,
+  'linkName': SymbolKindValues.String,
+  'link name': SymbolKindValues.String,
+  'linkText': SymbolKindValues.String,
+  'link text': SymbolKindValues.String,
   
   // String literals
-  'stringLiteral': monaco.languages.SymbolKind.String,
-  'string literal': monaco.languages.SymbolKind.String,
+  'stringLiteral': SymbolKindValues.String,
+  'string literal': SymbolKindValues.String,
 };
 
 /**
@@ -267,7 +301,7 @@ export function mapTsKindToMonacoSymbol(
   }
   
   // Safe fallback
-  return monaco.languages.SymbolKind.Variable;
+  return SymbolKindValues.Variable;
 }
 
 /**

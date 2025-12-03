@@ -3,7 +3,8 @@
  * Adds VS Code-level advanced features to Monaco editor
  */
 
-import * as monaco from 'monaco-editor';
+import type * as monaco from 'monaco-editor';
+import { getMonaco, type Monaco } from './monaco-cdn-loader';
 
 export interface MonacoEnhancementConfig {
   enableMultiCursor?: boolean;
@@ -27,42 +28,47 @@ export interface MonacoEnhancementConfig {
 export class MultiCursorEnhancement {
   private editor: monaco.editor.IStandaloneCodeEditor;
   private disposables: monaco.IDisposable[] = [];
+  private monacoInstance: Monaco | null = null;
 
   constructor(editor: monaco.editor.IStandaloneCodeEditor) {
     this.editor = editor;
+    this.monacoInstance = getMonaco();
     this.registerCommands();
   }
 
   private registerCommands() {
+    const m = this.monacoInstance;
+    if (!m) return;
+
     // Note: addCommand returns command ID (string|null), not IDisposable
     // Monaco manages command lifecycle, no disposal needed
 
     // Add selection to next find match (Ctrl+D / Cmd+D)
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, () => {
+    this.editor.addCommand(m.KeyMod.CtrlCmd | m.KeyCode.KeyD, () => {
       this.editor.trigger('keyboard', 'editor.action.addSelectionToNextFindMatch', {});
     });
 
     // Select all occurrences of find match (Ctrl+Shift+L / Cmd+Shift+L)
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyL, () => {
+    this.editor.addCommand(m.KeyMod.CtrlCmd | m.KeyMod.Shift | m.KeyCode.KeyL, () => {
       this.editor.trigger('keyboard', 'editor.action.selectHighlights', {});
     });
 
     // Add cursor above (Ctrl+Alt+Up / Cmd+Option+Up)
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.UpArrow, () => {
+    this.editor.addCommand(m.KeyMod.CtrlCmd | m.KeyMod.Alt | m.KeyCode.UpArrow, () => {
       this.editor.trigger('keyboard', 'editor.action.insertCursorAbove', {});
     });
 
     // Add cursor below (Ctrl+Alt+Down / Cmd+Option+Down)
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.DownArrow, () => {
+    this.editor.addCommand(m.KeyMod.CtrlCmd | m.KeyMod.Alt | m.KeyCode.DownArrow, () => {
       this.editor.trigger('keyboard', 'editor.action.insertCursorBelow', {});
     });
 
     // Column selection (Ctrl+Shift+Alt+Arrow)
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.DownArrow, () => {
+    this.editor.addCommand(m.KeyMod.CtrlCmd | m.KeyMod.Shift | m.KeyMod.Alt | m.KeyCode.DownArrow, () => {
       this.editor.trigger('keyboard', 'cursorColumnSelectDown', {});
     });
 
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.UpArrow, () => {
+    this.editor.addCommand(m.KeyMod.CtrlCmd | m.KeyMod.Shift | m.KeyMod.Alt | m.KeyCode.UpArrow, () => {
       this.editor.trigger('keyboard', 'cursorColumnSelectUp', {});
     });
   }
@@ -79,58 +85,54 @@ export class MultiCursorEnhancement {
 export class CodeNavigationEnhancement {
   private editor: monaco.editor.IStandaloneCodeEditor;
   private disposables: monaco.IDisposable[] = [];
+  private monacoInstance: Monaco | null = null;
 
   constructor(editor: monaco.editor.IStandaloneCodeEditor) {
     this.editor = editor;
+    this.monacoInstance = getMonaco();
     this.registerCommands();
     this.registerProviders();
   }
 
   private registerCommands() {
+    const m = this.monacoInstance;
+    if (!m) return;
+
     // Go to Definition (F12)
-    this.editor.addCommand(monaco.KeyCode.F12, () => {
-
+    this.editor.addCommand(m.KeyCode.F12, () => {
       this.editor.trigger('keyboard', 'editor.action.revealDefinition', {});
-
     });
 
     // Peek Definition (Alt+F12)
-    this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.F12, () => {
-
+    this.editor.addCommand(m.KeyMod.Alt | m.KeyCode.F12, () => {
       this.editor.trigger('keyboard', 'editor.action.peekDefinition', {});
-
     });
 
     // Find All References (Shift+F12)
-    this.editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.F12, () => {
-
+    this.editor.addCommand(m.KeyMod.Shift | m.KeyCode.F12, () => {
       this.editor.trigger('keyboard', 'editor.action.goToReferences', {});
-
     });
 
     // Go to Symbol in File (Ctrl+Shift+O / Cmd+Shift+O)
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyO, () => {
-
+    this.editor.addCommand(m.KeyMod.CtrlCmd | m.KeyMod.Shift | m.KeyCode.KeyO, () => {
       this.editor.trigger('keyboard', 'editor.action.quickOutline', {});
-
     });
 
     // Go to Symbol in Workspace (Ctrl+T / Cmd+T)
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyT, () => {
-
+    this.editor.addCommand(m.KeyMod.CtrlCmd | m.KeyCode.KeyT, () => {
       this.editor.trigger('keyboard', 'editor.action.quickOpen', { prefix: '#' });
-
     });
 
     // Go to Line (Ctrl+G / Cmd+G)
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG, () => {
-
+    this.editor.addCommand(m.KeyMod.CtrlCmd | m.KeyCode.KeyG, () => {
       this.editor.trigger('keyboard', 'editor.action.gotoLine', {});
-
     });
   }
 
   private registerProviders() {
+    const m = this.monacoInstance;
+    if (!m) return;
+
     const model = this.editor.getModel();
     if (!model) return;
 
@@ -138,7 +140,7 @@ export class CodeNavigationEnhancement {
 
     // Register Definition Provider (for simple cases)
     this.disposables.push(
-      monaco.languages.registerDefinitionProvider(language, {
+      m.languages.registerDefinitionProvider(language, {
         provideDefinition: (model, position, token) => {
           // This would typically call a language server
           // For now, we'll return null to use Monaco's built-in providers
@@ -149,7 +151,7 @@ export class CodeNavigationEnhancement {
 
     // Register Reference Provider
     this.disposables.push(
-      monaco.languages.registerReferenceProvider(language, {
+      m.languages.registerReferenceProvider(language, {
         provideReferences: (model, position, context, token) => {
           // This would typically call a language server
           return null;
@@ -159,7 +161,7 @@ export class CodeNavigationEnhancement {
 
     // Register Document Symbol Provider (for outline)
     this.disposables.push(
-      monaco.languages.registerDocumentSymbolProvider(language, {
+      m.languages.registerDocumentSymbolProvider(language, {
         provideDocumentSymbols: (model, token) => {
           // Parse the document and return symbols
           // This enables the outline view and breadcrumbs
@@ -181,59 +183,55 @@ export class CodeNavigationEnhancement {
 export class CodeRefactoringEnhancement {
   private editor: monaco.editor.IStandaloneCodeEditor;
   private disposables: monaco.IDisposable[] = [];
+  private monacoInstance: Monaco | null = null;
 
   constructor(editor: monaco.editor.IStandaloneCodeEditor) {
     this.editor = editor;
+    this.monacoInstance = getMonaco();
     this.registerCommands();
     this.registerProviders();
   }
 
   private registerCommands() {
+    const m = this.monacoInstance;
+    if (!m) return;
+
     // Rename Symbol (F2)
-    this.editor.addCommand(monaco.KeyCode.F2, () => {
-
+    this.editor.addCommand(m.KeyCode.F2, () => {
       this.editor.trigger('keyboard', 'editor.action.rename', {});
-
     });
 
     // Format Document (Shift+Alt+F)
-    this.editor.addCommand(monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.KeyF, () => {
-
+    this.editor.addCommand(m.KeyMod.Shift | m.KeyMod.Alt | m.KeyCode.KeyF, () => {
       this.editor.trigger('keyboard', 'editor.action.formatDocument', {});
-
     });
 
     // Format Selection (Ctrl+K Ctrl+F / Cmd+K Cmd+F)
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
-
+    this.editor.addCommand(m.KeyMod.CtrlCmd | m.KeyCode.KeyK, () => {
       // This is a chord command - wait for second key
-          this.editor.trigger('keyboard', 'editor.action.formatSelection', {});
-
+      this.editor.trigger('keyboard', 'editor.action.formatSelection', {});
     });
 
     // Organize Imports (Shift+Alt+O)
-    this.editor.addCommand(monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.KeyO, () => {
-
+    this.editor.addCommand(m.KeyMod.Shift | m.KeyMod.Alt | m.KeyCode.KeyO, () => {
       this.editor.trigger('keyboard', 'editor.action.organizeImports', {});
-
     });
 
     // Quick Fix (Ctrl+. / Cmd+.)
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Period, () => {
-
+    this.editor.addCommand(m.KeyMod.CtrlCmd | m.KeyCode.Period, () => {
       this.editor.trigger('keyboard', 'editor.action.quickFix', {});
-
     });
 
     // Trigger Suggest (Ctrl+Space)
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space, () => {
-
+    this.editor.addCommand(m.KeyMod.CtrlCmd | m.KeyCode.Space, () => {
       this.editor.trigger('keyboard', 'editor.action.triggerSuggest', {});
-
     });
   }
 
   private registerProviders() {
+    const m = this.monacoInstance;
+    if (!m) return;
+
     const model = this.editor.getModel();
     if (!model) return;
 
@@ -241,7 +239,7 @@ export class CodeRefactoringEnhancement {
 
     // Register Rename Provider
     this.disposables.push(
-      monaco.languages.registerRenameProvider(language, {
+      m.languages.registerRenameProvider(language, {
         provideRenameEdits: (model, position, newName, token) => {
           // Find all references and create edits
           const word = model.getWordAtPosition(position);
@@ -275,7 +273,7 @@ export class CodeRefactoringEnhancement {
           if (!word) return null;
 
           return {
-            range: new monaco.Range(
+            range: new m.Range(
               position.lineNumber,
               word.startColumn,
               position.lineNumber,
@@ -289,7 +287,7 @@ export class CodeRefactoringEnhancement {
 
     // Register Code Action Provider (Quick Fixes)
     this.disposables.push(
-      monaco.languages.registerCodeActionProvider(language, {
+      m.languages.registerCodeActionProvider(language, {
         provideCodeActions: (model, range, context, token) => {
           const actions: monaco.languages.CodeAction[] = [];
 
@@ -342,60 +340,51 @@ export class CodeRefactoringEnhancement {
 export class AdvancedSearchEnhancement {
   private editor: monaco.editor.IStandaloneCodeEditor;
   private disposables: monaco.IDisposable[] = [];
+  private monacoInstance: Monaco | null = null;
 
   constructor(editor: monaco.editor.IStandaloneCodeEditor) {
     this.editor = editor;
+    this.monacoInstance = getMonaco();
     this.registerCommands();
   }
 
   private registerCommands() {
+    const m = this.monacoInstance;
+    if (!m) return;
+
     // Find with selection (Ctrl+F / Cmd+F)
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, () => {
-
+    this.editor.addCommand(m.KeyMod.CtrlCmd | m.KeyCode.KeyF, () => {
       this.editor.trigger('keyboard', 'actions.find', {});
-
     });
 
     // Replace (Ctrl+H / Cmd+H)
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyH, () => {
-
+    this.editor.addCommand(m.KeyMod.CtrlCmd | m.KeyCode.KeyH, () => {
       this.editor.trigger('keyboard', 'editor.action.startFindReplaceAction', {});
-
     });
 
     // Find Next (F3)
-    this.editor.addCommand(monaco.KeyCode.F3, () => {
-
+    this.editor.addCommand(m.KeyCode.F3, () => {
       this.editor.trigger('keyboard', 'editor.action.nextMatchFindAction', {});
-
     });
 
     // Find Previous (Shift+F3)
-    this.editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.F3, () => {
-
+    this.editor.addCommand(m.KeyMod.Shift | m.KeyCode.F3, () => {
       this.editor.trigger('keyboard', 'editor.action.previousMatchFindAction', {});
-
     });
 
     // Toggle Find Regex (Alt+R)
-    this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.KeyR, () => {
-
+    this.editor.addCommand(m.KeyMod.Alt | m.KeyCode.KeyR, () => {
       this.editor.trigger('keyboard', 'toggleFindRegex', {});
-
     });
 
     // Toggle Find Whole Word (Alt+W)
-    this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.KeyW, () => {
-
+    this.editor.addCommand(m.KeyMod.Alt | m.KeyCode.KeyW, () => {
       this.editor.trigger('keyboard', 'toggleFindWholeWord', {});
-
     });
 
     // Toggle Find Case Sensitive (Alt+C)
-    this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.KeyC, () => {
-
+    this.editor.addCommand(m.KeyMod.Alt | m.KeyCode.KeyC, () => {
       this.editor.trigger('keyboard', 'toggleFindCaseSensitive', {});
-
     });
   }
 
@@ -454,30 +443,34 @@ export class AdvancedSearchEnhancement {
 export class IntelliSenseEnhancement {
   private editor: monaco.editor.IStandaloneCodeEditor;
   private disposables: monaco.IDisposable[] = [];
+  private monacoInstance: Monaco | null = null;
 
   constructor(editor: monaco.editor.IStandaloneCodeEditor) {
     this.editor = editor;
+    this.monacoInstance = getMonaco();
     this.registerCommands();
     this.registerProviders();
   }
 
   private registerCommands() {
+    const m = this.monacoInstance;
+    if (!m) return;
+
     // Trigger Parameter Hints (Ctrl+Shift+Space / Cmd+Shift+Space)
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Space, () => {
-
+    this.editor.addCommand(m.KeyMod.CtrlCmd | m.KeyMod.Shift | m.KeyCode.Space, () => {
       this.editor.trigger('keyboard', 'editor.action.triggerParameterHints', {});
-
     });
 
     // Trigger Suggest (Ctrl+Space / Cmd+Space)
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space, () => {
-
+    this.editor.addCommand(m.KeyMod.CtrlCmd | m.KeyCode.Space, () => {
       this.editor.trigger('keyboard', 'editor.action.triggerSuggest', {});
-
     });
   }
 
   private registerProviders() {
+    const m = this.monacoInstance;
+    if (!m) return;
+
     const model = this.editor.getModel();
     if (!model) return;
 
@@ -485,7 +478,7 @@ export class IntelliSenseEnhancement {
 
     // Register Signature Help Provider (Parameter Hints)
     this.disposables.push(
-      monaco.languages.registerSignatureHelpProvider(language, {
+      m.languages.registerSignatureHelpProvider(language, {
         signatureHelpTriggerCharacters: ['(', ','],
         signatureHelpRetriggerCharacters: [','],
         provideSignatureHelp: (model, position, token, context) => {
@@ -498,7 +491,7 @@ export class IntelliSenseEnhancement {
 
     // Register Hover Provider (enhanced tooltips)
     this.disposables.push(
-      monaco.languages.registerHoverProvider(language, {
+      m.languages.registerHoverProvider(language, {
         provideHover: (model, position, token) => {
           // Provide rich hover information
           return null;
@@ -508,7 +501,7 @@ export class IntelliSenseEnhancement {
 
     // Register Completion Item Provider (enhanced autocomplete)
     this.disposables.push(
-      monaco.languages.registerCompletionItemProvider(language, {
+      m.languages.registerCompletionItemProvider(language, {
         triggerCharacters: ['.', ':', '<', '"', "'", '/', '@'],
         provideCompletionItems: (model, position, context, token) => {
           // Provide context-aware completions
@@ -551,15 +544,20 @@ export class AICodeActionsEnhancement {
   private disposables: monaco.IDisposable[] = [];
   private projectId: string | number;
   private loadingDecorations: string[] = [];
+  private monacoInstance: Monaco | null = null;
 
   constructor(editor: monaco.editor.IStandaloneCodeEditor, projectId?: string | number) {
     this.editor = editor;
     this.projectId = projectId || 'unknown';
+    this.monacoInstance = getMonaco();
     this.registerProviders();
     this.registerCodeLensProvider();
   }
 
   private registerProviders() {
+    const m = this.monacoInstance;
+    if (!m) return;
+
     const model = this.editor.getModel();
     if (!model) return;
 
@@ -587,7 +585,7 @@ export class AICodeActionsEnhancement {
     ];
     
     this.disposables.push(
-      monaco.languages.registerCodeActionProvider(supportedLanguages, {
+      m.languages.registerCodeActionProvider(supportedLanguages, {
         provideCodeActions: (model, range, context, token) => {
           const actions: monaco.languages.CodeAction[] = [];
           
@@ -603,7 +601,7 @@ export class AICodeActionsEnhancement {
             // Get the current line if no selection
             const lineNumber = range.startLineNumber;
             selectedText = model.getLineContent(lineNumber);
-            effectiveRange = new monaco.Range(lineNumber, 1, lineNumber, model.getLineMaxColumn(lineNumber));
+            effectiveRange = new m.Range(lineNumber, 1, lineNumber, model.getLineMaxColumn(lineNumber));
           }
 
           const hasContent = selectedText.trim().length > 0;
@@ -702,6 +700,9 @@ export class AICodeActionsEnhancement {
    * Register Code Lens provider for function-level AI actions
    */
   private registerCodeLensProvider() {
+    const m = this.monacoInstance;
+    if (!m) return;
+
     // Comprehensive language support for function-level AI actions
     const supportedLanguages = [
       'typescript', 'javascript', 'typescriptreact', 'javascriptreact',
@@ -710,7 +711,7 @@ export class AICodeActionsEnhancement {
     ];
     
     this.disposables.push(
-      monaco.languages.registerCodeLensProvider(supportedLanguages, {
+      m.languages.registerCodeLensProvider(supportedLanguages, {
         provideCodeLenses: (model, token) => {
           const lenses: monaco.languages.CodeLens[] = [];
           const text = model.getValue();
@@ -733,7 +734,7 @@ export class AICodeActionsEnhancement {
               
               // Add AI actions as code lenses above functions
               lenses.push({
-                range: new monaco.Range(line, 1, line, 1),
+                range: new m.Range(line, 1, line, 1),
                 command: {
                   id: 'ai.explain.function',
                   title: '✨ Explain',
@@ -742,7 +743,7 @@ export class AICodeActionsEnhancement {
               });
               
               lenses.push({
-                range: new monaco.Range(line, 1, line, 1),
+                range: new m.Range(line, 1, line, 1),
                 command: {
                   id: 'ai.test.function',
                   title: '🧪 Test',
@@ -751,7 +752,7 @@ export class AICodeActionsEnhancement {
               });
               
               lenses.push({
-                range: new monaco.Range(line, 1, line, 1),
+                range: new m.Range(line, 1, line, 1),
                 command: {
                   id: 'ai.document.function',
                   title: '📝 Doc',
@@ -833,13 +834,16 @@ export class AICodeActionsEnhancement {
   }
 
   private registerAICommandHandlers() {
+    const m = this.monacoInstance;
+    if (!m) return;
+
     // Handler for AI Explain
     this.editor.addAction({
       id: 'ai.explain',
       label: '✨ AI Explain',
       contextMenuGroupId: 'ai-actions',
       contextMenuOrder: 1,
-      keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyE],
+      keybindings: [m.KeyMod.Alt | m.KeyCode.KeyE],
       run: async (editor, ...args) => {
         const [code] = args as [string];
         await this.handleAIAction('explain', code || this.getSelectedOrLineCode());
@@ -852,7 +856,7 @@ export class AICodeActionsEnhancement {
       label: '🐛 AI Debug',
       contextMenuGroupId: 'ai-actions',
       contextMenuOrder: 2,
-      keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyB],
+      keybindings: [m.KeyMod.Alt | m.KeyCode.KeyB],
       run: async (editor, ...args) => {
         const [code] = args as [string];
         await this.handleAIAction('debug', code || this.getSelectedOrLineCode());
@@ -865,7 +869,7 @@ export class AICodeActionsEnhancement {
       label: '🧪 AI Generate Tests',
       contextMenuGroupId: 'ai-actions',
       contextMenuOrder: 3,
-      keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyT],
+      keybindings: [m.KeyMod.Alt | m.KeyCode.KeyT],
       run: async (editor, ...args) => {
         const [code] = args as [string];
         await this.handleAIAction('test', code || this.getSelectedOrLineCode());
@@ -878,7 +882,7 @@ export class AICodeActionsEnhancement {
       label: '📝 AI Document',
       contextMenuGroupId: 'ai-actions',
       contextMenuOrder: 4,
-      keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyD],
+      keybindings: [m.KeyMod.Alt | m.KeyCode.KeyD],
       run: async (editor, ...args) => {
         const [code] = args as [string];
         await this.handleAIAction('document', code || this.getSelectedOrLineCode());
@@ -891,7 +895,7 @@ export class AICodeActionsEnhancement {
       label: '⚡ AI Optimize',
       contextMenuGroupId: 'ai-actions',
       contextMenuOrder: 5,
-      keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyO],
+      keybindings: [m.KeyMod.Alt | m.KeyCode.KeyO],
       run: async (editor, ...args) => {
         const [code] = args as [string];
         await this.handleAIAction('optimize', code || this.getSelectedOrLineCode());
@@ -904,7 +908,7 @@ export class AICodeActionsEnhancement {
       label: '🔍 AI Review',
       contextMenuGroupId: 'ai-actions',
       contextMenuOrder: 6,
-      keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyR],
+      keybindings: [m.KeyMod.Alt | m.KeyCode.KeyR],
       run: async (editor, ...args) => {
         const [code] = args as [string];
         await this.handleAIAction('review', code || this.getSelectedOrLineCode());

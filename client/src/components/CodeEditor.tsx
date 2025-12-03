@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import * as monaco from 'monaco-editor';
+import type * as monaco from 'monaco-editor';
+import { getMonaco, type Monaco } from "@/lib/monaco-cdn-loader";
 import { setupMonacoTheme, getMonacoEditorOptions } from "@/lib/monaco-setup";
 import { File } from "@shared/schema";
 import { Search, XCircle, Maximize2, Minimize2, Code, Settings, Share2, Save, CheckCircle } from "lucide-react";
@@ -114,8 +115,11 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
         folding: editorSettings.folding,
       });
       
+      const monacoInstance = getMonaco();
+      if (!monacoInstance) return;
+      
       // Update font info measurements for cursor positioning
-      const fontInfo = monacoEditorRef.current.getOption(monaco.editor.EditorOption.fontInfo);
+      const fontInfo = monacoEditorRef.current.getOption(monacoInstance.editor.EditorOption.fontInfo);
       setEditorDimensions({
         lineHeight: fontInfo.lineHeight,
         charWidth: fontInfo.typicalHalfwidthCharacterWidth,
@@ -221,8 +225,14 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
   };
   
   useEffect(() => {
+    const monacoInstance = getMonaco();
+    if (!monacoInstance) {
+      console.warn('[Monaco] Monaco not yet initialized');
+      return;
+    }
+    
     // Setup Monaco themes and snippets
-    setupMonacoTheme();
+    setupMonacoTheme(monacoInstance);
     
     // Initialize Monaco editor
     if (editorRef.current && !monacoEditorRef.current) {
@@ -242,7 +252,7 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
       });
       
       // Create editor instance
-      monacoEditorRef.current = monaco.editor.create(editorRef.current, {
+      monacoEditorRef.current = monacoInstance.editor.create(editorRef.current, {
         ...options,
         value: file.content || '',
         language: getLanguageFromFilename(file.name),
@@ -288,7 +298,7 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
       }
       
       // Get dimensions for cursor positioning
-      const fontInfo = monacoEditorRef.current.getOption(monaco.editor.EditorOption.fontInfo);
+      const fontInfo = monacoEditorRef.current.getOption(monacoInstance.editor.EditorOption.fontInfo);
       setEditorDimensions({
         lineHeight: fontInfo.lineHeight,
         charWidth: fontInfo.typicalHalfwidthCharacterWidth,
@@ -307,22 +317,22 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
       // Ctrl/Cmd+F for search (already provided by Monaco)
       
       // Ctrl/Cmd+S to save
-      monacoEditorRef.current.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+      monacoEditorRef.current.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS, () => {
         saveFile();
       });
       
       // Ctrl/Cmd+/ to toggle line comment
-      monacoEditorRef.current.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Slash, () => {
+      monacoEditorRef.current.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Slash, () => {
         monacoEditorRef.current?.trigger('keyboard', 'editor.action.commentLine', {});
       });
       
       // Ctrl/Cmd+Shift+A to toggle block comment
-      monacoEditorRef.current.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyA, () => {
+      monacoEditorRef.current.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyMod.Shift | monacoInstance.KeyCode.KeyA, () => {
         monacoEditorRef.current?.trigger('keyboard', 'editor.action.blockComment', {});
       });
       
       // Add keyboard shortcut for search (Cmd+F / Ctrl+F) - custom handling
-      monacoEditorRef.current.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, () => {
+      monacoEditorRef.current.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyF, () => {
         toggleSearch();
       });
       
@@ -361,8 +371,9 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
       
       // Update language if file extension changed
       const model = monacoEditorRef.current.getModel();
-      if (model) {
-        monaco.editor.setModelLanguage(model, getLanguageFromFilename(file.name));
+      const monacoInstance = getMonaco();
+      if (model && monacoInstance) {
+        monacoInstance.editor.setModelLanguage(model, getLanguageFromFilename(file.name));
       }
     }
   }, [file.name, file.content]);

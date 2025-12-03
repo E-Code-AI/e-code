@@ -1,4 +1,5 @@
-import * as monaco from 'monaco-editor';
+import type * as monaco from 'monaco-editor';
+import { getMonacoAsync, type Monaco } from './monaco-cdn-loader';
 
 export interface EditorOptions {
   theme?: string;
@@ -88,56 +89,56 @@ export function getMonacoEditorOptions(options?: Partial<EditorOptions>): monaco
 }
 
 // Define snippets for different languages
-export function registerSnippets() {
+export function registerSnippets(monacoInstance: Monaco) {
   // JavaScript/TypeScript snippets
-  monaco.languages.registerCompletionItemProvider('javascript', {
+  monacoInstance.languages.registerCompletionItemProvider('javascript', {
     provideCompletionItems: (model, position) => {
       const suggestions = [
         {
           label: 'console.log',
-          kind: monaco.languages.CompletionItemKind.Function,
+          kind: monacoInstance.languages.CompletionItemKind.Function,
           insertText: 'console.log($1);',
-          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           detail: 'Console log statement',
           documentation: 'Log output to the console'
         },
         {
           label: 'function',
-          kind: monaco.languages.CompletionItemKind.Snippet,
+          kind: monacoInstance.languages.CompletionItemKind.Snippet,
           insertText: 'function ${1:name}(${2:params}) {\n\t$0\n}',
-          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           detail: 'Function declaration',
           documentation: 'Creates a function declaration'
         },
         {
           label: 'arrow',
-          kind: monaco.languages.CompletionItemKind.Snippet,
+          kind: monacoInstance.languages.CompletionItemKind.Snippet,
           insertText: '(${1:params}) => {\n\t$0\n}',
-          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           detail: 'Arrow function',
           documentation: 'Creates an arrow function'
         },
         {
           label: 'ifelse',
-          kind: monaco.languages.CompletionItemKind.Snippet,
+          kind: monacoInstance.languages.CompletionItemKind.Snippet,
           insertText: 'if (${1:condition}) {\n\t$2\n} else {\n\t$0\n}',
-          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           detail: 'If-Else statement',
           documentation: 'Creates an if-else statement'
         },
         {
           label: 'forloop',
-          kind: monaco.languages.CompletionItemKind.Snippet,
+          kind: monacoInstance.languages.CompletionItemKind.Snippet,
           insertText: 'for (let ${1:i} = 0; ${1:i} < ${2:array}.length; ${1:i}++) {\n\t$0\n}',
-          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           detail: 'For loop',
           documentation: 'Creates a for loop'
         },
         {
           label: 'import',
-          kind: monaco.languages.CompletionItemKind.Snippet,
+          kind: monacoInstance.languages.CompletionItemKind.Snippet,
           insertText: 'import { $2 } from "$1";',
-          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           detail: 'Import statement',
           documentation: 'ES6 import statement'
         },
@@ -147,30 +148,30 @@ export function registerSnippets() {
   });
 
   // Register snippets for TypeScript
-  monaco.languages.registerCompletionItemProvider('typescript', {
+  monacoInstance.languages.registerCompletionItemProvider('typescript', {
     provideCompletionItems: (model, position) => {
       const suggestions = [
         {
           label: 'interface',
-          kind: monaco.languages.CompletionItemKind.Snippet,
+          kind: monacoInstance.languages.CompletionItemKind.Snippet,
           insertText: 'interface ${1:Name} {\n\t${2:property}: ${3:type};\n\t$0\n}',
-          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           detail: 'Interface declaration',
           documentation: 'Creates a TypeScript interface'
         },
         {
           label: 'type',
-          kind: monaco.languages.CompletionItemKind.Snippet,
+          kind: monacoInstance.languages.CompletionItemKind.Snippet,
           insertText: 'type ${1:Name} = {\n\t${2:property}: ${3:type};\n\t$0\n}',
-          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           detail: 'Type declaration',
           documentation: 'Creates a TypeScript type alias'
         },
         {
           label: 'enum',
-          kind: monaco.languages.CompletionItemKind.Snippet,
+          kind: monacoInstance.languages.CompletionItemKind.Snippet,
           insertText: 'enum ${1:Name} {\n\t${2:Member1},\n\t${3:Member2},\n\t$0\n}',
-          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           detail: 'Enum declaration',
           documentation: 'Creates a TypeScript enum'
         },
@@ -180,22 +181,22 @@ export function registerSnippets() {
   });
 
   // HTML snippets
-  monaco.languages.registerCompletionItemProvider('html', {
+  monacoInstance.languages.registerCompletionItemProvider('html', {
     provideCompletionItems: (model, position) => {
       const suggestions = [
         {
           label: 'div',
-          kind: monaco.languages.CompletionItemKind.Snippet,
+          kind: monacoInstance.languages.CompletionItemKind.Snippet,
           insertText: '<div class="$1">\n\t$0\n</div>',
-          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           detail: 'Div element',
           documentation: 'Creates a div element with a class'
         },
         {
           label: 'html5',
-          kind: monaco.languages.CompletionItemKind.Snippet,
+          kind: monacoInstance.languages.CompletionItemKind.Snippet,
           insertText: '<!DOCTYPE html>\n<html lang="en">\n<head>\n\t<meta charset="UTF-8">\n\t<meta name="viewport" content="width=device-width, initial-scale=1.0">\n\t<title>$1</title>\n</head>\n<body>\n\t$0\n</body>\n</html>',
-          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           detail: 'HTML5 boilerplate',
           documentation: 'Creates a basic HTML5 document structure'
         },
@@ -205,9 +206,9 @@ export function registerSnippets() {
   });
 }
 
-export function setupMonacoTheme() {
+export function setupMonacoTheme(monacoInstance: Monaco) {
   // Define the E-Code dark theme
-  monaco.editor.defineTheme('replitDark', {
+  monacoInstance.editor.defineTheme('replitDark', {
     base: 'vs-dark',
     inherit: true,
     rules: [
@@ -238,7 +239,7 @@ export function setupMonacoTheme() {
   });
 
   // Define the E-Code light theme
-  monaco.editor.defineTheme('replitLight', {
+  monacoInstance.editor.defineTheme('replitLight', {
     base: 'vs',
     inherit: true,
     rules: [
@@ -269,6 +270,6 @@ export function setupMonacoTheme() {
   });
 
   // Register code snippets
-  registerSnippets();
+  registerSnippets(monacoInstance);
 }
 

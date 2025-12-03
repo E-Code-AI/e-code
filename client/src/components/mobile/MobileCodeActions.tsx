@@ -6,7 +6,8 @@
  */
 
 import { useState, useEffect } from 'react';
-import * as monaco from 'monaco-editor';
+import type * as monaco from 'monaco-editor';
+import { getMonaco } from '@/lib/monaco-cdn-loader';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles,

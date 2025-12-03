@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import * as monaco from 'monaco-editor';
+import type * as monaco from 'monaco-editor';
+import { getMonaco } from '@/lib/monaco-cdn-loader';
 import { motion, PanInfo, AnimatePresence } from 'framer-motion';
 import { 
   Undo2, Redo2, Save, Search, MoreVertical,

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import * as Monaco from 'monaco-editor';
+import type * as Monaco from 'monaco-editor';
+import { getMonaco } from '@/lib/monaco-cdn-loader';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Sparkles, Bot } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
