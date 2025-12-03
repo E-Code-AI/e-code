@@ -24,6 +24,12 @@ interface MobileMoreMenuProps {
   onClose: () => void;
   onOpenFiles?: () => void;
   onOpenCollaboration?: () => void;
+  onOpenGit?: () => void;
+  onOpenPackages?: () => void;
+  onOpenSecrets?: () => void;
+  onOpenDatabase?: () => void;
+  onOpenSettings?: () => void;
+  onOpenDebug?: () => void;
   problemsCount?: number;
   className?: string;
 }
@@ -48,6 +54,12 @@ export function MobileMoreMenu({
   onClose,
   onOpenFiles,
   onOpenCollaboration,
+  onOpenGit,
+  onOpenPackages,
+  onOpenSecrets,
+  onOpenDatabase,
+  onOpenSettings,
+  onOpenDebug,
   problemsCount = 0,
   className 
 }: MobileMoreMenuProps) {
@@ -80,45 +92,77 @@ export function MobileMoreMenu({
     }
   };
 
-  // Handle menu item clicks
+  // Handle menu item clicks - use real panels instead of toasts
   const handleGitCommit = () => {
-    toast({ title: 'Git Commit', description: 'Opening commit dialog...' });
-    onClose();
+    if (onOpenGit) {
+      onOpenGit();
+    } else {
+      toast({ title: 'Git Commit', description: 'Opening commit dialog...' });
+      onClose();
+    }
   };
 
   const handleGitPush = () => {
-    toast({ title: 'Git Push', description: 'Pushing changes...' });
-    onClose();
+    if (onOpenGit) {
+      onOpenGit();
+    } else {
+      toast({ title: 'Git Push', description: 'Pushing changes...' });
+      onClose();
+    }
   };
 
   const handleGitPull = () => {
-    toast({ title: 'Git Pull', description: 'Pulling latest changes...' });
-    onClose();
+    if (onOpenGit) {
+      onOpenGit();
+    } else {
+      toast({ title: 'Git Pull', description: 'Pulling latest changes...' });
+      onClose();
+    }
   };
 
   const handleGitBranches = () => {
-    toast({ title: 'Branches', description: 'Opening branch manager...' });
-    onClose();
+    if (onOpenGit) {
+      onOpenGit();
+    } else {
+      toast({ title: 'Branches', description: 'Opening branch manager...' });
+      onClose();
+    }
   };
 
   const handleDebugStart = () => {
-    toast({ title: 'Debug', description: 'Starting debugger...' });
-    onClose();
+    if (onOpenDebug) {
+      onOpenDebug();
+    } else {
+      toast({ title: 'Debug', description: 'Starting debugger...' });
+      onClose();
+    }
   };
 
   const handleDebugStop = () => {
-    toast({ title: 'Debug', description: 'Stopping debugger...' });
-    onClose();
+    if (onOpenDebug) {
+      onOpenDebug();
+    } else {
+      toast({ title: 'Debug', description: 'Stopping debugger...' });
+      onClose();
+    }
   };
 
   const handleBreakpoints = () => {
-    toast({ title: 'Breakpoints', description: 'Opening breakpoints panel...' });
-    onClose();
+    if (onOpenDebug) {
+      onOpenDebug();
+    } else {
+      toast({ title: 'Breakpoints', description: 'Opening breakpoints panel...' });
+      onClose();
+    }
   };
 
   const handleWatchVars = () => {
-    toast({ title: 'Watch Variables', description: 'Opening watch panel...' });
-    onClose();
+    if (onOpenDebug) {
+      onOpenDebug();
+    } else {
+      toast({ title: 'Watch Variables', description: 'Opening watch panel...' });
+      onClose();
+    }
   };
 
   const handleViewProblems = () => {
@@ -127,23 +171,39 @@ export function MobileMoreMenu({
   };
 
   const handleProjectSettings = () => {
-    toast({ title: 'Project Settings', description: 'Opening settings...' });
-    onClose();
+    if (onOpenSettings) {
+      onOpenSettings();
+    } else {
+      toast({ title: 'Project Settings', description: 'Opening settings...' });
+      onClose();
+    }
   };
 
   const handleTheme = () => {
-    toast({ title: 'Theme', description: 'Opening theme picker...' });
-    onClose();
+    if (onOpenSettings) {
+      onOpenSettings();
+    } else {
+      toast({ title: 'Theme', description: 'Opening theme picker...' });
+      onClose();
+    }
   };
 
   const handleSecrets = () => {
-    toast({ title: 'Secrets', description: 'Managing environment secrets...' });
-    onClose();
+    if (onOpenSecrets) {
+      onOpenSecrets();
+    } else {
+      toast({ title: 'Secrets', description: 'Managing environment secrets...' });
+      onClose();
+    }
   };
 
   const handleDatabase = () => {
-    toast({ title: 'Database', description: 'Opening database viewer...' });
-    onClose();
+    if (onOpenDatabase) {
+      onOpenDatabase();
+    } else {
+      toast({ title: 'Database', description: 'Opening database viewer...' });
+      onClose();
+    }
   };
 
   const handleShareLink = async () => {
@@ -201,15 +261,19 @@ export function MobileMoreMenu({
     onClose();
   };
 
-  // New handlers for additional services
+  // New handlers for additional services - use real panels
   const handleWebview = () => {
     toast({ title: 'Webview', description: 'Opening web preview...' });
     onClose();
   };
 
   const handlePackages = () => {
-    toast({ title: 'Packages', description: 'Managing dependencies...' });
-    onClose();
+    if (onOpenPackages) {
+      onOpenPackages();
+    } else {
+      toast({ title: 'Packages', description: 'Managing dependencies...' });
+      onClose();
+    }
   };
 
   const handleTests = () => {
@@ -238,8 +302,12 @@ export function MobileMoreMenu({
   };
 
   const handleEnvVars = () => {
-    toast({ title: 'Environment Variables', description: 'Managing env vars...' });
-    onClose();
+    if (onOpenSecrets) {
+      onOpenSecrets();
+    } else {
+      toast({ title: 'Environment Variables', description: 'Managing env vars...' });
+      onClose();
+    }
   };
 
   // Files handlers
