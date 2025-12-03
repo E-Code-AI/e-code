@@ -60,8 +60,8 @@ export class DeploymentMetricsService extends EventEmitter {
     errorRate: { warning: 1, critical: 5 }, // percentage
     responseTime: { warning: 1000, critical: 3000 }, // ms
   };
-  private metricsInterval?: NodeJS.Timer;
-  private aggregationInterval?: NodeJS.Timer;
+  private metricsInterval?: ReturnType<typeof setInterval>;
+  private aggregationInterval?: ReturnType<typeof setInterval>;
 
   constructor() {
     super();
@@ -344,7 +344,7 @@ export class DeploymentMetricsService extends EventEmitter {
         : ['default-deployment-1', 'default-deployment-2'];
       
       for (const deployment of deploymentIds) {
-        const id = typeof deployment === 'string' ? deployment : deployment.id;
+        const id = typeof deployment === 'string' ? deployment : String(deployment);
         await this.collectMetrics(id);
       }
     } catch (error) {
@@ -414,6 +414,8 @@ export class DeploymentMetricsService extends EventEmitter {
   private async storePerformanceMetric(metric: DeploymentMetric): Promise<void> {
     try {
       await db.insert(performanceMetrics).values({
+        metric_name: 'deployment_health',
+        metric_value: metric.healthScore.toFixed(4),
         type: 'deployment',
         category: 'system',
         value: metric.healthScore,
