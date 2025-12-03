@@ -52,9 +52,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: async (user: SelectUser) => {
       queryClient.setQueryData(["/api/me"], user);
       await queryClient.invalidateQueries();
+      const displayName = user.displayName || user.username || user.email?.split('@')[0] || 'User';
       toast({
         title: "Login successful",
-        description: `Welcome back, ${user.username}!`,
+        description: `Welcome back, ${displayName}!`,
       });
       // IMPORTANT: Do NOT navigate here with window.location.href
       // Let Login.tsx useEffect handle navigation to preserve sessionStorage flags
@@ -75,9 +76,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/me"], user);
+      const displayName = user.displayName || user.username || user.email?.split('@')[0] || 'User';
       toast({
         title: "Registration successful",
-        description: `Welcome, ${user.username}!`,
+        description: `Welcome, ${displayName}!`,
       });
     },
     onError: (error: Error) => {
