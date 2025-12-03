@@ -88,14 +88,25 @@ export class UnifiedCollaborationService {
     this.io = new SocketServer(server, {
       cors: {
         origin: '*',
-        credentials: true
+        credentials: true,
+        methods: ['GET', 'POST']
       },
-      path: '/ws/collaboration'
+      path: '/ws/collaboration',
+      transports: ['websocket', 'polling'],
+      allowEIO3: true
     });
     
     this.yjsWss = new WebSocketServer({ 
       server,
       path: '/ws/yjs'
+    });
+    
+    this.io.engine.on('connection_error', (err) => {
+      console.log('[Collaboration] Engine connection error:', err.message, err.context);
+    });
+    
+    this.io.on('connect_error', (err) => {
+      console.log('[Collaboration] Socket.IO connect error:', err);
     });
     
     this.setupSocketIO();
