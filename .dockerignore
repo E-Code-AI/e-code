@@ -373,7 +373,6 @@ yarn-debug.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Lock files not needed in runtime (already installed)
-package-lock.json
+# Lock files - keep package-lock.json for npm ci
 yarn.lock
 pnpm-lock.yaml
