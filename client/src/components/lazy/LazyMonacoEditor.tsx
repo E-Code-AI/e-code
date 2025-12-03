@@ -1,6 +1,7 @@
-import { lazy, Suspense, ComponentType } from 'react';
+import { lazy, Suspense, ComponentType, useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
+import { initMonaco, isMonacoInitialized } from '@/lib/monaco-cdn-loader';
 
 interface EditorFallbackProps {
   height?: string | number;
@@ -16,6 +17,22 @@ function EditorFallback({ height = '100%' }: EditorFallbackProps) {
       <span className="text-sm text-muted-foreground">Loading editor...</span>
     </div>
   );
+}
+
+function MonacoInitializer({ children }: { children: React.ReactNode }) {
+  const [isReady, setIsReady] = useState(isMonacoInitialized());
+
+  useEffect(() => {
+    if (!isReady) {
+      initMonaco().then(() => setIsReady(true)).catch(console.error);
+    }
+  }, [isReady]);
+
+  if (!isReady) {
+    return <EditorFallback />;
+  }
+
+  return <>{children}</>;
 }
 
 export const LazyCodeEditor = lazy(() => import('@/components/CodeEditor'));
@@ -48,9 +65,11 @@ export function LazyEditorWrapper({
   ...props 
 }: LazyEditorWrapperProps) {
   return (
-    <Suspense fallback={<EditorFallback height={fallbackHeight} />}>
-      <Component {...props} />
-    </Suspense>
+    <MonacoInitializer>
+      <Suspense fallback={<EditorFallback height={fallbackHeight} />}>
+        <Component {...props} />
+      </Suspense>
+    </MonacoInitializer>
   );
 }
 
@@ -62,9 +81,13 @@ export function withLazyEditor<P extends Record<string, unknown>>(
   
   return function LazyEditorHOC(props: P) {
     return (
-      <Suspense fallback={<EditorFallback height={fallbackHeight} />}>
-        <LazyComponent {...props as any} />
-      </Suspense>
+      <MonacoInitializer>
+        <Suspense fallback={<EditorFallback height={fallbackHeight} />}>
+          <LazyComponent {...props as any} />
+        </Suspense>
+      </MonacoInitializer>
     );
   };
 }
+
+export { MonacoInitializer };

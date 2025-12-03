@@ -4,7 +4,8 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import * as monaco from 'monaco-editor';
+import type * as monaco from 'monaco-editor';
+import { getMonaco } from '@/lib/monaco-cdn-loader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -67,8 +68,14 @@ export function VisualDiffEditor({
   useEffect(() => {
     if (!containerRef.current) return;
 
+    const monacoInstance = getMonaco();
+    if (!monacoInstance) {
+      console.warn('[Monaco] Monaco not yet initialized');
+      return;
+    }
+
     // Create diff editor
-    const diffEditor = monaco.editor.createDiffEditor(containerRef.current, {
+    const diffEditor = monacoInstance.editor.createDiffEditor(containerRef.current, {
       automaticLayout: true,
       renderSideBySide: !inlineView,
       readOnly: readOnly,
@@ -93,8 +100,8 @@ export function VisualDiffEditor({
     });
 
     // Set original and modified models
-    const originalModel = monaco.editor.createModel(originalContent, language);
-    const modifiedModel = monaco.editor.createModel(modifiedContent, language);
+    const originalModel = monacoInstance.editor.createModel(originalContent, language);
+    const modifiedModel = monacoInstance.editor.createModel(modifiedContent, language);
 
     diffEditor.setModel({
       original: originalModel,

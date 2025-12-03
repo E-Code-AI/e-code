@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState, createContext, useContext } from 'r
 import * as Y from 'yjs';
 import { MonacoBinding } from 'y-monaco';
 import { WebsocketProvider } from 'y-websocket';
-import * as monaco from 'monaco-editor';
+import type * as monaco from 'monaco-editor';
+import { getMonaco } from '@/lib/monaco-cdn-loader';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

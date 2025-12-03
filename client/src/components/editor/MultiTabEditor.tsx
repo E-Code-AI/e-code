@@ -12,7 +12,8 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { File } from '@shared/schema';
-import * as monaco from 'monaco-editor';
+import type * as monaco from 'monaco-editor';
+import { getMonaco } from '@/lib/monaco-cdn-loader';
 import { setupMonacoTheme, getMonacoEditorOptions } from '@/lib/monaco-setup';
 import { cn } from '@/lib/utils';
 import { X, Plus } from 'lucide-react';

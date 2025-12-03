@@ -3,8 +3,9 @@
  * Provides real-time suggestions as users type
  */
 
-import * as monaco from 'monaco-editor';
+import type * as monaco from 'monaco-editor';
 import { apiRequest } from '@/lib/queryClient';
+import { getMonaco, type Monaco } from './monaco-cdn-loader';
 
 interface AICompletionResponse {
   completions: Array<{
@@ -90,12 +91,17 @@ export class AICodeCompletionProvider implements monaco.languages.InlineCompleti
               return;
             }
 
-            // Convert to Monaco inline completion items
+            // Convert to Monaco inline completion items (using the CDN-loaded Monaco instance)
+            const monacoApi = getMonaco();
+            if (!monacoApi) {
+              resolve({ items: [] });
+              return;
+            }
             const items: monaco.languages.InlineCompletion[] = response.completions
               .filter((c: any) => c.confidence > 0.5) // Only show high-confidence completions
               .map((completion: any) => ({
                 insertText: completion.text,
-                range: new monaco.Range(
+                range: new monacoApi.Range(
                   position.lineNumber,
                   position.column,
                   position.lineNumber,
@@ -148,8 +154,16 @@ export class AICodeCompletionProvider implements monaco.languages.InlineCompleti
 // Register AI completion provider for supported languages
 export function registerAICodeCompletion(
   editor: monaco.editor.IStandaloneCodeEditor,
-  projectContext?: string
+  projectContext?: string,
+  monacoInstance?: Monaco
 ): monaco.IDisposable[] {
+  // Use provided monacoInstance or get it from CDN loader
+  const monacoApi = monacoInstance || (getMonaco() as Monaco);
+  if (!monacoApi) {
+    console.warn('[AI Completion] Monaco not initialized');
+    return [];
+  }
+
   const disposables: monaco.IDisposable[] = [];
   const provider = new AICodeCompletionProvider(projectContext);
   
@@ -157,7 +171,7 @@ export function registerAICodeCompletion(
   const languages = ['javascript', 'typescript', 'python', 'java', 'cpp', 'csharp', 'go', 'rust', 'php', 'ruby'];
   
   languages.forEach(language => {
-    const disposable = monaco.languages.registerInlineCompletionsProvider(
+    const disposable = monacoApi.languages.registerInlineCompletionsProvider(
       language,
       provider
     );
@@ -166,7 +180,7 @@ export function registerAICodeCompletion(
 
   // Add command to accept completion and send feedback
   disposables.push(
-    monaco.editor.addCommand({
+    monacoApi.editor.addCommand({
       id: 'aiCompletion.accept',
       run: async (accessor, completionText: string) => {
         // Send feedback that completion was accepted
@@ -191,7 +205,7 @@ export function registerAICodeCompletion(
 
   // Add settings to toggle AI completions
   disposables.push(
-    monaco.editor.addCommand({
+    monacoApi.editor.addCommand({
       id: 'aiCompletion.toggle',
       run: () => {
         const currentState = provider['isEnabled'];

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import * as monaco from "monaco-editor";
+import type * as monaco from "monaco-editor";
+import { getMonaco, type Monaco } from "@/lib/monaco-cdn-loader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -171,8 +172,14 @@ export function ReplitMonacoEditor({
     const activeFile = file || currentFile;
     if (!editorRef.current || !activeFile) return;
 
+    const monacoInstance = getMonaco();
+    if (!monacoInstance) {
+      console.warn('[Monaco] Monaco not yet initialized');
+      return;
+    }
+
     // Configuration du thème E-Code
-    monaco.editor.defineTheme("replit-dark", {
+    monacoInstance.editor.defineTheme("replit-dark", {
       base: "vs-dark",
       inherit: true,
       rules: [
@@ -199,7 +206,7 @@ export function ReplitMonacoEditor({
       },
     });
 
-    monaco.editor.defineTheme("replit-light", {
+    monacoInstance.editor.defineTheme("replit-light", {
       base: "vs",
       inherit: true,
       rules: [
@@ -222,7 +229,7 @@ export function ReplitMonacoEditor({
     });
 
     // Création de l'éditeur
-    const editor = monaco.editor.create(editorRef.current, {
+    const editor = monacoInstance.editor.create(editorRef.current, {
       value: activeFile.content,
       language: activeFile.language,
       theme: theme === "dark" ? "replit-dark" : "replit-light",
@@ -283,7 +290,7 @@ export function ReplitMonacoEditor({
       },
       // Enable lightbulb for AI code actions
       lightbulb: {
-        enabled: monaco.editor.ShowLightbulbIconMode.On,
+        enabled: monacoInstance.editor.ShowLightbulbIconMode.On,
       },
       // Enable quick suggestions for better code actions visibility
       quickSuggestions: {
@@ -340,15 +347,15 @@ export function ReplitMonacoEditor({
     });
 
     // Gestion des raccourcis clavier
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+    editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS, () => {
       handleSave();
     });
 
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+    editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter, () => {
       onRunCode?.();
     });
 
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
+    editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyMod.Shift | monacoInstance.KeyCode.Enter, () => {
       onStopCode?.();
     });
 
@@ -403,10 +410,13 @@ export function ReplitMonacoEditor({
     editorInstanceRef.current.revealLineInCenter(line);
     editorInstanceRef.current.setPosition({ lineNumber: line, column: issue.column || 1 });
     
+    const monacoInstance = getMonaco();
+    if (!monacoInstance) return;
+    
     // Add highlighting for the issue line
     const decorations = editorInstanceRef.current.deltaDecorations([], [
       {
-        range: new monaco.Range(line, 1, line + (issue.endLine ? issue.endLine - line : 0), 1000),
+        range: new monacoInstance.Range(line, 1, line + (issue.endLine ? issue.endLine - line : 0), 1000),
         options: {
           isWholeLine: true,
           className: `code-review-issue-${issue.severity}`,
@@ -434,8 +444,11 @@ export function ReplitMonacoEditor({
     const line = issue.line;
     const endLine = issue.endLine || line;
     
+    const monacoInstance = getMonaco();
+    if (!monacoInstance) return;
+    
     // Apply the fix by replacing the problematic lines
-    const range = new monaco.Range(line, 1, endLine, model.getLineMaxColumn(endLine));
+    const range = new monacoInstance.Range(line, 1, endLine, model.getLineMaxColumn(endLine));
     
     editorInstanceRef.current.executeEdits('code-review-fix', [{
       range: range,
