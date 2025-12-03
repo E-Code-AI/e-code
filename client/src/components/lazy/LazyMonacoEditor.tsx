@@ -1,5 +1,11 @@
+/**
+ * LazyMonacoEditor - Lazy loading wrappers for Monaco-based editor components.
+ * 
+ * This module does NOT import from 'monaco-editor' or '@monaco-editor/react'.
+ * Monaco is loaded via CDN script in index.html.
+ */
+
 import { lazy, Suspense, ComponentType, useEffect, useState } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
 import { initMonaco, isMonacoInitialized } from '@/lib/monaco-cdn-loader';
 
@@ -34,6 +40,10 @@ function MonacoInitializer({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>;
 }
+
+export const LazyExternalMonacoEditor = lazy(() => 
+  import('@/components/editor/ExternalMonacoEditor').then(mod => ({ default: mod.ExternalMonacoEditor }))
+);
 
 export const LazyCodeEditor = lazy(() => import('@/components/CodeEditor'));
 
@@ -90,4 +100,4 @@ export function withLazyEditor<P extends Record<string, unknown>>(
   };
 }
 
-export { MonacoInitializer };
+export { MonacoInitializer, EditorFallback };

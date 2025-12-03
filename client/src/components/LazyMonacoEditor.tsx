@@ -1,30 +1,16 @@
-import { lazy, Suspense } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
+/**
+ * LazyMonacoEditor - Lazy loaded Monaco Editor wrapper.
+ * 
+ * This component does NOT import from 'monaco-editor' or '@monaco-editor/react'.
+ * Monaco is loaded via CDN script in index.html.
+ */
 
-// Lazy load Monaco Editor with dynamic import
-const MonacoEditor = lazy(() => 
-  import('monaco-editor').then(monaco => {
-    // Configure Monaco on first load
-    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-      noSemanticValidation: false,
-      noSyntaxValidation: false,
-    });
-    
-    monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-      target: monaco.languages.typescript.ScriptTarget.Latest,
-      allowNonTsExtensions: true,
-      moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
-      module: monaco.languages.typescript.ModuleKind.CommonJS,
-      noEmit: true,
-      esModuleInterop: true,
-      jsx: monaco.languages.typescript.JsxEmit.React,
-      reactNamespace: 'React',
-      allowJs: true,
-      typeRoots: ['node_modules/@types'],
-    });
-    
-    return import('@/components/CodeEditor');
-  })
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { initMonaco, isMonacoInitialized, getMonaco } from '@/lib/monaco-cdn-loader';
+
+const ExternalMonacoEditor = lazy(() => 
+  import('@/components/editor/ExternalMonacoEditor').then(mod => ({ default: mod.ExternalMonacoEditor }))
 );
 
 interface LazyMonacoEditorProps {
@@ -34,7 +20,6 @@ interface LazyMonacoEditorProps {
   collaboration?: any;
 }
 
-// Loading skeleton that matches editor dimensions
 const EditorSkeleton = () => (
   <div className="flex flex-col h-full w-full bg-[var(--ecode-editor-bg)]">
     <div className="h-12 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] px-4 flex items-center space-x-3">
@@ -65,10 +50,61 @@ const EditorSkeleton = () => (
   </div>
 );
 
-export function LazyMonacoEditor(props: LazyMonacoEditorProps) {
+function MonacoConfigurer({ children }: { children: React.ReactNode }) {
+  const [isReady, setIsReady] = useState(isMonacoInitialized());
+
+  useEffect(() => {
+    if (!isReady) {
+      initMonaco().then((monaco) => {
+        monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+          noSemanticValidation: false,
+          noSyntaxValidation: false,
+        });
+        
+        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+          target: monaco.languages.typescript.ScriptTarget.Latest,
+          allowNonTsExtensions: true,
+          moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+          module: monaco.languages.typescript.ModuleKind.CommonJS,
+          noEmit: true,
+          esModuleInterop: true,
+          jsx: monaco.languages.typescript.JsxEmit.React,
+          reactNamespace: 'React',
+          allowJs: true,
+          typeRoots: ['node_modules/@types'],
+        });
+        
+        setIsReady(true);
+      }).catch(console.error);
+    }
+  }, [isReady]);
+
+  if (!isReady) {
+    return <EditorSkeleton />;
+  }
+
+  return <>{children}</>;
+}
+
+export function LazyMonacoEditor({ file, onChange, onSelectionChange, collaboration }: LazyMonacoEditorProps) {
   return (
-    <Suspense fallback={<EditorSkeleton />}>
-      <MonacoEditor {...props} />
-    </Suspense>
+    <MonacoConfigurer>
+      <Suspense fallback={<EditorSkeleton />}>
+        <ExternalMonacoEditor
+          value={file?.content || ''}
+          language={file?.language || 'javascript'}
+          onChange={(value) => onChange(value || '')}
+          onMount={(editor) => {
+            if (onSelectionChange) {
+              editor.onDidChangeCursorSelection((e) => {
+                const selection = editor.getModel()?.getValueInRange(e.selection);
+                onSelectionChange(selection);
+              });
+            }
+          }}
+          height="100%"
+        />
+      </Suspense>
+    </MonacoConfigurer>
   );
 }

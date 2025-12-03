@@ -1,41 +1,43 @@
 /**
  * Monaco Editor CDN Loader Configuration
  * 
- * This module configures Monaco Editor to load from jsDelivr CDN instead of bundling,
- * reducing the bundle size by ~3.3MB.
+ * This module configures @monaco-editor/react to load Monaco from CDN.
+ * This reduces the bundle size by ~3.3MB while still being compatible with Vite.
  * 
  * Usage:
- * 1. Import and call initMonaco() at app startup or in lazy wrapper
- * 2. Use getMonaco() to get the monaco instance after initialization
+ * 1. Use initMonaco() to initialize and get the monaco instance
+ * 2. Use getMonaco() to get the monaco instance synchronously (returns null if not loaded)
  * 3. Use type imports: `import type { editor, languages } from 'monaco-editor'`
  */
 
-import { loader } from "@monaco-editor/react";
-import type * as MonacoEditor from "monaco-editor";
+import { loader } from '@monaco-editor/react';
 
-const MONACO_CDN_VERSION = "0.45.0";
-const MONACO_CDN_URL = `https://cdn.jsdelivr.net/npm/monaco-editor@${MONACO_CDN_VERSION}/min/vs`;
+export type Monaco = typeof import('monaco-editor');
 
-let monacoInstance: typeof MonacoEditor | null = null;
-let initPromise: Promise<typeof MonacoEditor> | null = null;
+let monacoInstance: Monaco | null = null;
+let initPromise: Promise<Monaco> | null = null;
 
+// Configure loader to use CDN
 loader.config({
   paths: {
-    vs: MONACO_CDN_URL
-  },
-  "vs/nls": {
-    availableLanguages: {
-      "*": "en"
-    }
+    vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs'
   }
 });
+
+/**
+ * Get the Monaco instance synchronously
+ * @returns The Monaco instance or null if not yet initialized
+ */
+export function getMonaco(): Monaco | null {
+  return monacoInstance;
+}
 
 /**
  * Initialize Monaco Editor from CDN
  * Safe to call multiple times - will only initialize once
  * @returns Promise resolving to the Monaco instance
  */
-export async function initMonaco(): Promise<typeof MonacoEditor> {
+export async function initMonaco(): Promise<Monaco> {
   if (monacoInstance) {
     return monacoInstance;
   }
@@ -45,27 +47,19 @@ export async function initMonaco(): Promise<typeof MonacoEditor> {
   }
   
   initPromise = loader.init().then((monaco) => {
-    monacoInstance = monaco as typeof MonacoEditor;
-    console.log('[Monaco CDN] Initialized from CDN:', MONACO_CDN_URL);
-    return monacoInstance;
+    monacoInstance = monaco;
+    (window as any).monaco = monaco; // Also set on window for compatibility
+    return monaco;
   });
   
   return initPromise;
 }
 
 /**
- * Get the Monaco instance synchronously
- * @returns The Monaco instance or null if not yet initialized
- */
-export function getMonaco(): typeof MonacoEditor | null {
-  return monacoInstance;
-}
-
-/**
  * Get the Monaco instance, initializing if needed
  * @returns Promise resolving to the Monaco instance
  */
-export async function getMonacoAsync(): Promise<typeof MonacoEditor> {
+export async function getMonacoAsync(): Promise<Monaco> {
   if (monacoInstance) {
     return monacoInstance;
   }
@@ -78,6 +72,3 @@ export async function getMonacoAsync(): Promise<typeof MonacoEditor> {
 export function isMonacoInitialized(): boolean {
   return monacoInstance !== null;
 }
-
-export { loader };
-export type Monaco = typeof MonacoEditor;

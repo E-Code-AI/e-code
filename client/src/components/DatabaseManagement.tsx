@@ -78,7 +78,7 @@ import {
   Info,
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import Editor from '@monaco-editor/react';
+import { ExternalMonacoEditor } from '@/components/editor/ExternalMonacoEditor';
 
 interface DatabaseInstance {
   id: number;
@@ -288,7 +288,7 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
         </div>
 
         <div className="border rounded-lg overflow-hidden">
-          <Editor
+          <ExternalMonacoEditor
             height="200px"
             language="sql"
             theme="vs-dark"

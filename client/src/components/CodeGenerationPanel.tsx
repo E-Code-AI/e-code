@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Sparkles, Copy, Download, CheckCircle2, XCircle, Code2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import Editor, { Monaco } from '@monaco-editor/react';
+import { ExternalMonacoEditor } from '@/components/editor/ExternalMonacoEditor';
 import type { editor } from 'monaco-editor';
+import type { Monaco } from '@/lib/monaco-cdn-loader';
 
 interface AIModel {
   id: string;
@@ -409,7 +410,7 @@ export function CodeGenerationPanel() {
           </CardHeader>
           <CardContent className="flex-1 min-h-0 p-0">
             <div className="h-full border-t">
-              <Editor
+              <ExternalMonacoEditor
                 height="100%"
                 language={language}
                 value={generatedCode}
