@@ -300,3 +300,80 @@ Desktop.ini
 .yarn/cache
 .yarn/unplugged
 .yarn/install-state.gz
+
+# Heavy dev dependencies that should not be in production
+node_modules/@opentelemetry/
+node_modules/@kubernetes/
+node_modules/typescript/
+node_modules/drizzle-kit/
+node_modules/tsx/
+node_modules/@babel/
+node_modules/jest/
+node_modules/@jest/
+node_modules/playwright/
+node_modules/@playwright/
+node_modules/playwright-core/
+node_modules/vite/
+node_modules/esbuild/
+node_modules/@esbuild*/
+node_modules/eslint/
+node_modules/@typescript-eslint/
+node_modules/@eslint/
+node_modules/prettier/
+node_modules/tailwindcss/
+node_modules/@tailwindcss/
+node_modules/postcss/
+node_modules/autoprefixer/
+node_modules/terser/
+node_modules/rollup/
+node_modules/@rollup/
+node_modules/acorn/
+node_modules/chokidar/
+node_modules/nodemon/
+node_modules/concurrently/
+node_modules/cross-env/
+node_modules/husky/
+node_modules/lint-staged/
+node_modules/storybook/
+node_modules/@storybook/
+node_modules/chromatic/
+node_modules/cypress/
+node_modules/vitest/
+
+# Swagger/OpenAPI dev tools
+node_modules/swagger-ui-dist/
+node_modules/swagger-jsdoc/
+
+# Heavy but unused language files
+node_modules/react-syntax-highlighter/
+node_modules/prismjs/
+node_modules/refractor/
+node_modules/lowlight/
+
+# Test data and fixtures
+**/fixtures/
+**/testdata/
+**/__snapshots__/
+**/__mocks__/
+
+# Project/workspace data (user-generated)
+projects/*
+!projects/.gitkeep
+
+# Extremely large analysis output
+introspected/
+reports/
+coverage/
+*.lcov
+
+# Logs
+**/*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Lock files not needed in runtime (already installed)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
