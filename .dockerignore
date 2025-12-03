@@ -51,14 +51,16 @@ coverage
 out
 build
 
-# Caches
+# Caches (CRITICAL - can be 500MB+)
 .cache
+.cache/
 .npm
 .yarn
 **/.cache
 **/node_modules/.cache
 .cache/go-build
 .cache/ms-playwright
+.cache/typescript
 
 # Logs and temporary files
 logs
@@ -136,6 +138,9 @@ replit.nix
 .config
 .upm
 .breakpoints
+.local
+.pythonlibs
+.nix
 
 # Large assets
 attached_assets
