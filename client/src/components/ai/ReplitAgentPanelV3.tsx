@@ -132,6 +132,7 @@ interface Message {
     cacheHit?: boolean;
     streamingDuration?: number;
     finishReason?: 'stop' | 'length' | 'content_filter' | 'tool_calls';
+    error?: boolean;
   };
 }
 
@@ -161,6 +162,46 @@ interface ReplitAgentPanelV3Props {
   // Lifted agent tools settings to parent to survive remounts (Dec 2025)
   agentToolsSettings?: AgentToolsSettings;
   onAgentToolsSettingsChange?: (settings: AgentToolsSettings) => void;
+}
+
+function categorizeError(error: unknown): { title: string; message: string } {
+  const errorMessage = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  
+  if (errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('econnrefused') || errorMessage.includes('failed to fetch')) {
+    return {
+      title: 'Connection Error',
+      message: 'Unable to connect to the AI service. Please check your connection and try again.'
+    };
+  }
+  if (errorMessage.includes('timeout') || errorMessage.includes('etimedout') || errorMessage.includes('aborted')) {
+    return {
+      title: 'Request Timeout',
+      message: 'The request took too long. Please try a simpler request or try again.'
+    };
+  }
+  if (errorMessage.includes('401') || errorMessage.includes('unauthorized') || errorMessage.includes('authentication') || errorMessage.includes('unauthenticated')) {
+    return {
+      title: 'Authentication Error',
+      message: 'Authentication failed. Please refresh the page and log in again.'
+    };
+  }
+  if (errorMessage.includes('429') || errorMessage.includes('rate limit') || errorMessage.includes('too many requests')) {
+    return {
+      title: 'Rate Limit Exceeded',
+      message: 'Too many requests. Please wait a moment and try again.'
+    };
+  }
+  if (errorMessage.includes('500') || errorMessage.includes('internal server error')) {
+    return {
+      title: 'Server Error',
+      message: 'The server encountered an error. Please try again in a moment.'
+    };
+  }
+  
+  return {
+    title: 'AI Assistant Error',
+    message: 'Something went wrong. Please try again.'
+  };
 }
 
 export function ReplitAgentPanelV3({ 
@@ -708,17 +749,42 @@ export function ReplitAgentPanelV3({
           } catch (error) {
             console.error('AI chat error:', error);
             
-            const assistantMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              role: 'assistant',
-              content: "I'll help you build that! Let me start creating the project structure...",
-              timestamp: new Date(),
-              thinking: extendedThinkingEnabled ? activeThinking : undefined,
-              metadata: {
-                extendedThinking: extendedThinkingEnabled
+            const { title, message: userFriendlyError } = categorizeError(error);
+            const errorContent = `⚠️ ${userFriendlyError}\n\nIf this issue persists, please try:\n- Refreshing the page\n- Checking your internet connection\n- Waiting a few moments before trying again`;
+            
+            toast({
+              title,
+              description: userFriendlyError,
+              variant: 'destructive',
+            });
+            
+            setMessages(prev => {
+              const lastMessage = prev[prev.length - 1];
+              if (lastMessage && lastMessage.role === 'assistant' && lastMessage.isStreaming) {
+                return prev.map(msg =>
+                  msg.id === lastMessage.id
+                    ? { 
+                        ...msg, 
+                        content: errorContent, 
+                        isStreaming: false,
+                        status: 'error' as const,
+                        metadata: { ...msg.metadata, error: true }
+                      }
+                    : msg
+                );
               }
-            };
-            setMessages(prev => [...prev, assistantMessage]);
+              return [...prev, {
+                id: (Date.now() + 1).toString(),
+                role: 'assistant' as const,
+                content: errorContent,
+                timestamp: new Date(),
+                thinking: extendedThinkingEnabled ? activeThinking : undefined,
+                metadata: {
+                  extendedThinking: extendedThinkingEnabled,
+                  error: true
+                }
+              }];
+            });
             setActiveThinking([]);
           } finally {
             setIsWorking(false);
@@ -1002,17 +1068,42 @@ export function ReplitAgentPanelV3({
     } catch (error) {
       console.error('AI chat error:', error);
       
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: "I'll help you with that. Let me analyze your request and start working on it...",
-        timestamp: new Date(),
-        thinking: extendedThinkingEnabled ? activeThinking : undefined,
-        metadata: {
-          extendedThinking: extendedThinkingEnabled
+      const { title, message: userFriendlyError } = categorizeError(error);
+      const errorContent = `⚠️ ${userFriendlyError}\n\nIf this issue persists, please try:\n- Refreshing the page\n- Checking your internet connection\n- Waiting a few moments before trying again`;
+      
+      toast({
+        title,
+        description: userFriendlyError,
+        variant: 'destructive',
+      });
+      
+      setMessages(prev => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage && lastMessage.role === 'assistant' && lastMessage.isStreaming) {
+          return prev.map(msg =>
+            msg.id === lastMessage.id
+              ? { 
+                  ...msg, 
+                  content: errorContent, 
+                  isStreaming: false,
+                  status: 'error' as const,
+                  metadata: { ...msg.metadata, error: true }
+                }
+              : msg
+          );
         }
-      };
-      setMessages(prev => [...prev, assistantMessage]);
+        return [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant' as const,
+          content: errorContent,
+          timestamp: new Date(),
+          thinking: extendedThinkingEnabled ? activeThinking : undefined,
+          metadata: {
+            extendedThinking: extendedThinkingEnabled,
+            error: true
+          }
+        }];
+      });
       setActiveThinking([]);
     } finally {
       setIsWorking(false);
