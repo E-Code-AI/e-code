@@ -1,0 +1,4 @@
+{
+  "description": "Base TypeScript configuration shared by backend, frontend, and shared packages. Sets target, module resolution, strict type checking, path aliases for shared code, and JSX handling. Intended to be extended by app-specific tsconfig files.",
+  "todo": "Configure based on outline"
+}

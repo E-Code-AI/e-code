@@ -36,7 +36,7 @@ packages = [
 ]
 
 [deployment]
-deploymentTarget = "autoscale"
+deploymentTarget = "gce"
 run = ["sh", "-c", "npm run start"]
 build = ["sh", "-c", "npm install"]
 
@@ -58,6 +58,10 @@ failureThreshold = 2
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 24678
+externalPort = 3000
 
 [workflows]
 runButton = "Project"
