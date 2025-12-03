@@ -1,13 +1,10 @@
 /**
- * LazyMonacoEditor - Lazy loading wrappers for Monaco-based editor components.
- * 
- * This module does NOT import from 'monaco-editor' or '@monaco-editor/react'.
- * Monaco is loaded via CDN script in index.html.
+ * LazyMonacoEditor - Lazy loading wrappers for CodeMirror 6 editor components.
+ * Migrated from Monaco to CodeMirror 6 for better bundle size.
  */
 
-import { lazy, Suspense, ComponentType, useEffect, useState } from 'react';
+import { lazy, Suspense, ComponentType } from 'react';
 import { Loader2 } from 'lucide-react';
-import { initMonaco, isMonacoInitialized } from '@/lib/monaco-cdn-loader';
 
 interface EditorFallbackProps {
   height?: string | number;
@@ -18,27 +15,12 @@ function EditorFallback({ height = '100%' }: EditorFallbackProps) {
     <div 
       className="flex flex-col items-center justify-center bg-muted/30 rounded-md border"
       style={{ height: typeof height === 'number' ? `${height}px` : height, minHeight: '200px' }}
+      data-testid="editor-loading"
     >
       <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-2" />
       <span className="text-sm text-muted-foreground">Loading editor...</span>
     </div>
   );
-}
-
-function MonacoInitializer({ children }: { children: React.ReactNode }) {
-  const [isReady, setIsReady] = useState(isMonacoInitialized());
-
-  useEffect(() => {
-    if (!isReady) {
-      initMonaco().then(() => setIsReady(true)).catch(console.error);
-    }
-  }, [isReady]);
-
-  if (!isReady) {
-    return <EditorFallback />;
-  }
-
-  return <>{children}</>;
 }
 
 export const LazyExternalMonacoEditor = lazy(() => 
@@ -63,6 +45,10 @@ export const LazyVisualDiffEditor = lazy(() =>
   import('@/components/git/VisualDiffEditor').then(mod => ({ default: mod.VisualDiffEditor }))
 );
 
+export const LazyCM6Editor = lazy(() => 
+  import('@/components/editor/CM6Editor').then(mod => ({ default: mod.CM6Editor }))
+);
+
 interface LazyEditorWrapperProps {
   Component: ComponentType<any>;
   fallbackHeight?: string | number;
@@ -75,11 +61,9 @@ export function LazyEditorWrapper({
   ...props 
 }: LazyEditorWrapperProps) {
   return (
-    <MonacoInitializer>
-      <Suspense fallback={<EditorFallback height={fallbackHeight} />}>
-        <Component {...props} />
-      </Suspense>
-    </MonacoInitializer>
+    <Suspense fallback={<EditorFallback height={fallbackHeight} />}>
+      <Component {...props} />
+    </Suspense>
   );
 }
 
@@ -91,13 +75,11 @@ export function withLazyEditor<P extends Record<string, unknown>>(
   
   return function LazyEditorHOC(props: P) {
     return (
-      <MonacoInitializer>
-        <Suspense fallback={<EditorFallback height={fallbackHeight} />}>
-          <LazyComponent {...props as any} />
-        </Suspense>
-      </MonacoInitializer>
+      <Suspense fallback={<EditorFallback height={fallbackHeight} />}>
+        <LazyComponent {...props as any} />
+      </Suspense>
     );
   };
 }
 
-export { MonacoInitializer, EditorFallback };
+export { EditorFallback };
