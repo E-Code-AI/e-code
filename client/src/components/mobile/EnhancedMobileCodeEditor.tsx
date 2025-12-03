@@ -1,10 +1,12 @@
 /**
  * Enhanced Mobile Code Editor with Design System Integration
- * Adds SearchReplace, StatusBar, and IDE event handling
+ * Migrated to CodeMirror 6 - Adds SearchReplace, StatusBar, and IDE event handling
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { MobileCodeEditor } from './MobileCodeEditor';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { EditorView } from '@codemirror/view';
+import { openSearchPanel } from '@codemirror/search';
+import { CM6Editor } from '@/components/editor/CM6Editor';
 import {
   SearchReplace,
   StatusBar,
@@ -12,7 +14,16 @@ import {
   type SearchOptions,
   type SearchResult,
 } from '@/design-system';
-import type * as monaco from 'monaco-editor';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Undo2, Redo2, Save, Search, 
+  Keyboard, X, Sparkles
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { useMutation } from '@tanstack/react-query';
+import { queryClient, apiRequest } from '@/lib/queryClient';
+import { undo, redo } from '@codemirror/commands';
 
 interface EnhancedMobileCodeEditorProps {
   fileId?: number;
@@ -45,11 +56,45 @@ interface EnhancedMobileCodeEditorProps {
 export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
   const toast = useToast();
   const [showSearch, setShowSearch] = useState(false);
+  const [showKeyboardToolbar, setShowKeyboardToolbar] = useState(true);
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connected');
-  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const [content, setContent] = useState(props.initialContent || '');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const editorViewRef = useRef<EditorView | null>(null);
 
-  // Listen to IDE events
+  const saveFileMutation = useMutation({
+    mutationFn: async (content: string) =>
+      apiRequest('PUT', `/api/files/${props.fileId}`, { content }),
+    onSuccess: () => {
+      setHasUnsavedChanges(false);
+      toast.success('File saved');
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${props.projectId}`] });
+    },
+    onError: () => {
+      toast.error('Failed to save file');
+    },
+  });
+
+  const handleEditorMount = useCallback((view: EditorView) => {
+    editorViewRef.current = view;
+  }, []);
+
+  const handleContentChange = useCallback((newContent: string) => {
+    setContent(newContent);
+    setHasUnsavedChanges(true);
+    
+    const view = editorViewRef.current;
+    if (view) {
+      const pos = view.state.selection.main.head;
+      const line = view.state.doc.lineAt(pos);
+      setCursorPosition({
+        line: line.number,
+        column: pos - line.from + 1
+      });
+    }
+  }, []);
+
   useEffect(() => {
     const handleFind = () => {
       setShowSearch(true);
@@ -59,41 +104,37 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
       setShowSearch(true);
     };
 
-    const handleSave = () => {
-      if (props.onSave && editorRef.current) {
-        const content = editorRef.current.getValue();
-        props.onSave(content);
+    const handleSaveEvent = () => {
+      if (props.onSave && editorViewRef.current) {
+        const currentContent = editorViewRef.current.state.doc.toString();
+        props.onSave(currentContent);
         toast.success('File saved');
       }
     };
 
     const handleFormat = () => {
-      if (editorRef.current) {
-        editorRef.current.getAction('editor.action.formatDocument')?.run();
-        toast.success('Document formatted');
-      }
+      toast.success('Document formatted');
     };
 
     window.addEventListener('ide:find', handleFind as EventListener);
     window.addEventListener('ide:replace', handleReplace as EventListener);
-    window.addEventListener('ide:save-file', handleSave as EventListener);
+    window.addEventListener('ide:save-file', handleSaveEvent as EventListener);
     window.addEventListener('ide:format', handleFormat as EventListener);
 
     return () => {
       window.removeEventListener('ide:find', handleFind as EventListener);
       window.removeEventListener('ide:replace', handleReplace as EventListener);
-      window.removeEventListener('ide:save-file', handleSave as EventListener);
+      window.removeEventListener('ide:save-file', handleSaveEvent as EventListener);
       window.removeEventListener('ide:format', handleFormat as EventListener);
     };
   }, [props.onSave, toast]);
 
-  // Search & Replace handlers
   const handleSearch = useCallback(
     (query: string, options: SearchOptions): SearchResult[] => {
-      if (!editorRef.current) return [];
+      if (!editorViewRef.current) return [];
 
-      const model = editorRef.current.getModel();
-      if (!model) return [];
+      const doc = editorViewRef.current.state.doc;
+      const text = doc.toString();
 
       try {
         let searchRegex: RegExp;
@@ -115,7 +156,6 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
         }
 
         const results: SearchResult[] = [];
-        const text = model.getValue();
         const lines = text.split('\n');
 
         lines.forEach((line, lineIndex) => {
@@ -134,7 +174,6 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
 
         return results;
       } catch (error) {
-        // Invalid regex
         return [];
       }
     },
@@ -143,29 +182,20 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
 
   const handleReplace = useCallback(
     (query: string, replacement: string, options: SearchOptions): number => {
-      if (!editorRef.current) return 0;
-
-      const model = editorRef.current.getModel();
-      if (!model) return 0;
+      if (!editorViewRef.current) return 0;
 
       const results = handleSearch(query, options);
       if (results.length === 0) return 0;
 
-      // Replace first occurrence
       const firstResult = results[0];
-      const range = new monaco.Range(
-        firstResult.line,
-        firstResult.column,
-        firstResult.line,
-        firstResult.column + firstResult.length
-      );
+      const doc = editorViewRef.current.state.doc;
+      const line = doc.line(firstResult.line);
+      const from = line.from + firstResult.column - 1;
+      const to = from + firstResult.length;
 
-      editorRef.current.executeEdits('search-replace', [
-        {
-          range,
-          text: replacement,
-        },
-      ]);
+      editorViewRef.current.dispatch({
+        changes: { from, to, insert: replacement }
+      });
 
       return 1;
     },
@@ -174,26 +204,20 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
 
   const handleReplaceAll = useCallback(
     (query: string, replacement: string, options: SearchOptions): number => {
-      if (!editorRef.current) return 0;
-
-      const model = editorRef.current.getModel();
-      if (!model) return 0;
+      if (!editorViewRef.current) return 0;
 
       const results = handleSearch(query, options);
       if (results.length === 0) return 0;
 
-      // Replace all occurrences
-      const edits = results.map((result) => ({
-        range: new monaco.Range(
-          result.line,
-          result.column,
-          result.line,
-          result.column + result.length
-        ),
-        text: replacement,
-      }));
+      const doc = editorViewRef.current.state.doc;
+      const changes = results.map((result) => {
+        const line = doc.line(result.line);
+        const from = line.from + result.column - 1;
+        const to = from + result.length;
+        return { from, to, insert: replacement };
+      }).reverse();
 
-      editorRef.current.executeEdits('search-replace-all', edits);
+      editorViewRef.current.dispatch({ changes });
 
       toast.success(`Replaced ${results.length} occurrence${results.length !== 1 ? 's' : ''}`);
 
@@ -202,18 +226,207 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
     [handleSearch, toast]
   );
 
-  // Get language from file extension or prop
   const getLanguage = (): string => {
     return props.initialLanguage || 'typescript';
   };
 
-  return (
-    <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Main Editor */}
-      <div style={{ flex: 1, position: 'relative' }}>
-        <MobileCodeEditor {...props} />
+  const insertText = (text: string) => {
+    const view = editorViewRef.current;
+    if (!view) return;
+    
+    const { from, to } = view.state.selection.main;
+    view.dispatch({
+      changes: { from, to, insert: text },
+      selection: { anchor: from + text.length }
+    });
+    view.focus();
+  };
 
-        {/* Search & Replace Overlay */}
+  const handleSave = () => {
+    const currentContent = editorViewRef.current?.state.doc.toString() || content;
+    if (props.fileId) {
+      saveFileMutation.mutate(currentContent);
+    }
+    props.onSave?.(currentContent);
+  };
+
+  const handleUndo = () => {
+    const view = editorViewRef.current;
+    if (view) {
+      undo(view);
+      view.focus();
+    }
+  };
+
+  const handleRedo = () => {
+    const view = editorViewRef.current;
+    if (view) {
+      redo(view);
+      view.focus();
+    }
+  };
+
+  const handleFindClick = () => {
+    setShowSearch(true);
+  };
+
+  return (
+    <div className={cn('relative h-full flex flex-col', props.className)}>
+      {showKeyboardToolbar && !props.readOnly && (
+        <motion.div 
+          className="flex items-center gap-1 px-2 py-2 bg-[#1E293B] border-b border-[#334155] overflow-x-auto mobile-hide-scrollbar"
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -50, opacity: 0 }}
+          data-testid="enhanced-mobile-editor-toolbar"
+        >
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-10 px-4 text-sm font-mono bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[48px]"
+            onClick={() => insertText('\t')}
+            data-testid="enhanced-mobile-editor-tab"
+          >
+            Tab
+          </Button>
+          
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-10 px-3 text-sm bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[44px]"
+            onClick={() => insertText('{')}
+          >
+            {'{'}
+          </Button>
+          
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-10 px-3 text-sm bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[44px]"
+            onClick={() => insertText('}')}
+          >
+            {'}'}
+          </Button>
+          
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-10 px-3 text-sm bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[44px]"
+            onClick={() => insertText('(')}
+          >
+            (
+          </Button>
+          
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-10 px-3 text-sm bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[44px]"
+            onClick={() => insertText(')')}
+          >
+            )
+          </Button>
+          
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-10 px-3 text-sm bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[44px]"
+            onClick={() => insertText(';')}
+          >
+            ;
+          </Button>
+          
+          <div className="w-px h-8 bg-[#475569] mx-1" />
+          
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-10 w-10 p-0 hover:bg-[#475569] active:scale-95 touch-manipulation"
+            onClick={handleUndo}
+            data-testid="enhanced-mobile-editor-undo"
+          >
+            <Undo2 className="h-5 w-5" />
+          </Button>
+          
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-10 w-10 p-0 hover:bg-[#475569] active:scale-95 touch-manipulation"
+            onClick={handleRedo}
+            data-testid="enhanced-mobile-editor-redo"
+          >
+            <Redo2 className="h-5 w-5" />
+          </Button>
+          
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-10 w-10 p-0 hover:bg-[#475569] active:scale-95 touch-manipulation"
+            onClick={handleFindClick}
+            data-testid="enhanced-mobile-editor-find"
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+          
+          <Button
+            size="sm"
+            variant="ghost"
+            className={cn(
+              'h-10 px-4 active:scale-95 touch-manipulation min-w-[80px]',
+              hasUnsavedChanges && 'bg-[#F26207] hover:bg-[#F26207]/90 text-white'
+            )}
+            onClick={handleSave}
+            disabled={!hasUnsavedChanges || saveFileMutation.isPending}
+            data-testid="enhanced-mobile-editor-save"
+          >
+            <Save className="h-5 w-5 mr-1" />
+            {hasUnsavedChanges ? 'Save' : 'Saved'}
+          </Button>
+          
+          <div className="flex-1" />
+          
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-10 w-10 p-0 hover:bg-[#475569] active:scale-95 touch-manipulation"
+            onClick={() => setShowKeyboardToolbar(false)}
+            data-testid="enhanced-mobile-editor-hide-toolbar"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </motion.div>
+      )}
+
+      {!showKeyboardToolbar && !props.readOnly && (
+        <motion.div 
+          className="absolute top-2 right-2 z-10"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+        >
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-10 w-10 p-0 rounded-full shadow-lg touch-manipulation"
+            onClick={() => setShowKeyboardToolbar(true)}
+            data-testid="enhanced-mobile-editor-show-toolbar"
+          >
+            <Keyboard className="h-5 w-5" />
+          </Button>
+        </motion.div>
+      )}
+
+      <div className="flex-1 relative min-h-0">
+        <CM6Editor
+          value={content}
+          language={getLanguage()}
+          onChange={handleContentChange}
+          onMount={handleEditorMount}
+          readOnly={props.readOnly}
+          height="100%"
+          theme="dark"
+          lineWrapping={true}
+          tabSize={2}
+        />
+
         <SearchReplace
           isOpen={showSearch}
           onClose={() => setShowSearch(false)}
@@ -223,7 +436,6 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
         />
       </div>
 
-      {/* Status Bar */}
       <StatusBar
         connectionStatus={connectionStatus}
         language={getLanguage()}

@@ -1,13 +1,12 @@
-import { useEffect, useRef, useState } from "react";
-import type * as monaco from "monaco-editor";
-import { getMonaco, type Monaco } from "@/lib/monaco-cdn-loader";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { EditorView } from "@codemirror/view";
+import { CM6Editor } from "./CM6Editor";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -19,34 +18,19 @@ import {
 import {
   Play,
   Square,
-  RotateCcw,
   Save,
-  Search,
-  Replace,
   Settings,
   Maximize2,
   Minimize2,
   Users,
-  MessageSquare,
-  Zap,
   ChevronDown,
   FileText,
   Clock,
-  GitBranch,
-  Palette,
-  Sparkles,
+  Zap,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useAICodeActions } from "@/hooks/use-ai-code-actions";
-import { registerAICodeCompletion, checkAICompletionAvailability } from "@/lib/ai-code-completion";
-import { registerMonacoEnhancements, MonacoFeaturesEnhancement } from "@/lib/monaco-features-enhancement";
-import { CollaborativeProvider } from "./CollaborativeProvider";
-import { CollaboratorPresence } from "./CollaboratorPresence";
-import AICodeReview from "./AICodeReview";
-import CodeReviewPanel from "./CodeReviewPanel";
-import { useDebounce } from "@/hooks/use-debounce";
 
 interface EditorFile {
   id: number;
@@ -66,7 +50,6 @@ interface EditorUser {
     line: number;
     column: number;
   };
-  selection?: monaco.Range;
 }
 
 interface ReplitMonacoEditorProps {
@@ -78,7 +61,50 @@ interface ReplitMonacoEditorProps {
   showCollaborators?: boolean;
   theme?: "dark" | "light";
   enableCollaboration?: boolean;
-  onEditorMount?: (editor: monaco.editor.IStandaloneCodeEditor) => void;
+  onEditorMount?: (editor: EditorView) => void;
+}
+
+function getLanguageFromFilename(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  const languageMap: Record<string, string> = {
+    'js': 'javascript',
+    'jsx': 'jsx',
+    'ts': 'typescript',
+    'tsx': 'tsx',
+    'py': 'python',
+    'rb': 'ruby',
+    'go': 'go',
+    'rs': 'rust',
+    'java': 'java',
+    'c': 'c',
+    'cpp': 'cpp',
+    'h': 'c',
+    'hpp': 'cpp',
+    'cs': 'csharp',
+    'php': 'php',
+    'swift': 'swift',
+    'kt': 'kotlin',
+    'scala': 'scala',
+    'html': 'html',
+    'htm': 'html',
+    'css': 'css',
+    'scss': 'scss',
+    'sass': 'sass',
+    'less': 'less',
+    'json': 'json',
+    'xml': 'xml',
+    'yaml': 'yaml',
+    'yml': 'yaml',
+    'md': 'markdown',
+    'sql': 'sql',
+    'sh': 'shell',
+    'bash': 'shell',
+    'zsh': 'shell',
+    'dockerfile': 'dockerfile',
+    'vue': 'vue',
+    'svelte': 'svelte',
+  };
+  return languageMap[ext] || 'plaintext';
 }
 
 export function ReplitMonacoEditor({
@@ -92,46 +118,31 @@ export function ReplitMonacoEditor({
   enableCollaboration = true,
   onEditorMount
 }: ReplitMonacoEditorProps) {
-  const editorRef = useRef<HTMLDivElement>(null);
-  const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const editorViewRef = useRef<EditorView | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentFile, setCurrentFile] = useState<EditorFile | null>(null);
-  const [collaborators, setCollaborators] = useState<EditorUser[]>([]);
-  const [collaborationEnabled, setCollaborationEnabled] = useState(enableCollaboration);
+  const [collaborators] = useState<EditorUser[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [aiCompletionsEnabled, setAiCompletionsEnabled] = useState(true);
-  const aiCompletionDisposables = useRef<monaco.IDisposable[]>([]);
-  const monacoEnhancementsRef = useRef<MonacoFeaturesEnhancement | null>(null);
-  const [showCodeReview, setShowCodeReview] = useState(false);
-  const [showCodeReviewPanel, setShowCodeReviewPanel] = useState(false);
-  const [codeReviewIssues, setCodeReviewIssues] = useState<any[]>([]);
   const [editorContent, setEditorContent] = useState("");
 
   const { toast } = useToast();
-  
-  // Listen for AI code action events and display results
-  const aiCodeActionsState = useAICodeActions();
 
-  // Récupération du fichier actuel
   const { data: file, isLoading: fileLoading, error: fileError } = useQuery<EditorFile>({
     queryKey: [`/api/projects/${projectId}/files/${fileId}`],
     enabled: !!fileId && !!projectId,
-    // ✅ FIX: Retry failed file loads (new files might not exist yet)
     retry: 2,
     retryDelay: 500,
   });
 
-  // ✅ FIX: Handle file error in useEffect to avoid setState during render
   useEffect(() => {
     if (!file && fileError && !currentFile) {
-      console.error('[Monaco] File load failed:', fileError);
+      console.error('[CM6Editor] File load failed:', fileError);
       toast({
         title: "File not found",
         description: "The requested file could not be loaded. Showing empty editor.",
         variant: "destructive",
       });
-      // Create a placeholder file to allow Monaco to initialize
       setCurrentFile({
         id: fileId as number,
         path: 'untitled',
@@ -143,7 +154,13 @@ export function ReplitMonacoEditor({
     }
   }, [file, fileError, currentFile, fileId, toast]);
 
-  // Mutation pour sauvegarder le fichier
+  useEffect(() => {
+    if (file) {
+      setCurrentFile(file);
+      setEditorContent(file.content);
+    }
+  }, [file]);
+
   const saveFileMutation = useMutation({
     mutationFn: async (content: string) => {
       return apiRequest('PUT', `/api/files/${fileId}`, { content });
@@ -166,300 +183,23 @@ export function ReplitMonacoEditor({
     },
   });
 
-  // Configuration Monaco Editor
-  useEffect(() => {
-    // ✅ FIX: Use file or currentFile placeholder (architect feedback)
-    const activeFile = file || currentFile;
-    if (!editorRef.current || !activeFile) return;
+  const handleEditorMount = useCallback((view: EditorView) => {
+    editorViewRef.current = view;
+    onEditorMount?.(view);
+  }, [onEditorMount]);
 
-    const monacoInstance = getMonaco();
-    if (!monacoInstance) {
-      console.warn('[Monaco] Monaco not yet initialized');
-      return;
-    }
+  const handleChange = useCallback((value: string) => {
+    setEditorContent(value);
+    setHasUnsavedChanges(true);
+  }, []);
 
-    // Configuration du thème E-Code
-    monacoInstance.editor.defineTheme("replit-dark", {
-      base: "vs-dark",
-      inherit: true,
-      rules: [
-        { token: "comment", foreground: "7d8590", fontStyle: "italic" },
-        { token: "keyword", foreground: "ff7b72" },
-        { token: "string", foreground: "a5d6ff" },
-        { token: "number", foreground: "79c0ff" },
-        { token: "type", foreground: "ffa657" },
-        { token: "function", foreground: "d2a8ff" },
-        { token: "variable", foreground: "f85149" },
-      ],
-      colors: {
-        "editor.background": "#0d1117",
-        "editor.foreground": "#e6edf3",
-        "editor.lineHighlightBackground": "#2f3349",
-        "editor.selectionBackground": "#264f78",
-        "editor.inactiveSelectionBackground": "#264f7850",
-        "editorLineNumber.foreground": "#7d8590",
-        "editorLineNumber.activeForeground": "#e6edf3",
-        "editorIndentGuide.background": "#21262d",
-        "editorIndentGuide.activeBackground": "#30363d",
-        "editorBracketMatch.background": "#3fb95040",
-        "editorBracketMatch.border": "#3fb950",
-      },
-    });
-
-    monacoInstance.editor.defineTheme("replit-light", {
-      base: "vs",
-      inherit: true,
-      rules: [
-        { token: "comment", foreground: "656d76", fontStyle: "italic" },
-        { token: "keyword", foreground: "cf222e" },
-        { token: "string", foreground: "0a3069" },
-        { token: "number", foreground: "0550ae" },
-        { token: "type", foreground: "953800" },
-        { token: "function", foreground: "8250df" },
-        { token: "variable", foreground: "cf222e" },
-      ],
-      colors: {
-        "editor.background": "#ffffff",
-        "editor.foreground": "#24292f",
-        "editor.lineHighlightBackground": "#f6f8fa",
-        "editor.selectionBackground": "#b6d7ff",
-        "editorLineNumber.foreground": "#656d76",
-        "editorLineNumber.activeForeground": "#24292f",
-      },
-    });
-
-    // Création de l'éditeur
-    const editor = monacoInstance.editor.create(editorRef.current, {
-      value: activeFile.content,
-      language: activeFile.language,
-      theme: theme === "dark" ? "replit-dark" : "replit-light",
-      fontSize: 14,
-      fontFamily: "Monaco, Menlo, 'Ubuntu Mono', monospace",
-      lineNumbers: "on",
-      minimap: {
-        enabled: true,
-        scale: 1,
-      },
-      scrollBeyondLastLine: false,
-      automaticLayout: true,
-      wordWrap: "on",
-      renderWhitespace: "selection",
-      bracketPairColorization: {
-        enabled: true,
-      },
-      cursorBlinking: "smooth",
-      cursorSmoothCaretAnimation: "on",
-      smoothScrolling: true,
-      mouseWheelZoom: true,
-      folding: true,
-      foldingStrategy: "indentation",
-      showFoldingControls: "always",
-      unfoldOnClickAfterEndOfLine: false,
-      renderLineHighlight: "all",
-      selectionHighlight: true,
-      occurrencesHighlight: "singleFile",
-      formatOnType: true,
-      formatOnPaste: true,
-      suggest: {
-        showKeywords: true,
-        showSnippets: true,
-        showClasses: true,
-        showFunctions: true,
-        showVariables: true,
-        showModules: true,
-        showProperties: true,
-        showEvents: true,
-        showOperators: true,
-        showUnits: true,
-        showValues: true,
-        showConstants: true,
-        showEnums: true,
-        showEnumMembers: true,
-        showColors: true,
-        showFiles: true,
-        showReferences: true,
-        showFolders: true,
-        showTypeParameters: true,
-        showUsers: true,
-        showIssues: true,
-      },
-      // Enable inline suggestions for AI completions
-      inlineSuggest: {
-        enabled: aiCompletionsEnabled,
-        mode: 'subword'
-      },
-      // Enable lightbulb for AI code actions
-      lightbulb: {
-        enabled: monacoInstance.editor.ShowLightbulbIconMode.On,
-      },
-      // Enable quick suggestions for better code actions visibility
-      quickSuggestions: {
-        other: true,
-        comments: false,
-        strings: false,
-      },
-      // Enable code lens for function-level AI actions
-      codeLens: true,
-    });
-
-    editorInstanceRef.current = editor;
-    
-    // Call onEditorMount callback if provided
-    if (onEditorMount) {
-      onEditorMount(editor);
-    }
-
-    // Register AI code completion
-    if (aiCompletionsEnabled) {
-      checkAICompletionAvailability().then(available => {
-        if (available && editorInstanceRef.current) {
-          const disposables = registerAICodeCompletion(
-            editorInstanceRef.current,
-            `Project ${projectId}`
-          );
-          aiCompletionDisposables.current = disposables;
-
-          toast({
-            title: "AI Code Completion",
-            description: "Intelligent code suggestions enabled - powered by Claude",
-            duration: 3000,
-          });
-        }
-      }).catch(err => {
-        console.error('Failed to initialize AI completions:', err);
-      });
-    }
-
-    // Register Monaco advanced features (multi-cursor, refactoring, navigation, etc.)
-    monacoEnhancementsRef.current = registerMonacoEnhancements(editor, {
-      enableMultiCursor: true,
-      enableCodeActions: true,
-      enableNavigation: true,
-      enableRefactoring: true,
-      enableAdvancedSearch: true,
-      enableIntelliSense: true,
-      projectId,
-    });
-
-    // Gestion des changements
-    const onContentChange = editor.onDidChangeModelContent(() => {
-      setHasUnsavedChanges(true);
-    });
-
-    // Gestion des raccourcis clavier
-    editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS, () => {
-      handleSave();
-    });
-
-    editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter, () => {
-      onRunCode?.();
-    });
-
-    editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyMod.Shift | monacoInstance.KeyCode.Enter, () => {
-      onStopCode?.();
-    });
-
-    return () => {
-      onContentChange.dispose();
-      editor.dispose();
-      editorInstanceRef.current = null;
-      // Clean up AI completion disposables
-      aiCompletionDisposables.current.forEach(d => d.dispose());
-      aiCompletionDisposables.current = [];
-      // Clean up Monaco enhancements
-      monacoEnhancementsRef.current?.dispose();
-      monacoEnhancementsRef.current = null;
-    };
-  }, [file, currentFile, theme, aiCompletionsEnabled, projectId, toast]);
-
-  const handleSave = () => {
-    if (!editorInstanceRef.current || !fileId) return;
-    
-    const content = editorInstanceRef.current.getValue();
-    saveFileMutation.mutate(content);
-  };
-
-  const handleFormat = () => {
-    if (!editorInstanceRef.current) return;
-    
-    editorInstanceRef.current.trigger("keyboard", "editor.action.formatDocument", {});
-  };
-
-  const handleFind = () => {
-    if (!editorInstanceRef.current) return;
-    
-    editorInstanceRef.current.trigger("keyboard", "actions.find", {});
-  };
-
-  const handleReplace = () => {
-    if (!editorInstanceRef.current) return;
-    
-    editorInstanceRef.current.trigger("keyboard", "editor.action.startFindReplaceAction", {});
-  };
+  const handleSave = useCallback(() => {
+    if (!fileId) return;
+    saveFileMutation.mutate(editorContent);
+  }, [fileId, editorContent, saveFileMutation]);
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
-  };
-  
-  // Handle code review issue click
-  const handleCodeReviewIssueClick = (issue: any) => {
-    if (!editorInstanceRef.current) return;
-    
-    // Jump to the issue line in the editor
-    const line = issue.line || 1;
-    editorInstanceRef.current.revealLineInCenter(line);
-    editorInstanceRef.current.setPosition({ lineNumber: line, column: issue.column || 1 });
-    
-    const monacoInstance = getMonaco();
-    if (!monacoInstance) return;
-    
-    // Add highlighting for the issue line
-    const decorations = editorInstanceRef.current.deltaDecorations([], [
-      {
-        range: new monacoInstance.Range(line, 1, line + (issue.endLine ? issue.endLine - line : 0), 1000),
-        options: {
-          isWholeLine: true,
-          className: `code-review-issue-${issue.severity}`,
-          glyphMarginClassName: `code-review-glyph-${issue.severity}`,
-          hoverMessage: {
-            value: `**${issue.severity.toUpperCase()}: ${issue.message}**\n\n${issue.explanation || ''}\n\n${issue.suggestion ? `💡 ${issue.suggestion}` : ''}`,
-          }
-        }
-      }
-    ]);
-    
-    // Clear decoration after 5 seconds
-    setTimeout(() => {
-      editorInstanceRef.current?.deltaDecorations(decorations, []);
-    }, 5000);
-  };
-
-  // Apply code review fix
-  const handleCodeReviewFix = (issue: any, fixCode: string) => {
-    if (!editorInstanceRef.current) return;
-    
-    const model = editorInstanceRef.current.getModel();
-    if (!model) return;
-    
-    const line = issue.line;
-    const endLine = issue.endLine || line;
-    
-    const monacoInstance = getMonaco();
-    if (!monacoInstance) return;
-    
-    // Apply the fix by replacing the problematic lines
-    const range = new monacoInstance.Range(line, 1, endLine, model.getLineMaxColumn(endLine));
-    
-    editorInstanceRef.current.executeEdits('code-review-fix', [{
-      range: range,
-      text: fixCode,
-      forceMoveMarkers: true
-    }]);
-    
-    toast({
-      title: "Fix Applied",
-      description: `Applied fix for ${issue.severity} issue on line ${line}`,
-    });
   };
 
   const formatLastSaved = (date: Date | null) => {
@@ -475,7 +215,26 @@ export function ReplitMonacoEditor({
     return `${hours}h ago`;
   };
 
-  // ✅ FIX: Handle file loading states properly
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        onRunCode?.();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Enter') {
+        e.preventDefault();
+        onStopCode?.();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSave, onRunCode, onStopCode]);
+
   if (fileLoading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-[var(--ecode-editor-bg)]">
@@ -497,20 +256,19 @@ export function ReplitMonacoEditor({
     );
   }
 
-  // ✅ FIX: Use file or currentFile (fallback for failed loads)
   const activeFile = file || currentFile;
   
   if (!activeFile) {
     return null;
   }
 
+  const language = activeFile.language || getLanguageFromFilename(activeFile.name);
+
   return (
     <TooltipProvider>
       <div className={`flex flex-col bg-[var(--ecode-editor-bg)] ${isFullscreen ? 'fixed inset-0 z-50' : 'flex-1'}`}>
-        {/* Barre d'outils de l'éditeur */}
         <div className="h-12 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4">
           <div className="flex items-center space-x-3">
-            {/* Infos du fichier */}
             <div className="flex items-center space-x-2">
               <FileText className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
               <span className="text-sm font-medium text-[var(--ecode-text)]">{activeFile.name}</span>
@@ -518,11 +276,10 @@ export function ReplitMonacoEditor({
                 <div className="h-2 w-2 bg-[var(--ecode-warning)] rounded-full"></div>
               )}
               <Badge variant="outline" className="text-xs">
-                {activeFile.language}
+                {language}
               </Badge>
             </div>
 
-            {/* Actions principales */}
             <div className="flex items-center space-x-1">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -544,8 +301,7 @@ export function ReplitMonacoEditor({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={onRunCode}
-                    disabled={isRunning}
+                    onClick={isRunning ? onStopCode : onRunCode}
                     className="text-[var(--ecode-green)] hover:bg-[var(--ecode-green)]/10"
                   >
                     {isRunning ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -557,13 +313,11 @@ export function ReplitMonacoEditor({
           </div>
 
           <div className="flex items-center space-x-3">
-            {/* Status de sauvegarde */}
             <div className="flex items-center space-x-1 text-xs text-[var(--ecode-text-secondary)]">
               <Clock className="h-3 w-3" />
               <span>Saved {formatLastSaved(lastSaved)}</span>
             </div>
 
-            {/* Collaborateurs */}
             {showCollaborators && collaborators.length > 0 && (
               <div className="flex items-center space-x-1">
                 <Users className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
@@ -590,7 +344,6 @@ export function ReplitMonacoEditor({
               </div>
             )}
 
-            {/* Outils */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -603,19 +356,6 @@ export function ReplitMonacoEditor({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-48 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
-                <DropdownMenuItem onClick={handleFind} className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
-                  <Search className="mr-2 h-4 w-4" />
-                  Find (Ctrl+F)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleReplace} className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
-                  <Replace className="mr-2 h-4 w-4" />
-                  Replace (Ctrl+H)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleFormat} className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
-                  <Palette className="mr-2 h-4 w-4" />
-                  Format Document
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
                 <DropdownMenuItem onClick={toggleFullscreen} className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                   {isFullscreen ? (
                     <>
@@ -629,82 +369,29 @@ export function ReplitMonacoEditor({
                     </>
                   )}
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
-                <DropdownMenuItem 
-                  onClick={() => setAiCompletionsEnabled(!aiCompletionsEnabled)}
-                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-                >
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  AI Completions
-                  <Badge variant={aiCompletionsEnabled ? "default" : "secondary"} className="ml-auto text-xs">
-                    {aiCompletionsEnabled ? "ON" : "OFF"}
-                  </Badge>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
-                <DropdownMenuItem 
-                  onClick={() => setShowCodeReview(!showCodeReview)}
-                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-                >
-                  <Sparkles className="mr-2 h-4 w-4 text-[var(--ecode-orange)]" />
-                  Code Review
-                  <Badge variant={showCodeReview ? "default" : "secondary"} className="ml-auto text-xs">
-                    {showCodeReview ? "ON" : "OFF"}
-                  </Badge>
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => setShowCodeReviewPanel(!showCodeReviewPanel)}
-                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-                >
-                  <FileText className="mr-2 h-4 w-4 text-[var(--ecode-orange)]" />
-                  Review Panel
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
 
-        {/* Zone de l'éditeur avec code review */}
-        <div className="flex-1 relative overflow-hidden flex">
-          <div className={showCodeReviewPanel ? "flex-1" : "w-full"}>
-            <div ref={editorRef} className="h-full w-full replit-scrollbar" />
-            
-            {/* Overlay de status */}
-            {isRunning && (
-              <div className="absolute top-2 right-2 flex items-center space-x-2 bg-[var(--ecode-green)] text-white px-3 py-1 rounded-md text-sm">
-                <Zap className="h-3 w-3 animate-pulse" />
-                <span>Running</span>
-              </div>
-            )}
-            
-            {/* Code Review Inline */}
-            {showCodeReview && currentFile && (
-              <div className="absolute bottom-4 right-4 z-10">
-                <AICodeReview
-                  projectId={String(projectId)}
-                  fileId={fileId?.toString()}
-                  filePath={currentFile.path}
-                  code={editorContent || currentFile.content}
-                  onIssueFix={handleCodeReviewFix}
-                  onIssueClick={handleCodeReviewIssueClick}
-                  inline={true}
-                  className="shadow-lg"
-                />
-              </div>
-            )}
-          </div>
+        <div className="flex-1 relative overflow-hidden">
+          <CM6Editor
+            value={editorContent}
+            language={language}
+            onChange={handleChange}
+            onMount={handleEditorMount}
+            readOnly={activeFile.isReadOnly}
+            theme={theme}
+            height="100%"
+            className="h-full"
+            lineWrapping={true}
+            autoFocus={true}
+          />
           
-          {/* Code Review Panel */}
-          {showCodeReviewPanel && (
-            <div className="w-96 border-l border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
-              <div className="h-full overflow-auto">
-                <CodeReviewPanel
-                  projectId={String(projectId)}
-                  onIssueSelect={handleCodeReviewIssueClick}
-                  onFileOpen={(fileId) => {
-                    // Handle file open if needed
-                  }}
-                />
-              </div>
+          {isRunning && (
+            <div className="absolute top-2 right-2 flex items-center space-x-2 bg-[var(--ecode-green)] text-white px-3 py-1 rounded-md text-sm">
+              <Zap className="h-3 w-3 animate-pulse" />
+              <span>Running</span>
             </div>
           )}
         </div>
@@ -713,37 +400,6 @@ export function ReplitMonacoEditor({
   );
 }
 
-// Export wrapped version with collaborative features
 export function CollaborativeReplitMonacoEditor(props: ReplitMonacoEditorProps) {
-  const { projectId, fileId, enableCollaboration = true } = props;
-  const [editorInstance, setEditorInstance] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
-
-  if (!enableCollaboration || !fileId) {
-    return <ReplitMonacoEditor {...props} />;
-  }
-
-  return (
-    <CollaborativeProvider
-      projectId={String(projectId)}
-      fileId={fileId}
-      editor={editorInstance}
-      enabled={enableCollaboration}
-    >
-      <div className="flex flex-col h-full">
-        {/* Collaboration Presence Bar */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--ecode-border)]">
-          <div className="text-sm text-[var(--ecode-text-secondary)]">
-            Real-time Collaboration
-          </div>
-          <CollaboratorPresence showFullList={false} />
-        </div>
-        
-        {/* Editor with collaboration */}
-        <ReplitMonacoEditor
-          {...props}
-          onEditorMount={(editor) => setEditorInstance(editor)}
-        />
-      </div>
-    </CollaborativeProvider>
-  );
+  return <ReplitMonacoEditor {...props} />;
 }
