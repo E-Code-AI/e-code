@@ -1,6 +1,7 @@
 declare module 'react-syntax-highlighter';
 declare module 'react-syntax-highlighter/dist/esm/styles/prism';
 declare module 'react-syntax-highlighter/dist/esm/styles/hljs';
+declare module 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 declare module 'react-syntax-highlighter/dist/esm/languages/hljs/javascript';
 declare module 'react-syntax-highlighter/dist/esm/languages/hljs/typescript';
@@ -19,3 +20,21 @@ declare module 'react-syntax-highlighter/dist/esm/languages/hljs/csharp';
 declare module 'react-syntax-highlighter/dist/esm/languages/hljs/php';
 declare module 'react-syntax-highlighter/dist/esm/languages/hljs/ruby';
 declare module 'react-syntax-highlighter/dist/esm/languages/hljs/yaml';
+
+declare module 'highlight.js/lib/languages/javascript';
+declare module 'highlight.js/lib/languages/typescript';
+declare module 'highlight.js/lib/languages/python';
+declare module 'highlight.js/lib/languages/css';
+declare module 'highlight.js/lib/languages/json';
+declare module 'highlight.js/lib/languages/bash';
+declare module 'highlight.js/lib/languages/sql';
+declare module 'highlight.js/lib/languages/xml';
+declare module 'highlight.js/lib/languages/markdown';
+declare module 'highlight.js/lib/languages/java';
+declare module 'highlight.js/lib/languages/go';
+declare module 'highlight.js/lib/languages/rust';
+declare module 'highlight.js/lib/languages/cpp';
+declare module 'highlight.js/lib/languages/csharp';
+declare module 'highlight.js/lib/languages/php';
+declare module 'highlight.js/lib/languages/ruby';
+declare module 'highlight.js/lib/languages/yaml';
