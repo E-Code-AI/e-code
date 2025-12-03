@@ -2,18 +2,16 @@ import { lazy, Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 
-// Lazy load Enhanced Mobile Code Editor (with StatusBar, SearchReplace, IDE events) and Monaco
+// Lazy load Enhanced Mobile Code Editor (CodeMirror 6 based)
 const EnhancedMobileCodeEditor = lazy(() => 
-  import('monaco-editor').then(() => 
-    import('./EnhancedMobileCodeEditor').then(module => ({
-      default: module.EnhancedMobileCodeEditor
-    }))
-  )
+  import('./EnhancedMobileCodeEditor').then(module => ({
+    default: module.EnhancedMobileCodeEditor
+  }))
 );
 
 interface LazyMobileCodeEditorProps {
   fileId?: number;
-  projectId: string | number; // Support both UUID strings and numeric IDs
+  projectId: string | number;
   initialContent?: string;
   initialLanguage?: string;
   onSave?: (content: string) => void;
@@ -21,61 +19,39 @@ interface LazyMobileCodeEditorProps {
   className?: string;
 }
 
-// Mobile-optimized loading skeleton
 const MobileEditorSkeleton = () => (
   <motion.div 
-    className="flex flex-col h-full w-full bg-[#1e1e1e]"
+    className="flex flex-col h-full w-full bg-[#0E1525]"
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     data-testid="mobile-editor-skeleton"
   >
-    {/* Mobile Toolbar Skeleton */}
-    <div className="h-12 bg-[#2d2d2d] border-b border-[#3e3e42] px-3 flex items-center justify-between">
+    <div className="h-12 bg-[#1A2235] border-b border-[#2D3748] px-3 flex items-center justify-between">
       <div className="flex items-center space-x-2">
-        <Skeleton className="h-7 w-7 rounded bg-[#3e3e42]" />
-        <Skeleton className="h-7 w-7 rounded bg-[#3e3e42]" />
+        <Skeleton className="h-7 w-7 rounded bg-[#2D3748]" />
+        <Skeleton className="h-7 w-7 rounded bg-[#2D3748]" />
       </div>
-      <Skeleton className="h-6 w-16 rounded bg-[#3e3e42]" />
+      <Skeleton className="h-6 w-16 rounded bg-[#2D3748]" />
     </div>
 
-    {/* Code Lines Skeleton */}
     <div className="flex-1 p-4 space-y-2 overflow-hidden">
-      <div className="flex space-x-3">
-        <Skeleton className="h-4 w-8 bg-[#3e3e42]" />
-        <Skeleton className="h-4 w-48 bg-[#3e3e42]" />
-      </div>
-      <div className="flex space-x-3">
-        <Skeleton className="h-4 w-8 bg-[#3e3e42]" />
-        <Skeleton className="h-4 w-64 bg-[#3e3e42]" />
-      </div>
-      <div className="flex space-x-3">
-        <Skeleton className="h-4 w-8 bg-[#3e3e42]" />
-        <Skeleton className="h-4 w-40 bg-[#3e3e42]" />
-      </div>
-      <div className="flex space-x-3">
-        <Skeleton className="h-4 w-8 bg-[#3e3e42]" />
-        <Skeleton className="h-4 w-56 bg-[#3e3e42]" />
-      </div>
-      <div className="flex space-x-3">
-        <Skeleton className="h-4 w-8 bg-[#3e3e42]" />
-        <Skeleton className="h-4 w-72 bg-[#3e3e42]" />
-      </div>
-      <div className="flex space-x-3">
-        <Skeleton className="h-4 w-8 bg-[#3e3e42]" />
-        <Skeleton className="h-4 w-44 bg-[#3e3e42]" />
-      </div>
+      {[48, 64, 40, 56, 72, 44].map((width, i) => (
+        <div key={i} className="flex space-x-3">
+          <Skeleton className="h-4 w-8 bg-[#2D3748]" />
+          <Skeleton className={`h-4 bg-[#2D3748]`} style={{ width: `${width * 4}px` }} />
+        </div>
+      ))}
     </div>
 
-    {/* Mobile Keyboard Toolbar Skeleton */}
-    <div className="h-12 bg-[#2d2d2d] border-t border-[#3e3e42] px-3 flex items-center justify-between">
+    <div className="h-12 bg-[#1A2235] border-t border-[#2D3748] px-3 flex items-center justify-between">
       <div className="flex items-center space-x-2">
-        <Skeleton className="h-8 w-12 rounded bg-[#3e3e42]" />
-        <Skeleton className="h-8 w-12 rounded bg-[#3e3e42]" />
-        <Skeleton className="h-8 w-12 rounded bg-[#3e3e42]" />
+        <Skeleton className="h-8 w-12 rounded bg-[#2D3748]" />
+        <Skeleton className="h-8 w-12 rounded bg-[#2D3748]" />
+        <Skeleton className="h-8 w-12 rounded bg-[#2D3748]" />
       </div>
       <div className="flex items-center space-x-2">
-        <Skeleton className="h-8 w-8 rounded bg-[#3e3e42]" />
-        <Skeleton className="h-8 w-8 rounded bg-[#3e3e42]" />
+        <Skeleton className="h-8 w-8 rounded bg-[#2D3748]" />
+        <Skeleton className="h-8 w-8 rounded bg-[#2D3748]" />
       </div>
     </div>
   </motion.div>
