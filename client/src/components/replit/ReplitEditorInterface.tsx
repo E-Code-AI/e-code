@@ -8,7 +8,6 @@ import { ReplitSearchBox } from './ReplitSearchBox';
 import { ReplitContextMenu } from './ReplitContextMenu';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
-import type { Monaco } from '@/lib/monaco-cdn-loader';
 import { 
   FileText, 
   Terminal as TerminalIcon, 

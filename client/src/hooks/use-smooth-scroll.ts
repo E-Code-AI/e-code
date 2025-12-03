@@ -1,19 +1,19 @@
 import { useEffect, useRef } from 'react';
-import type * as monaco from 'monaco-editor';
+import type { EditorView } from '@codemirror/view';
 
 interface SmoothScrollConfig {
   friction?: number;
   threshold?: number;
   enabled?: boolean;
-  editorInstanceRef?: React.RefObject<monaco.editor.IStandaloneCodeEditor | null>;
+  editorInstanceRef?: React.RefObject<EditorView | null>;
 }
 
 /**
- * Enhanced two-finger scroll optimization for tablet Monaco editor
+ * Enhanced two-finger scroll optimization for tablet CodeMirror 6 editor
  * Provides momentum scrolling and smooth deceleration
  * 
  * Features:
- * - Momentum-based scrolling using Monaco's setScrollTop API (via ref)
+ * - Momentum-based scrolling using CM6's scrollDOM API (via ref)
  * - Smooth deceleration (physics-based friction)
  * - Touch-friendly gesture detection
  * - Prevents conflicts with pinch-to-zoom
@@ -112,13 +112,13 @@ export function useSmoothScroll(
         velocityRef.current.x *= friction;
         velocityRef.current.y *= friction;
         
-        // Scroll using Monaco's API if available (access ref.current for live instance)
+        // Scroll using CM6's scrollDOM API if available (access ref.current for live instance)
         const editor = editorInstanceRef?.current;
         if (editor) {
-          const currentScroll = editor.getScrollTop();
-          editor.setScrollTop(currentScroll - vy * 20);
+          const currentScroll = editor.scrollDOM.scrollTop;
+          editor.scrollDOM.scrollTo({ top: currentScroll - vy * 20, behavior: 'auto' });
         } else if (element.scrollTop !== undefined) {
-          element.scrollTop -= vy * 20; // Fallback for non-Monaco elements
+          element.scrollTop -= vy * 20; // Fallback for non-CM6 elements
         }
         if (element.scrollLeft !== undefined) {
           element.scrollLeft -= vx * 20;

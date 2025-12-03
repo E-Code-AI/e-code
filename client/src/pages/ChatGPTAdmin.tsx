@@ -26,9 +26,9 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { io, Socket } from 'socket.io-client';
 import { format } from 'date-fns';
-import { ExternalMonacoEditor } from '@/components/editor/ExternalMonacoEditor';
+import { CM6Editor } from '@/components/editor/CM6Editor';
 
-const MonacoFallback = () => (
+const EditorFallback = () => (
   <div className="h-full flex items-center justify-center bg-muted/30">
     <div className="flex flex-col items-center gap-2">
       <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -732,17 +732,13 @@ export default function ChatGPTAdmin() {
                           Save
                         </Button>
                       </div>
-                      <Suspense fallback={<MonacoFallback />}>
-                        <ExternalMonacoEditor
+                      <Suspense fallback={<EditorFallback />}>
+                        <CM6Editor
                           value={fileContent}
-                          onChange={(value) => setFileContent(value || '')}
+                          onChange={(value) => setFileContent(value)}
                           language="typescript"
-                          theme="vs-dark"
-                          options={{
-                            minimap: { enabled: false },
-                            fontSize: 14,
-                            lineNumbers: 'on',
-                          }}
+                          theme="dark"
+                          height="100%"
                         />
                       </Suspense>
                     </>

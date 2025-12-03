@@ -1,239 +1,108 @@
 /**
- * AI-powered inline code completion for Monaco Editor
+ * AI-powered inline code completion for CodeMirror 6
  * Provides real-time suggestions as users type
+ * 
+ * This file re-exports from the CM6 autocomplete adapter for convenience.
+ * All Monaco-specific code has been removed in favor of CM6 compatibility.
  */
 
-import type * as monaco from 'monaco-editor';
-import { apiRequest } from '@/lib/queryClient';
-import { getMonaco, type Monaco } from './monaco-cdn-loader';
+import type { Extension } from '@codemirror/state';
+import type { CompletionSource } from '@codemirror/autocomplete';
+import {
+  aiCompletion,
+  aiCompletionWithSource,
+  createAICompletionSource,
+  isAICompletionLoading,
+  aiLoadingField,
+  setAILoadingEffect,
+  type AICompletionOptions,
+} from './cm6/autocomplete-adapter';
 
-interface AICompletionResponse {
-  completions: Array<{
-    text: string;
-    confidence: number;
-    range?: {
-      startLine: number;
-      startColumn: number;
-      endLine: number;
-      endColumn: number;
-    };
-  }>;
+export type {
+  AICompletionOptions,
+};
+
+export {
+  aiCompletion,
+  aiCompletionWithSource,
+  createAICompletionSource,
+  isAICompletionLoading,
+  aiLoadingField,
+  setAILoadingEffect,
+};
+
+/**
+ * Creates an AI code completion extension for CodeMirror 6
+ * This is the primary API for adding AI completions to an editor
+ */
+export function createAICodeCompletionExtension(
+  options?: AICompletionOptions
+): Extension {
+  return aiCompletion(options);
 }
 
-export class AICodeCompletionProvider implements monaco.languages.InlineCompletionsProvider {
-  private debounceTimer: NodeJS.Timeout | null = null;
-  private lastRequest: string = '';
-  private isEnabled: boolean = true;
-  
-  constructor(private projectContext?: string) {}
-
-  async provideInlineCompletions(
-    model: monaco.editor.ITextModel,
-    position: monaco.Position,
-    context: monaco.languages.InlineCompletionContext,
-    token: monaco.CancellationToken
-  ): Promise<monaco.languages.InlineCompletions> {
-    if (!this.isEnabled) {
-      return { items: [] };
-    }
-
-    // Don't provide completions if we're in the middle of a word
-    const lineContent = model.getLineContent(position.lineNumber);
-    const charBefore = lineContent[position.column - 2];
-    const charAfter = lineContent[position.column - 1];
-    
-    if (charAfter && /\w/.test(charAfter)) {
-      return { items: [] };
-    }
-
-    // Get code context
-    const code = model.getValue();
-    const fileName = model.uri.path.split('/').pop() || 'untitled';
-    const language = model.getLanguageId();
-    
-    // Create request key to prevent duplicate requests
-    const requestKey = `${position.lineNumber}:${position.column}:${lineContent}`;
-    if (requestKey === this.lastRequest) {
-      return { items: [] };
-    }
-    this.lastRequest = requestKey;
-
-    try {
-      // Debounce requests to avoid overwhelming the API
-      if (this.debounceTimer) {
-        clearTimeout(this.debounceTimer);
-      }
-
-      return new Promise((resolve) => {
-        this.debounceTimer = setTimeout(async () => {
-          if (token.isCancellationRequested) {
-            resolve({ items: [] });
-            return;
-          }
-
-          try {
-            const response = await apiRequest('/api/ai/code-completion', {
-              method: 'POST',
-              body: JSON.stringify({
-                code,
-                position: {
-                  line: position.lineNumber,
-                  column: position.column
-                },
-                language,
-                fileName,
-                projectContext: this.projectContext
-              })
-            }) as AICompletionResponse;
-
-            if (!response || !response.completions || token.isCancellationRequested) {
-              resolve({ items: [] });
-              return;
-            }
-
-            // Convert to Monaco inline completion items (using the CDN-loaded Monaco instance)
-            const monacoApi = getMonaco();
-            if (!monacoApi) {
-              resolve({ items: [] });
-              return;
-            }
-            const items: monaco.languages.InlineCompletion[] = response.completions
-              .filter((c: any) => c.confidence > 0.5) // Only show high-confidence completions
-              .map((completion: any) => ({
-                insertText: completion.text,
-                range: new monacoApi.Range(
-                  position.lineNumber,
-                  position.column,
-                  position.lineNumber,
-                  position.column
-                ),
-                command: {
-                  id: 'aiCompletion.accept',
-                  title: 'Accept AI Completion',
-                  arguments: [completion.text]
-                }
-              }));
-
-            resolve({ items });
-          } catch (error) {
-            console.error('Error getting AI completions:', error);
-            resolve({ items: [] });
-          }
-        }, 300); // 300ms debounce
-      });
-    } catch (error) {
-      console.error('Error in AI completion provider:', error);
-      return { items: [] };
-    }
-  }
-
-  freeInlineCompletions(): void {
-    // Clean up any resources
-    if (this.debounceTimer) {
-      clearTimeout(this.debounceTimer);
-      this.debounceTimer = null;
-    }
-  }
-
-  handleItemDidShow?(
-    completions: monaco.languages.InlineCompletions,
-    item: monaco.languages.InlineCompletion
-  ): void {
-    // Track when completions are shown (for analytics)
-  }
-
-  setEnabled(enabled: boolean): void {
-    this.isEnabled = enabled;
-  }
-
-  updateProjectContext(context: string): void {
-    this.projectContext = context;
-  }
+/**
+ * Creates a completion source that can be combined with other sources
+ */
+export function createAICompletionProvider(
+  options?: AICompletionOptions
+): CompletionSource {
+  return createAICompletionSource(options);
 }
 
-// Register AI completion provider for supported languages
-export function registerAICodeCompletion(
-  editor: monaco.editor.IStandaloneCodeEditor,
-  projectContext?: string,
-  monacoInstance?: Monaco
-): monaco.IDisposable[] {
-  // Use provided monacoInstance or get it from CDN loader
-  const monacoApi = monacoInstance || (getMonaco() as Monaco);
-  if (!monacoApi) {
-    console.warn('[AI Completion] Monaco not initialized');
-    return [];
-  }
-
-  const disposables: monaco.IDisposable[] = [];
-  const provider = new AICodeCompletionProvider(projectContext);
-  
-  // Register for multiple languages
-  const languages = ['javascript', 'typescript', 'python', 'java', 'cpp', 'csharp', 'go', 'rust', 'php', 'ruby'];
-  
-  languages.forEach(language => {
-    const disposable = monacoApi.languages.registerInlineCompletionsProvider(
-      language,
-      provider
-    );
-    disposables.push(disposable);
-  });
-
-  // Add command to accept completion and send feedback
-  disposables.push(
-    monacoApi.editor.addCommand({
-      id: 'aiCompletion.accept',
-      run: async (accessor, completionText: string) => {
-        // Send feedback that completion was accepted
-        try {
-          await apiRequest('/api/ai/code-completion/feedback', {
-            method: 'POST',
-            body: JSON.stringify({
-              completion: completionText,
-              accepted: true,
-              context: {
-                language: editor.getModel()?.getLanguageId(),
-                fileName: editor.getModel()?.uri.path.split('/').pop()
-              }
-            })
-          });
-        } catch (error) {
-          console.error('Error sending completion feedback:', error);
-        }
-      }
-    })
-  );
-
-  // Add settings to toggle AI completions
-  disposables.push(
-    monacoApi.editor.addCommand({
-      id: 'aiCompletion.toggle',
-      run: () => {
-        const currentState = provider['isEnabled'];
-        provider.setEnabled(!currentState);
-      }
-    })
-  );
-
-  return disposables;
-}
-
-// Helper to check if AI completions are available
+/**
+ * Helper to check if AI completions are available
+ */
 export async function checkAICompletionAvailability(): Promise<boolean> {
   try {
-    // Quick check to see if the API endpoint is available
-    const response = await fetch('/api/ai/code-completion', {
+    const response = await fetch('/api/ai/completion', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        code: '// test',
-        position: { line: 1, column: 7 },
-        language: 'javascript',
-        fileName: 'test.js'
-      })
+        context: {
+          currentFile: '// test',
+          fileName: 'test.js',
+          language: 'javascript',
+          cursorPosition: { line: 1, column: 7 },
+          currentLine: '// test',
+          precedingCode: '',
+          followingCode: '',
+        },
+        triggerKind: 'manual',
+        maxSuggestions: 1,
+      }),
     });
     
     return response.ok;
   } catch {
     return false;
   }
+}
+
+/**
+ * @deprecated Use createAICodeCompletionExtension instead
+ * This is a no-op stub for backwards compatibility
+ */
+export function registerAICodeCompletion(): { dispose: () => void }[] {
+  console.warn(
+    '[AI Completion] registerAICodeCompletion is deprecated. ' +
+    'Use createAICodeCompletionExtension with CodeMirror 6 instead.'
+  );
+  return [];
+}
+
+/**
+ * @deprecated This class was Monaco-specific and has been removed
+ * Use createAICompletionProvider or aiCompletion extension instead
+ */
+export class AICodeCompletionProvider {
+  constructor(_projectContext?: string) {
+    console.warn(
+      '[AI Completion] AICodeCompletionProvider is deprecated. ' +
+      'Use createAICompletionProvider or aiCompletion extension instead.'
+    );
+  }
+
+  setEnabled(_enabled: boolean): void {}
+  updateProjectContext(_context: string): void {}
 }

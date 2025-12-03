@@ -1,13 +1,14 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { MonacoBinding } from 'y-monaco';
-import type * as monaco from 'monaco-editor';
+import { yCollab } from 'y-codemirror.next';
+import type { Extension } from '@codemirror/state';
+import type { EditorView } from '@codemirror/view';
 
 export class CollaborationProvider {
   private doc: Y.Doc;
   private provider: WebsocketProvider;
-  private binding: MonacoBinding | null = null;
   private awareness: any;
+  private undoManager: Y.UndoManager | null = null;
 
   constructor(
     roomName: string,
@@ -32,27 +33,26 @@ export class CollaborationProvider {
     // Set local user info in awareness
     this.awareness.setLocalStateField('user', {
       userId: userInfo.userId,
-      username: userInfo.username,
-      color: userInfo.color
+      name: userInfo.username,
+      color: userInfo.color,
+      colorLight: userInfo.color + '33'
     });
   }
 
-  public bindMonaco(
-    editor: monaco.editor.IStandaloneCodeEditor,
-    model: monaco.editor.ITextModel
-  ): MonacoBinding {
+  public bindCM6(view: EditorView, textField: string = 'content'): Extension {
     // Get the Yjs text type
-    const ytext = this.doc.getText('monaco');
+    const ytext = this.doc.getText(textField);
     
-    // Create Monaco binding for collaborative editing
-    this.binding = new MonacoBinding(
-      ytext,
-      model,
-      new Set([editor]),
-      this.awareness
-    );
+    // Create undo manager for collaborative editing
+    this.undoManager = new Y.UndoManager(ytext, {
+      trackedOrigins: new Set([this.awareness.clientID]),
+      captureTimeout: 500,
+    });
     
-    return this.binding;
+    // Create CM6 collaboration extension using yCollab
+    return yCollab(ytext, this.awareness, {
+      undoManager: this.undoManager,
+    });
   }
 
   public getAwareness() {
@@ -67,10 +67,15 @@ export class CollaborationProvider {
     return this.provider;
   }
 
+  public getUndoManager() {
+    return this.undoManager;
+  }
+
   public destroy() {
-    if (this.binding) {
-      this.binding.destroy();
+    if (this.undoManager) {
+      this.undoManager.destroy();
     }
+    this.awareness.setLocalState(null);
     this.provider.destroy();
     this.doc.destroy();
   }
@@ -101,18 +106,10 @@ export class CollaborationProvider {
     };
   }
 
-  public sendCursorUpdate(position: monaco.Position, selection?: monaco.Selection) {
+  public sendCursorUpdate(anchor: number, head: number) {
     this.awareness.setLocalStateField('cursor', {
-      position: {
-        lineNumber: position.lineNumber,
-        column: position.column
-      },
-      selection: selection ? {
-        startLineNumber: selection.startLineNumber,
-        startColumn: selection.startColumn,
-        endLineNumber: selection.endLineNumber,
-        endColumn: selection.endColumn
-      } : null
+      anchor,
+      head
     });
   }
 }

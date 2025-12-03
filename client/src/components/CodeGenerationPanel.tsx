@@ -7,10 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Loader2, Sparkles, Copy, Download, CheckCircle2, XCircle, Code2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-import { ExternalMonacoEditor } from '@/components/editor/ExternalMonacoEditor';
-import type { editor } from 'monaco-editor';
-import type { Monaco } from '@/lib/monaco-cdn-loader';
+import { CM6Editor } from '@/components/editor/CM6Editor';
 
 interface AIModel {
   id: string;
@@ -49,7 +46,6 @@ export function CodeGenerationPanel() {
   
   // Refs
   const eventSourceRef = useRef<EventSource | null>(null);
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   
   // Fetch available models
   const { data: modelsData } = useQuery<{ models: AIModel[]; defaultModel: string }>({
@@ -242,36 +238,6 @@ export function CodeGenerationPanel() {
     });
   };
   
-  // Monaco editor mount handler
-  const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor, monaco: Monaco) => {
-    editorRef.current = editor;
-  };
-  
-  // ✅ CRITICAL FIX: Manually update Monaco editor when generatedCode changes
-  // Monaco Editor's value prop doesn't always trigger re-renders during SSE streaming
-  useEffect(() => {
-    console.log('[CodeGen] useEffect triggered, editorRef.current:', !!editorRef.current, 'code length:', generatedCode?.length);
-    
-    if (editorRef.current) {
-      const editor = editorRef.current;
-      
-      try {
-        const currentValue = editor.getValue();
-        
-        // Only update if value actually changed to avoid cursor jumps
-        if (currentValue !== generatedCode) {
-          console.log('[CodeGen] Updating Monaco editor, old:', currentValue.length, 'new:', generatedCode.length);
-          editor.setValue(generatedCode);
-          console.log('[CodeGen] Monaco updated successfully');
-        }
-      } catch (e) {
-        console.error('[CodeGen] Failed to update Monaco:', e);
-      }
-    } else {
-      console.warn('[CodeGen] Monaco editor not mounted yet, code will update on mount');
-    }
-  }, [generatedCode]);
-  
   return (
     <div className="h-full flex flex-col gap-4 p-4">
       <Card>
@@ -410,21 +376,13 @@ export function CodeGenerationPanel() {
           </CardHeader>
           <CardContent className="flex-1 min-h-0 p-0">
             <div className="h-full border-t">
-              <ExternalMonacoEditor
+              <CM6Editor
                 height="100%"
                 language={language}
                 value={generatedCode}
-                theme="vs-dark"
-                onMount={handleEditorDidMount}
-                options={{
-                  readOnly: true,
-                  minimap: { enabled: false },
-                  fontSize: 14,
-                  lineNumbers: 'on',
-                  scrollBeyondLastLine: false,
-                  wordWrap: 'on',
-                  automaticLayout: true,
-                }}
+                theme="dark"
+                readOnly={true}
+                lineWrapping={true}
               />
             </div>
           </CardContent>

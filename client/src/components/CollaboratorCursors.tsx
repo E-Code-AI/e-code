@@ -2,21 +2,22 @@
  * E-Code Collaborator Cursors Component
  * Fortune 500 Quality Editor Integration
  * 
- * Renders remote collaborator cursors and selections in Monaco Editor
+ * Renders remote collaborator cursors and selections in CodeMirror 6 Editor
+ * Note: Primary cursor rendering is handled by y-codemirror.next via the collaboration adapter.
+ * This component provides additional CSS styling and the "follow user" feature.
+ * 
  * Features:
- * - Animated cursor indicators
- * - Username labels
- * - Selection highlighting
+ * - Enhanced cursor styling (complements y-codemirror.next)
+ * - Follow user cursor scrolling
  * - Mobile-friendly touch targets
  */
 
 import { useEffect, useRef, memo } from 'react';
-import type * as monaco from 'monaco-editor';
-import { getMonaco } from '@/lib/monaco-cdn-loader';
+import { EditorView } from '@codemirror/view';
 import { Collaborator } from '@/hooks/useRealTimeCollaboration';
 
 interface CollaboratorCursorsProps {
-  editor: monaco.editor.IStandaloneCodeEditor | null;
+  editor: EditorView | null;
   collaborators: Collaborator[];
   followingUserId?: string | null;
   onFollowCursor?: (position: { lineNumber: number; column: number }) => void;
@@ -59,10 +60,29 @@ const cursorStyles = `
     50% { opacity: 0.5; }
   }
   
+  /* Enhanced y-codemirror.next cursor styles */
+  .cm-ySelectionInfo {
+    animation: cursor-label-fade-in 0.2s ease-out;
+  }
+  
+  .cm-yCursor {
+    animation: cursor-blink 1s ease-in-out infinite;
+  }
+  
+  @keyframes cursor-label-fade-in {
+    from { opacity: 0; transform: translateY(-2px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
   @media (max-width: 768px) {
     .collaborator-cursor-label {
       font-size: 9px;
       padding: 2px 4px;
+    }
+    
+    .cm-ySelectionInfo {
+      font-size: 9px !important;
+      padding: 2px 4px !important;
     }
   }
 `;
@@ -77,13 +97,25 @@ function injectCursorStyles() {
   }
 }
 
+function lineColumnToPos(view: EditorView, lineNumber: number, column: number): number {
+  try {
+    const doc = view.state.doc;
+    const maxLine = doc.lines;
+    const clampedLine = Math.max(1, Math.min(lineNumber, maxLine));
+    const line = doc.line(clampedLine);
+    const clampedColumn = Math.max(1, Math.min(column, line.length + 1));
+    return line.from + clampedColumn - 1;
+  } catch {
+    return 0;
+  }
+}
+
 export const CollaboratorCursors = memo(function CollaboratorCursors({
   editor,
   collaborators,
   followingUserId,
   onFollowCursor
 }: CollaboratorCursorsProps) {
-  const decorationsRef = useRef<string[]>([]);
   const styleInjectedRef = useRef(false);
 
   useEffect(() => {
@@ -96,79 +128,8 @@ export const CollaboratorCursors = memo(function CollaboratorCursors({
   useEffect(() => {
     if (!editor) return;
 
-    const model = editor.getModel();
-    if (!model) return;
-
-    const monacoInstance = getMonaco();
-    if (!monacoInstance) return;
-
-    const newDecorations: monaco.editor.IModelDeltaDecoration[] = [];
-
     collaborators.forEach((collaborator) => {
-      const { cursor, selection, color, username, odUserId } = collaborator;
-
-      if (cursor) {
-        newDecorations.push({
-          range: new monacoInstance.Range(
-            cursor.lineNumber,
-            cursor.column,
-            cursor.lineNumber,
-            cursor.column
-          ),
-          options: {
-            className: 'collaborator-cursor',
-            stickiness: monacoInstance.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
-            beforeContentClassName: `collaborator-cursor-line`,
-            hoverMessage: { value: `**${username}**` },
-            overviewRuler: {
-              color: color,
-              position: monacoInstance.editor.OverviewRulerLane.Right
-            }
-          }
-        });
-
-        newDecorations.push({
-          range: new monacoInstance.Range(
-            cursor.lineNumber,
-            cursor.column,
-            cursor.lineNumber,
-            cursor.column + 1
-          ),
-          options: {
-            after: {
-              content: '',
-              inlineClassName: `collaborator-cursor-indicator-${odUserId}`
-            },
-            stickiness: monacoInstance.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges
-          }
-        });
-      }
-
-      if (selection && (
-        selection.startLineNumber !== selection.endLineNumber ||
-        selection.startColumn !== selection.endColumn
-      )) {
-        newDecorations.push({
-          range: new monacoInstance.Range(
-            selection.startLineNumber,
-            selection.startColumn,
-            selection.endLineNumber,
-            selection.endColumn
-          ),
-          options: {
-            className: 'collaborator-selection',
-            stickiness: monacoInstance.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
-            minimap: {
-              color: color,
-              position: monacoInstance.editor.MinimapPosition.Inline
-            },
-            overviewRuler: {
-              color: color,
-              position: monacoInstance.editor.OverviewRulerLane.Full
-            }
-          }
-        });
-      }
+      const { color, username, odUserId } = collaborator;
 
       const existingStyle = document.getElementById(`cursor-style-${odUserId}`);
       if (existingStyle) existingStyle.remove();
@@ -207,8 +168,6 @@ export const CollaboratorCursors = memo(function CollaboratorCursors({
       document.head.appendChild(dynamicStyle);
     });
 
-    decorationsRef.current = editor.deltaDecorations(decorationsRef.current, newDecorations);
-
     return () => {
       collaborators.forEach((collaborator) => {
         const style = document.getElementById(`cursor-style-${collaborator.odUserId}`);
@@ -222,7 +181,13 @@ export const CollaboratorCursors = memo(function CollaboratorCursors({
 
     const followedUser = collaborators.find(c => c.odUserId.toString() === followingUserId);
     if (followedUser?.cursor) {
-      editor.revealLineInCenter(followedUser.cursor.lineNumber);
+      const { lineNumber, column } = followedUser.cursor;
+      const pos = lineColumnToPos(editor, lineNumber, column);
+      
+      editor.dispatch({
+        effects: EditorView.scrollIntoView(pos, { y: 'center' })
+      });
+      
       onFollowCursor(followedUser.cursor);
     }
   }, [editor, followingUserId, collaborators, onFollowCursor]);

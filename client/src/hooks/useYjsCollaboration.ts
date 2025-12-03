@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import type * as monaco from 'monaco-editor';
+import type { EditorView } from '@codemirror/view';
 import { CollaborationProvider } from '@/utils/collaboration-provider';
 import { useAuth } from '@/hooks/use-auth';
-import { getMonaco } from '@/lib/monaco-cdn-loader';
 
 interface Collaborator {
   clientId: number;
@@ -10,25 +9,16 @@ interface Collaborator {
   username: string;
   color: string;
   cursor?: {
-    position: {
-      lineNumber: number;
-      column: number;
-    };
-    selection?: {
-      startLineNumber: number;
-      startColumn: number;
-      endLineNumber: number;
-      endColumn: number;
-    };
+    anchor: number;
+    head: number;
   };
 }
 
-// Hash string to number for color selection
 function hashStringToIndex(str: string, arrayLength: number): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash = hash & hash; // Convert to 32-bit integer
+    hash = hash & hash;
   }
   return Math.abs(hash) % arrayLength;
 }
@@ -36,8 +26,7 @@ function hashStringToIndex(str: string, arrayLength: number): number {
 interface UseYjsCollaborationOptions {
   projectId: number;
   fileId: number;
-  editor?: monaco.editor.IStandaloneCodeEditor | null;
-  model?: monaco.editor.ITextModel | null;
+  editorView?: EditorView | null;
 }
 
 const COLORS = [
@@ -48,8 +37,7 @@ const COLORS = [
 export function useYjsCollaboration({
   projectId,
   fileId,
-  editor,
-  model
+  editorView
 }: UseYjsCollaborationOptions) {
   const { user } = useAuth();
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
@@ -57,15 +45,12 @@ export function useYjsCollaboration({
   const [followingUserId, setFollowingUserId] = useState<number | null>(null);
   const providerRef = useRef<CollaborationProvider | null>(null);
   const bindingRef = useRef<any>(null);
-  const decorationsRef = useRef<string[]>([]);
 
   useEffect(() => {
     if (!user || !projectId || !fileId) return;
 
-    // Generate a color for this user (user.id is always a string UUID)
     const userColor = COLORS[hashStringToIndex(user.id, COLORS.length)];
     
-    // Create collaboration provider
     const provider = new CollaborationProvider(
       `project-${projectId}`,
       {
@@ -77,22 +62,14 @@ export function useYjsCollaboration({
     
     providerRef.current = provider;
 
-    // Listen for connection status
     provider.getProvider().on('status', ({ status }: { status: string }) => {
       setIsConnected(status === 'connected');
     });
 
-    // Listen for collaborator changes
     const unsubscribe = provider.onUsersChange((users) => {
       setCollaborators(users);
-      
-      // Update cursor decorations if editor is available
-      if (editor && model) {
-        updateCursorDecorations(editor, model, users);
-      }
     });
 
-    // Cleanup
     return () => {
       unsubscribe();
       if (bindingRef.current) {
@@ -104,106 +81,30 @@ export function useYjsCollaboration({
     };
   }, [user, projectId, fileId]);
 
-  // Bind Monaco editor when it becomes available
   useEffect(() => {
-    if (!editor || !model || !providerRef.current) return;
+    if (!editorView || !providerRef.current) return;
 
-    // Bind Monaco editor to Yjs
-    bindingRef.current = providerRef.current.bindMonaco(editor, model);
+    bindingRef.current = providerRef.current.bindCM6(editorView);
 
-    // Listen for cursor position changes
-    const disposable = editor.onDidChangeCursorPosition((e) => {
-      if (providerRef.current && editor) {
-        providerRef.current.sendCursorUpdate(
-          e.position,
-          editor?.getSelection() || undefined
-        );
-      }
-    });
-
-    // Handle following user
     if (followingUserId !== null) {
       const collaborator = collaborators.find(c => c.userId === followingUserId);
       if (collaborator?.cursor) {
-        editor.revealLineInCenter(collaborator.cursor.position.lineNumber);
-        editor.setPosition(collaborator.cursor.position);
+        const pos = collaborator.cursor.head;
+        editorView.dispatch({
+          effects: [],
+          selection: { anchor: pos, head: pos },
+          scrollIntoView: true
+        });
       }
     }
 
     return () => {
-      disposable.dispose();
-    };
-  }, [editor, model, followingUserId, collaborators]);
-
-  const updateCursorDecorations = (
-    editor: monaco.editor.IStandaloneCodeEditor,
-    model: monaco.editor.ITextModel,
-    users: Collaborator[]
-  ) => {
-    const monacoInstance = getMonaco();
-    if (!monacoInstance) return;
-    
-    // Clear previous decorations
-    decorationsRef.current = editor.deltaDecorations(
-      decorationsRef.current,
-      []
-    );
-
-    const newDecorations: monaco.editor.IModelDeltaDecoration[] = [];
-
-    users.forEach((user) => {
-      if (!user.cursor) return;
-
-      const { position, selection } = user.cursor;
-
-      // Add cursor decoration
-      newDecorations.push({
-        range: new monacoInstance.Range(
-          position.lineNumber,
-          position.column,
-          position.lineNumber,
-          position.column
-        ),
-        options: {
-          className: 'yjs-cursor',
-          hoverMessage: { value: user.username },
-          stickiness: monacoInstance.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
-          afterContentClassName: `yjs-cursor-head yjs-cursor-${user.userId}`,
-          after: {
-            content: ' ',
-            inlineClassName: `yjs-cursor-${user.userId}`
-          }
-        }
-      });
-
-      // Add selection decoration if exists
-      if (selection) {
-        newDecorations.push({
-          range: new monacoInstance.Range(
-            selection.startLineNumber,
-            selection.startColumn,
-            selection.endLineNumber,
-            selection.endColumn
-          ),
-          options: {
-            className: `yjs-selection yjs-selection-${user.userId}`,
-            inlineClassName: 'yjs-selection-inline',
-            beforeContentClassName: 'yjs-selection-before',
-            afterContentClassName: 'yjs-selection-after',
-            inlineClassNameAffectsLetterSpacing: true,
-            stickiness: monacoInstance.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
-            isWholeLine: false,
-            minimap: {
-              color: user.color,
-              position: monacoInstance.editor.MinimapPosition.Inline
-            }
-          }
-        });
+      if (bindingRef.current && typeof bindingRef.current.destroy === 'function') {
+        bindingRef.current.destroy();
+        bindingRef.current = null;
       }
-    });
-
-    decorationsRef.current = editor.deltaDecorations([], newDecorations);
-  };
+    };
+  }, [editorView, followingUserId, collaborators]);
 
   const followUser = (userId: number) => {
     if (followingUserId === userId) {
@@ -213,12 +114,8 @@ export function useYjsCollaboration({
     }
   };
 
-  const setEditor = (newEditor: monaco.editor.IStandaloneCodeEditor | null) => {
-    editor = newEditor;
-  };
-
-  const setModel = (newModel: monaco.editor.ITextModel | null) => {
-    model = newModel;
+  const setEditorView = (newEditorView: EditorView | null) => {
+    editorView = newEditorView;
   };
 
   return {
@@ -226,7 +123,6 @@ export function useYjsCollaboration({
     isConnected,
     followingUserId,
     followUser,
-    setEditor,
-    setModel
+    setEditorView
   };
 }
