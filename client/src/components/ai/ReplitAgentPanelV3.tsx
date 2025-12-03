@@ -602,6 +602,9 @@ export function ReplitAgentPanelV3({
           setActiveThinking(thinkingSteps);
         }
 
+        // Track assistant message ID for error handling
+        let autoStartAssistantMessageId: string | null = null;
+        
         // Call the AI streaming API
         (async () => {
           try {
@@ -632,8 +635,9 @@ export function ReplitAgentPanelV3({
             const reader = response.body?.getReader();
             const decoder = new TextDecoder();
             
+            autoStartAssistantMessageId = (Date.now() + 1).toString();
             const assistantMessage: Message = {
-              id: (Date.now() + 1).toString(),
+              id: autoStartAssistantMessageId,
               role: 'assistant',
               content: '',
               timestamp: new Date(),
@@ -643,6 +647,9 @@ export function ReplitAgentPanelV3({
                 extendedThinking: extendedThinkingEnabled
               }
             };
+            
+            // Add assistant message to state BEFORE streaming to support live updates
+            setMessages(prev => [...prev, assistantMessage]);
 
             let fullContent = '';
             const thinkingSteps: ThinkingStep[] = [];
@@ -740,9 +747,16 @@ export function ReplitAgentPanelV3({
               }
             }
 
-            assistantMessage.content = fullContent || "I'll help you build that! Let me start working on it...";
-            assistantMessage.isStreaming = false;
-            setMessages(prev => [...prev, assistantMessage]);
+            // Update existing assistant message with final content
+            setMessages(prev => prev.map(msg =>
+              msg.id === autoStartAssistantMessageId
+                ? {
+                    ...msg,
+                    content: fullContent || "I'll help you build that! Let me start working on it...",
+                    isStreaming: false
+                  }
+                : msg
+            ));
             setStreamingContent('');
             setActiveThinking([]);
             
@@ -759,25 +773,31 @@ export function ReplitAgentPanelV3({
             });
             
             setMessages(prev => {
-              const lastMessage = prev[prev.length - 1];
-              if (lastMessage && lastMessage.role === 'assistant' && lastMessage.isStreaming) {
-                return prev.map(msg =>
-                  msg.id === lastMessage.id
-                    ? { 
-                        ...msg, 
-                        content: errorContent, 
-                        isStreaming: false,
-                        status: 'error' as const,
-                        metadata: { ...msg.metadata, error: true }
-                      }
-                    : msg
-                );
+              // Find and update the streaming assistant message by tracked ID
+              if (autoStartAssistantMessageId) {
+                const existingMessage = prev.find(msg => msg.id === autoStartAssistantMessageId);
+                if (existingMessage) {
+                  return prev.map(msg =>
+                    msg.id === autoStartAssistantMessageId
+                      ? { 
+                          ...msg, 
+                          content: errorContent, 
+                          isStreaming: false,
+                          status: 'error' as const,
+                          metadata: { ...msg.metadata, error: true }
+                        }
+                      : msg
+                  );
+                }
               }
+              // Only append new error message if no streaming message was created
               return [...prev, {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant' as const,
                 content: errorContent,
                 timestamp: new Date(),
+                isStreaming: false,
+                status: 'error' as const,
                 thinking: extendedThinkingEnabled ? activeThinking : undefined,
                 metadata: {
                   extendedThinking: extendedThinkingEnabled,
@@ -878,6 +898,9 @@ export function ReplitAgentPanelV3({
       setActiveThinking(thinkingSteps);
     }
 
+    // Track assistant message ID for error handling
+    let assistantMessageId: string | null = null;
+
     try {
       // Use selected provider from model preference (fallback to openai)
       const selectedProvider = provider || 'openai';
@@ -906,8 +929,9 @@ export function ReplitAgentPanelV3({
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       
+      assistantMessageId = (Date.now() + 1).toString();
       const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: assistantMessageId,
         role: 'assistant',
         content: '',
         timestamp: new Date(),
@@ -1078,25 +1102,31 @@ export function ReplitAgentPanelV3({
       });
       
       setMessages(prev => {
-        const lastMessage = prev[prev.length - 1];
-        if (lastMessage && lastMessage.role === 'assistant' && lastMessage.isStreaming) {
-          return prev.map(msg =>
-            msg.id === lastMessage.id
-              ? { 
-                  ...msg, 
-                  content: errorContent, 
-                  isStreaming: false,
-                  status: 'error' as const,
-                  metadata: { ...msg.metadata, error: true }
-                }
-              : msg
-          );
+        // Find and update the streaming assistant message by tracked ID
+        if (assistantMessageId) {
+          const existingMessage = prev.find(msg => msg.id === assistantMessageId);
+          if (existingMessage) {
+            return prev.map(msg =>
+              msg.id === assistantMessageId
+                ? { 
+                    ...msg, 
+                    content: errorContent, 
+                    isStreaming: false,
+                    status: 'error' as const,
+                    metadata: { ...msg.metadata, error: true }
+                  }
+                : msg
+            );
+          }
         }
+        // Only append new error message if no streaming message was created
         return [...prev, {
           id: (Date.now() + 1).toString(),
           role: 'assistant' as const,
           content: errorContent,
           timestamp: new Date(),
+          isStreaming: false,
+          status: 'error' as const,
           thinking: extendedThinkingEnabled ? activeThinking : undefined,
           metadata: {
             extendedThinking: extendedThinkingEnabled,
