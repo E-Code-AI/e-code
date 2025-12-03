@@ -1,27 +1,27 @@
-import { lazy, Suspense, ComponentProps } from 'react';
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
-import js from 'react-syntax-highlighter/dist/esm/languages/hljs/javascript';
-import typescript from 'react-syntax-highlighter/dist/esm/languages/hljs/typescript';
-import python from 'react-syntax-highlighter/dist/esm/languages/hljs/python';
-import css from 'react-syntax-highlighter/dist/esm/languages/hljs/css';
-import json from 'react-syntax-highlighter/dist/esm/languages/hljs/json';
-import bash from 'react-syntax-highlighter/dist/esm/languages/hljs/bash';
-import sql from 'react-syntax-highlighter/dist/esm/languages/hljs/sql';
-import xml from 'react-syntax-highlighter/dist/esm/languages/hljs/xml';
-import markdown from 'react-syntax-highlighter/dist/esm/languages/hljs/markdown';
-import java from 'react-syntax-highlighter/dist/esm/languages/hljs/java';
-import go from 'react-syntax-highlighter/dist/esm/languages/hljs/go';
-import rust from 'react-syntax-highlighter/dist/esm/languages/hljs/rust';
-import cpp from 'react-syntax-highlighter/dist/esm/languages/hljs/cpp';
-import csharp from 'react-syntax-highlighter/dist/esm/languages/hljs/csharp';
-import php from 'react-syntax-highlighter/dist/esm/languages/hljs/php';
-import ruby from 'react-syntax-highlighter/dist/esm/languages/hljs/ruby';
-import yaml from 'react-syntax-highlighter/dist/esm/languages/hljs/yaml';
-import { vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { vs2015 } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
-SyntaxHighlighter.registerLanguage('javascript', js);
-SyntaxHighlighter.registerLanguage('js', js);
-SyntaxHighlighter.registerLanguage('jsx', js);
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+import css from 'highlight.js/lib/languages/css';
+import json from 'highlight.js/lib/languages/json';
+import bash from 'highlight.js/lib/languages/bash';
+import sql from 'highlight.js/lib/languages/sql';
+import xml from 'highlight.js/lib/languages/xml';
+import markdown from 'highlight.js/lib/languages/markdown';
+import java from 'highlight.js/lib/languages/java';
+import go from 'highlight.js/lib/languages/go';
+import rust from 'highlight.js/lib/languages/rust';
+import cpp from 'highlight.js/lib/languages/cpp';
+import csharp from 'highlight.js/lib/languages/csharp';
+import php from 'highlight.js/lib/languages/php';
+import ruby from 'highlight.js/lib/languages/ruby';
+import yaml from 'highlight.js/lib/languages/yaml';
+
+SyntaxHighlighter.registerLanguage('javascript', javascript);
+SyntaxHighlighter.registerLanguage('js', javascript);
+SyntaxHighlighter.registerLanguage('jsx', javascript);
 SyntaxHighlighter.registerLanguage('typescript', typescript);
 SyntaxHighlighter.registerLanguage('ts', typescript);
 SyntaxHighlighter.registerLanguage('tsx', typescript);
@@ -56,6 +56,7 @@ SyntaxHighlighter.registerLanguage('yml', yaml);
 interface LightSyntaxHighlighterProps {
   language: string;
   children: string;
+  style?: any;
   customStyle?: React.CSSProperties;
 }
 
