@@ -78,7 +78,7 @@ import {
   Info,
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ExternalMonacoEditor } from '@/components/editor/ExternalMonacoEditor';
+import { CM6Editor } from '@/components/editor/CM6Editor';
 
 interface DatabaseInstance {
   id: number;
@@ -288,19 +288,12 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
         </div>
 
         <div className="border rounded-lg overflow-hidden">
-          <ExternalMonacoEditor
+          <CM6Editor
             height="200px"
             language="sql"
-            theme="vs-dark"
+            theme="dark"
             value={queryInput}
-            onChange={(value) => setQueryInput(value || '')}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              lineNumbers: 'on',
-              scrollBeyondLastLine: false,
-              automaticLayout: true,
-            }}
+            onChange={(value) => setQueryInput(value)}
           />
         </div>
 

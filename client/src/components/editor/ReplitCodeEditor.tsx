@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { ExternalMonacoEditor } from '@/components/editor/ExternalMonacoEditor';
+import { EditorView } from '@codemirror/view';
+import { CM6Editor } from '@/components/editor/CM6Editor';
 import { Button } from '@/components/ui/button';
 import { X, ChevronDown, AlertCircle, RefreshCw, Sparkles, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { File } from '@shared/schema';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { motion, AnimatePresence } from 'framer-motion';
 import { SkeletonText } from '@/components/ui/skeleton-loader';
 import {
   DropdownMenu,
@@ -18,7 +18,6 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { useMediaQuery } from '@/hooks/use-media-query';
-import { AICodeCompletion, useAICompletion } from './AICodeCompletion';
 import { useAIPreferences } from '@/hooks/use-ai-preferences';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -182,16 +181,14 @@ export function ReplitCodeEditor({
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const editorRef = useRef<any>(null);
-  const retryTimeoutRef = useRef<any>(null);
+  const editorRef = useRef<EditorView | null>(null);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
-  // Refs for managing autosave and preventing race conditions
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isSavingRef = useRef<boolean>(false);
   const pendingSaveRef = useRef<{ fileId: number; content: string; version: number } | null>(null);
   const fileVersionsRef = useRef<Map<number, number>>(new Map());
   
-  // AI Code Completion hooks
   const {
     preferences: aiPreferences,
     toggleEnabled: toggleAIEnabled,
@@ -200,9 +197,6 @@ export function ReplitCodeEditor({
     setConfidenceThreshold,
     getAvailableModels,
   } = useAIPreferences();
-  
-  const aiCompletion = useAICompletion(editorRef.current);
-  const [aiProcessing, setAIProcessing] = useState(false);
 
   // Open file in new tab or activate existing tab
   useEffect(() => {
@@ -345,36 +339,16 @@ export function ReplitCodeEditor({
     }
   };
 
-  const handleEditorMount = (editor: any, monaco: any) => {
-    editorRef.current = editor;
+  const handleEditorMount = (view: EditorView) => {
+    editorRef.current = view;
     setIsLoading(false);
     setHasError(false);
     setErrorMessage('');
     
-    // Clear any retry timeout
     if (retryTimeoutRef.current) {
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
     }
-    
-    // Set up AI completion status callback
-    aiCompletion.setEnabled(aiPreferences.enabled);
-    aiCompletion.setModel(aiPreferences.model);
-    aiCompletion.setAutoTrigger(aiPreferences.autoTrigger);
-    aiCompletion.setConfidenceThreshold(aiPreferences.confidenceThreshold);
-  };
-
-  const handleEditorError = (error: any) => {
-    console.error('Monaco initialization: error', error);
-    setHasError(true);
-    setIsLoading(false);
-    setErrorMessage(error?.message || 'Failed to load the code editor. Please refresh the page.');
-    
-    // Auto-retry after 3 seconds
-    retryTimeoutRef.current = setTimeout(() => {
-      setIsLoading(true);
-      setHasError(false);
-    }, 3000);
   };
 
   const handleRetry = () => {
@@ -631,17 +605,7 @@ export function ReplitCodeEditor({
           </div>
         )}
 
-        {/* AI Code Completion Component */}
-        <AICodeCompletion
-          editor={editorRef.current}
-          enabled={aiPreferences.enabled}
-          model={aiPreferences.model}
-          autoTrigger={aiPreferences.autoTrigger}
-          confidenceThreshold={aiPreferences.confidenceThreshold}
-          onStatusChange={(status) => setAIProcessing(status === 'loading')}
-        />
-        
-        {/* Multi-Editor Manager - One Monaco instance per tab */}
+        {/* Multi-Editor Manager - CodeMirror 6 instance per tab */}
         <MultiEditorManager
           tabs={tabs.map(tab => ({
             fileId: tab.fileId,

@@ -47,8 +47,8 @@ import { useToast } from '@/hooks/use-toast';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
 import { WebsocketProvider } from 'y-websocket';
-import { MonacoBinding } from 'y-monaco';
-import type * as monaco from 'monaco-editor';
+import { yCollab } from 'y-codemirror.next';
+import { EditorView } from '@codemirror/view';
 
 interface Collaborator {
   id: string;
@@ -85,20 +85,23 @@ interface ChatMessage {
 interface RealTimeCollaborationProps {
   projectId: number;
   fileId?: number;
-  editor?: monaco.editor.IStandaloneCodeEditor;
+  editor?: EditorView;
   onCollaboratorJoin?: (collaborator: Collaborator) => void;
   onCollaboratorLeave?: (collaboratorId: string) => void;
 }
 
 // Generate a random color for collaborators
-const generateCollaboratorColor = () => {
-  const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
-    '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8C471', '#82E0AA'
-  ];
-  // Use user ID for deterministic color selection
-  const userId = typeof user === 'object' && user.id ? user.id : 0;
-  return colors[userId % colors.length];
+const COLLABORATOR_COLORS = [
+  '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+  '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8C471', '#82E0AA'
+];
+
+const generateCollaboratorColor = (userId?: string | number) => {
+  if (!userId) return COLLABORATOR_COLORS[Math.floor(Math.random() * COLLABORATOR_COLORS.length)];
+  const hash = typeof userId === 'string' 
+    ? userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    : userId;
+  return COLLABORATOR_COLORS[hash % COLLABORATOR_COLORS.length];
 };
 
 export function RealTimeCollaboration({
@@ -124,7 +127,6 @@ export function RealTimeCollaboration({
   // CRDT and WebRTC refs
   const ydocRef = useRef<Y.Doc | null>(null);
   const providerRef = useRef<WebrtcProvider | WebsocketProvider | null>(null);
-  const bindingRef = useRef<MonacoBinding | null>(null);
   const awarenessRef = useRef<any>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
@@ -144,7 +146,7 @@ export function RealTimeCollaboration({
       ydoc,
       {
         params: {
-          auth: user?.id,
+          auth: String(user?.id || 'anonymous'),
           username: user?.username || 'Anonymous',
         }
       }
@@ -155,11 +157,12 @@ export function RealTimeCollaboration({
     const awareness = wsProvider.awareness;
     awarenessRef.current = awareness;
 
-    // Set local user info
+    // Set local user info with yCollab compatible format
+    const userColor = generateCollaboratorColor();
     awareness.setLocalStateField('user', {
-      id: user?.id || 'anonymous',
-      username: user?.username || 'Anonymous',
-      color: generateCollaboratorColor(),
+      name: user?.username || 'Anonymous',
+      color: userColor,
+      colorLight: userColor + '33',
     });
 
     // Listen for awareness changes
@@ -169,7 +172,7 @@ export function RealTimeCollaboration({
         .filter(([clientId]) => clientId !== awareness.clientID)
         .map(([clientId, state]) => ({
           id: clientId.toString(),
-          username: state.user?.username || 'Anonymous',
+          username: state.user?.name || state.user?.username || 'Anonymous',
           color: state.user?.color || '#000000',
           cursor: state.cursor,
           selection: state.selection,
@@ -181,124 +184,79 @@ export function RealTimeCollaboration({
       setCollaborators(collaboratorList);
     });
 
-    // Create Monaco binding
+    // yCollab extension handles text syncing and cursor display
+    // The extension should be added to the EditorView during creation
+    // Here we just set up the awareness for collaboration tracking
     const ytext = ydoc.getText('content');
-    const binding = new MonacoBinding(
-      ytext,
-      editor.getModel()!,
-      new Set([editor]),
-      awareness
-    );
-    bindingRef.current = binding;
-
-    // Track cursor position
-    editor.onDidChangeCursorPosition((e) => {
-      awareness.setLocalStateField('cursor', {
-        line: e.position.lineNumber,
-        column: e.position.column,
-      });
-    });
-
-    // Track selection
-    editor.onDidChangeCursorSelection((e) => {
-      awareness.setLocalStateField('selection', {
-        startLine: e.selection.startLineNumber,
-        startColumn: e.selection.startColumn,
-        endLine: e.selection.endLineNumber,
-        endColumn: e.selection.endColumn,
-      });
+    
+    // Create yCollab extension and add to editor
+    const undoManager = new Y.UndoManager(ytext);
+    const collabExtension = yCollab(ytext, awareness, { undoManager });
+    
+    // Dispatch the extension to the existing editor
+    editor.dispatch({
+      effects: (editor.state as any).reconfigure?.([
+        ...(editor.state as any).facet?.((editor.state as any).configuration) || [],
+        collabExtension,
+      ]),
     });
 
     return () => {
-      binding.destroy();
+      undoManager.destroy();
       wsProvider.destroy();
       ydoc.destroy();
     };
   }, [editor, fileId, projectId, user]);
 
-  // Render collaborator cursors
+  // yCollab handles cursor and selection rendering internally
+  // This effect adds additional styling for yCollab's cursor elements
   useEffect(() => {
     if (!editor) return;
 
-    const decorations: string[] = [];
-    
-    collaborators.forEach((collaborator) => {
-      if (collaborator.cursor) {
-        // Add cursor decoration
-        const cursorDecoration = editor.deltaDecorations([], [
-          {
-            range: new (window as any).monaco.Range(
-              collaborator.cursor.line,
-              collaborator.cursor.column,
-              collaborator.cursor.line,
-              collaborator.cursor.column
-            ),
-            options: {
-              className: 'collaborator-cursor',
-              hoverMessage: { value: collaborator.username },
-              beforeContentClassName: 'collaborator-cursor-before',
-              afterContentClassName: 'collaborator-cursor-after',
-              // Use inline styles for dynamic colors
-              inlineClassName: `collaborator-cursor-${collaborator.id}`,
-            },
-          },
-        ]);
-        decorations.push(...cursorDecoration);
-      }
-
-      if (collaborator.selection) {
-        // Add selection decoration
-        const selectionDecoration = editor.deltaDecorations([], [
-          {
-            range: new (window as any).monaco.Range(
-              collaborator.selection.startLine,
-              collaborator.selection.startColumn,
-              collaborator.selection.endLine,
-              collaborator.selection.endColumn
-            ),
-            options: {
-              className: 'collaborator-selection',
-              inlineClassName: `collaborator-selection-${collaborator.id}`,
-              // Use inline styles for dynamic colors with transparency
-              beforeContentClassName: `collaborator-selection-before-${collaborator.id}`,
-            },
-          },
-        ]);
-        decorations.push(...selectionDecoration);
-      }
-    });
-
-    // Add dynamic styles for each collaborator
+    // Add custom CSS for yCollab cursor styling enhancements
     const styleElement = document.createElement('style');
-    styleElement.textContent = collaborators.map(collaborator => `
-      .collaborator-cursor-${collaborator.id}::before {
-        border-left: 2px solid ${collaborator.color};
-        content: '';
+    styleElement.id = 'ycollab-custom-styles';
+    styleElement.textContent = `
+      .cm-ySelectionInfo {
         position: absolute;
-      }
-      .collaborator-cursor-${collaborator.id}::after {
-        content: '${collaborator.username}';
-        position: absolute;
-        background: ${collaborator.color};
-        color: white;
-        padding: 2px 4px;
-        border-radius: 2px;
-        font-size: 11px;
-        top: -20px;
-        left: -2px;
+        top: -1.05em;
+        left: -1px;
+        font-size: 0.75em;
+        font-family: sans-serif;
+        font-weight: 600;
+        line-height: normal;
+        user-select: none;
+        padding: 0 4px;
+        border-radius: 3px 3px 3px 0;
+        z-index: 101;
         white-space: nowrap;
+        pointer-events: none;
       }
-      .collaborator-selection-${collaborator.id} {
-        background-color: ${collaborator.color}33;
+      .cm-ySelection {
+        mix-blend-mode: multiply;
       }
-    `).join('\n');
-    document.head.appendChild(styleElement);
+      .cm-yCursor {
+        position: relative;
+        border-left: 2px solid;
+        border-right: none;
+        margin-left: -1px;
+        margin-right: -1px;
+        pointer-events: none;
+      }
+    `;
+    
+    const existingStyle = document.getElementById('ycollab-custom-styles');
+    if (!existingStyle) {
+      document.head.appendChild(styleElement);
+    }
 
     return () => {
-      editor.deltaDecorations(decorations, []);
-      document.head.removeChild(styleElement);
+      const styleToRemove = document.getElementById('ycollab-custom-styles');
+      if (styleToRemove) {
+        document.head.removeChild(styleToRemove);
+      }
     };
-  }, [editor, collaborators]);
+  }, [editor]);
 
   // Handle chat message sending
   const sendMessage = () => {
@@ -306,7 +264,7 @@ export function RealTimeCollaboration({
 
     const message: ChatMessage = {
       id: Date.now().toString(),
-      userId: user?.id || 'anonymous',
+      userId: String(user?.id || 'anonymous'),
       username: user?.username || 'Anonymous',
       message: messageInput,
       timestamp: new Date(),
@@ -327,7 +285,7 @@ export function RealTimeCollaboration({
     if (!awarenessRef.current) return;
 
     const handleChatMessage = () => {
-      const states = Array.from(awarenessRef.current.getStates().entries());
+      const states = Array.from(awarenessRef.current.getStates().entries()) as [number, any][];
       states.forEach(([clientId, state]) => {
         if (state.chat && clientId !== awarenessRef.current.clientID) {
           setChatMessages(prev => {
@@ -481,7 +439,7 @@ export function RealTimeCollaboration({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={user?.avatarUrl} />
+                          <AvatarImage src={user?.avatarUrl ?? undefined} />
                           <AvatarFallback>
                             {user?.username?.charAt(0).toUpperCase()}
                           </AvatarFallback>
@@ -543,11 +501,11 @@ export function RealTimeCollaboration({
                 {chatMessages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.userId === user?.id ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${message.userId === String(user?.id) ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
                       className={`max-w-[70%] rounded-lg p-3 ${
-                        message.userId === user?.id
+                        message.userId === String(user?.id)
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted'
                       }`}

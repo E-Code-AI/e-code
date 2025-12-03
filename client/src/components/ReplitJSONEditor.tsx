@@ -37,7 +37,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { ExternalMonacoEditor } from '@/components/editor/ExternalMonacoEditor';
+import { CM6Editor } from '@/components/editor/CM6Editor';
 
 interface JSONNode {
   key: string;
@@ -451,19 +451,13 @@ export function ReplitJSONEditor({
               )}
             </ScrollArea>
           ) : (
-            <ExternalMonacoEditor
+            <CM6Editor
               language="json"
               value={jsonString}
               onChange={handleCodeChange}
-              theme="vs-dark"
-              options={{
-                minimap: { enabled: false },
-                fontSize: 14,
-                wordWrap: 'on',
-                formatOnPaste: true,
-                formatOnType: true,
-                automaticLayout: true,
-              }}
+              theme="dark"
+              height="100%"
+              lineWrapping={true}
             />
           )}
         </div>
