@@ -79,7 +79,7 @@ const MobileCollaboratorItem = memo(({
           className={cn(
             "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-background",
             collaborator.status === 'active' ? 'bg-green-500' :
-            collaborator.status === 'idle' ? 'bg-yellow-500' : 'bg-gray-400'
+            collaborator.status === 'idle' ? 'bg-yellow-500' : 'bg-muted-foreground'
           )}
         />
       </div>
@@ -249,7 +249,7 @@ export function MobileCollaborationPanel({
                 <div className="w-10 h-1 bg-muted-foreground/30 rounded-full" />
               </div>
               
-              <div className="flex items-center justify-between px-4 pb-3 border-b">
+              <div className="flex items-center justify-between px-4 pb-3 border-b border-border">
                 <div className="flex items-center gap-2">
                   <div className={cn(
                     "h-2.5 w-2.5 rounded-full",
@@ -281,7 +281,7 @@ export function MobileCollaborationPanel({
                 </div>
               </div>
               
-              <div className="flex gap-1 p-2 border-b bg-muted/30">
+              <div className="flex gap-1 p-2 border-b border-border bg-muted/30">
                 <Button
                   variant={activeView === 'people' ? 'default' : 'ghost'}
                   size="sm"
@@ -365,7 +365,7 @@ export function MobileCollaborationPanel({
                       )}
                     </ScrollArea>
                     
-                    <form onSubmit={handleSendMessage} className="p-4 border-t bg-background safe-area-bottom">
+                    <form onSubmit={handleSendMessage} className="p-4 border-t border-border bg-background safe-area-bottom">
                       <div className="flex gap-2">
                         <Input
                           value={chatInput}
