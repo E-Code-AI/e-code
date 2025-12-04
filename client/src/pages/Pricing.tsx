@@ -21,7 +21,6 @@ import { useState, useEffect, useMemo, type ReactNode, Fragment } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
 
-// Import stock images for background
 import cloudComputingImg from '@assets/stock_images/cloud_computing_tech_ffd053c9.jpg';
 
 interface PricingTier {
@@ -96,7 +95,6 @@ export default function Pricing() {
       ctaVariant: 'outline'
     };
 
-    // Fallback hardcoded tiers when API is unavailable
     const coreTier: PricingTier = {
       name: 'Core',
       description: 'Essential tools for productive development',
@@ -104,7 +102,7 @@ export default function Pricing() {
       yearlyPrice: 15,
       popular: true,
       icon: <Star className="h-6 w-6" />,
-      gradient: 'from-violet-600 to-fuchsia-600',
+      gradient: 'from-[#F26207] to-[#FF8534]',
       features: [
         { text: '4 vCPUs + 8 GB RAM', included: true, highlight: true },
         { text: '100 GB storage', included: true },
@@ -168,12 +166,10 @@ export default function Pricing() {
       ctaVariant: 'default'
     };
 
-    // Always return all tiers - fallback when API unavailable
     if (!apiPlans || apiPlans.length === 0) {
       return [freeTier, coreTier, teamsTier, enterpriseTier];
     }
 
-    // Group plans by tier to avoid duplicates (monthly + yearly = 1 card per tier)
     const tierGroups: Record<string, { monthly?: any; yearly?: any }> = {};
     
     apiPlans.forEach((plan) => {
@@ -189,7 +185,7 @@ export default function Pricing() {
     });
 
     const mappedTiers: PricingTier[] = Object.entries(tierGroups)
-      .filter(([tierName]) => tierName !== 'free') // Free tier already added
+      .filter(([tierName]) => tierName !== 'free')
       .map(([tierName, plans]) => {
         const plan = plans.monthly || plans.yearly;
         const isCore = tierName === 'core';
@@ -213,9 +209,9 @@ export default function Pricing() {
               ? <Users className="h-6 w-6" />
               : <Building2 className="h-6 w-6" />,
           gradient: isCore
-            ? 'from-blue-600 to-cyan-600'
+            ? 'from-[#F26207] to-[#FF8534]'
             : isTeams
-              ? 'from-violet-600 to-fuchsia-600'
+              ? 'from-blue-600 to-cyan-600'
               : 'from-amber-600 to-orange-600',
           features: plan.features.map((f: string) => ({
             text: f,
@@ -239,21 +235,21 @@ export default function Pricing() {
     ]},
     { category: 'Development', features: [
       { name: 'Projects', starter: '5 active', pro: 'Unlimited', business: 'Unlimited', enterprise: 'Unlimited' },
-      { name: 'Private repos', starter: <X className="h-4 w-4 text-gray-400" />, pro: <Check className="h-4 w-4 text-green-500" />, business: <Check className="h-4 w-4 text-green-500" />, enterprise: <Check className="h-4 w-4 text-green-500" /> },
-      { name: 'Custom domains', starter: <X className="h-4 w-4 text-gray-400" />, pro: '5', business: 'Unlimited', enterprise: 'Unlimited' },
-      { name: 'SSL certificates', starter: <Check className="h-4 w-4 text-green-500" />, pro: <Check className="h-4 w-4 text-green-500" />, business: <Check className="h-4 w-4 text-green-500" />, enterprise: <Check className="h-4 w-4 text-green-500" /> }
+      { name: 'Private repos', starter: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, pro: <Check className="h-4 w-4 text-[#F26207]" />, business: <Check className="h-4 w-4 text-[#F26207]" />, enterprise: <Check className="h-4 w-4 text-[#F26207]" /> },
+      { name: 'Custom domains', starter: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, pro: '5', business: 'Unlimited', enterprise: 'Unlimited' },
+      { name: 'SSL certificates', starter: <Check className="h-4 w-4 text-[#F26207]" />, pro: <Check className="h-4 w-4 text-[#F26207]" />, business: <Check className="h-4 w-4 text-[#F26207]" />, enterprise: <Check className="h-4 w-4 text-[#F26207]" /> }
     ]},
     { category: 'AI Features', features: [
       { name: 'AI requests/month', starter: '100', pro: 'Unlimited', business: 'Unlimited', enterprise: 'Unlimited' },
       { name: 'Code completion', starter: 'Basic', pro: 'Advanced', business: 'Advanced', enterprise: 'Custom models' },
-      { name: 'AI Agent apps', starter: <X className="h-4 w-4 text-gray-400" />, pro: 'Unlimited', business: 'Unlimited', enterprise: 'Unlimited' },
-      { name: 'Custom AI training', starter: <X className="h-4 w-4 text-gray-400" />, pro: <X className="h-4 w-4 text-gray-400" />, business: <Check className="h-4 w-4 text-green-500" />, enterprise: <Check className="h-4 w-4 text-green-500" /> }
+      { name: 'AI Agent apps', starter: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, pro: 'Unlimited', business: 'Unlimited', enterprise: 'Unlimited' },
+      { name: 'Custom AI training', starter: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, pro: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, business: <Check className="h-4 w-4 text-[#F26207]" />, enterprise: <Check className="h-4 w-4 text-[#F26207]" /> }
     ]},
     { category: 'Support', features: [
       { name: 'Support channels', starter: 'Community', pro: 'Email', business: 'Priority + Chat', enterprise: '24/7 Phone' },
       { name: 'Response time', starter: 'Best effort', pro: '24 hours', business: '4 hours', enterprise: '1 hour' },
-      { name: 'Dedicated manager', starter: <X className="h-4 w-4 text-gray-400" />, pro: <X className="h-4 w-4 text-gray-400" />, business: <X className="h-4 w-4 text-gray-400" />, enterprise: <Check className="h-4 w-4 text-green-500" /> },
-      { name: 'SLA', starter: <X className="h-4 w-4 text-gray-400" />, pro: <X className="h-4 w-4 text-gray-400" />, business: '99.9%', enterprise: '99.99%' }
+      { name: 'Dedicated manager', starter: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, pro: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, business: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, enterprise: <Check className="h-4 w-4 text-[#F26207]" /> },
+      { name: 'SLA', starter: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, pro: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, business: '99.9%', enterprise: '99.99%' }
     ]}
   ];
 
@@ -274,12 +270,15 @@ export default function Pricing() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-gray-50 dark:to-gray-900/50">
+      <div 
+        className="min-h-screen flex flex-col bg-[var(--ecode-background)]"
+        style={{ fontFamily: 'var(--ecode-font-sans)' }}
+      >
         <PublicNavbar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
-            <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto" />
-            <p className="text-lg text-muted-foreground">Loading pricing plans...</p>
+            <div className="animate-spin w-12 h-12 border-4 border-[#F26207] border-t-transparent rounded-full mx-auto" />
+            <p className="text-lg text-[var(--ecode-text-muted)]">Loading pricing plans...</p>
           </div>
         </div>
       </div>
@@ -287,7 +286,11 @@ export default function Pricing() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-gray-50 dark:to-gray-900/50">
+    <div 
+      className="min-h-screen flex flex-col bg-[var(--ecode-background)]"
+      style={{ fontFamily: 'var(--ecode-font-sans)' }}
+      data-testid="page-pricing"
+    >
       <PublicNavbar />
 
       {/* Hero Section with Background */}
@@ -304,7 +307,7 @@ export default function Pricing() {
             alt="Cloud Computing"
             className="w-full h-full object-cover opacity-5 dark:opacity-3"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/90 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[var(--ecode-background)]/80 via-[var(--ecode-background)]/90 to-[var(--ecode-background)]" />
         </div>
 
         <div className="container-responsive relative z-10 max-w-7xl">
@@ -317,9 +320,10 @@ export default function Pricing() {
             <motion.div variants={fadeInUp}>
               <Badge 
                 variant="secondary" 
-                className="mb-4 px-6 py-2 text-sm font-semibold bg-gradient-to-r from-violet-600/10 to-fuchsia-600/10 border-violet-600/20"
+                className="mb-4 px-6 py-2 text-sm font-semibold bg-[#F26207]/10 border-[#F26207]/20 text-[#F26207]"
+                data-testid="badge-savings"
               >
-                <Sparkles className="h-4 w-4 mr-2 text-violet-600" />
+                <Sparkles className="h-4 w-4 mr-2 text-[#F26207]" />
                 Save up to 20% with annual billing
               </Badge>
             </motion.div>
@@ -328,17 +332,17 @@ export default function Pricing() {
               className="text-5xl sm:text-6xl lg:text-7xl font-bold"
               variants={fadeInUp}
             >
-              <span className="bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+              <span className="text-[var(--ecode-text)]">
                 Pricing that scales
               </span>
               <br />
-              <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#F26207] to-[#FF8534] bg-clip-text text-transparent">
                 with your growth
               </span>
             </motion.h1>
             
             <motion.p 
-              className="text-xl sm:text-2xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
+              className="text-xl sm:text-2xl text-[var(--ecode-text-muted)] max-w-3xl mx-auto"
               variants={fadeInUp}
             >
               Start free and upgrade as you grow. No hidden fees, no surprises. 
@@ -350,31 +354,32 @@ export default function Pricing() {
               className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-6 sm:pt-8"
               variants={fadeInUp}
             >
-              <span className={`text-sm sm:text-lg font-medium transition-colors ${billingPeriod === 'monthly' ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>
+              <span className={`text-sm sm:text-lg font-medium transition-colors duration-200 ${billingPeriod === 'monthly' ? 'text-[var(--ecode-text)]' : 'text-[var(--ecode-text-muted)]'}`}>
                 Monthly
               </span>
               <Switch
                 checked={billingPeriod === 'yearly'}
                 onCheckedChange={(checked) => setBillingPeriod(checked ? 'yearly' : 'monthly')}
-                className="scale-110 sm:scale-125"
+                className="scale-110 sm:scale-125 data-[state=checked]:bg-[#F26207]"
                 data-testid="switch-billing-period"
               />
-              <span className={`text-sm sm:text-lg font-medium transition-colors ${billingPeriod === 'yearly' ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>
+              <span className={`text-sm sm:text-lg font-medium transition-colors duration-200 ${billingPeriod === 'yearly' ? 'text-[var(--ecode-text)]' : 'text-[var(--ecode-text-muted)]'}`}>
                 Yearly
-                <Badge className="ml-1 sm:ml-2 text-[10px] sm:text-xs bg-gradient-to-r from-green-600 to-emerald-600 text-white border-0">
+                <Badge className="ml-1 sm:ml-2 text-[10px] sm:text-xs bg-[#F26207] text-white border-0">
                   Save 20%
                 </Badge>
               </span>
             </motion.div>
           </motion.div>
 
-          {/* Pricing Cards with Glassmorphism */}
+          {/* Pricing Cards with E-Code Design Tokens */}
           <motion.div 
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
             initial="initial"
             whileInView="animate"
             viewport={{ once: true }}
             variants={staggerContainer}
+            data-testid="pricing-cards-grid"
           >
             <AnimatePresence mode="wait">
               {tiers.map((tier, index) => (
@@ -385,55 +390,63 @@ export default function Pricing() {
                   onHoverStart={() => setHoveredCard(tier.name)}
                   onHoverEnd={() => setHoveredCard(null)}
                   className="relative"
+                  data-testid={`pricing-card-${tier.name.toLowerCase()}`}
                 >
-                  {/* Popular Badge */}
+                  {/* Popular Badge - E-Code Orange */}
                   {tier.popular && (
                     <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
-                      <Badge className="px-4 py-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white border-0 shadow-lg">
+                      <Badge 
+                        className="px-4 py-1 bg-[#F26207] text-white border-0 shadow-lg"
+                        data-testid="badge-popular"
+                      >
                         <Star className="h-3 w-3 mr-1 fill-white" />
-                        MOST POPULAR
+                        RECOMMENDED
                       </Badge>
                     </div>
                   )}
 
-                  {/* Card with Glassmorphism */}
+                  {/* Card with E-Code Design Tokens */}
                   <Card className={`
                     h-full relative overflow-hidden transition-all duration-300
-                    ${tier.popular ? 'border-2 border-violet-600/50 shadow-2xl' : 'border-gray-200 dark:border-gray-800'}
-                    ${hoveredCard === tier.name ? 'shadow-2xl' : 'shadow-lg'}
-                    backdrop-blur-sm bg-white/80 dark:bg-gray-900/80
+                    ${tier.popular 
+                      ? 'border-2 border-[#F26207] shadow-[0_8px_32px_-8px_rgba(242,98,7,0.4)]' 
+                      : 'border border-[var(--ecode-border)] bg-[var(--ecode-surface)]'
+                    }
+                    ${hoveredCard === tier.name && !tier.popular ? 'shadow-[0_8px_24px_-8px_rgba(242,98,7,0.2)] border-[#F26207]/30' : ''}
+                    ${!tier.popular ? 'hover:border-[#F26207]/30' : ''}
+                    backdrop-blur-sm bg-[var(--ecode-surface)]
                   `}>
                     {/* Gradient Background */}
                     <div className={`absolute inset-0 bg-gradient-to-br ${tier.gradient} opacity-5`} />
                     
                     <CardHeader className="relative z-10 pb-6">
                       {/* Icon with gradient background */}
-                      <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${tier.gradient} p-3 mb-4 text-white`}>
+                      <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${tier.gradient} p-3 mb-4 text-white transition-transform duration-200 hover:scale-105`}>
                         {tier.icon}
                       </div>
                       
-                      <CardTitle className="text-2xl font-bold">{tier.name}</CardTitle>
-                      <CardDescription className="text-base mt-2">{tier.description}</CardDescription>
+                      <CardTitle className="text-2xl font-bold text-[var(--ecode-text)]">{tier.name}</CardTitle>
+                      <CardDescription className="text-base mt-2 text-[var(--ecode-text-muted)]">{tier.description}</CardDescription>
                       
                       {/* Price */}
                       <div className="pt-6">
                         {tier.enterprise ? (
                           <div>
-                            <div className="text-4xl font-bold">Custom</div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Contact for pricing</p>
+                            <div className="text-4xl font-bold text-[var(--ecode-text)]">Custom</div>
+                            <p className="text-sm text-[var(--ecode-text-muted)] mt-1">Contact for pricing</p>
                           </div>
                         ) : (
                           <div>
                             <div className="flex items-baseline gap-1">
-                              <span className="text-4xl font-bold">
+                              <span className="text-4xl font-bold text-[var(--ecode-text)]">
                                 ${billingPeriod === 'monthly' ? tier.monthlyPrice : tier.yearlyPrice}
                               </span>
-                              <span className="text-gray-600 dark:text-gray-400">
+                              <span className="text-[var(--ecode-text-muted)]">
                                 /month
                               </span>
                             </div>
                             {billingPeriod === 'yearly' && tier.monthlyPrice > 0 && (
-                              <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                              <p className="text-sm text-[#F26207] mt-1 font-medium">
                                 Save ${(tier.monthlyPrice - tier.yearlyPrice) * 12}/year
                               </p>
                             )}
@@ -443,46 +456,48 @@ export default function Pricing() {
                     </CardHeader>
                     
                     <CardContent className="relative z-10 space-y-3 sm:space-y-4 p-4 sm:p-6">
-                      {/* CTA Button */}
+                      {/* CTA Button - E-Code Styled */}
                       <Button 
                         className={`w-full h-11 sm:h-12 text-sm sm:text-base font-semibold transition-all duration-200 ${
                           tier.popular 
-                            ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white shadow-lg' 
-                            : ''
+                            ? 'bg-[#F26207] hover:bg-[#D04E00] text-white shadow-lg hover:shadow-xl' 
+                            : tier.enterprise
+                              ? 'bg-[#F26207] hover:bg-[#D04E00] text-white'
+                              : 'border border-[var(--ecode-border)] bg-transparent text-[var(--ecode-text)] hover:border-[#F26207]/30 hover:bg-[#F26207]/5'
                         }`}
-                        variant={tier.popular ? 'default' : tier.ctaVariant}
+                        variant={tier.popular || tier.enterprise ? 'default' : 'outline'}
                         onClick={() => handleSelectPlan(tier)}
                         data-testid={`button-pricing-${tier.name.toLowerCase()}`}
                       >
                         {tier.cta}
-                        <ArrowRight className="ml-1 sm:ml-2 h-4 w-4" />
+                        <ArrowRight className="ml-1 sm:ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                       </Button>
                       
                       {/* Features List */}
-                      <div className="pt-4 border-t">
+                      <div className="pt-4 border-t border-[var(--ecode-border)]">
                         <ul className="space-y-3">
                           {tier.features.slice(0, 10).map((feature, idx) => (
-                            <li key={idx} className="flex items-start gap-3">
+                            <li key={idx} className="flex items-start gap-3 group">
                               {feature.included ? (
-                                <div className={`mt-0.5 ${feature.highlight ? 'text-violet-600 dark:text-violet-400' : 'text-green-600 dark:text-green-400'}`}>
+                                <div className={`mt-0.5 transition-colors duration-200 ${feature.highlight ? 'text-[#F26207]' : 'text-[#F26207]/70'}`}>
                                   <CheckCircle2 className="h-5 w-5" />
                                 </div>
                               ) : (
-                                <X className="h-5 w-5 text-gray-300 dark:text-gray-600 mt-0.5" />
+                                <X className="h-5 w-5 text-[var(--ecode-text-muted)]/50 mt-0.5" />
                               )}
-                              <span className={`text-sm ${
-                                !feature.included ? 'text-gray-400 dark:text-gray-600 line-through' : 
-                                feature.highlight ? 'font-semibold text-gray-900 dark:text-white' : 
-                                'text-gray-700 dark:text-gray-300'
+                              <span className={`text-sm transition-colors duration-200 ${
+                                !feature.included ? 'text-[var(--ecode-text-muted)]/50 line-through' : 
+                                feature.highlight ? 'font-semibold text-[var(--ecode-text)]' : 
+                                'text-[var(--ecode-text-secondary)]'
                               }`}>
                                 {feature.text}
                                 {feature.tooltip && (
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
-                                        <Info className="inline h-3 w-3 ml-1 text-gray-400" />
+                                        <Info className="inline h-3 w-3 ml-1 text-[var(--ecode-text-muted)] hover:text-[#F26207] transition-colors cursor-help" />
                                       </TooltipTrigger>
-                                      <TooltipContent>
+                                      <TooltipContent className="bg-[var(--ecode-surface)] border-[var(--ecode-border)] text-[var(--ecode-text)]">
                                         <p>{feature.tooltip}</p>
                                       </TooltipContent>
                                     </Tooltip>
@@ -494,7 +509,10 @@ export default function Pricing() {
                         </ul>
                         
                         {tier.features.length > 10 && (
-                          <button className="text-sm text-violet-600 dark:text-violet-400 font-medium mt-4 hover:underline">
+                          <button 
+                            className="text-sm text-[#F26207] font-medium mt-4 hover:underline transition-all duration-200 hover:text-[#D04E00]"
+                            data-testid={`button-more-features-${tier.name.toLowerCase()}`}
+                          >
                             + {tier.features.length - 10} more features
                           </button>
                         )}
@@ -508,8 +526,8 @@ export default function Pricing() {
         </div>
       </motion.section>
 
-      {/* Detailed Comparison Table */}
-      <section className="py-20 bg-gray-50 dark:bg-gray-900/50">
+      {/* Detailed Comparison Table - E-Code Styled */}
+      <section className="py-20 bg-[var(--ecode-surface-tertiary,var(--ecode-surface))]" data-testid="section-comparison">
         <div className="container-responsive max-w-7xl">
           <motion.div 
             className="text-center mb-12"
@@ -519,13 +537,13 @@ export default function Pricing() {
             variants={staggerContainer}
           >
             <motion.h2 
-              className="text-4xl font-bold mb-4"
+              className="text-4xl font-bold mb-4 text-[var(--ecode-text)]"
               variants={fadeInUp}
             >
               Compare plans in detail
             </motion.h2>
             <motion.p 
-              className="text-xl text-gray-600 dark:text-gray-400"
+              className="text-xl text-[var(--ecode-text-muted)]"
               variants={fadeInUp}
             >
               Every feature, every detail, side by side
@@ -538,47 +556,51 @@ export default function Pricing() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <Card className="overflow-hidden backdrop-blur-sm bg-white/90 dark:bg-gray-900/90">
+            <Card className="overflow-hidden backdrop-blur-sm bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full" data-testid="table-comparison">
                   <thead>
-                    <tr className="border-b bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left p-6 font-semibold text-gray-900 dark:text-white">Features</th>
+                    <tr className="border-b border-[var(--ecode-border)] bg-[var(--ecode-surface-tertiary,var(--ecode-surface))]">
+                      <th className="text-left p-6 font-semibold text-[var(--ecode-text)]">Features</th>
                       <th className="text-center p-6 min-w-[150px]">
-                        <div className="font-semibold text-gray-900 dark:text-white">Starter</div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Free forever</div>
+                        <div className="font-semibold text-[var(--ecode-text)]">Starter</div>
+                        <div className="text-sm text-[var(--ecode-text-muted)] mt-1">Free forever</div>
                       </th>
                       <th className="text-center p-6 min-w-[150px]">
-                        <div className="font-semibold text-violet-600 dark:text-violet-400">Professional</div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Most popular</div>
+                        <div className="font-semibold text-[#F26207]">Core</div>
+                        <div className="text-sm text-[var(--ecode-text-muted)] mt-1">Most popular</div>
                       </th>
                       <th className="text-center p-6 min-w-[150px]">
-                        <div className="font-semibold text-gray-900 dark:text-white">Business</div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">For teams</div>
+                        <div className="font-semibold text-[var(--ecode-text)]">Teams</div>
+                        <div className="text-sm text-[var(--ecode-text-muted)] mt-1">For teams</div>
                       </th>
                       <th className="text-center p-6 min-w-[150px]">
-                        <div className="font-semibold text-gray-900 dark:text-white">Enterprise</div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Custom</div>
+                        <div className="font-semibold text-[var(--ecode-text)]">Enterprise</div>
+                        <div className="text-sm text-[var(--ecode-text-muted)] mt-1">Custom</div>
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {comparisonFeatures.map((category, categoryIdx) => (
                       <Fragment key={categoryIdx}>
-                        <tr className="bg-gray-50 dark:bg-gray-800/30">
+                        <tr className="bg-[var(--ecode-surface-tertiary,var(--ecode-surface))]">
                           <td colSpan={5} className="px-6 py-3">
-                            <div className="font-semibold text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                            <div className="font-semibold text-sm text-[var(--ecode-text-muted)] uppercase tracking-wider">
                               {category.category}
                             </div>
                           </td>
                         </tr>
                         {category.features.map((feature, featureIdx) => (
-                          <tr key={featureIdx} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-colors">
-                            <td className="p-6 font-medium text-gray-700 dark:text-gray-300">{feature.name}</td>
-                            <td className="text-center p-6 text-gray-600 dark:text-gray-400">{feature.starter}</td>
-                            <td className="text-center p-6 text-violet-600 dark:text-violet-400 font-medium">{feature.pro}</td>
-                            <td className="text-center p-6 text-gray-900 dark:text-white font-medium">{feature.business}</td>
-                            <td className="text-center p-6 text-gray-900 dark:text-white font-medium">{feature.enterprise}</td>
+                          <tr 
+                            key={featureIdx} 
+                            className="border-b border-[var(--ecode-border)] hover:bg-[#F26207]/5 transition-colors duration-200"
+                            data-testid={`row-feature-${feature.name.toLowerCase().replace(/\s/g, '-')}`}
+                          >
+                            <td className="p-6 font-medium text-[var(--ecode-text-secondary)]">{feature.name}</td>
+                            <td className="text-center p-6 text-[var(--ecode-text-muted)]">{feature.starter}</td>
+                            <td className="text-center p-6 text-[#F26207] font-medium">{feature.pro}</td>
+                            <td className="text-center p-6 text-[var(--ecode-text)] font-medium">{feature.business}</td>
+                            <td className="text-center p-6 text-[var(--ecode-text)] font-medium">{feature.enterprise}</td>
                           </tr>
                         ))}
                       </Fragment>
@@ -591,8 +613,11 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* Enterprise Section */}
-      <section className="py-20 bg-gradient-to-r from-gray-900 to-gray-800 text-white">
+      {/* Enterprise Section - E-Code Styled */}
+      <section 
+        className="py-20 bg-gradient-to-r from-[#0e1525] to-[#1c2333] text-white"
+        data-testid="section-enterprise"
+      >
         <div className="container-responsive max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -602,7 +627,7 @@ export default function Pricing() {
               transition={{ duration: 0.6 }}
               className="space-y-6"
             >
-              <Badge className="bg-white/10 text-white border-white/20">
+              <Badge className="bg-[#F26207]/20 text-[#F26207] border-[#F26207]/30">
                 <Building2 className="h-4 w-4 mr-2" />
                 Enterprise Solutions
               </Badge>
@@ -616,19 +641,19 @@ export default function Pricing() {
               
               <div className="grid sm:grid-cols-2 gap-4 pt-4">
                 <div className="flex items-center gap-3">
-                  <Shield className="h-5 w-5 text-green-400" />
+                  <Shield className="h-5 w-5 text-[#F26207]" />
                   <span>SOC 2 Type II Certified</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Lock className="h-5 w-5 text-green-400" />
+                  <Lock className="h-5 w-5 text-[#F26207]" />
                   <span>HIPAA Compliant</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Gauge className="h-5 w-5 text-green-400" />
+                  <Gauge className="h-5 w-5 text-[#F26207]" />
                   <span>99.99% Uptime SLA</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Phone className="h-5 w-5 text-green-400" />
+                  <Phone className="h-5 w-5 text-[#F26207]" />
                   <span>24/7 Phone Support</span>
                 </div>
               </div>
@@ -636,8 +661,9 @@ export default function Pricing() {
               <div className="flex gap-4 pt-4">
                 <Button 
                   size="lg"
-                  className="bg-white text-gray-900 hover:bg-gray-100"
+                  className="bg-[#F26207] text-white hover:bg-[#D04E00] transition-all duration-200"
                   onClick={() => navigate('/contact-sales')}
+                  data-testid="button-enterprise-contact"
                 >
                   Contact Sales
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -645,8 +671,9 @@ export default function Pricing() {
                 <Button 
                   size="lg"
                   variant="outline"
-                  className="bg-transparent border-white/20 text-white hover:bg-white/10"
+                  className="bg-transparent border-white/20 text-white hover:bg-white/10 hover:border-[#F26207]/50 transition-all duration-200"
                   onClick={() => navigate('/docs/enterprise')}
+                  data-testid="button-enterprise-learn"
                 >
                   Learn More
                 </Button>
@@ -660,7 +687,7 @@ export default function Pricing() {
               transition={{ duration: 0.6 }}
               className="relative"
             >
-              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+              <Card className="bg-white/10 backdrop-blur-sm border-white/20 hover:border-[#F26207]/30 transition-all duration-300">
                 <CardHeader>
                   <CardTitle className="text-white">Enterprise includes:</CardTitle>
                 </CardHeader>
@@ -676,8 +703,8 @@ export default function Pricing() {
                       'Priority feature requests',
                       'Custom billing & contracts'
                     ].map((item, idx) => (
-                      <li key={idx} className="flex items-center gap-3 text-white/90">
-                        <CheckCircle2 className="h-5 w-5 text-green-400" />
+                      <li key={idx} className="flex items-center gap-3 text-white/90 group">
+                        <CheckCircle2 className="h-5 w-5 text-[#F26207] group-hover:scale-110 transition-transform duration-200" />
                         <span>{item}</span>
                       </li>
                     ))}
@@ -689,8 +716,8 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="py-20">
+      {/* FAQ Section - E-Code Styled */}
+      <section className="py-20 bg-[var(--ecode-background)]" data-testid="section-faq">
         <div className="container-responsive max-w-4xl">
           <motion.div 
             className="text-center mb-12"
@@ -700,13 +727,13 @@ export default function Pricing() {
             variants={staggerContainer}
           >
             <motion.h2 
-              className="text-4xl font-bold mb-4"
+              className="text-4xl font-bold mb-4 text-[var(--ecode-text)]"
               variants={fadeInUp}
             >
               Frequently asked questions
             </motion.h2>
             <motion.p 
-              className="text-xl text-gray-600 dark:text-gray-400"
+              className="text-xl text-[var(--ecode-text-muted)]"
               variants={fadeInUp}
             >
               Got questions? We've got answers
@@ -735,7 +762,7 @@ export default function Pricing() {
               },
               {
                 question: "How does the AI Agent work?",
-                answer: "Our AI Agent understands natural language descriptions and builds complete, production-ready applications. It handles all the code, setup, and deployment automatically. Available on Professional plans and above."
+                answer: "Our AI Agent understands natural language descriptions and builds complete, production-ready applications. It handles all the code, setup, and deployment automatically. Available on Core plans and above."
               },
               {
                 question: "What happens if I exceed my limits?",
@@ -747,12 +774,15 @@ export default function Pricing() {
               }
             ].map((faq, idx) => (
               <motion.div key={idx} variants={fadeInUp}>
-                <Card className="hover:shadow-lg transition-shadow duration-200">
+                <Card 
+                  className="bg-[var(--ecode-surface)] border-[var(--ecode-border)] hover:border-[#F26207]/30 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.15)] transition-all duration-300"
+                  data-testid={`faq-card-${idx}`}
+                >
                   <CardHeader>
-                    <CardTitle className="text-lg font-semibold">{faq.question}</CardTitle>
+                    <CardTitle className="text-lg font-semibold text-[var(--ecode-text)]">{faq.question}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-[var(--ecode-text-muted)]">
                       {faq.answer}
                     </p>
                   </CardContent>
@@ -763,8 +793,11 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-violet-600 to-fuchsia-600">
+      {/* CTA Section - E-Code Orange Gradient */}
+      <section 
+        className="py-20 bg-gradient-to-r from-[#F26207] to-[#FF8534]"
+        data-testid="section-cta"
+      >
         <div className="container-responsive max-w-4xl text-center">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
@@ -783,8 +816,9 @@ export default function Pricing() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
               <Button 
                 size="lg"
-                className="bg-white text-violet-600 hover:bg-gray-100 px-8 py-6 text-lg font-semibold shadow-lg"
+                className="bg-white text-[#F26207] hover:bg-white/95 px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                 onClick={() => navigate(user ? '/dashboard' : '/register')}
+                data-testid="button-cta-start-free"
               >
                 <Sparkles className="mr-2 h-5 w-5" />
                 Start Free Trial
@@ -792,8 +826,9 @@ export default function Pricing() {
               <Button 
                 size="lg"
                 variant="ghost"
-                className="text-white border-2 border-white/30 hover:bg-white/10 px-8 py-6 text-lg"
+                className="text-white border-2 border-white/30 hover:bg-white/10 hover:border-white/50 px-8 py-6 text-lg transition-all duration-200"
                 onClick={() => navigate('/demo')}
+                data-testid="button-cta-watch-demo"
               >
                 <PlayCircle className="mr-2 h-5 w-5" />
                 Watch Demo

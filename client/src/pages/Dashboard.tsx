@@ -186,98 +186,123 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Welcome Header with AI Prompt */}
+    <div className="min-h-screen bg-[var(--ecode-background)] p-4 md:p-6 lg:p-8" style={{ fontFamily: 'var(--ecode-font-sans)' }}>
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Welcome Header with AI Prompt - E-Code Branded */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-xl bg-gradient-to-r from-orange-500 to-yellow-500 p-6 md:p-8 text-white shadow-lg"
+          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+          className="relative rounded-2xl overflow-hidden"
+          style={{ 
+            background: 'linear-gradient(135deg, #F26207 0%, #FF8534 50%, #F99D25 100%)',
+            boxShadow: '0 8px 32px -8px rgba(242, 98, 7, 0.4)'
+          }}
         >
-          <div className="flex items-center gap-3 mb-3">
-            <greeting.icon className="h-8 w-8" />
-            <h1 className="text-2xl md:text-3xl font-bold">
-              {greeting.text}, {user?.displayName || user?.username || 'Developer'}!
-            </h1>
+          {/* Decorative background pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full translate-y-1/2 -translate-x-1/2" />
           </div>
-          <p className="text-white/90 mb-4">
-            What would you like to build today?
-          </p>
-
-          {/* AI Model Selection */}
-          <div className="mb-4">
-            <AIModelSelector variant="inline" />
-          </div>
-
-          {/* AI Prompt Input - Mobile Optimized */}
-          <form onSubmit={handleCreateProject} className="max-w-2xl">
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={aiPrompt}
-                onChange={(e) => setAiPrompt(e.target.value)}
-                placeholder={isMobile ? "Describe your app..." : "Describe your app idea in natural language..."}
-                className="flex-1 px-4 py-3 sm:py-3 rounded-lg bg-white/20 backdrop-blur-md text-white placeholder:text-white/70 border border-white/30 focus:border-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 text-base"
-                data-testid="input-ai-prompt"
-              />
-              <Button
-                type="submit"
-                size="lg"
-                disabled={!aiPrompt.trim() || isCreating}
-                className="bg-white text-orange-600 hover:bg-white/90 font-semibold h-12 sm:h-auto w-full sm:w-auto"
-                data-testid="button-create-project"
-              >
-                {isCreating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Build
-                  </>
-                )}
-              </Button>
+          
+          <div className="relative p-6 md:p-8 text-white">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                <greeting.icon className="h-6 w-6" />
+              </div>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                {greeting.text}, {user?.displayName || user?.username || 'Developer'}!
+              </h1>
             </div>
-          </form>
+            <p className="text-white/90 mb-5 text-lg">
+              What would you like to build today?
+            </p>
+
+            {/* AI Model Selection */}
+            <div className="mb-5">
+              <AIModelSelector variant="inline" />
+            </div>
+
+            {/* AI Prompt Input - E-Code Styled */}
+            <form onSubmit={handleCreateProject} className="max-w-2xl">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder={isMobile ? "Describe your app..." : "Describe your app idea in natural language..."}
+                  className="flex-1 px-5 py-3.5 rounded-xl bg-white/15 backdrop-blur-md text-white placeholder:text-white/60 border border-white/25 focus:border-white/50 focus:outline-none focus:ring-2 focus:ring-white/25 text-base transition-all duration-200"
+                  style={{ fontFamily: 'var(--ecode-font-sans)' }}
+                  data-testid="input-ai-prompt"
+                />
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={!aiPrompt.trim() || isCreating}
+                  className="bg-white text-[#F26207] hover:bg-white/95 font-semibold h-12 sm:h-auto w-full sm:w-auto px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                  data-testid="button-create-project"
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Build with AI
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
         </motion.div>
 
-        {/* Quick Actions */}
+        {/* Quick Actions - E-Code Styled */}
         <div>
-          <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+          <h2 className="text-lg font-semibold mb-4 text-[var(--ecode-text)]">Quick Actions</h2>
           <div className={`grid ${TABLET_GRID_CLASSES.quickActionsTabletOptimized} gap-4`}>
-            {quickActions.map((action) => (
-              <Card
+            {quickActions.map((action, index) => (
+              <motion.div
                 key={action.title}
-                className="cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={action.action}
-                data-testid={`action-${action.title.toLowerCase().replace(/\s/g, '-')}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.3 }}
               >
-                <CardContent className="p-6 flex flex-col items-center text-center">
-                  <action.icon className="h-8 w-8 mb-3 text-orange-500" />
-                  <h3 className="font-medium text-sm mb-1">{action.title}</h3>
-                  <p className="text-xs text-muted-foreground hidden md:block">{action.description}</p>
-                </CardContent>
-              </Card>
+                <Card
+                  className="cursor-pointer group border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[#F26207]/30 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.15)] transition-all duration-200"
+                  onClick={action.action}
+                  data-testid={`action-${action.title.toLowerCase().replace(/\s/g, '-')}`}
+                >
+                  <CardContent className="p-6 flex flex-col items-center text-center">
+                    <div className="p-3 rounded-xl bg-[#F26207]/10 group-hover:bg-[#F26207]/15 transition-colors mb-3">
+                      <action.icon className="h-6 w-6 text-[#F26207]" />
+                    </div>
+                    <h3 className="font-medium text-sm mb-1 text-[var(--ecode-text)] group-hover:text-[#F26207] transition-colors">{action.title}</h3>
+                    <p className="text-xs text-[var(--ecode-text-muted)] hidden md:block">{action.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
           </div>
         </div>
 
-        {/* Recent Projects */}
+        {/* Recent Projects - E-Code Styled */}
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <h2 className="text-lg font-semibold">Your Projects ({recentProjects.length})</h2>
-            <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-[var(--ecode-text)]">Your Projects ({recentProjects.length})</h2>
+            <div className="flex items-center gap-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--ecode-text-muted)]" />
                 <input
                   type="text"
                   placeholder="Search projects..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-3 py-2 min-h-[44px] text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="pl-9 pr-4 py-2.5 min-h-[44px] text-sm border border-[var(--ecode-border)] rounded-xl bg-[var(--ecode-surface)] focus:outline-none focus:ring-2 focus:ring-[#F26207]/20 focus:border-[#F26207]/40 transition-all duration-200"
+                  style={{ fontFamily: 'var(--ecode-font-sans)' }}
                   data-testid="input-search-projects"
                 />
               </div>
@@ -285,7 +310,7 @@ export default function Dashboard() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="min-h-[44px]"
+                  className="min-h-[44px] border-[var(--ecode-border)] hover:border-[#F26207]/40 hover:text-[#F26207] transition-colors rounded-xl"
                   onClick={() => navigate('/projects')}
                   data-testid="button-view-all"
                 >
@@ -310,53 +335,56 @@ export default function Dashboard() {
               ))}
             </div>
           ) : filteredProjects.length === 0 ? (
-            <Card className="p-12 text-center border-dashed">
-              <Code2 className="h-12 w-12 mx-auto mb-4 text-orange-500" />
-              <p className="text-muted-foreground">
+            <Card className="p-12 text-center border-dashed border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+              <div className="p-4 rounded-2xl bg-[#F26207]/10 w-fit mx-auto mb-4">
+                <Code2 className="h-10 w-10 text-[#F26207]" />
+              </div>
+              <p className="text-[var(--ecode-text-muted)]">
                 {searchQuery ? 'No projects found matching your search.' : 'No projects yet. Create your first one!'}
               </p>
             </Card>
           ) : (
             <div className={`grid ${TABLET_GRID_CLASSES.projectsTabletOptimized} gap-4`}>
               <AnimatePresence>
-                {filteredProjects.map((project) => (
+                {filteredProjects.map((project, index) => (
                   <motion.div
                     key={project.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ delay: index * 0.03, duration: 0.3 }}
                   >
                     <Card
-                      className="cursor-pointer hover:shadow-lg transition-shadow group"
+                      className="cursor-pointer group border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[#F26207]/30 hover:shadow-[0_8px_24px_-8px_rgba(242,98,7,0.2)] transition-all duration-200 overflow-hidden"
                       onClick={() => {
                         navigate(`/ide/${project.id}`);
                       }}
                       data-testid={`project-card-${project.id}`}
                     >
                       {/* Project Icon/Preview */}
-                      <div className="aspect-video relative bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-950/20 dark:to-amber-950/20 flex items-center justify-center">
+                      <div className="aspect-video relative bg-gradient-to-br from-[#F26207]/5 to-[#F99D25]/10 flex items-center justify-center">
                         {getProjectIcon(project)}
                         {project.isDeployed && (
-                          <Badge className="absolute top-2 right-2 bg-green-500">
+                          <Badge className="absolute top-2 right-2 bg-emerald-500 text-white border-0 shadow-sm">
                             <CheckCircle2 className="h-3 w-3 mr-1" />
                             Live
                           </Badge>
                         )}
-                        <Badge variant="secondary" className="absolute bottom-2 left-2 text-xs">
+                        <Badge variant="secondary" className="absolute bottom-2 left-2 text-xs bg-[var(--ecode-surface)] text-[var(--ecode-text-muted)] border border-[var(--ecode-border)]">
                           {project.language || 'JavaScript'}
                         </Badge>
                       </div>
 
                       <CardContent className="p-4">
-                        <h3 className="font-semibold truncate mb-1 group-hover:text-orange-500 transition-colors">
+                        <h3 className="font-semibold truncate mb-1 text-[var(--ecode-text)] group-hover:text-[#F26207] transition-colors">
                           {project.name}
                         </h3>
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                        <p className="text-sm text-[var(--ecode-text-muted)] mb-3 line-clamp-2">
                           {project.description || 'No description'}
                         </p>
 
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <span className="text-xs text-[var(--ecode-text-muted)] flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {getTimeAgo(project.updatedAt)}
                           </span>
@@ -364,7 +392,7 @@ export default function Dashboard() {
                             <Button 
                               size="sm" 
                               variant="ghost" 
-                              className="h-8 w-8 p-0" 
+                              className="h-8 w-8 p-0 hover:bg-[#F26207]/10 hover:text-[#F26207]" 
                               data-testid={`button-open-${project.id}`}
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -376,7 +404,7 @@ export default function Dashboard() {
                             <Button 
                               size="sm" 
                               variant="ghost" 
-                              className="h-8 w-8 p-0"
+                              className="h-8 w-8 p-0 hover:bg-[#F26207]/10 hover:text-[#F26207]"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const projectUrl = getProjectUrl(project, user?.username);
