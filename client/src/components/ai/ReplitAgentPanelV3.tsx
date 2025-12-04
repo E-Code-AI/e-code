@@ -612,10 +612,13 @@ export function ReplitAgentPanelV3({
             // Use selected provider from model preference (fallback to openai)
             const selectedProvider = provider || 'openai';
             
+            // Use actual conversationId for RAG session alignment
+            const chatConversationId = conversationId ? String(conversationId) : `conv-${Date.now()}`;
+            
             const response = await apiRequest('POST', '/api/agent/chat/stream', {
               message: userMessage.content,
               projectId: projectId,
-              conversationId: `conv-${Date.now()}`,
+              conversationId: chatConversationId,
               provider: selectedProvider,
               modelId: modelId || undefined,
               context: messages.slice(-5).map(m => ({
@@ -906,10 +909,13 @@ export function ReplitAgentPanelV3({
       // Use selected provider from model preference (fallback to openai)
       const selectedProvider = provider || 'openai';
       
+      // Use actual conversationId for RAG session alignment
+      const chatConversationId = conversationId ? String(conversationId) : `conv-${Date.now()}`;
+      
       const response = await apiRequest('POST', '/api/agent/chat/stream', {
         message: userMessage.content,
         projectId: projectId,
-        conversationId: `conv-${Date.now()}`,
+        conversationId: chatConversationId,
         provider: selectedProvider,
         modelId: modelId || undefined,
         context: messages.slice(-5).map(m => ({
@@ -1609,7 +1615,7 @@ export function ReplitAgentPanelV3({
           {ragStats?.isAvailable && (
             <div className="flex items-center justify-between gap-3 py-2 px-1 border-t border-border/40" data-testid="rag-controls-section">
               <RAGToggle 
-                sessionId={autonomySessionId || undefined}
+                sessionId={conversationId ? String(conversationId) : undefined}
                 enabled={ragEnabled}
                 onToggle={setRagEnabled}
                 compact
@@ -1630,10 +1636,10 @@ export function ReplitAgentPanelV3({
           )}
           
           {/* Retrieved Context Panel - Collapsible */}
-          {ragEnabled && showRAGContext && autonomySessionId && (
+          {ragEnabled && showRAGContext && conversationId && (
             <div className="border-t border-border/40 pt-2" data-testid="rag-context-section">
               <RetrievedContextPanel 
-                sessionId={autonomySessionId} 
+                sessionId={String(conversationId)} 
                 maxHeight={mode === 'mobile' ? '150px' : '200px'}
               />
             </div>
