@@ -15,6 +15,8 @@ import { useToast } from '@/hooks/use-toast';
 import { usePullToRefresh } from '@/hooks/use-mobile-gestures';
 import { VirtualFileTree } from './VirtualFileTree';
 import { useFileBrowserPersistence } from '@/hooks/use-mobile-persistence';
+import { FileExplorerSkeleton } from './MobileLoadingSkeleton';
+import { NoFilesEmptyState, NoSearchResultsEmptyState } from './MobileEmptyState';
 import {
   Dialog,
   DialogContent,
@@ -494,8 +496,8 @@ export function MobileFileExplorer({
               </AnimatePresence>
 
               {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground text-sm" data-testid="mobile-file-loading">
-                  Loading files...
+                <div data-testid="mobile-file-loading">
+                  <FileExplorerSkeleton className="h-full" />
                 </div>
               ) : filteredFiles.length > 0 ? (
                 <div 
@@ -512,10 +514,18 @@ export function MobileFileExplorer({
                     className="h-full"
                   />
                 </div>
+              ) : searchQuery ? (
+                <NoSearchResultsEmptyState
+                  searchQuery={searchQuery}
+                  onClearSearch={() => setSearchQuery('')}
+                  className="h-full"
+                />
               ) : (
-                <div className="text-center py-8 text-muted-foreground text-sm" data-testid="mobile-file-empty">
-                  {searchQuery ? 'No files found' : 'No files yet'}
-                </div>
+                <NoFilesEmptyState
+                  onCreateFile={() => setNewItemDialog({ type: 'file', name: '' })}
+                  onCreateFolder={() => setNewItemDialog({ type: 'folder', name: '' })}
+                  className="h-full"
+                />
               )}
             </div>
             

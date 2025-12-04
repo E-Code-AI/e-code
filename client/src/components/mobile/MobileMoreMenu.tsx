@@ -68,8 +68,8 @@ export function MobileMoreMenu({
   const prefersReducedMotion = useReducedMotion();
   
   const dragY = useMotionValue(0);
-  const dragOpacity = useTransform(dragY, [0, 150], [1, 0.5]);
-  const dragScale = useTransform(dragY, [0, 150], [1, 0.98]);
+  const dragOpacity = useTransform(dragY, [0, 150], [1, 0.5], { clamp: true });
+  const dragScale = useTransform(dragY, [0, 150], [1, 0.98], { clamp: true });
   
   const startY = useRef(0);
   const velocity = useRef(0);
