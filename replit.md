@@ -21,6 +21,12 @@ E-Code is a collaborative, AI-assisted web-based IDE designed for rapid prototyp
 ### UI/UX Decisions
 The frontend uses Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to iOS Dynamic Color System principles, San Francisco Pro Typography, 8pt Grid Spacing, Apple-quality animation, iOS-style shadows, continuous corners, and appropriate touch targets for a mobile-first experience. The autonomous agent interface is platform-agnostic and responsive, featuring real-time progress tracking. QA instrumentation includes minimum touch targets, comprehensive `data-testid` coverage, and mobile-first grid implementations.
 
+#### Replit-Style IDE Components (Dec 2025)
+- **ReplitActivityBar** (`client/src/components/ide/ReplitActivityBar.tsx`): Vertical icon rail (48px) on the left edge of the IDE, matching Replit's exact design. Features: Files, Search, Git, Packages, Debug, Terminal, Agent, Deploy, Secrets, Database, Preview, Workflows, History, Extensions, Settings icons with tooltips, keyboard shortcuts, and badge counts. Active item indicator with accent color border.
+- **ReplitTabBar** (`client/src/components/ide/ReplitTabBar.tsx`): Horizontal tab strip above editor with drag-drop reordering, tab pinning, context menus (Close, Close Others, Close to Right, Pin/Unpin, Duplicate, Split Right, Copy Path), file type icons, modified indicators, and overflow scroll buttons.
+- **StatusBar** (`client/src/components/ide/StatusBar.tsx`): Bottom status bar with Git branch, connection status, running state, problems count, last saved time, CPU/memory usage, cursor position, language, encoding, notifications, and keyboard shortcuts button.
+- **Design Tokens**: IBM Plex Sans/Mono fonts, E-Code orange (#F26207) accent, full light/dark mode support via CSS variables in `client/src/styles/replit-theme.css`.
+
 ### Technical Implementations
 The frontend uses React 18, TypeScript, Vite, TanStack Query, and Wouter. The backend is a Node.js/Express.js application in TypeScript, employing Drizzle ORM for PostgreSQL and Passport.js for authentication, following a RESTful API design. WebSockets power real-time features. AI optimization includes a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are AES-256-GCM encrypted, and SSE streaming is used for code generation. Anonymous bootstrap authentication provides ephemeral guest users.
 

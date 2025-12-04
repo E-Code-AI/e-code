@@ -1,6 +1,25 @@
 import { Button } from '@/components/ui/button';
-import { Command, Circle } from 'lucide-react';
+import { 
+  Command, 
+  Circle, 
+  GitBranch, 
+  Wifi, 
+  WifiOff,
+  Bell,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+  Cpu,
+  HardDrive,
+  Clock,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface StatusBarProps {
   gitBranch: string;
@@ -9,6 +28,12 @@ interface StatusBarProps {
   language: string;
   encoding: string;
   onShowShortcuts: () => void;
+  notifications?: number;
+  problems?: { errors: number; warnings: number };
+  isConnected?: boolean;
+  cpuUsage?: number;
+  memoryUsage?: number;
+  lastSaved?: Date;
 }
 
 export function StatusBar({
@@ -17,60 +42,294 @@ export function StatusBar({
   cursorPosition,
   language,
   encoding,
-  onShowShortcuts
+  onShowShortcuts,
+  notifications = 0,
+  problems = { errors: 0, warnings: 0 },
+  isConnected = true,
+  cpuUsage,
+  memoryUsage,
+  lastSaved,
 }: StatusBarProps) {
+  const formatTime = (date: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
-    <div className="h-6 border-t bg-muted/50 flex items-center px-4 gap-4 text-xs">
-      {/* Git Branch */}
-      <div className="flex items-center gap-2" data-testid="status-git-branch">
-        <span className="text-muted-foreground">Branch:</span>
-        <span className="font-medium">{gitBranch}</span>
-      </div>
-      
-      {/* Running Status */}
-      <div className="flex items-center gap-2" data-testid="status-running">
-        <Circle
-          className={cn(
-            "h-2 w-2",
-            isRunning ? "fill-green-500 text-green-500" : "fill-gray-500 text-gray-500"
-          )}
-        />
-        <span>{isRunning ? 'Running' : 'Stopped'}</span>
-      </div>
-      
-      {/* Spacer */}
-      <div className="flex-1" />
-      
-      {/* Cursor Position */}
-      <div className="flex items-center gap-2" data-testid="status-cursor">
-        <span className="text-muted-foreground">Ln</span>
-        <span>{cursorPosition.line}</span>
-        <span className="text-muted-foreground">,</span>
-        <span className="text-muted-foreground">Col</span>
-        <span>{cursorPosition.column}</span>
-      </div>
-      
-      {/* Language */}
-      <div className="flex items-center gap-2" data-testid="status-language">
-        <span>{language}</span>
-      </div>
-      
-      {/* Encoding */}
-      <div className="flex items-center gap-2" data-testid="status-encoding">
-        <span>{encoding}</span>
-      </div>
-      
-      {/* Shortcuts Button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onShowShortcuts}
-        data-testid="button-show-shortcuts"
-        className="h-5 px-2 gap-1"
+    <TooltipProvider>
+      <div 
+        className={cn(
+          'h-[22px] flex items-center text-[11px]',
+          'bg-[var(--ecode-sidebar-bg)] border-t border-[var(--ecode-border)]',
+          'font-[var(--ecode-font-sans)]'
+        )}
+        data-testid="status-bar"
       >
-        <Command className="h-3 w-3" />
-        <span>Shortcuts</span>
-      </Button>
-    </div>
+        {/* Left Section */}
+        <div className="flex items-center h-full">
+          {/* Git Branch */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button 
+                className={cn(
+                  'flex items-center gap-1.5 h-full px-2.5',
+                  'text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]',
+                  'hover:bg-[var(--ecode-sidebar-hover)] transition-colors'
+                )}
+                data-testid="status-git-branch"
+              >
+                <GitBranch className="h-3 w-3" />
+                <span className="font-medium">{gitBranch}</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              Current branch: {gitBranch}
+            </TooltipContent>
+          </Tooltip>
+          
+          {/* Connection Status */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div 
+                className={cn(
+                  'flex items-center gap-1 h-full px-2',
+                  'hover:bg-[var(--ecode-sidebar-hover)] transition-colors cursor-default'
+                )}
+              >
+                {isConnected ? (
+                  <Wifi className="h-3 w-3 text-[hsl(var(--ecode-green))]" />
+                ) : (
+                  <WifiOff className="h-3 w-3 text-[hsl(var(--ecode-danger))]" />
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              {isConnected ? 'Connected' : 'Disconnected'}
+            </TooltipContent>
+          </Tooltip>
+          
+          {/* Running Status */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div 
+                className={cn(
+                  'flex items-center gap-1.5 h-full px-2',
+                  'hover:bg-[var(--ecode-sidebar-hover)] transition-colors cursor-default'
+                )}
+                data-testid="status-running"
+              >
+                {isRunning ? (
+                  <>
+                    <Loader2 className="h-3 w-3 text-[hsl(var(--ecode-green))] animate-spin" />
+                    <span className="text-[hsl(var(--ecode-green))]">Running</span>
+                  </>
+                ) : (
+                  <>
+                    <Circle className="h-2.5 w-2.5 fill-[var(--ecode-text-muted)] text-[var(--ecode-text-muted)]" />
+                    <span className="text-[var(--ecode-text-muted)]">Stopped</span>
+                  </>
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              {isRunning ? 'Server is running' : 'Server is stopped'}
+            </TooltipContent>
+          </Tooltip>
+          
+          {/* Problems */}
+          {(problems.errors > 0 || problems.warnings > 0) && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  className={cn(
+                    'flex items-center gap-1.5 h-full px-2',
+                    'hover:bg-[var(--ecode-sidebar-hover)] transition-colors'
+                  )}
+                >
+                  {problems.errors > 0 && (
+                    <span className="flex items-center gap-0.5 text-[hsl(var(--ecode-danger))]">
+                      <AlertCircle className="h-3 w-3" />
+                      {problems.errors}
+                    </span>
+                  )}
+                  {problems.warnings > 0 && (
+                    <span className="flex items-center gap-0.5 text-[hsl(var(--ecode-warning))]">
+                      <AlertCircle className="h-3 w-3" />
+                      {problems.warnings}
+                    </span>
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                {problems.errors} errors, {problems.warnings} warnings
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+        
+        {/* Spacer */}
+        <div className="flex-1" />
+        
+        {/* Right Section */}
+        <div className="flex items-center h-full">
+          {/* Last Saved */}
+          {lastSaved && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div 
+                  className={cn(
+                    'flex items-center gap-1 h-full px-2',
+                    'text-[var(--ecode-text-muted)]',
+                    'hover:bg-[var(--ecode-sidebar-hover)] transition-colors cursor-default'
+                  )}
+                >
+                  <CheckCircle className="h-3 w-3 text-[hsl(var(--ecode-green))]" />
+                  <span>{formatTime(lastSaved)}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                Last saved: {lastSaved.toLocaleString()}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          
+          {/* Resource Usage */}
+          {(cpuUsage !== undefined || memoryUsage !== undefined) && (
+            <div className="flex items-center gap-2 h-full px-2 text-[var(--ecode-text-muted)]">
+              {cpuUsage !== undefined && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex items-center gap-1 cursor-default">
+                      <Cpu className="h-3 w-3" />
+                      {cpuUsage}%
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">
+                    CPU Usage: {cpuUsage}%
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {memoryUsage !== undefined && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex items-center gap-1 cursor-default">
+                      <HardDrive className="h-3 w-3" />
+                      {memoryUsage}%
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">
+                    Memory Usage: {memoryUsage}%
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )}
+          
+          {/* Cursor Position */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button 
+                className={cn(
+                  'flex items-center gap-1 h-full px-2',
+                  'text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]',
+                  'hover:bg-[var(--ecode-sidebar-hover)] transition-colors',
+                  'font-mono text-[10px]'
+                )}
+                data-testid="status-cursor"
+              >
+                <span>Ln {cursorPosition.line}, Col {cursorPosition.column}</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              Go to Line
+            </TooltipContent>
+          </Tooltip>
+          
+          {/* Language */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button 
+                className={cn(
+                  'flex items-center h-full px-2',
+                  'text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]',
+                  'hover:bg-[var(--ecode-sidebar-hover)] transition-colors'
+                )}
+                data-testid="status-language"
+              >
+                {language}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              Select Language Mode
+            </TooltipContent>
+          </Tooltip>
+          
+          {/* Encoding */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button 
+                className={cn(
+                  'flex items-center h-full px-2',
+                  'text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]',
+                  'hover:bg-[var(--ecode-sidebar-hover)] transition-colors'
+                )}
+                data-testid="status-encoding"
+              >
+                {encoding}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              Select Encoding
+            </TooltipContent>
+          </Tooltip>
+          
+          {/* Notifications */}
+          {notifications > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  className={cn(
+                    'flex items-center gap-1 h-full px-2',
+                    'text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]',
+                    'hover:bg-[var(--ecode-sidebar-hover)] transition-colors'
+                  )}
+                >
+                  <Bell className="h-3 w-3" />
+                  <span className="font-medium">{notifications}</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                {notifications} notification{notifications > 1 ? 's' : ''}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          
+          {/* Shortcuts Button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onShowShortcuts}
+                data-testid="button-show-shortcuts"
+                className={cn(
+                  'h-full px-2 rounded-none',
+                  'text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]',
+                  'hover:bg-[var(--ecode-sidebar-hover)]'
+                )}
+              >
+                <Command className="h-3 w-3" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              Keyboard Shortcuts
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+    </TooltipProvider>
   );
 }
