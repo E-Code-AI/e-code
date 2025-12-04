@@ -27,7 +27,7 @@ import { Button } from '@/components/ui/button';
 
 // Core lightweight components (static imports)
 import { TopNavBar } from '@/components/ide/TopNavBar';
-import { StatusBar } from '@/components/ide/StatusBar';
+import { StatusBar, type DeploymentStatus } from '@/components/ide/StatusBar';
 import { ReplitActivityBar, type ActivityItem } from '@/components/ide/ReplitActivityBar';
 import { ReplitTabBar, type Tab as EditorTab } from '@/components/ide/ReplitTabBar';
 import { ReplitToolsSheet } from '@/components/ide/ReplitToolsSheet';
@@ -267,6 +267,12 @@ export default function IDEPage() {
   const [showQuickFileSearch, setShowQuickFileSearch] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   
+  // Problems count for ActivityBar badge (could connect to LSP/diagnostics)
+  const [problemsCount, setProblemsCount] = useState<{ errors: number; warnings: number }>({ errors: 0, warnings: 0 });
+  
+  // Git changes count for ActivityBar badge (could connect to git status)
+  const [gitChangesCount, setGitChangesCount] = useState(0);
+  
   // Lift Agent Tools settings to parent level with sessionStorage persistence to survive remounts
   const getStoredAgentToolsSettings = () => {
     if (typeof window === 'undefined') return null;
@@ -402,6 +408,32 @@ export default function IDEPage() {
     },
     enabled: !!projectId && (!!user || !!bootstrapToken),
   });
+  
+  // Query publish status for StatusBar deployment indicator
+  interface PublishState {
+    status: 'idle' | 'publishing' | 'live' | 'failed' | 'needs-republish';
+    url?: string;
+    deployedAt?: string;
+    errorMessage?: string;
+  }
+  
+  const { data: publishState } = useQuery<PublishState>({
+    queryKey: ['/api/projects', projectId, 'publish', 'status'],
+    enabled: !!projectId && !!user,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      return data?.status === 'publishing' ? 2000 : false;
+    },
+  });
+  
+  // Map publish status to DeploymentStatus for StatusBar
+  const deploymentStatus: DeploymentStatus = publishState?.status === 'publishing' 
+    ? 'deploying' 
+    : publishState?.status === 'live' || publishState?.status === 'needs-republish'
+    ? 'live'
+    : publishState?.status === 'failed'
+    ? 'failed'
+    : 'idle';
   
   // Available tools/panels that can be added (comprehensive list with all features)
   const availableTools = [
@@ -896,8 +928,8 @@ export default function IDEPage() {
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
         badgeCounts={{
-          agent: 0,
-          git: 0,
+          git: gitChangesCount > 0 ? gitChangesCount : undefined,
+          debug: problemsCount.errors > 0 ? problemsCount.errors : undefined,
         }}
       />
       
@@ -1098,6 +1130,13 @@ export default function IDEPage() {
           onShowShortcuts={() => setShowKeyboardShortcuts(true)}
           isConnected={true}
           lastSaved={lastSaved}
+          problems={problemsCount}
+          deploymentStatus={deploymentStatus}
+          deploymentUrl={publishState?.url}
+          onDeployClick={() => {
+            setLeftPanelTab('deployment');
+            setDeploymentTab('logs');
+          }}
         />
       </div>
       
