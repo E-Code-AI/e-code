@@ -27,6 +27,14 @@ The frontend uses Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to iOS
 - **StatusBar** (`client/src/components/ide/StatusBar.tsx`): Bottom status bar with Git branch, connection status, running state, problems count, last saved time, CPU/memory usage, cursor position, language, encoding, notifications, and keyboard shortcuts button.
 - **Design Tokens**: IBM Plex Sans/Mono fonts, E-Code orange (#F26207) accent, full light/dark mode support via CSS variables in `client/src/styles/replit-theme.css`.
 
+#### Mobile IDE UX Polish (Dec 2025)
+- **Animations & Transitions**: Spring-based animations (stiffness: 400, damping: 30) with parallax swipe effects, icon bounce on tab activation, stagger menu item animations, all respecting `prefers-reduced-motion` via `useReducedMotion` hook (`client/src/hooks/use-reduced-motion.ts`).
+- **Loading Skeletons** (`MobileLoadingSkeleton.tsx`): FileExplorer, Editor, Terminal, Preview, Agent, Deploy skeletons with reduced-motion-aware pulse animations and semantic color tokens.
+- **Empty States** (`MobileEmptyState.tsx`): Configurable component with variants (no-files, no-project, empty-terminal, no-search-results, error) and contextual action buttons.
+- **Touch UX Enhancements**: Caret nudge buttons (←, →, ↑, ↓) in editor toolbar, keyboard toggle with haptic feedback, swipe gestures with velocity tracking.
+- **Preview Panel**: Dynamic Island for iPhone 14 Pro, realistic status bar with real-time clock/battery/signal, 3D rotation animations, styled URL bar with copy functionality.
+- **Suspense Integration**: All mobile panels wrapped with Suspense boundaries using appropriate skeleton fallbacks.
+
 ### Technical Implementations
 The frontend uses React 18, TypeScript, Vite, TanStack Query, and Wouter. The backend is a Node.js/Express.js application in TypeScript, employing Drizzle ORM for PostgreSQL and Passport.js for authentication, following a RESTful API design. WebSockets power real-time features. AI optimization includes a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are AES-256-GCM encrypted, and SSE streaming is used for code generation. Anonymous bootstrap authentication provides ephemeral guest users.
 
