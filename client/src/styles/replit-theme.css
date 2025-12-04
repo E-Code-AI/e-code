@@ -131,6 +131,27 @@
   --ecode-z-modal: 1100;
   --ecode-z-tooltip: 1200;
   --ecode-z-notification: 1300;
+
+  /* Fortune 500 Mobile Navigation - Premium Glass Design */
+  --mobile-nav-height: 72px;
+  --mobile-nav-bg: rgba(255, 255, 255, 0.85);
+  --mobile-nav-bg-elevated: rgba(255, 255, 255, 0.95);
+  --mobile-nav-blur: 24px;
+  --mobile-nav-border: rgba(0, 0, 0, 0.06);
+  --mobile-nav-border-top: rgba(255, 255, 255, 0.8);
+  --mobile-nav-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.03), 0 -4px 16px -4px rgba(0, 0, 0, 0.08), 0 -12px 32px -8px rgba(0, 0, 0, 0.04);
+  --mobile-nav-shadow-elevated: 0 -2px 24px -4px rgba(0, 0, 0, 0.12), 0 -8px 48px -8px rgba(0, 0, 0, 0.08);
+  --mobile-nav-glow: rgba(242, 98, 7, 0.2);
+  --mobile-nav-glow-strong: rgba(242, 98, 7, 0.35);
+  --mobile-nav-radius: 20px;
+  --mobile-nav-item-radius: 14px;
+  --mobile-nav-active-bg: rgba(242, 98, 7, 0.08);
+  --mobile-nav-active-border: rgba(242, 98, 7, 0.15);
+  --mobile-nav-inactive-opacity: 0.55;
+  --mobile-nav-label-size: 11px;
+  --mobile-nav-icon-size: 22px;
+  --mobile-nav-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.85) 100%);
+  --mobile-nav-inner-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
 }
 
 .dark {
@@ -214,6 +235,27 @@
   --mobile-ide-border: var(--ecode-border);
   --mobile-ide-hover: var(--ecode-surface-hover);
   --mobile-ide-active: var(--ecode-sidebar-active);
+
+  /* Fortune 500 Mobile Navigation - Premium Glass Design (Dark Mode) */
+  --mobile-nav-height: 72px;
+  --mobile-nav-bg: rgba(14, 21, 37, 0.88);
+  --mobile-nav-bg-elevated: rgba(28, 35, 51, 0.95);
+  --mobile-nav-blur: 24px;
+  --mobile-nav-border: rgba(255, 255, 255, 0.06);
+  --mobile-nav-border-top: rgba(255, 255, 255, 0.08);
+  --mobile-nav-shadow: 0 -1px 0 0 rgba(255, 255, 255, 0.03), 0 -4px 20px -4px rgba(0, 0, 0, 0.4), 0 -12px 40px -8px rgba(0, 0, 0, 0.25);
+  --mobile-nav-shadow-elevated: 0 -2px 32px -4px rgba(0, 0, 0, 0.5), 0 -8px 56px -8px rgba(0, 0, 0, 0.35);
+  --mobile-nav-glow: rgba(242, 98, 7, 0.25);
+  --mobile-nav-glow-strong: rgba(242, 98, 7, 0.45);
+  --mobile-nav-radius: 20px;
+  --mobile-nav-item-radius: 14px;
+  --mobile-nav-active-bg: rgba(242, 98, 7, 0.12);
+  --mobile-nav-active-border: rgba(242, 98, 7, 0.25);
+  --mobile-nav-inactive-opacity: 0.5;
+  --mobile-nav-label-size: 11px;
+  --mobile-nav-icon-size: 22px;
+  --mobile-nav-gradient: linear-gradient(180deg, rgba(28, 35, 51, 0.92) 0%, rgba(14, 21, 37, 0.88) 100%);
+  --mobile-nav-inner-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
 
   --ecode-button-primary: #F26207;  /* E-Code Orange */
   --ecode-button-primary-hover: #FF7A2B;
