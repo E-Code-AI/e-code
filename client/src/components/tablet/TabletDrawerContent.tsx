@@ -33,6 +33,8 @@ interface TabletDrawerContentProps {
   onOpenDebugger?: () => void;
   onOpenSettings?: () => void;
   onOpenCollaboration?: () => void;
+  // Badge counts
+  gitChangesCount?: number;
 }
 
 type DrawerTab = 'files' | 'tools';
@@ -48,7 +50,8 @@ export function TabletDrawerContent({
   onOpenPackages,
   onOpenDebugger,
   onOpenSettings,
-  onOpenCollaboration
+  onOpenCollaboration,
+  gitChangesCount = 0
 }: TabletDrawerContentProps) {
   const [activeTab, setActiveTab] = useState<DrawerTab>('files');
 
@@ -107,6 +110,7 @@ export function TabletDrawerContent({
             onOpenDebugger={onOpenDebugger}
             onOpenSettings={onOpenSettings}
             onOpenCollaboration={onOpenCollaboration}
+            gitChangesCount={gitChangesCount}
           />
         )}
       </div>
@@ -126,6 +130,7 @@ interface ToolsPanelProps {
   onOpenDebugger?: () => void;
   onOpenSettings?: () => void;
   onOpenCollaboration?: () => void;
+  gitChangesCount?: number;
 }
 
 function ToolsPanel({
@@ -136,7 +141,8 @@ function ToolsPanel({
   onOpenPackages,
   onOpenDebugger,
   onOpenSettings,
-  onOpenCollaboration
+  onOpenCollaboration,
+  gitChangesCount = 0
 }: ToolsPanelProps) {
   const tools = [
     {
@@ -145,6 +151,7 @@ function ToolsPanel({
       icon: Bot,
       description: 'Chat with AI to generate code',
       action: onOpenAIAgent || (() => console.warn('AI Agent handler not provided')),
+      badge: undefined as number | undefined,
     },
     {
       id: 'deploy',
@@ -152,6 +159,7 @@ function ToolsPanel({
       icon: Rocket,
       description: 'Publish your application',
       action: onOpenDeploy || (() => console.warn('Deploy handler not provided')),
+      badge: undefined as number | undefined,
     },
     {
       id: 'git',
@@ -159,6 +167,7 @@ function ToolsPanel({
       icon: GitBranch,
       description: 'Manage version control',
       action: onOpenGit || (() => console.warn('Git handler not provided')),
+      badge: gitChangesCount > 0 ? gitChangesCount : undefined,
     },
     {
       id: 'terminal',
@@ -166,6 +175,7 @@ function ToolsPanel({
       icon: TerminalIcon,
       description: 'Run shell commands',
       action: onOpenTerminal || (() => console.warn('Terminal handler not provided')),
+      badge: undefined as number | undefined,
     },
     {
       id: 'packages',
@@ -173,6 +183,7 @@ function ToolsPanel({
       icon: Package,
       description: 'Manage dependencies',
       action: onOpenPackages || (() => console.warn('Packages handler not provided')),
+      badge: undefined as number | undefined,
     },
     {
       id: 'debugger',
@@ -180,6 +191,7 @@ function ToolsPanel({
       icon: Code2,
       description: 'Debug your application',
       action: onOpenDebugger || (() => console.warn('Debugger handler not provided')),
+      badge: undefined as number | undefined,
     },
     {
       id: 'settings',
@@ -187,6 +199,7 @@ function ToolsPanel({
       icon: Settings,
       description: 'Configure workspace',
       action: onOpenSettings || (() => console.warn('Settings handler not provided')),
+      badge: undefined as number | undefined,
     },
     {
       id: 'collaboration',
@@ -194,6 +207,7 @@ function ToolsPanel({
       icon: Users,
       description: 'Invite others to code together',
       action: onOpenCollaboration || (() => console.warn('Collaboration handler not provided')),
+      badge: undefined as number | undefined,
     },
   ];
 
@@ -226,8 +240,13 @@ function ToolsPanel({
             )}
             data-testid={`tool-${tool.id}`}
           >
-            <div className="flex-shrink-0 mt-0.5">
+            <div className="flex-shrink-0 mt-0.5 relative">
               <Icon className="h-5 w-5" />
+              {tool.badge !== undefined && tool.badge > 0 && (
+                <span className="absolute -top-1 -right-2 flex items-center justify-center min-w-[16px] h-[16px] px-1 text-[10px] font-bold text-white bg-primary rounded-full">
+                  {tool.badge > 99 ? '99+' : tool.badge}
+                </span>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-medium text-sm">{tool.name}</div>
