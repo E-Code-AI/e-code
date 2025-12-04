@@ -47,17 +47,22 @@ export function PublicNavbar() {
     { title: 'Dashboard Builder', href: '/solutions/dashboard-builder', description: 'Data-rich dashboards with real-time collaboration.' },
     { title: 'Chatbot / AI Agent Builder', href: '/solutions/chatbot-builder', description: 'Deploy conversational assistants across your organization.' },
     { title: 'Internal AI Builder', href: '/solutions/internal-ai-builder', description: 'Bring private AI agents to every team safely and securely.' },
+    { title: 'Enterprise', href: '/solutions/enterprise', description: 'Fortune 500-grade platform with SSO, audit logs, and 99.99% SLA.' },
+    { title: 'Startups', href: '/solutions/startups', description: 'Ship your MVP 10x faster. Startup-friendly pricing.' },
+    { title: 'Freelancers', href: '/solutions/freelancers', description: 'Deliver client projects faster. Portfolio hosting included.' },
   ];
 
   const resourcesItems = [
     { title: 'Documentation', href: '/docs', description: 'Get started quickly with step-by-step guides.' },
     { title: 'AI Documentation', href: '/ai-documentation', description: 'Complete AI capabilities guide' },
+    { title: 'Tutorials', href: '/tutorials', description: 'Step-by-step learning from beginner to advanced.' },
     { title: 'Blog', href: '/blog', description: 'Stories on shipping software at global scale.' },
+    { title: 'Changelog', href: '/changelog', description: 'Latest features and product updates.' },
     { title: 'Community', href: '/community', description: 'Connect with builders and share best practices.' },
     { title: 'Templates', href: '/templates', description: 'Launch with curated, industry-specific templates.' },
-    { title: 'Languages', href: '/templates/languages', description: 'Build in 40+ languages without local installs.' },
+    { title: 'Case Studies', href: '/case-studies', description: 'Real-world success stories from our customers.' },
+    { title: 'Help Center', href: '/help-center', description: 'FAQs, troubleshooting, and support.' },
     { title: 'Status', href: '/status', description: 'Transparency around platform availability.' },
-    { title: 'Forum', href: '/forum', description: 'Get support from E-Code experts and peers.' },
   ];
 
   const companyItems = [
@@ -65,6 +70,8 @@ export function PublicNavbar() {
     { title: 'Careers', href: '/careers', description: 'Join a distributed team building the future of software.' },
     { title: 'Press', href: '/press', description: 'Press releases, media kit, and recent coverage.' },
     { title: 'Partners', href: '/partners', description: 'Strategic alliances and solution partners.' },
+    { title: 'Contact', href: '/contact', description: 'Get in touch with our team.' },
+    { title: 'Accessibility', href: '/accessibility', description: 'Our commitment to inclusive design.' },
   ];
 
   const desktopNav = (
