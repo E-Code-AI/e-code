@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useReducedMotion, SPRING_CONFIG, getReducedMotionTransition, DURATION_CONFIG } from '@/hooks/use-reduced-motion';
 
 interface MobileSlidePanelProps {
   isOpen: boolean;
@@ -18,15 +19,54 @@ export function MobileSlidePanel({
   children,
   className 
 }: MobileSlidePanelProps) {
+  const prefersReducedMotion = useReducedMotion();
+
+  const backdropVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+  };
+
+  const panelVariants = prefersReducedMotion 
+    ? {
+        hidden: { opacity: 0 },
+        visible: { opacity: 1 },
+      }
+    : {
+        hidden: { x: '100%', opacity: 0.8 },
+        visible: { x: 0, opacity: 1 },
+      };
+
+  const headerVariants = prefersReducedMotion
+    ? {
+        hidden: { opacity: 0 },
+        visible: { opacity: 1 },
+      }
+    : {
+        hidden: { opacity: 0, y: -10 },
+        visible: { opacity: 1, y: 0 },
+      };
+
+  const contentVariants = prefersReducedMotion
+    ? {
+        hidden: { opacity: 0 },
+        visible: { opacity: 1 },
+      }
+    : {
+        hidden: { opacity: 0, x: 20 },
+        visible: { opacity: 1, x: 0 },
+      };
+
   return (
     <AnimatePresence>
       {isOpen && (
         <>
           <motion.div
             className="fixed inset-0 bg-black/60 z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            variants={backdropVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            transition={{ duration: prefersReducedMotion ? 0.01 : DURATION_CONFIG.normal }}
             onClick={onClose}
             data-testid="mobile-slide-panel-backdrop"
           />
@@ -36,13 +76,23 @@ export function MobileSlidePanel({
               'fixed inset-y-0 right-0 w-full max-w-md bg-background dark:bg-[var(--ecode-background)] z-50 flex flex-col shadow-2xl',
               className
             )}
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            variants={panelVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            transition={getReducedMotionTransition(prefersReducedMotion, SPRING_CONFIG.default)}
             data-testid="mobile-slide-panel"
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <motion.div 
+              className="flex items-center justify-between px-4 py-3 border-b border-border"
+              variants={headerVariants}
+              initial="hidden"
+              animate="visible"
+              transition={{ 
+                ...getReducedMotionTransition(prefersReducedMotion, SPRING_CONFIG.default),
+                delay: prefersReducedMotion ? 0 : 0.1 
+              }}
+            >
               <h2 className="font-semibold text-foreground text-lg" data-testid="mobile-slide-panel-title">
                 {title}
               </h2>
@@ -55,11 +105,20 @@ export function MobileSlidePanel({
               >
                 <X className="h-5 w-5" />
               </Button>
-            </div>
+            </motion.div>
             
-            <div className="flex-1 overflow-hidden">
+            <motion.div 
+              className="flex-1 overflow-hidden"
+              variants={contentVariants}
+              initial="hidden"
+              animate="visible"
+              transition={{ 
+                ...getReducedMotionTransition(prefersReducedMotion, SPRING_CONFIG.gentle),
+                delay: prefersReducedMotion ? 0 : 0.15 
+              }}
+            >
               {children}
-            </div>
+            </motion.div>
           </motion.div>
         </>
       )}
