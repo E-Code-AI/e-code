@@ -12,6 +12,9 @@ import {
   Cpu,
   HardDrive,
   Clock,
+  Rocket,
+  Globe,
+  XCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -20,6 +23,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+
+export type DeploymentStatus = 'idle' | 'deploying' | 'live' | 'failed';
 
 interface StatusBarProps {
   gitBranch: string;
@@ -34,6 +39,9 @@ interface StatusBarProps {
   cpuUsage?: number;
   memoryUsage?: number;
   lastSaved?: Date;
+  deploymentStatus?: DeploymentStatus;
+  deploymentUrl?: string;
+  onDeployClick?: () => void;
 }
 
 export function StatusBar({
@@ -49,6 +57,9 @@ export function StatusBar({
   cpuUsage,
   memoryUsage,
   lastSaved,
+  deploymentStatus = 'idle',
+  deploymentUrl,
+  onDeployClick,
 }: StatusBarProps) {
   const formatTime = (date: Date) => {
     const now = new Date();
@@ -148,6 +159,7 @@ export function StatusBar({
                     'flex items-center gap-1.5 h-full px-2',
                     'hover:bg-[var(--ecode-sidebar-hover)] transition-colors'
                   )}
+                  data-testid="status-problems"
                 >
                   {problems.errors > 0 && (
                     <span className="flex items-center gap-0.5 text-[hsl(var(--ecode-danger))]">
@@ -165,6 +177,46 @@ export function StatusBar({
               </TooltipTrigger>
               <TooltipContent side="top" className="text-xs">
                 {problems.errors} errors, {problems.warnings} warnings
+              </TooltipContent>
+            </Tooltip>
+          )}
+          
+          {/* Deployment Status */}
+          {deploymentStatus !== 'idle' && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  onClick={onDeployClick}
+                  className={cn(
+                    'flex items-center gap-1.5 h-full px-2',
+                    'hover:bg-[var(--ecode-sidebar-hover)] transition-colors'
+                  )}
+                  data-testid="status-deployment"
+                >
+                  {deploymentStatus === 'deploying' && (
+                    <>
+                      <Loader2 className="h-3 w-3 text-[hsl(var(--ecode-accent))] animate-spin" />
+                      <span className="text-[hsl(var(--ecode-accent))]">Deploying...</span>
+                    </>
+                  )}
+                  {deploymentStatus === 'live' && (
+                    <>
+                      <Globe className="h-3 w-3 text-[hsl(var(--ecode-green))]" />
+                      <span className="text-[hsl(var(--ecode-green))]">Live</span>
+                    </>
+                  )}
+                  {deploymentStatus === 'failed' && (
+                    <>
+                      <XCircle className="h-3 w-3 text-[hsl(var(--ecode-danger))]" />
+                      <span className="text-[hsl(var(--ecode-danger))]">Failed</span>
+                    </>
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                {deploymentStatus === 'deploying' && 'Deployment in progress...'}
+                {deploymentStatus === 'live' && (deploymentUrl ? `Live at ${deploymentUrl}` : 'Deployment is live')}
+                {deploymentStatus === 'failed' && 'Deployment failed - click to view logs'}
               </TooltipContent>
             </Tooltip>
           )}
