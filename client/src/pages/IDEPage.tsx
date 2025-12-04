@@ -30,6 +30,7 @@ import { TopNavBar } from '@/components/ide/TopNavBar';
 import { StatusBar } from '@/components/ide/StatusBar';
 import { ReplitActivityBar, type ActivityItem } from '@/components/ide/ReplitActivityBar';
 import { ReplitTabBar, type Tab as EditorTab } from '@/components/ide/ReplitTabBar';
+import { ReplitToolsSheet } from '@/components/ide/ReplitToolsSheet';
 import { QuickFileSearch } from '@/components/ide/QuickFileSearch';
 import { KeyboardShortcutsOverlay } from '@/components/ide/KeyboardShortcutsOverlay';
 import { ReplitFileExplorer } from '@/components/editor/ReplitFileExplorer';
@@ -311,6 +312,7 @@ export default function IDEPage() {
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [showReplitDB, setShowReplitDB] = useState(false);
   const [showCollaboration, setShowCollaboration] = useState(false);
+  const [showToolsSheet, setShowToolsSheet] = useState(false);
   
   // Activity bar state - controls which sidebar panel is active
   const [activeActivityItem, setActiveActivityItem] = useState<ActivityItem>('files');
@@ -479,6 +481,66 @@ export default function IDEPage() {
       setActiveTab(tabs[0]?.id || 'preview');
     }
   };
+  
+  // Handle tab reorder via drag and drop
+  const handleTabReorder = useCallback((fromIndex: number, toIndex: number) => {
+    setTabs(prev => {
+      const newTabs = [...prev];
+      const [movedTab] = newTabs.splice(fromIndex, 1);
+      newTabs.splice(toIndex, 0, movedTab);
+      return newTabs;
+    });
+  }, []);
+  
+  // Handle tools sheet tool selection
+  const handleToolsSheetSelect = useCallback((toolId: string) => {
+    // Map tools sheet IDs to available tools
+    const toolMapping: Record<string, string> = {
+      'search': 'search',
+      'files': 'files',
+      'agent': 'agent',
+      'assistant': 'ai-assistant',
+      'publishing': 'deployment',
+      'app-storage': 'resources',
+      'auth': 'auth',
+      'console': 'terminal',
+      'database': 'database',
+      'developer': 'debugger',
+      'git': 'git',
+      'integrations': 'extensions',
+      'multiplayer': 'multiplayer',
+      'preview': 'preview',
+      'kv-store': 'database-browser',
+      'secrets': 'secrets',
+      'security': 'security',
+      'shell': 'shell',
+      'settings': 'settings',
+      'workflows': 'workflows',
+    };
+    
+    const mappedToolId = toolMapping[toolId] || toolId;
+    
+    // Special cases
+    if (toolId === 'search') {
+      setShowGlobalSearch(true);
+      return;
+    }
+    if (toolId === 'files') {
+      setShowFileExplorer(true);
+      return;
+    }
+    if (toolId === 'agent') {
+      setLeftPanelTab('agent');
+      setIsSidebarCollapsed(false);
+      return;
+    }
+    if (toolId === 'preview') {
+      setActiveTab('preview');
+      return;
+    }
+    
+    handleAddTool(mappedToolId);
+  }, [handleAddTool]);
   
   const handleRunStop = () => {
     setIsRunning(prev => !prev);
@@ -793,6 +855,8 @@ export default function IDEPage() {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           onTabClose={handleTabClose}
+          onTabReorder={handleTabReorder}
+          onOpenToolsSheet={() => setShowToolsSheet(true)}
           availableTools={availableTools}
           onAddTool={handleAddTool}
           showFileExplorer={showFileExplorer}
@@ -1038,6 +1102,13 @@ export default function IDEPage() {
           />
         </div>
       )}
+      
+      {/* Replit-style Tools Sheet */}
+      <ReplitToolsSheet
+        open={showToolsSheet}
+        onClose={() => setShowToolsSheet(false)}
+        onSelectTool={handleToolsSheetSelect}
+      />
       
       {/* Keyboard Utilities */}
       {enableShortcutHint && <ShortcutHint />}

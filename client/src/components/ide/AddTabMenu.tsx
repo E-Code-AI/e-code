@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, ChevronDown, FolderOpen, ChevronRight, Sparkles } from "lucide-react";
+import { Plus, ChevronDown, FolderOpen, ChevronRight, Sparkles, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -14,9 +14,10 @@ import { TOOL_REGISTRY, type ToolMetadata } from "@/lib/tool-registry";
 interface AddTabMenuProps {
   onAddTool: (toolId: string) => void;
   availableTools?: { id: string; label: string; icon: string }[];
+  onOpenToolsSheet?: () => void;
 }
 
-export function AddTabMenu({ onAddTool, availableTools = [] }: AddTabMenuProps) {
+export function AddTabMenu({ onAddTool, availableTools = [], onOpenToolsSheet }: AddTabMenuProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -151,10 +152,26 @@ export function AddTabMenu({ onAddTool, availableTools = [] }: AddTabMenuProps) 
           </div>
         </ScrollArea>
         
-        {/* Footer */}
-        <div className="p-2 border-t bg-muted/50 text-xs text-muted-foreground text-center">
-          {filteredFeatures.length} feature{filteredFeatures.length !== 1 ? 's' : ''} available
-          {search && ` matching "${search}"`}
+        {/* Footer with See All Tools */}
+        <div className="p-2 border-t bg-muted/50">
+          {onOpenToolsSheet && (
+            <button
+              onClick={() => {
+                setOpen(false);
+                setSearch("");
+                onOpenToolsSheet();
+              }}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 mb-2 rounded-md text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+              data-testid="button-see-all-tools"
+            >
+              <ExternalLink className="w-4 h-4" />
+              See All Tools
+            </button>
+          )}
+          <div className="text-xs text-muted-foreground text-center">
+            {filteredFeatures.length} feature{filteredFeatures.length !== 1 ? 's' : ''} available
+            {search && ` matching "${search}"`}
+          </div>
         </div>
       </PopoverContent>
     </Popover>
