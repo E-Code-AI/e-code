@@ -46,6 +46,8 @@ import { useToast } from '@/hooks/use-toast';
 import { ToastProvider as DesignSystemToastProvider } from '@/design-system';
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 import { AgentToolsPanel } from '@/components/ai/AgentToolsPanel';
+import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
+import { RAGStatsDisplay, useRAGStats } from '@/components/ai/RAGControls';
 import { useAgentTools } from '@/hooks/useAgentTools';
 import { ReplitDeploymentPanel } from '@/components/ide/ReplitDeploymentPanel';
 import { ReplitPublishButton } from '@/components/ide/ReplitPublishButton';
@@ -581,12 +583,12 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
                         <MobileTerminal projectId={projectId} />
                       </Suspense>
                     ) : rightPanel === 'agent' ? (
-                      <div className="h-full overflow-y-auto p-4 bg-background">
-                        <AgentToolsPanel
-                          projectId={numericProjectId}
-                          settings={agentSettings}
-                          onSettingsChange={updateAgentSettings}
-                          compact={false}
+                      <div className="h-full overflow-hidden bg-background">
+                        <ReplitAgentPanelV3
+                          projectId={projectId}
+                          mode="tablet"
+                          agentToolsSettings={agentSettings}
+                          onAgentToolsSettingsChange={updateAgentSettings}
                         />
                       </div>
                     ) : rightPanel === 'deploy' ? (
@@ -622,12 +624,12 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
                     <MobileTerminal projectId={projectId} />
                   </Suspense>
                 ) : rightPanel === 'agent' ? (
-                  <div className="h-full overflow-y-auto p-4 bg-background">
-                    <AgentToolsPanel
-                      projectId={numericProjectId}
-                      settings={agentSettings}
-                      onSettingsChange={updateAgentSettings}
-                      compact={false}
+                  <div className="h-full overflow-hidden bg-background">
+                    <ReplitAgentPanelV3
+                      projectId={projectId}
+                      mode="tablet"
+                      agentToolsSettings={agentSettings}
+                      onAgentToolsSettingsChange={updateAgentSettings}
                     />
                   </div>
                 ) : rightPanel === 'deploy' ? (

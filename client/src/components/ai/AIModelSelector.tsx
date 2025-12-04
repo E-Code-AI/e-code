@@ -13,7 +13,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Cpu, Brain, Lightbulb, Zap, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Cpu, Brain, Lightbulb, Zap, CheckCircle2, Database } from 'lucide-react';
+import { RAGToggle, RAGStatusBadge, useRAGStats } from './RAGControls';
 
 interface AIModel {
   id: string;
@@ -30,6 +31,9 @@ interface AIModelSelectorProps {
   variant?: 'inline' | 'card' | 'hero';
   className?: string;
   onModelChange?: (modelId: string) => void;
+  showRAGControls?: boolean;
+  sessionId?: string;
+  onRAGToggle?: (enabled: boolean) => void;
 }
 
 const getProviderIcon = (provider: string) => {
@@ -56,9 +60,17 @@ const getProviderColor = (provider: string) => {
   return colors[provider] || colors.default;
 };
 
-export function AIModelSelector({ variant = 'inline', className = '', onModelChange }: AIModelSelectorProps) {
+export function AIModelSelector({ 
+  variant = 'inline', 
+  className = '', 
+  onModelChange,
+  showRAGControls = true,
+  sessionId,
+  onRAGToggle
+}: AIModelSelectorProps) {
   const { toast } = useToast();
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
+  const { data: ragStats } = useRAGStats();
 
   // Fetch available models
   const { data: modelsData, isLoading: modelsLoading } = useQuery<{ models: AIModel[] }>({
@@ -171,6 +183,15 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
                 <span>Model preference saved</span>
               </div>
             )}
+            
+            {showRAGControls && (
+              <div className="pt-3 mt-3 border-t border-border/50">
+                <RAGToggle 
+                  sessionId={sessionId} 
+                  onToggle={onRAGToggle}
+                />
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -192,9 +213,18 @@ export function AIModelSelector({ variant = 'inline', className = '', onModelCha
             <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
             <span className="text-sm sm:text-base font-semibold">Choose Your AI Model</span>
           </div>
-          <Badge variant="secondary" className="bg-white/20 text-white border-white/30 w-fit">
-            {availableModels.length} models available
-          </Badge>
+          <div className="flex items-center gap-2">
+            {showRAGControls && ragStats?.isAvailable && (
+              <RAGStatusBadge 
+                isAvailable={ragStats.isAvailable} 
+                enabled={true} 
+                className="bg-white/20 border-white/30"
+              />
+            )}
+            <Badge variant="secondary" className="bg-white/20 text-white border-white/30 w-fit">
+              {availableModels.length} models
+            </Badge>
+          </div>
         </div>
         
         <Select value={currentModel || undefined} onValueChange={handleModelChange}>

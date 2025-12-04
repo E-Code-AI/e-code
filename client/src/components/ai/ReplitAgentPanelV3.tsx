@@ -69,7 +69,8 @@ import { ElementEditor, type ElementSelection } from './ElementEditor';
 import { ChatToolbar, ChatToolbarMobile } from './ChatToolbar';
 import { UsageTrackingIcon } from './UsageTrackingIcon';
 import { VideoReplayViewer } from './VideoReplayViewer';
-import { History, X, MousePointer2, Coins } from 'lucide-react';
+import { RAGToggle, RAGStatsDisplay, RetrievedContextPanel, useRAGStats } from './RAGControls';
+import { History, X, MousePointer2, Coins, Database } from 'lucide-react';
 
 interface ToolExecution {
   id: string;
@@ -289,6 +290,11 @@ export function ReplitAgentPanelV3({
   const [elementEditorActive, setElementEditorActive] = useState(false);
   const [selectedElement, setSelectedElement] = useState<ElementSelection | null>(null);
   const [videoReplayCount, setVideoReplayCount] = useState(0);
+  
+  // RAG (Retrieval-Augmented Generation) state
+  const [ragEnabled, setRagEnabled] = useState(true);
+  const [showRAGContext, setShowRAGContext] = useState(false);
+  const { data: ragStats } = useRAGStats();
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -1597,6 +1603,40 @@ export function ReplitAgentPanelV3({
               elementSelectorActive={elementEditorActive}
               isUpdating={false}
             />
+          )}
+          
+          {/* RAG Controls - Knowledge Retrieval Augmentation */}
+          {ragStats?.isAvailable && (
+            <div className="flex items-center justify-between gap-3 py-2 px-1 border-t border-border/40" data-testid="rag-controls-section">
+              <RAGToggle 
+                sessionId={autonomySessionId || undefined}
+                enabled={ragEnabled}
+                onToggle={setRagEnabled}
+                compact
+              />
+              {ragEnabled && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowRAGContext(!showRAGContext)}
+                  className="h-7 text-xs gap-1.5"
+                  data-testid="button-toggle-rag-context"
+                >
+                  <Database className="h-3.5 w-3.5" />
+                  Context
+                </Button>
+              )}
+            </div>
+          )}
+          
+          {/* Retrieved Context Panel - Collapsible */}
+          {ragEnabled && showRAGContext && autonomySessionId && (
+            <div className="border-t border-border/40 pt-2" data-testid="rag-context-section">
+              <RetrievedContextPanel 
+                sessionId={autonomySessionId} 
+                maxHeight={mode === 'mobile' ? '150px' : '200px'}
+              />
+            </div>
           )}
           
           {/* Agent Tools Panel - Replit Agent 3 toggles: Max Autonomy, App Testing, Extended Thinking, High Power Models, Web Search */}

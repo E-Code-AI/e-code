@@ -67,6 +67,7 @@ import createAgentToolsRouter from "./agent-tools.router";
 import { authCompleteRouter } from "./auth-complete";
 import placeholderRouter from "./placeholder.router";
 import analyticsRouter from "./analytics.router";
+import ragRouter from "./rag.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -216,6 +217,9 @@ export class MainRouter {
     
     // AI Models Selection routes
     app.use('/api/models', tierRateLimiters.api, aiModelsRouter);
+    
+    // RAG (Retrieval-Augmented Generation) routes
+    app.use('/api/rag', tierRateLimiters.api, ragRouter);
     
     // Code Generation routes (SSE streaming for real-time code generation)
     app.use('/api/code-generation', tierRateLimiters.streaming, codeGenerationRouter);

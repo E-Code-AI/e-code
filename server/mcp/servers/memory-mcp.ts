@@ -80,18 +80,28 @@ export class MemoryMCPServer {
         )
       `);
 
-      // Create indexes for better query performance
-      await db.execute(sql`
-        CREATE INDEX IF NOT EXISTS idx_nodes_type ON knowledge_graph_nodes(type);
-        CREATE INDEX IF NOT EXISTS idx_nodes_content ON knowledge_graph_nodes USING gin(to_tsvector('english', content));
-        CREATE INDEX IF NOT EXISTS idx_edges_relationship ON knowledge_graph_edges(relationship);
-        CREATE INDEX IF NOT EXISTS idx_user_session ON conversation_memory(user_id, session_id);
-        CREATE INDEX IF NOT EXISTS idx_timestamp ON conversation_memory(timestamp);
-      `);
+      // Create indexes for better query performance (each index separately for resilience)
+      const indexStatements = [
+        sql`CREATE INDEX IF NOT EXISTS idx_nodes_type ON knowledge_graph_nodes(type)`,
+        sql`CREATE INDEX IF NOT EXISTS idx_nodes_content ON knowledge_graph_nodes USING gin(to_tsvector('english', content))`,
+        sql`CREATE INDEX IF NOT EXISTS idx_edges_relationship ON knowledge_graph_edges(relationship)`,
+        sql`CREATE INDEX IF NOT EXISTS idx_user_session ON conversation_memory(user_id, session_id)`,
+        sql`CREATE INDEX IF NOT EXISTS idx_timestamp ON conversation_memory(timestamp)`
+      ];
+
+      for (const indexSql of indexStatements) {
+        try {
+          await db.execute(indexSql);
+        } catch (indexError: any) {
+          // Index creation may fail if column doesn't exist - log and continue
+          logger.warn(`Index creation skipped: ${indexError.message || 'unknown error'}`);
+        }
+      }
 
       logger.info('Memory schema initialized');
     } catch (error) {
       logger.error('Failed to initialize memory schema:', error);
+      // Non-blocking - continue even if schema init fails partially
     }
   }
 
