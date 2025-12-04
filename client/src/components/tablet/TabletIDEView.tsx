@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback, Suspense } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft,
@@ -91,6 +92,26 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
     rightPanelSize, 
     setRightPanelSize 
   } = usePanelSizesPersistence(projectId);
+  
+  // Query git status for badge count
+  interface GitStatus {
+    branch: string;
+    ahead: number;
+    behind: number;
+    staged: string[];
+    unstaged: string[];
+    untracked: string[];
+  }
+  
+  const { data: gitStatus } = useQuery<GitStatus>({
+    queryKey: ['/api/git/status'],
+    refetchInterval: 30000,
+  });
+  
+  // Calculate badge counts from git status
+  const gitChangesCount = gitStatus 
+    ? (gitStatus.staged?.length || 0) + (gitStatus.unstaged?.length || 0) + (gitStatus.untracked?.length || 0)
+    : 0;
   
   // Keyboard utilities feature flags
   const [enableShortcutHint, setEnableShortcutHint] = useState(() => {
@@ -399,6 +420,7 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
                 onOpenDebugger={handleOpenDebugger}
                 onOpenSettings={handleOpenSettings}
                 onOpenCollaboration={() => setIsCollaborationOpen(true)}
+                gitChangesCount={gitChangesCount}
               />
             </div>
           </motion.div>
