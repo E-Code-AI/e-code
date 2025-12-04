@@ -172,7 +172,7 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
   return (
     <div className={cn("flex flex-col h-full bg-background", className)} data-testid="mobile-database-panel">
       {/* Header */}
-      <div className="p-4 border-b space-y-3">
+      <div className="p-4 border-b border-border space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <Database className="h-4 w-4" />
@@ -197,7 +197,7 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b">
+      <div className="flex border-b border-border">
         <button
           onClick={() => setActiveTab('tables')}
           className={cn(
@@ -247,7 +247,7 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
               const isExpanded = expandedTables.has(table.name);
 
               return (
-                <div key={table.name} className="border rounded-lg overflow-hidden" data-testid={`table-${table.name}`}>
+                <div key={table.name} className="border border-border rounded-lg overflow-hidden" data-testid={`table-${table.name}`}>
                   <div className="flex items-center justify-between p-3 bg-card hover:bg-accent transition-colors cursor-pointer">
                     <div className="flex items-center gap-3 flex-1" onClick={() => handleTableSelect(table.name)}>
                       <TableIcon className="h-4 w-4 text-primary" />
@@ -346,7 +346,7 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
                 {tableData.rows.map((row, idx) => (
                   <div
                     key={idx}
-                    className="border rounded-lg p-3 space-y-2 bg-card"
+                    className="border border-border rounded-lg p-3 space-y-2 bg-card"
                     data-testid={`row-${idx}`}
                   >
                     {Object.entries(row).map(([key, value]) => (

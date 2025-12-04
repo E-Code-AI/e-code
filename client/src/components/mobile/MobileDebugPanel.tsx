@@ -336,10 +336,10 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
               <div 
                 key={bp.id}
                 className={cn(
-                  "flex items-center justify-between p-3 border rounded-lg",
+                  "flex items-center justify-between p-3 rounded-lg",
                   bp.isEnabled 
-                    ? "bg-red-500/10 border-red-500/20"
-                    : "bg-muted/50 border-border"
+                    ? "bg-red-500/10 border border-red-500/20"
+                    : "bg-muted/50 border border-border"
                 )}
                 data-testid={`breakpoint-${bp.id}`}
               >
