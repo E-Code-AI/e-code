@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -6,6 +7,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { useAgentConversationStore, type Message } from '@/stores/agentConversationStore';
 import {
   Tooltip,
   TooltipContent,
@@ -94,47 +96,6 @@ type WorkflowPhase =
   | 'extended_build'
   | 'complete';
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: Date;
-  status?: 'sending' | 'sent' | 'error';
-  thinking?: ThinkingStep[];
-  toolExecutions?: ToolExecution[];
-  isStreaming?: boolean;
-  type?: 'text' | 'workflow_features' | 'workflow_build_choice' | 'workflow_design' | 'workflow_mvp';
-  workflowPhase?: WorkflowPhase;
-  workflowPayload?: {
-    featureList?: string[];
-    taskList?: string[];
-    designPreviewUrl?: string;
-    buildChoice?: 'full' | 'design';
-  };
-  tasks?: Task[];
-  actions?: Action[];
-  checkpoint?: {
-    id: string;
-    name: string;
-    diff: FileDiff[];
-    rollbackAvailable: boolean;
-  };
-  metadata?: {
-    model?: string;
-    provider?: string;
-    tokens?: number;
-    promptTokens?: number;
-    completionTokens?: number;
-    cost?: string;
-    latency?: number;
-    webSearchUsed?: boolean;
-    extendedThinking?: boolean;
-    cacheHit?: boolean;
-    streamingDuration?: number;
-    finishReason?: 'stop' | 'length' | 'content_filter' | 'tool_calls';
-    error?: boolean;
-  };
-}
 
 interface AgentCapability {
   id: string;
@@ -231,14 +192,30 @@ export function ReplitAgentPanelV3({
   const [agentMode, setAgentMode] = useState<AgentMode>('build');
   const [autonomySessionId, setAutonomySessionId] = useState<string | null>(null);
   
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: "Hi! I'm your AI assistant with extended thinking capabilities. I can help you build, debug, and improve your code with transparent reasoning. What would you like to create today?",
-      timestamp: new Date()
-    }
-  ]);
+  // Zustand store for message persistence across tab switches
+  const { 
+    getMessages, 
+    setMessages: setStoreMessages, 
+    addMessage: addStoreMessage,
+    clearMessages: clearStoreMessages,
+    setLastSyncedAt,
+    hasConversation
+  } = useAgentConversationStore();
+  
+  // Get messages from store when conversationId is available
+  const messages = conversationId ? getMessages(conversationId) : [{
+    id: '1',
+    role: 'assistant' as const,
+    content: "Hi! I'm your AI assistant with extended thinking capabilities. I can help you build, debug, and improve your code with transparent reasoning. What would you like to create today?",
+    timestamp: new Date()
+  }];
+  
+  // Wrapper to update messages in zustand store
+  const setMessages = useCallback((updater: Message[] | ((prev: Message[]) => Message[])) => {
+    if (!conversationId) return;
+    const newMessages = typeof updater === 'function' ? updater(messages) : updater;
+    setStoreMessages(conversationId, newMessages);
+  }, [conversationId, messages, setStoreMessages]);
   const [input, setInput] = useState('');
   const [isWorking, setIsWorking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -347,6 +324,24 @@ export function ReplitAgentPanelV3({
 
     bootstrapConversation();
   }, [projectId, toast, externalConversationId]);
+
+  // Load existing messages from backend when conversationId is available
+  const { data: backendMessages, isLoading: isLoadingMessages } = useQuery({
+    queryKey: ['/api/agent/conversation', conversationId, 'messages'],
+    enabled: !!conversationId && !hasConversation(conversationId),
+  });
+
+  // Sync backend messages to zustand store on fetch
+  useEffect(() => {
+    if (backendMessages?.messages && conversationId && !hasConversation(conversationId)) {
+      const fetchedMessages = backendMessages.messages as Message[];
+      if (fetchedMessages.length > 0) {
+        console.log('[ReplitAgentPanelV3] Syncing', fetchedMessages.length, 'messages from backend to store');
+        setStoreMessages(conversationId, fetchedMessages);
+        setLastSyncedAt(conversationId, Date.now());
+      }
+    }
+  }, [backendMessages, conversationId, hasConversation, setStoreMessages, setLastSyncedAt]);
 
   // Track whether initial prompt has been processed (idempotent guard)
   const initialPromptProcessedRef = useRef(false);
@@ -1153,7 +1148,9 @@ export function ReplitAgentPanelV3({
   };
 
   const handleClearChat = () => {
-    setMessages([messages[0]]);
+    if (conversationId) {
+      clearStoreMessages(conversationId);
+    }
     toast({
       title: 'Chat cleared',
       description: 'Conversation history has been reset',
@@ -1311,7 +1308,7 @@ export function ReplitAgentPanelV3({
               variant="ghost"
               size="icon"
               className="h-7 w-7"
-              onClick={() => setMessages([messages[0]])}
+              onClick={handleClearChat}
               data-testid="button-new-chat"
             >
               <Plus className="h-3.5 w-3.5" />
