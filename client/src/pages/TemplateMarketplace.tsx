@@ -490,6 +490,7 @@ export default function TemplateMarketplace() {
           onClose={() => setSelectedTemplate(null)}
           onDeploy={() => handleDeploy(selectedTemplate)}
           onFork={() => handleFork(selectedTemplate)}
+          onSelectTemplate={handleTemplateClick}
         />
       )}
     </PageShell>

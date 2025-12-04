@@ -35,6 +35,7 @@ interface TemplatePreviewProps {
   onClose: () => void;
   onDeploy: () => void;
   onFork: () => void;
+  onSelectTemplate?: (template: any) => void;
 }
 
 export function TemplatePreview({
@@ -43,6 +44,7 @@ export function TemplatePreview({
   onClose,
   onDeploy,
   onFork,
+  onSelectTemplate,
 }: TemplatePreviewProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -246,8 +248,11 @@ export function TemplatePreview({
                               <div
                                 key={similar.id}
                                 className="p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                                data-testid={`similar-template-${similar.id}`}
                                 onClick={() => {
-                                  // TODO: Navigate to similar template
+                                  if (onSelectTemplate) {
+                                    onSelectTemplate(similar);
+                                  }
                                 }}
                               >
                                 <h4 className="font-medium text-sm line-clamp-1">
