@@ -86,7 +86,7 @@ export class MemoryMCPServer {
         sql`CREATE INDEX IF NOT EXISTS idx_nodes_content ON knowledge_graph_nodes USING gin(to_tsvector('english', content))`,
         sql`CREATE INDEX IF NOT EXISTS idx_edges_relationship ON knowledge_graph_edges(relationship)`,
         sql`CREATE INDEX IF NOT EXISTS idx_user_session ON conversation_memory(user_id, session_id)`,
-        sql`CREATE INDEX IF NOT EXISTS idx_timestamp ON conversation_memory(timestamp)`
+        sql`CREATE INDEX IF NOT EXISTS idx_created_at ON conversation_memory(created_at)`
       ];
 
       for (const indexSql of indexStatements) {
