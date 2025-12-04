@@ -48,7 +48,12 @@ interface GitDiff {
   staged: boolean;
 }
 
-export function ReplitGitPanel({ projectId }: { projectId?: string }) {
+interface ReplitGitPanelProps {
+  projectId?: string;
+  className?: string;
+}
+
+export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
   const { toast } = useToast();
   const [commitMessage, setCommitMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -193,7 +198,7 @@ export function ReplitGitPanel({ projectId }: { projectId?: string }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full text-[var(--ecode-text-muted)]">
+      <div className={cn("flex items-center justify-center h-full text-[var(--ecode-text-muted)] bg-background", className)}>
         <p className="text-sm font-[family-name:var(--ecode-font-sans)]">Loading git status...</p>
       </div>
     );
@@ -201,7 +206,7 @@ export function ReplitGitPanel({ projectId }: { projectId?: string }) {
 
   if (!status) {
     return (
-      <div className="flex flex-col h-full bg-[var(--ecode-surface)]">
+      <div className={cn("flex flex-col h-full bg-[var(--ecode-surface)]", className)}>
         <div className="flex items-center justify-between p-3 border-b border-[var(--ecode-border)]">
           <div className="flex items-center gap-2">
             <FolderGit2 className="h-4 w-4 text-[var(--ecode-accent)]" />
@@ -312,7 +317,7 @@ export function ReplitGitPanel({ projectId }: { projectId?: string }) {
   const allChanges = [...status.staged, ...status.unstaged, ...status.untracked];
 
   return (
-    <div className="flex flex-col h-full bg-[var(--ecode-surface)]">
+    <div className={cn("flex flex-col h-full bg-[var(--ecode-surface)]", className)}>
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-[var(--ecode-border)]">
         <div className="flex items-center gap-2">
