@@ -76,6 +76,14 @@
   --ecode-terminal-text: #f7f8fa;
   --ecode-terminal-cursor: #F26207;  /* E-Code Orange */
 
+  /* Mobile IDE surfaces - Light mode */
+  --mobile-ide-bg: var(--ecode-background);
+  --mobile-ide-surface: var(--ecode-surface);
+  --mobile-ide-toolbar: var(--ecode-surface);
+  --mobile-ide-border: var(--ecode-border);
+  --mobile-ide-hover: var(--ecode-surface-hover);
+  --mobile-ide-active: var(--ecode-sidebar-active);
+
   --ecode-button-primary: #F26207;  /* E-Code Orange */
   --ecode-button-primary-hover: #D04E00;
   --ecode-button-secondary: #f7f8fa;
@@ -198,6 +206,14 @@
   --ecode-terminal-bg: #0e1525;
   --ecode-terminal-text: #f5f9fc;
   --ecode-terminal-cursor: #F26207;  /* E-Code Orange */
+
+  /* Mobile IDE surfaces - Dark mode */
+  --mobile-ide-bg: var(--ecode-background);
+  --mobile-ide-surface: var(--ecode-surface);
+  --mobile-ide-toolbar: var(--ecode-surface);
+  --mobile-ide-border: var(--ecode-border);
+  --mobile-ide-hover: var(--ecode-surface-hover);
+  --mobile-ide-active: var(--ecode-sidebar-active);
 
   --ecode-button-primary: #F26207;  /* E-Code Orange */
   --ecode-button-primary-hover: #FF7A2B;

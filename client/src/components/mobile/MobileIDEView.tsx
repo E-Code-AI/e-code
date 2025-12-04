@@ -32,7 +32,7 @@ const EnhancedMobileTerminal = React.lazy(() =>
 );
 
 const TerminalFallback = () => (
-  <div className="h-full flex items-center justify-center bg-[#1e1e1e]">
+  <div className="h-full flex items-center justify-center bg-[var(--ecode-terminal-bg)]">
     <div className="flex flex-col items-center gap-2">
       <Loader2 className="h-5 w-5 animate-spin text-primary" />
       <p className="text-xs text-muted-foreground">Loading terminal...</p>
@@ -453,7 +453,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
   };
 
   return (
-    <div className={cn('flex flex-col h-full bg-[#1e1e1e] md:hidden', className)}>
+    <div className={cn('flex flex-col h-full bg-background dark:bg-[var(--ecode-background)] md:hidden', className)}>
       {/* Content Area with Swipe Gestures */}
       <div 
         ref={containerRef}
@@ -503,7 +503,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
               )}
               
               {activeTab === 'deploy' && (
-                <div className="h-full overflow-y-auto bg-[#1e1e1e]">
+                <div className="h-full overflow-y-auto bg-background dark:bg-[var(--ecode-background)]">
                   <ReplitDeploymentPanel 
                     projectId={normalizedProjectId} 
                     className="h-full"

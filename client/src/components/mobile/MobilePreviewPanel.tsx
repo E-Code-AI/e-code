@@ -105,12 +105,12 @@ export function MobilePreviewPanel({
 
   return (
     <div 
-      className={cn('flex flex-col h-full bg-[#1e1e1e]', className)}
+      className={cn('flex flex-col h-full bg-background dark:bg-[var(--ecode-background)]', className)}
       ref={containerRef}
     >
       {/* Toolbar */}
       <div 
-        className="flex-shrink-0 border-b border-[#3e3e42] bg-[#252526] p-2"
+        className="flex-shrink-0 border-b border-border dark:border-[var(--ecode-border)] bg-card dark:bg-[var(--ecode-surface)] p-2"
         data-testid="mobile-preview-toolbar"
       >
         <div className="flex items-center gap-2">
@@ -120,7 +120,7 @@ export function MobilePreviewPanel({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 text-xs hover:bg-[#3e3e42] active:scale-95 touch-manipulation flex items-center gap-2"
+                className="h-8 text-xs hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation flex items-center gap-2"
                 data-testid="mobile-preview-device-selector"
               >
                 <selectedDevice.icon className="h-4 w-4" />
@@ -185,7 +185,7 @@ export function MobilePreviewPanel({
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 w-8 p-0 hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
+            className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleRotate}
             data-testid="mobile-preview-rotate"
           >
@@ -196,7 +196,7 @@ export function MobilePreviewPanel({
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 w-8 p-0 hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
+            className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleRefresh}
             data-testid="mobile-preview-refresh"
           >
@@ -207,7 +207,7 @@ export function MobilePreviewPanel({
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 w-8 p-0 hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
+            className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleOpenExternal}
             data-testid="mobile-preview-external"
           >
@@ -220,7 +220,7 @@ export function MobilePreviewPanel({
           <Button
             size="sm"
             variant={showDeviceFrame ? 'default' : 'ghost'}
-            className="h-8 px-3 text-xs hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
+            className="h-8 px-3 text-xs hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={() => setShowDeviceFrame(prev => !prev)}
             data-testid="mobile-preview-frame-toggle"
           >
@@ -229,7 +229,7 @@ export function MobilePreviewPanel({
         </div>
 
         {/* Device Info */}
-        <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
+        <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
           <span>{isLandscape ? 'Landscape' : 'Portrait'}</span>
           <span>•</span>
           <span>{deviceWidth}×{deviceHeight}px</span>
@@ -258,17 +258,17 @@ export function MobilePreviewPanel({
           {/* Device Frame */}
           {showDeviceFrame && (
             <div 
-              className="absolute inset-0 border-[12px] border-[#2a2a2a] rounded-[36px] pointer-events-none z-10"
+              className="absolute inset-0 border-[12px] border-gray-700 dark:border-[#2a2a2a] rounded-[36px] pointer-events-none z-10"
               data-testid="mobile-preview-frame"
             >
               {/* Notch (for phone devices) */}
               {selectedDevice.type === 'phone' && !isLandscape && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-[#2a2a2a] rounded-b-3xl" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-gray-700 dark:bg-[#2a2a2a] rounded-b-3xl" />
               )}
               
               {/* Camera (for phone devices) */}
               {selectedDevice.type === 'phone' && (
-                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#1a1a1a] rounded-full" />
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 dark:bg-[#1a1a1a] rounded-full" />
               )}
             </div>
           )}
