@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import { 
   GitBranch, GitCommit, GitPullRequest, GitMerge,
   Bug, Play, Pause, Target,
@@ -17,9 +17,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useReducedMotion, SPRING_CONFIG, getReducedMotionTransition, DURATION_CONFIG } from '@/hooks/use-reduced-motion';
 
 interface MobileMoreMenuProps {
-  projectId: string | number; // Support both UUID strings and numeric IDs
+  projectId: string | number;
   isOpen: boolean;
   onClose: () => void;
   onOpenFiles?: () => void;
@@ -64,35 +65,56 @@ export function MobileMoreMenu({
   className 
 }: MobileMoreMenuProps) {
   const { toast } = useToast();
-  const [dragOffset, setDragOffset] = useState(0);
+  const prefersReducedMotion = useReducedMotion();
+  
+  const dragY = useMotionValue(0);
+  const dragOpacity = useTransform(dragY, [0, 150], [1, 0.5]);
+  const dragScale = useTransform(dragY, [0, 150], [1, 0.98]);
+  
   const startY = useRef(0);
+  const velocity = useRef(0);
+  const lastY = useRef(0);
+  const lastTime = useRef(Date.now());
   const CLOSE_THRESHOLD = 100;
-  
-  // Handle drag gestures on the handle
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const VELOCITY_THRESHOLD = 500;
+
+  const handleDragStart = (e: React.TouchEvent) => {
     startY.current = e.touches[0].clientY;
+    lastY.current = e.touches[0].clientY;
+    lastTime.current = Date.now();
+    velocity.current = 0;
   };
-  
-  const handleTouchMove = (e: React.TouchEvent) => {
+
+  const handleDrag = (e: React.TouchEvent) => {
     const currentY = e.touches[0].clientY;
+    const currentTime = Date.now();
     const distance = currentY - startY.current;
+    const timeDelta = currentTime - lastTime.current;
     
-    // Only allow downward swipe
-    if (distance > 0) {
-      setDragOffset(distance);
+    if (timeDelta > 0) {
+      velocity.current = (currentY - lastY.current) / timeDelta * 1000;
     }
-  };
-  
-  const handleTouchEnd = () => {
-    if (dragOffset >= CLOSE_THRESHOLD) {
-      onClose();
-    } else {
-      // Animate back to 0
-      setDragOffset(0);
+    
+    lastY.current = currentY;
+    lastTime.current = currentTime;
+    
+    if (distance > 0) {
+      dragY.set(distance);
     }
   };
 
-  // Handle menu item clicks - use real panels instead of toasts
+  const handleDragEnd = () => {
+    const currentOffset = dragY.get();
+    const shouldClose = currentOffset >= CLOSE_THRESHOLD || velocity.current >= VELOCITY_THRESHOLD;
+    
+    if (shouldClose) {
+      onClose();
+    }
+    
+    dragY.set(0);
+    velocity.current = 0;
+  };
+
   const handleGitCommit = () => {
     if (onOpenGit) {
       onOpenGit();
@@ -230,7 +252,6 @@ export function MobileMoreMenu({
     onClose();
   };
 
-  // Collaboration handlers
   const handleOpenCollabPanel = () => {
     if (onOpenCollaboration) {
       onOpenCollaboration();
@@ -261,7 +282,6 @@ export function MobileMoreMenu({
     onClose();
   };
 
-  // New handlers for additional services - use real panels
   const handleWebview = () => {
     toast({ title: 'Webview', description: 'Opening web preview...' });
     onClose();
@@ -310,7 +330,6 @@ export function MobileMoreMenu({
     }
   };
 
-  // Files handlers
   const handleOpenFiles = () => {
     if (onOpenFiles) {
       onOpenFiles();
@@ -330,7 +349,6 @@ export function MobileMoreMenu({
     onClose();
   };
 
-  // Menu sections
   const menuSections: MenuSection[] = [
     {
       title: 'Files',
@@ -425,44 +443,105 @@ export function MobileMoreMenu({
     },
   ];
 
+  const sheetVariants = prefersReducedMotion
+    ? {
+        hidden: { opacity: 0 },
+        visible: { opacity: 1 },
+      }
+    : {
+        hidden: { y: '100%' },
+        visible: { 
+          y: 0,
+          transition: {
+            type: 'spring',
+            stiffness: 400,
+            damping: 28,
+            mass: 0.8,
+          }
+        },
+      };
+
+  const backdropVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+  };
+
+  const sectionVariants = prefersReducedMotion
+    ? {
+        hidden: { opacity: 0 },
+        visible: { opacity: 1 },
+      }
+    : {
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0 },
+      };
+
+  const itemVariants = prefersReducedMotion
+    ? {
+        hidden: { opacity: 0 },
+        visible: { opacity: 1 },
+      }
+    : {
+        hidden: { opacity: 0, x: -10 },
+        visible: { opacity: 1, x: 0 },
+      };
+
+  const containerVariants = prefersReducedMotion
+    ? {}
+    : {
+        visible: {
+          transition: {
+            staggerChildren: 0.03,
+            delayChildren: 0.1,
+          },
+        },
+      };
+
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             className="fixed inset-0 bg-black/60 z-40"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            variants={backdropVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            transition={{ duration: prefersReducedMotion ? 0.01 : DURATION_CONFIG.normal }}
             onClick={onClose}
             data-testid="mobile-more-menu-backdrop"
           />
           
-          {/* Bottom Sheet */}
           <motion.div
             className={cn(
               'fixed bottom-0 left-0 right-0 bg-card dark:bg-[var(--ecode-surface)] rounded-t-2xl shadow-2xl z-50 max-h-[85vh] flex flex-col',
               className
             )}
-            initial={{ y: '100%' }}
-            animate={{ y: dragOffset }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 500 }}
+            variants={sheetVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            style={prefersReducedMotion ? {} : { 
+              y: dragY, 
+              opacity: dragOpacity,
+              scale: dragScale,
+            }}
             data-testid="mobile-more-menu-sheet"
           >
-            {/* Drag Handle */}
             <div 
               className="flex justify-center pt-2 pb-1 cursor-grab active:cursor-grabbing touch-none"
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
+              onTouchStart={handleDragStart}
+              onTouchMove={handleDrag}
+              onTouchEnd={handleDragEnd}
               data-testid="mobile-more-menu-handle"
             >
-              <div className="w-12 h-1 bg-muted-foreground/50 rounded-full" />
+              <motion.div 
+                className="w-12 h-1 bg-muted-foreground/50 rounded-full"
+                whileHover={prefersReducedMotion ? {} : { scaleX: 1.2 }}
+                transition={SPRING_CONFIG.default}
+              />
             </div>
 
-            {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <h2 className="font-semibold text-foreground text-lg">Tools & More</h2>
               <Button
@@ -476,12 +555,20 @@ export function MobileMoreMenu({
               </Button>
             </div>
 
-            {/* Menu Content */}
             <ScrollArea className="flex-1 overflow-y-auto mobile-hide-scrollbar" style={{ maxHeight: 'calc(85vh - 120px)' }}>
-              <div className="p-4 space-y-6 pb-safe">
+              <motion.div 
+                className="p-4 space-y-6 pb-safe"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
                 {menuSections.map((section, sectionIndex) => (
-                  <div key={section.title} data-testid={`mobile-more-menu-section-${section.title.toLowerCase()}`}>
-                    {/* Section Header */}
+                  <motion.div 
+                    key={section.title} 
+                    variants={sectionVariants}
+                    transition={getReducedMotionTransition(prefersReducedMotion, SPRING_CONFIG.gentle)}
+                    data-testid={`mobile-more-menu-section-${section.title.toLowerCase()}`}
+                  >
                     <div className="flex items-center gap-2 mb-3">
                       <section.icon className="h-4 w-4 text-[#F26207]" />
                       <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
@@ -489,49 +576,48 @@ export function MobileMoreMenu({
                       </h3>
                     </div>
 
-                    {/* Section Items */}
                     <div className="space-y-1">
-                      {section.items.map((item) => (
+                      {section.items.map((item, itemIndex) => (
                         <motion.button
                           key={item.id}
                           className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted active:bg-muted/70 transition-colors touch-manipulation text-left group"
                           onClick={item.onClick}
-                          whileTap={{ scale: 0.98 }}
+                          variants={itemVariants}
+                          whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
+                          transition={getReducedMotionTransition(prefersReducedMotion, SPRING_CONFIG.default)}
                           data-testid={`mobile-more-menu-${item.id}`}
                         >
-                          {/* Icon */}
-                          <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-muted dark:bg-[var(--ecode-surface-secondary)] rounded-lg group-hover:bg-muted/80 transition-colors">
+                          <motion.div 
+                            className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-muted dark:bg-[var(--ecode-surface-secondary)] rounded-lg group-hover:bg-muted/80 transition-colors"
+                            whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}
+                            transition={SPRING_CONFIG.default}
+                          >
                             <item.icon className="h-5 w-5 text-muted-foreground" />
-                          </div>
+                          </motion.div>
 
-                          {/* Label */}
                           <span className="flex-1 text-sm text-foreground font-medium">
                             {item.label}
                           </span>
 
-                          {/* Badge (if present) */}
                           {item.badge !== undefined && (
                             <Badge variant="destructive" className="flex-shrink-0">
                               {item.badge}
                             </Badge>
                           )}
 
-                          {/* Chevron */}
                           <ChevronRight className="flex-shrink-0 h-4 w-4 text-muted-foreground/70 group-hover:text-muted-foreground transition-colors" />
                         </motion.button>
                       ))}
                     </div>
 
-                    {/* Separator (except for last section) */}
                     {sectionIndex < menuSections.length - 1 && (
                       <Separator className="mt-6 bg-border" />
                     )}
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </ScrollArea>
 
-            {/* Footer Info */}
             <div className="px-4 py-3 border-t border-border text-xs text-muted-foreground text-center">
               E-Code Mobile • Project #{projectId}
             </div>

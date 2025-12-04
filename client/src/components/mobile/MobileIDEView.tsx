@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
-import { motion, AnimatePresence, useMotionValue, PanInfo } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import { Code, Terminal, Monitor, MoreHorizontal, Sparkles, Rocket, Loader2, CheckCircle, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EnhancedMobileFileExplorer } from './EnhancedMobileFileExplorer';
@@ -23,6 +23,7 @@ import { ReplitPublishButton } from '@/components/ide/ReplitPublishButton';
 import { ReplitDeploymentPanel } from '@/components/ide/ReplitDeploymentPanel';
 import { useConnectionStatus } from '@/hooks/use-connection-status';
 import { useProblemsCount } from '@/hooks/use-problems-count';
+import { useReducedMotion, SPRING_CONFIG, getReducedMotionTransition } from '@/hooks/use-reduced-motion';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { toast } from '@/hooks/use-toast';
@@ -45,11 +46,10 @@ export type MobilePanelType = 'git' | 'packages' | 'secrets' | 'database' | 'set
 export type MobileTab = 'agent' | 'code' | 'terminal' | 'preview' | 'deploy' | 'more';
 
 interface MobileIDEViewProps {
-  projectId: string | number; // Support both UUID strings and numeric IDs
+  projectId: string | number;
   className?: string;
 }
 
-// Normalize projectId to string for all child components
 const normalizeProjectId = (id: string | number): string => String(id);
 
 type PublishStatus = 'idle' | 'publishing' | 'live' | 'failed' | 'needs-republish';
@@ -69,6 +69,7 @@ interface MobilePublishFABProps {
 
 function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePublishFABProps) {
   const [showLabel, setShowLabel] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   const { data: publishState, isLoading } = useQuery<PublishState>({
     queryKey: ['/api/projects', projectId, 'publish', 'status'],
@@ -214,10 +215,10 @@ function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePu
       )}
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: 'spring', stiffness: 500, damping: 30, delay: 0.1 }}
+      transition={getReducedMotionTransition(prefersReducedMotion, SPRING_CONFIG.snappy)}
     >
       <AnimatePresence>
-        {isLive && showLabel && (
+        {isLive && showLabel && !prefersReducedMotion && (
           <motion.div
             className="absolute inset-0 rounded-full bg-green-500"
             initial={{ scale: 1, opacity: 0.6 }}
@@ -241,7 +242,7 @@ function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePu
           isPublishing && 'opacity-75 cursor-not-allowed',
           buttonState.bgColor
         )}
-        whileTap={!isPublishing ? { scale: 0.9 } : undefined}
+        whileTap={!isPublishing && !prefersReducedMotion ? { scale: 0.9 } : undefined}
         aria-label={buttonState.ariaLabel}
         data-testid="mobile-publish-fab"
         onHoverStart={() => setShowLabel(true)}
@@ -258,7 +259,10 @@ function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePu
         
         {isLive && (
           <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+            <span className={cn(
+              "absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75",
+              !prefersReducedMotion && "animate-ping"
+            )} />
             <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 border-2 border-white" />
           </span>
         )}
@@ -274,10 +278,10 @@ function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePu
         {showLabel && (
           <motion.div
             className="absolute bottom-full left-0 mb-2 px-3 py-1.5 bg-black/90 text-white text-xs font-medium rounded-lg whitespace-nowrap pointer-events-none"
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.2 }}
+            exit={{ opacity: 0, y: prefersReducedMotion ? 0 : 10 }}
+            transition={{ duration: prefersReducedMotion ? 0.01 : 0.2 }}
           >
             {buttonState.label}
             {isLive && publishState?.url && (
@@ -303,13 +307,10 @@ const tabs: { id: MobileTab; label: string; icon: typeof Code }[] = [
 ];
 
 export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
-  // Normalize projectId to string
   const normalizedProjectId = normalizeProjectId(projectId);
+  const prefersReducedMotion = useReducedMotion();
   
-  // Persistent tab state
   const [activeTab, setActiveTab] = useTabPersistence(normalizedProjectId);
-  
-  // Persistent file browser state
   const { selectedFileId, setSelectedFileId } = useFileBrowserPersistence(normalizedProjectId);
   
   const [isDragging, setIsDragging] = useState(false);
@@ -317,8 +318,8 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isCollaborationOpen, setIsCollaborationOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<MobilePanelType>(null);
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   
-  // Query git status for badge count
   interface GitStatus {
     branch: string;
     ahead: number;
@@ -333,18 +334,13 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
     refetchInterval: 30000,
   });
   
-  // Calculate badge counts from git status
   const gitChangesCount = gitStatus 
     ? (gitStatus.staged?.length || 0) + (gitStatus.unstaged?.length || 0) + (gitStatus.untracked?.length || 0)
     : 0;
   
-  // Connection status detection
   const isConnected = useConnectionStatus();
-  
-  // Problems/errors count
   const { errorsCount } = useProblemsCount(normalizedProjectId);
   
-  // Keyboard utilities feature flags
   const [enableShortcutHint, setEnableShortcutHint] = useState(() => {
     if (typeof window === 'undefined') return true;
     return localStorage.getItem('keyboard-shortcut-hint') !== 'false';
@@ -354,11 +350,9 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
     return localStorage.getItem('keyboard-shortcut-tester') === 'true';
   });
   
-  // Listen for keyboard settings changes
   useEffect(() => {
     const handleKeyboardSettingsChanged = (event: Event) => {
       const customEvent = event as CustomEvent;
-      // Use event detail if available, otherwise fallback to localStorage
       const hintValue = customEvent.detail?.shortcutHint ?? localStorage.getItem('keyboard-shortcut-hint');
       const testerValue = customEvent.detail?.shortcutTester ?? localStorage.getItem('keyboard-shortcut-tester');
       
@@ -373,38 +367,48 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
   const x = useMotionValue(0);
   const containerRef = useRef<HTMLDivElement>(null);
   
+  const parallaxOffset = useTransform(x, [-200, 0, 200], [30, 0, -30]);
+  const dragOpacity = useTransform(x, [-150, -50, 0, 50, 150], [0.6, 0.9, 1, 0.9, 0.6]);
+  
   const activeIndex = tabs.findIndex(tab => tab.id === activeTab);
   const SWIPE_THRESHOLD = 50;
+  const VELOCITY_THRESHOLD = 500;
 
-  // Handle swipe gestures
   const handleDragStart = () => {
     setIsDragging(true);
+    setSwipeDirection(null);
   };
 
-  const handleDragEnd = (_: any, info: PanInfo) => {
+  const handleDrag = (_: unknown, info: PanInfo) => {
+    if (info.offset.x > 20) {
+      setSwipeDirection('right');
+    } else if (info.offset.x < -20) {
+      setSwipeDirection('left');
+    }
+  };
+
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
     setIsDragging(false);
+    setSwipeDirection(null);
     
     const offset = info.offset.x;
     const velocity = info.velocity.x;
     
-    // Determine if swipe threshold met
-    if (Math.abs(offset) > SWIPE_THRESHOLD || Math.abs(velocity) > 500) {
+    const shouldSwipe = Math.abs(offset) > SWIPE_THRESHOLD || Math.abs(velocity) > VELOCITY_THRESHOLD;
+    
+    if (shouldSwipe) {
       if (offset > 0 && activeIndex > 0) {
-        // Swipe right - go to previous tab
         const prevTab = tabs[activeIndex - 1];
         if (prevTab.id !== 'more') {
           setActiveTab(prevTab.id);
-          // Haptic feedback
           if ('vibrate' in navigator) {
             navigator.vibrate(10);
           }
         }
       } else if (offset < 0 && activeIndex < tabs.length - 1) {
-        // Swipe left - go to next tab
         const nextTab = tabs[activeIndex + 1];
         if (nextTab.id !== 'more') {
           setActiveTab(nextTab.id);
-          // Haptic feedback
           if ('vibrate' in navigator) {
             navigator.vibrate(10);
           }
@@ -412,32 +416,26 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
       }
     }
     
-    // Reset position
     x.set(0);
   };
 
-  // Handle tab bar clicks with modal management
   const handleTabClick = (tabId: string) => {
     if (tabId === 'more') {
       setIsMoreMenuOpen(true);
     } else {
-      // Only set active tab for content tabs (agent, code, terminal, preview)
       setActiveTab(tabId);
     }
     
-    // Haptic feedback
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
     }
   };
   
-  // Handle opening files from More menu
   const handleOpenFiles = () => {
     setIsFilesOpen(true);
     setIsMoreMenuOpen(false);
   };
   
-  // Panel handlers - open real slide panels instead of toasts
   const handleOpenPanel = (panel: MobilePanelType) => {
     setActivePanel(panel);
     setIsMoreMenuOpen(false);
@@ -447,36 +445,56 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
     setActivePanel(null);
   };
   
-  // File selection handler with persistence
-  const handleFileSelect = (file: any) => {
+  const handleFileSelect = (file: { id: string }) => {
     setSelectedFileId(file.id);
+  };
+
+  const getTabVariants = (direction: 'left' | 'right' | null) => {
+    if (prefersReducedMotion) {
+      return {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+      };
+    }
+    
+    const offset = direction === 'left' ? -30 : direction === 'right' ? 30 : 20;
+    const exitOffset = direction === 'left' ? 30 : direction === 'right' ? -30 : -20;
+    
+    return {
+      initial: { opacity: 0, x: offset, scale: 0.98 },
+      animate: { opacity: 1, x: 0, scale: 1 },
+      exit: { opacity: 0, x: exitOffset, scale: 0.98 },
+    };
   };
 
   return (
     <div className={cn('flex flex-col h-full bg-background dark:bg-[var(--ecode-background)] md:hidden', className)}>
-      {/* Content Area with Swipe Gestures */}
       <div 
         ref={containerRef}
         className="flex-1 overflow-hidden relative touch-pan-y"
         data-testid="mobile-ide-content"
       >
         <motion.div
-          drag={activeTab === 'agent' ? false : "x"}
+          drag={activeTab === 'agent' || prefersReducedMotion ? false : "x"}
           dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.2}
+          dragElastic={0.15}
           onDragStart={handleDragStart}
+          onDrag={handleDrag}
           onDragEnd={handleDragEnd}
-          style={{ x }}
+          style={{ x, opacity: prefersReducedMotion ? 1 : dragOpacity }}
           className={cn('h-full', isDragging && 'cursor-grabbing')}
         >
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
+              variants={getTabVariants(swipeDirection)}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={getReducedMotionTransition(prefersReducedMotion, SPRING_CONFIG.default)}
               className="h-full"
+              style={{ x: prefersReducedMotion ? 0 : parallaxOffset }}
             >
               {activeTab === 'agent' && (
                 <ReplitAgentPanelV3 
@@ -515,20 +533,29 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
           </AnimatePresence>
         </motion.div>
 
-        {/* Swipe Indicator (optional visual feedback) */}
-        {isDragging && (
+        {isDragging && !prefersReducedMotion && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-between px-8">
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="text-white/30"
+              initial={{ opacity: 0, x: -20, scale: 0.8 }}
+              animate={{ 
+                opacity: swipeDirection === 'right' ? 0.5 : 0.2, 
+                x: swipeDirection === 'right' ? 0 : -10,
+                scale: swipeDirection === 'right' ? 1 : 0.9
+              }}
+              transition={SPRING_CONFIG.default}
+              className="text-white/50 text-2xl font-light"
             >
               {activeIndex > 0 && '‹'}
             </motion.div>
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="text-white/30"
+              initial={{ opacity: 0, x: 20, scale: 0.8 }}
+              animate={{ 
+                opacity: swipeDirection === 'left' ? 0.5 : 0.2, 
+                x: swipeDirection === 'left' ? 0 : 10,
+                scale: swipeDirection === 'left' ? 1 : 0.9
+              }}
+              transition={SPRING_CONFIG.default}
+              className="text-white/50 text-2xl font-light"
             >
               {activeIndex < tabs.length - 2 && '›'}
             </motion.div>
@@ -536,7 +563,6 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         )}
       </div>
 
-      {/* Bottom Tab Bar using ReplitBottomTabs */}
       <ReplitBottomTabs
         activeTab={activeTab}
         onTabChange={handleTabClick}
@@ -544,16 +570,13 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         isConnected={isConnected}
       />
 
-      {/* Floating Action Button (Run) */}
       <MobileFAB projectId={normalizedProjectId} />
 
-      {/* Floating Action Button (Publish Status) */}
       <MobilePublishFAB 
         projectId={normalizedProjectId} 
         onNavigateToDeploy={() => setActiveTab('deploy')}
       />
 
-      {/* File Explorer Modal */}
       <EnhancedMobileFileExplorer
         isOpen={isFilesOpen}
         onClose={() => setIsFilesOpen(false)}
@@ -565,7 +588,6 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         }}
       />
 
-      {/* More Menu Modal */}
       <MobileMoreMenu
         projectId={normalizedProjectId}
         isOpen={isMoreMenuOpen}
@@ -580,14 +602,12 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         onOpenDebug={() => handleOpenPanel('debug')}
       />
       
-      {/* Collaboration Panel */}
       <MobileCollaborationPanel
         projectId={parseInt(normalizedProjectId, 10) || 0}
         isOpen={isCollaborationOpen}
         onClose={() => setIsCollaborationOpen(false)}
       />
       
-      {/* Git Panel */}
       <MobileSlidePanel
         isOpen={activePanel === 'git'}
         onClose={handleClosePanel}
@@ -596,7 +616,6 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         <MobileGitPanel projectId={normalizedProjectId} className="h-full" />
       </MobileSlidePanel>
       
-      {/* Packages Panel */}
       <MobileSlidePanel
         isOpen={activePanel === 'packages'}
         onClose={handleClosePanel}
@@ -605,7 +624,6 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         <MobilePackagesPanel projectId={normalizedProjectId} className="h-full" />
       </MobileSlidePanel>
       
-      {/* Secrets Panel */}
       <MobileSlidePanel
         isOpen={activePanel === 'secrets'}
         onClose={handleClosePanel}
@@ -614,7 +632,6 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         <MobileSecretsPanel projectId={normalizedProjectId} className="h-full" />
       </MobileSlidePanel>
       
-      {/* Database Panel */}
       <MobileSlidePanel
         isOpen={activePanel === 'database'}
         onClose={handleClosePanel}
@@ -623,7 +640,6 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         <MobileDatabasePanel projectId={normalizedProjectId} className="h-full" />
       </MobileSlidePanel>
       
-      {/* Settings Panel */}
       <MobileSlidePanel
         isOpen={activePanel === 'settings'}
         onClose={handleClosePanel}
@@ -634,7 +650,6 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         </div>
       </MobileSlidePanel>
       
-      {/* Debug Panel */}
       <MobileSlidePanel
         isOpen={activePanel === 'debug'}
         onClose={handleClosePanel}
@@ -643,7 +658,6 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         <MobileDebugPanel projectId={normalizedProjectId} className="h-full" />
       </MobileSlidePanel>
       
-      {/* Keyboard Utilities (work with external keyboards on mobile) */}
       {enableShortcutHint && <ShortcutHint />}
       {enableShortcutTester && <ShortcutTester />}
     </div>
