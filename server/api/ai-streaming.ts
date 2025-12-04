@@ -10,6 +10,10 @@ import { allTools, toOpenAITools, toAnthropicTools } from '../agent/tool-definit
 import { ToolExecutor } from '../agent/tool-executor';
 import { ProjectContextProvider } from '../agent/project-context';
 import { truncateContext } from '../agent/context-manager';
+import { memoryMCP } from '../mcp/servers/memory-mcp';
+import { db } from '../db';
+import { agentSessions } from '../../shared/schema';
+import { eq } from 'drizzle-orm';
 
 // Create logger instance
 const logger = winston.createLogger({
@@ -131,7 +135,86 @@ You are in BUILD MODE. You can execute actions like creating files, running comm
     const projectContext = await contextProvider.getContext();
     const contextPrompt = ProjectContextProvider.formatAsSystemPrompt(projectContext);
     
-    // Build messages array with context
+    // ============================================================
+    // RAG CONTEXT INTEGRATION - Fetch and inject knowledge graph context
+    // ============================================================
+    let ragContextPrompt = '';
+    let ragEnabled = false;
+    const sessionId = conversationId || `session_${userId}_${projectId}`;
+    
+    try {
+      // Check if RAG is enabled for this session
+      const [session] = await db.select()
+        .from(agentSessions)
+        .where(eq(agentSessions.sessionToken, sessionId))
+        .limit(1);
+      
+      const ragConfig = (session?.context as any)?.ragConfig;
+      ragEnabled = ragConfig?.enabled ?? false; // Default to false if not set
+      
+      if (ragEnabled) {
+        logger.info(`[RAG] RAG enabled for session ${sessionId}, fetching context...`);
+        
+        // Fetch relevant knowledge from the knowledge graph
+        const ragContexts = await memoryMCP.searchNodes(
+          message.substring(0, 500), // Use user message as search query
+          undefined, // No type filter
+          ragConfig?.retrievalDepth || 5 // Number of relevant nodes to fetch
+        );
+        
+        if (ragContexts.length > 0) {
+          // Build RAG context prompt
+          const ragItems = ragContexts.map((node, index) => {
+            return `[${index + 1}] ${node.type.toUpperCase()}: ${node.content}`;
+          }).join('\n\n');
+          
+          ragContextPrompt = `
+=== KNOWLEDGE GRAPH CONTEXT (RAG) ===
+The following relevant information has been retrieved from your knowledge graph memory:
+
+${ragItems}
+
+Use this context to provide more accurate and informed responses.
+=====================================
+`;
+          
+          logger.info(`[RAG] Injected ${ragContexts.length} knowledge nodes into context`);
+          
+          // Send RAG status event to client
+          sendSSE(res, 'rag_status', {
+            enabled: true,
+            nodesRetrieved: ragContexts.length,
+            sessionId
+          });
+        } else {
+          logger.info(`[RAG] No relevant knowledge nodes found for query`);
+        }
+        
+        // Also fetch recent conversation history if enabled
+        if (ragConfig?.includeConversationHistory) {
+          const history = await memoryMCP.getConversationHistory(
+            String(userId),
+            sessionId,
+            3 // Last 3 conversation turns
+          );
+          
+          if (history.length > 0) {
+            const historyItems = history.map(h => `${h.role}: ${h.content.substring(0, 200)}...`).join('\n');
+            ragContextPrompt += `
+=== CONVERSATION MEMORY ===
+Previous conversation context:
+${historyItems}
+===========================
+`;
+          }
+        }
+      }
+    } catch (ragError: any) {
+      // RAG errors should not block the chat - log and continue
+      logger.warn(`[RAG] Failed to fetch RAG context: ${ragError.message}`);
+    }
+    
+    // Build messages array with context (including RAG if enabled)
     const rawMessages = [
       {
         role: 'system',
@@ -141,7 +224,9 @@ You are in BUILD MODE. You can execute actions like creating files, running comm
         
         ${modeSystemPrompt}
         
-        ${contextPrompt}`
+        ${contextPrompt}
+        
+        ${ragContextPrompt}`
       },
       ...context,
       { role: 'user', content: message }
