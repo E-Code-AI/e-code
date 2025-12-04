@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { 
   X, Search, Folder, File, ChevronRight, ChevronDown, Plus,
   FileText, FileCode, Image, Film, Music, Archive, Database,
-  Edit2, Trash2, Copy, FolderPlus, RefreshCw
+  Edit2, Trash2, Copy, FolderPlus, RefreshCw, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 interface FileItem {
   id: number;
@@ -268,76 +269,92 @@ export function MobileFileExplorer({
   
   // Note: Swipe-to-close is handled by the existing handleDragEnd (horizontal swipe)
   
-  // Create file/folder mutation
+  // Create file/folder mutation - uses POST /api/projects/:id/files
   const createMutation = useMutation({
-    mutationFn: async (data: { name: string; isFolder: boolean; parentId: number | null }) => {
+    mutationFn: async (data: { name: string; isDirectory: boolean; parentId: number | null }) => {
       if (import.meta.env.DEV) {
         console.log('[MobileFileExplorer] Creating file:', { projectId, data });
       }
-      return apiRequest('POST', `/api/files/${projectId}`, data);
+      // Derive path from name (root level if no parentId)
+      const path = data.name;
+      return apiRequest('POST', `/api/projects/${projectId}/files`, {
+        name: data.name,
+        path: path,
+        isDirectory: data.isDirectory,
+        content: data.isDirectory ? '' : '',
+      });
     },
     onSuccess: (result) => {
       if (import.meta.env.DEV) {
         console.log('[MobileFileExplorer] File created successfully:', result);
       }
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
-      toast({ title: 'Success', description: `${newItemDialog?.type === 'folder' ? 'Folder' : 'File'} created` });
+      const itemType = newItemDialog?.type === 'folder' ? 'Dossier' : 'Fichier';
+      toast({ 
+        title: 'Succès', 
+        description: `${itemType} créé avec succès` 
+      });
       setNewItemDialog(null);
     },
     onError: (error: any) => {
       if (import.meta.env.DEV) {
         console.error('[MobileFileExplorer] Failed to create file:', error);
       }
-      const errorMessage = error?.message || error?.toString() || 'Failed to create item';
-      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
+      const errorMessage = error?.message || error?.toString() || 'Échec de la création';
+      toast({ title: 'Erreur', description: errorMessage, variant: 'destructive' });
     },
   });
   
-  // Rename mutation
+  // Rename mutation - uses PATCH /api/files/:id
   const renameMutation = useMutation({
     mutationFn: async ({ id, name }: { id: number; name: string }) =>
       apiRequest('PATCH', `/api/files/${id}`, { name }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
-      toast({ title: 'Success', description: 'File renamed' });
+      const itemType = renameDialog?.file.type === 'folder' ? 'Dossier' : 'Fichier';
+      toast({ title: 'Succès', description: `${itemType} renommé avec succès` });
       setRenameDialog(null);
     },
-    onError: () => {
-      toast({ title: 'Error', description: 'Failed to rename', variant: 'destructive' });
+    onError: (error: any) => {
+      const errorMessage = error?.message || 'Échec du renommage';
+      toast({ title: 'Erreur', description: errorMessage, variant: 'destructive' });
     },
   });
   
-  // Delete mutation
+  // Delete mutation - uses DELETE /api/files/:id
   const deleteMutation = useMutation({
     mutationFn: async (id: number) =>
       apiRequest('DELETE', `/api/files/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
-      toast({ title: 'Success', description: 'File deleted' });
+      const itemType = deleteConfirm?.type === 'folder' ? 'Dossier' : 'Fichier';
+      toast({ title: 'Succès', description: `${itemType} supprimé avec succès` });
       setDeleteConfirm(null);
       setShowContextMenu(false);
     },
-    onError: () => {
-      toast({ title: 'Error', description: 'Failed to delete', variant: 'destructive' });
+    onError: (error: any) => {
+      const errorMessage = error?.message || 'Échec de la suppression';
+      toast({ title: 'Erreur', description: errorMessage, variant: 'destructive' });
     },
   });
   
-  // Duplicate mutation
+  // Duplicate mutation - uses POST /api/projects/:id/files
   const duplicateMutation = useMutation({
     mutationFn: async (file: FileItem) =>
-      apiRequest('POST', `/api/files/${projectId}`, {
-        name: `${file.name} (copy)`,
-        isFolder: file.type === 'folder',
-        parentId: file.parentId,
-        content: file.content,
+      apiRequest('POST', `/api/projects/${projectId}/files`, {
+        name: `${file.name} (copie)`,
+        path: `${file.name} (copie)`,
+        isDirectory: file.type === 'folder',
+        content: file.content || '',
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
-      toast({ title: 'Success', description: 'File duplicated' });
+      toast({ title: 'Succès', description: 'Fichier dupliqué avec succès' });
       setShowContextMenu(false);
     },
-    onError: () => {
-      toast({ title: 'Error', description: 'Failed to duplicate', variant: 'destructive' });
+    onError: (error: any) => {
+      const errorMessage = error?.message || 'Échec de la duplication';
+      toast({ title: 'Erreur', description: errorMessage, variant: 'destructive' });
     },
   });
   
@@ -417,8 +434,8 @@ export function MobileFileExplorer({
             onDragEnd={handleDragEnd}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b bg-background/95 backdrop-blur-sm">
-              <h2 className="text-lg font-semibold">Files</h2>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background/95 backdrop-blur-sm">
+              <h2 className="text-lg font-semibold text-foreground">Fichiers</h2>
               <Button
                 variant="ghost"
                 size="icon"
@@ -431,12 +448,12 @@ export function MobileFileExplorer({
             </div>
             
             {/* Search Bar */}
-            <div className="px-4 py-2 border-b bg-background/95">
+            <div className="px-4 py-2 border-b border-border bg-background/95">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                    type="text"
-                  placeholder="Search files..."
+                  type="text"
+                  placeholder="Rechercher..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 h-9 text-sm touch-manipulation"
@@ -446,26 +463,36 @@ export function MobileFileExplorer({
             </div>
             
             {/* Quick Actions */}
-            <div className="flex gap-2 px-4 py-2 border-b">
+            <div className="flex gap-2 px-4 py-2 border-b border-border">
               <Button
                 variant="outline"
                 size="sm"
                 className="flex-1 touch-manipulation"
                 onClick={() => setNewItemDialog({ type: 'file', name: '' })}
+                disabled={createMutation.isPending}
                 data-testid="mobile-file-new-file-btn"
               >
-                <Plus className="h-3 w-3 mr-1" />
-                New File
+                {createMutation.isPending && newItemDialog?.type === 'file' ? (
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <Plus className="h-3 w-3 mr-1" />
+                )}
+                Nouveau fichier
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 className="flex-1 touch-manipulation"
                 onClick={() => setNewItemDialog({ type: 'folder', name: '' })}
+                disabled={createMutation.isPending}
                 data-testid="mobile-file-new-folder-btn"
               >
-                <FolderPlus className="h-3 w-3 mr-1" />
-                New Folder
+                {createMutation.isPending && newItemDialog?.type === 'folder' ? (
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <FolderPlus className="h-3 w-3 mr-1" />
+                )}
+                Nouveau dossier
               </Button>
             </div>
             
@@ -536,12 +563,13 @@ export function MobileFileExplorer({
                   initial={{ y: '100%' }}
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
-                  className="absolute bottom-0 left-0 right-0 bg-card border-t p-4 rounded-t-2xl shadow-2xl mobile-safe-bottom"
+                  className="absolute bottom-0 left-0 right-0 bg-card border-t border-border p-4 rounded-t-2xl shadow-2xl mobile-safe-bottom"
+                  data-testid="mobile-file-context-menu"
                 >
-                  <div className="mb-2">
-                    <p className="text-sm font-medium">{selectedItem.name}</p>
+                  <div className="mb-3">
+                    <p className="text-sm font-medium text-foreground">{selectedItem.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {selectedItem.type === 'folder' ? 'Folder' : `File · ${selectedItem.size}`}
+                      {selectedItem.type === 'folder' ? 'Dossier' : `Fichier${selectedItem.size ? ` · ${formatFileSize(selectedItem.size)}` : ''}`}
                     </p>
                   </div>
                   <div className="space-y-2">
@@ -553,10 +581,10 @@ export function MobileFileExplorer({
                         setRenameDialog({ file: selectedItem, newName: selectedItem.name });
                         setShowContextMenu(false);
                       }}
-                      data-testid="mobile-file-rename"
+                      data-testid="mobile-file-action-rename"
                     >
                       <Edit2 className="h-4 w-4 mr-2" />
-                      Rename
+                      Renommer
                     </Button>
                     <Button 
                       variant="outline" 
@@ -564,10 +592,14 @@ export function MobileFileExplorer({
                       size="sm"
                       onClick={() => duplicateMutation.mutate(selectedItem)}
                       disabled={duplicateMutation.isPending}
-                      data-testid="mobile-file-duplicate"
+                      data-testid="mobile-file-action-duplicate"
                     >
-                      <Copy className="h-4 w-4 mr-2" />
-                      Duplicate
+                      {duplicateMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Copy className="h-4 w-4 mr-2" />
+                      )}
+                      Dupliquer
                     </Button>
                     <Button 
                       variant="destructive" 
@@ -577,19 +609,19 @@ export function MobileFileExplorer({
                         setDeleteConfirm(selectedItem);
                         setShowContextMenu(false);
                       }}
-                      data-testid="mobile-file-delete"
+                      data-testid="mobile-file-action-delete"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
+                      Supprimer
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full touch-manipulation"
+                      className="w-full touch-manipulation text-muted-foreground"
                       size="sm"
                       onClick={() => setShowContextMenu(false)}
-                      data-testid="mobile-file-cancel"
+                      data-testid="mobile-file-action-cancel"
                     >
-                      Cancel
+                      Annuler
                     </Button>
                   </div>
                 </motion.div>
@@ -598,21 +630,42 @@ export function MobileFileExplorer({
             
             {/* Rename Dialog */}
             <Dialog open={!!renameDialog} onOpenChange={(open) => !open && setRenameDialog(null)}>
-              <DialogContent className="max-w-[90%]">
+              <DialogContent className="max-w-[90%] sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Rename {renameDialog?.file.type === 'folder' ? 'Folder' : 'File'}</DialogTitle>
-                  <DialogDescription>Enter a new name for {renameDialog?.file.name}</DialogDescription>
+                  <DialogTitle>
+                    Renommer {renameDialog?.file.type === 'folder' ? 'le dossier' : 'le fichier'}
+                  </DialogTitle>
+                  <DialogDescription>
+                    Entrez un nouveau nom pour "{renameDialog?.file.name}"
+                  </DialogDescription>
                 </DialogHeader>
-                <Input
-                  value={renameDialog?.newName || ''}
-                  onChange={(e) => setRenameDialog(prev => prev ? { ...prev, newName: e.target.value } : null)}
-                  placeholder="New name"
-                  className="touch-manipulation"
-                  data-testid="mobile-file-rename-input"
-                />
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setRenameDialog(null)} data-testid="mobile-file-rename-cancel">
-                    Cancel
+                <div className="space-y-2">
+                  <Label htmlFor="rename-input" className="sr-only">
+                    Nouveau nom
+                  </Label>
+                  <Input
+                    id="rename-input"
+                    value={renameDialog?.newName || ''}
+                    onChange={(e) => setRenameDialog(prev => prev ? { ...prev, newName: e.target.value } : null)}
+                    placeholder="Nouveau nom"
+                    className="touch-manipulation"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && renameDialog?.newName && !renameMutation.isPending) {
+                        renameMutation.mutate({ id: renameDialog.file.id, name: renameDialog.newName });
+                      }
+                    }}
+                    data-testid="mobile-file-rename-input"
+                  />
+                </div>
+                <DialogFooter className="gap-2 sm:gap-0">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setRenameDialog(null)} 
+                    disabled={renameMutation.isPending}
+                    data-testid="mobile-file-rename-cancel"
+                  >
+                    Annuler
                   </Button>
                   <Button
                     onClick={() => {
@@ -620,10 +673,17 @@ export function MobileFileExplorer({
                         renameMutation.mutate({ id: renameDialog.file.id, name: renameDialog.newName });
                       }
                     }}
-                    disabled={!renameDialog?.newName || renameMutation.isPending}
+                    disabled={!renameDialog?.newName || renameDialog?.newName === renameDialog?.file.name || renameMutation.isPending}
                     data-testid="mobile-file-rename-confirm"
                   >
-                    Rename
+                    {renameMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Renommage...
+                      </>
+                    ) : (
+                      'Renommer'
+                    )}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -631,16 +691,23 @@ export function MobileFileExplorer({
             
             {/* Delete Confirmation */}
             <Dialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
-              <DialogContent className="max-w-[90%]">
+              <DialogContent className="max-w-[90%] sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Delete {deleteConfirm?.type === 'folder' ? 'Folder' : 'File'}?</DialogTitle>
+                  <DialogTitle>
+                    Supprimer {deleteConfirm?.type === 'folder' ? 'le dossier' : 'le fichier'} ?
+                  </DialogTitle>
                   <DialogDescription>
-                    Are you sure you want to delete "{deleteConfirm?.name}"? This action cannot be undone.
+                    Êtes-vous sûr de vouloir supprimer "{deleteConfirm?.name}" ? Cette action est irréversible.
                   </DialogDescription>
                 </DialogHeader>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setDeleteConfirm(null)} data-testid="mobile-file-delete-cancel">
-                    Cancel
+                <DialogFooter className="gap-2 sm:gap-0">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setDeleteConfirm(null)} 
+                    disabled={deleteMutation.isPending}
+                    data-testid="mobile-file-delete-cancel"
+                  >
+                    Annuler
                   </Button>
                   <Button
                     variant="destructive"
@@ -652,7 +719,14 @@ export function MobileFileExplorer({
                     disabled={deleteMutation.isPending}
                     data-testid="mobile-file-delete-confirm"
                   >
-                    Delete
+                    {deleteMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Suppression...
+                      </>
+                    ) : (
+                      'Supprimer'
+                    )}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -660,28 +734,53 @@ export function MobileFileExplorer({
             
             {/* New File/Folder Dialog */}
             <Dialog open={!!newItemDialog} onOpenChange={(open) => !open && setNewItemDialog(null)}>
-              <DialogContent className="max-w-[90%]">
+              <DialogContent className="max-w-[90%] sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>New {newItemDialog?.type === 'folder' ? 'Folder' : 'File'}</DialogTitle>
-                  <DialogDescription>Enter a name for the new {newItemDialog?.type}</DialogDescription>
+                  <DialogTitle>
+                    {newItemDialog?.type === 'folder' ? 'Nouveau dossier' : 'Nouveau fichier'}
+                  </DialogTitle>
+                  <DialogDescription>
+                    Entrez un nom pour {newItemDialog?.type === 'folder' ? 'le nouveau dossier' : 'le nouveau fichier'}
+                  </DialogDescription>
                 </DialogHeader>
-                <Input
-                  value={newItemDialog?.name || ''}
-                  onChange={(e) => setNewItemDialog(prev => prev ? { ...prev, name: e.target.value } : null)}
-                  placeholder={newItemDialog?.type === 'folder' ? 'Folder name' : 'File name'}
-                  className="touch-manipulation"
-                  data-testid="mobile-file-new-input"
-                />
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setNewItemDialog(null)} data-testid="mobile-file-new-cancel">
-                    Cancel
+                <div className="space-y-2">
+                  <Label htmlFor="new-item-input" className="sr-only">
+                    {newItemDialog?.type === 'folder' ? 'Nom du dossier' : 'Nom du fichier'}
+                  </Label>
+                  <Input
+                    id="new-item-input"
+                    value={newItemDialog?.name || ''}
+                    onChange={(e) => setNewItemDialog(prev => prev ? { ...prev, name: e.target.value } : null)}
+                    placeholder={newItemDialog?.type === 'folder' ? 'Nom du dossier' : 'Nom du fichier (ex: index.js)'}
+                    className="touch-manipulation"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && newItemDialog?.name && !createMutation.isPending) {
+                        createMutation.mutate({
+                          name: newItemDialog.name,
+                          isDirectory: newItemDialog.type === 'folder',
+                          parentId: null,
+                        });
+                      }
+                    }}
+                    data-testid="mobile-file-new-input"
+                  />
+                </div>
+                <DialogFooter className="gap-2 sm:gap-0">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setNewItemDialog(null)} 
+                    disabled={createMutation.isPending}
+                    data-testid="mobile-file-new-cancel"
+                  >
+                    Annuler
                   </Button>
                   <Button
                     onClick={() => {
                       if (newItemDialog) {
                         createMutation.mutate({
                           name: newItemDialog.name,
-                          isFolder: newItemDialog.type === 'folder',
+                          isDirectory: newItemDialog.type === 'folder',
                           parentId: null,
                         });
                       }
@@ -689,7 +788,14 @@ export function MobileFileExplorer({
                     disabled={!newItemDialog?.name || createMutation.isPending}
                     data-testid="mobile-file-new-confirm"
                   >
-                    Create
+                    {createMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Création...
+                      </>
+                    ) : (
+                      'Créer'
+                    )}
                   </Button>
                 </DialogFooter>
               </DialogContent>
