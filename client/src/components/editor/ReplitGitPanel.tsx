@@ -14,9 +14,24 @@ import {
   Download,
   FileCode,
   FolderGit2,
+  Github,
+  Link2,
+  ExternalLink,
+  RefreshCw,
+  Settings,
 } from 'lucide-react';
+import { SiGithub } from 'react-icons/si';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 interface GitStatus {
   branch: string;
@@ -38,9 +53,48 @@ export function ReplitGitPanel({ projectId }: { projectId?: string }) {
   const [commitMessage, setCommitMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [selectedFileStaged, setSelectedFileStaged] = useState<boolean>(false);
+  const [showConnectDialog, setShowConnectDialog] = useState(false);
+  const [remoteUrl, setRemoteUrl] = useState('');
 
   const { data: status, refetch: refetchStatus, isLoading } = useQuery<GitStatus>({
     queryKey: ['/api/git/status'],
+  });
+
+  const { data: remotesData } = useQuery<{ remotes: { name: string; url: string; type: 'fetch' | 'push' }[] }>({
+    queryKey: ['/api/git/remotes'],
+    enabled: !!status,
+  });
+
+  const originRemote = remotesData?.remotes?.find(r => r.name === 'origin' && r.type === 'fetch');
+
+  const initMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('/api/git/status', 'GET');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/git/status'] });
+      toast({ description: 'Git repository initialized successfully!' });
+    },
+    onError: (error: any) => {
+      toast({ description: error.message || 'Failed to initialize git repository', variant: 'destructive' });
+    },
+  });
+
+  const connectRemoteMutation = useMutation({
+    mutationFn: async (url: string) => {
+      return apiRequest('/api/git/remotes', 'POST', { url, name: 'origin' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/git/remote'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/git/remotes'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/git/status'] });
+      setShowConnectDialog(false);
+      setRemoteUrl('');
+      toast({ description: 'GitHub repository connected successfully!' });
+    },
+    onError: (error: any) => {
+      toast({ description: error.message || 'Failed to connect to GitHub', variant: 'destructive' });
+    },
   });
 
   const { data: diff } = useQuery<GitDiff>({
@@ -147,14 +201,110 @@ export function ReplitGitPanel({ projectId }: { projectId?: string }) {
 
   if (!status) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-[var(--ecode-text-muted)] p-4">
-        <FolderGit2 className="h-12 w-12 mb-4 text-[var(--ecode-text-muted)]" />
-        <p className="text-sm font-[family-name:var(--ecode-font-sans)] text-center">
-          Initializing git repository...
-        </p>
-        <p className="text-xs text-center mt-2 opacity-75">
-          Git will be initialized on first use
-        </p>
+      <div className="flex flex-col h-full bg-[var(--ecode-surface)]">
+        <div className="flex items-center justify-between p-3 border-b border-[var(--ecode-border)]">
+          <div className="flex items-center gap-2">
+            <FolderGit2 className="h-4 w-4 text-[var(--ecode-accent)]" />
+            <span className="text-sm font-[family-name:var(--ecode-font-sans)] font-semibold text-[var(--ecode-text)]">
+              Git
+            </span>
+          </div>
+        </div>
+        
+        <div className="flex flex-col items-center justify-center flex-1 p-6 space-y-6">
+          <div className="text-center space-y-2">
+            <FolderGit2 className="h-12 w-12 mx-auto text-[var(--ecode-text-muted)] opacity-50" />
+            <h3 className="text-base font-semibold text-[var(--ecode-text)]">
+              Version Control
+            </h3>
+            <p className="text-xs text-[var(--ecode-text-muted)] max-w-[200px]">
+              Initialize a Git repository to track changes and collaborate
+            </p>
+          </div>
+
+          <div className="w-full space-y-3">
+            <Button
+              onClick={() => initMutation.mutate(undefined)}
+              disabled={initMutation.isPending}
+              className="w-full h-10 bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent)]/90"
+              data-testid="button-git-init"
+            >
+              {initMutation.isPending ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4 mr-2" />
+              )}
+              Create a Git Repo
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator className="w-full" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-[var(--ecode-surface)] px-2 text-[var(--ecode-text-muted)]">
+                  or
+                </span>
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowConnectDialog(true)}
+              className="w-full h-10"
+              data-testid="button-connect-github"
+            >
+              <SiGithub className="h-4 w-4 mr-2" />
+              Connect to GitHub
+            </Button>
+          </div>
+        </div>
+
+        <Dialog open={showConnectDialog} onOpenChange={setShowConnectDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <SiGithub className="h-5 w-5" />
+                Connect to GitHub
+              </DialogTitle>
+              <DialogDescription>
+                Link your project to an existing GitHub repository
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="remote-url">Repository URL</Label>
+                <Input
+                  id="remote-url"
+                  value={remoteUrl}
+                  onChange={(e) => setRemoteUrl(e.target.value)}
+                  placeholder="https://github.com/username/repository.git"
+                  data-testid="input-remote-url"
+                />
+                <p className="text-xs text-[var(--ecode-text-muted)]">
+                  You can use HTTPS or SSH URLs
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowConnectDialog(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => connectRemoteMutation.mutate(remoteUrl)}
+                disabled={!remoteUrl.trim() || connectRemoteMutation.isPending}
+                data-testid="button-confirm-connect"
+              >
+                {connectRemoteMutation.isPending ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Link2 className="h-4 w-4 mr-2" />
+                )}
+                Connect
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -197,19 +347,94 @@ export function ReplitGitPanel({ projectId }: { projectId?: string }) {
 
       {/* Branch Info */}
       <div className="px-3 py-2 bg-[var(--ecode-surface-hover)] border-b border-[var(--ecode-border)]">
-        <div className="flex items-center gap-2">
-          <GitBranch className="h-3.5 w-3.5 text-[var(--ecode-text-muted)]" />
-          <span className="text-xs font-[family-name:var(--ecode-font-mono)] text-[var(--ecode-text)]">
-            {status.branch}
-          </span>
-          {status.ahead > 0 && (
-            <span className="text-xs text-status-success">↑{status.ahead}</span>
-          )}
-          {status.behind > 0 && (
-            <span className="text-xs text-status-warning">↓{status.behind}</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <GitBranch className="h-3.5 w-3.5 text-[var(--ecode-text-muted)]" />
+            <span className="text-xs font-[family-name:var(--ecode-font-mono)] text-[var(--ecode-text)]">
+              {status.branch}
+            </span>
+            {status.ahead > 0 && (
+              <span className="text-xs text-status-success">↑{status.ahead}</span>
+            )}
+            {status.behind > 0 && (
+              <span className="text-xs text-status-warning">↓{status.behind}</span>
+            )}
+          </div>
+          {originRemote ? (
+            <a
+              href={originRemote.url.replace(/\.git$/, '').replace(/^git@github\.com:/, 'https://github.com/')}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-[var(--ecode-text-muted)] hover:text-[var(--ecode-accent)] transition-colors"
+              data-testid="link-github-repo"
+            >
+              <SiGithub className="h-3 w-3" />
+              <span className="hidden sm:inline truncate max-w-[100px]">
+                {originRemote.url.split('/').slice(-2).join('/').replace('.git', '')}
+              </span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          ) : (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowConnectDialog(true)}
+              className="h-6 px-2 text-xs"
+              data-testid="button-connect-github-header"
+            >
+              <SiGithub className="h-3 w-3 mr-1" />
+              Connect
+            </Button>
           )}
         </div>
       </div>
+
+      {/* Connect GitHub Dialog (for active repo) */}
+      <Dialog open={showConnectDialog} onOpenChange={setShowConnectDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <SiGithub className="h-5 w-5" />
+              Connect to GitHub
+            </DialogTitle>
+            <DialogDescription>
+              Link your project to an existing GitHub repository
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="remote-url-active">Repository URL</Label>
+              <Input
+                id="remote-url-active"
+                value={remoteUrl}
+                onChange={(e) => setRemoteUrl(e.target.value)}
+                placeholder="https://github.com/username/repository.git"
+                data-testid="input-remote-url-active"
+              />
+              <p className="text-xs text-[var(--ecode-text-muted)]">
+                You can use HTTPS or SSH URLs
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConnectDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => connectRemoteMutation.mutate(remoteUrl)}
+              disabled={!remoteUrl.trim() || connectRemoteMutation.isPending}
+              data-testid="button-confirm-connect-active"
+            >
+              {connectRemoteMutation.isPending ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Link2 className="h-4 w-4 mr-2" />
+              )}
+              Connect
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Changes List */}
       <ScrollArea className="flex-1">
