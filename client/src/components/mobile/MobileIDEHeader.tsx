@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useReducedMotion } from '@/hooks/use-reduced-motion';
+import { useReducedMotion, SPRING_CONFIG, getReducedMotionTransition } from '@/hooks/use-reduced-motion';
 import { Link } from 'wouter';
 
 interface MobileIDEHeaderProps {
@@ -96,16 +96,16 @@ export function MobileIDEHeader({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48">
-            <DropdownMenuItem onClick={onSettings}>
+            <DropdownMenuItem onClick={onSettings} data-testid="menu-project-settings">
               <Settings className="h-4 w-4 mr-2" />
               Project Settings
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onShare}>
+            <DropdownMenuItem onClick={onShare} data-testid="menu-project-share">
               <Share2 className="h-4 w-4 mr-2" />
               Share Project
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem asChild data-testid="menu-all-projects">
               <Link href="/projects" className="flex items-center">
                 <Home className="h-4 w-4 mr-2" />
                 All Projects
@@ -137,6 +137,7 @@ export function MobileIDEHeader({
 
         <motion.div
           whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}
+          transition={getReducedMotionTransition(prefersReducedMotion, SPRING_CONFIG.default)}
         >
           <Button
             variant="ghost"
@@ -190,11 +191,11 @@ export function MobileIDEHeader({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={onSettings}>
+            <DropdownMenuItem onClick={onSettings} data-testid="menu-settings">
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onShare}>
+            <DropdownMenuItem onClick={onShare} data-testid="menu-share">
               <Share2 className="h-4 w-4 mr-2" />
               Share
             </DropdownMenuItem>
