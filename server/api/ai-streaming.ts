@@ -140,27 +140,52 @@ You are in BUILD MODE. You can execute actions like creating files, running comm
     // ============================================================
     let ragContextPrompt = '';
     let ragEnabled = false;
-    const sessionId = conversationId || `session_${userId}_${projectId}`;
+    let ragNodesCount = 0;
+    
+    // Use client-provided conversationId as sessionId for RAG config lookup
+    // This aligns with how /api/rag/session-config stores configs
+    const ragSessionId = conversationId || `session_${userId}_${projectId}`;
+    
+    // Default RAG config for new sessions (RAG enabled by default for better context)
+    const defaultRagConfig = {
+      enabled: true,
+      mode: 'auto' as const,
+      retrievalDepth: 3,
+      includeConversationHistory: false,
+      maxContextTokens: 2000
+    };
     
     try {
-      // Check if RAG is enabled for this session
+      // Check if RAG is enabled for this session - try multiple lookup strategies
+      let ragConfig = defaultRagConfig;
+      
+      // Strategy 1: Look up by conversationId (client-provided sessionId from /api/rag/session-config)
       const [session] = await db.select()
         .from(agentSessions)
-        .where(eq(agentSessions.sessionToken, sessionId))
+        .where(eq(agentSessions.sessionToken, ragSessionId))
         .limit(1);
       
-      const ragConfig = (session?.context as any)?.ragConfig;
-      ragEnabled = ragConfig?.enabled ?? false; // Default to false if not set
+      if (session?.context && (session.context as any).ragConfig) {
+        ragConfig = (session.context as any).ragConfig;
+        logger.info(`[RAG] Found session RAG config for ${ragSessionId}`);
+      } else {
+        // No session found - use default config (RAG enabled)
+        logger.info(`[RAG] No session config found for ${ragSessionId}, using defaults (RAG enabled)`);
+      }
+      
+      ragEnabled = ragConfig?.enabled ?? true; // Default to true for better UX
       
       if (ragEnabled) {
-        logger.info(`[RAG] RAG enabled for session ${sessionId}, fetching context...`);
+        logger.info(`[RAG] RAG enabled for session ${ragSessionId}, fetching context...`);
         
         // Fetch relevant knowledge from the knowledge graph
         const ragContexts = await memoryMCP.searchNodes(
           message.substring(0, 500), // Use user message as search query
           undefined, // No type filter
-          ragConfig?.retrievalDepth || 5 // Number of relevant nodes to fetch
+          ragConfig?.retrievalDepth || 3 // Number of relevant nodes to fetch
         );
+        
+        ragNodesCount = ragContexts.length;
         
         if (ragContexts.length > 0) {
           // Build RAG context prompt
@@ -180,21 +205,29 @@ Use this context to provide more accurate and informed responses.
           
           logger.info(`[RAG] Injected ${ragContexts.length} knowledge nodes into context`);
           
-          // Send RAG status event to client
+          // Send RAG status event to client - success with nodes
           sendSSE(res, 'rag_status', {
             enabled: true,
             nodesRetrieved: ragContexts.length,
-            sessionId
+            sessionId: ragSessionId,
+            status: 'success'
           });
         } else {
           logger.info(`[RAG] No relevant knowledge nodes found for query`);
+          // Send RAG status event to client - enabled but no results
+          sendSSE(res, 'rag_status', {
+            enabled: true,
+            nodesRetrieved: 0,
+            sessionId: ragSessionId,
+            status: 'no_results'
+          });
         }
         
         // Also fetch recent conversation history if enabled
         if (ragConfig?.includeConversationHistory) {
           const history = await memoryMCP.getConversationHistory(
             String(userId),
-            sessionId,
+            ragSessionId,
             3 // Last 3 conversation turns
           );
           
@@ -208,10 +241,27 @@ ${historyItems}
 `;
           }
         }
+      } else {
+        // RAG disabled for this session - notify client
+        logger.info(`[RAG] RAG disabled for session ${ragSessionId}`);
+        sendSSE(res, 'rag_status', {
+          enabled: false,
+          nodesRetrieved: 0,
+          sessionId: ragSessionId,
+          status: 'disabled'
+        });
       }
     } catch (ragError: any) {
       // RAG errors should not block the chat - log and continue
       logger.warn(`[RAG] Failed to fetch RAG context: ${ragError.message}`);
+      // Send error status to client
+      sendSSE(res, 'rag_status', {
+        enabled: false,
+        nodesRetrieved: 0,
+        sessionId: ragSessionId,
+        status: 'error',
+        error: ragError.message
+      });
     }
     
     // Build messages array with context (including RAG if enabled)
