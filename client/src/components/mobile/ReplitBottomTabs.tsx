@@ -1,3 +1,15 @@
+/**
+ * ReplitBottomTabs - Fortune 500-Grade Mobile Navigation
+ * 
+ * Premium glassmorphic bottom navigation with:
+ * - Elevated glass container with backdrop blur
+ * - Refined micro-interactions and spring animations
+ * - E-Code orange (#F26207) accent with gradient glow
+ * - IBM Plex Sans typography at 11px
+ * - 72px height with proper touch targets (min 48px)
+ * - Reduced motion support
+ */
+
 import { Terminal as TerminalIcon, Monitor, MoreHorizontal, Sparkles, FolderOpen, GitBranch, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,6 +35,18 @@ interface ReplitBottomTabsProps {
   isConnected?: boolean;
 }
 
+const PREMIUM_SPRING = {
+  stiffness: 400,
+  damping: 28,
+  mass: 0.8,
+};
+
+const GLOW_SPRING = {
+  stiffness: 300,
+  damping: 35,
+  mass: 1,
+};
+
 export function ReplitBottomTabs({ 
   activeTab,
   onTabChange,
@@ -42,7 +66,7 @@ export function ReplitBottomTabs({
   const handleTabClick = (tabId: string) => {
     onTabChange(tabId);
     if ('vibrate' in navigator) {
-      navigator.vibrate(10);
+      navigator.vibrate([8, 50, 4]);
     }
   };
 
@@ -59,57 +83,134 @@ export function ReplitBottomTabs({
     <div 
       className="fixed bottom-0 left-0 right-0 z-50 md:hidden" 
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      data-testid="mobile-bottom-navigation"
     >
-      <div className="absolute inset-0 bg-[var(--ecode-surface)]/98 dark:bg-[var(--ecode-surface)]/98 backdrop-blur-xl border-t border-[var(--ecode-border)]" />
+      {/* Premium Glass Container */}
+      <div 
+        className="absolute inset-x-3 bottom-2 rounded-[var(--mobile-nav-radius)]"
+        style={{
+          background: 'var(--mobile-nav-gradient)',
+          backdropFilter: 'blur(var(--mobile-nav-blur)) saturate(180%)',
+          WebkitBackdropFilter: 'blur(var(--mobile-nav-blur)) saturate(180%)',
+          boxShadow: 'var(--mobile-nav-shadow), var(--mobile-nav-inner-shadow)',
+          border: '1px solid var(--mobile-nav-border)',
+          borderTop: '1px solid var(--mobile-nav-border-top)',
+        }}
+      >
+        {/* Subtle top highlight line */}
+        <div 
+          className="absolute top-0 left-4 right-4 h-px opacity-60"
+          style={{
+            background: 'linear-gradient(90deg, transparent, var(--mobile-nav-border-top), transparent)',
+          }}
+        />
+      </div>
       
-      <div className="absolute top-2.5 left-3 z-10 flex items-center gap-1.5" data-testid="indicator-connection-status">
+      {/* Status Indicators Row - Premium Pill Design */}
+      <div className="absolute -top-8 left-0 right-0 px-4 flex items-center justify-between pointer-events-none">
+        {/* Connection Status Pill */}
         <motion.div
-          animate={isConnected ? { scale: [1, 1.2, 1] } : {}}
-          transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full pointer-events-auto"
+          style={{
+            background: isConnected 
+              ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.06) 100%)'
+              : 'linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(239, 68, 68, 0.06) 100%)',
+            backdropFilter: 'blur(8px)',
+            border: `1px solid ${isConnected ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
+            boxShadow: isConnected 
+              ? '0 2px 8px -2px rgba(34, 197, 94, 0.15)'
+              : '0 2px 8px -2px rgba(239, 68, 68, 0.15)',
+          }}
+          data-testid="indicator-connection-status"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, ...PREMIUM_SPRING }}
         >
-          {isConnected ? (
-            <Wifi className="h-3.5 w-3.5 text-green-500" />
-          ) : (
-            <WifiOff className="h-3.5 w-3.5 text-red-500 animate-pulse" />
-          )}
+          <motion.div
+            animate={isConnected && !prefersReducedMotion ? { 
+              scale: [1, 1.15, 1],
+              opacity: [1, 0.8, 1],
+            } : {}}
+            transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
+          >
+            {isConnected ? (
+              <div className="relative">
+                <Wifi className="h-3 w-3 text-green-500" />
+                <div className="absolute inset-0 animate-ping opacity-30">
+                  <Wifi className="h-3 w-3 text-green-500" />
+                </div>
+              </div>
+            ) : (
+              <WifiOff className="h-3 w-3 text-red-500" />
+            )}
+          </motion.div>
+          <span 
+            className="text-[10px] font-semibold uppercase tracking-wider"
+            style={{ 
+              color: isConnected ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)',
+              fontFamily: 'var(--ecode-font-sans)',
+            }}
+          >
+            {isConnected ? 'Live' : 'Offline'}
+          </span>
         </motion.div>
-        <span className={cn(
-          "text-[9px] font-medium uppercase tracking-wider",
-          isConnected ? "text-green-500" : "text-red-500"
-        )}>
-          {isConnected ? 'Live' : 'Offline'}
-        </span>
+        
+        {/* Status Badges */}
+        <div className="flex items-center gap-2 pointer-events-auto">
+          <AnimatePresence mode="popLayout">
+            {badgeCounts.errors && badgeCounts.errors > 0 && (
+              <motion.div 
+                className="flex items-center gap-1 px-2 py-1 rounded-full"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.08) 100%)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  boxShadow: '0 2px 8px -2px rgba(239, 68, 68, 0.2)',
+                }}
+                data-testid="indicator-errors"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={PREMIUM_SPRING}
+              >
+                <AlertCircle className="h-3 w-3 text-red-500" />
+                <span className="text-[10px] font-bold text-red-500" style={{ fontFamily: 'var(--ecode-font-sans)' }}>
+                  {badgeCounts.errors}
+                </span>
+              </motion.div>
+            )}
+            
+            {badgeCounts.git && badgeCounts.git > 0 && (
+              <motion.div 
+                className="flex items-center gap-1 px-2 py-1 rounded-full"
+                style={{
+                  background: 'var(--mobile-nav-bg)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid var(--mobile-nav-border)',
+                  boxShadow: '0 2px 6px -2px rgba(0, 0, 0, 0.08)',
+                }}
+                data-testid="indicator-git-changes"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={PREMIUM_SPRING}
+              >
+                <GitBranch className="h-3 w-3 text-[var(--ecode-text-muted)]" />
+                <span className="text-[10px] font-semibold text-[var(--ecode-text-muted)]" style={{ fontFamily: 'var(--ecode-font-sans)' }}>
+                  {badgeCounts.git}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
       
-      <div className="absolute top-2.5 right-3 z-10 flex items-center gap-2.5">
-        {badgeCounts.errors && badgeCounts.errors > 0 && (
-          <motion.div 
-            className="flex items-center gap-1 text-[10px] font-medium text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded-full" 
-            data-testid="indicator-errors"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-          >
-            <AlertCircle className="h-3 w-3" />
-            <span>{badgeCounts.errors}</span>
-          </motion.div>
-        )}
-        {badgeCounts.git && badgeCounts.git > 0 && (
-          <motion.div 
-            className="flex items-center gap-1 text-[10px] font-medium text-[var(--ecode-text-muted)] bg-[var(--ecode-surface-hover)] px-1.5 py-0.5 rounded-full" 
-            data-testid="indicator-git-changes"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-          >
-            <GitBranch className="h-3 w-3" />
-            <span>{badgeCounts.git}</span>
-          </motion.div>
-        )}
-      </div>
-      
-      <nav className="relative flex items-center justify-around h-[64px] px-1">
-        {tabs.map((tab) => {
+      {/* Navigation Items */}
+      <nav 
+        className="relative flex items-center justify-around px-4 mx-3 mb-2"
+        style={{ height: 'var(--mobile-nav-height)' }}
+      >
+        {tabs.map((tab, index) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           const badge = getBadgeForTab(tab.id);
@@ -119,83 +220,143 @@ export function ReplitBottomTabs({
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
               className={cn(
-                "relative flex flex-col items-center justify-center flex-1 h-full py-2 touch-manipulation",
-                "min-w-[56px] max-w-[76px] rounded-lg",
-                isActive ? "text-[var(--ecode-accent)]" : "text-[var(--ecode-text-muted)]",
-                "active:bg-[var(--ecode-surface-hover)]"
+                "relative flex flex-col items-center justify-center flex-1",
+                "min-w-[52px] max-w-[72px] min-h-[52px]",
+                "rounded-[var(--mobile-nav-item-radius)]",
+                "touch-manipulation select-none",
+                "transition-colors duration-150",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ecode-accent)] focus-visible:ring-offset-2"
               )}
-              whileTap={prefersReducedMotion ? undefined : { scale: 0.9 }}
-              transition={prefersReducedMotion ? { duration: 0.01 } : { type: 'spring', stiffness: 500, damping: 25 }}
+              whileTap={prefersReducedMotion ? undefined : { scale: 0.92 }}
+              transition={prefersReducedMotion ? { duration: 0.01 } : PREMIUM_SPRING}
               data-testid={`tab-${tab.id}`}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{ transitionDelay: `${index * 50}ms` }}
             >
-              <div className="relative">
+              {/* Active Background Pill */}
+              <AnimatePresence>
+                {isActive && (
+                  <motion.div
+                    className="absolute inset-1 rounded-[calc(var(--mobile-nav-item-radius)-4px)]"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={prefersReducedMotion ? { duration: 0.01 } : GLOW_SPRING}
+                    style={{
+                      background: 'var(--mobile-nav-active-bg)',
+                      border: '1px solid var(--mobile-nav-active-border)',
+                      boxShadow: `0 0 20px -4px var(--mobile-nav-glow), inset 0 1px 0 0 rgba(255,255,255,0.1)`,
+                    }}
+                  />
+                )}
+              </AnimatePresence>
+
+              {/* Icon Container */}
+              <div className="relative z-10">
                 <motion.div
-                  animate={isActive && !prefersReducedMotion ? {
-                    y: [0, -3, 0],
-                    scale: [1, 1.15, 1],
-                  } : {}}
-                  transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
+                  animate={isActive ? {
+                    y: prefersReducedMotion ? 0 : -2,
+                    scale: prefersReducedMotion ? 1 : 1.1,
+                  } : { y: 0, scale: 1 }}
+                  transition={prefersReducedMotion ? { duration: 0.01 } : PREMIUM_SPRING}
                 >
-                  <Icon className={cn(
-                    "h-6 w-6 mb-0.5 transition-colors duration-150",
-                    isActive ? "text-[var(--ecode-accent)]" : "text-[var(--ecode-text-muted)]"
-                  )} />
+                  <Icon 
+                    className="transition-colors duration-200"
+                    style={{
+                      width: 'var(--mobile-nav-icon-size)',
+                      height: 'var(--mobile-nav-icon-size)',
+                      color: isActive ? 'var(--ecode-accent)' : 'var(--ecode-text-muted)',
+                      opacity: isActive ? 1 : 'var(--mobile-nav-inactive-opacity)',
+                      strokeWidth: isActive ? 2.25 : 1.75,
+                    }}
+                  />
                 </motion.div>
                 
+                {/* Active Glow Effect */}
                 <AnimatePresence>
                   {isActive && !prefersReducedMotion && (
                     <motion.div
-                      className="absolute inset-0 -z-10 rounded-full"
-                      initial={{ opacity: 0, scale: 0.3 }}
-                      animate={{ opacity: 1, scale: 2 }}
-                      exit={{ opacity: 0, scale: 0.3 }}
-                      transition={SPRING_CONFIG.default}
+                      className="absolute inset-0 -z-10 pointer-events-none"
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ 
+                        opacity: [0.4, 0.2, 0.4],
+                        scale: [1.8, 2.2, 1.8],
+                      }}
+                      exit={{ opacity: 0, scale: 0.5 }}
+                      transition={{
+                        opacity: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+                        scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+                      }}
                       style={{
-                        background: 'radial-gradient(circle, var(--ecode-accent) 0%, transparent 70%)',
-                        opacity: 0.15,
-                        filter: 'blur(6px)',
+                        background: 'radial-gradient(circle, var(--mobile-nav-glow-strong) 0%, transparent 60%)',
+                        filter: 'blur(8px)',
                       }}
                     />
                   )}
                 </AnimatePresence>
                 
-                {badge !== undefined && badge > 0 && (
-                  <motion.span 
-                    className="absolute -top-1.5 -right-2 flex items-center justify-center min-w-[16px] h-[16px] px-1 text-[9px] font-bold text-white bg-red-500 rounded-full border-2 border-[var(--ecode-surface)]"
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={prefersReducedMotion ? { duration: 0.01 } : { type: 'spring', stiffness: 500, damping: 15 }}
-                  >
-                    {badge > 99 ? '99+' : badge}
-                  </motion.span>
-                )}
+                {/* Badge */}
+                <AnimatePresence>
+                  {badge !== undefined && badge > 0 && (
+                    <motion.span 
+                      className="absolute -top-2 -right-2.5 flex items-center justify-center"
+                      style={{
+                        minWidth: '18px',
+                        height: '18px',
+                        padding: '0 5px',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        fontFamily: 'var(--ecode-font-sans)',
+                        color: 'white',
+                        background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                        borderRadius: '9px',
+                        border: '2px solid var(--ecode-surface)',
+                        boxShadow: '0 2px 6px -1px rgba(239, 68, 68, 0.4)',
+                      }}
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      exit={{ scale: 0, rotate: 180 }}
+                      transition={prefersReducedMotion ? { duration: 0.01 } : { type: 'spring', stiffness: 500, damping: 20 }}
+                    >
+                      {badge > 99 ? '99+' : badge}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </div>
               
+              {/* Label */}
               <motion.span 
-                className={cn(
-                  "text-[10px] font-semibold leading-tight mt-0.5",
-                  isActive ? "text-[var(--ecode-accent)]" : "text-[var(--ecode-text-muted)]"
-                )}
+                className="relative z-10 mt-1 font-semibold leading-tight"
+                style={{
+                  fontSize: 'var(--mobile-nav-label-size)',
+                  fontFamily: 'var(--ecode-font-sans)',
+                  color: isActive ? 'var(--ecode-accent)' : 'var(--ecode-text-muted)',
+                  opacity: isActive ? 1 : 'var(--mobile-nav-inactive-opacity)',
+                  letterSpacing: '0.01em',
+                }}
                 animate={isActive ? { 
-                  scale: prefersReducedMotion ? 1 : 1.08,
-                  y: prefersReducedMotion ? 0 : -1 
-                } : { scale: 1, y: 0 }}
-                transition={getReducedMotionTransition(prefersReducedMotion, SPRING_CONFIG.default)}
+                  y: prefersReducedMotion ? 0 : -1,
+                  scale: prefersReducedMotion ? 1 : 1.02,
+                } : { y: 0, scale: 1 }}
+                transition={prefersReducedMotion ? { duration: 0.01 } : PREMIUM_SPRING}
               >
                 {tab.label}
               </motion.span>
               
+              {/* Active Indicator Line */}
               <AnimatePresence>
                 {isActive && (
                   <motion.div
-                    className="absolute -top-[1px] left-1/2 h-[3px] bg-[var(--ecode-accent)] rounded-full"
-                    initial={{ width: 0, x: '-50%', opacity: 0 }}
-                    animate={{ width: '70%', x: '-50%', opacity: 1 }}
-                    exit={{ width: 0, x: '-50%', opacity: 0 }}
-                    transition={prefersReducedMotion ? { duration: 0.01 } : { type: 'spring', stiffness: 400, damping: 25 }}
+                    className="absolute -bottom-0.5 rounded-full"
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: '60%', opacity: 1 }}
+                    exit={{ width: 0, opacity: 0 }}
+                    transition={prefersReducedMotion ? { duration: 0.01 } : { type: 'spring', stiffness: 400, damping: 28 }}
                     style={{
-                      boxShadow: prefersReducedMotion ? 'none' : '0 0 12px 3px var(--ecode-accent)',
-                      opacity: prefersReducedMotion ? 1 : 0.9,
+                      height: '3px',
+                      background: 'linear-gradient(90deg, var(--ecode-accent), #F99D25)',
+                      boxShadow: prefersReducedMotion ? 'none' : '0 0 16px 2px var(--mobile-nav-glow-strong)',
                     }}
                   />
                 )}
