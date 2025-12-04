@@ -1,0 +1,4 @@
+{
+  "description": "Secondary TypeScript config tailored for Node/Vite config files. Extends base tsconfig and overrides module and lib settings appropriate for Vite config and tooling scripts.",
+  "todo": "Configure based on outline"
+}
