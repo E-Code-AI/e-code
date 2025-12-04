@@ -228,7 +228,6 @@ function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePu
 
       <motion.button
         onClick={isLive ? handleViewLive : handlePublish}
-        onLongPress={onNavigateToDeploy}
         disabled={isPublishing}
         className={cn(
           'w-12 h-12 rounded-full',

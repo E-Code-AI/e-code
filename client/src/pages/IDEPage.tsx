@@ -28,6 +28,8 @@ import { Button } from '@/components/ui/button';
 // Core lightweight components (static imports)
 import { TopNavBar } from '@/components/ide/TopNavBar';
 import { StatusBar } from '@/components/ide/StatusBar';
+import { ReplitActivityBar, type ActivityItem } from '@/components/ide/ReplitActivityBar';
+import { ReplitTabBar, type Tab as EditorTab } from '@/components/ide/ReplitTabBar';
 import { QuickFileSearch } from '@/components/ide/QuickFileSearch';
 import { KeyboardShortcutsOverlay } from '@/components/ide/KeyboardShortcutsOverlay';
 import { ReplitFileExplorer } from '@/components/editor/ReplitFileExplorer';
@@ -310,6 +312,15 @@ export default function IDEPage() {
   const [showReplitDB, setShowReplitDB] = useState(false);
   const [showCollaboration, setShowCollaboration] = useState(false);
   
+  // Activity bar state - controls which sidebar panel is active
+  const [activeActivityItem, setActiveActivityItem] = useState<ActivityItem>('files');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  // Editor tabs state for ReplitTabBar
+  const [editorTabs, setEditorTabs] = useState<EditorTab[]>([]);
+  const [activeEditorTabId, setActiveEditorTabId] = useState<string>('');
+  const [lastSaved, setLastSaved] = useState<Date>(new Date());
+  
   // Deployment panel state - controlled by TopNavBar Publish button dropdown
   const [deploymentTab, setDeploymentTab] = useState<'deploy' | 'logs' | 'analytics' | null>(null);
   
@@ -475,6 +486,91 @@ export default function IDEPage() {
       title: isRunning ? 'Project stopped' : 'Project running',
       description: isRunning ? 'Server stopped' : 'Server started on port 5000',
     });
+  };
+  
+  // Handle activity bar item click
+  const handleActivityItemClick = (item: ActivityItem) => {
+    if (activeActivityItem === item && !isSidebarCollapsed) {
+      setIsSidebarCollapsed(true);
+    } else {
+      setActiveActivityItem(item);
+      setIsSidebarCollapsed(false);
+    }
+    
+    // Map activity items to left panel tabs or tools
+    switch (item) {
+      case 'agent':
+        setLeftPanelTab('agent');
+        break;
+      case 'files':
+        setShowFileExplorer(true);
+        break;
+      case 'search':
+        setShowGlobalSearch(true);
+        break;
+      case 'git':
+        handleAddTool('git');
+        break;
+      case 'packages':
+        handleAddTool('packages');
+        break;
+      case 'debug':
+        handleAddTool('debugger');
+        break;
+      case 'terminal':
+        handleAddTool('terminal');
+        break;
+      case 'deploy':
+        setLeftPanelTab('deployment');
+        break;
+      case 'secrets':
+        handleAddTool('secrets');
+        break;
+      case 'database':
+        handleAddTool('database');
+        break;
+      case 'preview':
+        setActiveTab('preview');
+        break;
+      case 'workflows':
+        handleAddTool('workflows');
+        break;
+      case 'history':
+        handleAddTool('rewind');
+        break;
+      case 'settings':
+        handleAddTool('settings');
+        break;
+      case 'extensions':
+        handleAddTool('extensions');
+        break;
+    }
+  };
+  
+  // Handle editor tab actions
+  const handleEditorTabClick = (tabId: string) => {
+    setActiveEditorTabId(tabId);
+    setActiveTab(tabId);
+  };
+  
+  const handleEditorTabClose = (tabId: string) => {
+    setEditorTabs(prev => prev.filter(t => t.id !== tabId));
+    handleTabClose(tabId);
+  };
+  
+  const handleEditorTabReorder = (fromIndex: number, toIndex: number) => {
+    setEditorTabs(prev => {
+      const newTabs = [...prev];
+      const [removed] = newTabs.splice(fromIndex, 1);
+      newTabs.splice(toIndex, 0, removed);
+      return newTabs;
+    });
+  };
+  
+  const handleEditorTabPin = (tabId: string) => {
+    setEditorTabs(prev => prev.map(t => 
+      t.id === tabId ? { ...t, pinned: !t.pinned } : t
+    ));
   };
   
   // Keyboard shortcuts (comprehensive)
@@ -669,37 +765,52 @@ export default function IDEPage() {
   }
   
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Top Navigation */}
-      <TopNavBar
-        projectName={project.name}
-        projectSlug={project.slug || String(project.id)}
-        ownerUsername={user?.username || ''}
-        projectId={projectId}
-        isDeployed={false}
-        onRun={handleRunStop}
-        isRunning={isRunning}
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        onTabClose={handleTabClose}
-        availableTools={availableTools}
-        onAddTool={handleAddTool}
-        showFileExplorer={showFileExplorer}
-        onToggleFileExplorer={() => setShowFileExplorer((prev: boolean) => !prev)}
-        showCollaboration={showCollaboration}
-        onToggleCollaboration={() => setShowCollaboration((prev: boolean) => !prev)}
-        collaboratorCount={0}
-        onOpenDeployLogs={() => setDeploymentTab('logs')}
-        onOpenDeployAnalytics={() => setDeploymentTab('analytics')}
+    <div className="flex h-screen bg-[var(--ecode-background)] overflow-hidden">
+      {/* Activity Bar - Left vertical icon rail (Replit style) */}
+      <ReplitActivityBar
+        activeItem={activeActivityItem}
+        onItemClick={handleActivityItemClick}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
+        badgeCounts={{
+          agent: 0,
+          git: 0,
+        }}
       />
       
-      {/* 3-Panel Layout */}
-      <ResizablePanelGroup direction="horizontal" className="flex-1">
-        {/* LEFT: AI Agent Panel (30%) */}
-        <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
-          <div className="h-full flex flex-col border-r">
-            <Tabs value={leftPanelTab} onValueChange={setLeftPanelTab} className="h-full flex flex-col">
+      {/* Main Content Area */}
+      <div className="flex flex-col flex-1 min-w-0">
+        {/* Top Navigation */}
+        <TopNavBar
+          projectName={project.name}
+          projectSlug={project.slug || String(project.id)}
+          ownerUsername={user?.username || ''}
+          projectId={projectId}
+          isDeployed={false}
+          onRun={handleRunStop}
+          isRunning={isRunning}
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onTabClose={handleTabClose}
+          availableTools={availableTools}
+          onAddTool={handleAddTool}
+          showFileExplorer={showFileExplorer}
+          onToggleFileExplorer={() => setShowFileExplorer((prev: boolean) => !prev)}
+          showCollaboration={showCollaboration}
+          onToggleCollaboration={() => setShowCollaboration((prev: boolean) => !prev)}
+          collaboratorCount={0}
+          onOpenDeployLogs={() => setDeploymentTab('logs')}
+          onOpenDeployAnalytics={() => setDeploymentTab('analytics')}
+        />
+        
+        {/* 3-Panel Layout */}
+        <ResizablePanelGroup direction="horizontal" className="flex-1">
+        {/* LEFT: AI Agent Panel (30%) - collapsible */}
+        {!isSidebarCollapsed && (
+          <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
+            <div className="h-full flex flex-col border-r">
+              <Tabs value={leftPanelTab} onValueChange={setLeftPanelTab} className="h-full flex flex-col">
               <TabsList className="w-full justify-start rounded-none border-b">
                 <TabsTrigger value="agent" className="gap-2" data-testid="tab-agent">
                   <Brain className="h-4 w-4" />
@@ -791,11 +902,12 @@ export default function IDEPage() {
             </Tabs>
           </div>
         </ResizablePanel>
+        )}
         
-        <ResizableHandle withHandle />
+        {!isSidebarCollapsed && <ResizableHandle withHandle />}
         
-        {/* CENTER: Main Content (52%) */}
-        <ResizablePanel defaultSize={showFileExplorer ? 52 : 70} minSize={30}>
+        {/* CENTER: Main Content - adjusts based on sidebar visibility */}
+        <ResizablePanel defaultSize={isSidebarCollapsed ? (showFileExplorer ? 82 : 100) : (showFileExplorer ? 52 : 70)} minSize={30}>
           <div className="h-full flex flex-col">
             {renderContent()}
           </div>
@@ -828,17 +940,20 @@ export default function IDEPage() {
             </ResizablePanel>
           </>
         )}
-      </ResizablePanelGroup>
-      
-      {/* Status Bar */}
-      <StatusBar
-        gitBranch={gitBranch}
-        isRunning={isRunning}
-        cursorPosition={cursorPosition}
-        language="TypeScript"
-        encoding="UTF-8"
-        onShowShortcuts={() => setShowKeyboardShortcuts(true)}
-      />
+        </ResizablePanelGroup>
+        
+        {/* Status Bar */}
+        <StatusBar
+          gitBranch={gitBranch}
+          isRunning={isRunning}
+          cursorPosition={cursorPosition}
+          language="TypeScript"
+          encoding="UTF-8"
+          onShowShortcuts={() => setShowKeyboardShortcuts(true)}
+          isConnected={true}
+          lastSaved={lastSaved}
+        />
+      </div>
       
       {/* Modals & Overlays */}
       <QuickFileSearch
