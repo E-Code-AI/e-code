@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
@@ -28,38 +27,31 @@ import {
   User,
   Bell,
   Shield,
-  Key,
   Palette,
   Code,
-  Globe,
   CreditCard,
   Crown,
   Database,
   Download,
-  Trash2,
-  Mail,
-  Smartphone,
-  Monitor,
-  Moon,
-  Sun,
   Check,
   X,
-  AlertCircle,
   Github,
   Link,
   Upload,
   Settings2,
+  Monitor,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TABLET_GRID_CLASSES } from '@shared/responsive-config';
 
 export default function Settings() {
   const [, navigate] = useLocation();
-  const { user, logoutMutation } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('account');
 
-  // Form states
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [email, setEmail] = useState(user?.email || '');
   const [bio, setBio] = useState(user?.bio || '');
@@ -93,630 +85,793 @@ export default function Settings() {
     });
   };
 
+  const navItems = [
+    { id: 'account', label: 'Account', icon: User },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'appearance', label: 'Appearance', icon: Palette },
+    { id: 'editor', label: 'Editor', icon: Code },
+    { id: 'privacy', label: 'Privacy & Security', icon: Shield },
+    { id: 'billing', label: 'Billing', icon: CreditCard },
+    { id: 'integrations', label: 'Integrations', icon: Link },
+    { id: 'data', label: 'Data & Export', icon: Database },
+  ];
+
+  const inputClassName = "min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-muted)] focus:ring-[#F26207]/20 focus:border-[#F26207]/40 focus:ring-2 transition-all duration-200";
+  
+  const cardClassName = "border border-[var(--ecode-border)] bg-[var(--ecode-surface)] shadow-[var(--ecode-shadow-sm)]";
+  
+  const switchClassName = "data-[state=checked]:bg-[#F26207] data-[state=unchecked]:bg-[var(--ecode-border)]";
+
   return (
     <PageShell>
-      <PageHeader
-        title="Workspace settings"
-        description="Manage your account, security, and IDE preferences from a single place."
-        icon={Settings2}
-        actions={(
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={() => navigate('/account')}
+      <div 
+        className="min-h-screen bg-[var(--ecode-background)] -mx-4 -mt-4 md:-mx-6 md:-mt-6 lg:-mx-8 lg:-mt-8 px-4 pt-4 pb-8 md:px-6 md:pt-6 lg:px-8 lg:pt-8"
+        style={{ fontFamily: 'var(--ecode-font-sans)' }}
+      >
+        <PageHeader
+          title="Workspace settings"
+          description="Manage your account, security, and IDE preferences from a single place."
+          icon={Settings2}
+          actions={(
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                variant="outline"
+                className="gap-2 border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] hover:bg-[var(--ecode-surface-hover)] hover:border-[#F26207]/30 transition-all duration-200"
+                onClick={() => navigate('/account')}
+                data-testid="button-account-overview"
+              >
+                <User className="h-4 w-4" />
+                Account overview
+              </Button>
+              <Button 
+                className="gap-2 bg-[#F26207] hover:bg-[#D04E00] text-white transition-all duration-200"
+                onClick={handleSaveProfile}
+                data-testid="button-save-changes"
+              >
+                <Check className="h-4 w-4" />
+                Save changes
+              </Button>
+            </div>
+          )}
+        />
+
+        <div className={`grid ${TABLET_GRID_CLASSES.settingsTabletOptimized} mt-6`}>
+          <div className="md:col-span-1 lg:col-span-1">
+            <nav 
+              className="space-y-1 p-2 rounded-xl border border-[var(--ecode-border)] bg-[var(--ecode-surface)]"
+              data-testid="nav-settings-sidebar"
             >
-              <User className="h-4 w-4" />
-              Account overview
-            </Button>
-            <Button className="gap-2" onClick={handleSaveProfile}>
-              <Check className="h-4 w-4" />
-              Save changes
-            </Button>
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px] ${
+                      isActive 
+                        ? 'bg-[#F26207]/10 text-[#F26207] border-l-2 border-[#F26207] pl-[10px]' 
+                        : 'text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-surface-hover)] hover:text-[var(--ecode-text)]'
+                    }`}
+                    onClick={() => setActiveTab(item.id)}
+                    data-testid={`button-settings-${item.id}`}
+                  >
+                    <Icon className={`h-4 w-4 ${isActive ? 'text-[#F26207]' : ''}`} />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </nav>
           </div>
-        )}
-      />
 
-      <div className={`grid ${TABLET_GRID_CLASSES.settingsTabletOptimized}`}>
-        {/* Sidebar Navigation */}
-        <div className="md:col-span-1 lg:col-span-1">
-          <nav className="space-y-1">
-            {[
-              { id: 'account', label: 'Account', icon: User },
-              { id: 'notifications', label: 'Notifications', icon: Bell },
-              { id: 'appearance', label: 'Appearance', icon: Palette },
-              { id: 'editor', label: 'Editor', icon: Code },
-              { id: 'privacy', label: 'Privacy & Security', icon: Shield },
-              { id: 'billing', label: 'Billing', icon: CreditCard },
-              { id: 'integrations', label: 'Integrations', icon: Link },
-              { id: 'data', label: 'Data & Export', icon: Database },
-            ].map((item) => {
-              const Icon = item.icon;
-              return (
-                <Button
-                  key={item.id}
-                  variant={activeTab === item.id ? 'secondary' : 'ghost'}
-                  className="w-full justify-start min-h-[44px]"
-                  onClick={() => setActiveTab(item.id)}
-                  data-testid={`button-settings-${item.id}`}
-                >
-                  <Icon className="mr-2 h-4 w-4" />
-                  {item.label}
-                </Button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Settings Content */}
-        <div className={TABLET_GRID_CLASSES.settingsContentTabletOptimized}>
-          {/* Account Settings */}
-          {activeTab === 'account' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Settings</CardTitle>
-                <CardDescription>
-                  Update your account information and profile
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Avatar Upload */}
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src={user?.avatarUrl || undefined} />
-                    <AvatarFallback className="text-2xl">
-                      {user?.username?.[0].toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <Button size="sm" className="gap-2">
-                      <Upload className="h-4 w-4" />
-                      Upload Avatar
-                    </Button>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      JPG, PNG or GIF. Max 2MB.
-                    </p>
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Profile Information */}
-                <div className="space-y-4">
-                  <div>
-                    <Label>Username</Label>
-                    <Input value={user?.username || ''} disabled />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Username cannot be changed
-                    </p>
-                  </div>
-
-                  <div>
-                    <Label>Display Name</Label>
-                    <Input
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="Your display name"
-                      className="min-h-[44px]"
-                      data-testid="input-display-name"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Email</Label>
-                    <Input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="your.email@example.com"
-                      className="min-h-[44px]"
-                      data-testid="input-settings-email"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Bio</Label>
-                    <Textarea
-                      value={bio}
-                      onChange={(e) => setBio(e.target.value)}
-                      placeholder="Tell us about yourself..."
-                      rows={4}
-                      className="min-h-[88px]"
-                      data-testid="textarea-settings-bio"
-                    />
-                  </div>
-                </div>
-
-                <Button onClick={handleSaveProfile} className="min-h-[44px]" data-testid="button-save-profile">Save Changes</Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Notifications Settings */}
-          {activeTab === 'notifications' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Notification Preferences</CardTitle>
-                <CardDescription>
-                  Choose how you want to be notified
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Email Notifications</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receive notifications via email
-                      </p>
-                    </div>
-                    <Switch
-                      checked={notifications.email}
-                      onCheckedChange={(checked) =>
-                        setNotifications({ ...notifications, email: checked })
-                      }
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Push Notifications</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receive push notifications in your browser
-                      </p>
-                    </div>
-                    <Switch
-                      checked={notifications.push}
-                      onCheckedChange={(checked) =>
-                        setNotifications({ ...notifications, push: checked })
-                      }
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Mentions</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Get notified when someone mentions you
-                      </p>
-                    </div>
-                    <Switch
-                      checked={notifications.mentions}
-                      onCheckedChange={(checked) =>
-                        setNotifications({ ...notifications, mentions: checked })
-                      }
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Product Updates</Label>
-                      <p className="text-sm text-muted-foreground">
-                        News about new features and improvements
-                      </p>
-                    </div>
-                    <Switch
-                      checked={notifications.updates}
-                      onCheckedChange={(checked) =>
-                        setNotifications({ ...notifications, updates: checked })
-                      }
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Marketing Emails</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Promotional content and special offers
-                      </p>
-                    </div>
-                    <Switch
-                      checked={notifications.marketing}
-                      onCheckedChange={(checked) =>
-                        setNotifications({ ...notifications, marketing: checked })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <Button className="min-h-[44px]" data-testid="button-save-preferences">Save Preferences</Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Appearance Settings */}
-          {activeTab === 'appearance' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Appearance</CardTitle>
-                <CardDescription>
-                  Customize how E-Code looks for you
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label>Theme</Label>
-                    <Select value={theme} onValueChange={setTheme}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="light">
-                          <div className="flex items-center gap-2">
-                            <Sun className="h-4 w-4" />
-                            Light
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="dark">
-                          <div className="flex items-center gap-2">
-                            <Moon className="h-4 w-4" />
-                            Dark
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="system">
-                          <div className="flex items-center gap-2">
-                            <Monitor className="h-4 w-4" />
-                            System
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Primary Color</Label>
-                    <div className="grid grid-cols-6 gap-2 mt-2">
-                      {['blue', 'green', 'purple', 'red', 'orange', 'pink'].map((color) => (
-                        <button
-                          key={color}
-                          className={`h-8 w-full rounded bg-${color}-500 hover:ring-2 ring-offset-2 ring-${color}-500`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <Button>Apply Theme</Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Editor Settings */}
-          {activeTab === 'editor' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Editor Preferences</CardTitle>
-                <CardDescription>
-                  Configure your code editor settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label>Editor Theme</Label>
-                    <Select value={editorTheme} onValueChange={setEditorTheme}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="dark">Dark</SelectItem>
-                        <SelectItem value="light">Light</SelectItem>
-                        <SelectItem value="monokai">Monokai</SelectItem>
-                        <SelectItem value="solarized">Solarized</SelectItem>
-                        <SelectItem value="dracula">Dracula</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Font Size</Label>
-                    <Select value={fontSize} onValueChange={setFontSize}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="12">12px</SelectItem>
-                        <SelectItem value="14">14px</SelectItem>
-                        <SelectItem value="16">16px</SelectItem>
-                        <SelectItem value="18">18px</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Tab Size</Label>
-                    <Select value={tabSize} onValueChange={setTabSize}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="2">2 spaces</SelectItem>
-                        <SelectItem value="4">4 spaces</SelectItem>
-                        <SelectItem value="8">8 spaces</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Word Wrap</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Wrap long lines of code
-                      </p>
-                    </div>
-                    <Switch checked={wordWrap} onCheckedChange={setWordWrap} />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Minimap</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Show code minimap
-                      </p>
-                    </div>
-                    <Switch checked={minimap} onCheckedChange={setMinimap} />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Auto Save</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Automatically save changes
-                      </p>
-                    </div>
-                    <Switch checked={autoSave} onCheckedChange={setAutoSave} />
-                  </div>
-                </div>
-
-                <Button>Save Editor Settings</Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Privacy & Security */}
-          {activeTab === 'privacy' && (
-            <div className="space-y-6">
-              <Card>
+          <div className={TABLET_GRID_CLASSES.settingsContentTabletOptimized}>
+            {activeTab === 'account' && (
+              <Card className={cardClassName} data-testid="card-account-settings">
                 <CardHeader>
-                  <CardTitle>Privacy Settings</CardTitle>
-                  <CardDescription>
-                    Control your privacy and data sharing
+                  <CardTitle className="text-[var(--ecode-text)]">Account Settings</CardTitle>
+                  <CardDescription className="text-[var(--ecode-text-muted)]">
+                    Update your account information and profile
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Public Profile</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Make your profile visible to others
+                <CardContent className="space-y-6">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-20 w-20 ring-2 ring-[var(--ecode-border)]">
+                      <AvatarImage src={user?.avatarUrl || undefined} />
+                      <AvatarFallback className="text-2xl bg-[#F26207]/10 text-[#F26207]">
+                        {user?.username?.[0].toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <Button 
+                        size="sm" 
+                        className="gap-2 bg-[#F26207] hover:bg-[#D04E00] text-white"
+                        data-testid="button-upload-avatar"
+                      >
+                        <Upload className="h-4 w-4" />
+                        Upload Avatar
+                      </Button>
+                      <p className="text-xs text-[var(--ecode-text-muted)] mt-1">
+                        JPG, PNG or GIF. Max 2MB.
                       </p>
                     </div>
-                    <Switch defaultChecked />
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Show Activity</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Display your coding activity on your profile
-                      </p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
+                  <Separator className="bg-[var(--ecode-border)]" />
 
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Analytics</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Help improve E-Code with anonymous usage data
-                      </p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Security</CardTitle>
-                  <CardDescription>
-                    Secure your account
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label>Password</Label>
-                    <div className="flex gap-2 mt-2">
-                      <Input type="password" placeholder="••••••••" disabled />
-                      <Button variant="outline">Change</Button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Two-Factor Authentication</Label>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Add an extra layer of security to your account
-                    </p>
-                    <Button variant="outline" className="gap-2">
-                      <Shield className="h-4 w-4" />
-                      Enable 2FA
-                    </Button>
-                  </div>
-
-                  <div>
-                    <Label>Sessions</Label>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Manage your active sessions
-                    </p>
-                    <Button variant="outline">View Sessions</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Billing */}
-          {activeTab === 'billing' && (
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Current Plan</CardTitle>
-                  <CardDescription>
-                    You're currently on the Free plan
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
                   <div className="space-y-4">
-                    <div className="p-4 border rounded-lg bg-muted/50">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold">Free Plan</h3>
-                        <Badge variant="secondary">Current</Badge>
-                      </div>
-                      <ul className="space-y-2 text-sm">
-                        <li className="flex items-center gap-2">
-                          <Check className="h-4 w-4 text-green-500" />
-                          Unlimited public repls
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <Check className="h-4 w-4 text-green-500" />
-                          500MB storage
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <X className="h-4 w-4 text-red-500" />
-                          Private repls
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <X className="h-4 w-4 text-red-500" />
-                          Always-on repls
-                        </li>
-                      </ul>
+                    <div>
+                      <Label className="text-[var(--ecode-text)]">Username</Label>
+                      <Input 
+                        value={user?.username || ''} 
+                        disabled 
+                        className={`${inputClassName} opacity-60`}
+                        data-testid="input-username"
+                      />
+                      <p className="text-xs text-[var(--ecode-text-muted)] mt-1">
+                        Username cannot be changed
+                      </p>
                     </div>
 
-                    <Button className="w-full gap-2">
-                      <Crown className="h-4 w-4" />
-                      Upgrade to Pro
+                    <div>
+                      <Label className="text-[var(--ecode-text)]">Display Name</Label>
+                      <Input
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        placeholder="Your display name"
+                        className={inputClassName}
+                        data-testid="input-display-name"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-[var(--ecode-text)]">Email</Label>
+                      <Input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="your.email@example.com"
+                        className={inputClassName}
+                        data-testid="input-settings-email"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-[var(--ecode-text)]">Bio</Label>
+                      <Textarea
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value)}
+                        placeholder="Tell us about yourself..."
+                        rows={4}
+                        className={`${inputClassName} min-h-[88px]`}
+                        data-testid="textarea-settings-bio"
+                      />
+                    </div>
+                  </div>
+
+                  <Button 
+                    onClick={handleSaveProfile} 
+                    className="min-h-[44px] bg-[#F26207] hover:bg-[#D04E00] text-white transition-all duration-200"
+                    data-testid="button-save-profile"
+                  >
+                    Save Changes
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'notifications' && (
+              <Card className={cardClassName} data-testid="card-notifications-settings">
+                <CardHeader>
+                  <CardTitle className="text-[var(--ecode-text)]">Notification Preferences</CardTitle>
+                  <CardDescription className="text-[var(--ecode-text-muted)]">
+                    Choose how you want to be notified
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                      <div className="space-y-0.5">
+                        <Label className="text-[var(--ecode-text)]">Email Notifications</Label>
+                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                          Receive notifications via email
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notifications.email}
+                        onCheckedChange={(checked) =>
+                          setNotifications({ ...notifications, email: checked })
+                        }
+                        className={switchClassName}
+                        data-testid="switch-email-notifications"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                      <div className="space-y-0.5">
+                        <Label className="text-[var(--ecode-text)]">Push Notifications</Label>
+                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                          Receive push notifications in your browser
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notifications.push}
+                        onCheckedChange={(checked) =>
+                          setNotifications({ ...notifications, push: checked })
+                        }
+                        className={switchClassName}
+                        data-testid="switch-push-notifications"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                      <div className="space-y-0.5">
+                        <Label className="text-[var(--ecode-text)]">Mentions</Label>
+                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                          Get notified when someone mentions you
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notifications.mentions}
+                        onCheckedChange={(checked) =>
+                          setNotifications({ ...notifications, mentions: checked })
+                        }
+                        className={switchClassName}
+                        data-testid="switch-mentions"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                      <div className="space-y-0.5">
+                        <Label className="text-[var(--ecode-text)]">Product Updates</Label>
+                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                          News about new features and improvements
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notifications.updates}
+                        onCheckedChange={(checked) =>
+                          setNotifications({ ...notifications, updates: checked })
+                        }
+                        className={switchClassName}
+                        data-testid="switch-updates"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                      <div className="space-y-0.5">
+                        <Label className="text-[var(--ecode-text)]">Marketing Emails</Label>
+                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                          Promotional content and special offers
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notifications.marketing}
+                        onCheckedChange={(checked) =>
+                          setNotifications({ ...notifications, marketing: checked })
+                        }
+                        className={switchClassName}
+                        data-testid="switch-marketing"
+                      />
+                    </div>
+                  </div>
+
+                  <Button 
+                    className="min-h-[44px] bg-[#F26207] hover:bg-[#D04E00] text-white transition-all duration-200"
+                    data-testid="button-save-preferences"
+                  >
+                    Save Preferences
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'appearance' && (
+              <Card className={cardClassName} data-testid="card-appearance-settings">
+                <CardHeader>
+                  <CardTitle className="text-[var(--ecode-text)]">Appearance</CardTitle>
+                  <CardDescription className="text-[var(--ecode-text-muted)]">
+                    Customize how E-Code looks for you
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-[var(--ecode-text)]">Theme</Label>
+                      <Select value={theme} onValueChange={setTheme}>
+                        <SelectTrigger 
+                          className={inputClassName}
+                          data-testid="select-theme"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+                          <SelectItem value="light" data-testid="select-theme-light">
+                            <div className="flex items-center gap-2">
+                              <Sun className="h-4 w-4" />
+                              Light
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="dark" data-testid="select-theme-dark">
+                            <div className="flex items-center gap-2">
+                              <Moon className="h-4 w-4" />
+                              Dark
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="system" data-testid="select-theme-system">
+                            <div className="flex items-center gap-2">
+                              <Monitor className="h-4 w-4" />
+                              System
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label className="text-[var(--ecode-text)]">Primary Color</Label>
+                      <div className="grid grid-cols-6 gap-2 mt-2">
+                        {[
+                          { name: 'orange', color: 'bg-[#F26207]' },
+                          { name: 'blue', color: 'bg-blue-500' },
+                          { name: 'green', color: 'bg-green-500' },
+                          { name: 'purple', color: 'bg-purple-500' },
+                          { name: 'red', color: 'bg-red-500' },
+                          { name: 'pink', color: 'bg-pink-500' },
+                        ].map((colorOption) => (
+                          <button
+                            key={colorOption.name}
+                            className={`h-8 w-full rounded-lg ${colorOption.color} hover:ring-2 ring-offset-2 ring-[var(--ecode-text)] transition-all duration-200`}
+                            data-testid={`button-color-${colorOption.name}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button 
+                    className="bg-[#F26207] hover:bg-[#D04E00] text-white transition-all duration-200"
+                    data-testid="button-apply-theme"
+                  >
+                    Apply Theme
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'editor' && (
+              <Card className={cardClassName} data-testid="card-editor-settings">
+                <CardHeader>
+                  <CardTitle className="text-[var(--ecode-text)]">Editor Preferences</CardTitle>
+                  <CardDescription className="text-[var(--ecode-text-muted)]">
+                    Configure your code editor settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-[var(--ecode-text)]">Editor Theme</Label>
+                      <Select value={editorTheme} onValueChange={setEditorTheme}>
+                        <SelectTrigger 
+                          className={inputClassName}
+                          data-testid="select-editor-theme"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+                          <SelectItem value="dark" data-testid="select-editor-dark">Dark</SelectItem>
+                          <SelectItem value="light" data-testid="select-editor-light">Light</SelectItem>
+                          <SelectItem value="monokai" data-testid="select-editor-monokai">Monokai</SelectItem>
+                          <SelectItem value="solarized" data-testid="select-editor-solarized">Solarized</SelectItem>
+                          <SelectItem value="dracula" data-testid="select-editor-dracula">Dracula</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label className="text-[var(--ecode-text)]">Font Size</Label>
+                      <Select value={fontSize} onValueChange={setFontSize}>
+                        <SelectTrigger 
+                          className={inputClassName}
+                          data-testid="select-font-size"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+                          <SelectItem value="12" data-testid="select-font-12">12px</SelectItem>
+                          <SelectItem value="14" data-testid="select-font-14">14px</SelectItem>
+                          <SelectItem value="16" data-testid="select-font-16">16px</SelectItem>
+                          <SelectItem value="18" data-testid="select-font-18">18px</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label className="text-[var(--ecode-text)]">Tab Size</Label>
+                      <Select value={tabSize} onValueChange={setTabSize}>
+                        <SelectTrigger 
+                          className={inputClassName}
+                          data-testid="select-tab-size"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+                          <SelectItem value="2" data-testid="select-tab-2">2 spaces</SelectItem>
+                          <SelectItem value="4" data-testid="select-tab-4">4 spaces</SelectItem>
+                          <SelectItem value="8" data-testid="select-tab-8">8 spaces</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                      <div className="space-y-0.5">
+                        <Label className="text-[var(--ecode-text)]">Word Wrap</Label>
+                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                          Wrap long lines of code
+                        </p>
+                      </div>
+                      <Switch 
+                        checked={wordWrap} 
+                        onCheckedChange={setWordWrap} 
+                        className={switchClassName}
+                        data-testid="switch-word-wrap"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                      <div className="space-y-0.5">
+                        <Label className="text-[var(--ecode-text)]">Minimap</Label>
+                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                          Show code minimap
+                        </p>
+                      </div>
+                      <Switch 
+                        checked={minimap} 
+                        onCheckedChange={setMinimap} 
+                        className={switchClassName}
+                        data-testid="switch-minimap"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                      <div className="space-y-0.5">
+                        <Label className="text-[var(--ecode-text)]">Auto Save</Label>
+                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                          Automatically save changes
+                        </p>
+                      </div>
+                      <Switch 
+                        checked={autoSave} 
+                        onCheckedChange={setAutoSave} 
+                        className={switchClassName}
+                        data-testid="switch-auto-save"
+                      />
+                    </div>
+                  </div>
+
+                  <Button 
+                    className="bg-[#F26207] hover:bg-[#D04E00] text-white transition-all duration-200"
+                    data-testid="button-save-editor-settings"
+                  >
+                    Save Editor Settings
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'privacy' && (
+              <div className="space-y-6">
+                <Card className={cardClassName} data-testid="card-privacy-settings">
+                  <CardHeader>
+                    <CardTitle className="text-[var(--ecode-text)]">Privacy Settings</CardTitle>
+                    <CardDescription className="text-[var(--ecode-text-muted)]">
+                      Control your privacy and data sharing
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                      <div className="space-y-0.5">
+                        <Label className="text-[var(--ecode-text)]">Public Profile</Label>
+                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                          Make your profile visible to others
+                        </p>
+                      </div>
+                      <Switch 
+                        defaultChecked 
+                        className={switchClassName}
+                        data-testid="switch-public-profile"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                      <div className="space-y-0.5">
+                        <Label className="text-[var(--ecode-text)]">Show Activity</Label>
+                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                          Display your coding activity on your profile
+                        </p>
+                      </div>
+                      <Switch 
+                        defaultChecked 
+                        className={switchClassName}
+                        data-testid="switch-show-activity"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                      <div className="space-y-0.5">
+                        <Label className="text-[var(--ecode-text)]">Analytics</Label>
+                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                          Help improve E-Code with anonymous usage data
+                        </p>
+                      </div>
+                      <Switch 
+                        defaultChecked 
+                        className={switchClassName}
+                        data-testid="switch-analytics"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className={cardClassName} data-testid="card-security-settings">
+                  <CardHeader>
+                    <CardTitle className="text-[var(--ecode-text)]">Security</CardTitle>
+                    <CardDescription className="text-[var(--ecode-text-muted)]">
+                      Secure your account
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label className="text-[var(--ecode-text)]">Password</Label>
+                      <div className="flex gap-2 mt-2">
+                        <Input 
+                          type="password" 
+                          placeholder="••••••••" 
+                          disabled 
+                          className={`${inputClassName} opacity-60 flex-1`}
+                          data-testid="input-password"
+                        />
+                        <Button 
+                          variant="outline" 
+                          className="border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] hover:bg-[var(--ecode-surface-hover)] hover:border-[#F26207]/30"
+                          data-testid="button-change-password"
+                        >
+                          Change
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-[var(--ecode-text)]">Two-Factor Authentication</Label>
+                      <p className="text-sm text-[var(--ecode-text-muted)] mb-2">
+                        Add an extra layer of security to your account
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="gap-2 border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] hover:bg-[var(--ecode-surface-hover)] hover:border-[#F26207]/30"
+                        data-testid="button-enable-2fa"
+                      >
+                        <Shield className="h-4 w-4" />
+                        Enable 2FA
+                      </Button>
+                    </div>
+
+                    <div>
+                      <Label className="text-[var(--ecode-text)]">Sessions</Label>
+                      <p className="text-sm text-[var(--ecode-text-muted)] mb-2">
+                        Manage your active sessions
+                      </p>
+                      <Button 
+                        variant="outline"
+                        className="border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] hover:bg-[var(--ecode-surface-hover)] hover:border-[#F26207]/30"
+                        data-testid="button-view-sessions"
+                      >
+                        View Sessions
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {activeTab === 'billing' && (
+              <div className="space-y-6">
+                <Card className={cardClassName} data-testid="card-billing-plan">
+                  <CardHeader>
+                    <CardTitle className="text-[var(--ecode-text)]">Current Plan</CardTitle>
+                    <CardDescription className="text-[var(--ecode-text-muted)]">
+                      You're currently on the Free plan
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="p-4 border border-[var(--ecode-border)] rounded-lg bg-[var(--ecode-surface-tertiary)]">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-semibold text-[var(--ecode-text)]">Free Plan</h3>
+                          <Badge 
+                            variant="secondary" 
+                            className="bg-[#F26207]/10 text-[#F26207] border-0"
+                          >
+                            Current
+                          </Badge>
+                        </div>
+                        <ul className="space-y-2 text-sm">
+                          <li className="flex items-center gap-2 text-[var(--ecode-text)]">
+                            <Check className="h-4 w-4 text-green-500" />
+                            Unlimited public repls
+                          </li>
+                          <li className="flex items-center gap-2 text-[var(--ecode-text)]">
+                            <Check className="h-4 w-4 text-green-500" />
+                            500MB storage
+                          </li>
+                          <li className="flex items-center gap-2 text-[var(--ecode-text-muted)]">
+                            <X className="h-4 w-4 text-red-500" />
+                            Private repls
+                          </li>
+                          <li className="flex items-center gap-2 text-[var(--ecode-text-muted)]">
+                            <X className="h-4 w-4 text-red-500" />
+                            Always-on repls
+                          </li>
+                        </ul>
+                      </div>
+
+                      <Button 
+                        className="w-full gap-2 bg-[#F26207] hover:bg-[#D04E00] text-white transition-all duration-200"
+                        data-testid="button-upgrade-pro"
+                      >
+                        <Crown className="h-4 w-4" />
+                        Upgrade to Pro
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className={cardClassName} data-testid="card-payment-methods">
+                  <CardHeader>
+                    <CardTitle className="text-[var(--ecode-text)]">Payment Methods</CardTitle>
+                    <CardDescription className="text-[var(--ecode-text-muted)]">
+                      Manage your payment methods
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-[var(--ecode-text-muted)]">
+                      No payment methods on file
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-4 border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] hover:bg-[var(--ecode-surface-hover)] hover:border-[#F26207]/30"
+                      data-testid="button-add-payment"
+                    >
+                      Add Payment Method
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {activeTab === 'integrations' && (
+              <Card className={cardClassName} data-testid="card-integrations">
+                <CardHeader>
+                  <CardTitle className="text-[var(--ecode-text)]">Connected Services</CardTitle>
+                  <CardDescription className="text-[var(--ecode-text-muted)]">
+                    Manage your connected accounts and services
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border border-[var(--ecode-border)] rounded-lg hover:border-[#F26207]/30 transition-all duration-200">
+                    <div className="flex items-center gap-3">
+                      <Github className="h-8 w-8 text-[var(--ecode-text)]" />
+                      <div>
+                        <h4 className="font-semibold text-[var(--ecode-text)]">GitHub</h4>
+                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                          Import and sync repositories
+                        </p>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="outline"
+                      className="border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] hover:bg-[var(--ecode-surface-hover)] hover:border-[#F26207]/30"
+                      data-testid="button-connect-github"
+                    >
+                      Connect
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Payment Methods</CardTitle>
-                  <CardDescription>
-                    Manage your payment methods
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    No payment methods on file
-                  </p>
-                  <Button variant="outline" className="mt-4">
-                    Add Payment Method
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Integrations */}
-          {activeTab === 'integrations' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Connected Services</CardTitle>
-                <CardDescription>
-                  Manage your connected accounts and services
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <Github className="h-8 w-8" />
-                    <div>
-                      <h4 className="font-semibold">GitHub</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Import and sync repositories
-                      </p>
+                  <div className="flex items-center justify-between p-4 border border-[var(--ecode-border)] rounded-lg hover:border-[#F26207]/30 transition-all duration-200">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 bg-blue-500 rounded flex items-center justify-center text-white font-bold">
+                        G
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-[var(--ecode-text)]">Google</h4>
+                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                          Sign in with Google
+                        </p>
+                      </div>
                     </div>
+                    <Badge 
+                      variant="secondary" 
+                      className="gap-1 bg-green-500/10 text-green-600 border-0"
+                    >
+                      <Check className="h-3 w-3" />
+                      Connected
+                    </Badge>
                   </div>
-                  <Button variant="outline">Connect</Button>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 bg-blue-500 rounded flex items-center justify-center text-white font-bold">
-                      G
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">Google</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Sign in with Google
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="secondary" className="gap-1">
-                    <Check className="h-3 w-3" />
-                    Connected
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Data & Export */}
-          {activeTab === 'data' && (
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Export Your Data</CardTitle>
-                  <CardDescription>
-                    Download all your repls and account data
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button className="gap-2">
-                    <Download className="h-4 w-4" />
-                    Export All Data
-                  </Button>
                 </CardContent>
               </Card>
+            )}
 
-              <Card className="border-destructive">
-                <CardHeader>
-                  <CardTitle className="text-destructive">Danger Zone</CardTitle>
-                  <CardDescription>
-                    Irreversible actions
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive">Delete Account</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete your
-                          account and remove all your data from our servers.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleDeleteAccount}
-                          className="bg-destructive text-destructive-foreground"
+            {activeTab === 'data' && (
+              <div className="space-y-6">
+                <Card className={cardClassName} data-testid="card-export-data">
+                  <CardHeader>
+                    <CardTitle className="text-[var(--ecode-text)]">Export Your Data</CardTitle>
+                    <CardDescription className="text-[var(--ecode-text-muted)]">
+                      Download all your repls and account data
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button 
+                      className="gap-2 bg-[#F26207] hover:bg-[#D04E00] text-white transition-all duration-200"
+                      data-testid="button-export-data"
+                    >
+                      <Download className="h-4 w-4" />
+                      Export All Data
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card 
+                  className="border border-red-500/30 bg-[var(--ecode-surface)] shadow-[var(--ecode-shadow-sm)]"
+                  data-testid="card-danger-zone"
+                >
+                  <CardHeader>
+                    <CardTitle className="text-red-500">Danger Zone</CardTitle>
+                    <CardDescription className="text-[var(--ecode-text-muted)]">
+                      Irreversible actions
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="destructive"
+                          className="bg-red-500 hover:bg-red-600 text-white"
+                          data-testid="button-delete-account"
                         >
                           Delete Account
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="text-[var(--ecode-text)]">
+                            Are you absolutely sure?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription className="text-[var(--ecode-text-muted)]">
+                            This action cannot be undone. This will permanently delete your
+                            account and remove all your data from our servers.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel 
+                            className="border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] hover:bg-[var(--ecode-surface-hover)]"
+                            data-testid="button-cancel-delete"
+                          >
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleDeleteAccount}
+                            className="bg-red-500 hover:bg-red-600 text-white"
+                            data-testid="button-confirm-delete"
+                          >
+                            Delete Account
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </PageShell>
