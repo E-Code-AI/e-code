@@ -110,16 +110,16 @@ export default function AuthPage() {
               <div className="flex flex-col gap-2 mt-2">
                 <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2">
                   <div className="text-xs sm:text-sm text-[var(--ecode-text-muted)]">
-                    <span>Email: <code className="bg-[#F26207]/10 dark:bg-[#F26207]/20 text-[#F26207] px-1.5 py-0.5 rounded font-mono text-xs">admin@e-code.ai</code></span><br/>
-                    <span>Password: <code className="bg-[#F26207]/10 dark:bg-[#F26207]/20 text-[#F26207] px-1.5 py-0.5 rounded font-mono text-xs">admin123</code></span>
+                    <span>Email: <code className="bg-[#F26207]/10 dark:bg-[#F26207]/20 text-[#F26207] px-1.5 py-0.5 rounded font-mono text-xs">admin@test.com</code></span><br/>
+                    <span>Password: <code className="bg-[#F26207]/10 dark:bg-[#F26207]/20 text-[#F26207] px-1.5 py-0.5 rounded font-mono text-xs">adminpass123</code></span>
                   </div>
                   <Button 
                     variant="secondary" 
                     size="sm" 
                     className="min-h-[40px] text-xs sm:text-sm px-4 bg-[#F26207]/10 hover:bg-[#F26207]/20 text-[#F26207] border-0 font-medium transition-all duration-200"
                     onClick={() => {
-                      loginForm.setValue('email', 'admin@e-code.ai');
-                      loginForm.setValue('password', 'admin123');
+                      loginForm.setValue('email', 'admin@test.com');
+                      loginForm.setValue('password', 'adminpass123');
                       setActiveTab('login');
                     }}
                     data-testid="button-use-admin"
@@ -223,8 +223,8 @@ export default function AuthPage() {
                           variant="outline" 
                           className="flex-1 min-h-[44px] text-xs sm:text-sm border-[#F26207]/30 bg-[#F26207]/5 hover:bg-[#F26207]/10 hover:border-[#F26207]/50 text-[#F26207] font-medium transition-all duration-200 rounded-lg"
                           onClick={() => {
-                            loginForm.setValue('email', 'admin@replit.com');
-                            loginForm.setValue('password', 'admin');
+                            loginForm.setValue('email', 'admin@test.com');
+                            loginForm.setValue('password', 'adminpass123');
                             loginForm.handleSubmit(onLoginSubmit)();
                           }}
                           data-testid="button-oneclick-admin"
@@ -237,8 +237,8 @@ export default function AuthPage() {
                           variant="outline" 
                           className="flex-1 min-h-[44px] text-xs sm:text-sm border-[var(--ecode-border)] hover:border-[#F26207]/30 hover:bg-[#F26207]/5 text-[var(--ecode-text)] font-medium transition-all duration-200 rounded-lg"
                           onClick={() => {
-                            loginForm.setValue('email', 'test@ecode.com');
-                            loginForm.setValue('password', 'admin123');
+                            loginForm.setValue('email', 'admin@test.com');
+                            loginForm.setValue('password', 'adminpass123');
                             loginForm.handleSubmit(onLoginSubmit)();
                           }}
                           data-testid="button-oneclick-demo"
