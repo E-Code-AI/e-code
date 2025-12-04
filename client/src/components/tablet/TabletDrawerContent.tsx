@@ -1,9 +1,11 @@
 /**
  * TabletDrawerContent Component
  * Enhanced drawer content with Files and Tools tabs for tablet interface
+ * Replit-identical design with E-Code branding
  */
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { 
   FileText, 
@@ -20,6 +22,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MobileFileExplorer } from '@/components/mobile/MobileFileExplorer';
+import { useReducedMotion, getReducedMotionTransition, SPRING_CONFIG } from '@/hooks/use-reduced-motion';
 
 interface TabletDrawerContentProps {
   projectId: string | number; // Support both UUID strings and numeric IDs
@@ -57,8 +60,8 @@ export function TabletDrawerContent({
   errorsCount = 0
 }: TabletDrawerContentProps) {
   const [activeTab, setActiveTab] = useState<DrawerTab>('files');
+  const prefersReducedMotion = useReducedMotion();
 
-  // Haptic feedback helper
   const vibrate = () => {
     if ('vibrate' in navigator) navigator.vibrate(10);
   };
@@ -69,29 +72,41 @@ export function TabletDrawerContent({
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* Tab Switcher */}
-      <div className="flex items-center border-b border-border bg-muted/50">
-        <Button
-          variant={activeTab === 'files' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => handleTabSwitch('files')}
-          className="flex-1 rounded-none h-12 touch-manipulation"
-          data-testid="tab-drawer-files"
-        >
-          <FileText className="h-5 w-5 mr-2" />
-          Files
-        </Button>
-        <Button
-          variant={activeTab === 'tools' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => handleTabSwitch('tools')}
-          className="flex-1 rounded-none h-12 touch-manipulation"
-          data-testid="tab-drawer-tools"
-        >
-          <Wrench className="h-5 w-5 mr-2" />
-          Tools
-        </Button>
+    <div className="h-full flex flex-col bg-[var(--ecode-background)]">
+      <div className="flex items-center border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+        {(['files', 'tools'] as DrawerTab[]).map((tab) => (
+          <motion.button
+            key={tab}
+            onClick={() => handleTabSwitch(tab)}
+            className={cn(
+              "relative flex-1 flex items-center justify-center gap-2 h-14 touch-manipulation",
+              "font-medium text-sm transition-colors",
+              activeTab === tab 
+                ? "text-[var(--ecode-accent)]" 
+                : "text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]"
+            )}
+            whileTap={prefersReducedMotion ? undefined : { scale: 0.97 }}
+            data-testid={`tab-drawer-${tab}`}
+          >
+            {tab === 'files' ? (
+              <FileText className="h-5 w-5" />
+            ) : (
+              <Wrench className="h-5 w-5" />
+            )}
+            <span className="capitalize">{tab}</span>
+            
+            {activeTab === tab && (
+              <motion.div
+                layoutId="tablet-drawer-tab-indicator"
+                className="absolute bottom-0 left-2 right-2 h-[3px] bg-[var(--ecode-accent)] rounded-full"
+                transition={getReducedMotionTransition(prefersReducedMotion, SPRING_CONFIG.default)}
+                style={{
+                  boxShadow: prefersReducedMotion ? 'none' : '0 0 8px 2px var(--ecode-accent)',
+                }}
+              />
+            )}
+          </motion.button>
+        ))}
       </div>
 
       {/* Tab Content */}
@@ -226,41 +241,53 @@ function ToolsPanel({
     tool.action();
   };
 
+  const prefersReducedMotion = useReducedMotion();
+
   return (
-    <div className="p-2 space-y-1">
-      <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+    <div className="p-3 space-y-1.5">
+      <div className="px-2 py-2 text-[11px] font-semibold text-[var(--ecode-text-muted)] uppercase tracking-wider">
         Quick Access
       </div>
       
-      {tools.map((tool) => {
+      {tools.map((tool, index) => {
         const Icon = tool.icon;
         return (
-          <button
+          <motion.button
             key={tool.id}
             onClick={() => handleToolClick(tool)}
+            initial={prefersReducedMotion ? false : { opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: prefersReducedMotion ? 0 : index * 0.03 }}
+            whileTap={prefersReducedMotion ? undefined : { scale: 0.98 }}
             className={cn(
-              "w-full flex items-start gap-3 p-3 rounded-md",
-              "hover:bg-accent hover:text-accent-foreground",
-              "transition-colors touch-manipulation",
-              "text-left min-h-[60px]"
+              "w-full flex items-start gap-3 p-3 rounded-lg",
+              "bg-transparent hover:bg-[var(--ecode-surface-hover)]",
+              "transition-colors duration-150 touch-manipulation",
+              "text-left min-h-[56px] group"
             )}
             data-testid={`tool-${tool.id}`}
           >
             <div className="flex-shrink-0 mt-0.5 relative">
-              <Icon className="h-5 w-5" />
+              <div className="w-9 h-9 rounded-lg bg-[var(--ecode-surface)] flex items-center justify-center group-hover:bg-[var(--ecode-accent)]/10 transition-colors">
+                <Icon className="h-4.5 w-4.5 text-[var(--ecode-text-muted)] group-hover:text-[var(--ecode-accent)] transition-colors" />
+              </div>
               {tool.badge !== undefined && tool.badge > 0 && (
-                <span className="absolute -top-1 -right-2 flex items-center justify-center min-w-[16px] h-[16px] px-1 text-[10px] font-bold text-white bg-primary rounded-full">
+                <motion.span 
+                  initial={prefersReducedMotion ? false : { scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full border-2 border-[var(--ecode-background)]"
+                >
                   {tool.badge > 99 ? '99+' : tool.badge}
-                </span>
+                </motion.span>
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm">{tool.name}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">
+            <div className="flex-1 min-w-0 py-0.5">
+              <div className="font-medium text-sm text-[var(--ecode-text)]">{tool.name}</div>
+              <div className="text-xs text-[var(--ecode-text-muted)] mt-0.5 line-clamp-1">
                 {tool.description}
               </div>
             </div>
-          </button>
+          </motion.button>
         );
       })}
     </div>
