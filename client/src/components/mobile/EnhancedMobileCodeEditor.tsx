@@ -274,7 +274,7 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
     <div className={cn('relative h-full flex flex-col', props.className)}>
       {showKeyboardToolbar && !props.readOnly && (
         <motion.div 
-          className="flex items-center gap-1 px-2 py-2 bg-[#1E293B] border-b border-[#334155] overflow-x-auto mobile-hide-scrollbar"
+          className="flex items-center gap-1 px-2 py-2 bg-card dark:bg-[var(--ecode-surface)] border-b border-border dark:border-[var(--ecode-border)] overflow-x-auto mobile-hide-scrollbar"
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -50, opacity: 0 }}
@@ -283,7 +283,7 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-4 text-sm font-mono bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[48px]"
+            className="h-10 px-4 text-sm font-mono bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[48px]"
             onClick={() => insertText('\t')}
             data-testid="enhanced-mobile-editor-tab"
           >
@@ -293,7 +293,7 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-3 text-sm bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[44px]"
+            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
             onClick={() => insertText('{')}
           >
             {'{'}
@@ -302,7 +302,7 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-3 text-sm bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[44px]"
+            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
             onClick={() => insertText('}')}
           >
             {'}'}
@@ -311,7 +311,7 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-3 text-sm bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[44px]"
+            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
             onClick={() => insertText('(')}
           >
             (
@@ -320,7 +320,7 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-3 text-sm bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[44px]"
+            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
             onClick={() => insertText(')')}
           >
             )
@@ -329,18 +329,18 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-3 text-sm bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[44px]"
+            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
             onClick={() => insertText(';')}
           >
             ;
           </Button>
           
-          <div className="w-px h-8 bg-[#475569] mx-1" />
+          <div className="w-px h-8 bg-border dark:bg-[var(--ecode-border)] mx-1" />
           
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 w-10 p-0 hover:bg-[#475569] active:scale-95 touch-manipulation"
+            className="h-10 w-10 p-0 hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleUndo}
             data-testid="enhanced-mobile-editor-undo"
           >
@@ -350,7 +350,7 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 w-10 p-0 hover:bg-[#475569] active:scale-95 touch-manipulation"
+            className="h-10 w-10 p-0 hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleRedo}
             data-testid="enhanced-mobile-editor-redo"
           >
@@ -360,7 +360,7 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 w-10 p-0 hover:bg-[#475569] active:scale-95 touch-manipulation"
+            className="h-10 w-10 p-0 hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleFindClick}
             data-testid="enhanced-mobile-editor-find"
           >
@@ -387,7 +387,7 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 w-10 p-0 hover:bg-[#475569] active:scale-95 touch-manipulation"
+            className="h-10 w-10 p-0 hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={() => setShowKeyboardToolbar(false)}
             data-testid="enhanced-mobile-editor-hide-toolbar"
           >

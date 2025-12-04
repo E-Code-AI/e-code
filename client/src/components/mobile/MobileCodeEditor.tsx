@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { EditorView } from '@codemirror/view';
-import { undo, redo } from '@codemirror/commands';
+import { undo, redo, cursorCharLeft, cursorCharRight, cursorLineUp, cursorLineDown } from '@codemirror/commands';
 import { openSearchPanel } from '@codemirror/search';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Undo2, Redo2, Save, Search, 
-  Keyboard, X, Sparkles
+  Keyboard, X, Sparkles,
+  ChevronLeft, ChevronRight, ChevronUp, ChevronDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -142,6 +143,56 @@ export function MobileCodeEditor({
     if (view) {
       openSearchPanel(view);
     }
+  };
+
+  const triggerHapticFeedback = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+  };
+
+  const handleCaretLeft = () => {
+    const view = editorViewRef.current;
+    if (view) {
+      cursorCharLeft(view);
+      view.focus();
+    }
+  };
+
+  const handleCaretRight = () => {
+    const view = editorViewRef.current;
+    if (view) {
+      cursorCharRight(view);
+      view.focus();
+    }
+  };
+
+  const handleCaretUp = () => {
+    const view = editorViewRef.current;
+    if (view) {
+      cursorLineUp(view);
+      view.focus();
+    }
+  };
+
+  const handleCaretDown = () => {
+    const view = editorViewRef.current;
+    if (view) {
+      cursorLineDown(view);
+      view.focus();
+    }
+  };
+
+  const handleHideToolbar = () => {
+    triggerHapticFeedback();
+    setShowKeyboardToolbar(false);
+    (document.activeElement as HTMLElement)?.blur();
+  };
+
+  const handleShowToolbar = () => {
+    triggerHapticFeedback();
+    setShowKeyboardToolbar(true);
+    editorViewRef.current?.focus();
   };
 
   const triggerSuggestions = () => {
@@ -318,6 +369,46 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
+            className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+            onClick={handleCaretLeft}
+            data-testid="button-caret-left"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+            onClick={handleCaretRight}
+            data-testid="button-caret-right"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+            onClick={handleCaretUp}
+            data-testid="button-caret-up"
+          >
+            <ChevronUp className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+            onClick={handleCaretDown}
+            data-testid="button-caret-down"
+          >
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            size="sm"
+            variant="ghost"
             className="h-10 w-10 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleUndo}
             data-testid="mobile-editor-undo"
@@ -376,7 +467,7 @@ export function MobileCodeEditor({
             size="sm"
             variant="ghost"
             className="h-10 w-10 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
-            onClick={() => setShowKeyboardToolbar(false)}
+            onClick={handleHideToolbar}
             data-testid="mobile-editor-hide-toolbar"
           >
             <X className="h-5 w-5" />
@@ -394,7 +485,7 @@ export function MobileCodeEditor({
             size="sm"
             variant="secondary"
             className="h-10 w-10 p-0 rounded-full shadow-lg touch-manipulation"
-            onClick={() => setShowKeyboardToolbar(true)}
+            onClick={handleShowToolbar}
             data-testid="mobile-editor-show-toolbar"
           >
             <Keyboard className="h-5 w-5" />
