@@ -73,7 +73,9 @@ interface TopNavBarProps {
   activeTab: string;
   onTabChange: (tabId: string) => void;
   onTabClose: (tabId: string) => void;
+  onTabReorder?: (fromIndex: number, toIndex: number) => void;
   onAddTab?: () => void;
+  onOpenToolsSheet?: () => void;
   availableTools?: AvailableTool[];
   onAddTool?: (toolId: string) => void;
   showFileExplorer: boolean;
@@ -97,7 +99,9 @@ export function TopNavBar({
   activeTab,
   onTabChange,
   onTabClose,
+  onTabReorder,
   onAddTab,
+  onOpenToolsSheet,
   availableTools,
   onAddTool,
   showFileExplorer,
@@ -165,17 +169,37 @@ export function TopNavBar({
         <span className="text-xs font-medium truncate max-w-[150px]">{projectName}</span>
       </div>
       
-      {/* Tabs */}
-      <div className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-thin">
-        {tabs.slice(0, 8).map((tab) => {
+      {/* Tabs with Drag-and-Drop Reorder - All tabs visible with scroll */}
+      <div className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+        {tabs.map((tab, index) => {
           const Icon = tab.icon;
           return (
             <button
               key={tab.id}
+              draggable={onTabReorder !== undefined}
+              onDragStart={(e) => {
+                e.dataTransfer.setData('text/plain', String(index));
+                e.dataTransfer.effectAllowed = 'move';
+                (e.target as HTMLElement).style.opacity = '0.5';
+              }}
+              onDragEnd={(e) => {
+                (e.target as HTMLElement).style.opacity = '1';
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                if (onTabReorder && fromIndex !== index) {
+                  onTabReorder(fromIndex, index);
+                }
+              }}
               onClick={() => onTabChange(tab.id)}
               data-testid={`tab-${tab.id}`}
               className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md transition-all duration-200",
+                "flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md transition-all duration-200 cursor-grab active:cursor-grabbing",
                 "hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-950/40 dark:hover:to-purple-950/40 hover:shadow-sm",
                 activeTab === tab.id 
                   ? "bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 shadow-sm" 
@@ -197,29 +221,8 @@ export function TopNavBar({
           );
         })}
         
-        {/* More tabs indicator */}
-        {tabs.length > 8 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                <MoreHorizontal className="h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              {tabs.slice(8).map((tab) => (
-                <DropdownMenuItem
-                  key={tab.id}
-                  onClick={() => onTabChange(tab.id)}
-                >
-                  {tab.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-        
         {/* Enhanced Add Tab Menu */}
-        {onAddTool && <AddTabMenu onAddTool={onAddTool} availableTools={availableTools} />}
+        {onAddTool && <AddTabMenu onAddTool={onAddTool} availableTools={availableTools} onOpenToolsSheet={onOpenToolsSheet} />}
       </div>
       
       {/* Right Actions */}
