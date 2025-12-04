@@ -135,7 +135,6 @@ const HealthDashboard = lazy(() => import("@/pages/HealthDashboard"));
 const StudentDPA = lazy(() => import("@/pages/StudentDPA"));
 const Languages = lazy(() => import("@/pages/Languages"));
 const GitHubImport = lazy(() => import("@/pages/GitHubImport"));
-const Git = lazy(() => import("@/pages/Git"));
 
 const Secrets = lazy(() => import("@/pages/Secrets"));
 const Workflows = lazy(() => import("@/pages/Workflows"));
@@ -531,7 +530,6 @@ function AppContent() {
               <LovableImport />
             </ReplitLayout>
           )} />
-          <Route path="/git" component={Git} />
           {/* Newsletter pages */}
           <Route path="/newsletter-confirmed" component={NewsletterConfirmed} />
           <Route path="/newsletter/confirm" component={NewsletterConfirm} />

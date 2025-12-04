@@ -9,7 +9,7 @@ import { MobilePreviewPanel } from '@/components/mobile/MobilePreviewPanel';
 import { MobileDatabasePanel } from '@/components/mobile/MobileDatabasePanel';
 import { MobileSecretsPanel } from '@/components/mobile/MobileSecretsPanel';
 import { MobilePackagesPanel } from '@/components/mobile/MobilePackagesPanel';
-import { MobileGitPanel } from '@/components/mobile/MobileGitPanel';
+import { ReplitGitPanel } from '@/components/editor/ReplitGitPanel';
 import { MobileDebugPanel } from '@/components/mobile/MobileDebugPanel';
 import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
 import { Button } from '@/components/ui/button';
@@ -221,7 +221,7 @@ export default function MobileWorkspace() {
           {activeTool === 'database' && <MobileDatabasePanel projectId={projectId} />}
           {activeTool === 'auth' && <MobileSecretsPanel projectId={projectId} />}
           {activeTool === 'integrations' && <MobilePackagesPanel projectId={projectId} />}
-          {activeTool === 'git' && <MobileGitPanel projectId={projectId} />}
+          {activeTool === 'git' && <ReplitGitPanel projectId={projectId} className="h-full" />}
           {activeTool === 'developer' && <MobileDebugPanel projectId={projectId} />}
           {!['database', 'auth', 'integrations', 'git', 'developer'].includes(activeTool || '') && (
             <div className="flex items-center justify-center h-full">
