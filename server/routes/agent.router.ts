@@ -226,6 +226,84 @@ router.post('/conversation/:id/mode', async (req, res) => {
   }
 });
 
+// GET /api/agent/conversation/:id/messages - Load existing messages for a conversation
+router.get('/conversation/:id/messages', async (req, res) => {
+  try {
+    const conversationIdStr = req.params.id;
+    const conversationId = parseInt(conversationIdStr, 10);
+    const userId = req.user!.id;
+
+    if (isNaN(conversationId)) {
+      return res.status(400).json({
+        error: 'Invalid conversation ID',
+      });
+    }
+
+    const { aiConversations, agentMessages } = await import('@shared/schema');
+    const { eq, and, desc } = await import('drizzle-orm');
+
+    const [conversation] = await db
+      .select()
+      .from(aiConversations)
+      .where(and(
+        eq(aiConversations.id, conversationId),
+        eq(aiConversations.userId, userId)
+      ))
+      .limit(1);
+
+    if (!conversation) {
+      return res.status(404).json({
+        error: 'Conversation not found or access denied',
+      });
+    }
+
+    const dbMessages = await db
+      .select()
+      .from(agentMessages)
+      .where(eq(agentMessages.conversationId, conversationId))
+      .orderBy(agentMessages.createdAt);
+
+    if (dbMessages.length > 0) {
+      const messages = dbMessages.map(msg => ({
+        id: msg.id,
+        role: msg.role as 'user' | 'assistant' | 'system',
+        content: msg.content,
+        timestamp: msg.createdAt,
+        type: msg.type || 'text',
+        thinking: msg.extendedThinking?.steps || undefined,
+        toolExecutions: msg.toolExecutions || undefined,
+        metadata: msg.metadata || undefined,
+      }));
+
+      return res.json({
+        conversationId,
+        messages,
+        source: 'agentMessages',
+        count: messages.length,
+      });
+    }
+
+    if (conversation.messages && Array.isArray(conversation.messages) && conversation.messages.length > 0) {
+      return res.json({
+        conversationId,
+        messages: conversation.messages,
+        source: 'aiConversations',
+        count: conversation.messages.length,
+      });
+    }
+
+    res.json({
+      conversationId,
+      messages: [],
+      source: 'none',
+      count: 0,
+    });
+  } catch (error: any) {
+    console.error('[AgentRouter] Error fetching conversation messages:', error);
+    res.status(500).json({ error: 'Failed to fetch conversation messages' });
+  }
+});
+
 // ====== ADMIN-ONLY ROUTES ======
 // These routes require admin authentication
 // Create new agent session

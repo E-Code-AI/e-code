@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'framer-motion';
-import { Code, Terminal, Monitor, MoreHorizontal, Sparkles, Rocket, Loader2, CheckCircle, ExternalLink } from 'lucide-react';
+import { Terminal, Monitor, MoreHorizontal, Sparkles, Loader2, CheckCircle, ExternalLink, FolderOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EnhancedMobileFileExplorer } from './EnhancedMobileFileExplorer';
 import { LazyMobileCodeEditor } from './LazyMobileCodeEditor';
@@ -19,15 +19,13 @@ import {
   TerminalSkeleton, 
   EditorSkeleton, 
   PreviewSkeleton, 
-  AgentSkeleton,
-  DeploySkeleton 
+  AgentSkeleton
 } from './MobileLoadingSkeleton';
 import { useTabPersistence, useFileBrowserPersistence } from '@/hooks/use-mobile-persistence';
 import { ReplitAgentPanelV3 } from '../ai/ReplitAgentPanelV3';
 import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 import { ReplitPublishButton } from '@/components/ide/ReplitPublishButton';
-import { ReplitDeploymentPanel } from '@/components/ide/ReplitDeploymentPanel';
 import { useConnectionStatus } from '@/hooks/use-connection-status';
 import { useProblemsCount } from '@/hooks/use-problems-count';
 import { useReducedMotion, SPRING_CONFIG, getReducedMotionTransition } from '@/hooks/use-reduced-motion';
@@ -55,13 +53,9 @@ const AgentFallback = () => (
   <AgentSkeleton className="h-full" />
 );
 
-const DeployFallback = () => (
-  <DeploySkeleton className="h-full" />
-);
-
 export type MobilePanelType = 'git' | 'packages' | 'secrets' | 'database' | 'settings' | 'debug' | null;
 
-export type MobileTab = 'agent' | 'code' | 'terminal' | 'preview' | 'deploy' | 'more';
+export type MobileTab = 'agent' | 'files' | 'console' | 'preview' | 'more';
 
 interface MobileIDEViewProps {
   projectId: string | number;
@@ -317,11 +311,10 @@ function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePu
 
 const tabs: { id: MobileTab; label: string; icon: typeof Code }[] = [
   { id: 'agent', label: 'Agent', icon: Sparkles },
-  { id: 'code', label: 'Code', icon: Code },
-  { id: 'terminal', label: 'Shell', icon: Terminal },
-  { id: 'preview', label: 'Web', icon: Monitor },
-  { id: 'deploy', label: 'Deploy', icon: Rocket },
-  { id: 'more', label: 'More', icon: MoreHorizontal },
+  { id: 'files', label: 'Files', icon: FolderOpen },
+  { id: 'console', label: 'Console', icon: Terminal },
+  { id: 'preview', label: 'Webview', icon: Monitor },
+  { id: 'more', label: 'Tools', icon: MoreHorizontal },
 ];
 
 export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
@@ -523,7 +516,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
                 </Suspense>
               )}
               
-              {activeTab === 'code' && (
+              {activeTab === 'files' && (
                 <Suspense fallback={<EditorFallback />}>
                   <LazyMobileCodeEditor 
                     projectId={projectId}
@@ -532,7 +525,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
                 </Suspense>
               )}
               
-              {activeTab === 'terminal' && (
+              {activeTab === 'console' && (
                 <Suspense fallback={<TerminalFallback />}>
                   <EnhancedMobileTerminal projectId={projectId} />
                 </Suspense>
@@ -544,17 +537,6 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
                 </Suspense>
               )}
               
-              {activeTab === 'deploy' && (
-                <Suspense fallback={<DeployFallback />}>
-                  <div className="h-full overflow-y-auto bg-background dark:bg-[var(--ecode-background)]">
-                    <ReplitDeploymentPanel 
-                      projectId={normalizedProjectId} 
-                      className="h-full"
-                      defaultTab="deploy"
-                    />
-                  </div>
-                </Suspense>
-              )}
             </motion.div>
           </AnimatePresence>
         </motion.div>
@@ -600,7 +582,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
 
       <MobilePublishFAB 
         projectId={normalizedProjectId} 
-        onNavigateToDeploy={() => setActiveTab('deploy')}
+        onNavigateToDeploy={() => handleOpenPanel('settings')}
       />
 
       <EnhancedMobileFileExplorer
@@ -609,7 +591,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         projectId={normalizedProjectId}
         onFileSelect={(file) => {
           setSelectedFileId(file.id);
-          setActiveTab('code' as MobileTab);
+          setActiveTab('files' as MobileTab);
           setIsFilesOpen(false);
         }}
       />
