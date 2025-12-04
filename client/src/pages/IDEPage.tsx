@@ -108,6 +108,9 @@ interface Tab {
   id: string;
   label: string;
   closable?: boolean;
+  pinned?: boolean;
+  modified?: boolean;
+  path?: string;
 }
 
 // Helper to get storage key for this project
@@ -492,6 +495,64 @@ export default function IDEPage() {
     });
   }, []);
   
+  // Handle tab pin/unpin (Replit-style)
+  const handleTabPin = useCallback((tabId: string) => {
+    setTabs(prev => {
+      const tabIndex = prev.findIndex(t => t.id === tabId);
+      if (tabIndex === -1) return prev;
+      
+      const tab = prev[tabIndex];
+      const newTab = { ...tab, pinned: !tab.pinned };
+      const newTabs = prev.filter(t => t.id !== tabId);
+      
+      // Pinned tabs go to the front
+      if (newTab.pinned) {
+        const pinnedCount = newTabs.filter(t => t.pinned).length;
+        newTabs.splice(pinnedCount, 0, newTab);
+      } else {
+        // Unpinned tabs go after all pinned tabs
+        const pinnedCount = newTabs.filter(t => t.pinned).length;
+        newTabs.splice(pinnedCount, 0, newTab);
+      }
+      
+      return newTabs;
+    });
+  }, []);
+  
+  // Handle tab duplicate (Replit-style)
+  const handleTabDuplicate = useCallback((tabId: string) => {
+    setTabs(prev => {
+      const tab = prev.find(t => t.id === tabId);
+      if (!tab) return prev;
+      
+      const duplicateId = `${tabId}-copy-${Date.now()}`;
+      const duplicateTab: Tab = {
+        ...tab,
+        id: duplicateId,
+        label: `${tab.label} (copy)`,
+        pinned: false,
+      };
+      
+      const tabIndex = prev.findIndex(t => t.id === tabId);
+      const newTabs = [...prev];
+      newTabs.splice(tabIndex + 1, 0, duplicateTab);
+      
+      return newTabs;
+    });
+    toast({
+      title: "Tab duplicated",
+      description: "A copy of the tab has been created.",
+    });
+  }, [toast]);
+  
+  // Handle split right (Replit-style) - placeholder for future implementation
+  const handleSplitRight = useCallback((tabId: string) => {
+    toast({
+      title: "Split view",
+      description: "Split view feature coming soon.",
+    });
+  }, [toast]);
+  
   // Handle tools sheet tool selection
   const handleToolsSheetSelect = useCallback((toolId: string) => {
     // Map tools sheet IDs to available tools
@@ -866,6 +927,27 @@ export default function IDEPage() {
           collaboratorCount={0}
           onOpenDeployLogs={() => setDeploymentTab('logs')}
           onOpenDeployAnalytics={() => setDeploymentTab('analytics')}
+          showTabs={false}
+        />
+        
+        {/* Replit-style Tab Bar with context menus, pinning, file icons */}
+        <ReplitTabBar
+          tabs={tabs.map(tab => ({
+            id: tab.id,
+            label: tab.label,
+            closable: tab.closable,
+            pinned: tab.pinned,
+            modified: tab.modified,
+            path: tab.path,
+          }))}
+          activeTabId={activeTab}
+          onTabClick={setActiveTab}
+          onTabClose={handleTabClose}
+          onTabReorder={handleTabReorder}
+          onTabPin={handleTabPin}
+          onTabDuplicate={handleTabDuplicate}
+          onSplitRight={handleSplitRight}
+          onAddTab={() => setShowToolsSheet(true)}
         />
         
         {/* 3-Panel Layout */}
