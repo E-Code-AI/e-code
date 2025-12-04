@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'framer-motion';
-import { Terminal, Monitor, MoreHorizontal, Sparkles, Loader2, CheckCircle, ExternalLink, FolderOpen, Rocket } from 'lucide-react';
+import { Terminal, Monitor, MoreHorizontal, Sparkles, Loader2, CheckCircle, ExternalLink, FolderOpen, Rocket, Code } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EnhancedMobileFileExplorer } from './EnhancedMobileFileExplorer';
 import { LazyMobileCodeEditor } from './LazyMobileCodeEditor';
@@ -456,8 +456,9 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
     setActivePanel(null);
   };
   
-  const handleFileSelect = (file: { id: string }) => {
-    setSelectedFileId(file.id);
+  const handleFileSelect = (file: { id: string | number }) => {
+    const fileId = typeof file.id === 'string' ? parseInt(file.id, 10) : file.id;
+    setSelectedFileId(isNaN(fileId) ? undefined : fileId);
   };
 
   const getTabVariants = (direction: 'left' | 'right' | null) => {

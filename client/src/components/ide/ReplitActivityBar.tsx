@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,9 +18,7 @@ import {
   Rocket,
   Key,
   Database,
-  Play,
   LayoutGrid,
-  Layers,
   History,
   Zap,
   Eye,
@@ -99,9 +96,9 @@ export function ReplitActivityBar({
     const badge = badgeCounts[item.id];
 
     return (
-      <div key={item.id}>
+      <div key={item.id} className="relative">
         {item.separator && (
-          <div className="mx-2 my-2 border-t border-[var(--ecode-border)]" />
+          <div className="mx-2.5 my-1.5 border-t border-[var(--ecode-border)] opacity-50" />
         )}
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
@@ -111,37 +108,49 @@ export function ReplitActivityBar({
               onClick={() => onItemClick(item.id)}
               data-testid={`activity-${item.id}`}
               className={cn(
-                'relative w-10 h-10 p-0 rounded-lg transition-all duration-200',
-                'hover:bg-[var(--ecode-sidebar-hover)]',
+                'relative w-9 h-9 p-0 rounded-md transition-all duration-150',
+                'hover:bg-[var(--ecode-sidebar-hover)] active:scale-95',
                 'focus-visible:ring-2 focus-visible:ring-[var(--ecode-accent)] focus-visible:ring-offset-0',
                 isActive && [
-                  'bg-[var(--ecode-accent)]/10',
+                  'bg-[var(--ecode-accent)]/15',
                   'text-[var(--ecode-accent)]',
-                  'before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2',
-                  'before:w-[3px] before:h-6 before:rounded-r-full',
-                  'before:bg-[var(--ecode-accent)]',
+                  'shadow-sm',
                 ],
                 !isActive && 'text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]'
               )}
             >
-              <Icon className="h-[18px] w-[18px]" />
-              {badge !== undefined && (
+              {isActive && (
+                <span 
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-[var(--ecode-accent)] shadow-[0_0_8px_var(--ecode-accent)]"
+                  style={{ marginLeft: '-2px' }}
+                />
+              )}
+              <Icon className={cn(
+                "h-[18px] w-[18px] transition-transform duration-150",
+                isActive && "scale-105"
+              )} />
+              {badge !== undefined && badge !== 0 && (
                 <span className={cn(
-                  'absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1',
+                  'absolute -top-1 -right-1 min-w-[16px] h-4 px-1',
                   'flex items-center justify-center',
-                  'text-[10px] font-semibold rounded-full',
+                  'text-[9px] font-bold rounded-full',
                   'bg-[var(--ecode-accent)] text-white',
-                  'shadow-sm'
+                  'shadow-md animate-in fade-in zoom-in-50 duration-200',
+                  'border border-[var(--ecode-sidebar-bg)]'
                 )}>
                   {typeof badge === 'number' && badge > 99 ? '99+' : badge}
                 </span>
               )}
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={8} className="flex items-center gap-2">
-            <span>{item.label}</span>
+          <TooltipContent 
+            side="right" 
+            sideOffset={12} 
+            className="flex items-center gap-2 bg-zinc-900 dark:bg-zinc-800 text-white border-zinc-700 shadow-xl"
+          >
+            <span className="font-medium">{item.label}</span>
             {item.shortcut && (
-              <kbd className="ml-2 px-1.5 py-0.5 text-[10px] font-mono bg-muted rounded">
+              <kbd className="ml-1 px-1.5 py-0.5 text-[10px] font-mono bg-zinc-700 dark:bg-zinc-600 rounded text-zinc-300">
                 {item.shortcut}
               </kbd>
             )}
@@ -152,21 +161,21 @@ export function ReplitActivityBar({
   };
 
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={0}>
       <div
         className={cn(
-          'flex flex-col h-full w-12 py-2',
+          'flex flex-col h-full w-12 py-1.5',
           'bg-[var(--ecode-sidebar-bg)] border-r border-[var(--ecode-border)]',
           'transition-all duration-200',
           className
         )}
         data-testid="activity-bar"
       >
-        <div className="flex flex-col items-center gap-1 flex-1">
+        <div className="flex flex-col items-center gap-0.5 flex-1 px-1.5">
           {defaultItems.map(renderItem)}
         </div>
         
-        <div className="flex flex-col items-center gap-1 mt-auto pt-2 border-t border-[var(--ecode-border)]">
+        <div className="flex flex-col items-center gap-0.5 mt-auto pt-1.5 border-t border-[var(--ecode-border)] mx-1.5 px-0">
           {bottomItems.map(renderItem)}
           
           {onToggleCollapse && (
@@ -178,9 +187,10 @@ export function ReplitActivityBar({
                   onClick={onToggleCollapse}
                   data-testid="activity-collapse-toggle"
                   className={cn(
-                    'w-10 h-10 p-0 rounded-lg mt-1',
+                    'w-9 h-9 p-0 rounded-md mt-0.5',
                     'text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]',
-                    'hover:bg-[var(--ecode-sidebar-hover)]'
+                    'hover:bg-[var(--ecode-sidebar-hover)] active:scale-95',
+                    'transition-all duration-150'
                   )}
                 >
                   {isCollapsed ? (
@@ -190,7 +200,11 @@ export function ReplitActivityBar({
                   )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={8}>
+              <TooltipContent 
+                side="right" 
+                sideOffset={12}
+                className="bg-zinc-900 dark:bg-zinc-800 text-white border-zinc-700"
+              >
                 {isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
               </TooltipContent>
             </Tooltip>
