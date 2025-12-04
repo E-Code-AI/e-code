@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'framer-motion';
-import { Terminal, Monitor, MoreHorizontal, Sparkles, Loader2, CheckCircle, ExternalLink, FolderOpen } from 'lucide-react';
+import { Terminal, Monitor, MoreHorizontal, Sparkles, Loader2, CheckCircle, ExternalLink, FolderOpen, Rocket } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EnhancedMobileFileExplorer } from './EnhancedMobileFileExplorer';
 import { LazyMobileCodeEditor } from './LazyMobileCodeEditor';
