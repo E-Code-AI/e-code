@@ -316,6 +316,26 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
   const [isCollaborationOpen, setIsCollaborationOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<MobilePanelType>(null);
   
+  // Query git status for badge count
+  interface GitStatus {
+    branch: string;
+    ahead: number;
+    behind: number;
+    staged: string[];
+    unstaged: string[];
+    untracked: string[];
+  }
+  
+  const { data: gitStatus } = useQuery<GitStatus>({
+    queryKey: ['/api/git/status'],
+    refetchInterval: 30000,
+  });
+  
+  // Calculate badge counts from git status
+  const gitChangesCount = gitStatus 
+    ? (gitStatus.staged?.length || 0) + (gitStatus.unstaged?.length || 0) + (gitStatus.untracked?.length || 0)
+    : 0;
+  
   // Keyboard utilities feature flags
   const [enableShortcutHint, setEnableShortcutHint] = useState(() => {
     if (typeof window === 'undefined') return true;
@@ -512,6 +532,8 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
       <ReplitBottomTabs
         activeTab={activeTab}
         onTabChange={handleTabClick}
+        badgeCounts={{ git: gitChangesCount }}
+        isConnected={true}
       />
 
       {/* Floating Action Button (Run) */}

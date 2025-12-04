@@ -1,4 +1,4 @@
-import { Code2, Terminal as TerminalIcon, Monitor, MoreHorizontal, Sparkles, Rocket } from 'lucide-react';
+import { Code2, Terminal as TerminalIcon, Monitor, MoreHorizontal, Sparkles, Rocket, GitBranch, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -10,14 +10,23 @@ interface Tab {
   label: string;
 }
 
+interface BadgeCounts {
+  git?: number;
+  errors?: number;
+}
+
 interface ReplitBottomTabsProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  badgeCounts?: BadgeCounts;
+  isConnected?: boolean;
 }
 
 export function ReplitBottomTabs({ 
   activeTab,
-  onTabChange
+  onTabChange,
+  badgeCounts = {},
+  isConnected = true,
 }: ReplitBottomTabsProps) {
   const tabs: Tab[] = [
     { id: 'agent', icon: Sparkles, label: 'Agent' },
@@ -35,14 +44,41 @@ export function ReplitBottomTabs({
     }
   };
 
+  const getBadgeForTab = (tabId: MobileTab): number | undefined => {
+    if (tabId === 'more') {
+      const gitCount = badgeCounts.git || 0;
+      const errorsCount = badgeCounts.errors || 0;
+      return gitCount + errorsCount > 0 ? gitCount + errorsCount : undefined;
+    }
+    return undefined;
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       <div className="absolute inset-0 bg-background/98 backdrop-blur-xl border-t border-border" />
+      
+      {/* Connection status indicator - top left */}
+      <div className="absolute top-2 left-3 z-10">
+        {isConnected ? (
+          <Wifi className="h-3 w-3 text-green-500" />
+        ) : (
+          <WifiOff className="h-3 w-3 text-red-500" />
+        )}
+      </div>
+      
+      {/* Git changes indicator - top right */}
+      {badgeCounts.git && badgeCounts.git > 0 && (
+        <div className="absolute top-2 right-3 z-10 flex items-center gap-1 text-[10px] text-muted-foreground">
+          <GitBranch className="h-3 w-3" />
+          <span>{badgeCounts.git}</span>
+        </div>
+      )}
       
       <nav className="relative flex items-center justify-around h-[60px] px-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
+          const badge = getBadgeForTab(tab.id);
 
           return (
             <motion.button
@@ -57,10 +93,19 @@ export function ReplitBottomTabs({
               transition={{ type: 'spring', stiffness: 400, damping: 17 }}
               data-testid={`tab-${tab.id}`}
             >
-              <Icon className={cn(
-                "h-6 w-6 mb-1 transition-all duration-200",
-                isActive ? "text-primary" : "text-muted-foreground"
-              )} />
+              <div className="relative">
+                <Icon className={cn(
+                  "h-6 w-6 mb-1 transition-all duration-200",
+                  isActive ? "text-primary" : "text-muted-foreground"
+                )} />
+                
+                {/* Badge indicator */}
+                {badge !== undefined && badge > 0 && (
+                  <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[14px] h-[14px] px-1 text-[9px] font-bold text-white bg-red-500 rounded-full">
+                    {badge > 99 ? '99+' : badge}
+                  </span>
+                )}
+              </div>
               
               <span className={cn(
                 "text-[11px] font-medium leading-tight",
