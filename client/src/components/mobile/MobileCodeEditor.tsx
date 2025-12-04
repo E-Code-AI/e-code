@@ -244,10 +244,10 @@ export function MobileCodeEditor({
     : completions;
 
   return (
-    <div className={cn('flex flex-col h-full bg-[#0E1525]', className)}>
+    <div className={cn('flex flex-col h-full bg-background dark:bg-[var(--ecode-background)]', className)}>
       {showKeyboardToolbar && !readOnly && (
         <motion.div 
-          className="flex items-center gap-1 px-2 py-2 bg-[#1E293B] border-b border-[#334155] overflow-x-auto mobile-hide-scrollbar"
+          className="flex items-center gap-1 px-2 py-2 bg-card dark:bg-[var(--ecode-surface)] border-b border-border dark:border-[var(--ecode-border)] overflow-x-auto mobile-hide-scrollbar"
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -50, opacity: 0 }}
@@ -256,7 +256,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-4 text-sm font-mono bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[48px]"
+            className="h-10 px-4 text-sm font-mono bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[48px]"
             onClick={() => insertText('\t')}
             data-testid="mobile-editor-tab"
           >
@@ -266,7 +266,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-3 text-sm bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[44px]"
+            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
             onClick={() => insertText('{')}
             data-testid="mobile-editor-brace"
           >
@@ -276,7 +276,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-3 text-sm bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[44px]"
+            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
             onClick={() => insertText('}')}
             data-testid="mobile-editor-close-brace"
           >
@@ -286,7 +286,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-3 text-sm bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[44px]"
+            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
             onClick={() => insertText('(')}
             data-testid="mobile-editor-paren"
           >
@@ -296,7 +296,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-3 text-sm bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[44px]"
+            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
             onClick={() => insertText(')')}
             data-testid="mobile-editor-close-paren"
           >
@@ -306,19 +306,19 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-3 text-sm bg-[#334155] hover:bg-[#475569] active:scale-95 touch-manipulation min-w-[44px]"
+            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
             onClick={() => insertText(';')}
             data-testid="mobile-editor-semicolon"
           >
             ;
           </Button>
           
-          <div className="w-px h-8 bg-[#475569] mx-1" />
+          <div className="w-px h-8 bg-border dark:bg-[var(--ecode-border)] mx-1" />
           
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 w-10 p-0 hover:bg-[#475569] active:scale-95 touch-manipulation"
+            className="h-10 w-10 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleUndo}
             data-testid="mobile-editor-undo"
           >
@@ -328,7 +328,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 w-10 p-0 hover:bg-[#475569] active:scale-95 touch-manipulation"
+            className="h-10 w-10 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleRedo}
             data-testid="mobile-editor-redo"
           >
@@ -338,7 +338,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 w-10 p-0 hover:bg-[#475569] active:scale-95 touch-manipulation"
+            className="h-10 w-10 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={triggerSuggestions}
             data-testid="mobile-editor-suggest"
           >
@@ -348,7 +348,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 w-10 p-0 hover:bg-[#475569] active:scale-95 touch-manipulation"
+            className="h-10 w-10 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleFind}
             data-testid="mobile-editor-find"
           >
@@ -375,7 +375,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 w-10 p-0 hover:bg-[#475569] active:scale-95 touch-manipulation"
+            className="h-10 w-10 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={() => setShowKeyboardToolbar(false)}
             data-testid="mobile-editor-hide-toolbar"
           >
@@ -429,22 +429,22 @@ export function MobileCodeEditor({
             />
             
             <motion.div
-              className="absolute bottom-0 left-0 right-0 bg-[#1E293B] rounded-t-2xl shadow-2xl z-50 max-h-[60vh] flex flex-col"
+              className="absolute bottom-0 left-0 right-0 bg-card dark:bg-[var(--ecode-surface)] rounded-t-2xl shadow-2xl z-50 max-h-[60vh] flex flex-col"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 500 }}
               data-testid="mobile-completion-modal"
             >
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#334155]">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border dark:border-[var(--ecode-border)]">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-[#F26207]" />
-                  <h3 className="font-semibold text-white">Code Completions</h3>
+                  <h3 className="font-semibold text-foreground">Code Completions</h3>
                 </div>
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-10 w-10 p-0 hover:bg-[#334155] touch-manipulation"
+                  className="h-10 w-10 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] touch-manipulation"
                   onClick={() => setShowCompletionModal(false)}
                   data-testid="mobile-completion-close"
                 >
@@ -452,13 +452,13 @@ export function MobileCodeEditor({
                 </Button>
               </div>
               
-              <div className="px-4 py-2 border-b border-[#334155]">
+              <div className="px-4 py-2 border-b border-border dark:border-[var(--ecode-border)]">
                 <Input
                   type="text"
                   placeholder="Filter completions..."
                   value={completionFilter}
                   onChange={(e) => setCompletionFilter(e.target.value)}
-                  className="bg-[#334155] border-none text-white placeholder:text-gray-400 h-10 touch-manipulation"
+                  className="bg-muted dark:bg-[var(--ecode-surface-secondary)] border-none text-foreground placeholder:text-muted-foreground h-10 touch-manipulation"
                   data-testid="mobile-completion-filter"
                 />
               </div>
@@ -469,40 +469,40 @@ export function MobileCodeEditor({
                     filteredCompletions.map((completion, index) => (
                       <motion.button
                         key={`${completion.label}-${index}`}
-                        className="w-full flex items-start gap-3 p-4 rounded-lg hover:bg-[#334155] active:bg-[#475569] transition-colors touch-manipulation text-left min-h-[56px]"
+                        className="w-full flex items-start gap-3 p-4 rounded-lg hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:bg-accent transition-colors touch-manipulation text-left min-h-[56px]"
                         onClick={() => insertCompletion(completion)}
                         whileTap={{ scale: 0.98 }}
                         data-testid={`mobile-completion-item-${index}`}
                       >
-                        <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-[#334155] rounded font-mono text-sm text-[#F26207]">
+                        <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-muted dark:bg-[var(--ecode-surface-secondary)] rounded font-mono text-sm text-[#F26207]">
                           {getCompletionKindIcon(completion.kind)}
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <div className="font-mono text-sm text-white truncate">
+                          <div className="font-mono text-sm text-foreground truncate">
                             {completion.label}
                           </div>
                           {completion.detail && (
-                            <div className="text-xs text-gray-400 truncate mt-0.5">
+                            <div className="text-xs text-muted-foreground truncate mt-0.5">
                               {completion.detail}
                             </div>
                           )}
                         </div>
                         
-                        <div className="flex-shrink-0 px-2 py-1 bg-[#334155] rounded text-xs text-gray-400 font-mono">
+                        <div className="flex-shrink-0 px-2 py-1 bg-muted dark:bg-[var(--ecode-surface-secondary)] rounded text-xs text-muted-foreground font-mono">
                           {completion.kind}
                         </div>
                       </motion.button>
                     ))
                   ) : (
-                    <div className="text-center py-8 text-gray-400 text-sm" data-testid="mobile-completion-empty">
+                    <div className="text-center py-8 text-muted-foreground text-sm" data-testid="mobile-completion-empty">
                       {completionFilter ? 'No matching completions' : 'No completions available'}
                     </div>
                   )}
                 </div>
               </ScrollArea>
               
-              <div className="px-4 py-2 border-t border-[#334155] text-xs text-gray-400 text-center">
+              <div className="px-4 py-2 border-t border-border dark:border-[var(--ecode-border)] text-xs text-muted-foreground text-center">
                 {filteredCompletions.length} {filteredCompletions.length === 1 ? 'completion' : 'completions'}
               </div>
             </motion.div>

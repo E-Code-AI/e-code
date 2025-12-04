@@ -42,17 +42,17 @@ export function MobileTerminal({
   useEffect(() => {
     if (!terminalRef.current) return;
 
-    // Create terminal instance with mobile-optimized settings
-    const terminal = new Terminal({
-      cursorBlink: true,
-      cursorStyle: 'block',
-      fontSize: 13, // Slightly larger for mobile
-      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-      lineHeight: 1.4,
-      theme: {
-        background: '#1e1e1e',
-        foreground: '#d4d4d4',
-        cursor: '#d4d4d4',
+    // Get theme colors from CSS variables for dynamic theme support
+    const getTerminalTheme = () => {
+      const computedStyle = getComputedStyle(document.documentElement);
+      const terminalBg = computedStyle.getPropertyValue('--ecode-terminal-bg').trim() || '#1e1e1e';
+      const terminalText = computedStyle.getPropertyValue('--ecode-terminal-text').trim() || '#d4d4d4';
+      const terminalCursor = computedStyle.getPropertyValue('--ecode-terminal-cursor').trim() || '#F26207';
+      
+      return {
+        background: terminalBg,
+        foreground: terminalText,
+        cursor: terminalCursor,
         selectionBackground: 'rgba(255, 255, 255, 0.3)',
         black: '#000000',
         red: '#cd3131',
@@ -70,12 +70,37 @@ export function MobileTerminal({
         brightMagenta: '#d670d6',
         brightCyan: '#29b8db',
         brightWhite: '#e5e5e5',
-      },
+      };
+    };
+
+    // Create terminal instance with mobile-optimized settings
+    const terminal = new Terminal({
+      cursorBlink: true,
+      cursorStyle: 'block',
+      fontSize: 13, // Slightly larger for mobile
+      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+      lineHeight: 1.4,
+      theme: getTerminalTheme(),
       scrollback: 1000,
       convertEol: true,
       disableStdin: false,
       allowProposedApi: true,
     });
+
+    // Listen for theme changes and update terminal theme dynamically
+    const handleThemeChange = () => {
+      terminal.options.theme = getTerminalTheme();
+    };
+    
+    // Observe class changes on html element for theme switching
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          handleThemeChange();
+        }
+      });
+    });
+    observer.observe(document.documentElement, { attributes: true });
 
     // Fit addon for responsive sizing
     const fitAddon = new FitAddon();
@@ -191,6 +216,7 @@ export function MobileTerminal({
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
+      observer.disconnect();
       const ws = wsRef.current;
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.close();
@@ -335,11 +361,11 @@ export function MobileTerminal({
   };
 
   return (
-    <div className={cn('flex flex-col h-full bg-[#1e1e1e]', className)}>
+    <div className={cn('flex flex-col h-full bg-[var(--ecode-terminal-bg)]', className)}>
       {/* Mobile Terminal Keyboard Toolbar */}
       {showKeyboard && (
         <div 
-          className="flex-shrink-0 border-b border-[#3e3e42] bg-[#252526] overflow-x-auto mobile-hide-scrollbar"
+          className="flex-shrink-0 border-b border-border dark:border-[var(--ecode-border)] bg-card dark:bg-[var(--ecode-surface)] overflow-x-auto mobile-hide-scrollbar"
           data-testid="mobile-terminal-keyboard-toolbar"
         >
           <div className="flex items-center gap-1 p-2 min-w-max">
@@ -347,7 +373,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 px-3 text-xs font-mono hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
+              className="h-8 px-3 text-xs font-mono hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleTab}
               data-testid="mobile-terminal-tab"
             >
@@ -357,7 +383,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 px-3 text-xs font-mono hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
+              className="h-8 px-3 text-xs font-mono hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleEscape}
               data-testid="mobile-terminal-esc"
             >
@@ -367,7 +393,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 px-3 text-xs font-mono hover:bg-[#3e3e42] active:scale-95 touch-manipulation flex items-center gap-1"
+              className="h-8 px-3 text-xs font-mono hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation flex items-center gap-1"
               onClick={handleCtrlC}
               data-testid="mobile-terminal-ctrl-c"
             >
@@ -378,7 +404,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 px-3 text-xs font-mono hover:bg-[#3e3e42] active:scale-95 touch-manipulation flex items-center gap-1"
+              className="h-8 px-3 text-xs font-mono hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation flex items-center gap-1"
               onClick={handleCtrlD}
               data-testid="mobile-terminal-ctrl-d"
             >
@@ -386,13 +412,13 @@ export function MobileTerminal({
               <span>D</span>
             </Button>
 
-            <div className="w-px h-6 bg-[#3e3e42]" />
+            <div className="w-px h-6 bg-border dark:bg-[var(--ecode-border)]" />
 
             {/* Arrow Keys */}
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleArrowUp}
               data-testid="mobile-terminal-arrow-up"
             >
@@ -402,7 +428,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleArrowDown}
               data-testid="mobile-terminal-arrow-down"
             >
@@ -412,7 +438,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleArrowLeft}
               data-testid="mobile-terminal-arrow-left"
             >
@@ -422,20 +448,20 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleArrowRight}
               data-testid="mobile-terminal-arrow-right"
             >
               <ArrowRight className="h-4 w-4" />
             </Button>
 
-            <div className="w-px h-6 bg-[#3e3e42]" />
+            <div className="w-px h-6 bg-border dark:bg-[var(--ecode-border)]" />
 
             {/* Text Operations */}
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleEnter}
               data-testid="mobile-terminal-enter"
             >
@@ -445,20 +471,20 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleBackspace}
               data-testid="mobile-terminal-backspace"
             >
               <Delete className="h-4 w-4" />
             </Button>
 
-            <div className="w-px h-6 bg-[#3e3e42]" />
+            <div className="w-px h-6 bg-border dark:bg-[var(--ecode-border)]" />
 
             {/* Clipboard */}
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleCopy}
               data-testid="mobile-terminal-copy"
             >
@@ -469,7 +495,7 @@ export function MobileTerminal({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 w-8 p-0 hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
+                className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
                 onClick={handlePaste}
                 data-testid="mobile-terminal-paste"
               >
@@ -477,20 +503,20 @@ export function MobileTerminal({
               </Button>
             )}
 
-            <div className="w-px h-6 bg-[#3e3e42]" />
+            <div className="w-px h-6 bg-border dark:bg-[var(--ecode-border)]" />
 
             {/* Clear */}
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 px-3 text-xs hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
+              className="h-8 px-3 text-xs hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleClear}
               data-testid="mobile-terminal-clear"
             >
               Clear
             </Button>
 
-            <div className="w-px h-6 bg-[#3e3e42]" />
+            <div className="w-px h-6 bg-border dark:bg-[var(--ecode-border)]" />
 
             {/* Fortune 500 Terminal Metrics */}
             <div className="ml-auto mr-2">
@@ -501,7 +527,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-[#3e3e42] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={() => setShowKeyboard(false)}
               data-testid="mobile-terminal-hide-toolbar"
             >

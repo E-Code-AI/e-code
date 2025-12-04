@@ -158,8 +158,8 @@ export function VirtualFileTree({
                 className={cn(
                   'flex items-center px-3 py-2 cursor-pointer transition-colors touch-manipulation',
                   isActive 
-                    ? 'bg-[#37373d] text-white' 
-                    : 'hover:bg-[#2a2a2a] active:bg-[#383838]',
+                    ? 'bg-accent dark:bg-[var(--ecode-sidebar-hover)] text-accent-foreground dark:text-white' 
+                    : 'hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:bg-accent/50',
                   item.type === 'file' && 'pl-9'
                 )}
                 style={{
@@ -189,10 +189,10 @@ export function VirtualFileTree({
                 
                 <Icon className={cn(
                   'h-4 w-4 mr-2 flex-shrink-0',
-                  item.type === 'folder' ? 'text-blue-400' : 'text-gray-400'
+                  item.type === 'folder' ? 'text-blue-400' : 'text-muted-foreground'
                 )} />
                 
-                <span className="text-sm text-white truncate">
+                <span className="text-sm text-foreground truncate">
                   {item.name}
                 </span>
               </div>
