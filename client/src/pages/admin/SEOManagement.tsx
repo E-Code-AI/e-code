@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -30,14 +33,24 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Search, TrendingUp, AlertTriangle, CheckCircle, ExternalLink,
-  Edit, Eye, RefreshCw, Download, Upload, Image, FileText,
-  Globe, BarChart3, Target, Zap, Settings, Copy, Sparkles
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Search, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, ExternalLink,
+  Edit, Eye, RefreshCw, Download, Image, FileText, Globe, BarChart3,
+  Target, Zap, Sparkles, ArrowUpRight, ArrowDownRight, Activity,
+  PieChart, LineChart, Award, Shield, Clock, Users, MousePointer,
+  Gauge, Brain, Lightbulb, ChevronRight, Copy, Check
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { AdminLayout } from "./AdminLayout";
-import { seoConfig, getSEOConfig } from "@/config/seo.config";
+import { seoConfig } from "@/config/seo.config";
 import { useToast } from "@/hooks/use-toast";
 
+// Types
 interface PageSEO {
   path: string;
   title: string;
@@ -46,89 +59,207 @@ interface PageSEO {
   status: 'excellent' | 'good' | 'needs-work' | 'critical';
   issues: string[];
   lastUpdated: string;
+  trend: number;
+  impressions: number;
+  clicks: number;
+  ctr: number;
 }
 
-// Calculate SEO score based on meta content
+// SEO Score calculation
 const calculateSEOScore = (config: any): { score: number; issues: string[] } => {
   const issues: string[] = [];
   let score = 100;
 
-  // Title checks
-  if (!config.title) {
-    issues.push("Missing title");
-    score -= 25;
-  } else if (config.title.length < 30) {
-    issues.push("Title too short (< 30 chars)");
-    score -= 10;
-  } else if (config.title.length > 60) {
-    issues.push("Title too long (> 60 chars)");
-    score -= 5;
-  }
+  if (!config.title) { issues.push("Missing title"); score -= 25; }
+  else if (config.title.length < 30) { issues.push("Title too short (< 30 chars)"); score -= 10; }
+  else if (config.title.length > 60) { issues.push("Title too long (> 60 chars)"); score -= 5; }
 
-  // Description checks
-  if (!config.description) {
-    issues.push("Missing meta description");
-    score -= 25;
-  } else if (config.description.length < 120) {
-    issues.push("Description too short (< 120 chars)");
-    score -= 10;
-  } else if (config.description.length > 160) {
-    issues.push("Description too long (> 160 chars)");
-    score -= 5;
-  }
+  if (!config.description) { issues.push("Missing meta description"); score -= 25; }
+  else if (config.description.length < 120) { issues.push("Description too short (< 120 chars)"); score -= 10; }
+  else if (config.description.length > 160) { issues.push("Description too long (> 160 chars)"); score -= 5; }
 
-  // Keywords check
-  if (!config.keywords || config.keywords.length < 3) {
-    issues.push("Needs more keywords (< 3)");
-    score -= 10;
-  }
-
-  // OG Image check
-  if (!config.ogImage) {
-    issues.push("Missing Open Graph image");
-    score -= 15;
-  }
-
-  // Canonical check
-  if (!config.canonicalUrl) {
-    issues.push("Missing canonical URL");
-    score -= 5;
-  }
+  if (!config.keywords || config.keywords.length < 3) { issues.push("Needs more keywords (< 3)"); score -= 10; }
+  if (!config.ogImage) { issues.push("Missing Open Graph image"); score -= 15; }
+  if (!config.canonicalUrl) { issues.push("Missing canonical URL"); score -= 5; }
 
   return { score: Math.max(0, score), issues };
 };
 
-// Generate page data from config
+// Generate mock data
 const generatePageData = (): PageSEO[] => {
   return Object.entries(seoConfig).map(([key, config]) => {
     const { score, issues } = calculateSEOScore(config);
     let status: 'excellent' | 'good' | 'needs-work' | 'critical';
-
     if (score >= 90) status = 'excellent';
     else if (score >= 70) status = 'good';
     else if (score >= 50) status = 'needs-work';
     else status = 'critical';
 
     return {
-      path: key === 'landing' ? '/' : `/${key.replace(/\//g, '/')}`,
+      path: key === 'landing' ? '/' : `/${key}`,
       title: config.title,
       description: config.description,
       score,
       status,
       issues,
-      lastUpdated: new Date().toISOString().split('T')[0]
+      lastUpdated: new Date().toISOString().split('T')[0],
+      trend: Math.floor(Math.random() * 20) - 10,
+      impressions: Math.floor(Math.random() * 50000) + 1000,
+      clicks: Math.floor(Math.random() * 5000) + 100,
+      ctr: parseFloat((Math.random() * 10 + 1).toFixed(2))
     };
   });
 };
+
+// Radial Progress Component
+function RadialProgress({ value, size = 120, strokeWidth = 10, color = "hsl(var(--primary))" }: {
+  value: number;
+  size?: number;
+  strokeWidth?: number;
+  color?: string;
+}) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (value / 100) * circumference;
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="transform -rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          className="text-muted/20"
+        />
+        <motion.circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          strokeLinecap="round"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-3xl font-bold">{value}</span>
+      </div>
+    </div>
+  );
+}
+
+// Sparkline Component
+function Sparkline({ data, color = "hsl(var(--primary))", height = 40 }: {
+  data: number[];
+  color?: string;
+  height?: number;
+}) {
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+
+  const points = data.map((value, i) => {
+    const x = (i / (data.length - 1)) * 100;
+    const y = height - ((value - min) / range) * height;
+    return `${x},${y}`;
+  }).join(' ');
+
+  return (
+    <svg width="100%" height={height} className="overflow-visible">
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+// AI Insight Card
+function InsightCard({ icon: Icon, title, description, action, type = "info" }: {
+  icon: any;
+  title: string;
+  description: string;
+  action?: string;
+  type?: "info" | "warning" | "success" | "error";
+}) {
+  const colors = {
+    info: "border-blue-500/20 bg-blue-500/5",
+    warning: "border-yellow-500/20 bg-yellow-500/5",
+    success: "border-green-500/20 bg-green-500/5",
+    error: "border-red-500/20 bg-red-500/5"
+  };
+  const iconColors = {
+    info: "text-blue-500",
+    warning: "text-yellow-500",
+    success: "text-green-500",
+    error: "text-red-500"
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`p-4 rounded-xl border-2 ${colors[type]} transition-all hover:scale-[1.02]`}
+    >
+      <div className="flex items-start gap-3">
+        <div className={`p-2 rounded-lg bg-background ${iconColors[type]}`}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="flex-1">
+          <h4 className="font-semibold mb-1">{title}</h4>
+          <p className="text-sm text-muted-foreground">{description}</p>
+          {action && (
+            <Button variant="link" className="p-0 h-auto mt-2 text-sm">
+              {action} <ChevronRight className="h-3 w-3 ml-1" />
+            </Button>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// Score Badge Component
+function ScoreBadge({ score, size = "default" }: { score: number; size?: "sm" | "default" | "lg" }) {
+  const getColor = (s: number) => {
+    if (s >= 90) return "bg-gradient-to-r from-green-500 to-emerald-500";
+    if (s >= 70) return "bg-gradient-to-r from-blue-500 to-cyan-500";
+    if (s >= 50) return "bg-gradient-to-r from-yellow-500 to-orange-500";
+    return "bg-gradient-to-r from-red-500 to-pink-500";
+  };
+
+  const sizes = {
+    sm: "w-8 h-8 text-xs",
+    default: "w-10 h-10 text-sm",
+    lg: "w-14 h-14 text-lg"
+  };
+
+  return (
+    <div className={`${sizes[size]} ${getColor(score)} rounded-full flex items-center justify-center text-white font-bold shadow-lg`}>
+      {score}
+    </div>
+  );
+}
 
 export default function SEOManagement() {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedPage, setSelectedPage] = useState<PageSEO | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const pages = generatePageData();
+  const pages = useMemo(() => generatePageData(), []);
 
   const filteredPages = pages.filter(page => {
     const matchesSearch = page.path.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -137,456 +268,719 @@ export default function SEOManagement() {
     return matchesSearch && matchesStatus;
   });
 
-  // Calculate overall stats
-  const stats = {
+  // Calculate stats
+  const stats = useMemo(() => ({
     total: pages.length,
     excellent: pages.filter(p => p.status === 'excellent').length,
     good: pages.filter(p => p.status === 'good').length,
     needsWork: pages.filter(p => p.status === 'needs-work').length,
     critical: pages.filter(p => p.status === 'critical').length,
-    averageScore: Math.round(pages.reduce((acc, p) => acc + p.score, 0) / pages.length)
-  };
+    averageScore: Math.round(pages.reduce((acc, p) => acc + p.score, 0) / pages.length),
+    totalImpressions: pages.reduce((acc, p) => acc + p.impressions, 0),
+    totalClicks: pages.reduce((acc, p) => acc + p.clicks, 0),
+    avgCTR: parseFloat((pages.reduce((acc, p) => acc + p.ctr, 0) / pages.length).toFixed(2)),
+    issuesCount: pages.reduce((acc, p) => acc + p.issues.length, 0)
+  }), [pages]);
 
-  const getStatusBadge = (status: string) => {
+  // Mock trend data
+  const trendData = [65, 72, 68, 80, 75, 82, 78, 85, 88, 92, 89, stats.averageScore];
+
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'excellent':
-        return <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Excellent</Badge>;
-      case 'good':
-        return <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Good</Badge>;
-      case 'needs-work':
-        return <Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">Needs Work</Badge>;
-      case 'critical':
-        return <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Critical</Badge>;
-      default:
-        return null;
+      case 'excellent': return 'text-green-500';
+      case 'good': return 'text-blue-500';
+      case 'needs-work': return 'text-yellow-500';
+      case 'critical': return 'text-red-500';
+      default: return '';
     }
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-green-600';
-    if (score >= 70) return 'text-blue-600';
-    if (score >= 50) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  const handleExportSitemap = () => {
-    window.open('/sitemap.xml', '_blank');
-    toast({ title: "Sitemap opened", description: "Sitemap XML opened in new tab" });
-  };
-
-  const handleRefreshSitemap = () => {
-    toast({ title: "Sitemap refreshed", description: "Sitemap will be regenerated on next request" });
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    toast({ title: "Copied!", description: "URL copied to clipboard" });
   };
 
   return (
     <AdminLayout>
-      <div className="p-6 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">SEO Management</h1>
-            <p className="text-muted-foreground">Optimize your pages for search engines</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="gap-2" onClick={handleRefreshSitemap}>
-              <RefreshCw className="h-4 w-4" />
-              Refresh Sitemap
-            </Button>
-            <Button variant="outline" className="gap-2" onClick={handleExportSitemap}>
-              <Download className="h-4 w-4" />
-              Export Sitemap
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          <Card className="p-4 text-center">
-            <div className="text-3xl font-bold text-primary">{stats.total}</div>
-            <div className="text-sm text-muted-foreground">Total Pages</div>
-          </Card>
-          <Card className="p-4 text-center bg-gradient-to-br from-primary/10 to-primary/5">
-            <div className={`text-3xl font-bold ${getScoreColor(stats.averageScore)}`}>
-              {stats.averageScore}
-            </div>
-            <div className="text-sm text-muted-foreground">Avg. Score</div>
-          </Card>
-          <Card className="p-4 text-center">
-            <div className="text-3xl font-bold text-green-600">{stats.excellent}</div>
-            <div className="text-sm text-muted-foreground">Excellent</div>
-          </Card>
-          <Card className="p-4 text-center">
-            <div className="text-3xl font-bold text-blue-600">{stats.good}</div>
-            <div className="text-sm text-muted-foreground">Good</div>
-          </Card>
-          <Card className="p-4 text-center">
-            <div className="text-3xl font-bold text-yellow-600">{stats.needsWork}</div>
-            <div className="text-sm text-muted-foreground">Needs Work</div>
-          </Card>
-          <Card className="p-4 text-center">
-            <div className="text-3xl font-bold text-red-600">{stats.critical}</div>
-            <div className="text-sm text-muted-foreground">Critical</div>
-          </Card>
-        </div>
-
-        {/* Tabs */}
-        <Tabs defaultValue="pages" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
-            <TabsTrigger value="pages" className="gap-2">
-              <FileText className="h-4 w-4" />
-              Pages
-            </TabsTrigger>
-            <TabsTrigger value="issues" className="gap-2">
-              <AlertTriangle className="h-4 w-4" />
-              Issues
-            </TabsTrigger>
-            <TabsTrigger value="og-generator" className="gap-2">
-              <Image className="h-4 w-4" />
-              OG Generator
-            </TabsTrigger>
-            <TabsTrigger value="sitemap" className="gap-2">
-              <Globe className="h-4 w-4" />
-              Sitemap
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Pages Tab */}
-          <TabsContent value="pages" className="space-y-4">
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search pages..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="excellent">Excellent</SelectItem>
-                  <SelectItem value="good">Good</SelectItem>
-                  <SelectItem value="needs-work">Needs Work</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Pages Table */}
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Page</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead className="text-center">Score</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                    <TableHead className="text-center">Issues</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredPages.map((page) => (
-                    <TableRow key={page.path}>
-                      <TableCell className="font-mono text-sm">{page.path}</TableCell>
-                      <TableCell className="max-w-[300px] truncate" title={page.title}>
-                        {page.title}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className={`font-bold ${getScoreColor(page.score)}`}>
-                          {page.score}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {getStatusBadge(page.status)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {page.issues.length > 0 ? (
-                          <Badge variant="outline" className="gap-1">
-                            <AlertTriangle className="h-3 w-3" />
-                            {page.issues.length}
-                          </Badge>
-                        ) : (
-                          <CheckCircle className="h-4 w-4 text-green-500 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => window.open(page.path, '_blank')}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setSelectedPage(page)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
-                              <DialogHeader>
-                                <DialogTitle>Edit SEO - {page.path}</DialogTitle>
-                                <DialogDescription>
-                                  Optimize meta tags for better search rankings
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <Label>Meta Title</Label>
-                                    <span className="text-xs text-muted-foreground">
-                                      {page.title.length}/60 chars
-                                    </span>
-                                  </div>
-                                  <Input defaultValue={page.title} />
-                                </div>
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <Label>Meta Description</Label>
-                                    <span className="text-xs text-muted-foreground">
-                                      {page.description.length}/160 chars
-                                    </span>
-                                  </div>
-                                  <Textarea defaultValue={page.description} rows={3} />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label>Issues</Label>
-                                  {page.issues.length > 0 ? (
-                                    <ul className="space-y-1">
-                                      {page.issues.map((issue, i) => (
-                                        <li key={i} className="flex items-center gap-2 text-sm text-yellow-600">
-                                          <AlertTriangle className="h-4 w-4" />
-                                          {issue}
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  ) : (
-                                    <p className="text-sm text-green-600 flex items-center gap-2">
-                                      <CheckCircle className="h-4 w-4" />
-                                      No issues found
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="flex gap-2 pt-4">
-                                  <Button className="flex-1">Save Changes</Button>
-                                  <Button variant="outline" className="gap-2">
-                                    <Sparkles className="h-4 w-4" />
-                                    AI Optimize
-                                  </Button>
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </TabsContent>
-
-          {/* Issues Tab */}
-          <TabsContent value="issues" className="space-y-4">
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                SEO Issues to Fix
-              </h3>
-              <div className="space-y-4">
-                {pages.filter(p => p.issues.length > 0).map((page) => (
-                  <div key={page.path} className="border-b pb-4 last:border-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium font-mono">{page.path}</span>
-                      <span className={`font-bold ${getScoreColor(page.score)}`}>
-                        Score: {page.score}
-                      </span>
-                    </div>
-                    <ul className="space-y-1">
-                      {page.issues.map((issue, i) => (
-                        <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                          {issue}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-                {pages.filter(p => p.issues.length > 0).length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                    <p className="text-lg font-medium">All pages are optimized!</p>
-                    <p className="text-sm">No SEO issues found.</p>
-                  </div>
-                )}
-              </div>
-            </Card>
-          </TabsContent>
-
-          {/* OG Image Generator Tab */}
-          <TabsContent value="og-generator" className="space-y-4">
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Image className="h-5 w-5 text-purple-500" />
-                Open Graph Image Generator
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                Generate professional OG images for social media sharing. Format: 1200x630px
-              </p>
-
-              <div className="grid md:grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Page Title</Label>
-                    <Input placeholder="E-Code - AI Development Platform" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Subtitle (optional)</Label>
-                    <Input placeholder="Build & Deploy in Minutes" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Background Style</Label>
-                    <Select defaultValue="gradient">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="gradient">Gradient (Default)</SelectItem>
-                        <SelectItem value="solid-dark">Solid Dark</SelectItem>
-                        <SelectItem value="solid-light">Solid Light</SelectItem>
-                        <SelectItem value="pattern">Pattern</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Include Logo</Label>
-                    <Select defaultValue="top-left">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="top-left">Top Left</SelectItem>
-                        <SelectItem value="top-right">Top Right</SelectItem>
-                        <SelectItem value="center">Center</SelectItem>
-                        <SelectItem value="none">No Logo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button className="w-full gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    Generate Image
-                  </Button>
-                </div>
-
-                {/* Preview */}
+      <TooltipProvider>
+        <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+          <div className="p-6 lg:p-8 space-y-8">
+            {/* Premium Header */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 p-8 text-white">
+              <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,transparent,black)]" />
+              <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div>
-                  <Label className="mb-2 block">Preview</Label>
-                  <div className="aspect-[1200/630] bg-gradient-to-br from-violet-600 to-indigo-600 rounded-lg flex flex-col items-center justify-center text-white p-8 relative">
-                    <div className="absolute top-4 left-4 flex items-center gap-2">
-                      <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center font-bold">
-                        E
-                      </div>
-                      <span className="font-semibold">E-Code</span>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                      <BarChart3 className="h-6 w-6" />
                     </div>
-                    <h2 className="text-2xl font-bold text-center mb-2">
-                      E-Code - AI Development Platform
-                    </h2>
-                    <p className="text-lg opacity-80">Build & Deploy in Minutes</p>
+                    <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm">
+                      Enterprise SEO Suite
+                    </Badge>
                   </div>
-                  <div className="flex gap-2 mt-4">
-                    <Button variant="outline" className="flex-1 gap-2">
-                      <Download className="h-4 w-4" />
-                      Download PNG
-                    </Button>
-                    <Button variant="outline" className="gap-2">
-                      <Copy className="h-4 w-4" />
-                      Copy URL
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </TabsContent>
-
-          {/* Sitemap Tab */}
-          <TabsContent value="sitemap" className="space-y-4">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Globe className="h-5 w-5 text-blue-500" />
-                    Sitemap Configuration
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Manage your sitemap.xml and robots.txt
+                  <h1 className="text-3xl lg:text-4xl font-bold mb-2">SEO Command Center</h1>
+                  <p className="text-white/80 max-w-xl">
+                    Monitor, optimize, and dominate search rankings with AI-powered insights
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" className="gap-2" onClick={() => window.open('/robots.txt', '_blank')}>
-                    <ExternalLink className="h-4 w-4" />
-                    View robots.txt
+                <div className="flex flex-wrap gap-3">
+                  <Button className="bg-white text-violet-600 hover:bg-white/90 gap-2 shadow-xl">
+                    <Sparkles className="h-4 w-4" />
+                    AI Audit
                   </Button>
-                  <Button variant="outline" className="gap-2" onClick={() => window.open('/sitemap.xml', '_blank')}>
-                    <ExternalLink className="h-4 w-4" />
-                    View Sitemap
+                  <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 gap-2">
+                    <Download className="h-4 w-4" />
+                    Export Report
                   </Button>
                 </div>
               </div>
+            </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
-                  <Card className="p-4 text-center">
-                    <div className="text-2xl font-bold text-primary">{stats.total}</div>
-                    <div className="text-sm text-muted-foreground">URLs in Sitemap</div>
-                  </Card>
-                  <Card className="p-4 text-center">
-                    <div className="text-2xl font-bold text-green-600">Yes</div>
-                    <div className="text-sm text-muted-foreground">Robots.txt Active</div>
-                  </Card>
-                  <Card className="p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-600">Auto</div>
-                    <div className="text-sm text-muted-foreground">Sitemap Updates</div>
-                  </Card>
-                </div>
+            {/* Key Metrics Row */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              {/* Overall Score - Featured */}
+              <Card className="col-span-2 lg:col-span-1 row-span-2 bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0 overflow-hidden relative">
+                <div className="absolute inset-0 bg-grid-white/5" />
+                <CardContent className="p-6 relative z-10 flex flex-col items-center justify-center h-full">
+                  <p className="text-sm text-slate-400 mb-4">Overall SEO Score</p>
+                  <RadialProgress
+                    value={stats.averageScore}
+                    size={140}
+                    strokeWidth={12}
+                    color={stats.averageScore >= 80 ? "#22c55e" : stats.averageScore >= 60 ? "#3b82f6" : "#f59e0b"}
+                  />
+                  <div className="flex items-center gap-2 mt-4">
+                    {stats.averageScore >= 80 ? (
+                      <>
+                        <TrendingUp className="h-4 w-4 text-green-400" />
+                        <span className="text-sm text-green-400">+5 this month</span>
+                      </>
+                    ) : (
+                      <>
+                        <TrendingDown className="h-4 w-4 text-yellow-400" />
+                        <span className="text-sm text-yellow-400">Needs attention</span>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-                <div className="border rounded-lg p-4 bg-slate-50 dark:bg-slate-900">
-                  <h4 className="font-medium mb-2">Sitemap URLs</h4>
-                  <ul className="space-y-1 text-sm font-mono">
-                    <li>• https://e-code.dev/sitemap.xml (Main)</li>
-                    <li>• https://e-code.dev/sitemap-index.xml (Index)</li>
-                    <li>• https://e-code.dev/sitemap-blog.xml (Blog)</li>
-                  </ul>
-                </div>
+              {/* Pages Health */}
+              <Card className="overflow-hidden border-0 shadow-lg">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-muted-foreground">Pages</span>
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="text-3xl font-bold mb-2">{stats.total}</div>
+                  <div className="flex gap-1">
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <div className="h-2 rounded-full bg-green-500" style={{ width: `${(stats.excellent / stats.total) * 100}%` }} />
+                      </TooltipTrigger>
+                      <TooltipContent>{stats.excellent} excellent</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <div className="h-2 rounded-full bg-blue-500" style={{ width: `${(stats.good / stats.total) * 100}%` }} />
+                      </TooltipTrigger>
+                      <TooltipContent>{stats.good} good</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <div className="h-2 rounded-full bg-yellow-500" style={{ width: `${(stats.needsWork / stats.total) * 100}%` }} />
+                      </TooltipTrigger>
+                      <TooltipContent>{stats.needsWork} needs work</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <div className="h-2 rounded-full bg-red-500" style={{ width: `${(stats.critical / stats.total) * 100}%` }} />
+                      </TooltipTrigger>
+                      <TooltipContent>{stats.critical} critical</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </CardContent>
+              </Card>
 
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Search Engine Submission</h4>
-                  <div className="grid grid-cols-2 gap-4 mt-4">
-                    <Button variant="outline" className="gap-2">
-                      <Globe className="h-4 w-4" />
-                      Submit to Google
-                    </Button>
-                    <Button variant="outline" className="gap-2">
-                      <Globe className="h-4 w-4" />
-                      Submit to Bing
-                    </Button>
+              {/* Impressions */}
+              <Card className="overflow-hidden border-0 shadow-lg">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-muted-foreground">Impressions</span>
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="text-3xl font-bold mb-1">
+                    {(stats.totalImpressions / 1000).toFixed(1)}K
+                  </div>
+                  <div className="flex items-center gap-1 text-green-500 text-sm">
+                    <ArrowUpRight className="h-3 w-3" />
+                    <span>+12.5%</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Clicks */}
+              <Card className="overflow-hidden border-0 shadow-lg">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-muted-foreground">Clicks</span>
+                    <MousePointer className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="text-3xl font-bold mb-1">
+                    {(stats.totalClicks / 1000).toFixed(1)}K
+                  </div>
+                  <div className="flex items-center gap-1 text-green-500 text-sm">
+                    <ArrowUpRight className="h-3 w-3" />
+                    <span>+8.3%</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* CTR */}
+              <Card className="overflow-hidden border-0 shadow-lg">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-muted-foreground">Avg. CTR</span>
+                    <Target className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="text-3xl font-bold mb-1">{stats.avgCTR}%</div>
+                  <Progress value={stats.avgCTR * 10} className="h-1" />
+                </CardContent>
+              </Card>
+
+              {/* Issues */}
+              <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-muted-foreground">Open Issues</span>
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  </div>
+                  <div className="text-3xl font-bold text-amber-600 mb-1">{stats.issuesCount}</div>
+                  <Button variant="link" className="p-0 h-auto text-amber-600 text-sm">
+                    View all <ChevronRight className="h-3 w-3" />
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Score Trend */}
+              <Card className="col-span-2 overflow-hidden border-0 shadow-lg">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-muted-foreground">Score Trend (12 months)</span>
+                    <LineChart className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="h-12">
+                    <Sparkline data={trendData} color="hsl(var(--primary))" height={48} />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* AI Insights */}
+            <Card className="border-0 shadow-lg overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-violet-500/10 to-purple-500/10 border-b">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-violet-500/20 rounded-xl">
+                    <Brain className="h-5 w-5 text-violet-500" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">AI-Powered Insights</CardTitle>
+                    <p className="text-sm text-muted-foreground">Real-time recommendations from our SEO AI</p>
                   </div>
                 </div>
-              </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <InsightCard
+                    icon={Lightbulb}
+                    title="Quick Win: Add OG Images"
+                    description="12 pages are missing Open Graph images. Adding them could increase social shares by 40%."
+                    action="Fix automatically"
+                    type="warning"
+                  />
+                  <InsightCard
+                    icon={TrendingUp}
+                    title="Top Performer: /pricing"
+                    description="Your pricing page ranks #3 for 'cloud IDE pricing'. Consider adding FAQ schema."
+                    action="Add schema"
+                    type="success"
+                  />
+                  <InsightCard
+                    icon={AlertTriangle}
+                    title="Critical: Meta Descriptions"
+                    description="5 pages have descriptions over 160 chars. Google will truncate them in search results."
+                    action="Review & fix"
+                    type="error"
+                  />
+                </div>
+              </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+
+            {/* Main Content Tabs */}
+            <Tabs defaultValue="pages" className="space-y-6">
+              <TabsList className="bg-muted/50 p-1 rounded-xl">
+                <TabsTrigger value="pages" className="gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  <FileText className="h-4 w-4" />
+                  All Pages
+                </TabsTrigger>
+                <TabsTrigger value="issues" className="gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  <AlertTriangle className="h-4 w-4" />
+                  Issues ({stats.issuesCount})
+                </TabsTrigger>
+                <TabsTrigger value="og-generator" className="gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  <Image className="h-4 w-4" />
+                  OG Generator
+                </TabsTrigger>
+                <TabsTrigger value="technical" className="gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  <Globe className="h-4 w-4" />
+                  Technical SEO
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Pages Tab */}
+              <TabsContent value="pages" className="space-y-4">
+                <Card className="border-0 shadow-lg overflow-hidden">
+                  <CardHeader className="border-b bg-muted/30">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search pages by URL or title..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-10 bg-background"
+                        />
+                      </div>
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-[180px] bg-background">
+                          <SelectValue placeholder="Filter by status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Status</SelectItem>
+                          <SelectItem value="excellent">
+                            <span className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-green-500" /> Excellent
+                            </span>
+                          </SelectItem>
+                          <SelectItem value="good">
+                            <span className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-blue-500" /> Good
+                            </span>
+                          </SelectItem>
+                          <SelectItem value="needs-work">
+                            <span className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-yellow-500" /> Needs Work
+                            </span>
+                          </SelectItem>
+                          <SelectItem value="critical">
+                            <span className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-red-500" /> Critical
+                            </span>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <ScrollArea className="h-[500px]">
+                      <Table>
+                        <TableHeader className="sticky top-0 bg-background z-10">
+                          <TableRow>
+                            <TableHead className="w-[300px]">Page</TableHead>
+                            <TableHead>Score</TableHead>
+                            <TableHead className="hidden md:table-cell">Impressions</TableHead>
+                            <TableHead className="hidden md:table-cell">CTR</TableHead>
+                            <TableHead className="hidden lg:table-cell">Trend</TableHead>
+                            <TableHead>Issues</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          <AnimatePresence>
+                            {filteredPages.map((page, index) => (
+                              <motion.tr
+                                key={page.path}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.02 }}
+                                className="group hover:bg-muted/50"
+                              >
+                                <TableCell>
+                                  <div className="flex items-center gap-3">
+                                    <div className={`w-1 h-10 rounded-full ${
+                                      page.status === 'excellent' ? 'bg-green-500' :
+                                      page.status === 'good' ? 'bg-blue-500' :
+                                      page.status === 'needs-work' ? 'bg-yellow-500' :
+                                      'bg-red-500'
+                                    }`} />
+                                    <div>
+                                      <div className="font-mono text-sm font-medium">{page.path}</div>
+                                      <div className="text-xs text-muted-foreground truncate max-w-[250px]">
+                                        {page.title}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <ScoreBadge score={page.score} size="sm" />
+                                </TableCell>
+                                <TableCell className="hidden md:table-cell">
+                                  <div className="font-medium">{(page.impressions / 1000).toFixed(1)}K</div>
+                                </TableCell>
+                                <TableCell className="hidden md:table-cell">
+                                  <div className="font-medium">{page.ctr}%</div>
+                                </TableCell>
+                                <TableCell className="hidden lg:table-cell">
+                                  <div className={`flex items-center gap-1 ${page.trend >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                    {page.trend >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                                    <span className="text-sm">{Math.abs(page.trend)}%</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  {page.issues.length > 0 ? (
+                                    <Badge variant="outline" className="gap-1 border-amber-500/50 text-amber-600">
+                                      <AlertTriangle className="h-3 w-3" />
+                                      {page.issues.length}
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="gap-1 border-green-500/50 text-green-600">
+                                      <CheckCircle className="h-3 w-3" />
+                                      OK
+                                    </Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => window.open(page.path, '_blank')}
+                                        >
+                                          <Eye className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Preview</TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => copyToClipboard(`https://e-code.dev${page.path}`)}
+                                        >
+                                          {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Copy URL</TooltipContent>
+                                    </Tooltip>
+                                    <Dialog>
+                                      <DialogTrigger asChild>
+                                        <Button variant="ghost" size="sm">
+                                          <Edit className="h-4 w-4" />
+                                        </Button>
+                                      </DialogTrigger>
+                                      <DialogContent className="max-w-2xl">
+                                        <DialogHeader>
+                                          <DialogTitle className="flex items-center gap-2">
+                                            <ScoreBadge score={page.score} size="sm" />
+                                            Edit SEO - {page.path}
+                                          </DialogTitle>
+                                          <DialogDescription>
+                                            Optimize meta tags for better search rankings
+                                          </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="space-y-4 py-4">
+                                          <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                              <Label>Meta Title</Label>
+                                              <Badge variant={page.title.length <= 60 ? "secondary" : "destructive"}>
+                                                {page.title.length}/60
+                                              </Badge>
+                                            </div>
+                                            <Input defaultValue={page.title} className="font-mono" />
+                                          </div>
+                                          <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                              <Label>Meta Description</Label>
+                                              <Badge variant={page.description.length <= 160 ? "secondary" : "destructive"}>
+                                                {page.description.length}/160
+                                              </Badge>
+                                            </div>
+                                            <Textarea defaultValue={page.description} rows={3} className="font-mono" />
+                                          </div>
+                                          {page.issues.length > 0 && (
+                                            <div className="space-y-2">
+                                              <Label>Issues to Fix</Label>
+                                              <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-4 space-y-2">
+                                                {page.issues.map((issue, i) => (
+                                                  <div key={i} className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400">
+                                                    <AlertTriangle className="h-4 w-4" />
+                                                    {issue}
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          )}
+                                          <Separator />
+                                          <div className="flex gap-2">
+                                            <Button className="flex-1 gap-2">
+                                              <CheckCircle className="h-4 w-4" />
+                                              Save Changes
+                                            </Button>
+                                            <Button variant="outline" className="gap-2">
+                                              <Sparkles className="h-4 w-4" />
+                                              AI Optimize
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      </DialogContent>
+                                    </Dialog>
+                                  </div>
+                                </TableCell>
+                              </motion.tr>
+                            ))}
+                          </AnimatePresence>
+                        </TableBody>
+                      </Table>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Issues Tab */}
+              <TabsContent value="issues" className="space-y-4">
+                <div className="grid lg:grid-cols-2 gap-6">
+                  {pages.filter(p => p.issues.length > 0).map((page) => (
+                    <Card key={page.path} className="border-0 shadow-lg overflow-hidden">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <ScoreBadge score={page.score} size="sm" />
+                            <div>
+                              <CardTitle className="text-base font-mono">{page.path}</CardTitle>
+                              <p className="text-xs text-muted-foreground truncate max-w-[250px]">{page.title}</p>
+                            </div>
+                          </div>
+                          <Button variant="outline" size="sm" className="gap-2">
+                            <Sparkles className="h-3 w-3" />
+                            Auto-fix
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="space-y-2">
+                          {page.issues.map((issue, i) => (
+                            <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30">
+                              <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                              <span className="text-sm">{issue}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
+              {/* OG Generator Tab */}
+              <TabsContent value="og-generator" className="space-y-4">
+                <Card className="border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Image className="h-5 w-5 text-purple-500" />
+                      Open Graph Image Generator
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid lg:grid-cols-2 gap-8">
+                      <div className="space-y-6">
+                        <div className="space-y-2">
+                          <Label>Page Title</Label>
+                          <Input placeholder="E-Code - AI Development Platform" className="text-lg" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Subtitle (optional)</Label>
+                          <Input placeholder="Build & Deploy in Minutes" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Background</Label>
+                            <Select defaultValue="gradient-purple">
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="gradient-purple">Purple Gradient</SelectItem>
+                                <SelectItem value="gradient-blue">Blue Gradient</SelectItem>
+                                <SelectItem value="gradient-green">Green Gradient</SelectItem>
+                                <SelectItem value="dark">Dark Solid</SelectItem>
+                                <SelectItem value="light">Light Solid</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Logo Position</Label>
+                            <Select defaultValue="top-left">
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="top-left">Top Left</SelectItem>
+                                <SelectItem value="top-right">Top Right</SelectItem>
+                                <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                                <SelectItem value="none">No Logo</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <Button className="w-full gap-2" size="lg">
+                          <Sparkles className="h-5 w-5" />
+                          Generate Image
+                        </Button>
+                      </div>
+
+                      <div className="space-y-4">
+                        <Label>Live Preview (1200×630)</Label>
+                        <div className="aspect-[1200/630] rounded-xl overflow-hidden shadow-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-600 flex flex-col items-center justify-center text-white p-8 relative">
+                          <div className="absolute inset-0 bg-grid-white/10" />
+                          <div className="absolute top-6 left-6 flex items-center gap-2 z-10">
+                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center font-bold text-lg backdrop-blur-sm">
+                              E
+                            </div>
+                            <span className="font-semibold text-lg">E-Code</span>
+                          </div>
+                          <div className="relative z-10 text-center">
+                            <h2 className="text-3xl font-bold mb-3">E-Code - AI Development Platform</h2>
+                            <p className="text-xl opacity-80">Build & Deploy in Minutes</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" className="flex-1 gap-2">
+                            <Download className="h-4 w-4" />
+                            Download PNG
+                          </Button>
+                          <Button variant="outline" className="flex-1 gap-2">
+                            <Copy className="h-4 w-4" />
+                            Copy URL
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Technical SEO Tab */}
+              <TabsContent value="technical" className="space-y-4">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <Card className="border-0 shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Globe className="h-5 w-5 text-blue-500" />
+                        Sitemap Status
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-950/30">
+                        <span className="text-sm">sitemap.xml</span>
+                        <Badge className="bg-green-500">Active</Badge>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {stats.total} URLs indexed
+                      </div>
+                      <Button variant="outline" className="w-full gap-2" onClick={() => window.open('/sitemap.xml', '_blank')}>
+                        <ExternalLink className="h-4 w-4" />
+                        View Sitemap
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-0 shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Shield className="h-5 w-5 text-green-500" />
+                        Robots.txt
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-950/30">
+                        <span className="text-sm">robots.txt</span>
+                        <Badge className="bg-green-500">Configured</Badge>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Blocking admin, API, and private routes
+                      </div>
+                      <Button variant="outline" className="w-full gap-2" onClick={() => window.open('/robots.txt', '_blank')}>
+                        <ExternalLink className="h-4 w-4" />
+                        View Robots.txt
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-0 shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Activity className="h-5 w-5 text-purple-500" />
+                        Core Web Vitals
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>LCP</span>
+                          <span className="text-green-500 font-medium">1.2s</span>
+                        </div>
+                        <Progress value={80} className="h-2" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>FID</span>
+                          <span className="text-green-500 font-medium">18ms</span>
+                        </div>
+                        <Progress value={95} className="h-2" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>CLS</span>
+                          <span className="text-green-500 font-medium">0.05</span>
+                        </div>
+                        <Progress value={90} className="h-2" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Search Engine Submission */}
+                <Card className="border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-base">Search Engine Submission</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+                        <img src="https://www.google.com/favicon.ico" alt="Google" className="h-6 w-6" />
+                        <span>Google Search Console</span>
+                      </Button>
+                      <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+                        <img src="https://www.bing.com/favicon.ico" alt="Bing" className="h-6 w-6" />
+                        <span>Bing Webmaster</span>
+                      </Button>
+                      <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+                        <Globe className="h-6 w-6" />
+                        <span>Yandex Webmaster</span>
+                      </Button>
+                      <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+                        <Globe className="h-6 w-6" />
+                        <span>Baidu Webmaster</span>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+      </TooltipProvider>
     </AdminLayout>
   );
 }
