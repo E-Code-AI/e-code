@@ -41,6 +41,18 @@ The frontend uses Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to iOS
 - **Backend Sync**: GET `/api/agent/conversation/:id/messages` endpoint retrieves conversation history from agentMessages table or aiConversations.messages JSONB.
 - **Tri-directional Sync**: localStorage ↔ Zustand store ↔ Backend database ensures messages survive tab switches, page reloads, and session changes.
 
+#### Agentic RAG System (Dec 2025)
+- **RAG API Router** (`server/routes/rag.router.ts`): Endpoints for RAG system management:
+  - `GET /api/rag/stats` - Returns RAG statistics (embeddingsCount, nodesCount, edgesCount, isAvailable, providers)
+  - `GET /api/rag/context/:sessionId` - Retrieves context for specific session
+  - `POST /api/rag/conversation-mode` - Toggle RAG mode per conversation
+  - `POST /api/rag/refresh-context` - Force refresh RAG context
+  - `GET /api/rag/session-config/:sessionId` - Get per-session RAG configuration
+- **RAG Controls Component** (`client/src/components/ai/RAGControls.tsx`): Reusable RAG UI with toggle switch, status badge (RAG On/Off), stats display (embeddings/nodes/edges counts), and retrieved context panel.
+- **Cross-Platform Integration**: RAG controls integrated into AIModelSelector (homepage), ReplitAgentPanelV3 (all platforms via mode prop: desktop/mobile/tablet), and TabletIDEView (uses full agent panel with RAG).
+- **Memory MCP** (`server/mcp/servers/memory-mcp.ts`): Knowledge graph storage with nodes, edges, and conversation memory tables. Resilient index creation with per-index try/catch for schema mismatches.
+- **Database Schema**: `knowledge_graph_nodes`, `knowledge_graph_edges`, `conversation_memory` tables defined in `shared/schema.ts` with OpenAI embeddings support.
+
 ### Technical Implementations
 The frontend uses React 18, TypeScript, Vite, TanStack Query, and Wouter. The backend is a Node.js/Express.js application in TypeScript, employing Drizzle ORM for PostgreSQL and Passport.js for authentication, following a RESTful API design. WebSockets power real-time features. AI optimization includes a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are AES-256-GCM encrypted, and SSE streaming is used for code generation. Anonymous bootstrap authentication provides ephemeral guest users.
 
