@@ -24,6 +24,9 @@ import {
   GitBranch,
   Package,
   Key,
+  Wifi,
+  WifiOff,
+  AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -50,6 +53,8 @@ import { GitPanel } from '@/components/ide/GitPanel';
 import { ReplitPackagesPanel } from '@/components/editor/ReplitPackagesPanel';
 import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
 import { ReplitSecretsPanel } from '@/components/editor/ReplitSecretsPanel';
+import { useConnectionStatus } from '@/hooks/use-connection-status';
+import { useProblemsCount } from '@/hooks/use-problems-count';
 
 const MobileTerminal = React.lazy(() => 
   import('@/components/mobile/MobileTerminal').then(module => ({ default: module.MobileTerminal }))
@@ -112,6 +117,12 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
   const gitChangesCount = gitStatus 
     ? (gitStatus.staged?.length || 0) + (gitStatus.unstaged?.length || 0) + (gitStatus.untracked?.length || 0)
     : 0;
+  
+  // Connection status detection
+  const isConnected = useConnectionStatus();
+  
+  // Problems/errors count
+  const { errorsCount } = useProblemsCount(projectId);
   
   // Keyboard utilities feature flags
   const [enableShortcutHint, setEnableShortcutHint] = useState(() => {
@@ -421,6 +432,7 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
                 onOpenSettings={handleOpenSettings}
                 onOpenCollaboration={() => setIsCollaborationOpen(true)}
                 gitChangesCount={gitChangesCount}
+                errorsCount={errorsCount}
               />
             </div>
           </motion.div>
@@ -453,11 +465,36 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
             {drawerOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
           </Button>
           
+          {/* Connection status indicator */}
+          <div className="flex items-center">
+            {isConnected ? (
+              <Wifi className="h-4 w-4 text-green-500" />
+            ) : (
+              <WifiOff className="h-4 w-4 text-red-500" />
+            )}
+          </div>
+          
           <div className="flex-1 flex items-center gap-2">
             <Code className="h-5 w-5 text-muted-foreground" />
             <span className="text-sm font-medium truncate">
               {selectedFileId ? `File ${selectedFileId}` : 'No file selected'}
             </span>
+          </div>
+          
+          {/* Status badges */}
+          <div className="flex items-center gap-2">
+            {errorsCount > 0 && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/10 text-red-500">
+                <AlertCircle className="h-3 w-3" />
+                <span className="text-xs font-medium">{errorsCount}</span>
+              </div>
+            )}
+            {gitChangesCount > 0 && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-muted-foreground">
+                <GitBranch className="h-3 w-3" />
+                <span className="text-xs font-medium">{gitChangesCount}</span>
+              </div>
+            )}
           </div>
           
           <ReplitPublishButton

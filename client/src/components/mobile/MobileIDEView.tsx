@@ -21,6 +21,8 @@ import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 import { ReplitPublishButton } from '@/components/ide/ReplitPublishButton';
 import { ReplitDeploymentPanel } from '@/components/ide/ReplitDeploymentPanel';
+import { useConnectionStatus } from '@/hooks/use-connection-status';
+import { useProblemsCount } from '@/hooks/use-problems-count';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { toast } from '@/hooks/use-toast';
@@ -336,6 +338,12 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
     ? (gitStatus.staged?.length || 0) + (gitStatus.unstaged?.length || 0) + (gitStatus.untracked?.length || 0)
     : 0;
   
+  // Connection status detection
+  const isConnected = useConnectionStatus();
+  
+  // Problems/errors count
+  const { errorsCount } = useProblemsCount(normalizedProjectId);
+  
   // Keyboard utilities feature flags
   const [enableShortcutHint, setEnableShortcutHint] = useState(() => {
     if (typeof window === 'undefined') return true;
@@ -532,8 +540,8 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
       <ReplitBottomTabs
         activeTab={activeTab}
         onTabChange={handleTabClick}
-        badgeCounts={{ git: gitChangesCount }}
-        isConnected={true}
+        badgeCounts={{ git: gitChangesCount, errors: errorsCount }}
+        isConnected={isConnected}
       />
 
       {/* Floating Action Button (Run) */}

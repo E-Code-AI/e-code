@@ -40,3 +40,9 @@ export { useToast } from './use-toast';
 
 // AI Code Actions Hook (Monaco Editor Integration)
 export { useAICodeActions } from './use-ai-code-actions';
+
+// Connection Status Detection
+export { useConnectionStatus } from './use-connection-status';
+
+// Problems/Errors Count
+export { useProblemsCount } from './use-problems-count';
