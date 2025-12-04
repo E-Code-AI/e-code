@@ -157,6 +157,7 @@ export const CreateProjectModal = ({
                 placeholder="My Repl"
                 {...form.register("name")}
                 className="bg-[var(--ecode-sidebar)] border-[var(--ecode-border)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-muted)]"
+                data-testid="input-project-name"
               />
               {form.formState.errors.name && (
                 <p className="text-sm text-destructive">
@@ -220,6 +221,7 @@ export const CreateProjectModal = ({
               type="submit" 
               disabled={isLoading}
               className="bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
+              data-testid="button-create-project"
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Repl
