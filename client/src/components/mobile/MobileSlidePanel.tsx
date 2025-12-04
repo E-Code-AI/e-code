@@ -33,7 +33,7 @@ export function MobileSlidePanel({
           
           <motion.div
             className={cn(
-              'fixed inset-y-0 right-0 w-full max-w-md bg-[#1e1e1e] z-50 flex flex-col shadow-2xl',
+              'fixed inset-y-0 right-0 w-full max-w-md bg-background dark:bg-[var(--ecode-background)] z-50 flex flex-col shadow-2xl',
               className
             )}
             initial={{ x: '100%' }}
@@ -42,14 +42,14 @@ export function MobileSlidePanel({
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             data-testid="mobile-slide-panel"
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#3e3e42]">
-              <h2 className="font-semibold text-white text-lg" data-testid="mobile-slide-panel-title">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <h2 className="font-semibold text-foreground text-lg" data-testid="mobile-slide-panel-title">
                 {title}
               </h2>
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-10 w-10 p-0 hover:bg-[#3e3e42] touch-manipulation"
+                className="h-10 w-10 p-0 hover:bg-muted touch-manipulation"
                 onClick={onClose}
                 data-testid="mobile-slide-panel-close"
               >

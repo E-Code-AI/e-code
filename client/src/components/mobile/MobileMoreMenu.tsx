@@ -442,7 +442,7 @@ export function MobileMoreMenu({
           {/* Bottom Sheet */}
           <motion.div
             className={cn(
-              'fixed bottom-0 left-0 right-0 bg-[#252526] rounded-t-2xl shadow-2xl z-50 max-h-[85vh] flex flex-col',
+              'fixed bottom-0 left-0 right-0 bg-card dark:bg-[var(--ecode-surface)] rounded-t-2xl shadow-2xl z-50 max-h-[85vh] flex flex-col',
               className
             )}
             initial={{ y: '100%' }}
@@ -459,16 +459,16 @@ export function MobileMoreMenu({
               onTouchEnd={handleTouchEnd}
               data-testid="mobile-more-menu-handle"
             >
-              <div className="w-12 h-1 bg-gray-600 rounded-full" />
+              <div className="w-12 h-1 bg-muted-foreground/50 rounded-full" />
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#3e3e42]">
-              <h2 className="font-semibold text-white text-lg">Tools & More</h2>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <h2 className="font-semibold text-foreground text-lg">Tools & More</h2>
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 w-8 p-0 hover:bg-[#3e3e42] touch-manipulation"
+                className="h-8 w-8 p-0 hover:bg-muted touch-manipulation"
                 onClick={onClose}
                 data-testid="mobile-more-menu-close"
               >
@@ -484,7 +484,7 @@ export function MobileMoreMenu({
                     {/* Section Header */}
                     <div className="flex items-center gap-2 mb-3">
                       <section.icon className="h-4 w-4 text-[#F26207]" />
-                      <h3 className="font-semibold text-sm text-gray-300 uppercase tracking-wide">
+                      <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
                         {section.title}
                       </h3>
                     </div>
@@ -494,18 +494,18 @@ export function MobileMoreMenu({
                       {section.items.map((item) => (
                         <motion.button
                           key={item.id}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[#3e3e42] active:bg-[#4e4e52] transition-colors touch-manipulation text-left group"
+                          className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted active:bg-muted/70 transition-colors touch-manipulation text-left group"
                           onClick={item.onClick}
                           whileTap={{ scale: 0.98 }}
                           data-testid={`mobile-more-menu-${item.id}`}
                         >
                           {/* Icon */}
-                          <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-[#3e3e42] rounded-lg group-hover:bg-[#4e4e52] transition-colors">
-                            <item.icon className="h-5 w-5 text-gray-300" />
+                          <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-muted dark:bg-[var(--ecode-surface-secondary)] rounded-lg group-hover:bg-muted/80 transition-colors">
+                            <item.icon className="h-5 w-5 text-muted-foreground" />
                           </div>
 
                           {/* Label */}
-                          <span className="flex-1 text-sm text-white font-medium">
+                          <span className="flex-1 text-sm text-foreground font-medium">
                             {item.label}
                           </span>
 
@@ -517,14 +517,14 @@ export function MobileMoreMenu({
                           )}
 
                           {/* Chevron */}
-                          <ChevronRight className="flex-shrink-0 h-4 w-4 text-gray-500 group-hover:text-gray-300 transition-colors" />
+                          <ChevronRight className="flex-shrink-0 h-4 w-4 text-muted-foreground/70 group-hover:text-muted-foreground transition-colors" />
                         </motion.button>
                       ))}
                     </div>
 
                     {/* Separator (except for last section) */}
                     {sectionIndex < menuSections.length - 1 && (
-                      <Separator className="mt-6 bg-[#3e3e42]" />
+                      <Separator className="mt-6 bg-border" />
                     )}
                   </div>
                 ))}
@@ -532,7 +532,7 @@ export function MobileMoreMenu({
             </ScrollArea>
 
             {/* Footer Info */}
-            <div className="px-4 py-3 border-t border-[#3e3e42] text-xs text-gray-400 text-center">
+            <div className="px-4 py-3 border-t border-border text-xs text-muted-foreground text-center">
               E-Code Mobile • Project #{projectId}
             </div>
           </motion.div>
