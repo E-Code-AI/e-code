@@ -58,7 +58,7 @@ export function ReplitBottomTabs({
       <div className="absolute inset-0 bg-background/98 backdrop-blur-xl border-t border-border" />
       
       {/* Connection status indicator - top left */}
-      <div className="absolute top-2 left-3 z-10">
+      <div className="absolute top-2 left-3 z-10" data-testid="indicator-connection-status">
         {isConnected ? (
           <Wifi className="h-3 w-3 text-green-500" />
         ) : (
@@ -66,13 +66,23 @@ export function ReplitBottomTabs({
         )}
       </div>
       
-      {/* Git changes indicator - top right */}
-      {badgeCounts.git && badgeCounts.git > 0 && (
-        <div className="absolute top-2 right-3 z-10 flex items-center gap-1 text-[10px] text-muted-foreground">
-          <GitBranch className="h-3 w-3" />
-          <span>{badgeCounts.git}</span>
-        </div>
-      )}
+      {/* Status indicators - top right */}
+      <div className="absolute top-2 right-3 z-10 flex items-center gap-3">
+        {/* Errors indicator */}
+        {badgeCounts.errors && badgeCounts.errors > 0 && (
+          <div className="flex items-center gap-1 text-[10px] text-red-500" data-testid="indicator-errors">
+            <AlertCircle className="h-3 w-3" />
+            <span>{badgeCounts.errors}</span>
+          </div>
+        )}
+        {/* Git changes indicator */}
+        {badgeCounts.git && badgeCounts.git > 0 && (
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground" data-testid="indicator-git-changes">
+            <GitBranch className="h-3 w-3" />
+            <span>{badgeCounts.git}</span>
+          </div>
+        )}
+      </div>
       
       <nav className="relative flex items-center justify-around h-[60px] px-2">
         {tabs.map((tab) => {

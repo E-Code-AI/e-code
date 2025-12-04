@@ -15,7 +15,8 @@ import {
   Code2,
   GitBranch,
   Package,
-  Users
+  Users,
+  AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MobileFileExplorer } from '@/components/mobile/MobileFileExplorer';
@@ -35,6 +36,7 @@ interface TabletDrawerContentProps {
   onOpenCollaboration?: () => void;
   // Badge counts
   gitChangesCount?: number;
+  errorsCount?: number;
 }
 
 type DrawerTab = 'files' | 'tools';
@@ -51,7 +53,8 @@ export function TabletDrawerContent({
   onOpenDebugger,
   onOpenSettings,
   onOpenCollaboration,
-  gitChangesCount = 0
+  gitChangesCount = 0,
+  errorsCount = 0
 }: TabletDrawerContentProps) {
   const [activeTab, setActiveTab] = useState<DrawerTab>('files');
 
@@ -111,6 +114,7 @@ export function TabletDrawerContent({
             onOpenSettings={onOpenSettings}
             onOpenCollaboration={onOpenCollaboration}
             gitChangesCount={gitChangesCount}
+            errorsCount={errorsCount}
           />
         )}
       </div>
@@ -131,6 +135,7 @@ interface ToolsPanelProps {
   onOpenSettings?: () => void;
   onOpenCollaboration?: () => void;
   gitChangesCount?: number;
+  errorsCount?: number;
 }
 
 function ToolsPanel({
@@ -142,7 +147,8 @@ function ToolsPanel({
   onOpenDebugger,
   onOpenSettings,
   onOpenCollaboration,
-  gitChangesCount = 0
+  gitChangesCount = 0,
+  errorsCount = 0
 }: ToolsPanelProps) {
   const tools = [
     {
@@ -187,11 +193,11 @@ function ToolsPanel({
     },
     {
       id: 'debugger',
-      name: 'Debugger',
-      icon: Code2,
-      description: 'Debug your application',
+      name: 'Problems',
+      icon: AlertCircle,
+      description: 'View errors and warnings',
       action: onOpenDebugger || (() => console.warn('Debugger handler not provided')),
-      badge: undefined as number | undefined,
+      badge: errorsCount > 0 ? errorsCount : undefined,
     },
     {
       id: 'settings',
