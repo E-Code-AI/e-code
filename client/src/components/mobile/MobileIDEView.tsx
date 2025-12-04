@@ -15,6 +15,13 @@ import { MobileDebugPanel } from './MobileDebugPanel';
 import { MobileSlidePanel } from './MobileSlidePanel';
 import { ReplitBottomTabs } from './ReplitBottomTabs';
 import { MobileFAB } from './MobileFAB';
+import { 
+  TerminalSkeleton, 
+  EditorSkeleton, 
+  PreviewSkeleton, 
+  AgentSkeleton,
+  DeploySkeleton 
+} from './MobileLoadingSkeleton';
 import { useTabPersistence, useFileBrowserPersistence } from '@/hooks/use-mobile-persistence';
 import { ReplitAgentPanelV3 } from '../ai/ReplitAgentPanelV3';
 import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
@@ -33,12 +40,23 @@ const EnhancedMobileTerminal = React.lazy(() =>
 );
 
 const TerminalFallback = () => (
-  <div className="h-full flex items-center justify-center bg-[var(--ecode-terminal-bg)]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="h-5 w-5 animate-spin text-primary" />
-      <p className="text-xs text-muted-foreground">Loading terminal...</p>
-    </div>
-  </div>
+  <TerminalSkeleton className="h-full" />
+);
+
+const EditorFallback = () => (
+  <EditorSkeleton className="h-full" />
+);
+
+const PreviewFallback = () => (
+  <PreviewSkeleton className="h-full" />
+);
+
+const AgentFallback = () => (
+  <AgentSkeleton className="h-full" />
+);
+
+const DeployFallback = () => (
+  <DeploySkeleton className="h-full" />
 );
 
 export type MobilePanelType = 'git' | 'packages' | 'secrets' | 'database' | 'settings' | 'debug' | null;
@@ -497,17 +515,21 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
               style={{ x: prefersReducedMotion ? 0 : parallaxOffset }}
             >
               {activeTab === 'agent' && (
-                <ReplitAgentPanelV3 
-                  projectId={String(projectId)}
-                  mode="mobile"
-                />
+                <Suspense fallback={<AgentFallback />}>
+                  <ReplitAgentPanelV3 
+                    projectId={String(projectId)}
+                    mode="mobile"
+                  />
+                </Suspense>
               )}
               
               {activeTab === 'code' && (
-                <LazyMobileCodeEditor 
-                  projectId={projectId}
-                  fileId={selectedFileId}
-                />
+                <Suspense fallback={<EditorFallback />}>
+                  <LazyMobileCodeEditor 
+                    projectId={projectId}
+                    fileId={selectedFileId}
+                  />
+                </Suspense>
               )}
               
               {activeTab === 'terminal' && (
@@ -517,17 +539,21 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
               )}
               
               {activeTab === 'preview' && (
-                <MobilePreviewPanel projectId={projectId} />
+                <Suspense fallback={<PreviewFallback />}>
+                  <MobilePreviewPanel projectId={projectId} />
+                </Suspense>
               )}
               
               {activeTab === 'deploy' && (
-                <div className="h-full overflow-y-auto bg-background dark:bg-[var(--ecode-background)]">
-                  <ReplitDeploymentPanel 
-                    projectId={normalizedProjectId} 
-                    className="h-full"
-                    defaultTab="deploy"
-                  />
-                </div>
+                <Suspense fallback={<DeployFallback />}>
+                  <div className="h-full overflow-y-auto bg-background dark:bg-[var(--ecode-background)]">
+                    <ReplitDeploymentPanel 
+                      projectId={normalizedProjectId} 
+                      className="h-full"
+                      defaultTab="deploy"
+                    />
+                  </div>
+                </Suspense>
               )}
             </motion.div>
           </AnimatePresence>
