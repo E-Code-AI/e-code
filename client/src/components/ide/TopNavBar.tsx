@@ -128,7 +128,7 @@ export function TopNavBar({
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
   
   return (
-    <div className="h-12 border-b bg-background flex items-center px-3 gap-2 shadow-sm">
+    <div className="h-12 border-b bg-background flex items-center px-3 gap-2 shadow-sm" data-testid="top-nav">
       {/* Main Menu Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
