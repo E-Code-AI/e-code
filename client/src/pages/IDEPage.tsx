@@ -435,6 +435,35 @@ export default function IDEPage() {
     ? 'failed'
     : 'idle';
   
+  // Query git status for badge count on ActivityBar
+  interface GitStatus {
+    branch: string;
+    ahead: number;
+    behind: number;
+    staged: string[];
+    unstaged: string[];
+    untracked: string[];
+  }
+  
+  const { data: gitStatus } = useQuery<GitStatus>({
+    queryKey: ['/api/git/status'],
+    enabled: !!projectId && !!user,
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+  
+  // Update gitChangesCount from git status query
+  useEffect(() => {
+    if (gitStatus) {
+      const totalChanges = (gitStatus.staged?.length || 0) + 
+                          (gitStatus.unstaged?.length || 0) + 
+                          (gitStatus.untracked?.length || 0);
+      setGitChangesCount(totalChanges);
+      if (gitStatus.branch) {
+        setGitBranch(gitStatus.branch);
+      }
+    }
+  }, [gitStatus]);
+  
   // Available tools/panels that can be added (comprehensive list with all features)
   const availableTools = [
     { id: 'console', label: 'Console', icon: '🖥️' },
