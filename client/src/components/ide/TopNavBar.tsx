@@ -85,6 +85,7 @@ interface TopNavBarProps {
   collaboratorCount?: number;
   onOpenDeployLogs?: () => void;
   onOpenDeployAnalytics?: () => void;
+  showTabs?: boolean;
 }
 
 export function TopNavBar({
@@ -111,6 +112,7 @@ export function TopNavBar({
   collaboratorCount = 0,
   onOpenDeployLogs,
   onOpenDeployAnalytics,
+  showTabs = true,
 }: TopNavBarProps) {
   const { user, logoutMutation } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -170,60 +172,64 @@ export function TopNavBar({
       </div>
       
       {/* Tabs with Drag-and-Drop Reorder - All tabs visible with scroll */}
-      <div className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
-        {tabs.map((tab, index) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              draggable={onTabReorder !== undefined}
-              onDragStart={(e) => {
-                e.dataTransfer.setData('text/plain', String(index));
-                e.dataTransfer.effectAllowed = 'move';
-                (e.target as HTMLElement).style.opacity = '0.5';
-              }}
-              onDragEnd={(e) => {
-                (e.target as HTMLElement).style.opacity = '1';
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
-                if (onTabReorder && fromIndex !== index) {
-                  onTabReorder(fromIndex, index);
-                }
-              }}
-              onClick={() => onTabChange(tab.id)}
-              data-testid={`tab-${tab.id}`}
-              className={cn(
-                "flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md transition-all duration-200 cursor-grab active:cursor-grabbing",
-                "hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-950/40 dark:hover:to-purple-950/40 hover:shadow-sm",
-                activeTab === tab.id 
-                  ? "bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 shadow-sm" 
-                  : "bg-transparent"
-              )}
-            >
-              {Icon && <Icon className="h-3.5 w-3.5 transition-transform duration-200 group-hover:scale-110" />}
-              <span className="max-w-[120px] truncate font-medium">{tab.label}</span>
-              {tab.closable && (
-                <X
-                  className="h-3 w-3 opacity-70 hover:opacity-100 hover:text-destructive transition-all"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onTabClose(tab.id);
-                  }}
-                />
-              )}
-            </button>
-          );
-        })}
-        
-        {/* Enhanced Add Tab Menu */}
-        {onAddTool && <AddTabMenu onAddTool={onAddTool} availableTools={availableTools} onOpenToolsSheet={onOpenToolsSheet} />}
-      </div>
+      {showTabs ? (
+        <div className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+          {tabs.map((tab, index) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                draggable={onTabReorder !== undefined}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('text/plain', String(index));
+                  e.dataTransfer.effectAllowed = 'move';
+                  (e.target as HTMLElement).style.opacity = '0.5';
+                }}
+                onDragEnd={(e) => {
+                  (e.target as HTMLElement).style.opacity = '1';
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                  if (onTabReorder && fromIndex !== index) {
+                    onTabReorder(fromIndex, index);
+                  }
+                }}
+                onClick={() => onTabChange(tab.id)}
+                data-testid={`tab-${tab.id}`}
+                className={cn(
+                  "flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md transition-all duration-200 cursor-grab active:cursor-grabbing",
+                  "hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-950/40 dark:hover:to-purple-950/40 hover:shadow-sm",
+                  activeTab === tab.id 
+                    ? "bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 shadow-sm" 
+                    : "bg-transparent"
+                )}
+              >
+                {Icon && <Icon className="h-3.5 w-3.5 transition-transform duration-200 group-hover:scale-110" />}
+                <span className="max-w-[120px] truncate font-medium">{tab.label}</span>
+                {tab.closable && (
+                  <X
+                    className="h-3 w-3 opacity-70 hover:opacity-100 hover:text-destructive transition-all"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onTabClose(tab.id);
+                    }}
+                  />
+                )}
+              </button>
+            );
+          })}
+          
+          {/* Enhanced Add Tab Menu */}
+          {onAddTool && <AddTabMenu onAddTool={onAddTool} availableTools={availableTools} onOpenToolsSheet={onOpenToolsSheet} />}
+        </div>
+      ) : (
+        <div className="flex-1" />
+      )}
       
       {/* Right Actions */}
       <div className="flex items-center gap-1.5">
