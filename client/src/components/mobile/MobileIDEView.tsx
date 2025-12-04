@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'framer-motion';
-import { Terminal, Monitor, MoreHorizontal, Sparkles, Loader2, CheckCircle, ExternalLink, FolderOpen, Rocket, Code } from 'lucide-react';
+import { Terminal, Monitor, MoreHorizontal, Sparkles, Loader2, CheckCircle, ExternalLink, FolderOpen, Rocket, Code, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EnhancedMobileFileExplorer } from './EnhancedMobileFileExplorer';
+import { InlineMobileFileExplorer } from './InlineMobileFileExplorer';
 import { LazyMobileCodeEditor } from './LazyMobileCodeEditor';
 import { MobilePreviewPanel } from './MobilePreviewPanel';
 import { MobileMoreMenu } from './MobileMoreMenu';
@@ -330,6 +331,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
   const [isCollaborationOpen, setIsCollaborationOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<MobilePanelType>(null);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const [isEditingFile, setIsEditingFile] = useState(false);
   
   interface GitStatus {
     branch: string;
@@ -374,6 +376,12 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
     window.addEventListener('keyboard-settings-changed', handleKeyboardSettingsChanged);
     return () => window.removeEventListener('keyboard-settings-changed', handleKeyboardSettingsChanged);
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'files') {
+      setIsEditingFile(false);
+    }
+  }, [activeTab]);
   
   const x = useMotionValue(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -518,12 +526,37 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
               )}
               
               {activeTab === 'files' && (
-                <Suspense fallback={<EditorFallback />}>
-                  <LazyMobileCodeEditor 
-                    projectId={projectId}
-                    fileId={selectedFileId}
+                isEditingFile && selectedFileId ? (
+                  <Suspense fallback={<EditorFallback />}>
+                    <div className="h-full flex flex-col">
+                      <div className="flex items-center gap-2 p-2 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+                        <button
+                          onClick={() => setIsEditingFile(false)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--ecode-accent)] hover:bg-[var(--ecode-surface-hover)] rounded-lg touch-manipulation min-h-[44px]"
+                          data-testid="button-back-to-files"
+                        >
+                          <ArrowLeft className="h-4 w-4" />
+                          Back to Files
+                        </button>
+                      </div>
+                      <div className="flex-1">
+                        <LazyMobileCodeEditor 
+                          projectId={projectId}
+                          fileId={selectedFileId}
+                        />
+                      </div>
+                    </div>
+                  </Suspense>
+                ) : (
+                  <InlineMobileFileExplorer
+                    projectId={normalizedProjectId}
+                    selectedFileId={selectedFileId}
+                    onFileSelect={(file) => {
+                      setSelectedFileId(file.id);
+                      setIsEditingFile(true);
+                    }}
                   />
-                </Suspense>
+                )
               )}
               
               {activeTab === 'console' && (
