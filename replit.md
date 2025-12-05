@@ -32,13 +32,19 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 
 ## External Dependencies
 
-### AI/ML Services
-- **OpenAI:** GPT-5.1, GPT-5, GPT-5-mini, GPT-4o, o3, o4-mini
-- **Anthropic:** Claude Sonnet 4.5, Claude Opus 4.1, Claude Haiku 4.5
-- **Google Gemini:** Gemini 2.5 Flash, Gemini 2.5 Pro
-- **Moonshot AI:** Kimi K2, Kimi K2 Thinking
-- **xAI:** Grok 4, Grok 4 Fast
-- **Groq:** Mixtral 8x7B
+### AI/ML Services (24 Models - E2E Verified December 2025)
+- **OpenAI (8):** GPT-5.1, GPT-5.1-thinking, GPT-5, GPT-5-mini, GPT-5-nano, GPT-4o, o3, o4-mini
+- **Anthropic (4):** Claude Opus 4.5-20251124, Claude Sonnet 4.5-20250929, Claude Opus 4.1-20250805, Claude Haiku 4.5-20251015
+- **Google Gemini (3):** Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini 2.0 Flash
+- **Moonshot AI (5):** Kimi K2-0711, **kimi-k2-0904-preview** (CORRECT ID), Kimi K2 Thinking, Moonshot v1-32k, v1-128k
+- **xAI (2):** Grok 4, Grok 4 Fast
+- **Groq (2):** Mixtral 8x7B, LLaMA 3 70B (pending API key)
+
+### Model Catalog Verification
+- **Route:** `/ai-models` - Public AI model showcase page
+- **API:** `GET /api/models` returns all 24 models
+- **Critical:** `kimi-k2-0904-preview` is the ONLY correct enum (not 0905)
+- **Test Report:** `docs/E2E-MODEL-TEST-REPORT.md`
 
 ### Infrastructure Services
 - **PostgreSQL:** Neon serverless
