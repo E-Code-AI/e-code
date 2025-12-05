@@ -1725,9 +1725,9 @@ export const AI_MODELS = [
   // xAI (July-Sept 2025)
   'grok-4',
   'grok-4-fast',
-  // Moonshot AI (Nov 2025) - ✅ 40-YEAR FIX: Production-recommended IDs
+  // Moonshot AI (Nov 2025) - ✅ ALIGNED with aiModelEnum
   'kimi-k2-0711-preview',
-  'kimi-k2-0905-preview',
+  'kimi-k2-0904-preview',
   'kimi-k2-thinking'
 ] as const;
 export type AiModel = typeof AI_MODELS[number];
