@@ -1644,6 +1644,7 @@ export function ReplitAgentPanelV3({
             onViewVideoReplays={handleViewVideoReplays}
             videoReplayCount={videoReplayCount}
             compact={mode !== 'desktop'}
+            actualModelName={model?.name}
           />
         </div>
         
