@@ -102,13 +102,23 @@ export const AI_MODELS: AIModel[] = [
     costPer1kTokens: 0.003
   },
   
-  // Anthropic Models - LATEST NOVEMBER 2025
-  // Source: https://docs.claude.com/en/docs/about-claude/models
+  // Anthropic Models - LATEST DECEMBER 2025
+  // Source: https://docs.anthropic.com/en/docs/about-claude/models/overview
+  // ✅ UPDATED Dec 5, 2025: Added Claude Opus 4.5 (released Nov 24, 2025)
+  {
+    id: 'claude-opus-4-5-20251124',
+    name: 'Claude Opus 4.5',
+    provider: 'anthropic',
+    description: 'Most capable frontier model - >80% SWE-bench, excels at coding, vision, computer use & agentic workflows (Nov 24, 2025)',
+    maxTokens: 200000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.015
+  },
   {
     id: 'claude-sonnet-4-5-20250929',
     name: 'Claude Sonnet 4.5',
     provider: 'anthropic',
-    description: 'Best coding model in the world - strongest at agents & computer use (Sept 29, 2025)',
+    description: 'Best balanced model - strong coding, agents, hybrid reasoning with fast & extended thinking (Sept 29, 2025)',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.003
@@ -117,7 +127,7 @@ export const AI_MODELS: AIModel[] = [
     id: 'claude-opus-4-1-20250805',
     name: 'Claude Opus 4.1',
     provider: 'anthropic',
-    description: 'Upgraded for agentic tasks & real-world coding - 74.5% on SWE-bench (Aug 5, 2025)',
+    description: 'Agentic tasks & real-world coding - 74.5% on SWE-bench Verified (Aug 5, 2025)',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.015
@@ -126,7 +136,7 @@ export const AI_MODELS: AIModel[] = [
     id: 'claude-haiku-4-5-20251015',
     name: 'Claude Haiku 4.5',
     provider: 'anthropic',
-    description: 'Fastest model - matches Sonnet 4 on coding at 1/3 the cost (Oct 15, 2025)',
+    description: 'Fastest & cheapest - matches Sonnet 4 on coding at 1/3 the cost, 73.3% SWE-bench (Oct 15, 2025)',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.001
