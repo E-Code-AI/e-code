@@ -120,3 +120,59 @@ export function getProjectUrl(project: ProjectLike, fallbackUsername?: string | 
 
   return '/projects';
 }
+
+/**
+ * Normalize projectId to number type (canonical database format)
+ * Handles string, number, undefined, and null inputs safely
+ * @param projectId The project ID in any format
+ * @returns number or undefined if invalid
+ */
+export function normalizeProjectId(projectId: string | number | undefined | null): number | undefined {
+  if (projectId === undefined || projectId === null) {
+    return undefined;
+  }
+  
+  if (typeof projectId === 'number') {
+    return isNaN(projectId) ? undefined : projectId;
+  }
+  
+  if (typeof projectId === 'string') {
+    const parsed = parseInt(projectId, 10);
+    return isNaN(parsed) ? undefined : parsed;
+  }
+  
+  return undefined;
+}
+
+/**
+ * Normalize projectId to number type, throwing error if invalid
+ * Use when projectId is required and must be valid
+ * @param projectId The project ID in any format
+ * @returns number (throws if invalid)
+ */
+export function requireProjectId(projectId: string | number | undefined | null): number {
+  const normalized = normalizeProjectId(projectId);
+  if (normalized === undefined) {
+    throw new Error(`Invalid projectId: ${projectId}`);
+  }
+  return normalized;
+}
+
+/**
+ * Type guard to check if projectId is valid
+ * @param projectId The project ID to check
+ * @returns boolean indicating validity
+ */
+export function isValidProjectId(projectId: string | number | undefined | null): projectId is string | number {
+  return normalizeProjectId(projectId) !== undefined;
+}
+
+/**
+ * Convert projectId to string for URL/API usage
+ * @param projectId The project ID in any format
+ * @returns string representation or empty string if invalid
+ */
+export function projectIdToString(projectId: string | number | undefined | null): string {
+  const normalized = normalizeProjectId(projectId);
+  return normalized !== undefined ? String(normalized) : '';
+}

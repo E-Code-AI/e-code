@@ -18,10 +18,17 @@ interface ToolExecution {
 
 interface ThinkingStep {
   id: string;
+  type?: 'reasoning' | 'analysis' | 'planning' | 'implementation' | 'verification' | 'tool_use';
   title: string;
-  description: string;
-  status: 'pending' | 'active' | 'complete' | 'error';
+  content?: string;
+  description?: string;
+  status: 'pending' | 'active' | 'complete' | 'completed' | 'error';
   timestamp: Date;
+  details?: string[];
+  progress?: number;
+  duration?: number;
+  isStreaming?: boolean;
+  metadata?: Record<string, any>;
 }
 
 interface Task {
@@ -30,11 +37,23 @@ interface Task {
   status: 'pending' | 'in_progress' | 'completed' | 'failed';
 }
 
+type ActionType = 'create_file' | 'edit_file' | 'delete_file' | 'run_command' | 'install_package' | 'create_folder' | string;
+
 interface Action {
   id: string;
-  type: string;
+  type: ActionType;
+  path?: string;
+  content?: string;
+  command?: string;
+  package?: string;
   description: string;
-  status: 'pending' | 'approved' | 'rejected' | 'executing' | 'completed';
+  status: 'pending' | 'approved' | 'rejected' | 'executing' | 'executed' | 'completed';
+  timestamp?: Date;
+  result?: {
+    success: boolean;
+    message?: string;
+    error?: string;
+  };
 }
 
 interface FileDiff {

@@ -7,14 +7,17 @@ import { Progress } from '@/components/ui/progress';
 
 export interface ThinkingStep {
   id: string;
-  type: 'reasoning' | 'analysis' | 'planning' | 'implementation' | 'verification';
+  type?: 'reasoning' | 'analysis' | 'planning' | 'implementation' | 'verification' | 'tool_use';
   title: string;
-  content: string;
-  status: 'pending' | 'active' | 'complete' | 'error';
+  content?: string;
+  description?: string;
+  status: 'pending' | 'active' | 'complete' | 'completed' | 'error';
   timestamp: Date;
   details?: string[];
   progress?: number;
+  duration?: number;
   isStreaming?: boolean;
+  metadata?: Record<string, any>;
 }
 
 export interface ThinkingDisplayProps {
@@ -111,8 +114,9 @@ export function ThinkingDisplay({
       <div className="divide-y divide-border">
         {safeSteps.map((step, index) => {
           const isExpanded = expandedSteps.has(step.id);
-          const Icon = STEP_ICONS[step.type];
-          const iconColor = STEP_COLORS[step.type];
+          const stepType = step.type || 'reasoning';
+          const Icon = STEP_ICONS[stepType] || Brain;
+          const iconColor = STEP_COLORS[stepType] || 'text-purple-600 dark:text-purple-400';
           
           return (
             <div key={step.id} className="group">
