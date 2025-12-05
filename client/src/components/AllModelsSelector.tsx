@@ -103,12 +103,12 @@ export function AllModelsSelector() {
       available: true
     },
     {
-      id: 'claude-opus-4-1-20250805',
-      name: 'Claude Opus 4.1',
-      description: 'Upgraded for agentic tasks - 74.5% on SWE-bench (Aug 5, 2025)',
+      id: 'claude-opus-4-5-20251124',
+      name: 'Claude Opus 4.5',
+      description: 'Most capable frontier model - >80% SWE-bench, vision, computer use & agents (Nov 24, 2025)',
       provider: 'Anthropic',
       contextWindow: 200000,
-      capabilities: ['Chat', 'Code', 'Debugging', 'Agents'],
+      capabilities: ['Chat', 'Code', 'Vision', 'Computer Use', 'Agents'],
       pricing: { input: 15, output: 75, currency: 'USD', unit: '1M tokens' },
       available: true
     },

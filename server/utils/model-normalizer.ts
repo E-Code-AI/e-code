@@ -39,7 +39,7 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
   'claude-opus-4.5': 'claude-opus-4-5-20251124',  // ✅ NEW: Dot notation alias
   'claude-opus-4-5-20251124': 'claude-opus-4-5-20251124',  // ✅ NEW: Identity mapping
   'claude-sonnet-4-5-20250929': 'claude-sonnet-4-5-20250929',  // Identity mapping
-  'claude-opus-4-1-20250805': 'claude-opus-4-1-20250805',  // Identity mapping
+  'claude-opus-4-1-20250805': 'claude-opus-4-5-20251124',  // Legacy alias → upgrade to Opus 4.5
   'claude-haiku-4-5-20251015': 'claude-haiku-4-5-20251015',  // Identity mapping
   
   // Gemini aliases (COMPLETE COVERAGE)
@@ -134,8 +134,8 @@ export function normalizeModelName(modelName: string | any | undefined, provider
     // OpenAI current models
     'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4o', 'gpt-4o-mini', 'o3', 'o4-mini',
     
-    // Anthropic current models (Dec 2025)
-    'claude-opus-4-5-20251124', 'claude-sonnet-4-5-20250929', 'claude-opus-4-1-20250805', 'claude-haiku-4-5-20251015',
+    // Anthropic current models (Dec 2025) - Only Opus 4.5, Sonnet 4.5, Haiku 4.5
+    'claude-opus-4-5-20251124', 'claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251015',
     
     // Gemini current models
     'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash',

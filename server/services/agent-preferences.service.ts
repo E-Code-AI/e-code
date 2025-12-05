@@ -131,8 +131,8 @@ export class AgentPreferencesService {
         },
       },
       {
-        id: 'claude-opus-4-1-20250805',
-        name: 'Claude Opus 4.1',
+        id: 'claude-opus-4-5-20251124',
+        name: 'Claude Opus 4.5',
         description: 'Most powerful Claude model',
         category: 'anthropic',
         tier: 'high-power',
@@ -312,7 +312,7 @@ export class AgentPreferencesService {
     // High power mode always uses premium models
     if (highPowerMode) {
       if (requiresExtendedThinking || complexity === 'complex') {
-        return 'claude-opus-4-1-20250805';
+        return 'claude-opus-4-5-20251124';
       }
       return 'gpt-5.1';
     }
@@ -320,7 +320,7 @@ export class AgentPreferencesService {
     // Extended thinking required
     if (requiresExtendedThinking) {
       if (speedPriority === 'fast') return 'o4-mini';
-      if (speedPriority === 'quality') return 'claude-opus-4-1-20250805';
+      if (speedPriority === 'quality') return 'claude-opus-4-5-20251124';
       return 'claude-sonnet-4-5-20250929';
     }
 

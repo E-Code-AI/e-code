@@ -1,18 +1,18 @@
 /**
- * E2E Test Script: Autonomous App Creation - All 24 AI Models
+ * E2E Test Script: Autonomous App Creation - All 23 AI Models
  * 
  * Tests the complete flow from prompt → app creation → preview render
  * for each AI model in the catalog.
  * 
  * Fortune 500-grade test matrix for E-Code Platform
- * Date: December 5, 2025
+ * Date: December 5, 2025 - Updated: Anthropic now has 3 models (Opus 4.5, Sonnet 4.5, Haiku 4.5)
  */
 
 import { createLogger } from '../server/utils/logger';
 
 const logger = createLogger('model-e2e-test');
 
-// All 24 models from the catalog
+// All 23 models from the catalog (OpenAI 8, Anthropic 3, Gemini 3, xAI 2, Moonshot 5, Groq 2)
 const ALL_MODELS = [
   // OpenAI (8 models)
   { id: 'gpt-5.1', provider: 'openai', name: 'GPT-5.1' },
@@ -24,10 +24,9 @@ const ALL_MODELS = [
   { id: 'o3', provider: 'openai', name: 'o3 Reasoning' },
   { id: 'o4-mini', provider: 'openai', name: 'o4 Mini' },
   
-  // Anthropic (4 models)
+  // Anthropic (3 models) - Opus 4.5, Sonnet 4.5, Haiku 4.5
   { id: 'claude-opus-4-5-20251124', provider: 'anthropic', name: 'Claude Opus 4.5' },
   { id: 'claude-sonnet-4-5-20250929', provider: 'anthropic', name: 'Claude Sonnet 4.5' },
-  { id: 'claude-opus-4-1-20250805', provider: 'anthropic', name: 'Claude Opus 4.1' },
   { id: 'claude-haiku-4-5-20251015', provider: 'anthropic', name: 'Claude Haiku 4.5' },
   
   // Gemini (3 models)

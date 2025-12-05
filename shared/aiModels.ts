@@ -189,20 +189,21 @@ export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
     releaseDate: '2025-09-29',
     available: true
   },
-  'claude-opus-4-1-20250805': {
-    id: 'claude-opus-4-1-20250805',
-    name: 'Claude Opus 4.1',
+  'claude-opus-4-5-20251124': {
+    id: 'claude-opus-4-5-20251124',
+    name: 'Claude Opus 4.5',
     provider: 'anthropic',
-    description: 'Upgraded for agentic tasks - 74.5% on SWE-bench',
+    description: 'Most capable frontier model - >80% SWE-bench, vision, computer use & agents',
     capabilities: {
       extendedThinking: true,
       toolUse: true,
       contextWindow: 200000,
       codeGeneration: true,
-      multimodal: true
+      multimodal: true,
+      computerUse: true
     },
     pricing: { input: 15, output: 75 },
-    releaseDate: '2025-08-05',
+    releaseDate: '2025-11-24',
     available: true
   },
   'claude-haiku-4-5-20251015': {
