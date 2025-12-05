@@ -195,7 +195,10 @@ export default function Landing() {
       const result = await apiRequest('POST', '/api/workspace/bootstrap', requestPayload) as any;
 
       if (result.success) {
-        // Clear any pending prompts on success
+        // Store prompt for the IDE Agent panel to pick up
+        sessionStorage.setItem(`agent-prompt-${result.projectId}`, description);
+        
+        // Clear the pending prompts
         sessionStorage.removeItem('pendingAppDescription');
         sessionStorage.removeItem('triggerBuildOnLanding');
         
