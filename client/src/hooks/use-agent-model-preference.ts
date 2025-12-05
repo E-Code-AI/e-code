@@ -89,7 +89,7 @@ export function useAgentModelPreference(): AgentModelPreference {
   };
 
   // Extract provider from model ID if model not found
-  // e.g., "gpt-4" → "openai", "claude-3" → "anthropic"
+  // e.g., "gpt-5" → "openai", "claude-sonnet-4-5" → "anthropic"
   const getProviderFromModelId = (modelId: string): string => {
     if (modelId.startsWith('gpt')) return 'openai';
     if (modelId.startsWith('claude')) return 'anthropic';

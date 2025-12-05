@@ -50,9 +50,9 @@ class AIServiceOrchestrator {
 | Provider | Strengths | Use Cases |
 |----------|-----------|-----------|
 | **OpenAI GPT-4/5** | Best reasoning, latest features | Complex architecture, system design |
-| **Claude 3.5 Sonnet** | Fastest context window (200K), best code | Large codebases, refactoring |
-| **Claude 3 Opus** | Highest intelligence | Critical features, production code |
-| **Gemini Pro** | Multimodal, cost-effective | Image analysis, budget tasks |
+| **Claude Sonnet 4.5** | Fastest context window (200K), best code | Large codebases, refactoring |
+| **Claude Opus 4.5** | Highest intelligence | Critical features, production code |
+| **Gemini 2.5 Pro** | Multimodal, cost-effective | Image analysis, budget tasks |
 | **Groq** | Ultra-low latency | Real-time completions, autocomplete |
 
 ### Fallback Strategy
@@ -80,11 +80,11 @@ File: `/home/user/e-code/server/services/ai-orchestrator.ts`
 ```typescript
 // Route to cost-effective models for simple tasks
 if (taskComplexity < 5) {
-  return useModel('claude-3-haiku'); // $0.25/1M tokens
+  return useModel('claude-haiku-4-5-20251015'); // $0.25/1M tokens
 } else if (taskComplexity < 8) {
-  return useModel('gpt-4-turbo'); // $10/1M tokens
+  return useModel('gpt-5'); // $2.50/1M tokens
 } else {
-  return useModel('claude-3-opus'); // $15/1M tokens
+  return useModel('claude-opus-4-5-20251124'); // $15/1M tokens
 }
 ```
 
