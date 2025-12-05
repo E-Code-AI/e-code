@@ -23,6 +23,13 @@ interface Message {
     data: any;
     completed: boolean;
   }>;
+  metadata?: {
+    model?: string;
+    provider?: string;
+    tokens?: number;
+    latency?: number;
+    extendedThinking?: boolean;
+  };
 }
 
 interface MobileChatInterfaceProps {
