@@ -179,8 +179,8 @@ export function AllModelsSelector() {
       available: true
     },
     {
-      id: 'kimi-k2-0905-preview',
-      name: 'Kimi K2 (Sept 2025)',
+      id: 'kimi-k2-0904-preview',
+      name: 'Kimi K2 (Sept 4, 2025)',
       description: 'Latest stable - improved coding performance with 256K context window',
       provider: 'Moonshot AI',
       contextWindow: 256000,

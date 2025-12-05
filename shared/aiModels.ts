@@ -314,9 +314,9 @@ export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
     releaseDate: '2025-07-11',
     available: true
   },
-  'kimi-k2-0905-preview': {
-    id: 'kimi-k2-0905-preview',
-    name: 'Kimi K2 (Sept 2025)',
+  'kimi-k2-0904-preview': {
+    id: 'kimi-k2-0904-preview',
+    name: 'Kimi K2 (Sept 4, 2025)',
     provider: 'moonshot',
     description: 'Latest stable - improved coding performance with 256K context window',
     capabilities: {
@@ -327,7 +327,7 @@ export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
       multimodal: false
     },
     pricing: { input: 0.6, output: 2.5 },
-    releaseDate: '2025-09-05',
+    releaseDate: '2025-09-04',
     available: true
   },
   'kimi-k2-thinking': {
