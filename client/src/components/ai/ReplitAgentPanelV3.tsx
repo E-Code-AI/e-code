@@ -615,21 +615,27 @@ export function ReplitAgentPanelV3({
             // Use actual conversationId for RAG session alignment
             const chatConversationId = conversationId ? String(conversationId) : `conv-${Date.now()}`;
             
-            const response = await apiRequest('POST', '/api/agent/chat/stream', {
-              message: userMessage.content,
-              projectId: projectId,
-              conversationId: chatConversationId,
-              provider: selectedProvider,
-              modelId: modelId || undefined,
-              context: messages.slice(-5).map(m => ({
-                role: m.role,
-                content: m.content
-              })),
-              capabilities: {
-                extendedThinking: capabilities.find(c => c.id === 'extended_thinking')?.enabled,
-                webSearch: capabilities.find(c => c.id === 'web_search')?.enabled,
-                highPower: capabilities.find(c => c.id === 'high_power')?.enabled,
-              }
+            // Use raw fetch for SSE streaming - apiRequest consumes the body
+            const response = await fetch('/api/agent/chat/stream', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                message: userMessage.content,
+                projectId: projectId,
+                conversationId: chatConversationId,
+                provider: selectedProvider,
+                modelId: modelId || undefined,
+                context: messages.slice(-5).map(m => ({
+                  role: m.role,
+                  content: m.content
+                })),
+                capabilities: {
+                  extendedThinking: capabilities.find(c => c.id === 'extended_thinking')?.enabled,
+                  webSearch: capabilities.find(c => c.id === 'web_search')?.enabled,
+                  highPower: capabilities.find(c => c.id === 'high_power')?.enabled,
+                }
+              })
             });
 
             if (!response.ok) {
@@ -912,21 +918,27 @@ export function ReplitAgentPanelV3({
       // Use actual conversationId for RAG session alignment
       const chatConversationId = conversationId ? String(conversationId) : `conv-${Date.now()}`;
       
-      const response = await apiRequest('POST', '/api/agent/chat/stream', {
-        message: userMessage.content,
-        projectId: projectId,
-        conversationId: chatConversationId,
-        provider: selectedProvider,
-        modelId: modelId || undefined,
-        context: messages.slice(-5).map(m => ({
-          role: m.role,
-          content: m.content
-        })),
-        capabilities: {
-          extendedThinking: capabilities.find(c => c.id === 'extended_thinking')?.enabled,
-          webSearch: capabilities.find(c => c.id === 'web_search')?.enabled,
-          highPower: capabilities.find(c => c.id === 'high_power')?.enabled,
-        }
+      // Use raw fetch for SSE streaming - apiRequest consumes the body
+      const response = await fetch('/api/agent/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          message: userMessage.content,
+          projectId: projectId,
+          conversationId: chatConversationId,
+          provider: selectedProvider,
+          modelId: modelId || undefined,
+          context: messages.slice(-5).map(m => ({
+            role: m.role,
+            content: m.content
+          })),
+          capabilities: {
+            extendedThinking: capabilities.find(c => c.id === 'extended_thinking')?.enabled,
+            webSearch: capabilities.find(c => c.id === 'web_search')?.enabled,
+            highPower: capabilities.find(c => c.id === 'high_power')?.enabled,
+          }
+        })
       });
 
       if (!response.ok) {
