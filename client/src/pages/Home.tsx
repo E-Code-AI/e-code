@@ -106,6 +106,9 @@ export default function Home() {
       
       // Handle redirect based on response type
       if (data.bootstrapToken) {
+        // Store prompt for the IDE Agent panel to pick up
+        sessionStorage.setItem(`agent-prompt-${data.projectId}`, promptToUse);
+        
         window.location.href = `/ide/${data.projectId}?bootstrap=${data.bootstrapToken}`;
         
         toast({
