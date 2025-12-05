@@ -1421,6 +1421,33 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       
       logger.info(`[Autonomous] Plan stored, starting workflow execution`, { sessionId });
       
+      // ✅ DEBUG (Dec 5, 2025): Validate plan before workflow execution with graceful failure
+      if (!executionPlan.tasks || !Array.isArray(executionPlan.tasks)) {
+        const errorMessage = 'Plan has no tasks array - cannot execute workflow';
+        logger.error(`[Autonomous] CRITICAL: ${errorMessage}`, { 
+          sessionId, 
+          planKeys: Object.keys(executionPlan),
+          tasksType: typeof executionPlan.tasks
+        });
+        
+        // Mark session as failed and notify via WebSocket
+        await db.update(agentSessions)
+          .set({ workflowStatus: 'failed' })
+          .where(eq(agentSessions.id, sessionId));
+        
+        agentWebSocketService.broadcast({
+          type: 'workflow_error',
+          sessionId,
+          projectId,
+          error: errorMessage,
+          message: 'Workflow failed: Invalid plan structure'
+        }, projectId);
+        
+        return; // Graceful return instead of throw
+      }
+      
+      logger.info(`[Autonomous] Plan validated: ${executionPlan.tasks.length} tasks to process`, { sessionId });
+      
       // Update session status
       await db.update(agentSessions)
         .set({ 
@@ -1442,7 +1469,10 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       // STEP 1: Build task-to-stepIDs mapping for dependency resolution
       const taskToStepIds: Record<string, string[]> = {};
       
-      const workflowSteps = executionPlan.tasks.flatMap((task: any) => {
+      logger.debug(`[Autonomous] Starting task-to-step conversion...`, { sessionId, taskCount: executionPlan.tasks.length });
+      
+      const workflowSteps = executionPlan.tasks.flatMap((task: any, taskIndex: number) => {
+        logger.debug(`[Autonomous] Processing task ${taskIndex}: ${task.id} (${task.type})`, { sessionId });
         const stepIds: string[] = [];
         let steps: any[] = [];
         
@@ -1546,8 +1576,33 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       
       logger.info(`[Autonomous] Converted ${workflowSteps.length} workflow steps`, { sessionId });
       
+      // ✅ DEBUG (Dec 5, 2025): Log step details with graceful failure handling
+      if (workflowSteps.length === 0) {
+        const errorMessage = `No workflow steps generated from ${executionPlan.tasks.length} tasks`;
+        logger.error(`[Autonomous] CRITICAL: ${errorMessage}`, { sessionId });
+        
+        // Mark session as failed and notify via WebSocket
+        await db.update(agentSessions)
+          .set({ workflowStatus: 'failed' })
+          .where(eq(agentSessions.id, sessionId));
+        
+        agentWebSocketService.broadcast({
+          type: 'workflow_error',
+          sessionId,
+          projectId,
+          error: errorMessage,
+          message: 'Workflow failed: No steps generated from plan'
+        }, projectId);
+        
+        return; // Graceful return instead of throw
+      }
+      
+      logger.info(`[Autonomous] Step types: ${workflowSteps.map((s: any) => s.type).join(', ')}`, { sessionId });
+      
       // 5. Execute workflow with event wiring
       const workingDirectory = path.join(process.cwd(), 'projects', projectId);
+      
+      logger.info(`[Autonomous] Working directory: ${workingDirectory}`, { sessionId });
       
       // Wire workflow engine events to WebSocket streaming
       // Workflow engine emits all events via 'workflow:event' channel
@@ -1566,17 +1621,28 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       
       try {
         // Execute workflow
-        logger.info(`[Autonomous] Starting workflow execution`, { sessionId, workingDirectory });
+        logger.info(`[Autonomous] Starting workflow execution`, { sessionId, workingDirectory, stepCount: workflowSteps.length });
         
-        const result = await agentWorkflowEngine.executeWorkflow(
-          sessionId,
-          Number(projectId),
-          executionPlan.goal || `Autonomous Workspace: ${prompt.substring(0, 50)}`,
-          executionPlan.summary || `Autonomous workspace creation from prompt: ${prompt}`,
-          workflowSteps,
-          userId,
-          {} // initialVariables
-        );
+        // ✅ DEBUG (Dec 5, 2025): Wrap execution in try-catch for detailed error logging
+        let result;
+        try {
+          result = await agentWorkflowEngine.executeWorkflow(
+            sessionId,
+            Number(projectId),
+            executionPlan.goal || `Autonomous Workspace: ${prompt.substring(0, 50)}`,
+            executionPlan.summary || `Autonomous workspace creation from prompt: ${prompt}`,
+            workflowSteps,
+            userId,
+            {} // initialVariables
+          );
+        } catch (workflowError: any) {
+          logger.error(`[Autonomous] Workflow engine threw error`, { 
+            sessionId, 
+            error: workflowError.message,
+            stack: workflowError.stack
+          });
+          throw workflowError;
+        }
         
         const isSuccess = result.status === 'completed';
         logger.info(`[Autonomous] Workflow execution completed`, { 
