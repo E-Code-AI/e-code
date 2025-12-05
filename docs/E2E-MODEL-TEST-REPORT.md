@@ -1,11 +1,11 @@
 # E-Code AI Model Catalog - E2E Test Report
 
 ## Test Summary
-**Date:** December 5, 2025
+**Date:** December 5, 2025 (Updated)
 **Platform:** E-Code v1.0
-**Total Models:** 24
-**Available:** 22/24 (92%)
-**Unavailable:** 2/24 (Groq - pending API key)
+**Total Models:** 23
+**Available:** 21/23 (91%)
+**Unavailable:** 2/23 (Groq - pending API key)
 
 ## Model Verification Results
 
@@ -21,12 +21,11 @@
 | o3 | o3 Reasoning | 200K | ✅ Available |
 | o4-mini | o4 Mini | 128K | ✅ Available |
 
-### ✅ Anthropic (4/4 Available)
+### ✅ Anthropic (3/3 Available)
 | Model ID | Name | Context | Status |
 |----------|------|---------|--------|
 | claude-opus-4-5-20251124 | Claude Opus 4.5 | 200K | ✅ Available |
 | claude-sonnet-4-5-20250929 | Claude Sonnet 4.5 | 200K | ✅ Available |
-| claude-opus-4-1-20250805 | Claude Opus 4.1 | 200K | ✅ Available |
 | claude-haiku-4-5-20251015 | Claude Haiku 4.5 | 200K | ✅ Available |
 
 ### ✅ Gemini (3/3 Available)
@@ -71,41 +70,36 @@
 5. `server/services/ai-metering-service.ts`
 6. `server/api/ai-streaming.ts`
 7. `client/src/components/AllModelsSelector.tsx`
-8. `client/src/pages/AIModels.tsx` (NEW)
-9. `desktop/renderer/assets/AIModels-FDUhgN7K.js`
+8. `server/services/agent-preferences.service.ts`
 
 ## API Endpoint Verification
 
 | Endpoint | Status | Response |
 |----------|--------|----------|
-| GET /api/models | ✅ 200 | 24 models returned |
+| GET /api/models | ✅ 200 | 23 models returned |
 | GET /api/me | ✅ 200 | Auth working |
 | GET /api/marketplace/templates | ✅ 200 | Templates loaded |
 | GET /api/models/preferred | ✅ 200 | User preferences |
 | GET /api/rag/stats | ✅ 200 | RAG system active |
-| GET /ai-models | ✅ 200 | Page loads correctly |
 
-## UI/UX Verification
+## Model Selection UI
 
-### /ai-models Page
-- ✅ Page loads without 404 error
-- ✅ "AI Models" heading displayed
-- ✅ Model cards render with providers grouped
-- ✅ Tabs: All Models, OpenAI, Anthropic, Open Source, Test
-- ✅ Model details: Context window, pricing, capabilities
-- ✅ Availability indicators (green checkmarks)
+Models are available for selection in:
+- IDE Agent Chat interface (UnifiedAIInterface.tsx)
+- AllModelsSelector component (dropdown/modal)
+- Agent preferences panel
 
 ## Test Artifacts
 
 ### Playwright E2E Test
 - **File:** `scripts/test-all-models-e2e.ts`
-- **Coverage:** All 24 models
-- **Result:** PASS (22/24 available with API keys)
+- **Coverage:** All 23 models (OpenAI 8, Anthropic 3, Gemini 3, xAI 2, Moonshot 5, Groq 2)
+- **Result:** PASS (21/23 available with API keys)
 
-### Screenshots
-- AI Models page loads with full model catalog
-- Provider tabs functioning correctly
-- Model cards display pricing and capabilities
+### Verification Points
+- Model selector dropdown loads all 23 models
+- Provider grouping works correctly
+- Model details display pricing and capabilities
 
 ## Recommendations
 
