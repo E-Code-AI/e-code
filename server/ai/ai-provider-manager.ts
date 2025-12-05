@@ -175,15 +175,8 @@ export const AI_MODELS: AIModel[] = [
     supportsStreaming: true,
     costPer1kTokens: 0.0025  // $0.60 input (cache miss), $2.50 output → avg $0.0025
   },
-  {
-    id: 'kimi-k2-0904-preview',
-    name: 'Kimi K2 (Sept 4, 2025)',
-    provider: 'moonshot',
-    description: 'Latest stable - improved coding performance with 256K context window',
-    maxTokens: 256000, // 256K context (Sept 2025 upgrade)
-    supportsStreaming: true,
-    costPer1kTokens: 0.0025
-  },
+  // NOTE: kimi-k2-0904-preview was removed - model does not exist on Moonshot API
+  // Verified December 2025: Only kimi-k2-0711-preview, kimi-k2-thinking, moonshot-v1-32k/128k are available
   {
     id: 'kimi-k2-thinking',
     name: 'Kimi K2 Thinking',
@@ -978,7 +971,7 @@ export class AIProviderManager {
       'Claude': ['claude-opus-4-5-20251124', 'claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251015'],
       'Anthropic': ['claude-sonnet-4-5-20250929'],
       'Gemini': ['gemini-2-5-flash', 'gemini-2-5-pro'],
-      'Moonshot': ['kimi-k2-0711-preview', 'kimi-k2-0904-preview'],
+      'Moonshot': ['kimi-k2-0711-preview', 'kimi-k2-thinking'],
       'xAI': ['grok-4', 'grok-4-fast'],
       'Groq': ['mixtral-8x7b-32768']
     };
@@ -1002,7 +995,7 @@ export class AIProviderManager {
       'Claude 3.5 Sonnet': 'claude-sonnet-4-5-20250929',
       'Anthropic': 'claude-sonnet-4-5-20250929',
       'Gemini': 'gemini-2-5-flash',
-      'Moonshot': 'kimi-k2-0904-preview',
+      'Moonshot': 'kimi-k2-0711-preview',
       'xAI': 'grok-4',
       'Groq': 'mixtral-8x7b-32768'
     };
@@ -1025,7 +1018,7 @@ export class AIProviderManager {
       'claude-sonnet-4-5-20250929', // Best coding model
       'gpt-5.1',                    // Latest GPT
       'gemini-2-5-flash',           // Fast fallback
-      'kimi-k2-0904-preview',       // Moonshot fallback
+      'kimi-k2-0711-preview',       // Moonshot fallback
       'grok-4'                      // xAI fallback
     ];
     

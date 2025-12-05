@@ -44,10 +44,11 @@ const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   'grok-4': { input: 5.0, output: 15.0 },
   'grok-4-fast': { input: 0.5, output: 1.5 },
   
-  // Moonshot AI - ✅ 40-YEAR FIX: Production-recommended pricing
-  'kimi-k2-0711-preview': { input: 0.6, output: 2.5 },  // Official pricing
-  'kimi-k2-0904-preview': { input: 0.6, output: 2.5 },  // ✅ ALIGNED with aiModelEnum
-  'kimi-k2-thinking': { input: 0.6, output: 2.5 },      // Same pricing
+  // Moonshot AI - Verified Dec 2025: Only 4 models exist on API
+  'kimi-k2-0711-preview': { input: 0.6, output: 2.5 },  // Production recommended
+  'kimi-k2-thinking': { input: 0.6, output: 2.5 },      // Advanced reasoning
+  'moonshot-v1-32k': { input: 0.12, output: 0.12 },     // Classic model
+  'moonshot-v1-128k': { input: 0.24, output: 0.24 },    // Extended context
 };
 
 interface TrackUsageParams {
