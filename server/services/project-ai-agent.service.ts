@@ -348,8 +348,14 @@ Generate EVERY file needed for a complete, working application. No placeholders 
       const fileName = filePath.split('/').pop() || filePath;
       const parentPath = filePath.substring(0, filePath.lastIndexOf('/')) || '/';
 
+      // Convert projectId to number as required by storage interface
+      const numericProjectId = parseInt(projectId, 10);
+      if (isNaN(numericProjectId)) {
+        throw new Error(`Invalid projectId: ${projectId}`);
+      }
+
       const file = await this.storage.createFile({
-        projectId,
+        projectId: numericProjectId,
         name: fileName,
         path: filePath,
         content,
