@@ -74,12 +74,14 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
   } = req.body;
   
   // Map modelId (from frontend) to model, with provider-specific defaults
+  // These MUST match the defaults in each stream function for consistency
   const getDefaultModel = (prov: string): string => {
     switch (prov) {
       case 'openai': return 'gpt-4o-mini';
-      case 'anthropic': return 'claude-sonnet-4-20250514';
+      case 'anthropic': return 'claude-sonnet-4-5-20250929';
       case 'gemini': return 'gemini-2.0-flash';
       case 'xai': return 'grok-3-fast-latest';
+      case 'moonshot': return 'moonshot-v1-32k';
       default: return 'gpt-4o-mini';
     }
   };
@@ -346,8 +348,17 @@ ${historyItems}
         usage = await streamGemini(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId });
         break;
         
+      case 'xai':
+        usage = await streamXAI(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId });
+        break;
+        
+      case 'moonshot':
+        usage = await streamMoonshot(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId });
+        break;
+        
       default:
-        // Fallback to OpenAI
+        // Fallback to OpenAI with warning
+        logger.warn(`Unknown provider "${provider}", falling back to OpenAI`);
         usage = await streamOpenAI(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId });
     }
     
@@ -598,9 +609,13 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
   const requestedTools = options.tools !== undefined ? options.tools : allTools;
   const tools = toAnthropicTools(requestedTools);
   
+  // Use provided model or default to claude-sonnet-4-5-20250929 (latest, falls back to 3.5 if needed)
+  const modelToUse = options.model || 'claude-sonnet-4-5-20250929';
+  logger.info(`[Anthropic Stream] Using model: ${modelToUse}`);
+  
   // ✅ Use .stream() helper to get finalMessage() with usage
   const stream = anthropic.messages.stream({
-    model: options.model || 'claude-3-5-sonnet-20241022',
+    model: modelToUse,
     messages: userMessages,
     system: systemMessage?.content,
     max_tokens: options.maxTokens,
@@ -754,9 +769,13 @@ async function streamGemini(res: any, messages: any[], options: any) {
     return;
   }
   
+  // Use provided model or default to gemini-2.0-flash (fast, latest)
+  const modelToUse = options.model || 'gemini-2.0-flash';
+  logger.info(`[Gemini Stream] Using model: ${modelToUse}`);
+  
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ 
-    model: options.model || 'gemini-pro' 
+    model: modelToUse 
   });
   
   // Convert messages to Gemini format
@@ -798,11 +817,153 @@ async function streamGemini(res: any, messages: any[], options: any) {
   // Send final message
   sendSSE(res, 'message', { 
     content: fullContent,
-    model: options.model || 'gemini-pro'
+    model: modelToUse
   });
   
   // ✅ Return token usage for billing
   return { tokensInput, tokensOutput };
+}
+
+/**
+ * Stream from xAI (Grok) API - OpenAI-compatible
+ * Uses xAI's OpenAI-compatible API at https://api.x.ai/v1
+ */
+async function streamXAI(res: any, messages: any[], options: any) {
+  const apiKey = process.env.XAI_API_KEY;
+  
+  if (!apiKey) {
+    sendSSE(res, 'error', { 
+      message: 'xAI API key not configured. Please add XAI_API_KEY to secrets.',
+      code: 'MISSING_API_KEY'
+    });
+    return { tokensInput: 0, tokensOutput: 0 };
+  }
+  
+  // xAI uses OpenAI-compatible API
+  const xaiClient = new OpenAI({ 
+    apiKey,
+    baseURL: 'https://api.x.ai/v1'
+  });
+  
+  // Use provided model or default to grok-3-fast-latest
+  const modelToUse = options.model || 'grok-3-fast-latest';
+  logger.info(`[xAI Stream] Using model: ${modelToUse}`);
+  
+  try {
+    const stream = await xaiClient.chat.completions.create({
+      model: modelToUse,
+      messages,
+      temperature: options.temperature,
+      max_tokens: options.maxTokens,
+      stream: true,
+      stream_options: { include_usage: true }
+    });
+    
+    let fullContent = '';
+    let tokensInput = 0;
+    let tokensOutput = 0;
+    
+    for await (const chunk of stream) {
+      const delta = chunk.choices[0]?.delta;
+      
+      // Capture token usage from final chunk
+      if (chunk.usage) {
+        tokensInput = chunk.usage.prompt_tokens || 0;
+        tokensOutput = chunk.usage.completion_tokens || 0;
+      }
+      
+      if (delta?.content) {
+        fullContent += delta.content;
+        sendSSE(res, 'token', { content: delta.content });
+      }
+    }
+    
+    // Send final message
+    sendSSE(res, 'message', { 
+      content: fullContent,
+      model: modelToUse
+    });
+    
+    return { tokensInput, tokensOutput };
+  } catch (error: any) {
+    logger.error(`[xAI Stream] Error:`, error);
+    sendSSE(res, 'error', { 
+      message: error.message || 'xAI streaming error',
+      code: error.code || 'XAI_ERROR'
+    });
+    return { tokensInput: 0, tokensOutput: 0 };
+  }
+}
+
+/**
+ * Stream from Moonshot AI (Kimi) API - OpenAI-compatible
+ * Uses Moonshot's OpenAI-compatible API at https://api.moonshot.ai/v1
+ */
+async function streamMoonshot(res: any, messages: any[], options: any) {
+  const apiKey = process.env.MOONSHOT_API_KEY;
+  
+  if (!apiKey) {
+    sendSSE(res, 'error', { 
+      message: 'Moonshot API key not configured. Please add MOONSHOT_API_KEY to secrets.',
+      code: 'MISSING_API_KEY'
+    });
+    return { tokensInput: 0, tokensOutput: 0 };
+  }
+  
+  // Moonshot uses OpenAI-compatible API
+  const moonshotClient = new OpenAI({ 
+    apiKey,
+    baseURL: 'https://api.moonshot.ai/v1'
+  });
+  
+  // Use provided model or default to moonshot-v1-32k
+  const modelToUse = options.model || 'moonshot-v1-32k';
+  logger.info(`[Moonshot Stream] Using model: ${modelToUse}`);
+  
+  try {
+    const stream = await moonshotClient.chat.completions.create({
+      model: modelToUse,
+      messages,
+      temperature: options.temperature,
+      max_tokens: options.maxTokens,
+      stream: true,
+      stream_options: { include_usage: true }
+    });
+    
+    let fullContent = '';
+    let tokensInput = 0;
+    let tokensOutput = 0;
+    
+    for await (const chunk of stream) {
+      const delta = chunk.choices[0]?.delta;
+      
+      // Capture token usage from final chunk
+      if (chunk.usage) {
+        tokensInput = chunk.usage.prompt_tokens || 0;
+        tokensOutput = chunk.usage.completion_tokens || 0;
+      }
+      
+      if (delta?.content) {
+        fullContent += delta.content;
+        sendSSE(res, 'token', { content: delta.content });
+      }
+    }
+    
+    // Send final message
+    sendSSE(res, 'message', { 
+      content: fullContent,
+      model: modelToUse
+    });
+    
+    return { tokensInput, tokensOutput };
+  } catch (error: any) {
+    logger.error(`[Moonshot Stream] Error:`, error);
+    sendSSE(res, 'error', { 
+      message: error.message || 'Moonshot streaming error',
+      code: error.code || 'MOONSHOT_ERROR'
+    });
+    return { tokensInput: 0, tokensOutput: 0 };
+  }
 }
 
 /**
@@ -819,22 +980,36 @@ router.post('/api/agent/chat/stop', ensureAuthenticated, (req, res) => {
 
 /**
  * Get available AI models endpoint
+ * Returns models with availability based on configured API keys
  */
 router.get('/api/agent/models', ensureAuthenticated, (req, res) => {
   const models = [
     // OpenAI Models
-    { provider: 'openai', model: 'gpt-4-turbo-preview', name: 'GPT-4 Turbo', context: 128000 },
-    { provider: 'openai', model: 'gpt-4', name: 'GPT-4', context: 8192 },
-    { provider: 'openai', model: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', context: 16385 },
+    { provider: 'openai', model: 'gpt-4o', name: 'GPT-4o', context: 128000, available: !!process.env.OPENAI_API_KEY },
+    { provider: 'openai', model: 'gpt-4o-mini', name: 'GPT-4o Mini', context: 128000, available: !!process.env.OPENAI_API_KEY },
+    { provider: 'openai', model: 'gpt-4-turbo', name: 'GPT-4 Turbo', context: 128000, available: !!process.env.OPENAI_API_KEY },
+    { provider: 'openai', model: 'o3', name: 'o3 (Reasoning)', context: 128000, available: !!process.env.OPENAI_API_KEY },
+    { provider: 'openai', model: 'o4-mini', name: 'o4 Mini', context: 128000, available: !!process.env.OPENAI_API_KEY },
     
     // Anthropic Models  
-    { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', context: 200000 },
-    { provider: 'anthropic', model: 'claude-3-opus-20240229', name: 'Claude 3 Opus', context: 200000 },
-    { provider: 'anthropic', model: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', context: 200000 },
+    { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
+    { provider: 'anthropic', model: 'claude-opus-4-1-20250805', name: 'Claude Opus 4.1', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
+    { provider: 'anthropic', model: 'claude-haiku-4-5-20251015', name: 'Claude Haiku 4.5', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
+    { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
     
-    // Google Models
-    { provider: 'gemini', model: 'gemini-pro', name: 'Gemini Pro', context: 30720 },
-    { provider: 'gemini', model: 'gemini-pro-vision', name: 'Gemini Pro Vision', context: 12288 },
+    // Google Gemini Models
+    { provider: 'gemini', model: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', context: 1000000, available: !!process.env.GEMINI_API_KEY },
+    { provider: 'gemini', model: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', context: 1000000, available: !!process.env.GEMINI_API_KEY },
+    
+    // xAI Grok Models
+    { provider: 'xai', model: 'grok-4', name: 'Grok 4', context: 256000, available: !!process.env.XAI_API_KEY },
+    { provider: 'xai', model: 'grok-4-fast', name: 'Grok 4 Fast', context: 256000, available: !!process.env.XAI_API_KEY },
+    { provider: 'xai', model: 'grok-3-fast-latest', name: 'Grok 3 Fast', context: 128000, available: !!process.env.XAI_API_KEY },
+    
+    // Moonshot AI (Kimi) Models
+    { provider: 'moonshot', model: 'kimi-k2-0905-preview', name: 'Kimi K2', context: 131072, available: !!process.env.MOONSHOT_API_KEY },
+    { provider: 'moonshot', model: 'moonshot-v1-32k', name: 'Moonshot v1 32K', context: 32768, available: !!process.env.MOONSHOT_API_KEY },
+    { provider: 'moonshot', model: 'moonshot-v1-128k', name: 'Moonshot v1 128K', context: 131072, available: !!process.env.MOONSHOT_API_KEY },
   ];
   
   res.json(models);
