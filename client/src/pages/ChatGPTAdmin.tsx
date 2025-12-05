@@ -467,9 +467,9 @@ export default function ChatGPTAdmin() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="gpt-5">GPT-5 (Latest)</SelectItem>
-                      <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
-                      <SelectItem value="gpt-4">GPT-4</SelectItem>
+                      <SelectItem value="gpt-5.1">GPT-5.1 (Latest)</SelectItem>
+                      <SelectItem value="gpt-5">GPT-5</SelectItem>
+                      <SelectItem value="gpt-5-mini">GPT-5 Mini</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

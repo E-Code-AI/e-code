@@ -55,7 +55,7 @@ export function CurrentModelChip({
   // Show warning if extended thinking is enabled but model doesn't support it
   const showWarning = extendedThinkingEnabled && !supportsExtendedThinking;
   
-  // Shorten model name for display (e.g., "gpt-4-turbo" → "GPT-4")
+  // Shorten model name for display (e.g., "gpt-5.1" → "GPT-5")
   const shortModelName = modelName 
     ? modelName.split('-').slice(0, 2).join('-').toUpperCase()
     : 'Select Model';

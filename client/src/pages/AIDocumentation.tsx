@@ -107,8 +107,8 @@ export default function AIDocumentation() {
                   <div className="border rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h3 className="font-semibold">Claude 3.5 Sonnet</h3>
-                        <p className="text-sm text-muted-foreground">Anthropic's advanced model (claude-3-5-sonnet-20241022)</p>
+                        <h3 className="font-semibold">Claude Sonnet 4.5</h3>
+                        <p className="text-sm text-muted-foreground">Anthropic's advanced model (claude-sonnet-4-5-20250929)</p>
                       </div>
                       <span className="px-2 py-1 bg-blue-500/10 text-blue-500 text-xs rounded">Fallback</span>
                     </div>
@@ -116,7 +116,7 @@ export default function AIDocumentation() {
                   </div>
 
                   <div className="border rounded-lg p-4">
-                    <h3 className="font-semibold">Gemini Pro</h3>
+                    <h3 className="font-semibold">Gemini 2.5 Pro</h3>
                     <p className="text-sm text-muted-foreground">Google's multimodal AI</p>
                     <p className="text-sm mt-2">Supports vision and code understanding for complex use cases.</p>
                   </div>
