@@ -1,0 +1,4 @@
+{
+  "description": "Base TypeScript configuration shared by client and server, defining common compiler options like strict mode, module resolution, path aliases baseUrl, and JSX settings.",
+  "todo": "Configure based on outline"
+}
