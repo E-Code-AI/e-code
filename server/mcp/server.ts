@@ -416,7 +416,7 @@ export default class MCPServer {
             type: "object",
             properties: {
               prompt: { type: "string", description: "Prompt for completion" },
-              model: { type: "string", default: "claude-3-sonnet" },
+              model: { type: "string", default: "claude-sonnet-4-5-20250929" },
               temperature: { type: "number", default: 0.7 },
               maxTokens: { type: "number", default: 2048 }
             },

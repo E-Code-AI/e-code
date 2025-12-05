@@ -13,23 +13,55 @@ const logger = createLogger('ai-billing-service');
 
 // Pricing per 1K tokens (similar to Replit's pricing model)
 export const AI_MODEL_PRICING = {
-  // OpenAI Models - Latest pricing as of 2025
+  // OpenAI Models - Latest pricing as of December 2025
+  'gpt-5.1': {
+    input: 0.005,   // $5 per 1M input tokens
+    output: 0.015,  // $15 per 1M output tokens  
+    creditsPerThousand: 0.02 // Latest flagship with adaptive reasoning
+  },
   'gpt-5': {
-    input: 0.003,  // $3 per 1M input tokens
-    output: 0.012, // $12 per 1M output tokens  
-    creditsPerThousand: 0.015 // Updated pricing for GPT-5
+    input: 0.0025,  // $2.50 per 1M input tokens
+    output: 0.01,   // $10 per 1M output tokens  
+    creditsPerThousand: 0.0125 // Updated pricing for GPT-5
+  },
+  'gpt-5-mini': {
+    input: 0.00015, // $0.15 per 1M input tokens
+    output: 0.0006, // $0.60 per 1M output tokens
+    creditsPerThousand: 0.00075 // Cost-optimized reasoning
+  },
+  'gpt-5-nano': {
+    input: 0.0001,  // $0.10 per 1M input tokens
+    output: 0.0003, // $0.30 per 1M output tokens
+    creditsPerThousand: 0.0004 // High-throughput for simple tasks
   },
   
-  // Anthropic Models
-  'claude-3-5-sonnet-20241022': {
-    input: 0.003,  // $3 per 1M input tokens
-    output: 0.015, // $15 per 1M output tokens
-    creditsPerThousand: 0.018 // Premium model, higher quality
+  // Anthropic Models - Claude 4.5 Family (December 2025)
+  'claude-opus-4-5-20251124': {
+    input: 0.015,   // $15 per 1M input tokens
+    output: 0.075,  // $75 per 1M output tokens
+    creditsPerThousand: 0.09 // Most capable frontier model
   },
-  'claude-3-haiku': {
-    input: 0.00025,
-    output: 0.00125,
-    creditsPerThousand: 0.0015
+  'claude-sonnet-4-5-20250929': {
+    input: 0.003,   // $3 per 1M input tokens
+    output: 0.015,  // $15 per 1M output tokens
+    creditsPerThousand: 0.018 // Best balanced model
+  },
+  'claude-haiku-4-5-20251015': {
+    input: 0.00025, // $0.25 per 1M input tokens
+    output: 0.00125,// $1.25 per 1M output tokens
+    creditsPerThousand: 0.0015 // Fastest & cheapest Claude
+  },
+  
+  // Google Gemini Models (December 2025)
+  'gemini-2.5-pro': {
+    input: 0.00125, // $1.25 per 1M input tokens
+    output: 0.005,  // $5 per 1M output tokens
+    creditsPerThousand: 0.00625 // Stable release with adaptive thinking
+  },
+  'gemini-2.5-flash': {
+    input: 0.000075, // $0.075 per 1M input tokens
+    output: 0.0003,  // $0.30 per 1M output tokens
+    creditsPerThousand: 0.0004 // Hybrid reasoning, low latency
   },
   
   // E-Code Custom Models (similar to Replit's custom models)

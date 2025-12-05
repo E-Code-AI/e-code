@@ -54,7 +54,7 @@ export class AIService {
         available: !!openai,
         configured: !!openaiKey,
         keyPresent: !!process.env.OPENAI_API_KEY,
-        models: openai ? ['gpt-4', 'gpt-4-turbo', 'gpt-5'] : []
+        models: openai ? ['gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano'] : []
       },
       anthropic: {
         available: !!anthropic,
@@ -89,7 +89,7 @@ export class AIService {
     }
     
     if (!isOpenAIModel && !isAnthropicModel) {
-      throw new Error(`Unsupported model: ${model}. Available models: gpt-4, gpt-5, claude-opus-4-5-20251124, claude-sonnet-4-5-20250929`);
+      throw new Error(`Unsupported model: ${model}. Available models: gpt-5.1, gpt-5, gpt-5-mini, claude-opus-4-5-20251124, claude-sonnet-4-5-20250929, claude-haiku-4-5-20251015`);
     }
   }
 

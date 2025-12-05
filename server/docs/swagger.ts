@@ -188,16 +188,19 @@ const swaggerDefinition = {
       },
       AIModel: {
         type: 'string',
+        description: 'Supported AI models - December 2025 catalog',
         enum: [
-          'gpt-4',
-          'gpt-4-turbo',
+          'gpt-5.1',
           'gpt-5',
-          'claude-3-opus',
-          'claude-3-sonnet',
-          'claude-3-5-sonnet',
-          'claude-3-haiku',
-          'gemini-pro',
-          'gemini-ultra'
+          'gpt-5-mini',
+          'gpt-5-nano',
+          'claude-opus-4-5-20251124',
+          'claude-sonnet-4-5-20250929',
+          'claude-haiku-4-5-20251015',
+          'gemini-2.5-pro',
+          'gemini-2.5-flash',
+          'grok-4-fast',
+          'grok-4'
         ]
       },
       AgentPlan: {

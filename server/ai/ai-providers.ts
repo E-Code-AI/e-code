@@ -71,7 +71,7 @@ export class AnthropicProvider implements AIProvider {
     
     const response = await this.client.messages.create({
       // Use latest AVAILABLE Claude model (validated working)
-      model: options?.model || 'claude-3-5-haiku-20241022',
+      model: options?.model || 'claude-haiku-4-5-20251015',
       messages: anthropicMessages,
       system: systemMessage,
       max_tokens: options?.max_tokens || 1024,

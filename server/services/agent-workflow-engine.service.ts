@@ -1279,7 +1279,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
     sessionId: string
   ): Promise<WorkflowStep[]> {
     const completion = await this.openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
+      model: 'gpt-5',
       messages: [
         {
           role: 'system',

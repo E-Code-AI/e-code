@@ -46,7 +46,7 @@ router.get('/preferences', async (req, res) => {
         extendedThinking: false,
         highPowerMode: false,
         autoWebSearch: true,
-        preferredModel: 'claude-3-5-sonnet',
+        preferredModel: 'claude-sonnet-4-5-20250929',
         customInstructions: null,
         improvePromptEnabled: false,
         progressTabEnabled: false,
@@ -151,7 +151,7 @@ router.post('/conversation', async (req, res) => {
         userId: userId,
         messages: [],
         agentMode: 'build', // Default to build mode
-        model: 'claude-3-5-sonnet',
+        model: 'claude-sonnet-4-5-20250929',
       })
       .returning();
 

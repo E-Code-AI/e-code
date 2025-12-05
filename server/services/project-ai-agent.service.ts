@@ -38,7 +38,7 @@ export class ProjectAIAgentService {
    * 
    * Security: Rate limiting, path validation, and audit logging applied
    * 
-   * @param modelId Optional model ID to use (e.g., "gpt-4o", "claude-3-5-sonnet-20241022")
+   * @param modelId Optional model ID to use (e.g., "gpt-5", "claude-sonnet-4-5-20250929")
    *                If not provided, uses user's preferred model or first available provider
    */
   async *processChat(
