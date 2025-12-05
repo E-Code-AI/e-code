@@ -428,20 +428,88 @@ class AgentWebSocketService {
               }
             }
           } else {
-            // ✅ FIX (Dec 1, 2025): Plan may not exist yet due to race condition
-            // Bootstrap endpoint returns token immediately, then fires setImmediate for plan generation
-            // Client WebSocket connects before setImmediate runs, finds no plan yet
-            // This is NOT an error - just a timing issue. Send 'status' instead of 'error'
-            logger.info(`[Agent WebSocket] No plan found yet for session ${sessionId} - waiting for plan generation to start...`);
+            // ✅ CRITICAL FIX (Dec 5, 2025): Start autonomous workflow on WebSocket connection
+            // Bootstrap endpoint no longer starts workflow immediately (race condition fix)
+            // WebSocket connection is now the trigger for workflow start
+            logger.info(`[Agent WebSocket] No plan found for session ${sessionId} - checking if workflow should start...`);
 
-            // Send status notification (not error) - plan generation will stream events when ready
-            ws.send(JSON.stringify({
-              type: 'status',
-              status: 'waiting_for_plan',
-              message: 'Connecting to AI... Plan generation will begin shortly.',
-              sessionId,
-              projectId
-            }));
+            // Get session to check status and get prompt
+            const sessions = await db.select()
+              .from(agentSessions)
+              .where(eq(agentSessions.id, sessionId))
+              .limit(1);
+
+            if (sessions.length === 0) {
+              logger.error(`[Agent WebSocket] Session ${sessionId} not found!`);
+              ws.send(JSON.stringify({
+                type: 'error',
+                message: 'Session not found',
+                sessionId,
+                projectId
+              }));
+              return;
+            }
+
+            const session = sessions[0];
+            
+            // ✅ Check if session is in idle status (workflow not started yet)
+            if (session.workflowStatus === 'idle' || !session.workflowStatus) {
+              logger.info(`[Agent WebSocket] 🚀 Session ${sessionId} is idle - starting autonomous workspace NOW!`);
+
+              // Send status to client immediately
+              ws.send(JSON.stringify({
+                type: 'status',
+                status: 'starting',
+                message: 'Starting AI workspace generation...',
+                sessionId,
+                projectId
+              }));
+
+              // Get prompt from project description (stored during bootstrap)
+              const { projects } = await import('@shared/schema');
+              const projectRows = await db.select()
+                .from(projects)
+                .where(eq(projects.id, Number(projectId)))
+                .limit(1);
+
+              if (projectRows.length === 0) {
+                throw new Error(`Project ${projectId} not found`);
+              }
+
+              const prompt = projectRows[0].description || projectRows[0].name || 'Create a web application';
+
+              // Start the autonomous workspace workflow
+              agentOrchestrator.startAutonomousWorkspace({
+                sessionId,
+                projectId: String(projectId),
+                userId: String(session.userId),
+                prompt: prompt,
+                options: {
+                  language: 'typescript',
+                  framework: 'react'
+                }
+              }).then(() => {
+                logger.info(`[Agent WebSocket] ✅ startAutonomousWorkspace COMPLETED for session ${sessionId}`);
+              }).catch(error => {
+                logger.error(`[Agent WebSocket] ❌ startAutonomousWorkspace FAILED:`, error);
+                ws.send(JSON.stringify({
+                  type: 'error',
+                  message: `Workspace creation failed: ${error.message}`,
+                  sessionId,
+                  projectId
+                }));
+              });
+            } else {
+              // Session already in progress - just wait
+              logger.info(`[Agent WebSocket] Session ${sessionId} already in status: ${session.workflowStatus}`);
+              ws.send(JSON.stringify({
+                type: 'status',
+                status: session.workflowStatus,
+                message: `Workspace creation ${session.workflowStatus}...`,
+                sessionId,
+                projectId
+              }));
+            }
           }
         } catch (error: any) {
           logger.error(`[Agent WebSocket] Failed to check/start workflow for session ${sessionId}:`, error);

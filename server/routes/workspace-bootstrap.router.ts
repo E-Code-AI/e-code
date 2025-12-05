@@ -284,48 +284,19 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     
     res.status(200).json(responsePayload);
     
-    // 8. ✅ AUTONOMOUS WORKSPACE CREATION (Nov 24, 2025): Fire-and-forget orchestration
-    // CRITICAL FIX (Nov 28, 2025): ALWAYS start autonomous workspace - no conditional
-    // Production flow MUST create files via agent orchestrator
-    // The autoStart option is now ignored - bootstrap ALWAYS triggers autonomous creation
+    // 8. ✅ AUTONOMOUS WORKSPACE CREATION (Dec 5, 2025): DEFERRED to WebSocket connection
+    // CRITICAL FIX: Do NOT start autonomous workspace immediately!
+    // PROBLEM: Client hasn't connected to WebSocket yet, so plan events are broadcast to nobody
+    // SOLUTION: Store the prompt in session metadata, let WebSocket connection trigger workflow
+    // The WebSocket service will call startAutonomousWorkspace when client connects
     
-    logger.info(`[Bootstrap] HTTP response sent - starting autonomous workspace creation for prompt: "${prompt.substring(0, 50)}..."`);
-    
-    // ✅ DEBUG (Nov 30, 2025): Log before invoking startAutonomousWorkspace
-    console.log(`[Bootstrap] 🎯 INVOKING startAutonomousWorkspace for session ${session.id}`);
-    
-    // 9. ✅ FIRE-AND-FORGET: Detach autonomous workspace creation to prevent Express from waiting
-    // Use setImmediate to ensure the fire-and-forget runs in the next tick
-    setImmediate(() => {
-      console.log(`[Bootstrap] 🚀 setImmediate callback executing for session ${session.id}`);
-      
-      agentOrchestrator.startAutonomousWorkspace({
-        sessionId: session.id,
-        projectId: String(project.id),
-        userId: String(userId),
-        prompt: prompt,
-        options: {
-          language: options.language || 'typescript',
-          framework: options.framework || 'react'
-        }
-      }).then(() => {
-        console.log(`[Bootstrap] ✅ startAutonomousWorkspace COMPLETED for session ${session.id}`);
-      }).catch(error => {
-        console.error(`[Bootstrap] ❌ startAutonomousWorkspace FAILED:`, error);
-        logger.error(`[Bootstrap] ❌ Autonomous workspace creation failed:`, {
-          message: error.message,
-          projectId: project.id,
-          sessionId: session.id,
-          stack: error.stack
-        });
-        // Error already broadcasted via WebSocket in startAutonomousWorkspace
-      });
-    });
-    
-    logger.info(`[Bootstrap] ✅ Autonomous workspace creation started in background`, {
+    logger.info(`[Bootstrap] ✅ HTTP response sent - workflow will start when client connects via WebSocket`, {
       sessionId: session.id,
-      projectId: project.id
+      projectId: project.id,
+      promptPreview: prompt.substring(0, 50)
     });
+    
+    console.log(`[Bootstrap] 📋 Workflow deferred until WebSocket connection for session ${session.id}`);
     
   } catch (error: any) {
     const elapsed = Date.now() - startTime;
