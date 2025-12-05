@@ -147,8 +147,10 @@ export function AutonomousWorkspaceViewer({
     const connectWebSocket = () => {
       // Determine WebSocket protocol based on current protocol
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      // ✅ FIX (Nov 24, 2025): Include bootstrap token for anonymous user authentication
-      const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${tokenData.projectId}&sessionId=${tokenData.sessionId}&bootstrap=${encodeURIComponent(bootstrapToken)}`;
+      // ✅ FIX (Dec 5, 2025): DO NOT include bootstrap token in WebSocket URL
+      // PROBLEM: Long JWT tokens cause "Invalid frame header" errors on mobile
+      // SOLUTION: Use only projectId and sessionId - the session is already authenticated
+      const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${tokenData.projectId}&sessionId=${tokenData.sessionId}`;
       
       let ws: WebSocket;
       try {

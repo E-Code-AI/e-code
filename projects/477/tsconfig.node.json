@@ -1,0 +1,4 @@
+{
+  "description": "Node-specific TypeScript configuration extending the base tsconfig, overriding module and target for Node where necessary. Used mainly if any tooling or config files are written in TypeScript, ensuring they compile correctly in a Node environment.",
+  "todo": "Configure based on outline"
+}
