@@ -21,12 +21,12 @@ const logger = createLogger('ai-metering');
 // Model pricing (USD per 1M tokens)
 // Source: Official pricing from OpenAI, Anthropic, Google, xAI, Moonshot (Nov 2025)
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
-  // OpenAI
+  // OpenAI - 8 models (Dec 2025)
   'gpt-5.1': { input: 15.0, output: 60.0 },
+  'gpt-5.1-thinking': { input: 15.0, output: 60.0 },  // Same as gpt-5.1
   'gpt-5': { input: 10.0, output: 40.0 },
   'gpt-5-mini': { input: 0.3, output: 1.2 },
   'gpt-5-nano': { input: 0.15, output: 0.6 },
-  'gpt-4.1': { input: 10.0, output: 30.0 },
   'gpt-4o': { input: 5.0, output: 15.0 },
   'o3': { input: 20.0, output: 80.0 },
   'o4-mini': { input: 0.4, output: 1.6 },
