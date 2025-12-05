@@ -64,7 +64,7 @@ export function AIModelSelector({
   variant = 'inline', 
   className = '', 
   onModelChange,
-  showRAGControls = true,
+  showRAGControls = false, // Replit-style: RAG is automatic, no user toggle needed
   sessionId,
   onRAGToggle
 }: AIModelSelectorProps) {
