@@ -1029,6 +1029,16 @@ export function ReplitAgentPanelV3({
                 setActiveThinking([...thinkingSteps]);
               }
               
+              // Handle RAG status events from backend
+              if (data.enabled !== undefined && data.nodesRetrieved !== undefined) {
+                console.log('[RAG] Status update:', data);
+                // RAG context is automatically injected by the backend
+                // This event is for UI feedback only
+                if (data.status === 'success' && data.nodesRetrieved > 0) {
+                  console.log(`[RAG] Retrieved ${data.nodesRetrieved} knowledge nodes for context`);
+                }
+              }
+              
               // Handle tool execution events
               if (data.toolCallId) {
                 const toolId = data.toolCallId;
