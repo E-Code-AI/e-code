@@ -3,13 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { MessageSquare, Send, Paperclip, Mic, X, Bot, User, Image, FileText, Loader2, Sparkles, Info, Zap } from 'lucide-react';
+import { MessageSquare, Send, Paperclip, Mic, X, Bot, User, Image, FileText, Loader2, Sparkles, Info, Zap, Brain, Cpu, Timer, BarChart3, Globe, Coins } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { QUICK_SUGGESTIONS } from '@/constants/brand';
 import { useToast } from '@/hooks/use-toast';
 import { simulateStreaming } from '@/lib/simulate-streaming';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLocation } from 'wouter';
+import { Badge } from '@/components/ui/badge';
 
 interface Message {
   id: string;
@@ -27,8 +28,15 @@ interface Message {
     model?: string;
     provider?: string;
     tokens?: number;
+    promptTokens?: number;
+    completionTokens?: number;
+    cost?: string;
     latency?: number;
     extendedThinking?: boolean;
+    webSearchUsed?: boolean;
+    cacheHit?: boolean;
+    streamingDuration?: number;
+    finishReason?: 'stop' | 'length' | 'content_filter' | 'tool_calls';
   };
 }
 
@@ -284,8 +292,52 @@ Would you like me to start building this for you?`;
                         )}
                       </div>
                       
-                      <div className="text-xs text-muted-foreground mt-1 px-3">
-                        {msg.timestamp.toLocaleTimeString()}
+                      {/* Message Metadata - Replit Style */}
+                      <div className="flex items-center flex-wrap gap-1.5 text-[10px] text-muted-foreground mt-1 px-3">
+                        <span>{msg.timestamp.toLocaleTimeString()}</span>
+                        {msg.metadata && msg.role === 'assistant' && (
+                          <>
+                            {msg.metadata.model && (
+                              <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 gap-0.5">
+                                <Cpu className="h-2 w-2" />
+                                {msg.metadata.model.split('-').pop()}
+                              </Badge>
+                            )}
+                            {msg.metadata.extendedThinking && (
+                              <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 gap-0.5 border-purple-500/30 text-purple-600">
+                                <Brain className="h-2 w-2" />
+                              </Badge>
+                            )}
+                            {msg.metadata.webSearchUsed && (
+                              <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 gap-0.5 border-sky-500/30 text-sky-600">
+                                <Globe className="h-2 w-2" />
+                              </Badge>
+                            )}
+                            {msg.metadata.cacheHit && (
+                              <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 gap-0.5 border-emerald-500/30 text-emerald-600">
+                                <Zap className="h-2 w-2" />
+                              </Badge>
+                            )}
+                            {msg.metadata.tokens && msg.metadata.tokens > 0 && (
+                              <span className="flex items-center gap-0.5">
+                                <BarChart3 className="h-2 w-2" />
+                                {msg.metadata.tokens < 1000 ? msg.metadata.tokens : `${(msg.metadata.tokens/1000).toFixed(1)}K`}
+                              </span>
+                            )}
+                            {msg.metadata.latency && (
+                              <span className="flex items-center gap-0.5">
+                                <Timer className="h-2 w-2" />
+                                {msg.metadata.latency < 1000 ? `${msg.metadata.latency}ms` : `${(msg.metadata.latency/1000).toFixed(1)}s`}
+                              </span>
+                            )}
+                            {msg.metadata.cost && (
+                              <span className="flex items-center gap-0.5 text-amber-600">
+                                <Coins className="h-2 w-2" />
+                                {msg.metadata.cost}
+                              </span>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
                     

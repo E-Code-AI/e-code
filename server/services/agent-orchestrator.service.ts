@@ -558,7 +558,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       preferredExecutor: taskClassification.preferredExecutor,
       confidence: taskClassification.confidence,
       userId,
-      projectId: session.projectId ?? undefined,
+      projectId: session.projectId?.toString(),
       sessionId
     });
 
@@ -583,7 +583,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       provider,
       model: session.model || 'default',
       userId,
-      projectId: session.projectId ?? undefined,
+      projectId: session.projectId?.toString(),
       sessionId
     });
 
@@ -603,7 +603,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           provider,
           model: session.model,
           userId,
-          projectId: session.projectId ?? undefined,
+          projectId: session.projectId?.toString(),
           sessionId,
           nextRetryAt: providerStatus.nextRetryAt
         },
@@ -626,7 +626,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           provider,
           model: session.model,
           userId,
-          projectId: session.projectId ?? undefined,
+          projectId: session.projectId?.toString(),
           sessionId,
           providerStatus: providerStatus.status
         },
@@ -720,6 +720,26 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       });
       
       logger.info(`[streamAgentExecution] ✅ Success - Provider: ${provider}, Response time: ${responseTime}ms, Tokens: ${totalTokens}, Task type: ${taskClassification.taskType}`);
+
+      // ✅ REPLIT-STYLE METADATA: Send final metadata chunk with model, tokens, latency, cost
+      const estimatedCost = this.calculateCost(provider, session.model || 'default', totalTokens);
+      yield {
+        type: 'metadata',
+        metadata: {
+          model: session.model || 'default',
+          provider,
+          tokens: totalTokens,
+          promptTokens: Math.floor(totalTokens * 0.7), // Estimate: 70% prompt
+          completionTokens: Math.floor(totalTokens * 0.3), // Estimate: 30% completion
+          cost: estimatedCost,
+          latency: responseTime,
+          streamingDuration: responseTime,
+          finishReason: 'stop',
+          cacheHit: false,
+          extendedThinking: session.model?.includes('thinking') || session.model?.includes('opus') || false,
+          webSearchUsed: false
+        }
+      };
       
       // ✅ OBSERVABILITY: Record successful AI request metric
       observability.recordMetric({
@@ -733,7 +753,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           provider,
           model: session.model,
           userId,
-          projectId: session.projectId ?? undefined,
+          projectId: session.projectId?.toString(),
           sessionId,
           taskType: taskClassification.taskType,
           latencyMs: responseTime,
@@ -765,7 +785,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           provider,
           model: session.model,
           userId,
-          projectId: session.projectId ?? undefined,
+          projectId: session.projectId?.toString(),
           sessionId,
           taskType: taskClassification.taskType,
           latencyMs: responseTime,
@@ -783,7 +803,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           provider,
           model: session.model,
           userId,
-          projectId: session.projectId ?? undefined,
+          projectId: session.projectId?.toString(),
           sessionId,
           error: error.message
         },
@@ -840,6 +860,62 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
   }
 
   // Get recently modified files
+  // Calculate cost based on provider and tokens (Replit-style pricing)
+  private calculateCost(provider: string, model: string, tokens: number): string {
+    const rates: Record<string, Record<string, number>> = {
+      openai: {
+        'gpt-5': 0.00003,
+        'gpt-5.1': 0.00004,
+        'gpt-5-mini': 0.000015,
+        'gpt-5-nano': 0.00001,
+        'gpt-4o': 0.000025,
+        'o3': 0.00006,
+        'o4-mini': 0.00002,
+        default: 0.00002
+      },
+      anthropic: {
+        'claude-opus-4.5': 0.00005,
+        'claude-sonnet-4.5': 0.00003,
+        'claude-haiku-4.5': 0.00001,
+        default: 0.00002
+      },
+      google: {
+        'gemini-2.5-pro': 0.00003,
+        'gemini-2.5-flash': 0.00001,
+        'gemini-2.0-flash': 0.000008,
+        default: 0.00001
+      },
+      xai: {
+        'grok-4': 0.00004,
+        'grok-4-fast': 0.00002,
+        default: 0.00002
+      },
+      moonshot: {
+        'kimi-k2': 0.00002,
+        'kimi-k2-thinking': 0.00003,
+        default: 0.00002
+      },
+      groq: {
+        'mixtral-8x7b': 0.000005,
+        'llama-3-70b': 0.000008,
+        default: 0.000005
+      }
+    };
+
+    const providerRates = rates[provider] || rates.openai;
+    let rate = providerRates.default;
+
+    for (const [modelKey, modelRate] of Object.entries(providerRates)) {
+      if (model.toLowerCase().includes(modelKey)) {
+        rate = modelRate;
+        break;
+      }
+    }
+
+    const cost = tokens * rate;
+    return cost < 0.01 ? `$${cost.toFixed(6)}` : `$${cost.toFixed(4)}`;
+  }
+
   private async getRecentlyModifiedFiles(
     projectPath: string,
     limit: number
