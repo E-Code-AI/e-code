@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
   Shield,
   Plus,
@@ -11,13 +15,15 @@ import {
   Edit,
   Trash2,
   Copy,
-  Download,
-  Upload,
   Lock,
   Key,
   AlertCircle,
   Check,
-  Search
+  Search,
+  RefreshCw,
+  Loader2,
+  Save,
+  X
 } from 'lucide-react';
 import {
   Dialog,
@@ -28,136 +34,222 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
-interface Secret {
+interface EnvVar {
   id: string;
+  projectId: number;
   key: string;
   value: string;
-  lastModified: string;
-  isRevealed?: boolean;
+  isSecret: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export function ReplitSecretsPanel({ projectId }: { projectId?: string }) {
-  const [secrets, setSecrets] = useState<Secret[]>([
-    {
-      id: '1',
-      key: 'DATABASE_URL',
-      value: 'postgresql://user:pass@localhost:5432/mydb',
-      lastModified: '2 days ago'
-    },
-    {
-      id: '2',
-      key: 'API_KEY',
-      value: 'sk-1234567890abcdef1234567890abcdef',
-      lastModified: '1 week ago'
-    },
-    {
-      id: '3',
-      key: 'JWT_SECRET',
-      value: 'super-secret-jwt-token-key-here',
-      lastModified: '1 month ago'
-    },
-    {
-      id: '4',
-      key: 'STRIPE_SECRET_KEY',
-      value: 'sk_live_1234567890abcdefghijklmnop',
-      lastModified: '3 days ago'
-    }
-  ]);
+interface EnvVarsResponse {
+  variables: EnvVar[];
+}
 
+export function ReplitSecretsPanel({ projectId }: { projectId?: string | number }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [editingSecret, setEditingSecret] = useState<Secret | null>(null);
-  const [newSecretKey, setNewSecretKey] = useState('');
-  const [newSecretValue, setNewSecretValue] = useState('');
+  const [editingSecret, setEditingSecret] = useState<EnvVar | null>(null);
+  const [newKey, setNewKey] = useState('');
+  const [newValue, setNewValue] = useState('');
+  const [isSecretToggle, setIsSecretToggle] = useState(true);
+  const [revealedSecrets, setRevealedSecrets] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const filteredSecrets = secrets.filter(secret =>
-    secret.key.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const { data: envVarsData, isLoading, error, refetch } = useQuery<EnvVarsResponse>({
+    queryKey: ['/api/env-vars', projectId],
+    queryFn: async () => {
+      if (!projectId) throw new Error('Project ID required');
+      const response = await fetch(`/api/env-vars/${projectId}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch environment variables');
+      }
+      return response.json();
+    },
+    enabled: !!projectId,
+    staleTime: 30000,
+  });
 
-  const handleToggleReveal = (secretId: string) => {
-    setSecrets(secrets.map(s => 
-      s.id === secretId ? { ...s, isRevealed: !s.isRevealed } : s
-    ));
-  };
-
-  const handleAddSecret = () => {
-    if (newSecretKey && newSecretValue) {
-      const newSecret: Secret = {
-        id: Date.now().toString(),
-        key: newSecretKey.toUpperCase().replace(/\s+/g, '_'),
-        value: newSecretValue,
-        lastModified: 'just now'
-      };
-      setSecrets([...secrets, newSecret]);
-      setNewSecretKey('');
-      setNewSecretValue('');
+  const createMutation = useMutation({
+    mutationFn: async (data: { key: string; value: string; isSecret: boolean }) => {
+      if (!projectId) throw new Error('Project ID required');
+      const response = await apiRequest('POST', '/api/env-vars', {
+        projectId: projectId.toString(),
+        key: data.key.toUpperCase().replace(/\s+/g, '_'),
+        value: data.value,
+        isSecret: data.isSecret
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Success', description: 'Environment variable created' });
+      queryClient.invalidateQueries({ queryKey: ['/api/env-vars', projectId] });
+      resetForm();
       setShowAddDialog(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create environment variable',
+        variant: 'destructive'
+      });
     }
-  };
+  });
 
-  const handleUpdateSecret = () => {
-    if (editingSecret && newSecretKey && newSecretValue) {
-      setSecrets(secrets.map(s => 
-        s.id === editingSecret.id 
-          ? { ...s, key: newSecretKey.toUpperCase().replace(/\s+/g, '_'), value: newSecretValue, lastModified: 'just now' }
-          : s
-      ));
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, value, isSecret }: { id: string; value?: string; isSecret?: boolean }) => {
+      const response = await apiRequest('PATCH', `/api/env-vars/${id}`, {
+        ...(value !== undefined && { value }),
+        ...(isSecret !== undefined && { isSecret })
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Success', description: 'Environment variable updated' });
+      queryClient.invalidateQueries({ queryKey: ['/api/env-vars', projectId] });
+      resetForm();
       setEditingSecret(null);
-      setNewSecretKey('');
-      setNewSecretValue('');
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update environment variable',
+        variant: 'destructive'
+      });
     }
-  };
+  });
 
-  const handleDeleteSecret = (secretId: string) => {
-    setSecrets(secrets.filter(s => s.id !== secretId));
-  };
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest('DELETE', `/api/env-vars/${id}`, {});
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Success', description: 'Environment variable deleted' });
+      queryClient.invalidateQueries({ queryKey: ['/api/env-vars', projectId] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete environment variable',
+        variant: 'destructive'
+      });
+    }
+  });
 
-  const handleCopyValue = (secret: Secret) => {
-    navigator.clipboard.writeText(secret.value);
+  const revealMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest('POST', `/api/env-vars/${id}/reveal`, {});
+      return response.json();
+    },
+    onSuccess: (data, id) => {
+      setRevealedSecrets(prev => ({ ...prev, [id]: data.value }));
+      setTimeout(() => {
+        setRevealedSecrets(prev => {
+          const newState = { ...prev };
+          delete newState[id];
+          return newState;
+        });
+      }, 60000);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to reveal secret',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  const resetForm = useCallback(() => {
+    setNewKey('');
+    setNewValue('');
+    setIsSecretToggle(true);
+  }, []);
+
+  const handleCopyValue = useCallback((secret: EnvVar) => {
+    const valueToCopy = revealedSecrets[secret.id] || secret.value;
+    if (valueToCopy === '********') {
+      toast({
+        title: 'Cannot copy',
+        description: 'Reveal the secret first to copy its value',
+        variant: 'destructive'
+      });
+      return;
+    }
+    navigator.clipboard.writeText(valueToCopy);
     setCopiedId(secret.id);
     setTimeout(() => setCopiedId(null), 2000);
-  };
+    toast({ title: 'Copied', description: 'Value copied to clipboard' });
+  }, [revealedSecrets, toast]);
 
-  const handleExport = () => {
-    const envContent = secrets.map(s => `${s.key}=${s.value}`).join('\n');
-    const blob = new Blob([envContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = '.env';
-    a.click();
-  };
+  const handleToggleReveal = useCallback((secret: EnvVar) => {
+    if (revealedSecrets[secret.id]) {
+      setRevealedSecrets(prev => {
+        const newState = { ...prev };
+        delete newState[secret.id];
+        return newState;
+      });
+    } else if (secret.isSecret) {
+      revealMutation.mutate(secret.id);
+    }
+  }, [revealedSecrets, revealMutation]);
 
-  const maskValue = (value: string) => {
-    if (value.length <= 8) return '••••••••';
-    return value.slice(0, 4) + '•'.repeat(value.length - 8) + value.slice(-4);
-  };
+  const variables = envVarsData?.variables || [];
+  const filteredVariables = variables.filter(v =>
+    v.key.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (!projectId) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-4" data-testid="secrets-panel-no-project">
+        <Shield className="h-12 w-12 text-muted-foreground mb-3" />
+        <p className="text-sm text-muted-foreground">Select a project to manage secrets</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* Header */}
+    <div className="h-full flex flex-col bg-background" data-testid="secrets-panel">
       <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-muted-foreground" />
             <h3 className="font-semibold text-foreground">Secrets</h3>
             <Badge variant="secondary" className="text-xs">
-              {secrets.length}
+              {variables.length}
             </Badge>
           </div>
-          <Button
-            size="sm"
-            onClick={() => setShowAddDialog(true)}
-            className="text-xs"
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Add Secret
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => refetch()}
+              disabled={isLoading}
+              data-testid="button-refresh-secrets"
+            >
+              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setShowAddDialog(true)}
+              data-testid="button-add-secret"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add
+            </Button>
+          </div>
         </div>
 
-        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -165,82 +257,104 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string }) {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search secrets..."
             className="pl-9 text-sm"
+            data-testid="input-search-secrets"
           />
         </div>
-
-        {/* Warning */}
-        <div className="mt-3 p-2 bg-status-warning/10 border border-status-warning rounded flex items-start gap-2">
-          <AlertCircle className="h-4 w-4 text-status-warning mt-0.5" />
-          <div className="text-xs text-status-warning">
-            <p className="font-medium">Keep your secrets safe!</p>
-            <p className="mt-0.5">Never commit secrets to your repository or share them publicly.</p>
-          </div>
-        </div>
       </div>
 
-      {/* Actions Bar */}
-      <div className="px-4 py-2 border-b border-border flex items-center gap-2">
-        <Button variant="outline" size="sm" className="text-xs" onClick={handleExport}>
-          <Download className="h-3 w-3 mr-1" />
-          Export .env
-        </Button>
-        <Button variant="outline" size="sm" className="text-xs">
-          <Upload className="h-3 w-3 mr-1" />
-          Import
-        </Button>
-      </div>
-
-      {/* Secrets List */}
       <ScrollArea className="flex-1">
         <div className="p-2">
-          {filteredSecrets.length > 0 ? (
-            filteredSecrets.map((secret) => (
+          {isLoading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map(i => (
+                <Skeleton key={i} className="h-16 w-full rounded" />
+              ))}
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <AlertCircle className="h-10 w-10 text-destructive mb-2" />
+              <p className="text-sm text-muted-foreground">Failed to load secrets</p>
+              <Button variant="link" size="sm" onClick={() => refetch()}>
+                Try again
+              </Button>
+            </div>
+          ) : filteredVariables.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Key className="h-12 w-12 text-muted-foreground mb-3" />
+              <p className="text-sm text-muted-foreground">
+                {searchQuery ? 'No matching secrets' : 'No secrets configured'}
+              </p>
+              {!searchQuery && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={() => setShowAddDialog(true)}
+                >
+                  Add your first secret
+                </Button>
+              )}
+            </div>
+          ) : (
+            filteredVariables.map((secret) => (
               <div
                 key={secret.id}
-                className="mb-2 p-3 border border-border rounded hover:bg-muted"
+                className="mb-2 p-3 border border-border rounded hover:bg-muted/50"
+                data-testid={`secret-item-${secret.key}`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <Key className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-mono text-sm font-medium text-foreground">
+                      {secret.isSecret ? (
+                        <Lock className="h-4 w-4 text-amber-500 shrink-0" />
+                      ) : (
+                        <Key className="h-4 w-4 text-muted-foreground shrink-0" />
+                      )}
+                      <span className="font-mono font-medium text-sm text-foreground truncate">
                         {secret.key}
                       </span>
-                      <Badge variant="outline" className="text-xs px-1 py-0">
-                        {secret.lastModified}
-                      </Badge>
+                      {secret.isSecret && (
+                        <Badge variant="outline" className="text-xs px-1.5 py-0 text-amber-500 border-amber-500/30">
+                          encrypted
+                        </Badge>
+                      )}
                     </div>
-                    
                     <div className="mt-2 flex items-center gap-2">
-                      <code className="flex-1 px-2 py-1 bg-muted rounded text-xs font-mono text-foreground">
-                        {secret.isRevealed ? secret.value : maskValue(secret.value)}
+                      <code className="text-xs text-muted-foreground font-mono bg-muted px-2 py-1 rounded max-w-[200px] truncate">
+                        {revealedSecrets[secret.id] || secret.value}
                       </code>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 ml-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => handleToggleReveal(secret.id)}
-                    >
-                      {secret.isRevealed ? (
-                        <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-                      )}
-                    </Button>
+                  <div className="flex items-center gap-1">
+                    {secret.isSecret && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => handleToggleReveal(secret)}
+                        disabled={revealMutation.isPending}
+                        data-testid={`button-reveal-${secret.key}`}
+                      >
+                        {revealMutation.isPending && revealMutation.variables === secret.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : revealedSecrets[secret.id] ? (
+                          <EyeOff className="h-3.5 w-3.5" />
+                        ) : (
+                          <Eye className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => handleCopyValue(secret)}
+                      data-testid={`button-copy-${secret.key}`}
                     >
                       {copiedId === secret.id ? (
-                        <Check className="h-3.5 w-3.5 text-status-success" />
+                        <Check className="h-3.5 w-3.5 text-green-500" />
                       ) : (
-                        <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                        <Copy className="h-3.5 w-3.5" />
                       )}
                     </Button>
                     <Button
@@ -249,113 +363,156 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string }) {
                       className="h-7 w-7"
                       onClick={() => {
                         setEditingSecret(secret);
-                        setNewSecretKey(secret.key);
-                        setNewSecretValue(secret.value);
+                        setNewKey(secret.key);
+                        setNewValue('');
+                        setIsSecretToggle(secret.isSecret);
                       }}
+                      data-testid={`button-edit-${secret.key}`}
                     >
-                      <Edit className="h-3.5 w-3.5 text-muted-foreground" />
+                      <Edit className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7"
-                      onClick={() => handleDeleteSecret(secret.id)}
+                      onClick={() => deleteMutation.mutate(secret.id)}
+                      disabled={deleteMutation.isPending}
+                      data-testid={`button-delete-${secret.key}`}
                     >
-                      <Trash2 className="h-3.5 w-3.5 text-status-critical" />
+                      {deleteMutation.isPending && deleteMutation.variables === secret.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      )}
                     </Button>
                   </div>
                 </div>
               </div>
             ))
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Lock className="h-12 w-12 text-muted-foreground mb-3" />
-              <p className="text-sm text-muted-foreground">
-                {searchQuery ? 'No secrets found' : 'No secrets yet'}
-              </p>
-              {!searchQuery && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-3"
-                  onClick={() => setShowAddDialog(true)}
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Add your first secret
-                </Button>
-              )}
-            </div>
           )}
         </div>
       </ScrollArea>
 
-      {/* Add/Edit Dialog */}
-      <Dialog open={showAddDialog || !!editingSecret} onOpenChange={(open) => {
-        if (!open) {
-          setShowAddDialog(false);
-          setEditingSecret(null);
-          setNewSecretKey('');
-          setNewSecretValue('');
-        }
-      }}>
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {editingSecret ? 'Edit Secret' : 'Add New Secret'}
-            </DialogTitle>
+            <DialogTitle>Add Environment Variable</DialogTitle>
             <DialogDescription>
-              {editingSecret 
-                ? 'Update the key and value for this secret.'
-                : 'Add a new environment secret to your project.'}
+              Add a new environment variable or secret to your project.
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="key" className="text-sm font-medium">
-                Key
-              </label>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="key">Key</Label>
               <Input
                 id="key"
-                value={newSecretKey}
-                onChange={(e) => setNewSecretKey(e.target.value)}
-                placeholder="SECRET_KEY_NAME"
-                className="mt-1 font-mono"
+                value={newKey}
+                onChange={(e) => setNewKey(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_'))}
+                placeholder="MY_SECRET_KEY"
+                className="font-mono"
+                data-testid="input-new-key"
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Use uppercase letters and underscores
-              </p>
+              <p className="text-xs text-muted-foreground">Uppercase with underscores only</p>
             </div>
-            
-            <div>
-              <label htmlFor="value" className="text-sm font-medium">
-                Value
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor="value">Value</Label>
               <Input
                 id="value"
-                type="password"
-                value={newSecretValue}
-                onChange={(e) => setNewSecretValue(e.target.value)}
-                placeholder="Enter secret value"
-                className="mt-1 font-mono"
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                placeholder="Enter value..."
+                type={isSecretToggle ? 'password' : 'text'}
+                data-testid="input-new-value"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="isSecret">Encrypt as secret</Label>
+              <Switch
+                id="isSecret"
+                checked={isSecretToggle}
+                onCheckedChange={setIsSecretToggle}
+                data-testid="switch-is-secret"
               />
             </div>
           </div>
-
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowAddDialog(false);
-                setEditingSecret(null);
-                setNewSecretKey('');
-                setNewSecretValue('');
-              }}
-            >
+            <Button variant="outline" onClick={() => { setShowAddDialog(false); resetForm(); }}>
               Cancel
             </Button>
-            <Button onClick={editingSecret ? handleUpdateSecret : handleAddSecret}>
-              {editingSecret ? 'Update' : 'Add'} Secret
+            <Button
+              onClick={() => createMutation.mutate({ key: newKey, value: newValue, isSecret: isSecretToggle })}
+              disabled={!newKey || !newValue || createMutation.isPending}
+              data-testid="button-save-secret"
+            >
+              {createMutation.isPending ? (
+                <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Saving...</>
+              ) : (
+                <><Save className="h-4 w-4 mr-1" /> Save</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingSecret} onOpenChange={(open) => { if (!open) { setEditingSecret(null); resetForm(); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Environment Variable</DialogTitle>
+            <DialogDescription>
+              Update the value for {editingSecret?.key}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Key</Label>
+              <div className="font-mono text-sm bg-muted px-3 py-2 rounded">
+                {editingSecret?.key}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editValue">New Value</Label>
+              <Input
+                id="editValue"
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                placeholder="Enter new value..."
+                type={isSecretToggle ? 'password' : 'text'}
+                data-testid="input-edit-value"
+              />
+              <p className="text-xs text-muted-foreground">Leave empty to keep current value</p>
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="editIsSecret">Encrypt as secret</Label>
+              <Switch
+                id="editIsSecret"
+                checked={isSecretToggle}
+                onCheckedChange={setIsSecretToggle}
+                data-testid="switch-edit-is-secret"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setEditingSecret(null); resetForm(); }}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (editingSecret) {
+                  updateMutation.mutate({
+                    id: editingSecret.id,
+                    ...(newValue && { value: newValue }),
+                    isSecret: isSecretToggle
+                  });
+                }
+              }}
+              disabled={updateMutation.isPending}
+              data-testid="button-update-secret"
+            >
+              {updateMutation.isPending ? (
+                <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Updating...</>
+              ) : (
+                <><Save className="h-4 w-4 mr-1" /> Update</>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

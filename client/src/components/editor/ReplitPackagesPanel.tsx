@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Package,
   Search,
@@ -12,12 +13,8 @@ import {
   RefreshCw,
   ChevronRight,
   ChevronDown,
-  ArrowUp,
-  ExternalLink,
   AlertCircle,
-  CheckCircle,
-  Clock,
-  Info
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -26,119 +23,172 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
-interface PackageInfo {
+interface InstalledPackage {
+  name: string;
+  version: string;
+  type: 'production' | 'development';
+}
+
+interface PackagesResponse {
+  success: boolean;
+  packages: InstalledPackage[];
+  language?: 'javascript' | 'python';
+  message?: string;
+}
+
+interface NpmSearchResult {
   name: string;
   version: string;
   description: string;
-  size: string;
-  weekly: number;
-  isInstalled?: boolean;
-  hasUpdate?: boolean;
-  dependencies?: string[];
+  date: string;
+  links: { npm: string };
 }
 
-export function ReplitPackagesPanel({ projectId }: { projectId?: string }) {
+export function ReplitPackagesPanel({ projectId }: { projectId?: string | number }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedPackages, setExpandedPackages] = useState<Set<string>>(new Set());
-  const [installingPackages, setInstallingPackages] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
 
-  const installedPackages: PackageInfo[] = [
-    {
-      name: 'react',
-      version: '18.2.0',
-      description: 'A JavaScript library for building user interfaces',
-      size: '2.3 MB',
-      weekly: 15234567,
-      isInstalled: true,
-      hasUpdate: true,
-      dependencies: ['react-dom', 'scheduler']
-    },
-    {
-      name: '@tanstack/react-query',
-      version: '5.12.2',
-      description: 'Powerful asynchronous state management',
-      size: '845 KB',
-      weekly: 234567,
-      isInstalled: true,
-      dependencies: []
-    },
-    {
-      name: 'tailwindcss',
-      version: '3.4.1',
-      description: 'A utility-first CSS framework',
-      size: '3.1 MB',
-      weekly: 4567890,
-      isInstalled: true,
-      dependencies: ['postcss', 'autoprefixer']
-    }
-  ];
-
-  const searchResults: PackageInfo[] = [
-    {
-      name: 'axios',
-      version: '1.6.5',
-      description: 'Promise based HTTP client for the browser and node.js',
-      size: '456 KB',
-      weekly: 8901234
-    },
-    {
-      name: 'lodash',
-      version: '4.17.21',
-      description: 'Lodash modular utilities',
-      size: '1.4 MB',
-      weekly: 12345678
-    },
-    {
-      name: 'date-fns',
-      version: '3.2.0',
-      description: 'Modern JavaScript date utility library',
-      size: '678 KB',
-      weekly: 3456789
-    }
-  ];
-
-  const togglePackageExpansion = (packageName: string) => {
-    const newExpanded = new Set(expandedPackages);
-    if (newExpanded.has(packageName)) {
-      newExpanded.delete(packageName);
-    } else {
-      newExpanded.add(packageName);
-    }
-    setExpandedPackages(newExpanded);
-  };
-
-  const installPackage = (packageName: string) => {
-    setInstallingPackages(new Set([...installingPackages, packageName]));
-    setTimeout(() => {
-      setInstallingPackages(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(packageName);
-        return newSet;
+  const { data: packagesData, isLoading, error, refetch } = useQuery<PackagesResponse>({
+    queryKey: ['/api/packages/installed', projectId],
+    queryFn: async () => {
+      if (!projectId) throw new Error('Project ID required');
+      const response = await fetch(`/api/packages/installed?projectId=${projectId}`, {
+        credentials: 'include'
       });
-    }, 2000);
-  };
+      if (!response.ok) {
+        throw new Error('Failed to fetch packages');
+      }
+      return response.json();
+    },
+    enabled: !!projectId,
+    staleTime: 30000,
+  });
 
-  const formatWeeklyDownloads = (num: number) => {
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
+  const { data: searchResults, isLoading: isSearching } = useQuery<NpmSearchResult[]>({
+    queryKey: ['npm-search', searchQuery],
+    queryFn: async () => {
+      if (!searchQuery || searchQuery.length < 2) return [];
+      const response = await fetch(
+        `https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(searchQuery)}&size=10`
+      );
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.objects?.map((obj: any) => ({
+        name: obj.package.name,
+        version: obj.package.version,
+        description: obj.package.description || '',
+        date: obj.package.date,
+        links: obj.package.links
+      })) || [];
+    },
+    enabled: searchQuery.length >= 2,
+    staleTime: 60000,
+  });
+
+  const installMutation = useMutation({
+    mutationFn: async ({ packageName, version }: { packageName: string; version?: string }) => {
+      if (!projectId) throw new Error('Project ID required');
+      const response = await apiRequest('POST', `/api/packages/${projectId}/install`, {
+        package: packageName,
+        version
+      });
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      toast({
+        title: 'Package installed',
+        description: `Successfully installed ${variables.packageName}`
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/packages/installed', projectId] });
+    },
+    onError: (error: any, variables) => {
+      toast({
+        title: 'Installation failed',
+        description: error.message || `Failed to install ${variables.packageName}`,
+        variant: 'destructive'
+      });
     }
-    if (num >= 1000) {
-      return `${(num / 1000).toFixed(0)}K`;
+  });
+
+  const uninstallMutation = useMutation({
+    mutationFn: async (packageName: string) => {
+      if (!projectId) throw new Error('Project ID required');
+      const response = await apiRequest('POST', `/api/packages/${projectId}/uninstall`, {
+        package: packageName
+      });
+      return response.json();
+    },
+    onSuccess: (data, packageName) => {
+      toast({
+        title: 'Package removed',
+        description: `Successfully removed ${packageName}`
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/packages/installed', projectId] });
+    },
+    onError: (error: any, packageName) => {
+      toast({
+        title: 'Removal failed',
+        description: error.message || `Failed to remove ${packageName}`,
+        variant: 'destructive'
+      });
     }
-    return num.toString();
-  };
+  });
+
+  const togglePackageExpansion = useCallback((packageName: string) => {
+    setExpandedPackages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(packageName)) {
+        newSet.delete(packageName);
+      } else {
+        newSet.add(packageName);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const installedPackages = packagesData?.packages || [];
+  const installedPackageNames = new Set(installedPackages.map(p => p.name));
+
+  const filteredSearch = searchResults?.filter(pkg => !installedPackageNames.has(pkg.name)) || [];
+
+  if (!projectId) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-4" data-testid="packages-panel-no-project">
+        <Package className="h-12 w-12 text-muted-foreground mb-3" />
+        <p className="text-sm text-muted-foreground">Select a project to manage packages</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* Header */}
+    <div className="h-full flex flex-col bg-background" data-testid="packages-panel">
       <div className="px-4 py-3 border-b border-border">
-        <div className="flex items-center gap-2 mb-3">
-          <Package className="h-5 w-5 text-muted-foreground" />
-          <h3 className="font-semibold text-foreground">Packages</h3>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-muted-foreground" />
+            <h3 className="font-semibold text-foreground">Packages</h3>
+            {packagesData?.language && (
+              <Badge variant="outline" className="text-xs">
+                {packagesData.language}
+              </Badge>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => refetch()}
+            disabled={isLoading}
+            data-testid="button-refresh-packages"
+          >
+            <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+          </Button>
         </div>
 
-        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -146,111 +196,168 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string }) {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search npm packages..."
             className="pl-9 text-sm"
+            data-testid="input-package-search"
           />
         </div>
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue="installed" className="flex-1 flex flex-col">
-        <TabsList className="grid w-full grid-cols-3 px-4 pt-2">
-          <TabsTrigger value="installed" className="text-xs">
+        <TabsList className="grid w-full grid-cols-2 px-4 pt-2">
+          <TabsTrigger value="installed" className="text-xs" data-testid="tab-installed">
             Installed
             <Badge variant="secondary" className="ml-1 px-1 py-0 text-xs">
               {installedPackages.length}
             </Badge>
           </TabsTrigger>
-          <TabsTrigger value="search" className="text-xs">
+          <TabsTrigger value="search" className="text-xs" data-testid="tab-search">
             Search
-          </TabsTrigger>
-          <TabsTrigger value="dependencies" className="text-xs">
-            Dependencies
+            {isSearching && <Loader2 className="ml-1 h-3 w-3 animate-spin" />}
           </TabsTrigger>
         </TabsList>
 
-        {/* Installed Packages */}
         <TabsContent value="installed" className="flex-1">
           <ScrollArea className="h-full">
             <div className="p-2">
-              {installedPackages.map((pkg) => (
-                <div key={pkg.name} className="mb-2 border border-border rounded">
+              {isLoading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map(i => (
+                    <Skeleton key={i} className="h-16 w-full rounded" />
+                  ))}
+                </div>
+              ) : error ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <AlertCircle className="h-10 w-10 text-destructive mb-2" />
+                  <p className="text-sm text-muted-foreground">Failed to load packages</p>
+                  <Button variant="link" size="sm" onClick={() => refetch()}>
+                    Try again
+                  </Button>
+                </div>
+              ) : installedPackages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Package className="h-12 w-12 text-muted-foreground mb-3" />
+                  <p className="text-sm text-muted-foreground">No packages installed</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Search for packages to add dependencies
+                  </p>
+                </div>
+              ) : (
+                installedPackages.map((pkg) => (
                   <div
-                    className="p-3 cursor-pointer hover:bg-muted"
-                    onClick={() => togglePackageExpansion(pkg.name)}
+                    key={pkg.name}
+                    className="mb-2 border border-border rounded"
+                    data-testid={`package-item-${pkg.name}`}
                   >
-                    <div className="flex items-start gap-2">
-                      <button className="mt-1">
-                        {expandedPackages.has(pkg.name) ? (
-                          <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                        ) : (
-                          <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                        )}
-                      </button>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm text-foreground">
-                            {pkg.name}
-                          </span>
-                          <Badge variant="outline" className="text-xs px-1.5 py-0">
-                            v{pkg.version}
-                          </Badge>
-                          {pkg.hasUpdate && (
-                            <Badge className="text-xs px-1.5 py-0 bg-status-success/10 text-status-success">
-                              Update available
-                            </Badge>
+                    <div
+                      className="p-3 cursor-pointer hover:bg-muted"
+                      onClick={() => togglePackageExpansion(pkg.name)}
+                    >
+                      <div className="flex items-start gap-2">
+                        <button className="mt-1">
+                          {expandedPackages.has(pkg.name) ? (
+                            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-3 w-3 text-muted-foreground" />
                           )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">{pkg.description}</p>
-                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                          <span>{pkg.size}</span>
-                          <span>•</span>
-                          <span>{formatWeeklyDownloads(pkg.weekly)} weekly</span>
-                        </div>
-                      </div>
+                        </button>
 
-                      <div className="flex gap-1">
-                        {pkg.hasUpdate && (
-                          <Button variant="ghost" size="icon" className="h-7 w-7">
-                            <ArrowUp className="h-3 w-3 text-status-success" />
-                          </Button>
-                        )}
-                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                          <Trash2 className="h-3 w-3 text-status-critical" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium text-sm text-foreground">
+                              {pkg.name}
+                            </span>
+                            <Badge variant="outline" className="text-xs px-1.5 py-0">
+                              {pkg.version}
+                            </Badge>
+                            <Badge
+                              variant="secondary"
+                              className={cn(
+                                "text-xs px-1.5 py-0",
+                                pkg.type === 'development' && "bg-yellow-500/10 text-yellow-600"
+                              )}
+                            >
+                              {pkg.type === 'development' ? 'dev' : 'prod'}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            uninstallMutation.mutate(pkg.name);
+                          }}
+                          disabled={uninstallMutation.isPending}
+                          data-testid={`button-uninstall-${pkg.name}`}
+                        >
+                          {uninstallMutation.isPending && uninstallMutation.variables === pkg.name ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          )}
                         </Button>
                       </div>
                     </div>
-                  </div>
 
-                  {expandedPackages.has(pkg.name) && pkg.dependencies && (
-                    <div className="px-3 pb-3 border-t border-border">
-                      <div className="mt-2">
-                        <span className="text-xs text-muted-foreground">Dependencies:</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {pkg.dependencies.map((dep) => (
-                            <Badge key={dep} variant="outline" className="text-xs px-2 py-0">
-                              {dep}
-                            </Badge>
-                          ))}
+                    {expandedPackages.has(pkg.name) && (
+                      <div className="px-3 pb-3 border-t border-border">
+                        <div className="mt-2 space-y-2">
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="text-muted-foreground">Version:</span>
+                            <span className="font-mono">{pkg.version}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="text-muted-foreground">Type:</span>
+                            <span>{pkg.type}</span>
+                          </div>
+                          <a
+                            href={`https://www.npmjs.com/package/${pkg.name}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary hover:underline"
+                          >
+                            View on npm →
+                          </a>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </ScrollArea>
         </TabsContent>
 
-        {/* Search Results */}
         <TabsContent value="search" className="flex-1">
           <ScrollArea className="h-full">
             <div className="p-2">
-              {searchQuery ? (
-                searchResults.map((pkg) => (
-                  <div key={pkg.name} className="mb-2 p-3 border border-border rounded hover:bg-muted">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
+              {searchQuery.length < 2 ? (
+                <div className="flex flex-col items-center justify-center h-full py-8">
+                  <Search className="h-12 w-12 text-muted-foreground mb-3" />
+                  <p className="text-sm text-muted-foreground">Type at least 2 characters to search</p>
+                </div>
+              ) : isSearching ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map(i => (
+                    <Skeleton key={i} className="h-20 w-full rounded" />
+                  ))}
+                </div>
+              ) : filteredSearch.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <Package className="h-12 w-12 text-muted-foreground mb-3" />
+                  <p className="text-sm text-muted-foreground">No packages found</p>
+                </div>
+              ) : (
+                filteredSearch.map((pkg) => (
+                  <div
+                    key={pkg.name}
+                    className="mb-2 p-3 border border-border rounded hover:bg-muted"
+                    data-testid={`search-result-${pkg.name}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium text-sm text-foreground">
                             {pkg.name}
                           </span>
@@ -258,24 +365,24 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string }) {
                             v{pkg.version}
                           </Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">{pkg.description}</p>
-                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                          <span>{pkg.size}</span>
-                          <span>•</span>
-                          <span>{formatWeeklyDownloads(pkg.weekly)} weekly</span>
-                        </div>
+                        {pkg.description && (
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            {pkg.description}
+                          </p>
+                        )}
                       </div>
 
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-xs"
-                        onClick={() => installPackage(pkg.name)}
-                        disabled={installingPackages.has(pkg.name)}
+                        className="text-xs shrink-0"
+                        onClick={() => installMutation.mutate({ packageName: pkg.name })}
+                        disabled={installMutation.isPending}
+                        data-testid={`button-install-${pkg.name}`}
                       >
-                        {installingPackages.has(pkg.name) ? (
+                        {installMutation.isPending && installMutation.variables?.packageName === pkg.name ? (
                           <>
-                            <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                             Installing
                           </>
                         ) : (
@@ -288,43 +395,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string }) {
                     </div>
                   </div>
                 ))
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full py-8">
-                  <Package className="h-12 w-12 text-muted-foreground mb-3" />
-                  <p className="text-sm text-muted-foreground">Search for packages to install</p>
-                </div>
               )}
-            </div>
-          </ScrollArea>
-        </TabsContent>
-
-        {/* Dependencies Tree */}
-        <TabsContent value="dependencies" className="flex-1">
-          <ScrollArea className="h-full">
-            <div className="p-3">
-              <div className="space-y-2">
-                {installedPackages.map((pkg) => (
-                  <div key={pkg.name} className="border-l-2 border-border pl-4">
-                    <div className="flex items-center gap-2">
-                      <Package className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-sm font-medium">{pkg.name}</span>
-                      <Badge variant="outline" className="text-xs px-1 py-0">
-                        {pkg.version}
-                      </Badge>
-                    </div>
-                    {pkg.dependencies && pkg.dependencies.length > 0 && (
-                      <div className="ml-5 mt-2 space-y-1">
-                        {pkg.dependencies.map((dep) => (
-                          <div key={dep} className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                            {dep}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
             </div>
           </ScrollArea>
         </TabsContent>
