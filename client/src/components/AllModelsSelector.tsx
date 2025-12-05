@@ -517,15 +517,15 @@ export function AllModelsSelector() {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm">OpenAI Models: GPT-4o, GPT-4o-mini, o1-preview, o1-mini</span>
+              <span className="text-sm">OpenAI Models: GPT-5.1, GPT-5, GPT-5 Mini/Nano, GPT-4o, o3, o4-mini</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm">Anthropic Models: Claude 3.5 Sonnet, Claude 3 Opus</span>
+              <span className="text-sm">Anthropic Models: Claude Opus 4.5, Claude Sonnet 4.5, Claude Haiku 4.5</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm">Open-Source Models: 9 models integrated</span>
+              <span className="text-sm">Other Providers: Gemini 2.5 Pro/Flash, Grok 4, Moonshot Kimi K2, Groq</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />

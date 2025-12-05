@@ -14,7 +14,7 @@ export interface AIPreferences {
 
 const DEFAULT_PREFERENCES: AIPreferences = {
   enabled: true,
-  model: 'Claude 3.5 Sonnet',
+  model: 'Claude Sonnet 4.5',
   autoTrigger: true,
   confidenceThreshold: 0.7,
   triggerDelay: 300,
@@ -136,11 +136,11 @@ export function useAIPreferences() {
   // Get available AI models
   const getAvailableModels = useCallback(() => {
     return [
-      { value: 'Claude 3.5 Sonnet', label: 'Claude 3.5 Sonnet', description: 'Most capable for code' },
-      { value: 'OpenAI GPT-4', label: 'GPT-4 Turbo', description: 'Latest GPT-4 model' },
+      { value: 'Claude Sonnet 4.5', label: 'Claude Sonnet 4.5', description: 'Best coding model in the world' },
+      { value: 'Claude Opus 4.5', label: 'Claude Opus 4.5', description: 'Most capable frontier model' },
+      { value: 'GPT-5.1', label: 'GPT-5.1', description: 'Latest flagship with adaptive reasoning' },
+      { value: 'GPT-5', label: 'GPT-5', description: 'Advanced reasoning model' },
       { value: 'E-Code Agent', label: 'E-Code Agent', description: 'Optimized for building' },
-      { value: 'E-Code Code', label: 'E-Code Code', description: 'Fast code completion' },
-      { value: 'E-Code Flash', label: 'E-Code Flash', description: 'Instant suggestions' },
     ];
   }, []);
 

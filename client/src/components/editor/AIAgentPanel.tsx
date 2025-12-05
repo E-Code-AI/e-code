@@ -238,9 +238,9 @@ export function AIAgentPanel({ projectId, onClose }: AIAgentPanelProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="openai">GPT-4 Turbo</SelectItem>
-                <SelectItem value="anthropic">Claude 3.5</SelectItem>
-                <SelectItem value="gemini">Gemini Pro</SelectItem>
+                <SelectItem value="openai">GPT-5.1</SelectItem>
+                <SelectItem value="anthropic">Claude Sonnet 4.5</SelectItem>
+                <SelectItem value="gemini">Gemini 2.5 Pro</SelectItem>
               </SelectContent>
             </Select>
           </div>

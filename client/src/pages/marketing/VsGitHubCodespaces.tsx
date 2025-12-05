@@ -7,7 +7,7 @@ export default function VsGitHubCodespaces() {
   const comparisons = [
     {
       feature: "AI-Powered Development",
-      eCode: "GPT-5 + Claude 3.5 Sonnet built-in",
+      eCode: "GPT-5.1 + Claude Sonnet 4.5 built-in",
       github: "GitHub Copilot (additional cost)",
       advantage: "eCode"
     },

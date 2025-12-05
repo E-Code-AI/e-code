@@ -7,7 +7,7 @@ export default function VsGlitch() {
   const comparisons = [
     {
       feature: "AI Code Generation",
-      eCode: "GPT-5 + Claude 3.5 Sonnet",
+      eCode: "GPT-5.1 + Claude Sonnet 4.5",
       glitch: "Not available",
       advantage: "eCode"
     },

@@ -88,7 +88,7 @@ class AICodeCompletionService {
    * Get intelligent code completions
    */
   async getCompletions(request: CompletionRequest): Promise<CodeCompletionSuggestion[]> {
-    const { context, userId, model = 'Claude 3.5 Sonnet', maxSuggestions = 5, temperature = 0.2 } = request;
+    const { context, userId, model = 'Claude Sonnet 4.5', maxSuggestions = 5, temperature = 0.2 } = request;
     
     // Check cache first
     const cacheKey = this.getCacheKey(context, model);

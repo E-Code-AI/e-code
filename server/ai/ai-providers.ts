@@ -152,7 +152,7 @@ export class XAIProvider implements AIProvider {
   
   async generateChat(messages: any[], options?: any): Promise<string> {
     const response = await this.client.chat.completions.create({
-      model: options?.model || 'grok-2-1212',
+      model: options?.model || 'grok-4',
       messages,
       ...options
     });
