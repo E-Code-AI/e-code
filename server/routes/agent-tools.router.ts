@@ -662,12 +662,12 @@ export default function createAgentToolsRouter(): Router {
         extendedThinking: {
           enabled: true,
           status: 'operational',
-          models: ['claude-sonnet-4-5-20250929', 'claude-opus-4-1-20250805', 'o3', 'gpt-5.1']
+          models: ['claude-opus-4-5-20251124', 'claude-sonnet-4-5-20250929', 'o3', 'gpt-5.1']
         },
         highPowerModels: {
           enabled: true,
           status: 'operational',
-          models: ['gpt-5.1', 'claude-opus-4-1-20250805', 'gemini-2.5-pro', 'grok-4']
+          models: ['gpt-5.1', 'claude-opus-4-5-20251124', 'gemini-2.5-pro', 'grok-4']
         },
         maxAutonomy: {
           enabled: true,

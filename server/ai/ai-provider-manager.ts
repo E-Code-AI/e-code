@@ -123,16 +123,7 @@ export const AI_MODELS: AIModel[] = [
     supportsStreaming: true,
     costPer1kTokens: 0.003
   },
-  {
-    id: 'claude-opus-4-1-20250805',
-    name: 'Claude Opus 4.1',
-    provider: 'anthropic',
-    description: 'Agentic tasks & real-world coding - 74.5% on SWE-bench Verified (Aug 5, 2025)',
-    maxTokens: 200000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.015
-  },
-  {
+    {
     id: 'claude-haiku-4-5-20251015',
     name: 'Claude Haiku 4.5',
     provider: 'anthropic',
@@ -984,7 +975,7 @@ export class AIProviderManager {
   getAvailableProviders(): Array<{ name: string; isAvailable: boolean }> {
     const providerMap: Record<string, string[]> = {
       'OpenAI': ['gpt-5.1', 'gpt-5', 'gpt-5-mini'],
-      'Claude': ['claude-sonnet-4-5-20250929', 'claude-opus-4-1-20250805', 'claude-haiku-4-5-20251015'],
+      'Claude': ['claude-opus-4-5-20251124', 'claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251015'],
       'Anthropic': ['claude-sonnet-4-5-20250929'],
       'Gemini': ['gemini-2-5-flash', 'gemini-2-5-pro'],
       'Moonshot': ['kimi-k2-0711-preview', 'kimi-k2-0904-preview'],

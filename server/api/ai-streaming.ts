@@ -1010,7 +1010,7 @@ router.get('/api/agent/models', ensureAuthenticated, (req, res) => {
     
     // Anthropic Models  
     { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
-    { provider: 'anthropic', model: 'claude-opus-4-1-20250805', name: 'Claude Opus 4.1', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
+    { provider: 'anthropic', model: 'claude-opus-4-5-20251124', name: 'Claude Opus 4.5', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
     { provider: 'anthropic', model: 'claude-haiku-4-5-20251015', name: 'Claude Haiku 4.5', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
     { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
     

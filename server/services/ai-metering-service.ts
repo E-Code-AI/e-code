@@ -31,9 +31,9 @@ const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   'o3': { input: 20.0, output: 80.0 },
   'o4-mini': { input: 0.4, output: 1.6 },
   
-  // Anthropic
+  // Anthropic - Only Opus 4.5, Sonnet 4.5, Haiku 4.5 (Dec 2025)
+  'claude-opus-4-5-20251124': { input: 15.0, output: 75.0 },
   'claude-sonnet-4-5-20250929': { input: 3.0, output: 15.0 },
-  'claude-opus-4-1-20250805': { input: 15.0, output: 75.0 },
   'claude-haiku-4-5-20251015': { input: 0.25, output: 1.25 },
   
   // Google Gemini
