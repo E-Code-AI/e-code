@@ -1,0 +1,4 @@
+{
+  "description": "Secondary tsconfig extending the base client config for application code, excluding test or config files. Fine-tunes compiler options for the main React source tree.",
+  "todo": "Configure based on outline"
+}
