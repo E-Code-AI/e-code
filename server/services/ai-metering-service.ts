@@ -46,7 +46,7 @@ const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   
   // Moonshot AI - ✅ 40-YEAR FIX: Production-recommended pricing
   'kimi-k2-0711-preview': { input: 0.6, output: 2.5 },  // Official pricing
-  'kimi-k2-0905-preview': { input: 0.6, output: 2.5 },  // Same pricing
+  'kimi-k2-0904-preview': { input: 0.6, output: 2.5 },  // ✅ ALIGNED with aiModelEnum
   'kimi-k2-thinking': { input: 0.6, output: 2.5 },      // Same pricing
 };
 

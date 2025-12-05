@@ -1024,7 +1024,7 @@ router.get('/api/agent/models', ensureAuthenticated, (req, res) => {
     { provider: 'xai', model: 'grok-3-fast-latest', name: 'Grok 3 Fast', context: 128000, available: !!process.env.XAI_API_KEY },
     
     // Moonshot AI (Kimi) Models
-    { provider: 'moonshot', model: 'kimi-k2-0905-preview', name: 'Kimi K2', context: 131072, available: !!process.env.MOONSHOT_API_KEY },
+    { provider: 'moonshot', model: 'kimi-k2-0904-preview', name: 'Kimi K2', context: 131072, available: !!process.env.MOONSHOT_API_KEY },
     { provider: 'moonshot', model: 'moonshot-v1-32k', name: 'Moonshot v1 32K', context: 32768, available: !!process.env.MOONSHOT_API_KEY },
     { provider: 'moonshot', model: 'moonshot-v1-128k', name: 'Moonshot v1 128K', context: 131072, available: !!process.env.MOONSHOT_API_KEY },
   ];
