@@ -59,7 +59,8 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
   setupSSE(res);
   
   const { 
-    message, 
+    message: rawMessage, 
+    messages: rawMessages,  // Support both message (string) and messages (array)
     projectId, 
     conversationId,
     provider = 'openai',
@@ -72,6 +73,19 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
     systemPrompt,
     capabilities = {}
   } = req.body;
+  
+  // Handle both message (string) and messages (array) input formats
+  // If messages array is provided, extract the last user message
+  let message: string | undefined = rawMessage;
+  if (!message && Array.isArray(rawMessages) && rawMessages.length > 0) {
+    const lastUserMsg = rawMessages.find((m: any) => m.role === 'user' && m.content);
+    message = lastUserMsg?.content || '';
+  }
+  
+  // Ensure message is a string (fallback to empty string if still undefined)
+  if (!message || typeof message !== 'string') {
+    message = '';
+  }
   
   // Map modelId (from frontend) to model, with provider-specific defaults
   // These MUST match the defaults in each stream function for consistency
@@ -198,8 +212,10 @@ You are in BUILD MODE. You can execute actions like creating files, running comm
         logger.info(`[RAG] RAG enabled for session ${ragSessionId}, fetching context...`);
         
         // Fetch relevant knowledge from the knowledge graph
+        // Safely handle empty message (avoid substring on empty string)
+        const searchQuery = message && message.length > 0 ? message.substring(0, 500) : '';
         const ragContexts = await memoryMCP.searchNodes(
-          message.substring(0, 500), // Use user message as search query
+          searchQuery, // Use user message as search query
           undefined, // No type filter
           ragConfig?.retrievalDepth || 3 // Number of relevant nodes to fetch
         );
