@@ -269,9 +269,9 @@ router.get('/conversation/:id/messages', async (req, res) => {
         role: msg.role as 'user' | 'assistant' | 'system',
         content: msg.content,
         timestamp: msg.createdAt,
-        type: msg.type || 'text',
+        type: (msg.metadata as any)?.type || 'text',
         thinking: msg.extendedThinking?.steps || undefined,
-        toolExecutions: msg.toolExecutions || undefined,
+        toolExecutions: (msg.metadata as any)?.toolExecutions || undefined,
         metadata: msg.metadata || undefined,
       }));
 

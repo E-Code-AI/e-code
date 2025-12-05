@@ -59,11 +59,10 @@ export class ConversationManagementService {
   }): Promise<Conversation> {
     const conversationId = `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Create in database
+    // Create in database - use numeric IDs as schema expects
     const [created] = await db.insert(aiConversations).values({
-      projectId: String(params.projectId),
-      userId: String(params.userId),
-      conversationId,
+      projectId: params.projectId,
+      userId: params.userId,
       messages: [],
       context: params.initialContext || {},
       totalTokensUsed: 0,
@@ -124,25 +123,38 @@ export class ConversationManagementService {
 
     // Persist to database
     try {
-      // Insert message into agentMessages table
-      await db.insert(agentMessages).values({
-        conversationId,
-        role: message.role,
-        content: message.content,
-        model: message.metadata?.model,
-        tokensUsed: message.metadata?.tokensUsed,
-        thinkingSteps: message.metadata?.thinkingSteps,
-        reasoning: message.metadata?.reasoning,
-      });
+      // Get the numeric conversation ID from the database
+      const [dbConv] = await db.select({ id: aiConversations.id })
+        .from(aiConversations)
+        .where(eq(aiConversations.id, parseInt(conversationId.replace(/\D/g, '')) || 0))
+        .limit(1);
 
-      // Update conversation in aiConversations table with new message array and token count
-      await db.update(aiConversations)
-        .set({
-          messages: conversation.messages as any,
-          totalTokensUsed: conversation.totalTokensUsed,
-          updatedAt: conversation.updatedAt
-        })
-        .where(eq(aiConversations.conversationId, conversationId));
+      if (dbConv) {
+        // Insert message into agentMessages table with required fields
+        await db.insert(agentMessages).values({
+          conversationId: dbConv.id,
+          projectId: conversation.projectId,
+          userId: conversation.userId,
+          role: message.role,
+          content: message.content,
+          model: message.metadata?.model || null,
+          metadata: message.metadata ? {
+            tokensUsed: message.metadata.tokensUsed,
+            processingTime: message.metadata.processingTime,
+            error: message.metadata.error,
+            attachments: message.metadata.attachments,
+          } : null,
+        });
+
+        // Update conversation in aiConversations table with new message array and token count
+        await db.update(aiConversations)
+          .set({
+            messages: conversation.messages as any,
+            totalTokensUsed: conversation.totalTokensUsed,
+            updatedAt: conversation.updatedAt
+          })
+          .where(eq(aiConversations.id, dbConv.id));
+      }
 
       logger.info(`Persisted message to database for conversation ${conversationId}`);
     } catch (dbError: any) {
@@ -167,11 +179,12 @@ export class ConversationManagementService {
       return this.activeConversations.get(conversationId)!;
     }
 
-    // Load from database
+    // Load from database - extract numeric ID from string conversationId
     try {
+      const numericId = parseInt(conversationId.replace(/\D/g, '')) || 0;
       const [dbConv] = await db.select()
         .from(aiConversations)
-        .where(eq(aiConversations.conversationId, conversationId));
+        .where(eq(aiConversations.id, numericId));
       
       if (!dbConv) {
         return null;
@@ -179,9 +192,9 @@ export class ConversationManagementService {
 
       // Convert DB record to Conversation
       const conversation: Conversation = {
-        id: dbConv.conversationId,
-        projectId: parseInt(dbConv.projectId),
-        userId: parseInt(dbConv.userId),
+        id: conversationId, // Keep the string ID for API compatibility
+        projectId: dbConv.projectId,
+        userId: dbConv.userId,
         title: `Conversation ${conversationId.slice(0, 8)}`,
         status: 'active',
         context: dbConv.context as any || {},
@@ -288,18 +301,16 @@ export class ConversationManagementService {
 
     await this.updateConversationStatus(conversationId, 'completed');
 
-    // Create checkpoint for billing
-    await checkpointService.createComprehensiveCheckpoint({
-      projectId: conversation.projectId,
-      userId: conversation.userId,
-      message: `Completed agent conversation: ${conversation.title}`,
-      agentTaskDescription: `Conversation with ${conversation.messages.length} messages`,
-      filesModified: 0,
-      linesOfCodeWritten: 0,
-      tokensUsed: conversation.totalTokensUsed,
-      executionTimeMs: conversation.updatedAt.getTime() - conversation.createdAt.getTime(),
-      apiCallsCount: conversation.messages.filter(m => m.role === 'assistant').length
-    });
+    // Create checkpoint for conversation completion
+    try {
+      await checkpointService.createCheckpoint({
+        projectId: conversation.projectId,
+        name: `Completed: ${conversation.title}`,
+        description: `Conversation with ${conversation.messages.length} messages, ${conversation.totalTokensUsed} tokens`,
+      });
+    } catch (checkpointError: any) {
+      logger.warn(`Failed to create checkpoint for conversation: ${checkpointError.message}`);
+    }
 
     // Remove from active cache
     this.activeConversations.delete(conversationId);
