@@ -43,10 +43,11 @@ interface MainAgentInterfaceProps {
 
 interface AgentMessage {
   id: string;
-  role: 'user' | 'agent' | 'system';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
   status?: 'thinking' | 'working' | 'complete' | 'error' | 'paused';
+  isStreaming?: boolean;
   steps?: WorkStep[];
   metrics?: {
     timeWorked?: string;
@@ -55,6 +56,13 @@ interface AgentMessage {
     tokensUsed?: number;
   };
   cost?: string;
+  metadata?: {
+    model?: string;
+    provider?: string;
+    tokens?: number;
+    latency?: number;
+    extendedThinking?: boolean;
+  };
 }
 
 interface WorkStep {
@@ -164,7 +172,7 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
         setMessages(prev => {
           const newMessages = [...prev];
           const lastMessage = newMessages[newMessages.length - 1];
-          if (lastMessage && lastMessage.role === 'agent' && lastMessage.status === 'working') {
+          if (lastMessage && lastMessage.role === 'assistant' && lastMessage.status === 'working') {
             lastMessage.steps = [...(lastMessage.steps || []), data.step];
           }
           return newMessages;
@@ -252,7 +260,7 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
     // Add agent thinking message
     const agentMessage: AgentMessage = {
       id: (Date.now() + 1).toString(),
-      role: 'agent',
+      role: 'assistant',
       content: 'Let me work on that...',
       timestamp: new Date(),
       status: 'thinking',
@@ -288,7 +296,7 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
       setMessages(prev => {
         const newMessages = [...prev];
         const lastMessage = newMessages[newMessages.length - 1];
-        if (lastMessage && lastMessage.role === 'agent') {
+        if (lastMessage && lastMessage.role === 'assistant') {
           lastMessage.content = data.content || 'Task completed successfully!';
           lastMessage.status = data.completed ? 'complete' : 'working';
           lastMessage.metrics = data.metrics;
@@ -310,7 +318,7 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
       setMessages(prev => {
         const newMessages = [...prev];
         const lastMessage = newMessages[newMessages.length - 1];
-        if (lastMessage && lastMessage.role === 'agent') {
+        if (lastMessage && lastMessage.role === 'assistant') {
           lastMessage.status = 'error';
           lastMessage.content = 'Sorry, I encountered an error. Please try again.';
         }
@@ -586,7 +594,7 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
                   message.role === 'user' && "justify-end"
                 )}
               >
-                {message.role === 'agent' && (
+                {message.role === 'assistant' && (
                   <div className="flex-shrink-0">
                     <div className="rounded-full bg-primary/10 p-2">
                       <Bot className="h-4 w-4 text-primary" />
@@ -605,7 +613,7 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                   
                   {/* Show work steps for agent messages */}
-                  {message.role === 'agent' && message.steps && message.steps.length > 0 && (
+                  {message.role === 'assistant' && message.steps && message.steps.length > 0 && (
                     <div className="space-y-2 mt-3">
                       {message.steps.map(step => renderStep(step))}
                     </div>

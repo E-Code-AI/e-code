@@ -10,9 +10,16 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 interface Message {
-  role: 'user' | 'assistant';
+  id: string;
+  role: 'user' | 'assistant' | 'system';
   content: string;
-  timestamp?: string;
+  timestamp: Date;
+  isStreaming?: boolean;
+  metadata?: {
+    model?: string;
+    tokens?: number;
+    latency?: number;
+  };
 }
 
 interface AIAgentPanelProps {
@@ -23,8 +30,10 @@ interface AIAgentPanelProps {
 export function AIAgentPanel({ projectId, onFileCreate }: AIAgentPanelProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
+      id: 'initial-1',
       role: 'assistant',
-      content: 'Hello! I\'m your AI coding assistant. I can help you write code, debug issues, and answer questions about your project. How can I help you today?'
+      content: 'Hello! I\'m your AI coding assistant. I can help you write code, debug issues, and answer questions about your project. How can I help you today?',
+      timestamp: new Date()
     }
   ]);
   const [input, setInput] = useState('');
@@ -53,7 +62,12 @@ export function AIAgentPanel({ projectId, onFileCreate }: AIAgentPanelProps) {
       setIsStreaming(true);
       
       // Add user message
-      const userMessage: Message = { role: 'user', content: message };
+      const userMessage: Message = { 
+        id: `user-${Date.now()}`,
+        role: 'user', 
+        content: message,
+        timestamp: new Date()
+      };
       setMessages(prev => [...prev, userMessage]);
       
       // Call AI endpoint
@@ -67,8 +81,11 @@ export function AIAgentPanel({ projectId, onFileCreate }: AIAgentPanelProps) {
       
       // Add assistant response
       const assistantMessage: Message = {
+        id: `assistant-${Date.now()}`,
         role: 'assistant',
-        content: data.response || 'Sorry, I couldn\'t process that request.'
+        content: data.response || 'Sorry, I couldn\'t process that request.',
+        timestamp: new Date(),
+        metadata: data.metadata
       };
       
       setMessages(prev => [...prev, assistantMessage]);
@@ -123,14 +140,14 @@ export function AIAgentPanel({ projectId, onFileCreate }: AIAgentPanelProps) {
       {/* Messages */}
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         <div className="space-y-4">
-          {messages.map((message, index) => (
+          {messages.map((message) => (
             <div
-              key={index}
+              key={message.id}
               className={cn(
                 "flex gap-3",
                 message.role === 'user' ? 'justify-end' : 'justify-start'
               )}
-              data-testid={`message-${message.role}`}
+              data-testid={`message-${message.role}-${message.id}`}
             >
               {message.role === 'assistant' && (
                 <Avatar className="h-8 w-8 shrink-0">
