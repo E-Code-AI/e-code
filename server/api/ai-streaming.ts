@@ -63,7 +63,8 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
     projectId, 
     conversationId,
     provider = 'openai',
-    model,
+    model: rawModel,
+    modelId, // Frontend sends modelId, map to model
     context = [],
     temperature = 0.7,
     maxTokens = 4096,
@@ -72,11 +73,27 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
     capabilities = {}
   } = req.body;
   
+  // Map modelId (from frontend) to model, with provider-specific defaults
+  const getDefaultModel = (prov: string): string => {
+    switch (prov) {
+      case 'openai': return 'gpt-4o-mini';
+      case 'anthropic': return 'claude-sonnet-4-20250514';
+      case 'gemini': return 'gemini-2.0-flash';
+      case 'xai': return 'grok-3-fast-latest';
+      default: return 'gpt-4o-mini';
+    }
+  };
+  
+  const model = rawModel || modelId || getDefaultModel(provider);
+  
   const userId = (req as any).user?.id;
   const requestStartTime = Date.now();
   let tokensInput = 0;
   let tokensOutput = 0;
   let agentMode: 'plan' | 'build' | 'edit' = 'build';
+  
+  // Entry logging for debugging
+  logger.info(`[AI Stream] Starting chat stream - provider: ${provider}, model: ${model}, projectId: ${projectId}, userId: ${userId}`);
   
   try {
     // PLAN MODE ENFORCEMENT: Check agent mode from database
@@ -447,13 +464,17 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
   const requestedTools = options.tools !== undefined ? options.tools : allTools;
   const tools = toOpenAITools(requestedTools);
   
+  // Use provided model or fallback to gpt-4o-mini (reliable, cost-effective default)
+  const modelToUse = options.model || 'gpt-4o-mini';
+  logger.info(`[OpenAI Stream] Using model: ${modelToUse}`);
+  
   const stream = await openai.chat.completions.create({
-    model: options.model || 'gpt-4-turbo-preview',
+    model: modelToUse,
     messages,
     temperature: options.temperature,
     max_tokens: options.maxTokens,
     stream: true,
-    stream_options: { include_usage: true }, // ✅ CRITICAL: Include token usage in streaming
+    stream_options: { include_usage: true },
     tools: tools.length > 0 ? tools : undefined
   });
   
