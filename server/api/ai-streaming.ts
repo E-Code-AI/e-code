@@ -89,12 +89,13 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
   
   // Map modelId (from frontend) to model, with provider-specific defaults
   // These MUST match the defaults in each stream function for consistency
+  // ✅ ALIGNED Dec 5, 2025: Defaults MUST match AI_MODELS catalog IDs
   const getDefaultModel = (prov: string): string => {
     switch (prov) {
       case 'openai': return 'gpt-4o-mini';
       case 'anthropic': return 'claude-sonnet-4-5-20250929';
       case 'gemini': return 'gemini-2.0-flash';
-      case 'xai': return 'grok-3-fast-latest';
+      case 'xai': return 'grok-4-fast';  // ✅ FIXED: Use catalog ID (was grok-3-fast-latest)
       case 'moonshot': return 'moonshot-v1-32k';
       default: return 'gpt-4o-mini';
     }
