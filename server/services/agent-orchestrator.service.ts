@@ -214,23 +214,27 @@ export class AgentOrchestratorService extends EventEmitter {
       path.join(process.cwd(), 'projects', projectId) : 
       process.cwd();
 
+    const insertData: Record<string, any> = {
+      userId: Number(userId),
+      sessionToken,
+      model,
+      context: {
+        files: [],
+        workingDirectory,
+        environment: {},
+        capabilities: Object.keys(AGENT_FUNCTIONS),
+        projectId: projectId ? Number(projectId) : undefined
+      },
+      isActive: true,
+      autonomousMode
+    };
+    
+    if (projectId) {
+      insertData.projectId = Number(projectId);
+    }
+
     const [session] = await db.insert(agentSessions)
-      .values({
-        userId: Number(userId),
-        projectId: projectId ? Number(projectId) : undefined,
-        sessionToken,
-        model,
-        context: {
-          files: [],
-          workingDirectory,
-          environment: {},
-          capabilities: Object.keys(AGENT_FUNCTIONS),
-          // ✅ CRITICAL FIX (Dec 1, 2025): Include projectId in context for file operations service
-          projectId: projectId ? Number(projectId) : undefined
-        },
-        isActive: true,
-        autonomousMode
-      })
+      .values(insertData as any)
       .returning();
 
     this.activeSessions.set(session.id, session);
@@ -1524,7 +1528,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       });
       
       // STEP 2: Map all dependencies from task IDs to actual step IDs
-      workflowSteps.forEach(step => {
+      workflowSteps.forEach((step: { id: string; name: string; type: string; config: any; dependencies: string[]; status: string }) => {
         const originalDeps = (step as any)._originalTaskDependencies || [];
         step.dependencies = originalDeps.flatMap((taskId: string) => {
           // Map task dependency to all its step IDs
