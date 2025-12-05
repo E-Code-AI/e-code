@@ -85,6 +85,7 @@ const MobileAdmin = lazy(() => import("@/pages/admin/MobileAdminDashboard"));
 const MobileWorkspace = lazy(() => import("@/pages/MobileWorkspace"));
 const MobileMarketingPage = lazy(() => import("@/pages/mobile"));
 const AI = lazy(() => import("@/pages/AI"));
+const AIModels = lazy(() => import("@/pages/AIModels"));
 const Press = lazy(() => import("@/pages/Press"));
 const Partners = lazy(() => import("@/pages/Partners"));
 const Security = lazy(() => import("@/pages/Security"));
@@ -436,6 +437,7 @@ function AppContent() {
           <Route path="/mobile" component={MobileMarketingPage} />
           <Route path="/mobile-workspace/:projectId" component={MobileWorkspace} />
           <Route path="/ai" component={AI} />
+          <Route path="/ai-models" component={AIModels} />
           <Route path="/ai-documentation" component={AIDocumentation} />
           {/* AI Agent Routes - Real Implementation */}
           <Route path="/agent" component={() => {
