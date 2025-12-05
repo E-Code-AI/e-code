@@ -75,6 +75,15 @@ export const AI_MODELS: AIModel[] = [
     costPer1kTokens: 0.0025
   },
   {
+    id: 'gpt-4o-mini',
+    name: 'GPT-4o Mini',
+    provider: 'openai',
+    description: 'Cost-effective multimodal - fast and affordable for everyday tasks',
+    maxTokens: 128000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.00015
+  },
+  {
     id: 'o3',
     name: 'o3',
     provider: 'openai',
@@ -143,6 +152,15 @@ export const AI_MODELS: AIModel[] = [
     supportsStreaming: true,
     costPer1kTokens: 0.000075
   },
+  {
+    id: 'gemini-2.0-flash',
+    name: 'Gemini 2.0 Flash',
+    provider: 'gemini',
+    description: 'Fast and versatile multimodal with native tool use (Dec 2024)',
+    maxTokens: 1000000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.00005
+  },
   
   // ✅ 40-YEAR ENGINEERING FIX: Moonshot AI - CORRECT Model IDs (November 2025)
   // Source: https://platform.moonshot.ai/docs/introduction
@@ -173,6 +191,24 @@ export const AI_MODELS: AIModel[] = [
     maxTokens: 256000, // 256K context
     supportsStreaming: true,
     costPer1kTokens: 0.0025
+  },
+  {
+    id: 'moonshot-v1-32k',
+    name: 'Moonshot v1-32k',
+    provider: 'moonshot',
+    description: 'Classic Moonshot model with 32K context - cost-effective for standard tasks',
+    maxTokens: 32768,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0012
+  },
+  {
+    id: 'moonshot-v1-128k',
+    name: 'Moonshot v1-128k',
+    provider: 'moonshot',
+    description: 'Extended context Moonshot model - 128K window for long documents',
+    maxTokens: 131072,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0024
   },
   
   // xAI Models - LATEST NOVEMBER 2025
