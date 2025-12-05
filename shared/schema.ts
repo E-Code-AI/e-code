@@ -69,9 +69,9 @@ export const mentorshipStatusEnum = pgEnum('mentorship_status', ['active', 'comp
 export const challengeStatusEnum = pgEnum('challenge_status', ['draft', 'published', 'archived']);
 export const submissionStatusEnum = pgEnum('submission_status', ['pending', 'accepted', 'rejected']);
 export const subscriptionTierEnum = pgEnum('subscription_tier', ['free', 'core', 'teams', 'enterprise']);
-// AI Models - Production enum (26 values: legacy + new)
+// AI Models - Production enum (Dec 2025) - 32 values: 8 legacy + 24 current
 export const aiModelEnum = pgEnum('ai_model', [
-  // Legacy models (kept for backward compatibility)
+  // Legacy models (kept for backward compatibility with existing data)
   'gpt-4',
   'gpt-4-turbo',
   'claude-3-opus',
@@ -81,33 +81,42 @@ export const aiModelEnum = pgEnum('ai_model', [
   'gemini-pro',
   'gemini-ultra',
   
-  // OpenAI (November 2025)
+  // OpenAI (Dec 2025) - 8 models
   'gpt-5.1',
   'gpt-5',
   'gpt-5-mini',
   'gpt-5-nano',
   'gpt-4.1',
   'gpt-4o',
+  'gpt-4o-mini',
   'o3',
   'o4-mini',
   
-  // Anthropic (Sept-Oct 2025)
+  // Anthropic (Dec 2025) - 4 models
+  'claude-opus-4-5-20251124',
   'claude-sonnet-4-5-20250929',
   'claude-opus-4-1-20250805',
   'claude-haiku-4-5-20251015',
   
-  // Google Gemini (Nov 2025)
+  // Google Gemini (Dec 2025) - 3 models
   'gemini-2.5-pro',
   'gemini-2.5-flash',
+  'gemini-2.0-flash',
   
-  // xAI (July-Sept 2025)
+  // xAI (Dec 2025) - 2 models
   'grok-4',
   'grok-4-fast',
   
-  // Moonshot AI (Nov 2025) - ✅ 40-YEAR FIX: Production-recommended IDs
+  // Moonshot AI (Dec 2025) - 5 models
   'kimi-k2-0711-preview',
-  'kimi-k2-0905-preview',
-  'kimi-k2-thinking'
+  'kimi-k2-0904-preview',
+  'kimi-k2-thinking',
+  'moonshot-v1-32k',
+  'moonshot-v1-128k',
+  
+  // Groq (Dec 2025) - 2 models
+  'mixtral-8x7b-32768',
+  'llama3-70b-8192'
 ]);
 export const agentModeEnum = pgEnum('agent_mode', ['plan', 'build', 'edit']);
 export const buildExecutionStatusEnum = pgEnum('build_execution_status', ['pending', 'running', 'completed', 'failed', 'cancelled']);
