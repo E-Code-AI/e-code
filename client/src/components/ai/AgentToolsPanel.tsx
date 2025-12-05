@@ -38,6 +38,8 @@ interface AgentToolsPanelProps {
   onSettingsChange?: (settings: AgentToolsSettings) => void;
   videoReplayCount?: number;
   compact?: boolean;
+  /** The actual model being used in chat (from model selector), overrides effectiveModel display */
+  actualModelName?: string;
 }
 
 const STORAGE_KEY = 'agent-tools-panel-collapsed';
@@ -50,6 +52,7 @@ export function AgentToolsPanel({
   onSettingsChange,
   videoReplayCount: externalVideoReplayCount,
   compact = false,
+  actualModelName,
 }: AgentToolsPanelProps) {
   // Initialize from localStorage, default to open unless compact mode
   const [isOpen, setIsOpen] = useState(() => {
@@ -190,12 +193,12 @@ export function AgentToolsPanel({
           <div className="px-3 pb-3 space-y-3">
             <Separator />
 
-            {/* Current Model Indicator */}
-            {effectiveModelInfo && (
+            {/* Current Model Indicator - Show actual selected model from chat, or fallback to effective model */}
+            {(actualModelName || effectiveModelInfo) && (
               <div className="flex items-center justify-between py-1 px-2 bg-muted/30 rounded-md">
                 <span className="text-[11px] text-muted-foreground">Active model:</span>
                 <Badge variant="outline" className="text-[10px] font-mono">
-                  {effectiveModelInfo.name}
+                  {actualModelName || effectiveModelInfo?.name || 'Default'}
                 </Badge>
               </div>
             )}
