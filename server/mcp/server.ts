@@ -1044,7 +1044,7 @@ export default class MCPServer {
   
   // AI/ML handlers
   private async handleAiComplete(args: any) {
-    const { prompt, model = "claude-3-5-sonnet-20241022", temperature = 0.7, maxTokens = 2048, userId } = args;
+    const { prompt, model = "claude-sonnet-4-5-20250929", temperature = 0.7, maxTokens = 2048, userId } = args;
     
     // Check if this is an open-source model
     const isOpenSourceModel = Object.keys(OPENSOURCE_MODELS).includes(model);

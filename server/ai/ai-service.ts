@@ -60,7 +60,7 @@ export class AIService {
         available: !!anthropic,
         configured: !!anthropicKey,
         keyPresent: !!process.env.ANTHROPIC_API_KEY,
-        models: anthropic ? ['claude-3-sonnet', 'claude-3-opus', 'claude-3-5-sonnet-20241022'] : []
+        models: anthropic ? ['claude-sonnet-4-5-20250929', 'claude-opus-4-1-20250805', 'claude-haiku-4-5-20251015'] : []
       },
       anyAvailable: !!openai || !!anthropic,
       missingKeys: [
@@ -89,7 +89,7 @@ export class AIService {
     }
     
     if (!isOpenAIModel && !isAnthropicModel) {
-      throw new Error(`Unsupported model: ${model}. Available models: gpt-4, gpt-5, claude-3-sonnet, claude-3-5-sonnet-20241022`);
+      throw new Error(`Unsupported model: ${model}. Available models: gpt-4, gpt-5, claude-sonnet-4-5-20250929, claude-opus-4-1-20250805`);
     }
   }
 
@@ -202,7 +202,7 @@ export class AIService {
     }));
 
     const response = await anthropic.messages.create({
-      model: model === 'claude-4' ? 'claude-sonnet-4-20250514' : 'claude-3-5-sonnet-20241022',
+      model: model === 'claude-4' ? 'claude-sonnet-4-5-20250929' : 'claude-sonnet-4-5-20250929',
       system: systemMessage,
       messages: anthropicMessages as any,
       temperature,

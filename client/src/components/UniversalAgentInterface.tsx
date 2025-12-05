@@ -659,8 +659,8 @@ export function UniversalAgentInterface({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="claude-sonnet-4-5">Claude Sonnet 4.5</SelectItem>
-                    <SelectItem value="claude-opus-4-1">Claude Opus 4.1</SelectItem>
+                    <SelectItem value="claude-sonnet-4-5-20250929">Claude Sonnet 4.5</SelectItem>
+                    <SelectItem value="claude-opus-4-1-20250805">Claude Opus 4.1</SelectItem>
                     <SelectItem value="gpt-5.1">GPT-5.1</SelectItem>
                     <SelectItem value="gpt-5">GPT-5</SelectItem>
                     <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>

@@ -71,7 +71,7 @@ export function UnifiedAIInterface({
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<"agent" | "assistant" | "advanced">("agent");
-  const [model, setModel] = useState("claude-sonnet-4-20250514");
+  const [model, setModel] = useState("claude-sonnet-4-5-20250929");
   const [autoRun, setAutoRun] = useState(true);
   const [showEffortPricing, setShowEffortPricing] = useState(false);
   const [totalEffort, setTotalEffort] = useState(0);
@@ -293,12 +293,12 @@ The implementation is complete and ready for use.`;
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="claude-3-5-sonnet-20241022">
-                    Claude 3.5 Sonnet
+                  <SelectItem value="claude-sonnet-4-5-20250929">
+                    Claude Sonnet 4.5
                   </SelectItem>
                   <SelectItem value="gpt-5">GPT-5</SelectItem>
                   <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
-                  <SelectItem value="grok-2-1212">Grok 2</SelectItem>
+                  <SelectItem value="grok-4">Grok 4</SelectItem>
                 </SelectContent>
               </Select>
             )}
