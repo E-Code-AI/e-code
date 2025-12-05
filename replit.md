@@ -41,6 +41,15 @@ The frontend uses Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to iOS
 - **Backend Sync**: GET `/api/agent/conversation/:id/messages` endpoint retrieves conversation history from agentMessages table or aiConversations.messages JSONB.
 - **Tri-directional Sync**: localStorage ↔ Zustand store ↔ Backend database ensures messages survive tab switches, page reloads, and session changes.
 
+#### Autonomous Build Flow (Dec 2025)
+- **Critical SSE Streaming Pattern**: Agent chat MUST use raw `fetch()` for SSE streaming, NOT `apiRequest()`. The `apiRequest()` function calls `res.text()` which consumes the response body and breaks SSE stream reading. Located in `ReplitAgentPanelV3.tsx` (handleSend and auto-start bootstrap functions).
+- **Prompt Persistence Mechanism**: When BUILD button is clicked, the prompt is stored in sessionStorage as `agent-prompt-${projectId}` before navigating to IDE. This ensures the prompt survives:
+  - Auth redirects (Login → back to IDE)
+  - Page navigation (Landing → IDE)
+  - Bootstrap token flow (workspace creation → IDE auto-start)
+- **Flow**: Landing/Home → `sessionStorage.setItem('agent-prompt-${projectId}', prompt)` → Navigate to `/ide/${projectId}?bootstrap=${token}` → IDE reads from sessionStorage → Agent auto-starts with preserved prompt.
+- **Platform Integration**: `ReplitAgentPanelV3` component used across all platforms with `mode` prop: desktop (default), tablet, mobile. All platforms share the same streaming, tools, and RAG functionality.
+
 #### Agentic RAG System (Dec 2025)
 - **RAG API Router** (`server/routes/rag.router.ts`): Endpoints for RAG system management:
   - `GET /api/rag/stats` - Returns RAG statistics (embeddingsCount, nodesCount, edgesCount, isAvailable, providers)
