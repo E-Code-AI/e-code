@@ -70,8 +70,8 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
   'moonshot-v1-32k': 'moonshot-v1-32k',  // ✅ NEW: Current model (identity)
   'moonshot-v1-128k': 'moonshot-v1-128k',  // ✅ NEW: Large context model
   'kimi-k2-0711-preview': 'kimi-k2-0711-preview',  // Identity mapping
-  'kimi-k2-0904-preview': 'kimi-k2-0904-preview',  // ✅ ALIGNED with aiModelEnum
-  'kimi-k2-0905-preview': 'kimi-k2-0904-preview',  // ✅ Legacy alias → valid enum value
+  'kimi-k2-0904-preview': 'kimi-k2-0711-preview',  // ⚠️ REMOVED: Model doesn't exist, alias to 0711
+  'kimi-k2-0905-preview': 'kimi-k2-0711-preview',  // Legacy alias → valid model
   'kimi-k2-thinking': 'kimi-k2-thinking',  // Identity mapping
 };
 
@@ -143,8 +143,8 @@ export function normalizeModelName(modelName: string | any | undefined, provider
     // xAI Grok current models
     'grok-4', 'grok-4-fast',
     
-    // Moonshot AI current models - ✅ ALIGNED with aiModelEnum (Dec 5, 2025)
-    'kimi-k2-0711-preview', 'kimi-k2-0904-preview', 'kimi-k2-thinking',
+    // Moonshot AI current models - ✅ VERIFIED Dec 5, 2025: Only 4 models exist
+    'kimi-k2-0711-preview', 'kimi-k2-thinking',
     'moonshot-v1-32k', 'moonshot-v1-128k'
   ];
   
