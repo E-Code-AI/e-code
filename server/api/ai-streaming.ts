@@ -862,8 +862,8 @@ async function streamXAI(res: any, messages: any[], options: any) {
     baseURL: 'https://api.x.ai/v1'
   });
   
-  // Use provided model or default to grok-3-fast-latest
-  const modelToUse = options.model || 'grok-3-fast-latest';
+  // ✅ FIXED Dec 5, 2025: Use catalog model ID (was grok-3-fast-latest which doesn't exist)
+  const modelToUse = options.model || 'grok-4-fast';
   logger.info(`[xAI Stream] Using model: ${modelToUse}`);
   
   try {
