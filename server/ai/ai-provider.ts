@@ -421,8 +421,8 @@ export class AIProviderManager {
   
   constructor() {
     // Initialize available providers
-    this.providers.set('OpenAI GPT-4', new OpenAIProvider());
-    this.providers.set('Claude 3.5 Sonnet', new AnthropicProvider());
+    this.providers.set('OpenAI GPT-5', new OpenAIProvider());
+    this.providers.set('Claude Sonnet 4.5', new AnthropicProvider());
     
     // E-Code fine-tuned models
     this.providers.set('E-Code Agent', new ECodeModelProvider('E-Code Agent'));
@@ -437,14 +437,14 @@ export class AIProviderManager {
   getAvailableProviders(): { name: string; available: boolean; description: string }[] {
     return [
       {
-        name: 'OpenAI GPT-4',
-        available: this.providers.get('OpenAI GPT-4')!.isAvailable(),
-        description: 'GPT-4 Omni - OpenAI\'s most capable model'
+        name: 'OpenAI GPT-5',
+        available: this.providers.get('OpenAI GPT-5')!.isAvailable(),
+        description: 'GPT-5.1 - OpenAI\'s most capable flagship model with adaptive reasoning'
       },
       {
-        name: 'Claude 3.5 Sonnet',
-        available: this.providers.get('Claude 3.5 Sonnet')!.isAvailable(),
-        description: 'Claude 3.5 Sonnet - Anthropic\'s most advanced AI model with superior coding capabilities'
+        name: 'Claude Sonnet 4.5',
+        available: this.providers.get('Claude Sonnet 4.5')!.isAvailable(),
+        description: 'Claude Sonnet 4.5 - Best coding model in the world'
       },
       {
         name: 'E-Code Agent',
@@ -466,7 +466,7 @@ export class AIProviderManager {
 
   getDefaultProvider(): AIProvider {
     // Try E-Code Agent first, then Claude, then OpenAI
-    const preferredOrder = ['E-Code Agent', 'Claude 3.5 Sonnet', 'OpenAI GPT-4'];
+    const preferredOrder = ['E-Code Agent', 'Claude Sonnet 4.5', 'OpenAI GPT-5'];
     
     for (const providerName of preferredOrder) {
       const provider = this.providers.get(providerName);
