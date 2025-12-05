@@ -122,7 +122,7 @@ export class AiOptimizationWorker {
         const session = await orchestrator.createSession(
           request.userId!,
           request.projectId,
-          provider || 'gpt-3.5-turbo'
+          provider || 'gpt-5-mini'
         );
 
         try {

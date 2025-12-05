@@ -62,11 +62,15 @@ Replit Auth provides the easiest authentication with support for:
 - Account verification
 
 ### 4. AI/LLM Integrations ✅
-**Status:** Both OpenAI and Anthropic configured
+**Status:** 6 providers configured (23 models total)
 
 **Available models:**
-- OpenAI: GPT-4, GPT-4 Turbo, GPT-3.5
-- Anthropic: Claude 3 Opus, Sonnet, Haiku
+- OpenAI (8): GPT-5.1, GPT-5.1-thinking, GPT-5, GPT-5-mini, GPT-5-nano, GPT-4o, o3, o4-mini
+- Anthropic (3): Claude Opus 4.5, Claude Sonnet 4.5, Claude Haiku 4.5
+- Google Gemini (3): Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini 2.0 Flash
+- xAI (2): Grok 4, Grok 4 Fast
+- Moonshot AI (5): Kimi K2-0711, Kimi K2-0904, Kimi K2 Thinking, Moonshot v1-32k, v1-128k
+- Groq (2): Mixtral 8x7B, LLaMA 3 70B (pending API key)
 
 ## 🚀 Production Deployment Checklist
 

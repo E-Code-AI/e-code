@@ -82,7 +82,7 @@ async function runTests() {
   })();
 
   await test('Get AI model details', async () => {
-    const response = await client.get('/api/ai/models/claude-3-sonnet', {
+    const response = await client.get('/api/ai/models/claude-sonnet-4-5-20250929', {
       headers: { Cookie: authCookie }
     });
 
@@ -93,7 +93,7 @@ async function runTests() {
 
   await test('Set default AI model', async () => {
     const response = await client.post('/api/ai/models/default', {
-      modelId: 'claude-3-sonnet'
+      modelId: 'claude-sonnet-4-5-20250929'
     }, {
       headers: { Cookie: authCookie }
     });
@@ -109,7 +109,7 @@ async function runTests() {
   await test('Generate AI completion', async () => {
     const response = await client.post('/api/ai/completions', {
       prompt: 'Write a hello world function in JavaScript',
-      model: 'claude-3-sonnet'
+      model: 'claude-sonnet-4-5-20250929'
     }, {
       headers: { Cookie: authCookie },
       timeout: 30000
@@ -123,7 +123,7 @@ async function runTests() {
   await test('Generate streaming completion', async () => {
     const response = await client.post('/api/ai/completions/stream', {
       prompt: 'Explain async/await',
-      model: 'claude-3-sonnet'
+      model: 'claude-sonnet-4-5-20250929'
     }, {
       headers: { Cookie: authCookie },
       responseType: 'stream'
@@ -138,7 +138,7 @@ async function runTests() {
     const response = await client.post('/api/ai/completions', {
       prompt: 'Fix this code',
       context: 'const x = 1\nconst y = 2\nconst z = x + y',
-      model: 'claude-3-sonnet'
+      model: 'claude-sonnet-4-5-20250929'
     }, {
       headers: { Cookie: authCookie }
     });

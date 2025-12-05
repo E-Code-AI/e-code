@@ -594,7 +594,7 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
     content: fullContent,
     tool_calls: toolCalls,
     tool_results: toolResults,
-    model: options.model || 'gpt-4-turbo-preview'
+    model: options.model || 'gpt-5'
   });
   
   // ✅ Return token usage for billing
@@ -1001,18 +1001,18 @@ router.post('/api/agent/chat/stop', ensureAuthenticated, (req, res) => {
  */
 router.get('/api/agent/models', ensureAuthenticated, (req, res) => {
   const models = [
-    // OpenAI Models
-    { provider: 'openai', model: 'gpt-4o', name: 'GPT-4o', context: 128000, available: !!process.env.OPENAI_API_KEY },
-    { provider: 'openai', model: 'gpt-4o-mini', name: 'GPT-4o Mini', context: 128000, available: !!process.env.OPENAI_API_KEY },
-    { provider: 'openai', model: 'gpt-4-turbo', name: 'GPT-4 Turbo', context: 128000, available: !!process.env.OPENAI_API_KEY },
+    // OpenAI Models (December 2025)
+    { provider: 'openai', model: 'gpt-5.1', name: 'GPT-5.1', context: 400000, available: !!process.env.OPENAI_API_KEY },
+    { provider: 'openai', model: 'gpt-5', name: 'GPT-5', context: 400000, available: !!process.env.OPENAI_API_KEY },
+    { provider: 'openai', model: 'gpt-5-mini', name: 'GPT-5 Mini', context: 400000, available: !!process.env.OPENAI_API_KEY },
+    { provider: 'openai', model: 'gpt-5-nano', name: 'GPT-5 Nano', context: 400000, available: !!process.env.OPENAI_API_KEY },
     { provider: 'openai', model: 'o3', name: 'o3 (Reasoning)', context: 128000, available: !!process.env.OPENAI_API_KEY },
     { provider: 'openai', model: 'o4-mini', name: 'o4 Mini', context: 128000, available: !!process.env.OPENAI_API_KEY },
     
-    // Anthropic Models  
-    { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
+    // Anthropic Models (Claude 4.5 Family)
     { provider: 'anthropic', model: 'claude-opus-4-5-20251124', name: 'Claude Opus 4.5', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
+    { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
     { provider: 'anthropic', model: 'claude-haiku-4-5-20251015', name: 'Claude Haiku 4.5', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
-    { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
     
     // Google Gemini Models
     { provider: 'gemini', model: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', context: 1000000, available: !!process.env.GEMINI_API_KEY },

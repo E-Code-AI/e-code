@@ -471,7 +471,7 @@ export class AIProviderManager {
    * Stream chat completion with the selected model
    * Routes to appropriate provider based on model ID
    * 
-   * @param modelId The model ID to use (e.g., "gpt-4o", "claude-3-5-sonnet-20241022")
+   * @param modelId The model ID to use (e.g., "gpt-5", "claude-sonnet-4-5-20250929")
    * @param messages Array of chat messages with role and content
    * @param options Additional options like system prompt, max_tokens, temperature
    */

@@ -754,7 +754,7 @@ Remember:
           technologies: plan.technologies
         },
         totalTokensUsed: 0,
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-haiku-4-5-20251015',
         agentMode: 'build'
       });
 
@@ -765,7 +765,7 @@ Remember:
         userId,     // Keep as string
         role: 'assistant',
         content: JSON.stringify(plan, null, 2),
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-haiku-4-5-20251015',
         metadata: {
           planId: plan.id,
           totalTasks: plan.totalTasks,
