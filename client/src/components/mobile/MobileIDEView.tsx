@@ -25,6 +25,7 @@ import {
 import { useTabPersistence, useFileBrowserPersistence } from '@/hooks/use-mobile-persistence';
 import { ReplitAgentPanelV3 } from '../ai/ReplitAgentPanelV3';
 import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
+import { useAgentTools } from '@/hooks/useAgentTools';
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 import { ReplitPublishButton } from '@/components/ide/ReplitPublishButton';
 import { useConnectionStatus } from '@/hooks/use-connection-status';
@@ -322,6 +323,9 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
   const normalizedProjectId = normalizeProjectId(projectId);
   const prefersReducedMotion = useReducedMotion();
   
+  const numericProjectId = typeof projectId === 'number' ? projectId : parseInt(String(projectId), 10) || 1;
+  const { settings: agentSettings, updateSettings: updateAgentSettings } = useAgentTools(numericProjectId);
+  
   const [activeTab, setActiveTab] = useTabPersistence(normalizedProjectId);
   const { selectedFileId, setSelectedFileId } = useFileBrowserPersistence(normalizedProjectId);
   
@@ -521,6 +525,8 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
                   <ReplitAgentPanelV3 
                     projectId={String(projectId)}
                     mode="mobile"
+                    agentToolsSettings={agentSettings}
+                    onAgentToolsSettingsChange={updateAgentSettings}
                   />
                 </Suspense>
               )}
