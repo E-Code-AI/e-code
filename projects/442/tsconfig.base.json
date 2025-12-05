@@ -1,0 +1,4 @@
+{
+  "description": "Base TypeScript configuration shared by client and server, including strict type checking, module resolution, and common compiler options. Child tsconfig files will extend this base.",
+  "todo": "Configure based on outline"
+}

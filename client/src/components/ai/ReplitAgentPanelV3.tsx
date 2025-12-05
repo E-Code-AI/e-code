@@ -1443,7 +1443,7 @@ export function ReplitAgentPanelV3({
                 {message.actions && message.actions.length > 0 && (
                   <div className="w-full mt-2" data-testid={`actions-${message.id}`}>
                     <ActionMessage 
-                      actions={message.actions}
+                      actions={message.actions as Action[]}
                       onApprove={(action) => handleApproveAction(action)}
                       onReject={(action) => handleRejectAction(action)}
                     />
