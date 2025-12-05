@@ -24,16 +24,20 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
   'o3': 'o3',  // Identity mapping
   'o4-mini': 'o4-mini',  // Identity mapping
   
-  // Anthropic aliases & version dates (COMPLETE COVERAGE)
+  // Anthropic aliases & version dates (COMPLETE COVERAGE - Dec 2025)
+  // ✅ UPDATED Dec 5, 2025: Added Claude Opus 4.5 (released Nov 24, 2025)
   'claude-3-5-sonnet-20241022': 'claude-sonnet-4-5-20250929',
   'claude-3-5-sonnet': 'claude-sonnet-4-5-20250929',
-  'claude-3-opus-20240229': 'claude-opus-4-1-20250805',
+  'claude-3-opus-20240229': 'claude-opus-4-5-20251124',  // Upgrade to latest Opus
   'claude-3-haiku-20240307': 'claude-haiku-4-5-20251015',
-  'claude-3-opus': 'claude-opus-4-1-20250805',
+  'claude-3-opus': 'claude-opus-4-5-20251124',  // Upgrade to latest Opus
   'claude-3-haiku': 'claude-haiku-4-5-20251015',
   'claude-sonnet': 'claude-sonnet-4-5-20250929',
-  'claude-opus': 'claude-opus-4-1-20250805',
+  'claude-opus': 'claude-opus-4-5-20251124',  // ✅ NEW: Points to latest Opus 4.5
   'claude-haiku': 'claude-haiku-4-5-20251015',
+  'claude-opus-4-5': 'claude-opus-4-5-20251124',  // ✅ NEW: Short alias
+  'claude-opus-4.5': 'claude-opus-4-5-20251124',  // ✅ NEW: Dot notation alias
+  'claude-opus-4-5-20251124': 'claude-opus-4-5-20251124',  // ✅ NEW: Identity mapping
   'claude-sonnet-4-5-20250929': 'claude-sonnet-4-5-20250929',  // Identity mapping
   'claude-opus-4-1-20250805': 'claude-opus-4-1-20250805',  // Identity mapping
   'claude-haiku-4-5-20251015': 'claude-haiku-4-5-20251015',  // Identity mapping
@@ -129,8 +133,8 @@ export function normalizeModelName(modelName: string | any | undefined, provider
     // OpenAI current models
     'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4o', 'gpt-4o-mini', 'o3', 'o4-mini',
     
-    // Anthropic current models
-    'claude-sonnet-4-5-20250929', 'claude-opus-4-1-20250805', 'claude-haiku-4-5-20251015',
+    // Anthropic current models (Dec 2025)
+    'claude-opus-4-5-20251124', 'claude-sonnet-4-5-20250929', 'claude-opus-4-1-20250805', 'claude-haiku-4-5-20251015',
     
     // Gemini current models
     'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash',
