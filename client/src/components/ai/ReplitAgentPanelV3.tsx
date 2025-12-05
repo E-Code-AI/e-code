@@ -1611,39 +1611,8 @@ export function ReplitAgentPanelV3({
             />
           )}
           
-          {/* RAG Controls - Knowledge Retrieval Augmentation */}
-          {ragStats?.isAvailable && (
-            <div className="flex items-center justify-between gap-3 py-2 px-1 border-t border-border/40" data-testid="rag-controls-section">
-              <RAGToggle 
-                sessionId={conversationId ? String(conversationId) : undefined}
-                enabled={ragEnabled}
-                onToggle={setRagEnabled}
-                compact
-              />
-              {ragEnabled && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowRAGContext(!showRAGContext)}
-                  className="h-7 text-xs gap-1.5"
-                  data-testid="button-toggle-rag-context"
-                >
-                  <Database className="h-3.5 w-3.5" />
-                  Context
-                </Button>
-              )}
-            </div>
-          )}
-          
-          {/* Retrieved Context Panel - Collapsible */}
-          {ragEnabled && showRAGContext && conversationId && (
-            <div className="border-t border-border/40 pt-2" data-testid="rag-context-section">
-              <RetrievedContextPanel 
-                sessionId={String(conversationId)} 
-                maxHeight={mode === 'mobile' ? '150px' : '200px'}
-              />
-            </div>
-          )}
+          {/* RAG Context - Automatic (Replit-style: no visible toggle, always enabled) */}
+          {/* Knowledge retrieval happens automatically behind the scenes like Replit's Agent */}
           
           {/* Agent Tools Panel - Replit Agent 3 toggles: Max Autonomy, App Testing, Extended Thinking, High Power Models, Web Search */}
           <AgentToolsPanel
