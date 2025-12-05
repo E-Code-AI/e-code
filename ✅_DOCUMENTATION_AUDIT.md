@@ -88,7 +88,7 @@ client/src/
 | Provider | Models | Status |
 |----------|--------|--------|
 | **OpenAI** | GPT-5.1, GPT-5, GPT-5-mini, GPT-4o, o3, o4-mini | ✅ |
-| **Anthropic** | Claude Sonnet 4.5, Claude Opus 4.1, Claude Haiku 4.5 | ✅ |
+| **Anthropic** | Claude Opus 4.5, Claude Sonnet 4.5, Claude Haiku 4.5 | ✅ |
 | **Google Gemini** | Gemini 2.5 Flash, Gemini 2.5 Pro | ✅ |
 | **Moonshot AI** | Kimi K2, Kimi K2 Thinking | ✅ |
 | **xAI** | Grok 4, Grok 4 Fast | ✅ |
