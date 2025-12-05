@@ -685,10 +685,10 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</SelectItem>
+                  <SelectItem value="claude-sonnet-4-5-20250929">Claude Sonnet 4.5</SelectItem>
                   <SelectItem value="gpt-5">GPT-5</SelectItem>
-                  <SelectItem value="gemini-2.5">Gemini 2.5 Pro</SelectItem>
-                  <SelectItem value="grok-2">Grok 2</SelectItem>
+                  <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                  <SelectItem value="grok-4">Grok 4</SelectItem>
                 </SelectContent>
               </Select>
             </div>

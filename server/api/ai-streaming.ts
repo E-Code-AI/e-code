@@ -759,7 +759,7 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
     content: fullContent,
     tool_calls: toolCalls,
     tool_results: toolResults,
-    model: options.model || 'claude-3-5-sonnet-20241022',
+    model: options.model || 'claude-sonnet-4-5-20250929',
     thinking: thinkingContent
   });
   
