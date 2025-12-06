@@ -25,6 +25,7 @@ import { monitoringMiddleware } from './services/monitoring.service';
 import { sanitizeInput } from './middleware/input-validation';
 import { loggingMiddleware, securityLoggingMiddleware, performanceLoggingMiddleware } from './logging/logging-middleware';
 import { createCentralizedLogger } from './logging/centralized-logger';
+import { centralUpgradeDispatcher } from './websocket/central-upgrade-dispatcher';
 
 const serverLogger = createCentralizedLogger('server');
 const app = express();
@@ -68,39 +69,26 @@ app.use(dynamicRateLimiter);
 // PORT is set by Docker (3000) or Cloud Run, fallback to 5000 for local development
 const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
 
-// ✅ CRITICAL FIX (Dec 1, 2025): Wrap createServer to bypass Express for WebSocket upgrades
-// PROBLEM: Even with upgrade guards, Express middleware (especially Vite's catch-all) still
-// processes WebSocket upgrade requests and writes HTML responses to the socket, causing
-// "Invalid frame header" errors and 1006 disconnections.
-// SOLUTION: Short-circuit WebSocket upgrade requests at the HTTP server level BEFORE
-// Express ever sees them. This completely prevents Express from corrupting WebSocket sockets.
-const httpServer = createServer((req, res) => {
-  // Check if this is a WebSocket upgrade request to managed endpoints
-  const isWsUpgrade = req.headers.upgrade?.toLowerCase() === 'websocket';
-  const isAgentPath = req.url?.startsWith('/ws/agent');
-  const isCollaborationPath = req.url?.startsWith('/ws/collaboration');
-  const isSocketIOPath = req.url?.startsWith('/socket.io');
-  
-  if (isWsUpgrade && (isAgentPath || isCollaborationPath || isSocketIOPath)) {
-    // DO NOT pass to Express - the 'upgrade' event handler will process this
-    // Return without calling app() to prevent any Express middleware from running
-    console.log('[HTTP Server] Bypassing Express for WebSocket upgrade:', req.url);
-    return;
-  }
-  
-  // All other requests go through Express normally
-  app(req, res);
-});
+// ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Standard HTTP server
+// The Central Upgrade Dispatcher handles ALL WebSocket upgrades through a single handler,
+// eliminating race conditions that caused "Invalid frame header" errors.
+// No need for request-level bypassing - the dispatcher marks sockets immediately.
+const httpServer = createServer(app);
 
 // Increase max listeners to prevent warnings (we have multiple WebSocket services + Vite HMR)
 // Agent WS, Terminal WS, LSP WS, Collaboration WS, WebRTC, Vite HMR, etc.
 httpServer.setMaxListeners(20);
 
-// 🔍 DEBUG: Log ALL WebSocket upgrade requests early to trace what's happening
-httpServer.prependListener('upgrade', (request, socket, head) => {
+// ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Initialize Central Upgrade Dispatcher FIRST
+// This MUST be done before any other WebSocket services are initialized
+// The dispatcher intercepts ALL upgrade events and routes them to the correct handler
+centralUpgradeDispatcher.initialize(httpServer);
+console.log('[Central Dispatcher] ✅ Initialized as authoritative WebSocket upgrade handler');
+
+// 🔍 DEBUG: Log ALL WebSocket upgrade requests (after dispatcher)
+httpServer.on('upgrade', (request, socket, head) => {
   const url = new URL(request.url!, `http://${request.headers.host || 'localhost'}`);
-  console.log(`[HTTP Server] Upgrade request received: ${url.pathname} from ${request.headers.origin || 'unknown'}`);
-  console.log(`[HTTP Server] Headers: upgrade=${request.headers.upgrade}, connection=${request.headers.connection}`);
+  console.log(`[HTTP Server] Upgrade request: ${url.pathname} from ${request.headers.origin || 'unknown'}`);
 });
 
 // Health check endpoint for deployment health checks
