@@ -1,7 +1,15 @@
+/**
+ * Realtime Collaboration Server
+ * ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Migrated to Central Upgrade Dispatcher
+ */
+
 import { WebSocketServer, WebSocket } from 'ws';
 import * as Y from 'yjs';
 import { storage } from '../storage';
-import { Server } from 'http';
+import { Server, IncomingMessage } from 'http';
+import type { Duplex } from 'stream';
+import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
+import { markSocketAsHandled } from '../websocket/upgrade-guard';
 
 interface CollaborationClient {
   ws: WebSocket;
@@ -37,14 +45,18 @@ export class CollaborationServer {
   private yjsDocs: Map<string, Y.Doc> = new Map();
 
   initialize(server: Server) {
-    this.wss = new WebSocketServer({ 
-      server,
-      path: '/ws/collaboration'
-    });
+    // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
+    // Use noServer mode and register with central dispatcher to eliminate race conditions
+    this.wss = new WebSocketServer({ noServer: true });
 
-    this.wss.on('connection', (ws: WebSocket, req: any) => {
-      this.handleConnection(ws, req);
-    });
+    // Register /ws/collaboration handler with central dispatcher (priority 63)
+    // Note: Socket.IO also uses /ws/collaboration in unified-collaboration-service.ts
+    // This registration provides backup WebSocket support for direct ws connections
+    centralUpgradeDispatcher.register(
+      '/ws/collaboration',
+      this.handleUpgrade.bind(this),
+      { pathMatch: 'prefix', priority: 63 }
+    );
 
     // Ping clients every 30 seconds to keep connections alive
     setInterval(() => {
@@ -54,6 +66,26 @@ export class CollaborationServer {
         }
       });
     }, 30000);
+    
+    console.log('[Realtime CollaborationServer] Initialized (using central dispatcher)');
+  }
+  
+  /**
+   * Handle /ws/collaboration WebSocket upgrade via central dispatcher
+   */
+  private handleUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): void {
+    if (!this.wss) {
+      socket.write('HTTP/1.1 503 Service Unavailable\r\n\r\n');
+      socket.destroy();
+      return;
+    }
+    
+    // Mark socket as handled before upgrade
+    markSocketAsHandled(request, socket);
+    
+    this.wss.handleUpgrade(request, socket, head, (ws) => {
+      this.handleConnection(ws, request);
+    });
   }
 
   private handleConnection(ws: WebSocket, req: any) {

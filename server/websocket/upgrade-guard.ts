@@ -121,12 +121,12 @@ export function wrapWebSocketServer(wss: any): any {
 // Paths that use { server, path } mode in WebSocketServer or Socket.IO
 // These paths are handled internally by ws library or Socket.IO and don't use manual socket marking
 // The upgrade guard must skip these to avoid destroying valid connections
-// NOTE: /ws/agent now uses noServer + prependListener + markSocketAsHandled, so it's removed from this list
+// NOTE: /ws/agent now uses noServer + central dispatcher + markSocketAsHandled, so it's removed from this list
+// NOTE: /ws/background-tests now uses noServer + central dispatcher + markSocketAsHandled (Dec 6, 2025)
+// NOTE: /api/runtime/logs/ws now uses noServer + central dispatcher + markSocketAsHandled
+// NOTE: All collaboration WebSocket paths now use noServer + central dispatcher (Dec 6, 2025):
+//       - /ws/yjs, /collaborate, /yjs, /collaboration, /ws/collaboration
 const WS_MANAGED_PATHS = new Set([
-  '/ws/background-tests',   // Background testing WebSocket
-  // NOTE: /api/runtime/logs/ws now uses noServer + central dispatcher + markSocketAsHandled
-  '/ws/collaboration',      // Real-time collaboration (Socket.IO)
-  '/ws/collaboration/',     // Socket.IO with trailing slash
   '/socket.io',             // Socket.IO default path
   '/socket.io/',            // Socket.IO with trailing slash
 ]);
