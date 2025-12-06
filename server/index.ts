@@ -85,11 +85,36 @@ httpServer.setMaxListeners(20);
 centralUpgradeDispatcher.initialize(httpServer);
 console.log('[Central Dispatcher] ✅ Initialized as authoritative WebSocket upgrade handler');
 
-// 🔍 DEBUG: Log ALL WebSocket upgrade requests (after dispatcher)
-httpServer.on('upgrade', (request, socket, head) => {
-  const url = new URL(request.url!, `http://${request.headers.host || 'localhost'}`);
-  console.log(`[HTTP Server] Upgrade request: ${url.pathname} from ${request.headers.origin || 'unknown'}`);
-});
+// ✅ FIX (Dec 6, 2025): Block additional upgrade listeners after dispatcher init
+// This prevents Vite, Express, Socket.IO, and other libraries from adding competing listeners
+// Only the central dispatcher should handle upgrades - it routes to registered handlers
+const originalHttpServerOn = httpServer.on.bind(httpServer);
+const originalHttpServerAddListener = httpServer.addListener.bind(httpServer);
+const originalHttpServerPrependListener = httpServer.prependListener.bind(httpServer);
+
+// Block 'upgrade' event registration (except for our final guard which we'll add later)
+const blockUpgradeListener = (method: typeof httpServer.on) => {
+  return function(event: string, listener: (...args: any[]) => void) {
+    if (event === 'upgrade') {
+      console.log('[HTTP Server] ⚠️ Blocked additional upgrade listener (use centralUpgradeDispatcher.register instead)');
+      return httpServer; // No-op for upgrade events
+    }
+    return method(event, listener);
+  } as typeof httpServer.on;
+};
+
+httpServer.on = blockUpgradeListener(originalHttpServerOn);
+httpServer.addListener = blockUpgradeListener(originalHttpServerAddListener);
+httpServer.prependListener = blockUpgradeListener(originalHttpServerPrependListener);
+
+console.log('[HTTP Server] ✅ Upgrade listener blocking enabled - only dispatcher handles upgrades');
+
+// Export restore function for use when adding the final guard
+(global as any).__restoreUpgradeListenerMethods = () => {
+  httpServer.on = originalHttpServerOn;
+  httpServer.addListener = originalHttpServerAddListener;
+  httpServer.prependListener = originalHttpServerPrependListener;
+};
 
 // Health check endpoint for deployment health checks
 // Note: Root '/' is handled by Vite middleware (dev) or serveStatic (prod) to serve the React app
@@ -570,7 +595,7 @@ app.get('/api/cors-health', async (_req, res) => {
   // NOW start listening - ONLY after all middleware and routes are registered
   // This prevents the race condition where requests arrive before Vite middleware is ready
   
-  // 🔍 DEBUG: Log upgrade listeners BEFORE listen
+  // 🔍 DEBUG: Log upgrade listeners BEFORE listen (should be 1 = dispatcher only due to blocking)
   console.log('[DEBUG] Before listen - upgrade listeners:', httpServer.listenerCount('upgrade'));
   console.log('[DEBUG] Upgrade listener functions:', httpServer.listeners('upgrade').map((l: any) => l.name || 'anonymous'));
   
@@ -579,12 +604,33 @@ app.get('/api/cors-health', async (_req, res) => {
     console.log('[DEBUG] After listen - upgrade listeners:', httpServer.listenerCount('upgrade'));
     console.log('[DEBUG] Upgrade listener functions:', httpServer.listeners('upgrade').map((l: any) => l.name || 'anonymous'));
     
+    // ✅ Restore original methods to allow adding the final guard
+    if ((global as any).__restoreUpgradeListenerMethods) {
+      (global as any).__restoreUpgradeListenerMethods();
+      console.log('[HTTP Server] Restored original methods to add final guard');
+    }
+    
     // ✅ Re-enable final guard (Nov 20, 2025)  
     // Root cause was Vite HMR, not the guard - guard correctly preserved /ws/agent sockets
     // Now that Vite HMR is on separate port 24678, guard can safely destroy orphan sockets
     httpServer.on('upgrade', installFinalUpgradeGuard);
     
+    // ✅ Re-block upgrade listeners after adding guard (prevents late additions)
+    const blockUpgradeListener = (method: typeof httpServer.on) => {
+      return function(event: string, listener: (...args: any[]) => void) {
+        if (event === 'upgrade') {
+          console.log('[HTTP Server] ⚠️ Blocked late upgrade listener');
+          return httpServer;
+        }
+        return method(event, listener);
+      } as typeof httpServer.on;
+    };
+    httpServer.on = blockUpgradeListener(httpServer.on.bind(httpServer));
+    httpServer.addListener = blockUpgradeListener(httpServer.addListener.bind(httpServer)) as typeof httpServer.addListener;
+    httpServer.prependListener = blockUpgradeListener(httpServer.prependListener.bind(httpServer)) as typeof httpServer.prependListener;
+    
     console.log('[DEBUG] After guard - upgrade listeners:', httpServer.listenerCount('upgrade'));
     console.log('[Upgrade Guard] Final catch-all guard registered for orphan socket cleanup');
+    console.log('[HTTP Server] ✅ Upgrade listeners locked: only dispatcher + guard active');
   });
 })();

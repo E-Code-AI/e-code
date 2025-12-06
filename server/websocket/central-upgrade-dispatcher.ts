@@ -102,12 +102,16 @@ class CentralUpgradeDispatcher {
     const handler = this.findHandler(pathname);
     
     if (handler) {
-      // Mark socket as handled IMMEDIATELY to prevent any other listener from interfering
+      // AUTHORITATIVE MARKING POINT (Dec 6, 2025):
+      // Mark socket as handled BEFORE delegating to any handler.
+      // This ensures EVERY WebSocket upgrade routed through the dispatcher is marked,
+      // even if downstream handlers forget to call markSocketAsHandled().
+      // This prevents race conditions with other upgrade listeners.
       markSocketAsHandled(request, socket);
       
       logger.info(`[Central Dispatcher] Routing ${pathname} to registered handler`);
       
-      // Delegate to the registered handler
+      // Delegate to the registered handler (socket is already marked above)
       try {
         handler.handler(request, socket, head);
       } catch (error) {
