@@ -8,7 +8,7 @@ export default defineConfig({
     testTimeout: 30000,
     hookTimeout: 30000,
     teardownTimeout: 10000,
-    include: ['tests/**/*.spec.ts'],
+    include: ['tests/**/*.spec.ts', 'tests/**/*.test.ts'],
     exclude: ['node_modules', 'dist', 'tests/backend/*.test.ts'],
     // Set NODE_ENV=test for rate limiter and other test-aware code
     env: {
