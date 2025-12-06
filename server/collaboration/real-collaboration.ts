@@ -1,10 +1,13 @@
 /**
  * Real-time Collaboration Service
  * Provides WebRTC/CRDT-based collaborative editing
+ * 
+ * ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Migrated to Central Upgrade Dispatcher
  */
 
 import { WebSocketServer, WebSocket } from 'ws';
-import { Server } from 'http';
+import { Server, IncomingMessage } from 'http';
+import type { Duplex } from 'stream';
 import * as Y from 'yjs';
 import * as syncProtocol from 'y-protocols/sync';
 import * as awarenessProtocol from 'y-protocols/awareness';
@@ -13,6 +16,8 @@ import * as decoding from 'lib0/decoding';
 import SimplePeer from 'simple-peer';
 import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
+import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
+import { markSocketAsHandled } from '../websocket/upgrade-guard';
 
 const logger = createLogger('real-collaboration');
 
@@ -192,34 +197,62 @@ interface CursorUpdate {
 
 export class RealCollaborationService {
   private wss!: WebSocketServer;
+  private yjsWss!: WebSocketServer;
   private sessions: Map<string, CollaborationSession> = new Map();
   private userSessions: Map<number, Set<string>> = new Map();
 
   constructor() {}
 
   setupWebSocket(server: Server) {
+    // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
+    // Use noServer mode and register with central dispatcher to eliminate race conditions
+    
     // Main collaboration WebSocket
-    this.wss = new WebSocketServer({ 
-      server, 
-      path: '/collaborate',
-      perMessageDeflate: false
-    });
-
-    this.wss.on('connection', this.handleConnection.bind(this));
+    this.wss = new WebSocketServer({ noServer: true });
 
     // Yjs WebSocket for CRDT sync
-    const yjsWss = new WebSocketServer({
-      server,
-      path: '/yjs',
-      perMessageDeflate: false
-    });
+    this.yjsWss = new WebSocketServer({ noServer: true });
 
-    yjsWss.on('connection', (ws, req) => {
+    // Register /collaborate handler with central dispatcher (priority 60 = collaboration tier)
+    centralUpgradeDispatcher.register(
+      '/collaborate',
+      this.handleCollaborateUpgrade.bind(this),
+      { pathMatch: 'prefix', priority: 60 }
+    );
+    
+    // Register /yjs handler with central dispatcher (priority 61 = slightly lower)
+    centralUpgradeDispatcher.register(
+      '/yjs',
+      this.handleYjsUpgrade.bind(this),
+      { pathMatch: 'prefix', priority: 61 }
+    );
+
+    logger.info('Real collaboration WebSocket servers initialized (using central dispatcher)');
+  }
+  
+  /**
+   * Handle /collaborate WebSocket upgrade via central dispatcher
+   */
+  private handleCollaborateUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): void {
+    // Mark socket as handled before upgrade
+    markSocketAsHandled(request, socket);
+    
+    this.wss.handleUpgrade(request, socket, head, (ws) => {
+      this.handleConnection(ws, request);
+    });
+  }
+  
+  /**
+   * Handle /yjs WebSocket upgrade via central dispatcher
+   */
+  private handleYjsUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): void {
+    // Mark socket as handled before upgrade
+    markSocketAsHandled(request, socket);
+    
+    this.yjsWss.handleUpgrade(request, socket, head, (ws) => {
       // Setup Yjs connection for CRDT synchronization
-      setupWSConnection(ws, req);
+      setupWSConnection(ws, request);
     });
-
-    logger.info('Real collaboration WebSocket servers initialized');
   }
 
   private async handleConnection(ws: WebSocket, request: any) {

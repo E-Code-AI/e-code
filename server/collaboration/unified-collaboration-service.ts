@@ -7,7 +7,8 @@
  */
 
 import { Server as SocketServer, Socket } from 'socket.io';
-import { Server as HttpServer } from 'http';
+import { Server as HttpServer, IncomingMessage } from 'http';
+import type { Duplex } from 'stream';
 import * as Y from 'yjs';
 import { Awareness } from 'y-protocols/awareness';
 import * as encoding from 'lib0/encoding';
@@ -20,6 +21,8 @@ import { db } from '../db';
 import { collaborationSessions, sessionParticipants, projects, users } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
+import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
+import { markSocketAsHandled } from '../websocket/upgrade-guard';
 
 interface CollaboratorInfo {
   id: string;
@@ -96,10 +99,16 @@ export class UnifiedCollaborationService {
       allowEIO3: true
     });
     
-    this.yjsWss = new WebSocketServer({ 
-      server,
-      path: '/ws/yjs'
-    });
+    // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
+    // Use noServer mode and register with central dispatcher to eliminate race conditions
+    this.yjsWss = new WebSocketServer({ noServer: true });
+    
+    // Register Yjs WebSocket handler with central dispatcher (priority 60 = collaboration tier)
+    centralUpgradeDispatcher.register(
+      '/ws/yjs',
+      this.handleYjsUpgrade.bind(this),
+      { pathMatch: 'prefix', priority: 60 }
+    );
     
     this.io.engine.on('connection_error', (err) => {
       console.log('[Collaboration] Engine connection error:', err.message, err.context);
@@ -113,7 +122,7 @@ export class UnifiedCollaborationService {
     this.setupYjsWebSocket();
     this.startCleanupInterval();
     
-    console.log('[Collaboration] Unified collaboration service initialized');
+    console.log('[Collaboration] Unified collaboration service initialized (using central dispatcher for Yjs)');
   }
   
   private getColorForUser(odUserId: string): string {
@@ -321,17 +330,25 @@ export class UnifiedCollaborationService {
     });
   }
   
-  private setupYjsWebSocket() {
-    this.yjsWss.on('connection', async (ws: WebSocket, request: any) => {
-      const url = new URL(request.url, `http://${request.headers.host}`);
-      const projectId = url.searchParams.get('projectId');
-      const userId = url.searchParams.get('userId');
-      
-      if (!projectId || !userId) {
-        ws.close(1008, 'Missing projectId or userId');
-        return;
-      }
-      
+  /**
+   * Handle Yjs WebSocket upgrade via central dispatcher
+   * ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025)
+   */
+  private handleYjsUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): void {
+    const url = new URL(request.url || '/', `http://${request.headers.host}`);
+    const projectId = url.searchParams.get('projectId');
+    const userId = url.searchParams.get('userId');
+    
+    if (!projectId || !userId) {
+      socket.write('HTTP/1.1 400 Bad Request\r\n\r\n');
+      socket.destroy();
+      return;
+    }
+    
+    // Mark socket as handled and complete the upgrade
+    markSocketAsHandled(request, socket);
+    
+    this.yjsWss.handleUpgrade(request, socket, head, async (ws) => {
       const projectIdNum = parseInt(projectId);
       const roomId = `project-${projectIdNum}`;
       
@@ -343,11 +360,16 @@ export class UnifiedCollaborationService {
       
       const room = this.getOrCreateRoom(roomId, projectIdNum);
       
+      // Emit connection event to trigger the connection handler
+      this.yjsWss.emit('connection', ws, request);
+      
+      // Send initial sync
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, 0);
       syncProtocol.writeSyncStep1(encoder, room.doc);
       ws.send(encoding.toUint8Array(encoder));
       
+      // Send awareness state
       const awarenessEncoder = encoding.createEncoder();
       encoding.writeVarUint(awarenessEncoder, 1);
       const awarenessStates = room.awareness.getStates();
@@ -360,6 +382,7 @@ export class UnifiedCollaborationService {
         ws.send(encoding.toUint8Array(awarenessEncoder));
       }
       
+      // Setup message handlers
       ws.on('message', (data: Buffer) => {
         try {
           const decoder = decoding.createDecoder(new Uint8Array(data));
@@ -382,6 +405,12 @@ export class UnifiedCollaborationService {
         room.lastActivity = new Date();
       });
     });
+  }
+  
+  private setupYjsWebSocket() {
+    // Connection handling is now done in handleYjsUpgrade via central dispatcher
+    // This method is kept for any additional setup that may be needed
+    console.log('[Collaboration] Yjs WebSocket setup complete (using central dispatcher)');
   }
   
   private handleYjsSync(decoder: any, ws: WebSocket, room: CollaborationRoom) {

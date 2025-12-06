@@ -1,3 +1,8 @@
+/**
+ * Collaboration Server
+ * ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Migrated to Central Upgrade Dispatcher
+ */
+
 import { WebSocketServer, WebSocket } from 'ws';
 import * as Y from 'yjs';
 import * as encoding from 'lib0/encoding';
@@ -6,8 +11,11 @@ import * as syncProtocol from 'y-protocols/sync';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import { Awareness } from 'y-protocols/awareness';
 import { Request } from 'express';
-import http from 'http';
+import http, { IncomingMessage } from 'http';
+import type { Duplex } from 'stream';
 import { storage } from '../storage';
+import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
+import { markSocketAsHandled } from '../websocket/upgrade-guard';
 
 interface CollaborationRoom {
   doc: Y.Doc;
@@ -30,17 +38,29 @@ export class CollaborationServer {
   private clientIdCounter = 0;
 
   constructor(server: http.Server) {
-    this.wss = new WebSocketServer({ 
-      server,
-      path: '/collaboration'
-    });
+    // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
+    // Use noServer mode and register with central dispatcher to eliminate race conditions
+    this.wss = new WebSocketServer({ noServer: true });
 
-    this.setupWebSocketServer();
+    // Register /collaboration handler with central dispatcher (priority 62)
+    centralUpgradeDispatcher.register(
+      '/collaboration',
+      this.handleUpgrade.bind(this),
+      { pathMatch: 'prefix', priority: 62 }
+    );
+
     this.startCleanupInterval();
+    console.log('[CollaborationServer] Initialized (using central dispatcher)');
   }
-
-  private setupWebSocketServer() {
-    this.wss.on('connection', async (ws: AuthenticatedWebSocket, request: Request) => {
+  
+  /**
+   * Handle /collaboration WebSocket upgrade via central dispatcher
+   */
+  private handleUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): void {
+    // Mark socket as handled before upgrade
+    markSocketAsHandled(request, socket);
+    
+    this.wss.handleUpgrade(request, socket, head, async (ws: AuthenticatedWebSocket) => {
       const projectId = parseInt(request.url?.split('?projectId=')[1] || '0');
       const userId = (request as any).session?.passport?.user;
       

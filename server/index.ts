@@ -173,14 +173,10 @@ app.get('/api/cors-health', async (_req, res) => {
 
   try {
     // Setup Background Testing WebSocket server for real-time test notifications
-    const { WebSocketServer } = await import("ws");
+    // Uses central upgrade dispatcher for race-condition-free WebSocket handling
     const { setupBackgroundTestingWebSocket } = await import("./websocket/background-testing-ws");
-    const backgroundTestingWss = new WebSocketServer({ 
-      server: httpServer, 
-      path: '/ws/background-tests' 
-    });
-    setupBackgroundTestingWebSocket(backgroundTestingWss);
-    console.log('[BackgroundTesting] WebSocket server initialized at /ws/background-tests');
+    setupBackgroundTestingWebSocket(httpServer);
+    console.log('[BackgroundTesting] WebSocket service initialized via central dispatcher at /ws/background-tests');
   } catch (error) {
     console.error('[WORKING SERVER] Failed to setup Background Testing WebSocket:', error);
   }
