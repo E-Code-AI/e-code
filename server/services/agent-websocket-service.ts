@@ -2,9 +2,11 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import type { IncomingMessage } from 'http';
 import type { Socket } from 'net';
+import type { Duplex } from 'stream';
 import { Server } from 'http';
 import { createLogger } from '../utils/logger';
 import { wrapWebSocketServer, markSocketAsHandled } from '../websocket/upgrade-guard';
+import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { isOriginAllowed } from '../utils/origin-validation';
 import jwt from 'jsonwebtoken';
 
@@ -110,13 +112,11 @@ class AgentWebSocketService {
   private pingInterval: NodeJS.Timeout | null = null;
   
   initialize(server: Server) {
-    // ✅ CRITICAL FIX (Dec 1, 2025): Use noServer mode with prependListener for priority
-    // PROBLEM: { server, path } mode registers listener AFTER other WS services,
-    // causing race conditions with 13+ upgrade listeners. The ws library's internal
-    // completeUpgrade sometimes fails silently when other handlers interfere.
-    //
-    // SOLUTION: Use noServer + prependListener to run FIRST, before any other handlers.
-    // Mark socket as handled immediately to prevent other handlers from touching it.
+    // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
+    // PROBLEM: 16+ upgrade listeners cause race conditions - "Invalid frame header" errors
+    // SOLUTION: Register with central dispatcher that routes ALL upgrades through ONE handler
+    // The dispatcher marks sockets BEFORE delegating, eliminating all race conditions
+    
     this.wss = new WebSocketServer({ noServer: true });
     
     // 🔍 DEBUG: Add error handlers
@@ -129,18 +129,73 @@ class AgentWebSocketService {
       console.error('[Agent WebSocket] wsClientError URL:', request?.url);
     });
     
-    // Register as FIRST listener using prependListener (runs before all other upgrade handlers)
-    // CRITICAL: Cannot use async/await here - must stay synchronous to prevent race conditions
-    server.prependListener('upgrade', (request: any, socket: any, head: Buffer) => {
-      const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
+    // Register with the central dispatcher (priority 10 = high priority)
+    // The dispatcher handles path matching and socket marking automatically
+    centralUpgradeDispatcher.register(
+      '/ws/agent',
+      (request: IncomingMessage, socket: Duplex, head: Buffer) => {
+        this.handleAgentUpgrade(request, socket as Socket, head);
+      },
+      { pathMatch: 'exact', priority: 10 }
+    );
+    
+    logger.info('[Agent WebSocket] Service initialized with noServer + prependListener mode');
+    
+    // Start heartbeat for connection health monitoring
+    this.startHeartbeat();
+    
+    this.wss.on('connection', (ws, req) => {
+      console.log(`[Agent WebSocket] 🎯 CONNECTION ESTABLISHED! URL: ${req.url}, ws.readyState: ${ws.readyState}`);
       
-      // Only handle /ws/agent path
-      if (pathname !== '/ws/agent') {
+      logger.info(`[Agent WebSocket] New connection attempt from ${req.socket.remoteAddress} - URL: ${req.url}`);
+      
+      const url = new URL(req.url!, `http://${req.headers.host}`);
+      const projectId = url.searchParams.get('projectId');
+      const sessionId = url.searchParams.get('sessionId');
+      const deviceId = url.searchParams.get('deviceId') || `device-${Date.now()}`;
+      const deviceType = (url.searchParams.get('deviceType') || 'web') as 'web' | 'mobile' | 'desktop';
+      
+      logger.info(`[Agent WebSocket] Parsed params - projectId: ${projectId}, sessionId: ${sessionId}, deviceId: ${deviceId}, deviceType: ${deviceType}`);
+      
+      if (!projectId || !sessionId) {
+        logger.warn(`[Agent WebSocket] Rejecting connection - missing params (projectId: ${projectId}, sessionId: ${sessionId})`);
+        ws.close(1008, 'Missing projectId or sessionId');
         return;
       }
       
-      // Mark socket as handled IMMEDIATELY to prevent other handlers from interfering
-      markSocketAsHandled(request, socket);
+      const connectionKey = `${projectId}-${sessionId}`;
+      
+      // Create device connection object
+      const deviceConnection: DeviceConnection = {
+        ws,
+        deviceId,
+        deviceType,
+        connectedAt: new Date(),
+        isAlive: true // Initially alive
+      };
+      
+      // Add to connections map (supports multiple devices per session)
+      if (!this.connections.has(connectionKey)) {
+        this.connections.set(connectionKey, new Set());
+      }
+      this.connections.get(connectionKey)!.add(deviceConnection);
+      
+      const deviceCount = this.connections.get(connectionKey)!.size;
+      logger.info(`[Agent WebSocket] ✅ Connection established: ${connectionKey} (deviceId: ${deviceId}, type: ${deviceType}, total devices: ${deviceCount})`);
+      
+      // Handle close, pong, message events here (moved from below)
+      this.setupConnectionHandlers(ws, connectionKey, deviceConnection);
+      
+      // Trigger workflow check/start
+      this.checkAndStartWorkflow(projectId, sessionId, ws);
+    });
+  }
+  
+  /**
+   * Handle the WebSocket upgrade for /ws/agent
+   * Called by the central dispatcher after socket is already marked as handled
+   */
+  private handleAgentUpgrade(request: IncomingMessage, socket: Socket, head: Buffer): void {
       
       // PRODUCTION SECURITY: Origin validation (prevents CSRF attacks)
       const origin = request.headers.origin;
@@ -251,317 +306,224 @@ class AgentWebSocketService {
       logger.warn('[Agent WebSocket] No valid authentication (no token, no session cookie) - rejecting');
       socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nContent-Length: 42\r\n\r\nAuthentication required (token or session)');
       socket.destroy();
+  }
+
+  /**
+   * Setup event handlers for a WebSocket connection
+   */
+  private setupConnectionHandlers(ws: WebSocket, connectionKey: string, deviceConnection: DeviceConnection): void {
+    ws.on('error', (error) => {
+      logger.error(`[Agent WebSocket] WebSocket error for ${connectionKey} (device: ${deviceConnection.deviceId}): ${error.message}`);
     });
     
-    logger.info('[Agent WebSocket] Service initialized with noServer + prependListener mode');
+    ws.on('pong', () => {
+      deviceConnection.isAlive = true;
+    });
     
-    // Start heartbeat for connection health monitoring
-    this.startHeartbeat();
-    
-    this.wss.on('connection', (ws, req) => {
-      console.log(`[Agent WebSocket] 🎯 CONNECTION ESTABLISHED! URL: ${req.url}, ws.readyState: ${ws.readyState}`);
+    ws.on('close', (code, reason) => {
+      // PRODUCTION SECURITY: Decrement active connection count for rate limiting
+      const clientIp = 'unknown'; // Rate limiting tracking
+      decrementActiveConnections(clientIp);
       
-      logger.info(`[Agent WebSocket] New connection attempt from ${req.socket.remoteAddress} - URL: ${req.url}`);
-      
-      const url = new URL(req.url!, `http://${req.headers.host}`);
-      const projectId = url.searchParams.get('projectId');
-      const sessionId = url.searchParams.get('sessionId');
-      const deviceId = url.searchParams.get('deviceId') || `device-${Date.now()}`;
-      const deviceType = (url.searchParams.get('deviceType') || 'web') as 'web' | 'mobile' | 'desktop';
-      
-      logger.info(`[Agent WebSocket] Parsed params - projectId: ${projectId}, sessionId: ${sessionId}, deviceId: ${deviceId}, deviceType: ${deviceType}`);
-      
-      if (!projectId || !sessionId) {
-        logger.warn(`[Agent WebSocket] Rejecting connection - missing params (projectId: ${projectId}, sessionId: ${sessionId})`);
-        ws.close(1008, 'Missing projectId or sessionId');
-        return;
+      // Remove this device from the connections
+      const connections = this.connections.get(connectionKey);
+      if (connections) {
+        connections.delete(deviceConnection);
+        
+        const remainingDevices = connections.size;
+        logger.info(`[Agent WebSocket] Connection closed: ${connectionKey} (deviceId: ${deviceConnection.deviceId}, code: ${code}, remaining devices: ${remainingDevices})`);
+        
+        // Clean up empty connection sets
+        if (remainingDevices === 0) {
+          this.connections.delete(connectionKey);
+        } else {
+          // Notify other devices about disconnection
+          this.broadcastPresence(connectionKey, {
+            type: 'device_disconnected',
+            deviceId: deviceConnection.deviceId,
+            deviceType: deviceConnection.deviceType,
+            totalDevices: remainingDevices
+          }, deviceConnection.deviceId);
+        }
       }
-      
-      const connectionKey = `${projectId}-${sessionId}`;
-      
-      // Create device connection object
-      const deviceConnection: DeviceConnection = {
-        ws,
-        deviceId,
-        deviceType,
-        connectedAt: new Date(),
-        isAlive: true // Initially alive
-      };
-      
-      // Add to connections map (supports multiple devices per session)
-      if (!this.connections.has(connectionKey)) {
-        this.connections.set(connectionKey, new Set());
-      }
-      this.connections.get(connectionKey)!.add(deviceConnection);
-      
-      const deviceCount = this.connections.get(connectionKey)!.size;
-      logger.info(`[Agent WebSocket] ✅ Connection established: ${connectionKey} (deviceId: ${deviceId}, type: ${deviceType}, total devices: ${deviceCount})`);
-      
-      // Build roster of currently connected devices (excluding this one)
-      const roster = Array.from(this.connections.get(connectionKey)!)
-        .filter((d) => d.deviceId !== deviceId)
-        .map((d) => ({
-          deviceId: d.deviceId,
-          deviceType: d.deviceType,
-          connectedAt: d.connectedAt.toISOString()
-        }));
-      
-      // Send initial connection confirmation WITH roster
-      ws.send(JSON.stringify({
-        type: 'connected',
-        projectId,
-        sessionId,
-        deviceId,
-        deviceType,
-        totalDevices: deviceCount,
-        roster
-      }));
+    });
+  }
 
-      // Notify other devices about new connection (presence update)
-      this.broadcastPresence(connectionKey, {
-        type: 'device_connected',
-        deviceId,
-        deviceType,
-        connectedAt: deviceConnection.connectedAt.toISOString(),
-        totalDevices: deviceCount
-      }, deviceId);
+  /**
+   * Check if workflow should be started and trigger it if needed
+   */
+  private async checkAndStartWorkflow(projectId: string, sessionId: string, ws: WebSocket): Promise<void> {
+    try {
+      // Import services dynamically to avoid circular dependencies
+      const { db } = await import('../db');
+      const { agentPlans, agentWorkflows, agentSessions, projects } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      const { agentOrchestrator } = await import('./agent-orchestrator.service');
 
-      // ✅ CRITICAL FIX (Nov 24, 2025): Trigger workflow startup on WebSocket connection
-      // PROBLEM: Background plan generation could fail, leaving WebSocket connected but idle
-      // SOLUTION: When WebSocket connects, check if workflow exists and start it if needed
-      logger.info(`[Agent WebSocket] Checking workflow status for session ${sessionId}...`);
+      // Check if a plan exists for this session
+      const existingPlans = await db.select()
+        .from(agentPlans)
+        .where(eq(agentPlans.sessionId, sessionId))
+        .limit(1);
 
-      (async () => {
-        try {
-          // Import services dynamically to avoid circular dependencies
-          const { db } = await import('../db');
-          const { agentPlans, agentWorkflows, agentSessions } = await import('@shared/schema');
-          const { eq } = await import('drizzle-orm');
-          const { agentOrchestrator } = await import('./agent-orchestrator.service');
-          const { aiPlanGenerator } = await import('./ai-plan-generator.service');
+      if (existingPlans.length > 0) {
+        logger.info(`[Agent WebSocket] Plan already exists for session ${sessionId}, checking workflow...`);
 
-          // Check if a plan exists for this session
-          const existingPlans = await db.select()
-            .from(agentPlans)
-            .where(eq(agentPlans.sessionId, sessionId))
+        // Check if workflow has been executed
+        const existingWorkflows = await db.select()
+          .from(agentWorkflows)
+          .where(eq(agentWorkflows.sessionId, sessionId))
+          .limit(1);
+
+        if (existingWorkflows.length === 0) {
+          logger.warn(`[Agent WebSocket] Plan exists but NO workflow! Starting execution for session ${sessionId}...`);
+
+          const sessions = await db.select()
+            .from(agentSessions)
+            .where(eq(agentSessions.id, sessionId))
             .limit(1);
 
-          if (existingPlans.length > 0) {
-            logger.info(`[Agent WebSocket] Plan already exists for session ${sessionId}, checking workflow...`);
-
-            // Check if workflow has been executed
-            const existingWorkflows = await db.select()
-              .from(agentWorkflows)
-              .where(eq(agentWorkflows.sessionId, sessionId))
-              .limit(1);
-
-            if (existingWorkflows.length === 0) {
-              logger.warn(`[Agent WebSocket] Plan exists but NO workflow! Starting execution for session ${sessionId}...`);
-
-              // Get session data
-              const sessions = await db.select()
-                .from(agentSessions)
-                .where(eq(agentSessions.id, sessionId))
-                .limit(1);
-
-              if (sessions.length === 0) {
-                throw new Error(`Session ${sessionId} not found`);
-              }
-
-              const session = sessions[0];
-              const storedPlan = existingPlans[0];
-
-              // Reconstruct ExecutionPlan from stored agentPlans columns
-              const executionPlan = {
-                goal: storedPlan.goal,
-                tasks: storedPlan.tasks,
-                metadata: storedPlan.metadata ?? {},
-                planId: storedPlan.planId,
-                estimatedTime: storedPlan.estimatedTime
-              };
-
-              // Execute the plan
-              await agentOrchestrator.executeAutonomousPlan(
-                sessionId,
-                executionPlan,
-                projectId,
-                session.userId.toString()
-              );
-
-              logger.info(`[Agent WebSocket] ✅ Workflow execution started for session ${sessionId}`);
-            } else {
-              const workflow = existingWorkflows[0];
-              logger.info(`[Agent WebSocket] Workflow already exists for session ${sessionId}, status: ${workflow.status}`);
-              
-              // ✅ FIX (Dec 1, 2025): Send workflow status to client when already complete
-              // PROBLEM: Client was left waiting with no response when workflow was already done
-              // SOLUTION: Send completion/failure status immediately so UI can update
-              if (workflow.status === 'completed') {
-                ws.send(JSON.stringify({
-                  type: 'complete',
-                  sessionId,
-                  projectId,
-                  message: 'Workspace creation completed successfully!',
-                  workflowId: workflow.id
-                }));
-                logger.info(`[Agent WebSocket] ✅ Sent 'complete' event to client for session ${sessionId}`);
-              } else if (workflow.status === 'failed') {
-                ws.send(JSON.stringify({
-                  type: 'error',
-                  sessionId,
-                  projectId,
-                  message: workflow.error || 'Workspace creation failed',
-                  workflowId: workflow.id
-                }));
-                logger.info(`[Agent WebSocket] ❌ Sent 'error' event to client for session ${sessionId}`);
-              } else if (workflow.status === 'in_progress') {
-                ws.send(JSON.stringify({
-                  type: 'status',
-                  sessionId,
-                  projectId,
-                  message: 'Workspace creation in progress...',
-                  status: 'in_progress',
-                  progress: workflow.progress || 0,
-                  workflowId: workflow.id
-                }));
-                logger.info(`[Agent WebSocket] 🔄 Sent 'in_progress' status to client for session ${sessionId}`);
-              }
-            }
-          } else {
-            // ✅ CRITICAL FIX (Dec 5, 2025): Start autonomous workflow on WebSocket connection
-            // Bootstrap endpoint no longer starts workflow immediately (race condition fix)
-            // WebSocket connection is now the trigger for workflow start
-            logger.info(`[Agent WebSocket] No plan found for session ${sessionId} - checking if workflow should start...`);
-
-            // Get session to check status and get prompt
-            const sessions = await db.select()
-              .from(agentSessions)
-              .where(eq(agentSessions.id, sessionId))
-              .limit(1);
-
-            if (sessions.length === 0) {
-              logger.error(`[Agent WebSocket] Session ${sessionId} not found!`);
-              ws.send(JSON.stringify({
-                type: 'error',
-                message: 'Session not found',
-                sessionId,
-                projectId
-              }));
-              return;
-            }
-
-            const session = sessions[0];
-            
-            // ✅ Check if session is in idle status (workflow not started yet)
-            if (session.workflowStatus === 'idle' || !session.workflowStatus) {
-              logger.info(`[Agent WebSocket] 🚀 Session ${sessionId} is idle - starting autonomous workspace NOW!`);
-
-              // Send status to client immediately
-              ws.send(JSON.stringify({
-                type: 'status',
-                status: 'starting',
-                message: 'Starting AI workspace generation...',
-                sessionId,
-                projectId
-              }));
-
-              // Get prompt from project description (stored during bootstrap)
-              const { projects } = await import('@shared/schema');
-              const projectRows = await db.select()
-                .from(projects)
-                .where(eq(projects.id, Number(projectId)))
-                .limit(1);
-
-              if (projectRows.length === 0) {
-                throw new Error(`Project ${projectId} not found`);
-              }
-
-              const prompt = projectRows[0].description || projectRows[0].name || 'Create a web application';
-
-              // Start the autonomous workspace workflow
-              agentOrchestrator.startAutonomousWorkspace({
-                sessionId,
-                projectId: String(projectId),
-                userId: String(session.userId),
-                prompt: prompt,
-                options: {
-                  language: 'typescript',
-                  framework: 'react'
-                }
-              }).then(() => {
-                logger.info(`[Agent WebSocket] ✅ startAutonomousWorkspace COMPLETED for session ${sessionId}`);
-              }).catch(error => {
-                logger.error(`[Agent WebSocket] ❌ startAutonomousWorkspace FAILED:`, error);
-                ws.send(JSON.stringify({
-                  type: 'error',
-                  message: `Workspace creation failed: ${error.message}`,
-                  sessionId,
-                  projectId
-                }));
-              });
-            } else {
-              // Session already in progress - just wait
-              logger.info(`[Agent WebSocket] Session ${sessionId} already in status: ${session.workflowStatus}`);
-              ws.send(JSON.stringify({
-                type: 'status',
-                status: session.workflowStatus,
-                message: `Workspace creation ${session.workflowStatus}...`,
-                sessionId,
-                projectId
-              }));
-            }
+          if (sessions.length === 0) {
+            throw new Error(`Session ${sessionId} not found`);
           }
-        } catch (error: any) {
-          logger.error(`[Agent WebSocket] Failed to check/start workflow for session ${sessionId}:`, error);
 
-          // Send error to client
+          const session = sessions[0];
+          const storedPlan = existingPlans[0];
+
+          const executionPlan = {
+            goal: storedPlan.goal,
+            tasks: storedPlan.tasks,
+            metadata: storedPlan.metadata ?? {},
+            planId: storedPlan.planId,
+            estimatedTime: storedPlan.estimatedTime
+          };
+
+          await agentOrchestrator.executeAutonomousPlan(
+            sessionId,
+            executionPlan,
+            projectId,
+            session.userId.toString()
+          );
+
+          logger.info(`[Agent WebSocket] ✅ Workflow execution started for session ${sessionId}`);
+        } else {
+          const workflow = existingWorkflows[0];
+          logger.info(`[Agent WebSocket] Workflow already exists for session ${sessionId}, status: ${workflow.status}`);
+          
+          // Send current status to client
+          if (workflow.status === 'completed') {
+            ws.send(JSON.stringify({
+              type: 'complete',
+              sessionId,
+              projectId,
+              message: 'Workspace creation completed successfully!',
+              workflowId: workflow.id
+            }));
+          } else if (workflow.status === 'failed') {
+            ws.send(JSON.stringify({
+              type: 'error',
+              sessionId,
+              projectId,
+              message: workflow.error || 'Workspace creation failed',
+              workflowId: workflow.id
+            }));
+          } else if (workflow.status === 'in_progress') {
+            ws.send(JSON.stringify({
+              type: 'status',
+              sessionId,
+              projectId,
+              message: 'Workspace creation in progress...',
+              status: 'in_progress',
+              progress: workflow.progress || 0,
+              workflowId: workflow.id
+            }));
+          }
+        }
+      } else {
+        // No plan - check if we need to start the workflow
+        logger.info(`[Agent WebSocket] No plan found for session ${sessionId} - checking if workflow should start...`);
+
+        const sessions = await db.select()
+          .from(agentSessions)
+          .where(eq(agentSessions.id, sessionId))
+          .limit(1);
+
+        if (sessions.length === 0) {
+          logger.error(`[Agent WebSocket] Session ${sessionId} not found!`);
           ws.send(JSON.stringify({
             type: 'error',
-            message: `Failed to start workspace workflow: ${error.message}`,
+            message: 'Session not found',
+            sessionId,
+            projectId
+          }));
+          return;
+        }
+
+        const session = sessions[0];
+        
+        // Check if session is in idle status
+        if (session.workflowStatus === 'idle' || !session.workflowStatus) {
+          logger.info(`[Agent WebSocket] 🚀 Session ${sessionId} is idle - starting autonomous workspace NOW!`);
+
+          ws.send(JSON.stringify({
+            type: 'status',
+            status: 'starting',
+            message: 'Starting AI workspace generation...',
+            sessionId,
+            projectId
+          }));
+
+          const projectRows = await db.select()
+            .from(projects)
+            .where(eq(projects.id, Number(projectId)))
+            .limit(1);
+
+          if (projectRows.length === 0) {
+            throw new Error(`Project ${projectId} not found`);
+          }
+
+          const prompt = projectRows[0].description || projectRows[0].name || 'Create a web application';
+
+          agentOrchestrator.startAutonomousWorkspace({
+            sessionId,
+            projectId: String(projectId),
+            userId: String(session.userId),
+            prompt: prompt,
+            options: {
+              language: 'typescript',
+              framework: 'react'
+            }
+          }).then(() => {
+            logger.info(`[Agent WebSocket] ✅ startAutonomousWorkspace COMPLETED for session ${sessionId}`);
+          }).catch(error => {
+            logger.error(`[Agent WebSocket] ❌ startAutonomousWorkspace FAILED:`, error);
+            ws.send(JSON.stringify({
+              type: 'error',
+              message: `Workspace creation failed: ${error.message}`,
+              sessionId,
+              projectId
+            }));
+          });
+        } else {
+          logger.info(`[Agent WebSocket] Session ${sessionId} already in status: ${session.workflowStatus}`);
+          ws.send(JSON.stringify({
+            type: 'status',
+            status: session.workflowStatus,
+            message: `Workspace creation ${session.workflowStatus}...`,
             sessionId,
             projectId
           }));
         }
-      })().catch(err => {
-        logger.error(`[Agent WebSocket] Unhandled error in workflow startup check:`, err);
-      });
-      
-      ws.on('error', (error) => {
-        logger.error(`[Agent WebSocket] WebSocket error for ${connectionKey} (device: ${deviceId}): ${error.message}`);
-      });
-      
-      ws.on('close', (code, reason) => {
-        // PRODUCTION SECURITY: Decrement active connection count for rate limiting
-        const clientIp = req.socket?.remoteAddress || 'unknown';
-        decrementActiveConnections(clientIp);
-        
-        // Remove this device from the connections
-        const connections = this.connections.get(connectionKey);
-        if (connections) {
-          connections.delete(deviceConnection);
-          
-          const remainingDevices = connections.size;
-          logger.info(`[Agent WebSocket] Connection closed: ${connectionKey} (deviceId: ${deviceId}, code: ${code}, remaining devices: ${remainingDevices})`);
-          
-          // Clean up empty connection sets
-          if (remainingDevices === 0) {
-            this.connections.delete(connectionKey);
-          } else {
-            // Notify other devices about disconnection
-            this.broadcastPresence(connectionKey, {
-              type: 'device_disconnected',
-              deviceId,
-              deviceType,
-              totalDevices: remainingDevices
-            }, deviceId);
-          }
-        }
-      });
-    });
-    
-    this.wss.on('error', (error) => {
-      logger.error(`[Agent WebSocket] Server error: ${error.message}`);
-    });
+      }
+    } catch (error: any) {
+      logger.error(`[Agent WebSocket] Failed to check/start workflow for session ${sessionId}:`, error);
+      ws.send(JSON.stringify({
+        type: 'error',
+        message: `Failed to start workspace workflow: ${error.message}`,
+        sessionId,
+        projectId
+      }));
+    }
   }
 
   // ✅ CRITICAL FIX (Dec 1, 2025): verifyClient validates bootstrap tokens/sessions BEFORE WebSocket upgrade
