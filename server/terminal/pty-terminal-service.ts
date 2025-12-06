@@ -7,6 +7,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server, IncomingMessage } from 'http';
 import { Socket } from 'net';
+import type { Duplex } from 'stream';
 import * as pty from 'node-pty';
 import * as os from 'os';
 import * as path from 'path';
@@ -14,6 +15,7 @@ import * as fs from 'fs';
 import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
+import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 
 const logger = createLogger('pty-terminal');
 
@@ -50,31 +52,25 @@ export class PTYTerminalService {
       }
     });
 
-    server.on('upgrade', (request: IncomingMessage, socket: Socket, head: Buffer) => {
-      let pathname: string;
-      
-      try {
-        pathname = new URL(request.url || '', `http://${request.headers.host || 'localhost'}`).pathname;
-      } catch (error) {
-        logger.warn('Failed to parse URL for terminal upgrade, ignoring request');
-        return;
-      }
-      
-      if (pathname !== '/api/terminal/ws') {
-        return;
-      }
-      
-      markSocketAsHandled(request, socket);
-      logger.debug(`Terminal WebSocket upgrade accepted for ${pathname}`);
-      
-      this.wss!.handleUpgrade(request, socket, head, (ws) => {
-        this.wss!.emit('connection', ws, request);
-      });
-    });
+    centralUpgradeDispatcher.register(
+      '/api/terminal/ws',
+      this.handleTerminalUpgrade.bind(this),
+      { pathMatch: 'exact', priority: 30 }
+    );
 
-    logger.info('PTY Terminal WebSocket server initialized at /api/terminal/ws');
+    logger.info('[PTY Terminal] Registered with central upgrade dispatcher at /api/terminal/ws (priority: 30)');
 
     this.wss.on('connection', this.handleConnection.bind(this));
+  }
+
+  private handleTerminalUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): void {
+    markSocketAsHandled(request, socket);
+    
+    logger.debug('[PTY Terminal] Handling upgrade via central dispatcher');
+    
+    this.wss!.handleUpgrade(request, socket as Socket, head, (ws) => {
+      this.wss!.emit('connection', ws, request);
+    });
   }
 
   private async handleConnection(ws: WebSocket, request: any): Promise<void> {

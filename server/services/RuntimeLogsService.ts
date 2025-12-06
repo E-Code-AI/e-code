@@ -1,11 +1,15 @@
 import { WebSocket, WebSocketServer } from 'ws';
 import type { IncomingMessage } from 'http';
 import type { Server } from 'http';
+import type { Socket } from 'net';
+import type { Duplex } from 'stream';
 import type { IStorage } from '../storage';
 import { WebSocketRateLimiter } from '../middleware/websocket-rate-limiter';
 import { getClientIp } from '../utils/ip-extraction';
 import { isOriginAllowed } from '../utils/origin-validation';
 import { createLogger } from '../utils/logger';
+import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
+import { markSocketAsHandled } from '../websocket/upgrade-guard';
 
 const logger = createLogger('runtime-logs');
 const rateLimiter = new WebSocketRateLimiter(20, 60000);
@@ -35,13 +39,19 @@ export class RuntimeLogsService {
   }
 
   setup(server: Server): void {
-    this.wss = new WebSocketServer({
-      server,
-      path: '/api/runtime/logs/ws'
-    });
+    // Use noServer mode - central dispatcher handles all upgrade routing
+    this.wss = new WebSocketServer({ noServer: true });
 
-    logger.info('Setting up runtime logs WebSocket server at /api/runtime/logs/ws');
+    logger.info('[RuntimeLogs] Registering with central upgrade dispatcher at /api/runtime/logs/ws');
 
+    // Register with central dispatcher (priority 40 - medium priority for logs)
+    centralUpgradeDispatcher.register(
+      '/api/runtime/logs/ws',
+      this.handleRuntimeLogsUpgrade.bind(this),
+      { pathMatch: 'exact', priority: 40 }
+    );
+
+    // Handle successful WebSocket connections
     this.wss.on('connection', async (ws, req) => {
       try {
         const url = new URL(req.url || '', `http://${req.headers.host}`);
@@ -54,29 +64,7 @@ export class RuntimeLogsService {
           return;
         }
 
-        const clientIp = getClientIp(req);
-        const origin = req.headers.origin || '';
-        const host = req.headers.host || '';
-
-        if (!isOriginAllowed(origin, host)) {
-          logger.warn(`[RuntimeLogs] Rejected connection from disallowed origin: ${origin}`);
-          ws.close(1008, 'Origin not allowed');
-          return;
-        }
-
-        if (!rateLimiter.checkLimit(clientIp)) {
-          logger.warn(`[RuntimeLogs] Rate limit exceeded for IP: ${clientIp}`);
-          ws.close(1008, 'Rate limit exceeded');
-          return;
-        }
-
-        const authorized = await this.authenticateConnection(req, userId, projectId);
-        if (!authorized) {
-          ws.close(1008, 'Unauthorized');
-          return;
-        }
-
-        logger.info(`[RuntimeLogs] Client connected: project=${projectId}, user=${userId}, execution=${executionId || 'all'}`);
+        logger.info(`[RuntimeLogs] Client connected via dispatcher: project=${projectId}, user=${userId}, execution=${executionId || 'all'}`);
 
         await this.handleConnection(ws, req, projectId, userId, executionId || undefined);
       } catch (error) {
@@ -84,6 +72,82 @@ export class RuntimeLogsService {
         ws.close(1011, 'Internal server error');
       }
     });
+  }
+
+  /**
+   * Handle WebSocket upgrade requests routed by the central dispatcher
+   * Performs validation before completing the handshake
+   */
+  private handleRuntimeLogsUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): void {
+    try {
+      const url = new URL(request.url || '', `http://${request.headers.host}`);
+      const projectId = url.searchParams.get('projectId');
+      const userId = url.searchParams.get('userId');
+
+      // Validate required parameters
+      if (!projectId || !userId) {
+        logger.warn('[RuntimeLogs] Upgrade rejected - missing projectId or userId');
+        this.destroySocketWithError(socket, 400, 'Missing projectId or userId');
+        return;
+      }
+
+      // Origin validation
+      const origin = request.headers.origin || '';
+      const host = request.headers.host || '';
+      if (!isOriginAllowed(origin, host)) {
+        logger.warn(`[RuntimeLogs] Upgrade rejected - disallowed origin: ${origin}`);
+        this.destroySocketWithError(socket, 403, 'Origin not allowed');
+        return;
+      }
+
+      // Rate limiting
+      const clientIp = getClientIp(request);
+      if (!rateLimiter.checkLimit(clientIp)) {
+        logger.warn(`[RuntimeLogs] Upgrade rejected - rate limit exceeded for IP: ${clientIp}`);
+        this.destroySocketWithError(socket, 429, 'Rate limit exceeded');
+        return;
+      }
+
+      // Mark socket as handled to prevent other handlers from interfering
+      markSocketAsHandled(request, socket);
+
+      // Authenticate asynchronously, then complete upgrade
+      this.authenticateConnection(request, userId, projectId)
+        .then((authorized) => {
+          if (!authorized) {
+            logger.warn(`[RuntimeLogs] Upgrade rejected - unauthorized user ${userId} for project ${projectId}`);
+            this.destroySocketWithError(socket, 401, 'Unauthorized');
+            return;
+          }
+
+          // Complete the WebSocket handshake
+          this.wss!.handleUpgrade(request, socket, head, (ws) => {
+            logger.debug(`[RuntimeLogs] Upgrade complete for project=${projectId}, user=${userId}`);
+            this.wss!.emit('connection', ws, request);
+          });
+        })
+        .catch((error) => {
+          logger.error('[RuntimeLogs] Upgrade authentication error:', error);
+          this.destroySocketWithError(socket, 500, 'Internal server error');
+        });
+    } catch (error) {
+      logger.error('[RuntimeLogs] Upgrade handler error:', error);
+      this.destroySocketWithError(socket, 500, 'Internal server error');
+    }
+  }
+
+  /**
+   * Send HTTP error response and destroy socket
+   */
+  private destroySocketWithError(socket: Duplex, code: number, message: string): void {
+    const httpResponse = `HTTP/1.1 ${code} ${message}\r\n` +
+      `Content-Type: text/plain\r\n` +
+      `Content-Length: ${message.length}\r\n` +
+      `\r\n` +
+      message;
+
+    socket.write(httpResponse);
+    socket.destroy();
   }
 
   private async authenticateConnection(

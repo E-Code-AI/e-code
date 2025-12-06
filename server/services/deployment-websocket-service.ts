@@ -4,8 +4,10 @@ import type { IncomingMessage } from 'http';
 import type { Socket } from 'net';
 import { Server } from 'http';
 import { EventEmitter } from 'events';
+import type { Duplex } from 'stream';
 import { createLogger } from '../utils/logger';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
+import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { isOriginAllowed } from '../utils/origin-validation';
 
 const logger = createLogger('deployment-websocket-service');
@@ -184,48 +186,19 @@ class DeploymentWebSocketService extends EventEmitter {
       console.error('[Deployment WebSocket] wsClientError URL:', request?.url);
     });
     
-    // Register as FIRST listener using prependListener
-    server.prependListener('upgrade', (request: any, socket: any, head: Buffer) => {
-      const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
-      
-      // Only handle /ws/deployments path
-      if (pathname !== '/ws/deployments') {
-        return;
-      }
-      
-      // Mark socket as handled IMMEDIATELY to prevent other handlers from interfering
-      markSocketAsHandled(request, socket);
-      
-      // PRODUCTION SECURITY: Origin validation (prevents CSRF attacks)
-      const origin = request.headers.origin;
-      const host = request.headers.host;
-      if (process.env.NODE_ENV === 'production' && !isOriginAllowed(origin, host)) {
-        logger.warn(`[Deployment WebSocket] Origin validation failed - origin: ${origin}, host: ${host}`);
-        socket.write('HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nInvalid origin');
-        socket.destroy();
-        return;
-      }
-      
-      // PRODUCTION SECURITY: Rate limiting (prevents connection flooding)
-      const clientIp = request.socket?.remoteAddress || 'unknown';
-      const rateLimitResult = checkWebSocketRateLimit(clientIp);
-      if (!rateLimitResult.allowed) {
-        logger.warn(`[Deployment WebSocket] Rate limit rejected - IP: ${clientIp}, reason: ${rateLimitResult.reason}`);
-        socket.write('HTTP/1.1 429 Too Many Requests\r\nContent-Type: text/plain\r\nContent-Length: 22\r\n\r\nToo many connections');
-        socket.destroy();
-        return;
-      }
-      
-      logger.info(`[Deployment WebSocket] Upgrade request from ${clientIp}`);
-      
-      // Complete the WebSocket handshake
-      this.wss!.handleUpgrade(request, socket, head, (ws) => {
-        logger.info(`[Deployment WebSocket] Upgrade complete, emitting connection event`);
-        this.wss!.emit('connection', ws, request);
-      });
-    });
+    // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
+    // PROBLEM: Multiple upgrade listeners cause race conditions - "Invalid frame header" errors
+    // SOLUTION: Register with central dispatcher that routes ALL upgrades through ONE handler
+    // The dispatcher marks sockets BEFORE delegating, eliminating all race conditions
+    centralUpgradeDispatcher.register(
+      '/ws/deployments',
+      (request: IncomingMessage, socket: Duplex, head: Buffer) => {
+        this.handleDeploymentUpgrade(request, socket as Socket, head);
+      },
+      { pathMatch: 'exact', priority: 20 }
+    );
     
-    logger.info('[Deployment WebSocket] Service initialized with noServer + prependListener mode');
+    logger.info('[Deployment WebSocket] Service initialized with central upgrade dispatcher (priority: 20)');
     
     // Start heartbeat for connection health monitoring
     this.startHeartbeat();
@@ -288,6 +261,43 @@ class DeploymentWebSocketService extends EventEmitter {
     
     this.wss.on('error', (error) => {
       logger.error(`[Deployment WebSocket] Server error: ${error.message}`);
+    });
+  }
+  
+  /**
+   * Handle the WebSocket upgrade for /ws/deployments
+   * Called by the central dispatcher after path matching
+   */
+  private handleDeploymentUpgrade(request: IncomingMessage, socket: Socket, head: Buffer): void {
+    // Mark socket as handled to prevent other handlers from interfering
+    markSocketAsHandled(request, socket);
+    
+    // PRODUCTION SECURITY: Origin validation (prevents CSRF attacks)
+    const origin = request.headers.origin;
+    const host = request.headers.host;
+    if (process.env.NODE_ENV === 'production' && !isOriginAllowed(origin, host)) {
+      logger.warn(`[Deployment WebSocket] Origin validation failed - origin: ${origin}, host: ${host}`);
+      socket.write('HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nInvalid origin');
+      socket.destroy();
+      return;
+    }
+    
+    // PRODUCTION SECURITY: Rate limiting (prevents connection flooding)
+    const clientIp = request.socket?.remoteAddress || 'unknown';
+    const rateLimitResult = checkWebSocketRateLimit(clientIp);
+    if (!rateLimitResult.allowed) {
+      logger.warn(`[Deployment WebSocket] Rate limit rejected - IP: ${clientIp}, reason: ${rateLimitResult.reason}`);
+      socket.write('HTTP/1.1 429 Too Many Requests\r\nContent-Type: text/plain\r\nContent-Length: 22\r\n\r\nToo many connections');
+      socket.destroy();
+      return;
+    }
+    
+    logger.info(`[Deployment WebSocket] Upgrade request from ${clientIp} via central dispatcher`);
+    
+    // Complete the WebSocket handshake
+    this.wss!.handleUpgrade(request, socket, head, (ws) => {
+      logger.info(`[Deployment WebSocket] Upgrade complete, emitting connection event`);
+      this.wss!.emit('connection', ws, request);
     });
   }
   
