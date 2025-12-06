@@ -39,7 +39,7 @@ interface AutonomousWorkspaceViewerProps {
 }
 
 interface AgentMessage {
-  type: 'task_start' | 'task_progress' | 'task_complete' | 'file_created' | 'build_log' | 'error' | 'complete' | 'status' | 'plan_chunk' | 'plan_generated';
+  type: 'task_start' | 'task_progress' | 'task_complete' | 'file_created' | 'build_log' | 'error' | 'complete' | 'status' | 'plan_chunk' | 'plan_generated' | 'connected';
   data?: any;
   message?: string;
   taskId?: string;
@@ -239,7 +239,7 @@ export function AutonomousWorkspaceViewer({
         // ✅ FIX (Dec 1, 2025): Handle 'waiting_for_plan' status gracefully
         // This happens when WebSocket connects before plan generation starts (race condition fix)
         if (message.status === 'waiting_for_plan') {
-          setPhase('connecting');
+          setPhase('planning');
           setCurrentTask('Connecting to AI...');
           addLog('⏳ Waiting for AI to begin planning...');
         } else if (message.status === 'planning') {
