@@ -124,7 +124,7 @@ export function wrapWebSocketServer(wss: any): any {
 // NOTE: /ws/agent now uses noServer + prependListener + markSocketAsHandled, so it's removed from this list
 const WS_MANAGED_PATHS = new Set([
   '/ws/background-tests',   // Background testing WebSocket
-  '/api/runtime/logs/ws',   // Runtime logs WebSocket
+  // NOTE: /api/runtime/logs/ws now uses noServer + central dispatcher + markSocketAsHandled
   '/ws/collaboration',      // Real-time collaboration (Socket.IO)
   '/ws/collaboration/',     // Socket.IO with trailing slash
   '/socket.io',             // Socket.IO default path
