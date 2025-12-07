@@ -412,7 +412,8 @@ export default function IDEPage() {
   // ✅ FIX (Dec 7, 2025): Persist bootstrap prompt in sessionStorage to survive component remounts
   // Problem: React state resets when component remounts, causing prompt to become null
   // Solution: Use sessionStorage + useState to capture prompt once and persist across remounts
-  const bootstrapPromptKey = `bootstrap_prompt_${projectId}`;
+  // IMPORTANT: Use 'agent-prompt-${projectId}' key - this is the key that ReplitAgentPanelV3 reads!
+  const bootstrapPromptKey = `agent-prompt-${projectId}`;
   
   // Initialize from sessionStorage on first mount
   const [persistedBootstrapPrompt, setPersistedBootstrapPrompt] = useState<string | null>(() => {
@@ -429,7 +430,7 @@ export default function IDEPage() {
   // Capture bootstrap prompt once when project loads, save to sessionStorage
   useEffect(() => {
     if (bootstrapToken && project?.description && !persistedBootstrapPrompt) {
-      console.log('[IDEPage] ✅ Persisting bootstrap prompt to sessionStorage:', project.description.substring(0, 50) + '...');
+      console.log('[IDEPage] ✅ Persisting bootstrap prompt to sessionStorage (key: agent-prompt):', project.description.substring(0, 50) + '...');
       setPersistedBootstrapPrompt(project.description);
       sessionStorage.setItem(bootstrapPromptKey, project.description);
     }
