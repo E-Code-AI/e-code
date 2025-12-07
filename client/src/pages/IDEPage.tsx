@@ -410,11 +410,12 @@ export default function IDEPage() {
   });
   
   // Auto-start runtime when IDE loads (Replit-like behavior)
+  // ✅ FIX (Dec 7, 2025): Start runtime even for empty projects - don't require files.length > 0
   const [runtimeAutoStarted, setRuntimeAutoStarted] = useState(false);
   
   useEffect(() => {
-    // Only auto-start once when files are loaded
-    if (!runtimeAutoStarted && files.length > 0 && projectId) {
+    // Auto-start once when project is loaded (even if empty)
+    if (!runtimeAutoStarted && projectId && project && !isLoadingProject) {
       setRuntimeAutoStarted(true);
       
       // Start runtime automatically in the background
@@ -424,12 +425,13 @@ export default function IDEPage() {
         timeout: 30000
       }).then(() => {
         setIsRunning(true);
+        console.log('[IDEPage] Runtime auto-started successfully');
       }).catch((err) => {
         // Silent fail - user can manually start if needed
         console.log('[IDEPage] Auto-start runtime failed:', err.message);
       });
     }
-  }, [files.length, projectId, runtimeAutoStarted]);
+  }, [projectId, project, isLoadingProject, runtimeAutoStarted]);
   
   // Query publish status for StatusBar deployment indicator
   interface PublishState {
