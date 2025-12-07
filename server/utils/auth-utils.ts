@@ -1,7 +1,8 @@
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes, createHash, randomUUID } from 'crypto';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { getJwtSecret, getJwtRefreshSecret } from './secrets-manager';
+import { isTokenRevoked, trackUserToken } from '../auth/token-revocation';
 
 // ✅ Fortune 500 Security: Use centralized secrets manager
 // Legacy local functions removed - all code now uses centralized secrets-manager
@@ -57,43 +58,91 @@ export function validatePassword(password: string): { valid: boolean; errors: st
 }
 
 // JWT token generation and verification - SECURITY: Use centralized secrets manager
+export interface AccessTokenPayload {
+  userId: number;
+  username: string;
+  jti: string;
+  type: 'access';
+  iat: number;
+  exp: number;
+}
+
+export interface RefreshTokenPayload {
+  userId: number;
+  jti: string;
+  type: 'refresh';
+  iat: number;
+  exp: number;
+}
+
 export function generateAccessToken(userId: number, username: string): string {
+  const jti = randomUUID();
+  trackUserToken(userId, jti);
+  
   return jwt.sign(
-    { userId, username, type: 'access' },
+    { userId, username, type: 'access', jti },
     getJwtSecret(),
     { expiresIn: '15m' }
   );
 }
 
 export function generateRefreshToken(userId: number): string {
+  const jti = randomUUID();
+  trackUserToken(userId, jti);
+  
   return jwt.sign(
-    { userId, type: 'refresh' },
+    { userId, type: 'refresh', jti },
     getJwtRefreshSecret(),
     { expiresIn: '7d' }
   );
 }
 
-export function verifyAccessToken(token: string): { userId: number; username: string } {
+export function verifyAccessToken(token: string): { userId: number; username: string; jti: string } {
   try {
-    const payload = jwt.verify(token, getJwtSecret()) as any;
+    const payload = jwt.verify(token, getJwtSecret()) as AccessTokenPayload;
     if (payload.type !== 'access') {
       throw new Error('Invalid token type');
     }
-    return { userId: payload.userId, username: payload.username };
-  } catch (error) {
+    
+    if (payload.jti && isTokenRevoked(payload.jti)) {
+      throw new Error('Token has been revoked');
+    }
+    
+    return { userId: payload.userId, username: payload.username, jti: payload.jti };
+  } catch (error: any) {
+    if (error.message === 'Token has been revoked') {
+      throw error;
+    }
     throw new Error('Invalid or expired access token');
   }
 }
 
-export function verifyRefreshToken(token: string): { userId: number } {
+export function verifyRefreshToken(token: string): { userId: number; jti: string } {
   try {
-    const payload = jwt.verify(token, getJwtRefreshSecret()) as any;
+    const payload = jwt.verify(token, getJwtRefreshSecret()) as RefreshTokenPayload;
     if (payload.type !== 'refresh') {
       throw new Error('Invalid token type');
     }
-    return { userId: payload.userId };
-  } catch (error) {
+    
+    if (payload.jti && isTokenRevoked(payload.jti)) {
+      throw new Error('Token has been revoked');
+    }
+    
+    return { userId: payload.userId, jti: payload.jti };
+  } catch (error: any) {
+    if (error.message === 'Token has been revoked') {
+      throw error;
+    }
     throw new Error('Invalid or expired refresh token');
+  }
+}
+
+export function decodeTokenWithoutVerification(token: string): { jti?: string; exp?: number; userId?: number } | null {
+  try {
+    const decoded = jwt.decode(token) as any;
+    return decoded ? { jti: decoded.jti, exp: decoded.exp, userId: decoded.userId } : null;
+  } catch {
+    return null;
   }
 }
 

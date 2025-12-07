@@ -7,7 +7,8 @@ import { devAuthBypass, isAuthBypassEnabled } from "../dev-auth-bypass";
 import { csrfProtection } from "../middleware/csrf";
 import type { User } from "@shared/schema";
 import { randomBytes } from "crypto";
-import { hashToken, generateEmailVerificationToken, generatePasswordResetToken } from "../utils/auth-utils";
+import { hashToken, generateEmailVerificationToken, generatePasswordResetToken, decodeTokenWithoutVerification } from "../utils/auth-utils";
+import { revokeToken, revokeAllUserTokens } from "../auth/token-revocation";
 import { sendVerificationEmail, sendPasswordResetEmail, resendVerificationEmail } from "../utils/sendgrid-email-service";
 import { z } from "zod";
 import { db } from "../db";
@@ -19,9 +20,8 @@ import { tierRateLimiters } from "../middleware/tier-rate-limiter";
 const logger = createLogger('auth-router');
 
 // Define a UserForAuth type that includes password for authentication
-interface UserForAuth extends User {
-  password?: string;
-}
+// User already has password as a required field, so no override needed
+type UserForAuth = User;
 
 export class AuthRouter {
   private router: Router;
@@ -53,7 +53,7 @@ export class AuthRouter {
       linkedinUsername: user.linkedinUsername,
       reputation: user.reputation,
       isMentor: user.isMentor,
-      isAdmin: user.isAdmin,
+      isAdmin: user.role === 'admin',
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
@@ -150,7 +150,7 @@ export class AuthRouter {
         expiresAt.setHours(expiresAt.getHours() + 24); // Expires in 24 hours
         
         await this.storage.saveEmailVerificationToken(
-          user.id,
+          user.id.toString(),
           user.email!,
           hashedToken,
           expiresAt
@@ -159,7 +159,7 @@ export class AuthRouter {
         // Send verification email (non-blocking - don't fail registration if email fails)
         try {
           await sendVerificationEmail(
-            user.id,
+            user.id.toString(),
             user.email!,
             user.displayName || user.username || 'User',
             verificationToken // Send unhashed token to user
@@ -356,7 +356,7 @@ export class AuthRouter {
         expiresAt.setHours(expiresAt.getHours() + 24); // Expires in 24 hours
         
         await this.storage.saveEmailVerificationToken(
-          user.id,
+          user.id.toString(),
           user.email!,
           hashedToken,
           expiresAt
@@ -365,7 +365,7 @@ export class AuthRouter {
         // Send verification email (non-blocking - don't fail registration if email fails)
         try {
           await sendVerificationEmail(
-            user.id,
+            user.id.toString(),
             user.email!,
             user.displayName || user.username || 'User',
             verificationToken // Send unhashed token to user
@@ -505,6 +505,87 @@ export class AuthRouter {
       });
     });
 
+    // JWT Token Revocation endpoint - revokes the current JWT token
+    this.router.post("/api/auth/revoke-token", (req: Request, res: Response) => {
+      try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+          return res.status(400).json({
+            message: "No token provided",
+            code: "NO_TOKEN"
+          });
+        }
+
+        const token = authHeader.substring(7);
+        const decoded = decodeTokenWithoutVerification(token);
+
+        if (!decoded || !decoded.jti) {
+          return res.status(400).json({
+            message: "Invalid token format or missing JTI",
+            code: "INVALID_TOKEN"
+          });
+        }
+
+        const expiresAt = decoded.exp ? new Date(decoded.exp * 1000) : new Date(Date.now() + 24 * 60 * 60 * 1000);
+        revokeToken(decoded.jti, expiresAt, decoded.userId);
+
+        logger.info('Token revoked via API', {
+          jti: decoded.jti.substring(0, 8) + '...',
+          userId: decoded.userId
+        });
+
+        res.json({
+          message: "Token revoked successfully",
+          code: "TOKEN_REVOKED"
+        });
+      } catch (error: any) {
+        logger.error('Token revocation error:', error);
+        res.status(500).json({
+          message: "Token revocation failed",
+          code: "REVOCATION_ERROR"
+        });
+      }
+    });
+
+    // Revoke all tokens for a user (requires authentication)
+    this.router.post("/api/auth/revoke-all-tokens", this.ensureAuthenticated, async (req: Request, res: Response) => {
+      try {
+        const user = req.user;
+        if (!user) {
+          return res.status(401).json({
+            message: "Not authenticated",
+            code: "AUTH_REQUIRED"
+          });
+        }
+
+        const revokedCount = revokeAllUserTokens(user.id);
+
+        await db.insert(securityLogs).values({
+          userId: user.id,
+          ip: req.ip || 'unknown',
+          action: 'revoke_all_tokens',
+          resource: `user:${user.id}`,
+          result: 'success',
+          userAgent: req.headers['user-agent'] || '',
+          metadata: { revokedCount }
+        });
+
+        logger.info('All user tokens revoked', { userId: user.id, revokedCount });
+
+        res.json({
+          message: `All tokens revoked successfully`,
+          code: "ALL_TOKENS_REVOKED",
+          revokedCount
+        });
+      } catch (error: any) {
+        logger.error('Revoke all tokens error:', error);
+        res.status(500).json({
+          message: "Failed to revoke tokens",
+          code: "REVOCATION_ERROR"
+        });
+      }
+    });
+
     // Email verification endpoint (token-based, no CSRF needed - token provides protection)
     this.router.post("/api/verify-email", async (req: Request, res: Response) => {
       try {
@@ -532,7 +613,7 @@ export class AuthRouter {
         }
 
         // Mark user as verified
-        await this.storage.updateUser(verification.userId, { 
+        await this.storage.updateUser(verification.userId.toString(), { 
           emailVerified: true 
         });
 
@@ -612,7 +693,7 @@ export class AuthRouter {
 
         // Save new token
         await this.storage.saveEmailVerificationToken(
-          user.id,
+          user.id.toString(),
           user.email,
           hashedToken,
           expiresAt
@@ -620,7 +701,7 @@ export class AuthRouter {
 
         // Send verification email
         await resendVerificationEmail(
-          user.id,
+          user.id.toString(),
           user.email,
           user.displayName || user.username || 'User',
           verificationToken
@@ -700,7 +781,7 @@ export class AuthRouter {
 
         // Save reset token
         await this.storage.savePasswordResetToken(
-          user.id,
+          user.id.toString(),
           hashedToken,
           expiresAt
         );
@@ -708,7 +789,7 @@ export class AuthRouter {
         // Send reset email
         try {
           await sendPasswordResetEmail(
-            user.id,
+            user.id.toString(),
             user.email,
             user.displayName || user.username || 'User',
             resetToken
@@ -784,12 +865,12 @@ export class AuthRouter {
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         // Update user password
-        await this.storage.updateUser(resetRecord.userId, {
+        await this.storage.updateUser(resetRecord.userId.toString(), {
           password: hashedPassword,
           passwordResetToken: null,
           passwordResetExpiry: null,
           failedLoginAttempts: 0,
-          lockedUntil: null
+          accountLockedUntil: null
         });
 
         // Mark token as used

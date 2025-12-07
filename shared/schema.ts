@@ -3702,3 +3702,78 @@ export type InsertBountySubmission = z.infer<typeof insertBountySubmissionSchema
 export type BountyReview = typeof bountyReviews.$inferSelect;
 export type InsertBountyReview = z.infer<typeof insertBountyReviewSchema>;
 
+// ============================================
+// RBAC (Role-Based Access Control) TABLES
+// ============================================
+
+// Permissions table - defines available system permissions
+export const permissions = pgTable('permissions', {
+  id: serial('id').primaryKey(),
+  resource: text('resource').notNull(),
+  action: text('action').notNull(),
+  description: text('description'),
+  category: text('category'),
+  isSystem: boolean('is_system').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  unique('unique_permission').on(table.resource, table.action),
+  index('permissions_category_idx').on(table.category),
+]);
+
+// Roles table - defines roles within an organization
+export const roles = pgTable('roles', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  permissions: text('permissions').array().notNull().default([]),
+  isSystem: boolean('is_system').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('roles_organization_id_idx').on(table.organizationId),
+  unique('unique_role_name_per_org').on(table.organizationId, table.name),
+]);
+
+// User-Role assignments
+export const userRoles = pgTable('user_roles', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  roleId: integer('role_id').notNull().references(() => roles.id, { onDelete: 'cascade' }),
+  organizationId: integer('organization_id').notNull(),
+  assignedAt: timestamp('assigned_at').defaultNow().notNull(),
+  assignedBy: integer('assigned_by').references(() => users.id),
+}, (table) => [
+  unique('unique_user_role_org').on(table.userId, table.roleId, table.organizationId),
+  index('user_roles_user_id_idx').on(table.userId),
+  index('user_roles_role_id_idx').on(table.roleId),
+  index('user_roles_organization_id_idx').on(table.organizationId),
+]);
+
+// Insert schemas for RBAC tables
+export const insertPermissionSchema = createInsertSchema(permissions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertRoleSchema = createInsertSchema(roles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserRoleSchema = createInsertSchema(userRoles).omit({
+  id: true,
+  assignedAt: true,
+});
+
+// Types for RBAC tables
+export type Permission = typeof permissions.$inferSelect;
+export type InsertPermission = z.infer<typeof insertPermissionSchema>;
+
+export type Role = typeof roles.$inferSelect;
+export type InsertRole = z.infer<typeof insertRoleSchema>;
+
+export type UserRole = typeof userRoles.$inferSelect;
+export type InsertUserRole = z.infer<typeof insertUserRoleSchema>;
+

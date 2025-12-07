@@ -4,7 +4,7 @@
  */
 
 import { db } from '../db';
-// import { roles, userRoles, permissions, users, auditLogs } from '@shared/schema';
+import { roles, userRoles, permissions, users, auditLogs } from '@shared/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 
 export interface PermissionDefinition {
@@ -305,12 +305,15 @@ export class RolesPermissionsService {
     details: any
   ): Promise<void> {
     await db.insert(auditLogs).values({
-      organizationId,
-      userId,
+      userId: userId?.toString() ?? 'system',
       action,
-      resourceType: 'role',
-      details,
-      status: 'success',
+      resource: 'role',
+      resourceId: details?.roleId?.toString(),
+      metadata: {
+        organizationId,
+        status: 'success',
+        ...details
+      },
       timestamp: new Date()
     });
   }
