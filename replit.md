@@ -39,6 +39,15 @@ The agent orchestrator (`agent-orchestrator.service.ts`) manages workflow state 
 - **Dependencies:** `[promptParam, autoStartAgent, storedPrompt, bootstrapToken, project?.description]`
 - **Dual Flow:** Client displays prompt in panel + server auto-starts `startAutonomousWorkspace()` via WebSocket connection
 
+### Lazy Loading Timing Fix (Dec 7, 2025)
+- **Problem:** `ReplitAgentPanelV3` lazy-loaded component received `initialPrompt=undefined` on first mount because `project` hadn't loaded yet
+- **Root Cause:** Lazy loading + async project fetch = component mounts with stale props, useEffect runs with undefined, and doesn't re-trigger when prop changes
+- **Solution:** 
+  1. Added `Suspense` boundary around lazy `ReplitAgentPanelV3` component
+  2. Added dynamic `key` prop (`key={...agentInitialPrompt...}`) that forces React to remount when prompt becomes available
+  3. Added debug logging in useEffect to track `changedFromUndefined` and `prevHadPrompt`
+- **Pattern:** For lazy components needing prop values from async queries, use dynamic `key` to force remount when critical props change from undefined to value
+
 ### Memory Optimization Patterns (Dec 7, 2025)
 Replit-style generators and lazy evaluation for handling millions of users:
 - **PostgreSQL Native Streaming:** `server/utils/db-streaming.ts` provides true cursor-based streaming
