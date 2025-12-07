@@ -128,14 +128,23 @@ Current model: GPT-5.1 (Nov 2025 flagship with adaptive reasoning)`
         ...session.messages.slice(1) // Conversation history
       ];
 
-      // Call OpenAI API
-      const response = await openai.chat.completions.create({
+      // Call OpenAI API - handle model-specific parameter requirements
+      const isNewGenModel = session.model.startsWith('gpt-5') || /^o[1-9]/.test(session.model);
+      const completionParams: any = {
         model: session.model,
         messages: apiMessages as any,
-        max_tokens: 4096,
-        temperature: 0.7,
         reasoning_effort: 'none' as any  // ✅ GPT-5.1: Fast non-reasoning mode for chat
-      });
+      };
+      
+      // New-gen models use max_completion_tokens and don't support temperature
+      if (isNewGenModel) {
+        completionParams.max_completion_tokens = 4096;
+      } else {
+        completionParams.max_tokens = 4096;
+        completionParams.temperature = 0.7;
+      }
+      
+      const response = await openai.chat.completions.create(completionParams);
 
       // Add assistant response
       const assistantMessage: ChatMessage = {

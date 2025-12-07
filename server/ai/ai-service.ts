@@ -137,14 +137,25 @@ export class AIService {
 
     const toolDefinitions = tools ? this.getToolDefinitions() : undefined;
 
-    const completion = await openai.chat.completions.create({
+    // Check if this is a new-gen model (GPT-5.x or o-series) that requires different parameters
+    const isNewGenModel = model.startsWith('gpt-5') || /^o[1-9]/.test(model);
+
+    const completionParams: any = {
       model: model === 'gpt-5' ? 'gpt-5' : 'gpt-5',
       messages: messagesWithSystem,
-      temperature,
-      max_tokens: maxTokens,
       tools: toolDefinitions,
       tool_choice: tools ? 'auto' : undefined,
-    });
+    };
+
+    if (isNewGenModel) {
+      completionParams.max_completion_tokens = maxTokens;
+      // Don't set temperature for new-gen models
+    } else {
+      completionParams.max_tokens = maxTokens;
+      completionParams.temperature = temperature;
+    }
+
+    const completion = await openai.chat.completions.create(completionParams);
 
     const response = completion.choices[0];
     const actions: AIResponse['actions'] = [];
