@@ -26,6 +26,65 @@ const logger = winston.createLogger({
   ]
 });
 
+/**
+ * OpenAI Model Capabilities Map
+ * Centralized configuration for model-specific parameter requirements
+ * - requiresMaxCompletionTokens: Use max_completion_tokens instead of max_tokens
+ * - supportsTemperature: Whether the model supports the temperature parameter
+ */
+interface OpenAIModelCapabilities {
+  requiresMaxCompletionTokens: boolean;
+  supportsTemperature: boolean;
+}
+
+const OPENAI_MODEL_CAPABILITIES: Record<string, OpenAIModelCapabilities> = {
+  // GPT-5.x family - requires max_completion_tokens, no temperature
+  'gpt-5.1': { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'gpt-5.1-thinking': { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'gpt-5': { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'gpt-5-mini': { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'gpt-5-nano': { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  // O-series - requires max_completion_tokens, no temperature
+  'o1': { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'o1-mini': { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'o1-preview': { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'o3': { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'o3-mini': { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'o4-mini': { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  // GPT-4o family - legacy parameters supported
+  'gpt-4o': { requiresMaxCompletionTokens: false, supportsTemperature: true },
+  'gpt-4o-mini': { requiresMaxCompletionTokens: false, supportsTemperature: true },
+  'gpt-4-turbo': { requiresMaxCompletionTokens: false, supportsTemperature: true },
+  'gpt-4': { requiresMaxCompletionTokens: false, supportsTemperature: true },
+  // GPT-3.5 family - legacy parameters supported
+  'gpt-3.5-turbo': { requiresMaxCompletionTokens: false, supportsTemperature: true },
+};
+
+/**
+ * Get model capabilities with fallback to safe defaults
+ * Unknown models default to legacy parameter support for backwards compatibility
+ */
+function getOpenAIModelCapabilities(model: string): OpenAIModelCapabilities {
+  // Check exact match first
+  if (OPENAI_MODEL_CAPABILITIES[model]) {
+    return OPENAI_MODEL_CAPABILITIES[model];
+  }
+  
+  // Check family patterns for unknown variants
+  if (model.startsWith('gpt-5')) {
+    return { requiresMaxCompletionTokens: true, supportsTemperature: false };
+  }
+  if (/^o[1-9]/.test(model)) {
+    return { requiresMaxCompletionTokens: true, supportsTemperature: false };
+  }
+  if (model.startsWith('gpt-4')) {
+    return { requiresMaxCompletionTokens: false, supportsTemperature: true };
+  }
+  
+  // Default: legacy parameters (safe fallback for older models)
+  return { requiresMaxCompletionTokens: false, supportsTemperature: true };
+}
+
 const router = Router();
 
 // AI Usage Tracking (Pay-As-You-Go) - Track ALL streaming endpoints for billing
@@ -496,14 +555,14 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
   const modelToUse = options.model || 'gpt-4o-mini';
   logger.info(`[OpenAI Stream] Using model: ${modelToUse}`);
   
-  // OpenAI o-series models (o1, o3, o4-mini) require max_completion_tokens instead of max_tokens
-  const isOSeriesModel = /^o[1-9]/.test(modelToUse);
+  // Get model capabilities for correct parameter usage
+  const capabilities = getOpenAIModelCapabilities(modelToUse);
   
   const stream = await openai.chat.completions.create({
     model: modelToUse,
     messages,
-    temperature: isOSeriesModel ? undefined : options.temperature, // o-series doesn't support temperature
-    ...(isOSeriesModel 
+    temperature: capabilities.supportsTemperature ? options.temperature : undefined,
+    ...(capabilities.requiresMaxCompletionTokens 
       ? { max_completion_tokens: options.maxTokens }
       : { max_tokens: options.maxTokens }),
     stream: true,
