@@ -102,7 +102,7 @@ export default function Pricing() {
       yearlyPrice: 15,
       popular: true,
       icon: <Star className="h-6 w-6" />,
-      gradient: 'from-[#F26207] to-[#FF8534]',
+      gradient: 'from-[var(--ecode-accent)] to-[var(--ecode-accent)]/80',
       features: [
         { text: '4 vCPUs + 8 GB RAM', included: true, highlight: true },
         { text: '100 GB storage', included: true },
@@ -209,7 +209,7 @@ export default function Pricing() {
               ? <Users className="h-6 w-6" />
               : <Building2 className="h-6 w-6" />,
           gradient: isCore
-            ? 'from-[#F26207] to-[#FF8534]'
+            ? 'from-[var(--ecode-accent)] to-[var(--ecode-accent)]/80'
             : isTeams
               ? 'from-blue-600 to-cyan-600'
               : 'from-amber-600 to-orange-600',
@@ -235,20 +235,20 @@ export default function Pricing() {
     ]},
     { category: 'Development', features: [
       { name: 'Projects', starter: '5 active', pro: 'Unlimited', business: 'Unlimited', enterprise: 'Unlimited' },
-      { name: 'Private repos', starter: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, pro: <Check className="h-4 w-4 text-[#F26207]" />, business: <Check className="h-4 w-4 text-[#F26207]" />, enterprise: <Check className="h-4 w-4 text-[#F26207]" /> },
+      { name: 'Private repos', starter: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, pro: <Check className="h-4 w-4 text-[var(--ecode-accent)]" />, business: <Check className="h-4 w-4 text-[var(--ecode-accent)]" />, enterprise: <Check className="h-4 w-4 text-[var(--ecode-accent)]" /> },
       { name: 'Custom domains', starter: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, pro: '5', business: 'Unlimited', enterprise: 'Unlimited' },
-      { name: 'SSL certificates', starter: <Check className="h-4 w-4 text-[#F26207]" />, pro: <Check className="h-4 w-4 text-[#F26207]" />, business: <Check className="h-4 w-4 text-[#F26207]" />, enterprise: <Check className="h-4 w-4 text-[#F26207]" /> }
+      { name: 'SSL certificates', starter: <Check className="h-4 w-4 text-[var(--ecode-accent)]" />, pro: <Check className="h-4 w-4 text-[var(--ecode-accent)]" />, business: <Check className="h-4 w-4 text-[var(--ecode-accent)]" />, enterprise: <Check className="h-4 w-4 text-[var(--ecode-accent)]" /> }
     ]},
     { category: 'AI Features', features: [
       { name: 'AI requests/month', starter: '100', pro: 'Unlimited', business: 'Unlimited', enterprise: 'Unlimited' },
       { name: 'Code completion', starter: 'Basic', pro: 'Advanced', business: 'Advanced', enterprise: 'Custom models' },
       { name: 'AI Agent apps', starter: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, pro: 'Unlimited', business: 'Unlimited', enterprise: 'Unlimited' },
-      { name: 'Custom AI training', starter: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, pro: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, business: <Check className="h-4 w-4 text-[#F26207]" />, enterprise: <Check className="h-4 w-4 text-[#F26207]" /> }
+      { name: 'Custom AI training', starter: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, pro: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, business: <Check className="h-4 w-4 text-[var(--ecode-accent)]" />, enterprise: <Check className="h-4 w-4 text-[var(--ecode-accent)]" /> }
     ]},
     { category: 'Support', features: [
       { name: 'Support channels', starter: 'Community', pro: 'Email', business: 'Priority + Chat', enterprise: '24/7 Phone' },
       { name: 'Response time', starter: 'Best effort', pro: '24 hours', business: '4 hours', enterprise: '1 hour' },
-      { name: 'Dedicated manager', starter: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, pro: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, business: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, enterprise: <Check className="h-4 w-4 text-[#F26207]" /> },
+      { name: 'Dedicated manager', starter: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, pro: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, business: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, enterprise: <Check className="h-4 w-4 text-[var(--ecode-accent)]" /> },
       { name: 'SLA', starter: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, pro: <X className="h-4 w-4 text-[var(--ecode-text-muted)]" />, business: '99.9%', enterprise: '99.99%' }
     ]}
   ];
@@ -277,7 +277,7 @@ export default function Pricing() {
         <PublicNavbar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
-            <div className="animate-spin w-12 h-12 border-4 border-[#F26207] border-t-transparent rounded-full mx-auto" />
+            <div className="animate-spin w-12 h-12 border-4 border-[var(--ecode-accent)] border-t-transparent rounded-full mx-auto" />
             <p className="text-lg text-[var(--ecode-text-muted)]">Loading pricing plans...</p>
           </div>
         </div>
@@ -320,10 +320,10 @@ export default function Pricing() {
             <motion.div variants={fadeInUp}>
               <Badge 
                 variant="secondary" 
-                className="mb-4 px-6 py-2 text-sm font-semibold bg-[#F26207]/10 border-[#F26207]/20 text-[#F26207]"
+                className="mb-4 px-6 py-2 text-sm font-semibold bg-[var(--ecode-accent)]/10 border-[var(--ecode-accent)]/20 text-[var(--ecode-accent)]"
                 data-testid="badge-savings"
               >
-                <Sparkles className="h-4 w-4 mr-2 text-[#F26207]" />
+                <Sparkles className="h-4 w-4 mr-2 text-[var(--ecode-accent)]" />
                 Save up to 20% with annual billing
               </Badge>
             </motion.div>
@@ -336,7 +336,7 @@ export default function Pricing() {
                 Pricing that scales
               </span>
               <br />
-              <span className="bg-gradient-to-r from-[#F26207] to-[#FF8534] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[var(--ecode-accent)] to-[var(--ecode-accent)]/80 bg-clip-text text-transparent">
                 with your growth
               </span>
             </motion.h1>
@@ -360,12 +360,12 @@ export default function Pricing() {
               <Switch
                 checked={billingPeriod === 'yearly'}
                 onCheckedChange={(checked) => setBillingPeriod(checked ? 'yearly' : 'monthly')}
-                className="scale-110 sm:scale-125 data-[state=checked]:bg-[#F26207]"
+                className="scale-110 sm:scale-125 data-[state=checked]:bg-[var(--ecode-accent)]"
                 data-testid="switch-billing-period"
               />
               <span className={`text-sm sm:text-lg font-medium transition-colors duration-200 ${billingPeriod === 'yearly' ? 'text-[var(--ecode-text)]' : 'text-[var(--ecode-text-muted)]'}`}>
                 Yearly
-                <Badge className="ml-1 sm:ml-2 text-[10px] sm:text-xs bg-[#F26207] text-white border-0">
+                <Badge className="ml-1 sm:ml-2 text-[10px] sm:text-xs bg-[var(--ecode-accent)] text-white border-0">
                   Save 20%
                 </Badge>
               </span>
@@ -396,7 +396,7 @@ export default function Pricing() {
                   {tier.popular && (
                     <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
                       <Badge 
-                        className="px-4 py-1 bg-[#F26207] text-white border-0 shadow-lg"
+                        className="px-4 py-1 bg-[var(--ecode-accent)] text-white border-0 shadow-lg"
                         data-testid="badge-popular"
                       >
                         <Star className="h-3 w-3 mr-1 fill-white" />
@@ -409,11 +409,11 @@ export default function Pricing() {
                   <Card className={`
                     h-full relative overflow-hidden transition-all duration-300
                     ${tier.popular 
-                      ? 'border-2 border-[#F26207] shadow-[0_8px_32px_-8px_rgba(242,98,7,0.4)]' 
+                      ? 'border-2 border-[var(--ecode-accent)] shadow-[0_8px_32px_-8px_rgba(242,98,7,0.4)]' 
                       : 'border border-[var(--ecode-border)] bg-[var(--ecode-surface)]'
                     }
-                    ${hoveredCard === tier.name && !tier.popular ? 'shadow-[0_8px_24px_-8px_rgba(242,98,7,0.2)] border-[#F26207]/30' : ''}
-                    ${!tier.popular ? 'hover:border-[#F26207]/30' : ''}
+                    ${hoveredCard === tier.name && !tier.popular ? 'shadow-[0_8px_24px_-8px_rgba(242,98,7,0.2)] border-[var(--ecode-accent)]/30' : ''}
+                    ${!tier.popular ? 'hover:border-[var(--ecode-accent)]/30' : ''}
                     backdrop-blur-sm bg-[var(--ecode-surface)]
                   `}>
                     {/* Gradient Background */}
@@ -446,7 +446,7 @@ export default function Pricing() {
                               </span>
                             </div>
                             {billingPeriod === 'yearly' && tier.monthlyPrice > 0 && (
-                              <p className="text-sm text-[#F26207] mt-1 font-medium">
+                              <p className="text-sm text-[var(--ecode-accent)] mt-1 font-medium">
                                 Save ${(tier.monthlyPrice - tier.yearlyPrice) * 12}/year
                               </p>
                             )}
@@ -460,10 +460,10 @@ export default function Pricing() {
                       <Button 
                         className={`w-full h-11 sm:h-12 text-sm sm:text-base font-semibold transition-all duration-200 ${
                           tier.popular 
-                            ? 'bg-[#F26207] hover:bg-[#D04E00] text-white shadow-lg hover:shadow-xl' 
+                            ? 'bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white shadow-lg hover:shadow-xl' 
                             : tier.enterprise
-                              ? 'bg-[#F26207] hover:bg-[#D04E00] text-white'
-                              : 'border border-[var(--ecode-border)] bg-transparent text-[var(--ecode-text)] hover:border-[#F26207]/30 hover:bg-[#F26207]/5'
+                              ? 'bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white'
+                              : 'border border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] hover:border-[var(--ecode-accent)]/30 hover:bg-[var(--ecode-accent)]/5'
                         }`}
                         variant={tier.popular || tier.enterprise ? 'default' : 'outline'}
                         onClick={() => handleSelectPlan(tier)}
@@ -479,7 +479,7 @@ export default function Pricing() {
                           {tier.features.slice(0, 10).map((feature, idx) => (
                             <li key={idx} className="flex items-start gap-3 group">
                               {feature.included ? (
-                                <div className={`mt-0.5 transition-colors duration-200 ${feature.highlight ? 'text-[#F26207]' : 'text-[#F26207]/70'}`}>
+                                <div className={`mt-0.5 transition-colors duration-200 ${feature.highlight ? 'text-[var(--ecode-accent)]' : 'text-[var(--ecode-accent)]/70'}`}>
                                   <CheckCircle2 className="h-5 w-5" />
                                 </div>
                               ) : (
@@ -495,7 +495,7 @@ export default function Pricing() {
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
-                                        <Info className="inline h-3 w-3 ml-1 text-[var(--ecode-text-muted)] hover:text-[#F26207] transition-colors cursor-help" />
+                                        <Info className="inline h-3 w-3 ml-1 text-[var(--ecode-text-muted)] hover:text-[var(--ecode-accent)] transition-colors cursor-help" />
                                       </TooltipTrigger>
                                       <TooltipContent className="bg-[var(--ecode-surface)] border-[var(--ecode-border)] text-[var(--ecode-text)]">
                                         <p>{feature.tooltip}</p>
@@ -510,7 +510,7 @@ export default function Pricing() {
                         
                         {tier.features.length > 10 && (
                           <button 
-                            className="text-sm text-[#F26207] font-medium mt-4 hover:underline transition-all duration-200 hover:text-[#D04E00]"
+                            className="text-sm text-[var(--ecode-accent)] font-medium mt-4 hover:underline transition-all duration-200 hover:text-[var(--ecode-accent-hover)]"
                             data-testid={`button-more-features-${tier.name.toLowerCase()}`}
                           >
                             + {tier.features.length - 10} more features
@@ -567,7 +567,7 @@ export default function Pricing() {
                         <div className="text-sm text-[var(--ecode-text-muted)] mt-1">Free forever</div>
                       </th>
                       <th className="text-center p-6 min-w-[150px]">
-                        <div className="font-semibold text-[#F26207]">Core</div>
+                        <div className="font-semibold text-[var(--ecode-accent)]">Core</div>
                         <div className="text-sm text-[var(--ecode-text-muted)] mt-1">Most popular</div>
                       </th>
                       <th className="text-center p-6 min-w-[150px]">
@@ -593,12 +593,12 @@ export default function Pricing() {
                         {category.features.map((feature, featureIdx) => (
                           <tr 
                             key={featureIdx} 
-                            className="border-b border-[var(--ecode-border)] hover:bg-[#F26207]/5 transition-colors duration-200"
+                            className="border-b border-[var(--ecode-border)] hover:bg-[var(--ecode-accent)]/5 transition-colors duration-200"
                             data-testid={`row-feature-${feature.name.toLowerCase().replace(/\s/g, '-')}`}
                           >
                             <td className="p-6 font-medium text-[var(--ecode-text-secondary)]">{feature.name}</td>
                             <td className="text-center p-6 text-[var(--ecode-text-muted)]">{feature.starter}</td>
-                            <td className="text-center p-6 text-[#F26207] font-medium">{feature.pro}</td>
+                            <td className="text-center p-6 text-[var(--ecode-accent)] font-medium">{feature.pro}</td>
                             <td className="text-center p-6 text-[var(--ecode-text)] font-medium">{feature.business}</td>
                             <td className="text-center p-6 text-[var(--ecode-text)] font-medium">{feature.enterprise}</td>
                           </tr>
@@ -627,7 +627,7 @@ export default function Pricing() {
               transition={{ duration: 0.6 }}
               className="space-y-6"
             >
-              <Badge className="bg-[#F26207]/20 text-[#F26207] border-[#F26207]/30">
+              <Badge className="bg-[var(--ecode-accent)]/20 text-[var(--ecode-accent)] border-[var(--ecode-accent)]/30">
                 <Building2 className="h-4 w-4 mr-2" />
                 Enterprise Solutions
               </Badge>
@@ -641,19 +641,19 @@ export default function Pricing() {
               
               <div className="grid sm:grid-cols-2 gap-4 pt-4">
                 <div className="flex items-center gap-3">
-                  <Shield className="h-5 w-5 text-[#F26207]" />
+                  <Shield className="h-5 w-5 text-[var(--ecode-accent)]" />
                   <span>SOC 2 Type II Certified</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Lock className="h-5 w-5 text-[#F26207]" />
+                  <Lock className="h-5 w-5 text-[var(--ecode-accent)]" />
                   <span>HIPAA Compliant</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Gauge className="h-5 w-5 text-[#F26207]" />
+                  <Gauge className="h-5 w-5 text-[var(--ecode-accent)]" />
                   <span>99.99% Uptime SLA</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Phone className="h-5 w-5 text-[#F26207]" />
+                  <Phone className="h-5 w-5 text-[var(--ecode-accent)]" />
                   <span>24/7 Phone Support</span>
                 </div>
               </div>
@@ -661,7 +661,7 @@ export default function Pricing() {
               <div className="flex gap-4 pt-4">
                 <Button 
                   size="lg"
-                  className="bg-[#F26207] text-white hover:bg-[#D04E00] transition-all duration-200"
+                  className="bg-[var(--ecode-accent)] text-white hover:bg-[var(--ecode-accent-hover)] transition-all duration-200"
                   onClick={() => navigate('/contact-sales')}
                   data-testid="button-enterprise-contact"
                 >
@@ -671,7 +671,7 @@ export default function Pricing() {
                 <Button 
                   size="lg"
                   variant="outline"
-                  className="bg-transparent border-white/20 text-white hover:bg-white/10 hover:border-[#F26207]/50 transition-all duration-200"
+                  className="bg-[var(--ecode-surface)] border-white/20 text-white hover:bg-white/10 hover:border-[var(--ecode-accent)]/50 transition-all duration-200"
                   onClick={() => navigate('/docs/enterprise')}
                   data-testid="button-enterprise-learn"
                 >
@@ -687,7 +687,7 @@ export default function Pricing() {
               transition={{ duration: 0.6 }}
               className="relative"
             >
-              <Card className="bg-white/10 backdrop-blur-sm border-white/20 hover:border-[#F26207]/30 transition-all duration-300">
+              <Card className="bg-white/10 backdrop-blur-sm border-white/20 hover:border-[var(--ecode-accent)]/30 transition-all duration-300">
                 <CardHeader>
                   <CardTitle className="text-white">Enterprise includes:</CardTitle>
                 </CardHeader>
@@ -704,7 +704,7 @@ export default function Pricing() {
                       'Custom billing & contracts'
                     ].map((item, idx) => (
                       <li key={idx} className="flex items-center gap-3 text-white/90 group">
-                        <CheckCircle2 className="h-5 w-5 text-[#F26207] group-hover:scale-110 transition-transform duration-200" />
+                        <CheckCircle2 className="h-5 w-5 text-[var(--ecode-accent)] group-hover:scale-110 transition-transform duration-200" />
                         <span>{item}</span>
                       </li>
                     ))}
@@ -775,7 +775,7 @@ export default function Pricing() {
             ].map((faq, idx) => (
               <motion.div key={idx} variants={fadeInUp}>
                 <Card 
-                  className="bg-[var(--ecode-surface)] border-[var(--ecode-border)] hover:border-[#F26207]/30 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.15)] transition-all duration-300"
+                  className="bg-[var(--ecode-surface)] border-[var(--ecode-border)] hover:border-[var(--ecode-accent)]/30 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.15)] transition-all duration-300"
                   data-testid={`faq-card-${idx}`}
                 >
                   <CardHeader>
@@ -795,7 +795,7 @@ export default function Pricing() {
 
       {/* CTA Section - E-Code Orange Gradient */}
       <section 
-        className="py-20 bg-gradient-to-r from-[#F26207] to-[#FF8534]"
+        className="py-20 bg-gradient-to-r from-[var(--ecode-accent)] to-[var(--ecode-accent)]/80"
         data-testid="section-cta"
       >
         <div className="container-responsive max-w-4xl text-center">
@@ -816,7 +816,7 @@ export default function Pricing() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
               <Button 
                 size="lg"
-                className="bg-white text-[#F26207] hover:bg-white/95 px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                className="bg-white text-[var(--ecode-accent)] hover:bg-white/95 px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                 onClick={() => navigate(user ? '/dashboard' : '/register')}
                 data-testid="button-cta-start-free"
               >

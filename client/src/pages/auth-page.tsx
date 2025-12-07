@@ -91,7 +91,7 @@ export default function AuthPage() {
         >
           <CardHeader className="p-5 sm:p-6 pb-2">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F26207] to-[#FF8534] flex items-center justify-center shadow-md">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--ecode-accent)] to-[var(--ecode-accent)]/80 flex items-center justify-center shadow-md">
                 <Code2 className="h-5 w-5 text-white" />
               </div>
               <CardTitle className="text-xl sm:text-2xl font-bold text-[var(--ecode-text)]">
@@ -104,19 +104,19 @@ export default function AuthPage() {
             
             <div className="mt-4 p-3 sm:p-4 bg-[var(--ecode-surface-tertiary)] dark:bg-[#1c2333] rounded-xl border border-[var(--ecode-border)] transition-colors duration-200">
               <div className="flex items-center gap-2 mb-2">
-                <Shield className="h-4 w-4 text-[#F26207]" />
+                <Shield className="h-4 w-4 text-[var(--ecode-accent)]" />
                 <p className="text-sm font-medium text-[var(--ecode-text)]">Quick Access</p>
               </div>
               <div className="flex flex-col gap-2 mt-2">
                 <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2">
                   <div className="text-xs sm:text-sm text-[var(--ecode-text-muted)]">
-                    <span>Email: <code className="bg-[#F26207]/10 dark:bg-[#F26207]/20 text-[#F26207] px-1.5 py-0.5 rounded font-mono text-xs">admin@test.com</code></span><br/>
-                    <span>Password: <code className="bg-[#F26207]/10 dark:bg-[#F26207]/20 text-[#F26207] px-1.5 py-0.5 rounded font-mono text-xs">adminpass123</code></span>
+                    <span>Email: <code className="bg-[var(--ecode-accent)]/10 dark:bg-[var(--ecode-accent)]/20 text-[var(--ecode-accent)] px-1.5 py-0.5 rounded font-mono text-xs">admin@test.com</code></span><br/>
+                    <span>Password: <code className="bg-[var(--ecode-accent)]/10 dark:bg-[var(--ecode-accent)]/20 text-[var(--ecode-accent)] px-1.5 py-0.5 rounded font-mono text-xs">adminpass123</code></span>
                   </div>
                   <Button 
                     variant="secondary" 
                     size="sm" 
-                    className="min-h-[40px] text-xs sm:text-sm px-4 bg-[#F26207]/10 hover:bg-[#F26207]/20 text-[#F26207] border-0 font-medium transition-all duration-200"
+                    className="min-h-[40px] text-xs sm:text-sm px-4 bg-[var(--ecode-accent)]/10 hover:bg-[var(--ecode-accent)]/20 text-[var(--ecode-accent)] border-0 font-medium transition-all duration-200"
                     onClick={() => {
                       loginForm.setValue('email', 'admin@test.com');
                       loginForm.setValue('password', 'adminpass123');
@@ -136,14 +136,14 @@ export default function AuthPage() {
               <TabsList className="grid w-full grid-cols-2 mb-5 sm:mb-6 bg-[var(--ecode-surface-tertiary)] dark:bg-[#1c2333] p-1 rounded-xl border border-[var(--ecode-border)]">
                 <TabsTrigger 
                   value="login" 
-                  className="rounded-lg data-[state=active]:bg-[#F26207] data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all duration-200"
+                  className="rounded-lg data-[state=active]:bg-[var(--ecode-accent)] data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all duration-200"
                   data-testid="tab-login"
                 >
                   Login
                 </TabsTrigger>
                 <TabsTrigger 
                   value="register" 
-                  className="rounded-lg data-[state=active]:bg-[#F26207] data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all duration-200"
+                  className="rounded-lg data-[state=active]:bg-[var(--ecode-accent)] data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all duration-200"
                   data-testid="tab-register"
                 >
                   Register
@@ -163,7 +163,7 @@ export default function AuthPage() {
                             <Input 
                               type="email" 
                               placeholder="your@email.com" 
-                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[#F26207]/20 focus:border-[#F26207]/40 transition-all duration-200 rounded-lg"
+                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40 transition-all duration-200 rounded-lg"
                               data-testid="input-login-email"
                               {...field} 
                             />
@@ -182,7 +182,7 @@ export default function AuthPage() {
                             <Input 
                               type="password" 
                               placeholder="••••••••" 
-                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[#F26207]/20 focus:border-[#F26207]/40 transition-all duration-200 rounded-lg"
+                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40 transition-all duration-200 rounded-lg"
                               data-testid="input-login-password"
                               {...field} 
                             />
@@ -194,7 +194,7 @@ export default function AuthPage() {
                     <div className="space-y-3 pt-2">
                       <Button 
                         type="submit" 
-                        className="w-full min-h-[48px] bg-[#F26207] hover:bg-[#D04E00] text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200" 
+                        className="w-full min-h-[48px] bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200" 
                         disabled={loginMutation.isPending}
                         data-testid="button-login-submit"
                       >
@@ -221,7 +221,7 @@ export default function AuthPage() {
                         <Button 
                           type="button" 
                           variant="outline" 
-                          className="flex-1 min-h-[44px] text-xs sm:text-sm border-[#F26207]/30 bg-[#F26207]/5 hover:bg-[#F26207]/10 hover:border-[#F26207]/50 text-[#F26207] font-medium transition-all duration-200 rounded-lg"
+                          className="flex-1 min-h-[44px] text-xs sm:text-sm border-[var(--ecode-accent)]/30 bg-[var(--ecode-accent)]/5 hover:bg-[var(--ecode-accent)]/10 hover:border-[var(--ecode-accent)]/50 text-[var(--ecode-accent)] font-medium transition-all duration-200 rounded-lg"
                           onClick={() => {
                             loginForm.setValue('email', 'admin@test.com');
                             loginForm.setValue('password', 'adminpass123');
@@ -235,7 +235,7 @@ export default function AuthPage() {
                         <Button 
                           type="button" 
                           variant="outline" 
-                          className="flex-1 min-h-[44px] text-xs sm:text-sm border-[var(--ecode-border)] hover:border-[#F26207]/30 hover:bg-[#F26207]/5 text-[var(--ecode-text)] font-medium transition-all duration-200 rounded-lg"
+                          className="flex-1 min-h-[44px] text-xs sm:text-sm border-[var(--ecode-border)] hover:border-[var(--ecode-accent)]/30 hover:bg-[var(--ecode-accent)]/5 text-[var(--ecode-text)] font-medium transition-all duration-200 rounded-lg"
                           onClick={() => {
                             loginForm.setValue('email', 'admin@test.com');
                             loginForm.setValue('password', 'adminpass123');
@@ -275,7 +275,7 @@ export default function AuthPage() {
                           <FormControl>
                             <Input 
                               placeholder="Choose a username" 
-                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[#F26207]/20 focus:border-[#F26207]/40 transition-all duration-200 rounded-lg"
+                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40 transition-all duration-200 rounded-lg"
                               data-testid="input-register-username"
                               {...field} 
                             />
@@ -294,7 +294,7 @@ export default function AuthPage() {
                             <Input 
                               type="password" 
                               placeholder="••••••••" 
-                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[#F26207]/20 focus:border-[#F26207]/40 transition-all duration-200 rounded-lg"
+                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40 transition-all duration-200 rounded-lg"
                               data-testid="input-register-password"
                               {...field} 
                             />
@@ -313,7 +313,7 @@ export default function AuthPage() {
                             <Input 
                               type="email" 
                               placeholder="your@email.com" 
-                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[#F26207]/20 focus:border-[#F26207]/40 transition-all duration-200 rounded-lg"
+                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40 transition-all duration-200 rounded-lg"
                               data-testid="input-register-email"
                               {...field} 
                             />
@@ -331,7 +331,7 @@ export default function AuthPage() {
                           <FormControl>
                             <Input 
                               placeholder="Your display name" 
-                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[#F26207]/20 focus:border-[#F26207]/40 transition-all duration-200 rounded-lg"
+                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40 transition-all duration-200 rounded-lg"
                               data-testid="input-register-displayname"
                               {...field} 
                             />
@@ -342,7 +342,7 @@ export default function AuthPage() {
                     />
                     <Button 
                       type="submit" 
-                      className="w-full min-h-[48px] bg-[#F26207] hover:bg-[#D04E00] text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 mt-2" 
+                      className="w-full min-h-[48px] bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 mt-2" 
                       disabled={registerMutation.isPending}
                       data-testid="button-register-submit"
                     >
@@ -368,7 +368,7 @@ export default function AuthPage() {
                   Don't have an account?{" "}
                   <Button 
                     variant="link" 
-                    className="p-0 h-auto text-[#F26207] hover:text-[#D04E00] font-medium transition-colors duration-200" 
+                    className="p-0 h-auto text-[var(--ecode-accent)] hover:text-[var(--ecode-accent-hover)] font-medium transition-colors duration-200" 
                     onClick={() => setActiveTab("register")}
                     data-testid="link-switch-register"
                   >
@@ -380,7 +380,7 @@ export default function AuthPage() {
                   Already have an account?{" "}
                   <Button 
                     variant="link" 
-                    className="p-0 h-auto text-[#F26207] hover:text-[#D04E00] font-medium transition-colors duration-200" 
+                    className="p-0 h-auto text-[var(--ecode-accent)] hover:text-[var(--ecode-accent-hover)] font-medium transition-colors duration-200" 
                     onClick={() => setActiveTab("login")}
                     data-testid="link-switch-login"
                   >
@@ -394,10 +394,7 @@ export default function AuthPage() {
       </div>
 
       <div 
-        className="flex-1 p-8 lg:p-12 flex flex-col justify-center hidden md:flex relative overflow-hidden"
-        style={{ 
-          background: 'linear-gradient(135deg, #F26207 0%, #FF8534 50%, #F99D25 100%)',
-        }}
+        className="flex-1 p-8 lg:p-12 flex flex-col justify-center hidden md:flex relative overflow-hidden bg-gradient-to-br from-[var(--ecode-accent)] via-[var(--ecode-accent)]/90 to-[var(--ecode-accent)]/80"
         data-testid="hero-section"
       >
         <div className="absolute inset-0 opacity-10">

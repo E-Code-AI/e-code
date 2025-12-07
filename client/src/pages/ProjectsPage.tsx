@@ -301,7 +301,7 @@ const ProjectsPage = () => {
             <Button 
               onClick={() => setLocation('/login')} 
               size="lg"
-              className="bg-[#F26207] hover:bg-[#D04E00] text-white"
+              className="bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
               data-testid="button-sign-in"
             >
               Sign In
@@ -325,7 +325,7 @@ const ProjectsPage = () => {
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
           className="relative rounded-2xl overflow-hidden mb-8"
           style={{ 
-            background: 'linear-gradient(135deg, #F26207 0%, #FF8534 50%, #F99D25 100%)',
+            background: 'linear-gradient(135deg, var(--ecode-accent) 0%, var(--ecode-accent) 50%, var(--ecode-accent) 100%)',
             boxShadow: '0 8px 32px -8px rgba(242, 98, 7, 0.4)'
           }}
         >
@@ -362,7 +362,7 @@ const ProjectsPage = () => {
                 <Dialog open={newProjectOpen} onOpenChange={setNewProjectOpen}>
                   <DialogTrigger asChild>
                     <Button 
-                      className="bg-white text-[#F26207] hover:bg-white/95 font-semibold shadow-lg"
+                      className="bg-white text-[var(--ecode-accent)] hover:bg-white/95 font-semibold shadow-lg"
                       data-testid="button-new-project"
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -388,7 +388,7 @@ const ProjectsPage = () => {
                                 <Input 
                                   placeholder="My Awesome Project" 
                                   {...field} 
-                                  className="border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] focus:ring-[#F26207]/20 focus:border-[#F26207]/40"
+                                  className="border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40"
                                   data-testid="input-project-name"
                                 />
                               </FormControl>
@@ -406,7 +406,7 @@ const ProjectsPage = () => {
                                 <Input 
                                   placeholder="A brief description..." 
                                   {...field}
-                                  className="border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] focus:ring-[#F26207]/20 focus:border-[#F26207]/40"
+                                  className="border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40"
                                   data-testid="input-project-description"
                                 />
                               </FormControl>
@@ -485,7 +485,7 @@ const ProjectsPage = () => {
                           <Button 
                             type="submit" 
                             disabled={createProjectMutation.isPending}
-                            className="bg-[#F26207] hover:bg-[#D04E00] text-white"
+                            className="bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
                             data-testid="button-create-project"
                           >
                             {createProjectMutation.isPending ? (
@@ -532,7 +532,7 @@ const ProjectsPage = () => {
                           placeholder="Search projects..."
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-9 border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] focus:ring-[#F26207]/20 focus:border-[#F26207]/40"
+                          className="pl-9 border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40"
                           data-testid="input-search-projects"
                         />
                       </div>
@@ -555,7 +555,7 @@ const ProjectsPage = () => {
                                     setFilterLanguage(filterLanguage.filter(l => l !== lang));
                                   }
                                 }}
-                                className="border-[var(--ecode-border)] data-[state=checked]:bg-[#F26207] data-[state=checked]:border-[#F26207]"
+                                className="border-[var(--ecode-border)] data-[state=checked]:bg-[var(--ecode-accent)] data-[state=checked]:border-[var(--ecode-accent)]"
                                 data-testid={`checkbox-lang-${lang}`}
                               />
                               <Label
@@ -586,7 +586,7 @@ const ProjectsPage = () => {
                                   setFilterVisibility(filterVisibility.filter(v => v !== vis));
                                 }
                               }}
-                              className="border-[var(--ecode-border)] data-[state=checked]:bg-[#F26207] data-[state=checked]:border-[#F26207]"
+                              className="border-[var(--ecode-border)] data-[state=checked]:bg-[var(--ecode-accent)] data-[state=checked]:border-[var(--ecode-accent)]"
                               data-testid={`checkbox-visibility-${vis}`}
                             />
                             <Label
@@ -604,7 +604,7 @@ const ProjectsPage = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[#F26207]/10 hover:text-[#F26207] hover:border-[#F26207]/30"
+                      className="w-full border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)] hover:border-[var(--ecode-accent)]/30"
                       onClick={() => {
                         setSearchQuery('');
                         setFilterLanguage([]);
@@ -636,8 +636,8 @@ const ProjectsPage = () => {
                         className={cn(
                           "h-8 w-8",
                           viewMode === 'grid' 
-                            ? "bg-[#F26207]/10 text-[#F26207]" 
-                            : "text-[var(--ecode-text-muted)] hover:bg-[#F26207]/10 hover:text-[#F26207]"
+                            ? "bg-[var(--ecode-accent)]/10 text-[var(--ecode-accent)]" 
+                            : "text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
                         )}
                         onClick={() => setViewMode('grid')}
                         data-testid="button-view-grid"
@@ -650,8 +650,8 @@ const ProjectsPage = () => {
                         className={cn(
                           "h-8 w-8",
                           viewMode === 'list' 
-                            ? "bg-[#F26207]/10 text-[#F26207]" 
-                            : "text-[var(--ecode-text-muted)] hover:bg-[#F26207]/10 hover:text-[#F26207]"
+                            ? "bg-[var(--ecode-accent)]/10 text-[var(--ecode-accent)]" 
+                            : "text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
                         )}
                         onClick={() => setViewMode('list')}
                         data-testid="button-view-list"
@@ -666,7 +666,7 @@ const ProjectsPage = () => {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="gap-2 border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[#F26207]/10 hover:text-[#F26207] hover:border-[#F26207]/30"
+                          className="gap-2 border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)] hover:border-[var(--ecode-accent)]/30"
                           data-testid="dropdown-sort"
                         >
                           <ArrowUpDown className="h-4 w-4" />
@@ -679,7 +679,7 @@ const ProjectsPage = () => {
                         <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
                         <DropdownMenuItem 
                           onClick={() => setSortBy('updated')}
-                          className="text-[var(--ecode-text)] focus:bg-[#F26207]/10 focus:text-[#F26207]"
+                          className="text-[var(--ecode-text)] focus:bg-[var(--ecode-accent)]/10 focus:text-[var(--ecode-accent)]"
                           data-testid="sort-updated"
                         >
                           <Clock className="h-4 w-4 mr-2" />
@@ -687,7 +687,7 @@ const ProjectsPage = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => setSortBy('created')}
-                          className="text-[var(--ecode-text)] focus:bg-[#F26207]/10 focus:text-[#F26207]"
+                          className="text-[var(--ecode-text)] focus:bg-[var(--ecode-accent)]/10 focus:text-[var(--ecode-accent)]"
                           data-testid="sort-created"
                         >
                           <Calendar className="h-4 w-4 mr-2" />
@@ -695,7 +695,7 @@ const ProjectsPage = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => setSortBy('name')}
-                          className="text-[var(--ecode-text)] focus:bg-[#F26207]/10 focus:text-[#F26207]"
+                          className="text-[var(--ecode-text)] focus:bg-[var(--ecode-accent)]/10 focus:text-[var(--ecode-accent)]"
                           data-testid="sort-name"
                         >
                           <FileText className="h-4 w-4 mr-2" />
@@ -703,7 +703,7 @@ const ProjectsPage = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => setSortBy('stars')}
-                          className="text-[var(--ecode-text)] focus:bg-[#F26207]/10 focus:text-[#F26207]"
+                          className="text-[var(--ecode-text)] focus:bg-[var(--ecode-accent)]/10 focus:text-[var(--ecode-accent)]"
                           data-testid="sort-stars"
                         >
                           <Star className="h-4 w-4 mr-2" />
@@ -719,7 +719,7 @@ const ProjectsPage = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         className="flex items-center gap-2"
                       >
-                        <Badge className="bg-[#F26207]/10 text-[#F26207] border border-[#F26207]/30">
+                        <Badge className="bg-[var(--ecode-accent)]/10 text-[var(--ecode-accent)] border border-[var(--ecode-accent)]/30">
                           {selectedProjects.length} selected
                         </Badge>
                         <DropdownMenu>
@@ -727,7 +727,7 @@ const ProjectsPage = () => {
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              className="gap-2 border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[#F26207]/10 hover:text-[#F26207]"
+                              className="gap-2 border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
                               data-testid="dropdown-bulk-actions"
                             >
                               Bulk Actions
@@ -737,7 +737,7 @@ const ProjectsPage = () => {
                           <DropdownMenuContent className="border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
                             <DropdownMenuItem 
                               onClick={() => handleBulkAction('archive')}
-                              className="text-[var(--ecode-text)] focus:bg-[#F26207]/10 focus:text-[#F26207]"
+                              className="text-[var(--ecode-text)] focus:bg-[var(--ecode-accent)]/10 focus:text-[var(--ecode-accent)]"
                               data-testid="bulk-archive"
                             >
                               <Archive className="h-4 w-4 mr-2" />
@@ -758,7 +758,7 @@ const ProjectsPage = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => setSelectedProjects([])}
-                          className="h-8 w-8 text-[var(--ecode-text-muted)] hover:bg-[#F26207]/10 hover:text-[#F26207]"
+                          className="h-8 w-8 text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
                           data-testid="button-clear-selection"
                         >
                           <X className="h-4 w-4" />
@@ -772,7 +772,7 @@ const ProjectsPage = () => {
                       id="select-all"
                       checked={selectedProjects.length === filteredAndSortedProjects.length && filteredAndSortedProjects.length > 0}
                       onCheckedChange={selectAllProjects}
-                      className="border-[var(--ecode-border)] data-[state=checked]:bg-[#F26207] data-[state=checked]:border-[#F26207]"
+                      className="border-[var(--ecode-border)] data-[state=checked]:bg-[var(--ecode-accent)] data-[state=checked]:border-[var(--ecode-accent)]"
                       data-testid="checkbox-select-all"
                     />
                     <Label htmlFor="select-all" className="text-sm cursor-pointer text-[var(--ecode-text)]">
@@ -802,8 +802,8 @@ const ProjectsPage = () => {
             ) : filteredAndSortedProjects.length === 0 ? (
               <Card className="p-16 text-center border border-dashed border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
                 <div className="max-w-md mx-auto">
-                  <div className="p-4 rounded-full bg-[#F26207]/10 w-fit mx-auto mb-4">
-                    <Folder className="h-12 w-12 text-[#F26207]" />
+                  <div className="p-4 rounded-full bg-[var(--ecode-accent)]/10 w-fit mx-auto mb-4">
+                    <Folder className="h-12 w-12 text-[var(--ecode-accent)]" />
                   </div>
                   <h3 className="text-xl font-semibold mb-2 text-[var(--ecode-text)]">No projects found</h3>
                   <p className="text-[var(--ecode-text-muted)] mb-6">
@@ -813,7 +813,7 @@ const ProjectsPage = () => {
                   </p>
                   <Button 
                     onClick={() => setNewProjectOpen(true)}
-                    className="bg-[#F26207] hover:bg-[#D04E00] text-white"
+                    className="bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
                     data-testid="button-create-first-project"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -837,13 +837,13 @@ const ProjectsPage = () => {
                       className="relative"
                       data-testid={`project-card-${project.id}`}
                     >
-                      <Card className="overflow-hidden border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[#F26207]/30 hover:shadow-[0_8px_24px_-8px_rgba(242,98,7,0.2)] transition-all duration-300 group">
+                      <Card className="overflow-hidden border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[var(--ecode-accent)]/30 hover:shadow-[0_8px_24px_-8px_rgba(242,98,7,0.2)] transition-all duration-300 group">
                         {/* Selection Checkbox */}
                         <div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Checkbox
                             checked={selectedProjects.includes(project.id)}
                             onCheckedChange={() => toggleProjectSelection(project.id)}
-                            className="bg-white/90 backdrop-blur-sm border-[var(--ecode-border)] data-[state=checked]:bg-[#F26207] data-[state=checked]:border-[#F26207]"
+                            className="bg-white/90 backdrop-blur-sm border-[var(--ecode-border)] data-[state=checked]:bg-[var(--ecode-accent)] data-[state=checked]:border-[var(--ecode-accent)]"
                             data-testid={`checkbox-project-${project.id}`}
                           />
                         </div>
@@ -851,21 +851,21 @@ const ProjectsPage = () => {
                         {/* Status Badges */}
                         <div className="absolute top-2 right-2 z-10 flex gap-2">
                           {project.isPinned && (
-                            <Badge className="bg-[#F26207] text-white shadow-lg">
+                            <Badge className="bg-[var(--ecode-accent)] text-white shadow-lg">
                               <Pin className="h-3 w-3" />
                             </Badge>
                           )}
                         </div>
 
                         {/* Project Thumbnail */}
-                        <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-[#F26207]/10 to-[#F99D25]/10">
+                        <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-[var(--ecode-accent)]/10 to-[var(--ecode-accent)]/10">
                           <img 
                             src={index % 2 === 0 ? codingImagePath : modernDevImagePath}
                             alt={project.name}
                             className="absolute inset-0 w-full h-full object-cover opacity-20"
                           />
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="text-4xl font-bold text-[#F26207]/30 select-none">
+                            <div className="text-4xl font-bold text-[var(--ecode-accent)]/30 select-none">
                               {project.name.substring(0, 2).toUpperCase()}
                             </div>
                           </div>
@@ -932,7 +932,7 @@ const ProjectsPage = () => {
                           <div className="flex gap-1 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button
                               size="sm"
-                              className="flex-1 bg-[#F26207] hover:bg-[#D04E00] text-white"
+                              className="flex-1 bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
                               onClick={() => {
                                 setLocation(`/ide/${project.id}`);
                               }}
@@ -944,7 +944,7 @@ const ProjectsPage = () => {
                             <Button 
                               size="sm" 
                               variant="ghost" 
-                              className="px-2 text-[var(--ecode-text-muted)] hover:bg-[#F26207]/10 hover:text-[#F26207]"
+                              className="px-2 text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
                               data-testid={`button-edit-${project.id}`}
                             >
                               <Edit className="h-4 w-4" />
@@ -952,7 +952,7 @@ const ProjectsPage = () => {
                             <Button 
                               size="sm" 
                               variant="ghost" 
-                              className="px-2 text-[var(--ecode-text-muted)] hover:bg-[#F26207]/10 hover:text-[#F26207]"
+                              className="px-2 text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
                               data-testid={`button-deploy-${project.id}`}
                             >
                               <Rocket className="h-4 w-4" />
@@ -962,26 +962,26 @@ const ProjectsPage = () => {
                                 <Button 
                                   size="sm" 
                                   variant="ghost" 
-                                  className="px-2 text-[var(--ecode-text-muted)] hover:bg-[#F26207]/10 hover:text-[#F26207]"
+                                  className="px-2 text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
                                   data-testid={`button-more-${project.id}`}
                                 >
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
-                                <DropdownMenuItem className="text-[var(--ecode-text)] focus:bg-[#F26207]/10 focus:text-[#F26207]">
+                                <DropdownMenuItem className="text-[var(--ecode-text)] focus:bg-[var(--ecode-accent)]/10 focus:text-[var(--ecode-accent)]">
                                   <Share2 className="h-4 w-4 mr-2" />
                                   Share
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="text-[var(--ecode-text)] focus:bg-[#F26207]/10 focus:text-[#F26207]">
+                                <DropdownMenuItem className="text-[var(--ecode-text)] focus:bg-[var(--ecode-accent)]/10 focus:text-[var(--ecode-accent)]">
                                   <GitFork className="h-4 w-4 mr-2" />
                                   Fork
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="text-[var(--ecode-text)] focus:bg-[#F26207]/10 focus:text-[#F26207]">
+                                <DropdownMenuItem className="text-[var(--ecode-text)] focus:bg-[var(--ecode-accent)]/10 focus:text-[var(--ecode-accent)]">
                                   <Copy className="h-4 w-4 mr-2" />
                                   Duplicate
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="text-[var(--ecode-text)] focus:bg-[#F26207]/10 focus:text-[#F26207]">
+                                <DropdownMenuItem className="text-[var(--ecode-text)] focus:bg-[var(--ecode-accent)]/10 focus:text-[var(--ecode-accent)]">
                                   <Archive className="h-4 w-4 mr-2" />
                                   Archive
                                 </DropdownMenuItem>
@@ -1015,24 +1015,20 @@ const ProjectsPage = () => {
                       whileHover={{ x: 4 }}
                       data-testid={`project-row-${project.id}`}
                     >
-                      <Card className="border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[#F26207]/30 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.15)] transition-all duration-300">
+                      <Card className="border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[var(--ecode-accent)]/30 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.15)] transition-all duration-300">
                         <CardContent className="p-4">
                           <div className="flex items-center gap-4">
                             {/* Checkbox */}
                             <Checkbox
                               checked={selectedProjects.includes(project.id)}
                               onCheckedChange={() => toggleProjectSelection(project.id)}
-                              className="border-[var(--ecode-border)] data-[state=checked]:bg-[#F26207] data-[state=checked]:border-[#F26207]"
+                              className="border-[var(--ecode-border)] data-[state=checked]:bg-[var(--ecode-accent)] data-[state=checked]:border-[var(--ecode-accent)]"
                               data-testid={`checkbox-list-project-${project.id}`}
                             />
 
                             {/* Project Icon */}
                             <div 
-                              className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold"
-                              style={{ 
-                                background: 'linear-gradient(135deg, #F26207 0%, #FF8534 100%)',
-                                boxShadow: '0 4px 12px -4px rgba(242, 98, 7, 0.3)'
-                              }}
+                              className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold bg-gradient-to-br from-[var(--ecode-accent)] to-[var(--ecode-accent)]/80 shadow-[0_4px_12px_-4px_rgba(var(--ecode-accent-rgb,242,98,7),0.3)]"
                             >
                               {project.name.substring(0, 2).toUpperCase()}
                             </div>
@@ -1041,7 +1037,7 @@ const ProjectsPage = () => {
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
                                 <h3 className="font-semibold text-lg text-[var(--ecode-text)]">{project.name}</h3>
-                                {project.isPinned && <Pin className="h-4 w-4 text-[#F26207]" />}
+                                {project.isPinned && <Pin className="h-4 w-4 text-[var(--ecode-accent)]" />}
                               </div>
                               <p className="text-sm text-[var(--ecode-text-muted)] mb-2">
                                 {project.description || 'No description available'}
@@ -1091,7 +1087,7 @@ const ProjectsPage = () => {
                                 onClick={() => {
                                   setLocation(`/ide/${project.id}`);
                                 }}
-                                className="text-[var(--ecode-text-muted)] hover:bg-[#F26207]/10 hover:text-[#F26207]"
+                                className="text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
                                 data-testid={`button-quick-open-${project.id}`}
                               >
                                 <ExternalLink className="h-4 w-4" />
@@ -1099,7 +1095,7 @@ const ProjectsPage = () => {
                               <Button 
                                 size="sm" 
                                 variant="ghost"
-                                className="text-[var(--ecode-text-muted)] hover:bg-[#F26207]/10 hover:text-[#F26207]"
+                                className="text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
                                 data-testid={`button-list-edit-${project.id}`}
                               >
                                 <Edit className="h-4 w-4" />
@@ -1107,7 +1103,7 @@ const ProjectsPage = () => {
                               <Button 
                                 size="sm" 
                                 variant="ghost"
-                                className="text-[var(--ecode-text-muted)] hover:bg-[#F26207]/10 hover:text-[#F26207]"
+                                className="text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
                                 data-testid={`button-list-deploy-${project.id}`}
                               >
                                 <Rocket className="h-4 w-4" />
@@ -1117,22 +1113,22 @@ const ProjectsPage = () => {
                                   <Button 
                                     size="sm" 
                                     variant="ghost"
-                                    className="text-[var(--ecode-text-muted)] hover:bg-[#F26207]/10 hover:text-[#F26207]"
+                                    className="text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
                                     data-testid={`button-list-more-${project.id}`}
                                   >
                                     <MoreVertical className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
-                                  <DropdownMenuItem className="text-[var(--ecode-text)] focus:bg-[#F26207]/10 focus:text-[#F26207]">
+                                  <DropdownMenuItem className="text-[var(--ecode-text)] focus:bg-[var(--ecode-accent)]/10 focus:text-[var(--ecode-accent)]">
                                     <Share2 className="h-4 w-4 mr-2" />
                                     Share
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem className="text-[var(--ecode-text)] focus:bg-[#F26207]/10 focus:text-[#F26207]">
+                                  <DropdownMenuItem className="text-[var(--ecode-text)] focus:bg-[var(--ecode-accent)]/10 focus:text-[var(--ecode-accent)]">
                                     <GitFork className="h-4 w-4 mr-2" />
                                     Fork
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem className="text-[var(--ecode-text)] focus:bg-[#F26207]/10 focus:text-[#F26207]">
+                                  <DropdownMenuItem className="text-[var(--ecode-text)] focus:bg-[var(--ecode-accent)]/10 focus:text-[var(--ecode-accent)]">
                                     <Archive className="h-4 w-4 mr-2" />
                                     Archive
                                   </DropdownMenuItem>
@@ -1174,7 +1170,7 @@ const ProjectsPage = () => {
                   <div className="flex items-center gap-1">
                     <Button 
                       size="sm"
-                      className="bg-[#F26207] hover:bg-[#D04E00] text-white"
+                      className="bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
                       data-testid="button-page-1"
                     >
                       1
@@ -1182,7 +1178,7 @@ const ProjectsPage = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[#F26207]/10 hover:text-[#F26207] hover:border-[#F26207]/30"
+                      className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)] hover:border-[var(--ecode-accent)]/30"
                       data-testid="button-page-2"
                     >
                       2
@@ -1190,7 +1186,7 @@ const ProjectsPage = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[#F26207]/10 hover:text-[#F26207] hover:border-[#F26207]/30"
+                      className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)] hover:border-[var(--ecode-accent)]/30"
                       data-testid="button-page-3"
                     >
                       3
@@ -1199,7 +1195,7 @@ const ProjectsPage = () => {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[#F26207]/10 hover:text-[#F26207] hover:border-[#F26207]/30"
+                    className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)] hover:border-[var(--ecode-accent)]/30"
                     data-testid="button-page-next"
                   >
                     Next
