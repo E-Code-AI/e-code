@@ -220,7 +220,7 @@ router.get('/api/logs/export', ensureAuthenticated, async (req: Request, res: Re
 router.post('/api/logs/clear', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    if (!user?.isAdmin) {
+    if (user?.role !== 'admin') {
       return res.status(403).json({ error: 'Admin access required' });
     }
 

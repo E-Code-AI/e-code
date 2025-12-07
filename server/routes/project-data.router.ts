@@ -62,8 +62,8 @@ const ensureProjectAccess = async (req: Request, res: Response, next: NextFuncti
     }
 
     // Check if user is admin - admins have access to all projects
-    const user = await storage.getUser(userId);
-    if (user && user.isAdmin) {
+    const user = await storage.getUser(userId.toString());
+    if (user && user.role === 'admin') {
       return next();
     }
 
