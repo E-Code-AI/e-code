@@ -409,6 +409,28 @@ export default function IDEPage() {
     enabled: !!projectId && (!!user || !!bootstrapToken),
   });
   
+  // Auto-start runtime when IDE loads (Replit-like behavior)
+  const [runtimeAutoStarted, setRuntimeAutoStarted] = useState(false);
+  
+  useEffect(() => {
+    // Only auto-start once when files are loaded
+    if (!runtimeAutoStarted && files.length > 0 && projectId) {
+      setRuntimeAutoStarted(true);
+      
+      // Start runtime automatically in the background
+      apiRequest('POST', '/api/runtime/start', {
+        projectId,
+        mainFile: undefined, // Auto-detection
+        timeout: 30000
+      }).then(() => {
+        setIsRunning(true);
+      }).catch((err) => {
+        // Silent fail - user can manually start if needed
+        console.log('[IDEPage] Auto-start runtime failed:', err.message);
+      });
+    }
+  }, [files.length, projectId, runtimeAutoStarted]);
+  
   // Query publish status for StatusBar deployment indicator
   interface PublishState {
     status: 'idle' | 'publishing' | 'live' | 'failed' | 'needs-republish';
@@ -1058,25 +1080,17 @@ export default function IDEPage() {
                     
                     // REAL: Auto-start runtime (Task 13) - Run button executes by default
                     try {
-                      const res = await apiRequest('POST', '/api/runtime/start', {
+                      // apiRequest already returns parsed JSON and throws on error
+                      await apiRequest('POST', '/api/runtime/start', {
                         projectId,
                         mainFile: undefined, // Auto-detection
                         timeout: 30000
                       });
                       
-                      if (res.ok) {
-                        toast({
-                          title: 'Build Complete',
-                          description: 'Preview is starting...',
-                        });
-                      } else {
-                        const error = await res.json();
-                        toast({
-                          title: 'Build Complete',
-                          description: 'Preview available (runtime start failed)',
-                          variant: 'destructive',
-                        });
-                      }
+                      toast({
+                        title: 'Build Complete',
+                        description: 'Preview is starting...',
+                      });
                     } catch (err) {
                       toast({
                         title: 'Build Complete',
