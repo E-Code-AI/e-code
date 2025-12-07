@@ -1082,16 +1082,19 @@ export default function IDEPage() {
               </TabsList>
               
               <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden" forceMount>
-                <ReplitAgentPanelV3
-                  projectId={projectId}
-                  sessionId={agentSessionId}
-                  externalConversationId={agentConversationId}
-                  initialPrompt={agentInitialPrompt || undefined}
-                  autoStart={!!bootstrapToken || autoStartAgent}
-                  mode="desktop"
-                  agentToolsSettings={agentToolsSettings}
-                  onAgentToolsSettingsChange={setAgentToolsSettings}
-                  onBuildComplete={async () => {
+                {/* ✅ FIX (Dec 7, 2025): Wrap lazy component in Suspense + pass key for re-mount on prompt change */}
+                <Suspense fallback={<div className="flex items-center justify-center h-full text-muted-foreground">Loading AI Agent...</div>}>
+                  <ReplitAgentPanelV3
+                    key={`agent-${projectId}-${agentInitialPrompt ? 'prompt' : 'no-prompt'}`}
+                    projectId={projectId}
+                    sessionId={agentSessionId}
+                    externalConversationId={agentConversationId}
+                    initialPrompt={agentInitialPrompt || undefined}
+                    autoStart={!!bootstrapToken || autoStartAgent}
+                    mode="desktop"
+                    agentToolsSettings={agentToolsSettings}
+                    onAgentToolsSettingsChange={setAgentToolsSettings}
+                    onBuildComplete={async () => {
                     // REAL: Auto-start preview when build completes (Task 12)
                     setActiveTab('preview');
                     
@@ -1116,7 +1119,8 @@ export default function IDEPage() {
                       });
                     }
                   }}
-                />
+                  />
+                </Suspense>
               </TabsContent>
               
               <TabsContent value="actions" className="flex-1 mt-0 overflow-hidden">

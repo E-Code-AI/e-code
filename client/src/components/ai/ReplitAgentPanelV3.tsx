@@ -286,6 +286,13 @@ export function ReplitAgentPanelV3({
     console.log('[ReplitAgentPanelV3] STATE CHANGED - agentToolsSettings is now:', JSON.stringify(agentToolsSettings));
   }, [agentToolsSettings]);
   
+  // DEBUG: Track initialPrompt prop at every render and when it changes
+  console.log('[ReplitAgentPanelV3] RENDER - initialPrompt:', initialPrompt ? `"${initialPrompt.substring(0, 50)}..."` : 'undefined');
+  
+  useEffect(() => {
+    console.log('[ReplitAgentPanelV3] PROP CHANGED - initialPrompt:', initialPrompt ? `"${initialPrompt.substring(0, 100)}..."` : 'undefined');
+  }, [initialPrompt]);
+  
   // Element Editor state
   const [elementEditorActive, setElementEditorActive] = useState(false);
   const [selectedElement, setSelectedElement] = useState<ElementSelection | null>(null);
@@ -352,11 +359,30 @@ export function ReplitAgentPanelV3({
   // Track whether initial prompt has been processed (idempotent guard)
   const initialPromptProcessedRef = useRef(false);
   const contextInjectedRef = useRef<string | null>(null);
+  // Track previous initialPrompt value to detect changes from undefined → value
+  const prevInitialPromptRef = useRef<string | undefined>(undefined);
   
-  // Handle initial prompt (from workspace bootstrap flow) - with idempotent check
+  // ✅ FIX (Dec 7, 2025): Handle initial prompt with robust change detection
+  // This fixes the lazy-loading timing issue where initialPrompt arrives AFTER component mounts
   useEffect(() => {
+    const prevValue = prevInitialPromptRef.current;
+    prevInitialPromptRef.current = initialPrompt;
+    
+    // Debug logging to diagnose bootstrap prompt flow
+    console.log('[ReplitAgentPanelV3] Auto-start useEffect RUNNING:', {
+      hasInitialPrompt: !!initialPrompt,
+      promptLength: initialPrompt?.length || 0,
+      prevHadPrompt: !!prevValue,
+      conversationId,
+      isWorking,
+      alreadyProcessed: initialPromptProcessedRef.current,
+      autoStart,
+      changedFromUndefined: !prevValue && !!initialPrompt
+    });
+    
+    // Process if: we have initialPrompt AND conversationId AND not already processing/processed
     if (initialPrompt && conversationId && !isWorking && !initialPromptProcessedRef.current) {
-      console.log('[ReplitAgentPanelV3] Processing initial prompt:', initialPrompt.substring(0, 50) + '...');
+      console.log('[ReplitAgentPanelV3] ✅ Processing initial prompt:', initialPrompt.substring(0, 50) + '...');
       initialPromptProcessedRef.current = true;
       setInput(initialPrompt);
       // Auto-start if requested
@@ -364,7 +390,10 @@ export function ReplitAgentPanelV3({
         setTimeout(() => {
           const form = document.querySelector('form[data-testid="chat-form"]') as HTMLFormElement;
           if (form) {
+            console.log('[ReplitAgentPanelV3] ✅ Auto-submitting form');
             form.requestSubmit();
+          } else {
+            console.error('[ReplitAgentPanelV3] ❌ Form not found for auto-submit');
           }
         }, 500);
       }
