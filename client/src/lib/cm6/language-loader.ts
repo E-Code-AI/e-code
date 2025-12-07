@@ -106,6 +106,95 @@ const languageLoaders: Record<string, LanguageLoader> = {
     const { shell } = await import('@codemirror/legacy-modes/mode/shell');
     return new LanguageSupport(StreamLanguage.define(shell));
   },
+  go: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { go } = await import('@codemirror/legacy-modes/mode/go');
+    return new LanguageSupport(StreamLanguage.define(go));
+  },
+  ruby: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { ruby } = await import('@codemirror/legacy-modes/mode/ruby');
+    return new LanguageSupport(StreamLanguage.define(ruby));
+  },
+  csharp: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { csharp } = await import('@codemirror/legacy-modes/mode/clike');
+    return new LanguageSupport(StreamLanguage.define(csharp));
+  },
+  swift: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { swift } = await import('@codemirror/legacy-modes/mode/swift');
+    return new LanguageSupport(StreamLanguage.define(swift));
+  },
+  kotlin: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { kotlin } = await import('@codemirror/legacy-modes/mode/clike');
+    return new LanguageSupport(StreamLanguage.define(kotlin));
+  },
+  dart: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { dart } = await import('@codemirror/legacy-modes/mode/clike');
+    return new LanguageSupport(StreamLanguage.define(dart));
+  },
+  lua: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { lua } = await import('@codemirror/legacy-modes/mode/lua');
+    return new LanguageSupport(StreamLanguage.define(lua));
+  },
+  perl: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { perl } = await import('@codemirror/legacy-modes/mode/perl');
+    return new LanguageSupport(StreamLanguage.define(perl));
+  },
+  r: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { r } = await import('@codemirror/legacy-modes/mode/r');
+    return new LanguageSupport(StreamLanguage.define(r));
+  },
+  haskell: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { haskell } = await import('@codemirror/legacy-modes/mode/haskell');
+    return new LanguageSupport(StreamLanguage.define(haskell));
+  },
+  scala: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { scala } = await import('@codemirror/legacy-modes/mode/clike');
+    return new LanguageSupport(StreamLanguage.define(scala));
+  },
+  clojure: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { clojure } = await import('@codemirror/legacy-modes/mode/clojure');
+    return new LanguageSupport(StreamLanguage.define(clojure));
+  },
+  elixir: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { ruby } = await import('@codemirror/legacy-modes/mode/ruby');
+    return new LanguageSupport(StreamLanguage.define(ruby));
+  },
+  julia: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { julia } = await import('@codemirror/legacy-modes/mode/julia');
+    return new LanguageSupport(StreamLanguage.define(julia));
+  },
+  ocaml: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { oCaml } = await import('@codemirror/legacy-modes/mode/mllike');
+    return new LanguageSupport(StreamLanguage.define(oCaml));
+  },
+  fortran: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { fortran } = await import('@codemirror/legacy-modes/mode/fortran');
+    return new LanguageSupport(StreamLanguage.define(fortran));
+  },
+  nix: async () => {
+    const { StreamLanguage, LanguageSupport } = await import('@codemirror/language');
+    const { shell } = await import('@codemirror/legacy-modes/mode/shell');
+    return new LanguageSupport(StreamLanguage.define(shell));
+  },
+  zig: async () => {
+    const { cpp } = await import('@codemirror/lang-cpp');
+    return cpp();
+  },
 };
 
 const extensionToLanguage: Record<string, string> = {
@@ -167,6 +256,36 @@ const extensionToLanguage: Record<string, string> = {
   '.bashrc': 'bash',
   '.zshrc': 'shell',
   '.profile': 'shell',
+  '.go': 'go',
+  '.rb': 'ruby',
+  '.cs': 'csharp',
+  '.swift': 'swift',
+  '.kt': 'kotlin',
+  '.kts': 'kotlin',
+  '.dart': 'dart',
+  '.lua': 'lua',
+  '.pl': 'perl',
+  '.pm': 'perl',
+  '.r': 'r',
+  '.R': 'r',
+  '.hs': 'haskell',
+  '.lhs': 'haskell',
+  '.scala': 'scala',
+  '.sc': 'scala',
+  '.clj': 'clojure',
+  '.cljs': 'clojure',
+  '.cljc': 'clojure',
+  '.ex': 'elixir',
+  '.exs': 'elixir',
+  '.jl': 'julia',
+  '.ml': 'ocaml',
+  '.mli': 'ocaml',
+  '.f': 'fortran',
+  '.for': 'fortran',
+  '.f90': 'fortran',
+  '.f95': 'fortran',
+  '.nix': 'nix',
+  '.zig': 'zig',
 };
 
 const filenameToLanguage: Record<string, string> = {
