@@ -186,9 +186,31 @@ export interface AgentExecutionResult {
   sessionId: string;
 }
 
+/**
+ * Pending recovery item for sessions with failed DB status updates
+ * ✅ ARCHITECT FEEDBACK (Dec 7, 2025): Durable failure recovery for eventual consistency
+ */
+export interface PendingRecoveryItem {
+  sessionId: string;
+  targetStatus: string;
+  projectId?: string;
+  addedAt: Date;
+  retryCount: number;
+  lastError?: string;
+}
+
 export class AgentOrchestratorService extends EventEmitter {
   private openai: OpenAI;
   private activeSessions: Map<string, AgentSession> = new Map();
+  
+  /**
+   * ✅ DURABLE RECOVERY (Dec 7, 2025): In-memory queue for sessions with failed DB status updates
+   * Key: sessionId, Value: PendingRecoveryItem with target status and metadata
+   */
+  private pendingRecovery: Map<string, PendingRecoveryItem> = new Map();
+  private recoveryWorkerInterval: ReturnType<typeof setInterval> | null = null;
+  private static readonly RECOVERY_INTERVAL_MS = 30000; // 30 seconds
+  private static readonly MAX_RECOVERY_RETRIES = 10; // Max retries before giving up
 
   constructor() {
     super();
@@ -200,6 +222,9 @@ export class AgentOrchestratorService extends EventEmitter {
       apiKey: apiKey,
       baseURL: baseUrl,
     });
+    
+    // Start the recovery worker for eventual consistency
+    this.startRecoveryWorker();
   }
 
   // Create a new agent session
@@ -1071,6 +1096,151 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
     return false;
   }
 
+  /**
+   * Add a session to the pending recovery queue for eventual consistency
+   * ✅ DURABLE RECOVERY (Dec 7, 2025): Ensures sessions don't stay stuck when DB is unavailable
+   */
+  private addToRecoveryQueue(
+    sessionId: string,
+    targetStatus: string,
+    projectId?: string,
+    error?: string
+  ): void {
+    const existingItem = this.pendingRecovery.get(sessionId);
+    
+    if (existingItem) {
+      // Update existing entry with new target status (latest status wins)
+      existingItem.targetStatus = targetStatus;
+      existingItem.retryCount += 1;
+      existingItem.lastError = error;
+      logger.info(`[Recovery Queue] Updated session ${sessionId} in recovery queue`, {
+        targetStatus,
+        retryCount: existingItem.retryCount
+      });
+    } else {
+      // Add new entry
+      this.pendingRecovery.set(sessionId, {
+        sessionId,
+        targetStatus,
+        projectId,
+        addedAt: new Date(),
+        retryCount: 0,
+        lastError: error
+      });
+      logger.info(`[Recovery Queue] Added session ${sessionId} to recovery queue`, {
+        targetStatus,
+        queueSize: this.pendingRecovery.size
+      });
+    }
+  }
+
+  /**
+   * Start the periodic recovery worker
+   * ✅ DURABLE RECOVERY (Dec 7, 2025): Runs every 30s to retry failed status updates
+   */
+  private startRecoveryWorker(): void {
+    if (this.recoveryWorkerInterval) {
+      return; // Already running
+    }
+
+    logger.info(`[Recovery Worker] Starting recovery worker (interval: ${AgentOrchestratorService.RECOVERY_INTERVAL_MS}ms)`);
+
+    this.recoveryWorkerInterval = setInterval(async () => {
+      await this.processRecoveryQueue();
+    }, AgentOrchestratorService.RECOVERY_INTERVAL_MS);
+
+    // Don't prevent process from exiting
+    this.recoveryWorkerInterval.unref();
+  }
+
+  /**
+   * Process the pending recovery queue
+   * ✅ DURABLE RECOVERY (Dec 7, 2025): Retries failed DB status updates
+   */
+  private async processRecoveryQueue(): Promise<void> {
+    if (this.pendingRecovery.size === 0) {
+      return; // Nothing to process
+    }
+
+    logger.info(`[Recovery Worker] Processing recovery queue (${this.pendingRecovery.size} items)`);
+
+    for (const [sessionId, item] of this.pendingRecovery.entries()) {
+      try {
+        // Attempt to update the session status
+        await db.update(agentSessions)
+          .set({ workflowStatus: item.targetStatus as any })
+          .where(eq(agentSessions.id, sessionId));
+
+        // Success! Remove from queue and log
+        this.pendingRecovery.delete(sessionId);
+        logger.info(`[Recovery Worker] ✅ Successfully recovered session ${sessionId}`, {
+          targetStatus: item.targetStatus,
+          retryCount: item.retryCount,
+          timeInQueue: Date.now() - item.addedAt.getTime()
+        });
+
+        // Emit recovery event for observability
+        this.emit('session:recovered', {
+          sessionId,
+          targetStatus: item.targetStatus,
+          retryCount: item.retryCount,
+          projectId: item.projectId
+        });
+
+      } catch (err: any) {
+        // Update retry count and check if we should give up
+        item.retryCount += 1;
+        item.lastError = err.message;
+
+        if (item.retryCount >= AgentOrchestratorService.MAX_RECOVERY_RETRIES) {
+          // Give up after max retries
+          this.pendingRecovery.delete(sessionId);
+          logger.error(`[Recovery Worker] ❌ Giving up on session ${sessionId} after ${item.retryCount} retries`, {
+            targetStatus: item.targetStatus,
+            lastError: item.lastError,
+            timeInQueue: Date.now() - item.addedAt.getTime()
+          });
+
+          // Emit failure event for alerting
+          this.emit('session:recovery_failed', {
+            sessionId,
+            targetStatus: item.targetStatus,
+            retryCount: item.retryCount,
+            projectId: item.projectId,
+            error: item.lastError
+          });
+        } else {
+          logger.warn(`[Recovery Worker] Retry failed for session ${sessionId}`, {
+            targetStatus: item.targetStatus,
+            retryCount: item.retryCount,
+            error: err.message
+          });
+        }
+      }
+    }
+  }
+
+  /**
+   * Stop the recovery worker (for cleanup/testing)
+   */
+  public stopRecoveryWorker(): void {
+    if (this.recoveryWorkerInterval) {
+      clearInterval(this.recoveryWorkerInterval);
+      this.recoveryWorkerInterval = null;
+      logger.info(`[Recovery Worker] Stopped recovery worker`);
+    }
+  }
+
+  /**
+   * Get the current recovery queue status (for monitoring/debugging)
+   */
+  public getRecoveryQueueStatus(): { size: number; items: PendingRecoveryItem[] } {
+    return {
+      size: this.pendingRecovery.size,
+      items: Array.from(this.pendingRecovery.values())
+    };
+  }
+
   async executeAutonomousPlan(
     sessionId: string,
     plan: any, // ExecutionPlan type from plan-generator
@@ -1258,6 +1428,8 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           }
         } else {
           logger.error(`[Execute Plan] Could not persist final status '${finalStatus}' after retries`, { sessionId });
+          // ✅ DURABLE RECOVERY (Dec 7, 2025): Add to recovery queue for eventual consistency
+          this.addToRecoveryQueue(sessionId, finalStatus, projectId, 'DB unreachable after retries');
           // Still broadcast failure to UI to prevent zombie state, but log the inconsistency
           agentWebSocketService.broadcastPlanCompleted(projectId, sessionId, false);
         }
@@ -1289,7 +1461,8 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       
       if (!failedOk) {
         logger.error('[Execute Plan] Session stuck in executing - DB unreachable after retries', { sessionId });
-        // NOTE: In production, could queue a compensating task here for eventual recovery
+        // ✅ DURABLE RECOVERY (Dec 7, 2025): Add to recovery queue for eventual consistency
+        this.addToRecoveryQueue(sessionId, 'failed', projectId, 'DB unreachable after retries');
       }
       
       // Send error via WebSocket (using static import)
