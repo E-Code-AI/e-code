@@ -32,6 +32,23 @@ The agent orchestrator (`agent-orchestrator.service.ts`) manages workflow state 
 - **WebSocket sync:** Broadcasts only occur AFTER confirmed DB writes (or explicit fallback on retry exhaustion)
 - **Critical fix (Dec 7):** `executeAutonomousPlan()` now properly transitions workflowStatus through all states
 
+### Fortune 500 Production Hardening (Dec 7, 2025)
+- **Centralized Secret Management:** `server/utils/secrets-manager.ts` with startup validation
+  - Enforces JWT_SECRET and SESSION_SECRET in production
+  - Development fallbacks with clear warnings (NOT FOR PRODUCTION)
+  - 9 files updated to use centralized getters
+- **Durable Recovery Queue:** 30-second recovery worker for failed DB updates
+  - Max 10 retries per session, emits events on success/failure
+  - Prevents "zombie" sessions during DB outages
+- **Circuit Breaker Enforcement:** WebSocket notifications on provider failures
+  - Fallback chain: `gpt-5.1 → kimi → gemini → grok → claude-haiku`
+  - Broadcasts `degraded_mode` messages with recovery estimates
+- **Health Endpoint:** `GET /api/health/detailed` returns comprehensive status
+  - Circuit breaker status for all 5 AI providers
+  - Recovery queue pending items
+  - Database latency and connectivity
+  - System metrics (memory, CPU, uptime)
+
 ### Feature Specifications
 Core features include a Monaco Code Editor with advanced enhancements, an interactive terminal (xterm.js), file management, real-time collaboration, authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager, a Logs Viewer, and a Debugger UI. Autonomous workspace creation involves a Bootstrap API call, AI plan generation, WebSocket-based real-time progress, autonomous execution, and a live preview. PWA features and Electron desktop support are planned. An Agent Activity Dashboard with AG Grid provides real-time metrics and session history. Agent conversation persistence is managed via a Zustand store with localStorage and backend synchronization. An Agentic RAG system provides automatic backend RAG context retrieval for all sessions.
 
