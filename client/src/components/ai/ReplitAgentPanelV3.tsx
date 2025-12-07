@@ -367,7 +367,7 @@ export function ReplitAgentPanelV3({
   // ✅ FIX (Dec 7, 2025): Remove conversationId dependency - let form submit create it
   useEffect(() => {
     const prevValue = prevInitialPromptRef.current;
-    prevInitialPromptRef.current = initialPrompt;
+    prevInitialPromptRef.current = initialPrompt ?? undefined; // Convert null to undefined for type safety
     
     // Debug logging to diagnose bootstrap prompt flow
     console.log('[ReplitAgentPanelV3] Auto-start useEffect RUNNING:', {
@@ -591,21 +591,35 @@ export function ReplitAgentPanelV3({
     textareaRef.current?.focus();
   }, []);
 
-  // Auto-start building from URL prompt (Build from Homepage feature)
+  // Auto-start building from URL prompt (Build from Homepage feature OR bootstrap)
   useEffect(() => {
-    // Check URL params for prompt
+    // Check URL params for prompt and bootstrap token
     const urlParams = new URLSearchParams(window.location.search);
     const promptFromUrl = urlParams.get('prompt');
     const agentEnabled = urlParams.get('agent') === 'true';
+    const hasBootstrapToken = !!urlParams.get('bootstrap');
     
-    // Check session storage for prompt
+    // Check session storage for prompt (IDEPage.tsx stores bootstrap prompt here)
     const promptFromSession = window.sessionStorage.getItem(`agent-prompt-${projectId}`);
     
-    const initialPrompt = promptFromUrl || promptFromSession;
+    // Use prompt from URL or session storage
+    const resolvedPrompt = promptFromUrl || promptFromSession;
     
-    if (agentEnabled && initialPrompt && !isWorking) {
+    // ✅ FIX (Dec 7, 2025): Also trigger for bootstrap token, not just agent=true
+    const shouldAutoStart = (agentEnabled || hasBootstrapToken || autoStart) && resolvedPrompt && !isWorking;
+    
+    console.log('[ReplitAgentPanelV3] Auto-start from sessionStorage check:', {
+      agentEnabled,
+      hasBootstrapToken,
+      autoStart,
+      hasPromptFromSession: !!promptFromSession,
+      promptLength: resolvedPrompt?.length || 0,
+      shouldAutoStart
+    });
+    
+    if (shouldAutoStart) {
       // Set the prompt in the input
-      setInput(initialPrompt);
+      setInput(resolvedPrompt);
       
       // Clear session storage
       if (promptFromSession) {
@@ -617,7 +631,7 @@ export function ReplitAgentPanelV3({
         const userMessage: Message = {
           id: Date.now().toString(),
           role: 'user',
-          content: initialPrompt.trim(),
+          content: resolvedPrompt.trim(),
           timestamp: new Date(),
           status: 'sent'
         };
