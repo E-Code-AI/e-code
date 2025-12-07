@@ -646,6 +646,15 @@ app.get('/api/cors-health', async (_req, res) => {
       console.log('[Shutdown] HTTP server closed');
     });
 
+    // Clear all registered intervals (prevents memory leaks)
+    try {
+      const { intervalRegistry } = await import('./utils/interval-registry');
+      intervalRegistry.clearAll();
+      console.log('[Shutdown] All intervals cleared');
+    } catch (e) {
+      console.warn('[Shutdown] Interval cleanup failed:', e);
+    }
+
     // Close database pools
     try {
       const { dbPool } = await import('./services/database-pool');
