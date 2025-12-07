@@ -24,6 +24,14 @@ The frontend utilizes Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to
 ### Technical Implementations
 The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Wouter. The backend is a Node.js/Express.js application in TypeScript, using Drizzle ORM for PostgreSQL and Passport.js for authentication, following a RESTful API design. Real-time features are powered by WebSockets. AI optimization includes a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are AES-256-GCM encrypted, and SSE streaming is used for code generation. Anonymous bootstrap authentication provides ephemeral guest users. AI Agent enhancements include structured XML-based system prompts, a repository overview service, a context window manager with token optimization, a unified AI provider system, and AI-powered inline code actions. A Checkpoints & Rollback System ensures atomic transactions, and a Background Auto-Testing System uses Playwright. Max Autonomy Mode enables extended autonomous sessions with AI task decomposition, auto-execution, ETA estimation, and cost tracking. The platform provides process-based code execution without Docker, leveraging native Nix-managed language runtimes (Python, Node.js, Go, GCC/G++, Java, Rust, PHP). A centralized Winston-based logging system with correlation IDs and multi-transport support is implemented.
 
+### Agent Workflow State Machine (Updated Dec 7, 2025)
+The agent orchestrator (`agent-orchestrator.service.ts`) manages workflow state transitions:
+- **State machine:** `idle → planning → executing → completed/failed`
+- **Retry helper:** `retryDbStatusUpdate()` with exponential backoff + jitter (1s/2s/4s delays, 3 retries)
+- **DB consistency:** All status transitions use retry helper for eventual consistency under DB failures
+- **WebSocket sync:** Broadcasts only occur AFTER confirmed DB writes (or explicit fallback on retry exhaustion)
+- **Critical fix (Dec 7):** `executeAutonomousPlan()` now properly transitions workflowStatus through all states
+
 ### Feature Specifications
 Core features include a Monaco Code Editor with advanced enhancements, an interactive terminal (xterm.js), file management, real-time collaboration, authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager, a Logs Viewer, and a Debugger UI. Autonomous workspace creation involves a Bootstrap API call, AI plan generation, WebSocket-based real-time progress, autonomous execution, and a live preview. PWA features and Electron desktop support are planned. An Agent Activity Dashboard with AG Grid provides real-time metrics and session history. Agent conversation persistence is managed via a Zustand store with localStorage and backend synchronization. An Agentic RAG system provides automatic backend RAG context retrieval for all sessions.
 
