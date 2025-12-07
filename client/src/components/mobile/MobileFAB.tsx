@@ -41,16 +41,12 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
   // Start project execution mutation
   const startMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/runtime/start`, {
+      // apiRequest already returns parsed JSON and throws on error
+      return await apiRequest('POST', `/api/runtime/start`, {
         projectId,
         mainFile: undefined,
         timeout: 30000
       });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to start runtime');
-      }
-      return res.json();
     },
     onSuccess: async (data) => {
       const execId = data.executionId || `exec-${Date.now()}`;
@@ -73,15 +69,11 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
   // Stop project execution mutation
   const stopMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/runtime/stop`, {
+      // apiRequest already returns parsed JSON and throws on error
+      return await apiRequest('POST', `/api/runtime/stop`, {
         projectId,
         executionId: localExecutionId
       });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to stop runtime');
-      }
-      return res.json();
     },
     onSuccess: async () => {
       setLocalExecutionId(undefined);
