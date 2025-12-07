@@ -98,8 +98,39 @@ export default function AdminAIUsage() {
   });
 
   const exportData = () => {
-    // TODO: Implement CSV export
-    alert('CSV export coming soon!');
+    if (!usageData?.usage || usageData.usage.length === 0) {
+      alert('No data to export');
+      return;
+    }
+    
+    const headers = ['ID', 'User ID', 'Model', 'Provider', 'Tokens Input', 'Tokens Output', 'Total Tokens', 'Cost (USD)', 'Status', 'Created At'];
+    const rows = usageData.usage.map((record: UsageRecord) => [
+      record.id,
+      record.userId,
+      record.model,
+      record.provider,
+      record.tokensInput,
+      record.tokensOutput,
+      record.tokensTotal,
+      record.costUsd,
+      record.status,
+      new Date(record.createdAt).toISOString()
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row: (string | number)[]) => row.map((cell) => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `ai-usage-export-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
