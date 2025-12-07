@@ -67,7 +67,10 @@ function buildLogsWhereConditions(params: {
     conditions.push(eq(buildLogs.buildId, params.buildId));
   }
   if (params.projectId) {
-    conditions.push(eq(buildLogs.projectId, params.projectId));
+    const projectIdNum = parseInt(params.projectId, 10);
+    if (!isNaN(projectIdNum)) {
+      conditions.push(eq(buildLogs.projectId, projectIdNum));
+    }
   }
   if (params.level && params.level !== 'all') {
     conditions.push(eq(buildLogs.level, params.level));
@@ -91,6 +94,9 @@ function buildLogsWhereConditions(params: {
  * 
  * MEMORY OPTIMIZATION: Uses SQL-level filtering instead of loading
  * all records into memory and filtering with .filter()
+ * 
+ * SECURITY: Always requires at least one valid scope (buildId, projectId, or deploymentId)
+ * to prevent exposing all logs to unauthorized users.
  */
 router.get('/', async (req, res) => {
   try {
@@ -108,6 +114,14 @@ router.get('/', async (req, res) => {
 
     let logs: LogEntry[] = [];
 
+    // SECURITY: Validate projectId is numeric if provided
+    if (projectId) {
+      const projectIdNum = parseInt(projectId, 10);
+      if (isNaN(projectIdNum)) {
+        return res.status(400).json({ error: 'Invalid projectId: must be a number' });
+      }
+    }
+
     // SQL-level filtering for memory efficiency (Replit pattern)
     if (buildId || projectId) {
       const whereConditions = buildLogsWhereConditions({
@@ -118,6 +132,11 @@ router.get('/', async (req, res) => {
         startDate,
         endDate
       });
+
+      // SECURITY: Ensure we always have a WHERE clause for scoped queries
+      if (!whereConditions) {
+        return res.status(400).json({ error: 'At least buildId or projectId is required' });
+      }
 
       // Get total count first (for pagination) - using SQL count
       const countResult = await db
@@ -140,7 +159,7 @@ router.get('/', async (req, res) => {
         level: log.level as 'info' | 'warn' | 'error' | 'debug',
         message: log.message,
         buildId: log.buildId,
-        projectId: log.projectId,
+        projectId: String(log.projectId),
         metadata: { source: log.source, logType: log.logType, ...((log.metadata as Record<string, any>) || {}) }
       }));
 
@@ -163,9 +182,9 @@ router.get('/', async (req, res) => {
       });
 
       if (deployment?.deploymentLogs) {
-        logs = parseDeploymentLogs(deployment.deploymentLogs, deploymentId, deployment.projectId);
+        logs = parseDeploymentLogs(deployment.deploymentLogs, deploymentId, String(deployment.projectId));
       } else if (deployment?.buildLogs) {
-        logs = parseDeploymentLogs(deployment.buildLogs, deploymentId, deployment.projectId);
+        logs = parseDeploymentLogs(deployment.buildLogs, deploymentId, String(deployment.projectId));
       }
 
       // Apply in-memory filters only for legacy deployment logs
@@ -232,12 +251,12 @@ router.post('/export', async (req, res) => {
         level: log.level as 'info' | 'warn' | 'error' | 'debug',
         message: log.message,
         buildId: log.buildId,
-        projectId: log.projectId,
+        projectId: String(log.projectId),
         metadata: { source: log.source, logType: log.logType }
       }));
     } else if (projectId) {
       const buildLogsRecords = await db.query.buildLogs.findMany({
-        where: eq(buildLogs.projectId, projectId),
+        where: eq(buildLogs.projectId, parseInt(projectId as string, 10)),
         orderBy: [desc(buildLogs.timestamp)]
       });
 
@@ -246,7 +265,7 @@ router.post('/export', async (req, res) => {
         level: log.level as 'info' | 'warn' | 'error' | 'debug',
         message: log.message,
         buildId: log.buildId,
-        projectId: log.projectId,
+        projectId: String(log.projectId),
         metadata: { source: log.source, logType: log.logType }
       }));
     } else if (deploymentId) {
@@ -255,7 +274,7 @@ router.post('/export', async (req, res) => {
       });
 
       if (deployment?.deploymentLogs) {
-        logs = parseDeploymentLogs(deployment.deploymentLogs, deploymentId, deployment.projectId);
+        logs = parseDeploymentLogs(deployment.deploymentLogs, deploymentId, String(deployment.projectId));
       }
     }
 
@@ -329,11 +348,11 @@ router.get('/stats', async (req, res) => {
         level: log.level as 'info' | 'warn' | 'error' | 'debug',
         message: log.message,
         buildId: log.buildId,
-        projectId: log.projectId
+        projectId: String(log.projectId)
       }));
     } else if (projectId) {
       const buildLogsRecords = await db.query.buildLogs.findMany({
-        where: eq(buildLogs.projectId, projectId as string),
+        where: eq(buildLogs.projectId, parseInt(projectId as string, 10)),
         orderBy: [desc(buildLogs.timestamp)]
       });
 
@@ -342,7 +361,7 @@ router.get('/stats', async (req, res) => {
         level: log.level as 'info' | 'warn' | 'error' | 'debug',
         message: log.message,
         buildId: log.buildId,
-        projectId: log.projectId
+        projectId: String(log.projectId)
       }));
     } else if (deploymentId) {
       const deployment = await db.query.deployments.findFirst({
@@ -350,7 +369,7 @@ router.get('/stats', async (req, res) => {
       });
 
       if (deployment?.deploymentLogs) {
-        logs = parseDeploymentLogs(deployment.deploymentLogs, deploymentId as string, deployment.projectId);
+        logs = parseDeploymentLogs(deployment.deploymentLogs, deploymentId as string, String(deployment.projectId));
       }
     }
 
