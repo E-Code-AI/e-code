@@ -456,3 +456,244 @@ export async function pipeDirectoryToArchive(
     throw error;
   }
 }
+
+// ============================================================================
+// PostgreSQL Native Streaming (pg-query-stream pattern)
+// ============================================================================
+
+import { Pool, PoolClient } from 'pg';
+
+/**
+ * Configuration for PostgreSQL streaming queries
+ */
+export interface PgStreamConfig {
+  /** Batch size for cursor fetch (default: 100) */
+  batchSize: number;
+  /** Maximum rows to stream (default: unlimited) */
+  maxRows?: number;
+  /** Query timeout in milliseconds */
+  timeout?: number;
+}
+
+const DEFAULT_PG_CONFIG: PgStreamConfig = {
+  batchSize: 100,
+  maxRows: undefined,
+  timeout: 30000
+};
+
+/**
+ * Stream PostgreSQL query results using native cursor-based pagination
+ * This is the Node.js equivalent of pg-query-stream, implemented using
+ * PostgreSQL's DECLARE CURSOR / FETCH pattern for true streaming.
+ * 
+ * Memory-efficient: Only holds one batch in memory at a time.
+ * Backpressure-aware: Yields control between batches.
+ * 
+ * @example
+ * ```typescript
+ * import { Pool } from 'pg';
+ * 
+ * const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+ * 
+ * // Stream millions of rows without memory issues
+ * const stream = streamPgQuery(
+ *   pool,
+ *   'SELECT * FROM logs WHERE created_at > $1',
+ *   [new Date('2025-01-01')],
+ *   { batchSize: 500 }
+ * );
+ * 
+ * for await (const row of stream) {
+ *   processRow(row);
+ * }
+ * ```
+ */
+export async function* streamPgQuery<T extends Record<string, any>>(
+  pool: Pool,
+  query: string,
+  params: any[] = [],
+  config: Partial<PgStreamConfig> = {}
+): AsyncGenerator<T, void, unknown> {
+  const opts = { ...DEFAULT_PG_CONFIG, ...config };
+  const cursorName = `cursor_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  
+  let client: PoolClient | null = null;
+  let totalYielded = 0;
+  let batchNumber = 0;
+
+  try {
+    // Acquire a dedicated connection for the cursor
+    client = await pool.connect();
+    
+    // Set statement timeout if specified
+    if (opts.timeout) {
+      await client.query(`SET statement_timeout = ${opts.timeout}`);
+    }
+
+    // Begin transaction (required for cursors)
+    await client.query('BEGIN');
+
+    // Declare the cursor with the user's query
+    const declareQuery = `DECLARE ${cursorName} CURSOR FOR ${query}`;
+    await client.query(declareQuery, params);
+
+    logger.debug(`[streamPgQuery] Cursor ${cursorName} declared`);
+
+    // Fetch rows in batches
+    while (true) {
+      // Check max rows limit
+      if (opts.maxRows !== undefined && totalYielded >= opts.maxRows) {
+        logger.debug(`[streamPgQuery] Hit maxRows limit: ${opts.maxRows}`);
+        break;
+      }
+
+      const remainingRows = opts.maxRows !== undefined 
+        ? opts.maxRows - totalYielded 
+        : opts.batchSize;
+      const fetchSize = Math.min(opts.batchSize, remainingRows);
+
+      batchNumber++;
+      const fetchQuery = `FETCH ${fetchSize} FROM ${cursorName}`;
+      const result = await client.query(fetchQuery);
+
+      if (result.rows.length === 0) {
+        logger.debug(`[streamPgQuery] End of results after ${batchNumber} batches, ${totalYielded} rows`);
+        break;
+      }
+
+      // Yield each row individually for fine-grained control
+      for (const row of result.rows) {
+        yield row as T;
+        totalYielded++;
+      }
+
+      // If we got fewer rows than requested, we've reached the end
+      if (result.rows.length < fetchSize) {
+        logger.debug(`[streamPgQuery] Final batch: ${result.rows.length} rows, total: ${totalYielded}`);
+        break;
+      }
+    }
+
+  } catch (error) {
+    logger.error(`[streamPgQuery] Error during streaming:`, error);
+    throw error;
+  } finally {
+    // Clean up: close cursor and release connection
+    if (client) {
+      try {
+        await client.query(`CLOSE ${cursorName}`);
+        await client.query('COMMIT');
+      } catch (cleanupError) {
+        logger.warn(`[streamPgQuery] Cleanup error:`, cleanupError);
+        try {
+          await client.query('ROLLBACK');
+        } catch (rollbackError) {
+          logger.error(`[streamPgQuery] Rollback error:`, rollbackError);
+        }
+      } finally {
+        client.release();
+        logger.debug(`[streamPgQuery] Connection released`);
+      }
+    }
+  }
+}
+
+/**
+ * Stream a raw SQL query with automatic resource cleanup
+ * Simpler API for one-off streaming queries
+ * 
+ * @example
+ * ```typescript
+ * const rows = await collectPgStream(
+ *   pool,
+ *   'SELECT id, name FROM users WHERE active = true',
+ *   [],
+ *   { batchSize: 1000, maxRows: 10000 }
+ * );
+ * ```
+ */
+export async function collectPgStream<T extends Record<string, any>>(
+  pool: Pool,
+  query: string,
+  params: any[] = [],
+  config: Partial<PgStreamConfig & { maxItems?: number }> = {}
+): Promise<T[]> {
+  const { maxItems = 10000, ...streamConfig } = config;
+  const stream = streamPgQuery<T>(pool, query, params, { 
+    ...streamConfig, 
+    maxRows: maxItems 
+  });
+  return collectStream(stream, maxItems);
+}
+
+/**
+ * Count rows in a streaming fashion without loading all data
+ * Useful for progress indicators on large datasets
+ */
+export async function countPgStream(
+  pool: Pool,
+  query: string,
+  params: any[] = [],
+  config: Partial<PgStreamConfig> = {}
+): Promise<number> {
+  let count = 0;
+  for await (const _ of streamPgQuery(pool, query, params, config)) {
+    count++;
+  }
+  return count;
+}
+
+/**
+ * Process PostgreSQL results in parallel batches
+ * Combines streaming with parallel processing for maximum throughput
+ * 
+ * @example
+ * ```typescript
+ * await processPgStreamParallel(
+ *   pool,
+ *   'SELECT * FROM large_table',
+ *   [],
+ *   async (batch) => {
+ *     await Promise.all(batch.map(row => sendToExternalAPI(row)));
+ *   },
+ *   { batchSize: 100, parallelism: 5 }
+ * );
+ * ```
+ */
+export async function processPgStreamParallel<T extends Record<string, any>>(
+  pool: Pool,
+  query: string,
+  params: any[],
+  processor: (batch: T[]) => Promise<void>,
+  config: Partial<PgStreamConfig & { parallelism?: number }> = {}
+): Promise<{ processed: number; batches: number }> {
+  const { parallelism = 3, ...streamConfig } = config;
+  const stream = streamPgQuery<T>(pool, query, params, streamConfig);
+  const batchedStream = batchStream(stream, streamConfig.batchSize || 100);
+  
+  let processed = 0;
+  let batches = 0;
+  const activePromises: Promise<void>[] = [];
+
+  for await (const batch of batchedStream) {
+    // Limit parallelism
+    if (activePromises.length >= parallelism) {
+      await Promise.race(activePromises);
+    }
+
+    const promise = processor(batch as T[]).then(() => {
+      const index = activePromises.indexOf(promise);
+      if (index > -1) activePromises.splice(index, 1);
+    });
+
+    activePromises.push(promise);
+    processed += batch.length;
+    batches++;
+  }
+
+  // Wait for remaining promises
+  await Promise.all(activePromises);
+  
+  logger.debug(`[processPgStreamParallel] Completed: ${processed} rows in ${batches} batches`);
+  return { processed, batches };
+}

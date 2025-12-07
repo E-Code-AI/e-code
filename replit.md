@@ -34,9 +34,14 @@ The agent orchestrator (`agent-orchestrator.service.ts`) manages workflow state 
 
 ### Memory Optimization Patterns (Dec 7, 2025)
 Replit-style generators and lazy evaluation for handling millions of users:
-- **Database Streaming:** `server/utils/db-streaming.ts` provides async generators for lazy evaluation
-  - `streamDatabaseResults<T>()` - Cursor-based pagination avoiding full table loads
-  - Process records one-by-one with `for await (const record of stream) { ... }`
+- **PostgreSQL Native Streaming:** `server/utils/db-streaming.ts` provides true cursor-based streaming
+  - `streamPgQuery<T>()` - Native PostgreSQL cursors (DECLARE CURSOR / FETCH) for streaming millions of rows
+  - `collectPgStream<T>()` - Simple API for collecting streamed results with limits
+  - `countPgStream()` - Count rows without loading all data (progress indicators)
+  - `processPgStreamParallel<T>()` - Parallel batch processing for maximum throughput
+- **File Streaming:** Same module provides directory and archive streaming
+  - `streamDirectoryFiles()` - Async generator for directory traversal
+  - `pipeStreamToArchive()` - Memory-efficient file archiving with backpressure
 - **SQL-Level Filtering:** Always move filters to SQL WHERE clauses instead of in-memory `.filter()`
   - Example: `logs-viewer.router.ts` refactored from loading 1000+ records to SQL WHERE
 - **Security Pattern:** Always validate inputs at schema level before SQL queries
