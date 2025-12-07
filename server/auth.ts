@@ -85,19 +85,11 @@ export async function comparePasswords(supplied: string, stored: string): Promis
 
 // Setup authentication for the Express app
 export function setupAuth(app: Express) {
-  // Configure session middleware
-  const sessionSecret = process.env.SESSION_SECRET;
-  if (!sessionSecret) {
-    const message = "SESSION_SECRET environment variable must be set";
-    if (process.env.NODE_ENV === 'development') {
-      console.warn(`${message} – falling back to an ephemeral secret for local development.`);
-    } else {
-      throw new Error(message);
-    }
-  }
-
+  // Configure session middleware - using centralized secrets manager
+  const { getSessionSecret } = require('./utils/secrets-manager');
+  
   const sessionSettings: session.SessionOptions = {
-    secret: sessionSecret || randomBytes(32).toString('hex'),
+    secret: getSessionSecret(),
     resave: false, // Don't save session if unmodified
     saveUninitialized: false, // Don't create session until something is stored
     store: sessionStore, // Using PostgreSQL session store
@@ -503,7 +495,7 @@ export function setupAuth(app: Express) {
     
     try {
       const { userId } = await verifyRefreshToken(refreshToken);
-      const user = await storage.getUser(userId);
+      const user = await storage.getUser(userId.toString());
       
       if (!user) {
         return res.status(401).json({ message: "Invalid refresh token" });
@@ -550,7 +542,8 @@ export function setupAuth(app: Express) {
       const apiToken = await storage.createApiKey({
         userId: req.user.id,
         name,
-        key: token.substring(0, 8) + "..." + token.substring(token.length - 4), // Store partial for display
+        keyHash: tokenHash, // SHA-256 hash of the actual key
+        publicKey: token.substring(0, 8) + "..." + token.substring(token.length - 4), // Store partial for display
         permissions: scopes || ["read", "write"]
       });
       
@@ -573,7 +566,7 @@ export function setupAuth(app: Express) {
     }
     
     try {
-      const tokens = await storage.getUserApiKeys(req.user.id);
+      const tokens = await storage.getUserApiKeys(req.user.id.toString());
       res.json(tokens);
     } catch (error) {
       console.error("API token list error:", error);
@@ -589,7 +582,7 @@ export function setupAuth(app: Express) {
     
     try {
       const tokenId = parseInt(req.params.id);
-      const tokens = await storage.getUserApiKeys(req.user.id);
+      const tokens = await storage.getUserApiKeys(req.user.id.toString());
       
       // Verify token belongs to user
       if (!tokens.find((t: any) => t.id === tokenId)) {
@@ -671,7 +664,7 @@ export function setupAuth(app: Express) {
       const userId = req.user!.id;
       const { displayName, bio } = req.body;
       
-      const updatedUser = await storage.updateUser(userId, {
+      const updatedUser = await storage.updateUser(userId.toString(), {
         displayName,
         bio
       });
@@ -696,7 +689,7 @@ export function setupAuth(app: Express) {
       const { currentPassword, newPassword } = req.body;
       
       // Verify current password
-      const user = await storage.getUser(userId);
+      const user = await storage.getUser(userId.toString());
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
@@ -712,7 +705,7 @@ export function setupAuth(app: Express) {
       
       // Hash new password and update
       const hashedPassword = await hashPassword(newPassword);
-      await storage.updateUser(userId, { password: hashedPassword });
+      await storage.updateUser(userId.toString(), { password: hashedPassword });
       
       res.json({ message: 'Password updated successfully' });
     } catch (error) {
@@ -728,7 +721,7 @@ export function setupAuth(app: Express) {
       const { email, password } = req.body;
       
       // Verify password
-      const user = await storage.getUser(userId);
+      const user = await storage.getUser(userId.toString());
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
@@ -749,7 +742,7 @@ export function setupAuth(app: Express) {
       }
       
       // Update email
-      await storage.updateUser(userId, { email, emailVerified: false });
+      await storage.updateUser(userId.toString(), { email, emailVerified: false });
       
       res.json({ message: 'Email updated successfully. Please verify your new email.' });
     } catch (error) {
@@ -764,13 +757,13 @@ export function setupAuth(app: Express) {
       const userId = req.user!.id;
       
       // Delete user's projects first
-      const projects = await storage.getProjectsByUserId(userId);
+      const projects = await storage.getProjectsByUserId(userId.toString());
       for (const project of projects) {
-        await storage.deleteProject(project.id);
+        await storage.deleteProject(project.id.toString());
       }
       
       // Delete user
-      await storage.deleteUser(userId);
+      await storage.deleteUser(userId.toString());
       
       // Logout
       req.logout(() => {
@@ -793,7 +786,7 @@ export function setupAuth(app: Express) {
       }
       
       // Get user's projects for stats
-      const projects = await storage.getProjectsByUserId(user.id);
+      const projects = await storage.getProjectsByUserId(user.id.toString());
       
       // Create profile response
       const profile = {
@@ -879,7 +872,7 @@ export function setupAuth(app: Express) {
   app.get("/api/user/settings", ensureAuthenticated, async (req, res) => {
     try {
       const userId = req.user!.id;
-      const user = await storage.getUser(userId);
+      const user = await storage.getUser(userId.toString());
       
       if (!user) {
         return res.status(404).json({ error: 'User not found' });

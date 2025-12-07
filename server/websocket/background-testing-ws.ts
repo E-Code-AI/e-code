@@ -12,21 +12,12 @@ import { eq, and } from 'drizzle-orm';
 import { storage } from '../storage';
 import { centralUpgradeDispatcher } from './central-upgrade-dispatcher';
 import { markSocketAsHandled } from './upgrade-guard';
+import { getJwtSecret } from '../utils/secrets-manager';
 
 const logger = createLogger('background-testing-ws');
 
-/**
- * SECURITY: Get JWT secret - fails fast if not configured
- */
-function getJWTSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('[SECURITY] JWT_SECRET environment variable is not configured');
-  }
-  return secret;
-}
-
-const getSecret = () => getJWTSecret();
+// ✅ Fortune 500 Security: Use centralized secrets manager
+const getSecret = () => getJwtSecret();
 
 /**
  * 🔥 SECURITY IMPLEMENTATION: Authenticated WebSocket with project access control

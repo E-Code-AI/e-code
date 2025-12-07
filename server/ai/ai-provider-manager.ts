@@ -462,6 +462,31 @@ export class AIProviderManager {
   }
   
   /**
+   * Get circuit breaker statuses for all providers
+   * Used by health endpoints for monitoring
+   */
+  getCircuitBreakerStatuses(): Record<string, {
+    status: 'closed' | 'open' | 'half_open';
+    failureCount: number;
+    lastFailure?: string;
+    nextAttempt?: string;
+  }> {
+    const statuses: Record<string, any> = {};
+    
+    for (const [provider, breaker] of this.circuitBreakers) {
+      const status = breaker.getStatus();
+      statuses[provider] = {
+        status: status.state.toLowerCase() as 'closed' | 'open' | 'half_open',
+        failureCount: status.failures,
+        lastFailure: status.failures > 0 ? new Date().toISOString() : undefined,
+        nextAttempt: status.nextAttemptTime || undefined
+      };
+    }
+    
+    return statuses;
+  }
+  
+  /**
    * Stream chat completion with the selected model
    * Routes to appropriate provider based on model ID
    * 
@@ -608,34 +633,6 @@ export class AIProviderManager {
     }
   }
   
-  /**
-   * Get all circuit breaker statuses for monitoring
-   */
-  getCircuitBreakerStatuses(): Array<{
-    provider: string;
-    state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
-    failures: number;
-    nextAttemptTime: string | null;
-  }> {
-    const statuses: Array<{
-      provider: string;
-      state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
-      failures: number;
-      nextAttemptTime: string | null;
-    }> = [];
-    
-    this.circuitBreakers.forEach((cb, provider) => {
-      const status = cb.getStatus();
-      statuses.push({
-        provider,
-        state: status.state,
-        failures: status.failures,
-        nextAttemptTime: status.nextAttemptTime
-      });
-    });
-    
-    return statuses;
-  }
   
   /**
    * Stream chat with retry logic and circuit breaker

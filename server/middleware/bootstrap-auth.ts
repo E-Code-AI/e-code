@@ -49,16 +49,9 @@ export const bootstrapAuth = async (req: Request, res: Response, next: NextFunct
       projectId: req.params.id 
     });
     
-    // Verify JWT - SECURITY: No fallback secret, must be configured
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      logger.error('[Bootstrap Auth] SECURITY: JWT_SECRET not configured');
-      return res.status(500).json({
-        error: 'Server configuration error',
-        message: 'Authentication service is not properly configured.'
-      });
-    }
-    const decoded = jwt.verify(bootstrapToken, secret) as BootstrapTokenPayload;
+    // Verify JWT - SECURITY: Use centralized secrets manager
+    const { getJwtSecret } = await import('../utils/secrets-manager');
+    const decoded = jwt.verify(bootstrapToken, getJwtSecret()) as BootstrapTokenPayload;
     
     // Validate token age (max 24 hours)
     const ageMs = Date.now() - decoded.timestamp;

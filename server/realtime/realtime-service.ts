@@ -40,12 +40,9 @@ export class RealtimeService {
           return next(new Error('Authentication required'));
         }
         
-        // Verify JWT token - SECURITY: No fallback secret
-        const jwtSecret = process.env.JWT_SECRET;
-        if (!jwtSecret) {
-          return next(new Error('Server configuration error: JWT_SECRET not set'));
-        }
-        const decoded = jwt.verify(token, jwtSecret) as any;
+        // Verify JWT token - SECURITY: Use centralized secrets manager
+        const { getJwtSecret } = await import('../utils/secrets-manager');
+        const decoded = jwt.verify(token, getJwtSecret()) as any;
         socket.data.userId = decoded.userId;
         socket.data.projectId = socket.handshake.query.projectId;
         

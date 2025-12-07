@@ -226,6 +226,37 @@ export class AgentOrchestratorService extends EventEmitter {
     // Start the recovery worker for eventual consistency
     this.startRecoveryWorker();
   }
+  
+  /**
+   * Get recovery queue status for health monitoring
+   * ✅ HEALTH ENDPOINT (Dec 7, 2025): Exposes pending recovery items for monitoring tools
+   */
+  getRecoveryQueueStatus(): {
+    pendingItems: number;
+    oldestItem?: string;
+    lastProcessed?: string;
+    items: Array<{
+      sessionId: string;
+      targetStatus: string;
+      addedAt: string;
+      retryCount: number;
+    }>;
+  } {
+    const items = Array.from(this.pendingRecovery.values());
+    const sortedByAge = [...items].sort((a, b) => a.addedAt.getTime() - b.addedAt.getTime());
+    
+    return {
+      pendingItems: items.length,
+      oldestItem: sortedByAge.length > 0 ? sortedByAge[0].addedAt.toISOString() : undefined,
+      lastProcessed: undefined, // Could track this separately if needed
+      items: items.map(item => ({
+        sessionId: item.sessionId,
+        targetStatus: item.targetStatus,
+        addedAt: item.addedAt.toISOString(),
+        retryCount: item.retryCount
+      }))
+    };
+  }
 
   // Create a new agent session
   async createSession(
@@ -1231,15 +1262,6 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
     }
   }
 
-  /**
-   * Get the current recovery queue status (for monitoring/debugging)
-   */
-  public getRecoveryQueueStatus(): { size: number; items: PendingRecoveryItem[] } {
-    return {
-      size: this.pendingRecovery.size,
-      items: Array.from(this.pendingRecovery.values())
-    };
-  }
 
   async executeAutonomousPlan(
     sessionId: string,

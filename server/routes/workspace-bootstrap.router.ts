@@ -27,6 +27,7 @@ import { eq } from 'drizzle-orm';
 import { agentOrchestrator } from '../services/agent-orchestrator.service';
 import { aiProviderManager } from '../ai/ai-provider-manager';
 import { createLogger } from '../utils/logger';
+import { getJwtSecret } from '../utils/secrets-manager';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { redisIdempotency } from '../services/redis-idempotency.service';
@@ -405,14 +406,9 @@ function getWebSocketBaseUrl(req: Request): string {
  * Token is valid for 24 hours
  */
 function generateBootstrapToken(payload: BootstrapTokenPayload): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('[Bootstrap Token] SECURITY: JWT_SECRET not configured');
-  }
-  
   return jwt.sign(
     payload,
-    secret,
+    getJwtSecret(),
     {
       expiresIn: '24h',
       issuer: 'e-code-platform',
@@ -426,12 +422,7 @@ function generateBootstrapToken(payload: BootstrapTokenPayload): string {
  */
 function verifyBootstrapToken(token: string): BootstrapTokenPayload | null {
   try {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      logger.error('[Bootstrap Token] SECURITY: JWT_SECRET not configured');
-      return null;
-    }
-    const decoded = jwt.verify(token, secret) as BootstrapTokenPayload;
+    const decoded = jwt.verify(token, getJwtSecret()) as BootstrapTokenPayload;
     
     // Additional validation: token not too old
     const ageMs = Date.now() - decoded.timestamp;

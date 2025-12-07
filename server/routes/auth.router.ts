@@ -839,10 +839,7 @@ export class AuthRouter {
 
         // Generate a short-lived JWT token for WebSocket auth (5 minutes)
         const jwt = await import('jsonwebtoken');
-        const JWT_SECRET = process.env.JWT_SECRET;
-        if (!JWT_SECRET) {
-          throw new Error('[SECURITY] JWT_SECRET not configured');
-        }
+        const { getJwtSecret } = await import('../utils/secrets-manager');
         
         const token = jwt.default.sign(
           { 
@@ -850,7 +847,7 @@ export class AuthRouter {
             username: user.username,
             type: 'websocket'
           },
-          JWT_SECRET,
+          getJwtSecret(),
           { expiresIn: '5m' }
         );
 
