@@ -241,14 +241,15 @@ export class EnhancedOpenAIProvider implements AIProvider {
         return result;
       } else {
         // GPT-4 and earlier use legacy Chat Completions API
+        // Check if this is an o-series model that requires different parameters
+        const isOSeriesModel = /^o[1-9]/.test(model);
+
         const completionParams: any = {
           model,
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: prompt },
           ],
-          max_tokens: Math.min(maxTokens, modelConfig.maxOutput),
-          temperature,
           top_p: options?.topP,
           frequency_penalty: options?.frequencyPenalty,
           presence_penalty: options?.presencePenalty,
@@ -257,6 +258,14 @@ export class EnhancedOpenAIProvider implements AIProvider {
           logprobs: options?.logprobs,
           top_logprobs: options?.topLogprobs,
         };
+
+        if (isOSeriesModel) {
+          completionParams.max_completion_tokens = Math.min(maxTokens, modelConfig.maxOutput);
+          // Don't set temperature for o-series models
+        } else {
+          completionParams.max_tokens = Math.min(maxTokens, modelConfig.maxOutput);
+          completionParams.temperature = temperature;
+        }
 
         const completion = await this.client.chat.completions.create(completionParams);
         
@@ -386,7 +395,10 @@ export class EnhancedOpenAIProvider implements AIProvider {
         return { content, functionCall };
       } else {
         // GPT-4 and earlier use Chat Completions API
-        const completion = await this.client.chat.completions.create({
+        // Check if this is an o-series model that requires different parameters
+        const isOSeriesModel = /^o[1-9]/.test(model);
+
+        const chatParams: any = {
           model,
           messages: messages as any,
           tools: functions.map(fn => ({
@@ -394,9 +406,17 @@ export class EnhancedOpenAIProvider implements AIProvider {
             function: fn
           })),
           tool_choice: options?.functionCall || 'auto',
-          max_tokens: options?.maxTokens || 1024,
-          temperature: options?.temperature || 0.5,
-        });
+        };
+
+        if (isOSeriesModel) {
+          chatParams.max_completion_tokens = options?.maxTokens || 1024;
+          // Don't set temperature for o-series models
+        } else {
+          chatParams.max_tokens = options?.maxTokens || 1024;
+          chatParams.temperature = options?.temperature || 0.5;
+        }
+
+        const completion = await this.client.chat.completions.create(chatParams);
         
         const message = completion.choices[0].message;
         const result = {
@@ -445,7 +465,10 @@ export class EnhancedOpenAIProvider implements AIProvider {
     }
     
     try {
-      const completion = await this.client.chat.completions.create({
+      // Check if this is a new-gen model (GPT-5.x or o-series) that requires different parameters
+      const isNewGenModel = model.startsWith('gpt-5') || /^o[1-9]/.test(model);
+
+      const visionParams: any = {
         model,
         messages: [
           {
@@ -456,9 +479,17 @@ export class EnhancedOpenAIProvider implements AIProvider {
             ]
           }
         ],
-        max_tokens: options?.maxTokens || 1024,
-        temperature: options?.temperature || 0.5,
-      });
+      };
+
+      if (isNewGenModel) {
+        visionParams.max_completion_tokens = options?.maxTokens || 1024;
+        // Don't set temperature for new-gen models
+      } else {
+        visionParams.max_tokens = options?.maxTokens || 1024;
+        visionParams.temperature = options?.temperature || 0.5;
+      }
+
+      const completion = await this.client.chat.completions.create(visionParams);
       
       const result = completion.choices[0].message.content || '';
       
@@ -499,13 +530,24 @@ export class EnhancedOpenAIProvider implements AIProvider {
     }
     
     try {
-      const stream = await this.client.chat.completions.create({
+      // Check if this is an o-series model that requires different parameters
+      const isOSeriesModel = /^o[1-9]/.test(model);
+
+      const streamParams: any = {
         model,
         messages: messages as any,
-        max_tokens: options?.maxTokens || 1024,
-        temperature: options?.temperature || 0.5,
         stream: true,
-      });
+      };
+
+      if (isOSeriesModel) {
+        streamParams.max_completion_tokens = options?.maxTokens || 1024;
+        // Don't set temperature for o-series models
+      } else {
+        streamParams.max_tokens = options?.maxTokens || 1024;
+        streamParams.temperature = options?.temperature || 0.5;
+      }
+
+      const stream = await this.client.chat.completions.create(streamParams);
       
       let totalTokens = 0;
       for await (const chunk of stream) {

@@ -815,18 +815,22 @@ export class AIProviderManager {
       ];
     }
     
-    // ✅ CRITICAL FIX: GPT-5 family and o-series use max_completion_tokens, older models use max_tokens
-    const usesMaxCompletionTokens = modelId.startsWith('gpt-5') || modelId.startsWith('o3') || modelId.startsWith('o4');
+    // ✅ CRITICAL FIX: GPT-5 family and o-series use max_completion_tokens and don't support temperature
+    const isNewGenModel = modelId.startsWith('gpt-5') || /^o[1-9]/.test(modelId);
     
     const completionParams: any = {
       model: modelId,
       messages: openaiMessages,
       stream: true,
-      temperature: options?.temperature || 0.7,
     };
     
+    // New-gen models don't support temperature parameter
+    if (!isNewGenModel) {
+      completionParams.temperature = options?.temperature || 0.7;
+    }
+    
     // Use correct token parameter based on model family
-    if (usesMaxCompletionTokens) {
+    if (isNewGenModel) {
       completionParams.max_completion_tokens = options?.max_tokens || 4000;
     } else {
       completionParams.max_tokens = options?.max_tokens || 4000;
