@@ -564,22 +564,25 @@ app.get('/api/cors-health', async (_req, res) => {
     console.warn('[WORKING SERVER] Database seeding failed (non-critical):', error.message);
   }
 
-  // ✅ Initialize Stripe Usage Worker (background queue processor)
-  try {
-    const { startStripeUsageWorker } = await import('./workflows/stripe-usage-worker');
-    startStripeUsageWorker();
-    console.log('✅ Stripe Usage Worker started - processing billing queue every 30s');
-  } catch (error) {
-    console.warn('[WORKING SERVER] Stripe worker initialization failed (non-critical):', error.message);
-  }
+  // ✅ Initialize billing workers ONLY in production (reduces log spam + CPU in dev)
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      const { startStripeUsageWorker } = await import('./workflows/stripe-usage-worker');
+      startStripeUsageWorker();
+      console.log('✅ Stripe Usage Worker started - processing billing queue every 30s');
+    } catch (error) {
+      console.warn('[WORKING SERVER] Stripe worker initialization failed (non-critical):', error.message);
+    }
 
-  // ✅ Initialize Pay-as-you-go Queue Processor
-  try {
-    const { startPayAsYouGoWorker } = await import('./workflows/payg-queue-processor');
-    startPayAsYouGoWorker();
-    console.log('✅ Pay-as-you-go Worker started - processing overage charges every 30s');
-  } catch (error) {
-    console.warn('[WORKING SERVER] Pay-as-you-go worker initialization failed (non-critical):', error.message);
+    try {
+      const { startPayAsYouGoWorker } = await import('./workflows/payg-queue-processor');
+      startPayAsYouGoWorker();
+      console.log('✅ Pay-as-you-go Worker started - processing overage charges every 30s');
+    } catch (error) {
+      console.warn('[WORKING SERVER] Pay-as-you-go worker initialization failed (non-critical):', error.message);
+    }
+  } else {
+    console.log('⏭️  Billing workers skipped in development (use NODE_ENV=production to enable)');
   }
 
   // ✅ CRITICAL FIX (Dec 1, 2025): Removed manual handleAgentUpgrade flow

@@ -6,15 +6,12 @@
 import { Request, Response, Router } from 'express';
 import { scalabilityOrchestrator } from '../services/scalability-orchestrator';
 import { redisCache } from '../services/redis-cache';
-import { DatabasePoolManager } from '../services/database-pool';
+import { dbPool } from '../services/database-pool';
 import { cdnOptimization } from '../services/cdn-optimization';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('scalability-routes');
 const router = Router();
-
-// Initialize services
-const dbPool = new DatabasePoolManager();
 const cdnService = cdnOptimization;
 
 /**
