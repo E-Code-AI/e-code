@@ -60,6 +60,10 @@
   --ecode-blue: #3b82f6;  /* Keep blue for certain elements */
   --ecode-purple: #7c3aed;
   --ecode-orange: #F26207;  /* E-Code Orange */
+  --ecode-orange-light: #FF7A2B;
+  --ecode-orange-tint: #ffe4d3;
+  --ecode-yellow: #F99D25;
+  --ecode-secondary-accent: #F99D25;
   --ecode-red: #dc3545;
 
   --ecode-sidebar-bg: #f7f8fa;
@@ -212,6 +216,10 @@
   --ecode-blue: #3b82f6;
   --ecode-purple: #a78bfa;
   --ecode-orange: #fb923c;
+  --ecode-orange-light: #fdba74;
+  --ecode-orange-tint: #7c2d12;
+  --ecode-yellow: #fbbf24;
+  --ecode-secondary-accent: #fbbf24;
   --ecode-red: #f87171;
 
   --ecode-sidebar-bg: #1c2333;
@@ -339,6 +347,10 @@
   --ecode-blue: #3b82f6;  /* Keep blue for certain elements */
   --ecode-purple: #7c3aed;
   --ecode-orange: #F26207;  /* E-Code Orange */
+  --ecode-orange-light: #FF7A2B;
+  --ecode-orange-tint: #ffe4d3;
+  --ecode-yellow: #F99D25;
+  --ecode-secondary-accent: #F99D25;
   --ecode-red: #dc3545;
 
   --ecode-sidebar-bg: #ffffff;

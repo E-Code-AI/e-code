@@ -32,21 +32,21 @@ export default {
         'xxs': ['0.625rem', { lineHeight: '0.75rem' }], // 10px for mobile bottom tabs
       },
       colors: {
-        // E-Code brand colors (hardcoded for gradients)
+        // E-Code brand colors using CSS variables (supports dark mode)
         'ecode-orange': {
-          DEFAULT: '#F26207',
-          hover: '#D04E00',
-          light: '#FF7A2B',
-          tint: '#ffe4d3',
+          DEFAULT: 'var(--ecode-orange)',
+          hover: 'var(--ecode-accent-hover)',
+          light: 'var(--ecode-orange-light)',
+          tint: 'var(--ecode-orange-tint)',
         },
-        'ecode-yellow': '#F99D25',
+        'ecode-yellow': 'var(--ecode-yellow)',
         
         // E-Code accent colors using CSS variables (supports dark mode)
         'ecode-accent': {
           DEFAULT: 'var(--ecode-accent)',
           hover: 'var(--ecode-accent-hover)',
         },
-        'ecode-secondary-accent': '#F99D25',
+        'ecode-secondary-accent': 'var(--ecode-secondary-accent)',
         
         // Semantic Status Colors (Fortune 500 Theme Token System)
         // Using HSL wrapper to enable Tailwind opacity modifiers (/10, /20, etc.)
