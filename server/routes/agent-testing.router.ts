@@ -43,7 +43,7 @@ router.use((req: Request, res: Response, next) => {
     });
   }
   
-  if (!user.isAdmin) {
+  if (user.role !== 'admin') {
     return res.status(403).json({ 
       success: false, 
       error: 'Admin access required. Testing features execute trusted code and require elevated permissions.' 

@@ -23,7 +23,7 @@ export class LoadTestingRouter {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-    if (!(req.user as any).isAdmin) {
+    if ((req.user as any).role !== 'admin') {
       return res.status(403).json({ error: 'Admin access required for load testing' });
     }
     next();
