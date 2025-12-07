@@ -869,3 +869,199 @@
 .focus\:ring-status-info:focus {
   --tw-ring-color: var(--ecode-info);
 }
+
+/* ============================================
+   E-CODE BRAND UTILITY CLASSES
+   Fortune 500 Enterprise Grade - No Hardcoded Colors
+   ============================================ */
+
+/* Brand Colors - Primary Orange */
+.bg-ecode-accent {
+  background-color: var(--ecode-accent);
+}
+
+.bg-ecode-accent-hover {
+  background-color: var(--ecode-accent-hover);
+}
+
+.hover\:bg-ecode-accent:hover {
+  background-color: var(--ecode-accent);
+}
+
+.hover\:bg-ecode-accent-hover:hover {
+  background-color: var(--ecode-accent-hover);
+}
+
+.text-ecode-accent {
+  color: var(--ecode-accent);
+}
+
+.hover\:text-ecode-accent:hover {
+  color: var(--ecode-accent);
+}
+
+.border-ecode-accent {
+  border-color: var(--ecode-accent);
+}
+
+.hover\:border-ecode-accent:hover {
+  border-color: var(--ecode-accent);
+}
+
+/* Brand Colors with Opacity */
+.bg-ecode-accent\/5 {
+  background-color: color-mix(in srgb, var(--ecode-accent) 5%, transparent);
+}
+
+.bg-ecode-accent\/10 {
+  background-color: color-mix(in srgb, var(--ecode-accent) 10%, transparent);
+}
+
+.bg-ecode-accent\/15 {
+  background-color: color-mix(in srgb, var(--ecode-accent) 15%, transparent);
+}
+
+.bg-ecode-accent\/20 {
+  background-color: color-mix(in srgb, var(--ecode-accent) 20%, transparent);
+}
+
+.hover\:bg-ecode-accent\/10:hover {
+  background-color: color-mix(in srgb, var(--ecode-accent) 10%, transparent);
+}
+
+.hover\:bg-ecode-accent\/20:hover {
+  background-color: color-mix(in srgb, var(--ecode-accent) 20%, transparent);
+}
+
+.border-ecode-accent\/20 {
+  border-color: color-mix(in srgb, var(--ecode-accent) 20%, transparent);
+}
+
+.border-ecode-accent\/30 {
+  border-color: color-mix(in srgb, var(--ecode-accent) 30%, transparent);
+}
+
+.border-ecode-accent\/50 {
+  border-color: color-mix(in srgb, var(--ecode-accent) 50%, transparent);
+}
+
+.hover\:border-ecode-accent\/30:hover {
+  border-color: color-mix(in srgb, var(--ecode-accent) 30%, transparent);
+}
+
+.hover\:border-ecode-accent\/50:hover {
+  border-color: color-mix(in srgb, var(--ecode-accent) 50%, transparent);
+}
+
+/* Surface Colors - Solid Backgrounds (No Transparency) */
+.bg-ecode-surface {
+  background-color: var(--ecode-surface);
+}
+
+.bg-ecode-surface-secondary {
+  background-color: var(--ecode-surface-secondary);
+}
+
+.bg-ecode-surface-tertiary {
+  background-color: var(--ecode-surface-tertiary);
+}
+
+.bg-ecode-surface-elevated {
+  background-color: var(--ecode-surface-elevated);
+}
+
+.bg-ecode-surface-hover {
+  background-color: var(--ecode-surface-hover);
+}
+
+.hover\:bg-ecode-surface-hover:hover {
+  background-color: var(--ecode-surface-hover);
+}
+
+/* Text Colors */
+.text-ecode-primary {
+  color: var(--ecode-text);
+}
+
+.text-ecode-secondary {
+  color: var(--ecode-text-secondary);
+}
+
+.text-ecode-muted {
+  color: var(--ecode-text-muted);
+}
+
+/* Border Colors */
+.border-ecode {
+  border-color: var(--ecode-border);
+}
+
+.border-ecode-strong {
+  border-color: var(--ecode-border-strong);
+}
+
+.hover\:border-ecode-strong:hover {
+  border-color: var(--ecode-border-strong);
+}
+
+/* Button Styles - Enterprise Grade */
+.btn-ecode-primary {
+  background-color: var(--ecode-button-primary);
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.btn-ecode-primary:hover {
+  background-color: var(--ecode-button-primary-hover);
+}
+
+.btn-ecode-secondary {
+  background-color: var(--ecode-button-secondary);
+  color: var(--ecode-text);
+  border: 1px solid var(--ecode-border);
+  transition: all 0.2s ease;
+}
+
+.btn-ecode-secondary:hover {
+  background-color: var(--ecode-button-secondary-hover);
+  border-color: var(--ecode-border-strong);
+}
+
+/* Shadow Utilities */
+.shadow-ecode-sm {
+  box-shadow: var(--ecode-shadow-sm);
+}
+
+.shadow-ecode-md {
+  box-shadow: var(--ecode-shadow-md);
+}
+
+.shadow-ecode-lg {
+  box-shadow: var(--ecode-shadow-lg);
+}
+
+.shadow-ecode-accent {
+  box-shadow: 0 8px 32px -8px color-mix(in srgb, var(--ecode-accent) 25%, transparent);
+}
+
+.hover\:shadow-ecode-accent:hover {
+  box-shadow: 0 8px 32px -8px color-mix(in srgb, var(--ecode-accent) 35%, transparent);
+}
+
+/* Ring/Focus Utilities */
+.ring-ecode-accent {
+  --tw-ring-color: var(--ecode-accent);
+}
+
+.focus\:ring-ecode-accent:focus {
+  --tw-ring-color: var(--ecode-accent);
+}
+
+/* Gradient Utilities */
+.gradient-ecode-accent {
+  background: linear-gradient(135deg, var(--ecode-accent) 0%, var(--ecode-accent-hover) 100%);
+}
+
+.gradient-ecode-surface {
+  background: linear-gradient(180deg, var(--ecode-surface) 0%, var(--ecode-surface-tertiary) 100%);
+}

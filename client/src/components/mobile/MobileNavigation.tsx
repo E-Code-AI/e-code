@@ -77,12 +77,12 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 mobile-safe-bottom">
-      {/* Backdrop blur effect with subtle gradient */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/85 to-background/80 backdrop-blur-xl border-t border-border/50" />
+      {/* Backdrop blur effect with solid background */}
+      <div className="absolute inset-0 bg-[var(--mobile-ide-bg)] backdrop-blur-xl border-t border-[var(--ecode-border)]" />
       
       {/* Active tab slide indicator */}
       <motion.div
-        className="absolute top-0 h-[2px] bg-[#F26207]"
+        className="absolute top-0 h-[2px] bg-[var(--ecode-accent)]"
         layoutId="activeIndicator"
         initial={false}
         transition={{ type: 'spring', stiffness: 500, damping: 35 }}
@@ -107,7 +107,7 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
               >
                 <motion.div
                   className={cn(
-                    "relative bg-gradient-to-br from-[#F26207] to-[#F99D25] rounded-full p-3 shadow-lg",
+                    "relative bg-gradient-to-br from-[var(--ecode-accent)] to-[var(--ecode-accent-hover)] rounded-full p-3 shadow-lg",
                     showPulse && "animate-pulse"
                   )}
                   whileHover={{ scale: 1.05 }}
@@ -158,8 +158,8 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
                   className={cn(
                     'h-5 w-5 transition-all duration-300',
                     isActive 
-                      ? 'text-[#F26207]' 
-                      : 'text-muted-foreground group-active:text-[#F26207]/70'
+                      ? 'text-[var(--ecode-accent)]' 
+                      : 'text-muted-foreground group-active:text-[var(--ecode-accent)]'
                   )}
                 />
                 
@@ -171,13 +171,13 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', stiffness: 500, damping: 15 }}
                   >
-                    <div className="bg-red-500 text-white text-[9px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                    <div className="bg-[hsl(var(--ecode-danger))] text-white text-[9px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
                       {badgeCount > 9 ? '9+' : badgeCount}
                     </div>
                     
                     {/* Badge pulse animation */}
                     <motion.div
-                      className="absolute inset-0 bg-red-500 rounded-full"
+                      className="absolute inset-0 bg-[hsl(var(--ecode-danger))] rounded-full"
                       animate={{ scale: [1, 1.3, 1], opacity: [0.7, 0, 0.7] }}
                       transition={{ 
                         duration: 1.5,
@@ -198,7 +198,7 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
                       exit={{ width: 0, opacity: 0 }}
                       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                     >
-                      <div className="h-[2px] bg-[#F26207] rounded-full" />
+                      <div className="h-[2px] bg-[var(--ecode-accent)] rounded-full" />
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -208,7 +208,7 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
                 className={cn(
                   'text-[10px] mt-1 transition-all duration-300',
                   isActive 
-                    ? 'text-[#F26207] font-semibold' 
+                    ? 'text-[var(--ecode-accent)] font-semibold' 
                     : 'text-muted-foreground font-normal'
                 )}
                 animate={{ 

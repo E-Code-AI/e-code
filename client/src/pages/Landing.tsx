@@ -274,12 +274,12 @@ export default function Landing() {
             <motion.div variants={fadeInUp}>
               <Badge 
                 variant="secondary" 
-                className="mx-auto inline-flex items-center gap-2 px-6 py-2 text-sm font-semibold bg-gradient-to-r from-[#F26207]/10 to-[#F99D25]/10 border border-[#F26207]/20 dark:from-[#F26207]/15 dark:to-[#F99D25]/15 dark:border-[#F26207]/30 transition-all duration-300 hover:border-[#F26207]/40"
+                className="mx-auto inline-flex items-center gap-2 px-6 py-2 text-sm font-semibold bg-gradient-to-r from-ecode-accent/10 to-ecode-secondary-accent/10 border border-ecode-accent/20 dark:from-ecode-accent/15 dark:to-ecode-secondary-accent/15 dark:border-ecode-accent/30 transition-all duration-300 hover:border-ecode-accent/40"
                 data-testid="badge-hero"
               >
-                <Sparkles className="h-4 w-4 text-[#F26207]" />
+                <Sparkles className="h-4 w-4 text-ecode-accent" />
                 AI-Powered Enterprise Development Platform
-                <Sparkles className="h-4 w-4 text-[#F26207]" />
+                <Sparkles className="h-4 w-4 text-ecode-accent" />
               </Badge>
             </motion.div>
 
@@ -293,7 +293,7 @@ export default function Landing() {
                 Build & Deploy
               </span>
               <br />
-              <span className="bg-gradient-to-r from-[#F26207] via-[#FF8534] to-[#F99D25] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-ecode-orange via-ecode-orange-light to-ecode-yellow bg-clip-text text-transparent">
                 Production Apps
               </span>
               <br />
@@ -330,12 +330,11 @@ export default function Landing() {
               <div className="relative group">
                 {/* E-Code Glow effect */}
                 <div 
-                  className="absolute -inset-1 rounded-2xl blur-lg opacity-20 group-hover:opacity-30 transition-all duration-300"
-                  style={{ background: 'linear-gradient(135deg, #F26207 0%, #FF8534 50%, #F99D25 100%)' }}
+                  className="absolute -inset-1 rounded-2xl blur-lg opacity-20 group-hover:opacity-30 transition-all duration-300 bg-gradient-to-br from-ecode-orange via-ecode-orange-light to-ecode-yellow"
                 />
                 
                 {/* Input Container */}
-                <div className="relative bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-2xl p-2 shadow-[0_8px_32px_-8px_rgba(242,98,7,0.15)] transition-all duration-300 hover:border-[#F26207]/30 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.25)]">
+                <div className="relative bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-2xl p-2 shadow-[0_8px_32px_-8px_rgba(242,98,7,0.15)] transition-all duration-300 hover:border-ecode-accent/30 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.25)]">
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                     <div className="flex-1">
                       <input
@@ -355,7 +354,7 @@ export default function Landing() {
                     </div>
                     <Button 
                       size="lg"
-                      className="bg-[#F26207] hover:bg-[#D04E00] text-white shadow-lg px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold h-auto min-h-[44px] rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.4)]"
+                      className="bg-ecode-accent hover:bg-ecode-accent-hover text-white shadow-lg px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold h-auto min-h-[44px] rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.4)]"
                       onClick={() => {
                         if (appDescription.trim()) {
                           handleStartBuilding(appDescription);
@@ -386,42 +385,42 @@ export default function Landing() {
                       icon: <ShoppingCart className="h-4 w-4" />, 
                       label: "E-commerce Platform",
                       text: "Build a full-stack e-commerce marketplace with Stripe payments, product catalog with search and filters, shopping cart with checkout flow, user authentication, order management dashboard, inventory tracking, email notifications for orders, and mobile-responsive design with dark mode", 
-                      color: "from-[#F26207] to-[#FF8534]", 
+                      color: "from-ecode-orange to-ecode-orange-light", 
                       id: "ecommerce" 
                     },
                     { 
                       icon: <MessageSquare className="h-4 w-4" />, 
                       label: "Real-time Chat",
                       text: "Create a Slack-like real-time messaging platform with WebSocket connections, public and private channels, direct messages, file and image sharing, message reactions and threading, typing indicators, read receipts, user presence status, and push notifications", 
-                      color: "from-[#FF8534] to-[#F99D25]", 
+                      color: "from-ecode-orange-light to-ecode-yellow", 
                       id: "chat" 
                     },
                     { 
                       icon: <Bot className="h-4 w-4" />, 
                       label: "AI Assistant",
                       text: "Build an intelligent AI chatbot with OpenAI GPT-4 integration, conversation memory and context, document upload for RAG knowledge base, code execution sandbox, streaming responses with typing animation, conversation history with search, export to PDF, and multi-language support", 
-                      color: "from-[#F26207] to-[#D04E00]", 
+                      color: "from-ecode-orange to-ecode-orange-hover", 
                       id: "chatbot" 
                     },
                     { 
                       icon: <Globe className="h-4 w-4" />, 
                       label: "Analytics Dashboard",
                       text: "Design a Fortune 500-grade analytics dashboard with real-time interactive charts (line, bar, pie, area), KPI metric widgets, data tables with sorting and filtering, date range picker with presets, CSV and PDF export, role-based access control, customizable widgets, and dark mode support", 
-                      color: "from-[#F99D25] to-[#F26207]", 
+                      color: "from-ecode-yellow to-ecode-orange", 
                       id: "dashboard" 
                     },
                     { 
                       icon: <Briefcase className="h-4 w-4" />, 
                       label: "SaaS Starter",
                       text: "Create a complete SaaS starter kit with beautiful landing page, pricing tiers comparison, Stripe subscription billing with usage-based pricing, user authentication with social login, team management and invitations, admin dashboard with analytics, email onboarding flow, and API documentation", 
-                      color: "from-[#D04E00] to-[#F26207]", 
+                      color: "from-ecode-orange-hover to-ecode-orange", 
                       id: "saas" 
                     },
                     { 
                       icon: <ListTodo className="h-4 w-4" />, 
                       label: "Project Management",
                       text: "Build a Jira-like project management tool with drag-and-drop Kanban boards, sprint planning and backlog, task assignments with deadlines, time tracking and estimates, Gantt chart timeline view, team collaboration with comments, file attachments, activity feed, and customizable workflows", 
-                      color: "from-[#FF8534] to-[#F26207]", 
+                      color: "from-ecode-orange-light to-ecode-orange", 
                       id: "project" 
                     }
                   ].map((example, index) => (
@@ -437,7 +436,7 @@ export default function Landing() {
                           }
                         }, 100);
                       }}
-                      className="group flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-[var(--ecode-surface)] border border-[var(--ecode-border)] hover:border-[#F26207]/50 transition-all duration-300 hover:scale-105 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.2)] min-h-[44px]"
+                      className="group flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-[var(--ecode-surface)] border border-[var(--ecode-border)] hover:border-ecode-accent/50 transition-all duration-300 hover:scale-105 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.2)] min-h-[44px]"
                       data-testid={`button-example-${example.id}`}
                     >
                       <div className={`bg-gradient-to-r ${example.color} text-white p-1.5 rounded-md transition-transform duration-300 group-hover:scale-110`}>
@@ -457,15 +456,15 @@ export default function Landing() {
                 variants={fadeInUp}
               >
                 <div className="flex items-center gap-2 text-sm text-[var(--ecode-text-muted)]">
-                  <CheckCircle className="h-4 w-4 text-[#F26207]" />
+                  <CheckCircle className="h-4 w-4 text-ecode-accent" />
                   No credit card required
                 </div>
                 <div className="flex items-center gap-2 text-sm text-[var(--ecode-text-muted)]">
-                  <CheckCircle className="h-4 w-4 text-[#F26207]" />
+                  <CheckCircle className="h-4 w-4 text-ecode-accent" />
                   Deploy instantly
                 </div>
                 <div className="flex items-center gap-2 text-sm text-[var(--ecode-text-muted)]">
-                  <CheckCircle className="h-4 w-4 text-[#F26207]" />
+                  <CheckCircle className="h-4 w-4 text-ecode-accent" />
                   Scale to millions
                 </div>
               </motion.div>
@@ -479,20 +478,20 @@ export default function Landing() {
               <Button 
                 size="lg"
                 variant="outline"
-                className="gap-2 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg border-2 border-[var(--ecode-border)] hover:border-[#F26207]/50 w-full sm:w-auto min-h-[48px] transition-all duration-300 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.2)]"
+                className="gap-2 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg border-2 border-[var(--ecode-border)] hover:border-ecode-accent/50 w-full sm:w-auto min-h-[48px] transition-all duration-300 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.2)]"
                 onClick={() => {
                   const demoSection = document.getElementById('video-demo');
                   demoSection?.scrollIntoView({ behavior: 'smooth' });
                 }}
                 data-testid="button-watch-demo"
               >
-                <PlayCircle className="h-4 w-4 sm:h-5 sm:w-5 text-[#F26207]" />
+                <PlayCircle className="h-4 w-4 sm:h-5 sm:w-5 text-ecode-accent" />
                 Watch Demo (2 min)
               </Button>
               <Button 
                 size="lg"
                 variant="ghost"
-                className="gap-2 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg w-full sm:w-auto min-h-[48px] text-[var(--ecode-text)] hover:text-[#F26207] transition-all duration-300"
+                className="gap-2 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg w-full sm:w-auto min-h-[48px] text-[var(--ecode-text)] hover:text-ecode-accent transition-all duration-300"
                 onClick={() => navigate('/pricing')}
                 data-testid="button-view-pricing"
               >
@@ -530,10 +529,10 @@ export default function Landing() {
                 variants={fadeInUp}
                 data-testid={`stat-${stat.label.toLowerCase().replace(/\s/g, '-')}`}
               >
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#F26207]/10 mb-3 transition-all duration-300 group-hover:bg-[#F26207]/20 group-hover:scale-110">
-                  <div className="text-[#F26207]">{stat.icon}</div>
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-ecode-accent/10 mb-3 transition-all duration-300 group-hover:bg-ecode-accent/20 group-hover:scale-110">
+                  <div className="text-ecode-accent">{stat.icon}</div>
                 </div>
-                <div className="text-4xl font-bold bg-gradient-to-r from-[#F26207] via-[#FF8534] to-[#F99D25] bg-clip-text text-transparent">
+                <div className="text-4xl font-bold bg-gradient-to-r from-ecode-orange via-ecode-orange-light to-ecode-yellow bg-clip-text text-transparent">
                   {stat.value}
                 </div>
                 <div className="text-sm text-[var(--ecode-text-muted)] mt-1">
@@ -579,7 +578,7 @@ export default function Landing() {
             {/* Video Container */}
             <div className="relative rounded-2xl overflow-hidden shadow-[0_8px_32px_-8px_rgba(242,98,7,0.3)] bg-gray-900 border border-[var(--ecode-border)] transition-all duration-300 hover:shadow-[0_12px_40px_-8px_rgba(242,98,7,0.4)]">
               {/* Video Placeholder */}
-              <div className="relative aspect-video bg-gradient-to-br from-[#F26207]/20 to-[#F99D25]/20">
+              <div className="relative aspect-video bg-gradient-to-br from-ecode-accent/20 to-ecode-secondary-accent/20">
                 <video
                   ref={videoRef}
                   className="w-full h-full object-cover"
@@ -756,8 +755,8 @@ export default function Landing() {
                 whileHover={{ scale: 1.03 }}
                 className="group cursor-pointer"
               >
-                <Card className="h-full overflow-hidden border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[#F26207]/30 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.2)] transition-all duration-300">
-                  <div className="relative h-48 overflow-hidden bg-gradient-to-br from-[#F26207]/10 to-[#F99D25]/10">
+                <Card className="h-full overflow-hidden border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-ecode-accent/30 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.2)] transition-all duration-300">
+                  <div className="relative h-48 overflow-hidden bg-gradient-to-br from-ecode-accent/10 to-ecode-secondary-accent/10">
                     <img 
                       src={project.image}
                       alt={project.title}
@@ -775,7 +774,7 @@ export default function Landing() {
                     </p>
                     <div className="flex flex-wrap gap-2 mb-4">
                       {project.tags.map(tag => (
-                        <Badge key={tag} variant="secondary" className="text-xs bg-[#F26207]/10 text-[#F26207] border-[#F26207]/20">
+                        <Badge key={tag} variant="secondary" className="text-xs bg-ecode-accent/10 text-ecode-accent border-ecode-accent/20">
                           {tag}
                         </Badge>
                       ))}
@@ -808,7 +807,7 @@ export default function Landing() {
             <Button 
               size="lg" 
               variant="outline" 
-              className="gap-2 border-[var(--ecode-border)] hover:border-[#F26207]/50 hover:text-[#F26207] transition-all duration-300"
+              className="gap-2 border-[var(--ecode-border)] hover:border-ecode-accent/50 hover:text-ecode-accent transition-all duration-300"
               onClick={() => navigate('/explore')}
               data-testid="button-explore-projects"
             >
@@ -858,10 +857,10 @@ export default function Landing() {
                 className="group"
                 data-testid={`feature-card-${index}`}
               >
-                <Card className="h-full border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[#F26207]/30 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.2)] transition-all duration-300">
+                <Card className="h-full border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-ecode-accent/30 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.2)] transition-all duration-300">
                   <CardHeader>
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#F26207]/15 to-[#F99D25]/15 flex items-center justify-center mb-4 group-hover:scale-110 transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-[#F26207]/25 group-hover:to-[#F99D25]/25">
-                      <div className="text-[#F26207]">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-ecode-accent/15 to-ecode-secondary-accent/15 flex items-center justify-center mb-4 group-hover:scale-110 transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-ecode-accent/25 group-hover:to-ecode-secondary-accent/25">
+                      <div className="text-ecode-accent">
                         {feature.icon}
                       </div>
                     </div>
@@ -904,12 +903,12 @@ export default function Landing() {
               transition={{ duration: 0.6 }}
               className="space-y-6 order-1 lg:order-2"
             >
-              <Badge variant="outline" className="text-[#F26207] border-[#F26207]/20 bg-[#F26207]/5">
+              <Badge variant="outline" className="text-ecode-accent border-ecode-accent/20 bg-ecode-accent/5">
                 Real-Time Collaboration
               </Badge>
               <h3 className="text-4xl font-bold text-[var(--ecode-text)]">
                 Code Together,
-                <span className="bg-gradient-to-r from-[#F26207] via-[#FF8534] to-[#F99D25] bg-clip-text text-transparent"> Ship Faster</span>
+                <span className="bg-gradient-to-r from-ecode-orange via-ecode-orange-light to-ecode-yellow bg-clip-text text-transparent"> Ship Faster</span>
               </h3>
               <p className="text-lg text-[var(--ecode-text-muted)]">
                 Multiple developers can work on the same codebase simultaneously. See changes in real-time, 
@@ -918,12 +917,12 @@ export default function Landing() {
               <ul className="space-y-3">
                 {['Live cursor tracking', 'Instant code sync', 'Voice & video chat', 'Shared debugging'].map((item) => (
                   <li key={item} className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-[#F26207] flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-ecode-accent flex-shrink-0" />
                     <span className="text-[var(--ecode-text-secondary)]">{item}</span>
                   </li>
                 ))}
               </ul>
-              <Button size="lg" className="gap-2 bg-[#F26207] hover:bg-[#D04E00] text-white transition-all duration-300 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.4)]" data-testid="button-try-collaboration">
+              <Button size="lg" className="gap-2 bg-ecode-accent hover:bg-ecode-accent-hover text-white transition-all duration-300 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.4)]" data-testid="button-try-collaboration">
                 Try Collaboration
                 <ArrowRight className="h-4 w-4" />
               </Button>
@@ -938,12 +937,12 @@ export default function Landing() {
               transition={{ duration: 0.6 }}
               className="space-y-6"
             >
-              <Badge variant="outline" className="text-[#F26207] border-[#F26207]/20 bg-[#F26207]/5">
+              <Badge variant="outline" className="text-ecode-accent border-ecode-accent/20 bg-ecode-accent/5">
                 AI Development
               </Badge>
               <h3 className="text-4xl font-bold text-[var(--ecode-text)]">
                 Your AI
-                <span className="bg-gradient-to-r from-[#F26207] via-[#FF8534] to-[#F99D25] bg-clip-text text-transparent"> Pair Programmer</span>
+                <span className="bg-gradient-to-r from-ecode-orange via-ecode-orange-light to-ecode-yellow bg-clip-text text-transparent"> Pair Programmer</span>
               </h3>
               <p className="text-lg text-[var(--ecode-text-muted)]">
                 Our AI understands your codebase, suggests improvements, writes tests, and even deploys your applications. 
@@ -952,12 +951,12 @@ export default function Landing() {
               <ul className="space-y-3">
                 {['Code generation', 'Bug detection & fixes', 'Performance optimization', 'Security scanning'].map((item) => (
                   <li key={item} className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-[#F26207] flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-ecode-accent flex-shrink-0" />
                     <span className="text-[var(--ecode-text-secondary)]">{item}</span>
                   </li>
                 ))}
               </ul>
-              <Button size="lg" className="gap-2 bg-[#F26207] hover:bg-[#D04E00] text-white transition-all duration-300 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.4)]" data-testid="button-explore-ai">
+              <Button size="lg" className="gap-2 bg-ecode-accent hover:bg-ecode-accent-hover text-white transition-all duration-300 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.4)]" data-testid="button-explore-ai">
                 Explore AI Features
                 <ArrowRight className="h-4 w-4" />
               </Button>
@@ -1006,22 +1005,22 @@ export default function Landing() {
               variants={fadeInUp}
             >
               {[
-                { Icon: SiPython, name: 'Python', color: 'text-[#F26207]' },
-                { Icon: SiJavascript, name: 'JavaScript', color: 'text-[#F99D25]' },
-                { Icon: SiTypescript, name: 'TypeScript', color: 'text-[#FF8534]' },
+                { Icon: SiPython, name: 'Python', color: 'text-ecode-accent' },
+                { Icon: SiJavascript, name: 'JavaScript', color: 'text-ecode-secondary-accent' },
+                { Icon: SiTypescript, name: 'TypeScript', color: 'text-ecode-orange-light' },
                 { Icon: SiReact, name: 'React', color: 'text-cyan-500' },
                 { Icon: SiNodedotjs, name: 'Node.js', color: 'text-green-500' },
                 { Icon: SiGo, name: 'Go', color: 'text-cyan-600' },
-                { Icon: SiRust, name: 'Rust', color: 'text-[#F26207]' },
+                { Icon: SiRust, name: 'Rust', color: 'text-ecode-accent' },
                 { Icon: SiPhp, name: 'PHP', color: 'text-purple-500' },
                 { Icon: SiOpenjdk, name: 'Java', color: 'text-red-600' },
-                { Icon: SiDocker, name: 'Docker', color: 'text-[#FF8534]' },
-                { Icon: SiKubernetes, name: 'Kubernetes', color: 'text-[#F26207]' },
+                { Icon: SiDocker, name: 'Docker', color: 'text-ecode-orange-light' },
+                { Icon: SiKubernetes, name: 'Kubernetes', color: 'text-ecode-accent' },
                 { Icon: SiSpring, name: 'Spring', color: 'text-green-600' }
               ].map(({ Icon, name, color }, index) => (
                 <motion.div
                   key={name}
-                  className="flex flex-col items-center gap-2 p-4 rounded-xl bg-[var(--ecode-surface)] border border-transparent hover:border-[#F26207]/30 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.15)] transition-all duration-300"
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl bg-[var(--ecode-surface)] border border-transparent hover:border-ecode-accent/30 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.15)] transition-all duration-300"
                   whileHover={{ scale: 1.1 }}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1070,12 +1069,11 @@ export default function Landing() {
           >
             {testimonials.map((testimonial, index) => (
               <motion.div key={index} variants={scaleIn} data-testid={`testimonial-${index}`}>
-                <Card className="h-full border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[#F26207]/30 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.2)] transition-all duration-300">
+                <Card className="h-full border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-ecode-accent/30 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.2)] transition-all duration-300">
                   <CardHeader>
                     <div className="flex items-center gap-4 mb-4">
                       <div 
-                        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
-                        style={{ background: 'linear-gradient(135deg, #F26207 0%, #FF8534 50%, #F99D25 100%)' }}
+                        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold bg-gradient-to-br from-ecode-orange via-ecode-orange-light to-ecode-yellow"
                       >
                         {testimonial.avatar}
                       </div>
@@ -1087,7 +1085,7 @@ export default function Landing() {
                     </div>
                     <div className="flex gap-1 mb-3">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="h-4 w-4 fill-[#F99D25] text-[#F99D25]" />
+                        <Star key={i} className="h-4 w-4 fill-ecode-secondary-accent text-ecode-secondary-accent" />
                       ))}
                     </div>
                   </CardHeader>
@@ -1126,8 +1124,7 @@ export default function Landing() {
 
       {/* CTA Section */}
       <section 
-        className="py-20 text-white"
-        style={{ background: 'linear-gradient(135deg, #F26207 0%, #FF8534 50%, #F99D25 100%)' }}
+        className="py-20 text-white bg-gradient-to-br from-ecode-orange via-ecode-orange-light to-ecode-yellow"
         data-testid="section-cta"
       >
         <div className="container-responsive max-w-4xl text-center">
@@ -1148,7 +1145,7 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
               <Button 
                 size="lg"
-                className="bg-white text-[#F26207] hover:bg-white/95 px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                className="bg-white text-ecode-accent hover:bg-white/95 px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 onClick={() => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                   setTimeout(() => {

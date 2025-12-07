@@ -204,7 +204,7 @@ function PhysicalButtons({ isLandscape, scale }: {
 function LoadingIndicator() {
   return (
     <motion.div 
-      className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-background/80 dark:bg-[var(--ecode-background)]/80 backdrop-blur-sm rounded-[24px]"
+      className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-[var(--ecode-surface)] dark:bg-[var(--ecode-background)] backdrop-blur-sm rounded-[24px]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

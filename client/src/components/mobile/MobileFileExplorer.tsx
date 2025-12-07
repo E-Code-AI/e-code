@@ -163,8 +163,8 @@ function FileTreeItem({
       <motion.div
         className={cn(
           'flex items-center px-3 py-3 mobile-touch-target cursor-pointer',
-          'hover:bg-accent/50 active:bg-accent',
-          isActive && 'bg-[#F26207]/10 border-l-2 border-[#F26207]'
+          'hover:bg-[var(--ecode-surface-hover)] active:bg-[var(--ecode-surface-hover)]',
+          isActive && 'bg-[var(--ecode-accent)]/10 border-l-2 border-[var(--ecode-accent)]'
         )}
         style={{ paddingLeft: `${level * 16 + 12}px` }}
         onClick={handleClick}
@@ -191,7 +191,7 @@ function FileTreeItem({
         
         <span className={cn(
           'flex-1 text-sm truncate',
-          isActive && 'font-medium text-[#F26207]'
+          isActive && 'font-medium text-[var(--ecode-accent)]'
         )}>
           {item.name}
         </span>
@@ -434,7 +434,7 @@ export function MobileFileExplorer({
             onDragEnd={handleDragEnd}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background/95 backdrop-blur-sm">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] backdrop-blur-sm">
               <h2 className="text-lg font-semibold text-foreground">Fichiers</h2>
               <Button
                 variant="ghost"
@@ -448,7 +448,7 @@ export function MobileFileExplorer({
             </div>
             
             {/* Search Bar */}
-            <div className="px-4 py-2 border-b border-border bg-background/95">
+            <div className="px-4 py-2 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -514,7 +514,7 @@ export function MobileFileExplorer({
                   >
                     <RefreshCw 
                       className={cn(
-                        'h-5 w-5 text-[#F26207]',
+                        'h-5 w-5 text-[var(--ecode-accent)]',
                         isRefreshing && 'animate-spin'
                       )} 
                     />
