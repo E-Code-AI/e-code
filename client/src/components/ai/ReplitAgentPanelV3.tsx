@@ -658,8 +658,11 @@ export function ReplitAgentPanelV3({
             // Use selected provider from model preference (fallback to openai)
             const selectedProvider = provider || 'openai';
             
-            // Use actual conversationId for RAG session alignment
-            const chatConversationId = conversationId ? String(conversationId) : `conv-${Date.now()}`;
+            // ✅ FIX (Dec 7, 2025): Only send conversationId if it's a valid numeric ID
+            // The backend expects an integer, not a string like "conv-123456"
+            const chatConversationId = conversationId && !isNaN(Number(conversationId)) 
+              ? String(conversationId) 
+              : undefined; // Let backend create conversation if needed
             
             // Use raw fetch for SSE streaming - apiRequest consumes the body
             const response = await fetch('/api/agent/chat/stream', {
@@ -669,7 +672,7 @@ export function ReplitAgentPanelV3({
               body: JSON.stringify({
                 message: userMessage.content,
                 projectId: projectId,
-                conversationId: chatConversationId,
+                ...(chatConversationId && { conversationId: chatConversationId }),
                 provider: selectedProvider,
                 modelId: modelId || undefined,
                 context: messages.slice(-5).map(m => ({
