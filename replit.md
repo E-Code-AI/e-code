@@ -39,14 +39,27 @@ The agent orchestrator (`agent-orchestrator.service.ts`) manages workflow state 
 - **Dependencies:** `[promptParam, autoStartAgent, storedPrompt, bootstrapToken, project?.description]`
 - **Dual Flow:** Client displays prompt in panel + server auto-starts `startAutonomousWorkspace()` via WebSocket connection
 
-### Lazy Loading Timing Fix (Dec 7, 2025)
-- **Problem:** `ReplitAgentPanelV3` lazy-loaded component received `initialPrompt=undefined` on first mount because `project` hadn't loaded yet
-- **Root Cause:** Lazy loading + async project fetch = component mounts with stale props, useEffect runs with undefined, and doesn't re-trigger when prop changes
-- **Solution:** 
-  1. Added `Suspense` boundary around lazy `ReplitAgentPanelV3` component
-  2. Added dynamic `key` prop (`key={...agentInitialPrompt...}`) that forces React to remount when prompt becomes available
-  3. Added debug logging in useEffect to track `changedFromUndefined` and `prevHadPrompt`
-- **Pattern:** For lazy components needing prop values from async queries, use dynamic `key` to force remount when critical props change from undefined to value
+### Bootstrap Auto-Start Complete Fix (Dec 7, 2025)
+**Problem Chain:**
+1. `ReplitAgentPanelV3` lazy-loaded component received `initialPrompt=undefined` on first mount
+2. React state (`persistedBootstrapPrompt`) reset when component remounted
+3. Auto-submit useEffect required `conversationId` which wasn't available when prompt arrived
+
+**Root Causes:**
+- Lazy loading + async project fetch = component mounts with stale props
+- TanStack Query refetches cause `project` to briefly become `undefined`, resetting useMemo
+- `conversationId` set asynchronously by `bootstrapConversation()`, never available when prompt ready
+
+**Solution (3-part fix):**
+1. **SessionStorage Persistence:** `IDEPage.tsx` stores bootstrap prompt in `sessionStorage.setItem(bootstrap_prompt_${projectId}, ...)` to survive React remounts
+2. **State Initialization from SessionStorage:** `useState(() => sessionStorage.getItem(...))` recovers prompt on any remount
+3. **Removed conversationId Dependency:** Auto-submit useEffect no longer waits for `conversationId` - the `handleSend()` function generates a fallback `conv-${Date.now()}` ID if needed
+
+**Files Modified:**
+- `client/src/pages/IDEPage.tsx` - SessionStorage persistence + recovery
+- `client/src/components/ai/ReplitAgentPanelV3.tsx` - Removed conversationId from auto-submit condition
+
+**Pattern:** For bootstrap flows with async data, use sessionStorage for cross-remount persistence rather than React state alone
 
 ### Memory Optimization Patterns (Dec 7, 2025)
 Replit-style generators and lazy evaluation for handling millions of users:
