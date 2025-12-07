@@ -134,6 +134,22 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
+// Revoked tokens table for token revocation persistence
+// Survives process restarts by persisting to database
+export const revokedTokens = pgTable("revoked_tokens", {
+  id: serial("id").primaryKey(),
+  jti: varchar("jti", { length: 255 }).notNull().unique(),
+  userId: varchar("user_id", { length: 64 }),
+  expiresAt: timestamp("expires_at").notNull(),
+  revokedAt: timestamp("revoked_at").notNull().defaultNow(),
+}, (table) => [
+  index("idx_revoked_tokens_expires").on(table.expiresAt),
+  index("idx_revoked_tokens_user").on(table.userId),
+]);
+
+export type RevokedToken = typeof revokedTokens.$inferSelect;
+export type InsertRevokedToken = typeof revokedTokens.$inferInsert;
+
 // User storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 // ✅ ALIGNED WITH DB: Uses serial ID (not UUID), role (not isAdmin), correct column names
