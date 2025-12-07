@@ -12,9 +12,10 @@ import * as nixManager from './nix-manager';
 import { createLogger } from '../utils/logger';
 import { Project, File } from '@shared/schema';
 import { CodeExecutor } from '../execution/executor';
-import { exec, spawn } from 'child_process';
+import { exec, spawn, ChildProcess } from 'child_process';
 import { promisify } from 'util';
 import { getRuntimeLogsService } from '../services/RuntimeLogsService';
+import * as treeKill from 'tree-kill';
 
 const execAsync = promisify(exec);
 const logger = createLogger('runtime');
@@ -35,6 +36,85 @@ async function isDockerAvailable(): Promise<boolean> {
   return dockerAvailable;
 }
 
+// Runtime timeout configuration per language (in milliseconds)
+// Fortune 500 production-grade timeout configuration
+const RUNTIME_TIMEOUTS: Record<string, number> = {
+  // Fast scripting languages: 30 seconds
+  'python': 30000,
+  'nodejs': 30000,
+  'typescript': 30000,
+  'ruby': 30000,
+  'bash': 30000,
+  'lua': 30000,
+  'perl': 30000,
+  'r': 60000,      // R can be slow for data processing
+  'julia': 60000,  // Julia has JIT compilation overhead
+  'elixir': 30000,
+  'clojure': 60000,
+  
+  // Compiled languages (need more time for compilation): 60 seconds
+  'c': 60000,
+  'cpp': 60000,
+  'java': 60000,
+  'kotlin': 90000,    // Kotlin can be slow to compile
+  'rust': 120000,     // Rust compilation can be slow
+  'go': 60000,
+  'csharp': 90000,
+  'swift': 90000,
+  'haskell': 90000,   // GHC compilation can be slow
+  'scala': 120000,    // Scala compilation is notoriously slow
+  'ocaml': 60000,
+  'fortran': 60000,
+  'zig': 60000,
+  
+  // Web servers (long-running): 5 minutes
+  'php': 300000,
+  'html-css-js': 300000,
+  'deno': 300000,
+  'nix': 300000,
+  'dart': 60000,
+  
+  // Default
+  'default': 30000
+};
+
+// User-friendly error messages for common failures
+const ERROR_MESSAGES: Record<string, string> = {
+  'ENOENT': 'Command not found. The required runtime may not be installed.',
+  'EACCES': 'Permission denied. Cannot execute the program.',
+  'ETIMEDOUT': 'Execution timed out. Your code took too long to run.',
+  'ENOMEM': 'Out of memory. Your program used too much memory.',
+  'SIGKILL': 'Process was killed (possibly due to memory limit).',
+  'SIGTERM': 'Process was terminated.',
+  'COMPILATION_FAILED': 'Compilation failed. Check your code for syntax errors.',
+  'SYNTAX_ERROR': 'Syntax error in your code. Please check for typos.',
+  'MODULE_NOT_FOUND': 'Missing dependency. Make sure all required packages are installed.',
+  'RUNTIME_NOT_INSTALLED': 'This language runtime is not installed on the server.'
+};
+
+function getUserFriendlyError(error: string, language: string): string {
+  // Check for known error patterns
+  for (const [pattern, message] of Object.entries(ERROR_MESSAGES)) {
+    if (error.includes(pattern)) {
+      return message;
+    }
+  }
+  
+  // Language-specific error hints
+  if (error.includes('SyntaxError') || error.includes('IndentationError')) {
+    return `Syntax error in your ${language} code. Please check for typos or indentation issues.`;
+  }
+  if (error.includes('ModuleNotFoundError') || error.includes('ImportError')) {
+    return `Missing module/package. Add the required dependency to your project.`;
+  }
+  if (error.includes('command not found') || error.includes('not recognized')) {
+    return `The ${language} runtime is not available. Please ensure it's installed.`;
+  }
+  
+  // Return original error if no pattern matches
+  return error;
+}
+
 // Map to track active project runtimes (using string UUIDs)
 const activeRuntimes: Map<string, {
   projectId: string;
@@ -46,7 +126,24 @@ const activeRuntimes: Map<string, {
   error?: string;
   directExecutionMode?: boolean;
   projectDir?: string;
+  process?: ChildProcess;  // Store the actual process for proper cleanup
+  pid?: number;            // Process ID for tree-kill
+  startTime?: number;      // Start time for timeout tracking
 }> = new Map();
+
+// Helper to safely kill a process tree
+async function killProcessTree(pid: number): Promise<void> {
+  return new Promise((resolve) => {
+    treeKill(pid, 'SIGTERM', (err) => {
+      if (err) {
+        // Force kill if SIGTERM fails
+        treeKill(pid, 'SIGKILL', () => resolve());
+      } else {
+        resolve();
+      }
+    });
+  });
+}
 
 // Interface for starting a project
 export interface StartProjectOptions {
@@ -183,34 +280,125 @@ export async function startProject(
         const baseCmd = parts[0];
         const args = parts.slice(1);
         
-        // Map command names to actual paths
-        // Use full path to tsx from E-Code's node_modules since user projects won't have it
-        const tsxPath = '/home/runner/workspace/node_modules/.bin/tsx';
+        // Comprehensive command mapping for all supported languages
+        // Use full paths for Node.js tools from E-Code's node_modules
+        const nodeModulesBin = '/home/runner/workspace/node_modules/.bin';
         const cmdMap: Record<string, string> = {
+          // JavaScript/TypeScript ecosystem
+          'node': 'node',
+          'tsx': `${nodeModulesBin}/tsx`,
+          'ts-node': `${nodeModulesBin}/tsx`,
+          'tsc': `${nodeModulesBin}/tsc`,
+          'npx': 'npx',
+          'npm': 'npm',
+          'serve': `${nodeModulesBin}/serve`,
+          
+          // Python
           'python': 'python3',
           'python3': 'python3',
-          'node': 'node',
-          'tsx': tsxPath,           // TypeScript execution via tsx (fast, zero-config)
-          'ts-node': tsxPath,       // Map ts-node to tsx for better performance
+          'pip': 'pip3',
+          
+          // Go
           'go': 'go',
+          
+          // Ruby
           'ruby': 'ruby',
+          'bundle': 'bundle',
+          
+          // Rust
           'rustc': 'rustc',
           'cargo': 'cargo',
+          
+          // Java/Kotlin
           'java': 'java',
           'javac': 'javac',
-          'php': 'php',
+          'kotlinc': 'kotlinc',
+          
+          // C/C++
           'gcc': 'gcc',
           'g++': 'g++',
-          'tsc': '/home/runner/workspace/node_modules/.bin/tsc'  // TypeScript compiler
+          'clang': 'clang',
+          'clang++': 'clang++',
+          
+          // C#/.NET
+          'dotnet': 'dotnet',
+          'csc': 'csc',
+          
+          // Swift
+          'swift': 'swift',
+          'swiftc': 'swiftc',
+          
+          // Dart/Flutter
+          'dart': 'dart',
+          'flutter': 'flutter',
+          
+          // Deno
+          'deno': 'deno',
+          
+          // PHP
+          'php': 'php',
+          'composer': 'composer',
+          
+          // Shell/Bash
+          'bash': 'bash',
+          'sh': 'sh',
+          'zsh': 'zsh',
+          
+          // Nix
+          'nix-build': 'nix-build',
+          'nix-shell': 'nix-shell',
+          
+          // Additional scripting languages
+          'lua': 'lua',
+          'perl': 'perl',
+          'Rscript': 'Rscript',
+          
+          // Functional/Academic languages
+          'ghc': 'ghc',           // Haskell compiler
+          'runghc': 'runghc',     // Haskell interpreter
+          'scalac': 'scalac',     // Scala compiler
+          'scala': 'scala',       // Scala runner
+          'clojure': 'clojure',   // Clojure
+          'lein': 'lein',         // Leiningen (Clojure build tool)
+          'elixir': 'elixir',     // Elixir
+          'mix': 'mix',           // Elixir build tool
+          'julia': 'julia',       // Julia
+          'ocaml': 'ocaml',       // OCaml interpreter
+          'ocamlopt': 'ocamlopt', // OCaml native compiler
+          
+          // Systems languages
+          'gfortran': 'gfortran', // Fortran compiler
+          'zig': 'zig',           // Zig
+          
+          // Executable files (compiled binaries)
+          './main': './main',
+          './a.out': './a.out'
         };
         
         const actualCmd = cmdMap[baseCmd] || baseCmd;
         
-        // For TypeScript commands, use shell for better compatibility
-        const needsShell = ['tsx', 'ts-node', 'tsc'].includes(baseCmd);
+        // Commands that need shell for PATH resolution or complex arguments
+        const needsShell = [
+          // Node.js ecosystem
+          'tsx', 'ts-node', 'tsc', 'npx', 'npm', 'serve',
+          // .NET/Swift/Dart
+          'dotnet', 'deno', 'swift', 'dart', 'flutter',
+          // Nix
+          'nix-build', 'nix-shell',
+          // JVM languages
+          'kotlinc', 'scala', 'scalac', 'clojure', 'lein',
+          // Functional languages
+          'ghc', 'runghc', 'elixir', 'mix', 'julia', 'ocaml', 'ocamlopt',
+          // Systems languages
+          'zig'
+        ].includes(baseCmd);
         
         // Handle compilation for compiled languages with real-time streaming
         const executionId = options.executionId;
+        
+        // Get language-specific timeout (or default)
+        const languageTimeout = RUNTIME_TIMEOUTS[language] || RUNTIME_TIMEOUTS['default'];
+        const compileTimeout = Math.min(languageTimeout, 120000); // Cap compile at 2 minutes
         
         if (config.compilerCommand) {
           const compileParts = config.compilerCommand.split(/\s+/);
@@ -226,7 +414,7 @@ export async function startProject(
             
             const proc = spawn(compileCmd, compileArgs, {
               cwd: projectDir,
-              shell: false
+              shell: needsShell  // Use shell for compilers that need PATH
             });
             
             proc.stdout.on('data', (data) => { 
@@ -241,10 +429,12 @@ export async function startProject(
             });
             
             const timeout = setTimeout(() => {
-              proc.kill('SIGTERM');
-              streamLog(projectId, executionId, 'stderr', 'Compilation timed out');
-              resolve({ stdout, stderr: stderr + '\nCompilation timed out', exitCode: 124 });
-            }, 30000);
+              if (proc.pid) killProcessTree(proc.pid);
+              else proc.kill('SIGTERM');
+              const timeoutMsg = `Compilation timed out (${compileTimeout/1000}s limit)`;
+              streamLog(projectId, executionId, 'stderr', timeoutMsg);
+              resolve({ stdout, stderr: stderr + '\n' + timeoutMsg, exitCode: 124 });
+            }, compileTimeout);
             
             proc.on('close', (code) => {
               clearTimeout(timeout);
@@ -259,8 +449,9 @@ export async function startProject(
           });
           
           if (compileResult.exitCode !== 0) {
-            logs.push(`Compilation error: ${compileResult.stderr}`);
-            streamLog(projectId, executionId, 'stderr', `Compilation failed with exit code ${compileResult.exitCode}`);
+            const friendlyError = getUserFriendlyError(compileResult.stderr, language);
+            logs.push(`Compilation error: ${friendlyError}`);
+            streamLog(projectId, executionId, 'stderr', `Compilation failed: ${friendlyError}`);
             
             // Notify exit for compilation failure
             const runtimeLogsService = getRuntimeLogsService();
@@ -308,6 +499,14 @@ export async function startProject(
             shell: needsShell  // Use shell for tsx/ts-node/npm commands for PATH resolution
           });
           
+          // Store process in activeRuntimes for proper cleanup
+          const runtime = activeRuntimes.get(projectId);
+          if (runtime) {
+            runtime.process = proc;
+            runtime.pid = proc.pid;
+            runtime.startTime = startTime;
+          }
+          
           proc.stdout.on('data', (data) => {
             const line = data.toString();
             stdout += line;
@@ -322,11 +521,14 @@ export async function startProject(
             streamLog(projectId, executionId, 'stderr', line);
           });
           
+          // Use language-specific timeout
           const timeout = setTimeout(() => {
-            proc.kill('SIGTERM');
-            streamLog(projectId, executionId, 'stderr', 'Execution timed out (30s limit)');
-            resolve({ stdout, stderr: stderr + '\nExecution timed out (30s limit)', exitCode: 124 });
-          }, 30000);
+            if (proc.pid) killProcessTree(proc.pid);
+            else proc.kill('SIGTERM');
+            const timeoutMsg = `Execution timed out (${languageTimeout/1000}s limit)`;
+            streamLog(projectId, executionId, 'stderr', timeoutMsg);
+            resolve({ stdout, stderr: stderr + '\n' + timeoutMsg, exitCode: 124 });
+          }, languageTimeout);
           
           proc.on('close', (code) => {
             clearTimeout(timeout);
@@ -340,17 +542,19 @@ export async function startProject(
           
           proc.on('error', (err) => {
             clearTimeout(timeout);
-            streamLog(projectId, executionId, 'stderr', err.message);
-            resolve({ stdout, stderr: err.message, exitCode: 1 });
+            const friendlyError = getUserFriendlyError(err.message, language);
+            streamLog(projectId, executionId, 'stderr', friendlyError);
+            resolve({ stdout, stderr: friendlyError, exitCode: 1 });
           });
         });
         
         if (execResult.exitCode === 0) {
           logs.push(`\n--- Execution completed successfully ---`);
         } else {
+          const friendlyError = getUserFriendlyError(execResult.stderr, language);
           logs.push(`\n--- Execution failed (exit code: ${execResult.exitCode}) ---`);
-          if (execResult.stderr) {
-            logs.push(execResult.stderr);
+          if (friendlyError) {
+            logs.push(friendlyError);
           }
         }
         
@@ -376,11 +580,12 @@ export async function startProject(
         };
         
       } catch (execError: any) {
-        const errorMessage = execError.message || 'Execution failed';
-        logs.push(`Execution error: ${errorMessage}`);
+        const rawError = execError.message || 'Execution failed';
+        const friendlyError = getUserFriendlyError(rawError, language);
+        logs.push(`Execution error: ${friendlyError}`);
         
         // Stream the error to connected clients
-        streamLog(projectId, executionIdForSetup, 'stderr', `Execution error: ${errorMessage}`);
+        streamLog(projectId, executionIdForSetup, 'stderr', `Execution error: ${friendlyError}`);
         
         // Notify exit with error
         const runtimeLogsService = getRuntimeLogsService();
@@ -404,7 +609,7 @@ export async function startProject(
           success: false,
           status: 'error',
           logs,
-          error: errorMessage
+          error: friendlyError
         };
       }
     }
@@ -579,7 +784,7 @@ export async function startProject(
 }
 
 /**
- * Stop a project runtime
+ * Stop a project runtime with proper process cleanup
  */
 export async function stopProject(projectId: string): Promise<boolean> {
   try {
@@ -596,10 +801,35 @@ export async function stopProject(projectId: string): Promise<boolean> {
     if (runtime.directExecutionMode || !runtime.containerId) {
       logger.info(`Cleaning up direct execution mode for project ${projectId}`);
       
+      // Kill the process tree if we have a PID
+      if (runtime.pid) {
+        try {
+          await killProcessTree(runtime.pid);
+          logger.info(`Killed process tree for PID ${runtime.pid}`);
+        } catch (killError) {
+          logger.warn(`Failed to kill process tree for PID ${runtime.pid}: ${killError}`);
+        }
+      }
+      
+      // Also try to kill via process reference
+      if (runtime.process && !runtime.process.killed) {
+        try {
+          runtime.process.kill('SIGTERM');
+          // Give it a moment then force kill if needed
+          setTimeout(() => {
+            if (runtime.process && !runtime.process.killed) {
+              runtime.process.kill('SIGKILL');
+            }
+          }, 1000);
+        } catch (e) {
+          // Process may already be dead
+        }
+      }
+      
       // Clean up temp directory if it exists
       if (runtime.projectDir) {
         try {
-          await fs.rm(runtime.projectDir, { recursive: true, force: true });
+          fs.rmSync(runtime.projectDir, { recursive: true, force: true });
           logger.info(`Cleaned up temp directory: ${runtime.projectDir}`);
         } catch (cleanupError) {
           logger.warn(`Failed to cleanup temp dir: ${runtime.projectDir}`);
