@@ -496,11 +496,16 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
   const modelToUse = options.model || 'gpt-4o-mini';
   logger.info(`[OpenAI Stream] Using model: ${modelToUse}`);
   
+  // OpenAI o-series models (o1, o3, o4-mini) require max_completion_tokens instead of max_tokens
+  const isOSeriesModel = /^o[1-9]/.test(modelToUse);
+  
   const stream = await openai.chat.completions.create({
     model: modelToUse,
     messages,
-    temperature: options.temperature,
-    max_tokens: options.maxTokens,
+    temperature: isOSeriesModel ? undefined : options.temperature, // o-series doesn't support temperature
+    ...(isOSeriesModel 
+      ? { max_completion_tokens: options.maxTokens }
+      : { max_tokens: options.maxTokens }),
     stream: true,
     stream_options: { include_usage: true },
     tools: tools.length > 0 ? tools : undefined
