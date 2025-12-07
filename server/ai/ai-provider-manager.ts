@@ -154,15 +154,6 @@ export const AI_MODELS: AIModel[] = [
     supportsStreaming: true,
     costPer1kTokens: 0.000075
   },
-  {
-    id: 'gemini-2.0-flash',
-    name: 'Gemini 2.0 Flash',
-    provider: 'gemini',
-    description: 'Fast and versatile multimodal with native tool use (Dec 2024)',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.00005
-  },
   
   // ✅ 40-YEAR ENGINEERING FIX: Moonshot AI - CORRECT Model IDs (November 2025)
   // Source: https://platform.moonshot.ai/docs/introduction
