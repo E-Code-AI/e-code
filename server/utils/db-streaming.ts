@@ -13,6 +13,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import type { Readable } from 'stream';
 import type Archiver from 'archiver';
+import { Pool, PoolClient } from 'pg';
 import { createLogger } from './logger';
 
 const logger = createLogger('db-streaming');
@@ -460,8 +461,6 @@ export async function pipeDirectoryToArchive(
 // ============================================================================
 // PostgreSQL Native Streaming (pg-query-stream pattern)
 // ============================================================================
-
-import { Pool, PoolClient } from 'pg';
 
 /**
  * Configuration for PostgreSQL streaming queries
