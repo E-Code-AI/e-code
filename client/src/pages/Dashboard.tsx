@@ -193,11 +193,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="relative rounded-2xl overflow-hidden"
-          style={{ 
-            background: 'linear-gradient(135deg, #F26207 0%, #FF8534 50%, #F99D25 100%)',
-            boxShadow: '0 8px 32px -8px rgba(242, 98, 7, 0.4)'
-          }}
+          className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[var(--ecode-accent)] via-[var(--ecode-accent)]/90 to-[var(--ecode-accent)]/80 shadow-[0_8px_32px_-8px_rgba(var(--ecode-accent-rgb,242,98,7),0.4)]"
         >
           {/* Decorative background pattern */}
           <div className="absolute inset-0 opacity-10">
@@ -240,7 +236,7 @@ export default function Dashboard() {
                   type="submit"
                   size="lg"
                   disabled={!aiPrompt.trim() || isCreating}
-                  className="bg-white text-[#F26207] hover:bg-white/95 font-semibold h-12 sm:h-auto w-full sm:w-auto px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="bg-white text-[var(--ecode-accent)] hover:bg-white/95 font-semibold h-12 sm:h-auto w-full sm:w-auto px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
                   data-testid="button-create-project"
                 >
                   {isCreating ? (
@@ -272,15 +268,15 @@ export default function Dashboard() {
                 transition={{ delay: index * 0.05, duration: 0.3 }}
               >
                 <Card
-                  className="cursor-pointer group border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[#F26207]/30 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.15)] transition-all duration-200"
+                  className="cursor-pointer group border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[var(--ecode-accent)]/30 hover:shadow-[0_4px_16px_-4px_rgba(var(--ecode-accent-rgb,242,98,7),0.15)] transition-all duration-200"
                   onClick={action.action}
                   data-testid={`action-${action.title.toLowerCase().replace(/\s/g, '-')}`}
                 >
                   <CardContent className="p-6 flex flex-col items-center text-center">
-                    <div className="p-3 rounded-xl bg-[#F26207]/10 group-hover:bg-[#F26207]/15 transition-colors mb-3">
-                      <action.icon className="h-6 w-6 text-[#F26207]" />
+                    <div className="p-3 rounded-xl bg-[var(--ecode-accent)]/10 group-hover:bg-[var(--ecode-accent)]/15 transition-colors mb-3">
+                      <action.icon className="h-6 w-6 text-[var(--ecode-accent)]" />
                     </div>
-                    <h3 className="font-medium text-sm mb-1 text-[var(--ecode-text)] group-hover:text-[#F26207] transition-colors">{action.title}</h3>
+                    <h3 className="font-medium text-sm mb-1 text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors">{action.title}</h3>
                     <p className="text-xs text-[var(--ecode-text-muted)] hidden md:block">{action.description}</p>
                   </CardContent>
                 </Card>
@@ -301,7 +297,7 @@ export default function Dashboard() {
                   placeholder="Search projects..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-4 py-2.5 min-h-[44px] text-sm border border-[var(--ecode-border)] rounded-xl bg-[var(--ecode-surface)] focus:outline-none focus:ring-2 focus:ring-[#F26207]/20 focus:border-[#F26207]/40 transition-all duration-200"
+                  className="pl-9 pr-4 py-2.5 min-h-[44px] text-sm border border-[var(--ecode-border)] rounded-xl bg-[var(--ecode-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40 transition-all duration-200"
                   style={{ fontFamily: 'var(--ecode-font-sans)' }}
                   data-testid="input-search-projects"
                 />
@@ -310,7 +306,7 @@ export default function Dashboard() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="min-h-[44px] border-[var(--ecode-border)] hover:border-[#F26207]/40 hover:text-[#F26207] transition-colors rounded-xl"
+                  className="min-h-[44px] border-[var(--ecode-border)] hover:border-[var(--ecode-accent)]/40 hover:text-[var(--ecode-accent)] transition-colors rounded-xl"
                   onClick={() => navigate('/projects')}
                   data-testid="button-view-all"
                 >
@@ -336,8 +332,8 @@ export default function Dashboard() {
             </div>
           ) : filteredProjects.length === 0 ? (
             <Card className="p-12 text-center border-dashed border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
-              <div className="p-4 rounded-2xl bg-[#F26207]/10 w-fit mx-auto mb-4">
-                <Code2 className="h-10 w-10 text-[#F26207]" />
+              <div className="p-4 rounded-2xl bg-[var(--ecode-accent)]/10 w-fit mx-auto mb-4">
+                <Code2 className="h-10 w-10 text-[var(--ecode-accent)]" />
               </div>
               <p className="text-[var(--ecode-text-muted)]">
                 {searchQuery ? 'No projects found matching your search.' : 'No projects yet. Create your first one!'}
@@ -355,14 +351,14 @@ export default function Dashboard() {
                     transition={{ delay: index * 0.03, duration: 0.3 }}
                   >
                     <Card
-                      className="cursor-pointer group border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[#F26207]/30 hover:shadow-[0_8px_24px_-8px_rgba(242,98,7,0.2)] transition-all duration-200 overflow-hidden"
+                      className="cursor-pointer group border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[var(--ecode-accent)]/30 hover:shadow-[0_8px_24px_-8px_rgba(var(--ecode-accent-rgb,242,98,7),0.2)] transition-all duration-200 overflow-hidden"
                       onClick={() => {
                         navigate(`/ide/${project.id}`);
                       }}
                       data-testid={`project-card-${project.id}`}
                     >
                       {/* Project Icon/Preview */}
-                      <div className="aspect-video relative bg-gradient-to-br from-[#F26207]/5 to-[#F99D25]/10 flex items-center justify-center">
+                      <div className="aspect-video relative bg-gradient-to-br from-[var(--ecode-accent)]/5 to-[var(--ecode-accent)]/10 flex items-center justify-center">
                         {getProjectIcon(project)}
                         {project.isDeployed && (
                           <Badge className="absolute top-2 right-2 bg-emerald-500 text-white border-0 shadow-sm">
@@ -376,7 +372,7 @@ export default function Dashboard() {
                       </div>
 
                       <CardContent className="p-4">
-                        <h3 className="font-semibold truncate mb-1 text-[var(--ecode-text)] group-hover:text-[#F26207] transition-colors">
+                        <h3 className="font-semibold truncate mb-1 text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors">
                           {project.name}
                         </h3>
                         <p className="text-sm text-[var(--ecode-text-muted)] mb-3 line-clamp-2">
@@ -392,7 +388,7 @@ export default function Dashboard() {
                             <Button 
                               size="sm" 
                               variant="ghost" 
-                              className="h-8 w-8 p-0 hover:bg-[#F26207]/10 hover:text-[#F26207]" 
+                              className="h-8 w-8 p-0 hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]" 
                               data-testid={`button-open-${project.id}`}
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -404,7 +400,7 @@ export default function Dashboard() {
                             <Button 
                               size="sm" 
                               variant="ghost" 
-                              className="h-8 w-8 p-0 hover:bg-[#F26207]/10 hover:text-[#F26207]"
+                              className="h-8 w-8 p-0 hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const projectUrl = getProjectUrl(project, user?.username);
