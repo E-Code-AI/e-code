@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE for rapid prototyping, education, and enterprise use. It offers multi-provider AI model selection, real-time collaboration, and robust security. The platform aims to provide autonomous workspace generation from natural language prompts, delivering live previews and streaming progress, thereby creating a comprehensive AI-powered development environment that streamlines coding and enhances learning. It is envisioned as an enterprise-grade solution with significant market potential.
+E-Code is an AI-assisted web-based IDE designed for rapid prototyping, education, and enterprise use. It provides multi-provider AI model selection, real-time collaboration, and robust security. The platform's core purpose is to autonomously generate workspaces from natural language prompts, offering live previews and streaming progress, thereby creating an AI-powered development environment that streamlines coding and enhances learning. It is envisioned as an enterprise-grade solution with significant market potential.
 
 ## User Preferences
 - **Communication:** Simple, everyday language
@@ -19,122 +19,25 @@ E-Code is an AI-assisted web-based IDE for rapid prototyping, education, and ent
 ## System Architecture
 
 ### UI/UX Decisions
-The frontend utilizes Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to iOS Dynamic Color System principles, San Francisco Pro Typography, 8pt Grid Spacing, Apple-quality animation, iOS-style shadows, continuous corners, and appropriate touch targets for a mobile-first experience. The autonomous agent interface is platform-agnostic and responsive, featuring real-time progress tracking. QA instrumentation includes minimum touch targets, comprehensive `data-testid` coverage, and mobile-first grid implementations. Key IDE components like the Activity Bar, Tab Bar, and Status Bar mirror Replit's design. Mobile UX includes a Replit-identical 5-tab navigation, spring-based animations, loading skeletons, and touch enhancements.
+The frontend uses Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to iOS Dynamic Color System principles, San Francisco Pro Typography, 8pt Grid Spacing, Apple-quality animation, iOS-style shadows, continuous corners, and appropriate touch targets for a mobile-first experience. The autonomous agent interface is platform-agnostic and responsive, featuring real-time progress tracking. QA instrumentation includes minimum touch targets, comprehensive `data-testid` coverage, and mobile-first grid implementations. Key IDE components like the Activity Bar, Tab Bar, and Status Bar mirror Replit's design. Mobile UX includes a Replit-identical 5-tab navigation, spring-based animations, loading skeletons, and touch enhancements.
 
 ### Technical Implementations
-The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Wouter. The backend is a Node.js/Express.js application in TypeScript, using Drizzle ORM for PostgreSQL and Passport.js for authentication, following a RESTful API design. Real-time features are powered by WebSockets. AI optimization includes a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are AES-256-GCM encrypted, and SSE streaming is used for code generation. Anonymous bootstrap authentication provides ephemeral guest users. AI Agent enhancements include structured XML-based system prompts, a repository overview service, a context window manager with token optimization, a unified AI provider system, and AI-powered inline code actions. A Checkpoints & Rollback System ensures atomic transactions, and a Background Auto-Testing System uses Playwright. Max Autonomy Mode enables extended autonomous sessions with AI task decomposition, auto-execution, ETA estimation, and cost tracking. The platform provides process-based code execution without Docker, leveraging native Nix-managed language runtimes (Python, Node.js, Go, GCC/G++, Java, Rust, PHP). A centralized Winston-based logging system with correlation IDs and multi-transport support is implemented.
-
-### Agent Workflow State Machine (Updated Dec 7, 2025)
-The agent orchestrator (`agent-orchestrator.service.ts`) manages workflow state transitions:
-- **State machine:** `idle → planning → executing → completed/failed`
-- **Retry helper:** `retryDbStatusUpdate()` with exponential backoff + jitter (1s/2s/4s delays, 3 retries)
-- **DB consistency:** All status transitions use retry helper for eventual consistency under DB failures
-- **WebSocket sync:** Broadcasts only occur AFTER confirmed DB writes (or explicit fallback on retry exhaustion)
-- **Critical fix (Dec 7):** `executeAutonomousPlan()` now properly transitions workflowStatus through all states
-
-### Bootstrap Prompt Flow Fix (Dec 7, 2025)
-- **Problem:** Bootstrap created projects with prompt in `project.description`, but client never used it for agent auto-start
-- **Solution:** Added `useMemo` in `IDEPage.tsx` that calculates `agentInitialPrompt` from `project.description` when bootstrap token present
-- **Priority Chain:** `promptParam (URL) → storedPrompt (sessionStorage) → project.description (bootstrap)`
-- **Dependencies:** `[promptParam, autoStartAgent, storedPrompt, bootstrapToken, project?.description]`
-- **Dual Flow:** Client displays prompt in panel + server auto-starts `startAutonomousWorkspace()` via WebSocket connection
-
-### Bootstrap Auto-Start Complete Fix (Dec 7, 2025)
-**Problem Chain:**
-1. `ReplitAgentPanelV3` lazy-loaded component received `initialPrompt=undefined` on first mount
-2. React state (`persistedBootstrapPrompt`) reset when component remounted
-3. Auto-submit useEffect required `conversationId` which wasn't available when prompt arrived
-4. SessionStorage key mismatch: IDEPage wrote to `bootstrap_prompt_${projectId}`, ReplitAgentPanelV3 read from `agent-prompt-${projectId}`
-5. Auto-start condition required `?agent=true` but bootstrap uses `?bootstrap=...` token
-
-**Root Causes:**
-- Lazy loading + async project fetch = component mounts with stale props
-- TanStack Query refetches cause `project` to briefly become `undefined`, resetting useMemo
-- `conversationId` set asynchronously by `bootstrapConversation()`, never available when prompt ready
-- Inconsistent sessionStorage keys between components
-- Auto-start useEffect only checked for `agent=true` URL param, not bootstrap token
-
-**Solution (5-part fix):**
-1. **SessionStorage Persistence:** `IDEPage.tsx` stores bootstrap prompt in sessionStorage to survive React remounts
-2. **Harmonized SessionStorage Key:** Both components now use `agent-prompt-${projectId}` key
-3. **State Initialization from SessionStorage:** `useState(() => sessionStorage.getItem(...))` recovers prompt on any remount
-4. **Removed conversationId Dependency:** Auto-submit useEffect no longer waits for `conversationId` - the `handleSend()` function generates a fallback `conv-${Date.now()}` ID if needed
-5. **Extended Auto-Start Condition:** `(agentEnabled || hasBootstrapToken || autoStart) && resolvedPrompt` now triggers for bootstrap flows
-
-**Files Modified:**
-- `client/src/pages/IDEPage.tsx` - SessionStorage persistence with `agent-prompt-${projectId}` key
-- `client/src/components/ai/ReplitAgentPanelV3.tsx` - Extended auto-start condition to accept bootstrap token
-
-**Pattern:** For bootstrap flows with async data, use consistent sessionStorage keys and ensure auto-start conditions cover all entry points (URL params, bootstrap tokens, props)
-
-### Memory Optimization Patterns (Dec 7, 2025)
-Replit-style generators and lazy evaluation for handling millions of users:
-- **PostgreSQL Native Streaming:** `server/utils/db-streaming.ts` provides true cursor-based streaming
-  - `streamPgQuery<T>()` - Native PostgreSQL cursors (DECLARE CURSOR / FETCH) for streaming millions of rows
-  - `collectPgStream<T>()` - Simple API for collecting streamed results with limits
-  - `countPgStream()` - Count rows without loading all data (progress indicators)
-  - `processPgStreamParallel<T>()` - Parallel batch processing for maximum throughput
-- **File Streaming:** Same module provides directory and archive streaming
-  - `streamDirectoryFiles()` - Async generator for directory traversal
-  - `pipeStreamToArchive()` - Memory-efficient file archiving with backpressure
-- **SQL-Level Filtering:** Always move filters to SQL WHERE clauses instead of in-memory `.filter()`
-  - Example: `logs-viewer.router.ts` refactored from loading 1000+ records to SQL WHERE
-- **Security Pattern:** Always validate inputs at schema level before SQL queries
-  - Prevent multi-tenant data leaks with strict Zod validation (e.g., numeric projectId)
-  - Return 400 error instead of running unscoped queries
-- **Stream Limits:** AI streaming capped at 10MB with circuit breakers (`server/ai/stream-limiter.ts`)
-
-### Fortune 500 Production Hardening (Dec 7, 2025)
-- **Centralized Secret Management:** `server/utils/secrets-manager.ts` with startup validation
-  - Enforces JWT_SECRET and SESSION_SECRET in production
-  - Development fallbacks with clear warnings (NOT FOR PRODUCTION)
-  - 9 files updated to use centralized getters
-- **Durable Recovery Queue:** 30-second recovery worker for failed DB updates
-  - Max 10 retries per session, emits events on success/failure
-  - Prevents "zombie" sessions during DB outages
-- **Circuit Breaker Enforcement:** WebSocket notifications on provider failures
-  - Fallback chain: `gpt-5.1 → kimi → gemini → grok → claude-haiku`
-  - Broadcasts `degraded_mode` messages with recovery estimates
-- **Health Endpoint:** `GET /api/health/detailed` returns comprehensive status
-  - Circuit breaker status for all 5 AI providers
-  - Recovery queue pending items
-  - Database latency and connectivity
-  - System metrics (memory, CPU, uptime)
-
-### Runtime System Fortune 500 Hardening (Dec 7, 2025)
-- **29 Supported Languages:** Full Replit parity with nodejs, python, java, go, ruby, rust, php, c, cpp, csharp, swift, kotlin, dart, typescript, bash, html-css-js, nix, deno, lua, perl, r, haskell, scala, clojure, elixir, julia, ocaml, fortran, zig
-- **Process Management:** 
-  - PID tracking in activeRuntimes map
-  - tree-kill for proper process tree termination
-  - Process stored for cleanup on stop/timeout
-- **Language-Specific Timeouts:** RUNTIME_TIMEOUTS map with per-language configuration
-  - Scripting languages: 30s (Python, Node.js, TypeScript, Ruby, Bash, Lua, Perl)
-  - Compiled languages: 60-120s (C/C++, Java, Kotlin, Rust, Go, C#, Swift, Haskell, Scala)
-  - Web servers: 5 minutes (PHP, HTML/CSS/JS, Deno, Nix)
-- **User-Friendly Error Messages:** ERROR_MESSAGES map + getUserFriendlyError() for translating technical errors
-- **Complete cmdMap:** 50+ commands covering all supported languages with proper PATH resolution
-- **TypeScript Detection Fix:** Prioritizes .ts/.tsx files over package.json for correct language detection
+The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Wouter. The backend is a Node.js/Express.js application in TypeScript, utilizing Drizzle ORM for PostgreSQL and Passport.js for authentication, following a RESTful API design. Real-time features are powered by WebSockets. AI optimization includes a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are AES-256-GCM encrypted, and SSE streaming is used for code generation. Anonymous bootstrap authentication provides ephemeral guest users. AI Agent enhancements include structured XML-based system prompts, a repository overview service, a context window manager with token optimization, a unified AI provider system, and AI-powered inline code actions. A Checkpoints & Rollback System ensures atomic transactions, and a Background Auto-Testing System uses Playwright. Max Autonomy Mode enables extended autonomous sessions with AI task decomposition, auto-execution, ETA estimation, and cost tracking. The platform provides process-based code execution without Docker, leveraging native Nix-managed language runtimes (Python, Node.js, Go, GCC/G++, Java, Rust, PHP). A centralized Winston-based logging system with correlation IDs and multi-transport support is implemented.
 
 ### Feature Specifications
 Core features include a Monaco Code Editor with advanced enhancements, an interactive terminal (xterm.js), file management, real-time collaboration, authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager, a Logs Viewer, and a Debugger UI. Autonomous workspace creation involves a Bootstrap API call, AI plan generation, WebSocket-based real-time progress, autonomous execution, and a live preview. PWA features and Electron desktop support are planned. An Agent Activity Dashboard with AG Grid provides real-time metrics and session history. Agent conversation persistence is managed via a Zustand store with localStorage and backend synchronization. An Agentic RAG system provides automatic backend RAG context retrieval for all sessions.
 
 ### System Design Choices
-A PostgreSQL database stores user data, project hierarchies, AI agent sessions, deployment history, and subscription management. Security measures include CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system provides server-sent event streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API with Prometheus metrics. A two-tier database API architecture (Admin and Project Data APIs) is used with integrated security. Docker builds are optimized for small image sizes. The Stripe payment integration supports a Replit-style hybrid pricing model.
+A PostgreSQL database stores user data, project hierarchies, AI agent sessions, deployment history, and subscription management. Security measures include CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system provides server-sent event streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API with Prometheus metrics. A two-tier database API architecture (Admin and Project Data APIs) is used with integrated security. Docker builds are optimized for small image sizes. The Stripe payment integration supports a Replit-style hybrid pricing model. Support for 29 languages is provided via CodeMirror 6 for syntax highlighting and a robust runtime system with PID tracking, tree-kill for process termination, and language-specific timeouts. New generation OpenAI models (`gpt-5.x`, `o-series`) require specific API parameter handling (e.g., `max_completion_tokens` instead of `max_tokens`, no `temperature` parameter).
 
 ## External Dependencies
 
-### AI/ML Services (20 Models - E2E Verified December 5, 2025)
-- **OpenAI (8):** GPT-5.1, GPT-5.1-thinking, GPT-5, GPT-5-mini, GPT-5-nano, GPT-4o, o3, o4-mini
-- **Anthropic (3):** Claude Opus 4.5-20251124, Claude Sonnet 4.5-20250929, Claude Haiku 4.5-20251015
-- **Google Gemini (3):** Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini 2.0 Flash
-- **Moonshot AI (4):** kimi-k2-0711-preview, kimi-k2-thinking, moonshot-v1-32k, moonshot-v1-128k
-- **xAI (2):** Grok 4, Grok 4 Fast
-
-### Model Catalog Verification
-- **API:** `GET /api/models` returns 20 verified models
-- **REMOVED (Dec 5):** `kimi-k2-0904-preview` - model does NOT exist on Moonshot API
-- **Legacy Alias:** `kimi-k2-0904-preview` → `kimi-k2-0711-preview` for backward compatibility
-- **Test Report:** `docs/E2E-MODEL-TEST-REPORT.md`
+### AI/ML Services
+- **OpenAI:** GPT-5.1, GPT-5.1-thinking, GPT-5, GPT-5-mini, GPT-5-nano, GPT-4o, o3, o4-mini
+- **Anthropic:** Claude Opus 4.5-20251124, Claude Sonnet 4.5-20250929, Claude Haiku 4.5-20251015
+- **Google Gemini:** Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini 2.0 Flash
+- **Moonshot AI:** kimi-k2-0711-preview, kimi-k2-thinking, moonshot-v1-32k, moonshot-v1-128k
+- **xAI:** Grok 4, Grok 4 Fast
 
 ### Infrastructure Services
 - **PostgreSQL:** Neon serverless
