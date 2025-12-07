@@ -33,10 +33,10 @@ function getGreeting() {
 // Get project icon based on project details
 function getProjectIcon(project: Project) {
   const colors = [
-    'bg-gradient-to-br from-orange-500 to-yellow-500',
-    'bg-gradient-to-br from-orange-600 to-red-500',
-    'bg-gradient-to-br from-yellow-500 to-orange-600',
-    'bg-gradient-to-br from-green-500 to-emerald-600',
+    'bg-gradient-to-br from-[var(--ecode-accent)] to-[var(--ecode-accent-hover)]',
+    'bg-gradient-to-br from-[var(--ecode-accent-hover)] to-[var(--ecode-accent)]',
+    'bg-gradient-to-br from-[var(--ecode-accent)] via-[var(--ecode-accent-hover)] to-[var(--ecode-accent)]',
+    'bg-gradient-to-br from-[hsl(var(--ecode-green))] to-[hsl(var(--ecode-green)/0.8)]',
   ];
   const bgColor = colors[project.id % colors.length];
   const firstLetter = project.name.charAt(0).toUpperCase();
@@ -361,7 +361,7 @@ export default function Dashboard() {
                       <div className="aspect-video relative bg-gradient-to-br from-[var(--ecode-accent)]/5 to-[var(--ecode-accent)]/10 flex items-center justify-center">
                         {getProjectIcon(project)}
                         {project.isDeployed && (
-                          <Badge className="absolute top-2 right-2 bg-emerald-500 text-white border-0 shadow-sm">
+                          <Badge className="absolute top-2 right-2 bg-[hsl(var(--ecode-green))] text-white border-0 shadow-sm">
                             <CheckCircle2 className="h-3 w-3 mr-1" />
                             Live
                           </Badge>
