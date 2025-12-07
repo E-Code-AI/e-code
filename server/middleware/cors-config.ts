@@ -157,12 +157,33 @@ export function createCorsMiddleware(): cors.CorsOptions {
       
       // Check if origin is in the allowed list
       if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        // Log rejected origins for security monitoring
-        console.warn(`[CORS] Rejected unauthorized origin: ${origin}`);
-        callback(new Error('Not allowed by CORS'));
+        return callback(null, true);
       }
+      
+      // Handle origins with ports (e.g., https://domain.replit.dev:5000)
+      // Strip port and check again for Replit development URLs
+      const originWithoutPort = origin.replace(/:\d+$/, '');
+      if (originWithoutPort !== origin && allowedOrigins.includes(originWithoutPort)) {
+        return callback(null, true);
+      }
+      
+      // Allow Replit development URLs dynamically (pattern matching)
+      // Pattern: https://<uuid>-<id>-<hash>.riker.replit.dev or similar
+      const replitDevPatterns = [
+        /^https:\/\/[a-f0-9-]+-\d+-[a-z0-9]+\.riker\.replit\.dev(:\d+)?$/,
+        /^https:\/\/[a-f0-9-]+-\d+-[a-z0-9]+\.kirk\.replit\.dev(:\d+)?$/,
+        /^https:\/\/[a-f0-9-]+-\d+-[a-z0-9]+\.spock\.replit\.dev(:\d+)?$/,
+        /^https:\/\/[a-z0-9-]+\.replit\.app(:\d+)?$/,
+        /^https:\/\/[a-z0-9-]+\.repl\.co(:\d+)?$/,
+      ];
+      
+      if (replitDevPatterns.some(pattern => pattern.test(origin))) {
+        return callback(null, true);
+      }
+      
+      // Log rejected origins for security monitoring
+      console.warn(`[CORS] Rejected unauthorized origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
     },
     credentials: true, // Allow cookies and authorization headers
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
