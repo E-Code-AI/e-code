@@ -243,8 +243,7 @@ class Program {
     fileExtensions: ['.ts', '.tsx'],
     defaultFile: 'index.ts',
     defaultContent: `console.log('Hello, world!');`,
-    compilerCommand: 'tsc',
-    runCommand: 'ts-node index.ts',
+    runCommand: 'tsx index.ts',  // tsx is faster than ts-node, no compilation needed
     installCommand: 'npm install',
     packageManager: 'npm',
     packageFile: 'package.json',
