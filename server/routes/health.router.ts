@@ -7,6 +7,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { aiProviderManager } from '../ai/ai-provider-manager';
 import { agentOrchestrator } from '../services/agent-orchestrator.service';
+import { db } from '../db';
+import { sql } from 'drizzle-orm';
 
 export class HealthRouter {
   private router: Router;
@@ -47,19 +49,24 @@ export class HealthRouter {
     };
   }
 
-  private async getDatabaseHealth(): Promise<{ status: string; connection: string; responseTime?: string; error?: string }> {
+  private async getDatabaseHealth(): Promise<{ status: string; connection: string; responseTime?: string; latencyMs?: number; error?: string }> {
+    const dbStartTime = Date.now();
     try {
-      // Simple database health check
-      const testQuery = await this.storage.getUser('health-check-id');
+      await db.execute(sql`SELECT 1`);
+      const latencyMs = Date.now() - dbStartTime;
       return {
         status: 'healthy',
         connection: 'active',
-        responseTime: '< 10ms'
+        responseTime: `${latencyMs}ms`,
+        latencyMs
       };
     } catch (error) {
+      const latencyMs = Date.now() - dbStartTime;
       return {
         status: 'unhealthy',
         connection: 'failed',
+        responseTime: `${latencyMs}ms`,
+        latencyMs,
         error: 'Database connection issue'
       };
     }
