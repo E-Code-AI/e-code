@@ -2265,6 +2265,8 @@ export const agentSessions = pgTable('agent_sessions', {
   index('agent_sessions_user_id_idx').on(table.userId),
   index('agent_sessions_project_id_idx').on(table.projectId),
   index('agent_sessions_active_idx').on(table.isActive),
+  index('agent_sessions_workflow_status_idx').on(table.workflowStatus),
+  index('agent_sessions_started_at_idx').on(table.startedAt),
 ]);
 
 // Agent Plans - Store complete AI-generated execution plans
