@@ -7,7 +7,7 @@
  * implementing the exact layout specified by the user.
  */
 
-import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
@@ -202,7 +202,7 @@ export default function IDEPage() {
 
   // NEW: Support ?prompt=... query param for direct agent invocation
   const storedPrompt = projectId ? sessionStorage.getItem(`agent-prompt-${projectId}`) : null;
-  const agentInitialPrompt = promptParam || (autoStartAgent && storedPrompt ? storedPrompt : null);
+  // Note: Bootstrap prompt is calculated below using project.description (requires project to load first)
   
   // NEW: If prompt is provided via query param, persist it to agent session
   useEffect(() => {
@@ -408,6 +408,21 @@ export default function IDEPage() {
     },
     enabled: !!projectId && (!!user || !!bootstrapToken),
   });
+  
+  // ✅ FIX (Dec 7, 2025): Calculate agentInitialPrompt AFTER project loads
+  // When bootstrap token present, use project.description as initial prompt for auto-start
+  const agentInitialPrompt = useMemo(() => {
+    // Priority 1: URL ?prompt= parameter
+    if (promptParam) return promptParam;
+    // Priority 2: Stored prompt with autoStartAgent flag
+    if (autoStartAgent && storedPrompt) return storedPrompt;
+    // Priority 3: Bootstrap token + project description (autonomous workspace creation)
+    if (bootstrapToken && project?.description) {
+      console.log('[IDEPage] ✅ Using project.description as agentInitialPrompt for bootstrap:', project.description);
+      return project.description;
+    }
+    return null;
+  }, [promptParam, autoStartAgent, storedPrompt, bootstrapToken, project?.description]);
   
   // Auto-start runtime when IDE loads (Replit-like behavior)
   // ✅ FIX (Dec 7, 2025): Start runtime even for empty projects - don't require files.length > 0
