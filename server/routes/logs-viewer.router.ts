@@ -3,8 +3,9 @@ import { z } from 'zod';
 import { createLogger } from '../utils/logger';
 import { db } from '../db';
 import { deployments, buildLogs, terminalLogs } from '@shared/schema';
-import { eq, desc, and, gte, lte, sql, like, inArray } from 'drizzle-orm';
+import { eq, desc, and, gte, lte, sql, like, inArray, or, ilike } from 'drizzle-orm';
 import { ensureAuthenticated } from '../middleware/auth';
+import { filterStream, transformStream, collectStream } from '../utils/db-streaming';
 
 const router = Router();
 const logger = createLogger('logs-viewer');
@@ -49,8 +50,47 @@ interface LogEntry {
 }
 
 /**
+ * Build SQL WHERE conditions for logs query
+ * Moves filtering to database level for memory efficiency
+ */
+function buildLogsWhereConditions(params: {
+  buildId?: string;
+  projectId?: string;
+  level?: string;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
+  const conditions: any[] = [];
+  
+  if (params.buildId) {
+    conditions.push(eq(buildLogs.buildId, params.buildId));
+  }
+  if (params.projectId) {
+    conditions.push(eq(buildLogs.projectId, params.projectId));
+  }
+  if (params.level && params.level !== 'all') {
+    conditions.push(eq(buildLogs.level, params.level));
+  }
+  if (params.search) {
+    conditions.push(ilike(buildLogs.message, `%${params.search}%`));
+  }
+  if (params.startDate) {
+    conditions.push(gte(buildLogs.timestamp, new Date(params.startDate)));
+  }
+  if (params.endDate) {
+    conditions.push(lte(buildLogs.timestamp, new Date(params.endDate)));
+  }
+  
+  return conditions.length > 0 ? and(...conditions) : undefined;
+}
+
+/**
  * Get deployment logs with search and filtering
  * GET /api/logs
+ * 
+ * MEMORY OPTIMIZATION: Uses SQL-level filtering instead of loading
+ * all records into memory and filtering with .filter()
  */
 router.get('/', async (req, res) => {
   try {
@@ -68,14 +108,32 @@ router.get('/', async (req, res) => {
 
     let logs: LogEntry[] = [];
 
-    // Fetch from build logs table
-    if (buildId) {
-      // Query by buildId directly
-      const buildLogsRecords = await db.query.buildLogs.findMany({
-        where: eq(buildLogs.buildId, buildId),
-        orderBy: [desc(buildLogs.timestamp)],
-        limit: 1000
+    // SQL-level filtering for memory efficiency (Replit pattern)
+    if (buildId || projectId) {
+      const whereConditions = buildLogsWhereConditions({
+        buildId,
+        projectId,
+        level,
+        search,
+        startDate,
+        endDate
       });
+
+      // Get total count first (for pagination) - using SQL count
+      const countResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(buildLogs)
+        .where(whereConditions);
+      const total = Number(countResult[0]?.count ?? 0);
+
+      // Fetch only the needed page with SQL LIMIT/OFFSET
+      const buildLogsRecords = await db
+        .select()
+        .from(buildLogs)
+        .where(whereConditions)
+        .orderBy(desc(buildLogs.timestamp))
+        .limit(limit)
+        .offset(offset);
 
       logs = buildLogsRecords.map(log => ({
         timestamp: log.timestamp.toISOString(),
@@ -83,39 +141,23 @@ router.get('/', async (req, res) => {
         message: log.message,
         buildId: log.buildId,
         projectId: log.projectId,
-        metadata: { source: log.source, logType: log.logType, ...log.metadata }
-      }));
-    } else if (projectId) {
-      // Get logs from build logs table for project
-      const buildLogsRecords = await db.query.buildLogs.findMany({
-        where: eq(buildLogs.projectId, projectId),
-        orderBy: [desc(buildLogs.timestamp)],
-        limit: 1000
-      });
-
-      logs = buildLogsRecords.map(log => ({
-        timestamp: log.timestamp.toISOString(),
-        level: log.level as 'info' | 'warn' | 'error' | 'debug',
-        message: log.message,
-        buildId: log.buildId,
-        projectId: log.projectId,
-        metadata: { source: log.source, logType: log.logType, ...log.metadata }
+        metadata: { source: log.source, logType: log.logType, ...((log.metadata as Record<string, any>) || {}) }
       }));
 
-      // Fallback: Get from deployment records if no build logs
-      if (logs.length === 0 && deploymentId) {
-        const deployment = await db.query.deployments.findFirst({
-          where: eq(deployments.deploymentId, deploymentId)
-        });
-
-        if (deployment?.deploymentLogs) {
-          logs = parseDeploymentLogs(deployment.deploymentLogs, deploymentId, projectId);
-        } else if (deployment?.buildLogs) {
-          logs = parseDeploymentLogs(deployment.buildLogs, deploymentId, projectId);
+      // Return early with SQL-based pagination
+      return res.json({
+        logs,
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore: offset + limit < total
         }
-      }
-    } else if (deploymentId) {
-      // Fallback: Get from deployment record
+      });
+    }
+
+    // Fallback: Get from deployment record (legacy support)
+    if (deploymentId) {
       const deployment = await db.query.deployments.findFirst({
         where: eq(deployments.deploymentId, deploymentId)
       });
@@ -125,31 +167,23 @@ router.get('/', async (req, res) => {
       } else if (deployment?.buildLogs) {
         logs = parseDeploymentLogs(deployment.buildLogs, deploymentId, deployment.projectId);
       }
+
+      // Apply in-memory filters only for legacy deployment logs
+      if (level !== 'all') {
+        logs = logs.filter(log => log.level === level);
+      }
+      if (search) {
+        const searchLower = search.toLowerCase();
+        logs = logs.filter(log => log.message.toLowerCase().includes(searchLower));
+      }
+      if (startDate) {
+        logs = logs.filter(log => new Date(log.timestamp) >= new Date(startDate));
+      }
+      if (endDate) {
+        logs = logs.filter(log => new Date(log.timestamp) <= new Date(endDate));
+      }
     }
 
-    // Apply filters
-    if (level !== 'all') {
-      logs = logs.filter(log => log.level === level);
-    }
-
-    if (search) {
-      const searchLower = search.toLowerCase();
-      logs = logs.filter(log =>
-        log.message.toLowerCase().includes(searchLower) ||
-        JSON.stringify(log.metadata || {}).toLowerCase().includes(searchLower)
-      );
-    }
-
-    if (startDate) {
-      const start = new Date(startDate);
-      logs = logs.filter(log => new Date(log.timestamp) >= start);
-    }
-    if (endDate) {
-      const end = new Date(endDate);
-      logs = logs.filter(log => new Date(log.timestamp) <= end);
-    }
-
-    // Pagination
     const total = logs.length;
     const paginatedLogs = logs.slice(offset, offset + limit);
 
