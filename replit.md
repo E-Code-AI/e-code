@@ -44,22 +44,28 @@ The agent orchestrator (`agent-orchestrator.service.ts`) manages workflow state 
 1. `ReplitAgentPanelV3` lazy-loaded component received `initialPrompt=undefined` on first mount
 2. React state (`persistedBootstrapPrompt`) reset when component remounted
 3. Auto-submit useEffect required `conversationId` which wasn't available when prompt arrived
+4. SessionStorage key mismatch: IDEPage wrote to `bootstrap_prompt_${projectId}`, ReplitAgentPanelV3 read from `agent-prompt-${projectId}`
+5. Auto-start condition required `?agent=true` but bootstrap uses `?bootstrap=...` token
 
 **Root Causes:**
 - Lazy loading + async project fetch = component mounts with stale props
 - TanStack Query refetches cause `project` to briefly become `undefined`, resetting useMemo
 - `conversationId` set asynchronously by `bootstrapConversation()`, never available when prompt ready
+- Inconsistent sessionStorage keys between components
+- Auto-start useEffect only checked for `agent=true` URL param, not bootstrap token
 
-**Solution (3-part fix):**
-1. **SessionStorage Persistence:** `IDEPage.tsx` stores bootstrap prompt in `sessionStorage.setItem(bootstrap_prompt_${projectId}, ...)` to survive React remounts
-2. **State Initialization from SessionStorage:** `useState(() => sessionStorage.getItem(...))` recovers prompt on any remount
-3. **Removed conversationId Dependency:** Auto-submit useEffect no longer waits for `conversationId` - the `handleSend()` function generates a fallback `conv-${Date.now()}` ID if needed
+**Solution (5-part fix):**
+1. **SessionStorage Persistence:** `IDEPage.tsx` stores bootstrap prompt in sessionStorage to survive React remounts
+2. **Harmonized SessionStorage Key:** Both components now use `agent-prompt-${projectId}` key
+3. **State Initialization from SessionStorage:** `useState(() => sessionStorage.getItem(...))` recovers prompt on any remount
+4. **Removed conversationId Dependency:** Auto-submit useEffect no longer waits for `conversationId` - the `handleSend()` function generates a fallback `conv-${Date.now()}` ID if needed
+5. **Extended Auto-Start Condition:** `(agentEnabled || hasBootstrapToken || autoStart) && resolvedPrompt` now triggers for bootstrap flows
 
 **Files Modified:**
-- `client/src/pages/IDEPage.tsx` - SessionStorage persistence + recovery
-- `client/src/components/ai/ReplitAgentPanelV3.tsx` - Removed conversationId from auto-submit condition
+- `client/src/pages/IDEPage.tsx` - SessionStorage persistence with `agent-prompt-${projectId}` key
+- `client/src/components/ai/ReplitAgentPanelV3.tsx` - Extended auto-start condition to accept bootstrap token
 
-**Pattern:** For bootstrap flows with async data, use sessionStorage for cross-remount persistence rather than React state alone
+**Pattern:** For bootstrap flows with async data, use consistent sessionStorage keys and ensure auto-start conditions cover all entry points (URL params, bootstrap tokens, props)
 
 ### Memory Optimization Patterns (Dec 7, 2025)
 Replit-style generators and lazy evaluation for handling millions of users:
