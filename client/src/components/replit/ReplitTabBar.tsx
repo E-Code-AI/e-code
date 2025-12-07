@@ -197,7 +197,7 @@ export function ReplitTabBar({
                 variant="ghost"
                 className={cn(
                   "h-8 flex-1 justify-start px-3 rounded-none border-none min-w-0",
-                  "hover:bg-transparent focus:bg-transparent"
+                  "hover:bg-[var(--ecode-sidebar-hover)] focus:bg-[var(--ecode-sidebar-hover)]"
                 )}
                 onClick={() => onTabClick?.(tab.id)}
               >

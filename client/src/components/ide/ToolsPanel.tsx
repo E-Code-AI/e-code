@@ -78,13 +78,13 @@ export function ToolsPanel({
   };
 
   return (
-    <div className="h-full flex flex-col bg-background border-l">
+    <div className="h-full flex flex-col bg-[var(--ecode-surface)] border-l border-[var(--ecode-border)]">
       {/* Header */}
-      <div className="px-4 py-3 border-b bg-gradient-to-r from-blue-50/30 to-purple-50/30 dark:from-blue-950/20 dark:to-purple-950/20">
+      <div className="px-4 py-3 border-b border-[var(--ecode-border)] bg-[var(--ecode-sidebar-bg)]">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            <h2 className="text-sm font-semibold">Tools</h2>
+            <Sparkles className="w-4 h-4 text-[var(--ecode-accent)]" />
+            <h2 className="text-sm font-semibold text-[var(--ecode-text)]">Tools</h2>
           </div>
           {onClose && (
             <Button
@@ -101,7 +101,7 @@ export function ToolsPanel({
         
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
           <Input
             placeholder="Search tools..."
             value={search}
@@ -114,7 +114,7 @@ export function ToolsPanel({
               variant="ghost"
               size="sm"
               onClick={() => setSearch('')}
-              className="absolute right-1 top-1 h-6 w-6 p-0 hover:bg-transparent"
+              className="absolute right-1 top-1 h-6 w-6 p-0 hover:bg-[var(--ecode-sidebar-hover)]"
             >
               <X className="w-3 h-3" />
             </Button>
@@ -126,7 +126,7 @@ export function ToolsPanel({
       <ScrollArea className="flex-1">
         <div className="p-2">
           {Object.entries(groupedTools).length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <div className="flex flex-col items-center justify-center py-12 text-[var(--ecode-text-muted)]">
               <Sparkles className="w-12 h-12 mb-3 opacity-20" />
               <p className="text-sm font-medium">No tools found</p>
               <p className="text-xs mt-1">Try a different search</p>
@@ -139,8 +139,8 @@ export function ToolsPanel({
                 onOpenChange={() => toggleCategory(category)}
                 className="mb-2"
               >
-                <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1.5 rounded-md hover:bg-accent transition-colors">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1.5 rounded-md hover:bg-[var(--ecode-sidebar-hover)] transition-colors">
+                  <span className="text-xs font-semibold text-[var(--ecode-text-muted)] uppercase tracking-wide">
                     {category}
                   </span>
                   <div className="flex items-center gap-2">
@@ -148,9 +148,9 @@ export function ToolsPanel({
                       {tools.length}
                     </Badge>
                     {expandedCategories.has(category) ? (
-                      <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                      <ChevronDown className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
                     ) : (
-                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                      <ChevronRight className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
                     )}
                   </div>
                 </CollapsibleTrigger>
@@ -168,16 +168,16 @@ export function ToolsPanel({
                         className={cn(
                           "w-full text-left px-3 py-2.5 rounded-md transition-all duration-150 flex items-start gap-3 group",
                           isActive
-                            ? "bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/40 dark:to-purple-900/40 shadow-sm"
-                            : "hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-950/30 dark:hover:to-purple-950/30"
+                            ? "bg-[var(--ecode-sidebar-hover)] shadow-sm border border-[var(--ecode-border)]"
+                            : "hover:bg-[var(--ecode-sidebar-hover)]"
                         )}
                       >
                         <IconComponent
                           className={cn(
                             "w-4 h-4 flex-shrink-0 mt-0.5 transition-all duration-200",
                             isActive
-                              ? "text-blue-600 dark:text-blue-400 scale-110"
-                              : "text-blue-600/70 dark:text-blue-400/70 group-hover:scale-110"
+                              ? "text-[var(--ecode-accent)] scale-110"
+                              : "text-[var(--ecode-text-muted)] group-hover:text-[var(--ecode-accent)] group-hover:scale-110"
                           )}
                         />
                         <div className="flex-1 min-w-0">
@@ -197,12 +197,12 @@ export function ToolsPanel({
                               </Badge>
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground line-clamp-2">
+                          <p className="text-xs text-[var(--ecode-text-muted)] line-clamp-2">
                             {tool.description}
                           </p>
                         </div>
                         {isActive && (
-                          <div className="w-1 h-1 rounded-full bg-blue-600 dark:bg-blue-400 flex-shrink-0 mt-2" />
+                          <div className="w-1 h-1 rounded-full bg-[var(--ecode-accent)] flex-shrink-0 mt-2" />
                         )}
                       </button>
                     );
@@ -215,8 +215,8 @@ export function ToolsPanel({
       </ScrollArea>
 
       {/* Footer Stats */}
-      <div className="px-4 py-2 border-t bg-muted/30">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+      <div className="px-4 py-2 border-t border-[var(--ecode-border)] bg-[var(--ecode-sidebar-bg)]">
+        <div className="flex items-center justify-between text-xs text-[var(--ecode-text-muted)]">
           <span>
             {filteredTools.length} tool{filteredTools.length !== 1 ? 's' : ''} available
           </span>

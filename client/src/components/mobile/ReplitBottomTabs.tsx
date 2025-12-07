@@ -355,7 +355,7 @@ export function ReplitBottomTabs({
                     transition={prefersReducedMotion ? { duration: 0.01 } : { type: 'spring', stiffness: 400, damping: 28 }}
                     style={{
                       height: '3px',
-                      background: 'linear-gradient(90deg, var(--ecode-accent), #F99D25)',
+                      background: 'linear-gradient(90deg, var(--ecode-accent), var(--ecode-accent-hover))',
                       boxShadow: prefersReducedMotion ? 'none' : '0 0 16px 2px var(--mobile-nav-glow-strong)',
                     }}
                   />

@@ -119,7 +119,7 @@ export function MobileToolsPanel({
             onDragEnd={handleDragEnd}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b bg-background/95 backdrop-blur-sm">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] backdrop-blur-sm">
               <h2 className="text-lg font-semibold">Tools</h2>
               <Button
                 variant="ghost"
@@ -132,7 +132,7 @@ export function MobileToolsPanel({
             </div>
             
             {/* Quick Actions Bar */}
-            <div className="flex items-center gap-2 px-4 py-2 border-b bg-background/95">
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
               <Button
                 size="sm"
                 variant={isRunning ? "destructive" : "default"}
@@ -250,7 +250,7 @@ export function MobileToolsPanel({
                         )}
                       >
                         {msg.role === 'assistant' && (
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F26207] to-[#F99D25] flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--ecode-accent)] to-[var(--ecode-accent-hover)] flex items-center justify-center">
                             <Sparkles className="h-4 w-4 text-white" />
                           </div>
                         )}
@@ -308,7 +308,7 @@ export function MobileToolsPanel({
                     <h3 className="font-semibold text-sm">Deployment Status</h3>
                     <Badge 
                       variant="default"
-                      className="bg-green-500 text-white"
+                      className="bg-[hsl(var(--ecode-green))] text-white"
                     >
                       {deploymentStats.status}
                     </Badge>
@@ -332,7 +332,7 @@ export function MobileToolsPanel({
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Uptime</span>
-                      <span className="text-green-500">{deploymentStats.uptime}</span>
+                      <span className="text-[hsl(var(--ecode-green))]">{deploymentStats.uptime}</span>
                     </div>
                   </div>
                 </div>

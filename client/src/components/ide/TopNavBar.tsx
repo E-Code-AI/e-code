@@ -128,11 +128,11 @@ export function TopNavBar({
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
   
   return (
-    <div className="h-12 border-b bg-background flex items-center px-3 gap-2 shadow-sm" data-testid="top-nav">
+    <div className="h-12 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] flex items-center px-3 gap-2 shadow-sm" data-testid="top-nav">
       {/* Main Menu Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-7 px-1.5 hover:bg-accent/80 transition-colors">
+          <Button variant="ghost" size="sm" className="h-7 px-1.5 hover:bg-[var(--ecode-sidebar-hover)] transition-colors">
             <Menu className="w-3.5 h-3.5" />
           </Button>
         </DropdownMenuTrigger>
@@ -149,7 +149,7 @@ export function TopNavBar({
                 className="py-2 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950"
                 onClick={() => navigate('/admin')}
               >
-                <Shield className="w-4 h-4 mr-2 text-blue-600" />
+                <Shield className="w-4 h-4 mr-2 text-[var(--ecode-accent)]" />
                 <span className="font-medium">Admin Dashboard</span>
                 <Badge 
                   variant="default"
@@ -165,7 +165,7 @@ export function TopNavBar({
       
       {/* Logo & Project Name */}
       <div className="flex items-center gap-2">
-        <span className="text-xs bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-semibold">E-Code</span>
+        <span className="text-xs text-[var(--ecode-accent)] font-semibold">E-Code</span>
         
         {/* Project Name */}
         <span className="text-xs font-medium truncate max-w-[150px]">{projectName}</span>
@@ -173,7 +173,7 @@ export function TopNavBar({
       
       {/* Tabs with Drag-and-Drop Reorder - All tabs visible with scroll */}
       {showTabs ? (
-        <div className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+        <div className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-thin scrollbar-thumb-[var(--ecode-border)] dark:scrollbar-thumb-[var(--ecode-border)]">
           {tabs.map((tab, index) => {
             const Icon = tab.icon;
             return (
@@ -203,10 +203,10 @@ export function TopNavBar({
                 data-testid={`tab-${tab.id}`}
                 className={cn(
                   "flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md transition-all duration-200 cursor-grab active:cursor-grabbing",
-                  "hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-950/40 dark:hover:to-purple-950/40 hover:shadow-sm",
+                  "hover:bg-[var(--ecode-sidebar-hover)] hover:shadow-sm",
                   activeTab === tab.id 
-                    ? "bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 shadow-sm" 
-                    : "bg-transparent"
+                    ? "bg-[var(--ecode-sidebar-bg)] shadow-sm border border-[var(--ecode-border)]" 
+                    : "bg-[var(--ecode-surface)]"
                 )}
               >
                 {Icon && <Icon className="h-3.5 w-3.5 transition-transform duration-200 group-hover:scale-110" />}
@@ -242,7 +242,7 @@ export function TopNavBar({
             data-testid="button-toggle-collaboration"
             className={cn(
               "h-7 px-2 gap-1.5",
-              showCollaboration && "bg-primary/10"
+              showCollaboration && "bg-[var(--ecode-sidebar-hover)]"
             )}
           >
             <Users className="h-3.5 w-3.5" />
@@ -274,8 +274,8 @@ export function TopNavBar({
           className={cn(
             "h-7 px-2.5 gap-1.5 text-xs transition-all shadow-sm",
             isRunning 
-              ? "bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700" 
-              : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              ? "bg-[hsl(var(--ecode-danger))] hover:bg-[hsl(var(--ecode-danger)/0.9)]" 
+              : "bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)]"
           )}
         >
           {isRunning ? (
