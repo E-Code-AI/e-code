@@ -1039,12 +1039,46 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
    * @param projectId - Project ID for WebSocket updates
    * @param userId - User ID for audit trail
    */
+  /**
+   * Retry helper with exponential backoff + jitter for DB status transitions
+   * ✅ ARCHITECT FEEDBACK (Dec 7, 2025): Ensure state machine consistency under DB failures
+   * Added jitter to prevent thundering herd during outages
+   */
+  private async retryDbStatusUpdate(
+    sessionId: string,
+    status: string,
+    maxRetries = 3
+  ): Promise<boolean> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await db.update(agentSessions)
+          .set({ workflowStatus: status as any })
+          .where(eq(agentSessions.id, sessionId));
+        logger.info(`[Execute Plan] Session ${sessionId} transitioned to '${status}' (attempt ${attempt})`);
+        return true;
+      } catch (err) {
+        // Exponential backoff with jitter: base * 2^attempt + random(0-500ms)
+        const baseDelay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+        const jitter = Math.floor(Math.random() * 500);
+        const delay = baseDelay + jitter;
+        logger.warn(`[Execute Plan] DB update to '${status}' failed (attempt ${attempt}/${maxRetries})`, { err, sessionId, nextRetryMs: delay });
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, delay));
+        }
+      }
+    }
+    logger.error(`[Execute Plan] All retries exhausted for status '${status}'`, { sessionId });
+    return false;
+  }
+
   async executeAutonomousPlan(
     sessionId: string,
     plan: any, // ExecutionPlan type from plan-generator
     projectId: string,
     userId: string
   ): Promise<void> {
+    // Use static imports (already imported at top of file) - no dynamic imports needed
+    
     try {
       logger.info(`[Execute Plan] Starting autonomous execution for session ${sessionId}`, {
         planId: plan.id,
@@ -1053,7 +1087,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
 
       // ✅ FIX (Nov 21, 2025): Store complete plan in dedicated table BEFORE execution
       // ARCHITECT APPROVED: Solves JSONB overflow by separating plan storage from workflows
-      const { agentPlanStore } = await import('./agent-plan-store.service');
+      // Uses static import: agentPlanStore (line 16)
       const projectIdNum = parseInt(projectId, 10);
       if (isNaN(projectIdNum) || projectIdNum <= 0) {
         throw new Error(`Invalid projectId for plan execution: "${projectId}" (parsed: ${projectIdNum})`);
@@ -1063,15 +1097,22 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
 
       // ✅ CRITICAL FIX (Dec 7, 2025): Transition workflowStatus to 'executing' BEFORE workflow starts
       // BUG: Sessions were stuck in 'planning' because this method never updated workflowStatus
-      await db.update(agentSessions)
-        .set({ workflowStatus: 'executing' })
-        .where(eq(agentSessions.id, sessionId));
-      logger.info(`[Execute Plan] Session ${sessionId} transitioned to 'executing'`);
-
-      // Import WebSocket service (dynamic to avoid circular dependency)
-      const { agentWebSocketService } = await import('./agent-websocket-service');
+      // ARCHITECT FEEDBACK: Use retry helper + broadcast failure BEFORE throwing
+      const executingOk = await this.retryDbStatusUpdate(sessionId, 'executing');
+      if (!executingOk) {
+        // Broadcast failure to UI BEFORE throwing (per architect feedback)
+        agentWebSocketService.broadcast({
+          type: 'status',
+          sessionId,
+          projectId,
+          status: 'failed',
+          message: 'Failed to start execution - database unavailable'
+        }, projectId);
+        agentWebSocketService.broadcastPlanFailed(projectId, sessionId, 'Database unavailable after retries');
+        throw new Error(`Failed to transition session ${sessionId} to 'executing' after retries`);
+      }
       
-      // Emit executing status via WebSocket
+      // Emit executing status via WebSocket (only after DB confirmed)
       agentWebSocketService.broadcast({
         type: 'status',
         sessionId,
@@ -1205,17 +1246,20 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         });
 
         // ✅ CRITICAL FIX (Dec 7, 2025): Update workflowStatus to 'completed' or 'failed'
-        await db.update(agentSessions)
-          .set({ workflowStatus: isSuccess ? 'completed' : 'failed' })
-          .where(eq(agentSessions.id, sessionId));
-        logger.info(`[Execute Plan] Session ${sessionId} transitioned to '${isSuccess ? 'completed' : 'failed'}'`);
-
-        // NEW: Broadcast plan completed (frontend-compatible)
-        agentWebSocketService.broadcastPlanCompleted(projectId, sessionId, isSuccess);
-
-        // Legacy: Also send completion for backward compatibility
-        if (isSuccess) {
-          agentWebSocketService.sendComplete(parseInt(projectId), sessionId);
+        // ARCHITECT FEEDBACK: Use retry helper for eventual consistency under DB failures
+        const finalStatus = isSuccess ? 'completed' : 'failed';
+        const statusOk = await this.retryDbStatusUpdate(sessionId, finalStatus);
+        
+        if (statusOk) {
+          // Broadcast plan completed (frontend-compatible) - only after DB confirmed
+          agentWebSocketService.broadcastPlanCompleted(projectId, sessionId, isSuccess);
+          if (isSuccess) {
+            agentWebSocketService.sendComplete(parseInt(projectId), sessionId);
+          }
+        } else {
+          logger.error(`[Execute Plan] Could not persist final status '${finalStatus}' after retries`, { sessionId });
+          // Still broadcast failure to UI to prevent zombie state, but log the inconsistency
+          agentWebSocketService.broadcastPlanCompleted(projectId, sessionId, false);
         }
 
         // Create audit entry
@@ -1239,13 +1283,16 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       logger.error(`[Execute Plan] Failed to execute plan:`, error);
       
       // ✅ CRITICAL FIX (Dec 7, 2025): Update workflowStatus to 'failed' on error
-      await db.update(agentSessions)
-        .set({ workflowStatus: 'failed' })
-        .where(eq(agentSessions.id, sessionId))
-        .catch(dbErr => logger.error('[Execute Plan] Failed to update session status', { dbErr }));
+      // ARCHITECT FEEDBACK: Use retry helper for eventual consistency
+      // Uses static import: agentWebSocketService (line 17)
+      const failedOk = await this.retryDbStatusUpdate(sessionId, 'failed');
       
-      // Send error via WebSocket
-      const { agentWebSocketService } = await import('./agent-websocket-service');
+      if (!failedOk) {
+        logger.error('[Execute Plan] Session stuck in executing - DB unreachable after retries', { sessionId });
+        // NOTE: In production, could queue a compensating task here for eventual recovery
+      }
+      
+      // Send error via WebSocket (using static import)
       agentWebSocketService.sendError(parseInt(projectId), sessionId, 
         `Plan execution failed: ${error.message}`
       );
