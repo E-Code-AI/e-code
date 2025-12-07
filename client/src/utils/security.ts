@@ -227,7 +227,7 @@ export const clickjackingProtection = {
   // Bust out of frames
   bustFrame(): void {
     if (clickjackingProtection.isFramed()) {
-      window.top!.location = window.self.location;
+      window.top!.location.href = window.self.location.href;
     }
   },
 

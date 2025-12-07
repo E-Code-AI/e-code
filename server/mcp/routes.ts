@@ -92,7 +92,7 @@ export function initializeMCPRoutes(app: any) {
   app.use('/mcp', router);
   
   // Protected endpoints (require authentication)
-  app.post('/mcp/connect', authenticateMCP, async (req: any, res: any) => {
+  app.post('/mcp/connect', authenticateMCP, async (req: any, res: any, next: any) => {
     // Connection handled by http-transport
     next();
   });
