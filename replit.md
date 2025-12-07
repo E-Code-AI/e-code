@@ -66,6 +66,20 @@ Replit-style generators and lazy evaluation for handling millions of users:
   - Database latency and connectivity
   - System metrics (memory, CPU, uptime)
 
+### Runtime System Fortune 500 Hardening (Dec 7, 2025)
+- **29 Supported Languages:** Full Replit parity with nodejs, python, java, go, ruby, rust, php, c, cpp, csharp, swift, kotlin, dart, typescript, bash, html-css-js, nix, deno, lua, perl, r, haskell, scala, clojure, elixir, julia, ocaml, fortran, zig
+- **Process Management:** 
+  - PID tracking in activeRuntimes map
+  - tree-kill for proper process tree termination
+  - Process stored for cleanup on stop/timeout
+- **Language-Specific Timeouts:** RUNTIME_TIMEOUTS map with per-language configuration
+  - Scripting languages: 30s (Python, Node.js, TypeScript, Ruby, Bash, Lua, Perl)
+  - Compiled languages: 60-120s (C/C++, Java, Kotlin, Rust, Go, C#, Swift, Haskell, Scala)
+  - Web servers: 5 minutes (PHP, HTML/CSS/JS, Deno, Nix)
+- **User-Friendly Error Messages:** ERROR_MESSAGES map + getUserFriendlyError() for translating technical errors
+- **Complete cmdMap:** 50+ commands covering all supported languages with proper PATH resolution
+- **TypeScript Detection Fix:** Prioritizes .ts/.tsx files over package.json for correct language detection
+
 ### Feature Specifications
 Core features include a Monaco Code Editor with advanced enhancements, an interactive terminal (xterm.js), file management, real-time collaboration, authentication, TypeScript-based container orchestration, Global Search & Replace, an Environment Variables Manager, a Logs Viewer, and a Debugger UI. Autonomous workspace creation involves a Bootstrap API call, AI plan generation, WebSocket-based real-time progress, autonomous execution, and a live preview. PWA features and Electron desktop support are planned. An Agent Activity Dashboard with AG Grid provides real-time metrics and session history. Agent conversation persistence is managed via a Zustand store with localStorage and backend synchronization. An Agentic RAG system provides automatic backend RAG context retrieval for all sessions.
 
