@@ -1,13 +1,15 @@
 /**
  * Export Manager Service
  * Implements comprehensive project export capabilities for E-Code
+ * Memory-optimized with streaming architecture - never loads entire project into memory
  * - Docker containerization
  * - GitHub repository export
  * - ZIP archive export
  * - Template export
  */
 
-import archiver from 'archiver';
+import archiver, { Archiver } from 'archiver';
+import { createWriteStream } from 'fs';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -45,12 +47,17 @@ export interface ExportResult {
   };
 }
 
+interface FileEntry {
+  relativePath: string;
+  absolutePath: string;
+  isDirectory: boolean;
+}
+
 export class ExportManager {
   private projectsDir = './projects';
   private exportsDir = './temp/exports';
 
   constructor() {
-    // Ensure export directory exists
     this.ensureExportDir();
   }
 
@@ -98,45 +105,21 @@ export class ExportManager {
   private async exportAsDocker(projectId: number, exportId: string, options: ExportOptions): Promise<ExportResult> {
     const startTime = Date.now();
     const projectPath = path.join(this.projectsDir, projectId.toString());
+    const zipPath = path.join(this.exportsDir, `${exportId}.zip`);
     
-    // Get project files
-    const files = await this.getProjectFiles(projectPath);
-    
-    // Detect project type and language
-    const projectInfo = await this.detectProjectType(files);
-    
-    // Generate Dockerfile
+    const projectInfo = await this.detectProjectTypeFromPath(projectPath);
     const dockerfile = options.customDockerfile || this.generateDockerfile(projectInfo, options.dockerBaseImage);
     
-    // Create export directory
-    const exportPath = path.join(this.exportsDir, exportId);
-    await fs.mkdir(exportPath, { recursive: true });
+    const generatedFiles: Map<string, string> = new Map();
+    generatedFiles.set('Dockerfile', dockerfile);
+    generatedFiles.set('.dockerignore', this.generateDockerignore());
+    generatedFiles.set('README.Docker.md', this.generateDockerReadme(projectInfo));
     
-    // Copy project files
-    await this.copyProjectFiles(projectPath, exportPath, options);
-    
-    // Write Dockerfile
-    await fs.writeFile(path.join(exportPath, 'Dockerfile'), dockerfile);
-    
-    // Generate docker-compose.yml if needed
     if (projectInfo.requiresDatabase || projectInfo.requiresRedis) {
-      const dockerCompose = this.generateDockerCompose(projectInfo);
-      await fs.writeFile(path.join(exportPath, 'docker-compose.yml'), dockerCompose);
+      generatedFiles.set('docker-compose.yml', this.generateDockerCompose(projectInfo));
     }
     
-    // Generate .dockerignore
-    const dockerignore = this.generateDockerignore();
-    await fs.writeFile(path.join(exportPath, '.dockerignore'), dockerignore);
-    
-    // Generate README with Docker instructions
-    const dockerReadme = this.generateDockerReadme(projectInfo);
-    await fs.writeFile(path.join(exportPath, 'README.Docker.md'), dockerReadme);
-    
-    // Create ZIP archive
-    const zipPath = path.join(this.exportsDir, `${exportId}.zip`);
-    await this.createZipArchive(exportPath, zipPath);
-    
-    const stats = await this.getExportStats(exportPath);
+    const stats = await this.createStreamingZipArchive(projectPath, zipPath, options, generatedFiles);
     const exportTime = Date.now() - startTime;
     
     return {
@@ -155,46 +138,19 @@ export class ExportManager {
   }
 
   private async exportToGitHub(projectId: number, exportId: string, options: ExportOptions): Promise<ExportResult> {
-    // Note: This would require GitHub API integration
-    // For now, we'll create a GitHub-ready export
-    
     const startTime = Date.now();
     const projectPath = path.join(this.projectsDir, projectId.toString());
-    const exportPath = path.join(this.exportsDir, exportId);
-    
-    await fs.mkdir(exportPath, { recursive: true });
-    
-    // Copy project files
-    await this.copyProjectFiles(projectPath, exportPath, options);
-    
-    // Generate GitHub-specific files
-    const files = await this.getProjectFiles(projectPath);
-    const projectInfo = await this.detectProjectType(files);
-    
-    // Generate README.md
-    const readme = this.generateGitHubReadme(projectInfo);
-    await fs.writeFile(path.join(exportPath, 'README.md'), readme);
-    
-    // Generate .gitignore
-    const gitignore = this.generateGitignore(projectInfo);
-    await fs.writeFile(path.join(exportPath, '.gitignore'), gitignore);
-    
-    // Generate LICENSE (MIT by default)
-    const license = this.generateLicense();
-    await fs.writeFile(path.join(exportPath, 'LICENSE'), license);
-    
-    // Generate GitHub workflows (CI/CD)
-    const workflowsDir = path.join(exportPath, '.github', 'workflows');
-    await fs.mkdir(workflowsDir, { recursive: true });
-    
-    const workflow = this.generateGitHubWorkflow(projectInfo);
-    await fs.writeFile(path.join(workflowsDir, 'ci.yml'), workflow);
-    
-    // Create ZIP for download
     const zipPath = path.join(this.exportsDir, `${exportId}.zip`);
-    await this.createZipArchive(exportPath, zipPath);
     
-    const stats = await this.getExportStats(exportPath);
+    const projectInfo = await this.detectProjectTypeFromPath(projectPath);
+    
+    const generatedFiles: Map<string, string> = new Map();
+    generatedFiles.set('README.md', this.generateGitHubReadme(projectInfo));
+    generatedFiles.set('.gitignore', this.generateGitignore(projectInfo));
+    generatedFiles.set('LICENSE', this.generateLicense());
+    generatedFiles.set('.github/workflows/ci.yml', this.generateGitHubWorkflow(projectInfo));
+    
+    const stats = await this.createStreamingZipArchive(projectPath, zipPath, options, generatedFiles);
     const exportTime = Date.now() - startTime;
     
     return {
@@ -216,7 +172,7 @@ export class ExportManager {
     const projectPath = path.join(this.projectsDir, projectId.toString());
     const zipPath = path.join(this.exportsDir, `${exportId}.zip`);
     
-    const stats = await this.createZipArchive(projectPath, zipPath, options);
+    const stats = await this.createStreamingZipArchive(projectPath, zipPath, options);
     const exportTime = Date.now() - startTime;
     
     return {
@@ -236,18 +192,8 @@ export class ExportManager {
   private async exportAsTemplate(projectId: number, exportId: string, options: ExportOptions): Promise<ExportResult> {
     const startTime = Date.now();
     const projectPath = path.join(this.projectsDir, projectId.toString());
-    const exportPath = path.join(this.exportsDir, exportId);
+    const zipPath = path.join(this.exportsDir, `${exportId}.zip`);
     
-    await fs.mkdir(exportPath, { recursive: true });
-    
-    // Copy project files (excluding user-specific data)
-    await this.copyProjectFiles(projectPath, exportPath, {
-      ...options,
-      includeSecrets: false, // Never include secrets in templates
-      includeHistory: false
-    });
-    
-    // Generate template metadata
     const templateMeta = {
       name: options.templateMetadata?.name || `Project Template ${projectId}`,
       description: options.templateMetadata?.description || 'Exported from E-Code project',
@@ -259,20 +205,17 @@ export class ExportManager {
       ...options.templateMetadata
     };
     
-    await fs.writeFile(
-      path.join(exportPath, 'template.json'),
-      JSON.stringify(templateMeta, null, 2)
-    );
+    const generatedFiles: Map<string, string> = new Map();
+    generatedFiles.set('template.json', JSON.stringify(templateMeta, null, 2));
+    generatedFiles.set('README.template.md', this.generateTemplateReadme(templateMeta));
     
-    // Generate template README
-    const templateReadme = this.generateTemplateReadme(templateMeta);
-    await fs.writeFile(path.join(exportPath, 'README.template.md'), templateReadme);
+    const templateOptions: ExportOptions = {
+      ...options,
+      includeSecrets: false,
+      includeHistory: false
+    };
     
-    // Create ZIP
-    const zipPath = path.join(this.exportsDir, `${exportId}.zip`);
-    await this.createZipArchive(exportPath, zipPath);
-    
-    const stats = await this.getExportStats(exportPath);
+    const stats = await this.createStreamingZipArchive(projectPath, zipPath, templateOptions, generatedFiles);
     const exportTime = Date.now() - startTime;
     
     return {
@@ -289,24 +232,54 @@ export class ExportManager {
     };
   }
 
-  private async getProjectFiles(projectPath: string): Promise<string[]> {
+  private async *streamProjectFiles(
+    dirPath: string,
+    basePath: string,
+    options: ExportOptions
+  ): AsyncGenerator<FileEntry> {
     try {
-      const files: string[] = [];
-      const items = await fs.readdir(projectPath, { withFileTypes: true });
+      const items = await fs.readdir(dirPath, { withFileTypes: true });
       
+      for (const item of items) {
+        const absolutePath = path.join(dirPath, item.name);
+        const relativePath = path.relative(basePath, absolutePath);
+        
+        if (!options.includeSecrets && (item.name === '.env' || item.name.includes('secret'))) {
+          continue;
+        }
+        
+        if (!options.includeHistory && (item.name === '.git' || item.name.includes('history'))) {
+          continue;
+        }
+        
+        if (item.isFile()) {
+          yield { relativePath, absolutePath, isDirectory: false };
+        } else if (item.isDirectory()) {
+          yield { relativePath, absolutePath, isDirectory: true };
+          yield* this.streamProjectFiles(absolutePath, basePath, options);
+        }
+      }
+    } catch (error) {
+      // Handle read errors gracefully - directory might not exist
+    }
+  }
+
+  private async detectProjectTypeFromPath(projectPath: string): Promise<any> {
+    const files: string[] = [];
+    try {
+      const items = await fs.readdir(projectPath, { withFileTypes: true });
       for (const item of items) {
         if (item.isFile()) {
           files.push(item.name);
         }
       }
-      
-      return files;
     } catch (error) {
-      return [];
+      // Directory might not exist
     }
+    return this.detectProjectType(files);
   }
 
-  private async detectProjectType(files: string[]): Promise<any> {
+  private detectProjectType(files: string[]): any {
     const hasFile = (name: string) => files.includes(name);
     const hasExtension = (ext: string) => files.some(f => f.endsWith(ext));
     
@@ -327,12 +300,48 @@ export class ExportManager {
     };
   }
 
+  private async createStreamingZipArchive(
+    sourcePath: string,
+    zipPath: string,
+    options: ExportOptions,
+    generatedFiles?: Map<string, string>
+  ): Promise<{fileCount: number, totalSize: number}> {
+    return new Promise(async (resolve, reject) => {
+      const output = createWriteStream(zipPath);
+      const archive = archiver('zip', { zlib: { level: 9 } });
+      
+      let fileCount = 0;
+      
+      output.on('close', () => {
+        resolve({ fileCount, totalSize: archive.pointer() });
+      });
+      
+      archive.on('error', reject);
+      archive.on('entry', () => fileCount++);
+      
+      archive.pipe(output);
+      
+      for await (const entry of this.streamProjectFiles(sourcePath, sourcePath, options)) {
+        if (!entry.isDirectory) {
+          archive.file(entry.absolutePath, { name: entry.relativePath });
+        }
+      }
+      
+      if (generatedFiles) {
+        for (const [filePath, content] of generatedFiles) {
+          archive.append(content, { name: filePath });
+        }
+      }
+      
+      archive.finalize();
+    });
+  }
+
   private generateDockerfile(projectInfo: any, baseImage?: string): string {
     const base = baseImage || this.getDefaultBaseImage(projectInfo.language);
     
     let dockerfile = `FROM ${base}\n\nWORKDIR /app\n\n`;
     
-    // Copy dependency files first for better caching
     if (projectInfo.language === 'javascript') {
       dockerfile += 'COPY package*.json ./\nRUN npm ci --only=production\n\n';
     } else if (projectInfo.language === 'python') {
@@ -341,15 +350,12 @@ export class ExportManager {
     
     dockerfile += 'COPY . .\n\n';
     
-    // Add build step if needed
     if (projectInfo.framework === 'nextjs') {
       dockerfile += 'RUN npm run build\n\n';
     }
     
-    // Expose port
     dockerfile += 'EXPOSE 3000\n\n';
     
-    // Start command
     const startCmd = this.getStartCommand(projectInfo);
     dockerfile += `CMD ${JSON.stringify(startCmd.split(' '))}`;
     
@@ -651,82 +657,7 @@ For support and questions, visit the E-Code platform.
 Template exported from E-Code platform`;
   }
 
-  private async copyProjectFiles(source: string, destination: string, options: ExportOptions): Promise<void> {
-    try {
-      const items = await fs.readdir(source, { withFileTypes: true });
-      
-      for (const item of items) {
-        const sourcePath = path.join(source, item.name);
-        const destPath = path.join(destination, item.name);
-        
-        // Skip certain files based on options
-        if (!options.includeSecrets && (item.name === '.env' || item.name.includes('secret'))) {
-          continue;
-        }
-        
-        if (!options.includeHistory && (item.name === '.git' || item.name.includes('history'))) {
-          continue;
-        }
-        
-        if (item.isFile()) {
-          await fs.copyFile(sourcePath, destPath);
-        } else if (item.isDirectory()) {
-          await fs.mkdir(destPath, { recursive: true });
-          await this.copyProjectFiles(sourcePath, destPath, options);
-        }
-      }
-    } catch (error) {
-      // Handle copy errors
-    }
-  }
-
-  private async createZipArchive(sourcePath: string, zipPath: string, options?: ExportOptions): Promise<{fileCount: number, totalSize: number}> {
-    return new Promise((resolve, reject) => {
-      const output = require('fs').createWriteStream(zipPath);
-      const archive = archiver('zip', { zlib: { level: 9 } });
-      
-      let fileCount = 0;
-      let totalSize = 0;
-      
-      output.on('close', () => {
-        resolve({ fileCount, totalSize: archive.pointer() });
-      });
-      
-      archive.on('error', reject);
-      archive.on('entry', () => fileCount++);
-      
-      archive.pipe(output);
-      archive.directory(sourcePath, false);
-      archive.finalize();
-    });
-  }
-
-  private async getExportStats(exportPath: string): Promise<{fileCount: number, totalSize: number}> {
-    let fileCount = 0;
-    let totalSize = 0;
-    
-    const calculateStats = async (dirPath: string): Promise<void> => {
-      const items = await fs.readdir(dirPath, { withFileTypes: true });
-      
-      for (const item of items) {
-        const itemPath = path.join(dirPath, item.name);
-        
-        if (item.isFile()) {
-          fileCount++;
-          const stats = await fs.stat(itemPath);
-          totalSize += stats.size;
-        } else if (item.isDirectory()) {
-          await calculateStats(itemPath);
-        }
-      }
-    };
-    
-    await calculateStats(exportPath);
-    return { fileCount, totalSize };
-  }
-
   async getExportStatus(exportId: string): Promise<ExportResult | null> {
-    // Check if export exists
     const zipPath = path.join(this.exportsDir, `${exportId}.zip`);
     
     try {

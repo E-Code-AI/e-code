@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { execa } from 'execa';
+import { spawn } from 'child_process';
+import { createInterface } from 'readline';
 import path from 'path';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
@@ -97,7 +99,7 @@ router.get('/status', ensureAuthenticated, async (req: Request, res: Response) =
 router.get('/diff/:filePath(*)', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { filePath } = req.params;
-    const { staged } = req.query;
+    const { staged, stream } = req.query;
 
     const isRepo = await ensureGitRepo();
     if (!isRepo) {
@@ -108,15 +110,73 @@ router.get('/diff/:filePath(*)', ensureAuthenticated, async (req: Request, res: 
       ? ['diff', '--cached', '--', filePath]
       : ['diff', '--', filePath];
 
-    const { stdout } = await execa('git', args, { cwd: PROJECT_ROOT });
+    if (stream === 'true') {
+      res.setHeader('Content-Type', 'application/x-ndjson');
+      res.setHeader('Transfer-Encoding', 'chunked');
+      
+      const gitProcess = spawn('git', args, { cwd: PROJECT_ROOT });
+      
+      const rl = createInterface({
+        input: gitProcess.stdout,
+        crlfDelay: Infinity
+      });
 
-    const diff: GitDiff = {
-      filePath,
-      diff: stdout,
-      staged: staged === 'true',
-    };
+      let lineCount = 0;
+      const MAX_LINES = 10000;
 
-    res.json(diff);
+      for await (const line of rl) {
+        lineCount++;
+        if (lineCount > MAX_LINES) {
+          res.write(JSON.stringify({ type: 'truncated', message: `Diff truncated at ${MAX_LINES} lines` }) + '\n');
+          gitProcess.kill();
+          break;
+        }
+        res.write(JSON.stringify({ type: 'line', content: line }) + '\n');
+      }
+
+      gitProcess.stderr.on('data', (data) => {
+        res.write(JSON.stringify({ type: 'error', content: data.toString() }) + '\n');
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        gitProcess.on('close', (code) => {
+          res.write(JSON.stringify({ type: 'done', exitCode: code }) + '\n');
+          res.end();
+          resolve();
+        });
+        gitProcess.on('error', reject);
+      });
+    } else {
+      const gitProcess = spawn('git', args, { cwd: PROJECT_ROOT });
+      const chunks: Buffer[] = [];
+      let totalSize = 0;
+      const MAX_SIZE = 5 * 1024 * 1024;
+      let truncated = false;
+
+      for await (const chunk of gitProcess.stdout) {
+        totalSize += chunk.length;
+        if (totalSize > MAX_SIZE) {
+          truncated = true;
+          gitProcess.kill();
+          break;
+        }
+        chunks.push(chunk);
+      }
+
+      const stdout = Buffer.concat(chunks).toString('utf-8');
+      
+      const diff: GitDiff & { truncated?: boolean } = {
+        filePath,
+        diff: stdout,
+        staged: staged === 'true',
+      };
+      
+      if (truncated) {
+        diff.truncated = true;
+      }
+
+      res.json(diff);
+    }
   } catch (error: any) {
     console.error('[Git] Diff error:', error);
     res.status(500).json({ error: error.message });
@@ -180,7 +240,6 @@ router.post('/commit', ensureAuthenticated, csrfProtection, async (req: Request,
       return res.status(400).json({ error: 'Not a git repository' });
     }
 
-    // Check if there are staged changes
     const { stdout: statusCheck } = await execa('git', ['diff', '--cached', '--name-only'], { cwd: PROJECT_ROOT });
     if (!statusCheck.trim()) {
       return res.status(422).json({ error: 'No staged changes to commit' });
@@ -202,16 +261,14 @@ router.post('/push', ensureAuthenticated, csrfProtection, async (req: Request, r
       return res.status(400).json({ error: 'Not a git repository' });
     }
 
-    // Check if remote is configured
     const { stdout: remoteCheck } = await execa('git', ['remote', '-v'], { cwd: PROJECT_ROOT });
     if (!remoteCheck.trim()) {
       return res.status(422).json({ error: 'No remote repository configured' });
     }
 
-    // Use timeout to prevent hanging on credential prompts
     const { stdout, stderr } = await execa('git', ['push'], { 
       cwd: PROJECT_ROOT,
-      timeout: 5000, // 5 second timeout
+      timeout: 5000,
       reject: false
     });
 
@@ -232,16 +289,14 @@ router.post('/pull', ensureAuthenticated, csrfProtection, async (req: Request, r
       return res.status(400).json({ error: 'Not a git repository' });
     }
 
-    // Check if remote is configured
     const { stdout: remoteCheck } = await execa('git', ['remote', '-v'], { cwd: PROJECT_ROOT });
     if (!remoteCheck.trim()) {
       return res.status(422).json({ error: 'No remote repository configured' });
     }
 
-    // Use timeout to prevent hanging on credential prompts
     const { stdout } = await execa('git', ['pull'], { 
       cwd: PROJECT_ROOT,
-      timeout: 5000, // 5 second timeout
+      timeout: 5000,
       reject: false
     });
 
@@ -282,7 +337,6 @@ async function parseBranchInfo(branchLine: string, currentBranch: string): Promi
     const isRemote = rawName.startsWith('remotes/');
     const name = isRemote ? rawName.replace('remotes/', '') : rawName;
     
-    // Get last commit info
     const logResult = await execa('git', ['log', '-1', '--format=%H|%s|%an|%aI', name], { 
       cwd: PROJECT_ROOT,
       reject: false
@@ -290,7 +344,6 @@ async function parseBranchInfo(branchLine: string, currentBranch: string): Promi
     
     const [hash = '', message = '', author = '', dateStr = ''] = (logResult.stdout || '').split('|');
     
-    // Get ahead/behind count relative to tracking branch
     let ahead = 0, behind = 0;
     try {
       const countResult = await execa('git', ['rev-list', '--left-right', '--count', `${name}...origin/${name}`], {
@@ -303,7 +356,6 @@ async function parseBranchInfo(branchLine: string, currentBranch: string): Promi
         behind = parseInt(parts[1], 10) || 0;
       }
     } catch {
-      // No tracking branch
     }
     
     return {
@@ -332,10 +384,8 @@ router.get('/branches', ensureAuthenticated, async (req: Request, res: Response)
       await initGitRepo();
     }
 
-    // Get current branch
     const { stdout: currentBranch } = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: PROJECT_ROOT });
     
-    // Get all branches (local and remote)
     const { stdout: branchOutput } = await execa('git', ['branch', '-a'], { cwd: PROJECT_ROOT });
     
     const branchLines = branchOutput.split('\n').filter(Boolean);
@@ -363,7 +413,6 @@ router.post('/branches', ensureAuthenticated, csrfProtection, async (req: Reques
       return res.status(400).json({ error: 'Branch name required' });
     }
     
-    // Validate branch name (no spaces, special chars)
     if (!/^[a-zA-Z0-9_\-\/]+$/.test(name)) {
       return res.status(400).json({ error: 'Invalid branch name' });
     }
@@ -401,7 +450,6 @@ router.delete('/branches/:name(*)', ensureAuthenticated, csrfProtection, async (
       return res.status(400).json({ error: 'Not a git repository' });
     }
     
-    // Prevent deleting current branch
     const { stdout: currentBranch } = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: PROJECT_ROOT });
     if (name === currentBranch.trim()) {
       return res.status(400).json({ error: 'Cannot delete current branch' });
@@ -462,7 +510,6 @@ router.post('/merge', ensureAuthenticated, csrfProtection, async (req: Request, 
     res.json({ success: true, output: stdout });
   } catch (error: any) {
     console.error('[Git] Merge error:', error);
-    // Check for merge conflicts
     if (error.message?.includes('CONFLICT')) {
       return res.status(409).json({ 
         error: 'Merge conflict', 
@@ -476,34 +523,199 @@ router.post('/merge', ensureAuthenticated, csrfProtection, async (req: Request, 
 
 router.get('/log', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    const { limit = '20', branch } = req.query;
+    const { limit = '100', branch, stream } = req.query;
     
     const isRepo = await ensureGitRepo();
     if (!isRepo) {
       return res.status(400).json({ error: 'Not a git repository' });
     }
-    
-    const args = ['log', '--format=%H|%s|%an|%aI', `-${limit}`];
+
+    const limitNum = Math.min(parseInt(limit as string, 10) || 100, 1000);
+    const args = ['log', '--format=%H|%s|%an|%aI', `-n`, `${limitNum}`];
     if (branch && typeof branch === 'string') {
       args.push(branch);
     }
     
-    const { stdout } = await execa('git', args, { cwd: PROJECT_ROOT });
-    
-    const commits = stdout.split('\n').filter(Boolean).map(line => {
-      const [hash, message, author, date] = line.split('|');
-      return {
-        hash,
-        shortHash: hash.substring(0, 7),
-        message,
-        author,
-        date
-      };
-    });
-    
-    res.json({ commits });
+    if (stream === 'true') {
+      res.setHeader('Content-Type', 'application/x-ndjson');
+      res.setHeader('Transfer-Encoding', 'chunked');
+      
+      const gitProcess = spawn('git', args, { cwd: PROJECT_ROOT });
+      
+      const rl = createInterface({
+        input: gitProcess.stdout,
+        crlfDelay: Infinity
+      });
+
+      for await (const line of rl) {
+        if (!line) continue;
+        const [hash, message, author, date] = line.split('|');
+        const commit = {
+          hash,
+          shortHash: hash?.substring(0, 7) || '',
+          message: message || '',
+          author: author || '',
+          date: date || ''
+        };
+        res.write(JSON.stringify(commit) + '\n');
+      }
+
+      let stderrOutput = '';
+      gitProcess.stderr.on('data', (data) => {
+        stderrOutput += data.toString();
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        gitProcess.on('close', (code) => {
+          if (code !== 0 && stderrOutput) {
+            res.write(JSON.stringify({ error: stderrOutput }) + '\n');
+          }
+          res.end();
+          resolve();
+        });
+        gitProcess.on('error', reject);
+      });
+    } else {
+      const gitProcess = spawn('git', args, { cwd: PROJECT_ROOT });
+      const commits: { hash: string; shortHash: string; message: string; author: string; date: string }[] = [];
+      
+      const rl = createInterface({
+        input: gitProcess.stdout,
+        crlfDelay: Infinity
+      });
+
+      for await (const line of rl) {
+        if (!line) continue;
+        const [hash, message, author, date] = line.split('|');
+        commits.push({
+          hash: hash || '',
+          shortHash: hash?.substring(0, 7) || '',
+          message: message || '',
+          author: author || '',
+          date: date || ''
+        });
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        gitProcess.on('close', resolve);
+        gitProcess.on('error', reject);
+      });
+
+      res.json({ commits });
+    }
   } catch (error: any) {
     console.error('[Git] Log error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/log/stream', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const { limit = '100', branch } = req.query;
+    
+    const isRepo = await ensureGitRepo();
+    if (!isRepo) {
+      return res.status(400).json({ error: 'Not a git repository' });
+    }
+
+    const limitNum = Math.min(parseInt(limit as string, 10) || 100, 1000);
+    const args = ['log', '--format=%H|%s|%an|%aI', `-n`, `${limitNum}`];
+    if (branch && typeof branch === 'string') {
+      args.push(branch);
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    
+    const gitProcess = spawn('git', args, { cwd: PROJECT_ROOT });
+    
+    const rl = createInterface({
+      input: gitProcess.stdout,
+      crlfDelay: Infinity
+    });
+
+    for await (const line of rl) {
+      if (!line) continue;
+      const [hash, message, author, date] = line.split('|');
+      const commit = {
+        hash,
+        shortHash: hash?.substring(0, 7) || '',
+        message: message || '',
+        author: author || '',
+        date: date || ''
+      };
+      res.write(`data: ${JSON.stringify(commit)}\n\n`);
+    }
+
+    gitProcess.stderr.on('data', (data) => {
+      res.write(`data: ${JSON.stringify({ error: data.toString() })}\n\n`);
+    });
+
+    await new Promise<void>((resolve) => {
+      gitProcess.on('close', () => {
+        res.write('data: [DONE]\n\n');
+        res.end();
+        resolve();
+      });
+    });
+  } catch (error: any) {
+    console.error('[Git] Log stream error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/diff/stream/:filePath(*)', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const { filePath } = req.params;
+    const { staged } = req.query;
+
+    const isRepo = await ensureGitRepo();
+    if (!isRepo) {
+      return res.status(400).json({ error: 'Not a git repository' });
+    }
+
+    const args = staged === 'true' 
+      ? ['diff', '--cached', '--', filePath]
+      : ['diff', '--', filePath];
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    
+    const gitProcess = spawn('git', args, { cwd: PROJECT_ROOT });
+    
+    const rl = createInterface({
+      input: gitProcess.stdout,
+      crlfDelay: Infinity
+    });
+
+    let lineCount = 0;
+    const MAX_LINES = 10000;
+
+    for await (const line of rl) {
+      lineCount++;
+      if (lineCount > MAX_LINES) {
+        res.write(`data: ${JSON.stringify({ type: 'truncated', message: `Diff truncated at ${MAX_LINES} lines` })}\n\n`);
+        gitProcess.kill();
+        break;
+      }
+      res.write(`data: ${JSON.stringify({ type: 'line', content: line })}\n\n`);
+    }
+
+    gitProcess.stderr.on('data', (data) => {
+      res.write(`data: ${JSON.stringify({ type: 'error', content: data.toString() })}\n\n`);
+    });
+
+    await new Promise<void>((resolve) => {
+      gitProcess.on('close', (code) => {
+        res.write(`data: ${JSON.stringify({ type: 'done', exitCode: code })}\n\n`);
+        res.end();
+        resolve();
+      });
+    });
+  } catch (error: any) {
+    console.error('[Git] Diff stream error:', error);
     res.status(500).json({ error: error.message });
   }
 });
