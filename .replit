@@ -116,5 +116,17 @@ TESTING_STRIPE_SECRET_KEY = "sk_test_51QPg0B2VSIgdqPLPR7HBpKWbq4x5BJKOrNCFDTGDgO
 TESTING_VITE_STRIPE_PUBLIC_KEY = "pk_test_51QPg0B2VSIgdqPLPngii8d0mAYVtYtaHQZSaCDkJCHZVJxjRNW002YDpBWCBMzsynpUZsaky0cPGOwnXwUoaksjD00asCttkC4"
 
 [[ports]]
+localPort = 5000
+externalPort = 5000
+
+[[ports]]
+localPort = 24678
+externalPort = 3000
+
+[[ports]]
 localPort = 36477
 externalPort = 80
+
+[[ports]]
+localPort = 37439
+externalPort = 3001
