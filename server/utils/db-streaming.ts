@@ -9,6 +9,10 @@
  * Status: Production-ready
  */
 
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import type { Readable } from 'stream';
+import type Archiver from 'archiver';
 import { createLogger } from './logger';
 
 const logger = createLogger('db-streaming');
@@ -180,22 +184,37 @@ export async function collectStream<T>(
 /**
  * Stream file lines lazily using async generators
  * Memory-efficient alternative to reading entire file
+ * Uses fs/promises for Replit-style memory optimization
  */
 export async function* streamFileLines(
-  filePath: string,
-  encoding: BufferEncoding = 'utf-8'
+  filePath: string
 ): AsyncGenerator<string, void, unknown> {
-  const fs = await import('fs');
-  const readline = await import('readline');
+  let fileHandle: fs.FileHandle | null = null;
   
-  const fileStream = fs.createReadStream(filePath, { encoding });
-  const rl = readline.createInterface({
-    input: fileStream,
-    crlfDelay: Infinity
-  });
-
-  for await (const line of rl) {
-    yield line;
+  try {
+    fileHandle = await fs.open(filePath, 'r');
+    const stream = fileHandle.createReadStream({ encoding: 'utf-8' });
+    let buffer = '';
+    
+    for await (const chunk of stream) {
+      buffer += chunk;
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        yield line;
+      }
+    }
+    
+    if (buffer) {
+      yield buffer;
+    }
+  } catch (error) {
+    logger.error(`[streamFileLines] Error reading file ${filePath}:`, error);
+    throw error;
+  } finally {
+    if (fileHandle) {
+      await fileHandle.close();
+    }
   }
 }
 
@@ -249,4 +268,191 @@ export function pipelineStream<T, R>(
     current = transform(current);
   }
   return current as AsyncGenerator<R>;
+}
+
+/**
+ * Options for streaming directory files
+ */
+export interface StreamDirectoryOptions {
+  /** Whether to recursively traverse subdirectories (default: false) */
+  recursive?: boolean;
+  /** Optional file extension filter (e.g., '.ts', '.js') */
+  extensions?: string[];
+  /** Optional pattern to exclude files/directories */
+  exclude?: RegExp;
+}
+
+/**
+ * Stream directory files lazily using async generators
+ * Memory-efficient alternative to building array of all files
+ * Yields file paths one-by-one instead of loading entire directory tree
+ * 
+ * @example
+ * ```typescript
+ * for await (const filePath of streamDirectoryFiles('./src', { recursive: true })) {
+ *   console.log(filePath);
+ * }
+ * ```
+ */
+export async function* streamDirectoryFiles(
+  dirPath: string,
+  options?: StreamDirectoryOptions
+): AsyncGenerator<string, void, unknown> {
+  const opts = {
+    recursive: false,
+    extensions: undefined,
+    exclude: undefined,
+    ...options
+  };
+
+  try {
+    const entries = await fs.readdir(dirPath, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry.name);
+      
+      // Check exclusion pattern
+      if (opts.exclude && opts.exclude.test(fullPath)) {
+        continue;
+      }
+      
+      if (entry.isDirectory()) {
+        if (opts.recursive) {
+          yield* streamDirectoryFiles(fullPath, opts);
+        }
+      } else if (entry.isFile()) {
+        // Filter by extension if specified
+        if (opts.extensions && opts.extensions.length > 0) {
+          const ext = path.extname(entry.name);
+          if (!opts.extensions.includes(ext)) {
+            continue;
+          }
+        }
+        yield fullPath;
+      }
+    }
+  } catch (error) {
+    logger.error(`[streamDirectoryFiles] Error reading directory ${dirPath}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Options for piping stream to archive
+ */
+export interface PipeToArchiveOptions {
+  /** Name/path of the file in the archive */
+  archivePath?: string;
+  /** Whether to store or compress (default: compress) */
+  store?: boolean;
+}
+
+/**
+ * Pipes a file stream directly to an archiver without buffering entire file
+ * Memory-efficient for large file archiving
+ * 
+ * @example
+ * ```typescript
+ * import archiver from 'archiver';
+ * 
+ * const archive = archiver('zip', { zlib: { level: 9 } });
+ * archive.pipe(output);
+ * 
+ * await pipeStreamToArchive(archive, '/path/to/large-file.log', {
+ *   archivePath: 'logs/file.log'
+ * });
+ * 
+ * await archive.finalize();
+ * ```
+ */
+export async function pipeStreamToArchive(
+  archive: Archiver,
+  filePath: string,
+  options?: PipeToArchiveOptions
+): Promise<void> {
+  const opts = {
+    archivePath: path.basename(filePath),
+    store: false,
+    ...options
+  };
+
+  let fileHandle: fs.FileHandle | null = null;
+  
+  try {
+    // Check if file exists and get stats
+    const stats = await fs.stat(filePath);
+    if (!stats.isFile()) {
+      throw new Error(`Path is not a file: ${filePath}`);
+    }
+
+    // Open file and create read stream
+    fileHandle = await fs.open(filePath, 'r');
+    const stream = fileHandle.createReadStream();
+
+    // Append stream to archive
+    archive.append(stream as unknown as Readable, {
+      name: opts.archivePath,
+      store: opts.store
+    });
+
+    // Wait for the stream to be consumed
+    await new Promise<void>((resolve, reject) => {
+      stream.on('end', resolve);
+      stream.on('error', reject);
+    });
+
+    logger.debug(`[pipeStreamToArchive] Added ${filePath} as ${opts.archivePath}`);
+  } catch (error) {
+    logger.error(`[pipeStreamToArchive] Error archiving ${filePath}:`, error);
+    throw error;
+  } finally {
+    if (fileHandle) {
+      await fileHandle.close();
+    }
+  }
+}
+
+/**
+ * Pipes multiple files from a directory to an archive using streaming
+ * Memory-efficient for archiving large directories
+ * 
+ * @example
+ * ```typescript
+ * import archiver from 'archiver';
+ * 
+ * const archive = archiver('zip', { zlib: { level: 9 } });
+ * archive.pipe(output);
+ * 
+ * await pipeDirectoryToArchive(archive, './logs', {
+ *   recursive: true,
+ *   baseDir: 'backup/logs'
+ * });
+ * 
+ * await archive.finalize();
+ * ```
+ */
+export async function pipeDirectoryToArchive(
+  archive: Archiver,
+  dirPath: string,
+  options?: StreamDirectoryOptions & { baseDir?: string }
+): Promise<number> {
+  const { baseDir = '', ...streamOpts } = options || {};
+  let fileCount = 0;
+
+  try {
+    for await (const filePath of streamDirectoryFiles(dirPath, { recursive: true, ...streamOpts })) {
+      // Calculate relative path for archive
+      const relativePath = path.relative(dirPath, filePath);
+      const archivePath = baseDir ? path.join(baseDir, relativePath) : relativePath;
+
+      await pipeStreamToArchive(archive, filePath, { archivePath });
+      fileCount++;
+    }
+
+    logger.debug(`[pipeDirectoryToArchive] Added ${fileCount} files from ${dirPath}`);
+    return fileCount;
+  } catch (error) {
+    logger.error(`[pipeDirectoryToArchive] Error archiving directory ${dirPath}:`, error);
+    throw error;
+  }
 }

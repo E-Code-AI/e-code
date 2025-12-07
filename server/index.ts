@@ -625,6 +625,10 @@ app.get('/api/cors-health', async (_req, res) => {
   console.log('[DEBUG] Upgrade listener functions:', httpServer.listeners('upgrade').map((l: any) => l.name || 'anonymous'));
   
   httpServer.listen(port, "0.0.0.0", () => {
+    // ✅ CRITICAL: Log that server is listening - this is what Replit workflow monitors for
+    console.log(`🚀 E-Code Platform listening on port ${port}`);
+    console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
+    
     // 🔍 DEBUG: Log upgrade listeners AFTER listen
     console.log('[DEBUG] After listen - upgrade listeners:', httpServer.listenerCount('upgrade'));
     console.log('[DEBUG] Upgrade listener functions:', httpServer.listeners('upgrade').map((l: any) => l.name || 'anonymous'));
