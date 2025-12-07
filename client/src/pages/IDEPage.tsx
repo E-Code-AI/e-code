@@ -409,20 +409,50 @@ export default function IDEPage() {
     enabled: !!projectId && (!!user || !!bootstrapToken),
   });
   
-  // ✅ FIX (Dec 7, 2025): Calculate agentInitialPrompt AFTER project loads
-  // When bootstrap token present, use project.description as initial prompt for auto-start
+  // ✅ FIX (Dec 7, 2025): Persist bootstrap prompt in sessionStorage to survive component remounts
+  // Problem: React state resets when component remounts, causing prompt to become null
+  // Solution: Use sessionStorage + useState to capture prompt once and persist across remounts
+  const bootstrapPromptKey = `bootstrap_prompt_${projectId}`;
+  
+  // Initialize from sessionStorage on first mount
+  const [persistedBootstrapPrompt, setPersistedBootstrapPrompt] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem(bootstrapPromptKey);
+      if (saved) {
+        console.log('[IDEPage] ✅ Recovered bootstrap prompt from sessionStorage:', saved.substring(0, 50) + '...');
+        return saved;
+      }
+    }
+    return null;
+  });
+  
+  // Capture bootstrap prompt once when project loads, save to sessionStorage
+  useEffect(() => {
+    if (bootstrapToken && project?.description && !persistedBootstrapPrompt) {
+      console.log('[IDEPage] ✅ Persisting bootstrap prompt to sessionStorage:', project.description.substring(0, 50) + '...');
+      setPersistedBootstrapPrompt(project.description);
+      sessionStorage.setItem(bootstrapPromptKey, project.description);
+    }
+  }, [bootstrapToken, project?.description, persistedBootstrapPrompt, bootstrapPromptKey]);
+  
+  // Calculate final prompt with priority chain
   const agentInitialPrompt = useMemo(() => {
     // Priority 1: URL ?prompt= parameter
     if (promptParam) return promptParam;
     // Priority 2: Stored prompt with autoStartAgent flag
     if (autoStartAgent && storedPrompt) return storedPrompt;
-    // Priority 3: Bootstrap token + project description (autonomous workspace creation)
+    // Priority 3: Persisted bootstrap prompt (survives refetches)
+    if (persistedBootstrapPrompt) {
+      console.log('[IDEPage] ✅ Using persisted bootstrap prompt:', persistedBootstrapPrompt.substring(0, 50) + '...');
+      return persistedBootstrapPrompt;
+    }
+    // Priority 4: Direct from project (fallback for first load)
     if (bootstrapToken && project?.description) {
-      console.log('[IDEPage] ✅ Using project.description as agentInitialPrompt for bootstrap:', project.description);
+      console.log('[IDEPage] ✅ Using project.description as agentInitialPrompt:', project.description.substring(0, 50) + '...');
       return project.description;
     }
     return null;
-  }, [promptParam, autoStartAgent, storedPrompt, bootstrapToken, project?.description]);
+  }, [promptParam, autoStartAgent, storedPrompt, persistedBootstrapPrompt, bootstrapToken, project?.description]);
   
   // Auto-start runtime when IDE loads (Replit-like behavior)
   // ✅ FIX (Dec 7, 2025): Start runtime even for empty projects - don't require files.length > 0

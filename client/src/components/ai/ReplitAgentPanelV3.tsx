@@ -364,6 +364,7 @@ export function ReplitAgentPanelV3({
   
   // ✅ FIX (Dec 7, 2025): Handle initial prompt with robust change detection
   // This fixes the lazy-loading timing issue where initialPrompt arrives AFTER component mounts
+  // ✅ FIX (Dec 7, 2025): Remove conversationId dependency - let form submit create it
   useEffect(() => {
     const prevValue = prevInitialPromptRef.current;
     prevInitialPromptRef.current = initialPrompt;
@@ -380,13 +381,15 @@ export function ReplitAgentPanelV3({
       changedFromUndefined: !prevValue && !!initialPrompt
     });
     
-    // Process if: we have initialPrompt AND conversationId AND not already processing/processed
-    if (initialPrompt && conversationId && !isWorking && !initialPromptProcessedRef.current) {
+    // Process if: we have initialPrompt AND not already processing/processed
+    // Note: We don't wait for conversationId - the form submit will create one if needed
+    if (initialPrompt && !isWorking && !initialPromptProcessedRef.current) {
       console.log('[ReplitAgentPanelV3] ✅ Processing initial prompt:', initialPrompt.substring(0, 50) + '...');
       initialPromptProcessedRef.current = true;
       setInput(initialPrompt);
       // Auto-start if requested
       if (autoStart) {
+        // Wait a bit for the form to render and conversationId to be available
         setTimeout(() => {
           const form = document.querySelector('form[data-testid="chat-form"]') as HTMLFormElement;
           if (form) {
@@ -395,7 +398,7 @@ export function ReplitAgentPanelV3({
           } else {
             console.error('[ReplitAgentPanelV3] ❌ Form not found for auto-submit');
           }
-        }, 500);
+        }, 1000); // Increased timeout to ensure form is ready
       }
     }
   }, [initialPrompt, conversationId, autoStart, isWorking]);
