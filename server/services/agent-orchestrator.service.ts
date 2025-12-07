@@ -1061,8 +1061,24 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       await agentPlanStore.storePlan(sessionId, projectIdNum, plan);
       logger.info(`[Execute Plan] Plan ${plan.id} stored in agent_plans table with projectId ${projectIdNum}`);
 
+      // ✅ CRITICAL FIX (Dec 7, 2025): Transition workflowStatus to 'executing' BEFORE workflow starts
+      // BUG: Sessions were stuck in 'planning' because this method never updated workflowStatus
+      await db.update(agentSessions)
+        .set({ workflowStatus: 'executing' })
+        .where(eq(agentSessions.id, sessionId));
+      logger.info(`[Execute Plan] Session ${sessionId} transitioned to 'executing'`);
+
       // Import WebSocket service (dynamic to avoid circular dependency)
       const { agentWebSocketService } = await import('./agent-websocket-service');
+      
+      // Emit executing status via WebSocket
+      agentWebSocketService.broadcast({
+        type: 'status',
+        sessionId,
+        projectId,
+        status: 'executing',
+        message: 'Starting autonomous execution...'
+      }, projectId);
 
       // Convert plan tasks to workflow steps (metadata only - no large content)
       // ✅ FIX (Nov 24, 2025): Expand multi-file tasks into multiple workflow steps
@@ -1181,23 +1197,33 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           userId
         );
 
+        const isSuccess = workflow.status === 'completed';
         logger.info(`[Execute Plan] Workflow ${workflow.id} execution completed`, {
           status: workflow.status,
-          progress: workflow.progress
+          progress: workflow.progress,
+          isSuccess
         });
 
+        // ✅ CRITICAL FIX (Dec 7, 2025): Update workflowStatus to 'completed' or 'failed'
+        await db.update(agentSessions)
+          .set({ workflowStatus: isSuccess ? 'completed' : 'failed' })
+          .where(eq(agentSessions.id, sessionId));
+        logger.info(`[Execute Plan] Session ${sessionId} transitioned to '${isSuccess ? 'completed' : 'failed'}'`);
+
         // NEW: Broadcast plan completed (frontend-compatible)
-        agentWebSocketService.broadcastPlanCompleted(projectId, sessionId, true);
+        agentWebSocketService.broadcastPlanCompleted(projectId, sessionId, isSuccess);
 
         // Legacy: Also send completion for backward compatibility
-        agentWebSocketService.sendComplete(parseInt(projectId), sessionId);
+        if (isSuccess) {
+          agentWebSocketService.sendComplete(parseInt(projectId), sessionId);
+        }
 
         // Create audit entry
         await this.createAuditEntry(
           sessionId,
           userId,
           'plan_executed',
-          `Executed plan ${plan.id} with ${plan.tasks.length} tasks`
+          `Executed plan ${plan.id} with ${plan.tasks.length} tasks (status: ${workflow.status})`
         );
         
       } finally {
@@ -1212,11 +1238,26 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
     } catch (error: any) {
       logger.error(`[Execute Plan] Failed to execute plan:`, error);
       
+      // ✅ CRITICAL FIX (Dec 7, 2025): Update workflowStatus to 'failed' on error
+      await db.update(agentSessions)
+        .set({ workflowStatus: 'failed' })
+        .where(eq(agentSessions.id, sessionId))
+        .catch(dbErr => logger.error('[Execute Plan] Failed to update session status', { dbErr }));
+      
       // Send error via WebSocket
       const { agentWebSocketService } = await import('./agent-websocket-service');
       agentWebSocketService.sendError(parseInt(projectId), sessionId, 
         `Plan execution failed: ${error.message}`
       );
+      
+      // Emit status failed event
+      agentWebSocketService.broadcast({
+        type: 'status',
+        sessionId,
+        projectId,
+        status: 'failed',
+        message: `Plan execution failed: ${error.message}`
+      }, projectId);
       
       throw error;
     }
