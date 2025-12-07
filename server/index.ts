@@ -636,4 +636,41 @@ app.get('/api/cors-health', async (_req, res) => {
     console.log('[Upgrade Guard] Final catch-all guard registered for orphan socket cleanup');
     console.log('[HTTP Server] ✅ Upgrade listeners locked: only dispatcher + guard active');
   });
+
+  // ✅ PRODUCTION OPTIMIZATION: Graceful shutdown handler
+  const gracefulShutdown = async (signal: string) => {
+    console.log(`\n[Shutdown] Received ${signal}, starting graceful shutdown...`);
+    
+    // Stop accepting new connections
+    httpServer.close(() => {
+      console.log('[Shutdown] HTTP server closed');
+    });
+
+    // Close database pools
+    try {
+      const { dbPool } = await import('./services/database-pool');
+      await dbPool.shutdown();
+      console.log('[Shutdown] Database pool closed');
+    } catch (e) {
+      console.warn('[Shutdown] Database pool close failed:', e);
+    }
+
+    // Close Redis connections
+    try {
+      const { redisCache } = await import('./services/redis-cache.service');
+      redisCache.disconnect();
+      console.log('[Shutdown] Redis connection closed');
+    } catch (e) {
+      console.warn('[Shutdown] Redis close failed:', e);
+    }
+
+    // Exit after cleanup
+    setTimeout(() => {
+      console.log('[Shutdown] Forced exit after timeout');
+      process.exit(0);
+    }, 5000);
+  };
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 })();
