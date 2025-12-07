@@ -5,6 +5,8 @@ import { execSync } from 'child_process';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { aiProviderManager } from '../ai/ai-provider-manager';
+import { agentOrchestrator } from '../services/agent-orchestrator.service';
 
 export class HealthRouter {
   private router: Router;
@@ -270,30 +272,74 @@ export class HealthRouter {
       });
     });
 
-    // Detailed health check
+    // Detailed health check with circuit breaker and recovery queue status
+    // ✅ MONITORING ENDPOINT (Dec 7, 2025): Comprehensive health for monitoring tools
     this.router.get("/api/health/detailed", async (req: Request, res: Response) => {
       try {
+        const startTime = Date.now();
         const [dbHealth] = await Promise.all([
           this.getDatabaseHealth()
         ]);
+        const dbLatencyMs = Date.now() - startTime;
+
+        // Get circuit breaker statuses from AI Provider Manager
+        const circuitBreakers = aiProviderManager.getCircuitBreakerStatuses();
+        
+        // Get recovery queue status from Agent Orchestrator
+        const recoveryQueueFull = agentOrchestrator.getRecoveryQueueStatus();
+        const recoveryQueue = {
+          pendingItems: recoveryQueueFull.pendingItems,
+          oldestItem: recoveryQueueFull.oldestItem,
+          lastProcessed: recoveryQueueFull.lastProcessed
+        };
+
+        // Determine overall health status
+        const hasOpenCircuitBreakers = Object.values(circuitBreakers).some(
+          cb => cb.status === 'open'
+        );
+        const hasPendingRecovery = recoveryQueue.pendingItems > 0;
+        const dbOk = dbHealth.status === 'healthy';
+        
+        let overallStatus: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
+        if (!dbOk) {
+          overallStatus = 'unhealthy';
+        } else if (hasOpenCircuitBreakers || hasPendingRecovery) {
+          overallStatus = 'degraded';
+        }
+
+        // Calculate uptime in seconds
+        const uptimeSeconds = Math.floor((Date.now() - this.startTime.getTime()) / 1000);
 
         res.json({
-          status: "healthy",
-          service: "E-Code Platform API",
+          status: overallStatus,
           timestamp: new Date().toISOString(),
-          uptime: this.getUptime(),
+          uptime: uptimeSeconds,
+          components: {
+            database: {
+              status: dbOk ? 'ok' : 'error',
+              latencyMs: dbLatencyMs
+            },
+            circuitBreakers,
+            recoveryQueue
+          },
+          // Legacy fields for backwards compatibility
+          service: "E-Code Platform API",
           environment: process.env.NODE_ENV || 'development',
           version: process.env.APP_VERSION || '1.0.0',
           system: this.getSystemHealth(),
-          database: dbHealth,
           security: this.getSecurityStatus()
         });
       } catch (error) {
         console.error('Health check error:', error);
         res.status(503).json({
           status: "unhealthy",
-          service: "E-Code Platform API",
           timestamp: new Date().toISOString(),
+          uptime: Math.floor((Date.now() - this.startTime.getTime()) / 1000),
+          components: {
+            database: { status: 'error' },
+            circuitBreakers: {},
+            recoveryQueue: { pendingItems: 0 }
+          },
           error: "Failed to gather health metrics"
         });
       }

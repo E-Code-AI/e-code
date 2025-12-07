@@ -6,6 +6,11 @@ if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = 'development';
 }
 
+// ✅ Fortune 500 Security: Validate required secrets EARLY in startup
+// Must be after dotenv/config to have access to environment variables
+import { validateRequiredSecrets } from './utils/secrets-manager';
+validateRequiredSecrets();
+
 // Set environment variables to prevent file watcher crashes (ENOSPC)
 // MUST be set before any imports to prevent crashes
 process.env.CHOKIDAR_USEPOLLING = 'true';

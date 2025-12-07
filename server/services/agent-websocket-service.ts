@@ -8,6 +8,7 @@ import { createLogger } from '../utils/logger';
 import { wrapWebSocketServer, markSocketAsHandled } from '../websocket/upgrade-guard';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { isOriginAllowed } from '../utils/origin-validation';
+import { getJwtSecret } from '../utils/secrets-manager';
 import jwt from 'jsonwebtoken';
 
 const logger = createLogger('agent-websocket-service');
@@ -68,21 +69,8 @@ function decrementActiveConnections(ip: string): void {
   }
 }
 
-// JWT secret for bootstrap tokens (must match workspace-bootstrap.router.ts)
-// ✅ SECURITY FIX (Dec 7, 2025): Remove hard-coded fallback - enforce secret injection
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
-  throw new Error('CRITICAL: JWT_SECRET environment variable must be set in production');
-}
-// Development fallback with clear warning
-const getJwtSecret = (): string => {
-  if (JWT_SECRET) return JWT_SECRET;
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn('[SECURITY] Using development JWT secret - NOT FOR PRODUCTION');
-    return 'dev-only-jwt-secret-do-not-use-in-prod';
-  }
-  throw new Error('JWT_SECRET not configured');
-};
+// ✅ Fortune 500 Security (Dec 7, 2025): Use centralized secrets manager
+// JWT secret now managed by secrets-manager.ts with proper dev fallbacks and prod enforcement
 
 interface AgentProgressUpdate {
   type: 'step' | 'summary' | 'error' | 'complete';

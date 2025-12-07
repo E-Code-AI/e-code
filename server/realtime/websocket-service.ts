@@ -52,12 +52,9 @@ export class WebSocketService {
           return next(new Error('Authentication required'));
         }
 
-        // SECURITY: No fallback secret
-        const jwtSecret = process.env.JWT_SECRET;
-        if (!jwtSecret) {
-          return next(new Error('Server configuration error: JWT_SECRET not set'));
-        }
-        const decoded = jwt.verify(token, jwtSecret) as any;
+        // SECURITY: Use centralized secrets manager
+        const { getJwtSecret } = await import('../utils/secrets-manager');
+        const decoded = jwt.verify(token, getJwtSecret()) as any;
         const user = await storage.getUser(decoded.userId);
         
         if (!user) {

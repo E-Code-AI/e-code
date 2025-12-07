@@ -57,15 +57,11 @@ export class MobileAPIService {
         hashedPassword: 'demo'
       };
 
-      // Generate mobile JWT token - SECURITY: No fallback secret
-      const jwtSecret = process.env.JWT_SECRET;
-      if (!jwtSecret) {
-        logger.error('[SECURITY] JWT_SECRET not configured');
-        return res.status(500).json({ error: 'Server configuration error' });
-      }
+      // Generate mobile JWT token - SECURITY: Use centralized secrets manager
+      const { getJwtSecret } = await import('../utils/secrets-manager');
       const token = jwt.sign(
         { userId: user.id, deviceId, platform },
-        jwtSecret,
+        getJwtSecret(),
         { expiresIn: '30d' }
       );
 

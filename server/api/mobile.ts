@@ -7,19 +7,12 @@ import { aiService } from '../ai/ai-service';
 import { mobileContainerService } from '../services/mobile-container-service';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
+import { getJwtSecret, getJwtRefreshSecret } from '../utils/secrets-manager';
 
 const router = Router();
 
-// JWT configuration
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-
-if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
-  throw new Error(
-    'FATAL: JWT_SECRET and JWT_REFRESH_SECRET environment variables must be set for mobile authentication. ' +
-    'Set them in your environment or .env file before starting the server.'
-  );
-}
+// ✅ Fortune 500 Security: Use centralized secrets manager
+// JWT secrets now managed by secrets-manager.ts with proper dev fallbacks and prod enforcement
 
 // Token expiration times
 const MOBILE_TOKEN_MAX_AGE = 1000 * 60 * 60 * 24; // 24 hours
@@ -31,11 +24,11 @@ const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 const MAX_LOGIN_ATTEMPTS = 5;
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
 
-// JWT token generation for mobile
+// JWT token generation for mobile - using centralized secrets manager
 function generateMobileAccessToken(userId: string, username: string): string {
   return jwt.sign(
     { userId, username, type: 'mobile-access' },
-    JWT_SECRET,
+    getJwtSecret(),
     { expiresIn: ACCESS_TOKEN_EXPIRY }
   );
 }
@@ -43,7 +36,7 @@ function generateMobileAccessToken(userId: string, username: string): string {
 function generateMobileRefreshToken(userId: string): string {
   return jwt.sign(
     { userId, type: 'mobile-refresh' },
-    JWT_REFRESH_SECRET,
+    getJwtRefreshSecret(),
     { expiresIn: REFRESH_TOKEN_EXPIRY }
   );
 }
@@ -58,7 +51,7 @@ interface JWTRefreshPayload {
 
 function verifyMobileRefreshToken(token: string): { userId: string } | null {
   try {
-    const payload = jwt.verify(token, JWT_REFRESH_SECRET) as JWTRefreshPayload;
+    const payload = jwt.verify(token, getJwtRefreshSecret()) as JWTRefreshPayload;
     if (payload.type !== 'mobile-refresh') {
       return null;
     }
@@ -100,10 +93,10 @@ interface JWTAccessPayload {
   exp?: number;
 }
 
-// Verify mobile access token (JWT)
+// Verify mobile access token (JWT) - using centralized secrets manager
 const parseMobileToken = (token: string): { userId: string; issuedAt?: number } => {
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as JWTAccessPayload;
+    const payload = jwt.verify(token, getJwtSecret()) as JWTAccessPayload;
     if (payload.type !== 'mobile-access') {
       throw new Error('Invalid token type');
     }
