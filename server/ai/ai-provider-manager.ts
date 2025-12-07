@@ -6,6 +6,7 @@ import { CircuitBreaker, RetryExecutor, isRetryableError } from './circuit-break
 import { createStreamLimiter } from './stream-limiter';
 import { AGENT_SYSTEM_PROMPT, getSystemPromptForContext } from './prompts/agent-system-prompt';
 import { ContextWindowManager } from './context-window-manager';
+import { agentWebSocketService } from '../services/agent-websocket-service';
 
 /**
  * Model configuration with provider metadata
@@ -513,8 +514,13 @@ export class AIProviderManager {
     } catch (primaryError: any) {
       console.log(`[AIProviderManager] Primary model ${modelId} failed, trying fallback chain...`);
       
+      // Get primary provider for degraded mode notification
+      const primaryModel = this.getModel(modelId);
+      const primaryProvider = primaryModel?.provider || 'unknown';
+      
       // Try fallback chain (skip models from providers with OPEN circuit breakers)
       const triedProviders = new Set<string>();
+      const openCircuits: string[] = [];
       
       for (const fallbackModelId of PROVIDER_FALLBACK_CHAIN) {
         if (fallbackModelId === modelId) continue; // Skip primary model
@@ -537,7 +543,16 @@ export class AIProviderManager {
           const status = circuitBreaker.getStatus();
           if (status.state === 'OPEN') {
             console.log(`[AIProviderManager] Skipping ${fallbackModelId} - circuit breaker OPEN for ${fallbackModel.provider}`);
+            openCircuits.push(fallbackModel.provider);
             triedProviders.add(fallbackModel.provider);
+            
+            // ✅ GRACEFUL DEGRADATION: Broadcast circuit breaker open notification
+            this.broadcastDegradedModeNotification({
+              provider: fallbackModel.provider,
+              status: 'circuit_open',
+              message: `AI provider ${fallbackModel.provider} temporarily unavailable (circuit breaker open)`,
+              estimatedRecovery: status.nextAttemptTime ? new Date(status.nextAttemptTime) : undefined
+            });
             continue;
           }
         }
@@ -545,6 +560,15 @@ export class AIProviderManager {
         try {
           console.log(`[AIProviderManager] Trying fallback: ${fallbackModelId} (provider: ${fallbackModel.provider})`);
           triedProviders.add(fallbackModel.provider);
+          
+          // ✅ GRACEFUL DEGRADATION: Broadcast fallback activation notification
+          this.broadcastDegradedModeNotification({
+            provider: primaryProvider,
+            status: 'fallback_activated',
+            fallbackProvider: fallbackModel.provider,
+            message: `Switched from ${primaryProvider} to ${fallbackModel.provider} for improved reliability`
+          });
+          
           yield* this.generateChatStreamWithRetry(fallbackModelId, optimizedMessages, options);
           console.log(`[AIProviderManager] ✓ Fallback successful: ${fallbackModelId}`);
           return;
@@ -554,9 +578,63 @@ export class AIProviderManager {
         }
       }
       
-      // All providers failed
+      // All providers failed - broadcast critical degradation
+      this.broadcastDegradedModeNotification({
+        provider: 'all',
+        status: 'circuit_open',
+        message: `All AI providers are currently unavailable. Please try again later.`
+      });
+      
       throw new Error(`All AI providers failed. Last error: ${primaryError.message}`);
     }
+  }
+  
+  /**
+   * Broadcast degraded mode notification via WebSocket
+   * Informs connected clients about provider health changes
+   */
+  private broadcastDegradedModeNotification(data: {
+    provider: string;
+    status: 'circuit_open' | 'fallback_activated' | 'recovered';
+    fallbackProvider?: string;
+    message: string;
+    estimatedRecovery?: Date;
+  }) {
+    try {
+      agentWebSocketService.broadcastDegradedMode(data);
+    } catch (error) {
+      // Don't let WebSocket errors affect AI operations
+      console.warn(`[AIProviderManager] Failed to broadcast degraded mode notification:`, error);
+    }
+  }
+  
+  /**
+   * Get all circuit breaker statuses for monitoring
+   */
+  getCircuitBreakerStatuses(): Array<{
+    provider: string;
+    state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+    failures: number;
+    nextAttemptTime: string | null;
+  }> {
+    const statuses: Array<{
+      provider: string;
+      state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+      failures: number;
+      nextAttemptTime: string | null;
+    }> = [];
+    
+    this.circuitBreakers.forEach((cb, provider) => {
+      const status = cb.getStatus();
+      statuses.push({
+        provider,
+        state: status.state,
+        failures: status.failures,
+        nextAttemptTime: status.nextAttemptTime
+      });
+    });
+    
+    return statuses;
   }
   
   /**

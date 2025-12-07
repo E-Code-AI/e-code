@@ -69,7 +69,20 @@ function decrementActiveConnections(ip: string): void {
 }
 
 // JWT secret for bootstrap tokens (must match workspace-bootstrap.router.ts)
-const JWT_SECRET = process.env.JWT_SECRET || 'e-code-jwt-secret-key-2024';
+// ✅ SECURITY FIX (Dec 7, 2025): Remove hard-coded fallback - enforce secret injection
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('CRITICAL: JWT_SECRET environment variable must be set in production');
+}
+// Development fallback with clear warning
+const getJwtSecret = (): string => {
+  if (JWT_SECRET) return JWT_SECRET;
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn('[SECURITY] Using development JWT secret - NOT FOR PRODUCTION');
+    return 'dev-only-jwt-secret-do-not-use-in-prod';
+  }
+  throw new Error('JWT_SECRET not configured');
+};
 
 interface AgentProgressUpdate {
   type: 'step' | 'summary' | 'error' | 'complete';
@@ -244,7 +257,7 @@ class AgentWebSocketService {
       if (token) {
         // Mode 1: Bootstrap token authentication (synchronous)
         try {
-          const decoded = jwt.verify(token, JWT_SECRET) as any;
+          const decoded = jwt.verify(token, getJwtSecret()) as any;
           
           if (decoded.projectId !== projectId || decoded.sessionId !== sessionId) {
             logger.warn('[Agent WebSocket] Token projectId/sessionId mismatch - rejecting');
@@ -551,7 +564,7 @@ class AgentWebSocketService {
       // For bootstrap connections, validate the JWT token
       if (bootstrapToken) {
         try {
-          const decoded = jwt.verify(bootstrapToken, JWT_SECRET) as {
+          const decoded = jwt.verify(bootstrapToken, getJwtSecret()) as {
             type: string;
             projectId: number;
             sessionId: string;
@@ -896,6 +909,69 @@ class AgentWebSocketService {
       content,
       messageType
     }, projectId);
+  }
+
+  /**
+   * Broadcast degraded mode notification to ALL connected clients
+   * Called when a circuit breaker opens or provider fallback occurs
+   */
+  broadcastDegradedMode(data: {
+    provider: string;
+    status: 'circuit_open' | 'fallback_activated' | 'recovered';
+    fallbackProvider?: string;
+    message: string;
+    estimatedRecovery?: Date;
+  }) {
+    const notification = {
+      type: 'degraded_mode',
+      ...data,
+      timestamp: new Date().toISOString()
+    };
+
+    const messageStr = JSON.stringify(notification);
+    let sentCount = 0;
+
+    // Broadcast to ALL active connections
+    this.connections.forEach((devices, connectionKey) => {
+      devices.forEach((device) => {
+        if (device.ws.readyState === WebSocket.OPEN) {
+          device.ws.send(messageStr);
+          sentCount++;
+        }
+      });
+    });
+
+    logger.info(`[Agent WebSocket] Broadcasted degraded mode (${data.status}) to ${sentCount} client(s): ${data.message}`);
+  }
+
+  /**
+   * Broadcast provider health status update to all clients
+   */
+  broadcastProviderHealth(providers: Array<{
+    provider: string;
+    status: 'healthy' | 'degraded' | 'circuit_open' | 'unavailable';
+    canAcceptRequests: boolean;
+    errorRate?: number;
+  }>) {
+    const notification = {
+      type: 'provider_health',
+      providers,
+      timestamp: new Date().toISOString()
+    };
+
+    const messageStr = JSON.stringify(notification);
+    let sentCount = 0;
+
+    this.connections.forEach((devices) => {
+      devices.forEach((device) => {
+        if (device.ws.readyState === WebSocket.OPEN) {
+          device.ws.send(messageStr);
+          sentCount++;
+        }
+      });
+    });
+
+    logger.debug(`[Agent WebSocket] Broadcasted provider health to ${sentCount} client(s)`);
   }
 }
 
