@@ -32,6 +32,18 @@ The agent orchestrator (`agent-orchestrator.service.ts`) manages workflow state 
 - **WebSocket sync:** Broadcasts only occur AFTER confirmed DB writes (or explicit fallback on retry exhaustion)
 - **Critical fix (Dec 7):** `executeAutonomousPlan()` now properly transitions workflowStatus through all states
 
+### Memory Optimization Patterns (Dec 7, 2025)
+Replit-style generators and lazy evaluation for handling millions of users:
+- **Database Streaming:** `server/utils/db-streaming.ts` provides async generators for lazy evaluation
+  - `streamDatabaseResults<T>()` - Cursor-based pagination avoiding full table loads
+  - Process records one-by-one with `for await (const record of stream) { ... }`
+- **SQL-Level Filtering:** Always move filters to SQL WHERE clauses instead of in-memory `.filter()`
+  - Example: `logs-viewer.router.ts` refactored from loading 1000+ records to SQL WHERE
+- **Security Pattern:** Always validate inputs at schema level before SQL queries
+  - Prevent multi-tenant data leaks with strict Zod validation (e.g., numeric projectId)
+  - Return 400 error instead of running unscoped queries
+- **Stream Limits:** AI streaming capped at 10MB with circuit breakers (`server/ai/stream-limiter.ts`)
+
 ### Fortune 500 Production Hardening (Dec 7, 2025)
 - **Centralized Secret Management:** `server/utils/secrets-manager.ts` with startup validation
   - Enforces JWT_SECRET and SESSION_SECRET in production
