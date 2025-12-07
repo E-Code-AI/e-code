@@ -184,10 +184,14 @@ export async function startProject(
         const args = parts.slice(1);
         
         // Map command names to actual paths
+        // Use full path to tsx from E-Code's node_modules since user projects won't have it
+        const tsxPath = '/home/runner/workspace/node_modules/.bin/tsx';
         const cmdMap: Record<string, string> = {
           'python': 'python3',
           'python3': 'python3',
           'node': 'node',
+          'tsx': tsxPath,           // TypeScript execution via tsx (fast, zero-config)
+          'ts-node': tsxPath,       // Map ts-node to tsx for better performance
           'go': 'go',
           'ruby': 'ruby',
           'rustc': 'rustc',
@@ -196,10 +200,14 @@ export async function startProject(
           'javac': 'javac',
           'php': 'php',
           'gcc': 'gcc',
-          'g++': 'g++'
+          'g++': 'g++',
+          'tsc': '/home/runner/workspace/node_modules/.bin/tsc'  // TypeScript compiler
         };
         
         const actualCmd = cmdMap[baseCmd] || baseCmd;
+        
+        // For TypeScript commands, use shell for better compatibility
+        const needsShell = ['tsx', 'ts-node', 'tsc'].includes(baseCmd);
         
         // Handle compilation for compiled languages with real-time streaming
         const executionId = options.executionId;
@@ -297,7 +305,7 @@ export async function startProject(
           const proc = spawn(actualCmd, args, {
             cwd: projectDir,
             env: { ...process.env, SANDBOX_EXECUTION: 'true' },
-            shell: false
+            shell: needsShell  // Use shell for tsx/ts-node/npm commands for PATH resolution
           });
           
           proc.stdout.on('data', (data) => {
@@ -1052,10 +1060,20 @@ function detectProjectLanguage(files: File[]): Language | undefined {
     return undefined;
   }
   
-  // Check for common main files
+  // PRIORITY CHECK: Detect TypeScript BEFORE checking package.json
+  // This prevents TypeScript projects from being incorrectly detected as Node.js
+  const hasTypeScriptFiles = nonFolderFiles.some(f => 
+    f.name.endsWith('.ts') || f.name.endsWith('.tsx')
+  );
+  const hasTsConfig = nonFolderFiles.some(f => f.name === 'tsconfig.json');
+  
+  if (hasTypeScriptFiles || hasTsConfig) {
+    logger.info('Language detected as typescript by .ts/.tsx files or tsconfig.json');
+    return 'typescript';
+  }
+  
+  // Check for common main files (order matters for priority)
   const mainFileChecks: [string, Language][] = [
-    ['package.json', 'nodejs'],
-    ['tsconfig.json', 'typescript'],
     ['requirements.txt', 'python'],
     ['Cargo.toml', 'rust'],
     ['pom.xml', 'java'],
@@ -1069,10 +1087,11 @@ function detectProjectLanguage(files: File[]): Language | undefined {
     ['*.kt', 'kotlin'],
     ['*.swift', 'swift'],
     ['index.html', 'html-css-js'],
-    ['replit.nix', 'nix']
+    ['replit.nix', 'nix'],
+    ['package.json', 'nodejs']  // Moved to last - only match if no TypeScript detected above
   ];
   
-  // First try to detect by main file
+  // Try to detect by main file
   for (const [pattern, language] of mainFileChecks) {
     // Handle glob patterns
     if (pattern.includes('*')) {
