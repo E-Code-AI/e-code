@@ -32,6 +32,13 @@ The agent orchestrator (`agent-orchestrator.service.ts`) manages workflow state 
 - **WebSocket sync:** Broadcasts only occur AFTER confirmed DB writes (or explicit fallback on retry exhaustion)
 - **Critical fix (Dec 7):** `executeAutonomousPlan()` now properly transitions workflowStatus through all states
 
+### Bootstrap Prompt Flow Fix (Dec 7, 2025)
+- **Problem:** Bootstrap created projects with prompt in `project.description`, but client never used it for agent auto-start
+- **Solution:** Added `useMemo` in `IDEPage.tsx` that calculates `agentInitialPrompt` from `project.description` when bootstrap token present
+- **Priority Chain:** `promptParam (URL) → storedPrompt (sessionStorage) → project.description (bootstrap)`
+- **Dependencies:** `[promptParam, autoStartAgent, storedPrompt, bootstrapToken, project?.description]`
+- **Dual Flow:** Client displays prompt in panel + server auto-starts `startAutonomousWorkspace()` via WebSocket connection
+
 ### Memory Optimization Patterns (Dec 7, 2025)
 Replit-style generators and lazy evaluation for handling millions of users:
 - **PostgreSQL Native Streaming:** `server/utils/db-streaming.ts` provides true cursor-based streaming
