@@ -307,7 +307,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-4 text-sm font-mono bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[48px]"
+            className="h-10 px-4 text-sm font-mono bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[48px]"
             onClick={() => insertText('\t')}
             data-testid="mobile-editor-tab"
           >
@@ -317,7 +317,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
+            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
             onClick={() => insertText('{')}
             data-testid="mobile-editor-brace"
           >
@@ -327,7 +327,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
+            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
             onClick={() => insertText('}')}
             data-testid="mobile-editor-close-brace"
           >
@@ -337,7 +337,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
+            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
             onClick={() => insertText('(')}
             data-testid="mobile-editor-paren"
           >
@@ -347,7 +347,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
+            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
             onClick={() => insertText(')')}
             data-testid="mobile-editor-close-paren"
           >
@@ -357,7 +357,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-muted/80 dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
+            className="h-10 px-3 text-sm bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
             onClick={() => insertText(';')}
             data-testid="mobile-editor-semicolon"
           >
@@ -369,7 +369,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+            className="h-8 w-8 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleCaretLeft}
             data-testid="button-caret-left"
           >
@@ -379,7 +379,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+            className="h-8 w-8 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleCaretRight}
             data-testid="button-caret-right"
           >
@@ -389,7 +389,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+            className="h-8 w-8 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleCaretUp}
             data-testid="button-caret-up"
           >
@@ -399,7 +399,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+            className="h-8 w-8 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleCaretDown}
             data-testid="button-caret-down"
           >
@@ -409,7 +409,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 w-10 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+            className="h-10 w-10 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleUndo}
             data-testid="mobile-editor-undo"
           >
@@ -419,7 +419,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 w-10 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+            className="h-10 w-10 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleRedo}
             data-testid="mobile-editor-redo"
           >
@@ -429,7 +429,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 w-10 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+            className="h-10 w-10 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={triggerSuggestions}
             data-testid="mobile-editor-suggest"
           >
@@ -439,7 +439,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 w-10 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+            className="h-10 w-10 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleFind}
             data-testid="mobile-editor-find"
           >
@@ -451,7 +451,7 @@ export function MobileCodeEditor({
             variant="ghost"
             className={cn(
               'h-10 px-4 active:scale-95 touch-manipulation min-w-[80px]',
-              hasUnsavedChanges && 'bg-[#F26207] hover:bg-[#F26207]/90 text-white'
+              hasUnsavedChanges && 'bg-[#F26207] hover:bg-[#D85506] text-white'
             )}
             onClick={handleSave}
             disabled={!hasUnsavedChanges || saveFileMutation.isPending}
@@ -466,7 +466,7 @@ export function MobileCodeEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="h-10 w-10 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+            className="h-10 w-10 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
             onClick={handleHideToolbar}
             data-testid="mobile-editor-hide-toolbar"
           >
@@ -511,7 +511,7 @@ export function MobileCodeEditor({
         {showCompletionModal && (
           <>
             <motion.div
-              className="absolute inset-0 bg-black/60 z-40"
+              className="absolute inset-0 bg-[#0E1525] z-40"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -535,7 +535,7 @@ export function MobileCodeEditor({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-10 w-10 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] touch-manipulation"
+                  className="h-10 w-10 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] touch-manipulation"
                   onClick={() => setShowCompletionModal(false)}
                   data-testid="mobile-completion-close"
                 >
@@ -560,7 +560,7 @@ export function MobileCodeEditor({
                     filteredCompletions.map((completion, index) => (
                       <motion.button
                         key={`${completion.label}-${index}`}
-                        className="w-full flex items-start gap-3 p-4 rounded-lg hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:bg-accent transition-colors touch-manipulation text-left min-h-[56px]"
+                        className="w-full flex items-start gap-3 p-4 rounded-lg hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:bg-[#2B3245] transition-colors touch-manipulation text-left min-h-[56px]"
                         onClick={() => insertCompletion(completion)}
                         whileTap={{ scale: 0.98 }}
                         data-testid={`mobile-completion-item-${index}`}

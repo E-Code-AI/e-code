@@ -255,12 +255,12 @@
     display: flex;
     gap: 4px;
     padding: 4px;
-    background: rgba(0, 0, 0, 0.05);
+    background: #f0f0f0;
     border-radius: 8px;
   }
   
   .dark .mobile-tools-tabs {
-    background: rgba(255, 255, 255, 0.05);
+    background: #1C2333;
   }
 }
 
@@ -270,7 +270,7 @@
     --replit-background: #ffffff;
     --replit-foreground: #0e1525;
     --replit-border: #e1e4e8;
-    --replit-hover: rgba(0, 0, 0, 0.04);
+    --replit-hover: #f5f5f5;
     --replit-selection: #e7f3ff;
     --replit-accent: #0969da;
     --replit-success: #2ea043;
@@ -295,17 +295,17 @@
     --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
     --shadow-premium: 0 30px 60px -15px rgba(242, 98, 7, 0.2), 0 10px 20px -5px rgba(0, 0, 0, 0.1);
     
-    /* Glassmorphism Variables */
-    --glass-bg: rgba(255, 255, 255, 0.8);
-    --glass-border: rgba(255, 255, 255, 0.3);
-    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-    --backdrop-blur: 12px;
+    /* Panel Variables (Solid Colors - No Glassmorphism) */
+    --glass-bg: #ffffff;
+    --glass-border: #e1e4e8;
+    --glass-shadow: 0 4px 12px 0 #00000020;
+    --backdrop-blur: 0px;
   }
   
   .dark {
-    --glass-bg: rgba(0, 0, 0, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --glass-bg: #1C2333;
+    --glass-border: #3D4455;
+    --glass-shadow: 0 4px 12px 0 #00000040;
   }
 
   * {
@@ -618,20 +618,16 @@
     border-color: var(--ecode-secondary-hex);
   }
   
-  /* Premium Glassmorphism */
+  /* Panel Styles (Solid Colors - No Blur Effects) */
   .glassmorphism {
     background: var(--glass-bg);
-    backdrop-filter: blur(var(--backdrop-blur));
-    -webkit-backdrop-filter: blur(var(--backdrop-blur));
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
   }
   
   .glassmorphism-dark {
-    background: rgba(17, 24, 39, 0.85);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #0E1525;
+    border: 1px solid #3D4455;
   }
   
   /* Responsive Images and Media */
@@ -896,7 +892,6 @@
     background-color: var(--marketing-glass-bg);
     border: 1px solid var(--marketing-glass-border);
     box-shadow: var(--marketing-glass-shadow);
-    backdrop-filter: blur(24px);
   }
 
   .glass-border {

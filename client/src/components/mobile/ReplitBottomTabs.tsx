@@ -105,7 +105,7 @@ export function ReplitBottomTabs({
       >
         {/* Subtle top highlight line */}
         <div 
-          className="absolute top-0 left-4 right-4 h-px opacity-60"
+          className="absolute top-0 left-4 right-4 h-px"
           style={{
             background: 'linear-gradient(90deg, transparent, var(--mobile-nav-border-top), transparent)',
           }}
@@ -119,13 +119,12 @@ export function ReplitBottomTabs({
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-full pointer-events-auto"
           style={{
             background: isConnected 
-              ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.06) 100%)'
-              : 'linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(239, 68, 68, 0.06) 100%)',
-            backdropFilter: 'blur(8px)',
-            border: `1px solid ${isConnected ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
+              ? '#1C2333'
+              : '#1C2333',
+            border: `1px solid ${isConnected ? '#22c55e' : '#ef4444'}`,
             boxShadow: isConnected 
-              ? '0 2px 8px -2px rgba(34, 197, 94, 0.15)'
-              : '0 2px 8px -2px rgba(239, 68, 68, 0.15)',
+              ? '0 2px 8px -2px #22c55e'
+              : '0 2px 8px -2px #ef4444',
           }}
           data-testid="indicator-connection-status"
           initial={{ opacity: 0, y: 8 }}
@@ -142,9 +141,6 @@ export function ReplitBottomTabs({
             {isConnected ? (
               <div className="relative">
                 <Wifi className="h-3 w-3 text-green-500" />
-                <div className="absolute inset-0 animate-ping opacity-30">
-                  <Wifi className="h-3 w-3 text-green-500" />
-                </div>
               </div>
             ) : (
               <WifiOff className="h-3 w-3 text-red-500" />
@@ -168,10 +164,9 @@ export function ReplitBottomTabs({
               <motion.div 
                 className="flex items-center gap-1 px-2 py-1 rounded-full"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.08) 100%)',
-                  backdropFilter: 'blur(8px)',
-                  border: '1px solid rgba(239, 68, 68, 0.25)',
-                  boxShadow: '0 2px 8px -2px rgba(239, 68, 68, 0.2)',
+                  background: '#1C2333',
+                  border: '1px solid #ef4444',
+                  boxShadow: '0 2px 8px -2px #ef4444',
                 }}
                 data-testid="indicator-errors"
                 initial={{ scale: 0, opacity: 0 }}
@@ -190,10 +185,9 @@ export function ReplitBottomTabs({
               <motion.div 
                 className="flex items-center gap-1 px-2 py-1 rounded-full"
                 style={{
-                  background: 'var(--mobile-nav-bg)',
-                  backdropFilter: 'blur(8px)',
-                  border: '1px solid var(--mobile-nav-border)',
-                  boxShadow: '0 2px 6px -2px rgba(0, 0, 0, 0.08)',
+                  background: '#1C2333',
+                  border: '1px solid #3D4455',
+                  boxShadow: '0 2px 6px -2px #0E1525',
                 }}
                 data-testid="indicator-git-changes"
                 initial={{ scale: 0, opacity: 0 }}
@@ -252,7 +246,7 @@ export function ReplitBottomTabs({
                     style={{
                       background: 'var(--mobile-nav-active-bg)',
                       border: '1px solid var(--mobile-nav-active-border)',
-                      boxShadow: `0 0 20px -4px var(--mobile-nav-glow), inset 0 1px 0 0 rgba(255,255,255,0.1)`,
+                      boxShadow: `0 0 20px -4px var(--mobile-nav-glow), inset 0 1px 0 0 #3D4455`,
                     }}
                   />
                 )}
@@ -318,7 +312,7 @@ export function ReplitBottomTabs({
                         background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                         borderRadius: '9px',
                         border: '2px solid var(--ecode-surface)',
-                        boxShadow: '0 2px 6px -1px rgba(239, 68, 68, 0.4)',
+                        boxShadow: '0 2px 6px -1px #ef4444',
                       }}
                       initial={{ scale: 0, rotate: -180 }}
                       animate={{ scale: 1, rotate: 0 }}
