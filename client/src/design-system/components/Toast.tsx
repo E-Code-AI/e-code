@@ -302,6 +302,11 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  // Define hide FIRST since show depends on it
+  const hide = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
   const show = useCallback((toast: Omit<Toast, 'id'>) => {
     const id = `toast-${Date.now()}-${Math.random()}`;
     const duration = toast.duration ?? 4000;
@@ -313,19 +318,23 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
       position,
     };
 
-    // Trigger haptic based on type
-    switch (toast.type) {
-      case 'success':
-        triggerHaptic('success');
-        break;
-      case 'error':
-        triggerHaptic('error');
-        break;
-      case 'warning':
-        triggerHaptic('warning');
-        break;
-      default:
-        triggerHaptic('light');
+    // Trigger haptic based on type (safe call)
+    try {
+      switch (toast.type) {
+        case 'success':
+          triggerHaptic('success');
+          break;
+        case 'error':
+          triggerHaptic('error');
+          break;
+        case 'warning':
+          triggerHaptic('warning');
+          break;
+        default:
+          triggerHaptic('light');
+      }
+    } catch (e) {
+      // Haptic feedback not available, ignore
     }
 
     setToasts((prev) => [...prev, newToast]);
@@ -335,11 +344,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
         hide(id);
       }, duration);
     }
-  }, []);
-
-  const hide = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+  }, [hide]);
 
   const success = useCallback(
     (message: string, description?: string) => {
@@ -369,11 +374,16 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
     [show]
   );
 
+  const contextValue = React.useMemo(
+    () => ({ show, hide, success, error, warning, info }),
+    [show, hide, success, error, warning, info]
+  );
+
   const topToasts = toasts.filter((t) => t.position === 'top');
   const bottomToasts = toasts.filter((t) => t.position === 'bottom');
 
   return (
-    <ToastContext.Provider value={{ show, hide, success, error, warning, info }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       <ToastContainer toasts={topToasts} onDismiss={hide} position="top" />
       <ToastContainer toasts={bottomToasts} onDismiss={hide} position="bottom" />
