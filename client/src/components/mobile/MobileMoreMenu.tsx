@@ -70,8 +70,16 @@ export function MobileMoreMenu({
   const prefersReducedMotion = useReducedMotion();
   
   const dragY = useMotionValue(0);
-  const dragOpacity = useTransform(dragY, [0, 150], [1, 0.5], { clamp: true });
-  const dragScale = useTransform(dragY, [0, 150], [1, 0.98], { clamp: true });
+  const dragOpacity = useTransform(dragY, (value) => {
+    if (typeof value !== 'number' || isNaN(value)) return 1;
+    const clamped = Math.max(0, Math.min(150, value));
+    return 1 - (clamped / 150) * 0.5;
+  });
+  const dragScale = useTransform(dragY, (value) => {
+    if (typeof value !== 'number' || isNaN(value)) return 1;
+    const clamped = Math.max(0, Math.min(150, value));
+    return 1 - (clamped / 150) * 0.02;
+  });
   
   const startY = useRef(0);
   const velocity = useRef(0);
@@ -485,9 +493,14 @@ export function MobileMoreMenu({
       };
 
   const containerVariants = prefersReducedMotion
-    ? {}
+    ? {
+        hidden: { opacity: 1 },
+        visible: { opacity: 1 },
+      }
     : {
+        hidden: { opacity: 1 },
         visible: {
+          opacity: 1,
           transition: {
             staggerChildren: 0.03,
             delayChildren: 0.1,
