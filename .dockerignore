@@ -275,3 +275,65 @@ __pycache__
 
 # Go cache
 .cache/go-build
+
+# ============================================
+# ADDITIONAL EXCLUSIONS FOR <8GB IMAGE
+# ============================================
+
+# Source TypeScript files (only needed for development)
+client/src
+!client/src/index.html
+
+# Shared source (compiled into dist)
+shared/*.ts
+
+# Server source (keep compiled JS only in production)
+# Note: These are compiled during build
+
+# Large node_modules packages (dev only)
+**/webpack*
+**/babel*
+**/eslint*
+**/prettier*
+**/jest*
+**/vitest*
+**/typescript/lib/*.d.ts
+
+# Editor/IDE heavy packages
+**/vscode-*
+**/@types
+
+# Unused language support files
+**/codemirror/lang-*
+
+# Heavy visualization libs docs
+**/recharts/es
+**/recharts/lib
+**/d3-*/src
+
+# Drizzle studio (dev only)
+**/drizzle-kit
+
+# Testing frameworks
+**/supertest
+**/@testing-library
+
+# Build tool caches
+.vite
+.turbo
+.swc
+
+# Unused binaries
+**/esbuild/bin
+**/node-gyp
+
+# Large optional dependencies
+**/sharp
+**/canvas
+**/bcrypt/build
+
+# Prisma engines (if not using Prisma)
+**/prisma/engines
+
+# Sentry source maps
+**/sentry-*/*.map

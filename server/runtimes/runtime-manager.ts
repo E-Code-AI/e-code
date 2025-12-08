@@ -15,7 +15,7 @@ import { CodeExecutor } from '../execution/executor';
 import { exec, spawn, ChildProcess } from 'child_process';
 import { promisify } from 'util';
 import { getRuntimeLogsService } from '../services/RuntimeLogsService';
-import * as treeKill from 'tree-kill';
+import treeKill from 'tree-kill';
 
 const execAsync = promisify(exec);
 const logger = createLogger('runtime');
@@ -413,7 +413,7 @@ export async function startProject(
             let stderr = '';
             
             const proc = spawn(compileCmd, compileArgs, {
-              cwd: projectDir,
+              cwd: projectDir || undefined,
               shell: needsShell  // Use shell for compilers that need PATH
             });
             
@@ -494,7 +494,7 @@ export async function startProject(
           let stderr = '';
           
           const proc = spawn(actualCmd, args, {
-            cwd: projectDir,
+            cwd: projectDir || undefined,
             env: { ...process.env, SANDBOX_EXECUTION: 'true' },
             shell: needsShell  // Use shell for tsx/ts-node/npm commands for PATH resolution
           });
