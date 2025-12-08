@@ -63,6 +63,44 @@ interface ReplitGitPanelProps {
 
 type ViewMode = 'main' | 'settings';
 
+function CommitSkeleton() {
+  return (
+    <div className="space-y-3" data-testid="commit-skeleton">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="flex items-start gap-2 py-1.5 animate-pulse">
+          <div className="flex flex-col items-center pt-1">
+            <div className="w-2 h-2 rounded-full bg-[#d4d8dd] dark:bg-[#3d4452]" />
+            <div className="w-0.5 flex-1 bg-[#d4d8dd] dark:bg-[#3d4452] mt-1 min-h-[24px]" />
+          </div>
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="h-3 bg-[#d4d8dd] dark:bg-[#3d4452] rounded w-3/4" />
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-[#d4d8dd] dark:bg-[#3d4452] rounded-full" />
+              <div className="h-2 bg-[#d4d8dd] dark:bg-[#3d4452] rounded w-24" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function NoChangesEmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-8 px-4 text-center" data-testid="no-changes-empty-state">
+      <div className="w-12 h-12 flex items-center justify-center mb-3">
+        <GitBranch className="w-12 h-12 text-[#5c6670]/40" />
+      </div>
+      <h3 className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white mb-1">
+        No uncommitted changes
+      </h3>
+      <p className="text-[13px] text-[#5c6670]">
+        Your working directory is clean. Make some changes to see them here.
+      </p>
+    </div>
+  );
+}
+
 export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
   const { toast } = useToast();
   const [viewMode, setViewMode] = useState<ViewMode>('main');
@@ -81,7 +119,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
     enabled: !!status,
   });
 
-  const { data: commitsData } = useQuery<{ commits: GitCommitInfo[] }>({
+  const { data: commitsData, isLoading: isLoadingCommits } = useQuery<{ commits: GitCommitInfo[] }>({
     queryKey: ['/api/git/log'],
     enabled: !!status,
   });
@@ -227,28 +265,28 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
   if (viewMode === 'settings') {
     return (
       <div className={cn("flex flex-col h-full bg-white dark:bg-[#1c2333]", className)} data-testid="git-settings">
-        <div className="flex items-center gap-3 p-3 border-b border-[#d4d8dd] dark:border-[#3d4452]">
+        <div className="flex items-center gap-3 px-3 min-h-[48px] border-b border-[#d4d8dd] dark:border-[#3d4452]">
           <button
             onClick={() => setViewMode('main')}
-            className="p-1 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded"
+            className="p-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
             data-testid="back-from-settings"
           >
-            <ChevronLeft className="w-5 h-5 text-[#5c6670]" />
+            <ChevronLeft className="w-[18px] h-[18px] text-[#5c6670]" />
           </button>
-          <span className="text-sm font-medium text-[#0e1525] dark:text-white">Settings</span>
+          <span className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white">Settings</span>
         </div>
 
         <ScrollArea className="flex-1">
-          <div className="p-4 space-y-6">
+          <div className="p-3 space-y-6">
             {/* Remote */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-[#0e1525] dark:text-white">Remote</h3>
+            <div className="space-y-2">
+              <h3 className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white">Remote</h3>
               <div className="flex gap-2">
                 <Input
                   value={remoteUrl || originRemote?.url || ''}
                   onChange={(e) => setRemoteUrl(e.target.value)}
                   placeholder="https://github.com/username/repo.git"
-                  className="flex-1 h-9 bg-white dark:bg-[#1c2333] border-[#d4d8dd] dark:border-[#3d4452]"
+                  className="flex-1 h-8 bg-white dark:bg-[#1c2333] border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
                   data-testid="input-remote-url"
                 />
                 <Button
@@ -256,7 +294,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                   size="sm"
                   onClick={() => remoteUrl && connectRemoteMutation.mutate(remoteUrl)}
                   disabled={!remoteUrl || connectRemoteMutation.isPending}
-                  className="h-9 border-[#d4d8dd] dark:border-[#3d4452]"
+                  className="h-8 border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
                   data-testid="button-create-remote"
                 >
                   Create Remote
@@ -265,13 +303,13 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
             </div>
 
             {/* Connections */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <button
                 onClick={() => setShowConnections(!showConnections)}
                 className="flex items-center justify-between w-full p-3 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
               >
-                <span className="text-sm font-medium text-[#0e1525] dark:text-white">Connections</span>
-                {showConnections ? <ChevronUp className="w-5 h-5 text-[#5c6670]" /> : <ChevronDown className="w-5 h-5 text-[#5c6670]" />}
+                <span className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white">Connections</span>
+                {showConnections ? <ChevronUp className="w-[18px] h-[18px] text-[#5c6670]" /> : <ChevronDown className="w-[18px] h-[18px] text-[#5c6670]" />}
               </button>
 
               <AnimatePresence>
@@ -285,27 +323,27 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                     {/* GitHub */}
                     <div className="flex items-center justify-between p-3 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg">
                       <div className="flex items-center gap-3">
-                        <SiGithub className="w-5 h-5" />
-                        <span className="text-sm text-[#0e1525] dark:text-white">GitHub</span>
-                        <span className="flex items-center gap-1 text-xs text-green-600">
+                        <SiGithub className="w-[18px] h-[18px]" />
+                        <span className="text-[15px] text-[#0e1525] dark:text-white">GitHub</span>
+                        <span className="flex items-center gap-1 text-[13px] text-green-600">
                           <span className="w-2 h-2 bg-green-500 rounded-full" />
                           Active
                         </span>
                       </div>
-                      <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600">Delete</Button>
+                      <Button variant="ghost" size="sm" className="h-8 text-red-500 hover:text-red-600 rounded-lg">Delete</Button>
                     </div>
 
                     {/* Bitbucket */}
                     <div className="flex items-center justify-between p-3 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg">
                       <div className="flex items-center gap-3">
-                        <SiBitbucket className="w-5 h-5 text-[#2684FF]" />
-                        <span className="text-sm text-[#0e1525] dark:text-white">Bitbucket</span>
-                        <span className="flex items-center gap-1 text-xs text-[#5c6670]">
+                        <SiBitbucket className="w-[18px] h-[18px] text-[#2684FF]" />
+                        <span className="text-[15px] text-[#0e1525] dark:text-white">Bitbucket</span>
+                        <span className="flex items-center gap-1 text-[13px] text-[#5c6670]">
                           <span className="w-2 h-2 bg-[#5c6670] rounded-full" />
                           Disconnected
                         </span>
                       </div>
-                      <Button variant="outline" size="sm" className="border-[#d4d8dd]">
+                      <Button variant="outline" size="sm" className="h-8 border-[#d4d8dd] rounded-lg">
                         <ExternalLink className="w-3 h-3 mr-1" />Sign in
                       </Button>
                     </div>
@@ -313,14 +351,14 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                     {/* GitLab */}
                     <div className="flex items-center justify-between p-3 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg">
                       <div className="flex items-center gap-3">
-                        <SiGitlab className="w-5 h-5 text-[#FC6D26]" />
-                        <span className="text-sm text-[#0e1525] dark:text-white">GitLab</span>
-                        <span className="flex items-center gap-1 text-xs text-[#5c6670]">
+                        <SiGitlab className="w-[18px] h-[18px] text-[#FC6D26]" />
+                        <span className="text-[15px] text-[#0e1525] dark:text-white">GitLab</span>
+                        <span className="flex items-center gap-1 text-[13px] text-[#5c6670]">
                           <span className="w-2 h-2 bg-[#5c6670] rounded-full" />
                           Disconnected
                         </span>
                       </div>
-                      <Button variant="outline" size="sm" className="border-[#d4d8dd]">
+                      <Button variant="outline" size="sm" className="h-8 border-[#d4d8dd] rounded-lg">
                         <ExternalLink className="w-3 h-3 mr-1" />Sign in
                       </Button>
                     </div>
@@ -330,23 +368,23 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
             </div>
 
             {/* Commit Author */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-[#0e1525] dark:text-white">Commit author</h3>
+            <div className="space-y-2">
+              <h3 className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white">Commit author</h3>
               <div className="p-3 bg-white dark:bg-[#242b3d] border-2 border-[#0079f2] rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#0079f2] rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-white" />
+                    <User className="w-[18px] h-[18px] text-white" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-[#0e1525] dark:text-white">developer</span>
-                      <a href="#" className="text-xs text-[#0079f2] flex items-center gap-1">
+                      <span className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white">developer</span>
+                      <a href="#" className="text-[13px] text-[#0079f2] flex items-center gap-1">
                         GitHub Settings <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>
-                    <span className="text-xs text-[#5c6670]">developer@example.com</span>
+                    <span className="text-[13px] text-[#5c6670]">developer@example.com</span>
                   </div>
-                  <div className="w-5 h-5 bg-[#0079f2] rounded-full flex items-center justify-center">
+                  <div className="w-[18px] h-[18px] bg-[#0079f2] rounded-full flex items-center justify-center">
                     <Check className="w-3 h-3 text-white" />
                   </div>
                 </div>
@@ -362,31 +400,31 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
   return (
     <div className={cn("flex flex-col h-full bg-white dark:bg-[#1c2333] relative", className)} data-testid="git-panel">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[#d4d8dd] dark:border-[#3d4452]">
+      <div className="flex items-center justify-between px-3 min-h-[48px] border-b border-[#d4d8dd] dark:border-[#3d4452]">
         <button
           onClick={() => setShowBranchDropdown(!showBranchDropdown)}
-          className="flex items-center gap-2 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded px-2 py-1"
+          className="flex items-center gap-2 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg px-2 py-1"
           data-testid="branch-selector"
         >
-          <GitBranch className="w-4 h-4 text-[#5c6670]" />
-          <span className="text-sm font-medium text-[#0e1525] dark:text-white">{status?.branch || 'main'}</span>
-          <ChevronDown className="w-4 h-4 text-[#5c6670]" />
+          <GitBranch className="w-[18px] h-[18px] text-[#5c6670]" />
+          <span className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white">{status?.branch || 'main'}</span>
+          <ChevronDown className="w-[18px] h-[18px] text-[#5c6670]" />
         </button>
         
         <div className="flex items-center gap-1">
           <button
             onClick={() => setViewMode('settings')}
-            className="p-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded"
+            className="p-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
             data-testid="git-settings-button"
           >
-            <Settings className="w-4 h-4 text-[#5c6670]" />
+            <Settings className="w-[18px] h-[18px] text-[#5c6670]" />
           </button>
           <button
             onClick={() => refetchStatus()}
-            className="p-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded"
+            className="p-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
             data-testid="git-refresh-button"
           >
-            <RefreshCw className="w-4 h-4 text-[#5c6670]" />
+            <RefreshCw className="w-[18px] h-[18px] text-[#5c6670]" />
           </button>
         </div>
       </div>
@@ -398,17 +436,17 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="absolute top-10 left-2 right-2 z-50 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg shadow-lg overflow-hidden"
+            className="absolute top-12 left-2 right-2 z-50 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg shadow-lg overflow-hidden"
           >
             <div className="p-2 border-b border-[#d4d8dd] dark:border-[#3d4452]">
-              <div className="flex items-center gap-2 px-2 py-1.5 bg-[#d4d8dd]/20 dark:bg-[#1c2333] rounded border border-[#d4d8dd] dark:border-[#3d4452]">
-                <Search className="w-4 h-4 text-[#5c6670]" />
+              <div className="flex items-center gap-2 px-2 py-1.5 bg-[#d4d8dd]/20 dark:bg-[#1c2333] rounded-lg border border-[#d4d8dd] dark:border-[#3d4452]">
+                <Search className="w-[18px] h-[18px] text-[#5c6670]" />
                 <input
                   type="text"
                   value={branchSearch}
                   onChange={(e) => setBranchSearch(e.target.value)}
                   placeholder="Find or create a branch..."
-                  className="flex-1 bg-inherit text-sm outline-none text-[#0e1525] dark:text-white placeholder:text-[#5c6670]"
+                  className="flex-1 bg-inherit text-[15px] outline-none text-[#0e1525] dark:text-white placeholder:text-[#5c6670]"
                   data-testid="input-branch-search"
                 />
               </div>
@@ -418,17 +456,17 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
               <div className="p-1">
                 {importantBranches.length > 0 && (
                   <div className="mb-1">
-                    <div className="px-2 py-1 text-xs font-medium text-[#5c6670] uppercase">Important</div>
+                    <div className="px-2 py-1 text-[11px] font-medium text-[#5c6670] uppercase tracking-wider">Important</div>
                     {importantBranches.map(branch => (
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded text-left"
+                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg text-left"
                         data-testid={`branch-${branch.name}`}
                       >
                         <span className={cn("w-2 h-2 rounded-full", branch.current ? "bg-[#0079f2]" : "bg-green-500")} />
-                        <span className="text-sm text-[#0e1525] dark:text-white flex-1">{branch.name}</span>
-                        {branch.current && <Check className="w-4 h-4 text-[#0079f2]" />}
+                        <span className="text-[15px] text-[#0e1525] dark:text-white flex-1">{branch.name}</span>
+                        {branch.current && <Check className="w-[18px] h-[18px] text-[#0079f2]" />}
                       </button>
                     ))}
                   </div>
@@ -436,16 +474,16 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
 
                 {activeBranches.length > 0 && (
                   <div className="mb-1">
-                    <div className="px-2 py-1 text-xs font-medium text-[#5c6670] uppercase">Active</div>
+                    <div className="px-2 py-1 text-[11px] font-medium text-[#5c6670] uppercase tracking-wider">Active</div>
                     {activeBranches.map(branch => (
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded text-left"
+                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg text-left"
                         data-testid={`branch-${branch.name}`}
                       >
                         <span className="w-2 h-2 bg-green-500 rounded-full" />
-                        <span className="text-sm text-[#0e1525] dark:text-white">{branch.name}</span>
+                        <span className="text-[15px] text-[#0e1525] dark:text-white">{branch.name}</span>
                       </button>
                     ))}
                   </div>
@@ -453,16 +491,16 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
 
                 {staleBranches.length > 0 && (
                   <div>
-                    <div className="px-2 py-1 text-xs font-medium text-[#5c6670] uppercase">Stale</div>
+                    <div className="px-2 py-1 text-[11px] font-medium text-[#5c6670] uppercase tracking-wider">Stale</div>
                     {staleBranches.slice(0, 5).map(branch => (
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded text-left"
+                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg text-left"
                         data-testid={`branch-${branch.name}`}
                       >
-                        <User className="w-4 h-4 text-[#5c6670]" />
-                        <span className="text-sm text-[#0e1525] dark:text-white truncate">{branch.name}</span>
+                        <User className="w-[18px] h-[18px] text-[#5c6670]" />
+                        <span className="text-[15px] text-[#0e1525] dark:text-white truncate">{branch.name}</span>
                       </button>
                     ))}
                   </div>
@@ -474,7 +512,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
       </AnimatePresence>
 
       <ScrollArea className="flex-1">
-        <div className="p-3 space-y-4">
+        <div className="p-3 space-y-2">
           {/* Remote Updates */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -484,7 +522,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                   href={`https://github.com/${repoName}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-xs text-[#0e1525] dark:text-white hover:text-[#0079f2]"
+                  className="flex items-center gap-1 text-[13px] text-[#0e1525] dark:text-white hover:text-[#0079f2]"
                   data-testid="link-github-repo"
                 >
                   <SiGithub className="w-3 h-3" />
@@ -494,7 +532,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
               )}
             </div>
 
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center justify-between text-[13px]">
               <div className="flex items-center gap-1 text-[#5c6670]">
                 <span className="font-medium text-[#0e1525] dark:text-white">origin/{status?.branch}</span>
                 <span>•</span>
@@ -507,7 +545,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                   size="sm"
                   onClick={() => fetchMutation.mutate(undefined)}
                   disabled={fetchMutation.isPending}
-                  className="h-6 px-2 text-xs text-[#5c6670]"
+                  className="h-6 px-2 text-[13px] text-[#5c6670] rounded-lg"
                   data-testid="button-fetch"
                 >
                   <RefreshCw className="w-3 h-3 mr-1" />
@@ -517,7 +555,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
             </div>
 
             {(status?.ahead || 0) > 0 && (
-              <p className="text-xs text-[#5c6670]">{status?.ahead} commits to push</p>
+              <p className="text-[13px] text-[#5c6670]">{status?.ahead} commits to push</p>
             )}
 
             {/* Action Buttons */}
@@ -529,7 +567,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                   pullMutation.mutate(undefined);
                   pushMutation.mutate(undefined);
                 }}
-                className="flex-1 h-8 text-xs border-[#d4d8dd] dark:border-[#3d4452]"
+                className="flex-1 h-8 text-[13px] border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
                 data-testid="button-sync"
               >
                 <RefreshCw className="w-3 h-3 mr-1" />
@@ -540,7 +578,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                 size="sm"
                 onClick={() => pullMutation.mutate(undefined)}
                 disabled={pullMutation.isPending}
-                className="h-8 px-3 text-xs border-[#d4d8dd] dark:border-[#3d4452]"
+                className="h-8 px-3 text-[13px] border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
                 data-testid="button-pull"
               >
                 <ArrowDown className="w-3 h-3 mr-1" />
@@ -551,7 +589,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                 size="sm"
                 onClick={() => pushMutation.mutate(undefined)}
                 disabled={pushMutation.isPending}
-                className="h-8 px-3 text-xs border-[#d4d8dd] dark:border-[#3d4452]"
+                className="h-8 px-3 text-[13px] border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
                 data-testid="button-push"
               >
                 <ArrowUp className="w-3 h-3 mr-1" />
@@ -562,7 +600,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
 
           {/* Commit Section */}
           <div className="space-y-2 pt-3 border-t border-[#d4d8dd] dark:border-[#3d4452]">
-            <h3 className="text-sm font-semibold text-[#0e1525] dark:text-white">Commit</h3>
+            <h3 className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white">Commit</h3>
             
             {hasChanges ? (
               <div className="space-y-2">
@@ -571,14 +609,14 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                   <div className="space-y-1">
                     <div className="text-xs font-medium text-[#5c6670] uppercase">Staged ({status.staged.length})</div>
                     {status.staged.map(file => (
-                      <div key={file} className="flex items-center justify-between px-2 py-1 rounded hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group">
+                      <div key={file} className="flex items-center justify-between px-2 py-1 rounded-lg hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <FileCode className="w-3 h-3 text-green-500 shrink-0" />
-                          <span className="text-xs text-[#0e1525] dark:text-white truncate">{file}</span>
+                          <span className="text-[13px] text-[#0e1525] dark:text-white truncate">{file}</span>
                         </div>
                         <button
                           onClick={() => unstageMutation.mutate([file])}
-                          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-[#e5e7eb] dark:hover:bg-[#3d4452] rounded"
+                          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-[#e5e7eb] dark:hover:bg-[#3d4452] rounded-lg"
                           data-testid={`unstage-${file}`}
                         >
                           <Minus className="w-3 h-3 text-[#5c6670]" />
@@ -593,14 +631,14 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                   <div className="space-y-1">
                     <div className="text-xs font-medium text-[#5c6670] uppercase">Changes ({status.unstaged.length})</div>
                     {status.unstaged.map(file => (
-                      <div key={file} className="flex items-center justify-between px-2 py-1 rounded hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group">
+                      <div key={file} className="flex items-center justify-between px-2 py-1 rounded-lg hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <FileCode className="w-3 h-3 text-yellow-500 shrink-0" />
-                          <span className="text-xs text-[#0e1525] dark:text-white truncate">{file}</span>
+                          <span className="text-[13px] text-[#0e1525] dark:text-white truncate">{file}</span>
                         </div>
                         <button
                           onClick={() => stageMutation.mutate([file])}
-                          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-[#e5e7eb] dark:hover:bg-[#3d4452] rounded"
+                          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-[#e5e7eb] dark:hover:bg-[#3d4452] rounded-lg"
                           data-testid={`stage-${file}`}
                         >
                           <Plus className="w-3 h-3 text-[#5c6670]" />
@@ -615,14 +653,14 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                   <div className="space-y-1">
                     <div className="text-xs font-medium text-[#5c6670] uppercase">Untracked ({status.untracked.length})</div>
                     {status.untracked.map(file => (
-                      <div key={file} className="flex items-center justify-between px-2 py-1 rounded hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group">
+                      <div key={file} className="flex items-center justify-between px-2 py-1 rounded-lg hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <FileCode className="w-3 h-3 text-[#5c6670] shrink-0" />
-                          <span className="text-xs text-[#0e1525] dark:text-white truncate">{file}</span>
+                          <span className="text-[13px] text-[#0e1525] dark:text-white truncate">{file}</span>
                         </div>
                         <button
                           onClick={() => stageMutation.mutate([file])}
-                          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-[#e5e7eb] dark:hover:bg-[#3d4452] rounded"
+                          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-[#e5e7eb] dark:hover:bg-[#3d4452] rounded-lg"
                           data-testid={`stage-${file}`}
                         >
                           <Plus className="w-3 h-3 text-[#5c6670]" />
@@ -636,13 +674,13 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                   value={commitMessage}
                   onChange={(e) => setCommitMessage(e.target.value)}
                   placeholder="Commit message..."
-                  className="h-8 text-sm bg-white dark:bg-[#1c2333] border-[#d4d8dd] dark:border-[#3d4452]"
+                  className="h-8 text-[15px] bg-white dark:bg-[#1c2333] border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
                   data-testid="input-commit-message"
                 />
                 <Button
                   onClick={() => commitMutation.mutate(commitMessage)}
                   disabled={!commitMessage.trim() || commitMutation.isPending || !status?.staged?.length}
-                  className="w-full h-8 text-xs bg-[#0079f2] hover:bg-[#0066cc] text-white"
+                  className="w-full h-8 text-[13px] bg-[#0079f2] hover:bg-[#0066cc] text-white rounded-lg"
                   data-testid="button-commit"
                 >
                   <GitCommit className="w-3 h-3 mr-1" />
@@ -650,15 +688,19 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                 </Button>
               </div>
             ) : (
-              <p className="text-sm text-[#5c6670]">There are no changes to commit.</p>
+              <NoChangesEmptyState />
             )}
           </div>
 
           {/* Commit History */}
-          {commits && commits.length > 0 && (
+          {isLoadingCommits ? (
+            <div className="space-y-2 pt-3 border-t border-[#d4d8dd] dark:border-[#3d4452]">
+              <CommitSkeleton />
+            </div>
+          ) : commits && commits.length > 0 ? (
             <div className="space-y-2 pt-3 border-t border-[#d4d8dd] dark:border-[#3d4452]">
               {unpushedCommits.length > 0 && (
-                <div className="flex items-center gap-1 text-xs text-[#5c6670]">
+                <div className="flex items-center gap-1 text-[13px] text-[#5c6670]">
                   <ArrowDown className="w-3 h-3" />
                   <span>Not pushed to remote</span>
                 </div>
@@ -681,11 +723,11 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-[#0e1525] dark:text-white truncate">
+                      <p className="text-[13px] font-medium text-[#0e1525] dark:text-white truncate">
                         {commit.message}
                       </p>
                       <div className="flex items-center gap-1 text-[10px] text-[#5c6670]">
-                        <div className="w-3 h-3 bg-green-500 rounded-full flex items-center justify-center text-[6px] text-white font-medium">
+                        <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-[8px] text-white font-medium">
                           {commit.author?.charAt(0)?.toUpperCase() || 'U'}
                         </div>
                         <span>{commit.author}</span>
@@ -696,7 +738,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                 ))}
               </div>
             </div>
-          )}
+          ) : null}
         </div>
       </ScrollArea>
     </div>
