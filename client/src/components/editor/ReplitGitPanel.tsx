@@ -40,20 +40,25 @@ interface GitStatus {
 
 interface GitCommitInfo {
   hash: string;
+  shortHash: string;
   message: string;
   author: string;
-  email: string;
   date: string;
-  pushed: boolean;
 }
 
 interface GitBranchInfo {
   name: string;
   current: boolean;
-  remote: boolean;
-  lastCommit?: string;
-  author?: string;
-  date?: string;
+  isRemote: boolean;
+  lastCommit: {
+    hash: string;
+    message: string;
+    author: string;
+    date: string;
+  };
+  ahead: number;
+  behind: number;
+  trackingBranch?: string;
 }
 
 interface ReplitGitPanelProps {
@@ -256,15 +261,16 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
   };
 
   const hasChanges = status && (status.staged.length > 0 || status.unstaged.length > 0 || status.untracked.length > 0);
-  const unpushedCommits = commits?.filter(c => !c.pushed) || [];
+  const unpushedCount = status?.ahead || 0;
+  const unpushedCommits = commits?.slice(0, unpushedCount) || [];
 
   const filteredBranches = branches.filter(b => 
     b.name.toLowerCase().includes(branchSearch.toLowerCase())
   );
 
   const importantBranches = filteredBranches.filter(b => b.name === 'main' || b.name === 'master');
-  const activeBranches = filteredBranches.filter(b => !b.remote && b.name !== 'main' && b.name !== 'master');
-  const staleBranches = filteredBranches.filter(b => b.remote);
+  const activeBranches = filteredBranches.filter(b => !b.isRemote && b.name !== 'main' && b.name !== 'master');
+  const staleBranches = filteredBranches.filter(b => b.isRemote);
 
   if (isLoading) {
     return (
@@ -729,7 +735,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                     <div className="flex flex-col items-center pt-1">
                       <span className={cn(
                         "w-2 h-2 rounded-full",
-                        commit.pushed ? "bg-[#5c6670]" : "bg-green-500"
+                        idx >= unpushedCount ? "bg-[#5c6670]" : "bg-green-500"
                       )} />
                       {idx < commits.length - 1 && (
                         <div className="w-0.5 flex-1 bg-[#d4d8dd] dark:bg-[#3d4452] mt-1" />
