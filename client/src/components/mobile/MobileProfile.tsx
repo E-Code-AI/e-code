@@ -114,9 +114,9 @@ export function MobileProfile() {
       <div className="relative">
         <div className="h-32 bg-gradient-to-br from-[#F26207] to-[#F99D25] relative">
           {/* Pattern overlay */}
-          <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0">
             <div className="absolute inset-0" style={{
-              backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.1) 35px, rgba(255,255,255,.1) 70px)`,
+              backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 35px, #3D4455 35px, #3D4455 70px)`,
             }} />
           </div>
         </div>
@@ -194,7 +194,7 @@ export function MobileProfile() {
                   }
                   if ('vibrate' in navigator) navigator.vibrate(5);
                 }}
-                className="w-full flex items-center justify-between p-4 hover:bg-secondary/50 rounded-lg transition-colors group"
+                className="w-full flex items-center justify-between p-4 hover:bg-[#2B3245] rounded-lg transition-colors group"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}

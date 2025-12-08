@@ -315,7 +315,7 @@ export function MobileCollaborationPanel({
                     <div className="p-4 space-y-3">
                       {collaborators.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground">
-                          <Users className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                          <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                           <p className="text-base">No collaborators yet</p>
                           <p className="text-sm mt-1">Invite someone to collaborate!</p>
                           <Button
@@ -343,7 +343,7 @@ export function MobileCollaborationPanel({
                     <ScrollArea className="flex-1 px-4" ref={chatScrollRef}>
                       {chatMessages.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground">
-                          <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                          <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                           <p className="text-base">No messages yet</p>
                           <p className="text-sm mt-1">Start the conversation!</p>
                         </div>

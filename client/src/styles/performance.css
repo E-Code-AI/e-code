@@ -52,18 +52,15 @@
   isolation: isolate;
 }
 
-/* Optimized backdrop filters */
+/* Optimized panel backgrounds (Solid Colors) */
 .backdrop-optimized {
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background-color: #1C2333;
   transform: translateZ(0);
-  will-change: backdrop-filter;
 }
 
-@supports not (backdrop-filter: blur(8px)) {
-  .backdrop-optimized {
-    background-color: rgba(255, 255, 255, 0.9);
-  }
+.light .backdrop-optimized,
+:root:not(.dark) .backdrop-optimized {
+  background-color: #ffffff;
 }
 
 /* Motion preference support */

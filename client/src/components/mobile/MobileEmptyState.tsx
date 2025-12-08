@@ -110,7 +110,7 @@ export function MobileEmptyState({
     >
       <motion.div
         className={cn(
-          'flex items-center justify-center rounded-full bg-muted/50',
+          'flex items-center justify-center rounded-full bg-[#1C2333]',
           compact ? 'w-12 h-12' : 'w-16 h-16'
         )}
         variants={iconVariants}

@@ -500,7 +500,7 @@ export function MobileMoreMenu({
       {isOpen && (
         <>
           <motion.div
-            className="fixed inset-0 bg-black/60 z-40"
+            className="fixed inset-0 bg-[#0E1525] z-40"
             variants={backdropVariants}
             initial="hidden"
             animate="visible"
@@ -578,7 +578,7 @@ export function MobileMoreMenu({
                       {section.items.map((item, itemIndex) => (
                         <motion.button
                           key={item.id}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted active:bg-muted/70 transition-colors touch-manipulation text-left group"
+                          className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted active:bg-[#2B3245] transition-colors touch-manipulation text-left group"
                           onClick={item.onClick}
                           variants={itemVariants}
                           whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
@@ -586,7 +586,7 @@ export function MobileMoreMenu({
                           data-testid={`mobile-more-menu-${item.id}`}
                         >
                           <motion.div 
-                            className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-muted dark:bg-[var(--ecode-surface-secondary)] rounded-lg group-hover:bg-muted/80 transition-colors"
+                            className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-muted dark:bg-[var(--ecode-surface-secondary)] rounded-lg group-hover:bg-[#2B3245] transition-colors"
                             whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}
                             transition={SPRING_CONFIG.default}
                           >

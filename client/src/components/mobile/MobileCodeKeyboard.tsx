@@ -238,13 +238,13 @@ export function MobileCodeKeyboard({
     <div 
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50",
-        "bg-background/95 backdrop-blur-sm border-t shadow-lg",
+        "bg-[#0E1525] border-t shadow-lg",
         className
       )}
       data-testid="mobile-code-keyboard"
     >
       {/* Header with collapse and language indicator */}
-      <div className="flex items-center justify-between px-3 py-1.5 border-b bg-muted/30">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b bg-[#1C2333]">
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="text-[10px] px-1.5">
             {language.toUpperCase()}
