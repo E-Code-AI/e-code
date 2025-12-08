@@ -57,7 +57,7 @@ const MobileCollaboratorItem = memo(({
       animate={{ opacity: 1, y: 0 }}
       className={cn(
         "flex items-center gap-3 p-3 w-full rounded-xl transition-colors min-h-[56px]",
-        isFollowing ? "bg-primary/10 border border-primary/20" : "bg-muted/30 active:bg-muted/50"
+        isFollowing ? "bg-[#e8eaed] dark:bg-[#3d4452] border border-[#d4d8dd] dark:border-[#5c6670]" : "bg-[#f0f1f3] dark:bg-[#242b3d] active:bg-[#e8eaed] dark:active:bg-[#3d4452]"
       )}
       onClick={onFollow}
       data-testid={`mobile-collaborator-${collaborator.odUserId}`}
@@ -228,7 +228,7 @@ export function MobileCollaborationPanel({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-50"
+            className="fixed inset-0 bg-[#0e1525] z-50"
             onClick={onClose}
           />
           
@@ -246,7 +246,7 @@ export function MobileCollaborationPanel({
           >
             <div className="flex flex-col h-full max-h-[90vh]">
               <div className="flex items-center justify-center pt-3 pb-2">
-                <div className="w-10 h-1 bg-muted-foreground/30 rounded-full" />
+                <div className="w-10 h-1 bg-[#9da2a6] dark:bg-[#5c6670] rounded-full" />
               </div>
               
               <div className="flex items-center justify-between px-4 pb-3 border-b border-border">
@@ -281,7 +281,7 @@ export function MobileCollaborationPanel({
                 </div>
               </div>
               
-              <div className="flex gap-1 p-2 border-b border-border bg-muted/30">
+              <div className="flex gap-1 p-2 border-b border-border bg-[#f0f1f3] dark:bg-[#242b3d]">
                 <Button
                   variant={activeView === 'people' ? 'default' : 'ghost'}
                   size="sm"
@@ -414,7 +414,7 @@ export function MobileCollaborationPanel({
                   </div>
                   
                   <div className="space-y-4">
-                    <div className="p-4 bg-muted/50 rounded-xl">
+                    <div className="p-4 bg-[#f0f1f3] dark:bg-[#242b3d] rounded-xl">
                       <p className="text-xs text-muted-foreground mb-2">Share Link</p>
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-mono truncate flex-1">{shareLink}</p>

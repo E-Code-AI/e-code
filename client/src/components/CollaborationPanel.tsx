@@ -105,7 +105,7 @@ const CollaboratorListItem = memo(({
     <div 
       className={cn(
         "flex items-center justify-between p-2 rounded-lg transition-colors cursor-pointer",
-        isFollowing ? "bg-primary/10 border border-primary/20" : "hover:bg-muted/50"
+        isFollowing ? "bg-[#e8eaed] dark:bg-[#3d4452] border border-[#d4d8dd] dark:border-[#5c6670]" : "hover:bg-[#e8eaed] dark:hover:bg-[#3d4452]"
       )}
       onClick={onFollow}
       data-testid={`collaborator-${collaborator.odUserId}`}
@@ -555,7 +555,7 @@ export function CollaborationPanel({
           <TabsContent value="collaborators" className="flex-1 mt-2 overflow-hidden">
             <ScrollArea className="h-full">
               <div className="px-4 pb-4 space-y-3">
-                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-2 p-3 bg-[#f0f1f3] dark:bg-[#242b3d] rounded-lg">
                   <Share2 className="h-4 w-4 text-muted-foreground shrink-0" />
                   <input
                     type="text"
@@ -664,7 +664,7 @@ export function CollaborationPanel({
         </Tabs>
         
         {error && (
-          <div className="p-3 border-t bg-destructive/10 text-destructive text-xs shrink-0">
+          <div className="p-3 border-t bg-[#fef2f2] dark:bg-[#3d2424] text-destructive text-xs shrink-0">
             {error}
           </div>
         )}
