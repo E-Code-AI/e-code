@@ -310,6 +310,34 @@ router.post('/pull', ensureAuthenticated, csrfProtection, async (req: Request, r
   }
 });
 
+router.post('/fetch', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+  try {
+    const isRepo = await ensureGitRepo();
+    if (!isRepo) {
+      return res.status(400).json({ error: 'Not a git repository' });
+    }
+
+    const { stdout: remoteCheck } = await execa('git', ['remote', '-v'], { cwd: PROJECT_ROOT });
+    if (!remoteCheck.trim()) {
+      return res.status(422).json({ error: 'No remote repository configured' });
+    }
+
+    const { stdout, stderr } = await execa('git', ['fetch', '--all', '--prune'], { 
+      cwd: PROJECT_ROOT,
+      timeout: 30000,
+      reject: false
+    });
+
+    res.json({ success: true, output: stdout || stderr || 'Fetched successfully' });
+  } catch (error: any) {
+    console.error('[Git] Fetch error:', error);
+    if (error.timedOut) {
+      return res.status(500).json({ error: 'Git fetch timed out - remote may require authentication' });
+    }
+    res.status(500).json({ error: error.message || 'Fetch failed' });
+  }
+});
+
 interface GitBranchInfo {
   name: string;
   current: boolean;
