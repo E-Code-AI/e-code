@@ -4,6 +4,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -25,9 +26,16 @@ import {
   Plus,
   Minus,
   FileCode,
+  LogOut,
 } from 'lucide-react';
 import { SiGithub, SiBitbucket, SiGitlab } from 'react-icons/si';
 import { cn } from '@/lib/utils';
+
+interface GitHubStatus {
+  connected: boolean;
+  username?: string;
+  avatarUrl?: string;
+}
 
 interface GitStatus {
   branch: string;
@@ -148,6 +156,10 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
   });
   const branches = branchesData?.branches || [];
 
+  const { data: githubStatus, isLoading: isLoadingGitHub, refetch: refetchGitHubStatus } = useQuery<GitHubStatus>({
+    queryKey: ['/api/git/github/status'],
+  });
+
   const originRemote = remotesData?.remotes?.find(r => r.name === 'origin' && r.type === 'fetch');
   const repoName = originRemote?.url?.split('/').slice(-2).join('/').replace('.git', '') || '';
 
@@ -246,6 +258,42 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
     },
   });
 
+  const disconnectGitHubMutation = useMutation({
+    mutationFn: async () => apiRequest('/api/git/github/disconnect', 'POST', {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/git/github/status'] });
+      toast({ description: 'GitHub disconnected successfully' });
+    },
+    onError: (error: any) => {
+      toast({ description: error.message || 'Failed to disconnect GitHub', variant: 'destructive' });
+    },
+  });
+
+  const createBranchMutation = useMutation({
+    mutationFn: async (name: string) => apiRequest('/api/git/branches', 'POST', { name }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/git/branches'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/git/status'] });
+      toast({ description: 'Branch created successfully' });
+      setShowBranchDropdown(false);
+      setBranchSearch('');
+    },
+    onError: (error: any) => {
+      toast({ description: error.message || 'Failed to create branch', variant: 'destructive' });
+    },
+  });
+
+  const handleConnectGitHub = async () => {
+    try {
+      const response = await apiRequest('/api/git/github/connect', 'GET');
+      if (response.authUrl) {
+        window.open(response.authUrl, '_blank', 'width=600,height=700');
+      }
+    } catch (error: any) {
+      toast({ description: error.message || 'Failed to connect to GitHub', variant: 'destructive' });
+    }
+  };
+
   const formatTimeAgo = (dateStr: string) => {
     const date = new Date(dateStr);
     const now = new Date();
@@ -340,16 +388,71 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                     className="space-y-2"
                   >
                     {/* GitHub */}
-                    <div className="flex items-center justify-between p-3 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <SiGithub className="w-[18px] h-[18px]" />
-                        <span className="text-[15px] text-[#0e1525] dark:text-white">GitHub</span>
-                        <span className="flex items-center gap-1 text-[13px] text-green-600">
-                          <span className="w-2 h-2 bg-green-500 rounded-full" />
-                          Active
-                        </span>
-                      </div>
-                      <Button variant="ghost" size="sm" className="h-8 text-red-500 hover:text-red-600 rounded-lg">Delete</Button>
+                    <div 
+                      className="flex items-center justify-between p-3 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
+                      data-testid="github-connection-section"
+                    >
+                      {isLoadingGitHub ? (
+                        <div className="flex items-center gap-3">
+                          <SiGithub className="w-[18px] h-[18px]" />
+                          <span className="text-[15px] text-[#0e1525] dark:text-white">GitHub</span>
+                          <Loader2 className="w-4 h-4 animate-spin text-[#5c6670]" data-testid="github-status-loading" />
+                        </div>
+                      ) : githubStatus?.connected ? (
+                        <>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-6 h-6" data-testid="github-avatar">
+                              <AvatarImage src={githubStatus.avatarUrl} alt={githubStatus.username} />
+                              <AvatarFallback>
+                                <SiGithub className="w-4 h-4" />
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-[15px] text-[#0e1525] dark:text-white" data-testid="github-username">
+                              {githubStatus.username}
+                            </span>
+                            <span className="flex items-center gap-1 text-[13px] text-green-600">
+                              <span className="w-2 h-2 bg-green-500 rounded-full" />
+                              Connected
+                            </span>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg"
+                            onClick={() => disconnectGitHubMutation.mutate(undefined)}
+                            disabled={disconnectGitHubMutation.isPending}
+                            data-testid="button-disconnect-github"
+                          >
+                            {disconnectGitHubMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                            ) : (
+                              <LogOut className="w-4 h-4 mr-1" />
+                            )}
+                            Disconnect
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-3">
+                            <SiGithub className="w-[18px] h-[18px]" />
+                            <span className="text-[15px] text-[#0e1525] dark:text-white">GitHub</span>
+                            <span className="flex items-center gap-1 text-[13px] text-[#5c6670]">
+                              <span className="w-2 h-2 bg-[#5c6670] rounded-full" />
+                              Disconnected
+                            </span>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
+                            onClick={handleConnectGitHub}
+                            data-testid="button-connect-github"
+                          >
+                            <ExternalLink className="w-3 h-3 mr-1" />
+                            Connect
+                          </Button>
+                        </>
+                      )}
                     </div>
 
                     {/* Bitbucket */}
@@ -522,6 +625,26 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                         <span className="text-[15px] text-[#0e1525] dark:text-white truncate">{branch.name}</span>
                       </button>
                     ))}
+                  </div>
+                )}
+
+                {branchSearch.trim() && !branches.some(b => b.name.toLowerCase() === branchSearch.trim().toLowerCase()) && (
+                  <div className="border-t border-[#d4d8dd] dark:border-[#3d4452] mt-1 pt-1">
+                    <button
+                      onClick={() => createBranchMutation.mutate(branchSearch.trim())}
+                      disabled={createBranchMutation.isPending}
+                      className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg text-left"
+                      data-testid="button-create-branch"
+                    >
+                      {createBranchMutation.isPending ? (
+                        <Loader2 className="w-[18px] h-[18px] text-[#0079f2] animate-spin" />
+                      ) : (
+                        <Plus className="w-[18px] h-[18px] text-[#0079f2]" />
+                      )}
+                      <span className="text-[15px] text-[#0079f2]">
+                        Create branch: <span className="font-medium">{branchSearch.trim()}</span>
+                      </span>
+                    </button>
                   </div>
                 )}
               </div>

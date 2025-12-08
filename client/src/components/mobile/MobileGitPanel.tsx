@@ -4,6 +4,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -21,9 +22,22 @@ import {
   Check,
   Loader2,
   User,
+  Plus,
+  Minus,
+  FileText,
+  FilePlus,
+  FileEdit,
+  ChevronRight,
+  LogOut,
 } from 'lucide-react';
 import { SiGithub, SiBitbucket, SiGitlab } from 'react-icons/si';
 import { cn } from '@/lib/utils';
+
+interface GitHubStatus {
+  connected: boolean;
+  username?: string;
+  avatarUrl?: string;
+}
 
 interface GitStatus {
   branch: string;
@@ -121,6 +135,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
   const [commitMessage, setCommitMessage] = useState('');
   const [showConnections, setShowConnections] = useState(true);
   const [remoteUrl, setRemoteUrl] = useState('');
+  const [showChanges, setShowChanges] = useState(true);
 
   const { data: status, refetch: refetchStatus, isLoading } = useQuery<GitStatus>({
     queryKey: ['/api/git/status'],
@@ -142,6 +157,10 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
     enabled: !!status,
   });
   const branches = branchesData?.branches || [];
+
+  const { data: githubStatus, isLoading: isLoadingGitHub, refetch: refetchGitHubStatus } = useQuery<GitHubStatus>({
+    queryKey: ['/api/git/github/status'],
+  });
 
   const originRemote = remotesData?.remotes?.find(r => r.name === 'origin' && r.type === 'fetch');
   const repoName = originRemote?.url?.split('/').slice(-2).join('/').replace('.git', '') || '';
@@ -216,6 +235,50 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
     },
     onError: (error: any) => {
       toast({ description: error.message || 'Failed to connect remote', variant: 'destructive' });
+    },
+  });
+
+  const disconnectGitHubMutation = useMutation({
+    mutationFn: async () => apiRequest('/api/git/github/disconnect', 'POST', {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/git/github/status'] });
+      toast({ description: 'GitHub disconnected successfully' });
+    },
+    onError: (error: any) => {
+      toast({ description: error.message || 'Failed to disconnect GitHub', variant: 'destructive' });
+    },
+  });
+
+  const handleConnectGitHub = async () => {
+    try {
+      const response = await apiRequest('/api/git/github/connect', 'GET');
+      if (response.authUrl) {
+        window.open(response.authUrl, '_blank', 'width=600,height=700');
+      }
+    } catch (error: any) {
+      toast({ description: error.message || 'Failed to connect to GitHub', variant: 'destructive' });
+    }
+  };
+
+  const stageMutation = useMutation({
+    mutationFn: async (files: string[]) => apiRequest('/api/git/stage', 'POST', { files }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/git/status'] });
+      toast({ description: 'Files staged successfully' });
+    },
+    onError: (error: any) => {
+      toast({ description: error.message || 'Failed to stage files', variant: 'destructive' });
+    },
+  });
+
+  const unstageMutation = useMutation({
+    mutationFn: async (files: string[]) => apiRequest('/api/git/unstage', 'POST', { files }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/git/status'] });
+      toast({ description: 'Files unstaged successfully' });
+    },
+    onError: (error: any) => {
+      toast({ description: error.message || 'Failed to unstage files', variant: 'destructive' });
     },
   });
 
@@ -314,23 +377,72 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                     className="overflow-hidden"
                   >
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between min-h-[44px] p-3 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <SiGithub className="w-[18px] h-[18px] text-[#0e1525] dark:text-white" />
-                          <span className="text-[15px] text-[#0e1525] dark:text-white">GitHub</span>
-                          <span className="flex items-center gap-1 text-[13px] text-green-600">
-                            <span className="w-2 h-2 bg-green-500 rounded-full" />
-                            Active
-                          </span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-10 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50"
-                          data-testid="button-delete-github"
-                        >
-                          Delete
-                        </Button>
+                      {/* GitHub - Dynamic */}
+                      <div 
+                        className="flex items-center justify-between min-h-[44px] p-3 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
+                        data-testid="github-connection-section"
+                      >
+                        {isLoadingGitHub ? (
+                          <div className="flex items-center gap-3">
+                            <SiGithub className="w-[18px] h-[18px] text-[#0e1525] dark:text-white" />
+                            <span className="text-[15px] text-[#0e1525] dark:text-white">GitHub</span>
+                            <Loader2 className="w-4 h-4 animate-spin text-[#5c6670]" data-testid="github-status-loading" />
+                          </div>
+                        ) : githubStatus?.connected ? (
+                          <>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="w-6 h-6" data-testid="github-avatar">
+                                <AvatarImage src={githubStatus.avatarUrl} alt={githubStatus.username} />
+                                <AvatarFallback>
+                                  <SiGithub className="w-4 h-4" />
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-[15px] text-[#0e1525] dark:text-white" data-testid="github-username">
+                                {githubStatus.username}
+                              </span>
+                              <span className="flex items-center gap-1 text-[13px] text-green-600">
+                                <span className="w-2 h-2 bg-green-500 rounded-full" />
+                                Connected
+                              </span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-10 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                              onClick={() => disconnectGitHubMutation.mutate(undefined)}
+                              disabled={disconnectGitHubMutation.isPending}
+                              data-testid="button-disconnect-github"
+                            >
+                              {disconnectGitHubMutation.isPending ? (
+                                <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                              ) : (
+                                <LogOut className="w-4 h-4 mr-1" />
+                              )}
+                              Disconnect
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-3">
+                              <SiGithub className="w-[18px] h-[18px] text-[#0e1525] dark:text-white" />
+                              <span className="text-[15px] text-[#0e1525] dark:text-white">GitHub</span>
+                              <span className="flex items-center gap-1 text-[13px] text-[#5c6670]">
+                                <span className="w-2 h-2 bg-[#5c6670] rounded-full" />
+                                Disconnected
+                              </span>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-10 rounded-lg border-[#d4d8dd] dark:border-[#3d4452]"
+                              onClick={handleConnectGitHub}
+                              data-testid="button-connect-github"
+                            >
+                              <ExternalLink className="w-[18px] h-[18px] mr-1" />
+                              Connect
+                            </Button>
+                          </>
+                        )}
                       </div>
 
                       <div className="flex items-center justify-between min-h-[44px] p-3 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg">
@@ -604,6 +716,185 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
 
           <div className="space-y-2 pt-3 border-t border-[#d4d8dd] dark:border-[#3d4452]">
             <h3 className="text-[13px] font-medium text-[#0e1525] dark:text-white">Commit</h3>
+
+            {hasChanges && (
+              <div className="space-y-2" data-testid="changes-section">
+                <button
+                  onClick={() => setShowChanges(!showChanges)}
+                  className="flex items-center justify-between w-full min-h-[36px] px-2.5 py-1.5 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-md hover:bg-[#d4d8dd]/20 dark:hover:bg-[#3d4452]/50"
+                  data-testid="toggle-changes-section"
+                >
+                  <div className="flex items-center gap-2">
+                    {showChanges ? (
+                      <ChevronDown className="w-4 h-4 text-[#5c6670]" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-[#5c6670]" />
+                    )}
+                    <span className="text-[13px] font-medium text-[#0e1525] dark:text-white">Changes</span>
+                    <span className="text-[12px] text-[#5c6670]">
+                      ({(status?.staged?.length || 0) + (status?.unstaged?.length || 0) + (status?.untracked?.length || 0)} files)
+                    </span>
+                  </div>
+                </button>
+
+                <AnimatePresence>
+                  {showChanges && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-3 pt-1">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const allFiles = [...(status?.unstaged || []), ...(status?.untracked || [])];
+                              if (allFiles.length > 0) stageMutation.mutate(allFiles);
+                            }}
+                            disabled={stageMutation.isPending || ((status?.unstaged?.length || 0) + (status?.untracked?.length || 0)) === 0}
+                            className="flex-1 h-8 rounded-md border-[#d4d8dd] dark:border-[#3d4452] text-[12px] text-[#0e1525] dark:text-white"
+                            data-testid="button-stage-all"
+                          >
+                            {stageMutation.isPending ? (
+                              <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                            ) : (
+                              <Plus className="w-3.5 h-3.5 mr-1" />
+                            )}
+                            Stage All
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if ((status?.staged?.length || 0) > 0) unstageMutation.mutate(status?.staged || []);
+                            }}
+                            disabled={unstageMutation.isPending || (status?.staged?.length || 0) === 0}
+                            className="flex-1 h-8 rounded-md border-[#d4d8dd] dark:border-[#3d4452] text-[12px] text-[#0e1525] dark:text-white"
+                            data-testid="button-unstage-all"
+                          >
+                            {unstageMutation.isPending ? (
+                              <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                            ) : (
+                              <Minus className="w-3.5 h-3.5 mr-1" />
+                            )}
+                            Unstage All
+                          </Button>
+                        </div>
+
+                        {(status?.staged?.length || 0) > 0 && (
+                          <div className="space-y-1" data-testid="staged-files-section">
+                            <div className="flex items-center gap-1.5 px-1">
+                              <span className="text-[11px] uppercase tracking-wider font-medium text-green-600 dark:text-green-400">Staged</span>
+                              <span className="text-[11px] text-[#5c6670]">({status?.staged?.length})</span>
+                            </div>
+                            <div className="space-y-0.5">
+                              {status?.staged?.map((file) => (
+                                <div
+                                  key={file}
+                                  className="flex items-center justify-between gap-2 px-2 py-1.5 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md"
+                                  data-testid={`staged-file-${file}`}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                                    <FileText className="w-3.5 h-3.5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                    <span className="text-[12px] text-[#0e1525] dark:text-white truncate">{file}</span>
+                                  </div>
+                                  <button
+                                    onClick={() => unstageMutation.mutate([file])}
+                                    disabled={unstageMutation.isPending}
+                                    className="flex items-center justify-center w-6 h-6 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 flex-shrink-0"
+                                    data-testid={`button-unstage-${file}`}
+                                  >
+                                    {unstageMutation.isPending ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <Minus className="w-3.5 h-3.5" />
+                                    )}
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {(status?.unstaged?.length || 0) > 0 && (
+                          <div className="space-y-1" data-testid="unstaged-files-section">
+                            <div className="flex items-center gap-1.5 px-1">
+                              <span className="text-[11px] uppercase tracking-wider font-medium text-amber-600 dark:text-amber-400">Modified</span>
+                              <span className="text-[11px] text-[#5c6670]">({status?.unstaged?.length})</span>
+                            </div>
+                            <div className="space-y-0.5">
+                              {status?.unstaged?.map((file) => (
+                                <div
+                                  key={file}
+                                  className="flex items-center justify-between gap-2 px-2 py-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md"
+                                  data-testid={`unstaged-file-${file}`}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                                    <FileEdit className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                                    <span className="text-[12px] text-[#0e1525] dark:text-white truncate">{file}</span>
+                                  </div>
+                                  <button
+                                    onClick={() => stageMutation.mutate([file])}
+                                    disabled={stageMutation.isPending}
+                                    className="flex items-center justify-center w-6 h-6 rounded hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400 flex-shrink-0"
+                                    data-testid={`button-stage-${file}`}
+                                  >
+                                    {stageMutation.isPending ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <Plus className="w-3.5 h-3.5" />
+                                    )}
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {(status?.untracked?.length || 0) > 0 && (
+                          <div className="space-y-1" data-testid="untracked-files-section">
+                            <div className="flex items-center gap-1.5 px-1">
+                              <span className="text-[11px] uppercase tracking-wider font-medium text-[#0079f2]">Untracked</span>
+                              <span className="text-[11px] text-[#5c6670]">({status?.untracked?.length})</span>
+                            </div>
+                            <div className="space-y-0.5">
+                              {status?.untracked?.map((file) => (
+                                <div
+                                  key={file}
+                                  className="flex items-center justify-between gap-2 px-2 py-1.5 bg-[#0079f2]/10 dark:bg-[#0079f2]/20 border border-[#0079f2]/30 dark:border-[#0079f2]/40 rounded-md"
+                                  data-testid={`untracked-file-${file}`}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                                    <FilePlus className="w-3.5 h-3.5 text-[#0079f2] flex-shrink-0" />
+                                    <span className="text-[12px] text-[#0e1525] dark:text-white truncate">{file}</span>
+                                  </div>
+                                  <button
+                                    onClick={() => stageMutation.mutate([file])}
+                                    disabled={stageMutation.isPending}
+                                    className="flex items-center justify-center w-6 h-6 rounded hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400 flex-shrink-0"
+                                    data-testid={`button-stage-${file}`}
+                                  >
+                                    {stageMutation.isPending ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <Plus className="w-3.5 h-3.5" />
+                                    )}
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
             
             {hasChanges ? (
               <div className="space-y-2">
