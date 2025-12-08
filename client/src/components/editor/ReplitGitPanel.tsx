@@ -215,7 +215,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
         <div className="flex items-center gap-3 p-3 border-b border-[#d4d8dd] dark:border-[#3d4452]">
           <button
             onClick={() => setViewMode('main')}
-            className="p-1 hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded"
+            className="p-1 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded"
             data-testid="back-from-settings"
           >
             <ChevronLeft className="w-5 h-5 text-[#5c6670]" />
@@ -350,7 +350,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
       <div className="flex items-center justify-between px-3 py-2 border-b border-[#d4d8dd] dark:border-[#3d4452]">
         <button
           onClick={() => setShowBranchDropdown(!showBranchDropdown)}
-          className="flex items-center gap-2 hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded px-2 py-1"
+          className="flex items-center gap-2 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded px-2 py-1"
           data-testid="branch-selector"
         >
           <GitBranch className="w-4 h-4 text-[#5c6670]" />
@@ -361,14 +361,14 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
         <div className="flex items-center gap-1">
           <button
             onClick={() => setViewMode('settings')}
-            className="p-1.5 hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded"
+            className="p-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded"
             data-testid="git-settings-button"
           >
             <Settings className="w-4 h-4 text-[#5c6670]" />
           </button>
           <button
             onClick={() => refetchStatus()}
-            className="p-1.5 hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded"
+            className="p-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded"
             data-testid="git-refresh-button"
           >
             <RefreshCw className="w-4 h-4 text-[#5c6670]" />
@@ -386,14 +386,14 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
             className="absolute top-10 left-2 right-2 z-50 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg shadow-lg overflow-hidden"
           >
             <div className="p-2 border-b border-[#d4d8dd] dark:border-[#3d4452]">
-              <div className="flex items-center gap-2 px-2 py-1.5 bg-[#f5f5f5] dark:bg-[#1c2333] rounded border border-[#d4d8dd] dark:border-[#3d4452]">
+              <div className="flex items-center gap-2 px-2 py-1.5 bg-[#d4d8dd]/20 dark:bg-[#1c2333] rounded border border-[#d4d8dd] dark:border-[#3d4452]">
                 <Search className="w-4 h-4 text-[#5c6670]" />
                 <input
                   type="text"
                   value={branchSearch}
                   onChange={(e) => setBranchSearch(e.target.value)}
                   placeholder="Find or create a branch..."
-                  className="flex-1 bg-transparent text-sm outline-none text-[#0e1525] dark:text-white placeholder:text-[#5c6670]"
+                  className="flex-1 bg-inherit text-sm outline-none text-[#0e1525] dark:text-white placeholder:text-[#5c6670]"
                   data-testid="input-branch-search"
                 />
               </div>
@@ -408,7 +408,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded text-left"
+                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded text-left"
                         data-testid={`branch-${branch.name}`}
                       >
                         <span className={cn("w-2 h-2 rounded-full", branch.current ? "bg-[#0079f2]" : "bg-green-500")} />
@@ -426,7 +426,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded text-left"
+                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded text-left"
                         data-testid={`branch-${branch.name}`}
                       >
                         <span className="w-2 h-2 bg-green-500 rounded-full" />
@@ -443,7 +443,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded text-left"
+                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded text-left"
                         data-testid={`branch-${branch.name}`}
                       >
                         <User className="w-4 h-4 text-[#5c6670]" />
@@ -556,7 +556,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                   <div className="space-y-1">
                     <div className="text-xs font-medium text-[#5c6670] uppercase">Staged ({status.staged.length})</div>
                     {status.staged.map(file => (
-                      <div key={file} className="flex items-center justify-between px-2 py-1 rounded hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] group">
+                      <div key={file} className="flex items-center justify-between px-2 py-1 rounded hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <FileCode className="w-3 h-3 text-green-500 shrink-0" />
                           <span className="text-xs text-[#0e1525] dark:text-white truncate">{file}</span>
@@ -578,7 +578,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                   <div className="space-y-1">
                     <div className="text-xs font-medium text-[#5c6670] uppercase">Changes ({status.unstaged.length})</div>
                     {status.unstaged.map(file => (
-                      <div key={file} className="flex items-center justify-between px-2 py-1 rounded hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] group">
+                      <div key={file} className="flex items-center justify-between px-2 py-1 rounded hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <FileCode className="w-3 h-3 text-yellow-500 shrink-0" />
                           <span className="text-xs text-[#0e1525] dark:text-white truncate">{file}</span>
@@ -600,7 +600,7 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                   <div className="space-y-1">
                     <div className="text-xs font-medium text-[#5c6670] uppercase">Untracked ({status.untracked.length})</div>
                     {status.untracked.map(file => (
-                      <div key={file} className="flex items-center justify-between px-2 py-1 rounded hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] group">
+                      <div key={file} className="flex items-center justify-between px-2 py-1 rounded hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <FileCode className="w-3 h-3 text-[#5c6670] shrink-0" />
                           <span className="text-xs text-[#0e1525] dark:text-white truncate">{file}</span>

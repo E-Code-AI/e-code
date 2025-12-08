@@ -209,7 +209,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
         <div className="flex items-center gap-3 p-4 border-b border-[#d4d8dd] dark:border-[#3d4452]">
           <button
             onClick={() => setViewMode('main')}
-            className="p-1 hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded"
+            className="p-1 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded"
             data-testid="back-from-settings"
           >
             <ChevronLeft className="w-5 h-5 text-[#5c6670]" />
@@ -388,7 +388,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#d4d8dd] dark:border-[#3d4452]">
         <button
           onClick={() => setShowBranchDropdown(!showBranchDropdown)}
-          className="flex items-center gap-2 hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded px-2 py-1"
+          className="flex items-center gap-2 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded px-2 py-1"
           data-testid="branch-selector"
         >
           <GitBranch className="w-4 h-4 text-[#5c6670]" />
@@ -399,14 +399,14 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setViewMode('settings')}
-            className="p-2 hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded"
+            className="p-2 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded"
             data-testid="git-settings-button"
           >
             <Settings className="w-5 h-5 text-[#5c6670]" />
           </button>
           <button
             onClick={() => refetchStatus()}
-            className="p-2 hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded"
+            className="p-2 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded"
             data-testid="git-refresh-button"
           >
             <RefreshCw className="w-5 h-5 text-[#5c6670]" />
@@ -424,14 +424,14 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
             className="absolute top-14 left-4 right-4 z-50 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg shadow-lg overflow-hidden"
           >
             <div className="p-3 border-b border-[#d4d8dd] dark:border-[#3d4452]">
-              <div className="flex items-center gap-2 px-3 py-2 bg-[#f5f5f5] dark:bg-[#1c2333] rounded border border-[#d4d8dd] dark:border-[#3d4452]">
+              <div className="flex items-center gap-2 px-3 py-2 bg-[#d4d8dd]/20 dark:bg-[#1c2333] rounded border border-[#d4d8dd] dark:border-[#3d4452]">
                 <Search className="w-4 h-4 text-[#5c6670]" />
                 <input
                   type="text"
                   value={branchSearch}
                   onChange={(e) => setBranchSearch(e.target.value)}
                   placeholder="Find or create a branch..."
-                  className="flex-1 bg-transparent text-sm outline-none text-[#0e1525] dark:text-white placeholder:text-[#5c6670]"
+                  className="flex-1 bg-inherit text-sm outline-none text-[#0e1525] dark:text-white placeholder:text-[#5c6670]"
                   data-testid="input-branch-search"
                 />
               </div>
@@ -447,7 +447,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 py-2 hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded"
+                        className="w-full flex items-center gap-2 px-2 py-2 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded"
                         data-testid={`branch-${branch.name}`}
                       >
                         <span className={cn("w-2 h-2 rounded-full", branch.current ? "bg-[#0079f2]" : "bg-green-500")} />
@@ -466,7 +466,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 py-2 hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded"
+                        className="w-full flex items-center gap-2 px-2 py-2 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded"
                         data-testid={`branch-${branch.name}`}
                       >
                         <span className="w-2 h-2 bg-green-500 rounded-full" />
@@ -489,7 +489,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 py-2 hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded"
+                        className="w-full flex items-center gap-2 px-2 py-2 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded"
                         data-testid={`branch-${branch.name}`}
                       >
                         <User className="w-4 h-4 text-[#5c6670]" />

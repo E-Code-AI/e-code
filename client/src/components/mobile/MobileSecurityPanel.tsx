@@ -170,7 +170,7 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
                 "flex-1 h-10 font-medium rounded-lg",
                 isScanning || startScanMutation.isPending
                   ? "border-[#0079f2] text-[#0079f2] bg-[#0079f2]/5"
-                  : "border-[#d4d8dd] dark:border-[#3d4452] text-[#0e1525] dark:text-white hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245]"
+                  : "border-[#d4d8dd] dark:border-[#3d4452] text-[#0e1525] dark:text-white hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452]"
               )}
               data-testid="scan-button"
             >
@@ -191,7 +191,7 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
               variant="outline"
               size="sm"
               onClick={() => setShowSettings(!showSettings)}
-              className="h-10 px-3 border-[#d4d8dd] dark:border-[#3d4452] text-[#0e1525] dark:text-white hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded-lg"
+              className="h-10 px-3 border-[#d4d8dd] dark:border-[#3d4452] text-[#0e1525] dark:text-white hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
               data-testid="scan-settings-button"
             >
               <Settings className="w-4 h-4 mr-2" />
@@ -214,7 +214,7 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
                     <h3 className="font-medium text-[#0e1525] dark:text-white">Scan Settings</h3>
                     <button 
                       onClick={() => setShowSettings(false)}
-                      className="p-1 hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded-full"
+                      className="p-1 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-full"
                       data-testid="close-settings-button"
                     >
                       <X className="w-4 h-4 text-[#5c6670] dark:text-[#9da2a6]" />
@@ -313,7 +313,7 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
                   {/* Card Header - Clickable */}
                   <button
                     onClick={() => toggleCardExpanded(vuln.id)}
-                    className="w-full p-3 flex items-center justify-between text-left hover:bg-[#f9fafb] dark:hover:bg-[#2b3245]"
+                    className="w-full p-3 flex items-center justify-between text-left hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452]"
                     data-testid={`expand-vulnerability-${vuln.id}`}
                   >
                     <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -358,7 +358,7 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
 
                           {/* File Path */}
                           {vuln.filePath && (
-                            <p className="text-xs text-[#5c6670] dark:text-[#9da2a6] font-mono bg-[#f5f5f5] dark:bg-[#1c2333] px-2 py-1 rounded">
+                            <p className="text-xs text-[#5c6670] dark:text-[#9da2a6] font-mono bg-[#d4d8dd]/20 dark:bg-[#1c2333] px-2 py-1 rounded">
                               {vuln.filePath}{vuln.lineNumber ? `:${vuln.lineNumber}` : ''}
                             </p>
                           )}
@@ -372,7 +372,7 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
                                 e.stopPropagation();
                                 toggleHideMutation.mutate({ id: vuln.id, isHidden: !vuln.isHidden });
                               }}
-                              className="h-9 px-4 border-[#d4d8dd] dark:border-[#3d4452] text-[#5c6670] dark:text-[#9da2a6] hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded-lg"
+                              className="h-9 px-4 border-[#d4d8dd] dark:border-[#3d4452] text-[#5c6670] dark:text-[#9da2a6] hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
                               data-testid={`toggle-hide-${vuln.id}`}
                             >
                               {vuln.isHidden ? 'Unhide' : 'Hide'}
