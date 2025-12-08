@@ -382,7 +382,7 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
                 Add environment variables and API keys to use in your project
               </p>
               <Button 
-                className="h-11 px-6 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[15px] font-medium"
+                className="h-11 px-6 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-[#ffffff] text-[15px] font-medium"
                 onClick={() => setShowAddDialog(true)}
                 data-testid="button-add-secret-empty"
               >
@@ -396,7 +396,7 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
 
       <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-[#3d4452] bg-[#1c2333] pb-[calc(16px+env(safe-area-inset-bottom))]">
         <Button 
-          className="w-full h-11 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[15px] font-medium"
+          className="w-full h-11 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-[#ffffff] text-[15px] font-medium"
           onClick={() => setShowAddDialog(true)}
           data-testid="button-add-secret"
         >
@@ -467,7 +467,7 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
               Cancel
             </Button>
             <Button
-              className="h-11 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[15px] font-medium"
+              className="h-11 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-[#ffffff] text-[15px] font-medium"
               onClick={editingSecret ? handleUpdateSecret : handleAddSecret}
               disabled={
                 (!newSecretKey || !newSecretValue) ||

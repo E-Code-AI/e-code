@@ -78,7 +78,7 @@ function ShimmerSkeleton({ className }: { className?: string }) {
       transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
     >
       <motion.div
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-[#3d4452]/30 to-transparent"
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-[#4a5263] to-transparent"
         animate={{ x: ['-100%', '100%'] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
       />
@@ -135,7 +135,7 @@ function EmptyState({ onAction }: { onAction?: () => void }) {
       {onAction && (
         <Button
           onClick={onAction}
-          className="h-11 px-6 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[15px] font-medium"
+          className="h-11 px-6 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-[#ffffff] text-[15px] font-medium"
           data-testid="button-create-table"
         >
           <Plus className="w-[18px] h-[18px] mr-2" />
@@ -310,7 +310,7 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
                 <p className="text-[15px] text-[#9da2a6]">Failed to load project data</p>
                 <Button
                   onClick={() => refetchTables()}
-                  className="h-11 mt-4 px-6 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff]"
+                  className="h-11 mt-4 px-6 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-[#ffffff]"
                 >
                   Try Again
                 </Button>
@@ -404,7 +404,7 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
                                 <div className="flex items-center gap-2">
                                   <span className="text-[13px] text-[#5c6670]">{col.type}</span>
                                   {col.isPrimaryKey && (
-                                    <Badge className="bg-[#0079f2]/20 text-[#0079f2] border-[#0079f2]/30 text-[11px]">
+                                    <Badge className="bg-[#e6f2fd] text-[#0079f2] border-[#99c9fa] text-[11px]">
                                       PK
                                     </Badge>
                                   )}
