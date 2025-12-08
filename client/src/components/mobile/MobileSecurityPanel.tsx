@@ -1,94 +1,70 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ShieldCheck, 
-  Settings, 
-  Loader2, 
+import {
+  ShieldCheck,
+  Settings,
+  Loader2,
   X,
-  AlertTriangle, 
-  AlertCircle, 
-  Info, 
-  CheckCircle, 
-  XCircle, 
-  Search, 
-  Filter, 
-  Clock,
+  AlertTriangle,
+  AlertCircle,
+  Info,
+  ExternalLink,
   Eye,
   EyeOff,
-  ExternalLink,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SecurityScan, Vulnerability, SecurityScanSettings } from '@shared/schema';
 
-interface ReplitSecurityPanelProps {
+interface MobileSecurityPanelProps {
   projectId: string;
   className?: string;
 }
 
-interface WebSocketMessage {
-  type: 'initial' | 'scan_update' | 'vulnerability_update' | 'error';
-  scans?: SecurityScan[];
-  vulnerabilities?: Vulnerability[];
-  scan?: SecurityScan;
-  vulnerability?: Vulnerability;
-  message?: string;
-}
-
-export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPanelProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSeverity, setSelectedSeverity] = useState<string>('all');
+export function MobileSecurityPanel({ projectId, className }: MobileSecurityPanelProps) {
   const [activeTab, setActiveTab] = useState<'active' | 'hidden'>('active');
   const [showSettings, setShowSettings] = useState(false);
-  const [realtimeScans, setRealtimeScans] = useState<SecurityScan[]>([]);
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch security settings
   const { data: settings } = useQuery<SecurityScanSettings>({
     queryKey: ['/api/workspace/projects', projectId, 'security-settings'],
-    enabled: !!projectId,
   });
 
-  // Fetch initial scans from REST API
-  const { data: initialScans } = useQuery<SecurityScan[]>({
+  // Fetch latest scan
+  const { data: scans, isLoading: scansLoading } = useQuery<SecurityScan[]>({
     queryKey: ['/api/workspace/projects', projectId, 'security-scans'],
-    enabled: !!projectId,
-    refetchInterval: 10000,
   });
 
   // Fetch active vulnerabilities
-  const { data: activeVulnerabilities } = useQuery<Vulnerability[]>({
+  const { data: activeVulnerabilities, isLoading: activeLoading } = useQuery<Vulnerability[]>({
     queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'],
     queryFn: async () => {
       const res = await fetch(`/api/workspace/projects/${projectId}/vulnerabilities/by-hidden?hidden=false`);
       if (!res.ok) throw new Error('Failed to fetch vulnerabilities');
       return res.json();
     },
-    enabled: !!projectId,
   });
 
   // Fetch hidden vulnerabilities
-  const { data: hiddenVulnerabilities } = useQuery<Vulnerability[]>({
+  const { data: hiddenVulnerabilities, isLoading: hiddenLoading } = useQuery<Vulnerability[]>({
     queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'hidden'],
     queryFn: async () => {
       const res = await fetch(`/api/workspace/projects/${projectId}/vulnerabilities/by-hidden?hidden=true`);
       if (!res.ok) throw new Error('Failed to fetch vulnerabilities');
       return res.json();
     },
-    enabled: !!projectId,
   });
 
-  // Use realtime data if available, fallback to initial data
-  const scans = realtimeScans.length > 0 ? realtimeScans : (initialScans || []);
-  const currentVulnerabilities = activeTab === 'active' 
-    ? (activeVulnerabilities || []) 
-    : (hiddenVulnerabilities || []);
   const latestScan = scans?.[0];
   const isScanning = latestScan?.status === 'running' || latestScan?.status === 'queued';
 
@@ -103,6 +79,17 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'security-scans'] });
+      toast({
+        title: 'Security scan started',
+        description: 'Scanning for vulnerabilities...',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Scan failed',
+        description: 'Failed to start security scan',
+        variant: 'destructive',
+      });
     },
   });
 
@@ -128,103 +115,15 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
     },
   });
 
-  // WebSocket connection for real-time updates
-  useEffect(() => {
-    if (!projectId) return;
-
-    const connectWebSocket = () => {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/api/security-scans/ws?projectId=${projectId}`;
-
-      try {
-        const ws = new WebSocket(wsUrl);
-        wsRef.current = ws;
-
-        ws.onmessage = (event) => {
-          try {
-            const message: WebSocketMessage = JSON.parse(event.data);
-            switch (message.type) {
-              case 'initial':
-                if (message.scans) setRealtimeScans(message.scans);
-                break;
-              case 'scan_update':
-                if (message.scan) {
-                  setRealtimeScans(prev => {
-                    const index = prev.findIndex(s => s.id === message.scan!.id);
-                    if (index >= 0) {
-                      const updated = [...prev];
-                      updated[index] = message.scan!;
-                      return updated;
-                    }
-                    return [message.scan!, ...prev];
-                  });
-                }
-                break;
-              case 'vulnerability_update':
-                // Invalidate React Query cache to refetch active/hidden lists
-                queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'] });
-                queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'hidden'] });
-                break;
-              case 'error':
-                console.error('[SecurityPanel] WebSocket error:', message.message);
-                break;
-            }
-          } catch (error) {
-            console.error('[SecurityPanel] Error parsing WebSocket message:', error);
-          }
-        };
-
-        ws.onerror = (error) => console.error('[SecurityPanel] WebSocket error:', error);
-        ws.onclose = () => {
-          wsRef.current = null;
-          reconnectTimeoutRef.current = setTimeout(connectWebSocket, 3000);
-        };
-      } catch (error) {
-        console.error('[SecurityPanel] Error creating WebSocket:', error);
-      }
-    };
-
-    connectWebSocket();
-    return () => {
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-    };
-  }, [projectId]);
-
-  // Filter vulnerabilities based on search and severity
-  const filteredVulnerabilities = currentVulnerabilities.filter(vuln => {
-    const matchesSearch = searchQuery === '' || 
-      vuln.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vuln.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vuln.filePath?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSeverity = selectedSeverity === 'all' || vuln.severity === selectedSeverity;
-    return matchesSearch && matchesSeverity;
-  });
-
-  // Get severity counts
-  const severityCounts = {
-    all: currentVulnerabilities.length,
-    critical: currentVulnerabilities.filter(v => v.severity === 'critical').length,
-    high: currentVulnerabilities.filter(v => v.severity === 'high').length,
-    medium: currentVulnerabilities.filter(v => v.severity === 'medium').length,
-    low: currentVulnerabilities.filter(v => v.severity === 'low').length,
-  };
-
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return <XCircle className="w-4 h-4 text-red-500" />;
       case 'high':
-        return <AlertCircle className="w-4 h-4 text-orange-500" />;
+        return <AlertTriangle className="w-4 h-4 text-red-500" />;
       case 'medium':
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
-      case 'low':
-        return <Info className="w-4 h-4 text-blue-500" />;
+        return <AlertCircle className="w-4 h-4 text-yellow-500" />;
       default:
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <Info className="w-4 h-4 text-blue-500" />;
     }
   };
 
@@ -236,22 +135,23 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
         return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
       case 'medium':
         return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
-      case 'low':
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
       default:
-        return 'bg-muted text-muted-foreground';
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
     }
   };
 
+  const vulnerabilities = activeTab === 'active' ? activeVulnerabilities : hiddenVulnerabilities;
+  const isLoading = activeTab === 'active' ? activeLoading : hiddenLoading;
+
   return (
-    <div className={cn('flex flex-col h-full bg-background text-foreground', className)} data-testid="security-panel">
-      {/* Main Content Scrollable Area */}
-      <div className="flex-1 overflow-y-auto">
+    <div className={cn('flex flex-col h-full bg-background', className)} data-testid="mobile-security-panel">
+      {/* Main Content */}
+      <ScrollArea className="flex-1">
         <div className="p-4 space-y-5">
           {/* Hero Section */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold text-foreground">
+              <h1 className="text-xl font-semibold text-foreground">
                 Security and Privacy Scanner
               </h1>
               <Badge 
@@ -285,13 +185,13 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
               size="sm"
               onClick={() => !isScanning && startScanMutation.mutate()}
               disabled={isScanning || startScanMutation.isPending}
-              className="h-9 border border-border hover:bg-accent/50"
+              className="flex-1 h-10 border-2 border-border hover:bg-accent/50"
               data-testid="scan-button"
             >
               {isScanning || startScanMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Scanning...
+                  Scanning for vulnerabilities
                 </>
               ) : (
                 <>
@@ -305,7 +205,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
               variant="outline"
               size="sm"
               onClick={() => setShowSettings(!showSettings)}
-              className="h-9 px-3 border border-border hover:bg-accent/50"
+              className="h-10 px-3 border-2 border-border hover:bg-accent/50"
               data-testid="scan-settings-button"
             >
               <Settings className="w-4 h-4 mr-2" />
@@ -325,7 +225,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
               >
                 <div className="bg-muted/30 rounded-lg p-4 space-y-4 border border-border">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-foreground text-sm">Scan Settings</h3>
+                    <h3 className="font-medium text-foreground">Scan Settings</h3>
                     <button 
                       onClick={() => setShowSettings(false)}
                       className="p-1 hover:bg-accent rounded-full"
@@ -367,36 +267,6 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
             )}
           </AnimatePresence>
 
-          {/* Search and Filters */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center flex-1 gap-2 px-3 py-1.5 bg-muted rounded border border-border">
-              <Search className="w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search vulnerabilities..."
-                className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                data-testid="input-search-vulnerabilities"
-              />
-            </div>
-            <div className="flex items-center gap-1">
-              <Filter className="w-4 h-4 text-muted-foreground" />
-              <select
-                value={selectedSeverity}
-                onChange={(e) => setSelectedSeverity(e.target.value)}
-                className="px-2 py-1.5 text-sm bg-muted rounded border border-border outline-none"
-                data-testid="select-severity-filter"
-              >
-                <option value="all">All ({severityCounts.all})</option>
-                <option value="critical">Critical ({severityCounts.critical})</option>
-                <option value="high">High ({severityCounts.high})</option>
-                <option value="medium">Medium ({severityCounts.medium})</option>
-                <option value="low">Low ({severityCounts.low})</option>
-              </select>
-            </div>
-          </div>
-
           {/* Tabs */}
           <div className="border-b border-border">
             <div className="flex gap-6">
@@ -410,7 +280,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                 )}
                 data-testid="active-issues-tab"
               >
-                Active Issues ({activeVulnerabilities?.length || 0})
+                Active Issues
               </button>
               <button
                 onClick={() => setActiveTab('hidden')}
@@ -422,30 +292,23 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                 )}
                 data-testid="hidden-issues-tab"
               >
-                Hidden Issues ({hiddenVulnerabilities?.length || 0})
+                Hidden Issues
               </button>
             </div>
           </div>
 
           {/* Issues List */}
           <div className="min-h-[150px]">
-            {filteredVulnerabilities.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 gap-3">
-                <CheckCircle className="w-10 h-10 text-green-500/50" />
-                <p className="text-sm text-muted-foreground">
-                  {searchQuery || selectedSeverity !== 'all'
-                    ? 'No vulnerabilities match your filters'
-                    : activeTab === 'active' 
-                      ? 'No active issues found.'
-                      : 'No hidden issues found.'}
-                </p>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
-            ) : (
-              <div className="space-y-2">
-                {filteredVulnerabilities.map((vuln) => (
+            ) : vulnerabilities && vulnerabilities.length > 0 ? (
+              <div className="space-y-3">
+                {vulnerabilities.map((vuln) => (
                   <div 
                     key={vuln.id}
-                    className="bg-muted/30 rounded-lg p-3 border border-border hover:bg-muted/50 transition-colors"
+                    className="bg-muted/30 rounded-lg p-3 border border-border"
                     data-testid={`vulnerability-${vuln.id}`}
                   >
                     <div className="flex items-start justify-between">
@@ -453,7 +316,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                         {getSeverityIcon(vuln.severity)}
                         <div className="space-y-1 flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-medium text-sm text-foreground">
+                            <span className="font-medium text-sm text-foreground truncate">
                               {vuln.title}
                             </span>
                             <Badge className={cn('text-xs', getSeverityBadgeStyle(vuln.severity))}>
@@ -469,7 +332,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                             {vuln.description}
                           </p>
                           {vuln.filePath && (
-                            <p className="text-xs text-muted-foreground font-mono truncate" title={vuln.filePath}>
+                            <p className="text-xs text-muted-foreground font-mono">
                               {vuln.filePath}{vuln.lineNumber ? `:${vuln.lineNumber}` : ''}
                             </p>
                           )}
@@ -481,7 +344,6 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                           isHidden: !vuln.isHidden 
                         })}
                         className="p-2 hover:bg-accent rounded-lg shrink-0"
-                        title={vuln.isHidden ? 'Show issue' : 'Hide issue'}
                         data-testid={`toggle-hide-${vuln.id}`}
                       >
                         {vuln.isHidden ? (
@@ -494,15 +356,21 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                   </div>
                 ))}
               </div>
+            ) : (
+              <p className="text-sm text-muted-foreground py-4">
+                {activeTab === 'active' 
+                  ? 'No active issues found.'
+                  : 'No hidden issues found.'}
+              </p>
             )}
           </div>
         </div>
-      </div>
+      </ScrollArea>
 
       {/* Partner Attribution Footer */}
-      <div className="border-t border-border p-4 space-y-3 bg-muted/20 shrink-0">
+      <div className="border-t border-border p-4 space-y-3 bg-muted/20">
         <p className="text-xs text-muted-foreground">
-          Vulnerability scans are enabled by the following E-Code partners:
+          Vulnerability scans are enabled by the following Replit partners:
         </p>
         
         <div className="space-y-2">
@@ -546,7 +414,25 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
           >
             HoundDog.ai
           </a>
-          , both running locally on E-Code infrastructure.
+          , both running locally on E-Code infrastructure. No code or data is transmitted to any third party, including{' '}
+          <a 
+            href="https://semgrep.dev" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            Semgrep
+          </a>
+          {' '}or{' '}
+          <a 
+            href="https://hounddog.ai" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            HoundDog.ai
+          </a>
+          .
         </p>
       </div>
     </div>

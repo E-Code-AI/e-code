@@ -31,6 +31,7 @@ interface MobileMoreMenuProps {
   onOpenDatabase?: () => void;
   onOpenSettings?: () => void;
   onOpenDebug?: () => void;
+  onOpenSecurity?: () => void;
   problemsCount?: number;
   className?: string;
 }
@@ -61,6 +62,7 @@ export function MobileMoreMenu({
   onOpenDatabase,
   onOpenSettings,
   onOpenDebug,
+  onOpenSecurity,
   problemsCount = 0,
   className 
 }: MobileMoreMenuProps) {
@@ -317,8 +319,12 @@ export function MobileMoreMenu({
   };
 
   const handleSecurity = () => {
-    toast({ title: 'Security', description: 'Running security scanner...' });
-    onClose();
+    if (onOpenSecurity) {
+      onOpenSecurity();
+    } else {
+      toast({ title: 'Security', description: 'Running security scanner...' });
+      onClose();
+    }
   };
 
   const handleEnvVars = () => {

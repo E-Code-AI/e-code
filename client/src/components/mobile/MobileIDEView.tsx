@@ -13,6 +13,7 @@ import { MobilePackagesPanel } from './MobilePackagesPanel';
 import { MobileSecretsPanel } from './MobileSecretsPanel';
 import { MobileDatabasePanel } from './MobileDatabasePanel';
 import { MobileDebugPanel } from './MobileDebugPanel';
+import { MobileSecurityPanel } from './MobileSecurityPanel';
 import { MobileSlidePanel } from './MobileSlidePanel';
 import { ReplitBottomTabs } from './ReplitBottomTabs';
 import { MobileFAB } from './MobileFAB';
@@ -55,7 +56,7 @@ const AgentFallback = () => (
   <AgentSkeleton className="h-full" />
 );
 
-export type MobilePanelType = 'git' | 'packages' | 'secrets' | 'database' | 'settings' | 'debug' | null;
+export type MobilePanelType = 'git' | 'packages' | 'secrets' | 'database' | 'settings' | 'debug' | 'security' | null;
 
 export type MobileTab = 'agent' | 'files' | 'console' | 'preview' | 'more';
 
@@ -648,6 +649,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         onOpenDatabase={() => handleOpenPanel('database')}
         onOpenSettings={() => handleOpenPanel('settings')}
         onOpenDebug={() => handleOpenPanel('debug')}
+        onOpenSecurity={() => handleOpenPanel('security')}
       />
       
       <MobileCollaborationPanel
@@ -704,6 +706,14 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         title="Debugger"
       >
         <MobileDebugPanel projectId={normalizedProjectId} className="h-full" />
+      </MobileSlidePanel>
+      
+      <MobileSlidePanel
+        isOpen={activePanel === 'security'}
+        onClose={handleClosePanel}
+        title="Security Scanner"
+      >
+        <MobileSecurityPanel projectId={normalizedProjectId} className="h-full" />
       </MobileSlidePanel>
       
       {enableShortcutHint && <ShortcutHint />}

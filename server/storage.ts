@@ -39,6 +39,7 @@ import {
   TestCase, InsertTestCase,
   SecurityScan, InsertSecurityScan,
   Vulnerability, InsertVulnerability,
+  SecurityScanSettings, InsertSecurityScanSettings,
   ResourceMetric, InsertResourceMetric,
   PaneConfiguration, InsertPaneConfiguration,
   AiApprovalQueue, InsertAiApprovalQueue,
@@ -61,7 +62,7 @@ import {
   assignments, submissions, aiUsageRecords, templates,
   promptTemplates, customPrompts, projectAiRules, promptUsageHistory, promptTemplateRatings,
   newsletterSubscribers, newsletterCampaigns, newsletterDeliveries,
-  lspDiagnostics, buildLogs, terminalLogs, testRuns, testCases, securityScans, vulnerabilities,
+  lspDiagnostics, buildLogs, terminalLogs, testRuns, testCases, securityScans, vulnerabilities, securityScanSettings,
   resourceMetrics, paneConfigurations,
   aiApprovalQueue, aiAuditLogs,
   bounties, bountySubmissions, bountyReviews,
@@ -681,7 +682,12 @@ export interface IStorage {
   createVulnerability(vulnerability: InsertVulnerability): Promise<Vulnerability>;
   getVulnerabilities(scanId: string): Promise<Vulnerability[]>;
   getProjectVulnerabilities(projectId: string, status?: string): Promise<Vulnerability[]>;
+  getProjectVulnerabilitiesByHidden(projectId: string, isHidden: boolean): Promise<Vulnerability[]>;
   updateVulnerability(id: string, updates: Partial<Vulnerability>): Promise<Vulnerability>;
+
+  // Security Scan Settings operations
+  getSecurityScanSettings(projectId: string): Promise<SecurityScanSettings | undefined>;
+  upsertSecurityScanSettings(projectId: string, updates: Partial<InsertSecurityScanSettings>): Promise<SecurityScanSettings>;
 
   // Resource Metrics operations - For Resources Panel
   createResourceMetric(metric: InsertResourceMetric): Promise<ResourceMetric>;
@@ -4649,6 +4655,42 @@ Constraints: {{constraints}}`,
       .where(eq(vulnerabilities.id, id))
       .returning();
     return updated;
+  }
+
+  async getProjectVulnerabilitiesByHidden(projectId: string, isHidden: boolean): Promise<Vulnerability[]> {
+    return await this.db.select().from(vulnerabilities)
+      .where(and(
+        eq(vulnerabilities.projectId, parseInt(projectId)),
+        eq(vulnerabilities.isHidden, isHidden)
+      ))
+      .orderBy(desc(vulnerabilities.discoveredAt));
+  }
+
+  // Security Scan Settings Methods
+  async getSecurityScanSettings(projectId: string): Promise<SecurityScanSettings | undefined> {
+    const [settings] = await this.db.select().from(securityScanSettings)
+      .where(eq(securityScanSettings.projectId, parseInt(projectId)));
+    return settings;
+  }
+
+  async upsertSecurityScanSettings(projectId: string, updates: Partial<InsertSecurityScanSettings>): Promise<SecurityScanSettings> {
+    const projectIdNum = parseInt(projectId);
+    const existing = await this.getSecurityScanSettings(projectId);
+    
+    if (existing) {
+      const [updated] = await this.db
+        .update(securityScanSettings)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(securityScanSettings.projectId, projectIdNum))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await this.db
+        .insert(securityScanSettings)
+        .values({ projectId: projectIdNum, ...updates })
+        .returning();
+      return created;
+    }
   }
 
   // Resource Metrics Methods - For Resources Panel (stub implementations)
