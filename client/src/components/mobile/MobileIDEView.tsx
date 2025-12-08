@@ -223,7 +223,7 @@ function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePu
   return (
     <motion.div
       className={cn(
-        'fixed z-40 md:hidden',
+        'fixed z-40',
         'bottom-20 left-4',
         className
       )}
