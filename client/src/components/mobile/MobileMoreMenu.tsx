@@ -349,16 +349,8 @@ export function MobileMoreMenu({
     onClose();
   };
 
+  // Note: Files section removed - use dedicated Files tab in bottom navigation instead
   const menuSections: MenuSection[] = [
-    {
-      title: 'Files',
-      icon: FolderOpen,
-      items: [
-        { id: 'files-explorer', label: 'File Explorer', icon: FolderOpen, onClick: handleOpenFiles },
-        { id: 'files-new', label: 'New File', icon: FilePlus, onClick: handleNewFile },
-        { id: 'files-recent', label: 'Recent Files', icon: FileCode, onClick: handleOpenRecent },
-      ],
-    },
     {
       title: 'Collaboration',
       icon: Users,
