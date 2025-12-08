@@ -254,7 +254,7 @@ router.get('/github', (req, res) => {
 
 router.get('/github/callback', async (req, res) => {
   try {
-    const { code } = req.query;
+    const { code, state } = req.query;
     const clientId = process.env.GITHUB_CLIENT_ID;
     const clientSecret = process.env.GITHUB_CLIENT_SECRET;
     
@@ -276,7 +276,12 @@ router.get('/github/callback', async (req, res) => {
       })
     });
     
-    const { access_token } = await tokenResponse.json();
+    const tokenData = await tokenResponse.json() as { access_token?: string; error?: string };
+    const access_token = tokenData.access_token;
+    
+    if (!access_token) {
+      throw new Error(tokenData.error || 'Failed to get access token');
+    }
     
     // Get user info
     const octokit = new Octokit({ auth: access_token });
@@ -288,28 +293,47 @@ router.get('/github/callback', async (req, res) => {
       throw new Error('No email found in GitHub account');
     }
     
-    // Find or create user
+    // Check if this is a "connect GitHub for Git" flow (user already logged in)
+    const isGitConnect = state === 'git_connect' && req.isAuthenticated?.() && req.user;
+    
+    if (isGitConnect) {
+      // Store token for existing user (Git operations)
+      const { githubOAuth } = await import('../services/github-oauth');
+      await githubOAuth.storeUserToken(req.user.id, access_token, {
+        id: githubUser.id,
+        login: githubUser.login,
+        name: githubUser.name || '',
+        email: primaryEmail,
+        avatar_url: githubUser.avatar_url,
+        html_url: githubUser.html_url
+      });
+      
+      return res.redirect('/settings?github=connected');
+    }
+    
+    // Find or create user (login/signup flow)
     let user = await storage.getUserByEmail(primaryEmail);
     if (!user) {
       user = await storage.createUser({
         username: githubUser.login,
         email: primaryEmail,
-        password: randomBytes(32).toString('hex'), // Random password for OAuth users
+        password: randomBytes(32).toString('hex'),
         displayName: githubUser.name || githubUser.login,
         avatarUrl: githubUser.avatar_url,
         bio: githubUser.bio || null
       });
     }
     
-    // Update user with GitHub info
-    try {
-      await storage.updateUser(String(user.id), {
-        githubUsername: githubUser.login,
-        avatarUrl: githubUser.avatar_url
-      });
-    } catch (err) {
-      console.warn('Failed to update user with GitHub info:', err);
-    }
+    // Store encrypted token for Git operations
+    const { githubOAuth } = await import('../services/github-oauth');
+    await githubOAuth.storeUserToken(user.id, access_token, {
+      id: githubUser.id,
+      login: githubUser.login,
+      name: githubUser.name || '',
+      email: primaryEmail,
+      avatar_url: githubUser.avatar_url,
+      html_url: githubUser.html_url
+    });
 
     // Log the user in
     req.login(user, (err) => {
