@@ -5,10 +5,42 @@ import { createInterface } from 'readline';
 import path from 'path';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
+import { getGitCredentials, getGitHubConnectionStatus, isGitHubConnected } from '../services/github-connector';
 
 const router = Router();
 
 const PROJECT_ROOT = process.cwd();
+
+async function configureGitCredentials(): Promise<void> {
+  const credentials = await getGitCredentials();
+  if (credentials) {
+    try {
+      await execa('git', ['config', '--local', 'credential.helper', 'store'], { cwd: PROJECT_ROOT });
+      await execa('git', ['config', '--local', 'user.name', credentials.username], { cwd: PROJECT_ROOT });
+    } catch (error) {
+      console.warn('[Git] Failed to configure credentials:', error);
+    }
+  }
+}
+
+async function getAuthenticatedRemoteUrl(remoteUrl: string): Promise<string> {
+  const credentials = await getGitCredentials();
+  if (!credentials) {
+    return remoteUrl;
+  }
+  
+  try {
+    const url = new URL(remoteUrl);
+    url.username = credentials.username;
+    url.password = credentials.password;
+    return url.toString();
+  } catch {
+    if (remoteUrl.includes('github.com')) {
+      return remoteUrl.replace('https://github.com/', `https://${credentials.username}:${credentials.password}@github.com/`);
+    }
+    return remoteUrl;
+  }
+}
 
 interface GitStatus {
   branch: string;
@@ -261,22 +293,57 @@ router.post('/push', ensureAuthenticated, csrfProtection, async (req: Request, r
       return res.status(400).json({ error: 'Not a git repository' });
     }
 
-    const { stdout: remoteCheck } = await execa('git', ['remote', '-v'], { cwd: PROJECT_ROOT });
+    const { stdout: remoteCheck } = await execa('git', ['remote', 'get-url', 'origin'], { 
+      cwd: PROJECT_ROOT, 
+      reject: false 
+    });
     if (!remoteCheck.trim()) {
       return res.status(422).json({ error: 'No remote repository configured' });
     }
 
-    const { stdout, stderr } = await execa('git', ['push'], { 
-      cwd: PROJECT_ROOT,
-      timeout: 5000,
-      reject: false
-    });
-
-    res.json({ success: true, output: stdout || stderr });
+    const credentials = await getGitCredentials();
+    let env = { ...process.env };
+    
+    if (credentials) {
+      const authenticatedUrl = await getAuthenticatedRemoteUrl(remoteCheck.trim());
+      await execa('git', ['remote', 'set-url', 'origin', authenticatedUrl], { cwd: PROJECT_ROOT });
+      
+      const { stdout, stderr } = await execa('git', ['push', '-u', 'origin', 'HEAD'], { 
+        cwd: PROJECT_ROOT,
+        timeout: 60000,
+        reject: false,
+        env
+      });
+      
+      await execa('git', ['remote', 'set-url', 'origin', remoteCheck.trim()], { cwd: PROJECT_ROOT });
+      
+      res.json({ success: true, output: stdout || stderr || 'Pushed successfully' });
+    } else {
+      const { stdout, stderr } = await execa('git', ['push'], { 
+        cwd: PROJECT_ROOT,
+        timeout: 30000,
+        reject: false
+      });
+      
+      if (stderr?.includes('Authentication failed') || stderr?.includes('could not read Username')) {
+        return res.status(401).json({ 
+          error: 'Authentication required. Please connect your GitHub account in Settings.',
+          requiresAuth: true
+        });
+      }
+      
+      res.json({ success: true, output: stdout || stderr });
+    }
   } catch (error: any) {
     console.error('[Git] Push error:', error);
     if (error.timedOut) {
-      return res.status(500).json({ error: 'Git push timed out - remote may require authentication' });
+      return res.status(500).json({ error: 'Git push timed out - check your network connection' });
+    }
+    if (error.stderr?.includes('Authentication failed')) {
+      return res.status(401).json({ 
+        error: 'Authentication failed. Please reconnect your GitHub account.',
+        requiresAuth: true
+      });
     }
     res.status(500).json({ error: error.message || error.stderr || 'Push failed' });
   }
@@ -289,22 +356,55 @@ router.post('/pull', ensureAuthenticated, csrfProtection, async (req: Request, r
       return res.status(400).json({ error: 'Not a git repository' });
     }
 
-    const { stdout: remoteCheck } = await execa('git', ['remote', '-v'], { cwd: PROJECT_ROOT });
+    const { stdout: remoteCheck } = await execa('git', ['remote', 'get-url', 'origin'], { 
+      cwd: PROJECT_ROOT, 
+      reject: false 
+    });
     if (!remoteCheck.trim()) {
       return res.status(422).json({ error: 'No remote repository configured' });
     }
 
-    const { stdout } = await execa('git', ['pull'], { 
-      cwd: PROJECT_ROOT,
-      timeout: 5000,
-      reject: false
-    });
-
-    res.json({ success: true, output: stdout });
+    const credentials = await getGitCredentials();
+    
+    if (credentials) {
+      const authenticatedUrl = await getAuthenticatedRemoteUrl(remoteCheck.trim());
+      await execa('git', ['remote', 'set-url', 'origin', authenticatedUrl], { cwd: PROJECT_ROOT });
+      
+      const { stdout, stderr } = await execa('git', ['pull', '--rebase=false'], { 
+        cwd: PROJECT_ROOT,
+        timeout: 60000,
+        reject: false
+      });
+      
+      await execa('git', ['remote', 'set-url', 'origin', remoteCheck.trim()], { cwd: PROJECT_ROOT });
+      
+      res.json({ success: true, output: stdout || stderr || 'Pulled successfully' });
+    } else {
+      const { stdout, stderr } = await execa('git', ['pull'], { 
+        cwd: PROJECT_ROOT,
+        timeout: 30000,
+        reject: false
+      });
+      
+      if (stderr?.includes('Authentication failed') || stderr?.includes('could not read Username')) {
+        return res.status(401).json({ 
+          error: 'Authentication required. Please connect your GitHub account in Settings.',
+          requiresAuth: true
+        });
+      }
+      
+      res.json({ success: true, output: stdout || stderr });
+    }
   } catch (error: any) {
     console.error('[Git] Pull error:', error);
     if (error.timedOut) {
-      return res.status(500).json({ error: 'Git pull timed out - remote may require authentication' });
+      return res.status(500).json({ error: 'Git pull timed out - check your network connection' });
+    }
+    if (error.stderr?.includes('Authentication failed')) {
+      return res.status(401).json({ 
+        error: 'Authentication failed. Please reconnect your GitHub account.',
+        requiresAuth: true
+      });
     }
     res.status(500).json({ error: error.message || 'Pull failed' });
   }
@@ -317,24 +417,61 @@ router.post('/fetch', ensureAuthenticated, csrfProtection, async (req: Request, 
       return res.status(400).json({ error: 'Not a git repository' });
     }
 
-    const { stdout: remoteCheck } = await execa('git', ['remote', '-v'], { cwd: PROJECT_ROOT });
+    const { stdout: remoteCheck } = await execa('git', ['remote', 'get-url', 'origin'], { 
+      cwd: PROJECT_ROOT, 
+      reject: false 
+    });
     if (!remoteCheck.trim()) {
       return res.status(422).json({ error: 'No remote repository configured' });
     }
 
-    const { stdout, stderr } = await execa('git', ['fetch', '--all', '--prune'], { 
-      cwd: PROJECT_ROOT,
-      timeout: 30000,
-      reject: false
-    });
-
-    res.json({ success: true, output: stdout || stderr || 'Fetched successfully' });
+    const credentials = await getGitCredentials();
+    
+    if (credentials) {
+      const authenticatedUrl = await getAuthenticatedRemoteUrl(remoteCheck.trim());
+      await execa('git', ['remote', 'set-url', 'origin', authenticatedUrl], { cwd: PROJECT_ROOT });
+      
+      const { stdout, stderr } = await execa('git', ['fetch', '--all', '--prune'], { 
+        cwd: PROJECT_ROOT,
+        timeout: 60000,
+        reject: false
+      });
+      
+      await execa('git', ['remote', 'set-url', 'origin', remoteCheck.trim()], { cwd: PROJECT_ROOT });
+      
+      res.json({ success: true, output: stdout || stderr || 'Fetched successfully' });
+    } else {
+      const { stdout, stderr } = await execa('git', ['fetch', '--all', '--prune'], { 
+        cwd: PROJECT_ROOT,
+        timeout: 30000,
+        reject: false
+      });
+      
+      if (stderr?.includes('Authentication failed') || stderr?.includes('could not read Username')) {
+        return res.status(401).json({ 
+          error: 'Authentication required. Please connect your GitHub account in Settings.',
+          requiresAuth: true
+        });
+      }
+      
+      res.json({ success: true, output: stdout || stderr || 'Fetched successfully' });
+    }
   } catch (error: any) {
     console.error('[Git] Fetch error:', error);
     if (error.timedOut) {
-      return res.status(500).json({ error: 'Git fetch timed out - remote may require authentication' });
+      return res.status(500).json({ error: 'Git fetch timed out - check your network connection' });
     }
     res.status(500).json({ error: error.message || 'Fetch failed' });
+  }
+});
+
+router.get('/github/status', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const status = await getGitHubConnectionStatus();
+    res.json(status);
+  } catch (error: any) {
+    console.error('[Git] GitHub status error:', error);
+    res.json({ connected: false });
   }
 });
 
