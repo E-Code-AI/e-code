@@ -269,7 +269,7 @@ export function MobilePackagesPanel({ projectId, className }: MobilePackagesPane
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="w-11 h-11 rounded-lg bg-[#242b3d] hover:bg-red-500/20"
+                  className="w-11 h-11 rounded-lg bg-[#242b3d] hover:bg-[#fee2e2]"
                   onClick={() => handleUninstall(pkg.name)}
                   disabled={isUninstalling}
                   data-testid={`button-uninstall-${pkg.name}`}
@@ -287,7 +287,7 @@ export function MobilePackagesPanel({ projectId, className }: MobilePackagesPane
                 size="icon"
                 onClick={() => handleInstall(pkg)}
                 disabled={isInstalling}
-                className="w-11 h-11 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90"
+                className="w-11 h-11 rounded-lg bg-[#0079f2] hover:bg-[#0066cc]"
                 data-testid={`button-install-${pkg.name}`}
               >
                 {isInstalling ? (
@@ -364,7 +364,7 @@ export function MobilePackagesPanel({ projectId, className }: MobilePackagesPane
       </p>
       {showInstallButton && (
         <Button
-          className="h-11 px-6 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[15px] font-medium text-[#ffffff]"
+          className="h-11 px-6 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-[15px] font-medium text-[#ffffff]"
           onClick={() => setActiveTab('search')}
           data-testid="button-browse-packages"
         >
@@ -459,7 +459,7 @@ export function MobilePackagesPanel({ projectId, className }: MobilePackagesPane
                 {(error as Error).message}
               </p>
               <Button
-                className="h-11 px-6 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[15px] font-medium text-[#ffffff] mt-6"
+                className="h-11 px-6 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-[15px] font-medium text-[#ffffff] mt-6"
                 onClick={() => refetch()}
                 data-testid="button-retry-load"
               >
@@ -494,7 +494,7 @@ export function MobilePackagesPanel({ projectId, className }: MobilePackagesPane
         style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
       >
         <Button
-          className="w-full h-11 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[15px] font-medium text-[#ffffff]"
+          className="w-full h-11 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-[15px] font-medium text-[#ffffff]"
           onClick={() => {
             setActiveTab('search');
             setSearchQuery('');

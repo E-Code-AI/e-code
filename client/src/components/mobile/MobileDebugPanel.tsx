@@ -264,7 +264,7 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
         <div className="flex gap-2">
           {!isRunning ? (
             <Button 
-              className="flex-1 h-11 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[15px] leading-[20px]"
+              className="flex-1 h-11 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-[#ffffff] text-[15px] leading-[20px]"
               onClick={handleStart}
               disabled={startMutation.isPending || isLoading}
               data-testid="button-debug-start"
@@ -376,7 +376,7 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                 className={cn(
                   "flex items-center justify-between p-3 rounded-lg",
                   bp.isEnabled 
-                    ? "bg-[#0079f2]/10 border border-[#0079f2]/30"
+                    ? "bg-[#e6f2fd] border border-[#99c9fa]"
                     : "bg-[#1c2333] border border-[#3d4452]"
                 )}
                 data-testid={`breakpoint-${bp.id}`}
@@ -423,7 +423,7 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                 <h4 className="text-[17px] font-medium leading-tight text-[#ffffff] mb-2">No breakpoints set</h4>
                 <p className="text-[13px] text-[#5c6670] mb-6">Click line numbers in the editor to add breakpoints</p>
                 <Button 
-                  className="h-11 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[15px] leading-[20px] px-6"
+                  className="h-11 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-[#ffffff] text-[15px] leading-[20px] px-6"
                   data-testid="button-add-breakpoint-empty"
                   disabled
                 >
@@ -443,7 +443,7 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                 <h4 className="text-[17px] font-medium leading-tight text-[#ffffff] mb-2">No variables available</h4>
                 <p className="text-[13px] text-[#5c6670] mb-6">Start debugging and pause execution to inspect variables</p>
                 <Button 
-                  className="h-11 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[15px] leading-[20px] px-6"
+                  className="h-11 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-[#ffffff] text-[15px] leading-[20px] px-6"
                   onClick={handleStart}
                   disabled={startMutation.isPending || isRunning}
                   data-testid="button-start-debug-variables"

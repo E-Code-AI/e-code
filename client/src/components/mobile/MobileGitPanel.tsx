@@ -80,9 +80,9 @@ type ViewMode = 'main' | 'settings' | 'branches';
 
 function ShimmerBar({ className }: { className?: string }) {
   return (
-    <div className={cn("relative overflow-hidden bg-[#d4d8dd]/30 dark:bg-[#3d4452] rounded", className)}>
+    <div className={cn("relative overflow-hidden bg-[#ecedef] dark:bg-[#3d4452] rounded", className)}>
       <motion.div
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-white/10 to-transparent"
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-[#e6e6e6] dark:via-[#4a5263] to-transparent"
         animate={{ x: ['-100%', '100%'] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
       />
@@ -322,7 +322,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
         <div className="flex items-center gap-3 px-4 min-h-[56px] border-b border-[#d4d8dd] dark:border-[#3d4452]">
           <button
             onClick={() => setViewMode('main')}
-            className="w-11 h-11 flex items-center justify-center hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
+            className="w-11 h-11 flex items-center justify-center hover:bg-[#ecedef] dark:hover:bg-[#3d4452] rounded-lg"
             data-testid="back-from-settings"
           >
             <ChevronLeft className="w-[18px] h-[18px] text-[#5c6670]" />
@@ -408,7 +408,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-10 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                              className="h-10 rounded-lg text-red-500 hover:text-red-600 hover:bg-[#fef2f2] dark:hover:bg-[#3d2828]"
                               onClick={() => disconnectGitHubMutation.mutate(undefined)}
                               disabled={disconnectGitHubMutation.isPending}
                               data-testid="button-disconnect-github"
@@ -542,7 +542,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
       <div className="flex items-center justify-between px-3 h-12 border-b border-[#d4d8dd] dark:border-[#3d4452]">
         <button
           onClick={() => setShowBranchDropdown(!showBranchDropdown)}
-          className="flex items-center gap-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-md px-2 py-1.5"
+          className="flex items-center gap-1.5 hover:bg-[#ecedef] dark:hover:bg-[#3d4452] rounded-md px-2 py-1.5"
           data-testid="branch-selector"
         >
           <GitBranch className="w-4 h-4 text-[#5c6670]" />
@@ -553,14 +553,14 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
         <div className="flex items-center">
           <button
             onClick={() => setViewMode('settings')}
-            className="w-9 h-9 flex items-center justify-center hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-md"
+            className="w-9 h-9 flex items-center justify-center hover:bg-[#ecedef] dark:hover:bg-[#3d4452] rounded-md"
             data-testid="git-settings-button"
           >
             <Settings className="w-[18px] h-[18px] text-[#5c6670]" />
           </button>
           <button
             onClick={() => refetchStatus()}
-            className="w-9 h-9 flex items-center justify-center hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-md"
+            className="w-9 h-9 flex items-center justify-center hover:bg-[#ecedef] dark:hover:bg-[#3d4452] rounded-md"
             data-testid="git-refresh-button"
           >
             <RefreshCw className="w-[18px] h-[18px] text-[#5c6670]" />
@@ -577,7 +577,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
             className="absolute top-12 left-3 right-3 z-50 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-md shadow-lg overflow-hidden"
           >
             <div className="p-2 border-b border-[#d4d8dd] dark:border-[#3d4452]">
-              <div className="flex items-center gap-2 px-2.5 h-8 bg-[#d4d8dd]/20 dark:bg-[#1c2333] rounded-md border border-[#d4d8dd] dark:border-[#3d4452]">
+              <div className="flex items-center gap-2 px-2.5 h-8 bg-[#f0f1f3] dark:bg-[#1c2333] rounded-md border border-[#d4d8dd] dark:border-[#3d4452]">
                 <Search className="w-4 h-4 text-[#5c6670]" />
                 <input
                   type="text"
@@ -599,7 +599,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 h-8 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-md"
+                        className="w-full flex items-center gap-2 px-2 h-8 hover:bg-[#ecedef] dark:hover:bg-[#3d4452] rounded-md"
                         data-testid={`branch-${branch.name}`}
                       >
                         <span className={cn("w-1.5 h-1.5 rounded-full", branch.current ? "bg-[#0079f2]" : "bg-green-500")} />
@@ -617,7 +617,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 h-8 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-md"
+                        className="w-full flex items-center gap-2 px-2 h-8 hover:bg-[#ecedef] dark:hover:bg-[#3d4452] rounded-md"
                         data-testid={`branch-${branch.name}`}
                       >
                         <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
@@ -639,7 +639,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 h-8 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-md"
+                        className="w-full flex items-center gap-2 px-2 h-8 hover:bg-[#ecedef] dark:hover:bg-[#3d4452] rounded-md"
                         data-testid={`branch-${branch.name}`}
                       >
                         <User className="w-4 h-4 text-[#5c6670]" />
@@ -721,7 +721,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
               <div className="space-y-2" data-testid="changes-section">
                 <button
                   onClick={() => setShowChanges(!showChanges)}
-                  className="flex items-center justify-between w-full min-h-[36px] px-2.5 py-1.5 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-md hover:bg-[#d4d8dd]/20 dark:hover:bg-[#3d4452]/50"
+                  className="flex items-center justify-between w-full min-h-[36px] px-2.5 py-1.5 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-md hover:bg-[#f0f1f3] dark:hover:bg-[#353d4d]"
                   data-testid="toggle-changes-section"
                 >
                   <div className="flex items-center gap-2">
@@ -795,7 +795,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                               {status?.staged?.map((file) => (
                                 <div
                                   key={file}
-                                  className="flex items-center justify-between gap-2 px-2 py-1.5 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md"
+                                  className="flex items-center justify-between gap-2 px-2 py-1.5 bg-[#f0fdf4] dark:bg-[#1a2e1a] border border-green-200 dark:border-green-800 rounded-md"
                                   data-testid={`staged-file-${file}`}
                                 >
                                   <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -805,7 +805,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                                   <button
                                     onClick={() => unstageMutation.mutate([file])}
                                     disabled={unstageMutation.isPending}
-                                    className="flex items-center justify-center w-6 h-6 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 flex-shrink-0"
+                                    className="flex items-center justify-center w-6 h-6 rounded hover:bg-[#fee2e2] dark:hover:bg-[#3d2424] text-red-500 dark:text-red-400 flex-shrink-0"
                                     data-testid={`button-unstage-${file}`}
                                   >
                                     {unstageMutation.isPending ? (
@@ -830,7 +830,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                               {status?.unstaged?.map((file) => (
                                 <div
                                   key={file}
-                                  className="flex items-center justify-between gap-2 px-2 py-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md"
+                                  className="flex items-center justify-between gap-2 px-2 py-1.5 bg-[#fffbeb] dark:bg-[#2e2a1a] border border-amber-200 dark:border-amber-800 rounded-md"
                                   data-testid={`unstaged-file-${file}`}
                                 >
                                   <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -840,7 +840,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                                   <button
                                     onClick={() => stageMutation.mutate([file])}
                                     disabled={stageMutation.isPending}
-                                    className="flex items-center justify-center w-6 h-6 rounded hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400 flex-shrink-0"
+                                    className="flex items-center justify-center w-6 h-6 rounded hover:bg-[#dcfce7] dark:hover:bg-[#1a3d1a] text-green-600 dark:text-green-400 flex-shrink-0"
                                     data-testid={`button-stage-${file}`}
                                   >
                                     {stageMutation.isPending ? (
@@ -865,7 +865,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                               {status?.untracked?.map((file) => (
                                 <div
                                   key={file}
-                                  className="flex items-center justify-between gap-2 px-2 py-1.5 bg-[#0079f2]/10 dark:bg-[#0079f2]/20 border border-[#0079f2]/30 dark:border-[#0079f2]/40 rounded-md"
+                                  className="flex items-center justify-between gap-2 px-2 py-1.5 bg-[#e6f2fd] dark:bg-[#1a2840] border border-[#99c9fa] dark:border-[#4d7cb3] rounded-md"
                                   data-testid={`untracked-file-${file}`}
                                 >
                                   <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -875,7 +875,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                                   <button
                                     onClick={() => stageMutation.mutate([file])}
                                     disabled={stageMutation.isPending}
-                                    className="flex items-center justify-center w-6 h-6 rounded hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400 flex-shrink-0"
+                                    className="flex items-center justify-center w-6 h-6 rounded hover:bg-[#dcfce7] dark:hover:bg-[#1a3d1a] text-green-600 dark:text-green-400 flex-shrink-0"
                                     data-testid={`button-stage-${file}`}
                                   >
                                     {stageMutation.isPending ? (
