@@ -457,6 +457,12 @@ export function createWorkspaceRoutes(storage: IStorage) {
         await securityScannerService.broadcastScanUpdate(projectId, scan);
       }
       
+      // Queue the scan for actual execution
+      const scanExecutor = (global as any).scanExecutor;
+      if (scanExecutor) {
+        scanExecutor.queueScan(scan);
+      }
+      
       res.status(201).json(scan);
     } catch (error) {
       console.error('[API] Error creating security scan:', error);
