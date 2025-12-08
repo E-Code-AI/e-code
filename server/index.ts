@@ -326,6 +326,14 @@ app.get('/api/cors-health', async (_req, res) => {
       console.error('[WORKING SERVER] Failed to setup Security Scanner WebSocket:', error);
     }
     
+    // Setup Scan Executor service for processing security scans
+    try {
+      const { setupScanExecutor } = await import("./services/scan-executor.service");
+      setupScanExecutor(storage);
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to setup Scan Executor:', error);
+    }
+    
     // Setup Resources WebSocket server for real-time resource metrics streaming
     try {
       const { setupResourcesWebSocket } = await import("./services/ResourcesService");
