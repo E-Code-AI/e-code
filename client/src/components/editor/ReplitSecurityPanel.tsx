@@ -506,56 +506,56 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
               ))
             )}
           </div>
-        </div>
-      </div>
 
-      {/* Partner Attribution Footer - Replit style */}
-      <div className="border-t border-[#d4d8dd] dark:border-[#3d4452] p-3 space-y-2 bg-[#f9fafb] dark:bg-[#1c2333] shrink-0">
-        <p className="text-[13px] text-[#5c6670] dark:text-[#9da2a6]">
-          Vulnerability scans are enabled by the following Replit partners:
-        </p>
-        
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-[#0e1525] dark:text-white" fill="currentColor">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-            <span className="text-[13px] text-[#5c6670] dark:text-[#9da2a6]">
-              Security scans are powered by Semgrep Community Edition.
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-[#0e1525] dark:text-white" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
-            <span className="text-[13px] text-[#5c6670] dark:text-[#9da2a6]">
-              Privacy scans are powered by HoundDog.ai.
-            </span>
+          {/* Partner Attribution - Scrolls with content */}
+          <div className="border-t border-[#d4d8dd] dark:border-[#3d4452] pt-3 mt-3 space-y-2">
+            <p className="text-[13px] text-[#5c6670] dark:text-[#9da2a6]">
+              Vulnerability scans are enabled by the following Replit partners:
+            </p>
+            
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-[#0e1525] dark:text-white" fill="currentColor">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+                <span className="text-[13px] text-[#5c6670] dark:text-[#9da2a6]">
+                  Security scans are powered by Semgrep Community Edition.
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-[#0e1525] dark:text-white" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                <span className="text-[13px] text-[#5c6670] dark:text-[#9da2a6]">
+                  Privacy scans are powered by HoundDog.ai.
+                </span>
+              </div>
+            </div>
+            
+            <p className="text-[13px] text-[#5c6670] dark:text-[#9da2a6] leading-relaxed">
+              Security scanning powered by{' '}
+              <a 
+                href="https://semgrep.dev" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-[#0079f2] hover:underline"
+              >
+                Semgrep
+              </a>
+              {' '}and privacy scanning powered by{' '}
+              <a 
+                href="https://hounddog.ai" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-[#0079f2] hover:underline"
+              >
+                HoundDog.ai
+              </a>
+              , both running locally on Replit infrastructure.
+            </p>
           </div>
         </div>
-        
-        <p className="text-[13px] text-[#5c6670] dark:text-[#9da2a6] leading-relaxed">
-          Security scanning powered by{' '}
-          <a 
-            href="https://semgrep.dev" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-[#0079f2] hover:underline"
-          >
-            Semgrep
-          </a>
-          {' '}and privacy scanning powered by{' '}
-          <a 
-            href="https://hounddog.ai" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-[#0079f2] hover:underline"
-          >
-            HoundDog.ai
-          </a>
-          , both running locally on Replit infrastructure.
-        </p>
       </div>
     </div>
   );
