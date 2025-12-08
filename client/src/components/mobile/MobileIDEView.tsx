@@ -8,7 +8,7 @@ import { LazyMobileCodeEditor } from './LazyMobileCodeEditor';
 import { MobilePreviewPanel } from './MobilePreviewPanel';
 import { MobileMoreMenu } from './MobileMoreMenu';
 import { MobileCollaborationPanel } from './MobileCollaborationPanel';
-import { ReplitGitPanel } from '@/components/editor/ReplitGitPanel';
+import { MobileGitPanel } from './MobileGitPanel';
 import { MobilePackagesPanel } from './MobilePackagesPanel';
 import { MobileSecretsPanel } from './MobileSecretsPanel';
 import { MobileDatabasePanel } from './MobileDatabasePanel';
@@ -663,7 +663,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         onClose={handleClosePanel}
         title="Git"
       >
-        <ReplitGitPanel projectId={normalizedProjectId} className="h-full" />
+        <MobileGitPanel projectId={normalizedProjectId} className="h-full" />
       </MobileSlidePanel>
       
       <MobileSlidePanel
