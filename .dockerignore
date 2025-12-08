@@ -1,13 +1,15 @@
 # ===========================================
 # CRITICAL: Files/folders excluded from deployment
-# This file reduces deployment image from 4GB+ to under 2GB
+# This file reduces deployment image from 8GB+ to under 2GB
 # ===========================================
 
 # Node modules - reinstalled during build with --omit=dev
 node_modules
+**/node_modules
 
 # User-generated project data (2.8GB+)
 projects
+projects/
 
 # Development-only directories
 sdk
@@ -28,6 +30,15 @@ scripts
 services
 storage
 introspected
+backups
+
+# Pre-built assets (regenerated during build)
+server/public/assets
+server/public/assets/
+
+# Playwright browsers (500MB+)
+.cache/ms-playwright
+**/ms-playwright
 
 # Git and version control
 .git
