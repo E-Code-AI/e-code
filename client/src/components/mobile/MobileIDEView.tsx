@@ -292,7 +292,7 @@ function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePu
       <AnimatePresence>
         {showLabel && (
           <motion.div
-            className="absolute bottom-full left-0 mb-2 px-3 py-1.5 bg-black/90 text-white text-xs font-medium rounded-lg whitespace-nowrap pointer-events-none"
+            className="absolute bottom-full left-0 mb-2 px-3 py-1.5 bg-[#0E1525] text-white text-xs font-medium rounded-lg whitespace-nowrap pointer-events-none"
             initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: prefersReducedMotion ? 0 : 10 }}

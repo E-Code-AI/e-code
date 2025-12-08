@@ -274,11 +274,15 @@
   scroll-snap-align: start;
 }
 
-/* Optimized Backdrop Blur */
+/* Optimized Panel Background (Solid Colors) */
 .backdrop-blur-optimized {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: #1C2333;
   transform: translateZ(0);
+}
+
+.light .backdrop-blur-optimized,
+:root:not(.dark) .backdrop-blur-optimized {
+  background-color: #ffffff;
 }
 
 /* Prevent Layout Shift */

@@ -214,7 +214,7 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
           'focus:outline-none focus:ring-4 focus:ring-[#F26207]/50',
           'touch-manipulation',
           // Disable interaction during loading
-          isLoading && 'opacity-75 cursor-not-allowed',
+          isLoading && 'cursor-not-allowed',
           buttonState.bgColor
         )}
         whileTap={!isLoading ? { scale: 0.9 } : undefined}
@@ -233,7 +233,7 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
       <AnimatePresence>
         {showPulse && (
           <motion.div
-            className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-black/90 text-white text-xs font-medium rounded-lg whitespace-nowrap pointer-events-none"
+            className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-[#0E1525] text-white text-xs font-medium rounded-lg whitespace-nowrap pointer-events-none"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}

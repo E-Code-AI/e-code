@@ -397,9 +397,7 @@
 .replit-header {
   background: var(--ecode-surface-elevated);
   border-bottom: 1px solid var(--ecode-border);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 1px 3px #00000010;
   color: var(--ecode-text);
   position: sticky;
   top: 0;
