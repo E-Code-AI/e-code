@@ -101,6 +101,9 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
       queryClient.invalidateQueries({ queryKey: ['/api/git/status'] });
       toast({ description: 'Files staged' });
     },
+    onError: (error: any) => {
+      toast({ description: error.message || 'Failed to stage files', variant: 'destructive' });
+    },
   });
 
   const unstageMutation = useMutation({
@@ -108,6 +111,9 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/git/status'] });
       toast({ description: 'Files unstaged' });
+    },
+    onError: (error: any) => {
+      toast({ description: error.message || 'Failed to unstage files', variant: 'destructive' });
     },
   });
 
@@ -141,6 +147,9 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
       queryClient.invalidateQueries({ queryKey: ['/api/git/status'] });
       toast({ description: 'Fetched latest from remote' });
     },
+    onError: (error: any) => {
+      toast({ description: error.message || 'Failed to fetch from remote', variant: 'destructive' });
+    },
   });
 
   const commitMutation = useMutation({
@@ -164,6 +173,9 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
       setShowBranchDropdown(false);
       toast({ description: 'Switched branch' });
     },
+    onError: (error: any) => {
+      toast({ description: error.message || 'Failed to switch branch', variant: 'destructive' });
+    },
   });
 
   const connectRemoteMutation = useMutation({
@@ -172,6 +184,9 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
       queryClient.invalidateQueries({ queryKey: ['/api/git/remotes'] });
       setRemoteUrl('');
       toast({ description: 'Remote connected' });
+    },
+    onError: (error: any) => {
+      toast({ description: error.message || 'Failed to connect remote', variant: 'destructive' });
     },
   });
 
