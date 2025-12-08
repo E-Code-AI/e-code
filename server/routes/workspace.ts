@@ -446,7 +446,7 @@ export function createWorkspaceRoutes(storage: IStorage) {
       const { projectId } = req.params;
       const scanData = insertSecurityScanSchema.parse({
         ...req.body,
-        projectId,
+        projectId: parseInt(projectId),
       });
       
       const scan = await storage.createSecurityScan(scanData);
@@ -574,6 +574,91 @@ export function createWorkspaceRoutes(storage: IStorage) {
     } catch (error) {
       console.error('[API] Error updating vulnerability:', error);
       res.status(500).json({ error: 'Failed to update vulnerability' });
+    }
+  });
+
+  // Get vulnerabilities by hidden status (for Active/Hidden Issues tabs)
+  router.get('/projects/:projectId/vulnerabilities/by-hidden', async (req: Request, res: Response) => {
+    try {
+      const { projectId } = req.params;
+      const { hidden } = req.query;
+      const isHidden = hidden === 'true';
+      
+      const vulnerabilities = await storage.getProjectVulnerabilitiesByHidden(projectId, isHidden);
+      res.json(vulnerabilities);
+    } catch (error) {
+      console.error('[API] Error fetching vulnerabilities by hidden status:', error);
+      res.status(500).json({ error: 'Failed to fetch vulnerabilities' });
+    }
+  });
+
+  // Hide/unhide a vulnerability
+  router.patch('/vulnerabilities/:id/hide', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { isHidden } = req.body;
+      
+      const vulnerability = await storage.updateVulnerability(id, { isHidden: !!isHidden });
+      
+      // Broadcast to connected clients
+      const securityScannerService = (global as any).securityScannerService;
+      if (securityScannerService && vulnerability) {
+        await securityScannerService.broadcastVulnerabilityUpdate(vulnerability.projectId, vulnerability);
+      }
+      
+      res.json(vulnerability);
+    } catch (error) {
+      console.error('[API] Error updating vulnerability hidden status:', error);
+      res.status(500).json({ error: 'Failed to update vulnerability' });
+    }
+  });
+
+  // ============================================================================
+  // SECURITY SCAN SETTINGS ROUTES - For Scan Settings panel
+  // ============================================================================
+
+  // Get security scan settings for a project
+  router.get('/projects/:projectId/security-settings', async (req: Request, res: Response) => {
+    try {
+      const { projectId } = req.params;
+      
+      let settings = await storage.getSecurityScanSettings(projectId);
+      
+      // Return default settings if none exist
+      if (!settings) {
+        settings = {
+          id: '',
+          projectId: parseInt(projectId),
+          privacyDetectionEnabled: true,
+          securityDetectionEnabled: true,
+          autoScanOnPush: false,
+          updatedAt: new Date(),
+        };
+      }
+      
+      res.json(settings);
+    } catch (error) {
+      console.error('[API] Error fetching security settings:', error);
+      res.status(500).json({ error: 'Failed to fetch security settings' });
+    }
+  });
+
+  // Update security scan settings for a project
+  router.patch('/projects/:projectId/security-settings', async (req: Request, res: Response) => {
+    try {
+      const { projectId } = req.params;
+      const { privacyDetectionEnabled, securityDetectionEnabled, autoScanOnPush } = req.body;
+      
+      const settings = await storage.upsertSecurityScanSettings(projectId, {
+        privacyDetectionEnabled,
+        securityDetectionEnabled,
+        autoScanOnPush,
+      });
+      
+      res.json(settings);
+    } catch (error) {
+      console.error('[API] Error updating security settings:', error);
+      res.status(500).json({ error: 'Failed to update security settings' });
     }
   });
 

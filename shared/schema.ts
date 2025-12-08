@@ -2870,7 +2870,7 @@ export const vulnerabilities = pgTable('vulnerabilities', {
   scanId: varchar('scan_id').notNull().references(() => securityScans.id, { onDelete: 'cascade' }),
   projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
   severity: text('severity').notNull(), // 'critical', 'high', 'medium', 'low'
-  type: text('type').notNull(), // 'dependency', 'code', 'secret', 'config'
+  type: text('type').notNull(), // 'dependency', 'code', 'secret', 'config', 'privacy'
   title: text('title').notNull(),
   description: text('description').notNull(),
   filePath: text('file_path'),
@@ -2883,6 +2883,8 @@ export const vulnerabilities = pgTable('vulnerabilities', {
   recommendation: text('recommendation'),
   references: text('references').array(),
   status: text('status').notNull().default('open'), // 'open', 'fixed', 'ignored', 'false_positive'
+  isHidden: boolean('is_hidden').default(false).notNull(), // For Active/Hidden Issues tabs
+  toolAttribution: text('tool_attribution'), // 'semgrep', 'hounddog', etc.
   discoveredAt: timestamp('discovered_at').defaultNow().notNull(),
   resolvedAt: timestamp('resolved_at'),
 }, (table) => [
@@ -2890,6 +2892,19 @@ export const vulnerabilities = pgTable('vulnerabilities', {
   index('vulnerabilities_project_id_idx').on(table.projectId),
   index('vulnerabilities_severity_idx').on(table.severity),
   index('vulnerabilities_status_idx').on(table.status),
+  index('vulnerabilities_is_hidden_idx').on(table.isHidden),
+]);
+
+// Security Scan Settings - Per-project scan configuration
+export const securityScanSettings = pgTable('security_scan_settings', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }).unique(),
+  privacyDetectionEnabled: boolean('privacy_detection_enabled').default(true).notNull(),
+  securityDetectionEnabled: boolean('security_detection_enabled').default(true).notNull(),
+  autoScanOnPush: boolean('auto_scan_on_push').default(false).notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('security_scan_settings_project_id_idx').on(table.projectId),
 ]);
 
 // Resource Metrics - For Resources Panel (live CPU/RAM/storage monitoring)
@@ -3238,6 +3253,11 @@ export const insertVulnerabilitySchema = createInsertSchema(vulnerabilities).omi
   discoveredAt: true,
 });
 
+export const insertSecurityScanSettingsSchema = createInsertSchema(securityScanSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
 export const insertResourceMetricSchema = createInsertSchema(resourceMetrics).omit({
   id: true,
   timestamp: true,
@@ -3320,6 +3340,9 @@ export type InsertSecurityScan = z.infer<typeof insertSecurityScanSchema>;
 
 export type Vulnerability = typeof vulnerabilities.$inferSelect;
 export type InsertVulnerability = z.infer<typeof insertVulnerabilitySchema>;
+
+export type SecurityScanSettings = typeof securityScanSettings.$inferSelect;
+export type InsertSecurityScanSettings = z.infer<typeof insertSecurityScanSettingsSchema>;
 
 export type ResourceMetric = typeof resourceMetrics.$inferSelect;
 export type InsertResourceMetric = z.infer<typeof insertResourceMetricSchema>;
