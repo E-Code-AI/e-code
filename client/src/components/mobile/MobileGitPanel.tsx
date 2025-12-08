@@ -142,10 +142,11 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
   });
   const commits = commitsData?.commits;
 
-  const { data: branches } = useQuery<GitBranchInfo[]>({
+  const { data: branchesData } = useQuery<{ branches: GitBranchInfo[] }>({
     queryKey: ['/api/git/branches'],
     enabled: !!status,
   });
+  const branches = branchesData?.branches || [];
 
   const originRemote = remotesData?.remotes?.find(r => r.name === 'origin' && r.type === 'fetch');
   const repoName = originRemote?.url?.split('/').slice(-2).join('/').replace('.git', '') || '';
@@ -240,9 +241,9 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
   const hasChanges = status && (status.staged.length > 0 || status.unstaged.length > 0 || status.untracked.length > 0);
   const unpushedCommits = commits?.filter(c => !c.pushed) || [];
 
-  const filteredBranches = branches?.filter(b => 
+  const filteredBranches = branches.filter(b => 
     b.name.toLowerCase().includes(branchSearch.toLowerCase())
-  ) || [];
+  );
 
   const importantBranches = filteredBranches.filter(b => b.name === 'main' || b.name === 'master');
   const activeBranches = filteredBranches.filter(b => !b.remote && b.name !== 'main' && b.name !== 'master');
