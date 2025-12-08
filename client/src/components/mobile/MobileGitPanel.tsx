@@ -4,7 +4,6 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -60,21 +59,33 @@ interface MobileGitPanelProps {
 
 type ViewMode = 'main' | 'settings' | 'branches';
 
+function ShimmerBar({ className }: { className?: string }) {
+  return (
+    <div className={cn("relative overflow-hidden bg-[#d4d8dd]/30 dark:bg-[#3d4452] rounded", className)}>
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-white/10 to-transparent"
+        animate={{ x: ['-100%', '100%'] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+      />
+    </div>
+  );
+}
+
 function CommitListSkeleton() {
   return (
     <div className="space-y-3" data-testid="commits-skeleton">
       {[1, 2, 3, 4].map((i) => (
         <div key={i} className="flex items-start gap-3 py-2">
           <div className="flex flex-col items-center">
-            <Skeleton className="w-2 h-2 rounded-full mt-1.5" />
-            <Skeleton className="w-0.5 h-12 mt-1" />
+            <ShimmerBar className="w-2 h-2 rounded-full mt-1.5" />
+            <ShimmerBar className="w-0.5 h-12 mt-1" />
           </div>
           <div className="flex-1 space-y-2">
-            <Skeleton className="h-4 w-3/4" />
+            <ShimmerBar className="h-4 w-3/4" />
             <div className="flex items-center gap-2">
-              <Skeleton className="w-[18px] h-[18px] rounded-full" />
-              <Skeleton className="h-3 w-24" />
-              <Skeleton className="h-3 w-16" />
+              <ShimmerBar className="w-[18px] h-[18px] rounded-full" />
+              <ShimmerBar className="h-3 w-24" />
+              <ShimmerBar className="h-3 w-16" />
             </div>
           </div>
         </div>
