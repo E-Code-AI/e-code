@@ -493,7 +493,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
   };
 
   return (
-    <div className={cn('flex flex-col h-full bg-background dark:bg-[var(--ecode-background)] md:hidden', className)}>
+    <div className={cn('flex flex-col h-full bg-background dark:bg-[var(--ecode-background)]', className)}>
       <div 
         ref={containerRef}
         className="flex-1 overflow-hidden relative touch-pan-y"
