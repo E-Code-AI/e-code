@@ -19,6 +19,7 @@ import {
 import { cn } from '@/lib/utils';
 import { TerminalMetricsIndicator } from '@/components/terminal/TerminalMetricsIndicator';
 import { useToast } from '@/hooks/use-toast';
+import { motion } from 'framer-motion';
 
 interface ReplitTerminalPanelProps {
   projectId?: string | number;
@@ -27,14 +28,11 @@ interface ReplitTerminalPanelProps {
 
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
-    <div
-      className={cn(
-        "animate-pulse bg-gradient-to-r from-[#242b3d] via-[#3d4452] to-[#242b3d] bg-[length:200%_100%]",
-        className
-      )}
-      style={{
-        animation: 'shimmer 1.5s infinite',
-      }}
+    <motion.div
+      className={cn("rounded-lg", className)}
+      style={{ backgroundColor: '#242b3d' }}
+      animate={{ opacity: [0.5, 0.8, 0.5] }}
+      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
     />
   );
 }
@@ -52,16 +50,16 @@ function ConnectionBadge({ isConnecting, isConnected }: { isConnecting: boolean;
   if (isConnected) {
     return (
       <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#242b3d] border border-[#3d4452]">
-        <Wifi className="w-[18px] h-[18px] text-green-500" />
-        <span className="text-[13px] text-green-500">Connected</span>
+        <Wifi className="w-[18px] h-[18px]" style={{ color: '#0079f2' }} />
+        <span className="text-[13px]" style={{ color: '#0079f2' }}>Connected</span>
       </div>
     );
   }
   
   return (
     <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#242b3d] border border-[#3d4452]">
-      <WifiOff className="w-[18px] h-[18px] text-yellow-500" />
-      <span className="text-[13px] text-yellow-500">Disconnected</span>
+      <WifiOff className="w-[18px] h-[18px]" style={{ color: '#9da2a6' }} />
+      <span className="text-[13px]" style={{ color: '#9da2a6' }}>Disconnected</span>
     </div>
   );
 }
@@ -170,23 +168,23 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
         background: '#0e1525',
         foreground: '#d4d8dd',
         cursor: '#0079f2',
-        cursorAccent: '#0079f2',
+        cursorAccent: '#0e1525',
         selectionBackground: '#3d4452',
         black: '#0e1525',
-        red: '#ff7b72',
-        green: '#3fb950',
-        yellow: '#d29922',
+        red: '#9da2a6',
+        green: '#0079f2',
+        yellow: '#9da2a6',
         blue: '#0079f2',
-        magenta: '#bc8cff',
-        cyan: '#39c5cf',
-        white: '#d4d8dd',
-        brightBlack: '#5c6670',
-        brightRed: '#ffa198',
-        brightGreen: '#56d364',
-        brightYellow: '#e3b341',
-        brightBlue: '#79c0ff',
-        brightMagenta: '#d2a8ff',
-        brightCyan: '#39c5cf',
+        magenta: '#5c6670',
+        cyan: '#9da2a6',
+        white: '#ffffff',
+        brightBlack: '#3d4452',
+        brightRed: '#9da2a6',
+        brightGreen: '#0079f2',
+        brightYellow: '#d4d8dd',
+        brightBlue: '#0079f2',
+        brightMagenta: '#9da2a6',
+        brightCyan: '#d4d8dd',
         brightWhite: '#ffffff'
       },
       fontSize: 14,
@@ -432,13 +430,6 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
           data-testid="terminal-container"
         />
       </div>
-      
-      <style>{`
-        @keyframes shimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-      `}</style>
     </div>
   );
 }

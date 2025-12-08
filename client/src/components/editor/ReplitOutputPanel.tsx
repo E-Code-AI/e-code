@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { 
@@ -33,23 +34,25 @@ interface ReplitOutputPanelProps {
   projectId?: string;
 }
 
+function ShimmerSkeletonItem({ className }: { className?: string }) {
+  return (
+    <motion.div
+      className={cn("rounded-lg", className)}
+      style={{ backgroundColor: '#242b3d' }}
+      animate={{ opacity: [0.5, 0.8, 0.5] }}
+      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+    />
+  );
+}
+
 function ShimmerSkeleton() {
   return (
     <div className="p-3 space-y-3">
       {[...Array(6)].map((_, i) => (
         <div key={i} className="flex items-center gap-3">
-          <div 
-            className="h-4 w-16 rounded bg-[#3d4452] animate-pulse"
-            style={{ animationDelay: `${i * 100}ms` }}
-          />
-          <div 
-            className="h-4 w-12 rounded bg-[#3d4452] animate-pulse"
-            style={{ animationDelay: `${i * 100 + 50}ms` }}
-          />
-          <div 
-            className="h-4 flex-1 rounded bg-[#3d4452] animate-pulse"
-            style={{ animationDelay: `${i * 100 + 100}ms` }}
-          />
+          <ShimmerSkeletonItem className="h-4 w-16" />
+          <ShimmerSkeletonItem className="h-4 w-12" />
+          <ShimmerSkeletonItem className="h-4 flex-1" />
         </div>
       ))}
     </div>
@@ -59,9 +62,7 @@ function ShimmerSkeleton() {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center px-6">
-      <div className="w-12 h-12 rounded-xl bg-[#242b3d] flex items-center justify-center mb-4">
-        <Terminal className="w-[18px] h-[18px] text-[#5c6670]" />
-      </div>
+      <Terminal className="w-12 h-12 mb-4 opacity-40" style={{ color: '#5c6670' }} />
       <h3 className="text-[17px] font-medium leading-tight text-[#ffffff] mb-2">
         No output yet
       </h3>
@@ -155,13 +156,13 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'error':
-        return 'text-[#ff6b6b]';
+        return 'text-[#d4d8dd]';
       case 'warn':
-        return 'text-[#ffc107]';
-      case 'info':
-        return 'text-[#0079f2]';
-      case 'debug':
         return 'text-[#9da2a6]';
+      case 'info':
+        return 'text-[#5c6670]';
+      case 'debug':
+        return 'text-[#5c6670]';
       default:
         return 'text-[#d4d8dd]';
     }
@@ -171,25 +172,25 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
     switch (level) {
       case 'error':
         return (
-          <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-[#ff6b6b]/20 text-[#ff6b6b]">
+          <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-[#3d4452] text-[#d4d8dd]">
             ERROR
           </span>
         );
       case 'warn':
         return (
-          <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-[#ffc107]/20 text-[#ffc107]">
+          <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-[#242b3d] text-[#9da2a6]">
             WARN
           </span>
         );
       case 'info':
         return (
-          <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-[#0079f2]/20 text-[#0079f2]">
+          <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-[#1c2333] text-[#5c6670]">
             INFO
           </span>
         );
       case 'debug':
         return (
-          <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-[#3d4452] text-[#9da2a6]">
+          <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-[#1c2333] text-[#5c6670]">
             DEBUG
           </span>
         );
