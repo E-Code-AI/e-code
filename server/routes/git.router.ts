@@ -5,26 +5,18 @@ import { createInterface } from 'readline';
 import path from 'path';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
-import { getGitCredentials, getGitHubConnectionStatus, isGitHubConnected } from '../services/github-connector';
+import { githubOAuth } from '../services/github-oauth';
 
 const router = Router();
 
 const PROJECT_ROOT = process.cwd();
 
-async function configureGitCredentials(): Promise<void> {
-  const credentials = await getGitCredentials();
-  if (credentials) {
-    try {
-      await execa('git', ['config', '--local', 'credential.helper', 'store'], { cwd: PROJECT_ROOT });
-      await execa('git', ['config', '--local', 'user.name', credentials.username], { cwd: PROJECT_ROOT });
-    } catch (error) {
-      console.warn('[Git] Failed to configure credentials:', error);
-    }
-  }
+async function getGitCredentials(userId: number): Promise<{ username: string; password: string } | null> {
+  return await githubOAuth.getGitCredentials(userId);
 }
 
-async function getAuthenticatedRemoteUrl(remoteUrl: string): Promise<string> {
-  const credentials = await getGitCredentials();
+async function getAuthenticatedRemoteUrl(remoteUrl: string, userId: number): Promise<string> {
+  const credentials = await getGitCredentials(userId);
   if (!credentials) {
     return remoteUrl;
   }
@@ -288,6 +280,11 @@ router.post('/commit', ensureAuthenticated, csrfProtection, async (req: Request,
 
 router.post('/push', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const isRepo = await ensureGitRepo();
     if (!isRepo) {
       return res.status(400).json({ error: 'Not a git repository' });
@@ -301,23 +298,25 @@ router.post('/push', ensureAuthenticated, csrfProtection, async (req: Request, r
       return res.status(422).json({ error: 'No remote repository configured' });
     }
 
-    const credentials = await getGitCredentials();
-    let env = { ...process.env };
+    const credentials = await getGitCredentials(userId);
+    const originalUrl = remoteCheck.trim();
     
     if (credentials) {
-      const authenticatedUrl = await getAuthenticatedRemoteUrl(remoteCheck.trim());
+      const authenticatedUrl = await getAuthenticatedRemoteUrl(originalUrl, userId);
       await execa('git', ['remote', 'set-url', 'origin', authenticatedUrl], { cwd: PROJECT_ROOT });
       
-      const { stdout, stderr } = await execa('git', ['push', '-u', 'origin', 'HEAD'], { 
-        cwd: PROJECT_ROOT,
-        timeout: 60000,
-        reject: false,
-        env
-      });
-      
-      await execa('git', ['remote', 'set-url', 'origin', remoteCheck.trim()], { cwd: PROJECT_ROOT });
-      
-      res.json({ success: true, output: stdout || stderr || 'Pushed successfully' });
+      try {
+        const { stdout, stderr } = await execa('git', ['push', '-u', 'origin', 'HEAD'], { 
+          cwd: PROJECT_ROOT,
+          timeout: 60000,
+          reject: false
+        });
+        
+        res.json({ success: true, output: stdout || stderr || 'Pushed successfully' });
+      } finally {
+        // Always restore original URL to prevent credential leakage
+        await execa('git', ['remote', 'set-url', 'origin', originalUrl], { cwd: PROJECT_ROOT }).catch(() => {});
+      }
     } else {
       const { stdout, stderr } = await execa('git', ['push'], { 
         cwd: PROJECT_ROOT,
@@ -351,6 +350,11 @@ router.post('/push', ensureAuthenticated, csrfProtection, async (req: Request, r
 
 router.post('/pull', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const isRepo = await ensureGitRepo();
     if (!isRepo) {
       return res.status(400).json({ error: 'Not a git repository' });
@@ -364,21 +368,25 @@ router.post('/pull', ensureAuthenticated, csrfProtection, async (req: Request, r
       return res.status(422).json({ error: 'No remote repository configured' });
     }
 
-    const credentials = await getGitCredentials();
+    const credentials = await getGitCredentials(userId);
+    const originalUrl = remoteCheck.trim();
     
     if (credentials) {
-      const authenticatedUrl = await getAuthenticatedRemoteUrl(remoteCheck.trim());
+      const authenticatedUrl = await getAuthenticatedRemoteUrl(originalUrl, userId);
       await execa('git', ['remote', 'set-url', 'origin', authenticatedUrl], { cwd: PROJECT_ROOT });
       
-      const { stdout, stderr } = await execa('git', ['pull', '--rebase=false'], { 
-        cwd: PROJECT_ROOT,
-        timeout: 60000,
-        reject: false
-      });
-      
-      await execa('git', ['remote', 'set-url', 'origin', remoteCheck.trim()], { cwd: PROJECT_ROOT });
-      
-      res.json({ success: true, output: stdout || stderr || 'Pulled successfully' });
+      try {
+        const { stdout, stderr } = await execa('git', ['pull', '--rebase=false'], { 
+          cwd: PROJECT_ROOT,
+          timeout: 60000,
+          reject: false
+        });
+        
+        res.json({ success: true, output: stdout || stderr || 'Pulled successfully' });
+      } finally {
+        // Always restore original URL to prevent credential leakage
+        await execa('git', ['remote', 'set-url', 'origin', originalUrl], { cwd: PROJECT_ROOT }).catch(() => {});
+      }
     } else {
       const { stdout, stderr } = await execa('git', ['pull'], { 
         cwd: PROJECT_ROOT,
@@ -412,6 +420,11 @@ router.post('/pull', ensureAuthenticated, csrfProtection, async (req: Request, r
 
 router.post('/fetch', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const isRepo = await ensureGitRepo();
     if (!isRepo) {
       return res.status(400).json({ error: 'Not a git repository' });
@@ -425,21 +438,25 @@ router.post('/fetch', ensureAuthenticated, csrfProtection, async (req: Request, 
       return res.status(422).json({ error: 'No remote repository configured' });
     }
 
-    const credentials = await getGitCredentials();
+    const credentials = await getGitCredentials(userId);
+    const originalUrl = remoteCheck.trim();
     
     if (credentials) {
-      const authenticatedUrl = await getAuthenticatedRemoteUrl(remoteCheck.trim());
+      const authenticatedUrl = await getAuthenticatedRemoteUrl(originalUrl, userId);
       await execa('git', ['remote', 'set-url', 'origin', authenticatedUrl], { cwd: PROJECT_ROOT });
       
-      const { stdout, stderr } = await execa('git', ['fetch', '--all', '--prune'], { 
-        cwd: PROJECT_ROOT,
-        timeout: 60000,
-        reject: false
-      });
-      
-      await execa('git', ['remote', 'set-url', 'origin', remoteCheck.trim()], { cwd: PROJECT_ROOT });
-      
-      res.json({ success: true, output: stdout || stderr || 'Fetched successfully' });
+      try {
+        const { stdout, stderr } = await execa('git', ['fetch', '--all', '--prune'], { 
+          cwd: PROJECT_ROOT,
+          timeout: 60000,
+          reject: false
+        });
+        
+        res.json({ success: true, output: stdout || stderr || 'Fetched successfully' });
+      } finally {
+        // Always restore original URL to prevent credential leakage
+        await execa('git', ['remote', 'set-url', 'origin', originalUrl], { cwd: PROJECT_ROOT }).catch(() => {});
+      }
     } else {
       const { stdout, stderr } = await execa('git', ['fetch', '--all', '--prune'], { 
         cwd: PROJECT_ROOT,
@@ -467,11 +484,45 @@ router.post('/fetch', ensureAuthenticated, csrfProtection, async (req: Request, 
 
 router.get('/github/status', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    const status = await getGitHubConnectionStatus();
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.json({ connected: false });
+    }
+    
+    const status = await githubOAuth.getConnectionStatus(userId);
     res.json(status);
   } catch (error: any) {
     console.error('[Git] GitHub status error:', error);
     res.json({ connected: false });
+  }
+});
+
+router.get('/github/connect', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    if (!githubOAuth.isConfigured()) {
+      return res.status(501).json({ error: 'GitHub OAuth not configured' });
+    }
+    
+    const authUrl = githubOAuth.getAuthorizationUrl('git_connect');
+    res.json({ authUrl });
+  } catch (error: any) {
+    console.error('[Git] GitHub connect error:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate GitHub connect URL' });
+  }
+});
+
+router.post('/github/disconnect', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    
+    await githubOAuth.disconnectUser(userId);
+    res.json({ success: true, message: 'GitHub disconnected successfully' });
+  } catch (error: any) {
+    console.error('[Git] GitHub disconnect error:', error);
+    res.status(500).json({ error: error.message || 'Failed to disconnect GitHub' });
   }
 });
 

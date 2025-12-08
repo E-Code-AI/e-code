@@ -208,41 +208,108 @@ export class GitHubOAuthService {
     };
   }
 
-  // In-memory token storage (for session-based OAuth flows)
-  // In production, tokens should be stored in database via user update
-  private tokenCache: Map<number, { accessToken: string; githubUser: GitHubUser }> = new Map();
-
-  // Store GitHub token for user (in memory for session, and update user profile)
+  // Store GitHub token for user with AES-256-GCM encryption
   async storeUserToken(userId: number, accessToken: string, githubUser: GitHubUser): Promise<void> {
-    // Store in memory cache
-    this.tokenCache.set(userId, { accessToken, githubUser });
+    const { encryptToken } = await import('./credential-encryption');
     
-    // Update user profile with GitHub info
     try {
+      const { ciphertext, iv } = encryptToken(accessToken);
+      
       await storage.updateUser(String(userId), {
         githubUsername: githubUser.login,
-        avatarUrl: githubUser.avatar_url || undefined
+        avatarUrl: githubUser.avatar_url || undefined,
+        githubTokenCiphertext: ciphertext,
+        githubTokenIv: iv,
+        githubTokenCreatedAt: new Date()
       });
+      
+      console.log(`[GitHubOAuthService] Token stored securely for user ${userId}`);
     } catch (error) {
-      console.warn('[GitHubOAuthService] Failed to update user profile:', error);
+      console.error('[GitHubOAuthService] Failed to store token:', error);
+      throw new Error('Failed to store GitHub credentials securely');
     }
   }
 
-  // Get stored GitHub token
+  // Get stored GitHub token (decrypted)
   async getUserToken(userId: number): Promise<string | null> {
-    const cached = this.tokenCache.get(userId);
-    return cached?.accessToken || null;
+    try {
+      const user = await storage.getUser(String(userId));
+      if (!user?.githubTokenCiphertext || !user?.githubTokenIv) {
+        return null;
+      }
+      
+      const { decryptToken } = await import('./credential-encryption');
+      return decryptToken(user.githubTokenCiphertext, user.githubTokenIv);
+    } catch (error) {
+      console.error('[GitHubOAuthService] Failed to decrypt token:', error);
+      return null;
+    }
+  }
+
+  // Validate if stored token is still valid
+  async validateStoredToken(userId: number): Promise<boolean> {
+    const token = await this.getUserToken(userId);
+    if (!token) return false;
+    
+    try {
+      await this.getUser(token);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // Get GitHub connection status with user info (uses cached username, no API call)
+  async getConnectionStatus(userId: number): Promise<{ connected: boolean; username?: string; avatarUrl?: string }> {
+    try {
+      const user = await storage.getUser(String(userId));
+      if (!user?.githubTokenCiphertext || !user?.githubTokenIv || !user?.githubUsername) {
+        return { connected: false };
+      }
+      
+      // Use cached username instead of making API call
+      return {
+        connected: true,
+        username: user.githubUsername,
+        avatarUrl: user.avatarUrl || undefined
+      };
+    } catch {
+      return { connected: false };
+    }
+  }
+
+  // Get Git credentials for push/pull operations (uses cached username, no API call)
+  async getGitCredentials(userId: number): Promise<{ username: string; password: string } | null> {
+    try {
+      const user = await storage.getUser(String(userId));
+      if (!user?.githubTokenCiphertext || !user?.githubTokenIv || !user?.githubUsername) {
+        return null;
+      }
+      
+      const { decryptToken } = await import('./credential-encryption');
+      const token = decryptToken(user.githubTokenCiphertext, user.githubTokenIv);
+      
+      // Use cached username instead of making GitHub API call
+      return {
+        username: user.githubUsername,
+        password: token
+      };
+    } catch (error) {
+      console.error('[GitHubOAuthService] Failed to get Git credentials:', error);
+      return null;
+    }
   }
 
   // Remove GitHub connection
   async disconnectUser(userId: number): Promise<void> {
-    this.tokenCache.delete(userId);
-    
-    // Clear GitHub username from user profile
     try {
       await storage.updateUser(String(userId), {
-        githubUsername: null
+        githubUsername: null,
+        githubTokenCiphertext: null,
+        githubTokenIv: null,
+        githubTokenCreatedAt: null
       });
+      console.log(`[GitHubOAuthService] GitHub disconnected for user ${userId}`);
     } catch (error) {
       console.warn('[GitHubOAuthService] Failed to clear GitHub connection:', error);
     }
@@ -256,10 +323,9 @@ export class GitHubOAuthService {
 
     const token = await this.getUserToken(req.user.id);
     if (!token) {
-      return res.status(401).json({ error: 'GitHub not connected' });
+      return res.status(401).json({ error: 'GitHub not connected', requiresAuth: true });
     }
 
-    // Attach token to request for use in route handlers
     req.githubToken = token;
     next();
   };
