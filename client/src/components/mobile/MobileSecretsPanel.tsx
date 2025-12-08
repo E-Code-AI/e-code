@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { motion } from 'framer-motion';
 import {
-  Shield,
+  Lock,
   Plus,
   Eye,
   EyeOff,
@@ -49,6 +49,22 @@ interface MobileSecretsPanelProps {
   className?: string;
 }
 
+function ShimmerSkeleton({ className }: { className?: string }) {
+  return (
+    <motion.div
+      className={cn("bg-[#3d4452] rounded-lg", className)}
+      animate={{
+        opacity: [0.5, 0.8, 0.5],
+      }}
+      transition={{
+        duration: 1.5,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    />
+  );
+}
+
 export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelProps) {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,7 +75,6 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set());
 
-  // Fetch secrets
   const { data, isLoading, error } = useQuery<{ variables: EnvVariable[] }>({
     queryKey: ['/api/env-vars', projectId],
     queryFn: async () => {
@@ -81,7 +96,6 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
     secret.key.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Helper to format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -98,7 +112,6 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
     return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
   };
 
-  // Create secret mutation
   const createMutation = useMutation({
     mutationFn: async (data: { key: string; value: string }) => {
       return apiRequest('POST', '/api/env-vars', {
@@ -124,7 +137,6 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
     }
   });
 
-  // Update secret mutation
   const updateMutation = useMutation({
     mutationFn: async (data: { id: string; value: string }) => {
       return apiRequest('PATCH', `/api/env-vars/${data.id}`, {
@@ -147,7 +159,6 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
     }
   });
 
-  // Delete secret mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       return apiRequest('DELETE', `/api/env-vars/${id}`);
@@ -165,13 +176,11 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
     }
   });
 
-  // Reveal secret mutation
   const revealMutation = useMutation({
     mutationFn: async (id: string) => {
       return apiRequest<{ value: string }>('POST', `/api/env-vars/${id}/reveal`, {});
     },
     onSuccess: (data, id) => {
-      // Update the specific secret's value in cache
       queryClient.setQueryData<{ variables: EnvVariable[] }>(
         ['/api/env-vars', projectId],
         (old) => {
@@ -196,7 +205,6 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
 
   const handleToggleReveal = (secret: Secret) => {
     if (secret.isRevealed) {
-      // Hide secret - remove from revealed set and refetch to get masked value
       setRevealedSecrets(prev => {
         const newSet = new Set(prev);
         newSet.delete(secret.id);
@@ -204,7 +212,6 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
       });
       queryClient.invalidateQueries({ queryKey: ['/api/env-vars', projectId] });
     } else {
-      // Reveal secret
       revealMutation.mutate(secret.id);
     }
   };
@@ -235,100 +242,107 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
   };
 
   return (
-    <div className={cn("h-full flex flex-col bg-background", className)}>
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-border bg-card">
+    <div className={cn("h-full flex flex-col bg-[#0e1525]", className)}>
+      <div className="p-4 border-b border-[#3d4452] bg-[#1c2333] min-h-[56px]">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold" data-testid="header-secrets">Secrets</h3>
+            <Lock className="w-[18px] h-[18px] text-[#0079f2]" />
+            <h3 className="text-[17px] font-medium leading-tight text-[#ffffff]" data-testid="header-secrets">Secrets</h3>
           </div>
-          <Badge variant="secondary" className="text-xs" data-testid="badge-secret-count">
+          <Badge 
+            variant="secondary" 
+            className="text-[11px] uppercase tracking-wider bg-[#242b3d] text-[#9da2a6] border-none" 
+            data-testid="badge-secret-count"
+          >
             {secrets.length} secrets
           </Badge>
         </div>
 
-        {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#5c6670]" />
           <Input
             placeholder="Search secrets..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
+            className="pl-10 h-11 rounded-lg bg-[#242b3d] border-[#3d4452] text-[15px] leading-[20px] text-[#ffffff] placeholder:text-[#5c6670]"
             data-testid="input-search-secrets"
           />
         </div>
       </div>
 
-      {/* Secrets List */}
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-2">
+      <ScrollArea className="flex-1 pb-[88px]">
+        <div className="p-4 space-y-3">
           {isLoading && (
             <>
               {[1, 2, 3].map((i) => (
-                <div key={i} className="border border-border rounded-lg p-3 bg-card">
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-10 w-full mb-2" />
-                  <Skeleton className="h-4 w-1/2" />
+                <div key={i} className="border border-[#3d4452] rounded-lg p-4 bg-[#1c2333]">
+                  <div className="flex items-center justify-between mb-3">
+                    <ShimmerSkeleton className="h-5 w-32" />
+                    <div className="flex gap-2">
+                      <ShimmerSkeleton className="w-11 h-11 rounded-lg" />
+                      <ShimmerSkeleton className="w-11 h-11 rounded-lg" />
+                    </div>
+                  </div>
+                  <ShimmerSkeleton className="h-10 w-full mb-2 rounded-lg" />
+                  <ShimmerSkeleton className="h-4 w-24" />
                 </div>
               ))}
             </>
           )}
 
           {error && (
-            <div className="text-center py-12 text-destructive">
-              <Shield className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Failed to load secrets</p>
-              <p className="text-xs mt-1">{(error as Error).message}</p>
+            <div className="text-center py-16">
+              <Lock className="w-12 h-12 mx-auto mb-4 text-[#5c6670] opacity-40" />
+              <p className="text-[17px] font-medium leading-tight text-[#d4d8dd] mb-2">Failed to load secrets</p>
+              <p className="text-[13px] text-[#5c6670]">{(error as Error).message}</p>
             </div>
           )}
 
           {!isLoading && !error && filteredSecrets.map((secret) => (
             <div 
               key={secret.id}
-              className="border border-border rounded-lg p-3 bg-card"
+              className="border border-[#3d4452] rounded-lg p-4 bg-[#1c2333]"
               data-testid={`secret-${secret.key}`}
             >
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Key className="h-4 w-4 text-primary" />
-                  <span className="font-mono text-sm font-medium">{secret.key}</span>
+                  <Key className="w-[18px] h-[18px] text-[#0079f2]" />
+                  <span className="font-mono text-[15px] leading-[20px] font-medium text-[#ffffff]">{secret.key}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7"
+                    className="w-11 h-11 rounded-lg hover:bg-[#242b3d]"
                     onClick={() => handleToggleReveal(secret)}
                     disabled={revealMutation.isPending}
                     data-testid={`button-toggle-${secret.key}`}
                   >
                     {revealMutation.isPending && !secret.isRevealed ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <Loader2 className="w-[18px] h-[18px] animate-spin text-[#9da2a6]" />
                     ) : secret.isRevealed ? (
-                      <EyeOff className="h-3.5 w-3.5" />
+                      <EyeOff className="w-[18px] h-[18px] text-[#9da2a6]" />
                     ) : (
-                      <Eye className="h-3.5 w-3.5" />
+                      <Eye className="w-[18px] h-[18px] text-[#9da2a6]" />
                     )}
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7"
+                    className="w-11 h-11 rounded-lg hover:bg-[#242b3d]"
                     onClick={() => handleCopyValue(secret)}
                     data-testid={`button-copy-${secret.key}`}
                   >
                     {copiedId === secret.id ? (
-                      <Check className="h-3.5 w-3.5 text-green-500" />
+                      <Check className="w-[18px] h-[18px] text-[#0079f2]" />
                     ) : (
-                      <Copy className="h-3.5 w-3.5" />
+                      <Copy className="w-[18px] h-[18px] text-[#9da2a6]" />
                     )}
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7"
+                    className="w-11 h-11 rounded-lg hover:bg-[#242b3d]"
                     onClick={() => {
                       setEditingSecret(secret);
                       setNewSecretKey(secret.key);
@@ -336,52 +350,61 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
                     }}
                     data-testid={`button-edit-${secret.key}`}
                   >
-                    <Edit className="h-3.5 w-3.5" />
+                    <Edit className="w-[18px] h-[18px] text-[#9da2a6]" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7"
+                    className="w-11 h-11 rounded-lg hover:bg-[#242b3d]"
                     onClick={() => handleDeleteSecret(secret.id)}
                     data-testid={`button-delete-${secret.key}`}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="w-[18px] h-[18px] text-[#9da2a6]" />
                   </Button>
                 </div>
               </div>
               
-              <div className="font-mono text-xs p-2 bg-muted/50 rounded border border-border overflow-x-auto">
+              <div className="font-mono text-[13px] p-3 bg-[#242b3d] rounded-lg border border-[#3d4452] overflow-x-auto text-[#d4d8dd]">
                 {secret.isRevealed ? secret.value : '•'.repeat(32)}
               </div>
               
-              <div className="mt-2 text-xs text-muted-foreground">
+              <div className="mt-2 text-[13px] text-[#5c6670]">
                 Modified {formatDate(secret.updatedAt)}
               </div>
             </div>
           ))}
 
           {!isLoading && !error && filteredSecrets.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              <Shield className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No secrets found</p>
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <Lock className="w-12 h-12 mb-4 text-[#5c6670] opacity-40" />
+              <h4 className="text-[17px] font-medium leading-tight text-[#d4d8dd] mb-2">No secrets configured</h4>
+              <p className="text-[15px] leading-[20px] text-[#5c6670] text-center mb-6">
+                Add environment variables and API keys to use in your project
+              </p>
+              <Button 
+                className="h-11 px-6 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[15px] font-medium"
+                onClick={() => setShowAddDialog(true)}
+                data-testid="button-add-secret-empty"
+              >
+                <Plus className="w-[18px] h-[18px] mr-2" />
+                Add Secret
+              </Button>
             </div>
           )}
         </div>
       </ScrollArea>
 
-      {/* Add Button */}
-      <div className="p-4 border-t border-border bg-card">
+      <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-[#3d4452] bg-[#1c2333] pb-[calc(16px+env(safe-area-inset-bottom))]">
         <Button 
-          className="w-full"
+          className="w-full h-11 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[15px] font-medium"
           onClick={() => setShowAddDialog(true)}
           data-testid="button-add-secret"
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="w-[18px] h-[18px] mr-2" />
           Add Secret
         </Button>
       </div>
 
-      {/* Add/Edit Dialog */}
       <Dialog 
         open={showAddDialog || !!editingSecret} 
         onOpenChange={(open) => {
@@ -393,43 +416,46 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
           }
         }}
       >
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] bg-[#1c2333] border-[#3d4452]">
           <DialogHeader>
-            <DialogTitle>{editingSecret ? 'Edit' : 'Add'} Secret</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-[17px] font-medium leading-tight text-[#ffffff]">
+              {editingSecret ? 'Edit' : 'Add'} Secret
+            </DialogTitle>
+            <DialogDescription className="text-[15px] leading-[20px] text-[#5c6670]">
               {editingSecret ? 'Update' : 'Create'} an environment variable for your project
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Key</label>
+              <label className="text-[11px] uppercase tracking-wider font-medium text-[#9da2a6]">Key</label>
               <Input
                 placeholder="DATABASE_URL"
                 value={newSecretKey}
                 onChange={(e) => setNewSecretKey(e.target.value)}
-                className="font-mono"
+                className="h-11 rounded-lg font-mono bg-[#242b3d] border-[#3d4452] text-[15px] text-[#ffffff] placeholder:text-[#5c6670]"
                 disabled={!!editingSecret}
                 data-testid="input-secret-key"
               />
               {!!editingSecret && (
-                <p className="text-xs text-muted-foreground">Key cannot be changed</p>
+                <p className="text-[13px] text-[#5c6670]">Key cannot be changed</p>
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Value</label>
+              <label className="text-[11px] uppercase tracking-wider font-medium text-[#9da2a6]">Value</label>
               <Input
                 type="password"
                 placeholder="your-secret-value"
                 value={newSecretValue}
                 onChange={(e) => setNewSecretValue(e.target.value)}
-                className="font-mono"
+                className="h-11 rounded-lg font-mono bg-[#242b3d] border-[#3d4452] text-[15px] text-[#ffffff] placeholder:text-[#5c6670]"
                 data-testid="input-secret-value"
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button
               variant="outline"
+              className="h-10 rounded-lg border-[#3d4452] bg-transparent text-[#d4d8dd] hover:bg-[#242b3d] text-[15px]"
               onClick={() => {
                 setShowAddDialog(false);
                 setEditingSecret(null);
@@ -441,6 +467,7 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
               Cancel
             </Button>
             <Button
+              className="h-11 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[15px] font-medium"
               onClick={editingSecret ? handleUpdateSecret : handleAddSecret}
               disabled={
                 (!newSecretKey || !newSecretValue) ||
@@ -450,7 +477,7 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
               data-testid="button-save-secret"
             >
               {(createMutation.isPending || updateMutation.isPending) && (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="w-[18px] h-[18px] mr-2 animate-spin" />
               )}
               {editingSecret ? 'Update' : 'Add'} Secret
             </Button>

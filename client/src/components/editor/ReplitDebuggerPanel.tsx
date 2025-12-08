@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { motion } from 'framer-motion';
 import {
   Bug,
   Play,
@@ -68,13 +69,79 @@ interface DebugSession {
   currentLine?: number;
 }
 
+function ShimmerSkeleton({ className }: { className?: string }) {
+  return (
+    <motion.div
+      className={cn("bg-[#242b3d] rounded-lg", className)}
+      animate={{
+        backgroundPosition: ["200% 0", "-200% 0"],
+      }}
+      transition={{
+        duration: 1.5,
+        repeat: Infinity,
+        ease: "linear",
+      }}
+      style={{
+        backgroundImage: "linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)",
+        backgroundSize: "200% 100%",
+      }}
+    />
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="p-3 space-y-3">
+      <ShimmerSkeleton className="h-8 w-full" />
+      <ShimmerSkeleton className="h-8 w-3/4" />
+      <ShimmerSkeleton className="h-8 w-5/6" />
+      <ShimmerSkeleton className="h-8 w-2/3" />
+    </div>
+  );
+}
+
+function EmptyState({ 
+  icon: Icon, 
+  title, 
+  description, 
+  actionLabel, 
+  onAction 
+}: { 
+  icon: any;
+  title: string;
+  description: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-8 px-3">
+      <Icon className="w-12 h-12 text-[#5c6670] opacity-40 mb-3" />
+      <h4 className="text-[15px] leading-[20px] font-medium text-[#ffffff] mb-1">
+        {title}
+      </h4>
+      <p className="text-[13px] text-[#9da2a6] text-center mb-4">
+        {description}
+      </p>
+      {actionLabel && onAction && (
+        <Button
+          onClick={onAction}
+          className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[13px]"
+          data-testid="button-empty-state-action"
+        >
+          {actionLabel}
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string }) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('breakpoints');
   const [expandedVariables, setExpandedVariables] = useState<Set<string>>(new Set());
   const [newWatchExpression, setNewWatchExpression] = useState('');
 
-  const { data: session, refetch } = useQuery<DebugSession>({
+  const { data: session, refetch, isLoading } = useQuery<DebugSession>({
     queryKey: ['/api/debug/session', projectId],
     queryFn: async () => {
       const res = await fetch(`/api/debug/session/${projectId}`);
@@ -196,18 +263,18 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
 
   const renderVariableValue = (value: any, type: string) => {
     if (type === 'object') {
-      return <span className="text-[var(--ecode-text-muted)]">{'{ ... }'}</span>;
+      return <span className="text-[#9da2a6]">{'{ ... }'}</span>;
     }
     if (type === 'string') {
-      return <span className="text-status-success">"{value}"</span>;
+      return <span className="text-[#0079f2]">"{value}"</span>;
     }
     if (type === 'boolean') {
-      return <span className="text-status-info">{value.toString()}</span>;
+      return <span className="text-[#0079f2]">{value.toString()}</span>;
     }
     if (type === 'number') {
-      return <span className="text-status-warning">{value}</span>;
+      return <span className="text-[#0079f2]">{value}</span>;
     }
-    return <span className="text-[var(--ecode-text)]">{value}</span>;
+    return <span className="text-[#ffffff]">{value}</span>;
   };
 
   const isRunning = session?.isRunning || false;
@@ -217,20 +284,33 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
   const callStack = session?.callStack || [];
   const watchExpressions = session?.watchExpressions || [];
 
+  if (isLoading) {
+    return (
+      <div className="h-full flex flex-col bg-[#0e1525]">
+        <div className="p-3 min-h-[48px] border-b border-[#3d4452]">
+          <ShimmerSkeleton className="h-6 w-24" />
+        </div>
+        <LoadingSkeleton />
+      </div>
+    );
+  }
+
   return (
-    <div className="h-full flex flex-col bg-[var(--ecode-surface)]">
+    <div className="h-full flex flex-col bg-[#0e1525]">
       {/* Header */}
-      <div className="px-3 py-3 border-b border-[var(--ecode-border)]">
+      <div className="p-3 min-h-[48px] border-b border-[#3d4452]">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Bug className="h-4 w-4 text-[var(--ecode-accent)]" />
-            <h3 className="font-semibold text-[var(--ecode-text)] text-sm font-[family-name:var(--ecode-font-sans)]">
+            <Bug className="w-[18px] h-[18px] text-[#0079f2]" />
+            <h3 className="text-[17px] font-medium leading-tight text-[#ffffff]">
               Debugger
             </h3>
             {isRunning && (
               <Badge className={cn(
-                "text-xs",
-                isPaused ? "bg-status-warning/20 text-status-warning" : "bg-status-success/20 text-status-success"
+                "text-[11px] uppercase tracking-wider rounded-lg",
+                isPaused 
+                  ? "bg-[#242b3d] text-[#9da2a6] border border-[#3d4452]" 
+                  : "bg-[#0079f2]/20 text-[#0079f2] border border-[#0079f2]/30"
               )}>
                 {isPaused ? 'Paused' : 'Running'}
               </Badge>
@@ -239,16 +319,15 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
         </div>
 
         {/* Debug Controls */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           {!isRunning ? (
             <Button
-              size="sm"
               onClick={() => startDebugMutation.mutate(undefined)}
               disabled={startDebugMutation.isPending}
-              className="text-xs h-7"
+              className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[13px] px-3"
               data-testid="button-debug-start"
             >
-              <Play className="h-3 w-3 mr-1" />
+              <Play className="w-[18px] h-[18px] mr-2" />
               Start Debug
             </Button>
           ) : (
@@ -257,75 +336,75 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#242b3d]"
                   onClick={() => continueDebugMutation.mutate(undefined)}
                   disabled={continueDebugMutation.isPending}
                   data-testid="button-debug-continue"
                 >
-                  <Play className="h-3 w-3" />
+                  <Play className="w-[18px] h-[18px] text-[#0079f2]" />
                 </Button>
               ) : (
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#242b3d]"
                   onClick={() => pauseDebugMutation.mutate(undefined)}
                   disabled={pauseDebugMutation.isPending}
                   data-testid="button-debug-pause"
                 >
-                  <Pause className="h-3 w-3" />
+                  <Pause className="w-[18px] h-[18px] text-[#9da2a6]" />
                 </Button>
               )}
               <Button
                 variant="outline"
                 size="icon"
-                className="h-7 w-7"
+                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#242b3d]"
                 onClick={() => stopDebugMutation.mutate(undefined)}
                 disabled={stopDebugMutation.isPending}
                 data-testid="button-debug-stop"
               >
-                <Square className="h-3 w-3" />
+                <Square className="w-[18px] h-[18px] text-[#9da2a6]" />
               </Button>
-              <div className="w-px h-5 bg-[var(--ecode-border)] mx-1" />
+              <div className="w-px h-6 bg-[#3d4452] mx-1" />
               <Button
                 variant="outline"
                 size="icon"
-                className="h-7 w-7"
+                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#242b3d]"
                 disabled={!isPaused || stepOverMutation.isPending}
                 onClick={() => stepOverMutation.mutate(undefined)}
                 data-testid="button-debug-step-over"
               >
-                <ArrowRight className="h-3 w-3" />
+                <ArrowRight className="w-[18px] h-[18px] text-[#9da2a6]" />
               </Button>
               <Button
                 variant="outline"
                 size="icon"
-                className="h-7 w-7"
+                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#242b3d]"
                 disabled={!isPaused || stepIntoMutation.isPending}
                 onClick={() => stepIntoMutation.mutate(undefined)}
                 data-testid="button-debug-step-into"
               >
-                <ArrowDown className="h-3 w-3" />
+                <ArrowDown className="w-[18px] h-[18px] text-[#9da2a6]" />
               </Button>
               <Button
                 variant="outline"
                 size="icon"
-                className="h-7 w-7"
+                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#242b3d]"
                 disabled={!isPaused || stepOutMutation.isPending}
                 onClick={() => stepOutMutation.mutate(undefined)}
                 data-testid="button-debug-step-out"
               >
-                <ArrowUp className="h-3 w-3" />
+                <ArrowUp className="w-[18px] h-[18px] text-[#9da2a6]" />
               </Button>
-              <div className="w-px h-5 bg-[var(--ecode-border)] mx-1" />
+              <div className="w-px h-6 bg-[#3d4452] mx-1" />
               <Button
                 variant="outline"
                 size="icon"
-                className="h-7 w-7"
+                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#242b3d]"
                 onClick={() => refetch()}
                 data-testid="button-debug-refresh"
               >
-                <RefreshCw className="h-3 w-3" />
+                <RefreshCw className="w-[18px] h-[18px] text-[#9da2a6]" />
               </Button>
             </>
           )}
@@ -334,31 +413,43 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <TabsList className="grid w-full grid-cols-4 px-3 pt-2 bg-[var(--ecode-surface)]">
-          <TabsTrigger value="breakpoints" className="text-xs">
+        <TabsList className="grid w-full grid-cols-4 p-3 bg-[#0e1525] gap-1">
+          <TabsTrigger 
+            value="breakpoints" 
+            className="text-[11px] uppercase tracking-wider h-8 rounded-lg data-[state=active]:bg-[#242b3d] data-[state=active]:text-[#ffffff] text-[#9da2a6]"
+          >
             Breakpoints
           </TabsTrigger>
-          <TabsTrigger value="variables" className="text-xs">
+          <TabsTrigger 
+            value="variables" 
+            className="text-[11px] uppercase tracking-wider h-8 rounded-lg data-[state=active]:bg-[#242b3d] data-[state=active]:text-[#ffffff] text-[#9da2a6]"
+          >
             Variables
           </TabsTrigger>
-          <TabsTrigger value="watch" className="text-xs">
+          <TabsTrigger 
+            value="watch" 
+            className="text-[11px] uppercase tracking-wider h-8 rounded-lg data-[state=active]:bg-[#242b3d] data-[state=active]:text-[#ffffff] text-[#9da2a6]"
+          >
             Watch
           </TabsTrigger>
-          <TabsTrigger value="callstack" className="text-xs">
+          <TabsTrigger 
+            value="callstack" 
+            className="text-[11px] uppercase tracking-wider h-8 rounded-lg data-[state=active]:bg-[#242b3d] data-[state=active]:text-[#ffffff] text-[#9da2a6]"
+          >
             Call Stack
           </TabsTrigger>
         </TabsList>
 
         {/* Breakpoints Tab */}
-        <TabsContent value="breakpoints" className="flex-1">
+        <TabsContent value="breakpoints" className="flex-1 mt-0">
           <ScrollArea className="h-full">
-            <div className="p-2">
+            <div className="p-3 space-y-2">
               {breakpoints.length > 0 ? (
                 breakpoints.map((bp) => (
                   <div
                     key={bp.id}
                     className={cn(
-                      "flex items-center gap-2 px-2 py-2 hover:bg-[var(--ecode-surface-hover)] rounded",
+                      "flex items-center gap-3 p-3 hover:bg-[#1c2333] rounded-lg transition-colors",
                       !bp.isEnabled && "opacity-50"
                     )}
                     data-testid={`breakpoint-${bp.id}`}
@@ -367,96 +458,92 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                       type="checkbox"
                       checked={bp.isEnabled}
                       onChange={() => toggleBreakpointMutation.mutate({ breakpointId: bp.id })}
-                      className="rounded border-[var(--ecode-border)]"
+                      className="rounded border-[#3d4452] bg-[#242b3d] w-4 h-4"
                     />
                     <Circle className={cn(
-                      "h-3 w-3",
-                      bp.isEnabled ? "text-status-critical fill-status-critical" : "text-[var(--ecode-text-muted)]"
+                      "w-[18px] h-[18px]",
+                      bp.isEnabled ? "text-[#0079f2] fill-[#0079f2]" : "text-[#5c6670]"
                     )} />
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-[family-name:var(--ecode-font-mono)] text-[var(--ecode-text)] truncate">
+                      <div className="text-[15px] leading-[20px] font-mono text-[#ffffff] truncate">
                         {bp.file}:{bp.line}
                       </div>
                       {bp.condition && (
-                        <div className="text-xs text-[var(--ecode-text-muted)]">
+                        <div className="text-[13px] text-[#9da2a6]">
                           Condition: {bp.condition}
                         </div>
                       )}
                     </div>
-                    <Badge variant="outline" className="text-xs px-1 py-0">
+                    <Badge variant="outline" className="text-[11px] uppercase tracking-wider px-2 py-0.5 border-[#3d4452] text-[#9da2a6] rounded-lg">
                       {bp.hitCount}
                     </Badge>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6"
+                      className="h-8 w-8 rounded-lg hover:bg-[#242b3d]"
                       onClick={() => deleteBreakpointMutation.mutate({ breakpointId: bp.id })}
                       data-testid={`button-delete-breakpoint-${bp.id}`}
                     >
-                      <Trash2 className="h-3 w-3 text-status-critical" />
+                      <Trash2 className="w-[18px] h-[18px] text-[#5c6670] hover:text-[#0079f2]" />
                     </Button>
                   </div>
                 ))
               ) : (
-                <div className="flex flex-col items-center justify-center py-8">
-                  <Circle className="h-12 w-12 text-[var(--ecode-text-muted)] mb-3" />
-                  <p className="text-sm text-[var(--ecode-text-muted)] font-[family-name:var(--ecode-font-sans)]">
-                    No breakpoints set
-                  </p>
-                  <p className="text-xs text-[var(--ecode-text-muted)] mt-1 font-[family-name:var(--ecode-font-sans)]">
-                    Click on line numbers in the editor to add breakpoints
-                  </p>
-                </div>
+                <EmptyState
+                  icon={Circle}
+                  title="No breakpoints set"
+                  description="Click on line numbers in the editor to add breakpoints"
+                />
               )}
             </div>
           </ScrollArea>
         </TabsContent>
 
         {/* Variables Tab */}
-        <TabsContent value="variables" className="flex-1">
+        <TabsContent value="variables" className="flex-1 mt-0">
           <ScrollArea className="h-full">
-            <div className="p-2">
+            <div className="p-3 space-y-2">
               {isRunning && isPaused && variables.length > 0 ? (
                 variables.map((variable) => (
-                  <div key={variable.name} className="mb-1">
+                  <div key={variable.name} className="space-y-1">
                     <div
                       className={cn(
-                        "flex items-center gap-2 px-2 py-1 hover:bg-[var(--ecode-surface-hover)] rounded cursor-pointer",
+                        "flex items-center gap-3 p-3 hover:bg-[#1c2333] rounded-lg cursor-pointer transition-colors",
                         variable.children && "font-medium"
                       )}
                       onClick={() => variable.children && toggleVariableExpansion(variable.name)}
                     >
                       {variable.children ? (
                         expandedVariables.has(variable.name) ? (
-                          <ChevronDown className="h-3 w-3 text-[var(--ecode-text-muted)]" />
+                          <ChevronDown className="w-[18px] h-[18px] text-[#5c6670]" />
                         ) : (
-                          <ChevronRight className="h-3 w-3 text-[var(--ecode-text-muted)]" />
+                          <ChevronRight className="w-[18px] h-[18px] text-[#5c6670]" />
                         )
                       ) : (
-                        <div className="w-3" />
+                        <div className="w-[18px]" />
                       )}
-                      <span className="text-sm text-[var(--ecode-text)] font-[family-name:var(--ecode-font-mono)]">
+                      <span className="text-[15px] leading-[20px] text-[#ffffff] font-mono">
                         {variable.name}
                       </span>
-                      <span className="text-sm text-[var(--ecode-text-muted)]">:</span>
-                      <span className="text-sm font-[family-name:var(--ecode-font-mono)]">
+                      <span className="text-[15px] leading-[20px] text-[#5c6670]">:</span>
+                      <span className="text-[15px] leading-[20px] font-mono">
                         {renderVariableValue(variable.value, variable.type)}
                       </span>
                     </div>
 
                     {variable.children && expandedVariables.has(variable.name) && (
-                      <div className="ml-6">
+                      <div className="ml-8 space-y-1">
                         {variable.children.map((child) => (
                           <div
                             key={child.name}
-                            className="flex items-center gap-2 px-2 py-1 hover:bg-[var(--ecode-surface-hover)] rounded"
+                            className="flex items-center gap-3 p-3 hover:bg-[#1c2333] rounded-lg transition-colors"
                           >
-                            <div className="w-3" />
-                            <span className="text-sm text-[var(--ecode-text)] font-[family-name:var(--ecode-font-mono)]">
+                            <div className="w-[18px]" />
+                            <span className="text-[15px] leading-[20px] text-[#ffffff] font-mono">
                               {child.name}
                             </span>
-                            <span className="text-sm text-[var(--ecode-text-muted)]">:</span>
-                            <span className="text-sm font-[family-name:var(--ecode-font-mono)]">
+                            <span className="text-[15px] leading-[20px] text-[#5c6670]">:</span>
+                            <span className="text-[15px] leading-[20px] font-mono">
                               {renderVariableValue(child.value, child.type)}
                             </span>
                           </div>
@@ -466,98 +553,108 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                   </div>
                 ))
               ) : (
-                <div className="flex flex-col items-center justify-center py-8">
-                  <AlertCircle className="h-12 w-12 text-[var(--ecode-text-muted)] mb-3" />
-                  <p className="text-sm text-[var(--ecode-text-muted)] font-[family-name:var(--ecode-font-sans)]">
-                    {isRunning ? 'Not paused' : 'Start debugging to see variables'}
-                  </p>
-                </div>
+                <EmptyState
+                  icon={AlertCircle}
+                  title={isRunning ? 'Not paused' : 'No active debug session'}
+                  description={isRunning ? 'Pause execution to inspect variables' : 'Start debugging to see variables'}
+                  actionLabel={!isRunning ? 'Start Debug' : undefined}
+                  onAction={!isRunning ? () => startDebugMutation.mutate(undefined) : undefined}
+                />
               )}
             </div>
           </ScrollArea>
         </TabsContent>
 
         {/* Watch Tab */}
-        <TabsContent value="watch" className="flex-1">
-          <div className="p-2">
-            <div className="flex gap-2 mb-2">
+        <TabsContent value="watch" className="flex-1 mt-0">
+          <div className="p-3 space-y-3">
+            <div className="flex gap-2">
               <Input
                 value={newWatchExpression}
                 onChange={(e) => setNewWatchExpression(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddWatch()}
                 placeholder="Add watch expression..."
-                className="flex-1 h-7 text-xs font-[family-name:var(--ecode-font-mono)]"
+                className="flex-1 h-8 rounded-lg text-[13px] font-mono bg-[#1c2333] border-[#3d4452] text-[#ffffff] placeholder:text-[#5c6670]"
                 data-testid="input-watch-expression"
               />
               <Button
-                size="sm"
                 onClick={handleAddWatch}
-                className="h-7 w-7 p-0"
+                className="h-8 w-8 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 p-0"
                 disabled={!newWatchExpression.trim() || addWatchMutation.isPending}
                 data-testid="button-add-watch"
               >
-                <Plus className="h-3 w-3" />
+                <Plus className="w-[18px] h-[18px] text-[#ffffff]" />
               </Button>
             </div>
 
             <ScrollArea className="h-full">
-              {watchExpressions.map((expr, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-2 px-2 py-1.5 hover:bg-[var(--ecode-surface-hover)] rounded"
-                  data-testid={`watch-${index}`}
-                >
-                  <span className="text-sm font-[family-name:var(--ecode-font-mono)] text-[var(--ecode-text)] flex-1">
-                    {expr}
-                  </span>
-                  <span className="text-sm text-[var(--ecode-text-muted)] font-[family-name:var(--ecode-font-mono)]">
-                    {isRunning && isPaused ? (
-                      <span className="text-status-success">"value"</span>
-                    ) : (
-                      <span className="text-[var(--ecode-text-muted)]">-</span>
-                    )}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    onClick={() => deleteWatchMutation.mutate({ index })}
-                    data-testid={`button-delete-watch-${index}`}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
+              <div className="space-y-2">
+                {watchExpressions.length > 0 ? (
+                  watchExpressions.map((expr, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 p-3 hover:bg-[#1c2333] rounded-lg transition-colors"
+                      data-testid={`watch-${index}`}
+                    >
+                      <span className="text-[15px] leading-[20px] font-mono text-[#ffffff] flex-1">
+                        {expr}
+                      </span>
+                      <span className="text-[15px] leading-[20px] text-[#9da2a6] font-mono">
+                        {isRunning && isPaused ? (
+                          <span className="text-[#0079f2]">"value"</span>
+                        ) : (
+                          <span className="text-[#5c6670]">-</span>
+                        )}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-lg hover:bg-[#242b3d]"
+                        onClick={() => deleteWatchMutation.mutate({ index })}
+                        data-testid={`button-delete-watch-${index}`}
+                      >
+                        <X className="w-[18px] h-[18px] text-[#5c6670] hover:text-[#0079f2]" />
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <EmptyState
+                    icon={AlertCircle}
+                    title="No watch expressions"
+                    description="Add expressions to monitor their values during debugging"
+                  />
+                )}
+              </div>
             </ScrollArea>
           </div>
         </TabsContent>
 
         {/* Call Stack Tab */}
-        <TabsContent value="callstack" className="flex-1">
+        <TabsContent value="callstack" className="flex-1 mt-0">
           <ScrollArea className="h-full">
-            <div className="p-2">
+            <div className="p-3 space-y-2">
               {isRunning && isPaused && callStack.length > 0 ? (
                 callStack.map((frame) => (
                   <div
                     key={frame.id}
                     className={cn(
-                      "px-2 py-2 hover:bg-[var(--ecode-surface-hover)] rounded cursor-pointer",
-                      frame.isActive && "bg-status-info/10"
+                      "p-3 hover:bg-[#1c2333] rounded-lg cursor-pointer transition-colors",
+                      frame.isActive && "bg-[#0079f2]/10 border border-[#0079f2]/30"
                     )}
                     data-testid={`callstack-frame-${frame.id}`}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       {frame.isActive && (
-                        <ChevronRight className="h-3 w-3 text-status-info" />
+                        <ChevronRight className="w-[18px] h-[18px] text-[#0079f2]" />
                       )}
                       <div className={cn(
                         "flex-1",
-                        !frame.isActive && "ml-5"
+                        !frame.isActive && "ml-[26px]"
                       )}>
-                        <div className="text-sm font-medium text-[var(--ecode-text)] font-[family-name:var(--ecode-font-mono)]">
+                        <div className="text-[15px] leading-[20px] font-medium text-[#ffffff] font-mono">
                           {frame.name}
                         </div>
-                        <div className="text-xs text-[var(--ecode-text-muted)] font-[family-name:var(--ecode-font-mono)]">
+                        <div className="text-[13px] text-[#9da2a6] font-mono">
                           {frame.file}:{frame.line}
                         </div>
                       </div>
@@ -565,12 +662,13 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                   </div>
                 ))
               ) : (
-                <div className="flex flex-col items-center justify-center py-8">
-                  <AlertCircle className="h-12 w-12 text-[var(--ecode-text-muted)] mb-3" />
-                  <p className="text-sm text-[var(--ecode-text-muted)] font-[family-name:var(--ecode-font-sans)]">
-                    {isRunning ? 'Not paused' : 'Start debugging to see call stack'}
-                  </p>
-                </div>
+                <EmptyState
+                  icon={AlertCircle}
+                  title={isRunning ? 'Not paused' : 'No active debug session'}
+                  description={isRunning ? 'Pause execution to see call stack' : 'Start debugging to see call stack'}
+                  actionLabel={!isRunning ? 'Start Debug' : undefined}
+                  onAction={!isRunning ? () => startDebugMutation.mutate(undefined) : undefined}
+                />
               )}
             </div>
           </ScrollArea>

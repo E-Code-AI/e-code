@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
@@ -26,6 +25,47 @@ interface ReplitTerminalPanelProps {
   className?: string;
 }
 
+function ShimmerSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "animate-pulse bg-gradient-to-r from-[#242b3d] via-[#3d4452] to-[#242b3d] bg-[length:200%_100%]",
+        className
+      )}
+      style={{
+        animation: 'shimmer 1.5s infinite',
+      }}
+    />
+  );
+}
+
+function ConnectionBadge({ isConnecting, isConnected }: { isConnecting: boolean; isConnected: boolean }) {
+  if (isConnecting) {
+    return (
+      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#242b3d] border border-[#3d4452]">
+        <Loader2 className="w-[18px] h-[18px] animate-spin text-[#0079f2]" />
+        <span className="text-[13px] text-[#9da2a6]">Connecting</span>
+      </div>
+    );
+  }
+  
+  if (isConnected) {
+    return (
+      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#242b3d] border border-[#3d4452]">
+        <Wifi className="w-[18px] h-[18px] text-green-500" />
+        <span className="text-[13px] text-green-500">Connected</span>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#242b3d] border border-[#3d4452]">
+      <WifiOff className="w-[18px] h-[18px] text-yellow-500" />
+      <span className="text-[13px] text-yellow-500">Disconnected</span>
+    </div>
+  );
+}
+
 export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPanelProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
@@ -39,6 +79,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   const connectWebSocket = useCallback(() => {
@@ -56,6 +97,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
       ws.onopen = () => {
         setIsConnected(true);
         setIsConnecting(false);
+        setIsLoading(false);
         
         if (xtermRef.current) {
           xtermRef.current.writeln('\x1b[1;32m✓ Connected to terminal server\x1b[0m');
@@ -125,27 +167,27 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
 
     const term = new XTerm({
       theme: {
-        background: '#0d1117',
-        foreground: '#e6edf3',
-        cursor: '#F26207',
-        cursorAccent: '#F26207',
-        selectionBackground: '#264f78',
-        black: '#484f58',
+        background: '#0e1525',
+        foreground: '#d4d8dd',
+        cursor: '#0079f2',
+        cursorAccent: '#0079f2',
+        selectionBackground: '#3d4452',
+        black: '#0e1525',
         red: '#ff7b72',
         green: '#3fb950',
         yellow: '#d29922',
-        blue: '#58a6ff',
+        blue: '#0079f2',
         magenta: '#bc8cff',
         cyan: '#39c5cf',
-        white: '#e6edf3',
-        brightBlack: '#6e7681',
+        white: '#d4d8dd',
+        brightBlack: '#5c6670',
         brightRed: '#ffa198',
         brightGreen: '#56d364',
         brightYellow: '#e3b341',
         brightBlue: '#79c0ff',
         brightMagenta: '#d2a8ff',
         brightCyan: '#39c5cf',
-        brightWhite: '#f0f6fc'
+        brightWhite: '#ffffff'
       },
       fontSize: 14,
       fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
@@ -222,6 +264,8 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
     });
 
     connectWebSocket();
+    
+    setTimeout(() => setIsLoading(false), 1500);
 
     const handleResize = () => {
       if (fitAddonRef.current) {
@@ -298,28 +342,22 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
   };
 
   return (
-    <div className={cn("h-full flex flex-col bg-background", className)} data-testid="replit-terminal-panel">
-      <div className="h-10 px-3 flex items-center justify-between bg-muted border-b border-border">
-        <div className="flex items-center gap-2">
-          <Terminal className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Shell</span>
+    <div 
+      className={cn(
+        "h-full flex flex-col bg-[#0e1525]",
+        isFullscreen && "fixed inset-0 z-50",
+        className
+      )} 
+      data-testid="replit-terminal-panel"
+    >
+      <div className="min-h-[48px] p-3 flex items-center justify-between bg-[#1c2333] border-b border-[#3d4452]">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Terminal className="w-[18px] h-[18px] text-[#9da2a6]" />
+            <span className="text-[17px] font-medium leading-tight text-[#d4d8dd]">Shell</span>
+          </div>
           
-          {isConnecting ? (
-            <Badge variant="outline" className="text-xs gap-1">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              Connecting
-            </Badge>
-          ) : isConnected ? (
-            <Badge variant="outline" className="text-xs gap-1 text-green-500 border-green-500/30">
-              <Wifi className="h-3 w-3" />
-              Connected
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="text-xs gap-1 text-yellow-500 border-yellow-500/30">
-              <WifiOff className="h-3 w-3" />
-              Disconnected
-            </Badge>
-          )}
+          <ConnectionBadge isConnecting={isConnecting} isConnected={isConnected} />
           
           <TerminalMetricsIndicator compact data-testid="replit-terminal-panel-metrics" />
         </div>
@@ -328,59 +366,79 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-accent"
+            className="h-8 w-8 rounded-lg text-[#9da2a6] hover:text-[#ffffff] hover:bg-[#3d4452] transition-colors"
             onClick={handleCopy}
             data-testid="button-terminal-copy"
           >
-            <Copy className="h-3.5 w-3.5" />
+            <Copy className="w-[18px] h-[18px]" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-accent"
+            className="h-8 w-8 rounded-lg text-[#9da2a6] hover:text-[#ffffff] hover:bg-[#3d4452] transition-colors"
             onClick={handleClear}
             data-testid="button-terminal-clear"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="w-[18px] h-[18px]" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-accent"
+            className="h-8 w-8 rounded-lg text-[#9da2a6] hover:text-[#ffffff] hover:bg-[#3d4452] transition-colors"
             onClick={handleReset}
             data-testid="button-terminal-reset"
           >
-            <RotateCcw className="h-3.5 w-3.5" />
+            <RotateCcw className="w-[18px] h-[18px]" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-accent"
+            className="h-8 w-8 rounded-lg text-[#9da2a6] hover:text-[#ffffff] hover:bg-[#3d4452] transition-colors"
             onClick={() => setIsFullscreen(!isFullscreen)}
             data-testid="button-terminal-fullscreen"
           >
             {isFullscreen ? (
-              <Minimize2 className="h-3.5 w-3.5" />
+              <Minimize2 className="w-[18px] h-[18px]" />
             ) : (
-              <Maximize2 className="h-3.5 w-3.5" />
+              <Maximize2 className="w-[18px] h-[18px]" />
             )}
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-accent"
+            className="h-8 w-8 rounded-lg text-[#9da2a6] hover:text-[#ffffff] hover:bg-[#3d4452] transition-colors"
             data-testid="button-terminal-new"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="w-[18px] h-[18px]" />
           </Button>
         </div>
       </div>
 
-      <div
-        ref={terminalRef}
-        className="flex-1 p-2 bg-[#0d1117]"
-        data-testid="terminal-container"
-      />
+      <div className="flex-1 relative">
+        {isLoading && (
+          <div className="absolute inset-0 z-10 p-3 bg-[#0e1525] flex flex-col gap-2">
+            <ShimmerSkeleton className="h-4 w-3/4 rounded" />
+            <ShimmerSkeleton className="h-4 w-1/2 rounded" />
+            <ShimmerSkeleton className="h-4 w-2/3 rounded" />
+            <ShimmerSkeleton className="h-4 w-1/3 rounded" />
+          </div>
+        )}
+        <div
+          ref={terminalRef}
+          className={cn(
+            "h-full p-3 bg-[#0e1525]",
+            isLoading && "opacity-0"
+          )}
+          data-testid="terminal-container"
+        />
+      </div>
+      
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+      `}</style>
     </div>
   );
 }

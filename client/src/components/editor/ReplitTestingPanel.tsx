@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { 
   PlayCircle, 
   CheckCircle2, 
   XCircle, 
   Clock, 
-  FileCode, 
+  FlaskConical,
   ChevronRight,
   ChevronDown,
   RefreshCw,
@@ -25,7 +26,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 
-// Backend types matching schema
 interface TestRun {
   id: string;
   projectId: string;
@@ -69,6 +69,35 @@ interface ReplitTestingPanelProps {
   className?: string;
 }
 
+function ShimmerSkeleton({ className }: { className?: string }) {
+  return (
+    <motion.div
+      className={cn("bg-[#3d4452] rounded-lg overflow-hidden", className)}
+      initial={{ opacity: 0.5 }}
+      animate={{ opacity: [0.5, 0.8, 0.5] }}
+      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+    >
+      <motion.div
+        className="h-full w-full bg-gradient-to-r from-transparent via-[#5c6670]/20 to-transparent"
+        animate={{ x: ["-100%", "100%"] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+      />
+    </motion.div>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="p-3 space-y-3">
+      <ShimmerSkeleton className="h-10 w-full" />
+      <ShimmerSkeleton className="h-10 w-full" />
+      <ShimmerSkeleton className="h-10 w-3/4" />
+      <ShimmerSkeleton className="h-10 w-5/6" />
+      <ShimmerSkeleton className="h-10 w-2/3" />
+    </div>
+  );
+}
+
 export function ReplitTestingPanel({ projectId = 'default-project', className }: ReplitTestingPanelProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'passed' | 'failed' | 'pending'>('all');
@@ -76,14 +105,12 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
 
-  // Fetch test runs from API
   const { data: testRuns = [], isLoading, refetch } = useQuery<TestRun[]>({
     queryKey: ['/api/workspace/projects', projectId, 'test-runs'],
     enabled: !!projectId,
-    refetchInterval: 5000, // Poll every 5 seconds as fallback
+    refetchInterval: 5000,
   });
 
-  // WebSocket connection for real-time updates
   useEffect(() => {
     if (!projectId) return;
 
@@ -93,22 +120,16 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
-    ws.onopen = () => {
-
-    };
+    ws.onopen = () => {};
 
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
         
         if (message.type === 'initial') {
-          // Initial test runs received
-
         } else if (message.type === 'update' || message.type === 'complete') {
-          // Test run updated - refetch to get latest data
           refetch();
         } else if (message.type === 'test_case') {
-          // New test case result
           setTestCases(prev => {
             const filtered = prev.filter(tc => tc.id !== message.testCase.id);
             return [...filtered, message.testCase];
@@ -123,16 +144,13 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
       console.error('[TestRuns] WebSocket error:', error);
     };
 
-    ws.onclose = () => {
-
-    };
+    ws.onclose = () => {};
 
     return () => {
       ws.close();
     };
   }, [projectId, refetch]);
 
-  // Group test cases by suite name
   const testSuites: TestSuite[] = [];
   const suiteMap = new Map<string, TestSuite>();
 
@@ -150,7 +168,6 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
 
   suiteMap.forEach(suite => testSuites.push(suite));
 
-  // Filter tests based on search and filter
   const filteredSuites = testSuites
     .map(suite => ({
       ...suite,
@@ -177,17 +194,16 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
   const getTestIcon = (status: TestCase['status']) => {
     switch (status) {
       case 'passed':
-        return <CheckCircle2 className="h-4 w-4 text-status-success" />;
+        return <CheckCircle2 className="w-[18px] h-[18px] text-[#22c55e]" />;
       case 'failed':
-        return <XCircle className="h-4 w-4 text-status-critical" />;
+        return <XCircle className="w-[18px] h-[18px] text-[#ef4444]" />;
       case 'skipped':
-        return <AlertCircle className="h-4 w-4 text-status-warning" />;
+        return <AlertCircle className="w-[18px] h-[18px] text-[#f59e0b]" />;
       case 'pending':
-        return <Clock className="h-4 w-4 text-[var(--ecode-text-secondary)]" />;
+        return <Clock className="w-[18px] h-[18px] text-[#5c6670]" />;
     }
   };
 
-  // Calculate stats from latest test run
   const latestRun = testRuns[0];
   const totalTests = latestRun?.totalTests || 0;
   const passedTests = latestRun?.passedTests || 0;
@@ -195,11 +211,10 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
   const skippedTests = latestRun?.skippedTests || 0;
 
   return (
-    <div className={cn("flex flex-col h-full bg-[var(--ecode-surface)]", className)}>
-      {/* Header */}
-      <div className="p-3 border-b border-[var(--ecode-border)] space-y-3">
+    <div className={cn("flex flex-col h-full bg-[#0e1525]", className)}>
+      <div className="p-3 border-b border-[#3d4452] space-y-3 min-h-[48px]">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-[var(--ecode-text)] font-[family-name:var(--ecode-font-sans)]">
+          <h3 className="text-[17px] font-medium leading-tight text-[#ffffff]">
             Testing
           </h3>
           <div className="flex items-center gap-2">
@@ -207,148 +222,142 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
               size="sm"
               variant="ghost"
               onClick={() => refetch()}
-              className="h-7 px-2"
+              className="h-8 px-3 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[13px]"
               data-testid="button-run-tests"
             >
-              <PlayCircle className="h-3.5 w-3.5 mr-1" />
+              <PlayCircle className="w-[18px] h-[18px] mr-1.5" />
               Run All
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="ghost" className="h-7 px-2">
-                  <Settings className="h-3.5 w-3.5" />
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-lg hover:bg-[#3d4452]">
+                  <Settings className="w-[18px] h-[18px] text-[#9da2a6]" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Configure Test Runner</DropdownMenuItem>
-                <DropdownMenuItem>Watch Mode</DropdownMenuItem>
-                <DropdownMenuItem>Coverage Report</DropdownMenuItem>
+              <DropdownMenuContent align="end" className="bg-[#1c2333] border-[#3d4452]">
+                <DropdownMenuItem className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-[#3d4452]">Configure Test Runner</DropdownMenuItem>
+                <DropdownMenuItem className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-[#3d4452]">Watch Mode</DropdownMenuItem>
+                <DropdownMenuItem className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-[#3d4452]">Coverage Report</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
 
-        {/* Stats */}
         {latestRun && (
-          <div className="flex items-center gap-3 text-xs">
-            <Badge variant="outline" className="bg-[var(--ecode-background)]">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] uppercase tracking-wider text-[#5c6670]">Results:</span>
+            <Badge variant="outline" className="bg-[#242b3d] border-[#3d4452] text-[#d4d8dd] text-[13px]">
               Total: {totalTests}
             </Badge>
             {passedTests > 0 && (
-              <Badge variant="outline" className="bg-status-success/10 text-status-success border-status-success/30">
+              <Badge variant="outline" className="bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/30 text-[13px]">
                 Passed: {passedTests}
               </Badge>
             )}
             {failedTests > 0 && (
-              <Badge variant="outline" className="bg-status-critical/10 text-status-critical border-status-critical/30">
+              <Badge variant="outline" className="bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/30 text-[13px]">
                 Failed: {failedTests}
               </Badge>
             )}
             {skippedTests > 0 && (
-              <Badge variant="outline" className="bg-status-warning/100/10 text-status-warning border-status-warning/30">
+              <Badge variant="outline" className="bg-[#f59e0b]/10 text-[#f59e0b] border-[#f59e0b]/30 text-[13px]">
                 Skipped: {skippedTests}
               </Badge>
             )}
             {latestRun.duration && (
-              <Badge variant="outline" className="bg-[var(--ecode-background)]">
+              <Badge variant="outline" className="bg-[#242b3d] border-[#3d4452] text-[#9da2a6] text-[13px]">
                 {latestRun.duration}ms
               </Badge>
             )}
           </div>
         )}
 
-        {/* Search & Filter */}
         <div className="flex items-center gap-2">
           <Input
             placeholder="Search tests..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-7 text-xs"
+            className="h-8 rounded-lg text-[15px] leading-[20px] bg-[#1c2333] border-[#3d4452] text-[#d4d8dd] placeholder:text-[#5c6670]"
             data-testid="input-search-tests"
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="outline" className="h-7 px-2">
-                <Filter className="h-3.5 w-3.5 mr-1" />
+              <Button size="sm" variant="outline" className="h-8 px-3 rounded-lg border-[#3d4452] bg-[#1c2333] hover:bg-[#3d4452] text-[13px] text-[#d4d8dd]">
+                <Filter className="w-[18px] h-[18px] mr-1.5 text-[#9da2a6]" />
                 {filter === 'all' ? 'All' : filter.charAt(0).toUpperCase() + filter.slice(1)}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setFilter('all')}>All Tests</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter('passed')}>Passed</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter('failed')}>Failed</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter('pending')}>Pending</DropdownMenuItem>
+            <DropdownMenuContent align="end" className="bg-[#1c2333] border-[#3d4452]">
+              <DropdownMenuItem onClick={() => setFilter('all')} className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-[#3d4452]">All Tests</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilter('passed')} className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-[#3d4452]">Passed</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilter('failed')} className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-[#3d4452]">Failed</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilter('pending')} className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-[#3d4452]">Pending</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
-      {/* Test Suites List */}
       <ScrollArea className="flex-1">
-        <div className="p-2 space-y-1">
+        <div className="p-3 space-y-1">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <RefreshCw className="h-5 w-5 text-[var(--ecode-text-secondary)] animate-spin" />
-            </div>
+            <LoadingSkeleton />
           ) : filteredSuites.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <FileCode className="h-8 w-8 text-[var(--ecode-text-secondary)] mb-2" />
-              <p className="text-sm text-[var(--ecode-text-muted)] font-[family-name:var(--ecode-font-sans)]">
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <FlaskConical className="w-12 h-12 text-[#5c6670] opacity-40 mb-4" style={{ width: 48, height: 48 }} />
+              <p className="text-[17px] font-medium leading-tight text-[#d4d8dd] mb-2">
                 {searchQuery ? 'No tests match your search' : 'No tests found'}
               </p>
-              <p className="text-xs text-[var(--ecode-text-secondary)] mt-1">
+              <p className="text-[13px] text-[#5c6670] max-w-[240px]">
                 {testRuns.length === 0 ? 'Run tests to see results here' : 'Create test files to get started'}
               </p>
             </div>
           ) : (
             filteredSuites.map(suite => (
-              <div key={suite.id} className="rounded-md overflow-hidden">
-                {/* Suite Header */}
+              <div key={suite.id} className="rounded-lg overflow-hidden">
                 <button
                   onClick={() => toggleSuite(suite.id)}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[var(--ecode-sidebar-hover)] rounded-md transition-colors text-left"
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#3d4452] rounded-lg transition-colors text-left"
                   data-testid={`suite-${suite.id}`}
                 >
                   {expandedSuites.has(suite.id) ? (
-                    <ChevronDown className="h-3.5 w-3.5 text-[var(--ecode-text-secondary)] flex-shrink-0" />
+                    <ChevronDown className="w-[18px] h-[18px] text-[#5c6670] flex-shrink-0" />
                   ) : (
-                    <ChevronRight className="h-3.5 w-3.5 text-[var(--ecode-text-secondary)] flex-shrink-0" />
+                    <ChevronRight className="w-[18px] h-[18px] text-[#5c6670] flex-shrink-0" />
                   )}
-                  <FileCode className="h-3.5 w-3.5 text-[var(--ecode-text-secondary)] flex-shrink-0" />
+                  <FlaskConical className="w-[18px] h-[18px] text-[#9da2a6] flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[var(--ecode-text)] truncate font-[family-name:var(--ecode-font-sans)]">
+                    <p className="text-[15px] leading-[20px] font-medium text-[#ffffff] truncate">
                       {suite.name}
                     </p>
-                    <p className="text-xs text-[var(--ecode-text-secondary)] truncate font-[family-name:var(--ecode-font-mono)]">
+                    <p className="text-[13px] text-[#5c6670] truncate font-mono">
                       {suite.file}
                     </p>
                   </div>
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-[13px] bg-[#242b3d] border-[#3d4452] text-[#9da2a6]">
                     {suite.tests.length}
                   </Badge>
                 </button>
 
-                {/* Test Cases */}
                 {expandedSuites.has(suite.id) && (
-                  <div className="ml-6 mt-1 space-y-1">
+                  <div className="ml-8 mt-1 space-y-1">
                     {suite.tests.map(test => (
                       <div
                         key={test.id}
-                        className="flex items-start gap-2 px-2 py-1.5 hover:bg-[var(--ecode-sidebar-hover)] rounded-md transition-colors cursor-pointer"
+                        className="flex items-start gap-2 px-3 py-2 hover:bg-[#3d4452] rounded-lg transition-colors cursor-pointer"
                         data-testid={`test-${test.id}`}
                       >
                         {getTestIcon(test.status)}
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs text-[var(--ecode-text)] font-[family-name:var(--ecode-font-sans)]">
+                          <p className="text-[15px] leading-[20px] text-[#d4d8dd]">
                             {test.testName}
                           </p>
                           {test.error && (
-                            <p className="text-xs text-status-critical mt-0.5 font-[family-name:var(--ecode-font-mono)] whitespace-pre-wrap">
+                            <p className="text-[13px] text-[#ef4444] mt-1 font-mono whitespace-pre-wrap">
                               {test.error}
                             </p>
                           )}
                           {test.duration && (
-                            <p className="text-xs text-[var(--ecode-text-secondary)] mt-0.5">
+                            <p className="text-[13px] text-[#5c6670] mt-0.5">
                               {test.duration}ms
                             </p>
                           )}
@@ -363,28 +372,27 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
         </div>
       </ScrollArea>
 
-      {/* Test Runs History */}
       {testRuns.length > 0 && (
-        <div className="border-t border-[var(--ecode-border)] p-2">
-          <p className="text-xs text-[var(--ecode-text-secondary)] font-[family-name:var(--ecode-font-sans)] mb-2">
+        <div className="border-t border-[#3d4452] p-3">
+          <p className="text-[11px] uppercase tracking-wider text-[#5c6670] mb-2">
             Recent Runs
           </p>
           <div className="space-y-1">
             {testRuns.slice(0, 3).map(run => (
               <div
                 key={run.id}
-                className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-[var(--ecode-sidebar-hover)] cursor-pointer"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#3d4452] cursor-pointer transition-colors"
                 data-testid={`run-${run.id}`}
               >
-                {run.status === 'passed' && <CheckCircle2 className="h-3.5 w-3.5 text-status-success" />}
-                {run.status === 'failed' && <XCircle className="h-3.5 w-3.5 text-status-critical" />}
-                {run.status === 'running' && <RefreshCw className="h-3.5 w-3.5 text-status-info animate-spin" />}
-                {run.status === 'cancelled' && <AlertCircle className="h-3.5 w-3.5 text-status-warning" />}
+                {run.status === 'passed' && <CheckCircle2 className="w-[18px] h-[18px] text-[#22c55e]" />}
+                {run.status === 'failed' && <XCircle className="w-[18px] h-[18px] text-[#ef4444]" />}
+                {run.status === 'running' && <RefreshCw className="w-[18px] h-[18px] text-[#0079f2] animate-spin" />}
+                {run.status === 'cancelled' && <AlertCircle className="w-[18px] h-[18px] text-[#f59e0b]" />}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-[var(--ecode-text)] font-[family-name:var(--ecode-font-mono)]">
+                  <p className="text-[15px] leading-[20px] text-[#d4d8dd] font-mono">
                     {run.runner} • {run.runId.slice(0, 8)}
                   </p>
-                  <p className="text-xs text-[var(--ecode-text-secondary)]">
+                  <p className="text-[13px] text-[#5c6670]">
                     {run.passedTests}/{run.totalTests} passed
                     {run.duration && ` • ${run.duration}ms`}
                   </p>
@@ -392,10 +400,10 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
                 <Badge 
                   variant="outline" 
                   className={cn(
-                    "text-xs",
-                    run.status === 'passed' && "bg-status-success/10 text-status-success border-status-success/30",
-                    run.status === 'failed' && "bg-status-critical/10 text-status-critical border-status-critical/30",
-                    run.status === 'running' && "bg-status-info/10 text-status-info border-status-info/30"
+                    "text-[13px]",
+                    run.status === 'passed' && "bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/30",
+                    run.status === 'failed' && "bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/30",
+                    run.status === 'running' && "bg-[#0079f2]/10 text-[#0079f2] border-[#0079f2]/30"
                   )}
                 >
                   {run.status}
