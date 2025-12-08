@@ -164,7 +164,7 @@ function FileTreeItem({
         className={cn(
           'flex items-center px-3 py-3 mobile-touch-target cursor-pointer',
           'hover:bg-[var(--ecode-surface-hover)] active:bg-[var(--ecode-surface-hover)]',
-          isActive && 'bg-[var(--ecode-accent)]/10 border-l-2 border-[var(--ecode-accent)]'
+          isActive && 'bg-[#2B3245] border-l-2 border-[var(--ecode-accent)]'
         )}
         style={{ paddingLeft: `${level * 16 + 12}px` }}
         onClick={handleClick}

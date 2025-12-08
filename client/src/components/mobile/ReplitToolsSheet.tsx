@@ -198,7 +198,7 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
                 placeholder="Search for tools and files"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 bg-muted/50"
+                className="pl-9 bg-[#1C2333]"
                 data-testid="input-search-tools"
               />
             </div>
@@ -221,7 +221,7 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
                       <button
                         key={tool.id}
                         onClick={() => handleToolClick(tool.id)}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left"
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#2B3245] transition-colors text-left"
                         data-testid={`tool-${tool.id}`}
                       >
                         <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -252,16 +252,16 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
                       <button
                         key={tool.id}
                         onClick={() => handleToolClick(tool.id)}
-                        className="w-full flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left"
+                        className="w-full flex items-start gap-3 px-4 py-3 hover:bg-[#2B3245] transition-colors text-left"
                         data-testid={`tool-${tool.id}`}
                       >
                         <div className={cn(
                           "flex items-center justify-center h-10 w-10 rounded-lg flex-shrink-0",
-                          tool.id === 'agent' && "bg-primary/10",
-                          tool.id === 'publishing' && "bg-green-500/10",
-                          tool.id === 'database' && "bg-blue-500/10",
-                          tool.id === 'git' && "bg-orange-500/10",
-                          !['agent', 'publishing', 'database', 'git'].includes(tool.id) && "bg-muted/50"
+                          tool.id === 'agent' && "bg-[#2B3245]",
+                          tool.id === 'publishing' && "bg-[#1C2333]",
+                          tool.id === 'database' && "bg-[#1C2333]",
+                          tool.id === 'git' && "bg-[#1C2333]",
+                          !['agent', 'publishing', 'database', 'git'].includes(tool.id) && "bg-[#1C2333]"
                         )}>
                           <Icon className={cn(
                             "h-5 w-5",
@@ -288,7 +288,7 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
             {/* No Results */}
             {searchQuery && filteredSearchTools.length === 0 && filteredRegularTools.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-                <Search className="h-12 w-12 text-muted-foreground/50 mb-3" />
+                <Search className="h-12 w-12 text-muted-foreground mb-3" />
                 <p className="text-sm text-muted-foreground">
                   No tools found for "{searchQuery}"
                 </p>

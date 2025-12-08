@@ -53,7 +53,7 @@ export function MobileTerminal({
         background: terminalBg,
         foreground: terminalText,
         cursor: terminalCursor,
-        selectionBackground: 'rgba(255, 255, 255, 0.3)',
+        selectionBackground: '#3D4455',
         black: '#000000',
         red: '#cd3131',
         green: '#0dbc79',
@@ -373,7 +373,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 px-3 text-xs font-mono hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 px-3 text-xs font-mono hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleTab}
               data-testid="mobile-terminal-tab"
             >
@@ -383,7 +383,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 px-3 text-xs font-mono hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 px-3 text-xs font-mono hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleEscape}
               data-testid="mobile-terminal-esc"
             >
@@ -393,7 +393,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 px-3 text-xs font-mono hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation flex items-center gap-1"
+              className="h-8 px-3 text-xs font-mono hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation flex items-center gap-1"
               onClick={handleCtrlC}
               data-testid="mobile-terminal-ctrl-c"
             >
@@ -404,7 +404,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 px-3 text-xs font-mono hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation flex items-center gap-1"
+              className="h-8 px-3 text-xs font-mono hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation flex items-center gap-1"
               onClick={handleCtrlD}
               data-testid="mobile-terminal-ctrl-d"
             >
@@ -418,7 +418,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleArrowUp}
               data-testid="mobile-terminal-arrow-up"
             >
@@ -428,7 +428,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleArrowDown}
               data-testid="mobile-terminal-arrow-down"
             >
@@ -438,7 +438,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleArrowLeft}
               data-testid="mobile-terminal-arrow-left"
             >
@@ -448,7 +448,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleArrowRight}
               data-testid="mobile-terminal-arrow-right"
             >
@@ -461,7 +461,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleEnter}
               data-testid="mobile-terminal-enter"
             >
@@ -471,7 +471,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleBackspace}
               data-testid="mobile-terminal-backspace"
             >
@@ -484,7 +484,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleCopy}
               data-testid="mobile-terminal-copy"
             >
@@ -495,7 +495,7 @@ export function MobileTerminal({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+                className="h-8 w-8 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
                 onClick={handlePaste}
                 data-testid="mobile-terminal-paste"
               >
@@ -509,7 +509,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 px-3 text-xs hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 px-3 text-xs hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={handleClear}
               data-testid="mobile-terminal-clear"
             >
@@ -527,7 +527,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-[#2B3245] dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
               onClick={() => setShowKeyboard(false)}
               data-testid="mobile-terminal-hide-toolbar"
             >
@@ -548,7 +548,7 @@ export function MobileTerminal({
           <Button
             size="sm"
             variant="default"
-            className="h-9 w-9 rounded-full shadow-lg bg-[#F26207] hover:bg-[#F26207]/90 active:scale-95 touch-manipulation"
+            className="h-9 w-9 rounded-full shadow-lg bg-[#F26207] hover:bg-[#D85506] active:scale-95 touch-manipulation"
             onClick={() => setShowKeyboard(true)}
             data-testid="mobile-terminal-show-toolbar"
           >

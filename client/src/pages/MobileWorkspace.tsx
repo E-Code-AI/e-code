@@ -163,8 +163,8 @@ export default function MobileWorkspace() {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-primary/10 rounded-md">
-            <div className="h-5 w-5 rounded bg-primary/20 flex items-center justify-center">
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-[#2B3245] rounded-md">
+            <div className="h-5 w-5 rounded bg-[#1C2333] flex items-center justify-center">
               <div className="h-2 w-2 rounded-full bg-primary" />
             </div>
             <span className="text-sm font-medium">Agent 3</span>

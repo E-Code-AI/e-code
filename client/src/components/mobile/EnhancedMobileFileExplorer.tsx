@@ -331,8 +331,8 @@ export function EnhancedMobileFileExplorer({
           animate={{ opacity: 1, x: 0 }}
           className={cn(
             'flex items-center gap-2 px-3 py-2 rounded-lg transition-colors touch-manipulation',
-            'active:scale-[0.98] active:bg-accent/80',
-            isSelected ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'
+            'active:scale-[0.98] active:bg-[#2B3245]',
+            isSelected ? 'bg-accent text-accent-foreground' : 'hover:bg-[#2B3245]'
           )}
           style={{ paddingLeft: `${12 + level * 16}px` }}
           onClick={() => handleFileSelect(item)}
@@ -350,7 +350,7 @@ export function EnhancedMobileFileExplorer({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                className="h-8 w-8 p-0"
                 onClick={(e) => {
                   e.stopPropagation();
                   haptic(5);
