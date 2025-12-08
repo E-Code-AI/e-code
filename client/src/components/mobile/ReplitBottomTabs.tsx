@@ -14,6 +14,7 @@ import { Terminal as TerminalIcon, Monitor, MoreHorizontal, Sparkles, FolderOpen
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion, SPRING_CONFIG, getReducedMotionTransition } from '@/hooks/use-reduced-motion';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type MobileTab = 'agent' | 'files' | 'console' | 'preview' | 'more';
 
@@ -54,6 +55,11 @@ export function ReplitBottomTabs({
   isConnected = true,
 }: ReplitBottomTabsProps) {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
+  
+  if (!isMobile) {
+    return null;
+  }
   
   const tabs: Tab[] = [
     { id: 'agent', icon: Sparkles, label: 'Agent' },
@@ -81,7 +87,7 @@ export function ReplitBottomTabs({
 
   return (
     <div 
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden" 
+      className="fixed bottom-0 left-0 right-0 z-50" 
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       data-testid="mobile-bottom-navigation"
     >

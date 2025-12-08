@@ -4,6 +4,24 @@ export default {
   darkMode: ["class"],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
+    screens: {
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px',
+      // Mobile landscape detection: wider than mobile but short height (phone rotated)
+      // This allows showing mobile UI even when width exceeds md breakpoint
+      'mobile-landscape': { 'raw': '(max-height: 500px) and (min-width: 568px) and (orientation: landscape)' },
+      // Tablet portrait: medium width with tall height
+      'tablet-portrait': { 'raw': '(min-width: 768px) and (min-height: 600px) and (orientation: portrait)' },
+      // True tablet: not a phone in landscape
+      'tablet': { 'raw': '(min-width: 768px) and (min-height: 500px)' },
+      // Touch device detection for hover states
+      'touch': { 'raw': '(hover: none) and (pointer: coarse)' },
+      // Desktop with hover support
+      'desktop': { 'raw': '(min-width: 1024px) and (hover: hover)' },
+    },
     extend: {
       borderRadius: {
         lg: "var(--ecode-radius-lg)",

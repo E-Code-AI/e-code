@@ -3,6 +3,7 @@ import { Home, Search, Plus, Bell, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface NavItem {
   icon: React.ElementType;
@@ -31,6 +32,10 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
   const [lastTapTime, setLastTapTime] = useState(0);
   const [showPulse, setShowPulse] = useState(true);
   const activeIndicatorRef = useRef<HTMLDivElement>(null);
+  
+  // Use improved mobile detection that considers both width AND height
+  // This correctly shows mobile nav for phone landscape mode
+  const isMobile = useIsMobile();
 
   // Update active tab when location changes
   useEffect(() => {
@@ -75,8 +80,13 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
     }
   };
 
+  // Don't render if not mobile (this handles both portrait and landscape phones)
+  if (!isMobile) {
+    return null;
+  }
+
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 mobile-safe-bottom">
+    <div className="fixed bottom-0 left-0 right-0 z-50 mobile-safe-bottom">
       {/* Backdrop blur effect with solid background */}
       <div className="absolute inset-0 bg-[var(--mobile-ide-bg)] backdrop-blur-xl border-t border-[var(--ecode-border)]" />
       
