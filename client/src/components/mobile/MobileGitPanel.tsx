@@ -511,8 +511,8 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                         <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
                         <div className="flex-1 text-left">
                           <span className="text-[13px] text-[#0e1525] dark:text-white">{branch.name}</span>
-                          {branch.author && (
-                            <span className="text-[11px] text-[#5c6670] ml-1.5">{branch.author}</span>
+                          {branch.lastCommit?.author && (
+                            <span className="text-[11px] text-[#5c6670] ml-1.5">{branch.lastCommit.author}</span>
                           )}
                         </div>
                       </button>
