@@ -81,10 +81,11 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
     enabled: !!status,
   });
 
-  const { data: commits } = useQuery<GitCommitInfo[]>({
+  const { data: commitsData } = useQuery<{ commits: GitCommitInfo[] }>({
     queryKey: ['/api/git/log'],
     enabled: !!status,
   });
+  const commits = commitsData?.commits;
 
   const { data: branches } = useQuery<GitBranchInfo[]>({
     queryKey: ['/api/git/branches'],
