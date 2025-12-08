@@ -214,7 +214,7 @@ export function InlineMobileFileExplorer({
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data: files, isLoading, refetch } = useQuery<FileItem[]>({
-    queryKey: ['/api/projects', projectId, 'files'],
+    queryKey: [`/api/projects/${projectId}/files`],
   });
 
   const handleToggleFolder = useCallback((folderId: number) => {
