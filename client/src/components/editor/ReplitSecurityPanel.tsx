@@ -4,6 +4,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShieldCheck,
@@ -38,6 +39,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [realtimeScans, setRealtimeScans] = useState<SecurityScan[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
+  const { toast } = useToast();
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const queryClient = useQueryClient();
 
@@ -90,6 +92,10 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'security-scans'] });
+      toast({ title: 'Security scan started', description: 'Scanning for vulnerabilities...' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Scan failed', description: error.message || 'Failed to start security scan', variant: 'destructive' });
     },
   });
 
@@ -99,6 +105,10 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'security-settings'] });
+      toast({ description: 'Settings updated' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to update settings', variant: 'destructive' });
     },
   });
 
@@ -109,6 +119,9 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'hidden'] });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to update vulnerability', variant: 'destructive' });
     },
   });
 

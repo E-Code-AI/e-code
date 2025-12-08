@@ -106,6 +106,10 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'security-settings'] });
+      toast({ description: 'Settings updated' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to update settings', variant: 'destructive' });
     },
   });
 
@@ -116,6 +120,9 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'hidden'] });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to update vulnerability', variant: 'destructive' });
     },
   });
 
