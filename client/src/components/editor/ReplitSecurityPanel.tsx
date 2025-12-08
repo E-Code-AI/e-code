@@ -37,11 +37,11 @@ function VulnerabilitySkeleton() {
   return (
     <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-[#d4d8dd] dark:border-[#3d4452] p-3" data-testid="vulnerability-skeleton">
       <div className="flex items-center gap-2">
-        <div className="relative overflow-hidden w-20 h-5 bg-[#d4d8dd]/30 dark:bg-[#3d4452] rounded">
-          <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        <div className="relative overflow-hidden w-20 h-5 bg-[#e8eaed] dark:bg-[#3d4452] rounded">
+          <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-[#f0f1f3] to-transparent" />
         </div>
-        <div className="relative overflow-hidden flex-1 h-4 bg-[#d4d8dd]/30 dark:bg-[#3d4452] rounded">
-          <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        <div className="relative overflow-hidden flex-1 h-4 bg-[#e8eaed] dark:bg-[#3d4452] rounded">
+          <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-[#f0f1f3] to-transparent" />
         </div>
       </div>
     </div>
@@ -265,8 +265,8 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
               className={cn(
                 "h-8 font-medium rounded-lg",
                 isScanning || startScanMutation.isPending
-                  ? "border-[#0079f2] text-[#0079f2] bg-[#0079f2]/5"
-                  : "border-[#d4d8dd] dark:border-[#3d4452] text-[#0e1525] dark:text-white hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452]"
+                  ? "border-[#0079f2] text-[#0079f2] bg-[#e5f0fd]"
+                  : "border-[#d4d8dd] dark:border-[#3d4452] text-[#0e1525] dark:text-white hover:bg-[#e8eaed] dark:hover:bg-[#3d4452]"
               )}
               data-testid="scan-button"
             >
@@ -287,7 +287,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
               variant="outline"
               size="sm"
               onClick={() => setShowSettings(!showSettings)}
-              className="h-8 px-3 border-[#d4d8dd] dark:border-[#3d4452] text-[#0e1525] dark:text-white hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
+              className="h-8 px-3 border-[#d4d8dd] dark:border-[#3d4452] text-[#0e1525] dark:text-white hover:bg-[#e8eaed] dark:hover:bg-[#3d4452] rounded-lg"
               data-testid="scan-settings-button"
             >
               <Settings className="w-[18px] h-[18px] mr-2" />
@@ -310,7 +310,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                     <h3 className="font-medium text-[#0e1525] dark:text-white text-[15px] leading-[20px]">Scan Settings</h3>
                     <button 
                       onClick={() => setShowSettings(false)}
-                      className="w-8 h-8 flex items-center justify-center hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-full"
+                      className="w-8 h-8 flex items-center justify-center hover:bg-[#e8eaed] dark:hover:bg-[#3d4452] rounded-full"
                       data-testid="close-settings-button"
                     >
                       <X className="w-[18px] h-[18px] text-[#5c6670] dark:text-[#9da2a6]" />
@@ -404,8 +404,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
             ) : currentVulnerabilities.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center" data-testid="empty-state">
                 <ShieldCheck 
-                  className="w-12 h-12 mb-3" 
-                  style={{ color: 'rgba(92, 102, 112, 0.4)' }}
+                  className="w-12 h-12 mb-3 text-[#9da2a6]"
                 />
                 <h3 className="text-[17px] font-medium leading-tight text-[#0e1525] dark:text-white mb-1">
                   {activeTab === 'active' ? 'No active issues found' : 'No hidden issues'}
@@ -426,7 +425,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                   {/* Card Header - Clickable */}
                   <button
                     onClick={() => toggleCardExpanded(vuln.id)}
-                    className="w-full p-3 flex items-center justify-between text-left hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452]"
+                    className="w-full p-3 flex items-center justify-between text-left hover:bg-[#e8eaed] dark:hover:bg-[#3d4452]"
                     data-testid={`expand-vulnerability-${vuln.id}`}
                   >
                     <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -471,7 +470,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
 
                           {/* File Path */}
                           {vuln.filePath && (
-                            <p className="text-[13px] text-[#5c6670] dark:text-[#9da2a6] font-mono bg-[#d4d8dd]/20 dark:bg-[#1c2333] px-2 py-1 rounded">
+                            <p className="text-[13px] text-[#5c6670] dark:text-[#9da2a6] font-mono bg-[#f0f1f3] dark:bg-[#1c2333] px-2 py-1 rounded">
                               {vuln.filePath}{vuln.lineNumber ? `:${vuln.lineNumber}` : ''}
                             </p>
                           )}
@@ -485,7 +484,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                                 e.stopPropagation();
                                 toggleHideMutation.mutate({ id: vuln.id, isHidden: !vuln.isHidden });
                               }}
-                              className="h-8 px-4 border-[#d4d8dd] dark:border-[#3d4452] text-[#5c6670] dark:text-[#9da2a6] hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
+                              className="h-8 px-4 border-[#d4d8dd] dark:border-[#3d4452] text-[#5c6670] dark:text-[#9da2a6] hover:bg-[#e8eaed] dark:hover:bg-[#3d4452] rounded-lg"
                               data-testid={`toggle-hide-${vuln.id}`}
                             >
                               {vuln.isHidden ? 'Unhide' : 'Hide'}

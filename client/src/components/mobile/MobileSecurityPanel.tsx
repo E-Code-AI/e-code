@@ -38,16 +38,16 @@ function VulnerabilitySkeleton() {
   return (
     <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-[#d4d8dd] dark:border-[#3d4452] p-4" data-testid="vulnerability-skeleton">
       <div className="flex items-center gap-2">
-        <div className="relative overflow-hidden w-20 h-5 bg-[#d4d8dd]/30 dark:bg-[#3d4452] rounded">
+        <div className="relative overflow-hidden w-20 h-5 bg-[#e8eaed] dark:bg-[#3d4452] rounded">
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-[#f0f1f3] to-transparent"
             animate={{ x: ['-100%', '100%'] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
           />
         </div>
-        <div className="relative overflow-hidden flex-1 h-4 bg-[#d4d8dd]/30 dark:bg-[#3d4452] rounded">
+        <div className="relative overflow-hidden flex-1 h-4 bg-[#e8eaed] dark:bg-[#3d4452] rounded">
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-[#f0f1f3] to-transparent"
             animate={{ x: ['-100%', '100%'] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
           />
@@ -278,8 +278,8 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
               className={cn(
                 "flex-1 h-11 font-medium rounded-lg text-[15px] leading-[20px]",
                 isScanning || startScanMutation.isPending
-                  ? "border-[#0079f2] text-[#0079f2] bg-[#0079f2]/5"
-                  : "border-[#d4d8dd] dark:border-[#3d4452] text-[#0e1525] dark:text-white hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452]"
+                  ? "border-[#0079f2] text-[#0079f2] bg-[#e5f0fd]"
+                  : "border-[#d4d8dd] dark:border-[#3d4452] text-[#0e1525] dark:text-white hover:bg-[#e8eaed] dark:hover:bg-[#3d4452]"
               )}
               data-testid="scan-button"
             >
@@ -299,7 +299,7 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
             <Button
               variant="outline"
               onClick={() => setShowSettings(!showSettings)}
-              className="w-11 h-11 p-0 border-[#d4d8dd] dark:border-[#3d4452] text-[#0e1525] dark:text-white hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
+              className="w-11 h-11 p-0 border-[#d4d8dd] dark:border-[#3d4452] text-[#0e1525] dark:text-white hover:bg-[#e8eaed] dark:hover:bg-[#3d4452] rounded-lg"
               data-testid="scan-settings-button"
             >
               <Settings className="w-[18px] h-[18px]" />
@@ -321,7 +321,7 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
                     <h3 className="text-[17px] font-medium leading-tight text-[#0e1525] dark:text-white">Scan Settings</h3>
                     <button 
                       onClick={() => setShowSettings(false)}
-                      className="w-11 h-11 flex items-center justify-center hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
+                      className="w-11 h-11 flex items-center justify-center hover:bg-[#e8eaed] dark:hover:bg-[#3d4452] rounded-lg"
                       data-testid="close-settings-button"
                     >
                       <X className="w-[18px] h-[18px] text-[#5c6670] dark:text-[#9da2a6]" />
@@ -416,7 +416,7 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
               /* Empty State */
               <div className="flex flex-col items-center justify-center py-12 px-4 text-center" data-testid="empty-state">
                 <div className="w-12 h-12 flex items-center justify-center mb-4">
-                  <ShieldCheck className="w-12 h-12 text-[#5c6670]/40" />
+                  <ShieldCheck className="w-12 h-12 text-[#9da2a6]" />
                 </div>
                 <h3 className="text-[17px] font-medium leading-tight text-[#0e1525] dark:text-white mb-2">
                   {activeTab === 'active' ? 'No active issues' : 'No hidden issues'}
@@ -457,7 +457,7 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
                   {/* Card Header - Clickable */}
                   <button
                     onClick={() => toggleCardExpanded(vuln.id)}
-                    className="w-full p-4 flex items-center justify-between text-left hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] min-h-[44px]"
+                    className="w-full p-4 flex items-center justify-between text-left hover:bg-[#e8eaed] dark:hover:bg-[#3d4452] min-h-[44px]"
                     data-testid={`expand-vulnerability-${vuln.id}`}
                   >
                     <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -502,7 +502,7 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
 
                           {/* File Path */}
                           {vuln.filePath && (
-                            <p className="text-[13px] text-[#5c6670] dark:text-[#9da2a6] font-mono bg-[#d4d8dd]/20 dark:bg-[#1c2333] px-2 py-1 rounded">
+                            <p className="text-[13px] text-[#5c6670] dark:text-[#9da2a6] font-mono bg-[#f0f1f3] dark:bg-[#1c2333] px-2 py-1 rounded">
                               {vuln.filePath}{vuln.lineNumber ? `:${vuln.lineNumber}` : ''}
                             </p>
                           )}
@@ -515,7 +515,7 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
                                 e.stopPropagation();
                                 toggleHideMutation.mutate({ id: vuln.id, isHidden: !vuln.isHidden });
                               }}
-                              className="h-10 px-4 border-[#d4d8dd] dark:border-[#3d4452] text-[#5c6670] dark:text-[#9da2a6] hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg text-[15px] leading-[20px]"
+                              className="h-10 px-4 border-[#d4d8dd] dark:border-[#3d4452] text-[#5c6670] dark:text-[#9da2a6] hover:bg-[#e8eaed] dark:hover:bg-[#3d4452] rounded-lg text-[15px] leading-[20px]"
                               data-testid={`toggle-hide-${vuln.id}`}
                             >
                               {vuln.isHidden ? 'Unhide' : 'Hide'}
@@ -604,28 +604,6 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
           </div>
         </div>
       </ScrollArea>
-
-      {/* Fixed Bottom Action Bar */}
-      <div className="border-t border-[#d4d8dd] dark:border-[#3d4452] p-4 bg-white dark:bg-[#1c2333]" data-testid="bottom-action-bar">
-        <Button
-          onClick={() => !isScanning && startScanMutation.mutate(undefined)}
-          disabled={isScanning || startScanMutation.isPending}
-          className="w-full h-11 bg-[#0079f2] hover:bg-[#0066cc] text-white rounded-lg text-[15px] leading-[20px] font-medium"
-          data-testid="bottom-scan-button"
-        >
-          {isScanning || startScanMutation.isPending ? (
-            <>
-              <Loader2 className="w-[18px] h-[18px] mr-2 animate-spin" />
-              Scanning...
-            </>
-          ) : (
-            <>
-              <ShieldCheck className="w-[18px] h-[18px] mr-2" />
-              Run Security Scan
-            </>
-          )}
-        </Button>
-      </div>
     </div>
   );
 }
