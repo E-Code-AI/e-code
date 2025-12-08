@@ -173,8 +173,8 @@ export function ReplitVersionControl({ projectId, className }: VersionControlPro
   };
 
   const renderDiffLine = (line: GitLine, index: number) => {
-    const bgColor = line.type === 'add' ? 'bg-green-500/10' : 
-                    line.type === 'delete' ? 'bg-red-500/10' : '';
+    const bgColor = line.type === 'add' ? 'bg-[#f0fdf4] dark:bg-[#1a2e1a]' : 
+                    line.type === 'delete' ? 'bg-[#fef2f2] dark:bg-[#2e1a1a]' : '';
     const textColor = line.type === 'add' ? 'text-green-600' : 
                       line.type === 'delete' ? 'text-red-600' : 'text-muted-foreground';
     const prefix = line.type === 'add' ? '+' : 
@@ -413,7 +413,7 @@ export function ReplitVersionControl({ projectId, className }: VersionControlPro
                       key={branch.name}
                       className={cn(
                         "p-3 rounded-md border",
-                        branch.isActive && "border-primary bg-primary/5"
+                        branch.isActive && "border-primary bg-[#e6f2fd] dark:bg-[#1a2840]"
                       )}
                     >
                       <div className="flex items-center justify-between">
