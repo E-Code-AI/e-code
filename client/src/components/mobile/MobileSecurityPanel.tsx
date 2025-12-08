@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -25,10 +25,22 @@ interface MobileSecurityPanelProps {
   className?: string;
 }
 
+interface WebSocketMessage {
+  type: 'initial' | 'scan_update' | 'vulnerability_update' | 'error';
+  scans?: SecurityScan[];
+  vulnerabilities?: Vulnerability[];
+  scan?: SecurityScan;
+  vulnerability?: Vulnerability;
+  message?: string;
+}
+
 export function MobileSecurityPanel({ projectId, className }: MobileSecurityPanelProps) {
   const [activeTab, setActiveTab] = useState<'active' | 'hidden'>('active');
   const [showSettings, setShowSettings] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [realtimeScans, setRealtimeScans] = useState<SecurityScan[]>([]);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -36,9 +48,12 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
     queryKey: ['/api/workspace/projects', projectId, 'security-settings'],
   });
 
-  const { data: scans, isLoading: scansLoading } = useQuery<SecurityScan[]>({
+  const { data: initialScans, isLoading: scansLoading } = useQuery<SecurityScan[]>({
     queryKey: ['/api/workspace/projects', projectId, 'security-scans'],
+    refetchInterval: 10000,
   });
+
+  const scans = realtimeScans.length > 0 ? realtimeScans : (initialScans || []);
 
   const { data: activeVulnerabilities, isLoading: activeLoading } = useQuery<Vulnerability[]>({
     queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'],
@@ -121,6 +136,70 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
     const date = new Date(scan.startedAt);
     return `Last ran on ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}, ${date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}`;
   };
+
+  useEffect(() => {
+    if (!projectId) return;
+
+    const connectWebSocket = () => {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/api/security-scans/ws?projectId=${projectId}`;
+
+      try {
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+
+        ws.onmessage = (event) => {
+          try {
+            const message: WebSocketMessage = JSON.parse(event.data);
+            switch (message.type) {
+              case 'initial':
+                if (message.scans) setRealtimeScans(message.scans);
+                break;
+              case 'scan_update':
+                if (message.scan) {
+                  setRealtimeScans(prev => {
+                    const index = prev.findIndex(s => s.id === message.scan!.id);
+                    if (index >= 0) {
+                      const updated = [...prev];
+                      updated[index] = message.scan!;
+                      return updated;
+                    }
+                    return [message.scan!, ...prev];
+                  });
+                }
+                break;
+              case 'vulnerability_update':
+                queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'] });
+                queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'hidden'] });
+                break;
+              case 'error':
+                console.error('[MobileSecurityPanel] WebSocket error:', message.message);
+                break;
+            }
+          } catch (error) {
+            console.error('[MobileSecurityPanel] Error parsing WebSocket message:', error);
+          }
+        };
+
+        ws.onerror = (error) => console.error('[MobileSecurityPanel] WebSocket error:', error);
+        ws.onclose = () => {
+          wsRef.current = null;
+          reconnectTimeoutRef.current = setTimeout(connectWebSocket, 3000);
+        };
+      } catch (error) {
+        console.error('[MobileSecurityPanel] Error creating WebSocket:', error);
+      }
+    };
+
+    connectWebSocket();
+    return () => {
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
+  }, [projectId, queryClient]);
 
   const vulnerabilities = activeTab === 'active' ? activeVulnerabilities : hiddenVulnerabilities;
   const isLoading = activeTab === 'active' ? activeLoading : hiddenLoading;
