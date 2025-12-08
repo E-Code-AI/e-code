@@ -208,3 +208,70 @@ cookies.*
 
 # Shell scripts
 *.sh
+
+# ============================================
+# AGGRESSIVE EXCLUSIONS FOR <8GB IMAGE
+# ============================================
+
+# Playwright browsers (500MB+)
+**/chromium*
+**/firefox*
+**/.playwright
+**/playwright-core
+
+# Heavy dev dependencies
+**/puppeteer*
+**/@playwright
+**/electron*
+**/cypress
+
+# Monaco editor extras (keep only needed languages)
+**/monaco-editor/dev
+**/monaco-editor/min
+**/monaco-editor/min-maps
+
+# TypeScript source files in node_modules (keep .d.ts only)
+**/node_modules/**/*.ts
+!**/node_modules/**/*.d.ts
+
+# All source maps
+**/*.map
+**/*.js.map
+
+# Test and mock files
+**/*.test.*
+**/*.spec.*
+**/__tests__
+**/__mocks__
+**/test
+**/tests
+
+# Documentation in node_modules
+**/node_modules/**/docs
+**/node_modules/**/doc
+**/node_modules/**/documentation
+
+# Examples in node_modules  
+**/node_modules/**/example
+**/node_modules/**/examples
+**/node_modules/**/demo
+**/node_modules/**/demos
+
+# Heavy optional deps
+**/fsevents
+**/chokidar
+**/esbuild-*
+**/rollup-*
+**/swc-*
+
+# Replit cache (important!)
+.cache/replit
+.cache/nix
+
+# Python cache
+__pycache__
+*.pyc
+.pythonlibs
+
+# Go cache
+.cache/go-build
