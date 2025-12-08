@@ -36,7 +36,7 @@ packages = [
 ]
 
 [deployment]
-deploymentTarget = "gce"
+deploymentTarget = "cloudrun"
 run = ["sh", "-c", "npm run start"]
 build = ["sh", "-c", "npm install && npm run build && npm prune --omit=dev"]
 

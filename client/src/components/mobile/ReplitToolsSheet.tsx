@@ -174,12 +174,12 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side="bottom" 
-        className="h-[85vh] rounded-t-2xl p-0"
+        className="h-[85vh] rounded-t-2xl p-0 bg-[#0E1525] border-t border-[#2B3245]"
         data-testid="tools-sheet"
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <SheetHeader className="p-4 border-b space-y-3">
+          <SheetHeader className="p-4 border-b border-[#2B3245] space-y-3 bg-[#0E1525]">
             <div className="flex items-center justify-between">
               <SheetTitle className="text-base">Search for tools and files</SheetTitle>
               <button
