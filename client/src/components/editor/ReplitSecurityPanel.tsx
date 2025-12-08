@@ -6,21 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ShieldCheck, 
+  ShieldCheck,
+  ShieldAlert,
   Settings, 
   Loader2, 
   X,
-  AlertTriangle, 
-  AlertCircle, 
-  Info, 
-  CheckCircle, 
-  XCircle, 
-  Search, 
-  Filter, 
-  Clock,
-  Eye,
-  EyeOff,
-  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  Package,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SecurityScan, Vulnerability, SecurityScanSettings } from '@shared/schema';
@@ -40,29 +33,25 @@ interface WebSocketMessage {
 }
 
 export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPanelProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSeverity, setSelectedSeverity] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'active' | 'hidden'>('active');
   const [showSettings, setShowSettings] = useState(false);
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [realtimeScans, setRealtimeScans] = useState<SecurityScan[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const queryClient = useQueryClient();
 
-  // Fetch security settings
   const { data: settings } = useQuery<SecurityScanSettings>({
     queryKey: ['/api/workspace/projects', projectId, 'security-settings'],
     enabled: !!projectId,
   });
 
-  // Fetch initial scans from REST API
   const { data: initialScans } = useQuery<SecurityScan[]>({
     queryKey: ['/api/workspace/projects', projectId, 'security-scans'],
     enabled: !!projectId,
     refetchInterval: 10000,
   });
 
-  // Fetch active vulnerabilities
   const { data: activeVulnerabilities } = useQuery<Vulnerability[]>({
     queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'],
     queryFn: async () => {
@@ -73,7 +62,6 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
     enabled: !!projectId,
   });
 
-  // Fetch hidden vulnerabilities
   const { data: hiddenVulnerabilities } = useQuery<Vulnerability[]>({
     queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'hidden'],
     queryFn: async () => {
@@ -84,15 +72,14 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
     enabled: !!projectId,
   });
 
-  // Use realtime data if available, fallback to initial data
   const scans = realtimeScans.length > 0 ? realtimeScans : (initialScans || []);
   const currentVulnerabilities = activeTab === 'active' 
     ? (activeVulnerabilities || []) 
     : (hiddenVulnerabilities || []);
   const latestScan = scans?.[0];
   const isScanning = latestScan?.status === 'running' || latestScan?.status === 'queued';
+  const totalCount = (activeVulnerabilities?.length || 0) + (hiddenVulnerabilities?.length || 0);
 
-  // Start scan mutation
   const startScanMutation = useMutation({
     mutationFn: async () => {
       return apiRequest('POST', `/api/workspace/projects/${projectId}/security-scans`, {
@@ -106,7 +93,6 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
     },
   });
 
-  // Update settings mutation
   const updateSettingsMutation = useMutation({
     mutationFn: async (updates: Partial<SecurityScanSettings>) => {
       return apiRequest('PATCH', `/api/workspace/projects/${projectId}/security-settings`, updates);
@@ -116,19 +102,34 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
     },
   });
 
-  // Hide/unhide vulnerability mutation
   const toggleHideMutation = useMutation({
     mutationFn: async ({ id, isHidden }: { id: string; isHidden: boolean }) => {
       return apiRequest('PATCH', `/api/workspace/vulnerabilities/${id}/hide`, { isHidden });
     },
     onSuccess: () => {
-      // Invalidate both active and hidden vulnerability lists
       queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'hidden'] });
     },
   });
 
-  // WebSocket connection for real-time updates
+  const toggleCardExpanded = (id: string) => {
+    setExpandedCards(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const formatLastScanTime = (scan?: SecurityScan) => {
+    if (!scan?.startedAt) return null;
+    const date = new Date(scan.startedAt);
+    return `Last ran on ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}, ${date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}`;
+  };
+
   useEffect(() => {
     if (!projectId) return;
 
@@ -161,7 +162,6 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                 }
                 break;
               case 'vulnerability_update':
-                // Invalidate React Query cache to refetch active/hidden lists
                 queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'] });
                 queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'hidden'] });
                 break;
@@ -192,85 +192,34 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
         wsRef.current = null;
       }
     };
-  }, [projectId]);
-
-  // Filter vulnerabilities based on search and severity
-  const filteredVulnerabilities = currentVulnerabilities.filter(vuln => {
-    const matchesSearch = searchQuery === '' || 
-      vuln.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vuln.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vuln.filePath?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSeverity = selectedSeverity === 'all' || vuln.severity === selectedSeverity;
-    return matchesSearch && matchesSeverity;
-  });
-
-  // Get severity counts
-  const severityCounts = {
-    all: currentVulnerabilities.length,
-    critical: currentVulnerabilities.filter(v => v.severity === 'critical').length,
-    high: currentVulnerabilities.filter(v => v.severity === 'high').length,
-    medium: currentVulnerabilities.filter(v => v.severity === 'medium').length,
-    low: currentVulnerabilities.filter(v => v.severity === 'low').length,
-  };
-
-  const getSeverityIcon = (severity: string) => {
-    switch (severity) {
-      case 'critical':
-        return <XCircle className="w-4 h-4 text-red-500" />;
-      case 'high':
-        return <AlertCircle className="w-4 h-4 text-orange-500" />;
-      case 'medium':
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
-      case 'low':
-        return <Info className="w-4 h-4 text-blue-500" />;
-      default:
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-    }
-  };
-
-  const getSeverityBadgeStyle = (severity: string) => {
-    switch (severity) {
-      case 'critical':
-        return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-      case 'high':
-        return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
-      case 'low':
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
-  };
+  }, [projectId, queryClient]);
 
   return (
-    <div className={cn('flex flex-col h-full bg-background text-foreground', className)} data-testid="security-panel">
-      {/* Main Content Scrollable Area */}
+    <div className={cn('flex flex-col h-full bg-white dark:bg-[#1c2333]', className)} data-testid="security-panel">
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 space-y-5">
           {/* Hero Section */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold text-foreground">
+              <h1 className="text-lg font-semibold text-[#0e1525] dark:text-white">
                 Security and Privacy Scanner
               </h1>
               <Badge 
-                variant="secondary" 
-                className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs"
+                className="bg-[#0079f2] text-white text-xs font-medium px-2 py-0.5 rounded"
                 data-testid="beta-badge"
               >
                 Beta
               </Badge>
             </div>
             
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-sm text-[#5c6670] dark:text-[#9da2a6] leading-relaxed">
               Run a scan to check for potential security risks and privacy leaks in your application. 
               Scans are typically complete within minutes.{' '}
               <a 
                 href="https://docs.replit.com/programming-ide/security-scanner" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-0.5"
+                className="text-[#0079f2] hover:underline"
                 data-testid="learn-more-link"
               >
                 Learn more
@@ -278,20 +227,25 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
             </p>
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons - Replit style */}
           <div className="flex gap-3">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => !isScanning && startScanMutation.mutate()}
+              onClick={() => !isScanning && startScanMutation.mutate(undefined)}
               disabled={isScanning || startScanMutation.isPending}
-              className="h-9 border border-border hover:bg-accent/50"
+              className={cn(
+                "h-9 font-medium rounded-lg",
+                isScanning || startScanMutation.isPending
+                  ? "border-[#0079f2] text-[#0079f2] bg-[#0079f2]/5"
+                  : "border-[#d4d8dd] dark:border-[#3d4452] text-[#0e1525] dark:text-white hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245]"
+              )}
               data-testid="scan-button"
             >
               {isScanning || startScanMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Scanning...
+                  Scanning for vulnerabilities
                 </>
               ) : (
                 <>
@@ -305,7 +259,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
               variant="outline"
               size="sm"
               onClick={() => setShowSettings(!showSettings)}
-              className="h-9 px-3 border border-border hover:bg-accent/50"
+              className="h-9 px-3 border-[#d4d8dd] dark:border-[#3d4452] text-[#0e1525] dark:text-white hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded-lg"
               data-testid="scan-settings-button"
             >
               <Settings className="w-4 h-4 mr-2" />
@@ -323,21 +277,21 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="bg-muted/30 rounded-lg p-4 space-y-4 border border-border">
+                <div className="bg-white dark:bg-[#1c2333] rounded-lg p-4 space-y-4 border border-[#d4d8dd] dark:border-[#3d4452] shadow-sm">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-foreground text-sm">Scan Settings</h3>
+                    <h3 className="font-medium text-[#0e1525] dark:text-white text-sm">Scan Settings</h3>
                     <button 
                       onClick={() => setShowSettings(false)}
-                      className="p-1 hover:bg-accent rounded-full"
+                      className="p-1 hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded-full"
                       data-testid="close-settings-button"
                     >
-                      <X className="w-4 h-4 text-muted-foreground" />
+                      <X className="w-4 h-4 text-[#5c6670] dark:text-[#9da2a6]" />
                     </button>
                   </div>
                   
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-foreground">
+                      <span className="text-sm text-[#0e1525] dark:text-white">
                         Enable privacy vulnerability detection
                       </span>
                       <Switch
@@ -350,7 +304,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-foreground">
+                      <span className="text-sm text-[#0e1525] dark:text-white">
                         Enable security vulnerability detection
                       </span>
                       <Switch
@@ -367,173 +321,184 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
             )}
           </AnimatePresence>
 
-          {/* Search and Filters */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center flex-1 gap-2 px-3 py-1.5 bg-muted rounded border border-border">
-              <Search className="w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search vulnerabilities..."
-                className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                data-testid="input-search-vulnerabilities"
-              />
-            </div>
-            <div className="flex items-center gap-1">
-              <Filter className="w-4 h-4 text-muted-foreground" />
-              <select
-                value={selectedSeverity}
-                onChange={(e) => setSelectedSeverity(e.target.value)}
-                className="px-2 py-1.5 text-sm bg-muted rounded border border-border outline-none"
-                data-testid="select-severity-filter"
-              >
-                <option value="all">All ({severityCounts.all})</option>
-                <option value="critical">Critical ({severityCounts.critical})</option>
-                <option value="high">High ({severityCounts.high})</option>
-                <option value="medium">Medium ({severityCounts.medium})</option>
-                <option value="low">Low ({severityCounts.low})</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="border-b border-border">
+          {/* Tabs - Replit style */}
+          <div className="border-b border-[#d4d8dd] dark:border-[#3d4452]">
             <div className="flex gap-6">
               <button
                 onClick={() => setActiveTab('active')}
                 className={cn(
                   'pb-3 text-sm font-medium border-b-2 transition-colors',
                   activeTab === 'active'
-                    ? 'border-foreground text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                    ? 'border-[#0e1525] dark:border-white text-[#0e1525] dark:text-white'
+                    : 'border-transparent text-[#5c6670] dark:text-[#9da2a6] hover:text-[#0e1525] dark:hover:text-white'
                 )}
                 data-testid="active-issues-tab"
               >
-                Active Issues ({activeVulnerabilities?.length || 0})
+                Active Issues
               </button>
               <button
                 onClick={() => setActiveTab('hidden')}
                 className={cn(
                   'pb-3 text-sm font-medium border-b-2 transition-colors',
                   activeTab === 'hidden'
-                    ? 'border-foreground text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                    ? 'border-[#0e1525] dark:border-white text-[#0e1525] dark:text-white'
+                    : 'border-transparent text-[#5c6670] dark:text-[#9da2a6] hover:text-[#0e1525] dark:hover:text-white'
                 )}
                 data-testid="hidden-issues-tab"
               >
-                Hidden Issues ({hiddenVulnerabilities?.length || 0})
+                Hidden Issues
               </button>
             </div>
           </div>
 
-          {/* Issues List */}
-          <div className="min-h-[150px]">
-            {filteredVulnerabilities.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 gap-3">
-                <CheckCircle className="w-10 h-10 text-green-500/50" />
-                <p className="text-sm text-muted-foreground">
-                  {searchQuery || selectedSeverity !== 'all'
-                    ? 'No vulnerabilities match your filters'
-                    : activeTab === 'active' 
-                      ? 'No active issues found.'
-                      : 'No hidden issues found.'}
+          {/* Vulnerability Count & Last Scan Time */}
+          {activeTab === 'active' && (
+            <div className="space-y-1">
+              <p className="text-base font-semibold text-[#0e1525] dark:text-white">
+                {totalCount} potential vulnerabilities found.
+              </p>
+              {latestScan && (
+                <p className="text-sm text-[#5c6670] dark:text-[#9da2a6]">
+                  {formatLastScanTime(latestScan)}
                 </p>
-              </div>
+              )}
+            </div>
+          )}
+
+          {/* Issues List - Replit Accordion Cards */}
+          <div className="space-y-3">
+            {currentVulnerabilities.length === 0 ? (
+              <p className="text-sm text-[#5c6670] dark:text-[#9da2a6] py-4">
+                {activeTab === 'active' 
+                  ? 'No active issues found.'
+                  : 'No hidden issues found.'}
+              </p>
             ) : (
-              <div className="space-y-2">
-                {filteredVulnerabilities.map((vuln) => (
-                  <div 
-                    key={vuln.id}
-                    className="bg-muted/30 rounded-lg p-3 border border-border hover:bg-muted/50 transition-colors"
-                    data-testid={`vulnerability-${vuln.id}`}
+              currentVulnerabilities.map((vuln) => (
+                <div 
+                  key={vuln.id}
+                  className="bg-white dark:bg-[#242b3d] rounded-lg border border-[#d4d8dd] dark:border-[#3d4452] overflow-hidden"
+                  data-testid={`vulnerability-${vuln.id}`}
+                >
+                  {/* Card Header - Clickable */}
+                  <button
+                    onClick={() => toggleCardExpanded(vuln.id)}
+                    className="w-full p-3 flex items-center justify-between text-left hover:bg-[#f9fafb] dark:hover:bg-[#2b3245]"
+                    data-testid={`expand-vulnerability-${vuln.id}`}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3 flex-1">
-                        {getSeverityIcon(vuln.severity)}
-                        <div className="space-y-1 flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-medium text-sm text-foreground">
-                              {vuln.title}
-                            </span>
-                            <Badge className={cn('text-xs', getSeverityBadgeStyle(vuln.severity))}>
-                              {vuln.severity}
-                            </Badge>
-                            {vuln.toolAttribution && (
-                              <Badge variant="outline" className="text-xs">
-                                {vuln.toolAttribution}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground line-clamp-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <Badge className="bg-[#fee2e2] text-[#dc2626] border-0 text-xs font-medium flex items-center gap-1 shrink-0">
+                        <ShieldAlert className="w-3 h-3" />
+                        Security
+                      </Badge>
+                      <span className="text-sm text-[#0e1525] dark:text-white truncate">
+                        {vuln.title}
+                      </span>
+                    </div>
+                    {expandedCards.has(vuln.id) ? (
+                      <ChevronUp className="w-5 h-5 text-[#5c6670] shrink-0" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-[#5c6670] shrink-0" />
+                    )}
+                  </button>
+
+                  {/* Expanded Content */}
+                  <AnimatePresence>
+                    {expandedCards.has(vuln.id) && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <div className="px-3 pb-3 space-y-3 border-t border-[#d4d8dd] dark:border-[#3d4452]">
+                          <p className="text-sm text-[#5c6670] dark:text-[#9da2a6] pt-3">
                             {vuln.description}
                           </p>
+
+                          {/* Package Dependencies (if applicable) */}
+                          {vuln.packageName && (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-sm text-[#5c6670] dark:text-[#9da2a6]">
+                                <Package className="w-4 h-4" />
+                                <span className="font-mono">{vuln.packageName}@{vuln.vulnerableVersion}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* File Path */}
                           {vuln.filePath && (
-                            <p className="text-xs text-muted-foreground font-mono truncate" title={vuln.filePath}>
+                            <p className="text-xs text-[#5c6670] dark:text-[#9da2a6] font-mono bg-[#f5f5f5] dark:bg-[#1c2333] px-2 py-1 rounded">
                               {vuln.filePath}{vuln.lineNumber ? `:${vuln.lineNumber}` : ''}
                             </p>
                           )}
+
+                          {/* Action Buttons - Replit style */}
+                          <div className="flex gap-2 pt-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleHideMutation.mutate({ id: vuln.id, isHidden: !vuln.isHidden });
+                              }}
+                              className="h-9 px-4 border-[#d4d8dd] dark:border-[#3d4452] text-[#5c6670] dark:text-[#9da2a6] hover:bg-[#f5f5f5] dark:hover:bg-[#2b3245] rounded-lg"
+                              data-testid={`toggle-hide-${vuln.id}`}
+                            >
+                              {vuln.isHidden ? 'Unhide' : 'Hide'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="h-9 px-4 bg-[#0079f2] hover:bg-[#0066cc] text-white rounded-lg"
+                              data-testid={`fix-with-agent-${vuln.id}`}
+                            >
+                              Fix with Agent
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <button
-                        onClick={() => toggleHideMutation.mutate({ 
-                          id: vuln.id, 
-                          isHidden: !vuln.isHidden 
-                        })}
-                        className="p-2 hover:bg-accent rounded-lg shrink-0"
-                        title={vuln.isHidden ? 'Show issue' : 'Hide issue'}
-                        data-testid={`toggle-hide-${vuln.id}`}
-                      >
-                        {vuln.isHidden ? (
-                          <Eye className="w-4 h-4 text-muted-foreground" />
-                        ) : (
-                          <EyeOff className="w-4 h-4 text-muted-foreground" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))
             )}
           </div>
         </div>
       </div>
 
-      {/* Partner Attribution Footer */}
-      <div className="border-t border-border p-4 space-y-3 bg-muted/20 shrink-0">
-        <p className="text-xs text-muted-foreground">
-          Vulnerability scans are enabled by the following E-Code partners:
+      {/* Partner Attribution Footer - Replit style */}
+      <div className="border-t border-[#d4d8dd] dark:border-[#3d4452] p-4 space-y-3 bg-[#f9fafb] dark:bg-[#1c2333] shrink-0">
+        <p className="text-xs text-[#5c6670] dark:text-[#9da2a6]">
+          Vulnerability scans are enabled by the following Replit partners:
         </p>
         
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="w-4 h-4 text-foreground" fill="currentColor">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-              </svg>
-            </div>
-            <span className="text-xs text-muted-foreground">
+            <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#0e1525] dark:text-white" fill="currentColor">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+            <span className="text-xs text-[#5c6670] dark:text-[#9da2a6]">
               Security scans are powered by Semgrep Community Edition.
             </span>
           </div>
           
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 flex items-center justify-center text-xs font-bold text-foreground">
-              🐕
-            </div>
-            <span className="text-xs text-muted-foreground">
+            <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#0e1525] dark:text-white" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            <span className="text-xs text-[#5c6670] dark:text-[#9da2a6]">
               Privacy scans are powered by HoundDog.ai.
             </span>
           </div>
         </div>
         
-        <p className="text-xs text-muted-foreground leading-relaxed">
+        <p className="text-xs text-[#5c6670] dark:text-[#9da2a6] leading-relaxed">
           Security scanning powered by{' '}
           <a 
             href="https://semgrep.dev" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-blue-600 dark:text-blue-400 hover:underline"
+            className="text-[#0079f2] hover:underline"
           >
             Semgrep
           </a>
@@ -542,11 +507,11 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
             href="https://hounddog.ai" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-blue-600 dark:text-blue-400 hover:underline"
+            className="text-[#0079f2] hover:underline"
           >
             HoundDog.ai
           </a>
-          , both running locally on E-Code infrastructure.
+          , both running locally on Replit infrastructure.
         </p>
       </div>
     </div>
