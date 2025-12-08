@@ -1,4 +1,0 @@
-{
-  "description": "TypeScript config for Vite and Node-related client scripts (e.g., vite.config.ts). Sets module type and Node-specific libs for tooling files.",
-  "todo": "Configure based on outline"
-}

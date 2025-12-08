@@ -1,4 +1,0 @@
-{
-  "description": "Provide a secondary TypeScript configuration for Node-based build scripts if needed. Target commonjs modules, exclude browser-specific libs, and extend from the main tsconfig where appropriate.",
-  "todo": "Configure based on outline"
-}
