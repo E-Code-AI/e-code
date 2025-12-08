@@ -73,19 +73,19 @@ function ShimmerBar({ className }: { className?: string }) {
 
 function CommitListSkeleton() {
   return (
-    <div className="space-y-3" data-testid="commits-skeleton">
-      {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="flex items-start gap-3 py-2">
+    <div className="space-y-1" data-testid="commits-skeleton">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="flex items-start gap-2 py-1.5">
           <div className="flex flex-col items-center">
-            <ShimmerBar className="w-2 h-2 rounded-full mt-1.5" />
-            <ShimmerBar className="w-0.5 h-12 mt-1" />
+            <ShimmerBar className="w-1.5 h-1.5 rounded-full mt-1.5" />
+            <ShimmerBar className="w-0.5 h-6 mt-0.5" />
           </div>
-          <div className="flex-1 space-y-2">
-            <ShimmerBar className="h-4 w-3/4" />
-            <div className="flex items-center gap-2">
-              <ShimmerBar className="w-[18px] h-[18px] rounded-full" />
-              <ShimmerBar className="h-3 w-24" />
-              <ShimmerBar className="h-3 w-16" />
+          <div className="flex-1 space-y-1">
+            <ShimmerBar className="h-3 w-3/4" />
+            <div className="flex items-center gap-1.5">
+              <ShimmerBar className="w-4 h-4 rounded-full" />
+              <ShimmerBar className="h-2.5 w-16" />
+              <ShimmerBar className="h-2.5 w-12" />
             </div>
           </div>
         </div>
@@ -96,24 +96,14 @@ function CommitListSkeleton() {
 
 function EmptyState({ onRefresh }: { onRefresh: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4" data-testid="empty-state">
-      <div className="w-12 h-12 rounded-full bg-[#d4d8dd]/20 dark:bg-[#3d4452]/30 flex items-center justify-center mb-4">
-        <GitBranch className="w-[48px] h-[48px] text-[#5c6670]" />
-      </div>
-      <p className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white mb-1">
+    <div className="flex flex-col items-center justify-center py-8 px-4" data-testid="empty-state">
+      <GitBranch className="w-10 h-10 text-[#9da2a6] mb-3" />
+      <p className="text-[14px] font-medium text-[#0e1525] dark:text-white mb-0.5">
         No uncommitted changes
       </p>
-      <p className="text-[13px] text-[#5c6670] text-center mb-4">
+      <p className="text-[12px] text-[#5c6670] text-center">
         Your working directory is clean
       </p>
-      <Button
-        onClick={onRefresh}
-        className="h-11 px-6 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-white"
-        data-testid="button-refresh-empty"
-      >
-        <RefreshCw className="w-[18px] h-[18px] mr-2" />
-        Refresh Status
-      </Button>
     </div>
   );
 }
@@ -431,28 +421,28 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
 
   return (
     <div className={cn("flex flex-col h-full bg-white dark:bg-[#1c2333]", className)} data-testid="mobile-git-panel">
-      <div className="flex items-center justify-between px-4 min-h-[56px] border-b border-[#d4d8dd] dark:border-[#3d4452]">
+      <div className="flex items-center justify-between px-3 h-12 border-b border-[#d4d8dd] dark:border-[#3d4452]">
         <button
           onClick={() => setShowBranchDropdown(!showBranchDropdown)}
-          className="flex items-center gap-2 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg px-3 py-2 min-h-[44px]"
+          className="flex items-center gap-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-md px-2 py-1.5"
           data-testid="branch-selector"
         >
-          <GitBranch className="w-[18px] h-[18px] text-[#5c6670]" />
-          <span className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white">{status?.branch || 'main'}</span>
-          <ChevronDown className="w-[18px] h-[18px] text-[#5c6670]" />
+          <GitBranch className="w-4 h-4 text-[#5c6670]" />
+          <span className="text-[14px] font-medium text-[#0e1525] dark:text-white">{status?.branch || 'main'}</span>
+          <ChevronDown className="w-4 h-4 text-[#5c6670]" />
         </button>
         
-        <div className="flex items-center gap-1">
+        <div className="flex items-center">
           <button
             onClick={() => setViewMode('settings')}
-            className="w-11 h-11 flex items-center justify-center hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
+            className="w-9 h-9 flex items-center justify-center hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-md"
             data-testid="git-settings-button"
           >
             <Settings className="w-[18px] h-[18px] text-[#5c6670]" />
           </button>
           <button
             onClick={() => refetchStatus()}
-            className="w-11 h-11 flex items-center justify-center hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
+            className="w-9 h-9 flex items-center justify-center hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-md"
             data-testid="git-refresh-button"
           >
             <RefreshCw className="w-[18px] h-[18px] text-[#5c6670]" />
@@ -466,57 +456,57 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="absolute top-14 left-4 right-4 z-50 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg shadow-lg overflow-hidden"
+            className="absolute top-12 left-3 right-3 z-50 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-md shadow-lg overflow-hidden"
           >
-            <div className="p-3 border-b border-[#d4d8dd] dark:border-[#3d4452]">
-              <div className="flex items-center gap-2 px-3 min-h-[44px] bg-[#d4d8dd]/20 dark:bg-[#1c2333] rounded-lg border border-[#d4d8dd] dark:border-[#3d4452]">
-                <Search className="w-[18px] h-[18px] text-[#5c6670]" />
+            <div className="p-2 border-b border-[#d4d8dd] dark:border-[#3d4452]">
+              <div className="flex items-center gap-2 px-2.5 h-8 bg-[#d4d8dd]/20 dark:bg-[#1c2333] rounded-md border border-[#d4d8dd] dark:border-[#3d4452]">
+                <Search className="w-4 h-4 text-[#5c6670]" />
                 <input
                   type="text"
                   value={branchSearch}
                   onChange={(e) => setBranchSearch(e.target.value)}
                   placeholder="Find or create a branch..."
-                  className="flex-1 bg-inherit text-[15px] outline-none text-[#0e1525] dark:text-white placeholder:text-[#5c6670]"
+                  className="flex-1 bg-inherit text-[13px] outline-none text-[#0e1525] dark:text-white placeholder:text-[#5c6670]"
                   data-testid="input-branch-search"
                 />
               </div>
             </div>
 
-            <ScrollArea className="max-h-64">
-              <div className="p-2">
+            <ScrollArea className="max-h-52">
+              <div className="p-1.5">
                 {importantBranches.length > 0 && (
-                  <div className="mb-2">
-                    <div className="px-2 py-1 text-[11px] uppercase tracking-wider font-medium text-[#5c6670]">Important</div>
+                  <div className="mb-1.5">
+                    <div className="px-2 py-0.5 text-[10px] uppercase tracking-wider font-medium text-[#5c6670]">Important</div>
                     {importantBranches.map(branch => (
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 min-h-[44px] hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
+                        className="w-full flex items-center gap-2 px-2 h-8 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-md"
                         data-testid={`branch-${branch.name}`}
                       >
-                        <span className={cn("w-2 h-2 rounded-full", branch.current ? "bg-[#0079f2]" : "bg-green-500")} />
-                        <span className="text-[15px] text-[#0e1525] dark:text-white flex-1 text-left">{branch.name}</span>
-                        {branch.current && <Check className="w-[18px] h-[18px] text-[#0079f2]" />}
+                        <span className={cn("w-1.5 h-1.5 rounded-full", branch.current ? "bg-[#0079f2]" : "bg-green-500")} />
+                        <span className="text-[13px] text-[#0e1525] dark:text-white flex-1 text-left">{branch.name}</span>
+                        {branch.current && <Check className="w-4 h-4 text-[#0079f2]" />}
                       </button>
                     ))}
                   </div>
                 )}
 
                 {activeBranches.length > 0 && (
-                  <div className="mb-2">
-                    <div className="px-2 py-1 text-[11px] uppercase tracking-wider font-medium text-[#5c6670]">Active</div>
+                  <div className="mb-1.5">
+                    <div className="px-2 py-0.5 text-[10px] uppercase tracking-wider font-medium text-[#5c6670]">Active</div>
                     {activeBranches.map(branch => (
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 min-h-[44px] hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
+                        className="w-full flex items-center gap-2 px-2 h-8 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-md"
                         data-testid={`branch-${branch.name}`}
                       >
-                        <span className="w-2 h-2 bg-green-500 rounded-full" />
+                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
                         <div className="flex-1 text-left">
-                          <span className="text-[15px] text-[#0e1525] dark:text-white">{branch.name}</span>
+                          <span className="text-[13px] text-[#0e1525] dark:text-white">{branch.name}</span>
                           {branch.author && (
-                            <span className="text-[13px] text-[#5c6670] ml-2">{branch.author} • {branch.date}</span>
+                            <span className="text-[11px] text-[#5c6670] ml-1.5">{branch.author}</span>
                           )}
                         </div>
                       </button>
@@ -526,18 +516,16 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
 
                 {staleBranches.length > 0 && (
                   <div>
-                    <div className="px-2 py-1 text-[11px] uppercase tracking-wider font-medium text-[#5c6670]">Stale</div>
+                    <div className="px-2 py-0.5 text-[10px] uppercase tracking-wider font-medium text-[#5c6670]">Stale</div>
                     {staleBranches.slice(0, 5).map(branch => (
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 min-h-[44px] hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
+                        className="w-full flex items-center gap-2 px-2 h-8 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-md"
                         data-testid={`branch-${branch.name}`}
                       >
-                        <User className="w-[18px] h-[18px] text-[#5c6670]" />
-                        <div className="flex-1 text-left">
-                          <span className="text-[15px] text-[#0e1525] dark:text-white truncate">{branch.name}</span>
-                        </div>
+                        <User className="w-4 h-4 text-[#5c6670]" />
+                        <span className="text-[13px] text-[#0e1525] dark:text-white flex-1 text-left truncate">{branch.name}</span>
                       </button>
                     ))}
                   </div>
@@ -548,56 +536,36 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
         )}
       </AnimatePresence>
 
-      <ScrollArea className="flex-1 pb-24">
-        <div className="p-4 space-y-6">
-          <div className="space-y-3">
+      <ScrollArea className="flex-1 pb-20">
+        <div className="p-3 space-y-4">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[15px] font-medium leading-tight text-[#5c6670]">Remote Updates</span>
+              <span className="text-[13px] font-medium text-[#5c6670]">Remote Updates</span>
               {repoName && (
                 <a
                   href={`https://github.com/${repoName}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-[15px] text-[#0e1525] dark:text-white hover:text-[#0079f2]"
+                  className="flex items-center gap-1 text-[13px] text-[#0e1525] dark:text-white hover:text-[#0079f2]"
                   data-testid="link-github-repo"
                 >
-                  <SiGithub className="w-[18px] h-[18px]" />
-                  {repoName}
-                  <ExternalLink className="w-[18px] h-[18px]" />
+                  <SiGithub className="w-4 h-4" />
+                  {repoName.split('/')[1] || repoName}
                 </a>
               )}
             </div>
 
-            <div className="flex items-center justify-between text-[15px]">
-              <div className="flex items-center gap-2 text-[#5c6670]">
+            <div className="flex items-center justify-between text-[13px]">
+              <div className="flex items-center gap-1.5 text-[#5c6670]">
                 <span className="font-medium text-[#0e1525] dark:text-white">origin/{status?.branch}</span>
                 <span>•</span>
                 <span>upstream</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[13px] text-[#5c6670]">last fetched 1 hour ago</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => fetchMutation.mutate(undefined)}
-                  disabled={fetchMutation.isPending}
-                  className="h-10 px-3 rounded-lg text-[#5c6670] hover:text-[#0e1525]"
-                  data-testid="button-fetch"
-                >
-                  {fetchMutation.isPending ? (
-                    <Loader2 className="w-[18px] h-[18px] animate-spin" />
-                  ) : (
-                    <>
-                      <RefreshCw className="w-[18px] h-[18px] mr-1" />
-                      Fetch
-                    </>
-                  )}
-                </Button>
-              </div>
+              <span className="text-[12px] text-[#5c6670]">last fetched 1 h</span>
             </div>
 
             {(status?.ahead || 0) > 0 && (
-              <p className="text-[15px] text-[#5c6670]">{status?.ahead} commits to push</p>
+              <p className="text-[13px] text-[#5c6670]">{status?.ahead} commits to push</p>
             )}
 
             <div className="flex gap-2">
@@ -608,10 +576,10 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                   pullMutation.mutate(undefined);
                   pushMutation.mutate(undefined);
                 }}
-                className="flex-1 h-10 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] text-[15px] text-[#0e1525] dark:text-white"
+                className="flex-1 h-9 rounded-md border-[#d4d8dd] dark:border-[#3d4452] text-[13px] text-[#0e1525] dark:text-white"
                 data-testid="button-sync"
               >
-                <RefreshCw className="w-[18px] h-[18px] mr-2" />
+                <RefreshCw className="w-4 h-4 mr-1.5" />
                 Sync with Remote
               </Button>
               <Button
@@ -619,48 +587,37 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                 size="sm"
                 onClick={() => pullMutation.mutate(undefined)}
                 disabled={pullMutation.isPending}
-                className="h-10 px-4 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] text-[15px] text-[#0e1525] dark:text-white"
+                className="h-9 px-3 rounded-md border-[#d4d8dd] dark:border-[#3d4452] text-[13px] text-[#0e1525] dark:text-white"
                 data-testid="button-pull"
               >
-                <ArrowDown className="w-[18px] h-[18px] mr-1" />
+                <ArrowDown className="w-4 h-4 mr-1" />
                 Pull
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => pushMutation.mutate(undefined)}
-                disabled={pushMutation.isPending}
-                className="h-10 px-4 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] text-[15px] text-[#0e1525] dark:text-white"
-                data-testid="button-push"
-              >
-                <ArrowUp className="w-[18px] h-[18px] mr-1" />
-                Push
               </Button>
             </div>
           </div>
 
-          <div className="space-y-3 pt-4 border-t border-[#d4d8dd] dark:border-[#3d4452]">
-            <h3 className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white">Commit</h3>
+          <div className="space-y-2 pt-3 border-t border-[#d4d8dd] dark:border-[#3d4452]">
+            <h3 className="text-[13px] font-medium text-[#0e1525] dark:text-white">Commit</h3>
             
             {hasChanges ? (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Input
                   value={commitMessage}
                   onChange={(e) => setCommitMessage(e.target.value)}
                   placeholder="Commit message..."
-                  className="h-11 rounded-lg bg-white dark:bg-[#1c2333] border-[#d4d8dd] dark:border-[#3d4452] text-[15px]"
+                  className="h-9 rounded-md bg-white dark:bg-[#1c2333] border-[#d4d8dd] dark:border-[#3d4452] text-[13px]"
                   data-testid="input-commit-message"
                 />
                 <Button
                   onClick={() => commitMutation.mutate(commitMessage)}
                   disabled={!commitMessage.trim() || commitMutation.isPending}
-                  className="w-full h-11 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-white text-[15px]"
+                  className="w-full h-9 rounded-md bg-[#0079f2] hover:bg-[#0066cc] text-white text-[13px]"
                   data-testid="button-commit"
                 >
                   {commitMutation.isPending ? (
-                    <Loader2 className="w-[18px] h-[18px] mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
                   ) : (
-                    <GitCommit className="w-[18px] h-[18px] mr-2" />
+                    <GitCommit className="w-4 h-4 mr-1.5" />
                   )}
                   Commit {status?.staged.length || 0} staged changes
                 </Button>
@@ -671,43 +628,44 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
           </div>
 
           {isLoadingCommits ? (
-            <div className="space-y-3 pt-4 border-t border-[#d4d8dd] dark:border-[#3d4452]">
+            <div className="space-y-2 pt-3 border-t border-[#d4d8dd] dark:border-[#3d4452]">
               <CommitListSkeleton />
             </div>
           ) : commits && commits.length > 0 && (
-            <div className="space-y-3 pt-4 border-t border-[#d4d8dd] dark:border-[#3d4452]">
+            <div className="space-y-2 pt-3 border-t border-[#d4d8dd] dark:border-[#3d4452]">
               {unpushedCommits.length > 0 && (
-                <div className="flex items-center gap-2 text-[13px] text-[#5c6670]">
-                  <ArrowDown className="w-[18px] h-[18px]" />
+                <div className="flex items-center gap-1.5 text-[12px] text-[#5c6670]">
+                  <ArrowDown className="w-3.5 h-3.5" />
                   <span>Not pushed to remote</span>
                 </div>
               )}
 
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {commits.slice(0, 10).map((commit, idx) => (
                   <div
                     key={commit.hash}
-                    className="flex items-start gap-3 py-2"
+                    className="flex items-start gap-2 py-1.5"
                     data-testid={`commit-${commit.hash}`}
                   >
                     <div className="flex flex-col items-center">
                       <span className={cn(
-                        "w-2 h-2 rounded-full mt-1.5",
+                        "w-1.5 h-1.5 rounded-full mt-1.5",
                         commit.pushed ? "bg-[#5c6670]" : "bg-green-500"
                       )} />
                       {idx < commits.length - 1 && (
-                        <div className="w-0.5 h-full bg-[#d4d8dd] dark:bg-[#3d4452] mt-1" />
+                        <div className="w-0.5 h-8 bg-[#d4d8dd] dark:bg-[#3d4452] mt-0.5" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white truncate">
+                      <p className="text-[13px] font-medium text-[#0e1525] dark:text-white truncate">
                         {commit.message}
                       </p>
-                      <div className="flex items-center gap-2 text-[13px] text-[#5c6670]">
-                        <div className="w-[18px] h-[18px] bg-green-500 rounded-full flex items-center justify-center text-[8px] text-white font-medium">
+                      <div className="flex items-center gap-1.5 text-[11px] text-[#5c6670]">
+                        <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-[7px] text-white font-medium">
                           {commit.author?.charAt(0)?.toUpperCase() || 'U'}
                         </div>
                         <span>{commit.author}</span>
+                        <span>•</span>
                         <span>{formatTimeAgo(commit.date)}</span>
                       </div>
                     </div>
@@ -719,52 +677,50 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
         </div>
       </ScrollArea>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[#1c2333] border-t border-[#d4d8dd] dark:border-[#3d4452] p-4 pb-[calc(16px+env(safe-area-inset-bottom))]" data-testid="bottom-action-bar">
-        <div className="flex gap-3">
-          {hasChanges ? (
-            <Button
-              onClick={() => commitMessage.trim() && commitMutation.mutate(commitMessage)}
-              disabled={!commitMessage.trim() || commitMutation.isPending}
-              className="flex-1 h-11 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-white text-[15px]"
-              data-testid="bottom-button-commit"
-            >
-              {commitMutation.isPending ? (
-                <Loader2 className="w-[18px] h-[18px] mr-2 animate-spin" />
-              ) : (
-                <GitCommit className="w-[18px] h-[18px] mr-2" />
-              )}
-              Commit Changes
-            </Button>
-          ) : unpushedCommits.length > 0 ? (
-            <Button
-              onClick={() => pushMutation.mutate(undefined)}
-              disabled={pushMutation.isPending}
-              className="flex-1 h-11 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-white text-[15px]"
-              data-testid="bottom-button-push"
-            >
-              {pushMutation.isPending ? (
-                <Loader2 className="w-[18px] h-[18px] mr-2 animate-spin" />
-              ) : (
-                <ArrowUp className="w-[18px] h-[18px] mr-2" />
-              )}
-              Push {unpushedCommits.length} Commit{unpushedCommits.length > 1 ? 's' : ''}
-            </Button>
-          ) : (
-            <Button
-              onClick={() => pullMutation.mutate(undefined)}
-              disabled={pullMutation.isPending}
-              className="flex-1 h-11 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-white text-[15px]"
-              data-testid="bottom-button-pull"
-            >
-              {pullMutation.isPending ? (
-                <Loader2 className="w-[18px] h-[18px] mr-2 animate-spin" />
-              ) : (
-                <ArrowDown className="w-[18px] h-[18px] mr-2" />
-              )}
-              Pull Latest
-            </Button>
-          )}
-        </div>
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[#1c2333] border-t border-[#d4d8dd] dark:border-[#3d4452] px-3 py-2 pb-[calc(8px+env(safe-area-inset-bottom))]" data-testid="bottom-action-bar">
+        {hasChanges ? (
+          <Button
+            onClick={() => commitMessage.trim() && commitMutation.mutate(commitMessage)}
+            disabled={!commitMessage.trim() || commitMutation.isPending}
+            className="w-full h-10 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-white text-[14px] font-medium"
+            data-testid="bottom-button-commit"
+          >
+            {commitMutation.isPending ? (
+              <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+            ) : (
+              <GitCommit className="w-4 h-4 mr-1.5" />
+            )}
+            Commit Changes
+          </Button>
+        ) : unpushedCommits.length > 0 ? (
+          <Button
+            onClick={() => pushMutation.mutate(undefined)}
+            disabled={pushMutation.isPending}
+            className="w-full h-10 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-white text-[14px] font-medium"
+            data-testid="bottom-button-push"
+          >
+            {pushMutation.isPending ? (
+              <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+            ) : (
+              <ArrowUp className="w-4 h-4 mr-1.5" />
+            )}
+            Push {unpushedCommits.length} Commit{unpushedCommits.length > 1 ? 's' : ''}
+          </Button>
+        ) : (
+          <Button
+            onClick={() => pullMutation.mutate(undefined)}
+            disabled={pullMutation.isPending}
+            className="w-full h-10 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-white text-[14px] font-medium"
+            data-testid="bottom-button-pull"
+          >
+            {pullMutation.isPending ? (
+              <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+            ) : (
+              <ArrowDown className="w-4 h-4 mr-1.5" />
+            )}
+            Pull Latest
+          </Button>
+        )}
       </div>
     </div>
   );
