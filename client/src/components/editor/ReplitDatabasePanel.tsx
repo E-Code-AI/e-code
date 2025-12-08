@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,8 +11,6 @@ import {
   Play,
   RefreshCw,
   Download,
-  Upload,
-  Plus,
   ChevronRight,
   ChevronDown,
   Circle,
@@ -19,7 +18,8 @@ import {
   AlertCircle,
   Search,
   Copy,
-  Settings
+  Settings,
+  Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -40,10 +40,74 @@ interface TableInfo {
   }>;
 }
 
+function ShimmerSkeleton({ className }: { className?: string }) {
+  return (
+    <div className={cn("relative overflow-hidden rounded-lg bg-[#242b3d]", className)}>
+      <motion.div
+        className="absolute inset-0 -translate-x-full"
+        style={{
+          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)',
+        }}
+        animate={{ translateX: ['−100%', '100%'] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+      />
+    </div>
+  );
+}
+
+function EmptyState({ 
+  icon: Icon, 
+  title, 
+  description, 
+  actionLabel, 
+  onAction 
+}: { 
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+      <Icon className="w-12 h-12 text-[#5c6670] opacity-40 mb-4" />
+      <h4 className="text-[17px] font-medium leading-tight text-white dark:text-white mb-2">
+        {title}
+      </h4>
+      <p className="text-[13px] text-[#9da2a6] mb-4 max-w-[240px]">
+        {description}
+      </p>
+      {actionLabel && onAction && (
+        <Button 
+          onClick={onAction}
+          className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-white text-[13px]"
+          data-testid="empty-state-action-button"
+        >
+          <Plus className="w-[18px] h-[18px] mr-2" />
+          {actionLabel}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="p-3 space-y-3">
+      <ShimmerSkeleton className="h-8 w-full" />
+      <ShimmerSkeleton className="h-6 w-3/4" />
+      <ShimmerSkeleton className="h-6 w-1/2" />
+      <ShimmerSkeleton className="h-6 w-2/3" />
+      <ShimmerSkeleton className="h-6 w-1/2" />
+    </div>
+  );
+}
+
 export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
   const [selectedTable, setSelectedTable] = useState<string>('users');
   const [query, setQuery] = useState('SELECT * FROM users LIMIT 100;');
   const [isConnected, setIsConnected] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'tables' | 'query' | 'results'>('tables');
   const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set(['users']));
 
@@ -99,133 +163,186 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
   };
 
   const runQuery = () => {
-    setActiveTab('results');
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setActiveTab('results');
+    }, 500);
+  };
+
+  const handleRefresh = () => {
+    setIsLoading(true);
+    setTimeout(() => setIsLoading(false), 800);
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-border">
+    <div 
+      className="h-full flex flex-col bg-[#0e1525] dark:bg-[#0e1525]"
+      data-testid="database-panel"
+    >
+      <div className="p-3 border-b border-[#3d4452] min-h-[48px]">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Database className="h-5 w-5 text-muted-foreground" />
-            <h3 className="font-semibold text-foreground">Database</h3>
+            <Database className="w-[18px] h-[18px] text-[#9da2a6]" />
+            <h3 className="text-[17px] font-medium leading-tight text-white">Database</h3>
           </div>
-          <Button variant="ghost" size="icon" className="h-7 w-7">
-            <Settings className="h-4 w-4" />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 rounded-lg hover:bg-[#1c2333]"
+            data-testid="database-settings-button"
+          >
+            <Settings className="w-[18px] h-[18px] text-[#9da2a6]" />
           </Button>
         </div>
 
-        {/* Connection Status */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {isConnected ? (
-              <CheckCircle className="h-4 w-4 text-status-success" />
+              <CheckCircle className="w-[18px] h-[18px] text-emerald-500" data-testid="status-connected" />
             ) : (
-              <AlertCircle className="h-4 w-4 text-status-critical" />
+              <AlertCircle className="w-[18px] h-[18px] text-red-500" data-testid="status-disconnected" />
             )}
-            <span className="text-sm text-foreground">
+            <span className="text-[15px] leading-[20px] text-white">
               {isConnected ? 'Connected to PostgreSQL' : 'Disconnected'}
             </span>
           </div>
-          <Button variant="ghost" size="icon" className="h-6 w-6">
-            <RefreshCw className="h-3 w-3" />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 rounded-lg hover:bg-[#1c2333]"
+            onClick={handleRefresh}
+            data-testid="database-refresh-button"
+          >
+            <RefreshCw className={cn("w-[18px] h-[18px] text-[#9da2a6]", isLoading && "animate-spin")} />
           </Button>
         </div>
       </div>
 
-      <div className="flex-1 flex">
-        {/* Left Sidebar - Tables */}
-        <div className="w-1/3 border-r border-border">
-          <div className="p-2 border-b border-border">
+      <div className="flex-1 flex min-h-0">
+        <div className="w-1/3 border-r border-[#3d4452] flex flex-col">
+          <div className="p-3 border-b border-[#3d4452]">
+            <span className="text-[11px] uppercase tracking-wider text-[#5c6670] font-medium">Tables</span>
+          </div>
+          <div className="p-3 border-b border-[#3d4452]">
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#5c6670]" />
               <Input
                 placeholder="Search tables..."
-                className="h-7 pl-7 text-xs"
+                className="h-8 pl-9 text-[13px] bg-[#1c2333] border-[#3d4452] rounded-lg text-white placeholder:text-[#5c6670]"
+                data-testid="search-tables-input"
               />
             </div>
           </div>
           
           <ScrollArea className="flex-1">
-            <div className="p-2">
-              {tables.map((table) => (
-                <div key={table.name} className="mb-1">
-                  <button
-                    onClick={() => toggleTableExpansion(table.name)}
-                    className={cn(
-                      "w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted text-left",
-                      selectedTable === table.name && "bg-status-info/10"
-                    )}
-                  >
-                    {expandedTables.has(table.name) ? (
-                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                    )}
-                    <Table className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-sm text-foreground flex-1">{table.name}</span>
-                    <span className="text-xs text-muted-foreground">{table.rowCount}</span>
-                  </button>
+            {isLoading ? (
+              <LoadingSkeleton />
+            ) : tables.length === 0 ? (
+              <EmptyState
+                icon={Table}
+                title="No tables found"
+                description="Create your first table to start storing data"
+                actionLabel="Create Table"
+                onAction={() => {}}
+              />
+            ) : (
+              <div className="p-3 space-y-2">
+                {tables.map((table) => (
+                  <div key={table.name}>
+                    <button
+                      onClick={() => {
+                        toggleTableExpansion(table.name);
+                        setSelectedTable(table.name);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[#1c2333] text-left transition-colors",
+                        selectedTable === table.name && "bg-[#0079f2]/10"
+                      )}
+                      data-testid={`table-row-${table.name}`}
+                    >
+                      {expandedTables.has(table.name) ? (
+                        <ChevronDown className="w-[18px] h-[18px] text-[#5c6670]" />
+                      ) : (
+                        <ChevronRight className="w-[18px] h-[18px] text-[#5c6670]" />
+                      )}
+                      <Table className="w-[18px] h-[18px] text-[#9da2a6]" />
+                      <span className="text-[15px] leading-[20px] text-white flex-1">{table.name}</span>
+                      <span className="text-[13px] text-[#5c6670]">{table.rowCount.toLocaleString()}</span>
+                    </button>
 
-                  {expandedTables.has(table.name) && (
-                    <div className="ml-7 mt-1">
-                      {table.columns.map((column) => (
-                        <div
-                          key={column.name}
-                          className="flex items-center justify-between px-2 py-0.5 text-xs hover:bg-muted rounded"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Circle className="h-2 w-2 text-muted-foreground" />
-                            <span className="text-foreground">{column.name}</span>
+                    {expandedTables.has(table.name) && (
+                      <div className="ml-8 mt-1 space-y-1">
+                        {table.columns.map((column) => (
+                          <div
+                            key={column.name}
+                            className="flex items-center justify-between px-2 py-1.5 text-[13px] hover:bg-[#1c2333] rounded-lg transition-colors"
+                            data-testid={`column-${table.name}-${column.name}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Circle className="w-2 h-2 text-[#5c6670]" />
+                              <span className="text-white">{column.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[#5c6670]">{column.type}</span>
+                              {!column.nullable && (
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-[11px] px-1.5 py-0 border-[#3d4452] text-[#9da2a6] rounded"
+                                >
+                                  NOT NULL
+                                </Badge>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-muted-foreground">{column.type}</span>
-                            {!column.nullable && (
-                              <Badge variant="outline" className="text-[10px] px-1 py-0">
-                                NOT NULL
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </ScrollArea>
         </div>
 
-        {/* Right Panel - Query & Results */}
-        <div className="flex-1 flex flex-col">
-          {/* Query Editor */}
-          <div className="p-3 border-b border-border">
-            <div className="flex items-center justify-between mb-2">
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="p-3 border-b border-[#3d4452] space-y-3">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Select value="sql" disabled>
-                  <SelectTrigger className="h-7 w-24 text-xs">
+                  <SelectTrigger className="h-8 w-24 text-[13px] bg-[#1c2333] border-[#3d4452] rounded-lg text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sql">SQL</SelectItem>
+                  <SelectContent className="bg-[#1c2333] border-[#3d4452]">
+                    <SelectItem value="sql" className="text-white">SQL</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button
-                  size="sm"
                   onClick={runQuery}
-                  className="h-7 px-3 text-xs"
+                  className="h-8 px-4 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-white text-[13px]"
+                  disabled={isLoading}
+                  data-testid="run-query-button"
                 >
-                  <Play className="h-3 w-3 mr-1" />
+                  <Play className="w-[18px] h-[18px] mr-2" />
                   Run Query
                 </Button>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <Copy className="h-3 w-3" />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-lg hover:bg-[#1c2333] border border-[#3d4452]"
+                  data-testid="copy-query-button"
+                >
+                  <Copy className="w-[18px] h-[18px] text-[#9da2a6]" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <Download className="h-3 w-3" />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-lg hover:bg-[#1c2333] border border-[#3d4452]"
+                  data-testid="download-results-button"
+                >
+                  <Download className="w-[18px] h-[18px] text-[#9da2a6]" />
                 </Button>
               </div>
             </div>
@@ -234,45 +351,64 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Enter SQL query..."
-              className="font-mono text-xs min-h-[100px]"
+              className="font-mono text-[13px] min-h-[100px] bg-[#1c2333] border-[#3d4452] rounded-lg text-white placeholder:text-[#5c6670] resize-none"
               spellCheck={false}
+              data-testid="query-input"
             />
           </div>
 
-          {/* Results */}
           <ScrollArea className="flex-1">
-            <div className="p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-foreground">Query Results</span>
-                <span className="text-xs text-muted-foreground">
+            <div className="p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-wider text-[#5c6670] font-medium">Query Results</span>
+                <span className="text-[13px] text-[#5c6670]">
                   {queryResults.length} rows • 0.023s
                 </span>
               </div>
 
-              <div className="border border-border rounded overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="bg-muted border-b border-border">
-                      {Object.keys(queryResults[0] || {}).map((key) => (
-                        <th key={key} className="px-3 py-2 text-left font-medium text-foreground">
-                          {key}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {queryResults.map((row, index) => (
-                      <tr key={index} className="border-b border-border hover:bg-muted">
-                        {Object.values(row).map((value, i) => (
-                          <td key={i} className="px-3 py-2 text-muted-foreground">
-                            {value}
-                          </td>
+              {isLoading ? (
+                <div className="space-y-2">
+                  <ShimmerSkeleton className="h-10 w-full" />
+                  <ShimmerSkeleton className="h-10 w-full" />
+                  <ShimmerSkeleton className="h-10 w-full" />
+                  <ShimmerSkeleton className="h-10 w-full" />
+                </div>
+              ) : queryResults.length === 0 ? (
+                <EmptyState
+                  icon={Database}
+                  title="No results"
+                  description="Run a query to see results here"
+                />
+              ) : (
+                <div className="border border-[#3d4452] rounded-lg overflow-hidden">
+                  <table className="w-full text-[13px]" data-testid="results-table">
+                    <thead>
+                      <tr className="bg-[#1c2333] border-b border-[#3d4452]">
+                        {Object.keys(queryResults[0] || {}).map((key) => (
+                          <th key={key} className="px-3 py-2.5 text-left text-[11px] uppercase tracking-wider font-medium text-[#5c6670]">
+                            {key}
+                          </th>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {queryResults.map((row, index) => (
+                        <tr 
+                          key={index} 
+                          className="border-b border-[#3d4452] last:border-b-0 hover:bg-[#1c2333] transition-colors"
+                          data-testid={`result-row-${index}`}
+                        >
+                          {Object.values(row).map((value, i) => (
+                            <td key={i} className="px-3 py-2.5 text-[#9da2a6]">
+                              {String(value)}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </ScrollArea>
         </div>

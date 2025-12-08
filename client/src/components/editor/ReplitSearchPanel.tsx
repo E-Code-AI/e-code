@@ -1,27 +1,18 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
 import {
   Search,
   FileText,
   Code,
   Hash,
-  Filter,
   X,
   ChevronRight,
-  FileCode,
-  FolderOpen
+  FileCode
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { motion } from 'framer-motion';
 
 interface SearchResult {
   id: string;
@@ -33,11 +24,34 @@ interface SearchResult {
   type: 'file' | 'code' | 'symbol';
 }
 
+function ShimmerSkeleton() {
+  return (
+    <div className="p-3 space-y-3">
+      {[1, 2, 3, 4].map((i) => (
+        <motion.div
+          key={i}
+          className="flex items-start gap-2"
+          initial={{ opacity: 0.5 }}
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <div className="w-[18px] h-[18px] rounded bg-[#3d4452]" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 w-3/4 rounded bg-[#3d4452]" />
+            <div className="h-3 w-full rounded bg-[#242b3d]" />
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
 export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState<'all' | 'files' | 'code' | 'symbols'>('all');
   const [caseSensitive, setCaseSensitive] = useState(false);
   const [useRegex, setUseRegex] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([
     {
       id: '1',
@@ -69,30 +83,31 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
   ]);
 
   const handleSearch = () => {
-    // Simulate search
-
+    if (!searchQuery.trim()) return;
+    setIsLoading(true);
+    setTimeout(() => setIsLoading(false), 800);
   };
 
   const getResultIcon = (type: string) => {
     switch (type) {
       case 'file':
-        return <FileText className="h-4 w-4 text-muted-foreground" />;
+        return <FileText className="w-[18px] h-[18px] text-[#9da2a6]" />;
       case 'code':
-        return <Code className="h-4 w-4 text-status-info" />;
+        return <Code className="w-[18px] h-[18px] text-[#0079f2]" />;
       case 'symbol':
-        return <Hash className="h-4 w-4 text-status-success" />;
+        return <Hash className="w-[18px] h-[18px] text-[#0079f2]" />;
       default:
-        return <FileCode className="h-4 w-4 text-muted-foreground" />;
+        return <FileCode className="w-[18px] h-[18px] text-[#9da2a6]" />;
     }
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col bg-[#0e1525]">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-border">
+      <div className="p-3 border-b border-[#3d4452] min-h-[48px]">
         <div className="flex items-center gap-2 mb-3">
-          <Search className="h-5 w-5 text-muted-foreground" />
-          <h3 className="font-semibold text-foreground">Search</h3>
+          <Search className="w-[18px] h-[18px] text-[#9da2a6]" />
+          <h3 className="text-[17px] font-medium leading-tight text-[#ffffff]">Search</h3>
         </div>
 
         {/* Search Input */}
@@ -102,14 +117,16 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Search in project..."
-            className="pr-8 text-sm"
+            className="pr-8 text-[15px] leading-[20px] bg-[#1c2333] border-[#3d4452] text-[#ffffff] placeholder:text-[#5c6670] focus:border-[#0079f2] focus:ring-[#0079f2]"
+            data-testid="input-search"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#5c6670] hover:text-[#9da2a6] transition-colors"
+              data-testid="button-clear-search"
             >
-              <X className="h-4 w-4" />
+              <X className="w-[18px] h-[18px]" />
             </button>
           )}
         </div>
@@ -119,59 +136,81 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
           <div className="flex gap-2">
             <Button
               variant={searchType === 'all' ? 'default' : 'outline'}
-              size="sm"
               onClick={() => setSearchType('all')}
-              className="text-xs"
+              className={cn(
+                "h-8 rounded-lg text-[13px]",
+                searchType === 'all' 
+                  ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0079f2]/90" 
+                  : "bg-transparent border-[#3d4452] text-[#9da2a6] hover:bg-[#242b3d] hover:text-[#ffffff]"
+              )}
+              data-testid="button-filter-all"
             >
               All
             </Button>
             <Button
               variant={searchType === 'files' ? 'default' : 'outline'}
-              size="sm"
               onClick={() => setSearchType('files')}
-              className="text-xs"
+              className={cn(
+                "h-8 rounded-lg text-[13px]",
+                searchType === 'files' 
+                  ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0079f2]/90" 
+                  : "bg-transparent border-[#3d4452] text-[#9da2a6] hover:bg-[#242b3d] hover:text-[#ffffff]"
+              )}
+              data-testid="button-filter-files"
             >
-              <FileText className="h-3 w-3 mr-1" />
+              <FileText className="w-[18px] h-[18px] mr-1" />
               Files
             </Button>
             <Button
               variant={searchType === 'code' ? 'default' : 'outline'}
-              size="sm"
               onClick={() => setSearchType('code')}
-              className="text-xs"
+              className={cn(
+                "h-8 rounded-lg text-[13px]",
+                searchType === 'code' 
+                  ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0079f2]/90" 
+                  : "bg-transparent border-[#3d4452] text-[#9da2a6] hover:bg-[#242b3d] hover:text-[#ffffff]"
+              )}
+              data-testid="button-filter-code"
             >
-              <Code className="h-3 w-3 mr-1" />
+              <Code className="w-[18px] h-[18px] mr-1" />
               Code
             </Button>
             <Button
               variant={searchType === 'symbols' ? 'default' : 'outline'}
-              size="sm"
               onClick={() => setSearchType('symbols')}
-              className="text-xs"
+              className={cn(
+                "h-8 rounded-lg text-[13px]",
+                searchType === 'symbols' 
+                  ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0079f2]/90" 
+                  : "bg-transparent border-[#3d4452] text-[#9da2a6] hover:bg-[#242b3d] hover:text-[#ffffff]"
+              )}
+              data-testid="button-filter-symbols"
             >
-              <Hash className="h-3 w-3 mr-1" />
+              <Hash className="w-[18px] h-[18px] mr-1" />
               Symbols
             </Button>
           </div>
 
-          <div className="flex gap-3 text-xs">
+          <div className="flex gap-4 text-[11px] uppercase tracking-wider">
             <label className="flex items-center gap-1.5 cursor-pointer">
               <input
                 type="checkbox"
                 checked={caseSensitive}
                 onChange={(e) => setCaseSensitive(e.target.checked)}
-                className="rounded border-border"
+                className="rounded border-[#3d4452] bg-[#1c2333] text-[#0079f2] focus:ring-[#0079f2]"
+                data-testid="checkbox-case-sensitive"
               />
-              <span className="text-muted-foreground">Case sensitive</span>
+              <span className="text-[#5c6670]">Case sensitive</span>
             </label>
             <label className="flex items-center gap-1.5 cursor-pointer">
               <input
                 type="checkbox"
                 checked={useRegex}
                 onChange={(e) => setUseRegex(e.target.checked)}
-                className="rounded border-border"
+                className="rounded border-[#3d4452] bg-[#1c2333] text-[#0079f2] focus:ring-[#0079f2]"
+                data-testid="checkbox-regex"
               />
-              <span className="text-muted-foreground">Regex</span>
+              <span className="text-[#5c6670]">Regex</span>
             </label>
           </div>
         </div>
@@ -179,55 +218,58 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
 
       {/* Results */}
       <ScrollArea className="flex-1">
-        {results.length > 0 ? (
-          <div className="p-2">
-            <div className="text-xs text-muted-foreground px-2 py-1">
+        {isLoading ? (
+          <ShimmerSkeleton />
+        ) : results.length > 0 && searchQuery ? (
+          <div className="p-3">
+            <div className="text-[11px] uppercase tracking-wider text-[#5c6670] px-2 py-1 mb-2">
               {results.length} results
             </div>
             {results.map((result) => (
               <button
                 key={result.id}
-                className="w-full text-left px-2 py-2 hover:bg-muted rounded group"
+                className="w-full text-left px-2 py-2 hover:bg-[#242b3d] rounded-lg group transition-colors"
+                data-testid={`result-item-${result.id}`}
               >
                 <div className="flex items-start gap-2">
                   {getResultIcon(result.type)}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-foreground font-medium truncate">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[15px] leading-[20px] text-[#ffffff] font-medium truncate">
                         {result.file}
                       </span>
-                      <span className="text-muted-foreground text-xs">
+                      <span className="text-[13px] text-[#5c6670]">
                         {result.line}:{result.column}
                       </span>
                     </div>
-                    <div className="mt-1 font-mono text-xs text-muted-foreground truncate">
-                      <span className="text-muted-foreground">{result.line}: </span>
+                    <div className="mt-1 font-mono text-[13px] text-[#9da2a6] truncate">
+                      <span className="text-[#5c6670]">{result.line}: </span>
                       <span dangerouslySetInnerHTML={{
                         __html: result.preview.replace(
                           new RegExp(result.match, 'gi'),
-                          `<mark class="bg-status-warning/20 text-foreground">${result.match}</mark>`
+                          `<mark class="bg-[#0079f2]/20 text-[#ffffff] rounded px-0.5">${result.match}</mark>`
                         )
                       }} />
                     </div>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ChevronRight className="w-[18px] h-[18px] text-[#5c6670] opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               </button>
             ))}
           </div>
         ) : searchQuery ? (
-          <div className="flex flex-col items-center justify-center h-full text-center p-4">
-            <Search className="h-12 w-12 text-muted-foreground mb-3" />
-            <p className="text-sm text-muted-foreground">No results found</p>
-            <p className="text-xs text-muted-foreground mt-1">
+          <div className="flex flex-col items-center justify-center h-full text-center p-3">
+            <Search className="w-12 h-12 text-[#5c6670] opacity-40 mb-3" />
+            <p className="text-[17px] font-medium leading-tight text-[#ffffff]">No results found</p>
+            <p className="text-[13px] text-[#5c6670] mt-1">
               Try adjusting your search terms or filters
             </p>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center p-4">
-            <Search className="h-12 w-12 text-muted-foreground mb-3" />
-            <p className="text-sm text-muted-foreground">Enter a search term</p>
-            <p className="text-xs text-muted-foreground mt-1">
+          <div className="flex flex-col items-center justify-center h-full text-center p-3">
+            <Search className="w-12 h-12 text-[#5c6670] opacity-40 mb-3" />
+            <p className="text-[17px] font-medium leading-tight text-[#ffffff]">Search your project</p>
+            <p className="text-[13px] text-[#5c6670] mt-1">
               Search across files, code, and symbols
             </p>
           </div>

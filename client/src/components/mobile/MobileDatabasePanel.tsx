@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useQuery, useQueries } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { motion } from 'framer-motion';
 import {
   Database,
   RefreshCw,
@@ -13,7 +14,7 @@ import {
   FileText,
   Rocket,
   Key,
-  Loader2,
+  Plus,
   Table as TableIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -68,6 +69,83 @@ const iconMap: Record<string, any> = {
   Database
 };
 
+function ShimmerSkeleton({ className }: { className?: string }) {
+  return (
+    <motion.div
+      className={cn("bg-[#242b3d] rounded-lg overflow-hidden relative", className)}
+      initial={{ opacity: 0.5 }}
+      animate={{ opacity: [0.5, 0.8, 0.5] }}
+      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+    >
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-[#3d4452]/30 to-transparent"
+        animate={{ x: ['-100%', '100%'] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+      />
+    </motion.div>
+  );
+}
+
+function TableSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="border border-[#3d4452] rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <ShimmerSkeleton className="w-[18px] h-[18px] rounded" />
+            <div className="flex-1 space-y-2">
+              <ShimmerSkeleton className="h-4 w-32" />
+              <ShimmerSkeleton className="h-3 w-48" />
+            </div>
+            <ShimmerSkeleton className="h-6 w-16 rounded-full" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DataRowSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="border border-[#3d4452] rounded-lg p-4 space-y-3">
+          {[1, 2, 3].map((j) => (
+            <div key={j} className="flex items-center justify-between">
+              <ShimmerSkeleton className="h-3 w-20" />
+              <ShimmerSkeleton className="h-3 w-32" />
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({ onAction }: { onAction?: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-4">
+      <Database className="w-12 h-12 text-[#5c6670] opacity-40 mb-4" />
+      <h3 className="text-[17px] font-medium leading-tight text-[#ffffff] mb-2 text-center">
+        No Data Available
+      </h3>
+      <p className="text-[15px] leading-[20px] text-[#9da2a6] text-center mb-6 max-w-[280px]">
+        This project doesn't have any data tables yet. Create your first table to get started.
+      </p>
+      {onAction && (
+        <Button
+          onClick={onAction}
+          className="h-11 px-6 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[15px] font-medium"
+          data-testid="button-create-table"
+        >
+          <Plus className="w-[18px] h-[18px] mr-2" />
+          Create Table
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function MobileDatabasePanel({ projectId, className }: MobileDatabasePanelProps) {
   const [selectedTable, setSelectedTable] = useState<string>('files');
   const [activeTab, setActiveTab] = useState<'tables' | 'data'>('tables');
@@ -76,17 +154,15 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
   
   const { toast } = useToast();
 
-  // Fetch project data tables list (project-scoped)
   const { data: tablesData, isLoading: tablesLoading, error: tablesError, refetch: refetchTables } = useQuery<ProjectDataTablesResponse>({
     queryKey: ['/api/projects', projectId, 'data/tables'],
     queryFn: async () => {
       const response = await apiRequest('GET', `/api/projects/${projectId}/data/tables`);
       return response;
     },
-    staleTime: 30000 // Cache for 30 seconds
+    staleTime: 30000
   });
 
-  // Fetch table data (project-scoped)
   const { data: tableData, isLoading: dataLoading } = useQuery<TableDataResponse>({
     queryKey: ['/api/projects', projectId, 'data', selectedTable, 'page', currentPage],
     queryFn: async () => {
@@ -97,8 +173,6 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
     staleTime: 30000
   });
 
-  // Fetch table schemas for expanded tables using useQueries (stable hook count)
-  // Always query for all tables but only enable for expanded ones
   const allTables = tablesData?.tables || [];
   
   const schemasQueries = useQueries({
@@ -113,14 +187,12 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
     }))
   });
 
-  // Helper to get schema for a specific table (keyed by table name to avoid index desync)
   const getSchemaForTable = (tableName: string) => {
     const queryIndex = schemasQueries.findIndex(
       (query) => query.data && (query.data as any).tableName === tableName
     );
     if (queryIndex !== -1) return schemasQueries[queryIndex];
     
-    // If not found in data, try to match by queryKey
     const matchingQuery = schemasQueries.find((_, idx) => {
       const table = allTables[idx];
       return table && table.name === tableName;
@@ -141,7 +213,7 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
 
   const handleTableSelect = (tableName: string) => {
     setSelectedTable(tableName);
-    setCurrentPage(1); // Reset to first page when changing table
+    setCurrentPage(1);
     setActiveTab('data');
   };
 
@@ -170,41 +242,41 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
     : Database;
 
   return (
-    <div className={cn("flex flex-col h-full bg-background", className)} data-testid="mobile-database-panel">
+    <div className={cn("flex flex-col h-full bg-[#0e1525]", className)} data-testid="mobile-database-panel">
       {/* Header */}
-      <div className="p-4 border-b border-border space-y-3">
+      <div className="p-4 border-b border-[#3d4452] min-h-[56px] flex flex-col justify-center space-y-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
-            <Database className="h-4 w-4" />
+          <h3 className="text-[17px] font-medium leading-tight text-[#ffffff] flex items-center gap-2">
+            <Database className="w-[18px] h-[18px] text-[#0079f2]" />
             Project Data
           </h3>
           <Button
             variant="ghost"
-            size="sm"
             onClick={handleRefresh}
             disabled={tablesLoading}
+            className="w-11 h-11 p-0 rounded-lg hover:bg-[#1c2333]"
             data-testid="button-refresh-database"
           >
-            <RefreshCw className={cn("h-4 w-4", tablesLoading && "animate-spin")} />
+            <RefreshCw className={cn("w-[18px] h-[18px] text-[#9da2a6]", tablesLoading && "animate-spin")} />
           </Button>
         </div>
 
         {tablesData && (
-          <div className="text-xs text-muted-foreground">
+          <div className="text-[13px] text-[#5c6670]">
             {tablesData.projectName} • {tablesData.totalTables} data sources
           </div>
         )}
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-border">
+      <div className="flex border-b border-[#3d4452]">
         <button
           onClick={() => setActiveTab('tables')}
           className={cn(
-            "flex-1 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
+            "flex-1 h-11 text-[15px] font-medium border-b-2 transition-colors",
             activeTab === 'tables'
-              ? "border-primary text-primary"
-              : "border-transparent text-muted-foreground hover:text-foreground"
+              ? "border-[#0079f2] text-[#0079f2]"
+              : "border-transparent text-[#9da2a6] hover:text-[#ffffff]"
           )}
           data-testid="tab-tables"
         >
@@ -214,10 +286,10 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
           onClick={() => setActiveTab('data')}
           disabled={!selectedTable}
           className={cn(
-            "flex-1 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
+            "flex-1 h-11 text-[15px] font-medium border-b-2 transition-colors",
             activeTab === 'data'
-              ? "border-primary text-primary"
-              : "border-transparent text-muted-foreground hover:text-foreground",
+              ? "border-[#0079f2] text-[#0079f2]"
+              : "border-transparent text-[#9da2a6] hover:text-[#ffffff]",
             !selectedTable && "opacity-50 cursor-not-allowed"
           )}
           data-testid="tab-data"
@@ -229,46 +301,71 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
       {/* Content */}
       <ScrollArea className="flex-1">
         {activeTab === 'tables' && (
-          <div className="p-4 space-y-2">
-            {tablesLoading && (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <div className="p-4 space-y-3">
+            {tablesLoading && <TableSkeleton />}
+
+            {tablesError && (
+              <div className="text-center py-16">
+                <Database className="w-12 h-12 text-[#5c6670] opacity-40 mx-auto mb-4" />
+                <p className="text-[15px] text-[#9da2a6]">Failed to load project data</p>
+                <Button
+                  onClick={() => refetchTables()}
+                  className="h-11 mt-4 px-6 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff]"
+                >
+                  Try Again
+                </Button>
               </div>
             )}
 
-            {tablesError && (
-              <div className="text-center py-12 text-sm text-destructive">
-                Failed to load project data
-              </div>
+            {tablesData && tablesData.tables.length === 0 && (
+              <EmptyState onAction={() => {}} />
             )}
 
             {tablesData && tablesData.tables.map((table) => {
-              const TableIcon = iconMap[table.icon] || Database;
+              const TableIconComponent = iconMap[table.icon] || Database;
               const isExpanded = expandedTables.has(table.name);
 
               return (
-                <div key={table.name} className="border border-border rounded-lg overflow-hidden" data-testid={`table-${table.name}`}>
-                  <div className="flex items-center justify-between p-3 bg-card hover:bg-accent transition-colors cursor-pointer">
-                    <div className="flex items-center gap-3 flex-1" onClick={() => handleTableSelect(table.name)}>
-                      <TableIcon className="h-4 w-4 text-primary" />
+                <motion.div
+                  key={table.name}
+                  className="border border-[#3d4452] rounded-lg overflow-hidden bg-[#1c2333]"
+                  data-testid={`table-${table.name}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="flex items-center justify-between p-4 hover:bg-[#242b3d] transition-colors cursor-pointer">
+                    <div
+                      className="flex items-center gap-3 flex-1 min-h-[44px]"
+                      onClick={() => handleTableSelect(table.name)}
+                    >
+                      <TableIconComponent className="w-[18px] h-[18px] text-[#0079f2]" />
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm">{table.displayName}</div>
-                        <div className="text-xs text-muted-foreground truncate">{table.description}</div>
+                        <div className="text-[15px] font-medium text-[#ffffff] leading-[20px]">
+                          {table.displayName}
+                        </div>
+                        <div className="text-[13px] text-[#5c6670] truncate">
+                          {table.description}
+                        </div>
                       </div>
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge className="bg-[#242b3d] text-[#9da2a6] border-[#3d4452] text-[11px] uppercase tracking-wider">
                         {table.rowCount} rows
                       </Badge>
                     </div>
                     <Button
                       variant="ghost"
-                      size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleTableExpansion(table.name);
                       }}
+                      className="w-11 h-11 p-0 rounded-lg hover:bg-[#3d4452] ml-2"
                       data-testid={`button-expand-${table.name}`}
                     >
-                      {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      {isExpanded ? (
+                        <ChevronDown className="w-[18px] h-[18px] text-[#9da2a6]" />
+                      ) : (
+                        <ChevronRight className="w-[18px] h-[18px] text-[#9da2a6]" />
+                      )}
                     </Button>
                   </div>
 
@@ -278,118 +375,140 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
                     const schemaLoading = schemaQuery?.isLoading;
 
                     return (
-                      <div className="border-t bg-muted/30 p-3 space-y-2">
+                      <motion.div
+                        className="border-t border-[#3d4452] bg-[#0e1525] p-4 space-y-3"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        transition={{ duration: 0.2 }}
+                      >
                         {schemaLoading && (
-                          <div className="flex items-center justify-center py-4">
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                          <div className="space-y-2">
+                            {[1, 2, 3].map((i) => (
+                              <ShimmerSkeleton key={i} className="h-8 w-full" />
+                            ))}
                           </div>
                         )}
 
                         {schemaData && schemaData.columns && (
-                          <div className="space-y-1">
-                            <div className="text-xs font-semibold text-muted-foreground mb-2">Columns:</div>
+                          <div className="space-y-2">
+                            <div className="text-[11px] uppercase tracking-wider text-[#5c6670] font-medium mb-3">
+                              Columns
+                            </div>
                             {schemaData.columns.map((col: TableColumn) => (
                               <div
                                 key={col.name}
-                                className="flex items-center justify-between text-xs py-1 px-2 rounded bg-background"
+                                className="flex items-center justify-between py-2 px-3 rounded-lg bg-[#1c2333] min-h-[40px]"
                                 data-testid={`column-${col.name}`}
                               >
-                                <span className="font-mono">{col.name}</span>
+                                <span className="font-mono text-[13px] text-[#ffffff]">{col.name}</span>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-muted-foreground">{col.type}</span>
+                                  <span className="text-[13px] text-[#5c6670]">{col.type}</span>
                                   {col.isPrimaryKey && (
-                                    <Badge variant="outline" className="text-xs">PK</Badge>
+                                    <Badge className="bg-[#0079f2]/20 text-[#0079f2] border-[#0079f2]/30 text-[11px]">
+                                      PK
+                                    </Badge>
                                   )}
                                 </div>
                               </div>
                             ))}
                           </div>
                         )}
-                      </div>
+                      </motion.div>
                     );
                   })()}
-                </div>
+                </motion.div>
               );
             })}
           </div>
         )}
 
         {activeTab === 'data' && (
-          <div className="p-4 space-y-4">
+          <div className="p-4 space-y-3">
             {selectedTable && (
-              <div className="flex items-center gap-2 text-sm">
-                <Icon className="h-4 w-4 text-primary" />
-                <span className="font-medium">
+              <div className="flex items-center gap-2 min-h-[44px]">
+                <Icon className="w-[18px] h-[18px] text-[#0079f2]" />
+                <span className="text-[17px] font-medium text-[#ffffff]">
                   {tablesData?.tables.find(t => t.name === selectedTable)?.displayName || selectedTable}
                 </span>
               </div>
             )}
 
-            {dataLoading && (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            )}
+            {dataLoading && <DataRowSkeleton />}
 
             {tableData && tableData.rows.length === 0 && (
-              <div className="text-center py-12 text-sm text-muted-foreground">
-                No data available
+              <div className="flex flex-col items-center justify-center py-16">
+                <TableIcon className="w-12 h-12 text-[#5c6670] opacity-40 mb-4" />
+                <h3 className="text-[17px] font-medium leading-tight text-[#ffffff] mb-2">
+                  No Data
+                </h3>
+                <p className="text-[15px] leading-[20px] text-[#9da2a6] text-center">
+                  This table is empty
+                </p>
               </div>
             )}
 
             {tableData && tableData.rows.length > 0 && (
-              <div className="space-y-2">
-                <div className="text-xs text-muted-foreground">
+              <div className="space-y-3">
+                <div className="text-[13px] text-[#5c6670]">
                   Showing {tableData.rows.length} of {tableData.pagination.total} rows
                 </div>
 
                 {tableData.rows.map((row, idx) => (
-                  <div
+                  <motion.div
                     key={idx}
-                    className="border border-border rounded-lg p-3 space-y-2 bg-card"
+                    className="border border-[#3d4452] rounded-lg p-4 space-y-3 bg-[#1c2333]"
                     data-testid={`row-${idx}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: idx * 0.05 }}
                   >
                     {Object.entries(row).map(([key, value]) => (
-                      <div key={key} className="flex items-start justify-between gap-2">
-                        <span className="text-xs font-medium text-muted-foreground">{key}:</span>
-                        <span className="text-xs font-mono text-right break-all">
+                      <div key={key} className="flex items-start justify-between gap-3">
+                        <span className="text-[13px] font-medium text-[#5c6670] shrink-0">
+                          {key}:
+                        </span>
+                        <span className="text-[13px] font-mono text-[#ffffff] text-right break-all">
                           {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                         </span>
                       </div>
                     ))}
-                  </div>
+                  </motion.div>
                 ))}
-
-                {(tableData.pagination.hasNextPage || tableData.pagination.hasPrevPage) && (
-                  <div className="flex items-center justify-between pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={!tableData.pagination.hasPrevPage}
-                      onClick={handlePrevPage}
-                      data-testid="button-prev-page"
-                    >
-                      Previous
-                    </Button>
-                    <span className="text-xs text-muted-foreground">
-                      Page {tableData.pagination.page} of {tableData.pagination.totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={!tableData.pagination.hasNextPage}
-                      onClick={handleNextPage}
-                      data-testid="button-next-page"
-                    >
-                      Next
-                    </Button>
-                  </div>
-                )}
               </div>
             )}
           </div>
         )}
       </ScrollArea>
+
+      {/* Bottom Action Bar - Pagination */}
+      {activeTab === 'data' && tableData && (tableData.pagination.hasNextPage || tableData.pagination.hasPrevPage) && (
+        <div
+          className="border-t border-[#3d4452] bg-[#1c2333] p-4 flex items-center justify-between"
+          style={{ paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' }}
+        >
+          <Button
+            variant="outline"
+            disabled={!tableData.pagination.hasPrevPage}
+            onClick={handlePrevPage}
+            className="h-10 px-4 rounded-lg border-[#3d4452] bg-[#242b3d] text-[#ffffff] hover:bg-[#3d4452] disabled:opacity-50"
+            data-testid="button-prev-page"
+          >
+            Previous
+          </Button>
+          <span className="text-[13px] text-[#9da2a6]">
+            Page {tableData.pagination.page} of {tableData.pagination.totalPages}
+          </span>
+          <Button
+            variant="outline"
+            disabled={!tableData.pagination.hasNextPage}
+            onClick={handleNextPage}
+            className="h-10 px-4 rounded-lg border-[#3d4452] bg-[#242b3d] text-[#ffffff] hover:bg-[#3d4452] disabled:opacity-50"
+            data-testid="button-next-page"
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

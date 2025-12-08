@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Smartphone, Tablet, Monitor, RotateCw, RefreshCw,
-  ExternalLink, ChevronDown, Lock, Copy, Loader2,
+  ExternalLink, ChevronDown, Lock, Copy, Globe,
   Signal, Wifi, BatteryFull
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,18 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
+
+const colors = {
+  primary: '#0079f2',
+  background: '#0e1525',
+  textMuted: '#5c6670',
+  border: '#d4d8dd',
+  surface: '#3d4452',
+  white: '#ffffff',
+  dark: '#1c2333',
+  textSecondary: '#9da2a6',
+  surfaceAlt: '#242b3d',
+};
 
 interface DevicePreset {
   name: string;
@@ -58,12 +70,13 @@ function SimulatedStatusBar({ isLandscape }: { isLandscape: boolean }) {
     <div 
       className={cn(
         "absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-1",
-        "text-[10px] font-medium text-gray-900 dark:text-white",
+        "text-[13px] font-medium",
         isLandscape ? "h-5" : "h-6"
       )}
       style={{ 
         background: 'linear-gradient(to bottom, rgba(255,255,255,0.1), transparent)',
-        backdropFilter: 'blur(4px)'
+        backdropFilter: 'blur(4px)',
+        color: colors.white,
       }}
       data-testid="mobile-preview-status-bar"
     >
@@ -71,10 +84,10 @@ function SimulatedStatusBar({ isLandscape }: { isLandscape: boolean }) {
         <span>{formattedTime}</span>
       </div>
       <div className="flex items-center gap-1">
-        <Signal className="h-3 w-3" />
-        <Wifi className="h-3 w-3" />
-        <BatteryFull className="h-3 w-3" />
-        <span className="text-[9px]">100%</span>
+        <Signal className="w-[18px] h-[18px]" />
+        <Wifi className="w-[18px] h-[18px]" />
+        <BatteryFull className="w-[18px] h-[18px]" />
+        <span className="text-[13px]">100%</span>
       </div>
     </div>
   );
@@ -87,21 +100,23 @@ function DynamicIsland({ scale }: { scale: number }) {
       data-testid="mobile-preview-dynamic-island"
     >
       <div 
-        className="bg-black rounded-[22px] flex items-center justify-center"
+        className="rounded-[22px] flex items-center justify-center"
         style={{ 
           width: 126 * Math.min(scale, 1), 
           height: 37 * Math.min(scale, 1),
           minWidth: 90,
-          minHeight: 26
+          minHeight: 26,
+          backgroundColor: colors.background,
         }}
       >
         <div 
-          className="w-3 h-3 bg-gray-800 rounded-full mr-1"
+          className="rounded-full mr-1"
           style={{ 
             width: 12 * Math.min(scale, 1), 
             height: 12 * Math.min(scale, 1),
             minWidth: 8,
-            minHeight: 8
+            minHeight: 8,
+            backgroundColor: colors.surface,
           }}
         />
       </div>
@@ -112,15 +127,17 @@ function DynamicIsland({ scale }: { scale: number }) {
 function ClassicNotch({ scale }: { scale: number }) {
   return (
     <div 
-      className="absolute top-0 left-1/2 -translate-x-1/2 bg-gray-700 dark:bg-[#2a2a2a] rounded-b-3xl z-30"
+      className="absolute top-0 left-1/2 -translate-x-1/2 rounded-b-3xl z-30"
       style={{ 
         width: Math.max(120 * Math.min(scale, 1), 80), 
-        height: Math.max(24 * Math.min(scale, 1), 16) 
+        height: Math.max(24 * Math.min(scale, 1), 16),
+        backgroundColor: colors.surface,
       }}
       data-testid="mobile-preview-notch"
     >
       <div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-gray-800 dark:bg-[#1a1a1a] rounded-full"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full"
+        style={{ backgroundColor: colors.dark }}
       />
     </div>
   );
@@ -135,32 +152,30 @@ function PhysicalButtons({ isLandscape, scale }: {
   if (isLandscape) {
     return (
       <>
-        {/* Volume buttons - top in landscape */}
         <div 
           className="absolute -top-3 flex gap-3 z-20"
           style={{ left: '20%' }}
           data-testid="mobile-preview-volume-buttons"
         >
           <div 
-            className="bg-gray-600 dark:bg-gray-500 rounded-sm"
-            style={{ width: 24 * buttonScale, height: 4 }}
+            className="rounded-sm"
+            style={{ width: 24 * buttonScale, height: 4, backgroundColor: colors.textMuted }}
             data-testid="mobile-preview-volume-up"
           />
           <div 
-            className="bg-gray-600 dark:bg-gray-500 rounded-sm"
-            style={{ width: 24 * buttonScale, height: 4 }}
+            className="rounded-sm"
+            style={{ width: 24 * buttonScale, height: 4, backgroundColor: colors.textMuted }}
             data-testid="mobile-preview-volume-down"
           />
         </div>
-        {/* Power button - bottom in landscape */}
         <div 
           className="absolute -bottom-3 z-20"
           style={{ right: '25%' }}
           data-testid="mobile-preview-power-button"
         >
           <div 
-            className="bg-gray-600 dark:bg-gray-500 rounded-sm"
-            style={{ width: 40 * buttonScale, height: 4 }}
+            className="rounded-sm"
+            style={{ width: 40 * buttonScale, height: 4, backgroundColor: colors.textMuted }}
           />
         </div>
       </>
@@ -169,58 +184,117 @@ function PhysicalButtons({ isLandscape, scale }: {
 
   return (
     <>
-      {/* Volume buttons - left side */}
       <div 
         className="absolute -left-3 flex flex-col gap-2 z-20"
         style={{ top: '15%' }}
         data-testid="mobile-preview-volume-buttons"
       >
         <div 
-          className="bg-gray-600 dark:bg-gray-500 rounded-sm"
-          style={{ width: 4, height: 24 * buttonScale }}
+          className="rounded-sm"
+          style={{ width: 4, height: 24 * buttonScale, backgroundColor: colors.textMuted }}
           data-testid="mobile-preview-volume-up"
         />
         <div 
-          className="bg-gray-600 dark:bg-gray-500 rounded-sm"
-          style={{ width: 4, height: 24 * buttonScale }}
+          className="rounded-sm"
+          style={{ width: 4, height: 24 * buttonScale, backgroundColor: colors.textMuted }}
           data-testid="mobile-preview-volume-down"
         />
       </div>
-      {/* Power button - right side */}
       <div 
         className="absolute -right-3 z-20"
         style={{ top: '20%' }}
         data-testid="mobile-preview-power-button"
       >
         <div 
-          className="bg-gray-600 dark:bg-gray-500 rounded-sm"
-          style={{ width: 4, height: 40 * buttonScale }}
+          className="rounded-sm"
+          style={{ width: 4, height: 40 * buttonScale, backgroundColor: colors.textMuted }}
         />
       </div>
     </>
   );
 }
 
-function LoadingIndicator() {
+function ShimmerSkeleton() {
   return (
     <motion.div 
-      className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-[var(--ecode-surface)] dark:bg-[var(--ecode-background)] backdrop-blur-sm rounded-[24px]"
+      className="absolute inset-0 z-40 flex flex-col items-center justify-center rounded-[24px] overflow-hidden"
+      style={{ backgroundColor: colors.dark }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
       data-testid="mobile-preview-loading"
     >
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+      <div className="w-full h-full relative">
+        <div className="p-4 space-y-3">
+          <motion.div 
+            className="h-4 rounded-lg w-3/4"
+            style={{ backgroundColor: colors.surface }}
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div 
+            className="h-3 rounded-lg w-1/2"
+            style={{ backgroundColor: colors.surface }}
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
+          />
+        </div>
+        
+        <div className="px-4 space-y-4">
+          {[1, 2, 3].map((i) => (
+            <motion.div
+              key={i}
+              className="h-20 rounded-lg"
+              style={{ backgroundColor: colors.surface }}
+              animate={{ opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: i * 0.15 }}
+            />
+          ))}
+        </div>
+
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: `linear-gradient(90deg, transparent 0%, ${colors.surfaceAlt}40 50%, transparent 100%)` }}
+          animate={{ x: ['-100%', '200%'] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </div>
+      
+      <span 
+        className="absolute bottom-8 text-[15px] leading-[20px] font-medium"
+        style={{ color: colors.textSecondary }}
       >
-        <Loader2 className="h-8 w-8 text-primary" />
-      </motion.div>
-      <span className="mt-3 text-sm text-muted-foreground font-medium">
         Loading preview...
       </span>
     </motion.div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div 
+      className="absolute inset-0 z-40 flex flex-col items-center justify-center rounded-[24px]"
+      style={{ backgroundColor: colors.dark }}
+      data-testid="mobile-preview-empty"
+    >
+      <Globe 
+        className="mb-4"
+        style={{ width: 48, height: 48, opacity: 0.4, color: colors.textSecondary }}
+      />
+      <h3 
+        className="text-[17px] font-medium leading-tight mb-2"
+        style={{ color: colors.white }}
+      >
+        No preview available
+      </h3>
+      <p 
+        className="text-[15px] leading-[20px] text-center max-w-[200px]"
+        style={{ color: colors.textMuted }}
+      >
+        Run your application to see a live preview here
+      </p>
+    </div>
   );
 }
 
@@ -232,21 +306,26 @@ function URLBar({ url, onCopy }: { url: string; onCopy: () => void }) {
 
   return (
     <div 
-      className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 dark:bg-[var(--ecode-surface)] rounded-full border border-border dark:border-[var(--ecode-border)] text-xs"
+      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px]"
+      style={{ backgroundColor: colors.surfaceAlt, border: `1px solid ${colors.surface}` }}
       data-testid="mobile-preview-url-bar"
     >
-      <Lock className="h-3 w-3 text-green-500 flex-shrink-0" data-testid="mobile-preview-lock-icon" />
-      <span className="text-muted-foreground truncate" title={url}>
+      <Lock 
+        className="w-[18px] h-[18px] flex-shrink-0" 
+        style={{ color: '#22c55e' }}
+        data-testid="mobile-preview-lock-icon" 
+      />
+      <span className="truncate" title={url} style={{ color: colors.textSecondary }}>
         {truncatedUrl}
       </span>
       <Button
         size="sm"
         variant="ghost"
-        className="h-5 w-5 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] flex-shrink-0"
+        className="w-11 h-11 p-0 flex-shrink-0 rounded-lg"
         onClick={onCopy}
         data-testid="mobile-preview-copy-url"
       >
-        <Copy className="h-3 w-3" />
+        <Copy className="w-[18px] h-[18px]" style={{ color: colors.textSecondary }} />
       </Button>
     </div>
   );
@@ -262,6 +341,7 @@ export function MobilePreviewPanel({
   const [iframeKey, setIframeKey] = useState(0);
   const [showDeviceFrame, setShowDeviceFrame] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { toast } = useToast();
 
@@ -295,6 +375,7 @@ export function MobilePreviewPanel({
 
   const handleRefresh = () => {
     setIsLoading(true);
+    setHasError(false);
     setIframeKey(prev => prev + 1);
     toast({
       title: 'Preview refreshed',
@@ -304,6 +385,11 @@ export function MobilePreviewPanel({
 
   const handleIframeLoad = () => {
     setIsLoading(false);
+  };
+
+  const handleIframeError = () => {
+    setIsLoading(false);
+    setHasError(true);
   };
 
   const handleOpenExternal = () => {
@@ -330,31 +416,37 @@ export function MobilePreviewPanel({
 
   return (
     <div 
-      className={cn('flex flex-col h-full bg-background dark:bg-[var(--ecode-background)]', className)}
+      className={cn('flex flex-col h-full', className)}
+      style={{ backgroundColor: colors.background }}
       ref={containerRef}
     >
-      {/* Toolbar */}
       <div 
-        className="flex-shrink-0 border-b border-border dark:border-[var(--ecode-border)] bg-card dark:bg-[var(--ecode-surface)] p-2"
+        className="flex-shrink-0 p-4 min-h-[56px]"
+        style={{ borderBottom: `1px solid ${colors.surface}`, backgroundColor: colors.dark }}
         data-testid="mobile-preview-toolbar"
       >
         <div className="flex items-center gap-2">
-          {/* Device Selector */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 text-xs hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation flex items-center gap-2"
+                className="h-11 px-3 text-[15px] leading-[20px] rounded-lg flex items-center gap-2"
                 data-testid="mobile-preview-device-selector"
               >
-                <selectedDevice.icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{selectedDevice.name}</span>
-                <ChevronDown className="h-3 w-3" />
+                <selectedDevice.icon className="w-[18px] h-[18px]" />
+                <span className="hidden sm:inline font-medium" style={{ color: colors.white }}>{selectedDevice.name}</span>
+                <ChevronDown className="w-[18px] h-[18px]" style={{ color: colors.textSecondary }} />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              <DropdownMenuLabel>Phone Devices</DropdownMenuLabel>
+            <DropdownMenuContent 
+              align="start" 
+              className="w-56"
+              style={{ backgroundColor: colors.dark, borderColor: colors.surface }}
+            >
+              <DropdownMenuLabel className="text-[13px]" style={{ color: colors.textSecondary }}>
+                Phone Devices
+              </DropdownMenuLabel>
               {devicePresets.filter(d => d.type === 'phone').map((device) => (
                 <DropdownMenuItem
                   key={device.name}
@@ -362,24 +454,30 @@ export function MobilePreviewPanel({
                     setSelectedDevice(device);
                     setIsLoading(true);
                   }}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-[15px] leading-[20px]"
+                  style={{ color: colors.white }}
                   data-testid={`mobile-preview-device-${device.name.toLowerCase().replace(/\s+/g, '-')}`}
                 >
-                  <device.icon className="h-4 w-4" />
+                  <device.icon className="w-[18px] h-[18px]" />
                   <span>{device.name}</span>
                   {device.hasDynamicIsland && (
-                    <span className="ml-1 text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded-full">
+                    <span 
+                      className="ml-1 text-[13px] px-1.5 py-0.5 rounded-full"
+                      style={{ backgroundColor: `${colors.primary}20`, color: colors.primary }}
+                    >
                       Dynamic Island
                     </span>
                   )}
-                  <span className="ml-auto text-xs text-muted-foreground">
+                  <span className="ml-auto text-[13px]" style={{ color: colors.textMuted }}>
                     {device.width}×{device.height}
                   </span>
                 </DropdownMenuItem>
               ))}
               
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Tablet Devices</DropdownMenuLabel>
+              <DropdownMenuSeparator style={{ backgroundColor: colors.surface }} />
+              <DropdownMenuLabel className="text-[13px]" style={{ color: colors.textSecondary }}>
+                Tablet Devices
+              </DropdownMenuLabel>
               {devicePresets.filter(d => d.type === 'tablet').map((device) => (
                 <DropdownMenuItem
                   key={device.name}
@@ -387,19 +485,22 @@ export function MobilePreviewPanel({
                     setSelectedDevice(device);
                     setIsLoading(true);
                   }}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-[15px] leading-[20px]"
+                  style={{ color: colors.white }}
                   data-testid={`mobile-preview-device-${device.name.toLowerCase().replace(/\s+/g, '-')}`}
                 >
-                  <device.icon className="h-4 w-4" />
+                  <device.icon className="w-[18px] h-[18px]" />
                   <span>{device.name}</span>
-                  <span className="ml-auto text-xs text-muted-foreground">
+                  <span className="ml-auto text-[13px]" style={{ color: colors.textMuted }}>
                     {device.width}×{device.height}
                   </span>
                 </DropdownMenuItem>
               ))}
               
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Desktop</DropdownMenuLabel>
+              <DropdownMenuSeparator style={{ backgroundColor: colors.surface }} />
+              <DropdownMenuLabel className="text-[13px]" style={{ color: colors.textSecondary }}>
+                Desktop
+              </DropdownMenuLabel>
               {devicePresets.filter(d => d.type === 'desktop').map((device) => (
                 <DropdownMenuItem
                   key={device.name}
@@ -407,12 +508,13 @@ export function MobilePreviewPanel({
                     setSelectedDevice(device);
                     setIsLoading(true);
                   }}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-[15px] leading-[20px]"
+                  style={{ color: colors.white }}
                   data-testid={`mobile-preview-device-${device.name.toLowerCase().replace(/\s+/g, '-')}`}
                 >
-                  <device.icon className="h-4 w-4" />
+                  <device.icon className="w-[18px] h-[18px]" />
                   <span>{device.name}</span>
-                  <span className="ml-auto text-xs text-muted-foreground">
+                  <span className="ml-auto text-[13px]" style={{ color: colors.textMuted }}>
                     {device.width}×{device.height}
                   </span>
                 </DropdownMenuItem>
@@ -420,52 +522,51 @@ export function MobilePreviewPanel({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Rotate Button */}
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+            className="w-11 h-11 p-0 rounded-lg"
             onClick={handleRotate}
             data-testid="mobile-preview-rotate"
           >
-            <RotateCw className="h-4 w-4" />
+            <RotateCw className="w-[18px] h-[18px]" style={{ color: colors.textSecondary }} />
           </Button>
 
-          {/* Refresh Button */}
           <Button
             size="sm"
             variant="ghost"
-            className={cn(
-              "h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation",
-              isLoading && "animate-pulse"
-            )}
+            className={cn("w-11 h-11 p-0 rounded-lg", isLoading && "animate-pulse")}
             onClick={handleRefresh}
             data-testid="mobile-preview-refresh"
           >
-            <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+            <RefreshCw 
+              className={cn("w-[18px] h-[18px]", isLoading && "animate-spin")} 
+              style={{ color: colors.textSecondary }}
+            />
           </Button>
 
-          {/* Open External */}
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+            className="w-11 h-11 p-0 rounded-lg"
             onClick={handleOpenExternal}
             data-testid="mobile-preview-external"
           >
-            <ExternalLink className="h-4 w-4" />
+            <ExternalLink className="w-[18px] h-[18px]" style={{ color: colors.textSecondary }} />
           </Button>
 
-          {/* URL Bar */}
           <div className="flex-1 flex justify-center">
             <URLBar url={computedPreviewUrl} onCopy={handleCopyUrl} />
           </div>
 
-          {/* Device Frame Toggle */}
           <Button
             size="sm"
             variant={showDeviceFrame ? 'default' : 'ghost'}
-            className="h-8 px-3 text-xs hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+            className="h-11 px-4 text-[15px] leading-[20px] font-medium rounded-lg"
+            style={{ 
+              backgroundColor: showDeviceFrame ? colors.primary : 'transparent',
+              color: showDeviceFrame ? colors.white : colors.textSecondary,
+            }}
             onClick={() => setShowDeviceFrame(prev => !prev)}
             data-testid="mobile-preview-frame-toggle"
           >
@@ -473,8 +574,7 @@ export function MobilePreviewPanel({
           </Button>
         </div>
 
-        {/* Device Info */}
-        <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="mt-2 flex items-center gap-2 text-[13px]" style={{ color: colors.textMuted }}>
           <span>{isLandscape ? 'Landscape' : 'Portrait'}</span>
           <span>•</span>
           <span>{deviceWidth}×{deviceHeight}px</span>
@@ -483,56 +583,39 @@ export function MobilePreviewPanel({
           {selectedDevice.hasDynamicIsland && (
             <>
               <span>•</span>
-              <span className="text-primary">Dynamic Island</span>
+              <span style={{ color: colors.primary }}>Dynamic Island</span>
             </>
           )}
         </div>
       </div>
 
-      {/* Preview Container */}
       <div 
         className="flex-1 min-h-0 flex items-center justify-center p-4 overflow-auto"
         style={{ perspective: '1500px' }}
       >
         <motion.div
           key={`${selectedDevice.name}-${isLandscape}`}
-          className={cn(
-            'relative',
-            showDeviceFrame && 'shadow-2xl'
-          )}
+          className={cn('relative', showDeviceFrame && 'shadow-2xl')}
           style={{
             width: deviceWidth * scale,
             height: deviceHeight * scale,
             transformStyle: 'preserve-3d',
           }}
-          initial={{ 
-            opacity: 0, 
-            rotateY: isLandscape ? -90 : 90,
-            scale: 0.8 
-          }}
-          animate={{ 
-            opacity: 1, 
-            rotateY: 0,
-            scale: 1 
-          }}
+          initial={{ opacity: 0, rotateY: isLandscape ? -90 : 90, scale: 0.8 }}
+          animate={{ opacity: 1, rotateY: 0, scale: 1 }}
           transition={springTransition}
           data-testid="mobile-preview-container"
         >
-          {/* Physical Buttons */}
           {showDeviceFrame && selectedDevice.type === 'phone' && (
-            <PhysicalButtons 
-              isLandscape={isLandscape} 
-              scale={scale}
-            />
+            <PhysicalButtons isLandscape={isLandscape} scale={scale} />
           )}
 
-          {/* Device Frame */}
           {showDeviceFrame && (
             <div 
-              className="absolute inset-0 border-[12px] border-gray-700 dark:border-[#2a2a2a] rounded-[36px] pointer-events-none z-10"
+              className="absolute inset-0 border-[12px] rounded-[36px] pointer-events-none z-10"
+              style={{ borderColor: colors.surface }}
               data-testid="mobile-preview-frame"
             >
-              {/* Notch or Dynamic Island (for phone devices in portrait) */}
               {selectedDevice.type === 'phone' && !isLandscape && (
                 selectedDevice.hasDynamicIsland ? (
                   <DynamicIsland scale={scale} />
@@ -543,28 +626,28 @@ export function MobilePreviewPanel({
             </div>
           )}
 
-          {/* Simulated Status Bar */}
           {showDeviceFrame && selectedDevice.type === 'phone' && (
             <SimulatedStatusBar isLandscape={isLandscape} />
           )}
 
-          {/* Loading Indicator */}
           <AnimatePresence>
-            {isLoading && <LoadingIndicator />}
+            {isLoading && <ShimmerSkeleton />}
           </AnimatePresence>
 
-          {/* iframe */}
+          <AnimatePresence>
+            {hasError && !isLoading && <EmptyState />}
+          </AnimatePresence>
+
           <iframe
             key={iframeKey}
             ref={iframeRef}
             src={computedPreviewUrl}
-            className={cn(
-              'w-full h-full bg-white',
-              showDeviceFrame ? 'rounded-[24px]' : 'rounded-lg'
-            )}
+            className={cn('w-full h-full', showDeviceFrame ? 'rounded-[24px]' : 'rounded-lg')}
+            style={{ backgroundColor: colors.white }}
             title={`Preview - ${selectedDevice.name}`}
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
             onLoad={handleIframeLoad}
+            onError={handleIframeError}
             data-testid="mobile-preview-iframe"
           />
         </motion.div>
