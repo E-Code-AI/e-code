@@ -221,7 +221,7 @@ export default function MobileWorkspace() {
           {activeTool === 'database' && <MobileDatabasePanel projectId={projectId} />}
           {activeTool === 'auth' && <MobileSecretsPanel projectId={projectId} />}
           {activeTool === 'integrations' && <MobilePackagesPanel projectId={projectId} />}
-          {activeTool === 'git' && <ReplitGitPanel projectId={projectId} className="h-full" />}
+          {activeTool === 'git' && <ReplitGitPanel projectId={projectId} className="h-full" mode="mobile" />}
           {activeTool === 'developer' && <MobileDebugPanel projectId={projectId} />}
           {!['database', 'auth', 'integrations', 'git', 'developer'].includes(activeTool || '') && (
             <div className="flex items-center justify-center h-full">

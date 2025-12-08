@@ -5,6 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -27,6 +33,7 @@ import {
   Minus,
   FileCode,
   LogOut,
+  Eye,
 } from 'lucide-react';
 import { SiGithub, SiBitbucket, SiGitlab } from 'react-icons/si';
 import { cn } from '@/lib/utils';
@@ -72,9 +79,72 @@ interface GitBranchInfo {
 interface ReplitGitPanelProps {
   projectId?: string;
   className?: string;
+  mode?: 'desktop' | 'tablet' | 'mobile';
+}
+
+interface GitDiffResponse {
+  filePath: string;
+  diff: string;
+  staged: boolean;
+  truncated?: boolean;
 }
 
 type ViewMode = 'main' | 'settings';
+
+function DiffViewer({ diff, isLoading }: { diff: string; isLoading: boolean }) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8" data-testid="diff-loading">
+        <Loader2 className="w-6 h-6 animate-spin text-[#5c6670]" />
+      </div>
+    );
+  }
+
+  if (!diff || diff.trim() === '') {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 text-center" data-testid="diff-empty">
+        <FileCode className="w-12 h-12 text-[#5c6670]/40 mb-2" />
+        <p className="text-[13px] text-[#5c6670]">No changes to display</p>
+      </div>
+    );
+  }
+
+  const lines = diff.split('\n');
+
+  return (
+    <ScrollArea className="h-[400px]" data-testid="diff-content">
+      <pre className="font-mono text-[12px] leading-relaxed p-3">
+        {lines.map((line, idx) => {
+          let className = 'text-[#5c6670]';
+          let bgClassName = '';
+          
+          if (line.startsWith('+') && !line.startsWith('+++')) {
+            className = 'text-[#00a67e]';
+            bgClassName = 'bg-[#00a67e]/10';
+          } else if (line.startsWith('-') && !line.startsWith('---')) {
+            className = 'text-[#e5484d]';
+            bgClassName = 'bg-[#e5484d]/10';
+          } else if (line.startsWith('@@')) {
+            className = 'text-[#0079f2]';
+            bgClassName = 'bg-[#0079f2]/10';
+          } else if (line.startsWith('diff') || line.startsWith('index') || line.startsWith('---') || line.startsWith('+++')) {
+            className = 'text-[#0e1525] dark:text-white font-medium';
+          }
+
+          return (
+            <div
+              key={idx}
+              className={cn('px-2 -mx-2', bgClassName)}
+              data-testid={`diff-line-${idx}`}
+            >
+              <span className={className}>{line}</span>
+            </div>
+          );
+        })}
+      </pre>
+    </ScrollArea>
+  );
+}
 
 function ShimmerBar({ className }: { className?: string }) {
   return (
@@ -126,14 +196,20 @@ function NoChangesEmptyState() {
   );
 }
 
-export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
+export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: ReplitGitPanelProps & { mode?: 'desktop' | 'tablet' | 'mobile' }) {
   const { toast } = useToast();
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
   const [branchSearch, setBranchSearch] = useState('');
+  
+  const isTablet = mode === 'tablet';
+  const isMobile = mode === 'mobile';
+  const touchMode = isTablet || isMobile;
   const [commitMessage, setCommitMessage] = useState('');
   const [showConnections, setShowConnections] = useState(true);
   const [remoteUrl, setRemoteUrl] = useState('');
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [selectedFileStaged, setSelectedFileStaged] = useState(false);
 
   const { data: status, refetch: refetchStatus, isLoading } = useQuery<GitStatus>({
     queryKey: ['/api/git/status'],
@@ -158,6 +234,12 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
 
   const { data: githubStatus, isLoading: isLoadingGitHub, refetch: refetchGitHubStatus } = useQuery<GitHubStatus>({
     queryKey: ['/api/git/github/status'],
+  });
+
+  const { data: diffData, isLoading: isLoadingDiff } = useQuery<GitDiffResponse>({
+    queryKey: ['/api/git/diff', selectedFile, selectedFileStaged],
+    queryFn: () => apiRequest(`/api/git/diff/${encodeURIComponent(selectedFile!)}${selectedFileStaged ? '?staged=true' : ''}`, 'GET'),
+    enabled: !!selectedFile,
   });
 
   const originRemote = remotesData?.remotes?.find(r => r.name === 'origin' && r.type === 'fetch');
@@ -294,6 +376,16 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
     }
   };
 
+  const handleFileClick = (file: string, staged: boolean = false) => {
+    setSelectedFile(file);
+    setSelectedFileStaged(staged);
+  };
+
+  const closeDiffModal = () => {
+    setSelectedFile(null);
+    setSelectedFileStaged(false);
+  };
+
   const formatTimeAgo = (dateStr: string) => {
     const date = new Date(dateStr);
     const now = new Date();
@@ -332,15 +424,24 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
   if (viewMode === 'settings') {
     return (
       <div className={cn("flex flex-col h-full bg-white dark:bg-[#1c2333]", className)} data-testid="git-settings">
-        <div className="flex items-center gap-3 px-3 min-h-[48px] border-b border-[#d4d8dd] dark:border-[#3d4452]">
+        <div className={cn(
+          "flex items-center gap-3 border-b border-[#d4d8dd] dark:border-[#3d4452]",
+          touchMode ? "px-4 min-h-[56px]" : "px-3 min-h-[48px]"
+        )}>
           <button
             onClick={() => setViewMode('main')}
-            className="p-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
+            className={cn(
+              "hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg touch-manipulation",
+              touchMode ? "p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center" : "p-1.5"
+            )}
             data-testid="back-from-settings"
           >
-            <ChevronLeft className="w-[18px] h-[18px] text-[#5c6670]" />
+            <ChevronLeft className={cn(touchMode ? "w-5 h-5" : "w-[18px] h-[18px]", "text-[#5c6670]")} />
           </button>
-          <span className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white">Settings</span>
+          <span className={cn(
+            "font-medium leading-tight text-[#0e1525] dark:text-white",
+            touchMode ? "text-base" : "text-[15px]"
+          )}>Settings</span>
         </div>
 
         <ScrollArea className="flex-1">
@@ -521,32 +622,47 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
   // Main View
   return (
     <div className={cn("flex flex-col h-full bg-white dark:bg-[#1c2333] relative", className)} data-testid="git-panel">
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 min-h-[48px] border-b border-[#d4d8dd] dark:border-[#3d4452]">
+      {/* Header - tablet-responsive with proper touch targets */}
+      <div className={cn(
+        "flex items-center justify-between border-b border-[#d4d8dd] dark:border-[#3d4452]",
+        touchMode ? "px-4 min-h-[56px]" : "px-3 min-h-[48px]"
+      )}>
         <button
           onClick={() => setShowBranchDropdown(!showBranchDropdown)}
-          className="flex items-center gap-2 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg px-2 py-1"
+          className={cn(
+            "flex items-center gap-2 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg touch-manipulation",
+            touchMode ? "px-3 py-2.5 min-h-[44px]" : "px-2 py-1"
+          )}
           data-testid="branch-selector"
         >
-          <GitBranch className="w-[18px] h-[18px] text-[#5c6670]" />
-          <span className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white">{status?.branch || 'main'}</span>
-          <ChevronDown className="w-[18px] h-[18px] text-[#5c6670]" />
+          <GitBranch className={cn(touchMode ? "w-5 h-5" : "w-[18px] h-[18px]", "text-[#5c6670]")} />
+          <span className={cn(
+            "font-medium leading-tight text-[#0e1525] dark:text-white",
+            touchMode ? "text-base" : "text-[15px]"
+          )}>{status?.branch || 'main'}</span>
+          <ChevronDown className={cn(touchMode ? "w-5 h-5" : "w-[18px] h-[18px]", "text-[#5c6670]")} />
         </button>
         
-        <div className="flex items-center gap-1">
+        <div className={cn("flex items-center", touchMode ? "gap-2" : "gap-1")}>
           <button
             onClick={() => setViewMode('settings')}
-            className="p-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
+            className={cn(
+              "hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg touch-manipulation",
+              touchMode ? "p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center" : "p-1.5"
+            )}
             data-testid="git-settings-button"
           >
-            <Settings className="w-[18px] h-[18px] text-[#5c6670]" />
+            <Settings className={cn(touchMode ? "w-5 h-5" : "w-[18px] h-[18px]", "text-[#5c6670]")} />
           </button>
           <button
             onClick={() => refetchStatus()}
-            className="p-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg"
+            className={cn(
+              "hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg touch-manipulation",
+              touchMode ? "p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center" : "p-1.5"
+            )}
             data-testid="git-refresh-button"
           >
-            <RefreshCw className="w-[18px] h-[18px] text-[#5c6670]" />
+            <RefreshCw className={cn(touchMode ? "w-5 h-5" : "w-[18px] h-[18px]", "text-[#5c6670]")} />
           </button>
         </div>
       </div>
@@ -654,11 +770,11 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
       </AnimatePresence>
 
       <ScrollArea className="flex-1">
-        <div className="p-3 space-y-2">
+        <div className={cn("space-y-2", touchMode ? "p-4" : "p-3")}>
           {/* Remote Updates */}
-          <div className="space-y-2">
+          <div className={cn("space-y-2", touchMode && "space-y-3")}>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-[#5c6670] uppercase">Remote Updates</span>
+              <span className={cn("font-medium text-[#5c6670] uppercase", touchMode ? "text-sm" : "text-xs")}>Remote Updates</span>
               {repoName && (
                 <a
                   href={`https://github.com/${repoName}`}
@@ -700,8 +816,8 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
               <p className="text-[13px] text-[#5c6670]">{status?.ahead} commits to push</p>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex gap-2">
+            {/* Action Buttons - tablet-responsive with proper touch targets */}
+            <div className={cn("flex", touchMode ? "gap-3 flex-wrap" : "gap-2")}>
               <Button
                 variant="outline"
                 size="sm"
@@ -709,10 +825,13 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                   pullMutation.mutate(undefined);
                   pushMutation.mutate(undefined);
                 }}
-                className="flex-1 h-8 text-[13px] border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
+                className={cn(
+                  "flex-1 border-[#d4d8dd] dark:border-[#3d4452] rounded-lg touch-manipulation",
+                  touchMode ? "h-11 text-sm min-w-[120px]" : "h-8 text-[13px]"
+                )}
                 data-testid="button-sync"
               >
-                <RefreshCw className="w-3 h-3 mr-1" />
+                <RefreshCw className={cn(touchMode ? "w-4 h-4 mr-2" : "w-3 h-3 mr-1")} />
                 Sync with Remote
               </Button>
               <Button
@@ -720,10 +839,13 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                 size="sm"
                 onClick={() => pullMutation.mutate(undefined)}
                 disabled={pullMutation.isPending}
-                className="h-8 px-3 text-[13px] border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
+                className={cn(
+                  "border-[#d4d8dd] dark:border-[#3d4452] rounded-lg touch-manipulation",
+                  touchMode ? "h-11 px-4 text-sm" : "h-8 px-3 text-[13px]"
+                )}
                 data-testid="button-pull"
               >
-                <ArrowDown className="w-3 h-3 mr-1" />
+                <ArrowDown className={cn(touchMode ? "w-4 h-4 mr-2" : "w-3 h-3 mr-1")} />
                 Pull
               </Button>
               <Button
@@ -731,37 +853,60 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                 size="sm"
                 onClick={() => pushMutation.mutate(undefined)}
                 disabled={pushMutation.isPending}
-                className="h-8 px-3 text-[13px] border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
+                className={cn(
+                  "border-[#d4d8dd] dark:border-[#3d4452] rounded-lg touch-manipulation",
+                  touchMode ? "h-11 px-4 text-sm" : "h-8 px-3 text-[13px]"
+                )}
                 data-testid="button-push"
               >
-                <ArrowUp className="w-3 h-3 mr-1" />
+                <ArrowUp className={cn(touchMode ? "w-4 h-4 mr-2" : "w-3 h-3 mr-1")} />
                 Push
               </Button>
             </div>
           </div>
 
           {/* Commit Section */}
-          <div className="space-y-2 pt-3 border-t border-[#d4d8dd] dark:border-[#3d4452]">
-            <h3 className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white">Commit</h3>
+          <div className={cn("border-t border-[#d4d8dd] dark:border-[#3d4452]", touchMode ? "space-y-3 pt-4" : "space-y-2 pt-3")}>
+            <h3 className={cn(
+              "font-medium leading-tight text-[#0e1525] dark:text-white",
+              touchMode ? "text-base" : "text-[15px]"
+            )}>Commit</h3>
             
             {hasChanges ? (
               <div className="space-y-2">
                 {/* Staged Files */}
                 {status?.staged && status.staged.length > 0 && (
-                  <div className="space-y-1">
-                    <div className="text-xs font-medium text-[#5c6670] uppercase">Staged ({status.staged.length})</div>
+                  <div className={cn("space-y-1", touchMode && "space-y-0.5")}>
+                    <div className={cn("font-medium text-[#5c6670] uppercase", touchMode ? "text-sm" : "text-xs")}>Staged ({status.staged.length})</div>
                     {status.staged.map(file => (
-                      <div key={file} className="flex items-center justify-between px-2 py-1 rounded-lg hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <FileCode className="w-3 h-3 text-green-500 shrink-0" />
-                          <span className="text-[13px] text-[#0e1525] dark:text-white truncate">{file}</span>
-                        </div>
+                      <div key={file} className={cn(
+                        "flex items-center justify-between rounded-lg hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group touch-manipulation",
+                        touchMode ? "px-3 py-2.5 min-h-[44px]" : "px-2 py-1"
+                      )}>
+                        <button
+                          onClick={() => handleFileClick(file, true)}
+                          className={cn(
+                            "flex items-center flex-1 min-w-0 text-left touch-manipulation",
+                            touchMode ? "gap-3" : "gap-2"
+                          )}
+                          data-testid={`view-diff-staged-${file}`}
+                        >
+                          <FileCode className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-green-500 shrink-0")} />
+                          <span className={cn(
+                            "text-[#0e1525] dark:text-white truncate hover:underline",
+                            touchMode ? "text-sm" : "text-[13px]"
+                          )}>{file}</span>
+                          <Eye className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-[#5c6670]", !touchMode && "opacity-0 group-hover:opacity-100")} />
+                        </button>
                         <button
                           onClick={() => unstageMutation.mutate([file])}
-                          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-[#e5e7eb] dark:hover:bg-[#3d4452] rounded-lg"
+                          className={cn(
+                            "hover:bg-[#e5e7eb] dark:hover:bg-[#3d4452] rounded-lg touch-manipulation",
+                            touchMode ? "p-2 min-w-[44px] min-h-[44px] flex items-center justify-center" : "p-1 opacity-0 group-hover:opacity-100"
+                          )}
                           data-testid={`unstage-${file}`}
                         >
-                          <Minus className="w-3 h-3 text-[#5c6670]" />
+                          <Minus className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-[#5c6670]")} />
                         </button>
                       </div>
                     ))}
@@ -770,20 +915,37 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
 
                 {/* Unstaged Files */}
                 {status?.unstaged && status.unstaged.length > 0 && (
-                  <div className="space-y-1">
-                    <div className="text-xs font-medium text-[#5c6670] uppercase">Changes ({status.unstaged.length})</div>
+                  <div className={cn("space-y-1", touchMode && "space-y-0.5")}>
+                    <div className={cn("font-medium text-[#5c6670] uppercase", touchMode ? "text-sm" : "text-xs")}>Changes ({status.unstaged.length})</div>
                     {status.unstaged.map(file => (
-                      <div key={file} className="flex items-center justify-between px-2 py-1 rounded-lg hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <FileCode className="w-3 h-3 text-yellow-500 shrink-0" />
-                          <span className="text-[13px] text-[#0e1525] dark:text-white truncate">{file}</span>
-                        </div>
+                      <div key={file} className={cn(
+                        "flex items-center justify-between rounded-lg hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group touch-manipulation",
+                        touchMode ? "px-3 py-2.5 min-h-[44px]" : "px-2 py-1"
+                      )}>
+                        <button
+                          onClick={() => handleFileClick(file, false)}
+                          className={cn(
+                            "flex items-center flex-1 min-w-0 text-left touch-manipulation",
+                            touchMode ? "gap-3" : "gap-2"
+                          )}
+                          data-testid={`view-diff-unstaged-${file}`}
+                        >
+                          <FileCode className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-yellow-500 shrink-0")} />
+                          <span className={cn(
+                            "text-[#0e1525] dark:text-white truncate hover:underline",
+                            touchMode ? "text-sm" : "text-[13px]"
+                          )}>{file}</span>
+                          <Eye className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-[#5c6670]", !touchMode && "opacity-0 group-hover:opacity-100")} />
+                        </button>
                         <button
                           onClick={() => stageMutation.mutate([file])}
-                          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-[#e5e7eb] dark:hover:bg-[#3d4452] rounded-lg"
+                          className={cn(
+                            "hover:bg-[#e5e7eb] dark:hover:bg-[#3d4452] rounded-lg touch-manipulation",
+                            touchMode ? "p-2 min-w-[44px] min-h-[44px] flex items-center justify-center" : "p-1 opacity-0 group-hover:opacity-100"
+                          )}
                           data-testid={`stage-${file}`}
                         >
-                          <Plus className="w-3 h-3 text-[#5c6670]" />
+                          <Plus className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-[#5c6670]")} />
                         </button>
                       </div>
                     ))}
@@ -792,20 +954,37 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
 
                 {/* Untracked Files */}
                 {status?.untracked && status.untracked.length > 0 && (
-                  <div className="space-y-1">
-                    <div className="text-xs font-medium text-[#5c6670] uppercase">Untracked ({status.untracked.length})</div>
+                  <div className={cn("space-y-1", touchMode && "space-y-0.5")}>
+                    <div className={cn("font-medium text-[#5c6670] uppercase", touchMode ? "text-sm" : "text-xs")}>Untracked ({status.untracked.length})</div>
                     {status.untracked.map(file => (
-                      <div key={file} className="flex items-center justify-between px-2 py-1 rounded-lg hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <FileCode className="w-3 h-3 text-[#5c6670] shrink-0" />
-                          <span className="text-[13px] text-[#0e1525] dark:text-white truncate">{file}</span>
-                        </div>
+                      <div key={file} className={cn(
+                        "flex items-center justify-between rounded-lg hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group touch-manipulation",
+                        touchMode ? "px-3 py-2.5 min-h-[44px]" : "px-2 py-1"
+                      )}>
+                        <button
+                          onClick={() => handleFileClick(file, false)}
+                          className={cn(
+                            "flex items-center flex-1 min-w-0 text-left touch-manipulation",
+                            touchMode ? "gap-3" : "gap-2"
+                          )}
+                          data-testid={`view-diff-untracked-${file}`}
+                        >
+                          <FileCode className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-[#5c6670] shrink-0")} />
+                          <span className={cn(
+                            "text-[#0e1525] dark:text-white truncate hover:underline",
+                            touchMode ? "text-sm" : "text-[13px]"
+                          )}>{file}</span>
+                          <Eye className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-[#5c6670]", !touchMode && "opacity-0 group-hover:opacity-100")} />
+                        </button>
                         <button
                           onClick={() => stageMutation.mutate([file])}
-                          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-[#e5e7eb] dark:hover:bg-[#3d4452] rounded-lg"
+                          className={cn(
+                            "hover:bg-[#e5e7eb] dark:hover:bg-[#3d4452] rounded-lg touch-manipulation",
+                            touchMode ? "p-2 min-w-[44px] min-h-[44px] flex items-center justify-center" : "p-1 opacity-0 group-hover:opacity-100"
+                          )}
                           data-testid={`stage-${file}`}
                         >
-                          <Plus className="w-3 h-3 text-[#5c6670]" />
+                          <Plus className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-[#5c6670]")} />
                         </button>
                       </div>
                     ))}
@@ -816,16 +995,22 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
                   value={commitMessage}
                   onChange={(e) => setCommitMessage(e.target.value)}
                   placeholder="Commit message..."
-                  className="h-8 text-[15px] bg-white dark:bg-[#1c2333] border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
+                  className={cn(
+                    "bg-white dark:bg-[#1c2333] border-[#d4d8dd] dark:border-[#3d4452] rounded-lg",
+                    touchMode ? "h-11 text-base" : "h-8 text-[15px]"
+                  )}
                   data-testid="input-commit-message"
                 />
                 <Button
                   onClick={() => commitMutation.mutate(commitMessage)}
                   disabled={!commitMessage.trim() || commitMutation.isPending || !status?.staged?.length}
-                  className="w-full h-8 text-[13px] bg-[#0079f2] hover:bg-[#0066cc] text-white rounded-lg"
+                  className={cn(
+                    "w-full bg-[#0079f2] hover:bg-[#0066cc] text-white rounded-lg touch-manipulation",
+                    touchMode ? "h-11 text-sm" : "h-8 text-[13px]"
+                  )}
                   data-testid="button-commit"
                 >
-                  <GitCommit className="w-3 h-3 mr-1" />
+                  <GitCommit className={cn(touchMode ? "w-4 h-4 mr-2" : "w-3 h-3 mr-1")} />
                   Commit {status?.staged?.length || 0} staged
                 </Button>
               </div>
@@ -883,6 +1068,43 @@ export function ReplitGitPanel({ projectId, className }: ReplitGitPanelProps) {
           ) : null}
         </div>
       </ScrollArea>
+
+      {/* Diff Viewer Modal */}
+      <Dialog open={!!selectedFile} onOpenChange={(open) => !open && closeDiffModal()}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden" data-testid="diff-modal">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-[15px]">
+              <FileCode className="w-4 h-4" />
+              <span className="truncate" data-testid="diff-modal-filename">{selectedFile}</span>
+              {selectedFileStaged && (
+                <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded">
+                  Staged
+                </span>
+              )}
+              {diffData?.truncated && (
+                <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded">
+                  Truncated
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg bg-[#fafafa] dark:bg-[#1c2333] overflow-hidden">
+            <DiffViewer diff={diffData?.diff || ''} isLoading={isLoadingDiff} />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={closeDiffModal}
+              className="h-8 border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
+              data-testid="button-close-diff"
+            >
+              <X className="w-3 h-3 mr-1" />
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
