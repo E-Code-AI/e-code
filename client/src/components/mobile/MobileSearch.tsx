@@ -156,7 +156,7 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[100] bg-background md:hidden"
+          className="fixed inset-0 z-[100] bg-background"
           initial={{ y: "100%" }}
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
