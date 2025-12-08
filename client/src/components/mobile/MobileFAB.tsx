@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MobileFABProps {
   projectId: string | number; // Support both UUID strings and numeric IDs
@@ -21,6 +22,7 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
   const { toast } = useToast();
   const [showPulse, setShowPulse] = useState(false);
   const [localExecutionId, setLocalExecutionId] = useState<string | undefined>();
+  const isMobile = useIsMobile();
 
   // Poll runtime status from backend - supports both UUID and numeric IDs
   const { data: runtimeStatus } = useQuery<RuntimeStatus>({
@@ -125,6 +127,11 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
     }
   }, [status]);
 
+  // Early return for non-mobile devices (must be after all hooks)
+  if (!isMobile) {
+    return null;
+  }
+
   // Determine FAB appearance based on state
   const getButtonState = () => {
     // Check status directly to avoid type narrowing issues
@@ -172,7 +179,7 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
   return (
     <motion.div
       className={cn(
-        'fixed z-40 md:hidden',
+        'fixed z-40',
         // Position: bottom-right with safe area padding, above 64px bottom tab bar
         'bottom-20 right-4',
         className

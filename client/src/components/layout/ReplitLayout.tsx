@@ -9,6 +9,7 @@ import { PullToRefresh } from "@/components/ui/mobile-gestures";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useIsMobile, useDeviceInfo } from "@/hooks/use-mobile";
 import { ECodeLoading } from "@/components/ECodeLoading";
 
 interface ReplitLayoutProps {
@@ -27,9 +28,13 @@ export function ReplitLayout({
   onRefresh
 }: ReplitLayoutProps) {
   const [location, navigate] = useLocation();
-  const isMobile = useMediaQuery("(max-width: 768px)");
-  const isTablet = useMediaQuery("(max-width: 1024px)");
-  const isLandscape = useMediaQuery("(orientation: landscape)");
+  // Use improved mobile detection that considers both width AND height
+  // This correctly identifies phone landscape vs tablet portrait
+  const isMobile = useIsMobile();
+  const deviceInfo = useDeviceInfo();
+  const isTablet = deviceInfo.isTablet;
+  const isLandscape = deviceInfo.isLandscape;
+  const isMobileLandscape = deviceInfo.isMobileLandscape;
   const [showFileExplorer, setShowFileExplorer] = useState(false);
   const [showToolsPanel, setShowToolsPanel] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);

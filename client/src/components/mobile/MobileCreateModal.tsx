@@ -132,13 +132,13 @@ export function MobileCreateModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.5 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black z-40 md:hidden"
+            className="fixed inset-0 bg-black z-40"
             onClick={onClose}
           />
           
           {/* Bottom Sheet */}
           <motion.div
-            className="fixed bottom-0 left-0 right-0 bg-background rounded-t-2xl shadow-2xl z-50 md:hidden mobile-safe-bottom"
+            className="fixed bottom-0 left-0 right-0 bg-background rounded-t-2xl shadow-2xl z-50 mobile-safe-bottom"
             initial={{ y: '100%' }}
             animate={{ 
               y: snapHeights[currentSnapPoint]
@@ -214,7 +214,7 @@ export function MobileCreateModal({
             
             {/* Category Tabs */}
             <div className="px-4 pb-3">
-              <ScrollArea className="w-full" orientation="horizontal">
+              <ScrollArea className="w-full whitespace-nowrap">
                 <div className="flex gap-2 pb-1">
                   {categories.map((category) => (
                     <Button

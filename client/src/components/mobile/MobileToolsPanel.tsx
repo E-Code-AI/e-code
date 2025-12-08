@@ -102,13 +102,13 @@ export function MobileToolsPanel({
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.5 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black z-40 md:hidden"
+            className="fixed inset-0 bg-black z-40"
             onClick={onClose}
           />
           
           {/* Tools Panel */}
           <motion.div
-            className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-background z-50 md:hidden shadow-2xl flex flex-col"
+            className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-background z-50 shadow-2xl flex flex-col"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
