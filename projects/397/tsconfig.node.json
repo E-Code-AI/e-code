@@ -1,4 +1,0 @@
-{
-  "description": "Provide TypeScript configuration specifically for Node-based tooling files like vite.config.ts and ESLint configs. Use CommonJS or NodeNext module resolution as appropriate, and relax some DOM-specific options while keeping strictness reasonable.",
-  "todo": "Configure based on outline"
-}

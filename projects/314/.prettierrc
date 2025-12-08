@@ -1,3 +1,0 @@
-Define formatting preferences such as print width, tab width, semicolons, quotes, and trailing commas. Ensure settings are compatible with ESLint via eslint-config-prettier.
-
-TODO: Implement file content based on outline

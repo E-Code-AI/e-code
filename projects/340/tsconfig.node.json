@@ -1,4 +1,0 @@
-{
-  "description": "This file provides specific TypeScript configuration for Node.js environments, typically used for Vite's build process. It extends the base tsconfig.json and overrides settings relevant to Node.js modules.",
-  "todo": "Configure based on outline"
-}
