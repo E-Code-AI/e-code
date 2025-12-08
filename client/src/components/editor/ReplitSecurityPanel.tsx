@@ -33,6 +33,21 @@ interface WebSocketMessage {
   message?: string;
 }
 
+function VulnerabilitySkeleton() {
+  return (
+    <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-[#d4d8dd] dark:border-[#3d4452] p-3" data-testid="vulnerability-skeleton">
+      <div className="flex items-center gap-2">
+        <div className="relative overflow-hidden w-20 h-5 bg-[#d4d8dd]/30 dark:bg-[#3d4452] rounded">
+          <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        </div>
+        <div className="relative overflow-hidden flex-1 h-4 bg-[#d4d8dd]/30 dark:bg-[#3d4452] rounded">
+          <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPanelProps) {
   const [activeTab, setActiveTab] = useState<'active' | 'hidden'>('active');
   const [showSettings, setShowSettings] = useState(false);
@@ -54,7 +69,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
     refetchInterval: 10000,
   });
 
-  const { data: activeVulnerabilities } = useQuery<Vulnerability[]>({
+  const { data: activeVulnerabilities, isLoading: isLoadingActive } = useQuery<Vulnerability[]>({
     queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'],
     queryFn: async () => {
       const res = await fetch(`/api/workspace/projects/${projectId}/vulnerabilities/by-hidden?hidden=false`);
@@ -64,7 +79,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
     enabled: !!projectId,
   });
 
-  const { data: hiddenVulnerabilities } = useQuery<Vulnerability[]>({
+  const { data: hiddenVulnerabilities, isLoading: isLoadingHidden } = useQuery<Vulnerability[]>({
     queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'hidden'],
     queryFn: async () => {
       const res = await fetch(`/api/workspace/projects/${projectId}/vulnerabilities/by-hidden?hidden=true`);
@@ -380,7 +395,13 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
 
           {/* Issues List - Replit Accordion Cards */}
           <div className="space-y-2">
-            {currentVulnerabilities.length === 0 ? (
+            {(activeTab === 'active' ? isLoadingActive : isLoadingHidden) ? (
+              <div className="space-y-3" data-testid="vulnerabilities-loading">
+                <VulnerabilitySkeleton />
+                <VulnerabilitySkeleton />
+                <VulnerabilitySkeleton />
+              </div>
+            ) : currentVulnerabilities.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center" data-testid="empty-state">
                 <ShieldCheck 
                   className="w-12 h-12 mb-3" 

@@ -63,20 +63,32 @@ interface ReplitGitPanelProps {
 
 type ViewMode = 'main' | 'settings';
 
+function ShimmerBar({ className }: { className?: string }) {
+  return (
+    <div className={cn("relative overflow-hidden bg-[#d4d8dd]/30 dark:bg-[#3d4452] rounded", className)}>
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-white/10 to-transparent"
+        animate={{ x: ['-100%', '100%'] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+      />
+    </div>
+  );
+}
+
 function CommitSkeleton() {
   return (
     <div className="space-y-3" data-testid="commit-skeleton">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="flex items-start gap-2 py-1.5 animate-pulse">
+        <div key={i} className="flex items-start gap-2 py-1.5">
           <div className="flex flex-col items-center pt-1">
-            <div className="w-2 h-2 rounded-full bg-[#d4d8dd] dark:bg-[#3d4452]" />
-            <div className="w-0.5 flex-1 bg-[#d4d8dd] dark:bg-[#3d4452] mt-1 min-h-[24px]" />
+            <ShimmerBar className="w-2 h-2 rounded-full" />
+            <ShimmerBar className="w-0.5 flex-1 mt-1 min-h-[24px]" />
           </div>
           <div className="flex-1 min-w-0 space-y-2">
-            <div className="h-3 bg-[#d4d8dd] dark:bg-[#3d4452] rounded w-3/4" />
+            <ShimmerBar className="h-3 w-3/4" />
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-[#d4d8dd] dark:bg-[#3d4452] rounded-full" />
-              <div className="h-2 bg-[#d4d8dd] dark:bg-[#3d4452] rounded w-24" />
+              <ShimmerBar className="w-4 h-4 rounded-full" />
+              <ShimmerBar className="h-2 w-24" />
             </div>
           </div>
         </div>

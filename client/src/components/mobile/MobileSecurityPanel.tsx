@@ -34,6 +34,29 @@ interface WebSocketMessage {
   message?: string;
 }
 
+function VulnerabilitySkeleton() {
+  return (
+    <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-[#d4d8dd] dark:border-[#3d4452] p-4" data-testid="vulnerability-skeleton">
+      <div className="flex items-center gap-2">
+        <div className="relative overflow-hidden w-20 h-5 bg-[#d4d8dd]/30 dark:bg-[#3d4452] rounded">
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+            animate={{ x: ['-100%', '100%'] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+          />
+        </div>
+        <div className="relative overflow-hidden flex-1 h-4 bg-[#d4d8dd]/30 dark:bg-[#3d4452] rounded">
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+            animate={{ x: ['-100%', '100%'] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function MobileSecurityPanel({ projectId, className }: MobileSecurityPanelProps) {
   const [activeTab, setActiveTab] = useState<'active' | 'hidden'>('active');
   const [showSettings, setShowSettings] = useState(false);
@@ -384,8 +407,10 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
           {/* Issues List */}
           <div className="space-y-3">
             {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-[#5c6670]" />
+              <div className="space-y-3" data-testid="vulnerabilities-loading">
+                <VulnerabilitySkeleton />
+                <VulnerabilitySkeleton />
+                <VulnerabilitySkeleton />
               </div>
             ) : hasNoVulnerabilities ? (
               /* Empty State */
