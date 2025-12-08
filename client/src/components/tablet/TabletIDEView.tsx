@@ -594,7 +594,7 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
                     ) : rightPanel === 'deploy' ? (
                       <ReplitDeploymentPanel projectId={projectId} className="h-full" />
                     ) : rightPanel === 'git' ? (
-                      <GitPanel projectId={projectId} />
+                      <GitPanel projectId={projectId} mode="tablet" />
                     ) : rightPanel === 'packages' ? (
                       <ReplitPackagesPanel />
                     ) : rightPanel === 'secrets' ? (
