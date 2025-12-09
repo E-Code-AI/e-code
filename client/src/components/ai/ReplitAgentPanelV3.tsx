@@ -1697,9 +1697,10 @@ export function ReplitAgentPanelV3({
             <Button
               size="icon"
               onClick={handleSend}
-              disabled={!input.trim() || isWorking}
+              disabled={!input.trim() || isWorking || !conversationId}
               className="absolute bottom-2 right-2 h-7 w-7 rounded"
               data-testid="button-send"
+              title={!conversationId ? "Initializing conversation..." : undefined}
             >
               <Send className="h-3.5 w-3.5" />
             </Button>
