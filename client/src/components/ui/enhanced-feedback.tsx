@@ -290,7 +290,7 @@ export function AnimatedProgress({
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="h-full bg-gradient-to-r from-[#F26207] to-[#F99D25] rounded-full"
+          className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
         />
       </div>
       {showLabel && (
