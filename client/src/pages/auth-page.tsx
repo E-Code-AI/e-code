@@ -80,43 +80,43 @@ export default function AuthPage() {
 
   return (
     <div 
-      className="min-h-screen flex flex-col md:flex-row bg-[var(--ecode-background)]"
+      className="min-h-screen flex flex-col md:flex-row bg-background"
       style={{ fontFamily: 'var(--ecode-font-sans)' }}
       data-testid="page-auth"
     >
       <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
         <Card 
-          className="w-full max-w-md border border-[var(--ecode-border)] bg-[var(--ecode-surface)] shadow-lg transition-all duration-300 hover:shadow-xl" 
+          className="w-full max-w-md border border-border bg-card shadow-lg transition-all duration-300 hover:shadow-xl" 
           data-testid="card-auth"
         >
           <CardHeader className="p-5 sm:p-6 pb-2">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--ecode-accent)] to-[var(--ecode-accent)]/80 flex items-center justify-center shadow-md">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-md">
                 <Code2 className="h-5 w-5 text-white" />
               </div>
-              <CardTitle className="text-xl sm:text-2xl font-bold text-[var(--ecode-text)]">
+              <CardTitle className="text-xl sm:text-2xl font-bold text-foreground">
                 Welcome to E-Code
               </CardTitle>
             </div>
-            <CardDescription className="text-sm sm:text-base text-[var(--ecode-text-muted)]">
+            <CardDescription className="text-sm sm:text-base text-muted-foreground">
               Sign in to your account or create a new one to get started.
             </CardDescription>
             
-            <div className="mt-4 p-3 sm:p-4 bg-[var(--ecode-surface-tertiary)] dark:bg-[#1c2333] rounded-xl border border-[var(--ecode-border)] transition-colors duration-200">
+            <div className="mt-4 p-3 sm:p-4 bg-muted dark:bg-muted rounded-xl border border-border transition-colors duration-200">
               <div className="flex items-center gap-2 mb-2">
-                <Shield className="h-4 w-4 text-[var(--ecode-accent)]" />
-                <p className="text-sm font-medium text-[var(--ecode-text)]">Quick Access</p>
+                <Shield className="h-4 w-4 text-primary" />
+                <p className="text-sm font-medium text-foreground">Quick Access</p>
               </div>
               <div className="flex flex-col gap-2 mt-2">
                 <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2">
-                  <div className="text-xs sm:text-sm text-[var(--ecode-text-muted)]">
-                    <span>Email: <code className="bg-[var(--ecode-accent)]/10 dark:bg-[var(--ecode-accent)]/20 text-[var(--ecode-accent)] px-1.5 py-0.5 rounded font-mono text-xs">admin@test.com</code></span><br/>
-                    <span>Password: <code className="bg-[var(--ecode-accent)]/10 dark:bg-[var(--ecode-accent)]/20 text-[var(--ecode-accent)] px-1.5 py-0.5 rounded font-mono text-xs">adminpass123</code></span>
+                  <div className="text-xs sm:text-sm text-muted-foreground">
+                    <span>Email: <code className="bg-primary/10 dark:bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono text-xs">admin@test.com</code></span><br/>
+                    <span>Password: <code className="bg-primary/10 dark:bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono text-xs">adminpass123</code></span>
                   </div>
                   <Button 
                     variant="secondary" 
                     size="sm" 
-                    className="min-h-[40px] text-xs sm:text-sm px-4 bg-[var(--ecode-accent)]/10 hover:bg-[var(--ecode-accent)]/20 text-[var(--ecode-accent)] border-0 font-medium transition-all duration-200"
+                    className="min-h-[40px] text-xs sm:text-sm px-4 bg-primary/10 hover:bg-primary/20 text-primary border-0 font-medium transition-all duration-200"
                     onClick={() => {
                       loginForm.setValue('email', 'admin@test.com');
                       loginForm.setValue('password', 'adminpass123');
@@ -133,17 +133,17 @@ export default function AuthPage() {
           
           <CardContent className="p-5 sm:p-6 pt-4">
             <Tabs defaultValue="login" value={activeTab} onValueChange={(value) => setActiveTab(value as "login" | "register")}>
-              <TabsList className="grid w-full grid-cols-2 mb-5 sm:mb-6 bg-[var(--ecode-surface-tertiary)] dark:bg-[#1c2333] p-1 rounded-xl border border-[var(--ecode-border)]">
+              <TabsList className="grid w-full grid-cols-2 mb-5 sm:mb-6 bg-muted p-1 rounded-xl border border-border">
                 <TabsTrigger 
                   value="login" 
-                  className="rounded-lg data-[state=active]:bg-[var(--ecode-accent)] data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all duration-200"
+                  className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all duration-200"
                   data-testid="tab-login"
                 >
                   Login
                 </TabsTrigger>
                 <TabsTrigger 
                   value="register" 
-                  className="rounded-lg data-[state=active]:bg-[var(--ecode-accent)] data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all duration-200"
+                  className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md font-medium transition-all duration-200"
                   data-testid="tab-register"
                 >
                   Register
@@ -158,12 +158,12 @@ export default function AuthPage() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-[var(--ecode-text)]">Email</FormLabel>
+                          <FormLabel className="text-sm font-medium text-foreground">Email</FormLabel>
                           <FormControl>
                             <Input 
                               type="email" 
                               placeholder="your@email.com" 
-                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40 transition-all duration-200 rounded-lg"
+                              className="min-h-[44px] border-border bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all duration-200 rounded-lg"
                               data-testid="input-login-email"
                               {...field} 
                             />
@@ -177,12 +177,12 @@ export default function AuthPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-[var(--ecode-text)]">Password</FormLabel>
+                          <FormLabel className="text-sm font-medium text-foreground">Password</FormLabel>
                           <FormControl>
                             <Input 
                               type="password" 
                               placeholder="••••••••" 
-                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40 transition-all duration-200 rounded-lg"
+                              className="min-h-[44px] border-border bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all duration-200 rounded-lg"
                               data-testid="input-login-password"
                               {...field} 
                             />
@@ -194,7 +194,7 @@ export default function AuthPage() {
                     <div className="space-y-3 pt-2">
                       <Button 
                         type="submit" 
-                        className="w-full min-h-[48px] bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200" 
+                        className="w-full min-h-[48px] bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200" 
                         disabled={loginMutation.isPending}
                         data-testid="button-login-submit"
                       >
@@ -210,10 +210,10 @@ export default function AuthPage() {
                       
                       <div className="relative my-4">
                         <div className="absolute inset-0 flex items-center">
-                          <span className="w-full border-t border-[var(--ecode-border)]" />
+                          <span className="w-full border-t border-border" />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                          <span className="bg-[var(--ecode-surface)] px-3 text-[var(--ecode-text-muted)]">Quick access</span>
+                          <span className="bg-card px-3 text-muted-foreground">Quick access</span>
                         </div>
                       </div>
                       
@@ -221,7 +221,7 @@ export default function AuthPage() {
                         <Button 
                           type="button" 
                           variant="outline" 
-                          className="flex-1 min-h-[44px] text-xs sm:text-sm border-[var(--ecode-accent)]/30 bg-[var(--ecode-accent)]/5 hover:bg-[var(--ecode-accent)]/10 hover:border-[var(--ecode-accent)]/50 text-[var(--ecode-accent)] font-medium transition-all duration-200 rounded-lg"
+                          className="flex-1 min-h-[44px] text-xs sm:text-sm border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 text-primary font-medium transition-all duration-200 rounded-lg"
                           onClick={() => {
                             loginForm.setValue('email', 'admin@test.com');
                             loginForm.setValue('password', 'adminpass123');
@@ -235,7 +235,7 @@ export default function AuthPage() {
                         <Button 
                           type="button" 
                           variant="outline" 
-                          className="flex-1 min-h-[44px] text-xs sm:text-sm border-[var(--ecode-border)] hover:border-[var(--ecode-accent)]/30 hover:bg-[var(--ecode-accent)]/5 text-[var(--ecode-text)] font-medium transition-all duration-200 rounded-lg"
+                          className="flex-1 min-h-[44px] text-xs sm:text-sm border-border hover:border-primary/30 hover:bg-primary/5 text-foreground font-medium transition-all duration-200 rounded-lg"
                           onClick={() => {
                             loginForm.setValue('email', 'admin@test.com');
                             loginForm.setValue('password', 'adminpass123');
@@ -251,7 +251,7 @@ export default function AuthPage() {
                       <Button 
                         type="button" 
                         variant="outline" 
-                        className="w-full min-h-[44px] text-sm border-[var(--ecode-border)] hover:border-[var(--ecode-border-strong)] text-[var(--ecode-text)] font-medium transition-all duration-200 rounded-lg mt-2"
+                        className="w-full min-h-[44px] text-sm border-border hover:border-border text-foreground font-medium transition-all duration-200 rounded-lg mt-2"
                         onClick={() => {}}
                         data-testid="button-github-login"
                       >
@@ -271,11 +271,11 @@ export default function AuthPage() {
                       name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-[var(--ecode-text)]">Username</FormLabel>
+                          <FormLabel className="text-sm font-medium text-foreground">Username</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Choose a username" 
-                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40 transition-all duration-200 rounded-lg"
+                              className="min-h-[44px] border-border bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all duration-200 rounded-lg"
                               data-testid="input-register-username"
                               {...field} 
                             />
@@ -289,12 +289,12 @@ export default function AuthPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-[var(--ecode-text)]">Password</FormLabel>
+                          <FormLabel className="text-sm font-medium text-foreground">Password</FormLabel>
                           <FormControl>
                             <Input 
                               type="password" 
                               placeholder="••••••••" 
-                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40 transition-all duration-200 rounded-lg"
+                              className="min-h-[44px] border-border bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all duration-200 rounded-lg"
                               data-testid="input-register-password"
                               {...field} 
                             />
@@ -308,12 +308,12 @@ export default function AuthPage() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-[var(--ecode-text)]">Email <span className="text-[var(--ecode-text-muted)]">(optional)</span></FormLabel>
+                          <FormLabel className="text-sm font-medium text-foreground">Email <span className="text-muted-foreground">(optional)</span></FormLabel>
                           <FormControl>
                             <Input 
                               type="email" 
                               placeholder="your@email.com" 
-                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40 transition-all duration-200 rounded-lg"
+                              className="min-h-[44px] border-border bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all duration-200 rounded-lg"
                               data-testid="input-register-email"
                               {...field} 
                             />
@@ -327,11 +327,11 @@ export default function AuthPage() {
                       name="displayName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-[var(--ecode-text)]">Display Name <span className="text-[var(--ecode-text-muted)]">(optional)</span></FormLabel>
+                          <FormLabel className="text-sm font-medium text-foreground">Display Name <span className="text-muted-foreground">(optional)</span></FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Your display name" 
-                              className="min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] focus:ring-2 focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40 transition-all duration-200 rounded-lg"
+                              className="min-h-[44px] border-border bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all duration-200 rounded-lg"
                               data-testid="input-register-displayname"
                               {...field} 
                             />
@@ -342,7 +342,7 @@ export default function AuthPage() {
                     />
                     <Button 
                       type="submit" 
-                      className="w-full min-h-[48px] bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 mt-2" 
+                      className="w-full min-h-[48px] bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 mt-2" 
                       disabled={registerMutation.isPending}
                       data-testid="button-register-submit"
                     >
@@ -362,13 +362,13 @@ export default function AuthPage() {
           </CardContent>
           
           <CardFooter className="flex justify-center p-5 pt-0">
-            <p className="text-sm text-[var(--ecode-text-muted)]">
+            <p className="text-sm text-muted-foreground">
               {activeTab === "login" ? (
                 <>
                   Don't have an account?{" "}
                   <Button 
                     variant="link" 
-                    className="p-0 h-auto text-[var(--ecode-accent)] hover:text-[var(--ecode-accent-hover)] font-medium transition-colors duration-200" 
+                    className="p-0 h-auto text-primary hover:text-primary/90 font-medium transition-colors duration-200" 
                     onClick={() => setActiveTab("register")}
                     data-testid="link-switch-register"
                   >
@@ -380,7 +380,7 @@ export default function AuthPage() {
                   Already have an account?{" "}
                   <Button 
                     variant="link" 
-                    className="p-0 h-auto text-[var(--ecode-accent)] hover:text-[var(--ecode-accent-hover)] font-medium transition-colors duration-200" 
+                    className="p-0 h-auto text-primary hover:text-primary/90 font-medium transition-colors duration-200" 
                     onClick={() => setActiveTab("login")}
                     data-testid="link-switch-login"
                   >
@@ -394,7 +394,7 @@ export default function AuthPage() {
       </div>
 
       <div 
-        className="flex-1 p-8 lg:p-12 flex flex-col justify-center hidden md:flex relative overflow-hidden bg-gradient-to-br from-[var(--ecode-accent)] via-[var(--ecode-accent)]/90 to-[var(--ecode-accent)]/80"
+        className="flex-1 p-8 lg:p-12 flex flex-col justify-center hidden md:flex relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80"
         data-testid="hero-section"
       >
         <div className="absolute inset-0 opacity-10">

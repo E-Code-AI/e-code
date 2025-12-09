@@ -445,40 +445,40 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 h-12 sm:h-10 rounded-none border-b glassmorphism overflow-x-auto">
           <TabsTrigger 
             value="overview" 
-            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-[#F26207]/10 data-[state=active]:text-[#F26207] px-3 sm:px-4"
+            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
           >
             Overview
           </TabsTrigger>
           <TabsTrigger 
             value="metrics" 
-            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-[#F26207]/10 data-[state=active]:text-[#F26207] px-3 sm:px-4"
+            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
           >
             <Activity className="h-3 w-3 mr-1" />
             Metrics
           </TabsTrigger>
           <TabsTrigger 
             value="autoscaling" 
-            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-[#F26207]/10 data-[state=active]:text-[#F26207] px-3 sm:px-4"
+            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
           >
             <TrendingUp className="h-3 w-3 mr-1" />
             Auto-Scaling
           </TabsTrigger>
           <TabsTrigger 
             value="rollback" 
-            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-[#F26207]/10 data-[state=active]:text-[#F26207] px-3 sm:px-4"
+            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
           >
             <History className="h-3 w-3 mr-1" />
             Rollback
           </TabsTrigger>
           <TabsTrigger 
             value="logs" 
-            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-[#F26207]/10 data-[state=active]:text-[#F26207] px-3 sm:px-4"
+            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
           >
             Logs
           </TabsTrigger>
           <TabsTrigger 
             value="settings" 
-            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-[#F26207]/10 data-[state=active]:text-[#F26207] px-3 sm:px-4"
+            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
           >
             Settings
           </TabsTrigger>
@@ -494,7 +494,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
           >
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
               <div>
-                <h4 className="text-sm font-semibold bg-gradient-to-r from-[#F26207] to-[#F99D25] bg-clip-text text-transparent">
+                <h4 className="text-sm font-semibold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                   Deploy Application
                 </h4>
                 <p className="text-xs text-muted-foreground mt-1">Deploy your application to production environment</p>
@@ -502,7 +502,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
               <Button
                 size="sm"
                 onClick={() => setShowDeployDialog(true)}
-                className="min-h-[48px] sm:min-h-[40px] px-4 sm:px-6 bg-gradient-to-r from-[#F26207] to-[#F99D25] hover:from-[#D04E00] hover:to-[#E88510] text-white shadow-lg hover:shadow-xl transition-all duration-300 btn-premium focus:ring-2 focus:ring-[#F26207]/50 focus:ring-offset-2"
+                className="min-h-[48px] sm:min-h-[40px] px-4 sm:px-6 bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 btn-premium focus:ring-2 focus:ring-primary/50 focus:ring-offset-2"
                 disabled={isDeploying}
               >
                 {isDeploying ? (
@@ -544,7 +544,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
             transition={{ delay: 0.2 }}
             className="p-4 border-b"
           >
-            <Label className="text-sm font-semibold mb-3 text-[#F26207]">Active Deployments</Label>
+            <Label className="text-sm font-semibold mb-3 text-primary">Active Deployments</Label>
             <div className="space-y-3">
               {deployments.length === 0 && !stats ? (
                 // Skeleton Loaders for Deployments
@@ -579,7 +579,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                 </AnimatePresence>
               ) : deployments.length === 0 ? (
                 <Card className="p-8 text-center border-dashed glassmorphism">
-                  <Rocket className="h-12 w-12 mx-auto mb-3 text-[#F26207]" />
+                  <Rocket className="h-12 w-12 mx-auto mb-3 text-primary" />
                   <p className="text-sm text-muted-foreground">No deployments yet. Click deploy to get started!</p>
                 </Card>
               ) : (
@@ -595,8 +595,8 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                       className={cn(
                         "p-4 rounded-xl cursor-pointer transition-all duration-300 glassmorphism shadow-lg hover:shadow-xl",
                         selectedDeployment?.id === deployment.id 
-                          ? 'bg-gradient-to-r from-[#F26207]/10 to-[#F99D25]/10 border-[#F26207]' 
-                          : 'hover:bg-surface-hover-solid'
+                          ? 'bg-gradient-to-r from-primary/10 to-secondary/10 border-primary' 
+                          : 'hover:bg-muted'
                       )}
                       onClick={() => setSelectedDeployment(deployment)}
                     >
@@ -612,7 +612,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                             <span className="font-semibold text-sm">Deployment #{deployment.id}</span>
                             <Badge 
                               variant="outline" 
-                              className="text-xs bg-gradient-to-r from-[#F26207]/10 to-[#F99D25]/10"
+                              className="text-xs bg-gradient-to-r from-primary/10 to-secondary/10"
                             >
                               v{deployment.version}
                             </Badge>
@@ -639,7 +639,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                                   window.open(deployment.url, '_blank');
                                 }
                               }}
-                              className="h-8 w-8 hover:bg-[#F26207]/10 hover:text-[#F26207] transition-colors"
+                              className="h-8 w-8 hover:bg-primary/10 hover:text-primary transition-colors"
                             >
                               <ExternalLink className="h-3.5 w-3.5" />
                             </Button>
@@ -651,7 +651,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                               e.stopPropagation();
                               handleRedeploy(deployment);
                             }}
-                            className="h-8 w-8 hover:bg-[#F26207]/10 hover:text-[#F26207] transition-colors"
+                            className="h-8 w-8 hover:bg-primary/10 hover:text-primary transition-colors"
                           >
                             <RotateCcw className="h-3.5 w-3.5" />
                           </Button>

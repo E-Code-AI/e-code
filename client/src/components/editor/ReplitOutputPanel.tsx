@@ -37,8 +37,7 @@ interface ReplitOutputPanelProps {
 function ShimmerSkeletonItem({ className }: { className?: string }) {
   return (
     <motion.div
-      className={cn("rounded-lg", className)}
-      style={{ backgroundColor: '#242b3d' }}
+      className={cn("rounded-lg bg-muted", className)}
       animate={{ opacity: [0.5, 0.8, 0.5] }}
       transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
     />
@@ -62,11 +61,11 @@ function ShimmerSkeleton() {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center px-6">
-      <Terminal className="w-12 h-12 mb-4 opacity-40" style={{ color: '#5c6670' }} />
-      <h3 className="text-[17px] font-medium leading-tight text-[#ffffff] mb-2">
+      <Terminal className="w-12 h-12 mb-4 opacity-40 text-muted-foreground" />
+      <h3 className="text-[17px] font-medium leading-tight text-foreground mb-2">
         No output yet
       </h3>
-      <p className="text-[15px] leading-[20px] text-[#5c6670] max-w-[280px]">
+      <p className="text-[15px] leading-[20px] text-muted-foreground max-w-[280px]">
         Run your project to see output, logs, and build information here.
       </p>
     </div>
@@ -156,15 +155,15 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'error':
-        return 'text-[#d4d8dd]';
+        return 'text-foreground';
       case 'warn':
-        return 'text-[#9da2a6]';
+        return 'text-muted-foreground';
       case 'info':
-        return 'text-[#5c6670]';
+        return 'text-muted-foreground';
       case 'debug':
-        return 'text-[#5c6670]';
+        return 'text-muted-foreground';
       default:
-        return 'text-[#d4d8dd]';
+        return 'text-foreground';
     }
   };
 
@@ -172,25 +171,25 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
     switch (level) {
       case 'error':
         return (
-          <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-[#3d4452] text-[#d4d8dd]">
+          <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-muted text-foreground">
             ERROR
           </span>
         );
       case 'warn':
         return (
-          <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-[#242b3d] text-[#9da2a6]">
+          <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
             WARN
           </span>
         );
       case 'info':
         return (
-          <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-[#1c2333] text-[#5c6670]">
+          <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-card text-muted-foreground">
             INFO
           </span>
         );
       case 'debug':
         return (
-          <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-[#1c2333] text-[#5c6670]">
+          <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-card text-muted-foreground">
             DEBUG
           </span>
         );
@@ -225,16 +224,15 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
   const showNoMatches = !isLoading && output.length > 0 && filteredOutput.length === 0;
 
   return (
-    <div className="h-full flex flex-col bg-[#0e1525]">
-      {/* Header */}
-      <div className="p-3 border-b border-[#3d4452] flex-shrink-0 min-h-[48px]">
+    <div className="h-full flex flex-col bg-background">
+      <div className="p-3 border-b border-border flex-shrink-0 min-h-[48px]">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Terminal className="w-[18px] h-[18px] text-[#5c6670]" />
-            <h3 className="text-[17px] font-medium leading-tight text-[#ffffff]">
+            <Terminal className="w-[18px] h-[18px] text-muted-foreground" />
+            <h3 className="text-[17px] font-medium leading-tight text-foreground">
               Output
             </h3>
-            <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-[#242b3d] text-[#9da2a6]">
+            <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
               {filteredOutput.length} lines
             </span>
           </div>
@@ -244,39 +242,38 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
               variant="ghost"
               size="sm"
               onClick={() => setAutoScroll(!autoScroll)}
-              className="h-8 w-8 p-0 rounded-lg hover:bg-[#242b3d]"
+              className="h-8 w-8 p-0 rounded-lg hover:bg-muted"
               data-testid="button-toggle-autoscroll"
             >
               {autoScroll ? (
-                <Unlock className="w-[18px] h-[18px] text-[#9da2a6]" />
+                <Unlock className="w-[18px] h-[18px] text-muted-foreground" />
               ) : (
-                <Lock className="w-[18px] h-[18px] text-[#9da2a6]" />
+                <Lock className="w-[18px] h-[18px] text-muted-foreground" />
               )}
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={clearOutput}
-              className="h-8 w-8 p-0 rounded-lg hover:bg-[#242b3d]"
+              className="h-8 w-8 p-0 rounded-lg hover:bg-muted"
               data-testid="button-clear-output"
             >
-              <Trash2 className="w-[18px] h-[18px] text-[#9da2a6]" />
+              <Trash2 className="w-[18px] h-[18px] text-muted-foreground" />
             </Button>
           </div>
         </div>
 
-        {/* Filters */}
         <div className="flex items-center gap-2">
           <Select value={selectedSource} onValueChange={setSelectedSource}>
-            <SelectTrigger className="h-8 w-32 text-[13px] rounded-lg bg-[#1c2333] border-[#3d4452] text-[#d4d8dd]">
+            <SelectTrigger className="h-8 w-32 text-[13px] rounded-lg bg-card border-border text-foreground">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-[#1c2333] border-[#3d4452]">
+            <SelectContent className="bg-card border-border">
               {sources.map(source => (
                 <SelectItem 
                   key={source} 
                   value={source} 
-                  className="text-[13px] text-[#d4d8dd] focus:bg-[#242b3d] focus:text-[#ffffff]"
+                  className="text-[13px] text-foreground focus:bg-muted focus:text-foreground"
                 >
                   {source}
                 </SelectItem>
@@ -285,33 +282,32 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
           </Select>
 
           <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="h-8 w-28 text-[13px] rounded-lg bg-[#1c2333] border-[#3d4452] text-[#d4d8dd]">
+            <SelectTrigger className="h-8 w-28 text-[13px] rounded-lg bg-card border-border text-foreground">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-[#1c2333] border-[#3d4452]">
-              <SelectItem value="all" className="text-[13px] text-[#d4d8dd] focus:bg-[#242b3d] focus:text-[#ffffff]">All</SelectItem>
-              <SelectItem value="info" className="text-[13px] text-[#d4d8dd] focus:bg-[#242b3d] focus:text-[#ffffff]">Info</SelectItem>
-              <SelectItem value="warn" className="text-[13px] text-[#d4d8dd] focus:bg-[#242b3d] focus:text-[#ffffff]">Warnings</SelectItem>
-              <SelectItem value="error" className="text-[13px] text-[#d4d8dd] focus:bg-[#242b3d] focus:text-[#ffffff]">Errors</SelectItem>
-              <SelectItem value="debug" className="text-[13px] text-[#d4d8dd] focus:bg-[#242b3d] focus:text-[#ffffff]">Debug</SelectItem>
+            <SelectContent className="bg-card border-border">
+              <SelectItem value="all" className="text-[13px] text-foreground focus:bg-muted focus:text-foreground">All</SelectItem>
+              <SelectItem value="info" className="text-[13px] text-foreground focus:bg-muted focus:text-foreground">Info</SelectItem>
+              <SelectItem value="warn" className="text-[13px] text-foreground focus:bg-muted focus:text-foreground">Warnings</SelectItem>
+              <SelectItem value="error" className="text-[13px] text-foreground focus:bg-muted focus:text-foreground">Errors</SelectItem>
+              <SelectItem value="debug" className="text-[13px] text-foreground focus:bg-muted focus:text-foreground">Debug</SelectItem>
             </SelectContent>
           </Select>
 
           <div className="flex-1 relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#5c6670]" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground" />
             <Input
               type="text"
               placeholder="Search output..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-8 pl-9 text-[13px] rounded-lg bg-[#1c2333] border-[#3d4452] text-[#d4d8dd] placeholder:text-[#5c6670]"
+              className="h-8 pl-9 text-[13px] rounded-lg bg-card border-border text-foreground placeholder:text-muted-foreground"
               data-testid="input-search-output"
             />
           </div>
         </div>
       </div>
 
-      {/* Output Lines */}
       <ScrollArea className="flex-1" ref={scrollRef}>
         {isLoading ? (
           <ShimmerSkeleton />
@@ -319,13 +315,13 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
           <EmptyState />
         ) : showNoMatches ? (
           <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center px-6">
-            <div className="w-12 h-12 rounded-xl bg-[#242b3d] flex items-center justify-center mb-4">
-              <Search className="w-[18px] h-[18px] text-[#5c6670]" />
+            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mb-4">
+              <Search className="w-[18px] h-[18px] text-muted-foreground" />
             </div>
-            <h3 className="text-[17px] font-medium leading-tight text-[#ffffff] mb-2">
+            <h3 className="text-[17px] font-medium leading-tight text-foreground mb-2">
               No matching output
             </h3>
-            <p className="text-[15px] leading-[20px] text-[#5c6670] max-w-[280px]">
+            <p className="text-[15px] leading-[20px] text-muted-foreground max-w-[280px]">
               Try adjusting your filters or search query.
             </p>
           </div>
@@ -334,10 +330,10 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
             {filteredOutput.map((line) => (
               <div
                 key={line.id}
-                className="flex items-start gap-3 py-1.5 px-2 hover:bg-[#1c2333] rounded-lg transition-colors"
+                className="flex items-start gap-3 py-1.5 px-2 hover:bg-card rounded-lg transition-colors"
                 data-testid={`output-line-${line.level}`}
               >
-                <span className="text-[13px] text-[#5c6670] flex-shrink-0 tabular-nums">
+                <span className="text-[13px] text-muted-foreground flex-shrink-0 tabular-nums">
                   {line.timestamp}
                 </span>
                 <span className="flex-shrink-0">

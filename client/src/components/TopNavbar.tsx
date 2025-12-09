@@ -86,10 +86,10 @@ const TopNavbar = ({
   const projectTitle = isLoading ? "Loading..." : project?.name || "Untitled Project";
 
   return (
-    <div className="h-9 border-b border-[#e1e4e8] bg-white flex items-center justify-between px-2">
+    <div className="h-9 border-b border-border bg-background flex items-center justify-between px-2">
       {/* Left Section - Just Project Name */}
       <div className="flex items-center gap-2">
-        <span className="text-sm font-medium text-gray-900">
+        <span className="text-sm font-medium text-foreground">
           {projectTitle}
         </span>
       </div>
@@ -113,7 +113,7 @@ const TopNavbar = ({
           <Button
             size="sm"
             onClick={handleRun}
-            className="h-7 px-3 bg-[#2ea043] hover:bg-[#268838] text-white text-xs font-medium rounded"
+            className="h-7 px-3 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded"
           >
             <Play className="h-3 w-3 mr-1" />
             Run
@@ -124,7 +124,7 @@ const TopNavbar = ({
         <Button
           variant="outline"
           size="sm"
-          className="h-7 px-3 text-xs font-medium rounded border-gray-300"
+          className="h-7 px-3 text-xs font-medium rounded border-border"
         >
           Invite
         </Button>
@@ -133,7 +133,7 @@ const TopNavbar = ({
         <Button
           variant="outline"
           size="sm"
-          className="h-7 px-3 text-xs font-medium rounded border-gray-300"
+          className="h-7 px-3 text-xs font-medium rounded border-border"
         >
           Share
         </Button>
@@ -146,7 +146,7 @@ const TopNavbar = ({
               size="sm"
               className="h-7 w-7 p-0"
             >
-              <MoreVertical className="h-4 w-4 text-gray-600" />
+              <MoreVertical className="h-4 w-4 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">

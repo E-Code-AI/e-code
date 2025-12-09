@@ -109,7 +109,7 @@ interface XTermModules {
 }
 
 const TerminalLoadingFallback = () => (
-  <div className="flex-1 bg-[#1e1e1e] flex items-center justify-center">
+  <div className="flex-1 bg-[var(--ecode-terminal-bg)] flex items-center justify-center">
     <div className="flex flex-col items-center gap-3">
       <Loader2 className="h-8 w-8 animate-spin text-primary" />
       <p className="text-sm text-muted-foreground">Loading terminal...</p>
@@ -487,7 +487,7 @@ function ShellContent() {
           </div>
         </div>
 
-        <div className="flex-1 bg-[#1e1e1e] p-4">
+        <div className="flex-1 bg-[var(--ecode-terminal-bg)] p-4">
           {sessions.map(session => (
             <div
               key={session.id}

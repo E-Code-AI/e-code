@@ -435,7 +435,7 @@ session.share({ team: "Field Ops" });
                 <Play className="h-3.5 w-3.5" /> Run project
               </Button>
             </div>
-            <pre className="bg-[#0f1729] text-left text-xs leading-relaxed font-mono text-emerald-200/90 p-4 rounded-lg border border-white/5 overflow-x-auto">
+            <pre className="bg-[var(--ecode-terminal-bg)] text-left text-xs leading-relaxed font-mono text-emerald-200/90 p-4 rounded-lg border border-white/5 overflow-x-auto">
 {editorFiles[activeDemoFile]}
             </pre>
           </div>

@@ -35,13 +35,13 @@ interface WebSocketMessage {
 
 function VulnerabilitySkeleton() {
   return (
-    <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-[#d4d8dd] dark:border-[#3d4452] p-3" data-testid="vulnerability-skeleton">
+    <div className="bg-card rounded-lg border border-border p-3" data-testid="vulnerability-skeleton">
       <div className="flex items-center gap-2">
-        <div className="relative overflow-hidden w-20 h-5 bg-[#e8eaed] dark:bg-[#3d4452] rounded">
-          <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-[#f0f1f3] to-transparent" />
+        <div className="relative overflow-hidden w-20 h-5 bg-muted rounded">
+          <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-muted-foreground/10 to-transparent" />
         </div>
-        <div className="relative overflow-hidden flex-1 h-4 bg-[#e8eaed] dark:bg-[#3d4452] rounded">
-          <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-[#f0f1f3] to-transparent" />
+        <div className="relative overflow-hidden flex-1 h-4 bg-muted rounded">
+          <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-muted-foreground/10 to-transparent" />
         </div>
       </div>
     </div>
@@ -223,31 +223,30 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
   }, [projectId, queryClient]);
 
   return (
-    <div className={cn('flex flex-col h-full bg-white dark:bg-[#1c2333]', className)} data-testid="security-panel">
+    <div className={cn('flex flex-col h-full bg-background', className)} data-testid="security-panel">
       <div className="flex-1 overflow-y-auto">
         <div className="p-3 space-y-3">
-          {/* Hero Section */}
           <div className="space-y-2 min-h-[48px]">
             <div className="flex items-center gap-2">
-              <h1 className="text-[17px] font-medium leading-tight text-[#0e1525] dark:text-white">
+              <h1 className="text-[17px] font-medium leading-tight text-foreground">
                 Security and Privacy Scanner
               </h1>
               <Badge 
-                className="bg-[#0079f2] text-white uppercase text-[10px] tracking-wide font-medium px-2 py-0.5 rounded"
+                className="bg-primary text-primary-foreground uppercase text-[10px] tracking-wide font-medium px-2 py-0.5 rounded"
                 data-testid="beta-badge"
               >
                 Beta
               </Badge>
             </div>
             
-            <p className="text-[15px] leading-[20px] text-[#5c6670] dark:text-[#9da2a6]">
+            <p className="text-[15px] leading-[20px] text-muted-foreground">
               Run a scan to check for potential security risks and privacy leaks in your application. 
               Scans are typically complete within minutes.{' '}
               <a 
                 href="https://docs.replit.com/programming-ide/security-scanner" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-[#0079f2] hover:underline"
+                className="text-primary hover:underline"
                 data-testid="learn-more-link"
               >
                 Learn more
@@ -255,7 +254,6 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
             </p>
           </div>
 
-          {/* Action Buttons - Replit style */}
           <div className="flex gap-3">
             <Button
               variant="outline"
@@ -265,8 +263,8 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
               className={cn(
                 "h-8 font-medium rounded-lg",
                 isScanning || startScanMutation.isPending
-                  ? "border-[#0079f2] text-[#0079f2] bg-[#e5f0fd]"
-                  : "border-[#d4d8dd] dark:border-[#3d4452] text-[#0e1525] dark:text-white hover:bg-[#e8eaed] dark:hover:bg-[#3d4452]"
+                  ? "border-primary text-primary bg-primary/10"
+                  : "border-border text-foreground hover:bg-muted"
               )}
               data-testid="scan-button"
             >
@@ -287,7 +285,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
               variant="outline"
               size="sm"
               onClick={() => setShowSettings(!showSettings)}
-              className="h-8 px-3 border-[#d4d8dd] dark:border-[#3d4452] text-[#0e1525] dark:text-white hover:bg-[#e8eaed] dark:hover:bg-[#3d4452] rounded-lg"
+              className="h-8 px-3 border-border text-foreground hover:bg-muted rounded-lg"
               data-testid="scan-settings-button"
             >
               <Settings className="w-[18px] h-[18px] mr-2" />
@@ -295,7 +293,6 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
             </Button>
           </div>
 
-          {/* Scan Settings Panel */}
           <AnimatePresence>
             {showSettings && (
               <motion.div
@@ -305,21 +302,21 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="bg-white dark:bg-[#1c2333] rounded-lg p-3 space-y-2 border border-[#d4d8dd] dark:border-[#3d4452] shadow-sm">
+                <div className="bg-background rounded-lg p-3 space-y-2 border border-border shadow-sm">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-[#0e1525] dark:text-white text-[15px] leading-[20px]">Scan Settings</h3>
+                    <h3 className="font-medium text-foreground text-[15px] leading-[20px]">Scan Settings</h3>
                     <button 
                       onClick={() => setShowSettings(false)}
-                      className="w-8 h-8 flex items-center justify-center hover:bg-[#e8eaed] dark:hover:bg-[#3d4452] rounded-full"
+                      className="w-8 h-8 flex items-center justify-center hover:bg-muted rounded-full"
                       data-testid="close-settings-button"
                     >
-                      <X className="w-[18px] h-[18px] text-[#5c6670] dark:text-[#9da2a6]" />
+                      <X className="w-[18px] h-[18px] text-muted-foreground" />
                     </button>
                   </div>
                   
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[15px] leading-[20px] text-[#0e1525] dark:text-white">
+                      <span className="text-[15px] leading-[20px] text-foreground">
                         Enable privacy vulnerability detection
                       </span>
                       <Switch
@@ -332,7 +329,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <span className="text-[15px] leading-[20px] text-[#0e1525] dark:text-white">
+                      <span className="text-[15px] leading-[20px] text-foreground">
                         Enable security vulnerability detection
                       </span>
                       <Switch
@@ -349,16 +346,15 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
             )}
           </AnimatePresence>
 
-          {/* Tabs - Replit style */}
-          <div className="border-b border-[#d4d8dd] dark:border-[#3d4452]">
+          <div className="border-b border-border">
             <div className="flex gap-6">
               <button
                 onClick={() => setActiveTab('active')}
                 className={cn(
                   'pb-3 text-[15px] leading-[20px] font-medium border-b-2 transition-colors',
                   activeTab === 'active'
-                    ? 'border-[#0e1525] dark:border-white text-[#0e1525] dark:text-white'
-                    : 'border-transparent text-[#5c6670] dark:text-[#9da2a6] hover:text-[#0e1525] dark:hover:text-white'
+                    ? 'border-foreground text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
                 )}
                 data-testid="active-issues-tab"
               >
@@ -369,8 +365,8 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                 className={cn(
                   'pb-3 text-[15px] leading-[20px] font-medium border-b-2 transition-colors',
                   activeTab === 'hidden'
-                    ? 'border-[#0e1525] dark:border-white text-[#0e1525] dark:text-white'
-                    : 'border-transparent text-[#5c6670] dark:text-[#9da2a6] hover:text-[#0e1525] dark:hover:text-white'
+                    ? 'border-foreground text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
                 )}
                 data-testid="hidden-issues-tab"
               >
@@ -379,21 +375,19 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
             </div>
           </div>
 
-          {/* Vulnerability Count & Last Scan Time */}
           {activeTab === 'active' && (
             <div className="space-y-1">
-              <p className="text-[17px] font-medium leading-tight text-[#0e1525] dark:text-white">
+              <p className="text-[17px] font-medium leading-tight text-foreground">
                 {totalCount} potential vulnerabilities found.
               </p>
               {latestScan && (
-                <p className="text-[13px] text-[#5c6670] dark:text-[#9da2a6]">
+                <p className="text-[13px] text-muted-foreground">
                   {formatLastScanTime(latestScan)}
                 </p>
               )}
             </div>
           )}
 
-          {/* Issues List - Replit Accordion Cards */}
           <div className="space-y-2">
             {(activeTab === 'active' ? isLoadingActive : isLoadingHidden) ? (
               <div className="space-y-3" data-testid="vulnerabilities-loading">
@@ -404,12 +398,12 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
             ) : currentVulnerabilities.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center" data-testid="empty-state">
                 <ShieldCheck 
-                  className="w-12 h-12 mb-3 text-[#9da2a6]"
+                  className="w-12 h-12 mb-3 text-muted-foreground"
                 />
-                <h3 className="text-[17px] font-medium leading-tight text-[#0e1525] dark:text-white mb-1">
+                <h3 className="text-[17px] font-medium leading-tight text-foreground mb-1">
                   {activeTab === 'active' ? 'No active issues found' : 'No hidden issues'}
                 </h3>
-                <p className="text-[15px] leading-[20px] text-[#5c6670] dark:text-[#9da2a6]">
+                <p className="text-[15px] leading-[20px] text-muted-foreground">
                   {activeTab === 'active' 
                     ? 'Your project appears to be secure. Run a scan to check again.'
                     : 'Issues you hide will appear here.'}
@@ -419,32 +413,30 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
               currentVulnerabilities.map((vuln) => (
                 <div 
                   key={vuln.id}
-                  className="bg-white dark:bg-[#242b3d] rounded-lg border border-[#d4d8dd] dark:border-[#3d4452] overflow-hidden"
+                  className="bg-card rounded-lg border border-border overflow-hidden"
                   data-testid={`vulnerability-${vuln.id}`}
                 >
-                  {/* Card Header - Clickable */}
                   <button
                     onClick={() => toggleCardExpanded(vuln.id)}
-                    className="w-full p-3 flex items-center justify-between text-left hover:bg-[#e8eaed] dark:hover:bg-[#3d4452]"
+                    className="w-full p-3 flex items-center justify-between text-left hover:bg-muted"
                     data-testid={`expand-vulnerability-${vuln.id}`}
                   >
                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <Badge className="bg-[#fee2e2] text-[#dc2626] border-0 uppercase text-[10px] tracking-wide font-medium flex items-center gap-1 shrink-0 rounded">
+                      <Badge className="bg-destructive/10 text-destructive border-0 uppercase text-[10px] tracking-wide font-medium flex items-center gap-1 shrink-0 rounded">
                         <ShieldAlert className="w-3 h-3" />
                         Security
                       </Badge>
-                      <span className="text-[15px] leading-[20px] text-[#0e1525] dark:text-white truncate">
+                      <span className="text-[15px] leading-[20px] text-foreground truncate">
                         {vuln.title}
                       </span>
                     </div>
                     {expandedCards.has(vuln.id) ? (
-                      <ChevronUp className="w-[18px] h-[18px] text-[#5c6670] shrink-0" />
+                      <ChevronUp className="w-[18px] h-[18px] text-muted-foreground shrink-0" />
                     ) : (
-                      <ChevronDown className="w-[18px] h-[18px] text-[#5c6670] shrink-0" />
+                      <ChevronDown className="w-[18px] h-[18px] text-muted-foreground shrink-0" />
                     )}
                   </button>
 
-                  {/* Expanded Content */}
                   <AnimatePresence>
                     {expandedCards.has(vuln.id) && (
                       <motion.div
@@ -453,29 +445,26 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <div className="px-3 pb-3 space-y-2 border-t border-[#d4d8dd] dark:border-[#3d4452]">
-                          <p className="text-[15px] leading-[20px] text-[#5c6670] dark:text-[#9da2a6] pt-3">
+                        <div className="px-3 pb-3 space-y-2 border-t border-border">
+                          <p className="text-[15px] leading-[20px] text-muted-foreground pt-3">
                             {vuln.description}
                           </p>
 
-                          {/* Package Dependencies (if applicable) */}
                           {vuln.packageName && (
                             <div className="space-y-2">
-                              <div className="flex items-center gap-2 text-[15px] leading-[20px] text-[#5c6670] dark:text-[#9da2a6]">
+                              <div className="flex items-center gap-2 text-[15px] leading-[20px] text-muted-foreground">
                                 <Package className="w-[18px] h-[18px]" />
                                 <span className="font-mono">{vuln.packageName}@{vuln.vulnerableVersion}</span>
                               </div>
                             </div>
                           )}
 
-                          {/* File Path */}
                           {vuln.filePath && (
-                            <p className="text-[13px] text-[#5c6670] dark:text-[#9da2a6] font-mono bg-[#f0f1f3] dark:bg-[#1c2333] px-2 py-1 rounded">
+                            <p className="text-[13px] text-muted-foreground font-mono bg-muted px-2 py-1 rounded">
                               {vuln.filePath}{vuln.lineNumber ? `:${vuln.lineNumber}` : ''}
                             </p>
                           )}
 
-                          {/* Action Buttons - Replit style */}
                           <div className="flex gap-2 pt-1">
                             <Button
                               variant="outline"
@@ -484,14 +473,14 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                                 e.stopPropagation();
                                 toggleHideMutation.mutate({ id: vuln.id, isHidden: !vuln.isHidden });
                               }}
-                              className="h-8 px-4 border-[#d4d8dd] dark:border-[#3d4452] text-[#5c6670] dark:text-[#9da2a6] hover:bg-[#e8eaed] dark:hover:bg-[#3d4452] rounded-lg"
+                              className="h-8 px-4 border-border text-muted-foreground hover:bg-muted rounded-lg"
                               data-testid={`toggle-hide-${vuln.id}`}
                             >
                               {vuln.isHidden ? 'Unhide' : 'Hide'}
                             </Button>
                             <Button
                               size="sm"
-                              className="h-8 px-4 bg-[#0079f2] hover:bg-[#0066cc] text-white rounded-lg"
+                              className="h-8 px-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg"
                               data-testid={`fix-with-agent-${vuln.id}`}
                             >
                               Fix with Agent
@@ -506,39 +495,38 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
             )}
           </div>
 
-          {/* Partner Attribution - Scrolls with content */}
-          <div className="border-t border-[#d4d8dd] dark:border-[#3d4452] pt-3 mt-3 space-y-2">
-            <p className="text-[13px] text-[#5c6670] dark:text-[#9da2a6]">
+          <div className="border-t border-border pt-3 mt-3 space-y-2">
+            <p className="text-[13px] text-muted-foreground">
               Vulnerability scans are enabled by the following Replit partners:
             </p>
             
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-[#0e1525] dark:text-white" fill="currentColor">
+                <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-foreground" fill="currentColor">
                   <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                 </svg>
-                <span className="text-[13px] text-[#5c6670] dark:text-[#9da2a6]">
+                <span className="text-[13px] text-muted-foreground">
                   Security scans are powered by Semgrep Community Edition.
                 </span>
               </div>
               
               <div className="flex items-center gap-2">
-                <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-[#0e1525] dark:text-white" fill="currentColor">
+                <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-foreground" fill="currentColor">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                 </svg>
-                <span className="text-[13px] text-[#5c6670] dark:text-[#9da2a6]">
+                <span className="text-[13px] text-muted-foreground">
                   Privacy scans are powered by HoundDog.ai.
                 </span>
               </div>
             </div>
             
-            <p className="text-[13px] text-[#5c6670] dark:text-[#9da2a6] leading-relaxed">
+            <p className="text-[13px] text-muted-foreground leading-relaxed">
               Security scanning powered by{' '}
               <a 
                 href="https://semgrep.dev" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-[#0079f2] hover:underline"
+                className="text-primary hover:underline"
               >
                 Semgrep
               </a>
@@ -547,7 +535,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                 href="https://hounddog.ai" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-[#0079f2] hover:underline"
+                className="text-primary hover:underline"
               >
                 HoundDog.ai
               </a>

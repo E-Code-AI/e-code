@@ -79,7 +79,7 @@ export function MobileNavigation({ projectId, showNewProject }: MobileNavigation
               size="icon"
               className={cn(
                 "h-12 w-12 flex flex-col items-center justify-center gap-1 relative",
-                isCurrentActive && "text-[#F26207] bg-surface-solid",
+                isCurrentActive && "text-primary bg-primary/10",
                 item.disabled && "opacity-50 cursor-not-allowed"
               )}
               onClick={() => !item.disabled && item.path && navigate(item.path)}
@@ -88,16 +88,16 @@ export function MobileNavigation({ projectId, showNewProject }: MobileNavigation
             >
               <Icon className={cn(
                 "h-5 w-5",
-                isCurrentActive && "text-[#F26207]"
+                isCurrentActive && "text-primary"
               )} />
               <span className={cn(
                 "text-[10px] font-medium",
-                isCurrentActive && "text-[#F26207]"
+                isCurrentActive && "text-primary"
               )}>
                 {item.label}
               </span>
               {item.badge && (
-                <span className="absolute top-1 right-1 bg-[#F26207] text-white text-[9px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                <span className="absolute top-1 right-1 bg-primary text-primary-foreground text-[9px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
                   {item.badge > 9 ? '9+' : item.badge}
                 </span>
               )}
@@ -110,11 +110,11 @@ export function MobileNavigation({ projectId, showNewProject }: MobileNavigation
           <Button
             variant="default"
             size="icon"
-            className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-lg bg-gradient-to-r from-[#F26207] to-[#F99D25] hover:from-[#D04E00] hover:to-[#E88510] z-50"
+            className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-lg bg-gradient-to-r from-primary to-secondary hover:opacity-90 z-50"
             onClick={() => navigate('/projects/new')}
             aria-label="New Project"
           >
-            <Plus className="h-6 w-6 text-white" />
+            <Plus className="h-6 w-6 text-primary-foreground" />
           </Button>
         )}
       </div>

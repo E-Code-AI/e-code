@@ -88,7 +88,6 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
   const [autoRefresh, setAutoRefresh] = useState(true);
   const { toast } = useToast();
 
-  // Fetch current pipeline
   const { data: currentPipeline } = useQuery<Pipeline>({
     queryKey: [`/api/deployment/${projectId}/pipeline/current`],
     refetchInterval: (query) => {
@@ -100,12 +99,10 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
     }
   });
 
-  // Fetch pipeline history
   const { data: pipelineHistory = [] } = useQuery<Pipeline[]>({
     queryKey: [`/api/deployment/${projectId}/pipeline/history`]
   });
 
-  // Trigger deployment mutation
   const deployMutation = useMutation({
     mutationFn: async () => {
       return apiRequest('POST', `/api/deployment/${projectId}`);
@@ -119,7 +116,6 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
     }
   });
 
-  // Cancel deployment mutation
   const cancelMutation = useMutation({
     mutationFn: async (pipelineId: string) => {
       return apiRequest('POST', `/api/deployment/${projectId}/pipeline/${pipelineId}/cancel`);
@@ -133,7 +129,6 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
     }
   });
 
-  // Retry deployment mutation
   const retryMutation = useMutation({
     mutationFn: async (pipelineId: string) => {
       return apiRequest('POST', `/api/deployment/${projectId}/pipeline/${pipelineId}/retry`);
@@ -147,7 +142,6 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
     }
   });
 
-  // Draw pipeline visualization
   useEffect(() => {
     if (!canvasRef.current || !currentPipeline) return;
 
@@ -155,45 +149,39 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Stage dimensions
     const stageWidth = 150;
     const stageHeight = 80;
     const stageSpacing = 50;
     const startX = 50;
     const startY = canvas.height / 2 - stageHeight / 2;
 
-    // Draw stages
     currentPipeline.stages.forEach((stage, index) => {
       const x = startX + index * (stageWidth + stageSpacing);
       const y = startY;
 
-      // Connection line
       if (index > 0) {
         ctx.beginPath();
-        ctx.strokeStyle = '#4b5563';
+        ctx.strokeStyle = 'hsl(var(--border))';
         ctx.lineWidth = 2;
         ctx.moveTo(x - stageSpacing, y + stageHeight / 2);
         ctx.lineTo(x, y + stageHeight / 2);
         ctx.stroke();
       }
 
-      // Stage background
-      let bgColor = '#1f2937'; // Default
-      if (stage.status === 'success') bgColor = '#10b981';
-      else if (stage.status === 'failed') bgColor = '#ef4444';
-      else if (stage.status === 'running') bgColor = '#3b82f6';
-      else if (stage.status === 'skipped') bgColor = '#6b7280';
+      let bgColor = 'hsl(var(--card))';
+      if (stage.status === 'success') bgColor = 'hsl(var(--ecode-green))';
+      else if (stage.status === 'failed') bgColor = 'hsl(var(--destructive))';
+      else if (stage.status === 'running') bgColor = 'hsl(var(--primary))';
+      else if (stage.status === 'skipped') bgColor = 'hsl(var(--muted))';
 
       ctx.fillStyle = bgColor;
       ctx.beginPath();
       ctx.roundRect(x, y, stageWidth, stageHeight, 8);
       ctx.fill();
 
-      // Stage icon
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = 'hsl(var(--foreground))';
       ctx.font = '24px sans-serif';
       ctx.textAlign = 'center';
       let icon = '○';
@@ -203,14 +191,12 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
       else if (stage.status === 'skipped') icon = '⊘';
       ctx.fillText(icon, x + stageWidth / 2, y + 30);
 
-      // Stage name
       ctx.font = '14px sans-serif';
       ctx.fillText(stage.name, x + stageWidth / 2, y + 55);
 
-      // Duration
       if (stage.duration) {
         ctx.font = '12px sans-serif';
-        ctx.fillStyle = '#e5e7eb';
+        ctx.fillStyle = 'hsl(var(--muted-foreground))';
         ctx.fillText(`${(stage.duration / 1000).toFixed(1)}s`, x + stageWidth / 2, y + 70);
       }
     });
@@ -221,13 +207,13 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
       case 'success':
         return <Check className="h-4 w-4 text-green-500" />;
       case 'failed':
-        return <X className="h-4 w-4 text-red-500" />;
+        return <X className="h-4 w-4 text-destructive" />;
       case 'running':
-        return <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />;
+        return <Loader2 className="h-4 w-4 text-primary animate-spin" />;
       case 'pending':
-        return <Clock className="h-4 w-4 text-gray-500" />;
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
       case 'skipped':
-        return <AlertCircle className="h-4 w-4 text-gray-500" />;
+        return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
       default:
         return null;
     }
@@ -238,15 +224,15 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
       case 'success':
         return 'text-green-500';
       case 'failed':
-        return 'text-red-500';
+        return 'text-destructive';
       case 'running':
-        return 'text-blue-500';
+        return 'text-primary';
       case 'pending':
-        return 'text-gray-500';
+        return 'text-muted-foreground';
       case 'skipped':
-        return 'text-gray-500';
+        return 'text-muted-foreground';
       default:
-        return 'text-gray-500';
+        return 'text-muted-foreground';
     }
   };
 
@@ -310,7 +296,6 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
         <CardContent className="flex-1 flex flex-col p-4">
           {currentPipeline ? (
             <>
-              {/* Pipeline info */}
               <div className="mb-4 p-4 rounded-lg border">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-4">
@@ -344,13 +329,12 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
                 </p>
               </div>
 
-              {/* Pipeline visualization */}
               <div className="mb-4 border rounded-lg overflow-hidden">
                 <canvas
                   ref={canvasRef}
                   width={800}
                   height={150}
-                  className="w-full bg-[#0a0a0a]"
+                  className="w-full bg-background"
                 />
               </div>
 
@@ -425,13 +409,13 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
 
                 <TabsContent value="logs" className="flex-1">
                   <ScrollArea className="h-full">
-                    <div className="bg-black p-4 rounded-lg font-mono text-xs text-green-400">
+                    <div className="bg-[var(--ecode-terminal-bg)] p-4 rounded-lg font-mono text-xs text-green-400">
                       {selectedStage ? (
                         selectedStage.logs?.map((log, index) => (
                           <div key={index}>{log}</div>
                         ))
                       ) : (
-                        <p className="text-gray-500">Select a stage to view logs</p>
+                        <p className="text-muted-foreground">Select a stage to view logs</p>
                       )}
                     </div>
                   </ScrollArea>
@@ -500,7 +484,7 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
           ) : (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
-                <Rocket className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <Rocket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-lg font-medium">No active deployment</p>
                 <p className="text-sm text-muted-foreground mb-4">
                   Click Deploy to start a new deployment

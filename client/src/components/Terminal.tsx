@@ -518,7 +518,7 @@ const Terminal: React.FC<TerminalProps> = ({
   };
   
   return (
-    <div className={`flex flex-col border rounded-md overflow-hidden shadow-md bg-[#1a1b26] ${
+    <div className={`flex flex-col border rounded-md overflow-hidden shadow-md bg-card ${
       !minimized ? 'h-72' : 'fixed bottom-4 right-4 w-80 h-10 z-50'
     }`}>
       <div className="flex items-center justify-between bg-slate-900 p-2 border-b">
