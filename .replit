@@ -6,33 +6,8 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 channel = "stable-24_05"
 packages = [
   "glibcLocales",
-  "go",
-  "google-cloud-sdk",
   "jq",
   "libxcrypt",
-  "sptk",
-  "gir-rs",
-  "glib",
-  "nspr",
-  "nss",
-  "dbus",
-  "atk",
-  "at-spi2-atk",
-  "cups",
-  "xorg.libxcb",
-  "libxkbcommon",
-  "at-spi2-core",
-  "xorg.libX11",
-  "xorg.libXcomposite",
-  "xorg.libXdamage",
-  "xorg.libXext",
-  "xorg.libXfixes",
-  "xorg.libXrandr",
-  "libdrm",
-  "mesa",
-  "cairo",
-  "pango",
-  "alsa-lib",
 ]
 
 [deployment]
