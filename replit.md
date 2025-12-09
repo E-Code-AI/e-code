@@ -57,3 +57,15 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 ### Authentication Providers
 - **Replit Auth:** Google, GitHub, Twitter/X, Apple, email/password
 - **Custom Email/Password**
+
+## Recent Changes (Dec 9, 2025)
+
+### Bug Fixes
+1. **React Remounting Issue Fixed**: Changed ReplitAgentPanelV3 key from `agent-${projectId}-${agentInitialPrompt ? 'prompt' : 'no-prompt'}` to stable `agent-${projectId}`. This prevents React from destroying and recreating the component during streaming when the prompt prop changes.
+
+2. **Conversation Persistence Fixed**: Added `conversationId` dependency to auto-start effect with guard ref (`autoStartExecutedRef`). The effect now waits for conversationId to be initialized before executing, ensuring messages are saved to Zustand store.
+
+3. **Send Button Guard Added**: Send button is now disabled until conversationId is available, preventing silently dropped messages in race conditions.
+
+### Known Issues
+- **WebSocket Collaboration**: Socket.IO collaboration at `/ws/collaboration` conflicts with Central Upgrade Dispatcher architecture. Collaboration errors appear in console but do not affect core app functionality (AI agent, streaming, workspace creation work correctly).
