@@ -1239,7 +1239,8 @@ export const agentMessages = pgTable('agent_messages', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   sessionId: varchar('session_id').references(() => agentSessions.id, { onDelete: 'cascade' }),
   conversationId: integer('conversation_id').notNull().references(() => aiConversations.id, { onDelete: 'cascade' }), // Primary thread identifier
-  projectId: integer('project_id').notNull().references(() => projects.id),
+  // ✅ FIX (Dec 9, 2025): Made projectId nullable to allow message persistence for non-project conversations
+  projectId: integer('project_id').references(() => projects.id),
   userId: integer('user_id').notNull().references(() => users.id),
   role: varchar('role').notNull(), // 'user' | 'assistant' | 'system'
   content: text('content').notNull(),

@@ -47,9 +47,19 @@ export function ResponsiveWebPreview({
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   // Get preview URL from the backend - REAL BACKEND
-  const { data: previewData } = useQuery<{ previewUrl: string }>({
+  // ✅ FIX (Dec 9, 2025): Add refetch interval and staleTime to auto-refresh when preview starts
+  const { data: previewData, refetch: refetchPreview } = useQuery<{ previewUrl: string; status?: string }>({
     queryKey: [`/api/preview/url?projectId=${projectId}`],
-    enabled: !!projectId && (typeof projectId === 'string' ? projectId.length > 0 : projectId > 0)
+    enabled: !!projectId && (typeof projectId === 'string' ? projectId.length > 0 : projectId > 0),
+    staleTime: 2000, // Consider data stale after 2 seconds
+    refetchInterval: (query) => {
+      // Poll every 3 seconds when status is starting, otherwise every 10 seconds
+      const data = query.state.data;
+      if (data?.status === 'starting') return 3000;
+      if (data?.status === 'running' || data?.status === 'static') return 10000;
+      if (!data?.previewUrl) return 5000; // Poll more frequently when no URL yet
+      return false; // Stop polling when we have a stable URL
+    }
   });
 
   useEffect(() => {

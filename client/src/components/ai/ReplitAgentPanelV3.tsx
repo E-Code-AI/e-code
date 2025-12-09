@@ -386,34 +386,48 @@ export function ReplitAgentPanelV3({
   // Track previous initialPrompt value to detect changes from undefined → value
   const prevInitialPromptRef = useRef<string | undefined>(undefined);
   
-  // ✅ FIX (Dec 7, 2025): Handle initial prompt with robust change detection
-  // This fixes the lazy-loading timing issue where initialPrompt arrives AFTER component mounts
-  // ✅ FIX (Dec 7, 2025): Remove conversationId dependency - let form submit create it
+  // ✅ FIX (Dec 9, 2025): Robust auto-start with sessionStorage fallback
+  // Problem: initialPrompt prop arrives as undefined due to React lifecycle timing
+  // Solution: Read directly from sessionStorage as fallback, don't rely on parent prop
   useEffect(() => {
+    // Get effective prompt from multiple sources (priority order)
+    const sessionStorageKey = `agent-prompt-${projectId}`;
+    const promptFromSession = typeof window !== 'undefined' ? window.sessionStorage.getItem(sessionStorageKey) : null;
+    const effectivePrompt = initialPrompt || promptFromSession;
+    
     const prevValue = prevInitialPromptRef.current;
-    prevInitialPromptRef.current = initialPrompt ?? undefined; // Convert null to undefined for type safety
+    prevInitialPromptRef.current = effectivePrompt ?? undefined;
     
     // Debug logging to diagnose bootstrap prompt flow
     console.log('[ReplitAgentPanelV3] Auto-start useEffect RUNNING:', {
       hasInitialPrompt: !!initialPrompt,
-      promptLength: initialPrompt?.length || 0,
+      hasSessionStoragePrompt: !!promptFromSession,
+      effectivePrompt: effectivePrompt?.substring(0, 50) + '...' || null,
+      promptLength: effectivePrompt?.length || 0,
       prevHadPrompt: !!prevValue,
       conversationId,
       isWorking,
       alreadyProcessed: initialPromptProcessedRef.current,
       autoStart,
-      changedFromUndefined: !prevValue && !!initialPrompt
+      changedFromUndefined: !prevValue && !!effectivePrompt
     });
     
-    // Process if: we have initialPrompt AND not already processing/processed
+    // Process if: we have a prompt AND not already processing/processed
     // Note: We don't wait for conversationId - the form submit will create one if needed
-    if (initialPrompt && !isWorking && !initialPromptProcessedRef.current) {
-      console.log('[ReplitAgentPanelV3] ✅ Processing initial prompt:', initialPrompt.substring(0, 50) + '...');
+    if (effectivePrompt && !isWorking && !initialPromptProcessedRef.current) {
+      console.log('[ReplitAgentPanelV3] ✅ Processing prompt (source:', initialPrompt ? 'prop' : 'sessionStorage', '):', effectivePrompt.substring(0, 50) + '...');
       initialPromptProcessedRef.current = true;
-      setInput(initialPrompt);
+      setInput(effectivePrompt);
+      
+      // Clear sessionStorage AFTER capturing the prompt (prevent re-processing on remount)
+      if (promptFromSession) {
+        console.log('[ReplitAgentPanelV3] ✅ Clearing sessionStorage prompt after capture');
+        window.sessionStorage.removeItem(sessionStorageKey);
+      }
+      
       // Auto-start if requested
       if (autoStart) {
-        // Wait a bit for the form to render and conversationId to be available
+        // Wait for form to render and be ready
         setTimeout(() => {
           const form = document.querySelector('form[data-testid="chat-form"]') as HTMLFormElement;
           if (form) {
@@ -422,10 +436,10 @@ export function ReplitAgentPanelV3({
           } else {
             console.error('[ReplitAgentPanelV3] ❌ Form not found for auto-submit');
           }
-        }, 1000); // Increased timeout to ensure form is ready
+        }, 1000);
       }
     }
-  }, [initialPrompt, conversationId, autoStart, isWorking]);
+  }, [initialPrompt, projectId, conversationId, autoStart, isWorking]);
 
   // Handle selected file/code context injection - with idempotent check using content hash
   useEffect(() => {
@@ -981,6 +995,45 @@ export function ReplitAgentPanelV3({
     ];
   }, []);
 
+  // Fire-and-forget message persistence to backend
+  // Does not block streaming - errors are logged but don't affect UI
+  const persistMessageToBackend = useCallback((message: {
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    timestamp: Date;
+    metadata?: Record<string, any>;
+    extendedThinking?: any;
+  }) => {
+    if (!conversationId) {
+      console.warn('[Persistence] No conversationId, skipping message persistence');
+      return;
+    }
+
+    // Fire-and-forget: don't await, don't block
+    fetch(`/api/agent/conversation/${conversationId}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        role: message.role,
+        content: message.content,
+        timestamp: message.timestamp.toISOString(),
+        metadata: message.metadata || null,
+        extendedThinking: message.extendedThinking || null,
+      }),
+    })
+      .then(res => {
+        if (!res.ok) {
+          console.error('[Persistence] Failed to persist message:', res.status);
+        } else {
+          console.log('[Persistence] Message persisted:', message.role, message.content.substring(0, 50) + '...');
+        }
+      })
+      .catch(err => {
+        console.error('[Persistence] Error persisting message:', err);
+      });
+  }, [conversationId]);
+
   const handleSend = async () => {
     if (!input.trim() || isWorking) return;
 
@@ -993,6 +1046,14 @@ export function ReplitAgentPanelV3({
     };
 
     setMessages(prev => [...prev, userMessage]);
+    
+    // Persist user message immediately (fire-and-forget)
+    persistMessageToBackend({
+      role: 'user',
+      content: userMessage.content,
+      timestamp: userMessage.timestamp,
+    });
+    
     setInput('');
     setIsWorking(true);
     setStreamingContent('');
@@ -1206,6 +1267,16 @@ export function ReplitAgentPanelV3({
         ),
         ...warningMessages
       ]);
+      
+      // Persist assistant message after streaming completes (fire-and-forget)
+      persistMessageToBackend({
+        role: 'assistant',
+        content: assistantMessage.content,
+        timestamp: assistantMessage.timestamp,
+        metadata: assistantMessage.metadata,
+        extendedThinking: thinkingSteps.length > 0 ? { steps: thinkingSteps } : undefined,
+      });
+      
       setStreamingContent('');
       setActiveThinking([]);
       

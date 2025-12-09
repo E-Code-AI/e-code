@@ -304,6 +304,96 @@ router.get('/conversation/:id/messages', async (req, res) => {
   }
 });
 
+// POST /api/agent/conversation/:id/messages - Persist a message to the database
+router.post('/conversation/:id/messages', async (req, res) => {
+  try {
+    const conversationIdStr = req.params.id;
+    const conversationId = parseInt(conversationIdStr, 10);
+    const userId = req.user!.id;
+    const { role, content, timestamp, metadata, extendedThinking } = req.body;
+
+    // Validate conversation ID
+    if (isNaN(conversationId)) {
+      return res.status(400).json({
+        error: 'Invalid conversation ID',
+      });
+    }
+
+    // Validate required fields
+    if (!role || !content) {
+      return res.status(400).json({
+        error: 'Missing required fields: role and content are required',
+      });
+    }
+
+    // Validate role
+    if (!['user', 'assistant', 'system'].includes(role)) {
+      return res.status(400).json({
+        error: 'Invalid role. Must be "user", "assistant", or "system"',
+      });
+    }
+
+    const { aiConversations, agentMessages } = await import('@shared/schema');
+    const { eq, and } = await import('drizzle-orm');
+
+    // Verify conversation exists and belongs to user
+    const [conversation] = await db
+      .select()
+      .from(aiConversations)
+      .where(and(
+        eq(aiConversations.id, conversationId),
+        eq(aiConversations.userId, userId)
+      ))
+      .limit(1);
+
+    if (!conversation) {
+      return res.status(404).json({
+        error: 'Conversation not found or access denied',
+      });
+    }
+
+    // Get projectId from conversation - handle both numeric and string formats
+    // projectId is stored as string in aiConversations table
+    // ✅ FIX (Dec 9, 2025): Allow null projectId for non-project conversations (schema made nullable)
+    // IMPORTANT: Only parse if the ENTIRE string is numeric (to avoid parseInt('550e8400...')=550)
+    let projectId: number | null = null;
+    if (conversation.projectId && /^\d+$/.test(conversation.projectId)) {
+      projectId = parseInt(conversation.projectId, 10);
+    }
+    // For non-numeric or missing projectIds, projectId remains null (allowed now that schema is nullable)
+
+    // Insert message into agentMessages table (projectId can be null for non-project conversations)
+    const [savedMessage] = await db
+      .insert(agentMessages)
+      .values({
+        conversationId,
+        projectId: projectId,
+        userId,
+        role,
+        content,
+        metadata: metadata || null,
+        extendedThinking: extendedThinking || null,
+        model: metadata?.model || null,
+      })
+      .returning();
+
+    console.log('[AgentRouter] Message persisted:', {
+      id: savedMessage.id,
+      conversationId,
+      role,
+      contentLength: content.length,
+    });
+
+    res.json({
+      success: true,
+      message: savedMessage,
+    });
+  } catch (error: any) {
+    console.error('[AgentRouter] Error persisting message:', error);
+    res.status(500).json({ error: 'Failed to persist message' });
+  }
+});
+
 // ====== ADMIN-ONLY ROUTES ======
 // These routes require admin authentication
 // Create new agent session

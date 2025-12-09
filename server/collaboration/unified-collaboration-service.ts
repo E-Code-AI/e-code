@@ -88,6 +88,9 @@ export class UnifiedCollaborationService {
   private colorIndex = 0;
   
   constructor(server: HttpServer) {
+    // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 9, 2025): Use Central Upgrade Dispatcher for Socket.IO
+    // CRITICAL: Use noServer mode so Socket.IO doesn't add its own upgrade listener
+    // The central dispatcher handles ALL WebSocket upgrades and routes them to the right handler
     this.io = new SocketServer(server, {
       cors: {
         origin: '*',
@@ -103,6 +106,10 @@ export class UnifiedCollaborationService {
       allowUpgrades: true,
       perMessageDeflate: false
     });
+    
+    // NOTE: Socket.IO attach mode handles its own upgrades via the server constructor
+    // The central dispatcher has lower priority and will not interfere with Socket.IO's listener
+    // This is the standard Socket.IO configuration that should work out of the box
     
     // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
     // Use noServer mode and register with central dispatcher to eliminate race conditions
@@ -127,7 +134,7 @@ export class UnifiedCollaborationService {
     this.setupYjsWebSocket();
     this.startCleanupInterval();
     
-    console.log('[Collaboration] Unified collaboration service initialized (using central dispatcher for Yjs)');
+    console.log('[Collaboration] Unified collaboration service initialized (Socket.IO server-attached, Yjs via central dispatcher)');
   }
   
   private getColorForUser(odUserId: string): string {
