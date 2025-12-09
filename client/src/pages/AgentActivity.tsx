@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Activity, ArrowLeft, BarChart3, FileCode, 
   MessageSquare, Zap, Clock, Bot, TrendingUp
@@ -12,8 +13,18 @@ import { AgentSessionsGrid } from '@/components/grids/AgentSessionsGrid';
 import { AgentActionsGrid } from '@/components/grids/AgentActionsGrid';
 import { FileOperationsGrid } from '@/components/grids/FileOperationsGrid';
 import { ConversationHistoryGrid } from '@/components/grids/ConversationHistoryGrid';
-import { AgentMetricsDashboard } from '@/components/grids/AgentMetricsDashboard';
 import type { AgentSessionRow } from '@shared/types/agent-grid.types';
+
+const AgentMetricsDashboard = lazy(() => import('@/components/grids/AgentMetricsDashboard').then(m => ({ default: m.AgentMetricsDashboard })));
+
+const DashboardSkeleton = () => (
+  <div className="space-y-4 p-4">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}
+    </div>
+    <Skeleton className="h-64" />
+  </div>
+);
 
 export default function AgentActivity() {
   const [, navigate] = useLocation();
@@ -136,7 +147,9 @@ export default function AgentActivity() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <AgentMetricsDashboard />
+                <Suspense fallback={<DashboardSkeleton />}>
+                  <AgentMetricsDashboard />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
