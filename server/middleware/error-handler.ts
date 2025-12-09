@@ -157,17 +157,15 @@ export class DatabaseError extends AppError {
   }
 }
 
-export class DatabaseConnectionError extends DatabaseError {
+export class DatabaseConnectionError extends AppError {
   constructor(details?: any) {
-    super('Database connection failed', details);
-    this.code = 'DATABASE_CONNECTION_ERROR';
+    super('Database connection failed', 500, false, 'DATABASE_CONNECTION_ERROR', details);
   }
 }
 
-export class DatabaseQueryError extends DatabaseError {
+export class DatabaseQueryError extends AppError {
   constructor(message: string = 'Database query failed', details?: any) {
-    super(message, details);
-    this.code = 'DATABASE_QUERY_ERROR';
+    super(message, 500, false, 'DATABASE_QUERY_ERROR', details);
   }
 }
 

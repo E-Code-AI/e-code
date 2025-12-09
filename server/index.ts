@@ -701,7 +701,9 @@ app.get('/api/cors-health', async (_req, res) => {
     // Close Redis connections
     try {
       const { redisCache } = await import('./services/redis-cache.service');
-      redisCache.disconnect();
+      if (redisCache && typeof (redisCache as any).close === 'function') {
+        (redisCache as any).close();
+      }
       console.log('[Shutdown] Redis connection closed');
     } catch (e) {
       console.warn('[Shutdown] Redis close failed:', e);
