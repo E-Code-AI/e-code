@@ -98,7 +98,7 @@ export function ReplitToolsSheet({
     <>
       {/* Backdrop overlay */}
       <div 
-        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-in fade-in-0 duration-200"
+        className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm animate-in fade-in-0 duration-200"
         onClick={onClose}
         data-testid="tools-sheet-backdrop"
       />

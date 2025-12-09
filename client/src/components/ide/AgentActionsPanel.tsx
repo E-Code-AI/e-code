@@ -161,7 +161,7 @@ export function AgentActionsPanel({ projectId }: AgentActionsPanelProps) {
             <div className="space-y-2">
               <h4 className="text-sm font-medium text-muted-foreground">History</h4>
               {completedActions.slice(0, 10).map((action) => (
-                <Card key={action.id} className="bg-muted/50">
+                <Card key={action.id} className="bg-[#2B3245]">
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">

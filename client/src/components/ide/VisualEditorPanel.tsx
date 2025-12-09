@@ -489,7 +489,7 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
             <ScrollArea className="flex-1">
               {selectedElement ? (
                 <div className="p-3 space-y-4">
-                  <div className="p-2 bg-muted/50 rounded-lg">
+                  <div className="p-2 bg-[#2B3245] rounded-lg">
                     <div className="flex items-center gap-2 mb-1">
                       <Code className="h-3.5 w-3.5 text-purple-500" />
                       <span className="text-xs font-medium">{selectedElement.tagName}</span>

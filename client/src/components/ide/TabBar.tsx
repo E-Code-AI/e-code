@@ -21,7 +21,7 @@ export function TabBar({ tabs, activeTab, onTabChange, onTabClose }: TabBarProps
   return (
     <div className="h-10 bg-background border-b flex items-center">
       {tabs.length === 1 && (
-        <div className="flex items-center gap-2 px-3 py-1 text-xs text-muted-foreground bg-gradient-to-r from-blue-50 to-purple-50 dark:from-[#1C2333] dark:to-[#2B3245] border border-blue-100 dark:border-[#2B3245] rounded-md ml-2 mr-2 flex-shrink-0">
+        <div className="flex items-center gap-2 px-3 py-1 text-xs text-muted-foreground bg-[#1C2333] border border-[#2B3245] rounded-md ml-2 mr-2 flex-shrink-0">
           <span>💡 Tip: Multiple tabs help you work efficiently</span>
         </div>
       )}
