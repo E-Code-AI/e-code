@@ -87,16 +87,36 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 - `agentMessages.projectId`: Changed from `notNull()` to nullable to support conversations with non-numeric project IDs
 - SQL migration: `ALTER TABLE agent_messages ALTER COLUMN project_id DROP NOT NULL`
 
-### Prompt Caching System (Cost Optimization)
-Comprehensive prompt caching implementation for 50-90% AI API cost reduction:
-- **Server-side**: `server/ai/prompt-cache-manager.ts` with LRU cache (10k entries, 5-min TTL), hash-based deduplication
-- **Provider-specific optimizations**:
-  - Anthropic: `cache_control: { type: 'ephemeral' }` headers for 90% cost reduction on cached content
-  - OpenAI: Optimized message ordering for automatic caching detection
-  - Gemini/Moonshot: System prompt caching with context reuse
-- **API endpoints**: GET `/api/ai-optimization/prompt-cache/metrics`, POST `/clear`, POST `/warm`
-- **Frontend**: `client/src/hooks/use-ai-request-cache.ts` - useAIRequestCache(), useAIModelCache(), useConversationCache() hooks
-- Metrics tracking: hit rates, tokens saved, estimated cost savings
+### AI Cost Optimization System (50-90% Cost Reduction)
+
+**Three-Layer Cost Optimization Architecture:**
+
+1. **Prompt Caching System** (`server/ai/prompt-cache-manager.ts`)
+   - LRU cache with 100 system prompts, 500 responses, 5-min TTL
+   - Provider-specific optimizations:
+     - Anthropic: `cache_control: { type: 'ephemeral' }` headers for 90% cost reduction
+     - OpenAI: Optimized message ordering for automatic prefix caching
+     - Gemini/Moonshot: System prompt caching with context reuse
+   - API endpoints: GET `/api/ai-optimization/prompt-cache/metrics`, POST `/clear`, POST `/warm`
+
+2. **Batch API Manager** (`server/ai/batch-api-manager.ts`)
+   - OpenAI Batch API integration for 50% cost reduction on non-urgent tasks
+   - Automatic job submission, status polling, and result retrieval
+   - Priority queue with low/normal priority support
+   - API endpoints: POST `/api/ai-optimization/batch/queue`, GET `/batch/status/:taskId`, GET `/batch/metrics`
+
+3. **Provider Latency Monitor** (`server/ai/provider-latency-monitor.ts`)
+   - Real-time latency tracking for all 4 streaming methods (Anthropic, OpenAI, Gemini, Moonshot)
+   - P50/P95/P99 percentile tracking per provider and model
+   - Health status: healthy/degraded/unhealthy with automatic detection
+   - Smart fallback recommendations based on real performance data
+   - Prometheus-compatible metrics export at `/api/ai-optimization/metrics/prometheus`
+   - API endpoints: GET `/latency/providers`, GET `/latency/models`, GET `/latency/provider/:provider`, POST `/latency/reset`
+
+**Integration Points:**
+- All streaming methods in `ai-provider-manager.ts` have latency tracking integrated
+- Token counting approximation (chars/4) for cost estimation
+- Success/failure tracking with error messages for debugging
 
 ### Known Issues
 - Minor: Some other WebSocket services still log "Blocked additional upgrade listener" warnings. These services haven't been migrated to the central dispatcher yet, but they work correctly due to the blocking mechanism. This is cosmetic only and doesn't affect functionality.

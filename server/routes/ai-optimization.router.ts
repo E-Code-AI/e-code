@@ -9,10 +9,32 @@ import { aiOptimization } from '../services/ai-optimization';
 import { ensureAuthenticated } from '../middleware/auth';
 import { ensureAdmin } from '../middleware/admin-auth';
 import { promptCacheManager } from '../ai/prompt-cache-manager';
+import { batchAPIManager } from '../ai/batch-api-manager';
+import { providerLatencyMonitor } from '../ai/provider-latency-monitor';
 
 const router = Router();
 
-// All endpoints require authentication
+// ============================================================================
+// PUBLIC ENDPOINTS (no auth required)
+// ============================================================================
+
+/**
+ * GET /api/ai-optimization/metrics/prometheus
+ * Public endpoint for Prometheus scraping - no auth required
+ */
+router.get('/metrics/prometheus', async (req, res) => {
+  try {
+    const metrics = providerLatencyMonitor.getPrometheusMetrics();
+    res.set('Content-Type', 'text/plain; version=0.0.4');
+    res.send(metrics);
+  } catch (error: any) {
+    res.status(500).send(`# Error: ${error.message}`);
+  }
+});
+
+// ============================================================================
+// AUTHENTICATED ENDPOINTS
+// ============================================================================
 router.use(ensureAuthenticated);
 
 /**
@@ -378,6 +400,208 @@ router.post('/prompt-cache/warm', ensureAdmin, async (req, res) => {
       success: true,
       message: 'Cache warmed successfully',
       cacheSize: stats.systemPromptCacheSize,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// ============================================================================
+// BATCH API ENDPOINTS - 50% Cost Reduction for Non-Urgent Tasks
+// ============================================================================
+
+/**
+ * POST /api/ai-optimization/batch/queue
+ * Queue a task for batch processing (50% cost reduction)
+ */
+router.post('/batch/queue', ensureAuthenticated, async (req, res) => {
+  try {
+    if (!batchAPIManager.isAvailable()) {
+      return res.status(503).json({
+        success: false,
+        error: 'Batch API not available - OpenAI API key not configured',
+      });
+    }
+
+    const schema = z.object({
+      model: z.string(),
+      messages: z.array(z.object({
+        role: z.string(),
+        content: z.string(),
+      })),
+      priority: z.enum(['low', 'normal']).optional(),
+    });
+
+    const data = schema.parse(req.body);
+    const taskId = await batchAPIManager.queueTask(data.model, data.messages, {
+      priority: data.priority,
+    });
+
+    res.json({
+      success: true,
+      taskId,
+      message: 'Task queued for batch processing (50% cost savings)',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+/**
+ * GET /api/ai-optimization/batch/status/:taskId
+ * Get status of a batch task
+ */
+router.get('/batch/status/:taskId', ensureAuthenticated, async (req, res) => {
+  try {
+    const task = await batchAPIManager.getTaskStatus(req.params.taskId);
+    
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        error: 'Task not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      task,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+/**
+ * GET /api/ai-optimization/batch/metrics
+ * Get batch API metrics (admin only)
+ */
+router.get('/batch/metrics', ensureAdmin, async (req, res) => {
+  try {
+    const metrics = batchAPIManager.getMetrics();
+    const pendingTasks = batchAPIManager.getPendingTasks();
+    const allBatches = batchAPIManager.getAllBatches();
+
+    res.json({
+      success: true,
+      metrics,
+      pendingTaskCount: pendingTasks.length,
+      batchJobCount: allBatches.length,
+      recentBatches: allBatches.slice(-10).map(b => ({
+        id: b.id,
+        status: b.status,
+        taskCount: b.tasks.length,
+        costSaved: b.totalCostSaved,
+        createdAt: new Date(b.createdAt).toISOString(),
+      })),
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// ============================================================================
+// PROVIDER LATENCY MONITORING - Smart Fallback Decisions
+// ============================================================================
+
+/**
+ * GET /api/ai-optimization/latency/providers
+ * Get latency stats for all providers
+ */
+router.get('/latency/providers', ensureAuthenticated, async (req, res) => {
+  try {
+    const stats = providerLatencyMonitor.getAllProviderStats();
+    const recommendation = providerLatencyMonitor.getFallbackRecommendation();
+
+    res.json({
+      success: true,
+      providers: stats,
+      fallbackRecommendation: recommendation,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+/**
+ * GET /api/ai-optimization/latency/models
+ * Get latency stats for all models
+ */
+router.get('/latency/models', ensureAuthenticated, async (req, res) => {
+  try {
+    const stats = providerLatencyMonitor.getAllModelStats();
+
+    res.json({
+      success: true,
+      models: stats,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+/**
+ * GET /api/ai-optimization/latency/provider/:provider
+ * Get latency stats for a specific provider
+ */
+router.get('/latency/provider/:provider', ensureAuthenticated, async (req, res) => {
+  try {
+    const stats = providerLatencyMonitor.getProviderStats(req.params.provider);
+
+    if (!stats) {
+      return res.status(404).json({
+        success: false,
+        error: 'Provider not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      provider: stats,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+/**
+ * POST /api/ai-optimization/latency/reset
+ * Reset latency data (admin only)
+ */
+router.post('/latency/reset', ensureAdmin, async (req, res) => {
+  try {
+    providerLatencyMonitor.reset();
+
+    res.json({
+      success: true,
+      message: 'Latency data reset successfully',
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
