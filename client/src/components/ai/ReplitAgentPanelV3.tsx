@@ -615,8 +615,24 @@ export function ReplitAgentPanelV3({
     textareaRef.current?.focus();
   }, []);
 
+  // Ref to track if auto-start has been processed (prevent double execution)
+  const autoStartExecutedRef = useRef(false);
+  
   // Auto-start building from URL prompt (Build from Homepage feature OR bootstrap)
+  // ✅ FIX (Dec 9, 2025): Wait for conversationId to be set before starting
   useEffect(() => {
+    // CRITICAL: Don't start until conversationId is available so messages persist to store
+    if (!conversationId) {
+      console.log('[ReplitAgentPanelV3] Auto-start waiting for conversationId...');
+      return;
+    }
+    
+    // Prevent double execution
+    if (autoStartExecutedRef.current) {
+      console.log('[ReplitAgentPanelV3] Auto-start already executed, skipping');
+      return;
+    }
+    
     // Check URL params for prompt and bootstrap token
     const urlParams = new URLSearchParams(window.location.search);
     const promptFromUrl = urlParams.get('prompt');
@@ -638,10 +654,13 @@ export function ReplitAgentPanelV3({
       autoStart,
       hasPromptFromSession: !!promptFromSession,
       promptLength: resolvedPrompt?.length || 0,
-      shouldAutoStart
+      shouldAutoStart,
+      conversationId
     });
     
     if (shouldAutoStart) {
+      // Mark as executed to prevent re-runs
+      autoStartExecutedRef.current = true;
       // Set the prompt in the input
       setInput(resolvedPrompt);
       
@@ -903,13 +922,13 @@ export function ReplitAgentPanelV3({
             }
           }
         })();
-      }, 1000); // 1 second delay for smooth UX
+      }, 500); // 500ms delay for smooth UX (reduced from 1000ms since we now wait for conversationId)
       
       // Remove URL params to clean up the URL
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }
-  }, [projectId]); // Only run once on mount
+  }, [projectId, conversationId, autoStart, isWorking]); // ✅ FIX (Dec 9, 2025): Depend on conversationId to ensure store persistence
 
   const toggleCapability = useCallback((capabilityId: string) => {
     setCapabilities(prev => prev.map(cap =>
