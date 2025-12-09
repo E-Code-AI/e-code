@@ -527,15 +527,15 @@ export default function AIOptimizationDashboard() {
                       <div className="space-y-0.5 text-[10px] sm:text-xs text-zinc-400">
                         <div className="flex justify-between">
                           <span>P50:</span>
-                          <span className="text-white">{provider.p50?.toFixed(0) || 0}ms</span>
+                          <span className="text-white" data-testid={`text-latency-${providerKey}-p50`}>{provider.p50?.toFixed(0) || 0}ms</span>
                         </div>
                         <div className="flex justify-between">
                           <span>P95:</span>
-                          <span className="text-white">{provider.p95?.toFixed(0) || 0}ms</span>
+                          <span className="text-white" data-testid={`text-latency-${providerKey}-p95`}>{provider.p95?.toFixed(0) || 0}ms</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Success:</span>
-                          <span className="text-green-400">{provider.successRate?.toFixed(1) || 0}%</span>
+                          <span className="text-green-400" data-testid={`text-latency-${providerKey}-success`}>{provider.successRate?.toFixed(1) || 0}%</span>
                         </div>
                       </div>
                     </CardContent>
@@ -545,7 +545,7 @@ export default function AIOptimizationDashboard() {
             </div>
           )}
           {latencyData?.fallbackRecommendation && (
-            <div className="mt-3 p-3 bg-yellow-900/30 border border-yellow-700 rounded-lg text-sm text-yellow-300" data-testid="text-fallback-recommendation">
+            <div className="mt-3 p-3 bg-[#1C2333] border border-yellow-700 rounded-lg text-sm text-yellow-300" data-testid="text-fallback-recommendation">
               <AlertTriangle className="inline h-4 w-4 mr-2" />
               Fallback Recommendation: {latencyData.fallbackRecommendation}
             </div>
