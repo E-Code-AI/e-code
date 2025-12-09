@@ -280,16 +280,6 @@ __pycache__
 # ADDITIONAL EXCLUSIONS FOR <8GB IMAGE
 # ============================================
 
-# Source TypeScript files (only needed for development)
-client/src
-!client/src/index.html
-
-# Shared source (compiled into dist)
-shared/*.ts
-
-# Server source (keep compiled JS only in production)
-# Note: These are compiled during build
-
 # Large node_modules packages (dev only)
 **/webpack*
 **/babel*
@@ -297,14 +287,9 @@ shared/*.ts
 **/prettier*
 **/jest*
 **/vitest*
-**/typescript/lib/*.d.ts
 
 # Editor/IDE heavy packages
 **/vscode-*
-**/@types
-
-# Unused language support files
-**/codemirror/lang-*
 
 # Heavy visualization libs docs
 **/recharts/es
@@ -327,13 +312,84 @@ shared/*.ts
 **/esbuild/bin
 **/node-gyp
 
-# Large optional dependencies
-**/sharp
-**/canvas
-**/bcrypt/build
-
 # Prisma engines (if not using Prisma)
 **/prisma/engines
 
 # Sentry source maps
 **/sentry-*/*.map
+
+# ============================================
+# CRITICAL: Exclude development-only files
+# ============================================
+
+# Development/test configs (keep build configs)
+jest.config.*
+vitest.config.*
+playwright.config.*
+eslint.config.*
+.eslintrc*
+.prettierrc*
+
+# Package manager files not needed in runtime (keep package-lock.json for npm ci)
+yarn.lock
+pnpm-lock.yaml
+.npmrc
+
+# Heavy dev dependencies packages
+**/typescript
+**/@typescript-eslint
+**/eslint-*
+**/prettier
+**/@babel
+**/rollup
+**/esbuild
+**/vite
+**/tsx
+**/ts-node
+
+# OpenTelemetry (heavy, dev-only)
+**/opentelemetry*
+**/@opentelemetry
+
+# Kubernetes client (dev only)
+**/kubernetes*
+**/@kubernetes
+
+# Playwright (browsers are huge)
+**/playwright
+**/playwright-core
+**/@playwright
+
+# Heavy optional deps that node_modules might include
+**/node-pty
+**/fsevents
+**/sharp
+**/canvas
+
+# Source maps everywhere
+**/*.js.map
+**/*.d.ts.map
+**/*.css.map
+
+# Type definitions (not needed at runtime)
+**/@types
+
+# Locale files (not needed)
+**/moment/locale
+**/dayjs/locale
+
+# Unused CodeMirror languages 
+**/codemirror
+
+# Font files we don't need
+**/*.ttf
+**/*.woff
+**/*.woff2
+**/*.eot
+
+# Image files in node_modules
+**/node_modules/**/*.png
+**/node_modules/**/*.jpg
+**/node_modules/**/*.gif
+**/node_modules/**/*.svg
+**/node_modules/**/*.ico
