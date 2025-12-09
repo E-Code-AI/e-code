@@ -30,8 +30,8 @@ interface TierLimits {
 // Fortune 500 Rate Limits per Tier (API & AUTH only - AI is pay-as-you-go)
 const TIER_LIMITS: Record<SubscriptionTier, Record<LimitType, TierLimits>> = {
   free: {
-    api: { points: 100, duration: 60 },      // 100 req/min
-    auth: { points: 5, duration: 900 },      // 5 req/15min
+    api: { points: 500, duration: 60 },      // 500 req/min (production-friendly)
+    auth: { points: 10, duration: 900 },     // 10 req/15min
   },
   core: {
     api: { points: 1000, duration: 60 },     // 1000 req/min (10x)
@@ -49,7 +49,7 @@ const TIER_LIMITS: Record<SubscriptionTier, Record<LimitType, TierLimits>> = {
 
 // ✅ FORTUNE 500 FIX: Separate streaming limits (different structure than API/auth)
 const STREAMING_LIMITS: Record<SubscriptionTier, TierLimits> = {
-  free: { points: 10, duration: 900 },        // 10 streams per 15min
+  free: { points: 50, duration: 900 },        // 50 streams per 15min (production-friendly)
   core: { points: 100, duration: 3600 },      // 100 streams per hour
   teams: { points: 500, duration: 3600 },     // 500 streams per hour
   enterprise: { points: 1000, duration: 3600 }, // 1000 streams per hour
