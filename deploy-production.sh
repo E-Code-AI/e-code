@@ -11,8 +11,8 @@ export NODE_ENV=production
 
 # Step 1: Install dependencies
 echo ""
-echo "📦 Installing dependencies..."
-npm install
+echo "📦 Installing production dependencies..."
+npm ci --omit=dev
 
 # Step 2: Run production build
 echo ""
