@@ -60,12 +60,18 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 
 ## Recent Changes (Dec 9, 2025)
 
-### Bug Fixes
-1. **React Remounting Issue Fixed**: Changed ReplitAgentPanelV3 key from `agent-${projectId}-${agentInitialPrompt ? 'prompt' : 'no-prompt'}` to stable `agent-${projectId}`. This prevents React from destroying and recreating the component during streaming when the prompt prop changes.
+### Bug Fixes - Replit Parity Critical Fixes
+1. **Agent Bootstrap Lifecycle Fixed**: Added sessionStorage fallback for `initialPrompt` in ReplitAgentPanelV3. When props remount, the component reads from `sessionStorage.getItem(`agent-initial-prompt-${projectId}`)` ensuring the initial prompt survives React lifecycle events.
 
-2. **Conversation Persistence Fixed**: Added `conversationId` dependency to auto-start effect with guard ref (`autoStartExecutedRef`). The effect now waits for conversationId to be initialized before executing, ensuring messages are saved to Zustand store.
+2. **Server-Side Message Persistence**: Implemented `POST /api/agent/conversation/:id/messages` endpoint with fire-and-forget pattern. Messages are saved to `agentMessages` table during streaming. Schema updated: `agentMessages.projectId` is now nullable (via `ALTER TABLE agent_messages ALTER COLUMN project_id DROP NOT NULL`) to support non-numeric project IDs (UUIDs, etc.).
 
-3. **Send Button Guard Added**: Send button is now disabled until conversationId is available, preventing silently dropped messages in race conditions.
+3. **Preview Tab Wiring Fixed**: The `onBuildComplete` callback now properly calls `/api/preview/start` with `{ projectId }` in the request body. Added React Query cache invalidation (`queryClient.invalidateQueries`) and smart polling for preview status updates.
+
+4. **WebSocket Collaboration Fixed**: Changed Socket.IO from `noServer` mode (which conflicted with Central Upgrade Dispatcher) to standard server-attached mode. Yjs collaboration continues to use central dispatcher at `/ws/yjs`.
+
+### Schema Changes
+- `agentMessages.projectId`: Changed from `notNull()` to nullable to support conversations with non-numeric project IDs
+- SQL migration: `ALTER TABLE agent_messages ALTER COLUMN project_id DROP NOT NULL`
 
 ### Known Issues
-- **WebSocket Collaboration**: Socket.IO collaboration at `/ws/collaboration` conflicts with Central Upgrade Dispatcher architecture. Collaboration errors appear in console but do not affect core app functionality (AI agent, streaming, workspace creation work correctly).
+- None blocking core functionality. All critical bugs for Replit parity have been resolved.
