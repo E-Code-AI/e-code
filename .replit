@@ -38,7 +38,7 @@ packages = [
 [deployment]
 deploymentTarget = "cloudrun"
 run = ["sh", "-c", "npm run start"]
-build = ["sh", "-c", "npm install && npm run build && npm prune --omit=dev"]
+build = ["sh", "-c", "npm ci --omit=dev && npm run build"]
 
 # Health check configuration for Cloud Run
 [[deployment.healthCheck]]
