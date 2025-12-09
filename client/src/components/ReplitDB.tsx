@@ -418,7 +418,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
                       className={`p-2 rounded cursor-pointer transition-colors ${
                         selectedEntry?.key === entry.key 
                           ? 'bg-accent' 
-                          : 'hover:bg-accent/50'
+                          : 'hover:bg-[#3D4455]/50'
                       }`}
                       onClick={() => {
                         setSelectedEntry(entry);

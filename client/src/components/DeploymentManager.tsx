@@ -596,7 +596,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                         "p-4 rounded-xl cursor-pointer transition-all duration-300 glassmorphism shadow-lg hover:shadow-xl",
                         selectedDeployment?.id === deployment.id 
                           ? 'bg-gradient-to-r from-[#F26207]/10 to-[#F99D25]/10 border-[#F26207]' 
-                          : 'hover:bg-accent/50'
+                          : 'hover:bg-[#3D4455]/50'
                       )}
                       onClick={() => setSelectedDeployment(deployment)}
                     >

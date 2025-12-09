@@ -93,7 +93,7 @@ const BottomPanel = ({ activeFile, projectId }: BottomPanelProps) => {
 
           <div className="flex items-center pr-2">
             <button
-              className="p-1 hover:bg-accent hover:text-accent-foreground rounded-sm"
+              className="p-1 hover:bg-[#3D4455] hover:text-accent-foreground rounded-sm"
               onClick={() => setLogs([])}
               title="Clear console"
             >
@@ -139,7 +139,7 @@ const BottomPanel = ({ activeFile, projectId }: BottomPanelProps) => {
                 </div>
               ) : (
                 problems.map(problem => (
-                  <div key={problem.id} className="flex text-sm gap-2 p-2 hover:bg-accent rounded-md cursor-pointer">
+                  <div key={problem.id} className="flex text-sm gap-2 p-2 hover:bg-[#3D4455] rounded-md cursor-pointer">
                     <div className="shrink-0 mt-0.5">
                       {problem.type === "error" ? (
                         <AlertCircle className="h-4 w-4 text-red-500" />

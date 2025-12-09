@@ -403,7 +403,7 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
                     <div
                       key={msg.id}
                       className={cn(
-                        "flex items-start gap-2 p-2 rounded hover:bg-accent",
+                        "flex items-start gap-2 p-2 rounded hover:bg-[#3D4455]",
                         msg.level === 'error' && "bg-red-50 dark:bg-[#2B3245]",
                         msg.level === 'warn' && "bg-yellow-50 dark:bg-[#2B3245]"
                       )}
@@ -495,7 +495,7 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
                   </thead>
                   <tbody>
                     {filteredNetworkRequests.map((req) => (
-                      <tr key={req.id} className="border-b hover:bg-accent cursor-pointer">
+                      <tr key={req.id} className="border-b hover:bg-[#3D4455] cursor-pointer">
                         <td className="p-2 max-w-[300px] truncate" title={req.url}>
                           {req.url.split('/').pop() || req.url}
                         </td>
