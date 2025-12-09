@@ -92,14 +92,14 @@ export function useRealTimeCollaboration({ projectId, autoConnect = true }: UseR
         username: user.username || 'Anonymous',
         avatar: user.avatarUrl || undefined
       },
-      transports: ['polling', 'websocket'],
+      transports: ['websocket', 'polling'],
       upgrade: true,
       reconnection: true,
       reconnectionAttempts: maxReconnectAttempts,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       forceNew: true,
-      timeout: 20000
+      timeout: 30000
     });
 
     socket.on('connect', () => {
