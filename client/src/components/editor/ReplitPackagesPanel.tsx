@@ -51,13 +51,13 @@ interface NpmSearchResult {
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
     <motion.div
-      className={cn("bg-[#242b3d] rounded-lg overflow-hidden relative", className)}
+      className={cn("bg-muted rounded-lg overflow-hidden relative", className)}
       initial={{ opacity: 0.5 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
     >
       <motion.div
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-[#3D4455] to-transparent"
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-muted-foreground/10 to-transparent"
         animate={{ x: ['-100%', '100%'] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
       />
@@ -175,26 +175,26 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
   if (!projectId) {
     return (
       <div 
-        className="h-full flex flex-col items-center justify-center p-3 bg-[#0e1525]" 
+        className="h-full flex flex-col items-center justify-center p-3 bg-background" 
         data-testid="packages-panel-no-project"
       >
-        <Package className="w-12 h-12 text-[#5c6670] opacity-40 mb-3" />
-        <p className="text-[15px] leading-[20px] text-[#9da2a6]">Select a project to manage packages</p>
+        <Package className="w-12 h-12 text-muted-foreground opacity-40 mb-3" />
+        <p className="text-[15px] leading-[20px] text-muted-foreground">Select a project to manage packages</p>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#0e1525]" data-testid="packages-panel">
-      <div className="p-3 border-b border-[#3d4452] min-h-[48px]">
+    <div className="h-full flex flex-col bg-background" data-testid="packages-panel">
+      <div className="p-3 border-b border-border min-h-[48px]">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Package className="w-[18px] h-[18px] text-[#9da2a6]" />
-            <h3 className="text-[17px] font-medium leading-tight text-[#ffffff]">Packages</h3>
+            <Package className="w-[18px] h-[18px] text-muted-foreground" />
+            <h3 className="text-[17px] font-medium leading-tight text-foreground">Packages</h3>
             {packagesData?.language && (
               <Badge 
                 variant="outline" 
-                className="text-[11px] uppercase tracking-wider border-[#3d4452] text-[#9da2a6] bg-transparent"
+                className="text-[11px] uppercase tracking-wider border-border text-muted-foreground bg-transparent"
               >
                 {packagesData.language}
               </Badge>
@@ -203,49 +203,49 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg hover:bg-surface-hover-solid"
+            className="h-8 w-8 rounded-lg hover:bg-muted"
             onClick={() => refetch()}
             disabled={isLoading}
             data-testid="button-refresh-packages"
           >
-            <RefreshCw className={cn("w-[18px] h-[18px] text-[#9da2a6]", isLoading && "animate-spin")} />
+            <RefreshCw className={cn("w-[18px] h-[18px] text-muted-foreground", isLoading && "animate-spin")} />
           </Button>
         </div>
 
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#5c6670]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search npm packages..."
-            className="pl-10 h-8 rounded-lg text-[15px] leading-[20px] bg-[#1c2333] border-[#3d4452] text-[#ffffff] placeholder:text-[#5c6670] focus:border-[#0079f2] focus:ring-[#0079f2]"
+            className="pl-10 h-8 rounded-lg text-[15px] leading-[20px] bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
             data-testid="input-package-search"
           />
         </div>
       </div>
 
       <Tabs defaultValue="installed" className="flex-1 flex flex-col">
-        <TabsList className="grid w-full grid-cols-2 p-1 mx-3 mt-2 bg-[#1c2333] rounded-lg" style={{ width: 'calc(100% - 24px)' }}>
+        <TabsList className="grid w-full grid-cols-2 p-1 mx-3 mt-2 bg-muted rounded-lg" style={{ width: 'calc(100% - 24px)' }}>
           <TabsTrigger 
             value="installed" 
-            className="text-[13px] rounded-lg data-[state=active]:bg-[#242b3d] data-[state=active]:text-[#ffffff] text-[#9da2a6]" 
+            className="text-[13px] rounded-lg data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground" 
             data-testid="tab-installed"
           >
             Installed
             <Badge 
               variant="secondary" 
-              className="ml-1.5 px-1.5 py-0 text-[11px] bg-[#3d4452] text-[#d4d8dd]"
+              className="ml-1.5 px-1.5 py-0 text-[11px] bg-muted text-muted-foreground"
             >
               {installedPackages.length}
             </Badge>
           </TabsTrigger>
           <TabsTrigger 
             value="search" 
-            className="text-[13px] rounded-lg data-[state=active]:bg-[#242b3d] data-[state=active]:text-[#ffffff] text-[#9da2a6]" 
+            className="text-[13px] rounded-lg data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground" 
             data-testid="tab-search"
           >
             Search
-            {isSearching && <Loader2 className="ml-1.5 w-[18px] h-[18px] animate-spin text-[#0079f2]" />}
+            {isSearching && <Loader2 className="ml-1.5 w-[18px] h-[18px] animate-spin text-primary" />}
           </TabsTrigger>
         </TabsList>
 
@@ -260,28 +260,28 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                 </div>
               ) : error ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <AlertCircle className="w-12 h-12 text-red-500 opacity-40 mb-3" />
-                  <p className="text-[15px] leading-[20px] text-[#9da2a6]">Failed to load packages</p>
+                  <AlertCircle className="w-12 h-12 text-destructive opacity-40 mb-3" />
+                  <p className="text-[15px] leading-[20px] text-muted-foreground">Failed to load packages</p>
                   <Button 
                     variant="link" 
                     size="sm" 
                     onClick={() => refetch()}
-                    className="text-[13px] text-[#0079f2] hover:text-[#0079f2]"
+                    className="text-[13px] text-primary hover:text-primary"
                   >
                     Try again
                   </Button>
                 </div>
               ) : installedPackages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Package className="w-12 h-12 text-[#5c6670] opacity-40 mb-4" />
-                  <h4 className="text-[17px] font-medium leading-tight text-[#ffffff] mb-2">
+                  <Package className="w-12 h-12 text-muted-foreground opacity-40 mb-4" />
+                  <h4 className="text-[17px] font-medium leading-tight text-foreground mb-2">
                     No packages installed
                   </h4>
-                  <p className="text-[13px] text-[#5c6670] mb-4 max-w-[200px]">
+                  <p className="text-[13px] text-muted-foreground mb-4 max-w-[200px]">
                     Search for packages to add dependencies to your project
                   </p>
                   <Button
-                    className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0066CC] text-[#ffffff] text-[13px]"
+                    className="h-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-[13px]"
                     onClick={() => {
                       const searchTab = document.querySelector('[data-testid="tab-search"]') as HTMLElement;
                       searchTab?.click();
@@ -296,30 +296,30 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                 installedPackages.map((pkg) => (
                   <div
                     key={pkg.name}
-                    className="mb-2 border border-[#3d4452] rounded-lg bg-[#1c2333] overflow-hidden"
+                    className="mb-2 border border-border rounded-lg bg-card overflow-hidden"
                     data-testid={`package-item-${pkg.name}`}
                   >
                     <div
-                      className="p-3 cursor-pointer hover:bg-surface-hover-solid transition-colors"
+                      className="p-3 cursor-pointer hover:bg-muted transition-colors"
                       onClick={() => togglePackageExpansion(pkg.name)}
                     >
                       <div className="flex items-start gap-2">
                         <button className="mt-0.5">
                           {expandedPackages.has(pkg.name) ? (
-                            <ChevronDown className="w-[18px] h-[18px] text-[#5c6670]" />
+                            <ChevronDown className="w-[18px] h-[18px] text-muted-foreground" />
                           ) : (
-                            <ChevronRight className="w-[18px] h-[18px] text-[#5c6670]" />
+                            <ChevronRight className="w-[18px] h-[18px] text-muted-foreground" />
                           )}
                         </button>
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[15px] leading-[20px] font-medium text-[#ffffff]">
+                            <span className="text-[15px] leading-[20px] font-medium text-foreground">
                               {pkg.name}
                             </span>
                             <Badge 
                               variant="outline" 
-                              className="text-[11px] px-1.5 py-0 border-[#3d4452] text-[#9da2a6] bg-transparent"
+                              className="text-[11px] px-1.5 py-0 border-border text-muted-foreground bg-transparent"
                             >
                               {pkg.version}
                             </Badge>
@@ -327,8 +327,8 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                               className={cn(
                                 "text-[11px] uppercase tracking-wider px-1.5 py-0",
                                 pkg.type === 'development' 
-                                  ? "bg-surface-tertiary-solid text-amber-400 border-amber-500" 
-                                  : "bg-surface-solid text-[#0079f2] border-[#0079f2]"
+                                  ? "bg-muted text-amber-400 border-amber-500" 
+                                  : "bg-card text-primary border-primary"
                               )}
                             >
                               {pkg.type === 'development' ? 'dev' : 'prod'}
@@ -339,7 +339,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 rounded-lg hover:bg-surface-hover-solid"
+                          className="h-8 w-8 rounded-lg hover:bg-muted"
                           onClick={(e) => {
                             e.stopPropagation();
                             uninstallMutation.mutate(pkg.name);
@@ -348,30 +348,30 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                           data-testid={`button-uninstall-${pkg.name}`}
                         >
                           {uninstallMutation.isPending && uninstallMutation.variables === pkg.name ? (
-                            <Loader2 className="w-[18px] h-[18px] animate-spin text-[#9da2a6]" />
+                            <Loader2 className="w-[18px] h-[18px] animate-spin text-muted-foreground" />
                           ) : (
-                            <Trash2 className="w-[18px] h-[18px] text-red-500" />
+                            <Trash2 className="w-[18px] h-[18px] text-destructive" />
                           )}
                         </Button>
                       </div>
                     </div>
 
                     {expandedPackages.has(pkg.name) && (
-                      <div className="px-3 pb-3 border-t border-[#3d4452]">
+                      <div className="px-3 pb-3 border-t border-border">
                         <div className="mt-3 space-y-2">
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] uppercase tracking-wider text-[#5c6670]">Version:</span>
-                            <span className="text-[13px] font-mono text-[#d4d8dd]">{pkg.version}</span>
+                            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Version:</span>
+                            <span className="text-[13px] font-mono text-foreground">{pkg.version}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] uppercase tracking-wider text-[#5c6670]">Type:</span>
-                            <span className="text-[13px] text-[#d4d8dd]">{pkg.type}</span>
+                            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Type:</span>
+                            <span className="text-[13px] text-foreground">{pkg.type}</span>
                           </div>
                           <a
                             href={`https://www.npmjs.com/package/${pkg.name}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[13px] text-[#0079f2] hover:underline inline-flex items-center gap-1"
+                            className="text-[13px] text-primary hover:underline inline-flex items-center gap-1"
                           >
                             View on npm →
                           </a>
@@ -390,8 +390,8 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
             <div className="p-3">
               {searchQuery.length < 2 ? (
                 <div className="flex flex-col items-center justify-center h-full py-12">
-                  <Search className="w-12 h-12 text-[#5c6670] opacity-40 mb-4" />
-                  <p className="text-[15px] leading-[20px] text-[#9da2a6]">Type at least 2 characters to search</p>
+                  <Search className="w-12 h-12 text-muted-foreground opacity-40 mb-4" />
+                  <p className="text-[15px] leading-[20px] text-muted-foreground">Type at least 2 characters to search</p>
                 </div>
               ) : isSearching ? (
                 <div className="space-y-2">
@@ -401,11 +401,11 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                 </div>
               ) : filteredSearch.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <Package className="w-12 h-12 text-[#5c6670] opacity-40 mb-4" />
-                  <h4 className="text-[17px] font-medium leading-tight text-[#ffffff] mb-2">
+                  <Package className="w-12 h-12 text-muted-foreground opacity-40 mb-4" />
+                  <h4 className="text-[17px] font-medium leading-tight text-foreground mb-2">
                     No packages found
                   </h4>
-                  <p className="text-[13px] text-[#5c6670]">
+                  <p className="text-[13px] text-muted-foreground">
                     Try a different search term
                   </p>
                 </div>
@@ -413,31 +413,31 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                 filteredSearch.map((pkg) => (
                   <div
                     key={pkg.name}
-                    className="mb-2 p-3 border border-[#3d4452] rounded-lg bg-[#1c2333] hover:bg-surface-hover-solid transition-colors"
+                    className="mb-2 p-3 border border-border rounded-lg bg-card hover:bg-muted transition-colors"
                     data-testid={`search-result-${pkg.name}`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[15px] leading-[20px] font-medium text-[#ffffff]">
+                          <span className="text-[15px] leading-[20px] font-medium text-foreground">
                             {pkg.name}
                           </span>
                           <Badge 
                             variant="outline" 
-                            className="text-[11px] px-1.5 py-0 border-[#3d4452] text-[#9da2a6] bg-transparent"
+                            className="text-[11px] px-1.5 py-0 border-border text-muted-foreground bg-transparent"
                           >
                             v{pkg.version}
                           </Badge>
                         </div>
                         {pkg.description && (
-                          <p className="text-[13px] text-[#5c6670] mt-1.5 line-clamp-2">
+                          <p className="text-[13px] text-muted-foreground mt-1.5 line-clamp-2">
                             {pkg.description}
                           </p>
                         )}
                       </div>
 
                       <Button
-                        className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0066CC] text-[#ffffff] text-[13px] shrink-0"
+                        className="h-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-[13px] shrink-0"
                         onClick={() => installMutation.mutate({ packageName: pkg.name })}
                         disabled={installMutation.isPending}
                         data-testid={`button-install-${pkg.name}`}

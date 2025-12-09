@@ -29,8 +29,7 @@ interface ReplitTerminalPanelProps {
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
     <motion.div
-      className={cn("rounded-lg", className)}
-      style={{ backgroundColor: '#242b3d' }}
+      className={cn("rounded-lg bg-muted", className)}
       animate={{ opacity: [0.5, 0.8, 0.5] }}
       transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
     />
@@ -40,26 +39,26 @@ function ShimmerSkeleton({ className }: { className?: string }) {
 function ConnectionBadge({ isConnecting, isConnected }: { isConnecting: boolean; isConnected: boolean }) {
   if (isConnecting) {
     return (
-      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#242b3d] border border-[#3d4452]">
-        <Loader2 className="w-[18px] h-[18px] animate-spin text-[#0079f2]" />
-        <span className="text-[13px] text-[#9da2a6]">Connecting</span>
+      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted border border-border">
+        <Loader2 className="w-[18px] h-[18px] animate-spin text-primary" />
+        <span className="text-[13px] text-muted-foreground">Connecting</span>
       </div>
     );
   }
   
   if (isConnected) {
     return (
-      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#242b3d] border border-[#3d4452]">
-        <Wifi className="w-[18px] h-[18px]" style={{ color: '#0079f2' }} />
-        <span className="text-[13px]" style={{ color: '#0079f2' }}>Connected</span>
+      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted border border-border">
+        <Wifi className="w-[18px] h-[18px] text-primary" />
+        <span className="text-[13px] text-primary">Connected</span>
       </div>
     );
   }
   
   return (
-    <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#242b3d] border border-[#3d4452]">
-      <WifiOff className="w-[18px] h-[18px]" style={{ color: '#9da2a6' }} />
-      <span className="text-[13px]" style={{ color: '#9da2a6' }}>Disconnected</span>
+    <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted border border-border">
+      <WifiOff className="w-[18px] h-[18px] text-muted-foreground" />
+      <span className="text-[13px] text-muted-foreground">Disconnected</span>
     </div>
   );
 }
@@ -165,11 +164,11 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
 
     const term = new XTerm({
       theme: {
-        background: '#0e1525',
-        foreground: '#d4d8dd',
-        cursor: '#0079f2',
-        cursorAccent: '#0e1525',
-        selectionBackground: '#3d4452',
+        background: 'var(--ecode-terminal-bg)',
+        foreground: 'var(--ecode-terminal-text)',
+        cursor: 'var(--ecode-accent)',
+        cursorAccent: 'var(--ecode-terminal-bg)',
+        selectionBackground: 'var(--ecode-border)',
         black: '#0e1525',
         red: '#9da2a6',
         green: '#0079f2',
@@ -342,17 +341,17 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
   return (
     <div 
       className={cn(
-        "h-full flex flex-col bg-[#0e1525]",
+        "h-full flex flex-col bg-background",
         isFullscreen && "fixed inset-0 z-50",
         className
       )} 
       data-testid="replit-terminal-panel"
     >
-      <div className="min-h-[48px] p-3 flex items-center justify-between bg-[#1c2333] border-b border-[#3d4452]">
+      <div className="min-h-[48px] p-3 flex items-center justify-between bg-card border-b border-border">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <Terminal className="w-[18px] h-[18px] text-[#9da2a6]" />
-            <span className="text-[17px] font-medium leading-tight text-[#d4d8dd]">Shell</span>
+            <Terminal className="w-[18px] h-[18px] text-muted-foreground" />
+            <span className="text-[17px] font-medium leading-tight text-foreground">Shell</span>
           </div>
           
           <ConnectionBadge isConnecting={isConnecting} isConnected={isConnected} />
@@ -364,7 +363,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg text-[#9da2a6] hover:text-[#ffffff] hover:bg-[#3d4452] transition-colors"
+            className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             onClick={handleCopy}
             data-testid="button-terminal-copy"
           >
@@ -373,7 +372,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg text-[#9da2a6] hover:text-[#ffffff] hover:bg-[#3d4452] transition-colors"
+            className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             onClick={handleClear}
             data-testid="button-terminal-clear"
           >
@@ -382,7 +381,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg text-[#9da2a6] hover:text-[#ffffff] hover:bg-[#3d4452] transition-colors"
+            className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             onClick={handleReset}
             data-testid="button-terminal-reset"
           >
@@ -391,7 +390,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg text-[#9da2a6] hover:text-[#ffffff] hover:bg-[#3d4452] transition-colors"
+            className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             onClick={() => setIsFullscreen(!isFullscreen)}
             data-testid="button-terminal-fullscreen"
           >
@@ -404,7 +403,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg text-[#9da2a6] hover:text-[#ffffff] hover:bg-[#3d4452] transition-colors"
+            className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             data-testid="button-terminal-new"
           >
             <Plus className="w-[18px] h-[18px]" />
@@ -414,7 +413,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
 
       <div className="flex-1 relative">
         {isLoading && (
-          <div className="absolute inset-0 z-10 p-3 bg-[#0e1525] flex flex-col gap-2">
+          <div className="absolute inset-0 z-10 p-3 bg-background flex flex-col gap-2">
             <ShimmerSkeleton className="h-4 w-3/4 rounded" />
             <ShimmerSkeleton className="h-4 w-1/2 rounded" />
             <ShimmerSkeleton className="h-4 w-2/3 rounded" />
@@ -424,7 +423,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
         <div
           ref={terminalRef}
           className={cn(
-            "h-full p-3 bg-[#0e1525]",
+            "h-full p-3 bg-[var(--ecode-terminal-bg)]",
             isLoading && "opacity-0"
           )}
           data-testid="terminal-container"

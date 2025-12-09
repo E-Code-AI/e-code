@@ -349,7 +349,7 @@ export function ReplitPackageExplorer({ projectId, className }: PackageExplorerP
                 ref={canvasRef}
                 width={800}
                 height={600}
-                className="w-full h-full cursor-move bg-[#0a0a0a]"
+                className="w-full h-full cursor-move bg-card"
                 onClick={handleCanvasClick}
                 onMouseDown={(e) => {
                   const startX = e.clientX - pan.x;

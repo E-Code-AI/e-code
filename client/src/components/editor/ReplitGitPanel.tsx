@@ -95,7 +95,7 @@ function DiffViewer({ diff, isLoading }: { diff: string; isLoading: boolean }) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8" data-testid="diff-loading">
-        <Loader2 className="w-6 h-6 animate-spin text-[#5c6670]" />
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -103,8 +103,8 @@ function DiffViewer({ diff, isLoading }: { diff: string; isLoading: boolean }) {
   if (!diff || diff.trim() === '') {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center" data-testid="diff-empty">
-        <FileCode className="w-12 h-12 text-[#5c6670]/40 mb-2" />
-        <p className="text-[13px] text-[#5c6670]">No changes to display</p>
+        <FileCode className="w-12 h-12 text-muted-foreground/40 mb-2" />
+        <p className="text-[13px] text-muted-foreground">No changes to display</p>
       </div>
     );
   }
@@ -115,20 +115,20 @@ function DiffViewer({ diff, isLoading }: { diff: string; isLoading: boolean }) {
     <ScrollArea className="h-[400px]" data-testid="diff-content">
       <pre className="font-mono text-[12px] leading-relaxed p-3">
         {lines.map((line, idx) => {
-          let className = 'text-[#5c6670]';
+          let className = 'text-muted-foreground';
           let bgClassName = '';
           
           if (line.startsWith('+') && !line.startsWith('+++')) {
-            className = 'text-[#00a67e]';
-            bgClassName = 'bg-[#00a67e]/10';
+            className = 'text-green-500';
+            bgClassName = 'bg-green-500/10';
           } else if (line.startsWith('-') && !line.startsWith('---')) {
-            className = 'text-[#e5484d]';
-            bgClassName = 'bg-[#e5484d]/10';
+            className = 'text-destructive';
+            bgClassName = 'bg-destructive/10';
           } else if (line.startsWith('@@')) {
-            className = 'text-[#0079f2]';
-            bgClassName = 'bg-[#0079f2]/10';
+            className = 'text-primary';
+            bgClassName = 'bg-primary/10';
           } else if (line.startsWith('diff') || line.startsWith('index') || line.startsWith('---') || line.startsWith('+++')) {
-            className = 'text-[#0e1525] dark:text-white font-medium';
+            className = 'text-foreground font-medium';
           }
 
           return (
@@ -148,9 +148,9 @@ function DiffViewer({ diff, isLoading }: { diff: string; isLoading: boolean }) {
 
 function ShimmerBar({ className }: { className?: string }) {
   return (
-    <div className={cn("relative overflow-hidden bg-[#d4d8dd]/30 dark:bg-[#3d4452] rounded", className)}>
+    <div className={cn("relative overflow-hidden bg-muted rounded", className)}>
       <motion.div
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-white/10 to-transparent"
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-muted-foreground/10 to-transparent"
         animate={{ x: ['-100%', '100%'] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
       />
@@ -184,12 +184,12 @@ function NoChangesEmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-8 px-4 text-center" data-testid="no-changes-empty-state">
       <div className="w-12 h-12 flex items-center justify-center mb-3">
-        <GitBranch className="w-12 h-12 text-[#5c6670]/40" />
+        <GitBranch className="w-12 h-12 text-muted-foreground/40" />
       </div>
-      <h3 className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white mb-1">
+      <h3 className="text-[15px] font-medium leading-tight text-foreground mb-1">
         No uncommitted changes
       </h3>
-      <p className="text-[13px] text-[#5c6670]">
+      <p className="text-[13px] text-muted-foreground">
         Your working directory is clean. Make some changes to see them here.
       </p>
     </div>
@@ -414,47 +414,45 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
 
   if (isLoading) {
     return (
-      <div className={cn("flex items-center justify-center h-full bg-white dark:bg-[#1c2333]", className)}>
-        <Loader2 className="w-6 h-6 animate-spin text-[#5c6670]" />
+      <div className={cn("flex items-center justify-center h-full bg-background", className)}>
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
-  // Settings View
   if (viewMode === 'settings') {
     return (
-      <div className={cn("flex flex-col h-full bg-white dark:bg-[#1c2333]", className)} data-testid="git-settings">
+      <div className={cn("flex flex-col h-full bg-background", className)} data-testid="git-settings">
         <div className={cn(
-          "flex items-center gap-3 border-b border-[#d4d8dd] dark:border-[#3d4452]",
+          "flex items-center gap-3 border-b border-border",
           touchMode ? "px-4 min-h-[56px]" : "px-3 min-h-[48px]"
         )}>
           <button
             onClick={() => setViewMode('main')}
             className={cn(
-              "hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg touch-manipulation",
+              "hover:bg-muted rounded-lg touch-manipulation",
               touchMode ? "p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center" : "p-1.5"
             )}
             data-testid="back-from-settings"
           >
-            <ChevronLeft className={cn(touchMode ? "w-5 h-5" : "w-[18px] h-[18px]", "text-[#5c6670]")} />
+            <ChevronLeft className={cn(touchMode ? "w-5 h-5" : "w-[18px] h-[18px]", "text-muted-foreground")} />
           </button>
           <span className={cn(
-            "font-medium leading-tight text-[#0e1525] dark:text-white",
+            "font-medium leading-tight text-foreground",
             touchMode ? "text-base" : "text-[15px]"
           )}>Settings</span>
         </div>
 
         <ScrollArea className="flex-1">
           <div className="p-3 space-y-6">
-            {/* Remote */}
             <div className="space-y-2">
-              <h3 className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white">Remote</h3>
+              <h3 className="text-[15px] font-medium leading-tight text-foreground">Remote</h3>
               <div className="flex gap-2">
                 <Input
                   value={remoteUrl || originRemote?.url || ''}
                   onChange={(e) => setRemoteUrl(e.target.value)}
                   placeholder="https://github.com/username/repo.git"
-                  className="flex-1 h-8 bg-white dark:bg-[#1c2333] border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
+                  className="flex-1 h-8 bg-background border-border rounded-lg"
                   data-testid="input-remote-url"
                 />
                 <Button
@@ -462,7 +460,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                   size="sm"
                   onClick={() => remoteUrl && connectRemoteMutation.mutate(remoteUrl)}
                   disabled={!remoteUrl || connectRemoteMutation.isPending}
-                  className="h-8 border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
+                  className="h-8 border-border rounded-lg"
                   data-testid="button-create-remote"
                 >
                   Create Remote
@@ -470,14 +468,13 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
               </div>
             </div>
 
-            {/* Connections */}
             <div className="space-y-2">
               <button
                 onClick={() => setShowConnections(!showConnections)}
-                className="flex items-center justify-between w-full p-3 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
+                className="flex items-center justify-between w-full p-3 bg-card border border-border rounded-lg"
               >
-                <span className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white">Connections</span>
-                {showConnections ? <ChevronUp className="w-[18px] h-[18px] text-[#5c6670]" /> : <ChevronDown className="w-[18px] h-[18px] text-[#5c6670]" />}
+                <span className="text-[15px] font-medium leading-tight text-foreground">Connections</span>
+                {showConnections ? <ChevronUp className="w-[18px] h-[18px] text-muted-foreground" /> : <ChevronDown className="w-[18px] h-[18px] text-muted-foreground" />}
               </button>
 
               <AnimatePresence>
@@ -488,16 +485,15 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                     exit={{ height: 0, opacity: 0 }}
                     className="space-y-2"
                   >
-                    {/* GitHub */}
                     <div 
-                      className="flex items-center justify-between p-3 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
+                      className="flex items-center justify-between p-3 bg-card border border-border rounded-lg"
                       data-testid="github-connection-section"
                     >
                       {isLoadingGitHub ? (
                         <div className="flex items-center gap-3">
                           <SiGithub className="w-[18px] h-[18px]" />
-                          <span className="text-[15px] text-[#0e1525] dark:text-white">GitHub</span>
-                          <Loader2 className="w-4 h-4 animate-spin text-[#5c6670]" data-testid="github-status-loading" />
+                          <span className="text-[15px] text-foreground">GitHub</span>
+                          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" data-testid="github-status-loading" />
                         </div>
                       ) : githubStatus?.connected ? (
                         <>
@@ -508,7 +504,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                                 <SiGithub className="w-4 h-4" />
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-[15px] text-[#0e1525] dark:text-white" data-testid="github-username">
+                            <span className="text-[15px] text-foreground" data-testid="github-username">
                               {githubStatus.username}
                             </span>
                             <span className="flex items-center gap-1 text-[13px] text-green-600">
@@ -536,16 +532,16 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                         <>
                           <div className="flex items-center gap-3">
                             <SiGithub className="w-[18px] h-[18px]" />
-                            <span className="text-[15px] text-[#0e1525] dark:text-white">GitHub</span>
-                            <span className="flex items-center gap-1 text-[13px] text-[#5c6670]">
-                              <span className="w-2 h-2 bg-[#5c6670] rounded-full" />
+                            <span className="text-[15px] text-foreground">GitHub</span>
+                            <span className="flex items-center gap-1 text-[13px] text-muted-foreground">
+                              <span className="w-2 h-2 bg-muted-foreground rounded-full" />
                               Disconnected
                             </span>
                           </div>
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="h-8 border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
+                            className="h-8 border-border rounded-lg"
                             onClick={handleConnectGitHub}
                             data-testid="button-connect-github"
                           >
@@ -556,32 +552,30 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                       )}
                     </div>
 
-                    {/* Bitbucket */}
-                    <div className="flex items-center justify-between p-3 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-card border border-border rounded-lg">
                       <div className="flex items-center gap-3">
                         <SiBitbucket className="w-[18px] h-[18px] text-[#2684FF]" />
-                        <span className="text-[15px] text-[#0e1525] dark:text-white">Bitbucket</span>
-                        <span className="flex items-center gap-1 text-[13px] text-[#5c6670]">
-                          <span className="w-2 h-2 bg-[#5c6670] rounded-full" />
+                        <span className="text-[15px] text-foreground">Bitbucket</span>
+                        <span className="flex items-center gap-1 text-[13px] text-muted-foreground">
+                          <span className="w-2 h-2 bg-muted-foreground rounded-full" />
                           Disconnected
                         </span>
                       </div>
-                      <Button variant="outline" size="sm" className="h-8 border-[#d4d8dd] rounded-lg">
+                      <Button variant="outline" size="sm" className="h-8 border-border rounded-lg">
                         <ExternalLink className="w-3 h-3 mr-1" />Sign in
                       </Button>
                     </div>
 
-                    {/* GitLab */}
-                    <div className="flex items-center justify-between p-3 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-card border border-border rounded-lg">
                       <div className="flex items-center gap-3">
                         <SiGitlab className="w-[18px] h-[18px] text-[#FC6D26]" />
-                        <span className="text-[15px] text-[#0e1525] dark:text-white">GitLab</span>
-                        <span className="flex items-center gap-1 text-[13px] text-[#5c6670]">
-                          <span className="w-2 h-2 bg-[#5c6670] rounded-full" />
+                        <span className="text-[15px] text-foreground">GitLab</span>
+                        <span className="flex items-center gap-1 text-[13px] text-muted-foreground">
+                          <span className="w-2 h-2 bg-muted-foreground rounded-full" />
                           Disconnected
                         </span>
                       </div>
-                      <Button variant="outline" size="sm" className="h-8 border-[#d4d8dd] rounded-lg">
+                      <Button variant="outline" size="sm" className="h-8 border-border rounded-lg">
                         <ExternalLink className="w-3 h-3 mr-1" />Sign in
                       </Button>
                     </div>
@@ -590,25 +584,24 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
               </AnimatePresence>
             </div>
 
-            {/* Commit Author */}
             <div className="space-y-2">
-              <h3 className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white">Commit author</h3>
-              <div className="p-3 bg-white dark:bg-[#242b3d] border-2 border-[#0079f2] rounded-lg">
+              <h3 className="text-[15px] font-medium leading-tight text-foreground">Commit author</h3>
+              <div className="p-3 bg-card border-2 border-primary rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-[#0079f2] rounded-full flex items-center justify-center">
-                    <User className="w-[18px] h-[18px] text-white" />
+                  <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                    <User className="w-[18px] h-[18px] text-primary-foreground" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-[15px] font-medium leading-tight text-[#0e1525] dark:text-white">developer</span>
-                      <a href="#" className="text-[13px] text-[#0079f2] flex items-center gap-1">
+                      <span className="text-[15px] font-medium leading-tight text-foreground">developer</span>
+                      <a href="#" className="text-[13px] text-primary flex items-center gap-1">
                         GitHub Settings <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>
-                    <span className="text-[13px] text-[#5c6670]">developer@example.com</span>
+                    <span className="text-[13px] text-muted-foreground">developer@example.com</span>
                   </div>
-                  <div className="w-[18px] h-[18px] bg-[#0079f2] rounded-full flex items-center justify-center">
-                    <Check className="w-3 h-3 text-white" />
+                  <div className="w-[18px] h-[18px] bg-primary rounded-full flex items-center justify-center">
+                    <Check className="w-3 h-3 text-primary-foreground" />
                   </div>
                 </div>
               </div>
@@ -619,72 +612,69 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
     );
   }
 
-  // Main View
   return (
-    <div className={cn("flex flex-col h-full bg-white dark:bg-[#1c2333] relative", className)} data-testid="git-panel">
-      {/* Header - tablet-responsive with proper touch targets */}
+    <div className={cn("flex flex-col h-full bg-background relative", className)} data-testid="git-panel">
       <div className={cn(
-        "flex items-center justify-between border-b border-[#d4d8dd] dark:border-[#3d4452]",
+        "flex items-center justify-between border-b border-border",
         touchMode ? "px-4 min-h-[56px]" : "px-3 min-h-[48px]"
       )}>
         <button
           onClick={() => setShowBranchDropdown(!showBranchDropdown)}
           className={cn(
-            "flex items-center gap-2 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg touch-manipulation",
+            "flex items-center gap-2 hover:bg-muted rounded-lg touch-manipulation",
             touchMode ? "px-3 py-2.5 min-h-[44px]" : "px-2 py-1"
           )}
           data-testid="branch-selector"
         >
-          <GitBranch className={cn(touchMode ? "w-5 h-5" : "w-[18px] h-[18px]", "text-[#5c6670]")} />
+          <GitBranch className={cn(touchMode ? "w-5 h-5" : "w-[18px] h-[18px]", "text-muted-foreground")} />
           <span className={cn(
-            "font-medium leading-tight text-[#0e1525] dark:text-white",
+            "font-medium leading-tight text-foreground",
             touchMode ? "text-base" : "text-[15px]"
           )}>{status?.branch || 'main'}</span>
-          <ChevronDown className={cn(touchMode ? "w-5 h-5" : "w-[18px] h-[18px]", "text-[#5c6670]")} />
+          <ChevronDown className={cn(touchMode ? "w-5 h-5" : "w-[18px] h-[18px]", "text-muted-foreground")} />
         </button>
         
         <div className={cn("flex items-center", touchMode ? "gap-2" : "gap-1")}>
           <button
             onClick={() => setViewMode('settings')}
             className={cn(
-              "hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg touch-manipulation",
+              "hover:bg-muted rounded-lg touch-manipulation",
               touchMode ? "p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center" : "p-1.5"
             )}
             data-testid="git-settings-button"
           >
-            <Settings className={cn(touchMode ? "w-5 h-5" : "w-[18px] h-[18px]", "text-[#5c6670]")} />
+            <Settings className={cn(touchMode ? "w-5 h-5" : "w-[18px] h-[18px]", "text-muted-foreground")} />
           </button>
           <button
             onClick={() => refetchStatus()}
             className={cn(
-              "hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg touch-manipulation",
+              "hover:bg-muted rounded-lg touch-manipulation",
               touchMode ? "p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center" : "p-1.5"
             )}
             data-testid="git-refresh-button"
           >
-            <RefreshCw className={cn(touchMode ? "w-5 h-5" : "w-[18px] h-[18px]", "text-[#5c6670]")} />
+            <RefreshCw className={cn(touchMode ? "w-5 h-5" : "w-[18px] h-[18px]", "text-muted-foreground")} />
           </button>
         </div>
       </div>
 
-      {/* Branch Dropdown */}
       <AnimatePresence>
         {showBranchDropdown && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="absolute top-12 left-2 right-2 z-50 bg-white dark:bg-[#242b3d] border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg shadow-lg overflow-hidden"
+            className="absolute top-12 left-2 right-2 z-50 bg-card border border-border rounded-lg shadow-lg overflow-hidden"
           >
-            <div className="p-2 border-b border-[#d4d8dd] dark:border-[#3d4452]">
-              <div className="flex items-center gap-2 px-2 py-1.5 bg-[#d4d8dd]/20 dark:bg-[#1c2333] rounded-lg border border-[#d4d8dd] dark:border-[#3d4452]">
-                <Search className="w-[18px] h-[18px] text-[#5c6670]" />
+            <div className="p-2 border-b border-border">
+              <div className="flex items-center gap-2 px-2 py-1.5 bg-muted rounded-lg border border-border">
+                <Search className="w-[18px] h-[18px] text-muted-foreground" />
                 <input
                   type="text"
                   value={branchSearch}
                   onChange={(e) => setBranchSearch(e.target.value)}
                   placeholder="Find or create a branch..."
-                  className="flex-1 bg-inherit text-[15px] outline-none text-[#0e1525] dark:text-white placeholder:text-[#5c6670]"
+                  className="flex-1 bg-inherit text-[15px] outline-none text-foreground placeholder:text-muted-foreground"
                   data-testid="input-branch-search"
                 />
               </div>
@@ -694,17 +684,17 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
               <div className="p-1">
                 {importantBranches.length > 0 && (
                   <div className="mb-1">
-                    <div className="px-2 py-1 text-[11px] font-medium text-[#5c6670] uppercase tracking-wider">Important</div>
+                    <div className="px-2 py-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Important</div>
                     {importantBranches.map(branch => (
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg text-left"
+                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded-lg text-left"
                         data-testid={`branch-${branch.name}`}
                       >
-                        <span className={cn("w-2 h-2 rounded-full", branch.current ? "bg-[#0079f2]" : "bg-green-500")} />
-                        <span className="text-[15px] text-[#0e1525] dark:text-white flex-1">{branch.name}</span>
-                        {branch.current && <Check className="w-[18px] h-[18px] text-[#0079f2]" />}
+                        <span className={cn("w-2 h-2 rounded-full", branch.current ? "bg-primary" : "bg-green-500")} />
+                        <span className="text-[15px] text-foreground flex-1">{branch.name}</span>
+                        {branch.current && <Check className="w-[18px] h-[18px] text-primary" />}
                       </button>
                     ))}
                   </div>
@@ -712,16 +702,16 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
 
                 {activeBranches.length > 0 && (
                   <div className="mb-1">
-                    <div className="px-2 py-1 text-[11px] font-medium text-[#5c6670] uppercase tracking-wider">Active</div>
+                    <div className="px-2 py-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Active</div>
                     {activeBranches.map(branch => (
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg text-left"
+                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded-lg text-left"
                         data-testid={`branch-${branch.name}`}
                       >
                         <span className="w-2 h-2 bg-green-500 rounded-full" />
-                        <span className="text-[15px] text-[#0e1525] dark:text-white">{branch.name}</span>
+                        <span className="text-[15px] text-foreground">{branch.name}</span>
                       </button>
                     ))}
                   </div>
@@ -729,35 +719,35 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
 
                 {staleBranches.length > 0 && (
                   <div>
-                    <div className="px-2 py-1 text-[11px] font-medium text-[#5c6670] uppercase tracking-wider">Stale</div>
+                    <div className="px-2 py-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Stale</div>
                     {staleBranches.slice(0, 5).map(branch => (
                       <button
                         key={branch.name}
                         onClick={() => checkoutMutation.mutate(branch.name)}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg text-left"
+                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded-lg text-left"
                         data-testid={`branch-${branch.name}`}
                       >
-                        <User className="w-[18px] h-[18px] text-[#5c6670]" />
-                        <span className="text-[15px] text-[#0e1525] dark:text-white truncate">{branch.name}</span>
+                        <User className="w-[18px] h-[18px] text-muted-foreground" />
+                        <span className="text-[15px] text-foreground truncate">{branch.name}</span>
                       </button>
                     ))}
                   </div>
                 )}
 
                 {branchSearch.trim() && !branches.some(b => b.name.toLowerCase() === branchSearch.trim().toLowerCase()) && (
-                  <div className="border-t border-[#d4d8dd] dark:border-[#3d4452] mt-1 pt-1">
+                  <div className="border-t border-border mt-1 pt-1">
                     <button
                       onClick={() => createBranchMutation.mutate(branchSearch.trim())}
                       disabled={createBranchMutation.isPending}
-                      className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] rounded-lg text-left"
+                      className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded-lg text-left"
                       data-testid="button-create-branch"
                     >
                       {createBranchMutation.isPending ? (
-                        <Loader2 className="w-[18px] h-[18px] text-[#0079f2] animate-spin" />
+                        <Loader2 className="w-[18px] h-[18px] text-primary animate-spin" />
                       ) : (
-                        <Plus className="w-[18px] h-[18px] text-[#0079f2]" />
+                        <Plus className="w-[18px] h-[18px] text-primary" />
                       )}
-                      <span className="text-[15px] text-[#0079f2]">
+                      <span className="text-[15px] text-primary">
                         Create branch: <span className="font-medium">{branchSearch.trim()}</span>
                       </span>
                     </button>
@@ -771,16 +761,15 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
 
       <ScrollArea className="flex-1">
         <div className={cn("space-y-2", touchMode ? "p-4" : "p-3")}>
-          {/* Remote Updates */}
           <div className={cn("space-y-2", touchMode && "space-y-3")}>
             <div className="flex items-center justify-between">
-              <span className={cn("font-medium text-[#5c6670] uppercase", touchMode ? "text-sm" : "text-xs")}>Remote Updates</span>
+              <span className={cn("font-medium text-muted-foreground uppercase", touchMode ? "text-sm" : "text-xs")}>Remote Updates</span>
               {repoName && (
                 <a
                   href={`https://github.com/${repoName}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-[13px] text-[#0e1525] dark:text-white hover:text-[#0079f2]"
+                  className="flex items-center gap-1 text-[13px] text-foreground hover:text-primary"
                   data-testid="link-github-repo"
                 >
                   <SiGithub className="w-3 h-3" />
@@ -791,19 +780,19 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
             </div>
 
             <div className="flex items-center justify-between text-[13px]">
-              <div className="flex items-center gap-1 text-[#5c6670]">
-                <span className="font-medium text-[#0e1525] dark:text-white">origin/{status?.branch}</span>
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <span className="font-medium text-foreground">origin/{status?.branch}</span>
                 <span>•</span>
                 <span>upstream</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[#5c6670]">last fetched 1h ago</span>
+                <span className="text-muted-foreground">last fetched 1h ago</span>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => fetchMutation.mutate(undefined)}
                   disabled={fetchMutation.isPending}
-                  className="h-6 px-2 text-[13px] text-[#5c6670] rounded-lg"
+                  className="h-6 px-2 text-[13px] text-muted-foreground rounded-lg"
                   data-testid="button-fetch"
                 >
                   <RefreshCw className="w-3 h-3 mr-1" />
@@ -813,10 +802,9 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
             </div>
 
             {(status?.ahead || 0) > 0 && (
-              <p className="text-[13px] text-[#5c6670]">{status?.ahead} commits to push</p>
+              <p className="text-[13px] text-muted-foreground">{status?.ahead} commits to push</p>
             )}
 
-            {/* Action Buttons - tablet-responsive with proper touch targets */}
             <div className={cn("flex", touchMode ? "gap-3 flex-wrap" : "gap-2")}>
               <Button
                 variant="outline"
@@ -826,7 +814,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                   pushMutation.mutate(undefined);
                 }}
                 className={cn(
-                  "flex-1 border-[#d4d8dd] dark:border-[#3d4452] rounded-lg touch-manipulation",
+                  "flex-1 border-border rounded-lg touch-manipulation",
                   touchMode ? "h-11 text-sm min-w-[120px]" : "h-8 text-[13px]"
                 )}
                 data-testid="button-sync"
@@ -840,7 +828,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                 onClick={() => pullMutation.mutate(undefined)}
                 disabled={pullMutation.isPending}
                 className={cn(
-                  "border-[#d4d8dd] dark:border-[#3d4452] rounded-lg touch-manipulation",
+                  "border-border rounded-lg touch-manipulation",
                   touchMode ? "h-11 px-4 text-sm" : "h-8 px-3 text-[13px]"
                 )}
                 data-testid="button-pull"
@@ -854,7 +842,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                 onClick={() => pushMutation.mutate(undefined)}
                 disabled={pushMutation.isPending}
                 className={cn(
-                  "border-[#d4d8dd] dark:border-[#3d4452] rounded-lg touch-manipulation",
+                  "border-border rounded-lg touch-manipulation",
                   touchMode ? "h-11 px-4 text-sm" : "h-8 px-3 text-[13px]"
                 )}
                 data-testid="button-push"
@@ -865,22 +853,20 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
             </div>
           </div>
 
-          {/* Commit Section */}
-          <div className={cn("border-t border-[#d4d8dd] dark:border-[#3d4452]", touchMode ? "space-y-3 pt-4" : "space-y-2 pt-3")}>
+          <div className={cn("border-t border-border", touchMode ? "space-y-3 pt-4" : "space-y-2 pt-3")}>
             <h3 className={cn(
-              "font-medium leading-tight text-[#0e1525] dark:text-white",
+              "font-medium leading-tight text-foreground",
               touchMode ? "text-base" : "text-[15px]"
             )}>Commit</h3>
             
             {hasChanges ? (
               <div className="space-y-2">
-                {/* Staged Files */}
                 {status?.staged && status.staged.length > 0 && (
                   <div className={cn("space-y-1", touchMode && "space-y-0.5")}>
-                    <div className={cn("font-medium text-[#5c6670] uppercase", touchMode ? "text-sm" : "text-xs")}>Staged ({status.staged.length})</div>
+                    <div className={cn("font-medium text-muted-foreground uppercase", touchMode ? "text-sm" : "text-xs")}>Staged ({status.staged.length})</div>
                     {status.staged.map(file => (
                       <div key={file} className={cn(
-                        "flex items-center justify-between rounded-lg hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group touch-manipulation",
+                        "flex items-center justify-between rounded-lg hover:bg-muted group touch-manipulation",
                         touchMode ? "px-3 py-2.5 min-h-[44px]" : "px-2 py-1"
                       )}>
                         <button
@@ -893,33 +879,32 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                         >
                           <FileCode className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-green-500 shrink-0")} />
                           <span className={cn(
-                            "text-[#0e1525] dark:text-white truncate hover:underline",
+                            "text-foreground truncate hover:underline",
                             touchMode ? "text-sm" : "text-[13px]"
                           )}>{file}</span>
-                          <Eye className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-[#5c6670]", !touchMode && "opacity-0 group-hover:opacity-100")} />
+                          <Eye className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-muted-foreground", !touchMode && "opacity-0 group-hover:opacity-100")} />
                         </button>
                         <button
                           onClick={() => unstageMutation.mutate([file])}
                           className={cn(
-                            "hover:bg-[#e5e7eb] dark:hover:bg-[#3d4452] rounded-lg touch-manipulation",
+                            "hover:bg-muted rounded-lg touch-manipulation",
                             touchMode ? "p-2 min-w-[44px] min-h-[44px] flex items-center justify-center" : "p-1 opacity-0 group-hover:opacity-100"
                           )}
                           data-testid={`unstage-${file}`}
                         >
-                          <Minus className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-[#5c6670]")} />
+                          <Minus className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-muted-foreground")} />
                         </button>
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* Unstaged Files */}
                 {status?.unstaged && status.unstaged.length > 0 && (
                   <div className={cn("space-y-1", touchMode && "space-y-0.5")}>
-                    <div className={cn("font-medium text-[#5c6670] uppercase", touchMode ? "text-sm" : "text-xs")}>Changes ({status.unstaged.length})</div>
+                    <div className={cn("font-medium text-muted-foreground uppercase", touchMode ? "text-sm" : "text-xs")}>Changes ({status.unstaged.length})</div>
                     {status.unstaged.map(file => (
                       <div key={file} className={cn(
-                        "flex items-center justify-between rounded-lg hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group touch-manipulation",
+                        "flex items-center justify-between rounded-lg hover:bg-muted group touch-manipulation",
                         touchMode ? "px-3 py-2.5 min-h-[44px]" : "px-2 py-1"
                       )}>
                         <button
@@ -932,33 +917,32 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                         >
                           <FileCode className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-yellow-500 shrink-0")} />
                           <span className={cn(
-                            "text-[#0e1525] dark:text-white truncate hover:underline",
+                            "text-foreground truncate hover:underline",
                             touchMode ? "text-sm" : "text-[13px]"
                           )}>{file}</span>
-                          <Eye className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-[#5c6670]", !touchMode && "opacity-0 group-hover:opacity-100")} />
+                          <Eye className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-muted-foreground", !touchMode && "opacity-0 group-hover:opacity-100")} />
                         </button>
                         <button
                           onClick={() => stageMutation.mutate([file])}
                           className={cn(
-                            "hover:bg-[#e5e7eb] dark:hover:bg-[#3d4452] rounded-lg touch-manipulation",
+                            "hover:bg-muted rounded-lg touch-manipulation",
                             touchMode ? "p-2 min-w-[44px] min-h-[44px] flex items-center justify-center" : "p-1 opacity-0 group-hover:opacity-100"
                           )}
                           data-testid={`stage-${file}`}
                         >
-                          <Plus className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-[#5c6670]")} />
+                          <Plus className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-muted-foreground")} />
                         </button>
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* Untracked Files */}
                 {status?.untracked && status.untracked.length > 0 && (
                   <div className={cn("space-y-1", touchMode && "space-y-0.5")}>
-                    <div className={cn("font-medium text-[#5c6670] uppercase", touchMode ? "text-sm" : "text-xs")}>Untracked ({status.untracked.length})</div>
+                    <div className={cn("font-medium text-muted-foreground uppercase", touchMode ? "text-sm" : "text-xs")}>Untracked ({status.untracked.length})</div>
                     {status.untracked.map(file => (
                       <div key={file} className={cn(
-                        "flex items-center justify-between rounded-lg hover:bg-[#d4d8dd]/30 dark:hover:bg-[#3d4452] group touch-manipulation",
+                        "flex items-center justify-between rounded-lg hover:bg-muted group touch-manipulation",
                         touchMode ? "px-3 py-2.5 min-h-[44px]" : "px-2 py-1"
                       )}>
                         <button
@@ -969,22 +953,22 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                           )}
                           data-testid={`view-diff-untracked-${file}`}
                         >
-                          <FileCode className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-[#5c6670] shrink-0")} />
+                          <FileCode className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-muted-foreground shrink-0")} />
                           <span className={cn(
-                            "text-[#0e1525] dark:text-white truncate hover:underline",
+                            "text-foreground truncate hover:underline",
                             touchMode ? "text-sm" : "text-[13px]"
                           )}>{file}</span>
-                          <Eye className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-[#5c6670]", !touchMode && "opacity-0 group-hover:opacity-100")} />
+                          <Eye className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-muted-foreground", !touchMode && "opacity-0 group-hover:opacity-100")} />
                         </button>
                         <button
                           onClick={() => stageMutation.mutate([file])}
                           className={cn(
-                            "hover:bg-[#e5e7eb] dark:hover:bg-[#3d4452] rounded-lg touch-manipulation",
+                            "hover:bg-muted rounded-lg touch-manipulation",
                             touchMode ? "p-2 min-w-[44px] min-h-[44px] flex items-center justify-center" : "p-1 opacity-0 group-hover:opacity-100"
                           )}
                           data-testid={`stage-${file}`}
                         >
-                          <Plus className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-[#5c6670]")} />
+                          <Plus className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-muted-foreground")} />
                         </button>
                       </div>
                     ))}
@@ -996,7 +980,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                   onChange={(e) => setCommitMessage(e.target.value)}
                   placeholder="Commit message..."
                   className={cn(
-                    "bg-white dark:bg-[#1c2333] border-[#d4d8dd] dark:border-[#3d4452] rounded-lg",
+                    "bg-background border-border rounded-lg",
                     touchMode ? "h-11 text-base" : "h-8 text-[15px]"
                   )}
                   data-testid="input-commit-message"
@@ -1005,13 +989,13 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                   onClick={() => commitMutation.mutate(commitMessage)}
                   disabled={!commitMessage.trim() || commitMutation.isPending || !status?.staged?.length}
                   className={cn(
-                    "w-full bg-[#0079f2] hover:bg-[#0066cc] text-white rounded-lg touch-manipulation",
+                    "w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg touch-manipulation",
                     touchMode ? "h-11 text-sm" : "h-8 text-[13px]"
                   )}
                   data-testid="button-commit"
                 >
                   <GitCommit className={cn(touchMode ? "w-4 h-4 mr-2" : "w-3 h-3 mr-1")} />
-                  Commit {status?.staged?.length || 0} staged
+                  {commitMutation.isPending ? 'Committing...' : 'Commit'}
                 </Button>
               </div>
             ) : (
@@ -1019,90 +1003,60 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
             )}
           </div>
 
-          {/* Commit History */}
-          {isLoadingCommits ? (
-            <div className="space-y-2 pt-3 border-t border-[#d4d8dd] dark:border-[#3d4452]">
-              <CommitSkeleton />
-            </div>
-          ) : commits && commits.length > 0 ? (
-            <div className="space-y-2 pt-3 border-t border-[#d4d8dd] dark:border-[#3d4452]">
-              {unpushedCommits.length > 0 && (
-                <div className="flex items-center gap-1 text-[13px] text-[#5c6670]">
-                  <ArrowDown className="w-3 h-3" />
-                  <span>Not pushed to remote</span>
-                </div>
-              )}
-
-              <div className="space-y-0.5">
-                {commits.slice(0, 8).map((commit, idx) => (
-                  <div
-                    key={commit.hash}
-                    className="flex items-start gap-2 py-1.5"
-                    data-testid={`commit-${commit.hash}`}
-                  >
-                    <div className="flex flex-col items-center pt-1">
-                      <span className={cn(
-                        "w-2 h-2 rounded-full",
-                        idx >= unpushedCount ? "bg-[#5c6670]" : "bg-green-500"
-                      )} />
-                      {idx < commits.length - 1 && (
-                        <div className="w-0.5 flex-1 bg-[#d4d8dd] dark:bg-[#3d4452] mt-1" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-medium text-[#0e1525] dark:text-white truncate">
-                        {commit.message}
-                      </p>
-                      <div className="flex items-center gap-1 text-[10px] text-[#5c6670]">
-                        <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-[8px] text-white font-medium">
-                          {commit.author?.charAt(0)?.toUpperCase() || 'U'}
+          {commits && commits.length > 0 && (
+            <div className={cn("border-t border-border", touchMode ? "space-y-3 pt-4" : "space-y-2 pt-3")}>
+              <h3 className={cn(
+                "font-medium leading-tight text-foreground",
+                touchMode ? "text-base" : "text-[15px]"
+              )}>History</h3>
+              
+              {isLoadingCommits ? (
+                <CommitSkeleton />
+              ) : (
+                <div className="space-y-1">
+                  {commits.slice(0, 10).map((commit, idx) => (
+                    <div key={commit.hash} className="flex items-start gap-2 py-1.5">
+                      <div className="flex flex-col items-center pt-1">
+                        <span className={cn(
+                          "w-2 h-2 rounded-full",
+                          idx < unpushedCount ? "bg-primary" : "bg-muted-foreground"
+                        )} />
+                        {idx < commits.slice(0, 10).length - 1 && (
+                          <span className="w-0.5 flex-1 bg-border mt-1" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn(
+                          "text-foreground truncate",
+                          touchMode ? "text-sm" : "text-[13px]"
+                        )}>{commit.message}</p>
+                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                          <span>{commit.shortHash}</span>
+                          <span>•</span>
+                          <span>{formatTimeAgo(commit.date)}</span>
                         </div>
-                        <span>{commit.author}</span>
-                        <span>{formatTimeAgo(commit.date)}</span>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
-          ) : null}
+          )}
         </div>
       </ScrollArea>
 
-      {/* Diff Viewer Modal */}
-      <Dialog open={!!selectedFile} onOpenChange={(open) => !open && closeDiffModal()}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden" data-testid="diff-modal">
+      <Dialog open={!!selectedFile} onOpenChange={() => closeDiffModal()}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-[15px]">
+            <DialogTitle className="flex items-center gap-2">
               <FileCode className="w-4 h-4" />
-              <span className="truncate" data-testid="diff-modal-filename">{selectedFile}</span>
+              {selectedFile}
               {selectedFileStaged && (
-                <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded">
-                  Staged
-                </span>
-              )}
-              {diffData?.truncated && (
-                <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded">
-                  Truncated
-                </span>
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Staged</span>
               )}
             </DialogTitle>
           </DialogHeader>
-          <div className="border border-[#d4d8dd] dark:border-[#3d4452] rounded-lg bg-[#fafafa] dark:bg-[#1c2333] overflow-hidden">
-            <DiffViewer diff={diffData?.diff || ''} isLoading={isLoadingDiff} />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={closeDiffModal}
-              className="h-8 border-[#d4d8dd] dark:border-[#3d4452] rounded-lg"
-              data-testid="button-close-diff"
-            >
-              <X className="w-3 h-3 mr-1" />
-              Close
-            </Button>
-          </div>
+          <DiffViewer diff={diffData?.diff || ''} isLoading={isLoadingDiff} />
         </DialogContent>
       </Dialog>
     </div>

@@ -32,73 +32,66 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          // Headings with emoji support
           h1: ({ children }) => (
-            <h1 className="text-xl font-bold text-[var(--ecode-text)] mt-4 mb-2 flex items-center gap-2">
+            <h1 className="text-xl font-bold text-foreground mt-4 mb-2 flex items-center gap-2">
               {children}
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-lg font-bold text-[var(--ecode-text)] mt-3 mb-2 flex items-center gap-2">
+            <h2 className="text-lg font-bold text-foreground mt-3 mb-2 flex items-center gap-2">
               {children}
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-base font-semibold text-[var(--ecode-text)] mt-2 mb-1 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-foreground mt-2 mb-1 flex items-center gap-2">
               {children}
             </h3>
           ),
           
-          // Paragraphs
           p: ({ children }) => (
-            <p className="text-sm text-[var(--ecode-text)] leading-relaxed my-2">
+            <p className="text-sm text-foreground leading-relaxed my-2">
               {children}
             </p>
           ),
           
-          // Lists with styled bullets
           ul: ({ children }) => (
             <ul className="list-none space-y-1 my-2 pl-0">
               {children}
             </ul>
           ),
           li: ({ children }) => (
-            <li className="text-sm text-[var(--ecode-text)] flex items-start gap-2">
+            <li className="text-sm text-foreground flex items-start gap-2">
               <span className="text-violet-500 mt-1">•</span>
               <span className="flex-1">{children}</span>
             </li>
           ),
           
-          // Ordered lists
           ol: ({ children }) => (
-            <ol className="list-decimal list-inside space-y-1 my-2 text-sm text-[var(--ecode-text)]">
+            <ol className="list-decimal list-inside space-y-1 my-2 text-sm text-foreground">
               {children}
             </ol>
           ),
           
-          // Bold and italic
           strong: ({ children }) => (
-            <strong className="font-semibold text-[var(--ecode-text)]">
+            <strong className="font-semibold text-foreground">
               {children}
             </strong>
           ),
           em: ({ children }) => (
-            <em className="italic text-[var(--ecode-text-secondary)]">
+            <em className="italic text-muted-foreground">
               {children}
             </em>
           ),
           
-          // Inline code
           code: ({ inline, className, children, ...props }: any) => {
             if (inline) {
               return (
-                <code className="px-1.5 py-0.5 rounded bg-[var(--ecode-surface)] text-violet-500 font-mono text-xs">
+                <code className="px-1.5 py-0.5 rounded bg-muted text-violet-500 font-mono text-xs">
                   {children}
                 </code>
               );
             }
             
-            // Code block with syntax highlighting
             const match = /language-(\w+)/.exec(className || '');
             const language = match ? match[1] : 'text';
             const codeString = String(children).replace(/\n$/, '');
@@ -106,9 +99,9 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
             
             return (
               <div className="relative group my-3 max-w-full">
-                <div className="flex items-center justify-between px-3 py-2 md:py-1.5 bg-[#1e1e1e] border border-[var(--ecode-border)] rounded-t-lg">
+                <div className="flex items-center justify-between px-3 py-2 md:py-1.5 bg-[var(--ecode-terminal-bg)] border border-border rounded-t-lg">
                   {language && (
-                    <span className="text-xs font-mono text-gray-400 uppercase">
+                    <span className="text-xs font-mono text-muted-foreground uppercase">
                       {language}
                     </span>
                   )}
@@ -126,7 +119,7 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
                     )}
                   </Button>
                 </div>
-                <div className="border border-t-0 border-[var(--ecode-border)] rounded-b-lg overflow-hidden max-w-full">
+                <div className="border border-t-0 border-border rounded-b-lg overflow-hidden max-w-full">
                   <div className="overflow-x-auto max-w-full">
                     <LightSyntaxHighlighter
                       language={language}
@@ -136,7 +129,7 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
                         padding: '12px',
                         fontSize: '12px',
                         lineHeight: '1.5',
-                        background: '#1e1e1e',
+                        background: 'var(--ecode-terminal-bg)',
                         maxWidth: '100%',
                         overflowX: 'auto'
                       }}
@@ -149,40 +142,37 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
             );
           },
           
-          // Blockquotes
           blockquote: ({ children }) => (
             <blockquote className="border-l-4 border-violet-500 pl-4 py-2 my-2 bg-violet-50 dark:bg-violet-950/10">
-              <div className="text-sm text-[var(--ecode-text-secondary)]">
+              <div className="text-sm text-muted-foreground">
                 {children}
               </div>
             </blockquote>
           ),
           
-          // Tables
           table: ({ children }) => (
             <div className="overflow-x-auto my-3">
-              <table className="min-w-full border border-[var(--ecode-border)] rounded-lg">
+              <table className="min-w-full border border-border rounded-lg">
                 {children}
               </table>
             </div>
           ),
           thead: ({ children }) => (
-            <thead className="bg-[var(--ecode-surface)]">
+            <thead className="bg-muted">
               {children}
             </thead>
           ),
           th: ({ children }) => (
-            <th className="px-3 py-2 text-left text-xs font-semibold text-[var(--ecode-text)] border-b border-[var(--ecode-border)]">
+            <th className="px-3 py-2 text-left text-xs font-semibold text-foreground border-b border-border">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="px-3 py-2 text-sm text-[var(--ecode-text)] border-b border-[var(--ecode-border)]">
+            <td className="px-3 py-2 text-sm text-foreground border-b border-border">
               {children}
             </td>
           ),
           
-          // Links
           a: ({ href, children }) => (
             <a
               href={href}
@@ -194,9 +184,8 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
             </a>
           ),
           
-          // Horizontal rule
           hr: () => (
-            <hr className="my-4 border-t border-[var(--ecode-border)]" />
+            <hr className="my-4 border-t border-border" />
           ),
         }}
       >

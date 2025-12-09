@@ -58,12 +58,10 @@ export function ReplitForkGraph({ projectId, className }: ForkGraphProps) {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
 
-  // Fetch fork network data
   const { data: forkNetwork } = useQuery<Fork>({
     queryKey: [`/api/forks/${projectId}/network`]
   });
 
-  // Draw the fork network graph
   useEffect(() => {
     if (!canvasRef.current || !forkNetwork) return;
 
@@ -71,15 +69,12 @@ export function ReplitForkGraph({ projectId, className }: ForkGraphProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Calculate positions for nodes
     const nodeRadius = 30;
     const levelHeight = 100;
     const nodeSpacing = 120;
 
-    // Position nodes using breadth-first traversal
     const positionNodes = (node: Fork, x: number, y: number, level: number) => {
       node.x = x;
       node.y = y;
@@ -96,7 +91,6 @@ export function ReplitForkGraph({ projectId, className }: ForkGraphProps) {
 
     positionNodes(forkNetwork, canvas.width / 2, 50, 0);
 
-    // Draw connections
     ctx.save();
     ctx.translate(pan.x, pan.y);
     ctx.scale(zoom, zoom);
@@ -106,7 +100,7 @@ export function ReplitForkGraph({ projectId, className }: ForkGraphProps) {
         node.children.forEach(child => {
           if (node.x && node.y && child.x && child.y) {
             ctx.beginPath();
-            ctx.strokeStyle = '#4b5563';
+            ctx.strokeStyle = 'hsl(var(--border))';
             ctx.lineWidth = 2;
             ctx.moveTo(node.x, node.y + nodeRadius);
             ctx.bezierCurveTo(
@@ -123,35 +117,30 @@ export function ReplitForkGraph({ projectId, className }: ForkGraphProps) {
 
     drawConnections(forkNetwork);
 
-    // Draw nodes
     const drawNode = (node: Fork) => {
       if (!node.x || !node.y) return;
 
-      // Node circle
       ctx.beginPath();
       ctx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI);
-      ctx.fillStyle = node.id === projectId.toString() ? '#3b82f6' : '#1f2937';
+      ctx.fillStyle = node.id === projectId.toString() ? 'hsl(var(--primary))' : 'hsl(var(--card))';
       ctx.fill();
-      ctx.strokeStyle = '#4b5563';
+      ctx.strokeStyle = 'hsl(var(--border))';
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // User avatar or initial
       ctx.save();
       ctx.beginPath();
       ctx.arc(node.x, node.y, nodeRadius - 5, 0, 2 * Math.PI);
       ctx.clip();
       
-      // Draw initial
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = 'hsl(var(--foreground))';
       ctx.font = 'bold 16px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(node.owner.username[0].toUpperCase(), node.x, node.y);
       ctx.restore();
 
-      // Username label
-      ctx.fillStyle = '#e5e7eb';
+      ctx.fillStyle = 'hsl(var(--muted-foreground))';
       ctx.font = '12px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(node.owner.username, node.x, node.y + nodeRadius + 15);
@@ -165,7 +154,6 @@ export function ReplitForkGraph({ projectId, className }: ForkGraphProps) {
     ctx.restore();
   }, [forkNetwork, zoom, pan]);
 
-  // Handle canvas interactions
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || !forkNetwork) return;
 
@@ -173,7 +161,6 @@ export function ReplitForkGraph({ projectId, className }: ForkGraphProps) {
     const x = (e.clientX - rect.left - pan.x) / zoom;
     const y = (e.clientY - rect.top - pan.y) / zoom;
 
-    // Find clicked node
     const findClickedNode = (node: Fork): Fork | null => {
       if (node.x && node.y) {
         const distance = Math.sqrt(Math.pow(x - node.x, 2) + Math.pow(y - node.y, 2));
@@ -235,7 +222,7 @@ export function ReplitForkGraph({ projectId, className }: ForkGraphProps) {
               ref={canvasRef}
               width={800}
               height={600}
-              className="w-full cursor-move bg-[#0a0a0a]"
+              className="w-full cursor-move bg-background"
               onClick={handleCanvasClick}
               onMouseDown={(e) => {
                 const startX = e.clientX - pan.x;
@@ -258,7 +245,6 @@ export function ReplitForkGraph({ projectId, className }: ForkGraphProps) {
               }}
             />
             
-            {/* Fork details panel */}
             {selectedFork && (
               <div className="absolute top-4 right-4 w-80 bg-background border rounded-lg shadow-lg p-4">
                 <div className="flex items-start justify-between mb-4">
@@ -321,16 +307,15 @@ export function ReplitForkGraph({ projectId, className }: ForkGraphProps) {
             )}
           </div>
 
-          {/* Legend */}
           <div className="p-4 border-t">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-blue-500" />
+                  <div className="w-4 h-4 rounded-full bg-primary" />
                   <span className="text-muted-foreground">Original</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-gray-800" />
+                  <div className="w-4 h-4 rounded-full bg-card border border-border" />
                   <span className="text-muted-foreground">Fork</span>
                 </div>
               </div>

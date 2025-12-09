@@ -96,16 +96,16 @@ export default function Settings() {
     { id: 'data', label: 'Data & Export', icon: Database },
   ];
 
-  const inputClassName = "min-h-[44px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-muted)] focus:ring-[#F26207]/20 focus:border-[#F26207]/40 focus:ring-2 transition-all duration-200";
+  const inputClassName = "min-h-[44px] border-border bg-card text-foreground placeholder:text-muted-foreground focus:ring-primary/20 focus:border-primary/40 focus:ring-2 transition-all duration-200";
   
-  const cardClassName = "border border-[var(--ecode-border)] bg-[var(--ecode-surface)] shadow-[var(--ecode-shadow-sm)]";
+  const cardClassName = "border border-border bg-card shadow-sm";
   
-  const switchClassName = "data-[state=checked]:bg-[#F26207] data-[state=unchecked]:bg-[var(--ecode-border)]";
+  const switchClassName = "data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted";
 
   return (
     <PageShell>
       <div 
-        className="min-h-screen bg-[var(--ecode-background)] -mx-4 -mt-4 md:-mx-6 md:-mt-6 lg:-mx-8 lg:-mt-8 px-4 pt-4 pb-8 md:px-6 md:pt-6 lg:px-8 lg:pt-8"
+        className="min-h-screen bg-background -mx-4 -mt-4 md:-mx-6 md:-mt-6 lg:-mx-8 lg:-mt-8 px-4 pt-4 pb-8 md:px-6 md:pt-6 lg:px-8 lg:pt-8"
         style={{ fontFamily: 'var(--ecode-font-sans)' }}
       >
         <PageHeader
@@ -116,7 +116,7 @@ export default function Settings() {
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button
                 variant="outline"
-                className="gap-2 border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] hover:bg-[var(--ecode-surface-hover)] hover:border-[#F26207]/30 transition-all duration-200"
+                className="gap-2 border-border bg-card text-foreground hover:bg-muted hover:border-primary/30 transition-all duration-200"
                 onClick={() => navigate('/account')}
                 data-testid="button-account-overview"
               >
@@ -124,7 +124,7 @@ export default function Settings() {
                 Account overview
               </Button>
               <Button 
-                className="gap-2 bg-[#F26207] hover:bg-[#D04E00] text-white transition-all duration-200"
+                className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200"
                 onClick={handleSaveProfile}
                 data-testid="button-save-changes"
               >
@@ -138,7 +138,7 @@ export default function Settings() {
         <div className={`grid ${TABLET_GRID_CLASSES.settingsTabletOptimized} mt-6`}>
           <div className="md:col-span-1 lg:col-span-1">
             <nav 
-              className="space-y-1 p-2 rounded-xl border border-[var(--ecode-border)] bg-[var(--ecode-surface)]"
+              className="space-y-1 p-2 rounded-xl border border-border bg-card"
               data-testid="nav-settings-sidebar"
             >
               {navItems.map((item) => {
@@ -149,13 +149,13 @@ export default function Settings() {
                     key={item.id}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px] ${
                       isActive 
-                        ? 'bg-[#F26207]/10 text-[#F26207] border-l-2 border-[#F26207] pl-[10px]' 
-                        : 'text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-surface-hover)] hover:text-[var(--ecode-text)]'
+                        ? 'bg-primary/10 text-primary border-l-2 border-primary pl-[10px]' 
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     }`}
                     onClick={() => setActiveTab(item.id)}
                     data-testid={`button-settings-${item.id}`}
                   >
-                    <Icon className={`h-4 w-4 ${isActive ? 'text-[#F26207]' : ''}`} />
+                    <Icon className={`h-4 w-4 ${isActive ? 'text-primary' : ''}`} />
                     {item.label}
                   </button>
                 );
@@ -167,52 +167,52 @@ export default function Settings() {
             {activeTab === 'account' && (
               <Card className={cardClassName} data-testid="card-account-settings">
                 <CardHeader>
-                  <CardTitle className="text-[var(--ecode-text)]">Account Settings</CardTitle>
-                  <CardDescription className="text-[var(--ecode-text-muted)]">
+                  <CardTitle className="text-foreground">Account Settings</CardTitle>
+                  <CardDescription className="text-muted-foreground">
                     Update your account information and profile
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="flex items-center gap-4">
-                    <Avatar className="h-20 w-20 ring-2 ring-[var(--ecode-border)]">
+                    <Avatar className="h-20 w-20 ring-2 ring-border">
                       <AvatarImage src={user?.avatarUrl || undefined} />
-                      <AvatarFallback className="text-2xl bg-[#F26207]/10 text-[#F26207]">
+                      <AvatarFallback className="text-2xl bg-primary/10 text-primary">
                         {user?.username?.[0].toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <Button 
                         size="sm" 
-                        className="gap-2 bg-[#F26207] hover:bg-[#D04E00] text-white"
+                        className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
                         data-testid="button-upload-avatar"
                       >
                         <Upload className="h-4 w-4" />
                         Upload Avatar
                       </Button>
-                      <p className="text-xs text-[var(--ecode-text-muted)] mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         JPG, PNG or GIF. Max 2MB.
                       </p>
                     </div>
                   </div>
 
-                  <Separator className="bg-[var(--ecode-border)]" />
+                  <Separator className="bg-border" />
 
                   <div className="space-y-4">
                     <div>
-                      <Label className="text-[var(--ecode-text)]">Username</Label>
+                      <Label className="text-foreground">Username</Label>
                       <Input 
                         value={user?.username || ''} 
                         disabled 
                         className={`${inputClassName} opacity-60`}
                         data-testid="input-username"
                       />
-                      <p className="text-xs text-[var(--ecode-text-muted)] mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         Username cannot be changed
                       </p>
                     </div>
 
                     <div>
-                      <Label className="text-[var(--ecode-text)]">Display Name</Label>
+                      <Label className="text-foreground">Display Name</Label>
                       <Input
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
@@ -223,7 +223,7 @@ export default function Settings() {
                     </div>
 
                     <div>
-                      <Label className="text-[var(--ecode-text)]">Email</Label>
+                      <Label className="text-foreground">Email</Label>
                       <Input
                         type="email"
                         value={email}
@@ -235,7 +235,7 @@ export default function Settings() {
                     </div>
 
                     <div>
-                      <Label className="text-[var(--ecode-text)]">Bio</Label>
+                      <Label className="text-foreground">Bio</Label>
                       <Textarea
                         value={bio}
                         onChange={(e) => setBio(e.target.value)}
@@ -249,7 +249,7 @@ export default function Settings() {
 
                   <Button 
                     onClick={handleSaveProfile} 
-                    className="min-h-[44px] bg-[#F26207] hover:bg-[#D04E00] text-white transition-all duration-200"
+                    className="min-h-[44px] bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200"
                     data-testid="button-save-profile"
                   >
                     Save Changes
@@ -261,17 +261,17 @@ export default function Settings() {
             {activeTab === 'notifications' && (
               <Card className={cardClassName} data-testid="card-notifications-settings">
                 <CardHeader>
-                  <CardTitle className="text-[var(--ecode-text)]">Notification Preferences</CardTitle>
-                  <CardDescription className="text-[var(--ecode-text-muted)]">
+                  <CardTitle className="text-foreground">Notification Preferences</CardTitle>
+                  <CardDescription className="text-muted-foreground">
                     Choose how you want to be notified
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
-                        <Label className="text-[var(--ecode-text)]">Email Notifications</Label>
-                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                        <Label className="text-foreground">Email Notifications</Label>
+                        <p className="text-sm text-muted-foreground">
                           Receive notifications via email
                         </p>
                       </div>
@@ -285,10 +285,10 @@ export default function Settings() {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
-                        <Label className="text-[var(--ecode-text)]">Push Notifications</Label>
-                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                        <Label className="text-foreground">Push Notifications</Label>
+                        <p className="text-sm text-muted-foreground">
                           Receive push notifications in your browser
                         </p>
                       </div>
@@ -302,10 +302,10 @@ export default function Settings() {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
-                        <Label className="text-[var(--ecode-text)]">Mentions</Label>
-                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                        <Label className="text-foreground">Mentions</Label>
+                        <p className="text-sm text-muted-foreground">
                           Get notified when someone mentions you
                         </p>
                       </div>
@@ -319,10 +319,10 @@ export default function Settings() {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
-                        <Label className="text-[var(--ecode-text)]">Product Updates</Label>
-                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                        <Label className="text-foreground">Product Updates</Label>
+                        <p className="text-sm text-muted-foreground">
                           News about new features and improvements
                         </p>
                       </div>
@@ -336,10 +336,10 @@ export default function Settings() {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
-                        <Label className="text-[var(--ecode-text)]">Marketing Emails</Label>
-                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                        <Label className="text-foreground">Marketing Emails</Label>
+                        <p className="text-sm text-muted-foreground">
                           Promotional content and special offers
                         </p>
                       </div>
@@ -355,7 +355,7 @@ export default function Settings() {
                   </div>
 
                   <Button 
-                    className="min-h-[44px] bg-[#F26207] hover:bg-[#D04E00] text-white transition-all duration-200"
+                    className="min-h-[44px] bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200"
                     data-testid="button-save-preferences"
                   >
                     Save Preferences
@@ -367,15 +367,15 @@ export default function Settings() {
             {activeTab === 'appearance' && (
               <Card className={cardClassName} data-testid="card-appearance-settings">
                 <CardHeader>
-                  <CardTitle className="text-[var(--ecode-text)]">Appearance</CardTitle>
-                  <CardDescription className="text-[var(--ecode-text-muted)]">
+                  <CardTitle className="text-foreground">Appearance</CardTitle>
+                  <CardDescription className="text-muted-foreground">
                     Customize how E-Code looks for you
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-4">
                     <div>
-                      <Label className="text-[var(--ecode-text)]">Theme</Label>
+                      <Label className="text-foreground">Theme</Label>
                       <Select value={theme} onValueChange={setTheme}>
                         <SelectTrigger 
                           className={inputClassName}
@@ -383,7 +383,7 @@ export default function Settings() {
                         >
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+                        <SelectContent className="border-border bg-card">
                           <SelectItem value="light" data-testid="select-theme-light">
                             <div className="flex items-center gap-2">
                               <Sun className="h-4 w-4" />
@@ -407,10 +407,10 @@ export default function Settings() {
                     </div>
 
                     <div>
-                      <Label className="text-[var(--ecode-text)]">Primary Color</Label>
+                      <Label className="text-foreground">Primary Color</Label>
                       <div className="grid grid-cols-6 gap-2 mt-2">
                         {[
-                          { name: 'orange', color: 'bg-[#F26207]' },
+                          { name: 'orange', color: 'bg-primary' },
                           { name: 'blue', color: 'bg-blue-500' },
                           { name: 'green', color: 'bg-green-500' },
                           { name: 'purple', color: 'bg-purple-500' },
@@ -419,7 +419,7 @@ export default function Settings() {
                         ].map((colorOption) => (
                           <button
                             key={colorOption.name}
-                            className={`h-8 w-full rounded-lg ${colorOption.color} hover:ring-2 ring-offset-2 ring-[var(--ecode-text)] transition-all duration-200`}
+                            className={`h-8 w-full rounded-lg ${colorOption.color} hover:ring-2 ring-offset-2 ring-foreground transition-all duration-200`}
                             data-testid={`button-color-${colorOption.name}`}
                           />
                         ))}
@@ -428,7 +428,7 @@ export default function Settings() {
                   </div>
 
                   <Button 
-                    className="bg-[#F26207] hover:bg-[#D04E00] text-white transition-all duration-200"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200"
                     data-testid="button-apply-theme"
                   >
                     Apply Theme
@@ -440,15 +440,15 @@ export default function Settings() {
             {activeTab === 'editor' && (
               <Card className={cardClassName} data-testid="card-editor-settings">
                 <CardHeader>
-                  <CardTitle className="text-[var(--ecode-text)]">Editor Preferences</CardTitle>
-                  <CardDescription className="text-[var(--ecode-text-muted)]">
+                  <CardTitle className="text-foreground">Editor Preferences</CardTitle>
+                  <CardDescription className="text-muted-foreground">
                     Configure your code editor settings
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-4">
                     <div>
-                      <Label className="text-[var(--ecode-text)]">Editor Theme</Label>
+                      <Label className="text-foreground">Editor Theme</Label>
                       <Select value={editorTheme} onValueChange={setEditorTheme}>
                         <SelectTrigger 
                           className={inputClassName}
@@ -456,7 +456,7 @@ export default function Settings() {
                         >
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+                        <SelectContent className="border-border bg-card">
                           <SelectItem value="dark" data-testid="select-editor-dark">Dark</SelectItem>
                           <SelectItem value="light" data-testid="select-editor-light">Light</SelectItem>
                           <SelectItem value="monokai" data-testid="select-editor-monokai">Monokai</SelectItem>
@@ -467,7 +467,7 @@ export default function Settings() {
                     </div>
 
                     <div>
-                      <Label className="text-[var(--ecode-text)]">Font Size</Label>
+                      <Label className="text-foreground">Font Size</Label>
                       <Select value={fontSize} onValueChange={setFontSize}>
                         <SelectTrigger 
                           className={inputClassName}
@@ -475,7 +475,7 @@ export default function Settings() {
                         >
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+                        <SelectContent className="border-border bg-card">
                           <SelectItem value="12" data-testid="select-font-12">12px</SelectItem>
                           <SelectItem value="14" data-testid="select-font-14">14px</SelectItem>
                           <SelectItem value="16" data-testid="select-font-16">16px</SelectItem>
@@ -485,7 +485,7 @@ export default function Settings() {
                     </div>
 
                     <div>
-                      <Label className="text-[var(--ecode-text)]">Tab Size</Label>
+                      <Label className="text-foreground">Tab Size</Label>
                       <Select value={tabSize} onValueChange={setTabSize}>
                         <SelectTrigger 
                           className={inputClassName}
@@ -493,7 +493,7 @@ export default function Settings() {
                         >
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+                        <SelectContent className="border-border bg-card">
                           <SelectItem value="2" data-testid="select-tab-2">2 spaces</SelectItem>
                           <SelectItem value="4" data-testid="select-tab-4">4 spaces</SelectItem>
                           <SelectItem value="8" data-testid="select-tab-8">8 spaces</SelectItem>
@@ -501,10 +501,10 @@ export default function Settings() {
                       </Select>
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
-                        <Label className="text-[var(--ecode-text)]">Word Wrap</Label>
-                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                        <Label className="text-foreground">Word Wrap</Label>
+                        <p className="text-sm text-muted-foreground">
                           Wrap long lines of code
                         </p>
                       </div>
@@ -516,10 +516,10 @@ export default function Settings() {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
-                        <Label className="text-[var(--ecode-text)]">Minimap</Label>
-                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                        <Label className="text-foreground">Minimap</Label>
+                        <p className="text-sm text-muted-foreground">
                           Show code minimap
                         </p>
                       </div>
@@ -531,10 +531,10 @@ export default function Settings() {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
-                        <Label className="text-[var(--ecode-text)]">Auto Save</Label>
-                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                        <Label className="text-foreground">Auto Save</Label>
+                        <p className="text-sm text-muted-foreground">
                           Automatically save changes
                         </p>
                       </div>
@@ -548,7 +548,7 @@ export default function Settings() {
                   </div>
 
                   <Button 
-                    className="bg-[#F26207] hover:bg-[#D04E00] text-white transition-all duration-200"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200"
                     data-testid="button-save-editor-settings"
                   >
                     Save Editor Settings
@@ -561,16 +561,16 @@ export default function Settings() {
               <div className="space-y-6">
                 <Card className={cardClassName} data-testid="card-privacy-settings">
                   <CardHeader>
-                    <CardTitle className="text-[var(--ecode-text)]">Privacy Settings</CardTitle>
-                    <CardDescription className="text-[var(--ecode-text-muted)]">
+                    <CardTitle className="text-foreground">Privacy Settings</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                       Control your privacy and data sharing
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
-                        <Label className="text-[var(--ecode-text)]">Public Profile</Label>
-                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                        <Label className="text-foreground">Public Profile</Label>
+                        <p className="text-sm text-muted-foreground">
                           Make your profile visible to others
                         </p>
                       </div>
@@ -581,10 +581,10 @@ export default function Settings() {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
-                        <Label className="text-[var(--ecode-text)]">Show Activity</Label>
-                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                        <Label className="text-foreground">Show Activity</Label>
+                        <p className="text-sm text-muted-foreground">
                           Display your coding activity on your profile
                         </p>
                       </div>
@@ -595,10 +595,10 @@ export default function Settings() {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--ecode-border)] hover:border-[#F26207]/30 transition-all duration-200">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
-                        <Label className="text-[var(--ecode-text)]">Analytics</Label>
-                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                        <Label className="text-foreground">Analytics</Label>
+                        <p className="text-sm text-muted-foreground">
                           Help improve E-Code with anonymous usage data
                         </p>
                       </div>
@@ -613,14 +613,14 @@ export default function Settings() {
 
                 <Card className={cardClassName} data-testid="card-security-settings">
                   <CardHeader>
-                    <CardTitle className="text-[var(--ecode-text)]">Security</CardTitle>
-                    <CardDescription className="text-[var(--ecode-text-muted)]">
+                    <CardTitle className="text-foreground">Security</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                       Secure your account
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <Label className="text-[var(--ecode-text)]">Password</Label>
+                      <Label className="text-foreground">Password</Label>
                       <div className="flex gap-2 mt-2">
                         <Input 
                           type="password" 
@@ -631,7 +631,7 @@ export default function Settings() {
                         />
                         <Button 
                           variant="outline" 
-                          className="border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] hover:bg-[var(--ecode-surface-hover)] hover:border-[#F26207]/30"
+                          className="border-border bg-card text-foreground hover:bg-muted hover:border-primary/30"
                           data-testid="button-change-password"
                         >
                           Change
@@ -640,13 +640,13 @@ export default function Settings() {
                     </div>
 
                     <div>
-                      <Label className="text-[var(--ecode-text)]">Two-Factor Authentication</Label>
-                      <p className="text-sm text-[var(--ecode-text-muted)] mb-2">
+                      <Label className="text-foreground">Two-Factor Authentication</Label>
+                      <p className="text-sm text-muted-foreground mb-2">
                         Add an extra layer of security to your account
                       </p>
                       <Button 
                         variant="outline" 
-                        className="gap-2 border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] hover:bg-[var(--ecode-surface-hover)] hover:border-[#F26207]/30"
+                        className="gap-2 border-border bg-card text-foreground hover:bg-muted hover:border-primary/30"
                         data-testid="button-enable-2fa"
                       >
                         <Shield className="h-4 w-4" />
@@ -655,13 +655,13 @@ export default function Settings() {
                     </div>
 
                     <div>
-                      <Label className="text-[var(--ecode-text)]">Sessions</Label>
-                      <p className="text-sm text-[var(--ecode-text-muted)] mb-2">
+                      <Label className="text-foreground">Sessions</Label>
+                      <p className="text-sm text-muted-foreground mb-2">
                         Manage your active sessions
                       </p>
                       <Button 
                         variant="outline"
-                        className="border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] hover:bg-[var(--ecode-surface-hover)] hover:border-[#F26207]/30"
+                        className="border-border bg-card text-foreground hover:bg-muted hover:border-primary/30"
                         data-testid="button-view-sessions"
                       >
                         View Sessions
@@ -676,37 +676,37 @@ export default function Settings() {
               <div className="space-y-6">
                 <Card className={cardClassName} data-testid="card-billing-plan">
                   <CardHeader>
-                    <CardTitle className="text-[var(--ecode-text)]">Current Plan</CardTitle>
-                    <CardDescription className="text-[var(--ecode-text-muted)]">
+                    <CardTitle className="text-foreground">Current Plan</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                       You're currently on the Free plan
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="p-4 border border-[var(--ecode-border)] rounded-lg bg-[var(--ecode-surface-tertiary)]">
+                      <div className="p-4 border border-border rounded-lg bg-muted">
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-semibold text-[var(--ecode-text)]">Free Plan</h3>
+                          <h3 className="font-semibold text-foreground">Free Plan</h3>
                           <Badge 
                             variant="secondary" 
-                            className="bg-[#F26207]/10 text-[#F26207] border-0"
+                            className="bg-primary/10 text-primary border-0"
                           >
                             Current
                           </Badge>
                         </div>
                         <ul className="space-y-2 text-sm">
-                          <li className="flex items-center gap-2 text-[var(--ecode-text)]">
+                          <li className="flex items-center gap-2 text-foreground">
                             <Check className="h-4 w-4 text-green-500" />
                             Unlimited public repls
                           </li>
-                          <li className="flex items-center gap-2 text-[var(--ecode-text)]">
+                          <li className="flex items-center gap-2 text-foreground">
                             <Check className="h-4 w-4 text-green-500" />
                             500MB storage
                           </li>
-                          <li className="flex items-center gap-2 text-[var(--ecode-text-muted)]">
+                          <li className="flex items-center gap-2 text-muted-foreground">
                             <X className="h-4 w-4 text-red-500" />
                             Private repls
                           </li>
-                          <li className="flex items-center gap-2 text-[var(--ecode-text-muted)]">
+                          <li className="flex items-center gap-2 text-muted-foreground">
                             <X className="h-4 w-4 text-red-500" />
                             Always-on repls
                           </li>
@@ -714,7 +714,7 @@ export default function Settings() {
                       </div>
 
                       <Button 
-                        className="w-full gap-2 bg-[#F26207] hover:bg-[#D04E00] text-white transition-all duration-200"
+                        className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200"
                         data-testid="button-upgrade-pro"
                       >
                         <Crown className="h-4 w-4" />
@@ -726,18 +726,18 @@ export default function Settings() {
 
                 <Card className={cardClassName} data-testid="card-payment-methods">
                   <CardHeader>
-                    <CardTitle className="text-[var(--ecode-text)]">Payment Methods</CardTitle>
-                    <CardDescription className="text-[var(--ecode-text-muted)]">
+                    <CardTitle className="text-foreground">Payment Methods</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                       Manage your payment methods
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-[var(--ecode-text-muted)]">
+                    <p className="text-sm text-muted-foreground">
                       No payment methods on file
                     </p>
                     <Button 
                       variant="outline" 
-                      className="mt-4 border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] hover:bg-[var(--ecode-surface-hover)] hover:border-[#F26207]/30"
+                      className="mt-4 border-border bg-card text-foreground hover:bg-muted hover:border-primary/30"
                       data-testid="button-add-payment"
                     >
                       Add Payment Method
@@ -750,39 +750,39 @@ export default function Settings() {
             {activeTab === 'integrations' && (
               <Card className={cardClassName} data-testid="card-integrations">
                 <CardHeader>
-                  <CardTitle className="text-[var(--ecode-text)]">Connected Services</CardTitle>
-                  <CardDescription className="text-[var(--ecode-text-muted)]">
+                  <CardTitle className="text-foreground">Connected Services</CardTitle>
+                  <CardDescription className="text-muted-foreground">
                     Manage your connected accounts and services
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border border-[var(--ecode-border)] rounded-lg hover:border-[#F26207]/30 transition-all duration-200">
+                  <div className="flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/30 transition-all duration-200">
                     <div className="flex items-center gap-3">
-                      <Github className="h-8 w-8 text-[var(--ecode-text)]" />
+                      <Github className="h-8 w-8 text-foreground" />
                       <div>
-                        <h4 className="font-semibold text-[var(--ecode-text)]">GitHub</h4>
-                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                        <h4 className="font-semibold text-foreground">GitHub</h4>
+                        <p className="text-sm text-muted-foreground">
                           Import and sync repositories
                         </p>
                       </div>
                     </div>
                     <Button 
                       variant="outline"
-                      className="border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] hover:bg-[var(--ecode-surface-hover)] hover:border-[#F26207]/30"
+                      className="border-border bg-card text-foreground hover:bg-muted hover:border-primary/30"
                       data-testid="button-connect-github"
                     >
                       Connect
                     </Button>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 border border-[var(--ecode-border)] rounded-lg hover:border-[#F26207]/30 transition-all duration-200">
+                  <div className="flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/30 transition-all duration-200">
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 bg-blue-500 rounded flex items-center justify-center text-white font-bold">
                         G
                       </div>
                       <div>
-                        <h4 className="font-semibold text-[var(--ecode-text)]">Google</h4>
-                        <p className="text-sm text-[var(--ecode-text-muted)]">
+                        <h4 className="font-semibold text-foreground">Google</h4>
+                        <p className="text-sm text-muted-foreground">
                           Sign in with Google
                         </p>
                       </div>
@@ -803,14 +803,14 @@ export default function Settings() {
               <div className="space-y-6">
                 <Card className={cardClassName} data-testid="card-export-data">
                   <CardHeader>
-                    <CardTitle className="text-[var(--ecode-text)]">Export Your Data</CardTitle>
-                    <CardDescription className="text-[var(--ecode-text-muted)]">
+                    <CardTitle className="text-foreground">Export Your Data</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                       Download all your repls and account data
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <Button 
-                      className="gap-2 bg-[#F26207] hover:bg-[#D04E00] text-white transition-all duration-200"
+                      className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200"
                       data-testid="button-export-data"
                     >
                       <Download className="h-4 w-4" />
@@ -820,12 +820,12 @@ export default function Settings() {
                 </Card>
 
                 <Card 
-                  className="border border-red-500/30 bg-[var(--ecode-surface)] shadow-[var(--ecode-shadow-sm)]"
+                  className="border border-red-500/30 bg-card shadow-sm"
                   data-testid="card-danger-zone"
                 >
                   <CardHeader>
                     <CardTitle className="text-red-500">Danger Zone</CardTitle>
-                    <CardDescription className="text-[var(--ecode-text-muted)]">
+                    <CardDescription className="text-muted-foreground">
                       Irreversible actions
                     </CardDescription>
                   </CardHeader>
@@ -840,19 +840,19 @@ export default function Settings() {
                           Delete Account
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent className="border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+                      <AlertDialogContent className="border-border bg-card">
                         <AlertDialogHeader>
-                          <AlertDialogTitle className="text-[var(--ecode-text)]">
+                          <AlertDialogTitle className="text-foreground">
                             Are you absolutely sure?
                           </AlertDialogTitle>
-                          <AlertDialogDescription className="text-[var(--ecode-text-muted)]">
+                          <AlertDialogDescription className="text-muted-foreground">
                             This action cannot be undone. This will permanently delete your
                             account and remove all your data from our servers.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel 
-                            className="border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] hover:bg-[var(--ecode-surface-hover)]"
+                            className="border-border bg-card text-foreground hover:bg-muted"
                             data-testid="button-cancel-delete"
                           >
                             Cancel
