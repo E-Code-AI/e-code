@@ -820,14 +820,19 @@ export function ReplitAgentPanelV3({
             setActiveThinking([]);
             
           } catch (error) {
-            console.error('AI chat error:', error);
+            // Better error logging with full details
+            const errorDetails = error instanceof Error 
+              ? { message: error.message, stack: error.stack, name: error.name }
+              : { raw: error };
+            
+            console.error('AI chat error - Full details:', errorDetails);
             
             const { title, message: userFriendlyError } = categorizeError(error);
             const errorContent = `⚠️ ${userFriendlyError}\n\nIf this issue persists, please try:\n- Refreshing the page\n- Checking your internet connection\n- Waiting a few moments before trying again`;
             
             toast({
               title,
-              description: userFriendlyError,
+              description: userFriendlyError || 'An unknown error occurred. Please check the console for details.',
               variant: 'destructive',
             });
             

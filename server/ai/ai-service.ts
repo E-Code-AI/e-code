@@ -105,16 +105,27 @@ export class AIService {
   ): Promise<AIResponse> {
     const { model, projectContext, tools = true, temperature = 0.7, maxTokens = 4096 } = options;
 
-    // Validate provider before attempting to use it
-    this.validateProvider(model);
+    try {
+      // Validate provider before attempting to use it
+      this.validateProvider(model);
 
-    // Route to appropriate AI provider based on model
-    if (model.startsWith('gpt')) {
-      return this.generateOpenAIResponse(messages, { model, tools, temperature, maxTokens, projectContext });
-    } else if (model.startsWith('claude')) {
-      return this.generateAnthropicResponse(messages, { model, tools, temperature, maxTokens, projectContext });
-    } else {
-      throw new Error(`Unsupported model: ${model}`);
+      // Route to appropriate AI provider based on model
+      if (model.startsWith('gpt')) {
+        logger.info('Generating OpenAI response', { model, messageCount: messages.length });
+        return this.generateOpenAIResponse(messages, { model, tools, temperature, maxTokens, projectContext });
+      } else if (model.startsWith('claude')) {
+        logger.info('Generating Anthropic response', { model, messageCount: messages.length });
+        return this.generateAnthropicResponse(messages, { model, tools, temperature, maxTokens, projectContext });
+      } else {
+        throw new Error(`Unsupported model: ${model}`);
+      }
+    } catch (error) {
+      logger.error('AI generateResponse error', {
+        model,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error;
     }
   }
 
