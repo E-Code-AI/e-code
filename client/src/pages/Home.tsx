@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { CreateProjectModal } from "@/components/CreateProjectModal";
+import { BuildModeSelector, BuildMode } from "@/components/ai/BuildModeSelector";
 import { Project } from "@shared/schema";
 import AppLayout from "@/components/layout/AppLayout";
 import { 
@@ -49,6 +50,8 @@ import { AIModelSelector } from '@/components/ai/AIModelSelector';
 
 export default function Home() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isBuildModeOpen, setIsBuildModeOpen] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState("");
   const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("recent");
