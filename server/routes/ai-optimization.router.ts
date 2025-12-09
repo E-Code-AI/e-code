@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { aiOptimization } from '../services/ai-optimization';
 import { ensureAuthenticated } from '../middleware/auth';
 import { ensureAdmin } from '../middleware/admin-auth';
+import { promptCacheManager } from '../ai/prompt-cache-manager';
 
 const router = Router();
 
@@ -268,6 +269,115 @@ router.get('/dashboard', ensureAdmin, async (req, res) => {
       circuitBreakers: circuitBreakerStatus,
       tokenUsage: tokenUsageSummary,
       taskClassifications: classificationStats,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+/**
+ * GET /api/ai-optimization/prompt-cache/metrics
+ * Get prompt cache metrics for cost analysis (admin only)
+ * Returns: hit rates, tokens saved, estimated cost savings
+ */
+router.get('/prompt-cache/metrics', ensureAdmin, async (req, res) => {
+  try {
+    const metrics = promptCacheManager.getMetrics();
+    const stats = promptCacheManager.getCacheStats();
+    
+    res.json({
+      success: true,
+      metrics: {
+        systemPromptCache: {
+          hits: metrics.systemPromptHits,
+          misses: metrics.systemPromptMisses,
+          hitRate: metrics.systemPromptHits + metrics.systemPromptMisses > 0
+            ? (metrics.systemPromptHits / (metrics.systemPromptHits + metrics.systemPromptMisses) * 100).toFixed(2) + '%'
+            : '0%',
+          size: stats.systemPromptCacheSize,
+        },
+        responseCache: {
+          hits: metrics.responseHits,
+          misses: metrics.responseMisses,
+          hitRate: metrics.responseHits + metrics.responseMisses > 0
+            ? (metrics.responseHits / (metrics.responseHits + metrics.responseMisses) * 100).toFixed(2) + '%'
+            : '0%',
+          size: stats.responseCacheSize,
+        },
+        costSavings: {
+          totalTokensSaved: metrics.totalTokensSaved,
+          totalCostSaved: `$${metrics.totalCostSaved.toFixed(4)}`,
+          estimatedMonthlySavings: `$${stats.estimatedMonthlySavings.toFixed(2)}`,
+        },
+        overallHitRate: stats.hitRate + '%',
+        cacheSize: metrics.cacheSize,
+        cacheAgeRange: {
+          oldest: new Date(metrics.oldestEntry).toISOString(),
+          newest: new Date(metrics.newestEntry).toISOString(),
+        },
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+/**
+ * POST /api/ai-optimization/prompt-cache/clear
+ * Clear prompt cache (admin only)
+ * Query params: type = 'system' | 'response' | 'all' (default: 'all')
+ */
+router.post('/prompt-cache/clear', ensureAdmin, async (req, res) => {
+  try {
+    const type = (req.query.type as 'system' | 'response' | 'all') || 'all';
+    promptCacheManager.clearCache(type);
+    
+    res.json({
+      success: true,
+      message: `Prompt cache cleared (type: ${type})`,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+/**
+ * POST /api/ai-optimization/prompt-cache/warm
+ * Pre-warm cache with common system prompts (admin only)
+ */
+router.post('/prompt-cache/warm', ensureAdmin, async (req, res) => {
+  try {
+    const schema = z.object({
+      prompts: z.array(z.string()).optional(),
+    });
+    
+    const data = schema.parse(req.body);
+    
+    if (data.prompts && data.prompts.length > 0) {
+      promptCacheManager.warmCache(data.prompts);
+    } else {
+      const { warmSystemPromptCache } = await import('../ai/prompt-cache-manager');
+      warmSystemPromptCache();
+    }
+    
+    const stats = promptCacheManager.getCacheStats();
+    
+    res.json({
+      success: true,
+      message: 'Cache warmed successfully',
+      cacheSize: stats.systemPromptCacheSize,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {

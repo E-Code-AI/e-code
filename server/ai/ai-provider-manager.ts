@@ -7,6 +7,7 @@ import { createStreamLimiter } from './stream-limiter';
 import { AGENT_SYSTEM_PROMPT, getSystemPromptForContext } from './prompts/agent-system-prompt';
 import { ContextWindowManager } from './context-window-manager';
 import { agentWebSocketService } from '../services/agent-websocket-service';
+import { promptCacheManager } from './prompt-cache-manager';
 
 /**
  * Model configuration with provider metadata
@@ -754,22 +755,30 @@ export class AIProviderManager {
   /**
    * Anthropic streaming implementation with robust error handling
    * ✅ ROBUST PARSING: Handle stream errors and JSON parsing failures
+   * ✅ PROMPT CACHING: Uses Anthropic's cache_control for 90% cost reduction on repeated prompts
    */
   private async *streamAnthropic(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.anthropicClient) throw new Error('Anthropic client not initialized');
     
-    const anthropicMessages = messages.filter(m => m.role !== 'system').map(m => ({
-      role: m.role === 'assistant' ? 'assistant' as const : 'user' as const,
-      content: m.content
-    }));
-    
     const systemMessage = messages.find(m => m.role === 'system')?.content;
+    
+    // ✅ PROMPT CACHING: Use cache_control for system prompts (Anthropic-specific optimization)
+    // This enables 90% cost reduction on repeated system prompts (cached for 5 minutes)
+    const { system: cachedSystem, messages: cachedMessages } = promptCacheManager.formatMessagesForAnthropic(
+      messages,
+      systemMessage
+    );
+    
+    // Cache the system prompt hash for metrics
+    if (systemMessage) {
+      promptCacheManager.cacheSystemPrompt(systemMessage, 'anthropic');
+    }
     
     try {
       const stream = await this.anthropicClient.messages.create({
         model: modelId,
-        messages: anthropicMessages,
-        system: systemMessage,
+        messages: cachedMessages as any,
+        system: cachedSystem as any,
         max_tokens: options?.max_tokens || 4000,
         temperature: options?.temperature || 0.7,
         stream: true,
@@ -803,16 +812,20 @@ export class AIProviderManager {
   /**
    * OpenAI streaming implementation with robust error handling
    * ✅ ROBUST PARSING: Handle stream errors and JSON parsing failures
+   * ✅ PROMPT CACHING: OpenAI automatically caches prompts with matching prefixes
+   * Structure messages to maximize cache hits (system prompt first, consistent formatting)
    */
   private async *streamOpenAI(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.openaiClient) throw new Error('OpenAI client not initialized');
     
-    let openaiMessages = [...messages];
-    if (options?.system && !messages.find(m => m.role === 'system')) {
-      openaiMessages = [
-        { role: 'system', content: options.system },
-        ...messages
-      ];
+    // ✅ PROMPT CACHING: Format messages for optimal OpenAI caching
+    // OpenAI caches prompts automatically when prefix matches
+    const systemPrompt = options?.system || messages.find(m => m.role === 'system')?.content;
+    const openaiMessages = promptCacheManager.formatMessagesForOpenAI(messages, systemPrompt);
+    
+    // Cache system prompt for metrics tracking
+    if (systemPrompt) {
+      promptCacheManager.cacheSystemPrompt(systemPrompt, 'openai');
     }
     
     // ✅ CRITICAL FIX: GPT-5 family and o-series use max_completion_tokens and don't support temperature
@@ -871,8 +884,17 @@ export class AIProviderManager {
    * ✅ ROBUST PARSING: Handle stream errors and JSON parsing failures
    * ✅ 40-YEAR FIX (Nov 21, 2025): Detect error payloads BEFORE iterating
    */
+  /**
+   * ✅ PROMPT CACHING: Moonshot AI system prompt caching for cost optimization
+   */
   private async *streamMoonshot(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.moonshotClient) throw new Error('Moonshot AI client not initialized');
+    
+    // ✅ PROMPT CACHING: Cache system prompt for Moonshot
+    const systemPrompt = options?.system || messages.find(m => m.role === 'system')?.content;
+    if (systemPrompt) {
+      promptCacheManager.cacheSystemPrompt(systemPrompt, 'moonshot');
+    }
     
     let moonshotMessages = [...messages];
     if (options?.system && !messages.find(m => m.role === 'system')) {
@@ -946,13 +968,25 @@ export class AIProviderManager {
    * ✅ NEW APPROACH: Add system message as first chat message instead of systemInstruction
    * ✅ ROBUST PARSING: Handle stream errors, JSON parsing, and fallback mechanisms
    */
+  /**
+   * ✅ PROMPT CACHING: Gemini context caching for system prompts
+   * Caches system instructions for improved performance on repeated calls
+   */
   private async *streamGemini(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.geminiClient) throw new Error('Gemini client not initialized');
     
     const systemMessage = messages.find(m => m.role === 'system')?.content;
     const chatMessages = messages.filter(m => m.role !== 'system');
     
-    // Create model WITHOUT systemInstruction to avoid SDK issues
+    // ✅ PROMPT CACHING: Format messages for Gemini and cache system prompt
+    const { systemInstruction, contents } = promptCacheManager.formatMessagesForGemini(messages, systemMessage);
+    
+    // Cache system prompt for metrics tracking
+    if (systemMessage) {
+      promptCacheManager.cacheSystemPrompt(systemMessage, 'gemini');
+    }
+    
+    // Create model WITHOUT systemInstruction to avoid SDK issues (Gemini SDK quirk)
     const model = this.geminiClient.getGenerativeModel({ 
       model: modelId,
       generationConfig: {
