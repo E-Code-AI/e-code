@@ -396,7 +396,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                               <Badge 
                                 className="text-[11px] uppercase tracking-wider px-1.5 py-0 rounded"
                                 style={{ 
-                                  backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                                  backgroundColor: '#2B3245',
                                   color: '#f59e0b'
                                 }}
                               >
@@ -554,8 +554,8 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
               <div 
                 className="p-3 rounded-lg"
                 style={{ 
-                  backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                  border: '1px solid rgba(245, 158, 11, 0.3)'
+                  backgroundColor: '#2B3245',
+                  border: '1px solid #f59e0b'
                 }}
               >
                 <div className="flex items-start gap-2">

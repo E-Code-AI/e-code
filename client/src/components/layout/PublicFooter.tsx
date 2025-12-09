@@ -70,13 +70,13 @@ export function PublicFooter() {
   ];
 
   return (
-    <footer className="relative border-t border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] dark:border-white/10 dark:bg-slate-950/90 dark:text-slate-200">
+    <footer className="relative border-t border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] dark:border-[#2B3245] dark:bg-[#0E1525] dark:text-slate-200">
       <div className="absolute inset-0 marketing-gradient opacity-0 dark:opacity-100" aria-hidden />
       <div className="absolute inset-0 marketing-grid opacity-0 dark:opacity-60" aria-hidden />
       <div className="relative container-responsive py-16">
         <div className="grid gap-12 lg:grid-cols-[1.2fr_2fr]">
           <div className="space-y-6">
-            <Badge className="bg-[var(--ecode-accent)]/10 text-[var(--ecode-accent)] border-[var(--ecode-accent)]/20 dark:bg-white/10 dark:text-white dark:border-white/20">
+            <Badge className="bg-[#1C2333] text-[var(--ecode-accent)] border-[#2B3245] dark:bg-[#1C2333] dark:text-white dark:border-[#2B3245]">
               <Sparkles className="mr-2 h-3 w-3" />
               Built for Fortune 500
             </Badge>
@@ -88,7 +88,7 @@ export function PublicFooter() {
             </p>
             <div className="flex flex-wrap gap-3">
               <Button
-                className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/25 min-h-[44px]"
+                className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500 min-h-[44px]"
                 onClick={() => (window.location.href = '/contact-sales')}
                 data-testid="button-footer-contact-sales"
               >
@@ -97,7 +97,7 @@ export function PublicFooter() {
               </Button>
               <Button
                 variant="outline"
-                className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] dark:border-white/20 dark:text-slate-100 dark:hover:text-white min-h-[44px]"
+                className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] dark:border-[#2B3245] dark:text-slate-100 dark:hover:text-white min-h-[44px]"
                 onClick={() => (window.location.href = '/register')}
                 data-testid="button-footer-start-building"
               >
@@ -105,11 +105,11 @@ export function PublicFooter() {
               </Button>
             </div>
             <div className="grid grid-cols-2 gap-4 pt-4 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300">
-              <div className="rounded-xl border border-[var(--ecode-border)] bg-[var(--ecode-surface-secondary)] dark:border-white/10 dark:bg-white/5 p-4">
+              <div className="rounded-xl border border-[var(--ecode-border)] bg-[var(--ecode-surface-secondary)] dark:border-[#2B3245] dark:bg-[#1C2333] p-4">
                 <p className="text-xs uppercase tracking-widest text-[var(--ecode-text-muted)] dark:text-slate-400">Global uptime</p>
                 <p className="mt-2 text-2xl font-semibold text-[var(--ecode-text)] dark:text-white">99.99%</p>
               </div>
-              <div className="rounded-xl border border-[var(--ecode-border)] bg-[var(--ecode-surface-secondary)] dark:border-white/10 dark:bg-white/5 p-4">
+              <div className="rounded-xl border border-[var(--ecode-border)] bg-[var(--ecode-surface-secondary)] dark:border-[#2B3245] dark:bg-[#1C2333] p-4">
                 <p className="text-xs uppercase tracking-widest text-[var(--ecode-text-muted)] dark:text-slate-400">Enterprise teams</p>
                 <p className="mt-2 text-2xl font-semibold text-[var(--ecode-text)] dark:text-white">4,500+</p>
               </div>
@@ -166,7 +166,7 @@ export function PublicFooter() {
               </ul>
             </div>
             <div className="sm:col-span-2 lg:col-span-4">
-              <div className="mt-6 rounded-2xl border border-[var(--ecode-border)] bg-[var(--ecode-surface-secondary)] dark:border-white/10 dark:bg-white/5 p-6">
+              <div className="mt-6 rounded-2xl border border-[var(--ecode-border)] bg-[var(--ecode-surface-secondary)] dark:border-[#2B3245] dark:bg-[#1C2333] p-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
                     <p className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white">Compare platforms</p>
@@ -177,7 +177,7 @@ export function PublicFooter() {
                       <Link
                         key={link.href}
                         href={link.href}
-                        className="rounded-full border border-[var(--ecode-border)] dark:border-white/15 px-3 py-1.5 text-xs text-[var(--ecode-text-secondary)] dark:text-slate-200 transition hover:border-[var(--ecode-accent)] dark:hover:border-white/50 hover:text-[var(--ecode-accent)] dark:hover:text-white"
+                        className="rounded-full border border-[var(--ecode-border)] dark:border-[#2B3245] px-3 py-1.5 text-xs text-[var(--ecode-text-secondary)] dark:text-slate-200 transition hover:border-[var(--ecode-accent)] dark:hover:border-[#3D4455] hover:text-[var(--ecode-accent)] dark:hover:text-white"
                       >
                         {link.label}
                       </Link>
@@ -189,7 +189,7 @@ export function PublicFooter() {
           </div>
         </div>
 
-        <div className="mt-16 grid gap-8 border-t border-[var(--ecode-border)] dark:border-white/10 pt-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-16 grid gap-8 border-t border-[var(--ecode-border)] dark:border-[#2B3245] pt-10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex items-center gap-3 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300">
             <ShieldCheck className="h-5 w-5 text-emerald-500 dark:text-emerald-300" />
             SOC2 Type II, ISO 27001, GDPR & HIPAA ready.
@@ -209,7 +209,7 @@ export function PublicFooter() {
                 href={social.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-white/10 bg-[var(--ecode-surface-secondary)] dark:bg-white/5 text-[var(--ecode-text-secondary)] dark:text-slate-200 transition hover:border-[var(--ecode-accent)] dark:hover:border-white/40 hover:text-[var(--ecode-accent)] dark:hover:text-white"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-[#2B3245] bg-[var(--ecode-surface-secondary)] dark:bg-[#1C2333] text-[var(--ecode-text-secondary)] dark:text-slate-200 transition hover:border-[var(--ecode-accent)] dark:hover:border-[#3D4455] hover:text-[var(--ecode-accent)] dark:hover:text-white"
                 data-testid={`link-social-${social.label.toLowerCase()}`}
               >
                 <social.icon className="h-5 w-5" />

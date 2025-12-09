@@ -85,7 +85,7 @@ export function ThinkingDisplay({
       data-testid="thinking-display"
     >
       {/* Header */}
-      <div className="px-4 py-3 border-b bg-muted/30 dark:bg-muted/10" data-testid="thinking-header">
+      <div className="px-4 py-3 border-b bg-[#1C2333]" data-testid="thinking-header">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles 
@@ -124,8 +124,8 @@ export function ThinkingDisplay({
               <button
                 onClick={() => toggleStep(step.id)}
                 className={cn(
-                  "w-full px-4 py-3 flex items-center gap-3 hover:bg-muted/50 transition-colors text-left",
-                  step.status === 'active' && "bg-primary/5"
+                  "w-full px-4 py-3 flex items-center gap-3 hover:bg-[#3D4455] transition-colors text-left",
+                  step.status === 'active' && "bg-[#1C2333]"
                 )}
                 data-testid={`thinking-step-${step.id}`}
               >
@@ -141,10 +141,10 @@ export function ThinkingDisplay({
                 {/* Step Icon */}
                 <div className={cn(
                   "flex-shrink-0 rounded-full p-1.5",
-                  step.status === 'complete' && "bg-green-100 dark:bg-green-900/20",
-                  step.status === 'active' && "bg-primary/10",
-                  step.status === 'pending' && "bg-muted",
-                  step.status === 'error' && "bg-red-100 dark:bg-red-900/20"
+                  step.status === 'complete' && "bg-green-900",
+                  step.status === 'active' && "bg-[#2B3245]",
+                  step.status === 'pending' && "bg-[#1C2333]",
+                  step.status === 'error' && "bg-red-900"
                 )}>
                   {step.status === 'active' ? (
                     <Loader2 className={cn("h-4 w-4 animate-spin", iconColor)} />
@@ -189,7 +189,7 @@ export function ThinkingDisplay({
 
               {/* Expanded Content */}
               {isExpanded && (
-                <div className="px-4 pb-4 pt-2 bg-muted/20 dark:bg-muted/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="px-4 pb-4 pt-2 bg-[#0E1525] space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
                   {/* Main Content */}
                   <div className="pl-12">
                     <p className="text-sm text-foreground whitespace-pre-wrap">

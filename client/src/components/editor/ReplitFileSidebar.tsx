@@ -157,8 +157,8 @@ function FileTreeItem({
     <>
       <div
         className={cn(
-          "group flex items-center px-2 cursor-pointer hover:bg-[rgba(0,0,0,0.04)]",
-          activeFileId === file.id && "bg-accent text-primary"
+          "group flex items-center px-2 cursor-pointer hover:bg-[#3D4455]",
+          activeFileId === file.id && "bg-[#2B3245] text-primary"
         )}
         style={{ paddingLeft: `${level * 12 + 8}px`, lineHeight: '22px' }}
         onClick={() => {

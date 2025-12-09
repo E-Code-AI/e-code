@@ -252,7 +252,7 @@ function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePu
           'flex items-center justify-center',
           'shadow-xl',
           'transition-all duration-200',
-          'focus:outline-none focus:ring-4 focus:ring-blue-500/50',
+          'focus:outline-none focus:ring-4 focus:ring-blue-500',
           'touch-manipulation',
           isPublishing && 'opacity-75 cursor-not-allowed',
           buttonState.bgColor
@@ -592,7 +592,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
                 scale: swipeDirection === 'right' ? 1 : 0.9
               }}
               transition={SPRING_CONFIG.default}
-              className="text-white/50 text-2xl font-light"
+              className="text-[#3D4455] text-2xl font-light"
             >
               {activeIndex > 0 && '‹'}
             </motion.div>
@@ -604,7 +604,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
                 scale: swipeDirection === 'left' ? 1 : 0.9
               }}
               transition={SPRING_CONFIG.default}
-              className="text-white/50 text-2xl font-light"
+              className="text-[#3D4455] text-2xl font-light"
             >
               {activeIndex < tabs.length - 2 && '›'}
             </motion.div>

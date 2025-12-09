@@ -56,13 +56,13 @@ export function TerminalMetricsIndicator({
   const getHealthColor = () => {
     switch (health) {
       case 'healthy':
-        return 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20';
+        return 'bg-[#1C2333] text-green-600 dark:text-green-400 border-[#2B3245]';
       case 'degraded':
-        return 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20';
+        return 'bg-[#1C2333] text-yellow-600 dark:text-yellow-400 border-[#2B3245]';
       case 'unhealthy':
-        return 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20';
+        return 'bg-[#1C2333] text-red-600 dark:text-red-400 border-[#2B3245]';
       default:
-        return 'bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20';
+        return 'bg-[#1C2333] text-gray-600 dark:text-gray-400 border-[#2B3245]';
     }
   };
 
@@ -149,7 +149,7 @@ export function TerminalMetricsIndicator({
       {metricsData?.metrics?.health?.underBackpressure && (
         <Badge
           variant="outline"
-          className="flex items-center gap-1.5 bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
+          className="flex items-center gap-1.5 bg-[#1C2333] text-orange-600 dark:text-orange-400 border-[#2B3245]"
           data-testid="badge-backpressure"
         >
           <TrendingUp className="h-3 w-3" />

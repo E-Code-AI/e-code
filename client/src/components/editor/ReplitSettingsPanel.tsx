@@ -250,7 +250,7 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
                 { action: 'New File', keys: 'Cmd+N' },
                 { action: 'Close Tab', keys: 'Cmd+W' }
               ].map((shortcut) => (
-                <div key={shortcut.action} className="flex items-center justify-between h-8 px-3 rounded-lg bg-[#242b3d] hover:bg-[#3d4452] transition-colors">
+                <div key={shortcut.action} className="flex items-center justify-between h-8 px-3 rounded-lg bg-[#2B3245] hover:bg-[#3D4455] transition-colors">
                   <span className="text-[15px] leading-[20px] text-[#ffffff]">{shortcut.action}</span>
                   <kbd className="px-2 py-0.5 text-[13px] bg-[#1c2333] text-[#9da2a6] rounded-lg border border-[#3d4452]">
                     {shortcut.keys}
@@ -259,7 +259,7 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
               ))}
             </div>
 
-            <Button variant="outline" className="w-full h-8 rounded-lg bg-[#1c2333] border-[#3d4452] text-[15px] text-[#ffffff] hover:bg-[#242b3d]">
+            <Button variant="outline" className="w-full h-8 rounded-lg bg-[#1c2333] border-[#3d4452] text-[15px] text-[#ffffff] hover:bg-[#3D4455]">
               Customize Shortcuts
             </Button>
           </div>
@@ -294,7 +294,7 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
                 ))}
               </div>
 
-              <Button variant="outline" className="w-full h-8 rounded-lg mt-3 bg-[#1c2333] border-[#3d4452] text-[15px] text-[#ffffff] hover:bg-[#242b3d]">
+              <Button variant="outline" className="w-full h-8 rounded-lg mt-3 bg-[#1c2333] border-[#3d4452] text-[15px] text-[#ffffff] hover:bg-[#3D4455]">
                 Add Variable
               </Button>
             </div>
@@ -378,8 +378,8 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
                     className={cn(
                       "w-full flex items-center gap-2 px-3 h-8 rounded-lg transition-colors",
                       activeSection === section.id
-                        ? "bg-[#0079f2]/15 text-[#0079f2]"
-                        : "text-[#9da2a6] hover:bg-[#242b3d] hover:text-[#ffffff]"
+                        ? "bg-[#1C2333] text-[#0079f2]"
+                        : "text-[#9da2a6] hover:bg-[#3D4455] hover:text-[#ffffff]"
                     )}
                   >
                     <Icon className="w-[18px] h-[18px]" />
@@ -410,14 +410,14 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
-                    className="h-8 rounded-lg bg-transparent border-[#3d4452] text-[15px] text-[#9da2a6] hover:bg-[#242b3d] hover:text-[#ffffff]"
+                    className="h-8 rounded-lg bg-transparent border-[#3d4452] text-[15px] text-[#9da2a6] hover:bg-[#3D4455] hover:text-[#ffffff]"
                     onClick={handleReset}
                   >
                     <RotateCcw className="w-[18px] h-[18px] mr-1" />
                     Reset
                   </Button>
                   <Button 
-                    className="h-8 rounded-lg bg-[#0079f2] text-[15px] text-[#ffffff] hover:bg-[#0079f2]/90"
+                    className="h-8 rounded-lg bg-[#0079f2] text-[15px] text-[#ffffff] hover:bg-[#0066CC]"
                     onClick={handleSave}
                   >
                     <Save className="w-[18px] h-[18px] mr-1" />

@@ -294,29 +294,6 @@ export function ReplitAgentPanelV3({
   // Ref to track previous settings for toast comparison (avoids stale closure issues)
   const agentToolsSettingsRef = useRef<AgentToolsSettings>(agentToolsSettings);
   
-  // DEBUG: Log every render with current agentToolsSettings
-  console.log('[ReplitAgentPanelV3] RENDER - agentToolsSettings:', JSON.stringify(agentToolsSettings));
-  
-  // DEBUG: Track component mount/unmount
-  useEffect(() => {
-    console.log('[ReplitAgentPanelV3] === COMPONENT MOUNTED ===');
-    return () => {
-      console.log('[ReplitAgentPanelV3] === COMPONENT UNMOUNTED ===');
-    };
-  }, []);
-  
-  // DEBUG: Track when agentToolsSettings actually changes
-  useEffect(() => {
-    console.log('[ReplitAgentPanelV3] STATE CHANGED - agentToolsSettings is now:', JSON.stringify(agentToolsSettings));
-  }, [agentToolsSettings]);
-  
-  // DEBUG: Track initialPrompt prop at every render and when it changes
-  console.log('[ReplitAgentPanelV3] RENDER - initialPrompt:', initialPrompt ? `"${initialPrompt.substring(0, 50)}..."` : 'undefined');
-  
-  useEffect(() => {
-    console.log('[ReplitAgentPanelV3] PROP CHANGED - initialPrompt:', initialPrompt ? `"${initialPrompt.substring(0, 100)}..."` : 'undefined');
-  }, [initialPrompt]);
-  
   // Element Editor state
   const [elementEditorActive, setElementEditorActive] = useState(false);
   const [selectedElement, setSelectedElement] = useState<ElementSelection | null>(null);
@@ -338,7 +315,6 @@ export function ReplitAgentPanelV3({
       // Use external conversation ID if provided
       if (externalConversationId) {
         setConversationId(externalConversationId);
-        console.log('[ReplitAgentPanelV3] Using external conversationId:', externalConversationId);
         return;
       }
       
@@ -373,7 +349,6 @@ export function ReplitAgentPanelV3({
     if (backendMessages?.messages && conversationId && !hasConversation(conversationId)) {
       const fetchedMessages = backendMessages.messages as Message[];
       if (fetchedMessages.length > 0) {
-        console.log('[ReplitAgentPanelV3] Syncing', fetchedMessages.length, 'messages from backend to store');
         setStoreMessages(conversationId, fetchedMessages);
         setLastSyncedAt(conversationId, Date.now());
       }
@@ -398,30 +373,14 @@ export function ReplitAgentPanelV3({
     const prevValue = prevInitialPromptRef.current;
     prevInitialPromptRef.current = effectivePrompt ?? undefined;
     
-    // Debug logging to diagnose bootstrap prompt flow
-    console.log('[ReplitAgentPanelV3] Auto-start useEffect RUNNING:', {
-      hasInitialPrompt: !!initialPrompt,
-      hasSessionStoragePrompt: !!promptFromSession,
-      effectivePrompt: effectivePrompt?.substring(0, 50) + '...' || null,
-      promptLength: effectivePrompt?.length || 0,
-      prevHadPrompt: !!prevValue,
-      conversationId,
-      isWorking,
-      alreadyProcessed: initialPromptProcessedRef.current,
-      autoStart,
-      changedFromUndefined: !prevValue && !!effectivePrompt
-    });
-    
     // Process if: we have a prompt AND not already processing/processed
     // Note: We don't wait for conversationId - the form submit will create one if needed
     if (effectivePrompt && !isWorking && !initialPromptProcessedRef.current) {
-      console.log('[ReplitAgentPanelV3] ✅ Processing prompt (source:', initialPrompt ? 'prop' : 'sessionStorage', '):', effectivePrompt.substring(0, 50) + '...');
       initialPromptProcessedRef.current = true;
       setInput(effectivePrompt);
       
       // Clear sessionStorage AFTER capturing the prompt (prevent re-processing on remount)
       if (promptFromSession) {
-        console.log('[ReplitAgentPanelV3] ✅ Clearing sessionStorage prompt after capture');
         window.sessionStorage.removeItem(sessionStorageKey);
       }
       
@@ -431,10 +390,7 @@ export function ReplitAgentPanelV3({
         setTimeout(() => {
           const form = document.querySelector('form[data-testid="chat-form"]') as HTMLFormElement;
           if (form) {
-            console.log('[ReplitAgentPanelV3] ✅ Auto-submitting form');
             form.requestSubmit();
-          } else {
-            console.error('[ReplitAgentPanelV3] ❌ Form not found for auto-submit');
           }
         }, 1000);
       }
@@ -450,7 +406,6 @@ export function ReplitAgentPanelV3({
     const contextKey = `${selectedFile}:${codeHash}`;
     
     if (contextInjectedRef.current !== contextKey) {
-      console.log('[ReplitAgentPanelV3] Context injection:', selectedFile);
       contextInjectedRef.current = contextKey;
       // Add context to the input
       const contextPrefix = `\n\n[Context: ${selectedFile}]\n\`\`\`\n${selectedCode.substring(0, 500)}${selectedCode.length > 500 ? '...' : ''}\n\`\`\`\n\n`;
@@ -469,8 +424,6 @@ export function ReplitAgentPanelV3({
   // Handler for agent tools settings changes (Replit Agent 3 toggles)
   // State is now lifted to parent (IDEPage) to survive remounts
   const handleAgentToolsChange = useCallback((newSettings: AgentToolsSettings) => {
-    console.log('[ReplitAgentPanelV3] handleAgentToolsChange CALLED with:', JSON.stringify(newSettings));
-    
     // Get previous settings from ref for toast comparison
     const prevSettings = agentToolsSettingsRef.current;
     
@@ -479,7 +432,6 @@ export function ReplitAgentPanelV3({
     
     // Update state (either parent's state via callback or internal state)
     setAgentToolsSettings(newSettings);
-    console.log('[ReplitAgentPanelV3] handleAgentToolsChange - setAgentToolsSettings called');
     
     // Show toasts for newly enabled features
     if (newSettings.maxAutonomy && !prevSettings.maxAutonomy) {
@@ -520,7 +472,6 @@ export function ReplitAgentPanelV3({
   
   // Handler for Element Editor save
   const handleElementSave = useCallback((changes: Partial<ElementSelection['styles']> & { text?: string }) => {
-    console.log('Element changes to apply:', changes);
     setSelectedElement(null);
     setElementEditorActive(false);
     toast({
@@ -637,13 +588,11 @@ export function ReplitAgentPanelV3({
   useEffect(() => {
     // CRITICAL: Don't start until conversationId is available so messages persist to store
     if (!conversationId) {
-      console.log('[ReplitAgentPanelV3] Auto-start waiting for conversationId...');
       return;
     }
     
     // Prevent double execution
     if (autoStartExecutedRef.current) {
-      console.log('[ReplitAgentPanelV3] Auto-start already executed, skipping');
       return;
     }
     
@@ -661,16 +610,6 @@ export function ReplitAgentPanelV3({
     
     // ✅ FIX (Dec 7, 2025): Also trigger for bootstrap token, not just agent=true
     const shouldAutoStart = (agentEnabled || hasBootstrapToken || autoStart) && resolvedPrompt && !isWorking;
-    
-    console.log('[ReplitAgentPanelV3] Auto-start from sessionStorage check:', {
-      agentEnabled,
-      hasBootstrapToken,
-      autoStart,
-      hasPromptFromSession: !!promptFromSession,
-      promptLength: resolvedPrompt?.length || 0,
-      shouldAutoStart,
-      conversationId
-    });
     
     if (shouldAutoStart) {
       // Mark as executed to prevent re-runs
@@ -931,7 +870,6 @@ export function ReplitAgentPanelV3({
             setIsWorking(false);
             // Call onBuildComplete callback when bootstrap build finishes
             if (onBuildComplete) {
-              console.log('[ReplitAgentPanelV3] Bootstrap build complete, calling onBuildComplete');
               onBuildComplete();
             }
           }
@@ -1005,7 +943,6 @@ export function ReplitAgentPanelV3({
     extendedThinking?: any;
   }) => {
     if (!conversationId) {
-      console.warn('[Persistence] No conversationId, skipping message persistence');
       return;
     }
 
@@ -1024,9 +961,7 @@ export function ReplitAgentPanelV3({
     })
       .then(res => {
         if (!res.ok) {
-          console.error('[Persistence] Failed to persist message:', res.status);
-        } else {
-          console.log('[Persistence] Message persisted:', message.role, message.content.substring(0, 50) + '...');
+          // Silently handle persistence errors - non-critical
         }
       })
       .catch(err => {
@@ -1189,12 +1124,8 @@ export function ReplitAgentPanelV3({
               
               // Handle RAG status events from backend
               if (data.enabled !== undefined && data.nodesRetrieved !== undefined) {
-                console.log('[RAG] Status update:', data);
                 // RAG context is automatically injected by the backend
                 // This event is for UI feedback only
-                if (data.status === 'success' && data.nodesRetrieved > 0) {
-                  console.log(`[RAG] Retrieved ${data.nodesRetrieved} knowledge nodes for context`);
-                }
               }
               
               // Handle tool execution events
@@ -1282,7 +1213,6 @@ export function ReplitAgentPanelV3({
       
       // Call onBuildComplete callback when streaming completes in build mode
       if (agentMode === 'build' && onBuildComplete) {
-        console.log('[ReplitAgentPanelV3] Streaming complete, calling onBuildComplete');
         onBuildComplete();
       }
       
@@ -1336,7 +1266,6 @@ export function ReplitAgentPanelV3({
       setIsWorking(false);
       // Call onBuildComplete callback when build/execution finishes (for IDE integration)
       if (agentMode === 'build' && onBuildComplete) {
-        console.log('[ReplitAgentPanelV3] Build complete, calling onBuildComplete callback');
         onBuildComplete();
       }
     }
@@ -1540,8 +1469,8 @@ export function ReplitAgentPanelV3({
                 <AvatarFallback className={cn(
                   "text-xs font-semibold",
                   message.role === 'assistant' 
-                    ? "bg-primary/10 text-primary" 
-                    : "bg-muted text-muted-foreground"
+                    ? "bg-[#2B3245] text-primary" 
+                    : "bg-[#1C2333] text-[#9CA3AF]"
                 )}>
                   {message.role === 'assistant' ? <Sparkles className="h-4 w-4" /> : 'You'}
                 </AvatarFallback>
@@ -1592,7 +1521,7 @@ export function ReplitAgentPanelV3({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute -top-2 -right-2 h-6 w-6 bg-[#3D4455] hover:bg-[#2B3245] transition-colors"
                     onClick={() => handleCopyMessage(message.content)}
                     data-testid={`button-copy-${message.id}`}
                   >
@@ -1645,7 +1574,7 @@ export function ReplitAgentPanelV3({
           {isWorking && activeThinking.length > 0 && (
             <div className="flex gap-3" data-testid="active-thinking-container">
               <Avatar className="h-8 w-8" data-testid="active-thinking-avatar">
-                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                <AvatarFallback className="bg-[#2B3245] text-primary text-xs">
                   <Sparkles className="h-4 w-4" />
                 </AvatarFallback>
               </Avatar>
@@ -1670,7 +1599,7 @@ export function ReplitAgentPanelV3({
           {isWorking && streamingContent && (
             <div className="flex gap-3" data-testid="streaming-message-container">
               <Avatar className="h-8 w-8" data-testid="streaming-avatar">
-                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                <AvatarFallback className="bg-[#2B3245] text-primary text-xs">
                   <Sparkles className="h-4 w-4" />
                 </AvatarFallback>
               </Avatar>
@@ -1689,7 +1618,7 @@ export function ReplitAgentPanelV3({
           {isWorking && !streamingContent && activeThinking.length === 0 && (
             <div className="flex gap-3" data-testid="loading-indicator">
               <Avatar className="h-8 w-8" data-testid="loading-avatar">
-                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                <AvatarFallback className="bg-[#2B3245] text-primary text-xs">
                   <Loader2 className="h-4 w-4 animate-spin" />
                 </AvatarFallback>
               </Avatar>

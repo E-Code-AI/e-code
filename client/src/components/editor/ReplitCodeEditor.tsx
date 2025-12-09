@@ -181,6 +181,7 @@ export function ReplitCodeEditor({
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [aiProcessing, setAiProcessing] = useState(false);
   const editorRef = useRef<EditorView | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
@@ -480,7 +481,7 @@ export function ReplitCodeEditor({
         <div className="ml-auto flex items-center px-2 gap-2">
           {/* AI Status Badge */}
           {aiProcessing && (
-            <Badge variant="outline" className="text-xs bg-primary/10 border-primary">
+            <Badge variant="outline" className="text-xs bg-[#1C2333] border-primary">
               <Sparkles className="h-3 w-3 mr-1 animate-pulse" />
               AI Processing...
             </Badge>
@@ -495,7 +496,7 @@ export function ReplitCodeEditor({
                   size="icon"
                   className={cn(
                     "h-7 w-7",
-                    aiPreferences.enabled && "bg-primary hover:bg-primary/90"
+                    aiPreferences.enabled && "bg-[#0079f2] hover:bg-[#0066cc]"
                   )}
                   onClick={toggleAIEnabled}
                 >

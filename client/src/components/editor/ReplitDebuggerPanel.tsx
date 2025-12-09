@@ -82,7 +82,7 @@ function ShimmerSkeleton({ className }: { className?: string }) {
         ease: "linear",
       }}
       style={{
-        backgroundImage: "linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)",
+        backgroundImage: "linear-gradient(90deg, transparent, #3D4455, transparent)",
         backgroundSize: "200% 100%",
       }}
     />
@@ -125,7 +125,7 @@ function EmptyState({
       {actionLabel && onAction && (
         <Button
           onClick={onAction}
-          className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[13px]"
+          className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0066CC] text-[#ffffff] text-[13px]"
           data-testid="button-empty-state-action"
         >
           {actionLabel}
@@ -310,7 +310,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                 "text-[11px] uppercase tracking-wider rounded-lg",
                 isPaused 
                   ? "bg-[#242b3d] text-[#9da2a6] border border-[#3d4452]" 
-                  : "bg-[#0079f2]/20 text-[#0079f2] border border-[#0079f2]/30"
+                  : "bg-[#1C2333] text-[#0079f2] border border-[#0079f2]"
               )}>
                 {isPaused ? 'Paused' : 'Running'}
               </Badge>
@@ -324,7 +324,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
             <Button
               onClick={() => startDebugMutation.mutate(undefined)}
               disabled={startDebugMutation.isPending}
-              className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[13px] px-3"
+              className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0066CC] text-[#ffffff] text-[13px] px-3"
               data-testid="button-debug-start"
             >
               <Play className="w-[18px] h-[18px] mr-2" />
@@ -336,7 +336,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#242b3d]"
+                  className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#3D4455]"
                   onClick={() => continueDebugMutation.mutate(undefined)}
                   disabled={continueDebugMutation.isPending}
                   data-testid="button-debug-continue"
@@ -347,7 +347,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#242b3d]"
+                  className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#3D4455]"
                   onClick={() => pauseDebugMutation.mutate(undefined)}
                   disabled={pauseDebugMutation.isPending}
                   data-testid="button-debug-pause"
@@ -358,7 +358,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#242b3d]"
+                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#3D4455]"
                 onClick={() => stopDebugMutation.mutate(undefined)}
                 disabled={stopDebugMutation.isPending}
                 data-testid="button-debug-stop"
@@ -369,7 +369,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#242b3d]"
+                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#3D4455]"
                 disabled={!isPaused || stepOverMutation.isPending}
                 onClick={() => stepOverMutation.mutate(undefined)}
                 data-testid="button-debug-step-over"
@@ -379,7 +379,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#242b3d]"
+                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#3D4455]"
                 disabled={!isPaused || stepIntoMutation.isPending}
                 onClick={() => stepIntoMutation.mutate(undefined)}
                 data-testid="button-debug-step-into"
@@ -389,7 +389,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#242b3d]"
+                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#3D4455]"
                 disabled={!isPaused || stepOutMutation.isPending}
                 onClick={() => stepOutMutation.mutate(undefined)}
                 data-testid="button-debug-step-out"
@@ -400,7 +400,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#242b3d]"
+                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-[#3D4455]"
                 onClick={() => refetch()}
                 data-testid="button-debug-refresh"
               >
@@ -449,7 +449,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                   <div
                     key={bp.id}
                     className={cn(
-                      "flex items-center gap-3 p-3 hover:bg-[#1c2333] rounded-lg transition-colors",
+                      "flex items-center gap-3 p-3 hover:bg-[#3D4455] rounded-lg transition-colors",
                       !bp.isEnabled && "opacity-50"
                     )}
                     data-testid={`breakpoint-${bp.id}`}
@@ -480,7 +480,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 rounded-lg hover:bg-[#242b3d]"
+                      className="h-8 w-8 rounded-lg hover:bg-[#3D4455]"
                       onClick={() => deleteBreakpointMutation.mutate({ breakpointId: bp.id })}
                       data-testid={`button-delete-breakpoint-${bp.id}`}
                     >
@@ -508,7 +508,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                   <div key={variable.name} className="space-y-1">
                     <div
                       className={cn(
-                        "flex items-center gap-3 p-3 hover:bg-[#1c2333] rounded-lg cursor-pointer transition-colors",
+                        "flex items-center gap-3 p-3 hover:bg-[#3D4455] rounded-lg cursor-pointer transition-colors",
                         variable.children && "font-medium"
                       )}
                       onClick={() => variable.children && toggleVariableExpansion(variable.name)}
@@ -536,7 +536,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                         {variable.children.map((child) => (
                           <div
                             key={child.name}
-                            className="flex items-center gap-3 p-3 hover:bg-[#1c2333] rounded-lg transition-colors"
+                            className="flex items-center gap-3 p-3 hover:bg-[#3D4455] rounded-lg transition-colors"
                           >
                             <div className="w-[18px]" />
                             <span className="text-[15px] leading-[20px] text-[#ffffff] font-mono">
@@ -579,7 +579,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
               />
               <Button
                 onClick={handleAddWatch}
-                className="h-8 w-8 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 p-0"
+                className="h-8 w-8 rounded-lg bg-[#0079f2] hover:bg-[#0066CC] p-0"
                 disabled={!newWatchExpression.trim() || addWatchMutation.isPending}
                 data-testid="button-add-watch"
               >
@@ -593,7 +593,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                   watchExpressions.map((expr, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-3 p-3 hover:bg-[#1c2333] rounded-lg transition-colors"
+                      className="flex items-center gap-3 p-3 hover:bg-[#3D4455] rounded-lg transition-colors"
                       data-testid={`watch-${index}`}
                     >
                       <span className="text-[15px] leading-[20px] font-mono text-[#ffffff] flex-1">
@@ -609,7 +609,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-lg hover:bg-[#242b3d]"
+                        className="h-8 w-8 rounded-lg hover:bg-[#3D4455]"
                         onClick={() => deleteWatchMutation.mutate({ index })}
                         data-testid={`button-delete-watch-${index}`}
                       >
@@ -638,8 +638,8 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                   <div
                     key={frame.id}
                     className={cn(
-                      "p-3 hover:bg-[#1c2333] rounded-lg cursor-pointer transition-colors",
-                      frame.isActive && "bg-[#0079f2]/10 border border-[#0079f2]/30"
+                      "p-3 hover:bg-[#3D4455] rounded-lg cursor-pointer transition-colors",
+                      frame.isActive && "bg-[#1C2333] border border-[#0079f2]"
                     )}
                     data-testid={`callstack-frame-${frame.id}`}
                   >

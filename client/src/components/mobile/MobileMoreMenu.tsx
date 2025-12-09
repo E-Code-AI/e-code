@@ -547,7 +547,7 @@ export function MobileMoreMenu({
               data-testid="mobile-more-menu-handle"
             >
               <motion.div 
-                className="w-12 h-1 bg-muted-foreground/50 rounded-full"
+                className="w-12 h-1 bg-[#3D4455] rounded-full"
                 whileHover={prefersReducedMotion ? {} : { scaleX: 1.2 }}
                 transition={SPRING_CONFIG.default}
               />
@@ -616,7 +616,7 @@ export function MobileMoreMenu({
                             </Badge>
                           )}
 
-                          <ChevronRight className="flex-shrink-0 h-4 w-4 text-muted-foreground/70 group-hover:text-muted-foreground transition-colors" />
+                          <ChevronRight className="flex-shrink-0 h-4 w-4 text-[#3D4455] group-hover:text-muted-foreground transition-colors" />
                         </motion.button>
                       ))}
                     </div>

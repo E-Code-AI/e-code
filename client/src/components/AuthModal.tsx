@@ -79,8 +79,8 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-lg shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+      <div className="relative w-full max-w-md bg-[#1C2333] rounded-lg shadow-xl">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -111,7 +111,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+                    className="w-full px-3 py-2 border rounded-md bg-[#2B3245] border-[#3D4455]"
                     required
                   />
                 </div>
@@ -123,7 +123,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+                      className="w-full px-3 py-2 border rounded-md bg-[#2B3245] border-[#3D4455]"
                       required
                     />
                   </div>
@@ -135,7 +135,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+                    className="w-full px-3 py-2 border rounded-md bg-[#2B3245] border-[#3D4455]"
                     required
                   />
                 </div>
@@ -147,7 +147,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+                      className="w-full px-3 py-2 border rounded-md bg-[#2B3245] border-[#3D4455]"
                       required
                     />
                   </div>

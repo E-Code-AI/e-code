@@ -130,9 +130,9 @@ function ActivityEventItem({ event }: { event: ActivityEvent }) {
         <div 
           className={cn(
             "flex items-start gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md cursor-pointer transition-colors",
-            "hover:bg-muted/50",
-            event.status === 'error' || event.type === 'error' ? 'bg-red-500/5' : '',
-            event.status === 'running' ? 'bg-blue-500/5' : ''
+            "hover:bg-[#3D4455]",
+            event.status === 'error' || event.type === 'error' ? 'bg-red-950' : '',
+            event.status === 'running' ? 'bg-blue-950' : ''
           )}
           data-testid={`activity-event-${event.id}`}
         >
@@ -146,7 +146,7 @@ function ActivityEventItem({ event }: { event: ActivityEvent }) {
                 variant="outline" 
                 className={cn(
                   "text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0 h-4",
-                  event.type === 'error' ? 'border-red-500/30 text-red-500' : ''
+                  event.type === 'error' ? 'border-red-500 text-red-500' : ''
                 )}
               >
                 {label}
@@ -204,7 +204,7 @@ function ActivityEventItem({ event }: { event: ActivityEvent }) {
             {event.details?.error && (
               <div className="text-red-500">
                 <span>Error:</span>
-                <pre className="bg-red-500/10 p-1.5 sm:p-2 rounded mt-1 overflow-x-auto max-h-20 overflow-y-auto text-[9px] sm:text-[10px]">
+                <pre className="bg-red-950 p-1.5 sm:p-2 rounded mt-1 overflow-x-auto max-h-20 overflow-y-auto text-[9px] sm:text-[10px]">
                   {event.details.error}
                 </pre>
               </div>
@@ -284,7 +284,7 @@ export function AgentActivityFeed({
             <Activity className="h-4 w-4 text-primary" />
             <CardTitle className="text-sm sm:text-base">Activity Feed</CardTitle>
             {isLive && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20 animate-pulse">
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-emerald-950 text-emerald-600 border-emerald-500 animate-pulse">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1" />
                 Live
               </Badge>
@@ -306,7 +306,7 @@ export function AgentActivityFeed({
 
         {/* Session Stats */}
         {stats && showStats && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2 sm:p-3 bg-muted/50 rounded-lg text-[10px] sm:text-xs" data-testid="session-stats">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2 sm:p-3 bg-[#1C2333] rounded-lg text-[10px] sm:text-xs" data-testid="session-stats">
             <div className="space-y-0.5">
               <p className="text-muted-foreground">Duration</p>
               <p className="font-medium">{formatDuration(stats.duration)}</p>
@@ -345,7 +345,7 @@ export function AgentActivityFeed({
               size="sm"
               className={cn(
                 "h-6 px-2 text-[10px] sm:text-xs shrink-0",
-                filter === id && "bg-primary/10"
+                filter === id && "bg-[#2B3245]"
               )}
               onClick={() => setFilter(id)}
               disabled={count === 0 && id !== 'all'}

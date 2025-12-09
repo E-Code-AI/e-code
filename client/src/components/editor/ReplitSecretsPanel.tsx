@@ -382,7 +382,7 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
                           style={{ 
                             backgroundColor: 'transparent', 
                             color: '#f59e0b', 
-                            border: '1px solid rgba(245, 158, 11, 0.3)' 
+                            border: '1px solid #f59e0b' 
                           }}
                         >
                           encrypted

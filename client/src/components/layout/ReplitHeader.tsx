@@ -430,7 +430,7 @@ export function ReplitHeader() {
         <Button
           variant="outline"
           size="sm"
-          className="hidden sm:flex items-center space-x-1 border-[var(--ecode-warning)] text-[var(--ecode-warning)] hover:bg-[var(--ecode-warning)]/10 replit-transition"
+          className="hidden sm:flex items-center space-x-1 border-[var(--ecode-warning)] text-[var(--ecode-warning)] hover:bg-[#3D4455] replit-transition"
           onClick={() => navigate('/pricing')}
         >
           <Crown className="h-4 w-4" />

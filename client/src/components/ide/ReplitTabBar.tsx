@@ -202,7 +202,7 @@ export function ReplitTabBar({
                 'hover:bg-[var(--ecode-sidebar-hover)] hover:text-[var(--ecode-text)]',
               ],
               isDragging && 'opacity-50',
-              isDragOver && 'bg-[var(--ecode-accent)]/10 border-l-2 border-l-[var(--ecode-accent)]'
+              isDragOver && 'bg-[#2B3245] border-l-2 border-l-[var(--ecode-accent)]'
             )}
           >
             <Icon className={cn(
@@ -227,7 +227,7 @@ export function ReplitTabBar({
                     className={cn(
                       'flex-shrink-0 p-0.5 rounded-sm transition-all',
                       'opacity-0 group-hover:opacity-100',
-                      'hover:bg-[var(--ecode-text-muted)]/20'
+                      'hover:bg-[#3D4455]'
                     )}
                     data-testid={`tab-close-${tab.id}`}
                   >

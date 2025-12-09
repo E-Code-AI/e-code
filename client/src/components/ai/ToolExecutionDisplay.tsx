@@ -107,10 +107,10 @@ function CompactToolExecution({
   };
 
   const getStatusBg = () => {
-    if (status === 'complete' && success) return 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/15';
-    if (status === 'error' || (status === 'complete' && !success)) return 'bg-red-500/10 border-red-500/20 hover:bg-red-500/15';
-    if (status === 'running') return 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/15';
-    return 'bg-muted/50 border-border hover:bg-muted';
+    if (status === 'complete' && success) return 'bg-emerald-950 border-emerald-500 hover:bg-[#3D4455]';
+    if (status === 'error' || (status === 'complete' && !success)) return 'bg-red-950 border-red-500 hover:bg-[#3D4455]';
+    if (status === 'running') return 'bg-blue-950 border-blue-500 hover:bg-[#3D4455]';
+    return 'bg-[#1C2333] border-[#2B3245] hover:bg-[#3D4455]';
   };
 
   const getTarget = () => {
@@ -149,7 +149,7 @@ function CompactToolExecution({
           <div className="flex-1 min-w-0 flex items-center gap-1 sm:gap-2">
             <span className="text-[10px] sm:text-xs font-medium truncate">{label}</span>
             {target && (
-              <code className="text-[9px] sm:text-[10px] bg-background/50 px-1 sm:px-1.5 py-0.5 rounded truncate max-w-[100px] sm:max-w-[200px] hidden xs:inline">
+              <code className="text-[9px] sm:text-[10px] bg-[#0E1525] px-1 sm:px-1.5 py-0.5 rounded truncate max-w-[100px] sm:max-w-[200px] hidden xs:inline">
                 {target}
               </code>
             )}
@@ -231,7 +231,7 @@ function CompactToolExecution({
               <div className="text-red-600 dark:text-red-400">
                 <p>✗ {error || 'Execution failed'}</p>
                 {result?.stderr && (
-                  <pre className="bg-red-500/10 p-1.5 sm:p-2 rounded mt-1 overflow-x-auto max-h-24 overflow-y-auto text-[9px] sm:text-[10px]">
+                  <pre className="bg-red-950 p-1.5 sm:p-2 rounded mt-1 overflow-x-auto max-h-24 overflow-y-auto text-[9px] sm:text-[10px]">
                     {result.stderr}
                   </pre>
                 )}
@@ -311,17 +311,17 @@ export function ToolExecutionList({
         <div className="flex items-center gap-1.5">
           <div className="flex items-center gap-1">
             {stats.success > 0 && (
-              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-emerald-950 text-emerald-600 border-emerald-500">
                 {stats.success} done
               </Badge>
             )}
             {stats.running > 0 && (
-              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-blue-500/10 text-blue-600 border-blue-500/20 animate-pulse">
+              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-blue-950 text-blue-600 border-blue-500 animate-pulse">
                 {stats.running} running
               </Badge>
             )}
             {stats.errors > 0 && (
-              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-red-500/10 text-red-600 border-red-500/20">
+              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-red-950 text-red-600 border-red-500">
                 {stats.errors} failed
               </Badge>
             )}
@@ -348,7 +348,7 @@ export function ToolExecutionList({
               size="sm"
               className={cn(
                 "h-6 px-2 text-[10px] shrink-0",
-                filter === id && "bg-primary/10"
+                filter === id && "bg-[#2B3245]"
               )}
               onClick={() => setFilter(id)}
               disabled={count === 0 && id !== 'all'}
@@ -415,10 +415,10 @@ export function ToolExecutionDisplay({
   };
 
   const getStatusColor = () => {
-    if (status === 'complete' && success) return 'border-green-500/20 bg-green-500/5';
-    if (status === 'error' || !success) return 'border-red-500/20 bg-red-500/5';
-    if (status === 'running') return 'border-blue-500/20 bg-blue-500/5';
-    return 'border-border';
+    if (status === 'complete' && success) return 'border-green-500 bg-green-950';
+    if (status === 'error' || !success) return 'border-red-500 bg-red-950';
+    if (status === 'running') return 'border-blue-500 bg-blue-950';
+    return 'border-[#2B3245]';
   };
 
   return (
@@ -514,7 +514,7 @@ export function ToolExecutionDisplay({
                 ✗ {error || 'Tool execution failed'}
               </p>
               {result?.stderr && (
-                <pre className="bg-red-500/10 p-2 rounded text-xs mt-1 overflow-x-auto max-h-32 overflow-y-auto">
+                <pre className="bg-red-950 p-2 rounded text-xs mt-1 overflow-x-auto max-h-32 overflow-y-auto">
                   {result.stderr}
                 </pre>
               )}

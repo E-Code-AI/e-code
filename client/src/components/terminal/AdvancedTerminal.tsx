@@ -166,7 +166,6 @@ export function AdvancedTerminal({
       theme: terminalThemes[selectedTheme],
       allowTransparency: true,
       scrollback: 10000,
-      bellStyle: 'both',
       rightClickSelectsWord: true,
       convertEol: true,
       screenReaderMode: true,
@@ -387,7 +386,7 @@ export function AdvancedTerminal({
     <TooltipProvider>
       <div className={`flex flex-col h-full bg-background ${className || ''}`}>
         {/* Terminal Header */}
-        <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
+        <div className="flex items-center justify-between px-3 py-2 border-b bg-[#1C2333]">
           <div className="flex items-center space-x-2">
             <TerminalIcon className="h-4 w-4" />
             <span className="text-sm font-medium">Terminal</span>
@@ -579,7 +578,7 @@ export function AdvancedTerminal({
 
         {/* Search Bar */}
         {searchOpen && (
-          <div className="px-3 py-2 border-b bg-muted/20">
+          <div className="px-3 py-2 border-b bg-[#1C2333]">
             <div className="flex items-center space-x-2">
               <Input
                 type="text"

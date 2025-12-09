@@ -119,11 +119,10 @@ export function EnhancedMobileTerminal(props: EnhancedMobileTerminalProps) {
             exit={{ opacity: 0, y: -20 }}
             style={{
               padding: '8px 16px',
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              backgroundColor: '#0E1525',
               borderRadius: '20px',
               color: 'white',
               fontSize: '14px',
-              backdropFilter: 'blur(10px)',
             }}
           >
             Clearing terminal...
