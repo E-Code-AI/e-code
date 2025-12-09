@@ -3,8 +3,16 @@
 # Production Deployment Script for E-Code Platform
 # This script builds and prepares the application for production deployment
 
+set -e  # Exit on error
+set -x  # Print commands (debug mode)
+
 echo "🚀 E-Code Platform Production Deployment"
 echo "========================================"
+echo "Timestamp: $(date)"
+echo "Current directory: $(pwd)"
+echo "Available disk space:"
+df -h
+echo ""
 
 # Set production environment
 export NODE_ENV=production
@@ -12,12 +20,18 @@ export NODE_ENV=production
 # Step 1: Install dependencies
 echo ""
 echo "📦 Installing production dependencies..."
-npm ci --omit=dev
+echo "Running: npm ci --omit=dev"
+npm ci --omit=dev 2>&1 | tee /tmp/npm-install.log
+echo "✅ Dependencies installed successfully"
+echo ""
 
 # Step 2: Run production build
 echo ""
 echo "🔨 Building production assets..."
-node build-prod.js
+echo "Running: node build-prod.js"
+node build-prod.js 2>&1 | tee /tmp/build.log
+echo "✅ Build completed successfully"
+echo ""
 
 # Step 3: Verify build output
 if [ ! -d "dist" ]; then
