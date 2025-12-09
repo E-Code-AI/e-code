@@ -12,7 +12,7 @@ E-Code is an AI-assisted web-based IDE designed for rapid prototyping, education
 - **Routing:** `/ide/:id` (legacy `/editor/:id` redirects)
 - **Security:** API keys via Replit Secrets, never commit
 - **Docker Build:** Optimized for <2GiB images
-- **Rate Limiting:** Tier-based (Free: 100/min, Pro: 1000/min, Enterprise: 10000/min)
+- **Rate Limiting:** Tier-based (Free: 500/min, Pro: 1000/min, Teams: 5000/min, Enterprise: 10000/min)
 - **Monaco Editor:** Safe disposal pattern with optional chaining (`d?.dispose?.()`) for all enhancement classes
 - **Documentation:** Ruthlessly remove obsolete/misleading docs - maintain technical honesty
 
