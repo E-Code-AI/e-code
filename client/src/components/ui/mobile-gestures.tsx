@@ -210,7 +210,7 @@ export function PullToRefresh({
             ease: 'linear'
           }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" className="text-[#F26207]">
+          <svg width="24" height="24" viewBox="0 0 24 24" className="text-primary">
             <path 
               fill="currentColor" 
               d="M12 2v6l4-4-4-4M12 22v-6l-4 4 4 4M2 12h6l-4-4-4 4M22 12h-6l4 4 4-4"
