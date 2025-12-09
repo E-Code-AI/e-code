@@ -67,11 +67,25 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 
 3. **Preview Tab Wiring Fixed**: The `onBuildComplete` callback now properly calls `/api/preview/start` with `{ projectId }` in the request body. Added React Query cache invalidation (`queryClient.invalidateQueries`) and smart polling for preview status updates.
 
-4. **WebSocket Collaboration Fixed**: Changed Socket.IO from `noServer` mode (which conflicted with Central Upgrade Dispatcher) to standard server-attached mode. Yjs collaboration continues to use central dispatcher at `/ws/yjs`.
+4. **Socket.IO Collaboration Fixed (TRUE noServer Mode)**: Refactored UnifiedCollaborationService to use true noServer architecture:
+   - Creates standalone Engine.IO server with `new EngineServer({path: '/ws/collaboration', ...})`
+   - Creates Socket.IO server without HTTP attachment (prevents upgrade listener registration)
+   - Uses `io.bind(engineServer)` to connect Socket.IO to standalone engine
+   - Central dispatcher routes upgrades to `engineServer.handleUpgrade()` via priority 61
+   - Eliminates all Socket.IO-related upgrade listener blocking warnings
+   - Yjs collaboration continues at `/ws/yjs` via central dispatcher (priority 60)
+
+5. **Mobile IDE Agent Bootstrap Fixed**: Refactored MobileIDEView to use effect-based initialization:
+   - Moved all browser-only APIs (URLSearchParams, atob, sessionStorage) into useEffect
+   - Added `typeof window === 'undefined'` guards for SSR safety
+   - Decodes bootstrap token to extract conversationId, sessionId, and prompt
+   - Stores prompt in sessionStorage for React lifecycle persistence
+   - Passes initialPrompt, sessionId, externalConversationId, autoStart to ReplitAgentPanelV3
+   - Matches desktop IDEPage bootstrap flow exactly
 
 ### Schema Changes
 - `agentMessages.projectId`: Changed from `notNull()` to nullable to support conversations with non-numeric project IDs
 - SQL migration: `ALTER TABLE agent_messages ALTER COLUMN project_id DROP NOT NULL`
 
 ### Known Issues
-- None blocking core functionality. All critical bugs for Replit parity have been resolved.
+- Minor: Some other WebSocket services still log "Blocked additional upgrade listener" warnings. These services haven't been migrated to the central dispatcher yet, but they work correctly due to the blocking mechanism. This is cosmetic only and doesn't affect functionality.

@@ -7,6 +7,7 @@
  */
 
 import { Server as SocketServer, Socket } from 'socket.io';
+import { Server as EngineServer } from 'engine.io';
 import { Server as HttpServer, IncomingMessage } from 'http';
 import type { Duplex } from 'stream';
 import * as Y from 'yjs';
@@ -81,24 +82,33 @@ const COLLABORATOR_COLORS = [
 
 export class UnifiedCollaborationService {
   private io: SocketServer;
+  private engineServer: EngineServer;
   private yjsWss: WebSocketServer;
   private rooms: Map<string, CollaborationRoom> = new Map();
   private socketToRoom: Map<string, string> = new Map();
   private userColorMap: Map<string, string> = new Map();
   private colorIndex = 0;
+  private httpServer: HttpServer;
   
   constructor(server: HttpServer) {
-    // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 9, 2025): Use Central Upgrade Dispatcher for Socket.IO
-    // CRITICAL: Use noServer mode so Socket.IO doesn't add its own upgrade listener
-    // The central dispatcher handles ALL WebSocket upgrades and routes them to the right handler
-    this.io = new SocketServer(server, {
+    this.httpServer = server;
+    
+    // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 9, 2025): TRUE noServer mode for Socket.IO
+    // ARCHITECTURE: Create a standalone Engine.IO server and bind it to Socket.IO
+    // This avoids any upgrade listener registration on the HTTP server.
+    // Central dispatcher exclusively handles WebSocket upgrades.
+    
+    // Step 1: Create standalone Engine.IO server in noServer mode
+    // This engine will handle WebSocket protocol, but won't attach to HTTP server
+    // CRITICAL: path MUST match Socket.IO's path for handshake to work
+    this.engineServer = new EngineServer({
+      path: '/ws/collaboration', // MUST match Socket.IO path
       cors: {
         origin: '*',
         credentials: true,
         methods: ['GET', 'POST']
       },
-      path: '/ws/collaboration',
-      transports: ['websocket', 'polling'],
+      transports: ['websocket'], // WebSocket only - no polling
       allowEIO3: true,
       pingTimeout: 30000,
       pingInterval: 25000,
@@ -107,11 +117,32 @@ export class UnifiedCollaborationService {
       perMessageDeflate: false
     });
     
-    // NOTE: Socket.IO attach mode handles its own upgrades via the server constructor
-    // The central dispatcher has lower priority and will not interfere with Socket.IO's listener
-    // This is the standard Socket.IO configuration that should work out of the box
+    // Step 2: Create Socket.IO server WITHOUT attaching to HTTP server
+    // This prevents Socket.IO from registering its own upgrade listeners
+    this.io = new SocketServer({
+      cors: {
+        origin: '*',
+        credentials: true,
+        methods: ['GET', 'POST']
+      },
+      path: '/ws/collaboration'
+    });
     
-    // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
+    // Step 3: Bind our standalone Engine.IO server to Socket.IO
+    // This connects Socket.IO's event handling to our engine
+    this.io.bind(this.engineServer);
+    
+    // Step 4: Register Socket.IO WebSocket upgrade with central dispatcher (priority 61)
+    // Central dispatcher will forward matching upgrades to our Engine.IO server
+    centralUpgradeDispatcher.register(
+      '/ws/collaboration',
+      this.handleSocketIOUpgrade.bind(this),
+      { pathMatch: 'prefix', priority: 61 }
+    );
+    
+    console.log('[Collaboration] Socket.IO initialized with standalone Engine.IO (true noServer mode)');
+    
+    // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher for Yjs
     // Use noServer mode and register with central dispatcher to eliminate race conditions
     this.yjsWss = new WebSocketServer({ noServer: true });
     
@@ -122,7 +153,7 @@ export class UnifiedCollaborationService {
       { pathMatch: 'prefix', priority: 60 }
     );
     
-    this.io.engine.on('connection_error', (err) => {
+    this.engineServer.on('connection_error', (err) => {
       console.log('[Collaboration] Engine connection error:', err.message, err.context);
     });
     
@@ -134,7 +165,22 @@ export class UnifiedCollaborationService {
     this.setupYjsWebSocket();
     this.startCleanupInterval();
     
-    console.log('[Collaboration] Unified collaboration service initialized (Socket.IO server-attached, Yjs via central dispatcher)');
+    console.log('[Collaboration] ✅ Unified collaboration service initialized (Socket.IO noServer + Yjs via central dispatcher)');
+  }
+  
+  /**
+   * Handle Socket.IO WebSocket upgrade via central dispatcher
+   * ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 9, 2025)
+   */
+  private handleSocketIOUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): void {
+    // Mark socket as handled before upgrade
+    markSocketAsHandled(request, socket);
+    
+    // Forward the upgrade to our standalone Engine.IO server
+    // Engine.IO handles the WebSocket handshake and protocol
+    this.engineServer.handleUpgrade(request, socket, head);
+    
+    console.log('[Collaboration] Socket.IO WebSocket upgrade handled via central dispatcher');
   }
   
   private getColorForUser(odUserId: string): string {

@@ -338,6 +338,97 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [isEditingFile, setIsEditingFile] = useState(false);
   
+  // ✅ FIX (Dec 9, 2025): Mobile Agent Bootstrap - match desktop IDEPage flow
+  // Use effect-based initialization to guard browser-only APIs (safe for SSR/tests)
+  
+  // Bootstrap state - populated in effects to avoid browser-only API calls during render
+  const [agentSessionId, setAgentSessionId] = useState<string | null>(null);
+  const [agentConversationId, setAgentConversationId] = useState<number | null>(null);
+  const [autoStartAgent, setAutoStartAgent] = useState(false);
+  const [persistedBootstrapPrompt, setPersistedBootstrapPrompt] = useState<string | null>(null);
+  
+  const bootstrapPromptKey = `agent-prompt-${normalizedProjectId}`;
+  
+  // Decode bootstrap token to extract sessionId and conversationId
+  const decodeBootstrapToken = (token: string) => {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      
+      let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const pad = base64.length % 4;
+      if (pad) {
+        if (pad === 1) throw new Error('Invalid base64url string');
+        base64 += new Array(5 - pad).join('=');
+      }
+      
+      const payload = JSON.parse(atob(base64));
+      return {
+        projectId: payload.projectId,
+        sessionId: payload.sessionId,
+        conversationId: payload.conversationId,
+        userId: payload.userId
+      };
+    } catch (e) {
+      console.error('[MobileIDEView] Failed to decode bootstrap token:', e);
+      return null;
+    }
+  };
+  
+  // Extract bootstrap parameters from URL on mount (effect-based for SSR safety)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const searchParams = new URLSearchParams(window.location.search);
+    const bootstrapToken = searchParams.get('bootstrap');
+    const promptParam = searchParams.get('prompt');
+    const agentEnabled = searchParams.get('agent') === 'true' || searchParams.get('panel') === 'agent';
+    
+    // Decode bootstrap token if present
+    if (bootstrapToken) {
+      const tokenData = decodeBootstrapToken(bootstrapToken);
+      if (tokenData) {
+        setAgentSessionId(tokenData.sessionId || null);
+        setAgentConversationId(tokenData.conversationId || null);
+      }
+      setAutoStartAgent(true);
+    } else if (agentEnabled) {
+      setAutoStartAgent(true);
+    }
+    
+    // Handle prompt from URL param
+    if (promptParam && normalizedProjectId) {
+      sessionStorage.setItem(bootstrapPromptKey, promptParam);
+      setPersistedBootstrapPrompt(promptParam);
+      
+      // Clean URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('prompt');
+      window.history.replaceState({}, '', url);
+    }
+    
+    // Read existing prompt from sessionStorage
+    const saved = sessionStorage.getItem(bootstrapPromptKey);
+    if (saved) {
+      setPersistedBootstrapPrompt(saved);
+    }
+  }, [normalizedProjectId, bootstrapPromptKey]);
+  
+  // Fetch project data for bootstrap prompt
+  const { data: project } = useQuery<{ id: number; name: string; description?: string }>({
+    queryKey: [`/api/projects/${normalizedProjectId}`],
+    enabled: !!normalizedProjectId && normalizedProjectId !== 'undefined',
+  });
+  
+  // Store project description as fallback prompt for new projects
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!persistedBootstrapPrompt && project?.description) {
+      sessionStorage.setItem(bootstrapPromptKey, project.description);
+      setPersistedBootstrapPrompt(project.description);
+    }
+  }, [project?.description, persistedBootstrapPrompt, bootstrapPromptKey]);
+  
   interface GitStatus {
     branch: string;
     ahead: number;
@@ -528,6 +619,10 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
                     mode="mobile"
                     agentToolsSettings={agentSettings}
                     onAgentToolsSettingsChange={updateAgentSettings}
+                    initialPrompt={persistedBootstrapPrompt}
+                    sessionId={agentSessionId}
+                    externalConversationId={agentConversationId}
+                    autoStart={autoStartAgent || !!bootstrapToken}
                   />
                 </Suspense>
               )}
