@@ -622,7 +622,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
                     initialPrompt={persistedBootstrapPrompt}
                     sessionId={agentSessionId}
                     externalConversationId={agentConversationId}
-                    autoStart={autoStartAgent || !!bootstrapToken}
+                    autoStart={autoStartAgent}
                   />
                 </Suspense>
               )}

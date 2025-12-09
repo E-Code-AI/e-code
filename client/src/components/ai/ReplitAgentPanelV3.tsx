@@ -355,47 +355,15 @@ export function ReplitAgentPanelV3({
     }
   }, [backendMessages, conversationId, hasConversation, setStoreMessages, setLastSyncedAt]);
 
-  // Track whether initial prompt has been processed (idempotent guard)
-  const initialPromptProcessedRef = useRef(false);
+  // Track context injection to prevent duplicates
   const contextInjectedRef = useRef<string | null>(null);
-  // Track previous initialPrompt value to detect changes from undefined → value
-  const prevInitialPromptRef = useRef<string | undefined>(undefined);
   
-  // ✅ FIX (Dec 9, 2025): Robust auto-start with sessionStorage fallback
-  // Problem: initialPrompt prop arrives as undefined due to React lifecycle timing
-  // Solution: Read directly from sessionStorage as fallback, don't rely on parent prop
-  useEffect(() => {
-    // Get effective prompt from multiple sources (priority order)
-    const sessionStorageKey = `agent-prompt-${projectId}`;
-    const promptFromSession = typeof window !== 'undefined' ? window.sessionStorage.getItem(sessionStorageKey) : null;
-    const effectivePrompt = initialPrompt || promptFromSession;
-    
-    const prevValue = prevInitialPromptRef.current;
-    prevInitialPromptRef.current = effectivePrompt ?? undefined;
-    
-    // Process if: we have a prompt AND not already processing/processed
-    // Note: We don't wait for conversationId - the form submit will create one if needed
-    if (effectivePrompt && !isWorking && !initialPromptProcessedRef.current) {
-      initialPromptProcessedRef.current = true;
-      setInput(effectivePrompt);
-      
-      // Clear sessionStorage AFTER capturing the prompt (prevent re-processing on remount)
-      if (promptFromSession) {
-        window.sessionStorage.removeItem(sessionStorageKey);
-      }
-      
-      // Auto-start if requested
-      if (autoStart) {
-        // Wait for form to render and be ready
-        setTimeout(() => {
-          const form = document.querySelector('form[data-testid="chat-form"]') as HTMLFormElement;
-          if (form) {
-            form.requestSubmit();
-          }
-        }, 1000);
-      }
-    }
-  }, [initialPrompt, projectId, conversationId, autoStart, isWorking]);
+  // ✅ FIX (Dec 9, 2025): REMOVED first auto-start effect
+  // The second auto-start effect (lines 588-883) is the authoritative one.
+  // This first effect was clearing sessionStorage before the second effect could use it,
+  // causing the mobile bootstrap flow to fail.
+  // Consolidation: Only use the second effect which properly waits for conversationId,
+  // handles streaming, and persists messages correctly.
 
   // Handle selected file/code context injection - with idempotent check using content hash
   useEffect(() => {
@@ -583,8 +551,13 @@ export function ReplitAgentPanelV3({
   // Ref to track if auto-start has been processed (prevent double execution)
   const autoStartExecutedRef = useRef(false);
   
-  // Auto-start building from URL prompt (Build from Homepage feature OR bootstrap)
-  // ✅ FIX (Dec 9, 2025): Wait for conversationId to be set before starting
+  // ✅ FIX (Dec 9, 2025): CONSOLIDATED auto-start effect
+  // This is now the ONLY auto-start mechanism. The previous first effect was removed
+  // because it was clearing sessionStorage before this effect could read it.
+  // This effect properly:
+  // 1. Waits for conversationId to be available (messages persist to store)
+  // 2. Checks multiple prompt sources in priority order
+  // 3. Only clears sessionStorage AFTER successfully starting
   useEffect(() => {
     // CRITICAL: Don't start until conversationId is available so messages persist to store
     if (!conversationId) {
@@ -602,11 +575,14 @@ export function ReplitAgentPanelV3({
     const agentEnabled = urlParams.get('agent') === 'true';
     const hasBootstrapToken = !!urlParams.get('bootstrap');
     
-    // Check session storage for prompt (IDEPage.tsx stores bootstrap prompt here)
+    // Check session storage for prompt (IDEPage.tsx and MobileIDEView.tsx store bootstrap prompt here)
     const promptFromSession = window.sessionStorage.getItem(`agent-prompt-${projectId}`);
     
-    // Use prompt from URL or session storage
-    const resolvedPrompt = promptFromUrl || promptFromSession;
+    // ✅ FIX (Dec 9, 2025): Priority order for prompt sources:
+    // 1. initialPrompt prop (passed from parent component like MobileIDEView)
+    // 2. URL param (?prompt=...)
+    // 3. sessionStorage (bootstrap flow)
+    const resolvedPrompt = initialPrompt || promptFromUrl || promptFromSession;
     
     // ✅ FIX (Dec 7, 2025): Also trigger for bootstrap token, not just agent=true
     const shouldAutoStart = (agentEnabled || hasBootstrapToken || autoStart) && resolvedPrompt && !isWorking;
@@ -880,7 +856,7 @@ export function ReplitAgentPanelV3({
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }
-  }, [projectId, conversationId, autoStart, isWorking]); // ✅ FIX (Dec 9, 2025): Depend on conversationId to ensure store persistence
+  }, [projectId, conversationId, autoStart, isWorking, initialPrompt]); // ✅ FIX (Dec 9, 2025): Added initialPrompt to deps for mobile bootstrap
 
   const toggleCapability = useCallback((capabilityId: string) => {
     setCapabilities(prev => prev.map(cap =>
