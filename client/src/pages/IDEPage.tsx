@@ -1113,10 +1113,10 @@ export default function IDEPage() {
               </TabsList>
               
               <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden" forceMount>
-                {/* ✅ FIX (Dec 7, 2025): Wrap lazy component in Suspense + pass key for re-mount on prompt change */}
+                {/* ✅ FIX (Dec 9, 2025): Stable key to prevent remounts during streaming - component handles prompt changes internally */}
                 <Suspense fallback={<div className="flex items-center justify-center h-full text-muted-foreground">Loading AI Agent...</div>}>
                   <ReplitAgentPanelV3
-                    key={`agent-${projectId}-${agentInitialPrompt ? 'prompt' : 'no-prompt'}`}
+                    key={`agent-${projectId}`}
                     projectId={projectId}
                     sessionId={agentSessionId}
                     externalConversationId={agentConversationId}
