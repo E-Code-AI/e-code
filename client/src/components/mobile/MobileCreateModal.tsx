@@ -157,7 +157,7 @@ export function MobileCreateModal({
             {/* Handle */}
             <div className="flex justify-center py-3">
               <motion.div 
-                className="w-12 h-1.5 bg-[#3D4455] rounded-full"
+                className="w-12 h-1.5 bg-surface-hover-solid rounded-full"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               />
@@ -282,12 +282,12 @@ export function MobileCreateModal({
                         {/* Badges */}
                         <div className="absolute top-2 right-2 flex gap-1">
                           {template.isPopular && (
-                            <span className="text-xs px-1.5 py-0.5 bg-[#2B3245] text-amber-500 rounded-full">
+                            <span className="text-xs px-1.5 py-0.5 bg-surface-tertiary-solid text-amber-500 rounded-full">
                               Popular
                             </span>
                           )}
                           {template.isNew && (
-                            <span className="text-xs px-1.5 py-0.5 bg-[#2B3245] text-green-500 rounded-full">
+                            <span className="text-xs px-1.5 py-0.5 bg-surface-tertiary-solid text-green-500 rounded-full">
                               New
                             </span>
                           )}

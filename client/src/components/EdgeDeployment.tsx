@@ -124,7 +124,7 @@ export function EdgeDeployment({ projectId }: { projectId: string }) {
                       className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-colors ${
                         config.edgeLocations.includes(location.id)
                           ? 'border-primary bg-primary/5'
-                          : 'border-input hover:bg-[#3D4455]'
+                          : 'border-input hover:bg-surface-hover-solid'
                       }`}
                     >
                       <input

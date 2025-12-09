@@ -217,7 +217,7 @@ export function FolderOrganization({ projectId, files = [], onFileMove }: Folder
           filteredFolders.map((folder: FolderItem) => (
             <div
               key={folder.id}
-              className="border rounded-lg hover:bg-[#3D4455]/50 transition-colors"
+              className="border rounded-lg hover:bg-surface-hover-solid transition-colors"
               onDrop={(e) => handleFileDropToFolder(e, folder.id)}
               onDragOver={(e) => e.preventDefault()}
             >
@@ -225,7 +225,7 @@ export function FolderOrganization({ projectId, files = [], onFileMove }: Folder
                 <div className="flex items-center gap-2 flex-1">
                   <button
                     onClick={() => toggleFolder(folder.id)}
-                    className="p-0.5 hover:bg-[#3D4455] rounded"
+                    className="p-0.5 hover:bg-surface-hover-solid rounded"
                   >
                     {expandedFolders.has(folder.id) ? (
                       <ChevronDown className="h-4 w-4" />
@@ -280,7 +280,7 @@ export function FolderOrganization({ projectId, files = [], onFileMove }: Folder
                       .map((file: any) => (
                         <div 
                           key={file.id}
-                          className="flex items-center gap-2 py-1 px-2 hover:bg-[#3D4455] rounded text-sm"
+                          className="flex items-center gap-2 py-1 px-2 hover:bg-surface-hover-solid rounded text-sm"
                         >
                           <FileText className="h-3 w-3 text-muted-foreground" />
                           <span>{file.name}</span>

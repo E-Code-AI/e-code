@@ -268,14 +268,14 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
                 </TooltipProvider>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <div className="p-2 bg-[#2B3245] rounded text-center">
+                <div className="p-2 bg-surface-tertiary-solid rounded text-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
                     <TrendingDown className="h-3 w-3 text-green-500" />
                     <span className="text-[10px] text-muted-foreground">IN</span>
                   </div>
                   <span className="text-xs font-medium">{formatBytes(metrics.network.bytesIn)}</span>
                 </div>
-                <div className="p-2 bg-[#2B3245] rounded text-center">
+                <div className="p-2 bg-surface-tertiary-solid rounded text-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
                     <TrendingUp className="h-3 w-3 text-blue-500" />
                     <span className="text-[10px] text-muted-foreground">OUT</span>

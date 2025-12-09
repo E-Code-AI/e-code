@@ -210,7 +210,7 @@ export function RAGToggle({ sessionId, enabled = true, onToggle, compact = false
       <div className="flex items-center gap-3">
         <div className={cn(
           "h-9 w-9 rounded-lg flex items-center justify-center",
-          isEnabled && isAvailable ? "bg-orange-950" : "bg-[#1C2333]"
+          isEnabled && isAvailable ? "bg-orange-950" : "bg-surface-solid"
         )}>
           <Brain className={cn(
             "h-5 w-5",
@@ -367,7 +367,7 @@ export function RetrievedContextPanel({ sessionId, query, className, maxHeight =
       case 'entity': return 'border-blue-500 bg-blue-950';
       case 'fact': return 'border-green-500 bg-green-950';
       case 'idea': return 'border-orange-500 bg-orange-950';
-      default: return 'border-[#2B3245] bg-[#1C2333]';
+      default: return 'border-border bg-surface-solid';
     }
   };
 
@@ -414,7 +414,7 @@ export function RetrievedContextPanel({ sessionId, query, className, maxHeight =
                   <div
                     key={ctx.id}
                     className={cn(
-                      "p-3 rounded-lg border transition-colors hover:bg-[#3D4455]",
+                      "p-3 rounded-lg border transition-colors hover:bg-surface-hover-solid",
                       getTypeColor(ctx.type)
                     )}
                     data-testid={`context-item-${index}`}

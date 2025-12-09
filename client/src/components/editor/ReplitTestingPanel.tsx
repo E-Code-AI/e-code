@@ -230,14 +230,14 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-lg hover:bg-[#3D4455]">
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-lg hover:bg-surface-hover-solid">
                   <Settings className="w-[18px] h-[18px] text-[#9da2a6]" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-[#1c2333] border-[#3d4452]">
-                <DropdownMenuItem className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-[#3D4455]">Configure Test Runner</DropdownMenuItem>
-                <DropdownMenuItem className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-[#3D4455]">Watch Mode</DropdownMenuItem>
-                <DropdownMenuItem className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-[#3D4455]">Coverage Report</DropdownMenuItem>
+                <DropdownMenuItem className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-surface-hover-solid">Configure Test Runner</DropdownMenuItem>
+                <DropdownMenuItem className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-surface-hover-solid">Watch Mode</DropdownMenuItem>
+                <DropdownMenuItem className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-surface-hover-solid">Coverage Report</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -250,17 +250,17 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
               Total: {totalTests}
             </Badge>
             {passedTests > 0 && (
-              <Badge variant="outline" className="bg-[#1C2333] text-[#22c55e] border-[#22c55e] text-[13px]">
+              <Badge variant="outline" className="bg-surface-solid text-[#22c55e] border-[#22c55e] text-[13px]">
                 Passed: {passedTests}
               </Badge>
             )}
             {failedTests > 0 && (
-              <Badge variant="outline" className="bg-[#1C2333] text-[#ef4444] border-[#ef4444] text-[13px]">
+              <Badge variant="outline" className="bg-surface-solid text-[#ef4444] border-[#ef4444] text-[13px]">
                 Failed: {failedTests}
               </Badge>
             )}
             {skippedTests > 0 && (
-              <Badge variant="outline" className="bg-[#1C2333] text-[#f59e0b] border-[#f59e0b] text-[13px]">
+              <Badge variant="outline" className="bg-surface-solid text-[#f59e0b] border-[#f59e0b] text-[13px]">
                 Skipped: {skippedTests}
               </Badge>
             )}
@@ -282,16 +282,16 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="outline" className="h-8 px-3 rounded-lg border-[#3d4452] bg-[#1c2333] hover:bg-[#3D4455] text-[13px] text-[#d4d8dd]">
+              <Button size="sm" variant="outline" className="h-8 px-3 rounded-lg border-[#3d4452] bg-[#1c2333] hover:bg-surface-hover-solid text-[13px] text-[#d4d8dd]">
                 <Filter className="w-[18px] h-[18px] mr-1.5 text-[#9da2a6]" />
                 {filter === 'all' ? 'All' : filter.charAt(0).toUpperCase() + filter.slice(1)}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-[#1c2333] border-[#3d4452]">
-              <DropdownMenuItem onClick={() => setFilter('all')} className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-[#3D4455]">All Tests</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter('passed')} className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-[#3D4455]">Passed</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter('failed')} className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-[#3D4455]">Failed</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter('pending')} className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-[#3D4455]">Pending</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilter('all')} className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-surface-hover-solid">All Tests</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilter('passed')} className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-surface-hover-solid">Passed</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilter('failed')} className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-surface-hover-solid">Failed</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilter('pending')} className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-surface-hover-solid">Pending</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -316,7 +316,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
               <div key={suite.id} className="rounded-lg overflow-hidden">
                 <button
                   onClick={() => toggleSuite(suite.id)}
-                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#3D4455] rounded-lg transition-colors text-left"
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-surface-hover-solid rounded-lg transition-colors text-left"
                   data-testid={`suite-${suite.id}`}
                 >
                   {expandedSuites.has(suite.id) ? (
@@ -343,7 +343,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
                     {suite.tests.map(test => (
                       <div
                         key={test.id}
-                        className="flex items-start gap-2 px-3 py-2 hover:bg-[#3D4455] rounded-lg transition-colors cursor-pointer"
+                        className="flex items-start gap-2 px-3 py-2 hover:bg-surface-hover-solid rounded-lg transition-colors cursor-pointer"
                         data-testid={`test-${test.id}`}
                       >
                         {getTestIcon(test.status)}
@@ -381,7 +381,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
             {testRuns.slice(0, 3).map(run => (
               <div
                 key={run.id}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#3D4455] cursor-pointer transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover-solid cursor-pointer transition-colors"
                 data-testid={`run-${run.id}`}
               >
                 {run.status === 'passed' && <CheckCircle2 className="w-[18px] h-[18px] text-[#22c55e]" />}
@@ -401,9 +401,9 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
                   variant="outline" 
                   className={cn(
                     "text-[13px]",
-                    run.status === 'passed' && "bg-[#1C2333] text-[#22c55e] border-[#22c55e]",
-                    run.status === 'failed' && "bg-[#1C2333] text-[#ef4444] border-[#ef4444]",
-                    run.status === 'running' && "bg-[#1C2333] text-[#0079f2] border-[#0079f2]"
+                    run.status === 'passed' && "bg-surface-solid text-[#22c55e] border-[#22c55e]",
+                    run.status === 'failed' && "bg-surface-solid text-[#ef4444] border-[#ef4444]",
+                    run.status === 'running' && "bg-surface-solid text-[#0079f2] border-[#0079f2]"
                   )}
                 >
                   {run.status}

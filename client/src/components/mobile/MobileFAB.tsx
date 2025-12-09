@@ -233,7 +233,7 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
       <AnimatePresence>
         {showPulse && (
           <motion.div
-            className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-[#0E1525] text-white text-xs font-medium rounded-lg whitespace-nowrap pointer-events-none"
+            className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-background text-white text-xs font-medium rounded-lg whitespace-nowrap pointer-events-none"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}

@@ -457,7 +457,7 @@ export function AutonomousWorkspaceViewer({
               <Code2 className="h-3 w-3 sm:h-4 sm:w-4" />
               Generating Plan...
             </h4>
-            <ScrollArea className="h-24 sm:h-32 border rounded-md bg-[#2B3245] font-mono text-[10px] sm:text-xs">
+            <ScrollArea className="h-24 sm:h-32 border rounded-md bg-surface-tertiary-solid font-mono text-[10px] sm:text-xs">
               <div className="p-2 sm:p-3 text-muted-foreground whitespace-pre-wrap">
                 {planText}
                 <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-0.5" />

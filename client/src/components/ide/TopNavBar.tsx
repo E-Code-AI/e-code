@@ -146,7 +146,7 @@ export function TopNavBar({
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
-                className="py-2 bg-[#1C2333]"
+                className="py-2 bg-surface-solid"
                 onClick={() => navigate('/admin')}
               >
                 <Shield className="w-4 h-4 mr-2 text-[var(--ecode-accent)]" />

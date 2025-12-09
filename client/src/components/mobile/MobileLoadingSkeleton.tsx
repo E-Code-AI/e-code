@@ -80,7 +80,7 @@ export function EditorSkeleton({ className }: MobileLoadingSkeletonProps) {
       className={cn('flex flex-col bg-card', className)}
       data-testid="skeleton-editor"
     >
-      <div className="flex items-center gap-2 px-3 py-2 border-b bg-[#1C2333]">
+      <div className="flex items-center gap-2 px-3 py-2 border-b bg-surface-solid">
         <SkeletonLine width="80px" height="h-5" animate={animate} />
         <SkeletonLine width="60px" height="h-5" animate={animate} />
       </div>
@@ -162,13 +162,13 @@ export function TerminalSkeleton({ className }: MobileLoadingSkeletonProps) {
                   <SkeletonLine 
                     width="12px" 
                     height="h-3" 
-                    className="flex-shrink-0 bg-[#2B3245]"
+                    className="flex-shrink-0 bg-surface-tertiary-solid"
                     animate={animate}
                   />
                   <SkeletonLine 
                     width="45px" 
                     height="h-3" 
-                    className="flex-shrink-0 bg-[#2B3245]"
+                    className="flex-shrink-0 bg-surface-tertiary-solid"
                     animate={animate}
                   />
                 </>
@@ -186,13 +186,13 @@ export function TerminalSkeleton({ className }: MobileLoadingSkeletonProps) {
             <SkeletonLine 
               width="12px" 
               height="h-3" 
-              className="flex-shrink-0 bg-[#2B3245]"
+              className="flex-shrink-0 bg-surface-tertiary-solid"
               animate={animate}
             />
             <SkeletonLine 
               width="45px" 
               height="h-3" 
-              className="flex-shrink-0 bg-[#2B3245]"
+              className="flex-shrink-0 bg-surface-tertiary-solid"
               animate={animate}
             />
             <div className={cn(
@@ -218,7 +218,7 @@ export function PreviewSkeleton({ className }: MobileLoadingSkeletonProps) {
       )}
       data-testid="skeleton-preview"
     >
-      <div className="flex items-center gap-2 px-3 py-2 bg-[#1C2333] border-b">
+      <div className="flex items-center gap-2 px-3 py-2 bg-surface-solid border-b">
         <div className="flex gap-1">
           <SkeletonLine width="24px" height="h-6" className="rounded" animate={animate} />
           <SkeletonLine width="24px" height="h-6" className="rounded" animate={animate} />
@@ -280,7 +280,7 @@ export function AgentSkeleton({ className }: MobileLoadingSkeletonProps) {
               key={index}
               className={cn(
                 'p-3 rounded-lg',
-                index % 2 === 0 ? 'bg-[#1C2333] mr-8' : 'bg-[#2B3245] ml-8'
+                index % 2 === 0 ? 'bg-surface-solid mr-8' : 'bg-surface-tertiary-solid ml-8'
               )}
             >
               <div className="flex flex-col gap-2">

@@ -513,7 +513,7 @@ export function MobileMoreMenu({
       {isOpen && (
         <>
           <motion.div
-            className="fixed inset-0 bg-[#0E1525] z-40"
+            className="fixed inset-0 bg-background z-40"
             variants={backdropVariants}
             initial="hidden"
             animate="visible"
@@ -547,7 +547,7 @@ export function MobileMoreMenu({
               data-testid="mobile-more-menu-handle"
             >
               <motion.div 
-                className="w-12 h-1 bg-[#3D4455] rounded-full"
+                className="w-12 h-1 bg-surface-hover-solid rounded-full"
                 whileHover={prefersReducedMotion ? {} : { scaleX: 1.2 }}
                 transition={SPRING_CONFIG.default}
               />
@@ -591,7 +591,7 @@ export function MobileMoreMenu({
                       {section.items.map((item, itemIndex) => (
                         <motion.button
                           key={item.id}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted active:bg-[#2B3245] transition-colors touch-manipulation text-left group"
+                          className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted active:bg-surface-tertiary-solid transition-colors touch-manipulation text-left group"
                           onClick={item.onClick}
                           variants={itemVariants}
                           whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
@@ -599,7 +599,7 @@ export function MobileMoreMenu({
                           data-testid={`mobile-more-menu-${item.id}`}
                         >
                           <motion.div 
-                            className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-muted dark:bg-[var(--ecode-surface-secondary)] rounded-lg group-hover:bg-[#2B3245] transition-colors"
+                            className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-muted dark:bg-[var(--ecode-surface-secondary)] rounded-lg group-hover:bg-surface-tertiary-solid transition-colors"
                             whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}
                             transition={SPRING_CONFIG.default}
                           >
@@ -616,7 +616,7 @@ export function MobileMoreMenu({
                             </Badge>
                           )}
 
-                          <ChevronRight className="flex-shrink-0 h-4 w-4 text-[#3D4455] group-hover:text-muted-foreground transition-colors" />
+                          <ChevronRight className="flex-shrink-0 h-4 w-4 text-muted-foreground group-hover:text-muted-foreground transition-colors" />
                         </motion.button>
                       ))}
                     </div>

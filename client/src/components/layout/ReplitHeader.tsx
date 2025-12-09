@@ -89,7 +89,6 @@ export function ReplitHeader() {
   const isMobile = useIsMobile();
   const { toast } = useToast();
 
-  // Get project info from URL - supports: /ide/:id, /project/:id, /projects/:id, /@:username/:project, /u/:username/:project
   const ideMatch = location.match(/^\/ide\/([^/?]+)/);
   const legacyProjectMatch = location.match(/^\/project(?:s)?\/([^/?]+)/);
   const projectId = ideMatch?.[1] || legacyProjectMatch?.[1] || null;
@@ -99,14 +98,12 @@ export function ReplitHeader() {
   const username = replitStyleMatch?.[1] || userStyleMatch?.[1] || null;
   const projectSlug = replitStyleMatch?.[2] || userStyleMatch?.[2] || null;
 
-  // Fetch project info if we're in a project view
   useEffect(() => {
     const fetchProjectInfo = async () => {
       if (projectId) {
         setProjectInfoLoading(true);
         setProjectInfoError(null);
         try {
-          // apiRequest returns parsed data, not Response object
           const data = await apiRequest('GET', `/api/projects/${projectId}`);
           setProjectInfo(data);
         } catch (error) {
@@ -120,7 +117,6 @@ export function ReplitHeader() {
         setProjectInfoLoading(true);
         setProjectInfoError(null);
         try {
-          // apiRequest returns parsed data, not Response object
           const data = await apiRequest('GET', `/api/u/${username}/${projectSlug}`);
           setProjectInfo(data);
         } catch (error) {
@@ -150,21 +146,17 @@ export function ReplitHeader() {
   return (
     <>
     <header className="replit-header h-14 bg-background dark:bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4 replit-transition">
-      {/* Logo et navigation principale */}
       <div className="flex items-center gap-4">
-        {/* Mobile menu button - only on mobile */}
         <div className="lg:hidden mr-2">
           <MobileMenu onOpenSpotlight={() => setSpotlightOpen(true)} />
         </div>
 
-        {/* E-Code Logo */}
         <Link href="/">
           <div className="group cursor-pointer flex items-center">
             <ECodeLogo size="sm" showText={!isMobile} className="group-hover:opacity-80 transition-opacity" />
           </div>
         </Link>
 
-        {/* Project Name Display - shown when in project view */}
         {projectInfoLoading && (
           <>
             <span className="text-[var(--ecode-text-muted)] mx-2">/</span>
@@ -257,7 +249,6 @@ export function ReplitHeader() {
                   className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                   onClick={async () => {
                     try {
-                      // apiRequest returns parsed data, not Response object
                       const forkedProject = await apiRequest('POST', `/api/projects/${projectId}/fork`);
                       toast({
                         title: "Project Forked",
@@ -279,7 +270,6 @@ export function ReplitHeader() {
                 <DropdownMenuItem 
                   className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                   onClick={() => {
-                    // Generate shareable link
                     const shareUrl = window.location.origin + window.location.pathname;
                     navigator.clipboard.writeText(shareUrl);
                     toast({
@@ -340,9 +330,7 @@ export function ReplitHeader() {
           </>
         )}
 
-        {/* Navigation principale - hidden on mobile */}
         <nav className="replit-nav">
-          {/* Create Button - First like Replit */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -408,7 +396,6 @@ export function ReplitHeader() {
         </nav>
       </div>
 
-      {/* Search bar - only on larger screens */}
       <div className="flex-1 max-w-md mx-4 sm:mx-6 hidden lg:block">
         <Button
           variant="ghost"
@@ -424,13 +411,11 @@ export function ReplitHeader() {
         </Button>
       </div>
 
-      {/* Actions utilisateur */}
       <div className="replit-header-controls flex items-center gap-2 md:gap-3">
-        {/* Bouton Plan Pro */}
         <Button
           variant="outline"
           size="sm"
-          className="hidden sm:flex items-center space-x-1 border-[var(--ecode-warning)] text-[var(--ecode-warning)] hover:bg-[#3D4455] replit-transition"
+          className="hidden sm:flex items-center space-x-1 border-[var(--ecode-warning)] text-[var(--ecode-warning)] hover:bg-surface-hover-solid replit-transition"
           onClick={() => navigate('/pricing')}
         >
           <Crown className="h-4 w-4" />
@@ -439,10 +424,8 @@ export function ReplitHeader() {
 
 
 
-        {/* Notifications */}
         <NotificationCenter />
 
-        {/* Menu utilisateur */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 replit-hover">
@@ -579,39 +562,8 @@ export function ReplitHeader() {
             <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
 
             <DropdownMenuItem 
-              onClick={() => navigate('/referrals')}
-              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
-              <Gift className="mr-2 h-4 w-4" />
-              Refer a Friend
-            </DropdownMenuItem>
-
-            {/* Admin-Only Menu Items */}
-            {user?.isAdmin && (
-              <>
-                <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
-                
-                <DropdownMenuItem 
-                  onClick={() => navigate('/admin/chatgpt')}
-                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
-                  <Bot className="mr-2 h-4 w-4" />
-                  AI Assistant (Admin)
-                </DropdownMenuItem>
-
-                <DropdownMenuItem 
-                  onClick={() => navigate('/admin/dashboard')}
-                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
-                  <Shield className="mr-2 h-4 w-4" />
-                  Admin Dashboard
-                </DropdownMenuItem>
-              </>
-            )}
-
-            <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
-
-            <DropdownMenuItem
               onClick={handleLogout}
-              className="text-[var(--ecode-danger)] hover:bg-[var(--ecode-danger)]/10"
-            >
+              className="text-[var(--ecode-danger)] hover:bg-[var(--ecode-sidebar-hover)]">
               <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>
@@ -619,6 +571,8 @@ export function ReplitHeader() {
         </DropdownMenu>
       </div>
     </header>
+
+    <SpotlightSearch open={spotlightOpen} onOpenChange={setSpotlightOpen} />
     </>
   );
 }

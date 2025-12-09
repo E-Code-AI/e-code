@@ -130,7 +130,7 @@ function ActivityEventItem({ event }: { event: ActivityEvent }) {
         <div 
           className={cn(
             "flex items-start gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md cursor-pointer transition-colors",
-            "hover:bg-[#3D4455]",
+            "hover:bg-surface-hover-solid",
             event.status === 'error' || event.type === 'error' ? 'bg-red-950' : '',
             event.status === 'running' ? 'bg-blue-950' : ''
           )}
@@ -306,7 +306,7 @@ export function AgentActivityFeed({
 
         {/* Session Stats */}
         {stats && showStats && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2 sm:p-3 bg-[#1C2333] rounded-lg text-[10px] sm:text-xs" data-testid="session-stats">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2 sm:p-3 bg-surface-solid rounded-lg text-[10px] sm:text-xs" data-testid="session-stats">
             <div className="space-y-0.5">
               <p className="text-muted-foreground">Duration</p>
               <p className="font-medium">{formatDuration(stats.duration)}</p>
@@ -345,7 +345,7 @@ export function AgentActivityFeed({
               size="sm"
               className={cn(
                 "h-6 px-2 text-[10px] sm:text-xs shrink-0",
-                filter === id && "bg-[#2B3245]"
+                filter === id && "bg-surface-tertiary-solid"
               )}
               onClick={() => setFilter(id)}
               disabled={count === 0 && id !== 'all'}

@@ -481,7 +481,7 @@ export function ReplitCodeEditor({
         <div className="ml-auto flex items-center px-2 gap-2">
           {/* AI Status Badge */}
           {aiProcessing && (
-            <Badge variant="outline" className="text-xs bg-[#1C2333] border-primary">
+            <Badge variant="outline" className="text-xs bg-surface-solid border-primary">
               <Sparkles className="h-3 w-3 mr-1 animate-pulse" />
               AI Processing...
             </Badge>

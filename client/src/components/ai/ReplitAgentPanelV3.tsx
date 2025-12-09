@@ -1469,8 +1469,8 @@ export function ReplitAgentPanelV3({
                 <AvatarFallback className={cn(
                   "text-xs font-semibold",
                   message.role === 'assistant' 
-                    ? "bg-[#2B3245] text-primary" 
-                    : "bg-[#1C2333] text-[#9CA3AF]"
+                    ? "bg-surface-tertiary-solid text-primary" 
+                    : "bg-surface-solid text-muted-foreground"
                 )}>
                   {message.role === 'assistant' ? <Sparkles className="h-4 w-4" /> : 'You'}
                 </AvatarFallback>
@@ -1521,7 +1521,7 @@ export function ReplitAgentPanelV3({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute -top-2 -right-2 h-6 w-6 bg-[#3D4455] hover:bg-[#2B3245] transition-colors"
+                    className="absolute -top-2 -right-2 h-6 w-6 bg-surface-hover-solid hover:bg-surface-tertiary-solid transition-colors"
                     onClick={() => handleCopyMessage(message.content)}
                     data-testid={`button-copy-${message.id}`}
                   >
@@ -1574,7 +1574,7 @@ export function ReplitAgentPanelV3({
           {isWorking && activeThinking.length > 0 && (
             <div className="flex gap-3" data-testid="active-thinking-container">
               <Avatar className="h-8 w-8" data-testid="active-thinking-avatar">
-                <AvatarFallback className="bg-[#2B3245] text-primary text-xs">
+                <AvatarFallback className="bg-surface-tertiary-solid text-primary text-xs">
                   <Sparkles className="h-4 w-4" />
                 </AvatarFallback>
               </Avatar>
@@ -1599,7 +1599,7 @@ export function ReplitAgentPanelV3({
           {isWorking && streamingContent && (
             <div className="flex gap-3" data-testid="streaming-message-container">
               <Avatar className="h-8 w-8" data-testid="streaming-avatar">
-                <AvatarFallback className="bg-[#2B3245] text-primary text-xs">
+                <AvatarFallback className="bg-surface-tertiary-solid text-primary text-xs">
                   <Sparkles className="h-4 w-4" />
                 </AvatarFallback>
               </Avatar>
@@ -1618,7 +1618,7 @@ export function ReplitAgentPanelV3({
           {isWorking && !streamingContent && activeThinking.length === 0 && (
             <div className="flex gap-3" data-testid="loading-indicator">
               <Avatar className="h-8 w-8" data-testid="loading-avatar">
-                <AvatarFallback className="bg-[#2B3245] text-primary text-xs">
+                <AvatarFallback className="bg-surface-tertiary-solid text-primary text-xs">
                   <Loader2 className="h-4 w-4 animate-spin" />
                 </AvatarFallback>
               </Avatar>

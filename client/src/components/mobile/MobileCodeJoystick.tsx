@@ -204,7 +204,7 @@ export function MobileCodeJoystick({
     >
       {/* Selection mode indicator */}
       {selectionMode !== 'none' && (
-        <div className="bg-[#2B3245] text-primary px-2 py-1 rounded-full text-[10px] font-medium flex items-center gap-1">
+        <div className="bg-surface-tertiary-solid text-primary px-2 py-1 rounded-full text-[10px] font-medium flex items-center gap-1">
           <SelectionIcon className="w-3 h-3" />
           {selectionMode}
         </div>
@@ -214,7 +214,7 @@ export function MobileCodeJoystick({
       <Button
         variant="ghost"
         size="icon"
-        className="w-10 h-10 rounded-full bg-[#1C2333] border shadow-lg"
+        className="w-10 h-10 rounded-full bg-surface-solid border shadow-lg"
         onTouchStart={() => handleArrowPress('up')}
         onClick={() => handleArrowPress('up')}
         data-testid="joystick-up"
@@ -227,7 +227,7 @@ export function MobileCodeJoystick({
         <Button
           variant="ghost"
           size="icon"
-          className="w-10 h-10 rounded-full bg-[#1C2333] border shadow-lg"
+          className="w-10 h-10 rounded-full bg-surface-solid border shadow-lg"
           onTouchStart={() => handleArrowPress('left')}
           onClick={() => handleArrowPress('left')}
           data-testid="joystick-left"
@@ -258,7 +258,7 @@ export function MobileCodeJoystick({
           {/* Inner joystick nub */}
           <div
             className={cn(
-              "w-8 h-8 rounded-full bg-[#2B3245] shadow-inner",
+              "w-8 h-8 rounded-full bg-surface-tertiary-solid shadow-inner",
               "transition-transform duration-75 ease-out",
               isDragging && "bg-primary"
             )}
@@ -271,7 +271,7 @@ export function MobileCodeJoystick({
         <Button
           variant="ghost"
           size="icon"
-          className="w-10 h-10 rounded-full bg-[#1C2333] border shadow-lg"
+          className="w-10 h-10 rounded-full bg-surface-solid border shadow-lg"
           onTouchStart={() => handleArrowPress('right')}
           onClick={() => handleArrowPress('right')}
           data-testid="joystick-right"
@@ -284,7 +284,7 @@ export function MobileCodeJoystick({
       <Button
         variant="ghost"
         size="icon"
-        className="w-10 h-10 rounded-full bg-[#1C2333] border shadow-lg"
+        className="w-10 h-10 rounded-full bg-surface-solid border shadow-lg"
         onTouchStart={() => handleArrowPress('down')}
         onClick={() => handleArrowPress('down')}
         data-testid="joystick-down"

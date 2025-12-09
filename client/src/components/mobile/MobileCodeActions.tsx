@@ -324,7 +324,7 @@ export function MobileCodeActions({ editor, className }: MobileCodeActionsProps)
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed inset-0 z-30 bg-[#0E1525]"
+            className="fixed inset-0 z-30 bg-background"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

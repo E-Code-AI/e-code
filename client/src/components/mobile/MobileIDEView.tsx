@@ -292,7 +292,7 @@ function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePu
       <AnimatePresence>
         {showLabel && (
           <motion.div
-            className="absolute bottom-full left-0 mb-2 px-3 py-1.5 bg-[#0E1525] text-white text-xs font-medium rounded-lg whitespace-nowrap pointer-events-none"
+            className="absolute bottom-full left-0 mb-2 px-3 py-1.5 bg-background text-white text-xs font-medium rounded-lg whitespace-nowrap pointer-events-none"
             initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: prefersReducedMotion ? 0 : 10 }}
@@ -592,7 +592,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
                 scale: swipeDirection === 'right' ? 1 : 0.9
               }}
               transition={SPRING_CONFIG.default}
-              className="text-[#3D4455] text-2xl font-light"
+              className="text-muted-foreground text-2xl font-light"
             >
               {activeIndex > 0 && '‹'}
             </motion.div>
@@ -604,7 +604,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
                 scale: swipeDirection === 'left' ? 1 : 0.9
               }}
               transition={SPRING_CONFIG.default}
-              className="text-[#3D4455] text-2xl font-light"
+              className="text-muted-foreground text-2xl font-light"
             >
               {activeIndex < tabs.length - 2 && '›'}
             </motion.div>

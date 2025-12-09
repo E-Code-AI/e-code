@@ -53,7 +53,7 @@ export function AddTabMenu({ onAddTool, availableTools = [], onOpenToolsSheet }:
           variant="ghost" 
           size="sm" 
           data-testid="button-add-tab"
-          className="h-7 px-2 hover:bg-[#3D4455] border border-transparent transition-all duration-200"
+          className="h-7 px-2 hover:bg-surface-hover-solid border border-transparent transition-all duration-200"
         >
           <Plus className="w-3.5 h-3.5 mr-1" />
           <span className="text-xs">Add Tab</span>
@@ -62,7 +62,7 @@ export function AddTabMenu({ onAddTool, availableTools = [], onOpenToolsSheet }:
       </PopoverTrigger>
       <PopoverContent align="start" className="w-96 p-0 shadow-xl animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200">
         {/* Search Header */}
-        <div className="p-3 border-b border-[#2B3245] bg-[#1C2333]">
+        <div className="p-3 border-b border-border bg-surface-solid">
           <Input
             placeholder="Search features..."
             value={search}
@@ -85,7 +85,7 @@ export function AddTabMenu({ onAddTool, availableTools = [], onOpenToolsSheet }:
                 
                 <button
                   onClick={() => handleSelectFeature("files")}
-                  className="w-full text-left px-3 py-2.5 rounded-md hover:bg-[#3D4455] hover:shadow-sm transition-all duration-150 flex items-center gap-3 group mb-3"
+                  className="w-full text-left px-3 py-2.5 rounded-md hover:bg-surface-hover-solid hover:shadow-sm transition-all duration-150 flex items-center gap-3 group mb-3"
                   data-testid="button-open-files"
                 >
                   <FolderOpen className="w-4 h-4 flex-shrink-0 text-blue-500" />
@@ -117,7 +117,7 @@ export function AddTabMenu({ onAddTool, availableTools = [], onOpenToolsSheet }:
                         key={feature.id}
                         onClick={() => handleSelectFeature(feature.id)}
                         data-testid={`feature-${feature.id}`}
-                        className="w-full text-left px-3 py-2.5 rounded-md hover:bg-[#3D4455] hover:shadow-sm transition-all duration-200 flex items-center gap-3 group"
+                        className="w-full text-left px-3 py-2.5 rounded-md hover:bg-surface-hover-solid hover:shadow-sm transition-all duration-200 flex items-center gap-3 group"
                       >
                         <IconComponent className="w-4 h-4 flex-shrink-0 text-blue-600 dark:text-blue-400 transition-transform duration-200 group-hover:scale-110" />
                         <div className="flex-1 min-w-0">
@@ -153,7 +153,7 @@ export function AddTabMenu({ onAddTool, availableTools = [], onOpenToolsSheet }:
         </ScrollArea>
         
         {/* Footer with See All Tools */}
-        <div className="p-2 border-t border-[#2B3245] bg-[#1C2333]">
+        <div className="p-2 border-t border-border bg-surface-solid">
           {onOpenToolsSheet && (
             <button
               onClick={() => {
@@ -161,7 +161,7 @@ export function AddTabMenu({ onAddTool, availableTools = [], onOpenToolsSheet }:
                 setSearch("");
                 onOpenToolsSheet();
               }}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 mb-2 rounded-md text-sm font-medium text-primary hover:bg-[#3D4455] transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 mb-2 rounded-md text-sm font-medium text-primary hover:bg-surface-hover-solid transition-colors"
               data-testid="button-see-all-tools"
             >
               <ExternalLink className="w-4 h-4" />

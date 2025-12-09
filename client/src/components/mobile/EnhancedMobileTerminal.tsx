@@ -119,7 +119,7 @@ export function EnhancedMobileTerminal(props: EnhancedMobileTerminalProps) {
             exit={{ opacity: 0, y: -20 }}
             style={{
               padding: '8px 16px',
-              backgroundColor: '#0E1525',
+              backgroundColor: 'hsl(var(--background))',
               borderRadius: '20px',
               color: 'white',
               fontSize: '14px',

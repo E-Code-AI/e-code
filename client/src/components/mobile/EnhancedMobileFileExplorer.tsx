@@ -331,8 +331,8 @@ export function EnhancedMobileFileExplorer({
           animate={{ opacity: 1, x: 0 }}
           className={cn(
             'flex items-center gap-2 px-3 py-2 rounded-lg transition-colors touch-manipulation',
-            'active:scale-[0.98] active:bg-[#2B3245]',
-            isSelected ? 'bg-accent text-accent-foreground' : 'hover:bg-[#2B3245]'
+            'active:scale-[0.98] active:bg-surface-tertiary-solid',
+            isSelected ? 'bg-accent text-accent-foreground' : 'hover:bg-surface-tertiary-solid'
           )}
           style={{ paddingLeft: `${12 + level * 16}px` }}
           onClick={() => handleFileSelect(item)}

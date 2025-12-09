@@ -112,12 +112,12 @@ export function DeploymentPanel({ projectId, className }: DeploymentPanelProps) 
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, string> = {
-      deployed: 'bg-[#1C2333] text-green-500 border-[#2B3245]',
-      building: 'bg-[#1C2333] text-blue-500 border-[#2B3245]',
-      deploying: 'bg-[#1C2333] text-blue-500 border-[#2B3245]',
-      failed: 'bg-[#1C2333] text-red-500 border-[#2B3245]',
-      stopped: 'bg-[#1C2333] text-gray-500 border-[#2B3245]',
-      pending: 'bg-[#1C2333] text-yellow-500 border-[#2B3245]',
+      deployed: 'bg-surface-solid text-green-500 border-border',
+      building: 'bg-surface-solid text-blue-500 border-border',
+      deploying: 'bg-surface-solid text-blue-500 border-border',
+      failed: 'bg-surface-solid text-red-500 border-border',
+      stopped: 'bg-surface-solid text-gray-500 border-border',
+      pending: 'bg-surface-solid text-yellow-500 border-border',
     };
     return variants[status] || variants.pending;
   };
