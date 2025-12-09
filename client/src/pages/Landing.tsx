@@ -26,6 +26,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { getProjectUrl } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { AIModelSelector } from '@/components/ai/AIModelSelector';
+import { BuildModeSelector, BuildMode } from "@/components/ai/BuildModeSelector";
 import { 
   SiPython, SiJavascript, SiHtml5, SiCss3,
   SiTypescript, SiGo, SiReact, SiNodedotjs, SiSpring,
@@ -69,6 +70,8 @@ export default function Landing() {
   const [appDescription, setAppDescription] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [buildModeDialogOpen, setBuildModeDialogOpen] = useState(false);
+  const [pendingBuildPrompt, setPendingBuildPrompt] = useState('');
   const videoRef = useRef<HTMLVideoElement>(null);
   const { scrollYProgress } = useScroll();
   const y = useTransform(scrollYProgress, [0, 1], [0, -50]);
@@ -181,10 +184,28 @@ export default function Landing() {
       return;
     }
     
-    // User is authenticated - proceed with workspace creation
+    // User is authenticated - show BuildModeSelector dialog
+    setPendingBuildPrompt(description);
+    setBuildModeDialogOpen(true);
+  };
+
+  const handleBuildModeSelect = async (mode: BuildMode) => {
+    setBuildModeDialogOpen(false);
+    
+    // If user chose to continue planning, don't create workspace yet
+    if (mode === 'continue-planning') {
+      toast({
+        title: 'Continue refining',
+        description: 'Take your time to refine your app description',
+      });
+      return;
+    }
+    
+    // User selected a build mode - proceed with workspace creation
     try {
       const requestPayload = {
-        prompt: description,
+        prompt: pendingBuildPrompt,
+        buildMode: mode,
         options: {
           autoStart: true,
           language: 'typescript',
@@ -195,18 +216,22 @@ export default function Landing() {
       const result = await apiRequest('POST', '/api/workspace/bootstrap', requestPayload) as any;
 
       if (result.success) {
-        // Store prompt for the IDE Agent panel to pick up
-        sessionStorage.setItem(`agent-prompt-${result.projectId}`, description);
+        // Store prompt and build mode for the IDE Agent panel to pick up
+        sessionStorage.setItem(`agent-prompt-${result.projectId}`, pendingBuildPrompt);
+        sessionStorage.setItem(`agent-build-mode-${result.projectId}`, mode);
         
         // Clear the pending prompts
         sessionStorage.removeItem('pendingAppDescription');
         sessionStorage.removeItem('triggerBuildOnLanding');
+        setPendingBuildPrompt('');
         
         toast({
           title: 'Creating your workspace...',
-          description: 'AI is generating your project structure now',
+          description: mode === 'design-first' 
+            ? 'AI is creating your design prototype now' 
+            : 'AI is generating your full application now',
         });
-        navigate(`/ide/${result.projectId}?bootstrap=${result.bootstrapToken}`);
+        navigate(`/ide/${result.projectId}?bootstrap=${result.bootstrapToken}&buildMode=${mode}`);
       } else {
         throw new Error(result.error || 'Bootstrap failed');
       }
@@ -1174,6 +1199,14 @@ export default function Landing() {
           </motion.div>
         </div>
       </section>
+
+      {/* Build Mode Selector Dialog */}
+      <BuildModeSelector
+        open={buildModeDialogOpen}
+        onOpenChange={setBuildModeDialogOpen}
+        onSelectMode={handleBuildModeSelect}
+        projectName={pendingBuildPrompt.slice(0, 50) + (pendingBuildPrompt.length > 50 ? '...' : '')}
+      />
     </MarketingLayout>
   );
 }

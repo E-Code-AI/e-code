@@ -118,5 +118,19 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 - Token counting approximation (chars/4) for cost estimation
 - Success/failure tracking with error messages for debugging
 
+### BuildModeSelector Integration (Dec 9, 2025)
+
+**Full-Stack Build Mode Support:**
+- Frontend `BuildModeSelector` component integrated across all creation flows (Home, Dashboard, Landing, MobileIDEView, MobileCreateModal)
+- Backend `workspace-bootstrap.router.ts` accepts `buildMode` parameter with three options:
+  - `design-first`: Creates quick visual prototype in ~3 minutes (UI/UX focus)
+  - `full-app`: Builds complete working MVP in ~10 minutes (full-stack)
+  - `continue-planning`: Allows refinement without workspace creation
+- Prompt enhancement based on build mode:
+  - `design-first` adds: "Focus on: UI/UX design, visual layout, clickable prototype. Skip backend initially."
+  - `full-app` adds: "Include: Full-stack development, backend + frontend, database integration, working functionality."
+- Response includes buildMode and contextual message for client reference
+- Mobile: Haptic feedback for touch interactions, sessionStorage persistence for React lifecycle
+
 ### Known Issues
 - Minor: Some other WebSocket services still log "Blocked additional upgrade listener" warnings. These services haven't been migrated to the central dispatcher yet, but they work correctly due to the blocking mechanism. This is cosmetic only and doesn't affect functionality.

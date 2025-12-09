@@ -20,6 +20,7 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import { TABLET_GRID_CLASSES } from '@shared/responsive-config';
 import { apiRequest } from '@/lib/queryClient';
 import { AIModelSelector } from '@/components/ai/AIModelSelector';
+import { BuildModeSelector, BuildMode } from '@/components/ai/BuildModeSelector';
 
 // Get personalized greeting based on time of day
 function getGreeting() {
@@ -78,6 +79,8 @@ export default function Dashboard() {
   const [aiPrompt, setAiPrompt] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [isBuildModeOpen, setIsBuildModeOpen] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState('');
   const inputRef = useRef<HTMLInputElement | null>(null);
   const greeting = getGreeting();
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -109,13 +112,26 @@ export default function Dashboard() {
       return;
     }
 
+    // Show build mode selector for longer prompts (detailed descriptions)
+    if (aiPrompt.trim().length > 20) {
+      setPendingPrompt(aiPrompt.trim());
+      setIsBuildModeOpen(true);
+      return;
+    }
+
+    // For short prompts, proceed directly with full-app build
+    await createWorkspace(aiPrompt.trim(), 'full-app');
+  };
+
+  const createWorkspace = async (prompt: string, buildMode: BuildMode) => {
     setIsCreating(true);
 
     try {
       // Use Fortune 500-grade workspace bootstrap endpoint
       // This orchestrates project creation + agent session + auto-start workflow
       const response = await apiRequest('POST', '/api/workspace/bootstrap', {
-        prompt: aiPrompt,
+        prompt,
+        buildMode,
         options: {
           language: 'typescript',
           framework: 'react',
@@ -135,6 +151,19 @@ export default function Dashboard() {
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const handleSelectBuildMode = async (mode: BuildMode) => {
+    setIsBuildModeOpen(false);
+    
+    if (mode === 'continue-planning') {
+      // Keep the prompt in input for further refinement
+      return;
+    }
+    
+    await createWorkspace(pendingPrompt, mode);
+    setPendingPrompt('');
+    setAiPrompt('');
   };
 
   const quickActions = [
@@ -420,6 +449,14 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Build Mode Selector Dialog */}
+      <BuildModeSelector
+        open={isBuildModeOpen}
+        onOpenChange={setIsBuildModeOpen}
+        onSelectMode={handleSelectBuildMode}
+        projectName={pendingPrompt.slice(0, 50) + (pendingPrompt.length > 50 ? '...' : '')}
+      />
     </div>
   );
 }

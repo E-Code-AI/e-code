@@ -41,16 +41,19 @@ const router = Router();
 // Solution: Use .default() with full object OR postprocess after validation
 const bootstrapRequestSchema = z.object({
   prompt: z.string().min(5, 'Prompt must be at least 5 characters'),
+  buildMode: z.enum(['design-first', 'full-app', 'continue-planning']).default('full-app'),
   options: z.object({
     language: z.enum(['typescript', 'javascript', 'python', 'rust', 'go']).default('typescript'),
     framework: z.enum(['react', 'vue', 'svelte', 'express', 'fastapi']).default('react'),
     autoStart: z.boolean().default(true),
-    visibility: z.enum(['public', 'private', 'unlisted']).default('private')
+    visibility: z.enum(['public', 'private', 'unlisted']).default('private'),
+    designFirst: z.boolean().default(false)
   }).default({
     language: 'typescript',
     framework: 'react',
     autoStart: true,
-    visibility: 'private'
+    visibility: 'private',
+    designFirst: false
   })
 });
 
@@ -155,13 +158,22 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
   try {
     // 1. Validate request
     logger.info(`[Bootstrap] Attempting to parse request body...`);
-    const { prompt, options } = bootstrapRequestSchema.parse(req.body);
+    const { prompt, buildMode, options } = bootstrapRequestSchema.parse(req.body);
     logger.info(`[Bootstrap] ✅ Request validated successfully`, { 
       promptLength: prompt.length,
+      buildMode,
       autoStart: options.autoStart,
       language: options.language,
       framework: options.framework
     });
+    
+    // Enhanced prompt based on build mode
+    let enhancedPrompt = prompt;
+    if (buildMode === 'design-first') {
+      enhancedPrompt = `[DESIGN FIRST MODE - Create a quick visual prototype in ~3 minutes]\n\n${prompt}\n\nFocus on: UI/UX design, visual layout, clickable prototype. Skip backend initially.`;
+    } else if (buildMode === 'full-app') {
+      enhancedPrompt = `[FULL APP MODE - Build complete working MVP in ~10 minutes]\n\n${prompt}\n\nInclude: Full-stack development, backend + frontend, database integration, working functionality.`;
+    }
     
     // ✅ REPLIT-IDENTICAL: User must be authenticated (enforced by ensureAuthenticated middleware)
     // req.user is guaranteed to exist at this point
@@ -183,7 +195,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     const [project] = await db.insert(projects)
       .values({
         name: projectName,
-        description: prompt,
+        description: enhancedPrompt,
         slug,
         ownerId: userId,
         language: options.language || 'typescript',
@@ -257,6 +269,14 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     
     // 7. ✅ RETURN HTTP RESPONSE IMMEDIATELY (BEFORE background work starts)
     // This guarantees client receives token in <1s and can redirect to IDE
+    // Get contextual message based on build mode
+    let statusMessage = 'Building complete working MVP (~10 minutes)...'; // default for full-app
+    if (buildMode === 'design-first') {
+      statusMessage = 'Creating quick visual prototype (~3 minutes)...';
+    } else if (buildMode === 'continue-planning') {
+      statusMessage = 'Workspace ready for planning refinement. No build started yet.';
+    }
+    
     const responsePayload = {
       success: true,
       projectId: project.id,
@@ -264,8 +284,9 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
       sessionId: session.id,
       bootstrapToken,
       workspaceUrl,
+      buildMode, // Include build mode in response for client reference
       status: 'ready',
-      message: 'Workspace created successfully. Connect to workspaceUrl to stream agent progress.',
+      message: statusMessage,
       timing: {
         totalMs: elapsed,
         projectCreationMs: 0,

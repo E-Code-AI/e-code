@@ -25,6 +25,7 @@ import {
 } from './MobileLoadingSkeleton';
 import { useTabPersistence, useFileBrowserPersistence } from '@/hooks/use-mobile-persistence';
 import { ReplitAgentPanelV3 } from '../ai/ReplitAgentPanelV3';
+import { BuildModeSelector, BuildMode } from '@/components/ai/BuildModeSelector';
 import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
 import { useAgentTools } from '@/hooks/useAgentTools';
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
@@ -338,6 +339,11 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [isEditingFile, setIsEditingFile] = useState(false);
   
+  // Build mode selector state for workspace creation
+  const [isBuildModeOpen, setIsBuildModeOpen] = useState(false);
+  const [pendingBuildPrompt, setPendingBuildPrompt] = useState<string | null>(null);
+  const [selectedBuildMode, setSelectedBuildMode] = useState<BuildMode | null>(null);
+  
   // ✅ FIX (Dec 9, 2025): Mobile Agent Bootstrap - match desktop IDEPage flow
   // Use effect-based initialization to guard browser-only APIs (safe for SSR/tests)
   
@@ -375,6 +381,8 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
     }
   };
   
+  const buildModeKey = `agent-build-mode-${normalizedProjectId}`;
+  
   // Extract bootstrap parameters from URL on mount (effect-based for SSR safety)
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -383,6 +391,12 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
     const bootstrapToken = searchParams.get('bootstrap');
     const promptParam = searchParams.get('prompt');
     const agentEnabled = searchParams.get('agent') === 'true' || searchParams.get('panel') === 'agent';
+    
+    // Check for existing build mode in sessionStorage
+    const savedBuildMode = sessionStorage.getItem(buildModeKey) as BuildMode | null;
+    if (savedBuildMode) {
+      setSelectedBuildMode(savedBuildMode);
+    }
     
     // Decode bootstrap token if present
     if (bootstrapToken) {
@@ -396,10 +410,18 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
       setAutoStartAgent(true);
     }
     
-    // Handle prompt from URL param
+    // Handle prompt from URL param - show build mode selector if no mode selected
     if (promptParam && normalizedProjectId) {
-      sessionStorage.setItem(bootstrapPromptKey, promptParam);
-      setPersistedBootstrapPrompt(promptParam);
+      // Check if build mode already selected for this project
+      if (!savedBuildMode) {
+        // Store prompt as pending and show build mode selector
+        setPendingBuildPrompt(promptParam);
+        setIsBuildModeOpen(true);
+      } else {
+        // Build mode already selected, proceed with bootstrap
+        sessionStorage.setItem(bootstrapPromptKey, promptParam);
+        setPersistedBootstrapPrompt(promptParam);
+      }
       
       // Clean URL
       const url = new URL(window.location.href);
@@ -412,7 +434,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
     if (saved) {
       setPersistedBootstrapPrompt(saved);
     }
-  }, [normalizedProjectId, bootstrapPromptKey]);
+  }, [normalizedProjectId, bootstrapPromptKey, buildModeKey]);
   
   // Fetch project data for bootstrap prompt
   const { data: project } = useQuery<{ id: number; name: string; description?: string }>({
@@ -478,6 +500,37 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
       setIsEditingFile(false);
     }
   }, [activeTab]);
+  
+  // Handle build mode selection from dialog
+  const handleSelectBuildMode = (mode: BuildMode) => {
+    if (typeof window === 'undefined') return;
+    
+    // Haptic feedback for mobile
+    if ('vibrate' in navigator) {
+      navigator.vibrate([10, 50, 10]);
+    }
+    
+    if (mode === 'continue-planning') {
+      // User wants to continue planning - close dialog without starting
+      setIsBuildModeOpen(false);
+      setPendingBuildPrompt(null);
+      return;
+    }
+    
+    // Store the selected build mode
+    setSelectedBuildMode(mode);
+    sessionStorage.setItem(buildModeKey, mode);
+    
+    // Now store the pending prompt and trigger bootstrap
+    if (pendingBuildPrompt) {
+      sessionStorage.setItem(bootstrapPromptKey, pendingBuildPrompt);
+      setPersistedBootstrapPrompt(pendingBuildPrompt);
+      setAutoStartAgent(true);
+      setPendingBuildPrompt(null);
+    }
+    
+    setIsBuildModeOpen(false);
+  };
   
   const x = useMotionValue(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -813,6 +866,14 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
       
       {enableShortcutHint && <ShortcutHint />}
       {enableShortcutTester && <ShortcutTester />}
+      
+      {/* Build Mode Selector Dialog - touch-friendly for mobile */}
+      <BuildModeSelector
+        open={isBuildModeOpen}
+        onOpenChange={setIsBuildModeOpen}
+        onSelectMode={handleSelectBuildMode}
+        projectName={pendingBuildPrompt?.slice(0, 50) + (pendingBuildPrompt && pendingBuildPrompt.length > 50 ? '...' : '')}
+      />
     </div>
   );
 }

@@ -91,16 +91,16 @@ export function BuildModeSelector({
   const getColorClasses = (color: string, type: 'bg' | 'border' | 'text' | 'icon') => {
     const colors: Record<string, Record<string, string>> = {
       purple: {
-        bg: 'bg-purple-50 dark:bg-purple-950/30',
+        bg: 'bg-purple-50 dark:bg-[#1C2333]',
         border: 'border-purple-200 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-600',
         text: 'text-purple-600 dark:text-purple-400',
-        icon: 'bg-purple-100 dark:bg-purple-900/50'
+        icon: 'bg-purple-100 dark:bg-[#2B3245]'
       },
       emerald: {
-        bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+        bg: 'bg-emerald-50 dark:bg-[#1C2333]',
         border: 'border-emerald-200 dark:border-emerald-800 hover:border-emerald-400 dark:hover:border-emerald-600',
         text: 'text-emerald-600 dark:text-emerald-400',
-        icon: 'bg-emerald-100 dark:bg-emerald-900/50'
+        icon: 'bg-emerald-100 dark:bg-[#2B3245]'
       }
     };
     return colors[color]?.[type] || '';
@@ -109,7 +109,7 @@ export function BuildModeSelector({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden" data-testid="build-mode-selector-dialog">
-        <DialogHeader className="px-6 pt-6 pb-4 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-950/30 dark:to-purple-950/30 border-b">
+        <DialogHeader className="px-6 pt-6 pb-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-[#1C2333] dark:to-[#2B3245] border-b">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             <DialogTitle className="text-lg font-semibold">
@@ -123,7 +123,7 @@ export function BuildModeSelector({
           
           {/* Feature List Preview */}
           {featureList.length > 0 && (
-            <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+            <div className="mt-4 p-3 bg-muted rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Layers className="h-4 w-4 text-muted-foreground" />
                 <span className="text-xs font-medium text-muted-foreground">Feature list created</span>
