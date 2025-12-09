@@ -615,7 +615,7 @@ export default function Pricing() {
 
       {/* Enterprise Section - E-Code Styled */}
       <section 
-        className="py-20 bg-gradient-to-r from-[#0e1525] to-[#1c2333] text-white"
+        className="py-20 bg-gradient-to-r from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 text-white"
         data-testid="section-enterprise"
       >
         <div className="container-responsive max-w-6xl">

@@ -85,7 +85,7 @@ export function ECodeLoading({
         
         {/* Pulsing effect */}
         <div className={cn(
-          'absolute inset-0 rounded-full bg-gradient-to-br from-[#F26207] to-[#F99D25] opacity-20 animate-pulse',
+          'absolute inset-0 rounded-full bg-gradient-to-br from-primary to-secondary opacity-20 animate-pulse',
           sizes[size]
         )} />
       </div>
