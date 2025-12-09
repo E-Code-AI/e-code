@@ -156,7 +156,7 @@ export function AnimatedTemplateCard({
                   </div>
                   <div className="text-right">
                     {template.price > 0 ? (
-                      <div className="font-bold text-lg text-[#F26207]">
+                      <div className="font-bold text-lg text-primary">
                         $<AnimatedValue value={template.price} decimals={2} />
                       </div>
                     ) : (
@@ -191,7 +191,7 @@ export function AnimatedTemplateCard({
                       e.stopPropagation();
                       onUse?.(template);
                     }}
-                    className="bg-[#F26207] hover:bg-[#F26207]/90"
+                    className="bg-primary hover:bg-primary/90"
                   >
                     Use Template
                     <ChevronRight className="h-3 w-3 ml-1" />
@@ -254,7 +254,7 @@ export function AnimatedTemplateCard({
                   {template.category}
                 </Badge>
                 {template.price > 0 ? (
-                  <Badge className="text-xs bg-[#F26207]">
+                  <Badge className="text-xs bg-primary">
                     ${template.price}
                   </Badge>
                 ) : (
@@ -301,7 +301,7 @@ export function AnimatedTemplateCard({
                 <ul className="text-sm text-muted-foreground space-y-1">
                   {template.features?.slice(0, 4).map((feature: string) => (
                     <li key={feature} className="flex items-center gap-1">
-                      <ChevronRight className="h-3 w-3 text-[#F26207]" />
+                      <ChevronRight className="h-3 w-3 text-primary" />
                       {feature}
                     </li>
                   ))}
@@ -350,7 +350,7 @@ export function AnimatedTemplateCard({
                   e.stopPropagation();
                   onUse?.(template);
                 }}
-                className="flex-1 bg-[#F26207] hover:bg-[#F26207]/90"
+                className="flex-1 bg-primary hover:bg-primary/90"
               >
                 <Sparkles className="h-3 w-3 mr-1" />
                 Use Template

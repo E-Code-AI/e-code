@@ -127,7 +127,7 @@ export function LoadingSpinner({
         >
           <div
             className={cn(
-              'rounded-full border-2 border-transparent border-t-[#F99D25]',
+              'rounded-full border-2 border-transparent border-t-secondary',
               sizeClasses[size]
             )}
           />
@@ -156,7 +156,7 @@ export function PulsingAlert({
   className?: string;
 }) {
   const colors = {
-    warning: 'border-[#F26207] bg-orange-50 dark:bg-orange-950/20',
+    warning: 'border-primary bg-orange-50 dark:bg-orange-950/20',
     error: 'border-red-500 bg-red-50 dark:bg-red-950/20',
     info: 'border-blue-500 bg-blue-50 dark:bg-blue-950/20'
   };

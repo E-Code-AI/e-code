@@ -211,7 +211,7 @@
     bottom: 72px;
     right: 16px;
     z-index: 30;
-    box-shadow: 0 4px 12px rgba(242, 98, 7, 0.25);
+    box-shadow: 0 4px 12px hsl(var(--primary) / 0.25);
   }
   
   /* Mobile editor optimizations */
@@ -249,7 +249,7 @@
     width: 0;
     height: 0;
     border-radius: 50%;
-    background: rgba(242, 98, 7, 0.3);
+    background: hsl(var(--primary) / 0.3);
     transform: translate(-50%, -50%);
   }
   
@@ -261,8 +261,8 @@
   .mobile-pull-spinner {
     width: 24px;
     height: 24px;
-    border: 2px solid rgba(242, 98, 7, 0.2);
-    border-top-color: #F26207;
+    border: 2px solid hsl(var(--primary) / 0.2);
+    border-top-color: hsl(var(--primary));
     border-radius: 50%;
     animation: mobile-spin 0.8s linear infinite;
   }
@@ -296,12 +296,8 @@
     display: flex;
     gap: 4px;
     padding: 4px;
-    background: #f0f0f0;
+    background: hsl(var(--muted));
     border-radius: 8px;
-  }
-  
-  .dark .mobile-tools-tabs {
-    background: #1C2333;
   }
 }
 
