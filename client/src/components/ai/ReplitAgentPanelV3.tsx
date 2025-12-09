@@ -127,9 +127,33 @@ interface ReplitAgentPanelV3Props {
 }
 
 function categorizeError(error: unknown): { title: string; message: string } {
-  const errorMessage = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  // Extract error message from various formats - prioritize Error instances
+  let errorMessage = '';
+  if (error instanceof Error) {
+    errorMessage = error.message;
+  } else if (typeof error === 'object' && error !== null) {
+    const err = error as Record<string, unknown>;
+    // Check for empty plain objects (not Error instances) - indicates connection lost
+    if (Object.keys(err).length === 0) {
+      return {
+        title: 'Connection Issue',
+        message: 'Lost connection to the AI service. Please check your internet and try again.'
+      };
+    }
+    errorMessage = String(err.message || err.error || err.detail || JSON.stringify(error));
+  } else if (!error) {
+    // Handle null/undefined errors
+    return {
+      title: 'Connection Issue',
+      message: 'Lost connection to the AI service. Please check your internet and try again.'
+    };
+  } else {
+    errorMessage = String(error);
+  }
+  errorMessage = errorMessage.toLowerCase();
   
-  if (errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('econnrefused') || errorMessage.includes('failed to fetch')) {
+  // Handle "Load failed" and similar fetch errors  
+  if (errorMessage.includes('load failed') || errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('econnrefused') || errorMessage.includes('failed to fetch')) {
     return {
       title: 'Connection Error',
       message: 'Unable to connect to the AI service. Please check your connection and try again.'

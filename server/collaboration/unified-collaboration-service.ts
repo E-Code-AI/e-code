@@ -96,7 +96,12 @@ export class UnifiedCollaborationService {
       },
       path: '/ws/collaboration',
       transports: ['websocket', 'polling'],
-      allowEIO3: true
+      allowEIO3: true,
+      pingTimeout: 30000,
+      pingInterval: 25000,
+      upgradeTimeout: 30000,
+      allowUpgrades: true,
+      perMessageDeflate: false
     });
     
     // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
@@ -452,12 +457,12 @@ export class UnifiedCollaborationService {
   
   private async verifyProjectAccess(userId: string, projectId: number): Promise<boolean> {
     try {
-      const project = await storage.getProject(projectId);
+      const project = await storage.getProject(String(projectId));
       if (!project) return false;
       
       if (project.ownerId.toString() === userId.toString()) return true;
       
-      const isCollaborator = await storage.isProjectCollaborator(projectId, userId);
+      const isCollaborator = await storage.isProjectCollaborator(String(projectId), userId);
       if (isCollaborator) return true;
       
       if (project.visibility === 'public') return true;
