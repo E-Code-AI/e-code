@@ -4,7 +4,7 @@
  * Phase 2 - Agent Activity Dashboard
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, lazy, Suspense } from 'react';
 import { 
   X, ChevronLeft, Activity, Table2, BarChart3, 
   FileCode, MessageSquare, Maximize2, Minimize2
@@ -19,13 +19,15 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { AgentSessionsGrid } from './AgentSessionsGrid';
 import { AgentActionsGrid } from './AgentActionsGrid';
 import { FileOperationsGrid } from './FileOperationsGrid';
 import { ConversationHistoryGrid } from './ConversationHistoryGrid';
-import { AgentMetricsDashboard } from './AgentMetricsDashboard';
 import type { AgentSessionRow } from '@shared/types/agent-grid.types';
+
+const AgentMetricsDashboard = lazy(() => import('./AgentMetricsDashboard').then(m => ({ default: m.AgentMetricsDashboard })));
 
 interface AgentHistoryModalProps {
   open: boolean;
@@ -220,7 +222,9 @@ export function AgentHistoryModal({
                   </TabsContent>
                   
                   <TabsContent value="metrics" className="mt-0">
-                    <AgentMetricsDashboard projectId={projectId} />
+                    <Suspense fallback={<Skeleton className="h-96" />}>
+                      <AgentMetricsDashboard projectId={projectId} />
+                    </Suspense>
                   </TabsContent>
                 </div>
               </ScrollArea>
