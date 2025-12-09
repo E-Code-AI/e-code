@@ -30,7 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import analyticsImagePath from '@assets/stock_images/data_analytics_dashb_76f0a2c7.jpg';
+import analyticsImagePath from '@assets/stock_images/cloud_computing_tech_ffd053c9.jpg';
 
 // Lazy load heavy components
 const LazyCharts = React.lazy(() => import('./DashboardCharts'));
