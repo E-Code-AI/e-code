@@ -71,6 +71,38 @@ interface SlackConfig {
   webhookUrl: string | null;
 }
 
+interface ProviderLatencyStats {
+  provider: string;
+  avgLatency: number;
+  p50: number;
+  p95: number;
+  p99: number;
+  successCount: number;
+  failureCount: number;
+  successRate: number;
+  health: 'healthy' | 'degraded' | 'unhealthy';
+  tokensGenerated: number;
+}
+
+interface LatencyData {
+  success: boolean;
+  providers: ProviderLatencyStats[];
+  fallbackRecommendation: string | null;
+  timestamp: string;
+}
+
+interface PromptCacheMetrics {
+  success: boolean;
+  systemPromptCacheSize: number;
+  responseCacheSize: number;
+  hitRate: number;
+  totalHits: number;
+  totalMisses: number;
+  estimatedTokensSaved: number;
+  estimatedCostSaved: number;
+  timestamp: string;
+}
+
 export default function AIOptimizationDashboard() {
   const { toast } = useToast();
   const [webhookUrl, setWebhookUrl] = useState('');
@@ -83,6 +115,16 @@ export default function AIOptimizationDashboard() {
   const { data: slackConfig, isLoading: isSlackLoading } = useQuery<SlackConfig>({
     queryKey: ['/api/slack-config'],
     refetchInterval: 60000
+  });
+
+  const { data: latencyData, isLoading: isLatencyLoading } = useQuery<LatencyData>({
+    queryKey: ['/api/ai-optimization/latency/providers'],
+    refetchInterval: 15000
+  });
+
+  const { data: cacheMetrics, isLoading: isCacheLoading } = useQuery<PromptCacheMetrics>({
+    queryKey: ['/api/ai-optimization/prompt-cache/metrics'],
+    refetchInterval: 30000
   });
 
   const updateWebhookMutation = useMutation({
@@ -142,7 +184,7 @@ export default function AIOptimizationDashboard() {
   };
 
   const handleTestWebhook = () => {
-    testWebhookMutation.mutate();
+    testWebhookMutation.mutate(undefined);
   };
 
   const queueStatCards = [
@@ -440,6 +482,150 @@ export default function AIOptimizationDashboard() {
                 </div>
               </CardContent>
             </Card>
+          )}
+        </div>
+
+        {/* Provider Latency Monitoring */}
+        <div className="mb-4 sm:mb-6 lg:mb-8">
+          <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-provider-latency">
+            <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
+            Provider Latency Monitoring
+            <span className="text-xs text-zinc-400 font-normal ml-2">(50-90% Cost Savings)</span>
+          </h2>
+          {isLatencyLoading ? (
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
+              {[...Array(5)].map((_, i) => (
+                <Card key={i} className="bg-zinc-800 border-zinc-700">
+                  <CardHeader className="p-3 sm:p-4 pb-2 sm:pb-2">
+                    <div className="h-3 sm:h-4 bg-zinc-700 rounded w-16 sm:w-20 animate-pulse" />
+                  </CardHeader>
+                  <CardContent className="p-3 sm:p-4 pt-0">
+                    <div className="h-6 sm:h-8 bg-zinc-700 rounded w-16 sm:w-20 mb-1 animate-pulse" />
+                    <div className="h-2 sm:h-3 bg-zinc-700 rounded w-20 sm:w-24 animate-pulse" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
+              {latencyData?.providers?.map((provider) => {
+                const healthColor = provider.health === 'healthy' ? 'text-green-500' : 
+                                   provider.health === 'degraded' ? 'text-yellow-500' : 'text-red-500';
+                const providerKey = provider.provider.toLowerCase();
+                return (
+                  <Card key={provider.provider} className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors" data-testid={`card-latency-${providerKey}`}>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 sm:p-4 pb-1 sm:pb-2">
+                      <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300 uppercase">
+                        {provider.provider}
+                      </CardTitle>
+                      <div className={`h-2 w-2 rounded-full ${provider.health === 'healthy' ? 'bg-green-500' : provider.health === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'}`} />
+                    </CardHeader>
+                    <CardContent className="p-2 sm:p-4 pt-0">
+                      <div className={`text-sm sm:text-lg font-bold ${healthColor} mb-1`} data-testid={`text-latency-${providerKey}-health`}>
+                        {provider.health.toUpperCase()}
+                      </div>
+                      <div className="space-y-0.5 text-[10px] sm:text-xs text-zinc-400">
+                        <div className="flex justify-between">
+                          <span>P50:</span>
+                          <span className="text-white">{provider.p50?.toFixed(0) || 0}ms</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>P95:</span>
+                          <span className="text-white">{provider.p95?.toFixed(0) || 0}ms</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Success:</span>
+                          <span className="text-green-400">{provider.successRate?.toFixed(1) || 0}%</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              }) || <p className="text-zinc-400 text-sm">No latency data available yet</p>}
+            </div>
+          )}
+          {latencyData?.fallbackRecommendation && (
+            <div className="mt-3 p-3 bg-yellow-900/30 border border-yellow-700 rounded-lg text-sm text-yellow-300" data-testid="text-fallback-recommendation">
+              <AlertTriangle className="inline h-4 w-4 mr-2" />
+              Fallback Recommendation: {latencyData.fallbackRecommendation}
+            </div>
+          )}
+        </div>
+
+        {/* Prompt Cache Metrics */}
+        <div className="mb-4 sm:mb-6 lg:mb-8">
+          <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-prompt-cache">
+            <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5" />
+            Prompt Cache Metrics
+          </h2>
+          {isCacheLoading ? (
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+              {[...Array(4)].map((_, i) => (
+                <Card key={i} className="bg-zinc-800 border-zinc-700">
+                  <CardHeader className="p-3 sm:p-4 pb-2 sm:pb-2">
+                    <div className="h-3 sm:h-4 bg-zinc-700 rounded w-20 sm:w-24 animate-pulse" />
+                  </CardHeader>
+                  <CardContent className="p-3 sm:p-4 pt-0">
+                    <div className="h-6 sm:h-8 bg-zinc-700 rounded w-12 sm:w-16 mb-1 animate-pulse" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+              <Card className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors" data-testid="card-cache-hit-rate">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 sm:p-4 pb-1 sm:pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300">Cache Hit Rate</CardTitle>
+                  <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
+                </CardHeader>
+                <CardContent className="p-2 sm:p-4 pt-0">
+                  <div className="text-lg sm:text-2xl font-bold text-green-400" data-testid="text-cache-hit-rate">
+                    {((cacheMetrics?.hitRate || 0) * 100).toFixed(1)}%
+                  </div>
+                  <p className="text-[10px] sm:text-xs text-zinc-400 mt-1">
+                    {cacheMetrics?.totalHits || 0} hits / {cacheMetrics?.totalMisses || 0} misses
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors" data-testid="card-cache-tokens-saved">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 sm:p-4 pb-1 sm:pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300">Tokens Saved</CardTitle>
+                  <Cpu className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500" />
+                </CardHeader>
+                <CardContent className="p-2 sm:p-4 pt-0">
+                  <div className="text-lg sm:text-2xl font-bold text-purple-400" data-testid="text-cache-tokens-saved">
+                    {(cacheMetrics?.estimatedTokensSaved || 0).toLocaleString()}
+                  </div>
+                  <p className="text-[10px] sm:text-xs text-zinc-400 mt-1">Via prompt caching</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors" data-testid="card-cache-cost-saved">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 sm:p-4 pb-1 sm:pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300">Cost Saved</CardTitle>
+                  <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
+                </CardHeader>
+                <CardContent className="p-2 sm:p-4 pt-0">
+                  <div className="text-lg sm:text-2xl font-bold text-green-400" data-testid="text-cache-cost-saved">
+                    ${(cacheMetrics?.estimatedCostSaved || 0).toFixed(2)}
+                  </div>
+                  <p className="text-[10px] sm:text-xs text-zinc-400 mt-1">Estimated savings</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors" data-testid="card-cache-size">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 sm:p-4 pb-1 sm:pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300">Cache Size</CardTitle>
+                  <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
+                </CardHeader>
+                <CardContent className="p-2 sm:p-4 pt-0">
+                  <div className="text-lg sm:text-2xl font-bold text-blue-400" data-testid="text-cache-size">
+                    {(cacheMetrics?.systemPromptCacheSize || 0) + (cacheMetrics?.responseCacheSize || 0)}
+                  </div>
+                  <p className="text-[10px] sm:text-xs text-zinc-400 mt-1">
+                    {cacheMetrics?.systemPromptCacheSize || 0} prompts, {cacheMetrics?.responseCacheSize || 0} responses
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
 
