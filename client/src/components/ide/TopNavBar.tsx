@@ -146,7 +146,7 @@ export function TopNavBar({
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
-                className="py-2 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950"
+                className="py-2 bg-[#1C2333]"
                 onClick={() => navigate('/admin')}
               >
                 <Shield className="w-4 h-4 mr-2 text-[var(--ecode-accent)]" />
@@ -274,7 +274,7 @@ export function TopNavBar({
           className={cn(
             "h-7 px-2.5 gap-1.5 text-xs transition-all shadow-sm",
             isRunning 
-              ? "bg-[hsl(var(--ecode-danger))] hover:bg-[hsl(var(--ecode-danger)/0.9)]" 
+              ? "bg-[hsl(var(--ecode-danger))] hover:bg-[hsl(var(--ecode-danger))]" 
               : "bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)]"
           )}
         >

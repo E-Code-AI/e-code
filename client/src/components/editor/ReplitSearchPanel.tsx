@@ -140,8 +140,8 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
               className={cn(
                 "h-8 rounded-lg text-[13px]",
                 searchType === 'all' 
-                  ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0079f2]/90" 
-                  : "bg-transparent border-[#3d4452] text-[#9da2a6] hover:bg-[#242b3d] hover:text-[#ffffff]"
+                  ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0066CC]" 
+                  : "bg-transparent border-[#3d4452] text-[#9da2a6] hover:bg-[#3D4455] hover:text-[#ffffff]"
               )}
               data-testid="button-filter-all"
             >
@@ -153,8 +153,8 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
               className={cn(
                 "h-8 rounded-lg text-[13px]",
                 searchType === 'files' 
-                  ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0079f2]/90" 
-                  : "bg-transparent border-[#3d4452] text-[#9da2a6] hover:bg-[#242b3d] hover:text-[#ffffff]"
+                  ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0066CC]" 
+                  : "bg-transparent border-[#3d4452] text-[#9da2a6] hover:bg-[#3D4455] hover:text-[#ffffff]"
               )}
               data-testid="button-filter-files"
             >
@@ -167,8 +167,8 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
               className={cn(
                 "h-8 rounded-lg text-[13px]",
                 searchType === 'code' 
-                  ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0079f2]/90" 
-                  : "bg-transparent border-[#3d4452] text-[#9da2a6] hover:bg-[#242b3d] hover:text-[#ffffff]"
+                  ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0066CC]" 
+                  : "bg-transparent border-[#3d4452] text-[#9da2a6] hover:bg-[#3D4455] hover:text-[#ffffff]"
               )}
               data-testid="button-filter-code"
             >
@@ -181,8 +181,8 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
               className={cn(
                 "h-8 rounded-lg text-[13px]",
                 searchType === 'symbols' 
-                  ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0079f2]/90" 
-                  : "bg-transparent border-[#3d4452] text-[#9da2a6] hover:bg-[#242b3d] hover:text-[#ffffff]"
+                  ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0066CC]" 
+                  : "bg-transparent border-[#3d4452] text-[#9da2a6] hover:bg-[#3D4455] hover:text-[#ffffff]"
               )}
               data-testid="button-filter-symbols"
             >
@@ -228,7 +228,7 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
             {results.map((result) => (
               <button
                 key={result.id}
-                className="w-full text-left px-2 py-2 hover:bg-[#242b3d] rounded-lg group transition-colors"
+                className="w-full text-left px-2 py-2 hover:bg-[#3D4455] rounded-lg group transition-colors"
                 data-testid={`result-item-${result.id}`}
               >
                 <div className="flex items-start gap-2">
@@ -247,7 +247,7 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
                       <span dangerouslySetInnerHTML={{
                         __html: result.preview.replace(
                           new RegExp(result.match, 'gi'),
-                          `<mark class="bg-[#0079f2]/20 text-[#ffffff] rounded px-0.5">${result.match}</mark>`
+                          `<mark class="bg-[#1C2333] text-[#ffffff] rounded px-0.5">${result.match}</mark>`
                         )
                       }} />
                     </div>

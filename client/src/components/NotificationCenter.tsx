@@ -173,11 +173,11 @@ export function NotificationCenter() {
   };
 
   const markAllAsRead = () => {
-    markAllAsReadMutation.mutate();
+    markAllAsReadMutation.mutate(undefined);
   };
 
   const clearAll = () => {
-    clearAllMutation.mutate();
+    clearAllMutation.mutate(undefined);
   };
 
   // Mock notifications data removed, now using real data from API
@@ -246,7 +246,7 @@ export function NotificationCenter() {
                       return (
                         <div
                           key={notification.id}
-                          className="p-4 hover:bg-accent/50 cursor-pointer transition-colors"
+                          className="p-4 hover:bg-[#3D4455] cursor-pointer transition-colors"
                           onClick={() => handleNotificationClick(notification)}
                         >
                           <div className="flex gap-3">
@@ -298,7 +298,7 @@ export function NotificationCenter() {
                   return (
                     <div
                       key={notification.id}
-                      className={`p-4 hover:bg-accent/50 cursor-pointer transition-colors ${
+                      className={`p-4 hover:bg-[#3D4455] cursor-pointer transition-colors ${
                         notification.read ? 'opacity-60' : ''
                       }`}
                       onClick={() => handleNotificationClick(notification)}

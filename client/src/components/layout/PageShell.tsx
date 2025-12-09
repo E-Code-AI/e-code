@@ -11,10 +11,7 @@ interface PageShellProps {
   fullHeight?: boolean;
 }
 
-const DEFAULT_BACKGROUND =
-  "linear-gradient(180deg, rgba(0, 102, 204, 0.05) 0%, rgba(0, 102, 204, 0.02) 45%, rgba(255, 255, 255, 0) 100%), " +
-  "radial-gradient(circle at top right, rgba(124, 58, 237, 0.08), transparent 55%), " +
-  "radial-gradient(circle at bottom left, rgba(37, 99, 235, 0.06), transparent 60%)";
+const DEFAULT_BACKGROUND = "none";
 
 export function PageShell({
   children,
@@ -72,9 +69,9 @@ export function PageHeader({
   return (
     <section
       className={cn(
-        "relative overflow-hidden rounded-3xl border border-[var(--ecode-border)] bg-[var(--ecode-surface)]/95 p-6 shadow-sm transition-all",
+        "relative overflow-hidden rounded-3xl border border-[#2B3245] bg-[#1C2333] p-6 shadow-sm transition-all",
         "sm:p-8",
-        "before:absolute before:inset-0 before:-z-10 before:bg-gradient-to-br before:from-[var(--ecode-accent)]/5 before:via-transparent before:to-[var(--ecode-accent)]/10",
+        "",
         className
       )}
     >
@@ -90,7 +87,7 @@ export function PageHeader({
           <div className={cn("flex flex-col gap-4 sm:flex-row sm:items-start", alignCenter && "sm:items-center sm:justify-center")}
           >
             {Icon && (
-              <div className="mr-0 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--ecode-accent)]/15 text-[var(--ecode-accent)] shadow-inner sm:mr-4">
+              <div className="mr-0 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#2B3245] text-[var(--ecode-accent)] shadow-inner sm:mr-4">
                 <Icon className="h-6 w-6" />
               </div>
             )}

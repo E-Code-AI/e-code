@@ -77,14 +77,14 @@ interface CommandPaletteProps {
 }
 
 const categoryConfig: Record<CommandCategory, { label: string; color: string; icon: LucideIcon }> = {
-  file: { label: 'File', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20', icon: FileIcon },
-  edit: { label: 'Edit', color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20', icon: Copy },
-  view: { label: 'View', color: 'bg-purple-500/10 text-purple-500 border-purple-500/20', icon: Eye },
-  ai: { label: 'AI', color: 'bg-pink-500/10 text-pink-500 border-pink-500/20', icon: Sparkles },
-  tool: { label: 'Tool', color: 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20', icon: Settings },
-  action: { label: 'Action', color: 'bg-green-500/10 text-green-500 border-green-500/20', icon: Zap },
-  navigation: { label: 'Navigate', color: 'bg-orange-500/10 text-orange-500 border-orange-500/20', icon: Home },
-  recent: { label: 'Recent', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20', icon: History },
+  file: { label: 'File', color: 'bg-[#2B3245] text-blue-500 border-[#3D4455]', icon: FileIcon },
+  edit: { label: 'Edit', color: 'bg-[#2B3245] text-yellow-500 border-[#3D4455]', icon: Copy },
+  view: { label: 'View', color: 'bg-[#2B3245] text-purple-500 border-[#3D4455]', icon: Eye },
+  ai: { label: 'AI', color: 'bg-[#2B3245] text-pink-500 border-[#3D4455]', icon: Sparkles },
+  tool: { label: 'Tool', color: 'bg-[#2B3245] text-cyan-500 border-[#3D4455]', icon: Settings },
+  action: { label: 'Action', color: 'bg-[#2B3245] text-green-500 border-[#3D4455]', icon: Zap },
+  navigation: { label: 'Navigate', color: 'bg-[#2B3245] text-orange-500 border-[#3D4455]', icon: Home },
+  recent: { label: 'Recent', color: 'bg-[#2B3245] text-gray-500 border-[#3D4455]', icon: History },
 };
 
 function getRecentCommands(): string[] {

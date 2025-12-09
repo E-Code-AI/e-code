@@ -157,7 +157,7 @@ export function MobileCreateModal({
             {/* Handle */}
             <div className="flex justify-center py-3">
               <motion.div 
-                className="w-12 h-1.5 bg-muted-foreground/30 rounded-full"
+                className="w-12 h-1.5 bg-[#3D4455] rounded-full"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               />
@@ -224,7 +224,7 @@ export function MobileCreateModal({
                       onClick={() => setSelectedCategory(category)}
                       className={cn(
                         "whitespace-nowrap",
-                        selectedCategory === category && "bg-[#F26207] hover:bg-[#F26207]/90"
+                        selectedCategory === category && "bg-[#F26207] hover:bg-[#D35606]"
                       )}
                     >
                       {category === 'Popular' && '⭐ '}
@@ -282,12 +282,12 @@ export function MobileCreateModal({
                         {/* Badges */}
                         <div className="absolute top-2 right-2 flex gap-1">
                           {template.isPopular && (
-                            <span className="text-xs px-1.5 py-0.5 bg-amber-500/10 text-amber-500 rounded-full">
+                            <span className="text-xs px-1.5 py-0.5 bg-[#2B3245] text-amber-500 rounded-full">
                               Popular
                             </span>
                           )}
                           {template.isNew && (
-                            <span className="text-xs px-1.5 py-0.5 bg-green-500/10 text-green-500 rounded-full">
+                            <span className="text-xs px-1.5 py-0.5 bg-[#2B3245] text-green-500 rounded-full">
                               New
                             </span>
                           )}

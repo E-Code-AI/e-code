@@ -129,7 +129,7 @@ export const CreateProjectModal = ({
             
             {creationStep === 'success' && (
               <>
-                <div className="h-16 w-16 rounded-full bg-green-500 bg-opacity-10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-[#2B3245] flex items-center justify-center">
                   <CheckCircle2 className="h-10 w-10 text-green-500" />
                 </div>
                 <div className="text-center space-y-2">
@@ -201,7 +201,7 @@ export const CreateProjectModal = ({
             </div>
             
             {aiGenerated && (
-              <div className="flex items-center gap-2 p-3 bg-[var(--ecode-accent)] bg-opacity-10 text-[var(--ecode-accent)] rounded-md">
+              <div className="flex items-center gap-2 p-3 bg-[#2B3245] text-[var(--ecode-accent)] rounded-md">
                 <Sparkles className="h-4 w-4" />
                 <span className="text-sm">AI generated from your description</span>
               </div>

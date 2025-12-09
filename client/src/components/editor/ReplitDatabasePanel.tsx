@@ -46,7 +46,7 @@ function ShimmerSkeleton({ className }: { className?: string }) {
       <motion.div
         className="absolute inset-0 -translate-x-full"
         style={{
-          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)',
+          background: 'linear-gradient(90deg, transparent, #3D4455, transparent)',
         }}
         animate={{ translateX: ['−100%', '100%'] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
@@ -80,7 +80,7 @@ function EmptyState({
       {actionLabel && onAction && (
         <Button 
           onClick={onAction}
-          className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-white text-[13px]"
+          className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0066CC] text-white text-[13px]"
           data-testid="empty-state-action-button"
         >
           <Plus className="w-[18px] h-[18px] mr-2" />
@@ -189,7 +189,7 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8 rounded-lg hover:bg-[#1c2333]"
+            className="h-8 w-8 rounded-lg hover:bg-[#3D4455]"
             data-testid="database-settings-button"
           >
             <Settings className="w-[18px] h-[18px] text-[#9da2a6]" />
@@ -210,7 +210,7 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8 rounded-lg hover:bg-[#1c2333]"
+            className="h-8 w-8 rounded-lg hover:bg-[#3D4455]"
             onClick={handleRefresh}
             data-testid="database-refresh-button"
           >
@@ -256,8 +256,8 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
                         setSelectedTable(table.name);
                       }}
                       className={cn(
-                        "w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[#1c2333] text-left transition-colors",
-                        selectedTable === table.name && "bg-[#0079f2]/10"
+                        "w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[#3D4455] text-left transition-colors",
+                        selectedTable === table.name && "bg-[#1C2333]"
                       )}
                       data-testid={`table-row-${table.name}`}
                     >
@@ -276,7 +276,7 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
                         {table.columns.map((column) => (
                           <div
                             key={column.name}
-                            className="flex items-center justify-between px-2 py-1.5 text-[13px] hover:bg-[#1c2333] rounded-lg transition-colors"
+                            className="flex items-center justify-between px-2 py-1.5 text-[13px] hover:bg-[#3D4455] rounded-lg transition-colors"
                             data-testid={`column-${table.name}-${column.name}`}
                           >
                             <div className="flex items-center gap-2">
@@ -319,7 +319,7 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
                 </Select>
                 <Button
                   onClick={runQuery}
-                  className="h-8 px-4 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-white text-[13px]"
+                  className="h-8 px-4 rounded-lg bg-[#0079f2] hover:bg-[#0066CC] text-white text-[13px]"
                   disabled={isLoading}
                   data-testid="run-query-button"
                 >
@@ -331,7 +331,7 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-8 w-8 rounded-lg hover:bg-[#1c2333] border border-[#3d4452]"
+                  className="h-8 w-8 rounded-lg hover:bg-[#3D4455] border border-[#3d4452]"
                   data-testid="copy-query-button"
                 >
                   <Copy className="w-[18px] h-[18px] text-[#9da2a6]" />
@@ -339,7 +339,7 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-8 w-8 rounded-lg hover:bg-[#1c2333] border border-[#3d4452]"
+                  className="h-8 w-8 rounded-lg hover:bg-[#3D4455] border border-[#3d4452]"
                   data-testid="download-results-button"
                 >
                   <Download className="w-[18px] h-[18px] text-[#9da2a6]" />
@@ -395,7 +395,7 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
                       {queryResults.map((row, index) => (
                         <tr 
                           key={index} 
-                          className="border-b border-[#3d4452] last:border-b-0 hover:bg-[#1c2333] transition-colors"
+                          className="border-b border-[#3d4452] last:border-b-0 hover:bg-[#3D4455] transition-colors"
                           data-testid={`result-row-${index}`}
                         >
                           {Object.values(row).map((value, i) => (

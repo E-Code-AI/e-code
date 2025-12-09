@@ -484,7 +484,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-[var(--ecode-green)] hover:bg-[var(--ecode-green)]/10"
+                  className="h-8 w-8 text-[var(--ecode-green)] hover:bg-[#3D4455]"
                 >
                   <Play className="h-4 w-4" />
                 </Button>

@@ -47,16 +47,16 @@ function formatCost(cost: string | number): string {
 function getStatusColor(status: SessionStatus): string {
   switch (status) {
     case 'active':
-      return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+      return 'bg-emerald-950 text-emerald-600 border-emerald-500';
     case 'paused':
-      return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
+      return 'bg-amber-950 text-amber-600 border-amber-500';
     case 'completed':
-      return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+      return 'bg-blue-950 text-blue-600 border-blue-500';
     case 'failed':
     case 'cancelled':
-      return 'bg-red-500/10 text-red-600 border-red-500/20';
+      return 'bg-red-950 text-red-600 border-red-500';
     default:
-      return 'bg-gray-500/10 text-gray-600 border-gray-500/20';
+      return 'bg-[#1C2333] text-[#9CA3AF] border-[#2B3245]';
   }
 }
 
@@ -122,7 +122,7 @@ export function MaxAutonomyProgress({
 
   if (isLoadingSession) {
     return (
-      <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg animate-pulse" data-testid="autonomy-progress-loading">
+      <div className="flex items-center gap-2 p-3 bg-[#1C2333] rounded-lg animate-pulse" data-testid="autonomy-progress-loading">
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         <span className="text-sm text-muted-foreground">Loading autonomous session...</span>
       </div>
@@ -135,13 +135,13 @@ export function MaxAutonomyProgress({
 
   return (
     <div 
-      className="border border-border/50 rounded-lg bg-card/50 overflow-hidden"
+      className="border border-[#2B3245] rounded-lg bg-[#0E1525] overflow-hidden"
       data-testid="autonomy-progress-container"
     >
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CollapsibleTrigger asChild>
           <div 
-            className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/30 transition-colors"
+            className="flex items-center justify-between p-3 cursor-pointer hover:bg-[#3D4455] transition-colors"
             data-testid="autonomy-progress-header"
           >
             <div className="flex items-center gap-2.5">
@@ -211,7 +211,7 @@ export function MaxAutonomyProgress({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                    className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-950"
                     onClick={(e) => { 
                       e.stopPropagation(); 
                       stopSession();
@@ -247,7 +247,7 @@ export function MaxAutonomyProgress({
             </div>
 
             {currentTask && (
-              <div className="flex items-start gap-2 p-2 bg-blue-500/5 border border-blue-500/20 rounded-md">
+              <div className="flex items-start gap-2 p-2 bg-blue-950 border border-blue-500 rounded-md">
                 <Loader2 className="h-3.5 w-3.5 text-blue-500 animate-spin mt-0.5 shrink-0" />
                 <div className="text-xs">
                   <div className="font-medium text-blue-600 dark:text-blue-400">
@@ -310,9 +310,9 @@ export function MaxAutonomyProgress({
                       key={task.id}
                       className={cn(
                         "flex items-center gap-2 p-1.5 rounded text-xs",
-                        task.status === 'running' && "bg-blue-500/5",
+                        task.status === 'running' && "bg-blue-950",
                         task.status === 'completed' && "opacity-70",
-                        task.status === 'failed' && "bg-red-500/5"
+                        task.status === 'failed' && "bg-red-950"
                       )}
                       data-testid={`task-item-${task.id}`}
                     >
@@ -385,11 +385,11 @@ export function MaxAutonomyStartForm({
   };
 
   return (
-    <div className="space-y-3 p-3 border border-amber-500/30 bg-amber-500/5 rounded-lg" data-testid="autonomy-start-form">
+    <div className="space-y-3 p-3 border border-amber-500 bg-amber-950 rounded-lg" data-testid="autonomy-start-form">
       <div className="flex items-center gap-2">
         <Zap className="h-4 w-4 text-amber-500" />
         <span className="text-sm font-medium">Max Autonomy Mode</span>
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-amber-500/10 text-amber-600 border-amber-500/20">
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-amber-950 text-amber-600 border-amber-500">
           Up to {maxDuration} min
         </Badge>
       </div>

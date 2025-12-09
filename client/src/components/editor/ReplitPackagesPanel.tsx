@@ -57,7 +57,7 @@ function ShimmerSkeleton({ className }: { className?: string }) {
       transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
     >
       <motion.div
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-[#3d4452]/30 to-transparent"
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-[#3D4455] to-transparent"
         animate={{ x: ['-100%', '100%'] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
       />
@@ -203,7 +203,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg hover:bg-[#242b3d]"
+            className="h-8 w-8 rounded-lg hover:bg-[#3D4455]"
             onClick={() => refetch()}
             disabled={isLoading}
             data-testid="button-refresh-packages"
@@ -266,7 +266,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                     variant="link" 
                     size="sm" 
                     onClick={() => refetch()}
-                    className="text-[13px] text-[#0079f2] hover:text-[#0079f2]/80"
+                    className="text-[13px] text-[#0079f2] hover:text-[#0079f2]"
                   >
                     Try again
                   </Button>
@@ -281,7 +281,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                     Search for packages to add dependencies to your project
                   </p>
                   <Button
-                    className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[13px]"
+                    className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0066CC] text-[#ffffff] text-[13px]"
                     onClick={() => {
                       const searchTab = document.querySelector('[data-testid="tab-search"]') as HTMLElement;
                       searchTab?.click();
@@ -300,7 +300,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                     data-testid={`package-item-${pkg.name}`}
                   >
                     <div
-                      className="p-3 cursor-pointer hover:bg-[#242b3d] transition-colors"
+                      className="p-3 cursor-pointer hover:bg-[#3D4455] transition-colors"
                       onClick={() => togglePackageExpansion(pkg.name)}
                     >
                       <div className="flex items-start gap-2">
@@ -327,8 +327,8 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                               className={cn(
                                 "text-[11px] uppercase tracking-wider px-1.5 py-0",
                                 pkg.type === 'development' 
-                                  ? "bg-amber-500/10 text-amber-400 border-amber-500/20" 
-                                  : "bg-[#0079f2]/10 text-[#0079f2] border-[#0079f2]/20"
+                                  ? "bg-[#2B3245] text-amber-400 border-amber-500" 
+                                  : "bg-[#1C2333] text-[#0079f2] border-[#0079f2]"
                               )}
                             >
                               {pkg.type === 'development' ? 'dev' : 'prod'}
@@ -339,7 +339,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 rounded-lg hover:bg-[#3d4452]"
+                          className="h-8 w-8 rounded-lg hover:bg-[#3D4455]"
                           onClick={(e) => {
                             e.stopPropagation();
                             uninstallMutation.mutate(pkg.name);
@@ -413,7 +413,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                 filteredSearch.map((pkg) => (
                   <div
                     key={pkg.name}
-                    className="mb-2 p-3 border border-[#3d4452] rounded-lg bg-[#1c2333] hover:bg-[#242b3d] transition-colors"
+                    className="mb-2 p-3 border border-[#3d4452] rounded-lg bg-[#1c2333] hover:bg-[#3D4455] transition-colors"
                     data-testid={`search-result-${pkg.name}`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -437,7 +437,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                       </div>
 
                       <Button
-                        className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0079f2]/90 text-[#ffffff] text-[13px] shrink-0"
+                        className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0066CC] text-[#ffffff] text-[13px] shrink-0"
                         onClick={() => installMutation.mutate({ packageName: pkg.name })}
                         disabled={installMutation.isPending}
                         data-testid={`button-install-${pkg.name}`}

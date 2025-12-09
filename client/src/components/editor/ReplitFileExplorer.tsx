@@ -375,7 +375,7 @@ export function ReplitFileExplorer({
                 className={`
                   flex items-center py-1 px-2 rounded-md cursor-pointer select-none
                   ${isSelected ? "bg-[var(--ecode-accent)] text-white" : "hover:bg-[var(--ecode-sidebar-hover)]"}
-                  ${isDragOver ? "bg-[var(--ecode-accent)]/20" : ""}
+                  ${isDragOver ? "bg-[#2B3245]" : ""}
                   ${isHidden ? "opacity-60" : ""}
                 `}
                 style={{ paddingLeft: `${8 + level * 16}px` }}

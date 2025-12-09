@@ -383,7 +383,7 @@ export function ReplitFileExplorer({
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
                     <DropdownMenuItem
-                      className="text-[var(--ecode-danger)] hover:bg-[var(--ecode-danger)]/10"
+                      className="text-[var(--ecode-danger)] hover:bg-[#3D4455]"
                       onClick={() => deleteFileMutation.mutate(file)}
                     >
                       <Trash2 className="mr-2 h-3 w-3" />
@@ -420,7 +420,7 @@ export function ReplitFileExplorer({
                 Rename
               </ContextMenuItem>
               <ContextMenuSeparator className="bg-[var(--ecode-border)]" />
-              <ContextMenuItem className="text-[var(--ecode-danger)] hover:bg-[var(--ecode-danger)]/10">
+              <ContextMenuItem className="text-[var(--ecode-danger)] hover:bg-[#3D4455]">
                 <Trash2 className="mr-2 h-3 w-3" />
                 Delete
               </ContextMenuItem>

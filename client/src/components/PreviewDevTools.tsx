@@ -404,8 +404,8 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
                       key={msg.id}
                       className={cn(
                         "flex items-start gap-2 p-2 rounded hover:bg-accent",
-                        msg.level === 'error' && "bg-red-50 dark:bg-red-950/20",
-                        msg.level === 'warn' && "bg-yellow-50 dark:bg-yellow-950/20"
+                        msg.level === 'error' && "bg-red-50 dark:bg-[#2B3245]",
+                        msg.level === 'warn' && "bg-yellow-50 dark:bg-[#2B3245]"
                       )}
                     >
                       {getConsoleIcon(msg.level)}

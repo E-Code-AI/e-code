@@ -98,7 +98,7 @@ export function ReplitActivityBar({
     return (
       <div key={item.id} className="relative">
         {item.separator && (
-          <div className="mx-2.5 my-1.5 border-t border-[var(--ecode-border)] opacity-50" />
+          <div className="mx-2.5 my-1.5 border-t border-[#2B3245]" />
         )}
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
@@ -112,7 +112,7 @@ export function ReplitActivityBar({
                 'hover:bg-[var(--ecode-sidebar-hover)] active:scale-95',
                 'focus-visible:ring-2 focus-visible:ring-[var(--ecode-accent)] focus-visible:ring-offset-0',
                 isActive && [
-                  'bg-[var(--ecode-accent)]/15',
+                  'bg-[#2B3245]',
                   'text-[var(--ecode-accent)]',
                   'shadow-sm',
                 ],

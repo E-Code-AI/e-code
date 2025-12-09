@@ -210,7 +210,7 @@ export function RAGToggle({ sessionId, enabled = true, onToggle, compact = false
       <div className="flex items-center gap-3">
         <div className={cn(
           "h-9 w-9 rounded-lg flex items-center justify-center",
-          isEnabled && isAvailable ? "bg-orange-500/10" : "bg-muted"
+          isEnabled && isAvailable ? "bg-orange-950" : "bg-[#1C2333]"
         )}>
           <Brain className={cn(
             "h-5 w-5",
@@ -363,11 +363,11 @@ export function RetrievedContextPanel({ sessionId, query, className, maxHeight =
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'concept': return 'border-purple-500/20 bg-purple-500/5';
-      case 'entity': return 'border-blue-500/20 bg-blue-500/5';
-      case 'fact': return 'border-green-500/20 bg-green-500/5';
-      case 'idea': return 'border-orange-500/20 bg-orange-500/5';
-      default: return 'border-gray-500/20 bg-gray-500/5';
+      case 'concept': return 'border-purple-500 bg-purple-950';
+      case 'entity': return 'border-blue-500 bg-blue-950';
+      case 'fact': return 'border-green-500 bg-green-950';
+      case 'idea': return 'border-orange-500 bg-orange-950';
+      default: return 'border-[#2B3245] bg-[#1C2333]';
     }
   };
 
@@ -414,7 +414,7 @@ export function RetrievedContextPanel({ sessionId, query, className, maxHeight =
                   <div
                     key={ctx.id}
                     className={cn(
-                      "p-3 rounded-lg border transition-colors hover:bg-accent/50",
+                      "p-3 rounded-lg border transition-colors hover:bg-[#3D4455]",
                       getTypeColor(ctx.type)
                     )}
                     data-testid={`context-item-${index}`}
@@ -436,7 +436,7 @@ export function RetrievedContextPanel({ sessionId, query, className, maxHeight =
                         variant={ctx.relevanceScore > 0.7 ? "default" : "secondary"}
                         className={cn(
                           "text-xs",
-                          ctx.relevanceScore > 0.7 && "bg-green-500/10 text-green-600 border-green-500/20"
+                          ctx.relevanceScore > 0.7 && "bg-green-950 text-green-600 border-green-500"
                         )}
                       >
                         {Math.round(ctx.relevanceScore * 100)}%
