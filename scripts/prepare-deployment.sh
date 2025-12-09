@@ -47,8 +47,8 @@ mkdir -p uploads
 mkdir -p dist
 
 # Install dependencies
-echo "📦 Installing dependencies..."
-npm ci
+echo "📦 Installing production dependencies..."
+npm ci --omit=dev
 
 # Run database migrations
 echo "🗄️  Running database migrations..."

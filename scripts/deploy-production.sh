@@ -38,7 +38,7 @@ fi
 
 # Install dependencies
 echo "📦 Installing production dependencies..."
-npm ci --only=production
+npm ci --omit=dev
 
 # Build application
 echo "🔨 Building application..."
@@ -52,7 +52,7 @@ NODE_ENV=production npm run db:push
 case $DEPLOY_METHOD in
     pm2)
         echo "🔧 Deploying with PM2..."
-        
+
         # Check if ecosystem.config.js exists
         if [ ! -f "$APP_DIR/ecosystem.config.js" ]; then
             echo "⚠️  ecosystem.config.js not found. Creating default configuration..."
@@ -81,37 +81,37 @@ EOF
         else
             echo "✅ Using existing ecosystem.config.js"
         fi
-        
+
         # Stop existing instances
         pm2 stop ecosystem.config.js || true
-        
+
         # Start new instances
         pm2 start ecosystem.config.js --env production
-        
+
         # Save PM2 configuration
         pm2 save
-        
+
         # Setup startup script
         pm2 startup
         ;;
-        
+
     docker)
         echo "🐳 Deploying with Docker..."
-        
+
         # Stop existing containers
         docker-compose down || true
-        
+
         # Build and start containers
         docker-compose up -d --build
-        
+
         # Check health
         sleep 10
         docker-compose ps
         ;;
-        
+
     manual)
         echo "🔧 Manual deployment..."
-        
+
         # Create systemd service
         sudo tee /etc/systemd/system/e-code.service > /dev/null <<EOF
 [Unit]
@@ -130,13 +130,13 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 EOF
-        
+
         # Reload systemd and start service
         sudo systemctl daemon-reload
         sudo systemctl enable e-code
         sudo systemctl restart e-code
         ;;
-        
+
     *)
         echo "❌ Invalid deployment method: $DEPLOY_METHOD"
         echo "Usage: ./deploy-production.sh [pm2|docker|manual]"
@@ -147,7 +147,7 @@ esac
 # Setup Nginx if not already configured
 if [ ! -f "/etc/nginx/sites-enabled/e-code.conf" ]; then
     echo "⚙️  Setting up Nginx..."
-    
+
     # Check if nginx.conf exists
     if [ ! -f "$APP_DIR/nginx.conf" ]; then
         echo "⚠️  nginx.conf not found. Creating default configuration..."
@@ -198,7 +198,7 @@ EOF
     else
         echo "✅ Using existing nginx.conf"
     fi
-    
+
     sudo cp "$APP_DIR/nginx.conf" /etc/nginx/sites-available/e-code.conf
     sudo ln -sf /etc/nginx/sites-available/e-code.conf /etc/nginx/sites-enabled/
     sudo nginx -t && sudo systemctl reload nginx
