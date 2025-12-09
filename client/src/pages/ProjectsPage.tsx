@@ -68,7 +68,7 @@ import {
   Globe, Calendar, Archive, Lock, X
 } from 'lucide-react';
 import codingImagePath from '@assets/stock_images/coding_programming_l_3c65a90d.jpg';
-import modernDevImagePath from '@assets/stock_images/modern_software_deve_49bda81c.jpg';
+import modernDevImagePath from '@assets/stock_images/modern_software_deve_ff7f5fd4.jpg';
 
 const projectFormSchema = z.object({
   name: z.string().min(1, "Project name is required").max(64, "Project name must be less than 64 characters"),
