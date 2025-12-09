@@ -145,7 +145,7 @@ export function BottomSheet({
           >
             {showHandle && (
               <div className="flex justify-center py-2">
-                <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full" />
+                <div className="w-12 h-1.5 bg-muted rounded-full" />
               </div>
             )}
             <div className="overflow-auto" style={{ maxHeight: "calc(90vh - 2rem)" }}>
@@ -263,7 +263,7 @@ export function Skeleton({
   width,
   height
 }: SkeletonProps) {
-  const baseClasses = "bg-gray-200 dark:bg-gray-700";
+  const baseClasses = "bg-muted";
   const variantClasses = {
     text: "rounded h-4 w-full",
     circular: "rounded-full",
@@ -326,7 +326,7 @@ interface SpinnerProps {
   color?: string;
 }
 
-export function Spinner({ size = "md", color = "#F26207" }: SpinnerProps) {
+export function Spinner({ size = "md", color = "hsl(var(--primary))" }: SpinnerProps) {
   const sizes = {
     sm: "h-4 w-4",
     md: "h-8 w-8",
@@ -363,7 +363,7 @@ export function PullIndicator({ progress, isRefreshing }: PullIndicatorProps) {
           rotate: isRefreshing ? { duration: 1, repeat: Infinity, ease: "linear" } : { duration: 0 },
         }}
       >
-        <div className="h-8 w-8 border-2 border-[#F26207] border-t-transparent rounded-full" />
+        <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
       </motion.div>
     </div>
   );

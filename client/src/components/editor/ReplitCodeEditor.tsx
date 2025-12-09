@@ -53,8 +53,8 @@ interface EditorTab {
   content: string;
   language: string;
   isDirty: boolean;
-  version: number;  // Add version tracking to prevent concurrent edit conflicts
-  lastSavedContent?: string;  // Track last saved content for rollback
+  version: number;
+  lastSavedContent?: string;
 }
 
 interface ReplitCodeEditorProps {
@@ -109,7 +109,6 @@ function getLanguageFromFileName(fileName: string): string {
   return languageMap[extension || ''] || 'plaintext';
 }
 
-// Sortable Tab Component
 interface SortableTabProps {
   tab: EditorTab;
   isActive: boolean;
@@ -141,15 +140,15 @@ function SortableTab({ tab, isActive, onClick, onClose }: SortableTabProps) {
       {...attributes}
       {...listeners}
       className={cn(
-        "group flex items-center h-full px-3 border-r border-[var(--ecode-border)] cursor-pointer hover:bg-[var(--ecode-sidebar-hover)] select-none",
-        isActive && "bg-[var(--ecode-background)] border-b-0",
+        "group flex items-center h-full px-3 border-r border-border cursor-pointer hover:bg-accent select-none",
+        isActive && "bg-background border-b-0",
         isDragging && "cursor-grabbing"
       )}
       onClick={onClick}
       data-testid={`editor-tab-${tab.fileId}`}
     >
       <span className="text-sm whitespace-nowrap font-[family-name:var(--ecode-font-sans)]">
-        {tab.isDirty && <span className="text-[var(--ecode-accent)] mr-1">•</span>}
+        {tab.isDirty && <span className="text-primary mr-1">•</span>}
         {tab.fileName}
       </span>
       <Button
@@ -199,7 +198,6 @@ export function ReplitCodeEditor({
     getAvailableModels,
   } = useAIPreferences();
 
-  // Open file in new tab or activate existing tab
   useEffect(() => {
     if (activeFile && !activeFile.isDirectory) {
       const existingTab = tabs.find(tab => tab.fileId === activeFile.id);
@@ -218,13 +216,11 @@ export function ReplitCodeEditor({
         };
         setTabs([...tabs, newTab]);
         setActiveTabId(activeFile.id);
-        // Initialize version tracking
         fileVersionsRef.current.set(activeFile.id, 0);
       }
     }
   }, [activeFile]);
 
-  // Update editor content when active tab changes
   useEffect(() => {
     const activeTab = tabs.find(tab => tab.fileId === activeTabId);
     if (activeTab) {
@@ -234,51 +230,38 @@ export function ReplitCodeEditor({
     }
   }, [activeTabId, tabs]);
 
-  // Properly debounced handleEditorChange with race condition prevention
   const handleEditorChange = (value: string | undefined) => {
     if (value === undefined || activeTabId === null) return;
     
-    // Clear any existing save timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = null;
     }
     
-    // Get current version for this file
     const currentVersion = fileVersionsRef.current.get(activeTabId) || 0;
     
-    // Update tab content with optimistic update (single state mutation)
     setTabs(prevTabs => prevTabs.map(tab => 
       tab.fileId === activeTabId 
         ? { ...tab, content: value, isDirty: true, version: currentVersion }
         : tab
     ));
     
-    // Set up new debounced save
     saveTimeoutRef.current = setTimeout(async () => {
-      // Check if another save is already in progress
       if (isSavingRef.current && pendingSaveRef.current?.fileId === activeTabId) {
-        // Queue this save for after the current one completes
         pendingSaveRef.current = { fileId: activeTabId, content: value, version: currentVersion };
         return;
       }
       
-      // Mark as saving
       isSavingRef.current = true;
       
       try {
-        // Perform the save
         await onFileUpdate(activeTabId, value);
         
-        // Update version after successful save
         const newVersion = currentVersion + 1;
         fileVersionsRef.current.set(activeTabId, newVersion);
         
-        // Mark as clean and update version only after successful save
         setTabs(prevTabs => prevTabs.map(tab => {
           if (tab.fileId === activeTabId) {
-            // Only mark as clean if the content matches what we just saved
-            // This prevents marking as clean if user made more changes during save
             if (tab.content === value) {
               return { 
                 ...tab, 
@@ -294,10 +277,8 @@ export function ReplitCodeEditor({
       } catch (error) {
         console.error('Failed to save file:', error);
         
-        // On error, rollback to last saved content if user hasn't made more changes
         setTabs(prevTabs => prevTabs.map(tab => {
           if (tab.fileId === activeTabId && tab.content === value) {
-            // Only rollback if content hasn't changed further
             return {
               ...tab,
               content: tab.lastSavedContent || tab.content,
@@ -308,28 +289,23 @@ export function ReplitCodeEditor({
           return tab;
         }));
       } finally {
-        // Mark save as complete
         isSavingRef.current = false;
         
-        // Check if there's a pending save
         if (pendingSaveRef.current && pendingSaveRef.current.fileId === activeTabId) {
           const pending = pendingSaveRef.current;
           pendingSaveRef.current = null;
-          // Recursively handle the pending save
           handleEditorChange(pending.content);
         }
       }
-    }, 1000); // 1 second debounce
+    }, 1000);
   };
 
   const closeTab = (fileId: number) => {
-    // Cancel any pending save for this file
     if (activeTabId === fileId && saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = null;
     }
     
-    // Clean up version tracking for this file
     fileVersionsRef.current.delete(fileId);
     
     const newTabs = tabs.filter(tab => tab.fileId !== fileId);
@@ -358,9 +334,7 @@ export function ReplitCodeEditor({
     setErrorMessage('');
   };
 
-  // Clean up when active tab changes
   useEffect(() => {
-    // Cancel any pending save when switching tabs
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
@@ -369,30 +343,25 @@ export function ReplitCodeEditor({
     };
   }, [activeTabId]);
   
-  // Clean up on unmount
   useEffect(() => {
     return () => {
-      // Clean up retry timeout
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
         retryTimeoutRef.current = null;
       }
-      // Clean up save timeout
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
         saveTimeoutRef.current = null;
       }
-      // Reset save state
       isSavingRef.current = false;
       pendingSaveRef.current = null;
     };
   }, []);
 
-  // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Require 8px movement before drag starts
+        distance: 8,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -400,7 +369,6 @@ export function ReplitCodeEditor({
     })
   );
 
-  // Handle tab reordering
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -417,10 +385,10 @@ export function ReplitCodeEditor({
 
   if (tabs.length === 0) {
     return (
-      <div className={cn("flex items-center justify-center h-full bg-[var(--ecode-background)]", className)}>
+      <div className={cn("flex items-center justify-center h-full bg-background", className)}>
         <div className="text-center">
-          <p className="text-lg text-[var(--ecode-text-muted)]">No files open</p>
-          <p className="text-sm text-[var(--ecode-text-muted)] mt-2">
+          <p className="text-lg text-muted-foreground">No files open</p>
+          <p className="text-sm text-muted-foreground mt-2">
             Select a file from the sidebar to start editing
           </p>
         </div>
@@ -429,9 +397,9 @@ export function ReplitCodeEditor({
   }
 
   return (
-    <div className={cn("flex flex-col h-full bg-[var(--ecode-background)]", className)}>
+    <div className={cn("flex flex-col h-full bg-background", className)}>
       {/* Draggable Tabs */}
-      <div className="h-9 flex items-center bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] overflow-x-auto">
+      <div className="h-9 flex items-center bg-card border-b border-border overflow-x-auto">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -481,7 +449,7 @@ export function ReplitCodeEditor({
         <div className="ml-auto flex items-center px-2 gap-2">
           {/* AI Status Badge */}
           {aiProcessing && (
-            <Badge variant="outline" className="text-xs bg-surface-solid border-primary">
+            <Badge variant="outline" className="text-xs bg-card border-primary">
               <Sparkles className="h-3 w-3 mr-1 animate-pulse" />
               AI Processing...
             </Badge>
@@ -496,7 +464,7 @@ export function ReplitCodeEditor({
                   size="icon"
                   className={cn(
                     "h-7 w-7",
-                    aiPreferences.enabled && "bg-[#0079f2] hover:bg-[#0066cc]"
+                    aiPreferences.enabled && "bg-primary hover:bg-primary/90"
                   )}
                   onClick={toggleAIEnabled}
                 >
@@ -580,18 +548,18 @@ export function ReplitCodeEditor({
       <div className="flex-1 relative">
         {/* Loading state */}
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[var(--ecode-background)] z-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-background z-10">
             <div className="text-center space-y-4">
               <Skeleton className="h-4 w-48 mx-auto" />
               <Skeleton className="h-4 w-32 mx-auto" />
-              <p className="text-sm text-[var(--ecode-text-muted)]">Loading editor...</p>
+              <p className="text-sm text-muted-foreground">Loading editor...</p>
             </div>
           </div>
         )}
 
         {/* Error state */}
         {hasError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[var(--ecode-background)] z-10 p-8">
+          <div className="absolute inset-0 flex items-center justify-center bg-background z-10 p-8">
             <Alert className="max-w-md">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Editor Failed to Load</AlertTitle>
@@ -616,12 +584,10 @@ export function ReplitCodeEditor({
           }))}
           activeTabId={activeTabId}
           onContentChange={(fileId, content) => {
-            // Update local state
             setTabs(prevTabs => prevTabs.map(tab =>
               tab.fileId === fileId ? { ...tab, content, isDirty: true } : tab
             ));
             
-            // Debounced save (reuse existing logic)
             if (saveTimeoutRef.current) {
               clearTimeout(saveTimeoutRef.current);
             }
@@ -660,12 +626,9 @@ export function ReplitCodeEditor({
                 if (pendingSaveRef.current && pendingSaveRef.current.fileId === fileId) {
                   const pending = pendingSaveRef.current;
                   pendingSaveRef.current = null;
-                  // Trigger save for pending content
                   setTimeout(() => {
                     setTabs(prevTabs => prevTabs.map(tab =>
-                      tab.fileId === pending.fileId
-                        ? { ...tab, content: pending.content, isDirty: true }
-                        : tab
+                      tab.fileId === pending.fileId ? { ...tab, content: pending.content, isDirty: true } : tab
                     ));
                   }, 0);
                 }

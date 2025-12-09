@@ -545,7 +545,7 @@ export default function AIOptimizationDashboard() {
             </div>
           )}
           {latencyData?.fallbackRecommendation && (
-            <div className="mt-3 p-3 bg-[#1C2333] border border-yellow-700 rounded-lg text-sm text-yellow-300" data-testid="text-fallback-recommendation">
+            <div className="mt-3 p-3 bg-card border border-yellow-700 rounded-lg text-sm text-yellow-300" data-testid="text-fallback-recommendation">
               <AlertTriangle className="inline h-4 w-4 mr-2" />
               Fallback Recommendation: {latencyData.fallbackRecommendation}
             </div>

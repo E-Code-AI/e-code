@@ -72,13 +72,13 @@ interface ReplitTestingPanelProps {
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
     <motion.div
-      className={cn("bg-[#3d4452] rounded-lg overflow-hidden", className)}
+      className={cn("bg-muted rounded-lg overflow-hidden", className)}
       initial={{ opacity: 0.5 }}
       animate={{ opacity: [0.5, 0.8, 0.5] }}
       transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
     >
       <motion.div
-        className="h-full w-full bg-gradient-to-r from-transparent via-[#3D4455] to-transparent"
+        className="h-full w-full bg-gradient-to-r from-transparent via-accent to-transparent"
         animate={{ x: ["-100%", "100%"] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
       />
@@ -194,13 +194,13 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
   const getTestIcon = (status: TestCase['status']) => {
     switch (status) {
       case 'passed':
-        return <CheckCircle2 className="w-[18px] h-[18px] text-[#22c55e]" />;
+        return <CheckCircle2 className="w-[18px] h-[18px] text-green-500" />;
       case 'failed':
-        return <XCircle className="w-[18px] h-[18px] text-[#ef4444]" />;
+        return <XCircle className="w-[18px] h-[18px] text-destructive" />;
       case 'skipped':
-        return <AlertCircle className="w-[18px] h-[18px] text-[#f59e0b]" />;
+        return <AlertCircle className="w-[18px] h-[18px] text-yellow-500" />;
       case 'pending':
-        return <Clock className="w-[18px] h-[18px] text-[#5c6670]" />;
+        return <Clock className="w-[18px] h-[18px] text-muted-foreground" />;
     }
   };
 
@@ -211,10 +211,10 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
   const skippedTests = latestRun?.skippedTests || 0;
 
   return (
-    <div className={cn("flex flex-col h-full bg-[#0e1525]", className)}>
-      <div className="p-3 border-b border-[#3d4452] space-y-3 min-h-[48px]">
+    <div className={cn("flex flex-col h-full bg-card", className)}>
+      <div className="p-3 border-b border-border space-y-3 min-h-[48px]">
         <div className="flex items-center justify-between">
-          <h3 className="text-[17px] font-medium leading-tight text-[#ffffff]">
+          <h3 className="text-[17px] font-medium leading-tight text-foreground">
             Testing
           </h3>
           <div className="flex items-center gap-2">
@@ -222,7 +222,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
               size="sm"
               variant="ghost"
               onClick={() => refetch()}
-              className="h-8 px-3 rounded-lg bg-[#0079f2] hover:bg-[#0066CC] text-[#ffffff] text-[13px]"
+              className="h-8 px-3 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-[13px]"
               data-testid="button-run-tests"
             >
               <PlayCircle className="w-[18px] h-[18px] mr-1.5" />
@@ -230,14 +230,14 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-lg hover:bg-surface-hover-solid">
-                  <Settings className="w-[18px] h-[18px] text-[#9da2a6]" />
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-lg hover:bg-accent">
+                  <Settings className="w-[18px] h-[18px] text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-[#1c2333] border-[#3d4452]">
-                <DropdownMenuItem className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-surface-hover-solid">Configure Test Runner</DropdownMenuItem>
-                <DropdownMenuItem className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-surface-hover-solid">Watch Mode</DropdownMenuItem>
-                <DropdownMenuItem className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-surface-hover-solid">Coverage Report</DropdownMenuItem>
+              <DropdownMenuContent align="end" className="bg-card border-border">
+                <DropdownMenuItem className="text-[15px] leading-[20px] text-foreground hover:bg-accent">Configure Test Runner</DropdownMenuItem>
+                <DropdownMenuItem className="text-[15px] leading-[20px] text-foreground hover:bg-accent">Watch Mode</DropdownMenuItem>
+                <DropdownMenuItem className="text-[15px] leading-[20px] text-foreground hover:bg-accent">Coverage Report</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -245,27 +245,27 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
 
         {latestRun && (
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[11px] uppercase tracking-wider text-[#5c6670]">Results:</span>
-            <Badge variant="outline" className="bg-[#242b3d] border-[#3d4452] text-[#d4d8dd] text-[13px]">
+            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Results:</span>
+            <Badge variant="outline" className="bg-muted border-border text-foreground text-[13px]">
               Total: {totalTests}
             </Badge>
             {passedTests > 0 && (
-              <Badge variant="outline" className="bg-surface-solid text-[#22c55e] border-[#22c55e] text-[13px]">
+              <Badge variant="outline" className="bg-card text-green-500 border-green-500 text-[13px]">
                 Passed: {passedTests}
               </Badge>
             )}
             {failedTests > 0 && (
-              <Badge variant="outline" className="bg-surface-solid text-[#ef4444] border-[#ef4444] text-[13px]">
+              <Badge variant="outline" className="bg-card text-destructive border-destructive text-[13px]">
                 Failed: {failedTests}
               </Badge>
             )}
             {skippedTests > 0 && (
-              <Badge variant="outline" className="bg-surface-solid text-[#f59e0b] border-[#f59e0b] text-[13px]">
+              <Badge variant="outline" className="bg-card text-yellow-500 border-yellow-500 text-[13px]">
                 Skipped: {skippedTests}
               </Badge>
             )}
             {latestRun.duration && (
-              <Badge variant="outline" className="bg-[#242b3d] border-[#3d4452] text-[#9da2a6] text-[13px]">
+              <Badge variant="outline" className="bg-muted border-border text-muted-foreground text-[13px]">
                 {latestRun.duration}ms
               </Badge>
             )}
@@ -277,21 +277,21 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
             placeholder="Search tests..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-8 rounded-lg text-[15px] leading-[20px] bg-[#1c2333] border-[#3d4452] text-[#d4d8dd] placeholder:text-[#5c6670]"
+            className="h-8 rounded-lg text-[15px] leading-[20px] bg-muted border-border text-foreground placeholder:text-muted-foreground"
             data-testid="input-search-tests"
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="outline" className="h-8 px-3 rounded-lg border-[#3d4452] bg-[#1c2333] hover:bg-surface-hover-solid text-[13px] text-[#d4d8dd]">
-                <Filter className="w-[18px] h-[18px] mr-1.5 text-[#9da2a6]" />
+              <Button size="sm" variant="outline" className="h-8 px-3 rounded-lg border-border bg-muted hover:bg-accent text-[13px] text-foreground">
+                <Filter className="w-[18px] h-[18px] mr-1.5 text-muted-foreground" />
                 {filter === 'all' ? 'All' : filter.charAt(0).toUpperCase() + filter.slice(1)}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#1c2333] border-[#3d4452]">
-              <DropdownMenuItem onClick={() => setFilter('all')} className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-surface-hover-solid">All Tests</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter('passed')} className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-surface-hover-solid">Passed</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter('failed')} className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-surface-hover-solid">Failed</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter('pending')} className="text-[15px] leading-[20px] text-[#d4d8dd] hover:bg-surface-hover-solid">Pending</DropdownMenuItem>
+            <DropdownMenuContent align="end" className="bg-card border-border">
+              <DropdownMenuItem onClick={() => setFilter('all')} className="text-[15px] leading-[20px] text-foreground hover:bg-accent">All Tests</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilter('passed')} className="text-[15px] leading-[20px] text-foreground hover:bg-accent">Passed</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilter('failed')} className="text-[15px] leading-[20px] text-foreground hover:bg-accent">Failed</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilter('pending')} className="text-[15px] leading-[20px] text-foreground hover:bg-accent">Pending</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -303,11 +303,11 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
             <LoadingSkeleton />
           ) : filteredSuites.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <FlaskConical className="w-12 h-12 text-[#5c6670] opacity-40 mb-4" style={{ width: 48, height: 48 }} />
-              <p className="text-[17px] font-medium leading-tight text-[#d4d8dd] mb-2">
+              <FlaskConical className="w-12 h-12 text-muted-foreground opacity-40 mb-4" style={{ width: 48, height: 48 }} />
+              <p className="text-[17px] font-medium leading-tight text-foreground mb-2">
                 {searchQuery ? 'No tests match your search' : 'No tests found'}
               </p>
-              <p className="text-[13px] text-[#5c6670] max-w-[240px]">
+              <p className="text-[13px] text-muted-foreground max-w-[240px]">
                 {testRuns.length === 0 ? 'Run tests to see results here' : 'Create test files to get started'}
               </p>
             </div>
@@ -316,24 +316,24 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
               <div key={suite.id} className="rounded-lg overflow-hidden">
                 <button
                   onClick={() => toggleSuite(suite.id)}
-                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-surface-hover-solid rounded-lg transition-colors text-left"
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-accent rounded-lg transition-colors text-left"
                   data-testid={`suite-${suite.id}`}
                 >
                   {expandedSuites.has(suite.id) ? (
-                    <ChevronDown className="w-[18px] h-[18px] text-[#5c6670] flex-shrink-0" />
+                    <ChevronDown className="w-[18px] h-[18px] text-muted-foreground flex-shrink-0" />
                   ) : (
-                    <ChevronRight className="w-[18px] h-[18px] text-[#5c6670] flex-shrink-0" />
+                    <ChevronRight className="w-[18px] h-[18px] text-muted-foreground flex-shrink-0" />
                   )}
-                  <FlaskConical className="w-[18px] h-[18px] text-[#9da2a6] flex-shrink-0" />
+                  <FlaskConical className="w-[18px] h-[18px] text-muted-foreground flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[15px] leading-[20px] font-medium text-[#ffffff] truncate">
+                    <p className="text-[15px] leading-[20px] font-medium text-foreground truncate">
                       {suite.name}
                     </p>
-                    <p className="text-[13px] text-[#5c6670] truncate font-mono">
+                    <p className="text-[13px] text-muted-foreground truncate font-mono">
                       {suite.file}
                     </p>
                   </div>
-                  <Badge variant="outline" className="text-[13px] bg-[#242b3d] border-[#3d4452] text-[#9da2a6]">
+                  <Badge variant="outline" className="text-[13px] bg-muted border-border text-muted-foreground">
                     {suite.tests.length}
                   </Badge>
                 </button>
@@ -343,21 +343,21 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
                     {suite.tests.map(test => (
                       <div
                         key={test.id}
-                        className="flex items-start gap-2 px-3 py-2 hover:bg-surface-hover-solid rounded-lg transition-colors cursor-pointer"
+                        className="flex items-start gap-2 px-3 py-2 hover:bg-accent rounded-lg transition-colors cursor-pointer"
                         data-testid={`test-${test.id}`}
                       >
                         {getTestIcon(test.status)}
                         <div className="flex-1 min-w-0">
-                          <p className="text-[15px] leading-[20px] text-[#d4d8dd]">
+                          <p className="text-[15px] leading-[20px] text-foreground">
                             {test.testName}
                           </p>
                           {test.error && (
-                            <p className="text-[13px] text-[#ef4444] mt-1 font-mono whitespace-pre-wrap">
+                            <p className="text-[13px] text-destructive mt-1 font-mono whitespace-pre-wrap">
                               {test.error}
                             </p>
                           )}
                           {test.duration && (
-                            <p className="text-[13px] text-[#5c6670] mt-0.5">
+                            <p className="text-[13px] text-muted-foreground mt-0.5">
                               {test.duration}ms
                             </p>
                           )}
@@ -373,26 +373,26 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
       </ScrollArea>
 
       {testRuns.length > 0 && (
-        <div className="border-t border-[#3d4452] p-3">
-          <p className="text-[11px] uppercase tracking-wider text-[#5c6670] mb-2">
+        <div className="border-t border-border p-3">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">
             Recent Runs
           </p>
           <div className="space-y-1">
             {testRuns.slice(0, 3).map(run => (
               <div
                 key={run.id}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover-solid cursor-pointer transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent cursor-pointer transition-colors"
                 data-testid={`run-${run.id}`}
               >
-                {run.status === 'passed' && <CheckCircle2 className="w-[18px] h-[18px] text-[#22c55e]" />}
-                {run.status === 'failed' && <XCircle className="w-[18px] h-[18px] text-[#ef4444]" />}
-                {run.status === 'running' && <RefreshCw className="w-[18px] h-[18px] text-[#0079f2] animate-spin" />}
-                {run.status === 'cancelled' && <AlertCircle className="w-[18px] h-[18px] text-[#f59e0b]" />}
+                {run.status === 'passed' && <CheckCircle2 className="w-[18px] h-[18px] text-green-500" />}
+                {run.status === 'failed' && <XCircle className="w-[18px] h-[18px] text-destructive" />}
+                {run.status === 'running' && <RefreshCw className="w-[18px] h-[18px] text-primary animate-spin" />}
+                {run.status === 'cancelled' && <AlertCircle className="w-[18px] h-[18px] text-yellow-500" />}
                 <div className="flex-1 min-w-0">
-                  <p className="text-[15px] leading-[20px] text-[#d4d8dd] font-mono">
+                  <p className="text-[15px] leading-[20px] text-foreground font-mono">
                     {run.runner} • {run.runId.slice(0, 8)}
                   </p>
-                  <p className="text-[13px] text-[#5c6670]">
+                  <p className="text-[13px] text-muted-foreground">
                     {run.passedTests}/{run.totalTests} passed
                     {run.duration && ` • ${run.duration}ms`}
                   </p>
@@ -401,9 +401,9 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
                   variant="outline" 
                   className={cn(
                     "text-[13px]",
-                    run.status === 'passed' && "bg-surface-solid text-[#22c55e] border-[#22c55e]",
-                    run.status === 'failed' && "bg-surface-solid text-[#ef4444] border-[#ef4444]",
-                    run.status === 'running' && "bg-surface-solid text-[#0079f2] border-[#0079f2]"
+                    run.status === 'passed' && "bg-card text-green-500 border-green-500",
+                    run.status === 'failed' && "bg-card text-destructive border-destructive",
+                    run.status === 'running' && "bg-card text-primary border-primary"
                   )}
                 >
                   {run.status}

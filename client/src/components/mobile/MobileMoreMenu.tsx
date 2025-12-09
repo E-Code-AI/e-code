@@ -581,7 +581,7 @@ export function MobileMoreMenu({
                     data-testid={`mobile-more-menu-section-${section.title.toLowerCase()}`}
                   >
                     <div className="flex items-center gap-2 mb-3">
-                      <section.icon className="h-4 w-4 text-[#F26207]" />
+                      <section.icon className="h-4 w-4 text-primary" />
                       <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
                         {section.title}
                       </h3>

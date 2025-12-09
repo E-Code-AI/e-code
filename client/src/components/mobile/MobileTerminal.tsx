@@ -548,7 +548,7 @@ export function MobileTerminal({
           <Button
             size="sm"
             variant="default"
-            className="h-9 w-9 rounded-full shadow-lg bg-[#F26207] hover:bg-[#D85506] active:scale-95 touch-manipulation"
+            className="h-9 w-9 rounded-full shadow-lg bg-primary hover:bg-primary/90 active:scale-95 touch-manipulation"
             onClick={() => setShowKeyboard(true)}
             data-testid="mobile-terminal-show-toolbar"
           >

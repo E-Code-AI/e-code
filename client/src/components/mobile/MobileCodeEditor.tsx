@@ -451,7 +451,7 @@ export function MobileCodeEditor({
             variant="ghost"
             className={cn(
               'h-10 px-4 active:scale-95 touch-manipulation min-w-[80px]',
-              hasUnsavedChanges && 'bg-[#F26207] hover:bg-[#D85506] text-white'
+              hasUnsavedChanges && 'bg-primary hover:bg-primary/90 text-primary-foreground'
             )}
             onClick={handleSave}
             disabled={!hasUnsavedChanges || saveFileMutation.isPending}
@@ -529,7 +529,7 @@ export function MobileCodeEditor({
             >
               <div className="flex items-center justify-between px-4 py-3 border-b border-border dark:border-[var(--ecode-border)]">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-[#F26207]" />
+                  <Sparkles className="h-5 w-5 text-primary" />
                   <h3 className="font-semibold text-foreground">Code Completions</h3>
                 </div>
                 <Button
@@ -565,7 +565,7 @@ export function MobileCodeEditor({
                         whileTap={{ scale: 0.98 }}
                         data-testid={`mobile-completion-item-${index}`}
                       >
-                        <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-muted dark:bg-[var(--ecode-surface-secondary)] rounded font-mono text-sm text-[#F26207]">
+                        <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-muted dark:bg-[var(--ecode-surface-secondary)] rounded font-mono text-sm text-primary">
                           {getCompletionKindIcon(completion.kind)}
                         </div>
                         
