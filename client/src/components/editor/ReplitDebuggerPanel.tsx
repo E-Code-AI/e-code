@@ -72,7 +72,7 @@ interface DebugSession {
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
     <motion.div
-      className={cn("bg-[#242b3d] rounded-lg", className)}
+      className={cn("bg-muted rounded-lg", className)}
       animate={{
         backgroundPosition: ["200% 0", "-200% 0"],
       }}
@@ -82,7 +82,7 @@ function ShimmerSkeleton({ className }: { className?: string }) {
         ease: "linear",
       }}
       style={{
-        backgroundImage: "linear-gradient(90deg, transparent, #3D4455, transparent)",
+        backgroundImage: "linear-gradient(90deg, transparent, hsl(var(--accent)), transparent)",
         backgroundSize: "200% 100%",
       }}
     />
@@ -115,17 +115,17 @@ function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-8 px-3">
-      <Icon className="w-12 h-12 text-[#5c6670] opacity-40 mb-3" />
-      <h4 className="text-[15px] leading-[20px] font-medium text-[#ffffff] mb-1">
+      <Icon className="w-12 h-12 text-muted-foreground opacity-40 mb-3" />
+      <h4 className="text-[15px] leading-[20px] font-medium text-foreground mb-1">
         {title}
       </h4>
-      <p className="text-[13px] text-[#9da2a6] text-center mb-4">
+      <p className="text-[13px] text-muted-foreground text-center mb-4">
         {description}
       </p>
       {actionLabel && onAction && (
         <Button
           onClick={onAction}
-          className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0066CC] text-[#ffffff] text-[13px]"
+          className="h-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-[13px]"
           data-testid="button-empty-state-action"
         >
           {actionLabel}
@@ -263,18 +263,18 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
 
   const renderVariableValue = (value: any, type: string) => {
     if (type === 'object') {
-      return <span className="text-[#9da2a6]">{'{ ... }'}</span>;
+      return <span className="text-muted-foreground">{'{ ... }'}</span>;
     }
     if (type === 'string') {
-      return <span className="text-[#0079f2]">"{value}"</span>;
+      return <span className="text-primary">"{value}"</span>;
     }
     if (type === 'boolean') {
-      return <span className="text-[#0079f2]">{value.toString()}</span>;
+      return <span className="text-primary">{value.toString()}</span>;
     }
     if (type === 'number') {
-      return <span className="text-[#0079f2]">{value}</span>;
+      return <span className="text-primary">{value}</span>;
     }
-    return <span className="text-[#ffffff]">{value}</span>;
+    return <span className="text-foreground">{value}</span>;
   };
 
   const isRunning = session?.isRunning || false;
@@ -286,8 +286,8 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
 
   if (isLoading) {
     return (
-      <div className="h-full flex flex-col bg-[#0e1525]">
-        <div className="p-3 min-h-[48px] border-b border-[#3d4452]">
+      <div className="h-full flex flex-col bg-card">
+        <div className="p-3 min-h-[48px] border-b border-border">
           <ShimmerSkeleton className="h-6 w-24" />
         </div>
         <LoadingSkeleton />
@@ -296,21 +296,21 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#0e1525]">
+    <div className="h-full flex flex-col bg-card">
       {/* Header */}
-      <div className="p-3 min-h-[48px] border-b border-[#3d4452]">
+      <div className="p-3 min-h-[48px] border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Bug className="w-[18px] h-[18px] text-[#0079f2]" />
-            <h3 className="text-[17px] font-medium leading-tight text-[#ffffff]">
+            <Bug className="w-[18px] h-[18px] text-primary" />
+            <h3 className="text-[17px] font-medium leading-tight text-foreground">
               Debugger
             </h3>
             {isRunning && (
               <Badge className={cn(
                 "text-[11px] uppercase tracking-wider rounded-lg",
                 isPaused 
-                  ? "bg-[#242b3d] text-[#9da2a6] border border-[#3d4452]" 
-                  : "bg-surface-solid text-[#0079f2] border border-[#0079f2]"
+                  ? "bg-muted text-muted-foreground border border-border" 
+                  : "bg-card text-primary border border-primary"
               )}>
                 {isPaused ? 'Paused' : 'Running'}
               </Badge>
@@ -324,7 +324,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
             <Button
               onClick={() => startDebugMutation.mutate(undefined)}
               disabled={startDebugMutation.isPending}
-              className="h-8 rounded-lg bg-[#0079f2] hover:bg-[#0066CC] text-[#ffffff] text-[13px] px-3"
+              className="h-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-[13px] px-3"
               data-testid="button-debug-start"
             >
               <Play className="w-[18px] h-[18px] mr-2" />
@@ -336,75 +336,75 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-surface-hover-solid"
+                  className="h-8 w-8 rounded-lg border-border bg-transparent hover:bg-accent"
                   onClick={() => continueDebugMutation.mutate(undefined)}
                   disabled={continueDebugMutation.isPending}
                   data-testid="button-debug-continue"
                 >
-                  <Play className="w-[18px] h-[18px] text-[#0079f2]" />
+                  <Play className="w-[18px] h-[18px] text-primary" />
                 </Button>
               ) : (
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-surface-hover-solid"
+                  className="h-8 w-8 rounded-lg border-border bg-transparent hover:bg-accent"
                   onClick={() => pauseDebugMutation.mutate(undefined)}
                   disabled={pauseDebugMutation.isPending}
                   data-testid="button-debug-pause"
                 >
-                  <Pause className="w-[18px] h-[18px] text-[#9da2a6]" />
+                  <Pause className="w-[18px] h-[18px] text-muted-foreground" />
                 </Button>
               )}
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-surface-hover-solid"
+                className="h-8 w-8 rounded-lg border-border bg-transparent hover:bg-accent"
                 onClick={() => stopDebugMutation.mutate(undefined)}
                 disabled={stopDebugMutation.isPending}
                 data-testid="button-debug-stop"
               >
-                <Square className="w-[18px] h-[18px] text-[#9da2a6]" />
+                <Square className="w-[18px] h-[18px] text-muted-foreground" />
               </Button>
-              <div className="w-px h-6 bg-[#3d4452] mx-1" />
+              <div className="w-px h-6 bg-border mx-1" />
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-surface-hover-solid"
+                className="h-8 w-8 rounded-lg border-border bg-transparent hover:bg-accent"
                 disabled={!isPaused || stepOverMutation.isPending}
                 onClick={() => stepOverMutation.mutate(undefined)}
                 data-testid="button-debug-step-over"
               >
-                <ArrowRight className="w-[18px] h-[18px] text-[#9da2a6]" />
+                <ArrowRight className="w-[18px] h-[18px] text-muted-foreground" />
               </Button>
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-surface-hover-solid"
+                className="h-8 w-8 rounded-lg border-border bg-transparent hover:bg-accent"
                 disabled={!isPaused || stepIntoMutation.isPending}
                 onClick={() => stepIntoMutation.mutate(undefined)}
                 data-testid="button-debug-step-into"
               >
-                <ArrowDown className="w-[18px] h-[18px] text-[#9da2a6]" />
+                <ArrowDown className="w-[18px] h-[18px] text-muted-foreground" />
               </Button>
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-surface-hover-solid"
+                className="h-8 w-8 rounded-lg border-border bg-transparent hover:bg-accent"
                 disabled={!isPaused || stepOutMutation.isPending}
                 onClick={() => stepOutMutation.mutate(undefined)}
                 data-testid="button-debug-step-out"
               >
-                <ArrowUp className="w-[18px] h-[18px] text-[#9da2a6]" />
+                <ArrowUp className="w-[18px] h-[18px] text-muted-foreground" />
               </Button>
-              <div className="w-px h-6 bg-[#3d4452] mx-1" />
+              <div className="w-px h-6 bg-border mx-1" />
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-lg border-[#d4d8dd] dark:border-[#3d4452] bg-transparent hover:bg-surface-hover-solid"
+                className="h-8 w-8 rounded-lg border-border bg-transparent hover:bg-accent"
                 onClick={() => refetch()}
                 data-testid="button-debug-refresh"
               >
-                <RefreshCw className="w-[18px] h-[18px] text-[#9da2a6]" />
+                <RefreshCw className="w-[18px] h-[18px] text-muted-foreground" />
               </Button>
             </>
           )}
@@ -413,28 +413,28 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <TabsList className="grid w-full grid-cols-4 p-3 bg-[#0e1525] gap-1">
+        <TabsList className="grid w-full grid-cols-4 p-3 bg-card gap-1">
           <TabsTrigger 
             value="breakpoints" 
-            className="text-[11px] uppercase tracking-wider h-8 rounded-lg data-[state=active]:bg-[#242b3d] data-[state=active]:text-[#ffffff] text-[#9da2a6]"
+            className="text-[11px] uppercase tracking-wider h-8 rounded-lg data-[state=active]:bg-muted data-[state=active]:text-foreground text-muted-foreground"
           >
             Breakpoints
           </TabsTrigger>
           <TabsTrigger 
             value="variables" 
-            className="text-[11px] uppercase tracking-wider h-8 rounded-lg data-[state=active]:bg-[#242b3d] data-[state=active]:text-[#ffffff] text-[#9da2a6]"
+            className="text-[11px] uppercase tracking-wider h-8 rounded-lg data-[state=active]:bg-muted data-[state=active]:text-foreground text-muted-foreground"
           >
             Variables
           </TabsTrigger>
           <TabsTrigger 
             value="watch" 
-            className="text-[11px] uppercase tracking-wider h-8 rounded-lg data-[state=active]:bg-[#242b3d] data-[state=active]:text-[#ffffff] text-[#9da2a6]"
+            className="text-[11px] uppercase tracking-wider h-8 rounded-lg data-[state=active]:bg-muted data-[state=active]:text-foreground text-muted-foreground"
           >
             Watch
           </TabsTrigger>
           <TabsTrigger 
             value="callstack" 
-            className="text-[11px] uppercase tracking-wider h-8 rounded-lg data-[state=active]:bg-[#242b3d] data-[state=active]:text-[#ffffff] text-[#9da2a6]"
+            className="text-[11px] uppercase tracking-wider h-8 rounded-lg data-[state=active]:bg-muted data-[state=active]:text-foreground text-muted-foreground"
           >
             Call Stack
           </TabsTrigger>
@@ -449,7 +449,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                   <div
                     key={bp.id}
                     className={cn(
-                      "flex items-center gap-3 p-3 hover:bg-surface-hover-solid rounded-lg transition-colors",
+                      "flex items-center gap-3 p-3 hover:bg-accent rounded-lg transition-colors",
                       !bp.isEnabled && "opacity-50"
                     )}
                     data-testid={`breakpoint-${bp.id}`}
@@ -458,33 +458,33 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                       type="checkbox"
                       checked={bp.isEnabled}
                       onChange={() => toggleBreakpointMutation.mutate({ breakpointId: bp.id })}
-                      className="rounded border-[#3d4452] bg-[#242b3d] w-4 h-4"
+                      className="rounded border-border bg-muted w-4 h-4"
                     />
                     <Circle className={cn(
                       "w-[18px] h-[18px]",
-                      bp.isEnabled ? "text-[#0079f2] fill-[#0079f2]" : "text-[#5c6670]"
+                      bp.isEnabled ? "text-primary fill-primary" : "text-muted-foreground"
                     )} />
                     <div className="flex-1 min-w-0">
-                      <div className="text-[15px] leading-[20px] font-mono text-[#ffffff] truncate">
+                      <div className="text-[15px] leading-[20px] font-mono text-foreground truncate">
                         {bp.file}:{bp.line}
                       </div>
                       {bp.condition && (
-                        <div className="text-[13px] text-[#9da2a6]">
+                        <div className="text-[13px] text-muted-foreground">
                           Condition: {bp.condition}
                         </div>
                       )}
                     </div>
-                    <Badge variant="outline" className="text-[11px] uppercase tracking-wider px-2 py-0.5 border-[#3d4452] text-[#9da2a6] rounded-lg">
+                    <Badge variant="outline" className="text-[11px] uppercase tracking-wider px-2 py-0.5 border-border text-muted-foreground rounded-lg">
                       {bp.hitCount}
                     </Badge>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 rounded-lg hover:bg-surface-hover-solid"
+                      className="h-8 w-8 rounded-lg hover:bg-accent"
                       onClick={() => deleteBreakpointMutation.mutate({ breakpointId: bp.id })}
                       data-testid={`button-delete-breakpoint-${bp.id}`}
                     >
-                      <Trash2 className="w-[18px] h-[18px] text-[#5c6670] hover:text-[#0079f2]" />
+                      <Trash2 className="w-[18px] h-[18px] text-muted-foreground hover:text-primary" />
                     </Button>
                   </div>
                 ))
@@ -508,24 +508,24 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                   <div key={variable.name} className="space-y-1">
                     <div
                       className={cn(
-                        "flex items-center gap-3 p-3 hover:bg-surface-hover-solid rounded-lg cursor-pointer transition-colors",
+                        "flex items-center gap-3 p-3 hover:bg-accent rounded-lg cursor-pointer transition-colors",
                         variable.children && "font-medium"
                       )}
                       onClick={() => variable.children && toggleVariableExpansion(variable.name)}
                     >
                       {variable.children ? (
                         expandedVariables.has(variable.name) ? (
-                          <ChevronDown className="w-[18px] h-[18px] text-[#5c6670]" />
+                          <ChevronDown className="w-[18px] h-[18px] text-muted-foreground" />
                         ) : (
-                          <ChevronRight className="w-[18px] h-[18px] text-[#5c6670]" />
+                          <ChevronRight className="w-[18px] h-[18px] text-muted-foreground" />
                         )
                       ) : (
                         <div className="w-[18px]" />
                       )}
-                      <span className="text-[15px] leading-[20px] text-[#ffffff] font-mono">
+                      <span className="text-[15px] leading-[20px] text-foreground font-mono">
                         {variable.name}
                       </span>
-                      <span className="text-[15px] leading-[20px] text-[#5c6670]">:</span>
+                      <span className="text-[15px] leading-[20px] text-muted-foreground">:</span>
                       <span className="text-[15px] leading-[20px] font-mono">
                         {renderVariableValue(variable.value, variable.type)}
                       </span>
@@ -536,13 +536,13 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                         {variable.children.map((child) => (
                           <div
                             key={child.name}
-                            className="flex items-center gap-3 p-3 hover:bg-surface-hover-solid rounded-lg transition-colors"
+                            className="flex items-center gap-3 p-3 hover:bg-accent rounded-lg transition-colors"
                           >
                             <div className="w-[18px]" />
-                            <span className="text-[15px] leading-[20px] text-[#ffffff] font-mono">
+                            <span className="text-[15px] leading-[20px] text-foreground font-mono">
                               {child.name}
                             </span>
-                            <span className="text-[15px] leading-[20px] text-[#5c6670]">:</span>
+                            <span className="text-[15px] leading-[20px] text-muted-foreground">:</span>
                             <span className="text-[15px] leading-[20px] font-mono">
                               {renderVariableValue(child.value, child.type)}
                             </span>
@@ -574,16 +574,16 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                 onChange={(e) => setNewWatchExpression(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddWatch()}
                 placeholder="Add watch expression..."
-                className="flex-1 h-8 rounded-lg text-[13px] font-mono bg-[#1c2333] border-[#3d4452] text-[#ffffff] placeholder:text-[#5c6670]"
+                className="flex-1 h-8 rounded-lg text-[13px] font-mono bg-muted border-border text-foreground placeholder:text-muted-foreground"
                 data-testid="input-watch-expression"
               />
               <Button
                 onClick={handleAddWatch}
-                className="h-8 w-8 rounded-lg bg-[#0079f2] hover:bg-[#0066CC] p-0"
+                className="h-8 w-8 rounded-lg bg-primary hover:bg-primary/90 p-0"
                 disabled={!newWatchExpression.trim() || addWatchMutation.isPending}
                 data-testid="button-add-watch"
               >
-                <Plus className="w-[18px] h-[18px] text-[#ffffff]" />
+                <Plus className="w-[18px] h-[18px] text-primary-foreground" />
               </Button>
             </div>
 
@@ -593,27 +593,27 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                   watchExpressions.map((expr, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-3 p-3 hover:bg-surface-hover-solid rounded-lg transition-colors"
+                      className="flex items-center gap-3 p-3 hover:bg-accent rounded-lg transition-colors"
                       data-testid={`watch-${index}`}
                     >
-                      <span className="text-[15px] leading-[20px] font-mono text-[#ffffff] flex-1">
+                      <span className="text-[15px] leading-[20px] font-mono text-foreground flex-1">
                         {expr}
                       </span>
-                      <span className="text-[15px] leading-[20px] text-[#9da2a6] font-mono">
+                      <span className="text-[15px] leading-[20px] text-muted-foreground font-mono">
                         {isRunning && isPaused ? (
-                          <span className="text-[#0079f2]">"value"</span>
+                          <span className="text-primary">"value"</span>
                         ) : (
-                          <span className="text-[#5c6670]">-</span>
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-lg hover:bg-surface-hover-solid"
+                        className="h-8 w-8 rounded-lg hover:bg-accent"
                         onClick={() => deleteWatchMutation.mutate({ index })}
                         data-testid={`button-delete-watch-${index}`}
                       >
-                        <X className="w-[18px] h-[18px] text-[#5c6670] hover:text-[#0079f2]" />
+                        <Trash2 className="w-[18px] h-[18px] text-muted-foreground hover:text-primary" />
                       </Button>
                     </div>
                   ))
@@ -621,7 +621,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                   <EmptyState
                     icon={AlertCircle}
                     title="No watch expressions"
-                    description="Add expressions to monitor their values during debugging"
+                    description="Add expressions to monitor during debugging"
                   />
                 )}
               </div>
@@ -638,34 +638,31 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                   <div
                     key={frame.id}
                     className={cn(
-                      "p-3 hover:bg-surface-hover-solid rounded-lg cursor-pointer transition-colors",
-                      frame.isActive && "bg-surface-solid border border-[#0079f2]"
+                      "flex items-center gap-3 p-3 hover:bg-accent rounded-lg cursor-pointer transition-colors",
+                      frame.isActive && "bg-muted"
                     )}
-                    data-testid={`callstack-frame-${frame.id}`}
+                    data-testid={`callstack-${frame.id}`}
                   >
-                    <div className="flex items-center gap-3">
-                      {frame.isActive && (
-                        <ChevronRight className="w-[18px] h-[18px] text-[#0079f2]" />
-                      )}
-                      <div className={cn(
-                        "flex-1",
-                        !frame.isActive && "ml-[26px]"
-                      )}>
-                        <div className="text-[15px] leading-[20px] font-medium text-[#ffffff] font-mono">
-                          {frame.name}
-                        </div>
-                        <div className="text-[13px] text-[#9da2a6] font-mono">
-                          {frame.file}:{frame.line}
-                        </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[15px] leading-[20px] font-mono text-foreground truncate">
+                        {frame.name}
+                      </div>
+                      <div className="text-[13px] text-muted-foreground truncate">
+                        {frame.file}:{frame.line}
                       </div>
                     </div>
+                    {frame.isActive && (
+                      <Badge className="bg-primary text-primary-foreground text-[11px] rounded-lg">
+                        Current
+                      </Badge>
+                    )}
                   </div>
                 ))
               ) : (
                 <EmptyState
                   icon={AlertCircle}
                   title={isRunning ? 'Not paused' : 'No active debug session'}
-                  description={isRunning ? 'Pause execution to see call stack' : 'Start debugging to see call stack'}
+                  description={isRunning ? 'Pause execution to see the call stack' : 'Start debugging to see the call stack'}
                   actionLabel={!isRunning ? 'Start Debug' : undefined}
                   onAction={!isRunning ? () => startDebugMutation.mutate(undefined) : undefined}
                 />

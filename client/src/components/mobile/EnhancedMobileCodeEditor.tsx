@@ -372,7 +372,7 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
             variant="ghost"
             className={cn(
               'h-10 px-4 active:scale-95 touch-manipulation min-w-[80px]',
-              hasUnsavedChanges && 'bg-[#F26207] hover:bg-[#D35606] text-white'
+              hasUnsavedChanges && 'bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white'
             )}
             onClick={handleSave}
             disabled={!hasUnsavedChanges || saveFileMutation.isPending}

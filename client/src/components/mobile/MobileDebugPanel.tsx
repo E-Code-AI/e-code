@@ -55,7 +55,7 @@ interface MobileDebugPanelProps {
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
     <motion.div
-      className={cn("bg-[#3d4452] rounded-lg", className)}
+      className={cn("bg-muted rounded-lg", className)}
       animate={{
         opacity: [0.5, 0.8, 0.5],
       }}
@@ -72,7 +72,7 @@ function LoadingSkeleton() {
   return (
     <div className="p-4 space-y-3">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[#1c2333]">
+        <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-card">
           <ShimmerSkeleton className="w-5 h-5 rounded-full" />
           <div className="flex-1 space-y-2">
             <ShimmerSkeleton className="h-4 w-3/4" />
@@ -231,17 +231,17 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
   const isPaused = session?.isPaused || false;
 
   return (
-    <div className={cn("h-full flex flex-col bg-[#0e1525]", className)}>
+    <div className={cn("h-full flex flex-col bg-background", className)}>
       {/* Header */}
-      <div className="p-4 border-b border-[#3d4452] bg-[#1c2333] min-h-[56px] flex flex-col justify-center">
+      <div className="p-4 border-b border-border bg-card min-h-[56px] flex flex-col justify-center">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Bug className="w-[18px] h-[18px] text-[#0079f2]" />
-            <h3 className="text-[17px] font-medium leading-tight text-[#ffffff]">Debugger</h3>
+            <Bug className="w-[18px] h-[18px] text-primary" />
+            <h3 className="text-[17px] font-medium leading-tight text-foreground">Debugger</h3>
           </div>
           {isLoading && (
             <motion.div
-              className="w-4 h-4 border-2 border-[#0079f2] border-t-transparent rounded-full"
+              className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full"
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
             />
@@ -251,8 +251,8 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
               className={cn(
                 "text-[11px] uppercase tracking-wider font-medium rounded-lg",
                 isPaused 
-                  ? "bg-[#242b3d] text-[#9da2a6]" 
-                  : "bg-[#0079f2] text-[#ffffff]"
+                  ? "bg-muted text-muted-foreground" 
+                  : "bg-primary text-primary-foreground"
               )}
             >
               {isPaused ? 'Paused' : 'Running'}
@@ -264,14 +264,14 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
         <div className="flex gap-2">
           {!isRunning ? (
             <Button 
-              className="flex-1 h-11 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-[#ffffff] text-[15px] leading-[20px]"
+              className="flex-1 h-11 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-[15px] leading-[20px]"
               onClick={handleStart}
               disabled={startMutation.isPending || isLoading}
               data-testid="button-debug-start"
             >
               {startMutation.isPending ? (
                 <motion.div
-                  className="w-[18px] h-[18px] border-2 border-[#ffffff] border-t-transparent rounded-full mr-2"
+                  className="w-[18px] h-[18px] border-2 border-primary-foreground border-t-transparent rounded-full mr-2"
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                 />
@@ -284,14 +284,14 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
             <>
               {isPaused ? (
                 <Button 
-                  className="flex-1 h-10 rounded-lg bg-[#242b3d] hover:bg-[#3d4452] text-[#ffffff] text-[15px] leading-[20px] border border-[#3d4452]"
+                  className="flex-1 h-10 rounded-lg bg-muted hover:bg-accent text-foreground text-[15px] leading-[20px] border border-border"
                   onClick={handleContinue}
                   disabled={continueMutation.isPending}
                   data-testid="button-debug-continue"
                 >
                   {continueMutation.isPending ? (
                     <motion.div
-                      className="w-[18px] h-[18px] border-2 border-[#ffffff] border-t-transparent rounded-full mr-2"
+                      className="w-[18px] h-[18px] border-2 border-foreground border-t-transparent rounded-full mr-2"
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     />
@@ -302,14 +302,14 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                 </Button>
               ) : (
                 <Button 
-                  className="flex-1 h-10 rounded-lg bg-[#242b3d] hover:bg-[#3d4452] text-[#ffffff] text-[15px] leading-[20px] border border-[#3d4452]"
+                  className="flex-1 h-10 rounded-lg bg-muted hover:bg-accent text-foreground text-[15px] leading-[20px] border border-border"
                   onClick={handlePause}
                   disabled={pauseMutation.isPending}
                   data-testid="button-debug-pause"
                 >
                   {pauseMutation.isPending ? (
                     <motion.div
-                      className="w-[18px] h-[18px] border-2 border-[#ffffff] border-t-transparent rounded-full mr-2"
+                      className="w-[18px] h-[18px] border-2 border-foreground border-t-transparent rounded-full mr-2"
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     />
@@ -320,14 +320,14 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                 </Button>
               )}
               <Button 
-                className="w-11 h-11 rounded-lg bg-[#242b3d] hover:bg-[#3d4452] text-[#ffffff] border border-[#3d4452] p-0"
+                className="w-11 h-11 rounded-lg bg-muted hover:bg-accent text-foreground border border-border p-0"
                 onClick={handleStop}
                 disabled={stopMutation.isPending}
                 data-testid="button-debug-stop"
               >
                 {stopMutation.isPending ? (
                   <motion.div
-                    className="w-[18px] h-[18px] border-2 border-[#ffffff] border-t-transparent rounded-full"
+                    className="w-[18px] h-[18px] border-2 border-foreground border-t-transparent rounded-full"
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                   />
@@ -341,7 +341,7 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-[#3d4452] bg-[#1c2333]">
+      <div className="flex border-b border-border bg-card">
         {(['breakpoints', 'variables'] as const).map((tab) => (
           <button
             key={tab}
@@ -349,14 +349,14 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
             className={cn(
               "flex-1 py-3 text-[15px] leading-[20px] font-medium capitalize transition-colors flex items-center justify-center gap-2",
               activeTab === tab
-                ? "text-[#0079f2] border-b-2 border-[#0079f2]"
-                : "text-[#5c6670]"
+                ? "text-primary border-b-2 border-primary"
+                : "text-muted-foreground"
             )}
             data-testid={`tab-${tab}`}
           >
             {tab}
             {tab === 'breakpoints' && breakpoints.length > 0 && (
-              <Badge className="text-[11px] uppercase tracking-wider bg-[#242b3d] text-[#9da2a6] rounded-lg">
+              <Badge className="text-[11px] uppercase tracking-wider bg-muted text-muted-foreground rounded-lg">
                 {breakpoints.length}
               </Badge>
             )}
@@ -376,8 +376,8 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                 className={cn(
                   "flex items-center justify-between p-3 rounded-lg",
                   bp.isEnabled 
-                    ? "bg-[#e6f2fd] border border-[#99c9fa]"
-                    : "bg-[#1c2333] border border-[#3d4452]"
+                    ? "bg-primary/10 border border-primary/30"
+                    : "bg-card border border-border"
                 )}
                 data-testid={`breakpoint-${bp.id}`}
               >
@@ -392,14 +392,14 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                       className={cn(
                         "w-[18px] h-[18px]",
                         bp.isEnabled 
-                          ? "fill-[#0079f2] text-[#0079f2]"
-                          : "text-[#5c6670]"
+                          ? "fill-primary text-primary"
+                          : "text-muted-foreground"
                       )}
                     />
                   </button>
                   <div className="min-w-0">
-                    <div className="text-[15px] leading-[20px] font-mono text-[#ffffff] truncate">{bp.file}</div>
-                    <div className="text-[13px] text-[#5c6670]">
+                    <div className="text-[15px] leading-[20px] font-mono text-foreground truncate">{bp.file}</div>
+                    <div className="text-[13px] text-muted-foreground">
                       Line {bp.line}
                       {bp.hitCount > 0 && ` • Hit ${bp.hitCount}×`}
                     </div>
@@ -407,23 +407,23 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                 </div>
                 <Button
                   variant="ghost"
-                  className="w-11 h-11 flex-shrink-0 rounded-lg hover:bg-[#3d4452] p-0"
+                  className="w-11 h-11 flex-shrink-0 rounded-lg hover:bg-accent p-0"
                   onClick={() => deleteBreakpoint(bp.id)}
                   disabled={deleteMutation.isPending}
                   data-testid={`button-delete-breakpoint-${bp.id}`}
                 >
-                  <Trash2 className="w-[18px] h-[18px] text-[#5c6670]" />
+                  <Trash2 className="w-[18px] h-[18px] text-muted-foreground" />
                 </Button>
               </div>
             ))}
 
             {!isLoading && breakpoints.length === 0 && (
               <div className="text-center py-16">
-                <Bug className="w-12 h-12 mx-auto mb-4 text-[#5c6670] opacity-40" />
-                <h4 className="text-[17px] font-medium leading-tight text-[#ffffff] mb-2">No breakpoints set</h4>
-                <p className="text-[13px] text-[#5c6670] mb-6">Click line numbers in the editor to add breakpoints</p>
+                <Bug className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-40" />
+                <h4 className="text-[17px] font-medium leading-tight text-foreground mb-2">No breakpoints set</h4>
+                <p className="text-[13px] text-muted-foreground mb-6">Click line numbers in the editor to add breakpoints</p>
                 <Button 
-                  className="h-11 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-[#ffffff] text-[15px] leading-[20px] px-6"
+                  className="h-11 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-[15px] leading-[20px] px-6"
                   data-testid="button-add-breakpoint-empty"
                   disabled
                 >
@@ -439,11 +439,11 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
           <div className="p-4 space-y-1">
             {!isRunning || !isPaused ? (
               <div className="text-center py-16">
-                <Bug className="w-12 h-12 mx-auto mb-4 text-[#5c6670] opacity-40" />
-                <h4 className="text-[17px] font-medium leading-tight text-[#ffffff] mb-2">No variables available</h4>
-                <p className="text-[13px] text-[#5c6670] mb-6">Start debugging and pause execution to inspect variables</p>
+                <Bug className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-40" />
+                <h4 className="text-[17px] font-medium leading-tight text-foreground mb-2">No variables available</h4>
+                <p className="text-[13px] text-muted-foreground mb-6">Start debugging and pause execution to inspect variables</p>
                 <Button 
-                  className="h-11 rounded-lg bg-[#0079f2] hover:bg-[#0066cc] text-[#ffffff] text-[15px] leading-[20px] px-6"
+                  className="h-11 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-[15px] leading-[20px] px-6"
                   onClick={handleStart}
                   disabled={startMutation.isPending || isRunning}
                   data-testid="button-start-debug-variables"
@@ -458,9 +458,9 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                 
                 {!isLoading && variables.length === 0 && (
                   <div className="text-center py-16">
-                    <Bug className="w-12 h-12 mx-auto mb-4 text-[#5c6670] opacity-40" />
-                    <h4 className="text-[17px] font-medium leading-tight text-[#ffffff] mb-2">No variables in scope</h4>
-                    <p className="text-[13px] text-[#5c6670]">No variables are available in the current execution context</p>
+                    <Bug className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-40" />
+                    <h4 className="text-[17px] font-medium leading-tight text-foreground mb-2">No variables in scope</h4>
+                    <p className="text-[13px] text-muted-foreground">No variables are available in the current execution context</p>
                   </div>
                 )}
 
@@ -468,37 +468,37 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                   <div key={variable.name}>
                     <button
                       onClick={() => toggleVariable(variable.name)}
-                      className="w-full flex items-center gap-2 p-3 hover:bg-[#1c2333] rounded-lg text-left min-h-[44px]"
+                      className="w-full flex items-center gap-2 p-3 hover:bg-muted rounded-lg text-left min-h-[44px]"
                       data-testid={`variable-${variable.name}`}
                     >
                       {variable.type === 'object' || variable.type === 'array' ? (
                         expandedVariables.has(variable.name) ? (
-                          <ChevronDown className="w-[18px] h-[18px] flex-shrink-0 text-[#5c6670]" />
+                          <ChevronDown className="w-[18px] h-[18px] flex-shrink-0 text-muted-foreground" />
                         ) : (
-                          <ChevronRight className="w-[18px] h-[18px] flex-shrink-0 text-[#5c6670]" />
+                          <ChevronRight className="w-[18px] h-[18px] flex-shrink-0 text-muted-foreground" />
                         )
                       ) : (
                         <div className="w-[18px]" />
                       )}
-                      <span className="font-mono text-[15px] leading-[20px] text-[#ffffff] flex-1">{variable.name}:</span>
-                      <span className="text-[13px] text-[#9da2a6]">
+                      <span className="font-mono text-[15px] leading-[20px] text-foreground flex-1">{variable.name}:</span>
+                      <span className="text-[13px] text-muted-foreground">
                         {renderValue(variable.value)}
                       </span>
-                      <Badge className="text-[11px] uppercase tracking-wider bg-[#242b3d] text-[#9da2a6] rounded-lg">
+                      <Badge className="text-[11px] uppercase tracking-wider bg-muted text-muted-foreground rounded-lg">
                         {variable.type}
                       </Badge>
                     </button>
                     
                     {expandedVariables.has(variable.name) && variable.children && (
-                      <div className="ml-6 pl-3 border-l-2 border-[#3d4452] space-y-1 mt-1">
+                      <div className="ml-6 pl-3 border-l-2 border-border space-y-1 mt-1">
                         {variable.children.map((child) => (
                           <div 
                             key={child.name}
                             className="flex items-center gap-2 p-3 text-[13px] font-mono min-h-[44px]"
                           >
-                            <span className="text-[#5c6670]">{child.name}:</span>
-                            <span className="text-[#ffffff]">{JSON.stringify(child.value)}</span>
-                            <Badge className="text-[11px] uppercase tracking-wider bg-[#242b3d] text-[#9da2a6] rounded-lg ml-auto">
+                            <span className="text-muted-foreground">{child.name}:</span>
+                            <span className="text-foreground">{JSON.stringify(child.value)}</span>
+                            <Badge className="text-[11px] uppercase tracking-wider bg-muted text-muted-foreground rounded-lg ml-auto">
                               {child.type}
                             </Badge>
                           </div>
@@ -507,15 +507,15 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                     )}
                     
                     {expandedVariables.has(variable.name) && !variable.children && (
-                      <div className="ml-6 pl-3 border-l-2 border-[#3d4452] space-y-1 mt-1">
+                      <div className="ml-6 pl-3 border-l-2 border-border space-y-1 mt-1">
                         {typeof variable.value === 'object' && variable.value !== null && (
                           Object.entries(variable.value).map(([key, val]) => (
                             <div 
                               key={key}
                               className="flex items-center gap-2 p-3 text-[13px] font-mono min-h-[44px]"
                             >
-                              <span className="text-[#5c6670]">{key}:</span>
-                              <span className="text-[#ffffff]">{JSON.stringify(val)}</span>
+                              <span className="text-muted-foreground">{key}:</span>
+                              <span className="text-foreground">{JSON.stringify(val)}</span>
                             </div>
                           ))
                         )}
@@ -531,16 +531,16 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
 
       {/* Bottom Action Bar - Fixed with safe-area padding */}
       {activeTab === 'breakpoints' && breakpoints.length > 0 && (
-        <div className="p-4 border-t border-[#3d4452] bg-[#1c2333] pb-[calc(16px+env(safe-area-inset-bottom))]">
+        <div className="p-4 border-t border-border bg-card pb-[calc(16px+env(safe-area-inset-bottom))]">
           <Button 
-            className="w-full h-11 rounded-lg bg-[#242b3d] hover:bg-[#3d4452] text-[#ffffff] text-[15px] leading-[20px] border border-[#3d4452]"
+            className="w-full h-11 rounded-lg bg-muted hover:bg-accent text-foreground text-[15px] leading-[20px] border border-border"
             data-testid="button-add-breakpoint"
             disabled
           >
             <Plus className="w-[18px] h-[18px] mr-2" />
             Add Breakpoint
           </Button>
-          <p className="text-[11px] uppercase tracking-wider text-[#5c6670] text-center mt-3">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground text-center mt-3">
             Click line numbers in code editor to add breakpoints
           </p>
         </div>

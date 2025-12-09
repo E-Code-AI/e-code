@@ -39,7 +39,7 @@ const notificationColors: Record<NotificationType, string> = {
   like: "text-pink-500",
   follow: "text-green-500",
   comment: "text-purple-500",
-  deploy: "text-[#F26207]",
+  deploy: "text-primary",
   system: "text-yellow-500",
 };
 
@@ -248,7 +248,7 @@ export function MobileNotifications() {
               variant="ghost"
               size="sm"
               onClick={handleMarkAllAsRead}
-              className="text-[#F26207]"
+              className="text-primary"
             >
               Mark all read
             </Button>
@@ -270,7 +270,7 @@ export function MobileNotifications() {
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               >
-                <Bell className="h-5 w-5 text-[#F26207]" />
+                <Bell className="h-5 w-5 text-primary" />
               </motion.div>
             </div>
           </motion.div>
@@ -326,7 +326,7 @@ export function MobileNotifications() {
                     }}
                     className={cn(
                       "relative px-4 py-3 border-b transition-colors",
-                      !notification.read && "bg-[#F26207]/5",
+                      !notification.read && "bg-primary/5",
                       "active:bg-surface-tertiary-solid"
                     )}
                   >
@@ -376,7 +376,7 @@ export function MobileNotifications() {
                           </div>
                           
                           {!notification.read && (
-                            <div className="w-2 h-2 bg-[#F26207] rounded-full mt-2 flex-shrink-0" />
+                            <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
                           )}
                         </div>
                         

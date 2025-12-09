@@ -35,10 +35,10 @@ function ShimmerSkeleton() {
           animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <div className="w-[18px] h-[18px] rounded bg-surface-tertiary-solid" />
+          <div className="w-[18px] h-[18px] rounded bg-muted" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-3/4 rounded bg-surface-tertiary-solid" />
-            <div className="h-3 w-full rounded bg-surface-solid" />
+            <div className="h-4 w-3/4 rounded bg-muted" />
+            <div className="h-3 w-full rounded bg-muted/50" />
           </div>
         </motion.div>
       ))}
@@ -91,13 +91,13 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
   const getResultIcon = (type: string) => {
     switch (type) {
       case 'file':
-        return <FileText className="w-[18px] h-[18px] text-[#9da2a6]" />;
+        return <FileText className="w-[18px] h-[18px] text-muted-foreground" />;
       case 'code':
-        return <Code className="w-[18px] h-[18px] text-[#0079f2]" />;
+        return <Code className="w-[18px] h-[18px] text-primary" />;
       case 'symbol':
-        return <Hash className="w-[18px] h-[18px] text-[#0079f2]" />;
+        return <Hash className="w-[18px] h-[18px] text-primary" />;
       default:
-        return <FileCode className="w-[18px] h-[18px] text-[#9da2a6]" />;
+        return <FileCode className="w-[18px] h-[18px] text-muted-foreground" />;
     }
   };
 
@@ -106,8 +106,8 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
       {/* Header */}
       <div className="p-3 border-b border-border min-h-[48px]">
         <div className="flex items-center gap-2 mb-3">
-          <Search className="w-[18px] h-[18px] text-[#9da2a6]" />
-          <h3 className="text-[17px] font-medium leading-tight text-[#ffffff]">Search</h3>
+          <Search className="w-[18px] h-[18px] text-muted-foreground" />
+          <h3 className="text-[17px] font-medium leading-tight text-foreground">Search</h3>
         </div>
 
         {/* Search Input */}
@@ -117,13 +117,13 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Search in project..."
-            className="pr-8 text-[15px] leading-[20px] bg-surface-solid border-border text-[#ffffff] placeholder:text-[#5c6670] focus:border-[#0079f2] focus:ring-[#0079f2]"
+            className="pr-8 text-[15px] leading-[20px] bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
             data-testid="input-search"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#5c6670] hover:text-[#9da2a6] transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               data-testid="button-clear-search"
             >
               <X className="w-[18px] h-[18px]" />
@@ -140,8 +140,8 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
               className={cn(
                 "h-8 rounded-lg text-[13px]",
                 searchType === 'all' 
-                  ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0066CC]" 
-                  : "bg-transparent border-border text-[#9da2a6] hover:bg-surface-hover-solid hover:text-[#ffffff]"
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                  : "bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
               data-testid="button-filter-all"
             >
@@ -153,8 +153,8 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
               className={cn(
                 "h-8 rounded-lg text-[13px]",
                 searchType === 'files' 
-                  ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0066CC]" 
-                  : "bg-transparent border-border text-[#9da2a6] hover:bg-surface-hover-solid hover:text-[#ffffff]"
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                  : "bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
               data-testid="button-filter-files"
             >
@@ -167,8 +167,8 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
               className={cn(
                 "h-8 rounded-lg text-[13px]",
                 searchType === 'code' 
-                  ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0066CC]" 
-                  : "bg-transparent border-border text-[#9da2a6] hover:bg-surface-hover-solid hover:text-[#ffffff]"
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                  : "bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
               data-testid="button-filter-code"
             >
@@ -181,8 +181,8 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
               className={cn(
                 "h-8 rounded-lg text-[13px]",
                 searchType === 'symbols' 
-                  ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0066CC]" 
-                  : "bg-transparent border-border text-[#9da2a6] hover:bg-surface-hover-solid hover:text-[#ffffff]"
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                  : "bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
               data-testid="button-filter-symbols"
             >
@@ -197,20 +197,20 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
                 type="checkbox"
                 checked={caseSensitive}
                 onChange={(e) => setCaseSensitive(e.target.checked)}
-                className="rounded border-border bg-surface-solid text-[#0079f2] focus:ring-[#0079f2]"
+                className="rounded border-border bg-card text-primary focus:ring-primary"
                 data-testid="checkbox-case-sensitive"
               />
-              <span className="text-[#5c6670]">Case sensitive</span>
+              <span className="text-muted-foreground">Case sensitive</span>
             </label>
             <label className="flex items-center gap-1.5 cursor-pointer">
               <input
                 type="checkbox"
                 checked={useRegex}
                 onChange={(e) => setUseRegex(e.target.checked)}
-                className="rounded border-border bg-surface-solid text-[#0079f2] focus:ring-[#0079f2]"
+                className="rounded border-border bg-card text-primary focus:ring-primary"
                 data-testid="checkbox-regex"
               />
-              <span className="text-[#5c6670]">Regex</span>
+              <span className="text-muted-foreground">Regex</span>
             </label>
           </div>
         </div>
@@ -222,54 +222,54 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
           <ShimmerSkeleton />
         ) : results.length > 0 && searchQuery ? (
           <div className="p-3">
-            <div className="text-[11px] uppercase tracking-wider text-[#5c6670] px-2 py-1 mb-2">
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground px-2 py-1 mb-2">
               {results.length} results
             </div>
             {results.map((result) => (
               <button
                 key={result.id}
-                className="w-full text-left px-2 py-2 hover:bg-surface-hover-solid rounded-lg group transition-colors"
+                className="w-full text-left px-2 py-2 hover:bg-accent rounded-lg group transition-colors"
                 data-testid={`result-item-${result.id}`}
               >
                 <div className="flex items-start gap-2">
                   {getResultIcon(result.type)}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[15px] leading-[20px] text-[#ffffff] font-medium truncate">
+                      <span className="text-[15px] leading-[20px] text-foreground font-medium truncate">
                         {result.file}
                       </span>
-                      <span className="text-[13px] text-[#5c6670]">
+                      <span className="text-[13px] text-muted-foreground">
                         {result.line}:{result.column}
                       </span>
                     </div>
-                    <div className="mt-1 font-mono text-[13px] text-[#9da2a6] truncate">
-                      <span className="text-[#5c6670]">{result.line}: </span>
+                    <div className="mt-1 font-mono text-[13px] text-muted-foreground truncate">
+                      <span className="text-muted-foreground">{result.line}: </span>
                       <span dangerouslySetInnerHTML={{
                         __html: result.preview.replace(
                           new RegExp(result.match, 'gi'),
-                          `<mark class="bg-surface-solid text-[#ffffff] rounded px-0.5">${result.match}</mark>`
+                          `<mark class="bg-accent text-foreground rounded px-0.5">${result.match}</mark>`
                         )
                       }} />
                     </div>
                   </div>
-                  <ChevronRight className="w-[18px] h-[18px] text-[#5c6670] opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ChevronRight className="w-[18px] h-[18px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               </button>
             ))}
           </div>
         ) : searchQuery ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-3">
-            <Search className="w-12 h-12 text-[#5c6670] opacity-40 mb-3" />
-            <p className="text-[17px] font-medium leading-tight text-[#ffffff]">No results found</p>
-            <p className="text-[13px] text-[#5c6670] mt-1">
+            <Search className="w-12 h-12 text-muted-foreground opacity-40 mb-3" />
+            <p className="text-[17px] font-medium leading-tight text-foreground">No results found</p>
+            <p className="text-[13px] text-muted-foreground mt-1">
               Try adjusting your search terms or filters
             </p>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center p-3">
-            <Search className="w-12 h-12 text-[#5c6670] opacity-40 mb-3" />
-            <p className="text-[17px] font-medium leading-tight text-[#ffffff]">Search your project</p>
-            <p className="text-[13px] text-[#5c6670] mt-1">
+            <Search className="w-12 h-12 text-muted-foreground opacity-40 mb-3" />
+            <p className="text-[17px] font-medium leading-tight text-foreground">Search your project</p>
+            <p className="text-[13px] text-muted-foreground mt-1">
               Search across files, code, and symbols
             </p>
           </div>

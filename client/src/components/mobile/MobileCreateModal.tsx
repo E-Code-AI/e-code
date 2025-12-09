@@ -257,7 +257,7 @@ export function MobileCreateModal({
                       onClick={() => setSelectedCategory(category)}
                       className={cn(
                         "whitespace-nowrap",
-                        selectedCategory === category && "bg-[#F26207] hover:bg-[#D35606]"
+                        selectedCategory === category && "bg-primary hover:bg-primary/90"
                       )}
                     >
                       {category === 'Popular' && '⭐ '}
@@ -329,7 +329,7 @@ export function MobileCreateModal({
                         {/* Content */}
                         <div className="flex flex-col gap-2">
                           <div className="p-2 bg-muted rounded-md w-fit">
-                            <template.icon className="h-5 w-5 text-[#F26207]" />
+                            <template.icon className="h-5 w-5 text-primary" />
                           </div>
                           <div>
                             <p className="font-medium text-sm">{template.name}</p>

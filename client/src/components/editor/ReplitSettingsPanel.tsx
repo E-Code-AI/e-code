@@ -39,7 +39,7 @@ function SettingsSkeleton() {
       {[1, 2, 3, 4].map((i) => (
         <motion.div
           key={i}
-          className="h-10 rounded-lg bg-surface-tertiary-solid"
+          className="h-10 rounded-lg bg-muted"
           animate={{
             opacity: [0.5, 0.8, 0.5],
           }}
@@ -103,88 +103,88 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
         return (
           <div className="space-y-3">
             <div>
-              <span className="text-[11px] uppercase tracking-wider text-[#5c6670]">Editor Preferences</span>
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Editor Preferences</span>
               
               <div className="space-y-3 mt-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label htmlFor="fontSize" className="text-[13px] text-[#9da2a6]">Font Size</Label>
+                    <Label htmlFor="fontSize" className="text-[13px] text-muted-foreground">Font Size</Label>
                     <Select value={fontSize} onValueChange={(v) => { setFontSize(v); setIsDirty(true); }}>
-                      <SelectTrigger id="fontSize" className="mt-1 h-8 rounded-lg bg-surface-solid border-border text-[15px] text-[#ffffff]">
+                      <SelectTrigger id="fontSize" className="mt-1 h-8 rounded-lg bg-card border-border text-[15px] text-foreground">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-surface-solid border-border">
-                        <SelectItem value="12" className="text-[15px] text-[#ffffff]">12px</SelectItem>
-                        <SelectItem value="14" className="text-[15px] text-[#ffffff]">14px</SelectItem>
-                        <SelectItem value="16" className="text-[15px] text-[#ffffff]">16px</SelectItem>
-                        <SelectItem value="18" className="text-[15px] text-[#ffffff]">18px</SelectItem>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem value="12" className="text-[15px] text-foreground">12px</SelectItem>
+                        <SelectItem value="14" className="text-[15px] text-foreground">14px</SelectItem>
+                        <SelectItem value="16" className="text-[15px] text-foreground">16px</SelectItem>
+                        <SelectItem value="18" className="text-[15px] text-foreground">18px</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div>
-                    <Label htmlFor="tabSize" className="text-[13px] text-[#9da2a6]">Tab Size</Label>
+                    <Label htmlFor="tabSize" className="text-[13px] text-muted-foreground">Tab Size</Label>
                     <Select value={tabSize} onValueChange={(v) => { setTabSize(v); setIsDirty(true); }}>
-                      <SelectTrigger id="tabSize" className="mt-1 h-8 rounded-lg bg-surface-solid border-border text-[15px] text-[#ffffff]">
+                      <SelectTrigger id="tabSize" className="mt-1 h-8 rounded-lg bg-card border-border text-[15px] text-foreground">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-surface-solid border-border">
-                        <SelectItem value="2" className="text-[15px] text-[#ffffff]">2 spaces</SelectItem>
-                        <SelectItem value="4" className="text-[15px] text-[#ffffff]">4 spaces</SelectItem>
-                        <SelectItem value="8" className="text-[15px] text-[#ffffff]">8 spaces</SelectItem>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem value="2" className="text-[15px] text-foreground">2 spaces</SelectItem>
+                        <SelectItem value="4" className="text-[15px] text-foreground">4 spaces</SelectItem>
+                        <SelectItem value="8" className="text-[15px] text-foreground">8 spaces</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between h-8 px-3 rounded-lg bg-surface-tertiary-solid">
-                    <Label htmlFor="wordWrap" className="text-[15px] leading-[20px] text-[#ffffff] cursor-pointer">Word Wrap</Label>
+                  <div className="flex items-center justify-between h-8 px-3 rounded-lg bg-muted">
+                    <Label htmlFor="wordWrap" className="text-[15px] leading-[20px] text-foreground cursor-pointer">Word Wrap</Label>
                     <Switch
                       id="wordWrap"
                       checked={wordWrap}
                       onCheckedChange={(v) => { setWordWrap(v); setIsDirty(true); }}
-                      className="data-[state=checked]:bg-[#0079f2]"
+                      className="data-[state=checked]:bg-primary"
                     />
                   </div>
 
-                  <div className="flex items-center justify-between h-8 px-3 rounded-lg bg-surface-tertiary-solid">
-                    <Label htmlFor="lineNumbers" className="text-[15px] leading-[20px] text-[#ffffff] cursor-pointer">Line Numbers</Label>
+                  <div className="flex items-center justify-between h-8 px-3 rounded-lg bg-muted">
+                    <Label htmlFor="lineNumbers" className="text-[15px] leading-[20px] text-foreground cursor-pointer">Line Numbers</Label>
                     <Switch
                       id="lineNumbers"
                       checked={lineNumbers}
                       onCheckedChange={(v) => { setLineNumbers(v); setIsDirty(true); }}
-                      className="data-[state=checked]:bg-[#0079f2]"
+                      className="data-[state=checked]:bg-primary"
                     />
                   </div>
 
-                  <div className="flex items-center justify-between h-8 px-3 rounded-lg bg-surface-tertiary-solid">
-                    <Label htmlFor="minimap" className="text-[15px] leading-[20px] text-[#ffffff] cursor-pointer">Minimap</Label>
+                  <div className="flex items-center justify-between h-8 px-3 rounded-lg bg-muted">
+                    <Label htmlFor="minimap" className="text-[15px] leading-[20px] text-foreground cursor-pointer">Minimap</Label>
                     <Switch
                       id="minimap"
                       checked={minimap}
                       onCheckedChange={(v) => { setMinimap(v); setIsDirty(true); }}
-                      className="data-[state=checked]:bg-[#0079f2]"
+                      className="data-[state=checked]:bg-primary"
                     />
                   </div>
 
-                  <div className="flex items-center justify-between h-8 px-3 rounded-lg bg-surface-tertiary-solid">
-                    <Label htmlFor="autoSave" className="text-[15px] leading-[20px] text-[#ffffff] cursor-pointer">Auto Save</Label>
+                  <div className="flex items-center justify-between h-8 px-3 rounded-lg bg-muted">
+                    <Label htmlFor="autoSave" className="text-[15px] leading-[20px] text-foreground cursor-pointer">Auto Save</Label>
                     <Switch
                       id="autoSave"
                       checked={autoSave}
                       onCheckedChange={(v) => { setAutoSave(v); setIsDirty(true); }}
-                      className="data-[state=checked]:bg-[#0079f2]"
+                      className="data-[state=checked]:bg-primary"
                     />
                   </div>
 
-                  <div className="flex items-center justify-between h-8 px-3 rounded-lg bg-surface-tertiary-solid">
-                    <Label htmlFor="formatOnSave" className="text-[15px] leading-[20px] text-[#ffffff] cursor-pointer">Format on Save</Label>
+                  <div className="flex items-center justify-between h-8 px-3 rounded-lg bg-muted">
+                    <Label htmlFor="formatOnSave" className="text-[15px] leading-[20px] text-foreground cursor-pointer">Format on Save</Label>
                     <Switch
                       id="formatOnSave"
                       checked={formatOnSave}
                       onCheckedChange={(v) => { setFormatOnSave(v); setIsDirty(true); }}
-                      className="data-[state=checked]:bg-[#0079f2]"
+                      className="data-[state=checked]:bg-primary"
                     />
                   </div>
                 </div>
@@ -197,35 +197,35 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
         return (
           <div className="space-y-3">
             <div>
-              <span className="text-[11px] uppercase tracking-wider text-[#5c6670]">Appearance Settings</span>
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Appearance Settings</span>
               
               <div className="space-y-3 mt-3">
                 <div>
-                  <Label htmlFor="theme" className="text-[13px] text-[#9da2a6]">Application Theme</Label>
+                  <Label htmlFor="theme" className="text-[13px] text-muted-foreground">Application Theme</Label>
                   <Select value={theme} onValueChange={(v) => { setTheme(v); setIsDirty(true); }}>
-                    <SelectTrigger id="theme" className="mt-1 h-8 rounded-lg bg-surface-solid border-border text-[15px] text-[#ffffff]">
+                    <SelectTrigger id="theme" className="mt-1 h-8 rounded-lg bg-card border-border text-[15px] text-foreground">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-surface-solid border-border">
-                      <SelectItem value="light" className="text-[15px] text-[#ffffff]">Light</SelectItem>
-                      <SelectItem value="dark" className="text-[15px] text-[#ffffff]">Dark</SelectItem>
-                      <SelectItem value="system" className="text-[15px] text-[#ffffff]">System</SelectItem>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="light" className="text-[15px] text-foreground">Light</SelectItem>
+                      <SelectItem value="dark" className="text-[15px] text-foreground">Dark</SelectItem>
+                      <SelectItem value="system" className="text-[15px] text-foreground">System</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <Label htmlFor="editorTheme" className="text-[13px] text-[#9da2a6]">Editor Theme</Label>
+                  <Label htmlFor="editorTheme" className="text-[13px] text-muted-foreground">Editor Theme</Label>
                   <Select value={editorTheme} onValueChange={(v) => { setEditorTheme(v); setIsDirty(true); }}>
-                    <SelectTrigger id="editorTheme" className="mt-1 h-8 rounded-lg bg-surface-solid border-border text-[15px] text-[#ffffff]">
+                    <SelectTrigger id="editorTheme" className="mt-1 h-8 rounded-lg bg-card border-border text-[15px] text-foreground">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-surface-solid border-border">
-                      <SelectItem value="vs-light" className="text-[15px] text-[#ffffff]">VS Light</SelectItem>
-                      <SelectItem value="vs-dark" className="text-[15px] text-[#ffffff]">VS Dark</SelectItem>
-                      <SelectItem value="monokai" className="text-[15px] text-[#ffffff]">Monokai</SelectItem>
-                      <SelectItem value="github" className="text-[15px] text-[#ffffff]">GitHub</SelectItem>
-                      <SelectItem value="solarized" className="text-[15px] text-[#ffffff]">Solarized</SelectItem>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="vs-light" className="text-[15px] text-foreground">VS Light</SelectItem>
+                      <SelectItem value="vs-dark" className="text-[15px] text-foreground">VS Dark</SelectItem>
+                      <SelectItem value="monokai" className="text-[15px] text-foreground">Monokai</SelectItem>
+                      <SelectItem value="github" className="text-[15px] text-foreground">GitHub</SelectItem>
+                      <SelectItem value="solarized" className="text-[15px] text-foreground">Solarized</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -237,7 +237,7 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
       case 'keyboard':
         return (
           <div className="space-y-3">
-            <span className="text-[11px] uppercase tracking-wider text-[#5c6670]">Keyboard Shortcuts</span>
+            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Keyboard Shortcuts</span>
             
             <div className="space-y-2 mt-3">
               {[
@@ -250,16 +250,16 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
                 { action: 'New File', keys: 'Cmd+N' },
                 { action: 'Close Tab', keys: 'Cmd+W' }
               ].map((shortcut) => (
-                <div key={shortcut.action} className="flex items-center justify-between h-8 px-3 rounded-lg bg-surface-tertiary-solid hover:bg-surface-hover-solid transition-colors">
-                  <span className="text-[15px] leading-[20px] text-[#ffffff]">{shortcut.action}</span>
-                  <kbd className="px-2 py-0.5 text-[13px] bg-surface-solid text-[#9da2a6] rounded-lg border border-border">
+                <div key={shortcut.action} className="flex items-center justify-between h-8 px-3 rounded-lg bg-muted hover:bg-accent transition-colors">
+                  <span className="text-[15px] leading-[20px] text-foreground">{shortcut.action}</span>
+                  <kbd className="px-2 py-0.5 text-[13px] bg-card text-muted-foreground rounded-lg border border-border">
                     {shortcut.keys}
                   </kbd>
                 </div>
               ))}
             </div>
 
-            <Button variant="outline" className="w-full h-8 rounded-lg bg-surface-solid border-border text-[15px] text-[#ffffff] hover:bg-surface-hover-solid">
+            <Button variant="outline" className="w-full h-8 rounded-lg bg-card border-border text-[15px] text-foreground hover:bg-accent">
               Customize Shortcuts
             </Button>
           </div>
@@ -269,7 +269,7 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
         return (
           <div className="space-y-3">
             <div>
-              <span className="text-[11px] uppercase tracking-wider text-[#5c6670]">Environment Variables</span>
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Environment Variables</span>
               
               <div className="space-y-3 mt-3">
                 {[
@@ -281,20 +281,20 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
                     <Input
                       value={env.key}
                       placeholder="Key"
-                      className="flex-1 h-8 rounded-lg bg-surface-solid border-border text-[15px] text-[#ffffff] placeholder:text-[#5c6670]"
+                      className="flex-1 h-8 rounded-lg bg-card border-border text-[15px] text-foreground placeholder:text-muted-foreground"
                       onChange={() => setIsDirty(true)}
                     />
                     <Input
                       value={env.value}
                       placeholder="Value"
-                      className="flex-1 h-8 rounded-lg bg-surface-solid border-border text-[15px] text-[#ffffff] placeholder:text-[#5c6670]"
+                      className="flex-1 h-8 rounded-lg bg-card border-border text-[15px] text-foreground placeholder:text-muted-foreground"
                       onChange={() => setIsDirty(true)}
                     />
                   </div>
                 ))}
               </div>
 
-              <Button variant="outline" className="w-full h-8 rounded-lg mt-3 bg-surface-solid border-border text-[15px] text-[#ffffff] hover:bg-surface-hover-solid">
+              <Button variant="outline" className="w-full h-8 rounded-lg mt-3 bg-card border-border text-[15px] text-foreground hover:bg-accent">
                 Add Variable
               </Button>
             </div>
@@ -305,39 +305,39 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
         return (
           <div className="space-y-3">
             <div>
-              <span className="text-[11px] uppercase tracking-wider text-[#5c6670]">Project Settings</span>
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Project Settings</span>
               
               <div className="space-y-3 mt-3">
                 <div>
-                  <Label htmlFor="projectName" className="text-[13px] text-[#9da2a6]">Project Name</Label>
+                  <Label htmlFor="projectName" className="text-[13px] text-muted-foreground">Project Name</Label>
                   <Input
                     id="projectName"
                     value={projectName}
                     onChange={(e) => { setProjectName(e.target.value); setIsDirty(true); }}
-                    className="mt-1 h-8 rounded-lg bg-surface-solid border-border text-[15px] text-[#ffffff]"
+                    className="mt-1 h-8 rounded-lg bg-card border-border text-[15px] text-foreground"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="projectDescription" className="text-[13px] text-[#9da2a6]">Description</Label>
+                  <Label htmlFor="projectDescription" className="text-[13px] text-muted-foreground">Description</Label>
                   <Input
                     id="projectDescription"
                     value={projectDescription}
                     onChange={(e) => { setProjectDescription(e.target.value); setIsDirty(true); }}
-                    className="mt-1 h-8 rounded-lg bg-surface-solid border-border text-[15px] text-[#ffffff]"
+                    className="mt-1 h-8 rounded-lg bg-card border-border text-[15px] text-foreground"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="privacy" className="text-[13px] text-[#9da2a6]">Privacy</Label>
+                  <Label htmlFor="privacy" className="text-[13px] text-muted-foreground">Privacy</Label>
                   <Select value={projectPrivacy} onValueChange={(v) => { setProjectPrivacy(v); setIsDirty(true); }}>
-                    <SelectTrigger id="privacy" className="mt-1 h-8 rounded-lg bg-surface-solid border-border text-[15px] text-[#ffffff]">
+                    <SelectTrigger id="privacy" className="mt-1 h-8 rounded-lg bg-card border-border text-[15px] text-foreground">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-surface-solid border-border">
-                      <SelectItem value="public" className="text-[15px] text-[#ffffff]">Public</SelectItem>
-                      <SelectItem value="private" className="text-[15px] text-[#ffffff]">Private</SelectItem>
-                      <SelectItem value="unlisted" className="text-[15px] text-[#ffffff]">Unlisted</SelectItem>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="public" className="text-[15px] text-foreground">Public</SelectItem>
+                      <SelectItem value="private" className="text-[15px] text-foreground">Private</SelectItem>
+                      <SelectItem value="unlisted" className="text-[15px] text-foreground">Unlisted</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -349,8 +349,8 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full py-12">
-            <Settings className="w-[18px] h-[18px] text-[#5c6670] mb-3" />
-            <p className="text-[15px] leading-[20px] text-[#5c6670]">Section coming soon</p>
+            <Settings className="w-[18px] h-[18px] text-muted-foreground mb-3" />
+            <p className="text-[15px] leading-[20px] text-muted-foreground">Section coming soon</p>
           </div>
         );
     }
@@ -360,8 +360,8 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
     <div className="h-full flex flex-col bg-background">
       <div className="min-h-[48px] flex items-center px-3 border-b border-border">
         <div className="flex items-center gap-2">
-          <Settings className="w-[18px] h-[18px] text-[#5c6670]" />
-          <h3 className="text-[17px] font-medium leading-tight text-[#ffffff]">Settings</h3>
+          <Settings className="w-[18px] h-[18px] text-muted-foreground" />
+          <h3 className="text-[17px] font-medium leading-tight text-foreground">Settings</h3>
         </div>
       </div>
 
@@ -378,8 +378,8 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
                     className={cn(
                       "w-full flex items-center gap-2 px-3 h-8 rounded-lg transition-colors",
                       activeSection === section.id
-                        ? "bg-surface-solid text-[#0079f2]"
-                        : "text-[#9da2a6] hover:bg-surface-hover-solid hover:text-[#ffffff]"
+                        ? "bg-card text-primary"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
                     )}
                   >
                     <Icon className="w-[18px] h-[18px]" />
@@ -403,21 +403,21 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="border-t border-border p-3 bg-surface-solid"
+              className="border-t border-border p-3 bg-card"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-[#5c6670]">You have unsaved changes</span>
+                <span className="text-[13px] text-muted-foreground">You have unsaved changes</span>
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
-                    className="h-8 rounded-lg bg-transparent border-border text-[15px] text-[#9da2a6] hover:bg-surface-hover-solid hover:text-[#ffffff]"
+                    className="h-8 rounded-lg bg-transparent border-border text-[15px] text-muted-foreground hover:bg-accent hover:text-foreground"
                     onClick={handleReset}
                   >
                     <RotateCcw className="w-[18px] h-[18px] mr-1" />
                     Reset
                   </Button>
                   <Button 
-                    className="h-8 rounded-lg bg-[#0079f2] text-[15px] text-[#ffffff] hover:bg-[#0066CC]"
+                    className="h-8 rounded-lg bg-primary text-[15px] text-primary-foreground hover:bg-primary/90"
                     onClick={handleSave}
                   >
                     <Save className="w-[18px] h-[18px] mr-1" />

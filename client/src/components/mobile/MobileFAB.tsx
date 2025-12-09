@@ -167,7 +167,7 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
     
     return {
       icon: Play,
-      bgColor: 'bg-[#F26207] hover:bg-[#D65507] active:bg-[#C04907]',
+      bgColor: 'bg-primary hover:bg-primary/90 active:bg-primary/80',
       label: 'Run',
       ariaLabel: 'Run project',
     };
@@ -192,7 +192,7 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
       <AnimatePresence>
         {showPulse && isRunning && (
           <motion.div
-            className="absolute inset-0 rounded-full bg-[#F26207]"
+            className="absolute inset-0 rounded-full bg-primary"
             initial={{ scale: 1, opacity: 0.6 }}
             animate={{ scale: 2, opacity: 0 }}
             exit={{ opacity: 0 }}
@@ -211,7 +211,7 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
           'flex items-center justify-center',
           'shadow-2xl',
           'transition-all duration-200',
-          'focus:outline-none focus:ring-4 focus:ring-[#F26207]/50',
+          'focus:outline-none focus:ring-4 focus:ring-primary/50',
           'touch-manipulation',
           // Disable interaction during loading
           isLoading && 'cursor-not-allowed',

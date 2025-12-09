@@ -194,7 +194,7 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
                 className={cn(
                   "absolute right-3 top-1/2 -translate-y-1/2",
                   "mobile-touch-target p-1 -m-1",
-                  isListening && "text-[#F26207] animate-pulse"
+                  isListening && "text-primary animate-pulse"
                 )}
                 aria-label="Voice search"
               >
@@ -216,7 +216,7 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
                   "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
                   "mobile-touch-target",
                   activeCategory === category.value
-                    ? "bg-[#F26207] text-white"
+                    ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-muted-foreground"
                 )}
                 whileTap={{ scale: 0.95 }}
@@ -290,7 +290,7 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
                       <TrendingUp className={cn(
                         "h-4 w-4",
                         suggestion.trending 
-                          ? "text-[#F26207]" 
+                          ? "text-primary" 
                           : "text-muted-foreground"
                       )} />
                       <span className="flex-1 text-sm">{suggestion.text}</span>
@@ -298,7 +298,7 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
                         variant={suggestion.trending ? "default" : "secondary"}
                         className={cn(
                           "text-xs",
-                          suggestion.trending && "bg-[#F26207]/10 text-[#F26207] border-[#F26207]/20"
+                          suggestion.trending && "bg-primary/10 text-primary border-primary/20"
                         )}
                       >
                         {suggestion.category}
@@ -316,7 +316,7 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
                   </h3>
                   <button
                     onClick={() => setShowResults(false)}
-                    className="text-xs text-[#F26207]"
+                    className="text-xs text-primary"
                   >
                     New search
                   </button>

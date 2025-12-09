@@ -112,7 +112,7 @@ export function MobileProfile() {
     <div className="min-h-screen pb-20 bg-background">
       {/* Cover Image & Avatar */}
       <div className="relative">
-        <div className="h-32 bg-gradient-to-br from-[#F26207] to-[#F99D25] relative">
+        <div className="h-32 bg-gradient-to-br from-primary to-secondary relative">
           {/* Pattern overlay */}
           <div className="absolute inset-0">
             <div className="absolute inset-0" style={{
@@ -125,7 +125,7 @@ export function MobileProfile() {
           <div className="flex items-end gap-4">
             <Avatar className="h-24 w-24 border-4 border-background">
               <AvatarImage src={user.avatar} />
-              <AvatarFallback className="bg-[#F26207] text-white text-2xl">
+              <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
                 {user.name.split(' ').map(n => n[0]).join('')}
               </AvatarFallback>
             </Avatar>
@@ -165,7 +165,7 @@ export function MobileProfile() {
               transition={{ delay: index * 0.1 }}
             >
               <Card className="p-4 text-center hover:shadow-md transition-shadow">
-                <Icon className="h-5 w-5 text-[#F26207] mx-auto mb-2" />
+                <Icon className="h-5 w-5 text-primary mx-auto mb-2" />
                 <div className="text-2xl font-bold">{stat.value}</div>
                 <div className="text-xs text-muted-foreground">{stat.label}</div>
               </Card>
@@ -201,8 +201,8 @@ export function MobileProfile() {
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-secondary rounded-lg group-hover:bg-[#F26207]/10 transition-colors">
-                    <Icon className="h-4 w-4 group-hover:text-[#F26207] transition-colors" />
+                  <div className="p-2 bg-secondary rounded-lg group-hover:bg-primary/10 transition-colors">
+                    <Icon className="h-4 w-4 group-hover:text-primary transition-colors" />
                   </div>
                   <span className="text-sm font-medium">{setting.label}</span>
                 </div>
@@ -232,9 +232,9 @@ export function MobileProfile() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {theme === 'dark' ? (
-                <Moon className="h-5 w-5 text-[#F26207]" />
+                <Moon className="h-5 w-5 text-primary" />
               ) : (
-                <Sun className="h-5 w-5 text-[#F26207]" />
+                <Sun className="h-5 w-5 text-primary" />
               )}
               <div>
                 <div className="text-sm font-medium">Theme</div>
@@ -253,7 +253,7 @@ export function MobileProfile() {
                 className={cn(
                   "p-2 rounded-lg transition-colors",
                   theme === 'light' 
-                    ? "bg-[#F26207]/10 text-[#F26207]" 
+                    ? "bg-primary/10 text-primary" 
                     : "bg-secondary text-muted-foreground"
                 )}
                 whileTap={{ scale: 0.95 }}
@@ -269,7 +269,7 @@ export function MobileProfile() {
                 className={cn(
                   "p-2 rounded-lg transition-colors",
                   theme === 'dark' 
-                    ? "bg-[#F26207]/10 text-[#F26207]" 
+                    ? "bg-primary/10 text-primary" 
                     : "bg-secondary text-muted-foreground"
                 )}
                 whileTap={{ scale: 0.95 }}
