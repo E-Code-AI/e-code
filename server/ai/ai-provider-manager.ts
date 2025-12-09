@@ -8,6 +8,7 @@ import { AGENT_SYSTEM_PROMPT, getSystemPromptForContext } from './prompts/agent-
 import { ContextWindowManager } from './context-window-manager';
 import { agentWebSocketService } from '../services/agent-websocket-service';
 import { promptCacheManager } from './prompt-cache-manager';
+import { providerLatencyMonitor } from './provider-latency-monitor';
 
 /**
  * Model configuration with provider metadata
@@ -760,6 +761,10 @@ export class AIProviderManager {
   private async *streamAnthropic(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.anthropicClient) throw new Error('Anthropic client not initialized');
     
+    const startTime = Date.now();
+    let tokensGenerated = 0;
+    let success = false;
+    
     const systemMessage = messages.find(m => m.role === 'system')?.content;
     
     // ✅ PROMPT CACHING: Use cache_control for system prompts (Anthropic-specific optimization)
@@ -791,6 +796,7 @@ export class AIProviderManager {
             const text = chunk.delta.text;
             if (text) {
               buffer += text;
+              tokensGenerated += Math.ceil(text.length / 4);
               yield text;
             }
           }
@@ -803,9 +809,16 @@ export class AIProviderManager {
       if (!buffer) {
         throw new Error('Anthropic stream produced no content');
       }
+      
+      success = true;
     } catch (error: any) {
       console.error(`[Anthropic] Stream error: ${error.message}`);
+      providerLatencyMonitor.recordLatency('anthropic', modelId, Date.now() - startTime, false, 0, error.message);
       throw error;
+    } finally {
+      if (success) {
+        providerLatencyMonitor.recordLatency('anthropic', modelId, Date.now() - startTime, true, tokensGenerated);
+      }
     }
   }
   
@@ -817,6 +830,10 @@ export class AIProviderManager {
    */
   private async *streamOpenAI(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.openaiClient) throw new Error('OpenAI client not initialized');
+    
+    const startTime = Date.now();
+    let tokensGenerated = 0;
+    let success = false;
     
     // ✅ PROMPT CACHING: Format messages for optimal OpenAI caching
     // OpenAI caches prompts automatically when prefix matches
@@ -862,6 +879,7 @@ export class AIProviderManager {
           const content = chunk.choices?.[0]?.delta?.content;
           if (content) {
             buffer += content;
+            tokensGenerated += Math.ceil(content.length / 4);
             yield content;
           }
         } catch (chunkError: any) {
@@ -873,9 +891,16 @@ export class AIProviderManager {
       if (!buffer) {
         throw new Error('OpenAI stream produced no content');
       }
+      
+      success = true;
     } catch (error: any) {
       console.error(`[OpenAI] Stream error: ${error.message}`);
+      providerLatencyMonitor.recordLatency('openai', modelId, Date.now() - startTime, false, 0, error.message);
       throw error;
+    } finally {
+      if (success) {
+        providerLatencyMonitor.recordLatency('openai', modelId, Date.now() - startTime, true, tokensGenerated);
+      }
     }
   }
   
@@ -889,6 +914,10 @@ export class AIProviderManager {
    */
   private async *streamMoonshot(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.moonshotClient) throw new Error('Moonshot AI client not initialized');
+    
+    const startTime = Date.now();
+    let tokensGenerated = 0;
+    let success = false;
     
     // ✅ PROMPT CACHING: Cache system prompt for Moonshot
     const systemPrompt = options?.system || messages.find(m => m.role === 'system')?.content;
@@ -937,6 +966,7 @@ export class AIProviderManager {
           const content = chunk.choices?.[0]?.delta?.content;
           if (content) {
             buffer += content;
+            tokensGenerated += Math.ceil(content.length / 4);
             yield content;
           }
         } catch (chunkError: any) {
@@ -950,6 +980,7 @@ export class AIProviderManager {
         throw new Error(`Moonshot stream produced no content (received ${chunkCount} chunks)`);
       }
       
+      success = true;
       console.log(`[Moonshot] Stream completed successfully: ${buffer.length} chars from ${chunkCount} chunks`);
     } catch (error: any) {
       // ✅ ENHANCED LOGGING: Include status code, error details for diagnostics
@@ -959,7 +990,12 @@ export class AIProviderManager {
         errorType: error.constructor?.name,
         details: error.response?.data || error.body || 'No additional details'
       });
+      providerLatencyMonitor.recordLatency('moonshot', modelId, Date.now() - startTime, false, 0, error.message);
       throw error;
+    } finally {
+      if (success) {
+        providerLatencyMonitor.recordLatency('moonshot', modelId, Date.now() - startTime, true, tokensGenerated);
+      }
     }
   }
   
@@ -974,6 +1010,10 @@ export class AIProviderManager {
    */
   private async *streamGemini(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.geminiClient) throw new Error('Gemini client not initialized');
+    
+    const startTime = Date.now();
+    let tokensGenerated = 0;
+    let success = false;
     
     const systemMessage = messages.find(m => m.role === 'system')?.content;
     const chatMessages = messages.filter(m => m.role !== 'system');
@@ -1026,6 +1066,7 @@ export class AIProviderManager {
           const text = chunk.text();
           if (text) {
             buffer += text;
+            tokensGenerated += Math.ceil(text.length / 4);
             yield text;
           }
         } catch (chunkError: any) {
@@ -1039,11 +1080,21 @@ export class AIProviderManager {
       if (!buffer) {
         const response = await result.response;
         const fullText = response.text();
-        if (fullText) yield fullText;
+        if (fullText) {
+          tokensGenerated += Math.ceil(fullText.length / 4);
+          yield fullText;
+        }
       }
+      
+      success = true;
     } catch (error: any) {
       console.error(`[Gemini] Stream error: ${error.message}`);
+      providerLatencyMonitor.recordLatency('gemini', modelId, Date.now() - startTime, false, 0, error.message);
       throw new Error(`Gemini streaming failed: ${error.message}`);
+    } finally {
+      if (success) {
+        providerLatencyMonitor.recordLatency('gemini', modelId, Date.now() - startTime, true, tokensGenerated);
+      }
     }
   }
   
