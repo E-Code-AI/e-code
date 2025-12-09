@@ -72,40 +72,42 @@ export default function Home() {
   }, [user, isLoading]);
 
   const createProjectMutation = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async ({ prompt, buildMode }: { prompt: string; buildMode: BuildMode }) => {
       if (!user) {
         setIsAuthModalOpen(true);
         throw new Error("Please log in to create projects");
       }
       
       // Determine if this is an AI prompt (longer descriptions suggest AI generation)
-      const isAIPrompt = name.length > 20 || searchQuery.trim().length > 20;
-      const promptToUse = searchQuery.trim() || name;
+      const isAIPrompt = prompt.length > 20;
       
       // Use workspace bootstrap endpoint for AI prompts (Fortune 500-grade orchestration)
       if (isAIPrompt) {
         const response = await apiRequest('POST', '/api/workspace/bootstrap', {
-          prompt: promptToUse,
+          prompt,
+          buildMode, // Pass the selected build mode to backend
           options: {
             language: 'typescript',
             framework: 'react',
             autoStart: true,
-            visibility: 'private'
+            visibility: 'private',
+            designFirst: buildMode === 'design-first'
           }
         });
         return response;
       } else {
         // Simple project creation (no AI agent)
-        const project = await apiRequest('POST', '/api/projects', { name });
+        const project = await apiRequest('POST', '/api/projects', { name: prompt });
         return { projectId: project.id, projectSlug: project.slug, isSimple: true, project };
       }
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       setIsCreateModalOpen(false);
+      setIsBuildModeOpen(false);
       
-      const isAIPrompt = variables.length > 20 || searchQuery.trim().length > 20;
-      const promptToUse = searchQuery.trim() || variables;
+      const isAIPrompt = variables.prompt.length > 20;
+      const promptToUse = variables.prompt;
       
       // Handle redirect based on response type
       if (data.bootstrapToken) {
@@ -141,8 +143,33 @@ export default function Home() {
     }
   });
 
-  const handleCreateProject = (name: string) => {
-    createProjectMutation.mutate(name);
+  // Show build mode selector when user enters a prompt
+  const handleCreateProject = (prompt: string) => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    
+    // For AI prompts (longer descriptions), show the build mode selector
+    if (prompt.length > 20) {
+      setPendingPrompt(prompt);
+      setIsBuildModeOpen(true);
+    } else {
+      // Short prompts go directly to simple project creation
+      createProjectMutation.mutate({ prompt, buildMode: 'full-app' });
+    }
+  };
+
+  // Handle build mode selection
+  const handleSelectBuildMode = (mode: BuildMode) => {
+    if (mode === 'continue-planning') {
+      // User wants to refine more - close dialog and let them continue editing
+      setIsBuildModeOpen(false);
+      return;
+    }
+    
+    // Proceed with the selected build mode
+    createProjectMutation.mutate({ prompt: pendingPrompt, buildMode: mode });
   };
 
   // Filter projects based on search query
@@ -450,6 +477,14 @@ export default function Home() {
         onSubmit={handleCreateProject}
         isLoading={createProjectMutation.isPending}
         initialDescription={searchQuery}
+      />
+
+      {/* Build Mode Selector - "Build full app vs Design only" */}
+      <BuildModeSelector
+        open={isBuildModeOpen}
+        onOpenChange={setIsBuildModeOpen}
+        onSelectMode={handleSelectBuildMode}
+        projectName={pendingPrompt.slice(0, 50) + (pendingPrompt.length > 50 ? '...' : '')}
       />
       
       <AuthModal 

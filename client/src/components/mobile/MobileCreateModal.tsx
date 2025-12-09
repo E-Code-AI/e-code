@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { BuildModeSelector, BuildMode } from '@/components/ai/BuildModeSelector';
 
 interface Template {
   id: string;
@@ -79,6 +80,10 @@ export function MobileCreateModal({
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [currentSnapPoint, setCurrentSnapPoint] = useState(1);
   
+  // Build mode selector state
+  const [isBuildModeOpen, setIsBuildModeOpen] = useState(false);
+  const [pendingTemplate, setPendingTemplate] = useState<Template | null>(null);
+  
   // Handle drag to close
   const handleDragEnd = (event: any, info: PanInfo) => {
     const threshold = 100;
@@ -112,11 +117,39 @@ export function MobileCreateModal({
   });
   
   const handleTemplateSelect = (template: Template) => {
-    onCreate?.(template);
-    onClose();
+    // Show build mode selector before creating the project
+    setPendingTemplate(template);
+    setIsBuildModeOpen(true);
     // Haptic feedback
     if ('vibrate' in navigator) {
       navigator.vibrate(50);
+    }
+  };
+  
+  // Handle build mode selection
+  const handleSelectBuildMode = (mode: BuildMode) => {
+    // Haptic feedback for mobile
+    if ('vibrate' in navigator) {
+      navigator.vibrate([10, 50, 10]);
+    }
+    
+    if (mode === 'continue-planning') {
+      // User wants to continue planning - close build mode dialog but stay in create modal
+      setIsBuildModeOpen(false);
+      setPendingTemplate(null);
+      return;
+    }
+    
+    // Store build mode in sessionStorage for the IDE to pick up
+    if (pendingTemplate) {
+      // Create a unique key for the new project - will be matched when project is created
+      sessionStorage.setItem('pending-build-mode', mode);
+      
+      // Proceed with template creation
+      onCreate?.(pendingTemplate);
+      setIsBuildModeOpen(false);
+      setPendingTemplate(null);
+      onClose();
     }
   };
   
@@ -344,6 +377,14 @@ export function MobileCreateModal({
               </div>
             </ScrollArea>
           </motion.div>
+          
+          {/* Build Mode Selector Dialog - touch-friendly for mobile */}
+          <BuildModeSelector
+            open={isBuildModeOpen}
+            onOpenChange={setIsBuildModeOpen}
+            onSelectMode={handleSelectBuildMode}
+            projectName={pendingTemplate?.name || 'New Project'}
+          />
         </>
       )}
     </AnimatePresence>
