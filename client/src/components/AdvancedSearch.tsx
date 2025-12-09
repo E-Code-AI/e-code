@@ -281,7 +281,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
                     <ScrollArea className="h-[300px]">
                       <div className="p-2 space-y-1">
                         {LANGUAGES.map(lang => (
-                          <div key={lang} className="flex items-center space-x-2 p-2 hover:bg-[#3D4455] rounded-sm">
+                          <div key={lang} className="flex items-center space-x-2 p-2 hover:bg-surface-hover-solid rounded-sm">
                             <Checkbox
                               checked={filters.language.includes(lang)}
                               onCheckedChange={(checked) => {

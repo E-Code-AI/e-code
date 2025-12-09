@@ -181,7 +181,7 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="pl-10 pr-10 h-10 bg-[#1C2333] border-none text-base"
+                className="pl-10 pr-10 h-10 bg-surface-solid border-none text-base"
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"
@@ -252,7 +252,7 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
                           setQuery(search.query);
                           handleSearch(search.query, search.category);
                         }}
-                        className="flex items-center gap-3 w-full p-3 -mx-3 hover:bg-[#2B3245] rounded-lg text-left group"
+                        className="flex items-center gap-3 w-full p-3 -mx-3 hover:bg-surface-tertiary-solid rounded-lg text-left group"
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05 }}
@@ -281,7 +281,7 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
                         setQuery(suggestion.text);
                         handleSearch(suggestion.text, suggestion.category);
                       }}
-                      className="flex items-center gap-3 w-full p-3 -mx-3 hover:bg-[#2B3245] rounded-lg text-left group"
+                      className="flex items-center gap-3 w-full p-3 -mx-3 hover:bg-surface-tertiary-solid rounded-lg text-left group"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 + 0.2 }}
@@ -326,14 +326,14 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
                 {[1, 2, 3, 4, 5].map((_, index) => (
                   <motion.div
                     key={index}
-                    className="p-4 mb-3 bg-[#1C2333] rounded-lg"
+                    className="p-4 mb-3 bg-surface-solid rounded-lg"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
                     <div className="h-4 bg-secondary rounded w-3/4 mb-2" />
-                    <div className="h-3 bg-[#1C2333] rounded w-full mb-2" />
-                    <div className="h-3 bg-[#1C2333] rounded w-2/3" />
+                    <div className="h-3 bg-surface-solid rounded w-full mb-2" />
+                    <div className="h-3 bg-surface-solid rounded w-2/3" />
                   </motion.div>
                 ))}
               </div>

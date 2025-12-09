@@ -69,7 +69,7 @@ export function PageHeader({
   return (
     <section
       className={cn(
-        "relative overflow-hidden rounded-3xl border border-[#2B3245] bg-[#1C2333] p-6 shadow-sm transition-all",
+        "relative overflow-hidden rounded-3xl border border-border bg-surface-solid p-6 shadow-sm transition-all",
         "sm:p-8",
         "",
         className
@@ -87,7 +87,7 @@ export function PageHeader({
           <div className={cn("flex flex-col gap-4 sm:flex-row sm:items-start", alignCenter && "sm:items-center sm:justify-center")}
           >
             {Icon && (
-              <div className="mr-0 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#2B3245] text-[var(--ecode-accent)] shadow-inner sm:mr-4">
+              <div className="mr-0 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-surface-tertiary-solid text-[var(--ecode-accent)] shadow-inner sm:mr-4">
                 <Icon className="h-6 w-6" />
               </div>
             )}

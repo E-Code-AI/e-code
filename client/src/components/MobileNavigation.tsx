@@ -66,7 +66,7 @@ export function MobileNavigation({ projectId, showNewProject }: MobileNavigation
   return (
     <>
       {/* Mobile Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#0E1525] border-t h-16 flex items-center justify-around px-2 md:hidden z-40 safe-area-inset-bottom">
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t h-16 flex items-center justify-around px-2 md:hidden z-40 safe-area-inset-bottom">
         {navigationItems.map((item) => {
           if (item.path === null) return null;
           const Icon = item.icon;
@@ -79,7 +79,7 @@ export function MobileNavigation({ projectId, showNewProject }: MobileNavigation
               size="icon"
               className={cn(
                 "h-12 w-12 flex flex-col items-center justify-center gap-1 relative",
-                isCurrentActive && "text-[#F26207] bg-[#1C2333]",
+                isCurrentActive && "text-[#F26207] bg-surface-solid",
                 item.disabled && "opacity-50 cursor-not-allowed"
               )}
               onClick={() => !item.disabled && item.path && navigate(item.path)}

@@ -107,14 +107,14 @@ export function MobileHeader() {
       
       {/* Menu de navigation latéral */}
       {isMenuOpen && (
-        <div className="fixed inset-0 bg-[#0E1525] z-50" onClick={() => setIsMenuOpen(false)}>
+        <div className="fixed inset-0 bg-background z-50" onClick={() => setIsMenuOpen(false)}>
           <div 
             className="w-4/5 h-full bg-background overflow-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 border-b">
               <div className="flex items-center">
-                <div className="h-8 w-8 rounded-full bg-[#2B3245] flex items-center justify-center text-primary mr-2">
+                <div className="h-8 w-8 rounded-full bg-surface-tertiary-solid flex items-center justify-center text-primary mr-2">
                   {user?.username?.[0]?.toUpperCase() || 'U'}
                 </div>
                 <div>

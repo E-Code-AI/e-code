@@ -159,7 +159,7 @@ export function VirtualFileTree({
                   'flex items-center px-3 py-2 cursor-pointer transition-colors touch-manipulation',
                   isActive 
                     ? 'bg-accent dark:bg-[var(--ecode-sidebar-hover)] text-accent-foreground dark:text-white' 
-                    : 'hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:bg-[#2B3245]',
+                    : 'hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)] active:bg-surface-tertiary-solid',
                   item.type === 'file' && 'pl-9'
                 )}
                 style={{

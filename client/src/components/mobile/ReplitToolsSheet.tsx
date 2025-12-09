@@ -174,12 +174,12 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side="bottom" 
-        className="h-[85vh] rounded-t-2xl p-0 bg-[#0E1525] border-t border-[#2B3245]"
+        className="h-[85vh] rounded-t-2xl p-0 bg-background border-t border-border"
         data-testid="tools-sheet"
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <SheetHeader className="p-4 border-b border-[#2B3245] space-y-3 bg-[#0E1525]">
+          <SheetHeader className="p-4 border-b border-border space-y-3 bg-background">
             <div className="flex items-center justify-between">
               <SheetTitle className="text-base">Search for tools and files</SheetTitle>
               <button
@@ -198,7 +198,7 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
                 placeholder="Search for tools and files"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 bg-[#1C2333]"
+                className="pl-9 bg-surface-solid"
                 data-testid="input-search-tools"
               />
             </div>
@@ -221,7 +221,7 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
                       <button
                         key={tool.id}
                         onClick={() => handleToolClick(tool.id)}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#2B3245] transition-colors text-left"
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-tertiary-solid transition-colors text-left"
                         data-testid={`tool-${tool.id}`}
                       >
                         <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -252,16 +252,16 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
                       <button
                         key={tool.id}
                         onClick={() => handleToolClick(tool.id)}
-                        className="w-full flex items-start gap-3 px-4 py-3 hover:bg-[#2B3245] transition-colors text-left"
+                        className="w-full flex items-start gap-3 px-4 py-3 hover:bg-surface-tertiary-solid transition-colors text-left"
                         data-testid={`tool-${tool.id}`}
                       >
                         <div className={cn(
                           "flex items-center justify-center h-10 w-10 rounded-lg flex-shrink-0",
-                          tool.id === 'agent' && "bg-[#2B3245]",
-                          tool.id === 'publishing' && "bg-[#1C2333]",
-                          tool.id === 'database' && "bg-[#1C2333]",
-                          tool.id === 'git' && "bg-[#1C2333]",
-                          !['agent', 'publishing', 'database', 'git'].includes(tool.id) && "bg-[#1C2333]"
+                          tool.id === 'agent' && "bg-surface-tertiary-solid",
+                          tool.id === 'publishing' && "bg-surface-solid",
+                          tool.id === 'database' && "bg-surface-solid",
+                          tool.id === 'git' && "bg-surface-solid",
+                          !['agent', 'publishing', 'database', 'git'].includes(tool.id) && "bg-surface-solid"
                         )}>
                           <Icon className={cn(
                             "h-5 w-5",

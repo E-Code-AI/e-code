@@ -88,7 +88,7 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
   return (
     <div className={`flex flex-col h-full ${className} ${isFullscreen ? 'fixed inset-0 z-50 bg-background' : ''}`}>
       {/* Preview Toolbar */}
-      <div className="flex items-center gap-2 p-2 border-b bg-[#1C2333]">
+      <div className="flex items-center gap-2 p-2 border-b bg-surface-solid">
         <Button
           variant="ghost"
           size="icon"

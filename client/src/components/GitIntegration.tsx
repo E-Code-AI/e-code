@@ -497,7 +497,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
                       {gitStatus.staged.map(file => (
                         <div
                           key={file.path}
-                          className="flex items-center justify-between py-1 px-2 hover:bg-[#3D4455] rounded-sm cursor-pointer"
+                          className="flex items-center justify-between py-1 px-2 hover:bg-surface-hover-solid rounded-sm cursor-pointer"
                           onClick={() => handleUnstageFile(file.path)}
                         >
                           <div className="flex items-center space-x-2">
@@ -521,7 +521,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
                       {gitStatus.unstaged.map(file => (
                         <div
                           key={file.path}
-                          className="flex items-center justify-between py-1 px-2 hover:bg-[#3D4455] rounded-sm cursor-pointer"
+                          className="flex items-center justify-between py-1 px-2 hover:bg-surface-hover-solid rounded-sm cursor-pointer"
                           onClick={() => handleStageFile(file.path)}
                         >
                           <div className="flex items-center space-x-2">
@@ -545,7 +545,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
                       {gitStatus.untracked.map(path => (
                         <div
                           key={path}
-                          className="flex items-center justify-between py-1 px-2 hover:bg-[#3D4455] rounded-sm cursor-pointer"
+                          className="flex items-center justify-between py-1 px-2 hover:bg-surface-hover-solid rounded-sm cursor-pointer"
                           onClick={() => handleStageFile(path)}
                         >
                           <div className="flex items-center space-x-2">

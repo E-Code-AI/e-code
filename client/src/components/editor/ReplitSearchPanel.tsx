@@ -35,10 +35,10 @@ function ShimmerSkeleton() {
           animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <div className="w-[18px] h-[18px] rounded bg-[#3d4452]" />
+          <div className="w-[18px] h-[18px] rounded bg-surface-tertiary-solid" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-3/4 rounded bg-[#3d4452]" />
-            <div className="h-3 w-full rounded bg-[#242b3d]" />
+            <div className="h-4 w-3/4 rounded bg-surface-tertiary-solid" />
+            <div className="h-3 w-full rounded bg-surface-solid" />
           </div>
         </motion.div>
       ))}
@@ -102,9 +102,9 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#0e1525]">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="p-3 border-b border-[#3d4452] min-h-[48px]">
+      <div className="p-3 border-b border-border min-h-[48px]">
         <div className="flex items-center gap-2 mb-3">
           <Search className="w-[18px] h-[18px] text-[#9da2a6]" />
           <h3 className="text-[17px] font-medium leading-tight text-[#ffffff]">Search</h3>
@@ -117,7 +117,7 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Search in project..."
-            className="pr-8 text-[15px] leading-[20px] bg-[#1c2333] border-[#3d4452] text-[#ffffff] placeholder:text-[#5c6670] focus:border-[#0079f2] focus:ring-[#0079f2]"
+            className="pr-8 text-[15px] leading-[20px] bg-surface-solid border-border text-[#ffffff] placeholder:text-[#5c6670] focus:border-[#0079f2] focus:ring-[#0079f2]"
             data-testid="input-search"
           />
           {searchQuery && (
@@ -141,7 +141,7 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
                 "h-8 rounded-lg text-[13px]",
                 searchType === 'all' 
                   ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0066CC]" 
-                  : "bg-transparent border-[#3d4452] text-[#9da2a6] hover:bg-[#3D4455] hover:text-[#ffffff]"
+                  : "bg-transparent border-border text-[#9da2a6] hover:bg-surface-hover-solid hover:text-[#ffffff]"
               )}
               data-testid="button-filter-all"
             >
@@ -154,7 +154,7 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
                 "h-8 rounded-lg text-[13px]",
                 searchType === 'files' 
                   ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0066CC]" 
-                  : "bg-transparent border-[#3d4452] text-[#9da2a6] hover:bg-[#3D4455] hover:text-[#ffffff]"
+                  : "bg-transparent border-border text-[#9da2a6] hover:bg-surface-hover-solid hover:text-[#ffffff]"
               )}
               data-testid="button-filter-files"
             >
@@ -168,7 +168,7 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
                 "h-8 rounded-lg text-[13px]",
                 searchType === 'code' 
                   ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0066CC]" 
-                  : "bg-transparent border-[#3d4452] text-[#9da2a6] hover:bg-[#3D4455] hover:text-[#ffffff]"
+                  : "bg-transparent border-border text-[#9da2a6] hover:bg-surface-hover-solid hover:text-[#ffffff]"
               )}
               data-testid="button-filter-code"
             >
@@ -182,7 +182,7 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
                 "h-8 rounded-lg text-[13px]",
                 searchType === 'symbols' 
                   ? "bg-[#0079f2] text-[#ffffff] hover:bg-[#0066CC]" 
-                  : "bg-transparent border-[#3d4452] text-[#9da2a6] hover:bg-[#3D4455] hover:text-[#ffffff]"
+                  : "bg-transparent border-border text-[#9da2a6] hover:bg-surface-hover-solid hover:text-[#ffffff]"
               )}
               data-testid="button-filter-symbols"
             >
@@ -197,7 +197,7 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
                 type="checkbox"
                 checked={caseSensitive}
                 onChange={(e) => setCaseSensitive(e.target.checked)}
-                className="rounded border-[#3d4452] bg-[#1c2333] text-[#0079f2] focus:ring-[#0079f2]"
+                className="rounded border-border bg-surface-solid text-[#0079f2] focus:ring-[#0079f2]"
                 data-testid="checkbox-case-sensitive"
               />
               <span className="text-[#5c6670]">Case sensitive</span>
@@ -207,7 +207,7 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
                 type="checkbox"
                 checked={useRegex}
                 onChange={(e) => setUseRegex(e.target.checked)}
-                className="rounded border-[#3d4452] bg-[#1c2333] text-[#0079f2] focus:ring-[#0079f2]"
+                className="rounded border-border bg-surface-solid text-[#0079f2] focus:ring-[#0079f2]"
                 data-testid="checkbox-regex"
               />
               <span className="text-[#5c6670]">Regex</span>
@@ -228,7 +228,7 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
             {results.map((result) => (
               <button
                 key={result.id}
-                className="w-full text-left px-2 py-2 hover:bg-[#3D4455] rounded-lg group transition-colors"
+                className="w-full text-left px-2 py-2 hover:bg-surface-hover-solid rounded-lg group transition-colors"
                 data-testid={`result-item-${result.id}`}
               >
                 <div className="flex items-start gap-2">
@@ -247,7 +247,7 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
                       <span dangerouslySetInnerHTML={{
                         __html: result.preview.replace(
                           new RegExp(result.match, 'gi'),
-                          `<mark class="bg-[#1C2333] text-[#ffffff] rounded px-0.5">${result.match}</mark>`
+                          `<mark class="bg-surface-solid text-[#ffffff] rounded px-0.5">${result.match}</mark>`
                         )
                       }} />
                     </div>

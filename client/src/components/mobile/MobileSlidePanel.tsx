@@ -61,7 +61,7 @@ export function MobileSlidePanel({
       {isOpen && (
         <>
           <motion.div
-            className="fixed inset-0 bg-[#0E1525] z-50"
+            className="fixed inset-0 bg-background z-50"
             variants={backdropVariants}
             initial="hidden"
             animate="visible"

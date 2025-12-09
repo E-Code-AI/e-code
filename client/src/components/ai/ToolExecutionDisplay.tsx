@@ -107,10 +107,10 @@ function CompactToolExecution({
   };
 
   const getStatusBg = () => {
-    if (status === 'complete' && success) return 'bg-emerald-950 border-emerald-500 hover:bg-[#3D4455]';
-    if (status === 'error' || (status === 'complete' && !success)) return 'bg-red-950 border-red-500 hover:bg-[#3D4455]';
-    if (status === 'running') return 'bg-blue-950 border-blue-500 hover:bg-[#3D4455]';
-    return 'bg-[#1C2333] border-[#2B3245] hover:bg-[#3D4455]';
+    if (status === 'complete' && success) return 'bg-emerald-950 border-emerald-500 hover:bg-surface-hover-solid';
+    if (status === 'error' || (status === 'complete' && !success)) return 'bg-red-950 border-red-500 hover:bg-surface-hover-solid';
+    if (status === 'running') return 'bg-blue-950 border-blue-500 hover:bg-surface-hover-solid';
+    return 'bg-surface-solid border-border hover:bg-surface-hover-solid';
   };
 
   const getTarget = () => {
@@ -149,7 +149,7 @@ function CompactToolExecution({
           <div className="flex-1 min-w-0 flex items-center gap-1 sm:gap-2">
             <span className="text-[10px] sm:text-xs font-medium truncate">{label}</span>
             {target && (
-              <code className="text-[9px] sm:text-[10px] bg-[#0E1525] px-1 sm:px-1.5 py-0.5 rounded truncate max-w-[100px] sm:max-w-[200px] hidden xs:inline">
+              <code className="text-[9px] sm:text-[10px] bg-background px-1 sm:px-1.5 py-0.5 rounded truncate max-w-[100px] sm:max-w-[200px] hidden xs:inline">
                 {target}
               </code>
             )}
@@ -348,7 +348,7 @@ export function ToolExecutionList({
               size="sm"
               className={cn(
                 "h-6 px-2 text-[10px] shrink-0",
-                filter === id && "bg-[#2B3245]"
+                filter === id && "bg-surface-tertiary-solid"
               )}
               onClick={() => setFilter(id)}
               disabled={count === 0 && id !== 'all'}
@@ -418,7 +418,7 @@ export function ToolExecutionDisplay({
     if (status === 'complete' && success) return 'border-green-500 bg-green-950';
     if (status === 'error' || !success) return 'border-red-500 bg-red-950';
     if (status === 'running') return 'border-blue-500 bg-blue-950';
-    return 'border-[#2B3245]';
+    return 'border-border';
   };
 
   return (

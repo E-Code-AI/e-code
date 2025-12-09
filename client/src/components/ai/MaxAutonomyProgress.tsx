@@ -56,7 +56,7 @@ function getStatusColor(status: SessionStatus): string {
     case 'cancelled':
       return 'bg-red-950 text-red-600 border-red-500';
     default:
-      return 'bg-[#1C2333] text-[#9CA3AF] border-[#2B3245]';
+      return 'bg-surface-solid text-muted-foreground border-border';
   }
 }
 
@@ -122,7 +122,7 @@ export function MaxAutonomyProgress({
 
   if (isLoadingSession) {
     return (
-      <div className="flex items-center gap-2 p-3 bg-[#1C2333] rounded-lg animate-pulse" data-testid="autonomy-progress-loading">
+      <div className="flex items-center gap-2 p-3 bg-surface-solid rounded-lg animate-pulse" data-testid="autonomy-progress-loading">
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         <span className="text-sm text-muted-foreground">Loading autonomous session...</span>
       </div>
@@ -135,13 +135,13 @@ export function MaxAutonomyProgress({
 
   return (
     <div 
-      className="border border-[#2B3245] rounded-lg bg-[#0E1525] overflow-hidden"
+      className="border border-border rounded-lg bg-background overflow-hidden"
       data-testid="autonomy-progress-container"
     >
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CollapsibleTrigger asChild>
           <div 
-            className="flex items-center justify-between p-3 cursor-pointer hover:bg-[#3D4455] transition-colors"
+            className="flex items-center justify-between p-3 cursor-pointer hover:bg-surface-hover-solid transition-colors"
             data-testid="autonomy-progress-header"
           >
             <div className="flex items-center gap-2.5">

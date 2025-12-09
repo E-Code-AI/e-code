@@ -21,37 +21,37 @@ interface LazyMobileCodeEditorProps {
 
 const MobileEditorSkeleton = () => (
   <motion.div 
-    className="flex flex-col h-full w-full bg-[#0E1525]"
+    className="flex flex-col h-full w-full bg-background"
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     data-testid="mobile-editor-skeleton"
   >
-    <div className="h-12 bg-[#1A2235] border-b border-[#2D3748] px-3 flex items-center justify-between">
+    <div className="h-12 bg-surface-solid border-b border-border px-3 flex items-center justify-between">
       <div className="flex items-center space-x-2">
-        <Skeleton className="h-7 w-7 rounded bg-[#2D3748]" />
-        <Skeleton className="h-7 w-7 rounded bg-[#2D3748]" />
+        <Skeleton className="h-7 w-7 rounded bg-surface-tertiary-solid" />
+        <Skeleton className="h-7 w-7 rounded bg-surface-tertiary-solid" />
       </div>
-      <Skeleton className="h-6 w-16 rounded bg-[#2D3748]" />
+      <Skeleton className="h-6 w-16 rounded bg-surface-tertiary-solid" />
     </div>
 
     <div className="flex-1 p-4 space-y-2 overflow-hidden">
       {[48, 64, 40, 56, 72, 44].map((width, i) => (
         <div key={i} className="flex space-x-3">
-          <Skeleton className="h-4 w-8 bg-[#2D3748]" />
-          <Skeleton className={`h-4 bg-[#2D3748]`} style={{ width: `${width * 4}px` }} />
+          <Skeleton className="h-4 w-8 bg-surface-tertiary-solid" />
+          <Skeleton className={`h-4 bg-surface-tertiary-solid`} style={{ width: `${width * 4}px` }} />
         </div>
       ))}
     </div>
 
-    <div className="h-12 bg-[#1A2235] border-t border-[#2D3748] px-3 flex items-center justify-between">
+    <div className="h-12 bg-surface-solid border-t border-border px-3 flex items-center justify-between">
       <div className="flex items-center space-x-2">
-        <Skeleton className="h-8 w-12 rounded bg-[#2D3748]" />
-        <Skeleton className="h-8 w-12 rounded bg-[#2D3748]" />
-        <Skeleton className="h-8 w-12 rounded bg-[#2D3748]" />
+        <Skeleton className="h-8 w-12 rounded bg-surface-tertiary-solid" />
+        <Skeleton className="h-8 w-12 rounded bg-surface-tertiary-solid" />
+        <Skeleton className="h-8 w-12 rounded bg-surface-tertiary-solid" />
       </div>
       <div className="flex items-center space-x-2">
-        <Skeleton className="h-8 w-8 rounded bg-[#2D3748]" />
-        <Skeleton className="h-8 w-8 rounded bg-[#2D3748]" />
+        <Skeleton className="h-8 w-8 rounded bg-surface-tertiary-solid" />
+        <Skeleton className="h-8 w-8 rounded bg-surface-tertiary-solid" />
       </div>
     </div>
   </motion.div>

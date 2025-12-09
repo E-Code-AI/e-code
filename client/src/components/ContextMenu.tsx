@@ -72,7 +72,7 @@ export const ContextMenu = ({
       {mode === 'menu' && (
         <div className="py-1">
           <button
-            className="w-full text-left px-3 py-2 text-sm hover:bg-[#3D4455] flex items-center gap-2"
+            className="w-full text-left px-3 py-2 text-sm hover:bg-surface-hover-solid flex items-center gap-2"
             onClick={() => setMode('newFile')}
           >
             <File className="h-4 w-4" />
@@ -80,7 +80,7 @@ export const ContextMenu = ({
           </button>
           
           <button
-            className="w-full text-left px-3 py-2 text-sm hover:bg-[#3D4455] flex items-center gap-2"
+            className="w-full text-left px-3 py-2 text-sm hover:bg-surface-hover-solid flex items-center gap-2"
             onClick={() => setMode('newFolder')}
           >
             <Folder className="h-4 w-4" />
@@ -92,7 +92,7 @@ export const ContextMenu = ({
               <div className="h-px bg-border my-1" />
               
               <button
-                className="w-full text-left px-3 py-2 text-sm hover:bg-[#3D4455] flex items-center gap-2 text-red-500"
+                className="w-full text-left px-3 py-2 text-sm hover:bg-surface-hover-solid flex items-center gap-2 text-red-500"
                 onClick={onDelete}
               >
                 <Trash2 className="h-4 w-4" />

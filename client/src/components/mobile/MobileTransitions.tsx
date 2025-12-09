@@ -118,7 +118,7 @@ export function BottomSheet({
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-[#0E1525] z-[90]"
+            className="fixed inset-0 bg-background z-[90]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -192,7 +192,7 @@ export function MobileModal({
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-[#0E1525] z-[90]"
+            className="fixed inset-0 bg-background z-[90]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

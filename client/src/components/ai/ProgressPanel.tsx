@@ -129,7 +129,7 @@ function ActivityItem({
   return (
     <div 
       className={cn(
-        "border-l-2 pl-3 py-2 hover:bg-[#3D4455] transition-colors",
+        "border-l-2 pl-3 py-2 hover:bg-surface-hover-solid transition-colors",
         getStatusColor(event.status)
       )}
       data-testid={`activity-event-${event.id}`}
@@ -171,7 +171,7 @@ function ActivityItem({
                 Details
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-1">
-                <pre className="text-xs bg-[#1C2333] rounded p-2 overflow-x-auto max-h-32">
+                <pre className="text-xs bg-surface-solid rounded p-2 overflow-x-auto max-h-32">
                   {event.details}
                 </pre>
               </CollapsibleContent>
@@ -386,7 +386,7 @@ export function ProgressPanel({
   return (
     <div className="h-full flex flex-col bg-background" data-testid="progress-panel">
       {/* Header - Replit-style */}
-      <div className="px-4 py-3 border-b bg-[#1C2333]">
+      <div className="px-4 py-3 border-b bg-surface-solid">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -422,7 +422,7 @@ export function ProgressPanel({
 
         {/* Thinking indicator */}
         {externalIsThinking && (
-          <div className="flex items-center gap-2 mb-2 p-2 bg-[#1C2333] rounded-md border border-purple-800">
+          <div className="flex items-center gap-2 mb-2 p-2 bg-surface-solid rounded-md border border-purple-800">
             <Brain className="h-4 w-4 text-purple-600 dark:text-purple-400 animate-pulse" />
             <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
               Agent is thinking...

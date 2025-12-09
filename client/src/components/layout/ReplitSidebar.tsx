@@ -38,7 +38,7 @@ import {
   Package,
   HardDrive,
   Key,
-  Rocket, // Import Rocket icon
+  Rocket,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
@@ -66,13 +66,11 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(["/"]));
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
-  // Récupération des fichiers du projet - Fixed to use correct project-scoped endpoint
   const { data: files = [], isLoading: filesLoading } = useQuery<FileNode[]>({
     queryKey: [`/api/projects/${projectId}/files`],
     enabled: !!projectId,
   });
 
-  // Récupération des projets récents - Fixed to use correct user projects endpoint
   const { data: recentProjects = [] } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
   });
@@ -137,7 +135,6 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
       <div className="w-60 bg-[var(--ecode-surface)] border-r border-[var(--ecode-border)] flex flex-col h-full">
         <ScrollArea className="flex-1">
           <div className="p-3 space-y-4">
-            {/* Section Explorer de fichiers */}
             {projectId && (
               <Collapsible defaultOpen>
                 <CollapsibleTrigger asChild>
@@ -209,7 +206,6 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
               </Collapsible>
             )}
 
-            {/* Section Git */}
             <Collapsible>
               <CollapsibleTrigger asChild>
                 <Button
@@ -246,7 +242,6 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
               </CollapsibleContent>
             </Collapsible>
 
-            {/* Section Agent - Positioned before Tools like in Replit */}
             {projectId && (
               <Collapsible>
                 <CollapsibleTrigger asChild>
@@ -278,7 +273,6 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
               </Collapsible>
             )}
 
-            {/* Section Outils */}
             <Collapsible>
               <CollapsibleTrigger asChild>
                 <Button
@@ -359,7 +353,6 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
               </CollapsibleContent>
             </Collapsible>
 
-            {/* Projets récents */}
             {!projectId && (
               <Collapsible defaultOpen>
                 <CollapsibleTrigger asChild>
@@ -433,7 +426,6 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
               </Collapsible>
             )}
 
-            {/* Section Deploy */}
             {projectId && (
               <Collapsible>
                 <CollapsibleTrigger asChild>
@@ -468,7 +460,6 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
           </div>
         </ScrollArea>
 
-        {/* Actions du bas */}
         <div className="p-3 border-t border-[var(--ecode-border)]">
           <div className="flex items-center justify-between">
             <Button
@@ -484,7 +475,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-[var(--ecode-green)] hover:bg-[#3D4455]"
+                  className="h-8 w-8 text-[var(--ecode-green)] hover:bg-surface-hover-solid"
                 >
                   <Play className="h-4 w-4" />
                 </Button>

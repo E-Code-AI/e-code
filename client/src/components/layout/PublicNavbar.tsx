@@ -85,7 +85,7 @@ export function PublicNavbar() {
                 <li key={item.title}>
                   <Link
                     href={item.href}
-                    className="block rounded-xl border border-[#2B3245] bg-[#1C2333] p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-[#3D4455] hover:shadow-lg hover:shadow-sky-500"
+                    className="block rounded-xl border border-border bg-surface-solid p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-surface-hover-solid hover:shadow-lg hover:shadow-sky-500"
                   >
                     <div className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-sky-300" />
@@ -109,7 +109,7 @@ export function PublicNavbar() {
                 <li key={item.title}>
                   <Link
                     href={item.href}
-                    className="block rounded-xl border border-[#2B3245] bg-[#1C2333] p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-[#3D4455] hover:shadow-lg hover:shadow-sky-500"
+                    className="block rounded-xl border border-border bg-surface-solid p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-surface-hover-solid hover:shadow-lg hover:shadow-sky-500"
                   >
                     <div className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
                       <ArrowUpRight className="h-4 w-4 text-indigo-300" />
@@ -133,7 +133,7 @@ export function PublicNavbar() {
                 <li key={item.title}>
                   <Link
                     href={item.href}
-                    className="block rounded-xl border border-[#2B3245] bg-[#1C2333] p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-[#3D4455] hover:shadow-lg hover:shadow-sky-500"
+                    className="block rounded-xl border border-border bg-surface-solid p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-surface-hover-solid hover:shadow-lg hover:shadow-sky-500"
                   >
                     <div className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
                       <Search className="h-4 w-4 text-sky-300" />
@@ -157,7 +157,7 @@ export function PublicNavbar() {
                 <li key={item.title}>
                   <Link
                     href={item.href}
-                    className="block rounded-xl border border-[#2B3245] bg-[#1C2333] p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-[#3D4455] hover:shadow-lg hover:shadow-sky-500"
+                    className="block rounded-xl border border-border bg-surface-solid p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-surface-hover-solid hover:shadow-lg hover:shadow-sky-500"
                   >
                     <div className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
                       <ChevronRight className="h-4 w-4 text-indigo-300" />
@@ -176,7 +176,7 @@ export function PublicNavbar() {
         <NavigationMenuItem>
           <NavigationMenuLink
             href="/pricing"
-            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-[#2B3245] px-5 text-sm font-medium text-[var(--ecode-text)] dark:text-slate-200 transition-colors hover:border-[var(--ecode-accent)] dark:hover:border-[#3D4455] hover:text-[var(--ecode-accent)] dark:hover:text-white"
+            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-border px-5 text-sm font-medium text-[var(--ecode-text)] dark:text-slate-200 transition-colors hover:border-[var(--ecode-accent)] dark:hover:border-surface-hover-solid hover:text-[var(--ecode-accent)] dark:hover:text-white"
           >
             Pricing
           </NavigationMenuLink>
@@ -185,7 +185,7 @@ export function PublicNavbar() {
         <NavigationMenuItem>
           <NavigationMenuLink
             href="/team"
-            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-[#2B3245] px-5 text-sm font-medium text-[var(--ecode-text)] dark:text-slate-200 transition-colors hover:border-[var(--ecode-accent)] dark:hover:border-[#3D4455] hover:text-[var(--ecode-accent)] dark:hover:text-white"
+            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-border px-5 text-sm font-medium text-[var(--ecode-text)] dark:text-slate-200 transition-colors hover:border-[var(--ecode-accent)] dark:hover:border-surface-hover-solid hover:text-[var(--ecode-accent)] dark:hover:text-white"
           >
             Teams
           </NavigationMenuLink>
@@ -206,10 +206,10 @@ export function PublicNavbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full">
-      <div className="hidden md:block border-b border-[var(--ecode-border)] dark:border-[#2B3245] bg-background dark:bg-[#0E1525]">
+      <div className="hidden md:block border-b border-[var(--ecode-border)] dark:border-border bg-background dark:bg-background">
         <div className="container-responsive flex h-10 items-center justify-between text-xs text-[var(--ecode-text)] dark:text-slate-100">
           <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="bg-[#1C2333] text-[var(--ecode-accent)] dark:bg-[#1C2333] dark:text-white border-[#2B3245] dark:border-[#2B3245] uppercase tracking-[0.2em]">
+            <Badge variant="secondary" className="bg-surface-solid text-[var(--ecode-accent)] dark:bg-surface-solid dark:text-white border-border dark:border-border uppercase tracking-[0.2em]">
               NEW
             </Badge>
             <p className="font-medium">Introducing E-Code Enterprise Cloud with dedicated AI governance and auditability.</p>
@@ -224,7 +224,7 @@ export function PublicNavbar() {
         </div>
       </div>
 
-      <nav className="relative border-b border-[var(--ecode-border)] bg-background dark:border-[#2B3245] dark:bg-[#0E1525] backdrop-blur-xl overflow-visible">
+      <nav className="relative border-b border-[var(--ecode-border)] bg-background dark:border-border dark:bg-background backdrop-blur-xl overflow-visible">
         <div className="absolute inset-0 marketing-grid opacity-0 dark:opacity-100 pointer-events-none" aria-hidden />
         <div className="container-responsive-nav relative overflow-visible">
           <div className="flex h-16 items-center justify-between overflow-visible">
@@ -260,7 +260,6 @@ export function PublicNavbar() {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-full sm:w-[380px] p-0 border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
-                  {/* Simple Mobile Header */}
                   <div className="sticky top-0 z-10 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-4 py-3">
                     <div className="flex items-center justify-between">
                       <ECodeLogo size="sm" />
@@ -275,7 +274,6 @@ export function PublicNavbar() {
                     </div>
                   </div>
 
-                  {/* Simple CTA Buttons */}
                   <div className="p-4 border-b border-gray-200 dark:border-gray-800">
                     <Button
                       className="w-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400"
@@ -292,10 +290,8 @@ export function PublicNavbar() {
                     </Button>
                   </div>
 
-                  {/* Clean Navigation Sections */}
                   <ScrollArea className="h-[calc(100vh-180px)]">
                     <div className="p-4 space-y-6">
-                      {/* Product Section */}
                       <div>
                         <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                           Product
@@ -321,7 +317,6 @@ export function PublicNavbar() {
                         </div>
                       </div>
 
-                      {/* Solutions Section */}
                       <div>
                         <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                           Solutions
@@ -347,7 +342,6 @@ export function PublicNavbar() {
                         </div>
                       </div>
 
-                      {/* Resources Section */}
                       <div>
                         <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                           Resources
@@ -373,7 +367,6 @@ export function PublicNavbar() {
                         </div>
                       </div>
 
-                      {/* Company Section */}
                       <div>
                         <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                           Company
@@ -399,7 +392,6 @@ export function PublicNavbar() {
                         </div>
                       </div>
 
-                      {/* Footer Links */}
                       <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
                         <div className="grid grid-cols-2 gap-2">
                           <button

@@ -9,6 +9,47 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Solid Color Utilities - No Transparency */
+/* These replace transparent variants with solid colors that work in both themes */
+@layer utilities {
+  /* Solid background surfaces */
+  .bg-surface-solid {
+    background-color: var(--ecode-surface);
+  }
+  .bg-surface-secondary-solid {
+    background-color: var(--ecode-surface-secondary);
+  }
+  .bg-surface-tertiary-solid {
+    background-color: var(--ecode-surface-tertiary);
+  }
+  .bg-surface-hover-solid {
+    background-color: var(--ecode-surface-hover);
+  }
+  
+  /* Solid muted backgrounds - replacing bg-muted/50 etc */
+  .bg-muted-solid {
+    background-color: hsl(var(--muted));
+  }
+  
+  /* Solid accent backgrounds - replacing bg-accent/50 etc */
+  .bg-accent-solid {
+    background-color: hsl(var(--accent));
+  }
+  
+  /* Hover states with solid colors */
+  .hover\:bg-surface-hover-solid:hover {
+    background-color: var(--ecode-surface-hover);
+  }
+  .hover\:bg-accent-solid:hover {
+    background-color: hsl(var(--accent));
+  }
+  
+  /* Modal overlay - only place where opacity is allowed */
+  .bg-overlay {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+}
+
 /* AI Agent Chat Animations */
 @keyframes fadeInUp {
   from {

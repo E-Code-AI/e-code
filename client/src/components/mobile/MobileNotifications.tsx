@@ -282,7 +282,7 @@ export function MobileNotifications() {
         {Object.keys(groupedNotifications).length === 0 ? (
           // Empty state
           <div className="flex flex-col items-center justify-center py-20 px-4">
-            <div className="p-4 bg-[#1C2333] rounded-full mb-4">
+            <div className="p-4 bg-surface-solid rounded-full mb-4">
               <Bell className="h-8 w-8 text-muted-foreground" />
             </div>
             <h3 className="text-lg font-semibold mb-2">No notifications</h3>
@@ -293,7 +293,7 @@ export function MobileNotifications() {
         ) : (
           Object.entries(groupedNotifications).map(([date, notifs]) => (
             <div key={date}>
-              <div className="px-4 py-2 bg-[#1C2333] sticky top-0 z-10">
+              <div className="px-4 py-2 bg-surface-solid sticky top-0 z-10">
                 <h2 className="text-xs font-medium text-muted-foreground">
                   {date}
                 </h2>
@@ -327,7 +327,7 @@ export function MobileNotifications() {
                     className={cn(
                       "relative px-4 py-3 border-b transition-colors",
                       !notification.read && "bg-[#F26207]/5",
-                      "active:bg-[#2B3245]"
+                      "active:bg-surface-tertiary-solid"
                     )}
                   >
                     <div className="flex gap-3">

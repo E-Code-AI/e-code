@@ -216,8 +216,8 @@ export function CM6Editor({
         'relative w-full overflow-hidden',
         'rounded-lg border',
         theme === 'dark'
-          ? 'border-[#1E293B] bg-[#0E1525]'
-          : 'border-[#E2E8F0] bg-white',
+          ? 'border-border bg-background'
+          : 'border-border bg-white',
         className
       )}
       style={{

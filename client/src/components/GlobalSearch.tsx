@@ -199,7 +199,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
       <div
         key={result.id}
         className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-          isSelected ? 'bg-accent border-accent' : 'hover:bg-[#3D4455]'
+          isSelected ? 'bg-accent border-accent' : 'hover:bg-surface-hover-solid'
         }`}
         onClick={() => handleResultClick(result)}
         onMouseEnter={() => setSelectedResult(index)}
@@ -300,7 +300,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
           </div>
 
           {/* Search Filters */}
-          <div className="px-4 py-2 border-b bg-[#2B3245]">
+          <div className="px-4 py-2 border-b bg-muted">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -403,7 +403,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
 
           {/* Search Footer */}
           {results.length > 0 && (
-            <div className="px-4 py-2 border-t bg-[#2B3245] text-xs text-muted-foreground">
+            <div className="px-4 py-2 border-t bg-muted text-xs text-muted-foreground">
               <div className="flex items-center justify-between">
                 <span>{results.length} results found</span>
                 <div className="flex items-center space-x-4">

@@ -203,7 +203,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg hover:bg-[#3D4455]"
+            className="h-8 w-8 rounded-lg hover:bg-surface-hover-solid"
             onClick={() => refetch()}
             disabled={isLoading}
             data-testid="button-refresh-packages"
@@ -300,7 +300,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                     data-testid={`package-item-${pkg.name}`}
                   >
                     <div
-                      className="p-3 cursor-pointer hover:bg-[#3D4455] transition-colors"
+                      className="p-3 cursor-pointer hover:bg-surface-hover-solid transition-colors"
                       onClick={() => togglePackageExpansion(pkg.name)}
                     >
                       <div className="flex items-start gap-2">
@@ -327,8 +327,8 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                               className={cn(
                                 "text-[11px] uppercase tracking-wider px-1.5 py-0",
                                 pkg.type === 'development' 
-                                  ? "bg-[#2B3245] text-amber-400 border-amber-500" 
-                                  : "bg-[#1C2333] text-[#0079f2] border-[#0079f2]"
+                                  ? "bg-surface-tertiary-solid text-amber-400 border-amber-500" 
+                                  : "bg-surface-solid text-[#0079f2] border-[#0079f2]"
                               )}
                             >
                               {pkg.type === 'development' ? 'dev' : 'prod'}
@@ -339,7 +339,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 rounded-lg hover:bg-[#3D4455]"
+                          className="h-8 w-8 rounded-lg hover:bg-surface-hover-solid"
                           onClick={(e) => {
                             e.stopPropagation();
                             uninstallMutation.mutate(pkg.name);
@@ -413,7 +413,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                 filteredSearch.map((pkg) => (
                   <div
                     key={pkg.name}
-                    className="mb-2 p-3 border border-[#3d4452] rounded-lg bg-[#1c2333] hover:bg-[#3D4455] transition-colors"
+                    className="mb-2 p-3 border border-[#3d4452] rounded-lg bg-[#1c2333] hover:bg-surface-hover-solid transition-colors"
                     data-testid={`search-result-${pkg.name}`}
                   >
                     <div className="flex items-start justify-between gap-3">
