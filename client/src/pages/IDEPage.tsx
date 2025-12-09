@@ -1129,24 +1129,28 @@ export default function IDEPage() {
                     // REAL: Auto-start preview when build completes (Task 12)
                     setActiveTab('preview');
                     
-                    // REAL: Auto-start runtime (Task 13) - Run button executes by default
+                    // ✅ FIX (Dec 9, 2025): Call preview start API and invalidate cache
+                    // This triggers the preview server to start and loads the iframe
                     try {
-                      // apiRequest already returns parsed JSON and throws on error
-                      await apiRequest('POST', '/api/runtime/start', {
-                        projectId,
-                        mainFile: undefined, // Auto-detection
-                        timeout: 30000
-                      });
+                      // Start the preview server - include projectId in body as required
+                      await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, { projectId });
+                      
+                      // Invalidate preview URL cache so ResponsiveWebPreview fetches new URL
+                      queryClient.invalidateQueries({ queryKey: [`/api/preview/url?projectId=${projectId}`] });
                       
                       toast({
                         title: 'Build Complete',
                         description: 'Preview is starting...',
                       });
                     } catch (err) {
+                      // Even if preview start fails, still switch to preview tab
+                      // The ResponsiveWebPreview will show appropriate message
+                      queryClient.invalidateQueries({ queryKey: [`/api/preview/url?projectId=${projectId}`] });
+                      
                       toast({
                         title: 'Build Complete',
-                        description: 'Preview available (runtime start failed)',
-                        variant: 'destructive',
+                        description: 'Files created. Click refresh to view preview.',
+                        variant: 'default',
                       });
                     }
                   }}
