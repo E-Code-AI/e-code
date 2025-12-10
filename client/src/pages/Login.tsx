@@ -393,7 +393,7 @@ export default function Login() {
               </h2>
               
               <p className="text-lg opacity-90">
-                Join millions of developers using E-Code to ship production-ready applications 10x faster.
+                Ship production-ready applications 10x faster with AI-powered development.
               </p>
             </div>
 
@@ -423,12 +423,12 @@ export default function Login() {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 pt-8 border-t border-white/20">
               <div>
-                <div className="text-3xl font-bold">2M+</div>
-                <div className="text-sm opacity-75">Active developers</div>
+                <div className="text-3xl font-bold">21</div>
+                <div className="text-sm opacity-75">AI Models</div>
               </div>
               <div>
-                <div className="text-3xl font-bold">10M+</div>
-                <div className="text-sm opacity-75">Apps deployed</div>
+                <div className="text-3xl font-bold">29+</div>
+                <div className="text-sm opacity-75">Languages</div>
               </div>
             </div>
           </div>

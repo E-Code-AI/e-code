@@ -161,7 +161,7 @@ export default function Partners() {
                 Build the future together
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-                Join our thriving partner ecosystem and help millions of developers build, ship, and scale their ideas faster than ever before.
+                Join our thriving partner ecosystem and help developers build, ship, and scale their ideas faster than ever before.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg">

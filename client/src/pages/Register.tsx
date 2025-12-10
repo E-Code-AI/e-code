@@ -525,7 +525,7 @@ export default function Register() {
               </div>
               
               <h2 className="text-4xl font-bold leading-tight">
-                Join millions of developers worldwide
+                Start building with AI today
               </h2>
               
               <p className="text-lg opacity-90">
@@ -559,12 +559,12 @@ export default function Register() {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 pt-8 border-t border-white/20">
               <div>
-                <div className="text-3xl font-bold">2M+</div>
-                <div className="text-sm opacity-75">Active developers</div>
+                <div className="text-3xl font-bold">21</div>
+                <div className="text-sm opacity-75">AI Models</div>
               </div>
               <div>
-                <div className="text-3xl font-bold">10M+</div>
-                <div className="text-sm opacity-75">Apps deployed</div>
+                <div className="text-3xl font-bold">29+</div>
+                <div className="text-sm opacity-75">Languages</div>
               </div>
             </div>
           </div>

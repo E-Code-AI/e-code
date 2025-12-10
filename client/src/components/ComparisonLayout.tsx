@@ -202,7 +202,7 @@ export function ComparisonLayout({
               Ready to Build with E-Code?
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join millions of developers, learners, and creators building software with AI assistance.
+              Join developers, learners, and creators building software with AI assistance.
             </p>
             <div className="flex gap-4 justify-center">
               <Button

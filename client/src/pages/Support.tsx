@@ -430,7 +430,7 @@ export default function Support() {
                   <MessageSquare className="h-5 w-5" />
                   <div>
                     <p className="font-medium">Community Discord</p>
-                    <p className="text-sm text-muted-foreground">Join 50k+ developers</p>
+                    <p className="text-sm text-muted-foreground">Get help from the community</p>
                   </div>
                 </div>
                 <Button size="sm" variant="outline">
