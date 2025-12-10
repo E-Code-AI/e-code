@@ -487,7 +487,8 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           const targetPort = selectedPort && data.ports.includes(selectedPort) 
             ? selectedPort 
             : data.primaryPort;
-          setPreviewUrl(`http://localhost:${targetPort}`);
+          // Use the API preview route for serving project content
+          setPreviewUrl(`/api/preview/projects/${projectId}/preview/`);
           setSelectedPort(targetPort);
         }
       }
@@ -521,20 +522,20 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
   
   return (
     <div className={`flex flex-col h-full ${isFullscreen ? 'fixed inset-0 z-50 bg-background' : ''}`}>
-      {/* Preview header - Enhanced Replit style */}
-      <div className="flex items-center justify-between p-2 border-b bg-background">
-        <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold">Preview</h3>
+      {/* Preview header - Enhanced Replit style with responsive design */}
+      <div className="flex items-center justify-between p-1.5 sm:p-2 border-b bg-background gap-1 sm:gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-shrink">
+          <h3 className="text-xs sm:text-sm font-semibold whitespace-nowrap">Preview</h3>
           
           {/* Status indicator */}
           {previewStatus.status === 'running' && (
             <div className="flex items-center gap-1">
-              <span className="flex items-center gap-1 text-xs text-green-600">
-                <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
-                Live
+              <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-600 dark:bg-green-400 rounded-full animate-pulse" />
+                <span className="hidden xs:inline">Live</span>
               </span>
               {previewStatus.frameworkType && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-[10px] sm:text-xs hidden sm:inline-flex">
                   {previewStatus.frameworkType}
                 </Badge>
               )}
@@ -542,29 +543,31 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           )}
           
           {previewStatus.status === 'starting' && (
-            <span className="text-xs text-yellow-600">Starting...</span>
+            <span className="text-[10px] sm:text-xs text-yellow-600 dark:text-yellow-400">Starting...</span>
           )}
           
           {previewStatus.status === 'error' && (
-            <span className="text-xs text-red-600">Error</span>
+            <span className="text-[10px] sm:text-xs text-red-600 dark:text-red-400">Error</span>
           )}
           
-          {/* WebSocket connection status */}
-          {wsConnected ? (
-            <Wifi className="h-3 w-3 text-green-600" />
-          ) : (
-            <WifiOff className="h-3 w-3 text-gray-400" />
-          )}
+          {/* WebSocket connection status - hidden on very small screens */}
+          <span className="hidden sm:inline-flex">
+            {wsConnected ? (
+              <Wifi className="h-3 w-3 text-green-600 dark:text-green-400" />
+            ) : (
+              <WifiOff className="h-3 w-3 text-muted-foreground" />
+            )}
+          </span>
         </div>
         
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
           {/* Port selector */}
           {previewStatus.ports && previewStatus.ports.length > 1 && (
             <Select 
               value={selectedPort?.toString() || previewStatus.primaryPort?.toString()} 
               onValueChange={(value) => switchPort(parseInt(value))}
             >
-              <SelectTrigger className="h-8 w-20">
+              <SelectTrigger className="h-7 sm:h-8 w-16 sm:w-20 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -595,32 +598,34 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7 sm:h-8 sm:w-8"
               onClick={startPreview}
               disabled={!projectId || previewStatus.status === 'starting'}
               title="Start preview"
+              data-testid="button-start-preview"
             >
-              <Play className="h-4 w-4" />
+              <Play className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </Button>
           ) : (
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7 sm:h-8 sm:w-8"
               onClick={stopPreview}
               title="Stop preview"
+              data-testid="button-stop-preview"
             >
-              <Square className="h-4 w-4" />
+              <Square className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </Button>
           )}
           
-          {/* Device selector - Enhanced */}
+          {/* Device selector - Hidden on very small screens */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" title="Device preview">
-                {deviceMode === 'desktop' && <Monitor className="h-4 w-4" />}
-                {deviceMode.includes('tablet') && <Tablet className="h-4 w-4" />}
-                {deviceMode.includes('mobile') && <Smartphone className="h-4 w-4" />}
+              <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 hidden xs:flex" title="Device preview" data-testid="button-device-preview">
+                {deviceMode === 'desktop' && <Monitor className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+                {deviceMode.includes('tablet') && <Tablet className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+                {deviceMode.includes('mobile') && <Smartphone className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -648,70 +653,112 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             </DropdownMenuContent>
           </DropdownMenu>
           
-          {/* Developer tools toggle */}
+          {/* Developer tools toggle - hidden on mobile */}
           <Button
             variant="ghost"
             size="icon"
-            className={`h-8 w-8 ${devToolsEnabled ? 'text-orange-500' : ''}`}
+            className={`h-7 w-7 sm:h-8 sm:w-8 hidden sm:flex ${devToolsEnabled ? 'text-orange-500 dark:text-orange-400' : ''}`}
             onClick={toggleDevTools}
             title="Developer tools (Eruda)"
+            data-testid="button-devtools"
           >
-            <Bug className="h-4 w-4" />
+            <Bug className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Button>
           
-          {/* Copy URL button */}
+          {/* Copy URL button - hidden on very small screens */}
           <Button
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8"
+            className="h-7 w-7 sm:h-8 sm:w-8 hidden xs:flex"
             onClick={copyPreviewUrl}
             disabled={!previewUrl}
             title="Copy preview URL"
+            data-testid="button-copy-url"
           >
-            <Copy className="h-4 w-4" />
+            <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Button>
           
-          {/* Refresh button */}
+          {/* Refresh button - always visible */}
           <Button
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8"
+            className="h-7 w-7 sm:h-8 sm:w-8"
             onClick={handleRefresh}
             disabled={!previewUrl}
             title="Refresh"
+            data-testid="button-refresh-preview"
           >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
           
-          {/* Open in new window */}
+          {/* Open in new window - hidden on mobile */}
           <Button
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8"
+            className="h-7 w-7 sm:h-8 sm:w-8 hidden sm:flex"
             onClick={openInNewWindow}
             disabled={!previewUrl}
             title="Open in new window"
+            data-testid="button-open-new-window"
           >
-            <ExternalLink className="h-4 w-4" />
+            <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Button>
           
-          {/* Fullscreen toggle */}
+          {/* Fullscreen toggle - always visible */}
           <Button
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8"
+            className="h-7 w-7 sm:h-8 sm:w-8"
             onClick={toggleFullscreen}
             title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+            data-testid="button-fullscreen"
           >
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            {isFullscreen ? <Minimize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Maximize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
           </Button>
+          
+          {/* Mobile overflow menu for hidden buttons */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7 flex sm:hidden" data-testid="button-preview-more">
+                <Settings className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={toggleDevTools}>
+                <Bug className="h-4 w-4 mr-2" />
+                Dev Tools
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={copyPreviewUrl} disabled={!previewUrl}>
+                <Copy className="h-4 w-4 mr-2" />
+                Copy URL
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={openInNewWindow} disabled={!previewUrl}>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open in New Tab
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Device Presets</DropdownMenuLabel>
+              {Object.entries(DEVICE_PRESETS).map(([key, preset]) => (
+                <DropdownMenuItem
+                  key={key}
+                  onClick={() => handleDeviceChange(key as keyof typeof DEVICE_PRESETS)}
+                  className={deviceMode === key ? 'bg-accent' : ''}
+                >
+                  {key === 'desktop' && <Monitor className="h-4 w-4 mr-2" />}
+                  {key.includes('tablet') && <Tablet className="h-4 w-4 mr-2" />}
+                  {key.includes('mobile') && <Smartphone className="h-4 w-4 mr-2" />}
+                  {preset.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       
       {/* Preview iframe or status message */}
-      <div className={`flex-1 bg-gray-100 ${deviceMode !== 'desktop' ? 'p-4 flex items-center justify-center' : ''}`}>
+      <div className={`flex-1 bg-muted/50 ${deviceMode !== 'desktop' ? 'p-2 sm:p-4 flex items-center justify-center' : ''}`}>
         {previewUrl ? (
-          <div style={deviceStyles} className="h-full bg-white">
+          <div style={deviceStyles} className="h-full bg-background">
             <iframe
               ref={iframeRef}
               className="w-full h-full border-none"
@@ -721,12 +768,12 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             />
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center p-8">
-            <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">
+          <div className="flex flex-col items-center justify-center h-full text-center p-4 sm:p-8">
+            <AlertCircle className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold mb-1.5 sm:mb-2">
               {previewStatus.status === 'error' ? 'Preview Error' : 'Preview Server Offline'}
             </h3>
-            <p className="text-sm text-muted-foreground mb-4 max-w-md">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 max-w-sm sm:max-w-md">
               {projectId 
                 ? previewStatus.status === 'error'
                   ? "There was an error starting the preview server. Check your project files and try again."
@@ -737,18 +784,18 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             
             {/* Service status indicators */}
             {previewStatus.services && previewStatus.services.length > 0 && (
-              <div className="mt-4 p-3 bg-muted rounded-md max-w-lg w-full">
-                <h4 className="text-sm font-medium mb-2">Available Services:</h4>
+              <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-muted rounded-md max-w-sm sm:max-w-lg w-full">
+                <h4 className="text-xs sm:text-sm font-medium mb-1.5 sm:mb-2">Available Services:</h4>
                 <div className="space-y-1">
                   {previewStatus.services.map(service => (
-                    <div key={service.port} className="flex items-center gap-2 text-xs">
-                      <span className={`w-2 h-2 rounded-full ${
-                        previewStatus.healthChecks?.[service.port] !== false ? 'bg-green-500' : 'bg-red-500'
+                    <div key={service.port} className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs">
+                      <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ${
+                        previewStatus.healthChecks?.[service.port] !== false ? 'bg-green-500 dark:bg-green-400' : 'bg-red-500 dark:bg-red-400'
                       }`} />
-                      <span>{service.name}</span>
-                      <span className="text-muted-foreground">:{service.port}</span>
+                      <span className="truncate">{service.name}</span>
+                      <span className="text-muted-foreground flex-shrink-0">:{service.port}</span>
                       {service.description && (
-                        <span className="text-muted-foreground">- {service.description}</span>
+                        <span className="text-muted-foreground truncate hidden sm:inline">- {service.description}</span>
                       )}
                     </div>
                   ))}
@@ -758,7 +805,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             
             {/* Framework detection info */}
             {previewStatus.frameworkType && (
-              <div className="mt-2 text-xs text-muted-foreground">
+              <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs text-muted-foreground">
                 Detected: {previewStatus.frameworkType} project
               </div>
             )}
