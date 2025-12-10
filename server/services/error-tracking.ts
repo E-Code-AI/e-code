@@ -55,22 +55,12 @@ export class ErrorTrackingService {
           tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
           profilesSampleRate: parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE || '0.1'),
           
-          // Performance monitoring
+          // Performance monitoring - Sentry v8 API
           integrations: [
-            // HTTP integration for Express
-            new Sentry.Integrations.Http({ tracing: true }),
-            // Request data integration
-            new Sentry.Integrations.RequestData({
-              include: {
-                data: true,
-                headers: true,
-                query_string: true,
-                url: true,
-                user: true,
-              },
-            }),
+            // HTTP integration for Express (v8 uses function-based integrations)
+            Sentry.httpIntegration({ tracing: true }),
             // Console integration
-            new Sentry.Integrations.Console(),
+            Sentry.consoleIntegration(),
           ],
           
           // Before send hook for filtering
@@ -158,7 +148,7 @@ export class ErrorTrackingService {
       'Failed to fetch',
     ];
     
-    const errorMessage = error?.message || event.message || '';
+    const errorMessage = (error as Error)?.message || event.message || '';
     
     return ignoredErrors.some((ignored) => 
       errorMessage.includes(ignored)
@@ -312,19 +302,16 @@ export class ErrorTrackingService {
     };
   }
 
-  // Request handler for adding Sentry tracing
+  // Request handler for adding Sentry tracing (v8 uses setupExpressErrorHandler)
   requestHandler() {
-    if (this.initialized) {
-      return Sentry.Handlers.requestHandler();
-    }
+    // In Sentry v8, automatic Express instrumentation is built-in
+    // No separate request handler needed
     return (req: Request, res: Response, next: NextFunction) => next();
   }
 
-  // Tracing handler
+  // Tracing handler (v8 uses automatic instrumentation)
   tracingHandler() {
-    if (this.initialized) {
-      return Sentry.Handlers.tracingHandler();
-    }
+    // In Sentry v8, tracing is automatic via httpIntegration
     return (req: Request, res: Response, next: NextFunction) => next();
   }
 
