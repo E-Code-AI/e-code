@@ -64,6 +64,14 @@ const EnhancedMobileTerminal = lazy(() => import('@/components/mobile/EnhancedMo
 const MobilePreviewPanel = lazy(() => import('@/components/mobile/MobilePreviewPanel').then(mod => ({ default: mod.MobilePreviewPanel })));
 const MobileMoreMenu = lazy(() => import('@/components/mobile/MobileMoreMenu').then(mod => ({ default: mod.MobileMoreMenu })));
 
+const CommandPalette = lazy(() => import('@/components/CommandPalette').then(mod => ({ default: mod.CommandPalette })));
+const GlobalSearch = lazy(() => import('@/components/GlobalSearch').then(mod => ({ default: mod.GlobalSearch })));
+const CollaborationPanel = lazy(() => import('@/components/CollaborationPanel').then(mod => ({ default: mod.CollaborationPanel })));
+const ReplitDB = lazy(() => import('@/components/ReplitDB').then(mod => ({ default: mod.ReplitDB })));
+const AutonomousWorkspaceViewer = lazy(() => import('@/components/ide/AutonomousWorkspaceViewer').then(mod => ({ default: mod.AutonomousWorkspaceViewer })));
+
+import { ShortcutHint, ShortcutTester } from '@/components/utilities';
+
 interface UnifiedIDELayoutProps {
   projectId: string;
   className?: string;
@@ -144,14 +152,46 @@ function UnifiedIDELayout({
 
   const handleActivityItemClick = useCallback((item: ActivityItem) => {
     setActiveActivityItem(item);
+    if (item === 'search') {
+      setShowGlobalSearch(true);
+    } else if (item === 'database') {
+      setShowReplitDB(true);
+    }
   }, [setActiveActivityItem]);
 
   const [mobileActiveTab, setMobileActiveTab] = useState<MobileTab>('agent');
   const [tabletPanel, setTabletPanel] = useState<TabletPanel>('editor');
   const [tabletDrawerOpen, setTabletDrawerOpen] = useState(true);
   
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+  const [showCollaboration, setShowCollaboration] = useState(false);
+  const [showReplitDB, setShowReplitDB] = useState(false);
+  const [enableShortcutHint, setEnableShortcutHint] = useState(false);
+  const [enableShortcutTester, setEnableShortcutTester] = useState(false);
+  
   const touchStartX = useRef<number>(0);
   const touchStartTime = useRef<number>(0);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(prev => !prev);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'f') {
+        e.preventDefault();
+        setShowGlobalSearch(prev => !prev);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'p') {
+        e.preventDefault();
+        setShowQuickFileSearch(prev => !prev);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [setShowQuickFileSearch]);
 
   const handleMobileSwipe = useCallback((info: PanInfo) => {
     const { offset, velocity } = info;
@@ -544,12 +584,14 @@ function UnifiedIDELayout({
           onAddTool={handleAddTool}
           showFileExplorer={showFileExplorer}
           onToggleFileExplorer={() => setShowFileExplorer((prev: boolean) => !prev)}
-          showCollaboration={false}
-          onToggleCollaboration={() => {}}
+          showCollaboration={showCollaboration}
+          onToggleCollaboration={() => setShowCollaboration(prev => !prev)}
           collaboratorCount={0}
           onOpenDeployLogs={() => setDeploymentTab('logs')}
           onOpenDeployAnalytics={() => setDeploymentTab('analytics')}
           showTabs={false}
+          onOpenCommandPalette={() => setShowCommandPalette(true)}
+          onOpenGlobalSearch={() => setShowGlobalSearch(true)}
         />
         
         <ReplitTabBar
@@ -729,6 +771,93 @@ function UnifiedIDELayout({
           setShowToolsSheet(false);
         }}
       />
+      
+      <Suspense fallback={null}>
+        <CommandPalette
+          open={showCommandPalette}
+          onOpenChange={setShowCommandPalette}
+          files={files}
+          onFileSelect={(file) => {
+            setShowCommandPalette(false);
+            handleFileSelect(file);
+          }}
+          onToolSelect={(tool) => {
+            setShowCommandPalette(false);
+            handleAddTool(tool);
+          }}
+        />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <GlobalSearch
+          isOpen={showGlobalSearch}
+          onClose={() => setShowGlobalSearch(false)}
+          projectId={projectId}
+          onFileSelect={(file) => {
+            handleFileSelect({ id: file.id, name: file.name, path: file.name });
+            setShowGlobalSearch(false);
+          }}
+        />
+      </Suspense>
+
+      {showCollaboration && user && (
+        <div className="fixed inset-y-0 right-0 w-80 z-50 shadow-xl border-l bg-background">
+          <div className="flex items-center justify-between p-2 border-b">
+            <span className="font-medium text-sm">Collaboration</span>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setShowCollaboration(false)}
+              className="h-7 w-7"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+            <CollaborationPanel
+              projectId={parseInt(projectId, 10)}
+              projectName={project?.name}
+              currentUser={user}
+              currentFile={selectedFileId ? files.find(f => f.id === selectedFileId)?.name : undefined}
+              className="h-[calc(100%-48px)]"
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {showReplitDB && (
+        <div className="fixed inset-y-0 right-0 w-[600px] z-50 shadow-xl border-l bg-background">
+          <div className="flex items-center justify-between p-2 border-b">
+            <span className="font-medium text-sm">Database Browser</span>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setShowReplitDB(false)}
+              className="h-7 w-7"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+            <ReplitDB
+              projectId={parseInt(projectId, 10)}
+              className="h-[calc(100%-48px)]"
+            />
+          </Suspense>
+        </div>
+      )}
+
+      <Suspense fallback={null}>
+        <AutonomousWorkspaceViewer
+          bootstrapToken={bootstrapToken}
+          projectId={projectId}
+          onComplete={onWorkspaceComplete}
+          onError={onWorkspaceError}
+        />
+      </Suspense>
+
+      {enableShortcutHint && <ShortcutHint />}
+      {enableShortcutTester && <ShortcutTester />}
     </div>
   );
 }

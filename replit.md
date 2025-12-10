@@ -46,6 +46,18 @@ function useAIModels() {
 
 ## Component Architecture
 
+### Unified IDE Layout (Phase 1 Complete)
+The IDE uses a **single responsive component** (`UnifiedIDELayout`) for ALL screen sizes:
+- **Desktop/Tablet/Mobile**: Same component, responsive via Tailwind breakpoints
+- **No device-specific branching** in IDEPage.tsx - just `<UnifiedIDELayout />`
+- Desktop-only overlays (CommandPalette, GlobalSearch, CollaborationPanel, ReplitDB) are integrated in UnifiedIDELayout
+- Keyboard shortcuts: `Ctrl+K` (CommandPalette), `Ctrl+Shift+F` (GlobalSearch), `Ctrl+Shift+P` (QuickFileSearch)
+
+**3-Phase PWA Strategy**:
+1. ✅ **Phase 1**: Unified responsive IDE component (COMPLETE)
+2. 🔄 **Phase 2**: PWA (manifest.json, Service Worker, offline, push notifications)
+3. 🔄 **Phase 3**: Capacitor wrapper for iOS/Android stores
+
 ### Mobile Component Pattern (Enhanced Wrappers)
 The mobile components use a **wrapper pattern**, NOT duplicates:
 - `EnhancedMobileTerminal` imports and wraps `MobileTerminal` with additional UI chrome
