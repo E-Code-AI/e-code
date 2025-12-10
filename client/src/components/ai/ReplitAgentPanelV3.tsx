@@ -464,8 +464,8 @@ export function ReplitAgentPanelV3({
 
   // Handler for mode changes (Build/Plan/Edit - 3 modes only)
   const handleModeChange = async (newMode: AgentMode) => {
-    if (!conversationId) {
-      console.error('Cannot change mode: no conversationId');
+    if (!conversationId || !Number.isInteger(conversationId) || conversationId <= 0) {
+      console.error('Cannot change mode: invalid conversationId', { conversationId });
       return;
     }
 
@@ -947,7 +947,9 @@ export function ReplitAgentPanelV3({
     metadata?: Record<string, any>;
     extendedThinking?: any;
   }) => {
-    if (!conversationId) {
+    // Defensive validation: ensure conversationId is a valid integer
+    if (!conversationId || !Number.isInteger(conversationId) || conversationId <= 0) {
+      console.debug('[Persistence] Skipping: invalid conversationId', { conversationId });
       return;
     }
 
