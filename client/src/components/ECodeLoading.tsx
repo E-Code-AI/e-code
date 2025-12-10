@@ -33,10 +33,10 @@ export function ECodeLoading({
 
   const loadingContent = (
     <div className={cn('flex flex-col items-center justify-center gap-3', className)}>
-      <div className="relative">
+      <div className={cn('relative', sizes[size])}>
         {/* Spinning ring around the logo */}
         <svg
-          className={cn(sizes[size], 'animate-spin absolute inset-0')}
+          className="animate-spin absolute inset-0 w-full h-full"
           viewBox="0 0 40 40"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -62,13 +62,13 @@ export function ECodeLoading({
         
         {/* Static E-Code logo in center */}
         <svg
-          className={cn(sizes[size])}
+          className="absolute inset-0 w-full h-full"
           viewBox="0 0 40 40"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
           {/* Background circle */}
-          <circle cx="20" cy="20" r="16" fill="url(#loading-logo-gradient)" />
+          <circle cx="20" cy="20" r="14" fill="url(#loading-logo-gradient)" />
           
           {/* Letter E stylized as code brackets */}
           <path
@@ -98,10 +98,7 @@ export function ECodeLoading({
         </svg>
         
         {/* Pulsing effect */}
-        <div className={cn(
-          'absolute inset-0 rounded-full bg-gradient-to-br from-[#F26207] to-[#F99D25] opacity-20 animate-pulse',
-          sizes[size]
-        )} />
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#F26207] to-[#F99D25] opacity-20 animate-pulse" />
       </div>
       
       {text && (
