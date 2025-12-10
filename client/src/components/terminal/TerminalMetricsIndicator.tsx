@@ -22,12 +22,12 @@ export function TerminalMetricsIndicator({
   ...rest
 }: TerminalMetricsIndicatorProps) {
   const { data: healthData, isLoading: healthLoading } = useTerminalHealth({
-    refetchInterval: 10000
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 10s to 30s (hook sets refetchIntervalInBackground: false internally)
   });
   
   const { data: metricsData, isLoading: metricsLoading } = useTerminalMetrics({
     enabled: showDetailed,
-    refetchInterval: 5000
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s (hook sets refetchIntervalInBackground: false internally)
   });
 
   if (healthLoading && !healthData) {

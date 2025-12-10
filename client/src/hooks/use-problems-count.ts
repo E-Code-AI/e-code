@@ -11,7 +11,8 @@ export function useProblemsCount(projectId: string | number) {
   
   const { data } = useQuery<ProblemsStatus>({
     queryKey: ['/api/projects', normalizedProjectId, 'problems'],
-    refetchInterval: 15000,
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 15s to 30s
+    refetchIntervalInBackground: false,
     retry: false,
     staleTime: 10000,
   });

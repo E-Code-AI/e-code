@@ -127,7 +127,8 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
       return response.json();
     },
     enabled: !!projectId,
-    refetchInterval: 5000
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
+    refetchIntervalInBackground: false,
   });
 
   useEffect(() => {
@@ -353,7 +354,7 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
         <div className="p-2 border-t bg-muted/30">
           <div className="flex items-center justify-between text-[10px] text-muted-foreground">
             <span>Last updated: {new Date(metrics.timestamp).toLocaleTimeString()}</span>
-            <span>Auto-refresh: 5s</span>
+            <span>Auto-refresh: 30s</span>
           </div>
         </div>
       )}

@@ -67,7 +67,8 @@ export function EnhancedRunButton({ projectId, onRunStateChange, className }: En
       };
     },
     enabled: !!projectId,
-    refetchInterval: 5000
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
+    refetchIntervalInBackground: false,
   });
 
   const { data: customWorkflows } = useQuery<Workflow[]>({

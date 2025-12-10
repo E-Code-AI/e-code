@@ -97,7 +97,8 @@ export const ScalabilityDashboard: React.FC = () => {
   // Fetch cluster status
   const { data: clusterStatus, isLoading: clusterLoading, refetch: refetchCluster } = useQuery<ClusterStatus>({
     queryKey: ['/api/scalability/cluster/status'],
-    refetchInterval: 5000
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
+    refetchIntervalInBackground: false,
   });
 
   // Fetch database pool stats
