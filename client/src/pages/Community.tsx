@@ -149,19 +149,19 @@ const upcomingEvents = [
     id: 'executive-roundtable',
     title: 'Enterprise AI Builders Roundtable',
     description: 'Live strategy session with Fortune 500 program leaders on scaling internal developer platforms.',
-    date: 'Apr 30, 2024',
+    date: 'Jan 15, 2025',
   },
   {
     id: 'launch-week',
     title: 'Community Launch Week',
     description: 'A five-day showcase of flagship community products, customer spotlights, and lightning talks.',
-    date: 'May 13, 2024',
+    date: 'Feb 10, 2025',
   },
   {
     id: 'global-demo-day',
     title: 'Global Demo Day',
     description: 'Team up with cross-industry innovators to present breakthrough solutions in front of partners and investors.',
-    date: 'Jun 7, 2024',
+    date: 'Mar 21, 2025',
   },
 ];
 
@@ -201,11 +201,12 @@ export default function Community() {
   } = useInfiniteQuery<CommunityPostsResponse>({
     queryKey: postsQueryKey,
     initialPageParam: 1,
-    queryFn: async ({ pageParam = 1 }) => {
+    queryFn: async ({ pageParam }) => {
+      const page = typeof pageParam === 'number' ? pageParam : 1;
       const params = new URLSearchParams();
       if (activeCategory !== 'all') params.set('category', activeCategory);
       if (searchQuery) params.set('search', searchQuery);
-      params.set('page', pageParam.toString());
+      params.set('page', page.toString());
       params.set('pageSize', '20');
       const res = await fetch(`/api/community/posts?${params.toString()}`, {
         credentials: 'include',

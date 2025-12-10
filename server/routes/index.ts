@@ -24,6 +24,7 @@ import shellRouter from "./shell";
 import containersRouter from "./containers";
 import scalabilityRouter from "./scalability";
 import marketplaceRouter from "./marketplace";
+import communityRouter from "./community.router";
 import adminRouter from "./admin";
 import aiRouter from "./ai.router";
 import aiStreamingRouter from "../api/ai-streaming";
@@ -204,6 +205,9 @@ export class MainRouter {
     
     // Marketplace routes
     app.use('/api/marketplace', tierRateLimiters.api, marketplaceRouter);
+    
+    // Community routes
+    app.use('/api/community', tierRateLimiters.api, communityRouter);
     
     // Admin routes
     app.use('/api/admin', tierRateLimiters.api, adminRouter);
