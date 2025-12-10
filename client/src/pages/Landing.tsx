@@ -180,7 +180,7 @@ export default function Landing() {
       });
       
       // Redirect to auth page
-      navigate('/auth');
+      navigate('/login');
       return;
     }
     
@@ -252,7 +252,7 @@ export default function Landing() {
       const data = await apiRequest('POST', '/api/newsletter/subscribe', { email }) as any;
       toast({ title: "Success!", description: data.message || "You've been subscribed!" });
       setEmail('');
-      setTimeout(() => navigate('/auth'), 1500);
+      setTimeout(() => navigate('/login'), 1500);
     } catch (error) {
       toast({ title: "Error", description: "Failed to subscribe. Please try again.", variant: "destructive" });
     } finally {

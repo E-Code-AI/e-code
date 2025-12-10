@@ -375,8 +375,9 @@ function AppContent() {
             <LazyAnimatedRoutes>
               <Suspense fallback={<PageLoader />}>
                 <Switch>
-                <Route path="/auth" component={AuthPage} />
                 <Route path="/login" component={Login} />
+                {/* Redirect /auth to /login for backward compatibility */}
+                <Route path="/auth">{() => { window.location.href = '/login'; return null; }}</Route>
                 <Route path="/register" component={Register} />
 
           <Route path="/runtime-test" component={RuntimePublicPage} />
