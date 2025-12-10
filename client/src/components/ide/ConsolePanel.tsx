@@ -118,7 +118,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
     return new WebSocket(wsUrl);
   }, [userId]);
 
-  const createNewShell = useCallback(() => {
+  const createNewShell = useCallback(async () => {
     const sessionId = `shell-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
     const newSession: ShellSession = {
       id: sessionId,
@@ -128,36 +128,43 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
       isConnected: false
     };
 
-    const socket = createWebSocket(sessionId);
-    
-    socket.onopen = () => {
-      setShellSessions(prev => prev.map(s => 
-        s.id === sessionId ? { ...s, isConnected: true, output: [...s.output, '\x1b[32m● Connected to E-Code Shell\x1b[0m\r\n'] } : s
-      ));
-    };
-    
-    socket.onmessage = (event) => {
-      setShellSessions(prev => prev.map(s => 
-        s.id === sessionId ? { ...s, output: [...s.output, event.data] } : s
-      ));
-    };
-    
-    socket.onclose = () => {
-      setShellSessions(prev => prev.map(s => 
-        s.id === sessionId ? { ...s, isConnected: false, output: [...s.output, '\r\n\x1b[31m● Disconnected\x1b[0m\r\n'] } : s
-      ));
-    };
-    
-    socket.onerror = () => {
-      setShellSessions(prev => prev.map(s => 
-        s.id === sessionId ? { ...s, isConnected: false } : s
-      ));
-    };
-
-    newSession.ws = socket;
     setShellSessions(prev => [...prev, newSession]);
     setActiveShellId(sessionId);
     setActiveTab('shell');
+
+    const connectWithRetry = (retries = 3) => {
+      const socket = createWebSocket(sessionId);
+      
+      socket.onopen = () => {
+        setShellSessions(prev => prev.map(s => 
+          s.id === sessionId ? { ...s, ws: socket, isConnected: true, output: [...s.output, '\x1b[32m● Connected to E-Code Shell\x1b[0m\r\n'] } : s
+        ));
+      };
+      
+      socket.onmessage = (event) => {
+        setShellSessions(prev => prev.map(s => 
+          s.id === sessionId ? { ...s, output: [...s.output, event.data] } : s
+        ));
+      };
+      
+      socket.onclose = () => {
+        setShellSessions(prev => prev.map(s => 
+          s.id === sessionId ? { ...s, isConnected: false, output: [...s.output, '\r\n\x1b[31m● Disconnected\x1b[0m\r\n'] } : s
+        ));
+      };
+      
+      socket.onerror = () => {
+        if (retries > 0) {
+          setTimeout(() => connectWithRetry(retries - 1), 1000);
+        } else {
+          setShellSessions(prev => prev.map(s => 
+            s.id === sessionId ? { ...s, isConnected: false, output: [...s.output, '\r\n\x1b[31m● Connection failed\x1b[0m\r\n'] } : s
+          ));
+        }
+      };
+    };
+
+    setTimeout(() => connectWithRetry(), 100);
     
     return newSession;
   }, [shellSessions.length, createWebSocket]);
@@ -306,19 +313,19 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
     switch (type) {
       case 'error':
       case 'stderr':
-        return 'text-red-500';
+        return 'text-destructive';
       case 'warn': 
-        return 'text-yellow-500';
+        return 'text-[hsl(var(--chart-4))]';
       case 'info':
       case 'system':
-        return 'text-blue-500';
+        return 'text-primary';
       case 'debug': 
         return 'text-muted-foreground';
       case 'stdout':
       case 'log':
         return 'text-foreground';
       case 'exit':
-        return 'text-green-500';
+        return 'text-[hsl(var(--chart-2))]';
       default: 
         return 'text-foreground';
     }
@@ -326,13 +333,13 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
 
   const parseAnsiToHtml = (text: string, highlightQuery?: string): string => {
     let parsed = text
-      .replace(/\x1b\[32m/g, '<span class="text-green-500">')
-      .replace(/\x1b\[31m/g, '<span class="text-red-500">')
-      .replace(/\x1b\[33m/g, '<span class="text-yellow-500">')
-      .replace(/\x1b\[34m/g, '<span class="text-blue-500">')
-      .replace(/\x1b\[35m/g, '<span class="text-purple-500">')
-      .replace(/\x1b\[36m/g, '<span class="text-cyan-500">')
-      .replace(/\x1b\[90m/g, '<span class="text-muted-foreground">')
+      .replace(/\x1b\[32m/g, '<span style="color: hsl(var(--chart-2))">')
+      .replace(/\x1b\[31m/g, '<span style="color: hsl(var(--destructive))">')
+      .replace(/\x1b\[33m/g, '<span style="color: hsl(var(--chart-4))">')
+      .replace(/\x1b\[34m/g, '<span style="color: hsl(var(--primary))">')
+      .replace(/\x1b\[35m/g, '<span style="color: hsl(var(--chart-5))">')
+      .replace(/\x1b\[36m/g, '<span style="color: hsl(var(--chart-3))">')
+      .replace(/\x1b\[90m/g, '<span style="color: hsl(var(--muted-foreground))">')
       .replace(/\x1b\[0m/g, '</span>')
       .replace(/\x1b\[\d+m/g, '')
       .replace(/\r\n/g, '<br/>')
@@ -340,7 +347,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
     
     if (highlightQuery) {
       const regex = new RegExp(`(${highlightQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-      parsed = parsed.replace(regex, '<mark class="bg-yellow-400 text-black px-0.5 rounded">$1</mark>');
+      parsed = parsed.replace(regex, '<mark style="background: hsl(var(--chart-4)); color: hsl(var(--background)); padding: 0 2px; border-radius: 2px;">$1</mark>');
     }
     
     return parsed;
@@ -606,7 +613,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
         <div className="flex-1 flex flex-col overflow-hidden">
           <div 
             ref={shellScrollRef}
-            className="flex-1 overflow-auto p-2 font-mono text-xs bg-[#1e1e1e] text-[#d4d4d4]"
+            className="flex-1 overflow-auto p-2 font-mono text-xs bg-card text-card-foreground"
             onClick={() => inputRef.current?.focus()}
             data-testid="shell-output"
           >
