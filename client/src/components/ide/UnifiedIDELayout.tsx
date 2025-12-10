@@ -70,6 +70,15 @@ const CollaborationPanel = lazy(() => import('@/components/CollaborationPanel').
 const ReplitDB = lazy(() => import('@/components/ReplitDB').then(mod => ({ default: mod.ReplitDB })));
 const AutonomousWorkspaceViewer = lazy(() => import('@/components/ide/AutonomousWorkspaceViewer').then(mod => ({ default: mod.AutonomousWorkspaceViewer })));
 
+const ReplitGitPanel = lazy(() => import('@/components/editor/ReplitGitPanel').then(mod => ({ default: mod.ReplitGitPanel })));
+const ReplitPackagesPanel = lazy(() => import('@/components/editor/ReplitPackagesPanel').then(mod => ({ default: mod.ReplitPackagesPanel })));
+const ReplitDebuggerPanel = lazy(() => import('@/components/editor/ReplitDebuggerPanel').then(mod => ({ default: mod.ReplitDebuggerPanel })));
+const ReplitSecretsPanel = lazy(() => import('@/components/editor/ReplitSecretsPanel').then(mod => ({ default: mod.ReplitSecretsPanel })));
+const ReplitHistoryPanel = lazy(() => import('@/components/editor/ReplitHistoryPanel').then(mod => ({ default: mod.ReplitHistoryPanel })));
+const ReplitSettingsPanel = lazy(() => import('@/components/editor/ReplitSettingsPanel').then(mod => ({ default: mod.ReplitSettingsPanel })));
+const WorkflowsPanel = lazy(() => import('@/components/ide/WorkflowsPanel').then(mod => ({ default: mod.WorkflowsPanel })));
+const ExtensionsMarketplace = lazy(() => import('@/components/ExtensionsMarketplace').then(mod => ({ default: mod.ExtensionsMarketplace })));
+
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 
 interface UnifiedIDELayoutProps {
@@ -152,12 +161,57 @@ function UnifiedIDELayout({
 
   const handleActivityItemClick = useCallback((item: ActivityItem) => {
     setActiveActivityItem(item);
-    if (item === 'search') {
-      setShowGlobalSearch(true);
-    } else if (item === 'database') {
-      setShowReplitDB(true);
+    
+    switch (item) {
+      case 'files':
+        setShowFileExplorer((prev: boolean) => !prev);
+        break;
+      case 'search':
+        setShowGlobalSearch(true);
+        break;
+      case 'git':
+        setShowGitPanel(true);
+        break;
+      case 'packages':
+        setShowPackagesPanel(true);
+        break;
+      case 'debug':
+        setShowDebugPanel(true);
+        break;
+      case 'terminal':
+        handleAddTool('terminal');
+        break;
+      case 'agent':
+        setIsSidebarCollapsed(false);
+        setLeftPanelTab('agent');
+        break;
+      case 'deploy':
+        setIsSidebarCollapsed(false);
+        setLeftPanelTab('deployment');
+        break;
+      case 'secrets':
+        setShowSecretsPanel(true);
+        break;
+      case 'database':
+        setShowReplitDB(true);
+        break;
+      case 'preview':
+        handleAddTool('preview');
+        break;
+      case 'workflows':
+        setShowWorkflowsPanel(true);
+        break;
+      case 'history':
+        setShowHistoryPanel(true);
+        break;
+      case 'extensions':
+        setShowExtensionsPanel(true);
+        break;
+      case 'settings':
+        setShowSettingsPanel(true);
+        break;
     }
-  }, [setActiveActivityItem]);
+  }, [setActiveActivityItem, setShowFileExplorer, setIsSidebarCollapsed, setLeftPanelTab, handleAddTool]);
 
   const [mobileActiveTab, setMobileActiveTab] = useState<MobileTab>('agent');
   const [tabletPanel, setTabletPanel] = useState<TabletPanel>('editor');
@@ -169,6 +223,15 @@ function UnifiedIDELayout({
   const [showReplitDB, setShowReplitDB] = useState(false);
   const [enableShortcutHint, setEnableShortcutHint] = useState(false);
   const [enableShortcutTester, setEnableShortcutTester] = useState(false);
+  
+  const [showGitPanel, setShowGitPanel] = useState(false);
+  const [showPackagesPanel, setShowPackagesPanel] = useState(false);
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [showSecretsPanel, setShowSecretsPanel] = useState(false);
+  const [showWorkflowsPanel, setShowWorkflowsPanel] = useState(false);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  const [showExtensionsPanel, setShowExtensionsPanel] = useState(false);
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   
   const touchStartX = useRef<number>(0);
   const touchStartTime = useRef<number>(0);
@@ -782,9 +845,13 @@ function UnifiedIDELayout({
           open={showCommandPalette}
           onOpenChange={setShowCommandPalette}
           files={files}
-          onFileSelect={(file) => {
+          onFileSelect={(file: { id: number; name: string } | number) => {
             setShowCommandPalette(false);
-            handleFileSelect(file);
+            if (typeof file === 'number') {
+              handleFileSelect({ id: file, name: '' });
+            } else {
+              handleFileSelect({ id: file.id, name: file.name });
+            }
           }}
           onToolSelect={(tool) => {
             setShowCommandPalette(false);
@@ -799,7 +866,7 @@ function UnifiedIDELayout({
           onClose={() => setShowGlobalSearch(false)}
           projectId={projectId}
           onFileSelect={(file) => {
-            handleFileSelect({ id: file.id, name: file.name, path: file.name });
+            handleFileSelect({ id: file.id, name: file.name });
             setShowGlobalSearch(false);
           }}
         />
@@ -854,7 +921,7 @@ function UnifiedIDELayout({
 
       <Suspense fallback={null}>
         <AutonomousWorkspaceViewer
-          bootstrapToken={bootstrapToken}
+          bootstrapToken={bootstrapToken ?? null}
           projectId={projectId}
           onComplete={onWorkspaceComplete}
           onError={onWorkspaceError}
