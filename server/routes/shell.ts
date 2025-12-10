@@ -5,6 +5,9 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import { ensureAuthenticated } from '../middleware/auth';
+import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
+import type { IncomingMessage } from 'http';
+import type { Duplex } from 'stream';
 
 const router = Router();
 
@@ -18,6 +21,9 @@ interface ShellSession {
 
 const shellSessions = new Map<string, ShellSession>();
 
+// WebSocket server for shell connections (noServer mode)
+let shellWss: WebSocketServer | null = null;
+
 // Clean up old sessions periodically
 setInterval(() => {
   const now = Date.now();
@@ -30,32 +36,27 @@ setInterval(() => {
   }
 }, 60 * 60 * 1000); // Check every hour
 
-function setupShellWebSocket(server: any) {
-  const wss = new WebSocketServer({ 
-    server, 
-    path: '/shell',
-    verifyClient: (info, cb) => {
-      // Verify authentication through session
-      const sessionId = info.req.url?.split('sessionId=')[1];
-      if (!sessionId) {
-        cb(false, 401, 'Unauthorized');
-        return;
-      }
-      cb(true);
-    }
-  });
-
-  wss.on('connection', async (ws: WebSocket, req) => {
-    const sessionId = req.url?.split('sessionId=')[1];
+/**
+ * Initialize shell WebSocket with central dispatcher
+ * Uses noServer mode for integration with central upgrade handler
+ */
+function initializeShellWebSocket() {
+  if (shellWss) return;
+  
+  shellWss = new WebSocketServer({ noServer: true });
+  
+  // Handle new connections
+  shellWss.on('connection', async (ws: WebSocket, req: IncomingMessage) => {
+    const url = new URL(req.url || '', `http://${req.headers.host}`);
+    const sessionId = url.searchParams.get('sessionId');
+    const userId = parseInt(url.searchParams.get('userId') || '1', 10);
+    
     if (!sessionId) {
       ws.close(1008, 'Session ID required');
       return;
     }
 
     // Create shell home directory for user
-    // Extract user ID from URL query parameters (passed from client connection)
-    const url = new URL(req.url || '', `http://${req.headers.host}`);
-    const userId = parseInt(url.searchParams.get('userId') || '1', 10);
     const userHome = path.join(os.homedir(), 'ecode-shells', `user-${userId}`);
     
     try {
@@ -70,7 +71,7 @@ function setupShellWebSocket(server: any) {
       // Create .bashrc with custom prompt
       const bashrcContent = `
 # E-Code Shell Configuration
-export PS1='\\[\\033[32m\\]\\w\\[\\033[0m\\] $ '
+export PS1='\\[\\033[34m\\]~/workspace\\[\\033[0m\\] $ '
 export TERM=xterm-256color
 export LANG=en_US.UTF-8
 
@@ -82,8 +83,7 @@ alias ..='cd ..'
 alias ...='cd ../..'
 
 # Welcome message
-echo -e "\\033[32mWelcome to E-Code Shell\\033[0m"
-echo "Type 'help' for available commands"
+echo -e "\\033[32m● Connected to E-Code Shell\\033[0m"
 echo ""
 `;
       await fs.writeFile(path.join(userHome, '.bashrc'), bashrcContent);
@@ -159,10 +159,26 @@ echo ""
       shellSessions.delete(sessionId);
     });
   });
+  
+  // Register with central upgrade dispatcher
+  centralUpgradeDispatcher.register(
+    '/shell',
+    (req: IncomingMessage, socket: Duplex, head: Buffer) => {
+      shellWss!.handleUpgrade(req, socket, head, (ws) => {
+        shellWss!.emit('connection', ws, req);
+      });
+    },
+    { pathMatch: 'exact', priority: 35 }
+  );
+  
+  console.log('[Shell] WebSocket service initialized at /shell');
 }
 
+// Initialize immediately when module loads
+initializeShellWebSocket();
+
 // API endpoint to get shell sessions
-router.get('/api/shell/sessions', ensureAuthenticated, (req, res) => {
+router.get('/sessions', ensureAuthenticated, (req, res) => {
   const userId = (req.user as any).id;
   const sessions = Array.from(shellSessions.values())
     .filter(session => session.userId === userId)
@@ -176,13 +192,13 @@ router.get('/api/shell/sessions', ensureAuthenticated, (req, res) => {
 });
 
 // API endpoint to create a new shell session
-router.post('/api/shell/sessions', ensureAuthenticated, (req, res) => {
+router.post('/sessions', ensureAuthenticated, (req, res) => {
   const sessionId = `shell-${Date.now()}-${process.hrtime.bigint().toString(36).slice(0, 9)}`;
   res.json({ sessionId });
 });
 
 // API endpoint to kill a shell session
-router.delete('/api/shell/sessions/:sessionId', ensureAuthenticated, (req, res) => {
+router.delete('/sessions/:sessionId', ensureAuthenticated, (req, res) => {
   const { sessionId } = req.params;
   const session = shellSessions.get(sessionId);
   
@@ -196,7 +212,7 @@ router.delete('/api/shell/sessions/:sessionId', ensureAuthenticated, (req, res) 
 });
 
 // API endpoint to generate shell command with AI
-router.post('/api/shell/generate-command', ensureAuthenticated, async (req, res) => {
+router.post('/generate-command', ensureAuthenticated, async (req, res) => {
   try {
     const { prompt, projectId } = req.body;
     
@@ -234,10 +250,10 @@ router.post('/api/shell/generate-command', ensureAuthenticated, async (req, res)
 });
 
 // API endpoint to clear shell output (reset session buffer)
-router.post('/api/shell/clear', ensureAuthenticated, (req, res) => {
+router.post('/clear', ensureAuthenticated, (req, res) => {
   const { sessionId } = req.body;
   // Clear is handled client-side, just acknowledge
   res.json({ success: true, sessionId });
 });
 
-export { router as default, setupShellWebSocket };
+export default router;
