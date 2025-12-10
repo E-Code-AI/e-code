@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'wouter';
-import { Home, Search, Plus, Bell, User } from 'lucide-react';
+import { Home, Folder, Plus, Bell, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
@@ -15,7 +15,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { icon: Home, label: 'Home', path: '/dashboard' },
-  { icon: Search, label: 'Explore', path: '/explore' },
+  { icon: Folder, label: 'Projects', path: '/projects' },
   { icon: Plus, label: 'Create', path: '#create', isCenter: true },
   { icon: Bell, label: 'Notifications', path: '/notifications', badge: 3 },
   { icon: User, label: 'Profile', path: '/profile' },
