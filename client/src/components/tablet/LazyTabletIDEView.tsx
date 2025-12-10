@@ -11,6 +11,9 @@ const TabletIDEView = lazy(() =>
 interface LazyTabletIDEViewProps {
   projectId: string;
   className?: string;
+  bootstrapToken?: string | null;
+  onWorkspaceComplete?: () => void;
+  onWorkspaceError?: (error: string) => void;
 }
 
 const TabletIDESkeleton = () => (

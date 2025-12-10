@@ -62,6 +62,10 @@ const MobileTerminal = React.lazy(() =>
   import('@/components/mobile/MobileTerminal').then(module => ({ default: module.MobileTerminal }))
 );
 
+const AutonomousWorkspaceViewer = React.lazy(() => 
+  import('@/components/ide/AutonomousWorkspaceViewer').then(module => ({ default: module.AutonomousWorkspaceViewer }))
+);
+
 const TerminalFallback = () => (
   <div className="h-full flex items-center justify-center bg-background">
     <div className="flex flex-col items-center gap-2">
@@ -76,9 +80,12 @@ export type TabletPanel = 'editor' | 'terminal' | 'preview' | 'agent' | 'deploy'
 interface TabletIDEViewProps {
   projectId: string; // UUID string from route params
   className?: string;
+  bootstrapToken?: string | null;
+  onWorkspaceComplete?: () => void;
+  onWorkspaceError?: (error: string) => void;
 }
 
-export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
+export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspaceComplete, onWorkspaceError }: TabletIDEViewProps) {
   // Tablet detection and layout config
   const { isIPad, isIPadPro, orientation, screenSize } = useTablet();
   const layout = useTabletLayout();
@@ -659,6 +666,18 @@ export function TabletIDEView({ projectId, className }: TabletIDEViewProps) {
         isOpen={isCollaborationOpen}
         onClose={() => setIsCollaborationOpen(false)}
       />
+      
+      {/* Autonomous Workspace Viewer - shows animated progress during workspace creation */}
+      {bootstrapToken && (
+        <Suspense fallback={null}>
+          <AutonomousWorkspaceViewer
+            bootstrapToken={bootstrapToken}
+            projectId={projectId}
+            onComplete={onWorkspaceComplete}
+            onError={onWorkspaceError}
+          />
+        </Suspense>
+      )}
       </div>
     </DesignSystemToastProvider>
   );

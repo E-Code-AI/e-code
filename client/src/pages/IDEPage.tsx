@@ -1003,7 +1003,12 @@ export default function IDEPage() {
   if (deviceType === 'mobile') {
     return (
       <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading mobile workspace..." />}>
-        <MobileIDEView projectId={normalizedProjectId} />
+        <MobileIDEView 
+          projectId={normalizedProjectId} 
+          bootstrapToken={bootstrapToken}
+          onWorkspaceComplete={handleWorkspaceComplete}
+          onWorkspaceError={handleWorkspaceError}
+        />
       </Suspense>
     );
   }
@@ -1011,7 +1016,12 @@ export default function IDEPage() {
   if (deviceType === 'tablet') {
     return (
       <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading tablet workspace..." />}>
-        <LazyTabletIDEView projectId={normalizedProjectId} />
+        <LazyTabletIDEView 
+          projectId={normalizedProjectId}
+          bootstrapToken={bootstrapToken}
+          onWorkspaceComplete={handleWorkspaceComplete}
+          onWorkspaceError={handleWorkspaceError}
+        />
       </Suspense>
     );
   }

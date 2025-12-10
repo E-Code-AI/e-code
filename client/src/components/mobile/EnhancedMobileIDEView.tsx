@@ -11,6 +11,9 @@ import { IDEProvider } from '@/components/providers/IDEProvider';
 interface EnhancedMobileIDEViewProps {
   projectId: string | number;
   className?: string;
+  bootstrapToken?: string | null;
+  onWorkspaceComplete?: () => void;
+  onWorkspaceError?: (error: string) => void;
 }
 
 /**
