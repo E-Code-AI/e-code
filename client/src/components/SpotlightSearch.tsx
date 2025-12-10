@@ -148,7 +148,7 @@ export function SpotlightSearch() {
       icon: <Lock className="h-4 w-4" />,
       label: 'Authentication',
       description: 'Move existing tab here',
-      onSelect: () => handleSelect(() => navigate('/authentication')),
+      onSelect: () => handleSelect(() => navigate('/login')),
     },
     {
       icon: <Eye className="h-4 w-4" />,

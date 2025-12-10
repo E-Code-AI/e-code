@@ -250,7 +250,7 @@ export default function Features() {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 sm:px-0">
               <Button 
                 size="lg" 
-                onClick={() => navigate(user ? '/dashboard' : '/auth')}
+                onClick={() => navigate(user ? '/dashboard' : '/login')}
                 className="min-h-[44px]"
                 data-testid="button-features-start-building"
               >
@@ -422,7 +422,7 @@ export default function Features() {
             Join millions of developers who are building faster with E-Code
           </p>
           <div className="flex gap-4 justify-center">
-            <Button size="lg" onClick={() => navigate(user ? '/dashboard' : '/auth')}>
+            <Button size="lg" onClick={() => navigate(user ? '/dashboard' : '/login')}>
               Get started free
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>

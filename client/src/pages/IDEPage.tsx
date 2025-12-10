@@ -958,8 +958,6 @@ export default function IDEPage() {
         return <VisualEditorPanel projectId={projectId} />;
       case 'rewind':
         return <RewindPanel projectId={projectId} />;
-      case 'resources':
-        return <ResourcesPanel projectId={projectId} />;
       case 'workflows':
         return <WorkflowsPanel projectId={projectId} />;
       default:
