@@ -4,6 +4,8 @@ import { db } from '../db';
 import {
   agentSessions,
   agentAuditTrail,
+  agentMessages,
+  aiConversations,
   type AgentSession,
   type InsertAgentSession
 } from '@shared/schema';
@@ -1595,6 +1597,100 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
   }
 
   /**
+   * ✅ MESSAGE PERSISTENCE (Dec 10, 2025): Helper to save workspace creation messages to agentMessages table
+   * Ensures autonomous workspace progress appears in chat UI timeline
+   * 
+   * @param sessionId - Agent session ID
+   * @param projectId - Project ID
+   * @param userId - User ID
+   * @param content - Message content to save
+   * @param metadata - Optional metadata for the message
+   * @returns The conversation ID used (created if needed)
+   */
+  private async saveWorkspaceMessage(
+    sessionId: string,
+    projectId: string,
+    userId: string,
+    content: string,
+    metadata?: {
+      tokensUsed?: number;
+      processingTimeMs?: number;
+      toolsUsed?: string[];
+      filesModified?: string[];
+      actions?: Array<{
+        type: string;
+        path?: string;
+        success: boolean;
+      }>;
+      workspaceStatus?: string;
+      taskCount?: number;
+      estimatedTime?: string;
+    }
+  ): Promise<number> {
+    try {
+      const projectIdNum = Number(projectId);
+      const userIdNum = Number(userId);
+      
+      // Get or create conversation for this project/user
+      let [existingConversation] = await db.select()
+        .from(aiConversations)
+        .where(and(
+          eq(aiConversations.projectId, projectIdNum),
+          eq(aiConversations.userId, userIdNum)
+        ))
+        .limit(1);
+      
+      let conversationId: number;
+      
+      if (existingConversation) {
+        conversationId = existingConversation.id;
+      } else {
+        // Create new conversation for workspace
+        const [newConversation] = await db.insert(aiConversations)
+          .values({
+            projectId: projectIdNum,
+            userId: userIdNum,
+            messages: [],
+            context: { workspaceCreation: true },
+            model: 'gpt-5.1',
+            agentMode: 'build'
+          })
+          .returning();
+        conversationId = newConversation.id;
+        logger.info(`[Autonomous] Created new conversation ${conversationId} for workspace messages`);
+      }
+      
+      // Insert the message
+      await db.insert(agentMessages).values({
+        sessionId,
+        conversationId,
+        projectId: projectIdNum,
+        userId: userIdNum,
+        role: 'assistant',
+        content,
+        model: 'gpt-5.1',
+        metadata: {
+          tokensUsed: metadata?.tokensUsed ?? 0,
+          processingTimeMs: metadata?.processingTimeMs,
+          toolsUsed: metadata?.toolsUsed,
+          filesModified: metadata?.filesModified,
+          actions: metadata?.actions,
+          ...( metadata?.workspaceStatus && { workspaceStatus: metadata.workspaceStatus }),
+          ...( metadata?.taskCount !== undefined && { taskCount: metadata.taskCount }),
+          ...( metadata?.estimatedTime && { estimatedTime: metadata.estimatedTime })
+        }
+      });
+      
+      logger.debug(`[Autonomous] Saved workspace message to conversation ${conversationId}`, { sessionId, content: content.substring(0, 50) });
+      
+      return conversationId;
+    } catch (error) {
+      logger.error(`[Autonomous] Failed to save workspace message`, { error, sessionId, content: content.substring(0, 50) });
+      throw error;
+    }
+  }
+
+  /**
    * ✅ AUTONOMOUS WORKSPACE CREATION - Start autonomous plan generation and execution
    * Triggered by bootstrap endpoint, runs fire-and-forget to avoid HTTP timeout
    * 
@@ -1647,6 +1743,12 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         status: 'planning',
         message: 'AI is analyzing your request and generating execution plan...'
       }, projectId);
+      
+      // ✅ MESSAGE PERSISTENCE (Dec 10, 2025): Save planning started message
+      await this.saveWorkspaceMessage(sessionId, projectId, userId, 
+        '🧠 Starting to analyze your request and create an execution plan...', 
+        { workspaceStatus: 'planning', tokensUsed: 0 }
+      ).catch(err => logger.error('[Autonomous] Failed to save planning message', { err, sessionId }));
       
       // ✅ USER PREFERENCE FIX (Dec 2, 2025): Get user's preferred AI model from session
       // This ensures autonomous workspace creation uses the user's selected model (e.g., Kimi)
@@ -1704,6 +1806,14 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       
       logger.info(`[Autonomous] Plan stored, starting workflow execution`, { sessionId });
       
+      // ✅ MESSAGE PERSISTENCE (Dec 10, 2025): Save plan generated message
+      const taskCount = executionPlan.tasks?.length || 0;
+      const estimatedMinutes = Math.max(1, Math.ceil(taskCount * 0.5)); // ~30 seconds per task
+      await this.saveWorkspaceMessage(sessionId, projectId, userId, 
+        `📋 Execution plan created with ${taskCount} tasks. Estimated time: ${estimatedMinutes} minute${estimatedMinutes > 1 ? 's' : ''}`, 
+        { workspaceStatus: 'plan_generated', taskCount, estimatedTime: `${estimatedMinutes} minutes`, tokensUsed: 0 }
+      ).catch(err => logger.error('[Autonomous] Failed to save plan generated message', { err, sessionId }));
+      
       // ✅ DEBUG (Dec 5, 2025): Validate plan before workflow execution with graceful failure
       if (!executionPlan.tasks || !Array.isArray(executionPlan.tasks)) {
         const errorMessage = 'Plan has no tasks array - cannot execute workflow';
@@ -1746,6 +1856,12 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         status: 'executing',
         message: 'Starting autonomous execution...'
       }, projectId);
+      
+      // ✅ MESSAGE PERSISTENCE (Dec 10, 2025): Save execution started message
+      await this.saveWorkspaceMessage(sessionId, projectId, userId, 
+        '⚡ Starting autonomous execution...', 
+        { workspaceStatus: 'executing', tokensUsed: 0 }
+      ).catch(err => logger.error('[Autonomous] Failed to save execution started message', { err, sessionId }));
       
       // 4. Convert plan tasks to workflow steps with dependency mapping
       // ✅ FIX (Nov 24, 2025): Expand multi-file tasks + map dependencies correctly
@@ -1955,6 +2071,15 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           result
         }, projectId);
         
+        // ✅ MESSAGE PERSISTENCE (Dec 10, 2025): Save completion message
+        const completionMessage = isSuccess 
+          ? '✅ Workspace created successfully!'
+          : `❌ Workspace creation failed: ${result.error || 'Unknown error'}`;
+        await this.saveWorkspaceMessage(sessionId, projectId, userId, completionMessage, { 
+          workspaceStatus: isSuccess ? 'completed' : 'failed',
+          tokensUsed: 0 
+        }).catch(err => logger.error('[Autonomous] Failed to save completion message', { err, sessionId }));
+        
       } finally {
         // ✅ CRITICAL: Always cleanup event listener to prevent memory leaks
         agentWorkflowEngine.off('workflow:event', handleWorkflowEvent);
@@ -1994,6 +2119,13 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         error: error instanceof Error ? error.message : 'Unknown error',
         message: `❌ Autonomous workspace creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       }, projectId);
+      
+      // ✅ MESSAGE PERSISTENCE (Dec 10, 2025): Save error message
+      const errorMessage = `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      await this.saveWorkspaceMessage(sessionId, projectId, userId, errorMessage, { 
+        workspaceStatus: 'failed',
+        tokensUsed: 0 
+      }).catch(err => logger.error('[Autonomous] Failed to save error message', { err, sessionId }));
       
       // Re-throw for logging/monitoring
       throw error;
