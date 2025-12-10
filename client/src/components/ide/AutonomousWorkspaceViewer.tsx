@@ -472,13 +472,13 @@ export function AutonomousWorkspaceViewer({
         {/* Streaming Plan Text (during planning phase) - ALWAYS VISIBLE ON MOBILE */}
         {phase === 'planning' && (
           <div className="space-y-2 min-h-0">
-            <h4 className="text-xs sm:text-sm font-medium flex items-center gap-2">
+            <h4 className="text-xs sm:text-sm font-medium flex items-center gap-2 bg-background py-1">
               <Code2 className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               <span>Generating Plan...</span>
               {!planText && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
             </h4>
-            <ScrollArea className="h-28 sm:h-36 md:h-40 border rounded-md bg-muted/50 font-mono text-[10px] sm:text-xs">
-              <div className="p-2 sm:p-3 text-muted-foreground whitespace-pre-wrap break-words">
+            <ScrollArea className="h-32 sm:h-40 md:h-48 border rounded-md bg-card font-mono text-[10px] sm:text-xs">
+              <div className="p-2 sm:p-3 text-foreground whitespace-pre-wrap break-words">
                 {planText || 'Analyzing your request and generating an execution plan...'}
                 <span className="inline-block w-2 h-3 sm:h-4 bg-primary animate-pulse ml-0.5" />
               </div>
@@ -537,15 +537,15 @@ export function AutonomousWorkspaceViewer({
           </div>
         )}
 
-        {/* Logs - Compact on mobile */}
+        {/* Logs - Compact on mobile, limited to last 30 entries */}
         <div className="space-y-2 min-h-0">
-          <h4 className="text-xs sm:text-sm font-medium flex items-center gap-2">
+          <h4 className="text-xs sm:text-sm font-medium flex items-center gap-2 bg-background py-1 sticky top-0 z-10">
             <Terminal className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-            Activity Log ({logs.length})
+            Activity Log ({Math.min(logs.length, 30)}{logs.length > 30 ? '+' : ''})
           </h4>
-          <ScrollArea className="h-24 sm:h-32 md:h-40 border rounded-md bg-muted/30 font-mono text-[9px] sm:text-xs" data-testid="activity-logs">
+          <ScrollArea className="h-20 sm:h-24 md:h-28 border rounded-md bg-muted font-mono text-[9px] sm:text-xs" data-testid="activity-logs">
             <div className="p-2 space-y-0.5">
-              {logs.map((log, index) => (
+              {logs.slice(-30).map((log, index) => (
                 <div key={index} className="text-muted-foreground whitespace-pre-wrap break-words leading-tight">
                   {log}
                 </div>
