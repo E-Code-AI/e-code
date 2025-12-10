@@ -318,14 +318,11 @@ export function ReplitAgentPanelV3({
   const { toast } = useToast();
 
   // Bootstrap conversation on mount
+  // ✅ FIX (Dec 10, 2025): Always call POST /api/agent/conversation to get proper integer ID
+  // External conversation IDs from bootstrap tokens are UUIDs but aiConversations.id is integer
+  // The backend will return existing conversation if one exists for this projectId
   useEffect(() => {
     const bootstrapConversation = async () => {
-      // Use external conversation ID if provided
-      if (externalConversationId) {
-        setConversationId(externalConversationId);
-        return;
-      }
-      
       try {
         const response = await apiRequest('POST', '/api/agent/conversation', {
           projectId: projectId.toString()
@@ -344,7 +341,7 @@ export function ReplitAgentPanelV3({
     };
 
     bootstrapConversation();
-  }, [projectId, toast, externalConversationId]);
+  }, [projectId, toast]);
 
   // Load existing messages from backend when conversationId is available
   const { data: backendMessages, isLoading: isLoadingMessages } = useQuery({

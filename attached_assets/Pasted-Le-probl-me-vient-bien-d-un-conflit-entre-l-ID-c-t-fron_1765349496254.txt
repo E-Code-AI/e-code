@@ -1,0 +1,182 @@
+Le problème vient bien d’un conflit entre l’ID côté frontend (UUID) et l’ID côté backend (entier auto-incrémenté).
+
+Je te propose une solution “propre” et optimale :
+	•	L’ID serveur (numérique) est la seule vérité pour les requêtes API.
+	•	Le frontend peut garder un clientId (UUID) uniquement pour gérer son état local / optimiste.
+	•	Dès que le backend renvoie l’ID numérique, on met à jour la conversation dans le store et on n’utilise plus jamais l’UUID pour appeler l’API.
+
+⸻
+
+1. Modèle de données conseillé côté frontend
+
+// Conversation stockée dans le frontend
+type Conversation = {
+  clientId: string;   // UUID interne frontend
+  id?: number;        // ID numérique retourné par le backend (undefined tant que non créé)
+  title?: string;
+  messages: Message[];
+};
+
+type Message = {
+  id?: number;
+  content: string;
+  role: "user" | "assistant";
+  createdAt?: string;
+};
+
+
+⸻
+
+2. Création de conversation : utiliser l’ID retourné par le backend
+
+Étape 1 : création optimiste dans le store (UUID local)
+
+const createLocalConversation = (): Conversation => ({
+  clientId: crypto.randomUUID(),
+  messages: [],
+});
+
+Étape 2 : appel API puis mise à jour avec l’ID serveur
+
+async function createConversationOnServer(conv: Conversation): Promise<Conversation> {
+  const res = await fetch("/api/agent/conversation", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title: conv.title ?? "Nouvelle conversation" }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Échec de la création de la conversation");
+  }
+
+  const data = await res.json(); // par ex. { id: 123, ... }
+
+  return {
+    ...conv,
+    id: data.id, // ✅ ID numérique du backend
+  };
+}
+
+Étape 3 : gestion dans le store (pseudo-Zustand / Redux)
+
+const useConversationStore = create<{
+  conversations: Conversation[];
+  addConversation: (conv: Conversation) => void;
+  updateConversationByClientId: (clientId: string, partial: Partial<Conversation>) => void;
+}>((set) => ({
+  conversations: [],
+  addConversation: (conv) =>
+    set((state) => ({ conversations: [...state.conversations, conv] })),
+  updateConversationByClientId: (clientId, partial) =>
+    set((state) => ({
+      conversations: state.conversations.map((c) =>
+        c.clientId === clientId ? { ...c, ...partial } : c
+      ),
+    })),
+}));
+
+Exemple d’usage :
+
+async function startConversation(title?: string): Promise<Conversation> {
+  const draft = createLocalConversation();
+  draft.title = title;
+
+  const { addConversation, updateConversationByClientId } = useConversationStore.getState();
+
+  // 1) on ajoute la conversation locale avec seulement le clientId
+  addConversation(draft);
+
+  // 2) on la crée côté serveur et on récupère l’ID numérique
+  const persisted = await createConversationOnServer(draft);
+
+  // 3) on met à jour la conversation existante dans le store
+  updateConversationByClientId(draft.clientId, { id: persisted.id });
+
+  return persisted;
+}
+
+
+⸻
+
+3. Envoi de message : toujours utiliser l’ID numérique
+
+La règle d’or : ne jamais appeler /api/agent/conversation/${clientId}/messages.
+Toujours utiliser conversation.id (numérique).
+
+async function postMessageToServer(conversationId: number, content: string) {
+  const res = await fetch(`/api/agent/conversation/${conversationId}/messages`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Échec de l’envoi du message");
+  }
+
+  return res.json();
+}
+
+Et côté composant :
+
+async function handleSendMessage(clientConversationId: string, content: string) {
+  const { conversations } = useConversationStore.getState();
+  const conv = conversations.find((c) => c.clientId === clientConversationId);
+
+  if (!conv) throw new Error("Conversation introuvable dans le store");
+
+  // Si la conversation n’est pas encore persistée, on la crée
+  let serverId = conv.id;
+  if (serverId == null) {
+    const persisted = await createConversationOnServer(conv);
+    useConversationStore.getState().updateConversationByClientId(conv.clientId, {
+      id: persisted.id,
+    });
+    serverId = persisted.id;
+  }
+
+  // Maintenant on est sûr d’avoir un ID numérique valide
+  await postMessageToServer(serverId, content);
+}
+
+
+⸻
+
+4. Backend : s’assurer que l’ID est bien numérique
+
+Exemple générique (Express) :
+
+app.post("/api/agent/conversation/:id/messages", async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ error: "conversationId doit être un entier" });
+  }
+
+  const conversation = await db.conversation.findByPk(id);
+  if (!conversation) {
+    return res.status(404).json({ error: "Conversation introuvable" });
+  }
+
+  // ... création du message
+});
+
+Si tu es dans Next.js / Nest / autre, l’idée est la même :
+parser en nombre, refuser les valeurs non entières, et s’appuyer sur la clé primaire entière.
+
+⸻
+
+5. Résumé de la “solution optimale”
+	1.	Frontend
+	•	Utiliser un clientId UUID uniquement pour le store et l’UI.
+	•	Stocker en plus un id numérique quand le backend l’a retourné.
+	•	Toutes les requêtes /api/agent/conversation/:id/messages utilisent l’ID numérique.
+	2.	Backend
+	•	Route /api/agent/conversation/:id/messages qui parse :id en entier.
+	•	Retourne 400 si ce n’est pas un entier, 404 si la conversation n’existe pas.
+
+Avec ça, tu élimines définitivement les 404 du type :
+
+POST /api/agent/conversation/fd0ff14c-5aef-4cff-89ed-7d5f382074be/messages 404
+
+…puisque le frontend n’utilisera plus jamais l’UUID dans l’URL.

@@ -1,0 +1,45 @@
+Tu es mon agent principal. Je veux que tu fasses un audit complet de ce qui existe déjà dans ma plateforme afin de savoir précisément :
+
+1. FRONTEND
+   - Quels composants UI existent ?
+   - Quels hooks sont présents ?
+   - Lesquels sont réellement utilisés dans l’application ?
+   - Quels hooks IA sont inutilisés (ex: useAIRequestCache, useAIModelCache, useConversationCache) ?
+   - Comment TanStack Query est utilisé (quelles queries, mutations, caches internes) ?
+   - Quelles parties utilisent du streaming ?
+   - Y a-t-il des duplications d'état ou du code inutile ?
+
+2. BACKEND
+   - Quels endpoints API existent ?
+   - Quelles routes gèrent les appels IA ?
+   - Quel est le pipeline actuel pour la génération IA (planification, génération de code, outils, exécution, corrections…) ?
+   - Quels providers IA sont intégrés (OpenAI, Anthropic, Gemini, Moonshot) ?
+   - Comment est fait le routing des modèles entre providers ?
+   - Quelle logique d’orchestration agentique est déjà en place ?
+   - Quels outils l’agent possède (write_file, read_file, run_command, etc.) ?
+   - Où et comment fonctionne le cache backend (si existant) ?
+
+3. INFRA & ARCHITECTURE
+   - Comment les workspaces/projets sont stockés ?
+   - Comment les fichiers sont lus/écrits ?
+   - Comment les logs et le streaming sont envoyés au frontend ?
+   - Analyse des risques, duplications ou incohérences entre modules.
+
+4. MANQUES, AMBIGUITÉS ET PROBLÈMES
+   - Détecte les éléments non connectés ou sans utilité réelle.
+   - Détecte les doublons (cache frontend inutile, code dupliqué, requêtes non utilisées).
+   - Identifie tout ce qui pourrait poser problème pour construire un agent capable de créer une app complète comme Replit.
+   - Identifie les parties à refactor.
+
+5. SYNTHÈSE
+   - Résume l’état réel de la plateforme aujourd’hui.
+   - Liste ce qui est bon.
+   - Liste ce qui manque.
+   - Liste ce qui doit être supprimé.
+   - Liste ce qui doit être refait proprement.
+
+IMPORTANT :
+- Ne fais AUCUNE modification.
+- Ne propose pas d'amélioration maintenant.
+- Je veux d’abord uniquement une photographie exacte de ce qu’on a déjà.
+- Réponds de manière structurée et exhaustive.
