@@ -16,6 +16,34 @@ E-Code is an AI-assisted web-based IDE for rapid prototyping, education, and ent
 - **Monaco Editor:** Safe disposal pattern with optional chaining (`d?.dispose?.()`) for all enhancement classes
 - **Documentation:** Ruthlessly remove obsolete/misleading docs - maintain technical honesty
 
+## Frontend Caching Architecture
+
+### TanStack Query - Single Source of Truth
+**CRITICAL: TanStack Query (`@tanstack/react-query`) is the exclusive client-side caching layer for ALL API data.**
+
+**Rules:**
+1. **NO custom frontend AI cache hooks** - All AI request caching hooks (use-ai-request-cache.ts, etc.) have been removed from the codebase
+2. **Use TanStack Query for ALL API caching** - It provides built-in caching, deduplication, background refetching, and cache invalidation
+3. **Future AI frontend cache needs MUST use TanStack Query** - Either directly via `useQuery`/`useMutation`, or through wrapper hooks that delegate to TanStack Query internally
+
+**Recommended pattern:**
+```typescript
+// GOOD: Use TanStack Query directly
+const { data, isLoading } = useQuery({
+  queryKey: ['/api/ai/models'],
+  staleTime: 5 * 60 * 1000, // 5 minutes
+});
+
+// GOOD: Wrapper hook that uses TanStack Query
+function useAIModels() {
+  return useQuery({ queryKey: ['/api/ai/models'], staleTime: 300000 });
+}
+
+// BAD: Custom caching with useState/useRef - DO NOT CREATE
+```
+
+**Backend caching:** Server-side caching is handled by `AgentStepCacheService` (database-backed, TTL, version tracking).
+
 ## System Architecture
 
 ### UI/UX Decisions
