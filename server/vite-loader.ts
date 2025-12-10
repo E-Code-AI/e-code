@@ -165,7 +165,14 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
       console.log('[Vite Loader] /ws/agent connections will now bypass Vite HMR and survive');
       console.log('[Vite Loader] ⚠️  Wrapped listeners remain active, subsequent listeners run normally');
     } else {
-      viteModule.serveStatic(app);
+      console.log('[Vite Loader] 🏭 Production mode - calling serveStatic...');
+      try {
+        viteModule.serveStatic(app);
+        console.log('[Vite Loader] ✅ serveStatic completed successfully');
+      } catch (staticError: any) {
+        console.error('[Vite Loader] ❌ serveStatic failed:', staticError.message);
+        throw staticError;
+      }
     }
     
     return true;
