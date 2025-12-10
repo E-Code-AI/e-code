@@ -132,5 +132,28 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 - Response includes buildMode and contextual message for client reference
 - Mobile: Haptic feedback for touch interactions, sessionStorage persistence for React lifecycle
 
+### Agent Step Cache System (Dec 10, 2025)
+
+**Database-Backed Intermediate Step Caching for Major Cost Savings:**
+
+4. **Agent Step Cache** (`server/services/agent-step-cache.service.ts`)
+   - Caches expensive intermediate agent phases to avoid regenerating unchanged analyses:
+     - `SPECIFICATION`: App description, features, technologies
+     - `ARCHITECTURE_PLAN`: Structure, data models, API endpoints
+     - `FILE_LAYOUT`: File structure and purposes
+     - `INITIAL_SCAFFOLD`: Generated code and commands
+   - Version tracking with content hash validation
+   - Enables partial regeneration: "regenerate code but keep the plan"
+   - 24-hour TTL with automatic expiration
+   - Hit rate metrics for monitoring cache effectiveness
+   - Database table: `agent_step_cache` with indexed lookup (project_id, step_type, prompt_hash, is_valid)
+   - API endpoints: GET `/api/agent/step-cache/:projectId`, GET `/latest`, POST `/invalidate`, GET `/metrics`
+
+**Key Benefits:**
+- User can say "regenerate the code with a different approach" without re-running the entire planning phase
+- Embeddings, file analysis, and project architecture analysis cached and reused across similar requests
+- Content hash validation ensures cache invalidation when context changes
+- Version history allows rollback to previous generations
+
 ### Known Issues
 - Minor: Some other WebSocket services still log "Blocked additional upgrade listener" warnings. These services haven't been migrated to the central dispatcher yet, but they work correctly due to the blocking mechanism. This is cosmetic only and doesn't affect functionality.
