@@ -86,6 +86,8 @@ interface TopNavBarProps {
   onOpenDeployLogs?: () => void;
   onOpenDeployAnalytics?: () => void;
   showTabs?: boolean;
+  onOpenCommandPalette?: () => void;
+  onOpenGlobalSearch?: () => void;
 }
 
 export function TopNavBar({
@@ -113,6 +115,8 @@ export function TopNavBar({
   onOpenDeployLogs,
   onOpenDeployAnalytics,
   showTabs = true,
+  onOpenCommandPalette,
+  onOpenGlobalSearch,
 }: TopNavBarProps) {
   const { user, logoutMutation } = useAuth();
   const { theme, setTheme } = useTheme();
