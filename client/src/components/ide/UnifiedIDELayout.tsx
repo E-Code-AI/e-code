@@ -232,6 +232,11 @@ function UnifiedIDELayout({
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   const [showExtensionsPanel, setShowExtensionsPanel] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+
+  const closePanel = useCallback((setter: (v: boolean) => void) => {
+    setter(false);
+    setActiveActivityItem('files');
+  }, [setActiveActivityItem]);
   
   const touchStartX = useRef<number>(0);
   const touchStartTime = useRef<number>(0);
@@ -863,11 +868,11 @@ function UnifiedIDELayout({
       <Suspense fallback={null}>
         <GlobalSearch
           isOpen={showGlobalSearch}
-          onClose={() => setShowGlobalSearch(false)}
+          onClose={() => closePanel(setShowGlobalSearch)}
           projectId={projectId}
           onFileSelect={(file) => {
             handleFileSelect({ id: file.id, name: file.name });
-            setShowGlobalSearch(false);
+            closePanel(setShowGlobalSearch);
           }}
         />
       </Suspense>
@@ -879,8 +884,9 @@ function UnifiedIDELayout({
             <Button
               size="icon"
               variant="ghost"
-              onClick={() => setShowCollaboration(false)}
+              onClick={() => closePanel(setShowCollaboration)}
               className="h-7 w-7"
+              data-testid="button-close-collaboration"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -904,8 +910,9 @@ function UnifiedIDELayout({
             <Button
               size="icon"
               variant="ghost"
-              onClick={() => setShowReplitDB(false)}
+              onClick={() => closePanel(setShowReplitDB)}
               className="h-7 w-7"
+              data-testid="button-close-database"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -915,6 +922,118 @@ function UnifiedIDELayout({
               projectId={parseInt(projectId, 10)}
               className="h-[calc(100%-48px)]"
             />
+          </Suspense>
+        </div>
+      )}
+
+      {showGitPanel && (
+        <div className="fixed inset-y-0 right-0 w-80 z-50 shadow-xl border-l bg-background">
+          <div className="flex items-center justify-between p-2 border-b">
+            <span className="font-medium text-sm">Git</span>
+            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowGitPanel)} className="h-7 w-7" data-testid="button-close-git">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+            <ReplitGitPanel projectId={parseInt(projectId, 10)} className="h-[calc(100%-48px)]" />
+          </Suspense>
+        </div>
+      )}
+
+      {showPackagesPanel && (
+        <div className="fixed inset-y-0 right-0 w-80 z-50 shadow-xl border-l bg-background">
+          <div className="flex items-center justify-between p-2 border-b">
+            <span className="font-medium text-sm">Packages</span>
+            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowPackagesPanel)} className="h-7 w-7" data-testid="button-close-packages">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+            <ReplitPackagesPanel projectId={parseInt(projectId, 10)} className="h-[calc(100%-48px)]" />
+          </Suspense>
+        </div>
+      )}
+
+      {showDebugPanel && (
+        <div className="fixed inset-y-0 right-0 w-96 z-50 shadow-xl border-l bg-background">
+          <div className="flex items-center justify-between p-2 border-b">
+            <span className="font-medium text-sm">Debugger</span>
+            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowDebugPanel)} className="h-7 w-7" data-testid="button-close-debug">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+            <ReplitDebuggerPanel projectId={parseInt(projectId, 10)} className="h-[calc(100%-48px)]" />
+          </Suspense>
+        </div>
+      )}
+
+      {showSecretsPanel && (
+        <div className="fixed inset-y-0 right-0 w-80 z-50 shadow-xl border-l bg-background">
+          <div className="flex items-center justify-between p-2 border-b">
+            <span className="font-medium text-sm">Secrets</span>
+            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowSecretsPanel)} className="h-7 w-7" data-testid="button-close-secrets">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+            <ReplitSecretsPanel projectId={parseInt(projectId, 10)} className="h-[calc(100%-48px)]" />
+          </Suspense>
+        </div>
+      )}
+
+      {showWorkflowsPanel && (
+        <div className="fixed inset-y-0 right-0 w-96 z-50 shadow-xl border-l bg-background">
+          <div className="flex items-center justify-between p-2 border-b">
+            <span className="font-medium text-sm">Workflows</span>
+            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowWorkflowsPanel)} className="h-7 w-7" data-testid="button-close-workflows">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+            <WorkflowsPanel projectId={parseInt(projectId, 10)} className="h-[calc(100%-48px)]" />
+          </Suspense>
+        </div>
+      )}
+
+      {showHistoryPanel && (
+        <div className="fixed inset-y-0 right-0 w-96 z-50 shadow-xl border-l bg-background">
+          <div className="flex items-center justify-between p-2 border-b">
+            <span className="font-medium text-sm">History</span>
+            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowHistoryPanel)} className="h-7 w-7" data-testid="button-close-history">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+            <ReplitHistoryPanel projectId={parseInt(projectId, 10)} className="h-[calc(100%-48px)]" />
+          </Suspense>
+        </div>
+      )}
+
+      {showExtensionsPanel && (
+        <div className="fixed inset-y-0 right-0 w-[500px] z-50 shadow-xl border-l bg-background">
+          <div className="flex items-center justify-between p-2 border-b">
+            <span className="font-medium text-sm">Extensions</span>
+            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowExtensionsPanel)} className="h-7 w-7" data-testid="button-close-extensions">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+            <ExtensionsMarketplace className="h-[calc(100%-48px)]" />
+          </Suspense>
+        </div>
+      )}
+
+      {showSettingsPanel && (
+        <div className="fixed inset-y-0 right-0 w-[500px] z-50 shadow-xl border-l bg-background">
+          <div className="flex items-center justify-between p-2 border-b">
+            <span className="font-medium text-sm">Settings</span>
+            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowSettingsPanel)} className="h-7 w-7" data-testid="button-close-settings">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+            <ReplitSettingsPanel projectId={parseInt(projectId, 10)} className="h-[calc(100%-48px)]" />
           </Suspense>
         </div>
       )}
