@@ -344,6 +344,7 @@ export interface IStorage {
   getProject(id: string): Promise<Project | undefined>;
   getProjectBySlug(slug: string, ownerId?: string): Promise<Project | null>;
   getProjectsByUserId(ownerId: string): Promise<Project[]>;
+  getProjectsByUserIdPaginated(ownerId: string, limit: number, offset: number): Promise<{ projects: Project[]; total: number }>;
   getAllProjects(): Promise<Project[]>;
   createProject(project: InsertProject): Promise<Project>;
   updateProject(id: string, project: Partial<InsertProject>): Promise<Project | undefined>;
@@ -1209,6 +1210,27 @@ export class DatabaseStorage implements IStorage {
   // Alias for backward compatibility
   async getProjectsByUserId(userId: string): Promise<Project[]> {
     return this.getProjectsByUser(userId);
+  }
+
+  async getProjectsByUserIdPaginated(userId: string, limit: number, offset: number): Promise<{ projects: Project[]; total: number }> {
+    const [projectsList, countResult] = await Promise.all([
+      this.db
+        .select()
+        .from(projects)
+        .where(eq(projects.ownerId, userId))
+        .orderBy(desc(projects.createdAt))
+        .limit(limit)
+        .offset(offset),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(projects)
+        .where(eq(projects.ownerId, userId))
+    ]);
+    
+    return {
+      projects: projectsList,
+      total: countResult[0]?.count ?? 0
+    };
   }
 
   async getAllProjects(): Promise<Project[]> {
