@@ -259,7 +259,7 @@ export default function Pricing() {
     } else if (user) {
       navigate('/subscribe');
     } else {
-      navigate('/auth');
+      navigate('/login');
     }
   };
 

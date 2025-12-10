@@ -1,0 +1,120 @@
+2025-12-10T14:20:40Z info: Deployment: a8b8c817-42d7-4ffe-92f6-a5bbc521f026
+2025-12-10T14:20:40Z info: Build: a5a2cd00-d83e-46cf-ab75-6332f863967e
+2025-12-10T14:20:43Z info: Preparing development database
+2025-12-10T14:21:07Z info: Copying development database to production database
+2025-12-10T14:22:48Z info: Successfully copied development database to production database
+2025-12-10T14:22:48Z info: Connecting to builder
+2025-12-10T14:22:48Z info: Builder connected
+2025-12-10T14:22:48Z info: Installing packages
+2025-12-10T14:22:49Z info: Starting Build
+npm warn config optional Use `--omit=optional` to exclude optional dependencies, or
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps unless otherwise omitted.
+
+npm warn config production Use `--omit=dev` instead.
+
+npm warn deprecated xterm-addon-fit@0.8.0: This package is now deprecated. Move to @xterm/addon-fit instead.
+
+npm warn deprecated xterm-addon-web-links@0.9.0: This package is now deprecated. Move to @xterm/addon-web-links instead.
+
+npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+
+npm warn deprecated lodash.get@4.4.2: This package is deprecated. Use the optional chaining (?.) operator instead.
+
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+
+npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+
+npm warn deprecated glob@7.1.6: Glob versions prior to v9 are no longer supported
+
+npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+
+npm warn deprecated xterm@5.3.0: This package is now deprecated. Move to @xterm/xterm instead.
+
+
+added 1832 packages, and audited 1833 packages in 1m
+
+
+4 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+npm warn config optional Use `--omit=optional` to exclude optional dependencies, or
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps unless otherwise omitted.
+
+npm warn config production Use `--omit=dev` instead.
+
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+
+vite v7.2.7 building client environment for production...
+
+transforming...
+
+[plugin vite:esbuild] client/src/pages/IDEPage.tsx: This case clause will never be evaluated because it duplicates an earlier case clause
+959 |        case 'rewind':
+960 |          return <RewindPanel projectId={projectId} />;
+961 |        case 'resources':
+    |             ^
+962 |          return <ResourcesPanel projectId={projectId} />;
+963 |        case 'workflows':
+
+
+✓ 5380 modules transformed.
+
+rendering chunks...
+
+[plugin vite:reporter] 
+(!) /home/runner/workspace/client/src/components/tablet/TabletIDEView.tsx is dynamically imported by /home/runner/workspace/client/src/components/tablet/LazyTabletIDEView.tsx but also statically imported by /home/runner/workspace/client/src/components/tablet/EnhancedTabletIDEView.tsx, /home/runner/workspace/client/src/components/tablet/index.ts, dynamic import will not move module into another chunk.
+
+
+[plugin vite:reporter] 
+(!) /home/runner/workspace/node_modules/@codemirror/language/dist/index.js is dynamically imported by /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts, /home/runner/workspace/client/src/lib/cm6/language-loader.ts but also statically imported by /home/runner/workspace/client/src/lib/cm6/extensions.ts, /home/runner/workspace/client/src/lib/cm6/theme.ts, /home/runner/workspace/node_modules/@codemirror/autocomplete/dist/index.js, /home/runner/workspace/node_modules/@codemirror/commands/dist/index.js, /home/runner/workspace/node_modules/@codemirror/lang-cpp/dist/index.js, /home/runner/workspace/node_modules/@codemirror/lang-css/dist/index.js, /home/runner/workspace/node_modules/@codemirror/lang-html/dist/index.js, /home/runner/workspace/node_modules/@codemirror/lang-java/dist/index.js, /home/runner/workspace/node_modules/@codemirror/lang-javascript/dist/index.js, /home/runner/workspace/node_modules/@codemirror/lang-json/dist/index.js, /home/runner/workspace/node_modules/@codemirror/lang-markdown/dist/index.js, /home/runner/workspace/node_modules/@codemirror/lang-php/dist/index.js, /home/runner/workspace/node_modules/@codemirror/lang-python/dist/index.js, /home/runner/workspace/node_modules/@codemirror/lang-rust/dist/index.js, /home/runner/workspace/node_modules/@codemirror/lang-sql/dist/index.js, /home/runner/workspace/node_modules/@codemirror/lang-xml/dist/index.js, /home/runner/workspace/node_modules/@codemirror/lang-yaml/dist/index.js, dynamic import will not move module into another chunk.
+
+
+[plugin vite:reporter] 
+(!) /home/runner/workspace/client/src/components/SpotlightSearch.tsx is dynamically imported by /home/runner/workspace/client/src/components/LazyShellWidgets.tsx but also statically imported by /home/runner/workspace/client/src/components/layout/ReplitHeader.tsx, dynamic import will not move module into another chunk.
+
+
+computing gzip size...
+
+../dist/public/index.html                                            7.95 kB │ gzip:   2.45 kB
+
+../dist/public/assets/cloud_computing_tech_ffd053c9-D65KVHBw.jpg   115.13 kB
+
+../dist/public/assets/modern_software_deve_ff7f5fd4-UOVR0u45.js      0.08 kB │ gzip:   0.10 kB
+
+../dist/public/assets/minus-dv9_Kz9R.js                              0.11 kB │ gzip:   0.13 kB
+
+../dist/public/assets/bookmark-CIz4Kc0V.js                           0.16 kB │ gzip:   0.16 kB
+
+../dist/public/assets/NewsletterUnsubscribe-BI71jpom.js              2.64 kB │ gzip:   1.31 kB
+
+../dist/public/assets/go-CTD25R5P.js                                 2.79 kB │ gzip:   1.30 kB
+
+../dist/public/assets/radio-group-Dpjb9NPh.js                        3.96 kB │ gzip:   1.79 kB
+
+✓ built in 32.33s
+
+
+  dist/index.js  2.8mb ⚠️
+
+⚡ Done in 469ms
+
+2025-12-10T14:24:24Z info: Pushing pid1 binary layer...
+2025-12-10T14:24:25Z info: Created pid1 binary layer
+2025-12-10T14:24:30Z info: Pushing Repl layer...
+2025-12-10T14:24:30Z info: Retrieved cached nix layer
+2025-12-10T14:24:30Z info: Created hosting layer

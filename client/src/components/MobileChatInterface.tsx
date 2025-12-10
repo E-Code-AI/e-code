@@ -93,7 +93,7 @@ export function MobileChatInterface({ isOpen, onClose, onStartBuilding }: Mobile
     if (user) {
       navigate('/projects');
     } else {
-      navigate('/auth/login');
+      navigate('/login');
     }
     onClose();
   };

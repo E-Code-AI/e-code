@@ -174,7 +174,7 @@ export function SpotlightSearch() {
       icon: <Lock className="h-4 w-4" />,
       label: 'Auth',
       description: 'Let users log in to your App via a prebuilt login page',
-      onSelect: () => handleSelect(() => navigate('/auth')),
+      onSelect: () => handleSelect(() => navigate('/login')),
     },
     
     // Advanced Tools

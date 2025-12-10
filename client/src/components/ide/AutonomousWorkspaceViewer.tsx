@@ -382,7 +382,7 @@ export function AutonomousWorkspaceViewer({
       setIsOpen(open);
       if (!open) handleClose();
     }}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-[95vw] sm:max-w-2xl lg:max-w-3xl max-h-[90vh] sm:max-h-[85vh] flex flex-col p-4 sm:p-6" data-testid="autonomous-workspace-viewer">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-[98vw] sm:max-w-2xl lg:max-w-3xl max-h-[95vh] sm:max-h-[85vh] flex flex-col p-3 sm:p-6 overflow-y-auto" data-testid="autonomous-workspace-viewer">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             {isComplete ? (
@@ -450,17 +450,18 @@ export function AutonomousWorkspaceViewer({
           <Progress value={overallProgress} className="h-2" data-testid="overall-progress" />
         </div>
 
-        {/* Streaming Plan Text (during planning phase) */}
-        {phase === 'planning' && planText && (
+        {/* Streaming Plan Text (during planning phase) - ALWAYS VISIBLE ON MOBILE */}
+        {phase === 'planning' && (
           <div className="space-y-2 min-h-0">
             <h4 className="text-xs sm:text-sm font-medium flex items-center gap-2">
-              <Code2 className="h-3 w-3 sm:h-4 sm:w-4" />
-              Generating Plan...
+              <Code2 className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+              <span>Generating Plan...</span>
+              {!planText && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
             </h4>
-            <ScrollArea className="h-24 sm:h-32 border rounded-md bg-surface-tertiary-solid font-mono text-[10px] sm:text-xs">
-              <div className="p-2 sm:p-3 text-muted-foreground whitespace-pre-wrap">
-                {planText}
-                <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-0.5" />
+            <ScrollArea className="h-28 sm:h-36 md:h-40 border rounded-md bg-muted/50 font-mono text-[10px] sm:text-xs">
+              <div className="p-2 sm:p-3 text-muted-foreground whitespace-pre-wrap break-words">
+                {planText || 'Analyzing your request and generating an execution plan...'}
+                <span className="inline-block w-2 h-3 sm:h-4 bg-primary animate-pulse ml-0.5" />
               </div>
             </ScrollArea>
           </div>
@@ -486,39 +487,47 @@ export function AutonomousWorkspaceViewer({
           </div>
         )}
 
-        {/* Tasks List */}
+        {/* Tasks List - Responsive height for mobile */}
         {tasks.length > 0 && (
           <div className="space-y-2 min-h-0">
-            <h4 className="text-xs sm:text-sm font-medium">Tasks</h4>
-            <ScrollArea className="h-24 sm:h-32 md:h-36 border rounded-md p-2">
-              {tasks.map((task) => (
-                <div key={task.id} className="flex items-center gap-2 py-1 text-xs sm:text-sm" data-testid={`task-${task.id}`}>
-                  {task.status === 'completed' ? (
-                    <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
-                  ) : task.status === 'error' ? (
-                    <XCircle className="h-3 w-3 sm:h-4 sm:w-4 text-destructive flex-shrink-0" />
-                  ) : task.status === 'in_progress' ? (
-                    <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 text-primary animate-spin flex-shrink-0" />
-                  ) : (
-                    <div className="h-3 w-3 sm:h-4 sm:w-4 rounded-full border-2 border-muted flex-shrink-0" />
-                  )}
-                  <span className="flex-1 truncate min-w-0">{task.name}</span>
-                  {task.progress !== undefined && task.status === 'in_progress' && (
-                    <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">{task.progress}%</span>
-                  )}
-                </div>
-              ))}
+            <h4 className="text-xs sm:text-sm font-medium flex items-center gap-2">
+              <Package className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+              Tasks ({tasks.filter(t => t.status === 'completed').length}/{tasks.length})
+            </h4>
+            <ScrollArea className="h-20 sm:h-28 md:h-32 border rounded-md">
+              <div className="p-2 space-y-1">
+                {tasks.map((task) => (
+                  <div key={task.id} className="flex items-center gap-2 py-0.5 text-[11px] sm:text-sm" data-testid={`task-${task.id}`}>
+                    {task.status === 'completed' ? (
+                      <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
+                    ) : task.status === 'error' ? (
+                      <XCircle className="h-3 w-3 sm:h-4 sm:w-4 text-destructive flex-shrink-0" />
+                    ) : task.status === 'in_progress' ? (
+                      <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 text-primary animate-spin flex-shrink-0" />
+                    ) : (
+                      <div className="h-3 w-3 sm:h-4 sm:w-4 rounded-full border-2 border-muted flex-shrink-0" />
+                    )}
+                    <span className="flex-1 truncate min-w-0">{task.name}</span>
+                    {task.progress !== undefined && task.status === 'in_progress' && (
+                      <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">{task.progress}%</span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </ScrollArea>
           </div>
         )}
 
-        {/* Logs */}
-        <div className="flex-1 space-y-2 min-h-0 overflow-hidden">
-          <h4 className="text-xs sm:text-sm font-medium">Activity Log</h4>
-          <ScrollArea className="h-32 sm:h-40 md:h-48 border rounded-md bg-muted/30 font-mono text-[10px] sm:text-xs" data-testid="activity-logs">
-            <div className="p-2 sm:p-3 space-y-1">
+        {/* Logs - Compact on mobile */}
+        <div className="space-y-2 min-h-0">
+          <h4 className="text-xs sm:text-sm font-medium flex items-center gap-2">
+            <Terminal className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            Activity Log ({logs.length})
+          </h4>
+          <ScrollArea className="h-24 sm:h-32 md:h-40 border rounded-md bg-muted/30 font-mono text-[9px] sm:text-xs" data-testid="activity-logs">
+            <div className="p-2 space-y-0.5">
               {logs.map((log, index) => (
-                <div key={index} className="text-muted-foreground whitespace-pre-wrap break-all">
+                <div key={index} className="text-muted-foreground whitespace-pre-wrap break-words leading-tight">
                   {log}
                 </div>
               ))}
