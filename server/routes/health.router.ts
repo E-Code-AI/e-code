@@ -384,8 +384,8 @@ export class HealthRouter {
       }
     });
 
-    // Application metrics endpoint
-    this.router.get("/api/metrics", (req: Request, res: Response) => {
+    // Application metrics endpoint (JSON format - use /api/metrics for Prometheus format)
+    this.router.get("/api/health/metrics", (req: Request, res: Response) => {
       const memUsage = process.memoryUsage();
       
       res.json({
