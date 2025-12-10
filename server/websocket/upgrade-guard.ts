@@ -132,6 +132,23 @@ const WS_MANAGED_PATHS = new Set([
 ]);
 
 /**
+ * Check if the request is a Vite HMR connection
+ * Vite HMR connects on "/" with a token parameter
+ */
+function isViteHMRConnection(request: IncomingMessage): boolean {
+  try {
+    const url = new URL(request.url!, `http://${request.headers.host || 'localhost'}`);
+    // Vite HMR uses / path with a token query parameter
+    if (url.pathname === '/' && url.searchParams.has('token')) {
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Final catch-all upgrade guard that destroys untagged sockets
  * 
  * Register this LAST after all WebSocket services to prevent socket leaks
@@ -153,6 +170,13 @@ export function installFinalUpgradeGuard(
   // These services use ws library's built-in upgrade handling which doesn't mark sockets
   if (WS_MANAGED_PATHS.has(pathname)) {
     logger.debug(`[Upgrade Guard] Skipping ${pathname} - managed by ws library`);
+    return;
+  }
+  
+  // ✅ FIX (Dec 10, 2025): Skip Vite HMR connections on "/" with token parameter
+  // These are legitimate development connections handled by Vite internally
+  if (isViteHMRConnection(request)) {
+    logger.debug(`[Upgrade Guard] Skipping Vite HMR connection on ${pathname}`);
     return;
   }
   
