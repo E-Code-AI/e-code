@@ -71,6 +71,12 @@ import { UsageTrackingIcon } from './UsageTrackingIcon';
 import { VideoReplayViewer } from './VideoReplayViewer';
 import { RAGToggle, RAGStatsDisplay, RetrievedContextPanel, useRAGStats } from './RAGControls';
 import { History, X, MousePointer2, Coins, Database } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  EnhancedChatMessage, 
+  StreamingSkeleton, 
+  ConversationSyncIndicator 
+} from './EnhancedChatMessage';
 
 interface ToolExecution {
   id: string;
@@ -224,6 +230,7 @@ export function ReplitAgentPanelV3({
     addMessage: addStoreMessage,
     clearMessages: clearStoreMessages,
     setLastSyncedAt,
+    getLastSyncedAt,
     hasConversation
   } = useAgentConversationStore();
   
@@ -244,6 +251,7 @@ export function ReplitAgentPanelV3({
   const [input, setInput] = useState('');
   const [isWorking, setIsWorking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isPendingResponse, setIsPendingResponse] = useState(false); // True when waiting for first AI response chunk
   const [streamingContent, setStreamingContent] = useState('');
   const [activeThinking, setActiveThinking] = useState<ThinkingStep[]>([]);
   const [capabilities, setCapabilities] = useState<AgentCapability[]>([
@@ -619,6 +627,7 @@ export function ReplitAgentPanelV3({
         
         setInput('');
         setIsWorking(true);
+        setIsPendingResponse(true); // Show skeleton until first chunk
         setStreamingContent('');
 
         // Show thinking if extended thinking is enabled
@@ -714,9 +723,11 @@ export function ReplitAgentPanelV3({
                     if (data.content) {
                       fullContent += data.content;
                       setStreamingContent(fullContent);
+                      setIsPendingResponse(false); // First chunk received
                     }
                     
                     if (data.step) {
+                      setIsPendingResponse(false); // Thinking step received
                       const step: ThinkingStep = {
                         ...data.step,
                         timestamp: new Date(data.step.timestamp)
@@ -864,6 +875,7 @@ export function ReplitAgentPanelV3({
             setActiveThinking([]);
           } finally {
             setIsWorking(false);
+            setIsPendingResponse(false);
             // Call onBuildComplete callback when bootstrap build finishes
             if (onBuildComplete) {
               onBuildComplete();
@@ -987,6 +999,7 @@ export function ReplitAgentPanelV3({
     
     setInput('');
     setIsWorking(true);
+    setIsPendingResponse(true); // Show skeleton until first chunk
     setStreamingContent('');
 
     // Show thinking steps if extended thinking is enabled
@@ -1097,10 +1110,12 @@ export function ReplitAgentPanelV3({
               if (data.content) {
                 fullContent += data.content;
                 setStreamingContent(fullContent);
+                setIsPendingResponse(false); // First chunk received
               }
               
               // Handle thinking events from backend
               if (data.step) {
+                setIsPendingResponse(false); // Thinking step received
                 // Normalize timestamp from ISO string to Date object
                 const step: ThinkingStep = {
                   ...data.step,
@@ -1260,6 +1275,7 @@ export function ReplitAgentPanelV3({
       setActiveThinking([]);
     } finally {
       setIsWorking(false);
+      setIsPendingResponse(false);
       // Call onBuildComplete callback when build/execution finishes (for IDE integration)
       if (agentMode === 'build' && onBuildComplete) {
         onBuildComplete();
@@ -1449,129 +1465,38 @@ export function ReplitAgentPanelV3({
       <>
       {/* Messages */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <ScrollArea ref={scrollRef} className="flex-1 px-4 py-3">
-          <div className="space-y-4">
+        {/* Sync Indicator */}
+        <ConversationSyncIndicator
+          lastSyncedAt={conversationId ? getLastSyncedAt(conversationId) : undefined}
+        />
+        
+        <ScrollArea ref={scrollRef} className="flex-1 px-3 sm:px-4 py-3">
+          <div className="space-y-4 sm:space-y-5">
+          <AnimatePresence mode="popLayout">
           {messages.map((message) => (
-            <div
+            <EnhancedChatMessage
               key={message.id}
-              className={cn(
-                "flex gap-3",
-                message.role === 'user' && "flex-row-reverse"
-              )}
-              data-testid={`message-${message.id}`}
-            >
-              {/* Avatar */}
-              <Avatar className="h-8 w-8 shrink-0" data-testid={`avatar-${message.role}-${message.id}`}>
-                <AvatarFallback className={cn(
-                  "text-xs font-semibold",
-                  message.role === 'assistant' 
-                    ? "bg-surface-tertiary-solid text-primary" 
-                    : "bg-surface-solid text-muted-foreground"
-                )}>
-                  {message.role === 'assistant' ? <Sparkles className="h-4 w-4" /> : 'You'}
-                </AvatarFallback>
-              </Avatar>
-
-              {/* Message content */}
-              <div className={cn(
-                "flex-1 space-y-2 max-w-[85%]",
-                message.role === 'user' && "flex flex-col items-end"
-              )}>
-                {/* Thinking Display */}
-                {message.thinking && message.thinking.length > 0 && (
-                  <div className="w-full">
-                    {isCompactMode ? (
-                      <ThinkingDisplayCompact
-                        steps={message.thinking}
-                        isActive={message.isStreaming}
-                      />
-                    ) : (
-                      <ThinkingDisplay
-                        steps={message.thinking}
-                        isActive={message.isStreaming}
-                        mode="detailed"
-                      />
-                    )}
-                  </div>
-                )}
-
-                {/* Message bubble with Rich Content */}
-                <div 
-                  className={cn(
-                    "rounded-lg px-3 py-2 relative group",
-                    message.role === 'assistant'
-                      ? "bg-muted text-foreground"
-                      : "bg-primary text-primary-foreground"
-                  )}
-                  data-testid={`message-content-${message.id}`}
-                >
-                  {message.role === 'assistant' && message.content ? (
-                    <RichMessageContent content={message.content} />
-                  ) : (
-                    <p className="text-sm whitespace-pre-wrap break-words" data-testid={`message-text-${message.id}`}>
-                      {message.content}
-                    </p>
-                  )}
-
-                  {/* Copy button */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute -top-2 -right-2 h-6 w-6 bg-surface-hover-solid hover:bg-surface-tertiary-solid transition-colors"
-                    onClick={() => handleCopyMessage(message.content)}
-                    data-testid={`button-copy-${message.id}`}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                </div>
-
-                {/* Tasks - Inline task checklist like Replit */}
-                {message.tasks && message.tasks.length > 0 && (
-                  <div className="w-full mt-2" data-testid={`tasks-${message.id}`}>
-                    <TaskMessage tasks={message.tasks} />
-                  </div>
-                )}
-
-                {/* Actions - Inline approve/reject like Replit */}
-                {message.actions && message.actions.length > 0 && (
-                  <div className="w-full mt-2" data-testid={`actions-${message.id}`}>
-                    <ActionMessage 
-                      actions={message.actions as Action[]}
-                      onApprove={(action) => handleApproveAction(action)}
-                      onReject={(action) => handleRejectAction(action)}
-                    />
-                  </div>
-                )}
-
-                {/* Tool Executions - inline in chat like Replit */}
-                {message.toolExecutions && message.toolExecutions.length > 0 && (
-                  <div className="w-full mt-2" data-testid={`tool-executions-${message.id}`}>
-                    <ToolExecutionList 
-                      toolExecutions={message.toolExecutions} 
-                      showFilters={false}
-                      compact={true}
-                    />
-                  </div>
-                )}
-
-                {/* Metadata Footer */}
-                {message.metadata && message.role === 'assistant' && (
-                  <MessageMetadataFooter
-                    metadata={message.metadata}
-                    messageId={message.id}
-                    compact={isCompactMode}
-                  />
-                )}
-              </div>
-            </div>
+              message={message}
+              isCompactMode={isCompactMode}
+              onCopy={handleCopyMessage}
+              onApproveAction={handleApproveAction}
+              onRejectAction={handleRejectAction}
+            />
           ))}
 
           {/* Active Thinking Steps (while streaming) */}
           {isWorking && activeThinking.length > 0 && (
-            <div className="flex gap-3" data-testid="active-thinking-container">
-              <Avatar className="h-8 w-8" data-testid="active-thinking-avatar">
-                <AvatarFallback className="bg-surface-tertiary-solid text-primary text-xs">
-                  <Sparkles className="h-4 w-4" />
+            <motion.div 
+              key="active-thinking"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="flex gap-3" 
+              data-testid="active-thinking-container"
+            >
+              <Avatar className="h-9 w-9 ring-2 ring-offset-2 ring-offset-background ring-primary/30 shadow-lg" data-testid="active-thinking-avatar">
+                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs">
+                  <Sparkles className="h-4 w-4 animate-pulse" />
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1" data-testid="active-thinking-display">
@@ -1588,42 +1513,50 @@ export function ReplitAgentPanelV3({
                   />
                 )}
               </div>
-            </div>
+            </motion.div>
           )}
 
-          {/* Streaming message */}
+          {/* Streaming message with enhanced styling */}
           {isWorking && streamingContent && (
-            <div className="flex gap-3" data-testid="streaming-message-container">
-              <Avatar className="h-8 w-8" data-testid="streaming-avatar">
-                <AvatarFallback className="bg-surface-tertiary-solid text-primary text-xs">
-                  <Sparkles className="h-4 w-4" />
+            <motion.div 
+              key="streaming"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="flex gap-3" 
+              data-testid="streaming-message-container"
+            >
+              <Avatar className="h-9 w-9 ring-2 ring-offset-2 ring-offset-background ring-primary/30 shadow-lg" data-testid="streaming-avatar">
+                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs">
+                  <Sparkles className="h-4 w-4 animate-pulse" />
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <div className="bg-muted text-foreground rounded-lg px-3 py-2 max-w-[85%]" data-testid="streaming-content">
-                  <p className="text-sm whitespace-pre-wrap break-words" data-testid="streaming-text">
+                <motion.div 
+                  className="bg-muted/80 text-foreground rounded-2xl rounded-bl-md px-4 py-3 max-w-[85%] shadow-md border border-border/50" 
+                  data-testid="streaming-content"
+                  initial={{ scale: 0.95 }}
+                  animate={{ scale: 1 }}
+                >
+                  <p className="text-sm whitespace-pre-wrap break-words leading-relaxed" data-testid="streaming-text">
                     {streamingContent}
-                    <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1 align-middle" data-testid="streaming-cursor" />
+                    <motion.span 
+                      className="inline-block w-0.5 h-4 bg-primary ml-1 align-middle"
+                      animate={{ opacity: [1, 0] }}
+                      transition={{ duration: 0.8, repeat: Infinity }}
+                      data-testid="streaming-cursor" 
+                    />
                   </p>
-                </div>
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
           )}
 
-          {/* Loading indicator */}
-          {isWorking && !streamingContent && activeThinking.length === 0 && (
-            <div className="flex gap-3" data-testid="loading-indicator">
-              <Avatar className="h-8 w-8" data-testid="loading-avatar">
-                <AvatarFallback className="bg-surface-tertiary-solid text-primary text-xs">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg" data-testid="loading-message">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" data-testid="loading-spinner" />
-                <span className="text-sm text-muted-foreground" data-testid="loading-text">Initializing...</span>
-              </div>
-            </div>
+          {/* Loading indicator - Shows streaming skeleton while waiting for first response */}
+          {isPendingResponse && !streamingContent && activeThinking.length === 0 && (
+            <StreamingSkeleton key="skeleton" />
           )}
+          </AnimatePresence>
           
           {/* Scroll sentinel - always at the bottom */}
           <div ref={lastMessageRef} className="h-0" />
@@ -1674,7 +1607,7 @@ export function ReplitAgentPanelV3({
             />
           )}
           
-          {/* Chat input with inline toolbar */}
+          {/* Chat input with inline toolbar - Enhanced for mobile touch */}
           <div className="relative">
             <Textarea
               ref={textareaRef}
@@ -1686,20 +1619,40 @@ export function ReplitAgentPanelV3({
                 agentMode === 'edit' ? "Describe the changes you want to make..." :
                 "Ask a question or describe what you want to plan..."
               }
-              className="pr-12 resize-none text-sm min-h-[60px] max-h-[200px]"
+              className={cn(
+                "pr-14 resize-none text-sm min-h-[60px] max-h-[200px]",
+                "rounded-xl border-2 border-border/50 focus:border-primary/50",
+                "transition-all duration-200 shadow-sm focus:shadow-md",
+                "placeholder:text-muted-foreground/70"
+              )}
               disabled={isWorking}
               data-testid="input-message"
             />
-            <Button
-              size="icon"
-              onClick={handleSend}
-              disabled={!input.trim() || isWorking || !conversationId}
-              className="absolute bottom-2 right-2 h-7 w-7 rounded"
-              data-testid="button-send"
-              title={!conversationId ? "Initializing conversation..." : undefined}
+            <motion.div 
+              className="absolute bottom-2 right-2"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <Send className="h-3.5 w-3.5" />
-            </Button>
+              <Button
+                size="icon"
+                onClick={handleSend}
+                disabled={!input.trim() || isWorking || !conversationId}
+                className={cn(
+                  "h-10 w-10 sm:h-8 sm:w-8 rounded-xl",
+                  "shadow-md transition-all duration-200",
+                  "min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0",
+                  input.trim() && conversationId && !isWorking && "bg-primary hover:bg-primary/90"
+                )}
+                data-testid="button-send"
+                title={!conversationId ? "Initializing conversation..." : undefined}
+              >
+                {isWorking ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </motion.div>
           </div>
           
           {/* Chat Toolbar - Replit Agent 3 inline icons for quick toggle access */}
@@ -1742,47 +1695,79 @@ export function ReplitAgentPanelV3({
           />
         </div>
         
-        {/* Quick actions */}
+        {/* Quick actions - Enhanced with 44pt touch targets for mobile */}
+        <AnimatePresence>
         {!isWorking && messages.length === 1 && (
-          <div className="flex flex-wrap gap-2 mt-3" data-testid="quick-actions">
-            <Button
-              variant="outline"
-              size="sm"
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="grid grid-cols-2 gap-1.5 sm:gap-2 mt-2 sm:mt-3" 
+            data-testid="quick-actions"
+          >
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setInput("Build a full-stack dashboard with real-time charts, data tables with sorting/filtering, user authentication, and dark mode support")}
-              className="text-xs"
+              className={cn(
+                "flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg sm:rounded-xl",
+                "bg-muted/50 hover:bg-muted border border-border/50",
+                "transition-all duration-200 hover:shadow-md",
+                "text-left min-h-[36px] sm:min-h-[44px]"
+              )}
               data-testid="quick-action-dashboard"
             >
-              Build Dashboard
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+              <span className="text-sm sm:text-lg">📊</span>
+              <span className="text-[11px] sm:text-sm font-medium">Dashboard</span>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setInput("Add Stripe payment integration with subscription billing, usage tracking, and customer portal")}
-              className="text-xs"
+              className={cn(
+                "flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg sm:rounded-xl",
+                "bg-muted/50 hover:bg-muted border border-border/50",
+                "transition-all duration-200 hover:shadow-md",
+                "text-left min-h-[36px] sm:min-h-[44px]"
+              )}
               data-testid="quick-action-payments"
             >
-              Add Payments
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+              <span className="text-sm sm:text-lg">💳</span>
+              <span className="text-[11px] sm:text-sm font-medium">Payments</span>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setInput("Implement user authentication with email/password, social login (Google, GitHub), session management, and protected routes")}
-              className="text-xs"
+              className={cn(
+                "flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg sm:rounded-xl",
+                "bg-muted/50 hover:bg-muted border border-border/50",
+                "transition-all duration-200 hover:shadow-md",
+                "text-left min-h-[36px] sm:min-h-[44px]"
+              )}
               data-testid="quick-action-auth"
             >
-              Add Auth
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+              <span className="text-sm sm:text-lg">🔐</span>
+              <span className="text-[11px] sm:text-sm font-medium">Auth</span>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setInput("Debug and fix all TypeScript errors, optimize performance bottlenecks, and add proper error handling throughout the codebase")}
-              className="text-xs"
+              className={cn(
+                "flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg sm:rounded-xl",
+                "bg-muted/50 hover:bg-muted border border-border/50",
+                "transition-all duration-200 hover:shadow-md",
+                "text-left min-h-[36px] sm:min-h-[44px]"
+              )}
               data-testid="quick-action-debug"
             >
-              Debug & Optimize
-            </Button>
-          </div>
+              <span className="text-sm sm:text-lg">🔧</span>
+              <span className="text-[11px] sm:text-sm font-medium">Debug</span>
+            </motion.button>
+          </motion.div>
         )}
+        </AnimatePresence>
       </div>
         </>
 
