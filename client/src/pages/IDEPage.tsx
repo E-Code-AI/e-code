@@ -1001,7 +1001,12 @@ export default function IDEPage() {
   if (deviceType === 'mobile' || deviceType === 'tablet') {
     return (
       <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading workspace..." />}>
-        <UnifiedIDELayout projectId={normalizedProjectId} />
+        <UnifiedIDELayout 
+          projectId={normalizedProjectId}
+          bootstrapToken={bootstrapToken}
+          onWorkspaceComplete={handleWorkspaceComplete}
+          onWorkspaceError={handleWorkspaceError}
+        />
       </Suspense>
     );
   }

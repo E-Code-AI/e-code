@@ -67,6 +67,9 @@ const MobileMoreMenu = lazy(() => import('@/components/mobile/MobileMoreMenu').t
 interface UnifiedIDELayoutProps {
   projectId: string;
   className?: string;
+  bootstrapToken?: string | null;
+  onWorkspaceComplete?: () => void;
+  onWorkspaceError?: (error: string) => void;
 }
 
 type MobileTab = 'agent' | 'files' | 'console' | 'preview' | 'more';
@@ -77,7 +80,13 @@ const SWIPE_VELOCITY_THRESHOLD = 0.3;
 
 const mobileTabOrder: MobileTab[] = ['agent', 'files', 'console', 'preview', 'more'];
 
-function UnifiedIDELayout({ projectId, className }: UnifiedIDELayoutProps) {
+function UnifiedIDELayout({ 
+  projectId, 
+  className,
+  bootstrapToken,
+  onWorkspaceComplete,
+  onWorkspaceError,
+}: UnifiedIDELayoutProps) {
   const deviceType = useDeviceType();
   const { toast } = useToast();
   const isConnected = useConnectionStatus();
