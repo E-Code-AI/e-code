@@ -146,7 +146,7 @@ export function AIModelSelector({
               <SelectTrigger className="w-full min-h-[44px]" data-testid="select-ai-model">
                 <SelectValue placeholder="Select AI model..." />
               </SelectTrigger>
-              <SelectContent className="w-[280px] sm:w-[320px] max-w-[90vw]">
+              <SelectContent className="w-[420px] sm:w-[520px] max-w-[95vw]">
                 {availableModels.map((model) => {
                   const ProviderIcon = getProviderIcon(model.provider);
                   const providerColor = getProviderColor(model.provider);
@@ -162,11 +162,11 @@ export function AIModelSelector({
                       <div className="flex items-center gap-2 py-1">
                         <div className={`w-2 h-2 rounded-full shrink-0 ${providerColor}`} />
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-xs sm:text-sm truncate">
+                          <div className="font-medium text-xs sm:text-sm">
                             {model.name}
                             {!isAvailable && <span className="text-[10px] sm:text-xs text-red-500 ml-1">(N/A)</span>}
                           </div>
-                          <div className="text-[10px] sm:text-xs text-muted-foreground truncate">{model.description}</div>
+                          <div className="text-[10px] sm:text-xs text-muted-foreground">{model.description}</div>
                         </div>
                         {model.supportsStreaming && isAvailable && (
                           <Badge variant="secondary" className="text-[10px] shrink-0">Stream</Badge>
@@ -251,7 +251,7 @@ export function AIModelSelector({
               <SelectValue placeholder="Select your preferred AI model..." />
             )}
           </SelectTrigger>
-          <SelectContent className="max-h-[400px] w-[340px] sm:w-[400px] max-w-[90vw]">
+          <SelectContent className="max-h-[400px] w-[420px] sm:w-[520px] max-w-[95vw]">
             {availableModels.map((model) => {
               const ModelIcon = getProviderIcon(model.provider);
               const modelColor = getProviderColor(model.provider);
