@@ -98,11 +98,8 @@ const DeploymentManager = lazy(() => import('@/components/DeploymentManager').th
 const WebPreview = lazy(() => import('@/components/WebPreview').then(module => ({ default: module.WebPreview })));
 const PackageViewer = lazy(() => import('@/components/PackageViewer').then(module => ({ default: module.PackageViewer })));
 
-// Device-specific views (lazy loaded)
-// Import from index for tablet (has default export, avoids double-lazy-loading)
-const LazyTabletIDEView = lazy(() => import('@/components/tablet'));
-// Import from index for mobile (will add default export)
-const MobileIDEView = lazy(() => import('@/components/mobile'));
+// Unified responsive IDE layout (replaces separate mobile/tablet views)
+const UnifiedIDELayout = lazy(() => import('@/components/ide/UnifiedIDELayout'));
 
 interface Tab {
   id: string;
@@ -1000,28 +997,11 @@ export default function IDEPage() {
   // Optional chaining defends against guard regressions
   const normalizedProjectId = String(project?.id ?? projectId);
   
-  if (deviceType === 'mobile') {
+  // Use UnifiedIDELayout for mobile and tablet (responsive layout)
+  if (deviceType === 'mobile' || deviceType === 'tablet') {
     return (
-      <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading mobile workspace..." />}>
-        <MobileIDEView 
-          projectId={normalizedProjectId} 
-          bootstrapToken={bootstrapToken}
-          onWorkspaceComplete={handleWorkspaceComplete}
-          onWorkspaceError={handleWorkspaceError}
-        />
-      </Suspense>
-    );
-  }
-  
-  if (deviceType === 'tablet') {
-    return (
-      <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading tablet workspace..." />}>
-        <LazyTabletIDEView 
-          projectId={normalizedProjectId}
-          bootstrapToken={bootstrapToken}
-          onWorkspaceComplete={handleWorkspaceComplete}
-          onWorkspaceError={handleWorkspaceError}
-        />
+      <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading workspace..." />}>
+        <UnifiedIDELayout projectId={normalizedProjectId} />
       </Suspense>
     );
   }
