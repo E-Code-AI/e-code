@@ -609,6 +609,14 @@ export function ReplitAgentPanelV3({
         };
 
         setMessages(prev => [...prev, userMessage]);
+        
+        // ✅ FIX (Dec 10, 2025): Persist user message to backend database
+        persistMessageToBackend({
+          role: 'user',
+          content: userMessage.content,
+          timestamp: userMessage.timestamp,
+        });
+        
         setInput('');
         setIsWorking(true);
         setStreamingContent('');
@@ -779,15 +787,27 @@ export function ReplitAgentPanelV3({
             }
 
             // Update existing assistant message with final content
+            const finalContent = fullContent || "I'll help you build that! Let me start working on it...";
             setMessages(prev => prev.map(msg =>
               msg.id === autoStartAssistantMessageId
                 ? {
                     ...msg,
-                    content: fullContent || "I'll help you build that! Let me start working on it...",
+                    content: finalContent,
                     isStreaming: false
                   }
                 : msg
             ));
+            
+            // ✅ FIX (Dec 10, 2025): Persist assistant message to backend database
+            // Use current timestamp (not the one captured before streaming) to reflect completion time
+            persistMessageToBackend({
+              role: 'assistant',
+              content: finalContent,
+              timestamp: new Date(),
+              metadata: assistantMessage.metadata,
+              extendedThinking: thinkingSteps.length > 0 ? { steps: thinkingSteps } : undefined,
+            });
+            
             setStreamingContent('');
             setActiveThinking([]);
             
