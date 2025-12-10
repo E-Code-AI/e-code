@@ -123,7 +123,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     setIsLoading(true);
     
     try {
-      const data = await apiRequest('POST', `/api/projects/${projectId}/preview/start`);
+      const data = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`);
       
       if (data.success && data.preview) {
         const preview = data.preview;
@@ -174,7 +174,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     if (!projectId) return;
     
     try {
-      await apiRequest('POST', `/api/projects/${projectId}/preview/stop`);
+      await apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`);
       setPreviewUrl(null);
       setPreviewStatus({ status: 'idle' });
       setSelectedPort(null);
@@ -198,7 +198,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     if (!projectId || !previewStatus.ports?.includes(port)) return;
     
     try {
-      const data = await apiRequest('POST', `/api/projects/${projectId}/preview/switch-port`, {
+      const data = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/switch-port`, {
         port
       });
       
@@ -467,7 +467,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     if (!projectId) return;
     
     try {
-      const data = await apiRequest('GET', `/api/projects/${projectId}/preview/status`);
+      const data = await apiRequest('GET', `/api/preview/projects/${projectId}/preview/status`);
       
       if (data.status !== 'stopped') {
         setPreviewStatus({
