@@ -428,7 +428,7 @@ export default function About() {
             whiteboard sketch to global deployment.
           </p>
           <div className="flex gap-4 justify-center flex-col sm:flex-row">
-            <Button size="lg" onClick={() => navigate(user ? '/dashboard' : '/auth')}>
+            <Button size="lg" onClick={() => navigate(user ? '/dashboard' : '/login')}>
               Launch your workspace
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

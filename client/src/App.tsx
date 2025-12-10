@@ -1,5 +1,5 @@
 import { useEffect, useState, lazy, Suspense } from "react";
-import { Switch, Route, useLocation, useRoute } from "wouter";
+import { Switch, Route, useLocation, useRoute, Redirect } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
@@ -377,7 +377,7 @@ function AppContent() {
                 <Switch>
                 <Route path="/login" component={Login} />
                 {/* Redirect /auth to /login for backward compatibility */}
-                <Route path="/auth">{() => { window.location.href = '/login'; return null; }}</Route>
+                <Route path="/auth" component={() => <Redirect to="/login" />} />
                 <Route path="/register" component={Register} />
 
           <Route path="/runtime-test" component={RuntimePublicPage} />
