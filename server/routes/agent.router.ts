@@ -113,14 +113,63 @@ router.post('/recommend-model', async (req, res) => {
   }
 });
 
+// GET /api/agent/conversation - Get conversation by projectId query param
+router.get('/conversation', async (req, res) => {
+  try {
+    const projectIdStr = req.query.projectId as string;
+    const userId = req.user!.id;
+
+    if (!projectIdStr) {
+      return res.status(400).json({ error: 'projectId query parameter required' });
+    }
+
+    const projectId = parseInt(projectIdStr, 10);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid projectId - must be a number' });
+    }
+
+    const { aiConversations } = await import('@shared/schema');
+    const { eq, and, desc } = await import('drizzle-orm');
+
+    const [conversation] = await db
+      .select()
+      .from(aiConversations)
+      .where(and(
+        eq(aiConversations.projectId, projectId),
+        eq(aiConversations.userId, userId)
+      ))
+      .orderBy(desc(aiConversations.createdAt))
+      .limit(1);
+
+    if (!conversation) {
+      return res.status(404).json({ error: 'No conversation found for this project' });
+    }
+
+    res.json({
+      conversationId: conversation.id,
+      agentMode: conversation.agentMode,
+      projectId: conversation.projectId,
+    });
+  } catch (error: any) {
+    console.error('[AgentRouter] Error fetching conversation:', error);
+    res.status(500).json({ error: 'Failed to fetch conversation' });
+  }
+});
+
 // POST /api/agent/conversation - Create or get conversation for project
 router.post('/conversation', async (req, res) => {
   try {
-    const { projectId, initialPrompt } = req.body;
+    const { projectId: projectIdRaw, initialPrompt } = req.body;
     const userId = req.user!.id;
 
     const { aiConversations } = await import('@shared/schema');
     const { eq, and, desc } = await import('drizzle-orm');
+
+    // Parse projectId as integer
+    const projectId = projectIdRaw ? parseInt(String(projectIdRaw), 10) : null;
+    if (projectIdRaw && (projectId === null || isNaN(projectId))) {
+      return res.status(400).json({ error: 'Invalid projectId - must be a number' });
+    }
 
     // If projectId provided, try to find existing conversation
     if (projectId) {
@@ -128,7 +177,7 @@ router.post('/conversation', async (req, res) => {
         .select()
         .from(aiConversations)
         .where(and(
-          eq(aiConversations.projectId, projectId.toString()),
+          eq(aiConversations.projectId, projectId),
           eq(aiConversations.userId, userId)
         ))
         .orderBy(desc(aiConversations.createdAt))
@@ -143,11 +192,15 @@ router.post('/conversation', async (req, res) => {
       }
     }
 
-    // Create new conversation (projectId can be null)
+    // Create new conversation (projectId is required per schema)
+    if (!projectId) {
+      return res.status(400).json({ error: 'projectId is required to create a conversation' });
+    }
+
     const [newConversation] = await db
       .insert(aiConversations)
       .values({
-        projectId: projectId ? projectId.toString() : null,
+        projectId: projectId,
         userId: userId,
         messages: [],
         agentMode: 'build', // Default to build mode
@@ -352,15 +405,8 @@ router.post('/conversation/:id/messages', async (req, res) => {
       });
     }
 
-    // Get projectId from conversation - handle both numeric and string formats
-    // projectId is stored as string in aiConversations table
-    // ✅ FIX (Dec 9, 2025): Allow null projectId for non-project conversations (schema made nullable)
-    // IMPORTANT: Only parse if the ENTIRE string is numeric (to avoid parseInt('550e8400...')=550)
-    let projectId: number | null = null;
-    if (conversation.projectId && /^\d+$/.test(conversation.projectId)) {
-      projectId = parseInt(conversation.projectId, 10);
-    }
-    // For non-numeric or missing projectIds, projectId remains null (allowed now that schema is nullable)
+    // Get projectId from conversation - it's an integer column now
+    const projectId = conversation.projectId;
 
     // Insert message into agentMessages table (projectId can be null for non-project conversations)
     const [savedMessage] = await db
