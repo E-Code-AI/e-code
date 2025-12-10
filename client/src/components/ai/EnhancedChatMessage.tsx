@@ -114,44 +114,48 @@ export const EnhancedChatMessage = memo(function EnhancedChatMessage({
       )}
       data-testid={`enhanced-message-${message.id}`}
     >
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.1, ...springConfig }}
-      >
-        <Avatar 
-          className={cn(
-            "h-7 w-7 sm:h-8 sm:w-8 shrink-0 ring-1 sm:ring-2 ring-offset-1 sm:ring-offset-2 ring-offset-background transition-shadow duration-200",
-            isUser 
-              ? "ring-primary/20" 
-              : isError 
-                ? "ring-destructive/20" 
-                : "ring-primary/30",
-            "shadow-lg"
-          )}
-          data-testid={`enhanced-avatar-${message.role}-${message.id}`}
+      {/* Avatar - hidden on mobile for compact design */}
+      {!isCompactMode && (
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1, ...springConfig }}
+          className="hidden sm:block"
         >
-          <AvatarFallback 
+          <Avatar 
             className={cn(
-              "text-xs font-semibold transition-colors",
+              "h-8 w-8 shrink-0 ring-2 ring-offset-2 ring-offset-background transition-shadow duration-200",
               isUser 
-                ? "bg-primary text-primary-foreground"
-                : isError
-                  ? "bg-destructive/10 text-destructive"
-                  : "bg-gradient-to-br from-primary/20 to-primary/10 text-primary"
+                ? "ring-primary/20" 
+                : isError 
+                  ? "ring-destructive/20" 
+                  : "ring-primary/30",
+              "shadow-lg"
             )}
+            data-testid={`enhanced-avatar-${message.role}-${message.id}`}
           >
-            {isUser ? (
-              <span className="text-sm font-medium">You</span>
-            ) : (
-              <Sparkles className={cn(
-                "h-4 w-4",
-                message.isStreaming && "animate-pulse"
-              )} />
-            )}
-          </AvatarFallback>
-        </Avatar>
-      </motion.div>
+            <AvatarFallback 
+              className={cn(
+                "text-xs font-semibold transition-colors",
+                isUser 
+                  ? "bg-primary text-primary-foreground"
+                  : isError
+                    ? "bg-destructive/10 text-destructive"
+                    : "bg-gradient-to-br from-primary/20 to-primary/10 text-primary"
+              )}
+            >
+              {isUser ? (
+                <span className="text-sm font-medium">You</span>
+              ) : (
+                <Sparkles className={cn(
+                  "h-4 w-4",
+                  message.isStreaming && "animate-pulse"
+                )} />
+              )}
+            </AvatarFallback>
+          </Avatar>
+        </motion.div>
+      )}
 
       <div className={cn(
         "flex-1 space-y-2 max-w-[85%] sm:max-w-[80%]",
@@ -195,10 +199,9 @@ export const EnhancedChatMessage = memo(function EnhancedChatMessage({
                     "rounded-bl-md"
                   )
                 : cn(
-                    "bg-muted/80 text-foreground border border-border/50",
-                    "shadow-md shadow-black/5 dark:shadow-black/20",
-                    "rounded-bl-md",
-                    "backdrop-blur-sm"
+                    "bg-card text-card-foreground border border-border",
+                    "shadow-sm",
+                    "rounded-bl-md"
                   ),
             "group-hover:shadow-lg transition-shadow duration-300"
           )}
