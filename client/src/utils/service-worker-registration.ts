@@ -173,7 +173,7 @@ window.addEventListener('appinstalled', () => {
   deferredPrompt = null;
 
   // Track installation analytics
-  if (typeof gtag !== 'undefined') {
+  if (typeof (window as any).gtag !== 'undefined') {
     (window as any).gtag('event', 'pwa_install', {
       event_category: 'engagement',
       event_label: 'PWA Installed',

@@ -404,6 +404,7 @@ function UnifiedIDELayout({
           'touch-manipulation',
           className
         )}
+        data-testid="mobile-layout"
       >
         <motion.div 
           className="flex-1 overflow-hidden"
@@ -411,6 +412,7 @@ function UnifiedIDELayout({
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.1}
           onDragEnd={(_, info) => handleMobileSwipe(info)}
+          data-testid="mobile-swipe-area"
         >
           <AnimatePresence mode="wait">
             <motion.div
@@ -447,6 +449,7 @@ function UnifiedIDELayout({
           'touch-manipulation select-none',
           className
         )}
+        data-testid="tablet-layout"
         onTouchStart={handleTabletTouchStart}
         onTouchEnd={handleTabletTouchEnd}
       >
@@ -458,6 +461,7 @@ function UnifiedIDELayout({
               exit={{ x: -280 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className="fixed left-0 top-0 z-40 h-full bg-background border-r border-border shadow-xl w-[280px]"
+              data-testid="tablet-drawer"
             >
               <div className="flex items-center justify-between h-14 px-4 border-b border-border bg-muted/30">
                 <h2 className="text-sm font-semibold">Files</h2>
@@ -512,7 +516,7 @@ function UnifiedIDELayout({
             </div>
           </div>
 
-          <div className="flex items-center gap-1 border-b border-border bg-background/95 backdrop-blur p-1">
+          <div className="flex items-center gap-1 border-b border-border bg-background/95 backdrop-blur p-1" data-testid="tablet-panel-tabs">
             {(['editor', 'preview', 'terminal', 'agent'] as TabletPanel[]).map((panel) => (
               <Button
                 key={panel}
@@ -520,6 +524,7 @@ function UnifiedIDELayout({
                 size="sm"
                 onClick={() => setTabletPanel(panel)}
                 className="flex-1 h-10 touch-manipulation"
+                data-testid={`tablet-tab-${panel}`}
               >
                 {panel === 'editor' && <Code className="h-4 w-4 mr-1" />}
                 {panel === 'preview' && <Monitor className="h-4 w-4 mr-1" />}
@@ -553,7 +558,7 @@ function UnifiedIDELayout({
   }
 
   return (
-    <div className={cn("flex h-screen bg-[var(--ecode-background)] overflow-hidden", className)}>
+    <div className={cn("flex h-screen bg-[var(--ecode-background)] overflow-hidden", className)} data-testid="desktop-layout">
       <ReplitActivityBar
         activeItem={activeActivityItem}
         onItemClick={handleActivityItemClick}
@@ -613,9 +618,9 @@ function UnifiedIDELayout({
           onAddTab={() => setShowToolsSheet(true)}
         />
         
-        <ResizablePanelGroup direction="horizontal" className="flex-1">
+        <ResizablePanelGroup direction="horizontal" className="flex-1" data-testid="desktop-panel-group">
           {!isSidebarCollapsed && (
-            <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
+            <ResizablePanel defaultSize={30} minSize={20} maxSize={40} data-testid="desktop-left-panel">
               <div className="h-full flex flex-col border-r">
                 <Tabs value={leftPanelTab} onValueChange={setLeftPanelTab} className="h-full flex flex-col">
                   <TabsList className="w-full justify-start rounded-none border-b">
@@ -685,7 +690,7 @@ function UnifiedIDELayout({
           
           {!isSidebarCollapsed && <ResizableHandle withHandle />}
           
-          <ResizablePanel defaultSize={isSidebarCollapsed ? (showFileExplorer ? 82 : 100) : (showFileExplorer ? 52 : 70)} minSize={30}>
+          <ResizablePanel defaultSize={isSidebarCollapsed ? (showFileExplorer ? 82 : 100) : (showFileExplorer ? 52 : 70)} minSize={30} data-testid="desktop-main-panel">
             <div className="h-full flex flex-col">
               {renderDesktopContent()}
             </div>
@@ -695,7 +700,7 @@ function UnifiedIDELayout({
             <>
               <ResizableHandle withHandle />
               
-              <ResizablePanel defaultSize={18} minSize={15} maxSize={30}>
+              <ResizablePanel defaultSize={18} minSize={15} maxSize={30} data-testid="desktop-right-panel">
                 <div className="h-full flex flex-col border-l">
                   <div className="h-10 border-b flex items-center justify-between px-3">
                     <h3 className="font-semibold text-sm">Files</h3>
