@@ -302,10 +302,12 @@ export function useIDEWorkspace(projectId: string) {
     },
   });
 
+  // RATE LIMIT FIX: Increased refetchInterval from 30s to 60s
   const { data: gitStatus } = useQuery<GitStatus>({
     queryKey: ['/api/git/status'],
     enabled: !!projectId && !!user,
-    refetchInterval: 30000,
+    refetchInterval: 60000,
+    staleTime: 30000,
   });
 
   // ========== DERIVED STATE ==========

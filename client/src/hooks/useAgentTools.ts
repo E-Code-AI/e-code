@@ -129,31 +129,36 @@ export function useAgentTools(projectId?: number) {
   const [localAppTesting, setLocalAppTesting] = useState(true);
 
   // Fetch user preferences from backend
+  // RATE LIMIT FIX: Increased staleTime from 30s to 2min to reduce API calls
   const preferencesQuery = useQuery<AgentPreferences>({
     queryKey: ['/api/agent/preferences'],
-    staleTime: 30000,
+    staleTime: 120000,
   });
 
   // Fetch available models
+  // RATE LIMIT FIX: Increased staleTime from 60s to 5min (models rarely change)
   const modelsQuery = useQuery<ModelsResponse>({
     queryKey: ['/api/agent/models'],
-    staleTime: 60000,
+    staleTime: 300000,
   });
 
   // Fetch effective model based on current settings
+  // RATE LIMIT FIX: Increased staleTime from 10s to 2min
   const effectiveModelQuery = useQuery<EffectiveModelResponse>({
     queryKey: ['/api/agent/effective-model', { complexity: 'medium' }],
     enabled: !!preferencesQuery.data,
-    staleTime: 10000,
+    staleTime: 120000,
   });
 
   // Fetch tools status
+  // RATE LIMIT FIX: Increased staleTime from 60s to 5min (tools status rarely changes)
   const toolsStatusQuery = useQuery<ToolsStatusResponse>({
     queryKey: ['/api/agent/tools/status'],
-    staleTime: 60000,
+    staleTime: 300000,
   });
 
   // Fetch video replays for project - using /tools/ path
+  // RATE LIMIT FIX: Increased staleTime from 30s to 2min
   const videoReplaysQuery = useQuery<VideoReplaysResponse>({
     queryKey: ['/api/agent/tools/testing/replays', projectId],
     queryFn: async () => {
@@ -161,10 +166,11 @@ export function useAgentTools(projectId?: number) {
       return apiRequest<VideoReplaysResponse>("GET", `/api/agent/tools/testing/replays?projectId=${projectId}`);
     },
     enabled: !!projectId,
-    staleTime: 30000,
+    staleTime: 120000,
   });
 
   // Fetch test sessions
+  // RATE LIMIT FIX: Increased staleTime from 10s to 2min
   const testSessionsQuery = useQuery<{ sessions: TestSession[]; count: number }>({
     queryKey: ['/api/agent/testing/sessions', projectId],
     queryFn: async () => {
@@ -172,7 +178,7 @@ export function useAgentTools(projectId?: number) {
       return apiRequest<{ sessions: TestSession[]; count: number }>("GET", `/api/agent/testing/sessions?projectId=${projectId}`);
     },
     enabled: !!projectId,
-    staleTime: 10000,
+    staleTime: 120000,
   });
 
   // Convert backend preferences to AgentToolsSettings
