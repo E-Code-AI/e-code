@@ -9,6 +9,9 @@ import { IDEProvider } from '@/components/providers/IDEProvider';
 interface EnhancedTabletIDEViewProps {
   projectId: string;
   className?: string;
+  bootstrapToken?: string | null;
+  onWorkspaceComplete?: () => void;
+  onWorkspaceError?: (error: string) => void;
 }
 
 /**

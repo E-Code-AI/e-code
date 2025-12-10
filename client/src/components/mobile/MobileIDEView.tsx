@@ -41,6 +41,10 @@ const EnhancedMobileTerminal = React.lazy(() =>
   import('./EnhancedMobileTerminal').then(module => ({ default: module.EnhancedMobileTerminal }))
 );
 
+const AutonomousWorkspaceViewer = React.lazy(() => 
+  import('../ide/AutonomousWorkspaceViewer').then(module => ({ default: module.AutonomousWorkspaceViewer }))
+);
+
 const TerminalFallback = () => (
   <TerminalSkeleton className="h-full" />
 );
@@ -64,6 +68,9 @@ export type MobileTab = 'agent' | 'files' | 'console' | 'preview' | 'more';
 interface MobileIDEViewProps {
   projectId: string | number;
   className?: string;
+  bootstrapToken?: string | null;
+  onWorkspaceComplete?: () => void;
+  onWorkspaceError?: (error: string) => void;
 }
 
 const normalizeProjectId = (id: string | number): string => String(id);
@@ -321,7 +328,7 @@ const tabs: { id: MobileTab; label: string; icon: typeof Code }[] = [
   { id: 'more', label: 'Tools', icon: MoreHorizontal },
 ];
 
-export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
+export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspaceComplete, onWorkspaceError }: MobileIDEViewProps) {
   const normalizedProjectId = normalizeProjectId(projectId);
   const prefersReducedMotion = useReducedMotion();
   
@@ -874,6 +881,18 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         onSelectMode={handleSelectBuildMode}
         projectName={pendingBuildPrompt?.slice(0, 50) + (pendingBuildPrompt && pendingBuildPrompt.length > 50 ? '...' : '')}
       />
+      
+      {/* Autonomous Workspace Viewer - shows animated progress during workspace creation */}
+      {bootstrapToken && (
+        <Suspense fallback={null}>
+          <AutonomousWorkspaceViewer
+            bootstrapToken={bootstrapToken}
+            projectId={String(projectId)}
+            onComplete={onWorkspaceComplete}
+            onError={onWorkspaceError}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
