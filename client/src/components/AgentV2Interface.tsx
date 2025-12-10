@@ -44,21 +44,23 @@ export function AgentV2Interface({ projectId }: AgentV2InterfaceProps) {
   const [realTimeUpdates, setRealTimeUpdates] = useState(true);
   const [additionalContext, setAdditionalContext] = useState('');
 
-  // Check for active build
+  // Check for active build - RATE LIMIT FIX: Reduced polling frequency
   const { data: activeBuildData } = useQuery({
     queryKey: ['/api/agent-v2/active-build', projectId],
     queryFn: () => apiRequest('GET', `/api/agent-v2/active-build/${projectId}`).then(res => res.json()),
-    refetchInterval: 5000
+    refetchInterval: 30000, // 30s (was 5s) - prevents rate limit exceeded
+    refetchIntervalInBackground: false,
   });
 
   const activeBuildId = activeBuildData?.buildId;
 
-  // Get build progress
+  // Get build progress - RATE LIMIT FIX: Reduced polling frequency
   const { data: progressData } = useQuery({
     queryKey: ['/api/agent-v2/build-progress', activeBuildId],
     queryFn: () => apiRequest('GET', `/api/agent-v2/build-progress/${activeBuildId}`).then(res => res.json()),
     enabled: !!activeBuildId,
-    refetchInterval: realTimeUpdates ? 1000 : 5000
+    refetchInterval: realTimeUpdates ? 10000 : 30000, // 10s/30s (was 1s/5s) - prevents rate limit
+    refetchIntervalInBackground: false,
   });
 
   const progress = progressData?.progress as AgentV2Progress | undefined;

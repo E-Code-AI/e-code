@@ -148,14 +148,16 @@ export function UniversalAgentInterface({
     return () => window.removeEventListener('resize', handleResize);
   }, [viewport]);
   
-  // Query active session
+  // Query active session - RATE LIMIT FIX: Use much longer intervals
+  // Free tier allows 500 req/60s - aggressive polling was causing rate limit exceeded
   const { data: sessionData, isLoading: sessionLoading } = useQuery({
     queryKey: ['/api/agent/session', projectId],
     queryFn: async () => {
       const res = await apiRequest('GET', `/api/agent/session/${projectId}`);
       return res.json();
     },
-    refetchInterval: activeSession ? 1000 : 5000
+    refetchInterval: activeSession ? 10000 : 30000, // 10s when active, 30s otherwise (was 1s/5s)
+    refetchIntervalInBackground: false, // Don't poll when tab is hidden
   });
   
   // Query agent preferences

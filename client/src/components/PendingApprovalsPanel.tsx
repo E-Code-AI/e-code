@@ -76,11 +76,28 @@ export function PendingApprovalsPanel({
     }
   };
 
-  // Auto-refresh every 5 seconds
+  // Auto-refresh - RATE LIMIT FIX: Reduced from 5s to 30s, pause when hidden
   useEffect(() => {
     fetchPendingActions();
-    const interval = setInterval(fetchPendingActions, 5000);
-    return () => clearInterval(interval);
+    
+    // Only poll when page is visible to prevent rate limit exceeded
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchPendingActions();
+      }
+    };
+    
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchPendingActions();
+      }
+    }, 30000); // 30s instead of 5s
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [projectId]);
 
   // Approve action
