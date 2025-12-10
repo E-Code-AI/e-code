@@ -120,7 +120,8 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
       const response = await fetch(`/api/deployments/${deploymentId}/autoscale/status`);
       return response.json();
     },
-    refetchInterval: 5000,
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
+    refetchIntervalInBackground: false,
   });
 
   // Create or update policy mutation

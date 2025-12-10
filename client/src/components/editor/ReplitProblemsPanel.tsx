@@ -46,7 +46,8 @@ export function ReplitProblemsPanel({ projectId, onFileNavigate }: ReplitProblem
       return res.json();
     },
     enabled: !!projectId,
-    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
+    refetchIntervalInBackground: false,
   });
 
   // Transform diagnostics to Problem format

@@ -108,7 +108,8 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
   const { data: testRuns = [], isLoading, refetch } = useQuery<TestRun[]>({
     queryKey: ['/api/workspace/projects', projectId, 'test-runs'],
     enabled: !!projectId,
-    refetchInterval: 5000,
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
+    refetchIntervalInBackground: false,
   });
 
   useEffect(() => {

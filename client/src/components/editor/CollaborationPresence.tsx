@@ -41,7 +41,8 @@ export function CollaborationPresence({
   // Fetch active collaborators - REAL BACKEND
   const { data: activeCollaborators } = useQuery<Collaborator[]>({
     queryKey: [`/api/collaboration/active`, projectId],
-    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
+    refetchIntervalInBackground: false,
   });
 
   // WebSocket connection for real-time presence

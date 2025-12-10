@@ -259,7 +259,8 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
   const { data: activeBuildData } = useQuery({
     queryKey: ['/api/agent-v2/active-build', projectId],
     queryFn: () => apiRequest('GET', `/api/agent-v2/active-build/${projectId}`).then(res => res.json()),
-    refetchInterval: 5000,
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
+    refetchIntervalInBackground: false,
     enabled: agentMode === 'v2'
   });
 
@@ -270,7 +271,8 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
     queryKey: ['/api/agent-v2/build-progress', activeBuildId],
     queryFn: () => apiRequest('GET', `/api/agent-v2/build-progress/${activeBuildId}`).then(res => res.json()),
     enabled: !!activeBuildId && agentMode === 'v2',
-    refetchInterval: agentTools.realTimeUpdates ? 1000 : 5000
+    refetchInterval: agentTools.realTimeUpdates ? 10000 : 30000, // RATE LIMIT FIX: Increased from 1s/5s to 10s/30s
+    refetchIntervalInBackground: false
   });
 
   useEffect(() => {
