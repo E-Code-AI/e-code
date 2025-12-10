@@ -75,7 +75,8 @@ export function DeploymentMetrics({ deploymentId, className }: DeploymentMetrics
       const response = await fetch(`/api/deployments/${deploymentId}/metrics?range=${timeRange}`);
       return response.json();
     },
-    refetchInterval: autoRefresh ? 5000 : false, // Refresh every 5 seconds
+    refetchInterval: autoRefresh ? 30000 : false, // RATE LIMIT FIX: Increased from 5s to 30s
+    refetchIntervalInBackground: false,
   });
 
   // Fetch health status
@@ -85,7 +86,8 @@ export function DeploymentMetrics({ deploymentId, className }: DeploymentMetrics
       const response = await fetch(`/api/deployments/${deploymentId}/health`);
       return response.json();
     },
-    refetchInterval: autoRefresh ? 5000 : false,
+    refetchInterval: autoRefresh ? 30000 : false, // RATE LIMIT FIX: Increased from 5s to 30s
+    refetchIntervalInBackground: false,
   });
 
   const formatTimestamp = (timestamp: string) => {

@@ -30,7 +30,8 @@ export function AgentActionsPanel({ projectId }: AgentActionsPanelProps) {
   const { data: actions = [], isLoading } = useQuery<AgentAction[]>({
     queryKey: [`/api/agent/actions/${projectId}`],
     enabled: !!projectId,
-    refetchInterval: 5000 // Poll every 5 seconds
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
+    refetchIntervalInBackground: false,
   });
   
   // Approve action

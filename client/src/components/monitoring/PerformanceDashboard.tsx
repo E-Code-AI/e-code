@@ -48,13 +48,15 @@ export function PerformanceDashboard() {
   // Fetch real-time metrics
   const { data: metrics } = useQuery({
     queryKey: ['/api/monitoring/metrics'],
-    refetchInterval: 5000
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
+    refetchIntervalInBackground: false,
   });
 
   // Fetch endpoint rankings
   const { data: endpoints } = useQuery({
     queryKey: ['/api/monitoring/endpoints'],
-    refetchInterval: 10000
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 10s to 30s
+    refetchIntervalInBackground: false,
   });
 
   // Fetch bottlenecks
