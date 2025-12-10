@@ -55,8 +55,22 @@ import { apiRequest } from '@/lib/queryClient';
 import { getProjectUrl } from '@/lib/utils';
 import type { Project } from '@shared/schema';
 
-export function SpotlightSearch() {
-  const [open, setOpen] = useState(false);
+interface SpotlightSearchProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function SpotlightSearch({ open: controlledOpen, onOpenChange }: SpotlightSearchProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (value: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(value);
+    } else {
+      setInternalOpen(value);
+    }
+  };
   const [, navigate] = useLocation();
   const { user, logoutMutation } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,13 +86,13 @@ export function SpotlightSearch() {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((open) => !open);
+        setOpen(!open);
       }
     };
 
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
-  }, []);
+  }, [open, setOpen]);
 
   const handleSelect = useCallback((callback: () => void) => {
     setOpen(false);

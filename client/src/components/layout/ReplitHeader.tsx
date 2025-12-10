@@ -151,10 +151,8 @@ export function ReplitHeader() {
           <MobileMenu onOpenSpotlight={() => setSpotlightOpen(true)} />
         </div>
 
-        <Link href="/">
-          <div className="group cursor-pointer flex items-center">
-            <ECodeLogo size="sm" showText={!isMobile} className="group-hover:opacity-80 transition-opacity" />
-          </div>
+        <Link href="/" className="flex items-center">
+          <ECodeLogo size="sm" showText={!isMobile} className="hover:opacity-80 transition-opacity" />
         </Link>
 
         {projectInfoLoading && (
