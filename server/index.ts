@@ -11,6 +11,11 @@ if (!process.env.NODE_ENV) {
 import { validateRequiredSecrets } from './utils/secrets-manager';
 validateRequiredSecrets();
 
+// ✅ Fortune 500 Production Monitoring: Initialize Sentry error tracking EARLY
+// Must be done before any other imports to catch startup errors
+import { errorTracking } from './services/error-tracking';
+errorTracking.initialize();
+
 // Set environment variables to prevent file watcher crashes (ENOSPC)
 // MUST be set before any imports to prevent crashes
 process.env.CHOKIDAR_USEPOLLING = 'true';
@@ -409,6 +414,15 @@ app.get('/api/cors-health', async (_req, res) => {
       app.use(monitoringRouter);
     } catch (error) {
       console.error('[WORKING SERVER] Failed to register monitoring routes:', error);
+    }
+
+    // ✅ PROMETHEUS METRICS: Standard /metrics endpoint for Prometheus scraping
+    try {
+      const prometheusRouter = (await import('./routes/prometheus.router')).default;
+      app.use(prometheusRouter);
+      console.log('[Prometheus] Metrics endpoint registered at /metrics');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to register Prometheus metrics routes:', error);
     }
 
     // Register AI Optimization routes

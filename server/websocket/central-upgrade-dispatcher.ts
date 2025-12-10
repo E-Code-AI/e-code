@@ -33,10 +33,19 @@ interface ServiceHandler {
   priority: number; // Lower = higher priority
 }
 
+interface ConnectionStats {
+  totalConnections: number;
+  connectionsByPath: Map<string, number>;
+  activeConnections: number;
+}
+
 class CentralUpgradeDispatcher {
   private handlers: ServiceHandler[] = [];
   private isInitialized = false;
   private server: Server | null = null;
+  private totalConnections = 0;
+  private connectionsByPath: Map<string, number> = new Map();
+  private activeConnections = 0;
   
   /**
    * Initialize the dispatcher on an HTTP server
@@ -82,6 +91,7 @@ class CentralUpgradeDispatcher {
     }
     
     logger.info(`[Central Dispatcher] Registered handler for ${path} (match: ${pathMatch}, priority: ${priority})`);
+    logger.info(`[Central Dispatcher] Total handlers registered: ${this.handlers.length}`);
   }
   
   /**
@@ -91,6 +101,16 @@ class CentralUpgradeDispatcher {
   private handleUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): void {
     // Extract pathname safely
     const pathname = this.extractPathname(request);
+    
+    // Detailed connection logging
+    logger.info('[Central Dispatcher] New connection', {
+      pathname,
+      ip: request.socket?.remoteAddress,
+      origin: request.headers.origin,
+      userAgent: request.headers['user-agent'],
+      secWebSocketKey: request.headers['sec-websocket-key'],
+      timestamp: new Date().toISOString(),
+    });
     
     // Check if already handled (safety net)
     if (isSocketHandled(request, socket)) {
@@ -102,6 +122,17 @@ class CentralUpgradeDispatcher {
     const handler = this.findHandler(pathname);
     
     if (handler) {
+      // Update connection stats
+      this.totalConnections++;
+      this.activeConnections++;
+      const currentPathCount = this.connectionsByPath.get(handler.path) || 0;
+      this.connectionsByPath.set(handler.path, currentPathCount + 1);
+      
+      // Track socket close to update active connections
+      socket.once('close', () => {
+        this.activeConnections--;
+      });
+      
       // AUTHORITATIVE MARKING POINT (Dec 6, 2025):
       // Mark socket as handled BEFORE delegating to any handler.
       // This ensures EVERY WebSocket upgrade routed through the dispatcher is marked,
@@ -129,19 +160,29 @@ class CentralUpgradeDispatcher {
    * Find a matching handler for the given pathname
    */
   private findHandler(pathname: string): ServiceHandler | null {
+    const matchingHandlers: ServiceHandler[] = [];
+    
     for (const handler of this.handlers) {
       if (handler.pathMatch === 'exact') {
         if (pathname === handler.path) {
-          return handler;
+          matchingHandlers.push(handler);
         }
       } else {
         // prefix match
         if (pathname.startsWith(handler.path)) {
-          return handler;
+          matchingHandlers.push(handler);
         }
       }
     }
-    return null;
+    
+    if (matchingHandlers.length > 1) {
+      logger.debug(`[Central Dispatcher] Multiple handlers could match ${pathname}:`, {
+        handlers: matchingHandlers.map(h => ({ path: h.path, pathMatch: h.pathMatch, priority: h.priority })),
+        selectedHandler: matchingHandlers[0].path,
+      });
+    }
+    
+    return matchingHandlers.length > 0 ? matchingHandlers[0] : null;
   }
   
   /**
@@ -177,6 +218,18 @@ class CentralUpgradeDispatcher {
     return {
       handlers: this.handlers.map(h => `${h.path} (${h.pathMatch}, priority: ${h.priority})`),
       isInitialized: this.isInitialized
+    };
+  }
+  
+  /**
+   * Get connection statistics
+   * @returns Connection stats including total, per-path, and active connections
+   */
+  getConnectionStats(): ConnectionStats {
+    return {
+      totalConnections: this.totalConnections,
+      connectionsByPath: new Map(this.connectionsByPath),
+      activeConnections: this.activeConnections
     };
   }
 }

@@ -258,7 +258,9 @@ export const projects = pgTable("projects", {
   slug: text("slug").unique(),
   // 🔥 REPLIT AGENT 3: Track currently active checkpoint (decoupled from chronological order)
   currentCheckpointId: integer("current_checkpoint_id"), // FK to checkpoints.id (nullable - no checkpoint until first one created)
-});
+}, (table) => ({
+  ownerIdIdx: index("projects_owner_id_idx").on(table.ownerId),
+}));
 
 export const files = pgTable("files", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),

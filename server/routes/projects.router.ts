@@ -194,18 +194,32 @@ export class ProjectsRouter {
   }
 
   private initializeRoutes() {
-    // Get user's projects
+    // Get user's projects with pagination
     this.router.get("/api/projects", this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
         const userId = (req.user as User).id;
-        const projects = await this.storage.getProjectsByUserId(String(userId));
+        
+        // Parse pagination params with defaults and max limit
+        const requestedLimit = parseInt(req.query.limit as string) || 50;
+        const limit = Math.min(Math.max(1, requestedLimit), 100); // Clamp between 1 and 100
+        const offset = Math.max(0, parseInt(req.query.offset as string) || 0);
+        
+        const { projects, total } = await this.storage.getProjectsByUserIdPaginated(String(userId), limit, offset);
         
         const enrichedProjects = await Promise.all(projects.map(async (project) => {
           const owner = await this.storage.getUser(String(project.ownerId));
           return { ...project, owner };
         }));
         
-        res.json(enrichedProjects);
+        res.json({
+          projects: enrichedProjects,
+          pagination: {
+            total,
+            limit,
+            offset,
+            hasMore: offset + projects.length < total
+          }
+        });
       } catch (error) {
         console.error('Error fetching projects:', error);
         res.status(500).json({ 
