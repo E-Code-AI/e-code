@@ -73,7 +73,8 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
 
   const { data: initialScans, isLoading: scansLoading } = useQuery<SecurityScan[]>({
     queryKey: ['/api/workspace/projects', projectId, 'security-scans'],
-    refetchInterval: 10000,
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 10s to 30s
+    refetchIntervalInBackground: false,
   });
 
   const scans = realtimeScans.length > 0 ? realtimeScans : (initialScans || []);

@@ -66,7 +66,8 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
   const { data: initialScans } = useQuery<SecurityScan[]>({
     queryKey: ['/api/workspace/projects', projectId, 'security-scans'],
     enabled: !!projectId,
-    refetchInterval: 10000,
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 10s to 30s
+    refetchIntervalInBackground: false,
   });
 
   const { data: activeVulnerabilities, isLoading: isLoadingActive } = useQuery<Vulnerability[]>({
