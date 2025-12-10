@@ -6,7 +6,7 @@
  * Identical to Replit's build mode selection interface
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Paintbrush, Hammer, ChevronRight, Sparkles, 
   Clock, Layers, Code, FileCode
@@ -79,6 +79,34 @@ const buildOptions: BuildOption[] = [
   }
 ];
 
+function AnimatedDot({ color, delay, isActive }: { color: string; delay: number; isActive: boolean }) {
+  const [visible, setVisible] = useState(false);
+  
+  useEffect(() => {
+    if (isActive) {
+      const timer = setTimeout(() => setVisible(true), delay);
+      return () => clearTimeout(timer);
+    } else {
+      setVisible(false);
+    }
+  }, [isActive, delay]);
+  
+  const dotColors: Record<string, string> = {
+    purple: 'bg-purple-500',
+    emerald: 'bg-emerald-500'
+  };
+  
+  return (
+    <span 
+      className={cn(
+        "inline-block w-1.5 h-1.5 rounded-full transition-all duration-300",
+        visible ? dotColors[color] || 'bg-primary' : 'bg-muted-foreground/30',
+        visible && "animate-pulse"
+      )}
+    />
+  );
+}
+
 export function BuildModeSelector({
   open,
   onOpenChange,
@@ -87,6 +115,18 @@ export function BuildModeSelector({
   projectName
 }: BuildModeSelectorProps) {
   const [hoveredOption, setHoveredOption] = useState<BuildMode | null>(null);
+  const [activeAnimations, setActiveAnimations] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (open) {
+      const timer = setTimeout(() => {
+        setActiveAnimations({ 'design-first': true, 'full-app': true });
+      }, 200);
+      return () => clearTimeout(timer);
+    } else {
+      setActiveAnimations({});
+    }
+  }, [open]);
 
   const getColorClasses = (color: string, type: 'bg' | 'border' | 'text' | 'icon') => {
     const colors: Record<string, Record<string, string>> = {
@@ -206,11 +246,15 @@ export function BuildModeSelector({
                         <span className="text-xs text-muted-foreground">{option.timeEstimate}</span>
                       </div>
                       
-                      {/* Features */}
-                      <ul className="space-y-1">
+                      {/* Features with animated dots */}
+                      <ul className="space-y-1.5">
                         {option.features.map((feature, i) => (
-                          <li key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <ChevronRight className={cn("h-3 w-3", getColorClasses(option.color, 'text'))} />
+                          <li key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <AnimatedDot 
+                              color={option.color} 
+                              delay={i * 150} 
+                              isActive={activeAnimations[option.id] || false} 
+                            />
                             {feature}
                           </li>
                         ))}
