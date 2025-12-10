@@ -68,7 +68,7 @@ export default function Mobile() {
     }
   ];
 
-  const featureChecklists = {
+  const featureChecklists: Record<string, string[]> = {
     editor: [
       'IntelliSense, refactors, and AI inline help',
       'Multi-cursor editing with gestures',
@@ -101,7 +101,7 @@ export default function Mobile() {
     ]
   };
 
-  const editorFiles = {
+  const editorFiles: Record<string, string> = {
     'App.tsx': `import { Workspace, ActivityBar } from "@ecode/mobile";
 
 export default function InventoryDashboard() {
