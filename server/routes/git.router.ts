@@ -605,16 +605,19 @@ router.get('/branches', ensureAuthenticated, async (req: Request, res: Response)
     const { stdout: branchOutput } = await execa('git', ['branch', '-a'], { cwd: PROJECT_ROOT });
     
     const branchLines = branchOutput.split('\n').filter(Boolean);
-    const branches: GitBranchInfo[] = [];
     
-    for (const line of branchLines) {
-      const info = await parseBranchInfo(line, currentBranch.trim());
-      if (info) {
-        branches.push(info);
-      }
+    const CONCURRENCY_LIMIT = 10;
+    const results: GitBranchInfo[] = [];
+    
+    for (let i = 0; i < branchLines.length; i += CONCURRENCY_LIMIT) {
+      const batch = branchLines.slice(i, i + CONCURRENCY_LIMIT);
+      const batchResults = await Promise.all(
+        batch.map(line => parseBranchInfo(line, currentBranch.trim()))
+      );
+      results.push(...batchResults.filter((info): info is GitBranchInfo => info !== null));
     }
     
-    res.json({ branches });
+    res.json({ branches: results });
   } catch (error: any) {
     console.error('[Git] Branches error:', error);
     res.status(500).json({ error: error.message });
