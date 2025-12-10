@@ -46,3 +46,18 @@ export { useConnectionStatus } from './use-connection-status';
 
 // Problems/Errors Count
 export { useProblemsCount } from './use-problems-count';
+
+// IDE Workspace Hook (centralized state management)
+export {
+  useIDEWorkspace,
+  availableTools,
+  type Tab,
+  type AgentToolsSettings,
+  type CursorPosition,
+  type ProblemsCount,
+  type PublishState,
+  type GitStatus,
+  type DeploymentStatus,
+  type AvailableTool,
+  type UseIDEWorkspaceReturn,
+} from './useIDEWorkspace';
