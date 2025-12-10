@@ -38,7 +38,7 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
 
   const navigationLinks = [
     { icon: Home, label: 'Home', path: '/dashboard' },
-    { icon: Code, label: 'My Repls', path: '/projects' },
+    { icon: Code, label: 'My Apps', path: '/projects' },
     { icon: Users, label: 'Community', path: '/community' },
     { icon: Book, label: 'Templates', path: '/templates' },
   ];
