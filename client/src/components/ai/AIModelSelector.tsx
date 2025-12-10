@@ -146,7 +146,11 @@ export function AIModelSelector({
               <SelectTrigger className="w-full min-h-[44px]" data-testid="select-ai-model">
                 <SelectValue placeholder="Select AI model..." />
               </SelectTrigger>
-              <SelectContent className="w-[420px] sm:w-[520px] max-w-[95vw]">
+              <SelectContent 
+                className="min-w-[var(--radix-select-trigger-width)] w-auto max-w-[min(600px,95vw)] max-h-[60vh] overflow-y-auto"
+                position="popper"
+                sideOffset={4}
+              >
                 {availableModels.map((model) => {
                   const ProviderIcon = getProviderIcon(model.provider);
                   const providerColor = getProviderColor(model.provider);
@@ -157,20 +161,20 @@ export function AIModelSelector({
                       value={model.id} 
                       data-testid={`select-model-${model.id}`}
                       disabled={!isAvailable}
-                      className={!isAvailable ? 'opacity-50 cursor-not-allowed' : ''}
+                      className={`${!isAvailable ? 'opacity-50 cursor-not-allowed' : ''} py-2`}
                     >
-                      <div className="flex items-center gap-2 py-1">
-                        <div className={`w-2 h-2 rounded-full shrink-0 ${providerColor}`} />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-xs sm:text-sm">
+                      <div className="flex items-start gap-3 w-full">
+                        <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1 ${providerColor}`} />
+                        <div className="flex-1 min-w-0 pr-2">
+                          <div className="font-medium text-sm flex items-center gap-2">
                             {model.name}
-                            {!isAvailable && <span className="text-[10px] sm:text-xs text-red-500 ml-1">(N/A)</span>}
+                            {model.supportsStreaming && isAvailable && (
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Stream</Badge>
+                            )}
+                            {!isAvailable && <Badge variant="destructive" className="text-[10px] px-1.5 py-0">N/A</Badge>}
                           </div>
-                          <div className="text-[10px] sm:text-xs text-muted-foreground">{model.description}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5 whitespace-normal leading-relaxed">{model.description}</div>
                         </div>
-                        {model.supportsStreaming && isAvailable && (
-                          <Badge variant="secondary" className="text-[10px] shrink-0">Stream</Badge>
-                        )}
                       </div>
                     </SelectItem>
                   );
@@ -251,7 +255,11 @@ export function AIModelSelector({
               <SelectValue placeholder="Select your preferred AI model..." />
             )}
           </SelectTrigger>
-          <SelectContent className="max-h-[400px] w-[420px] sm:w-[520px] max-w-[95vw]">
+          <SelectContent 
+            className="min-w-[var(--radix-select-trigger-width)] w-auto max-w-[min(650px,95vw)] max-h-[60vh] overflow-y-auto"
+            position="popper"
+            sideOffset={4}
+          >
             {availableModels.map((model) => {
               const ModelIcon = getProviderIcon(model.provider);
               const modelColor = getProviderColor(model.provider);
@@ -262,35 +270,34 @@ export function AIModelSelector({
                   value={model.id} 
                   data-testid={`select-model-${model.id}`}
                   disabled={!isAvailable}
-                  className={!isAvailable ? 'opacity-50 cursor-not-allowed' : 'py-2 sm:py-3'}
+                  className={`${!isAvailable ? 'opacity-50 cursor-not-allowed' : ''} py-2.5`}
                 >
-                  <div className="flex items-center gap-2 sm:gap-3 py-1 w-full">
+                  <div className="flex items-start gap-3 w-full">
                     <div 
-                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${modelColor} flex items-center justify-center shrink-0`}
+                      className={`w-8 h-8 rounded-full ${modelColor} flex items-center justify-center shrink-0`}
                       data-testid={`provider-icon-${model.provider}`}
                     >
-                      <ModelIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
+                      <ModelIcon className="h-4 w-4 text-white" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold flex items-center gap-2 flex-wrap">
+                    <div className="flex-1 min-w-0 pr-2">
+                      <div className="font-semibold text-sm flex items-center gap-2 flex-wrap">
                         <span>{model.name}</span>
+                        {model.supportsStreaming && isAvailable && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                            <Zap className="h-3 w-3 mr-0.5" />Stream
+                          </Badge>
+                        )}
                         {!isAvailable && (
-                          <Badge variant="destructive" className="text-xs shrink-0">Not configured</Badge>
+                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0">N/A</Badge>
                         )}
                       </div>
-                      <div className="text-xs text-muted-foreground">{model.description}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5 whitespace-normal leading-relaxed">{model.description}</div>
                       {model.costPer1kTokens && (
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="text-[10px] text-muted-foreground/70 mt-1">
                           ${model.costPer1kTokens.toFixed(4)} / 1K tokens
                         </div>
                       )}
                     </div>
-                    {model.supportsStreaming && isAvailable && (
-                      <Badge variant="secondary" className="text-xs shrink-0" data-testid={`streaming-badge-${model.id}`}>
-                        <Zap className="h-3 w-3 sm:mr-1" />
-                        <span className="hidden sm:inline">Streaming</span>
-                      </Badge>
-                    )}
                   </div>
                 </SelectItem>
               );
