@@ -69,6 +69,7 @@ import placeholderRouter from "./placeholder.router";
 import analyticsRouter from "./analytics.router";
 import ragRouter from "./rag.router";
 import agentStepCacheRouter from "./agent-step-cache.router";
+import { prometheusRouter } from "../monitoring/prometheus";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -95,6 +96,9 @@ export class MainRouter {
   registerRoutes(app: Application): void {
     // Health check routes (no auth required)
     app.use(this.healthRouter.getRouter());
+    
+    // Prometheus metrics endpoint (no auth required for scraping)
+    app.use('/api', prometheusRouter);
     
     // Placeholder image routes (no auth required - used for avatars and product images)
     app.use(placeholderRouter);

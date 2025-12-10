@@ -32,6 +32,7 @@ import { securityMiddleware } from "./middleware/security";
 import { legacyRateLimiters, dynamicRateLimiter, logRateLimitViolations } from './middleware/rate-limiter';
 import { tierRateLimiters } from './middleware/tier-rate-limiter';
 import { monitoringMiddleware } from './services/monitoring.service';
+import { prometheusMiddleware } from './monitoring/prometheus';
 import { sanitizeInput } from './middleware/input-validation';
 import { loggingMiddleware, securityLoggingMiddleware, performanceLoggingMiddleware } from './logging/logging-middleware';
 import { createCentralizedLogger } from './logging/centralized-logger';
@@ -56,6 +57,9 @@ app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // Production monitoring middleware - tracks API latency, errors, WebSocket connections
 app.use(monitoringMiddleware);
+
+// Prometheus metrics collection middleware - Fortune 500 observability
+app.use(prometheusMiddleware);
 
 // XSS sanitization middleware - sanitizes all user input
 app.use(sanitizeInput);
