@@ -156,8 +156,7 @@ export default function GitHubImport() {
   const fetchUserRepos = async () => {
     setIsLoading(true);
     try {
-      const response = await apiRequest('GET', '/api/github/repos');
-      const repos = await response.json();
+      const repos = await apiRequest('GET', '/api/github/repos');
       setUserRepos(repos);
     } catch (error) {
       toast({
@@ -174,8 +173,7 @@ export default function GitHubImport() {
   useEffect(() => {
     const checkGitHubConnection = async () => {
       try {
-        const response = await apiRequest('GET', '/api/github/status');
-        const status = await response.json();
+        const status = await apiRequest('GET', '/api/github/status');
         if (status.connected) {
           fetchUserRepos();
         }

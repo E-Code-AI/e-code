@@ -23,8 +23,7 @@ export function AuthenticationDemo() {
   const handleLogin = async () => {
     setIsLogging(true);
     try {
-      const response = await apiRequest('POST', '/api/login', { email: username, password });
-      const userData = await response.json();
+      const userData = await apiRequest('POST', '/api/login', { email: username, password });
       
       toast({
         title: "✅ Login Successful",
@@ -78,8 +77,7 @@ export function AuthenticationDemo() {
       results.containerOrchestration = containerResponse.ok ? '✅ Working' : '❌ Failed';
 
       // Test Polyglot Services
-      const healthResponse = await apiRequest('GET', '/api/health');
-      const healthData = await healthResponse.json();
+      const healthData = await apiRequest('GET', '/api/health');
       results.polyglotServices = {
         typescript: healthData.services?.typescript === 'healthy' ? '✅ Healthy' : '❌ Unhealthy',
         golang: healthData.services?.golang === 'healthy' ? '✅ Healthy' : '❌ Unhealthy', 

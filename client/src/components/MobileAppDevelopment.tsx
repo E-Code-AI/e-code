@@ -92,14 +92,12 @@ export function MobileAppDevelopment({ projectId }: MobileAppDevelopmentProps) {
     setBuildLogs([]);
     
     try {
-      const response = await apiRequest('POST', `/api/mobile/build`, {
+      const data = await apiRequest('POST', `/api/mobile/build`, {
         projectId,
         platform,
         framework,
         config: appConfig
       });
-
-      const data = await response.json();
       
       // Simulate build process with logs
       const logs = [

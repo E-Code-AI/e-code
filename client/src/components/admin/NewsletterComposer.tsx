@@ -118,22 +118,13 @@ export default function NewsletterComposer() {
 
     setIsSending(true);
     try {
-      const response = await apiRequest('POST', '/api/newsletter/campaigns/send', payload);
-      const data = await response.json();
+      const data = await apiRequest('POST', '/api/newsletter/campaigns/send', payload);
 
-      if (response.ok) {
-        toast({
-          title: 'Campaign sent',
-          description: data.message || 'Newsletter campaign dispatched successfully.',
-        });
-        resetForm();
-      } else {
-        toast({
-          title: 'Unable to send newsletter',
-          description: data.message || 'An error occurred while sending the campaign.',
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: 'Campaign sent',
+        description: data.message || 'Newsletter campaign dispatched successfully.',
+      });
+      resetForm();
     } catch (error) {
       toast({
         title: 'Network error',
@@ -157,20 +148,11 @@ export default function NewsletterComposer() {
 
     setIsTesting(true);
     try {
-      const response = await apiRequest('POST', '/api/newsletter/test-send', { email: testEmail.trim() });
-      const data = await response.json();
-      if (response.ok) {
-        toast({
-          title: 'Test email dispatched',
-          description: data.message || 'Check your inbox for the sample newsletter.',
-        });
-      } else {
-        toast({
-          title: 'Unable to send test email',
-          description: data.message || 'Verify SMTP credentials and try again.',
-          variant: 'destructive',
-        });
-      }
+      const data = await apiRequest('POST', '/api/newsletter/test-send', { email: testEmail.trim() });
+      toast({
+        title: 'Test email dispatched',
+        description: data.message || 'Check your inbox for the sample newsletter.',
+      });
     } catch (error) {
       toast({
         title: 'Network error',
