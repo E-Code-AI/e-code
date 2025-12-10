@@ -225,7 +225,7 @@ export function PublicFooter() {
                 <ECodeLogo size="xs" />
               </div>
             </Link>
-            <span>© {new Date().getFullYear()} E-Code Inc. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} E-Code.AI (Snatch Group Limited). All rights reserved.</span>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/newsletter/unsubscribe" className="hover:text-[var(--ecode-accent)] dark:hover:text-white">

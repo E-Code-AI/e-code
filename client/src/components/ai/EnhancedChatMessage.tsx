@@ -133,27 +133,7 @@ export const EnhancedChatMessage = memo(function EnhancedChatMessage({
               "shadow-lg"
             )}
             data-testid={`enhanced-avatar-${message.role}-${message.id}`}
-          >
-            <AvatarFallback 
-              className={cn(
-                "text-xs font-semibold transition-colors",
-                isUser 
-                  ? "bg-primary text-primary-foreground"
-                  : isError
-                    ? "bg-destructive/10 text-destructive"
-                    : "bg-gradient-to-br from-primary/20 to-primary/10 text-primary"
-              )}
-            >
-              {isUser ? (
-                <span className="text-sm font-medium">You</span>
-              ) : (
-                <Sparkles className={cn(
-                  "h-4 w-4",
-                  message.isStreaming && "animate-pulse"
-                )} />
-              )}
-            </AvatarFallback>
-          </Avatar>
+          />
         </motion.div>
       )}
 

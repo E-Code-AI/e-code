@@ -97,9 +97,9 @@ export default function Terms() {
                   If you have any questions about these Terms, please contact us at:
                 </p>
                 <div className="mt-4 p-4 bg-muted rounded-lg">
-                  <p>E-Code Inc.</p>
-                  <p>Email: legal@e-code.ai</p>
-                  <p>Address: 548 Market St #16093, San Francisco, CA 94104</p>
+                  <p>E-Code.AI (Snatch Group Limited)</p>
+                  <p>Email: privacy@e-code.ai</p>
+                  <p>Address: Abba Eban 8 Blvd, 46120 Herzliya Pituach, Israel</p>
                 </div>
               </section>
             </div>
