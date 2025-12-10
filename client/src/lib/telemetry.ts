@@ -37,12 +37,18 @@ interface TelemetryConfig {
   debug: boolean;
 }
 
+// Production: 30s flush interval to reduce rate limit hits (2 req/min vs 12 req/min)
+// Development: 5s for faster debugging feedback
+const isProduction = typeof window !== 'undefined' && 
+  !window.location.hostname.includes('localhost') && 
+  !window.location.hostname.includes('127.0.0.1');
+
 const defaultConfig: TelemetryConfig = {
   endpoint: '/api/logs/ingest',
-  batchSize: 10,
-  flushInterval: 5000,
+  batchSize: isProduction ? 25 : 10,
+  flushInterval: isProduction ? 30000 : 5000,
   maxRetries: 3,
-  sampleRate: 1.0,
+  sampleRate: isProduction ? 0.5 : 1.0,
   enabled: true,
   debug: false,
 };
