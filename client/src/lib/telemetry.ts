@@ -48,7 +48,7 @@ const defaultConfig: TelemetryConfig = {
   batchSize: isProduction ? 25 : 10,
   flushInterval: isProduction ? 30000 : 5000,
   maxRetries: 3,
-  sampleRate: isProduction ? 0.5 : 1.0,
+  sampleRate: 1.0, // Keep 100% - errors/warnings must never be dropped
   enabled: true,
   debug: false,
 };
