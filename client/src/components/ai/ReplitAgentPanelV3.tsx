@@ -343,22 +343,36 @@ export function ReplitAgentPanelV3({
     bootstrapConversation();
   }, [projectId, toast]);
 
+  // Track if initial sync from backend has been completed for this conversation
+  const initialSyncDoneRef = useRef<number | null>(null);
+  
   // Load existing messages from backend when conversationId is available
+  // ✅ FIX (Dec 10, 2025): Always fetch when conversationId is available
+  // Previously used `!hasConversation(conversationId)` which prevented fetching
+  // when localStorage had rehydrated stale data
   const { data: backendMessages, isLoading: isLoadingMessages } = useQuery({
     queryKey: ['/api/agent/conversation', conversationId, 'messages'],
-    enabled: !!conversationId && !hasConversation(conversationId),
+    enabled: !!conversationId,
   });
 
   // Sync backend messages to zustand store on fetch
+  // ✅ FIX (Dec 10, 2025): Always hydrate store with backend messages on initial load
+  // Previously checked `!hasConversation(conversationId)` which prevented updates
+  // when the store was empty or had stale localStorage data
   useEffect(() => {
-    if (backendMessages?.messages && conversationId && !hasConversation(conversationId)) {
-      const fetchedMessages = backendMessages.messages as Message[];
-      if (fetchedMessages.length > 0) {
-        setStoreMessages(conversationId, fetchedMessages);
-        setLastSyncedAt(conversationId, Date.now());
+    if (backendMessages?.messages && conversationId) {
+      // Only sync once per conversationId to avoid overwriting user's new messages
+      if (initialSyncDoneRef.current === conversationId) {
+        return;
       }
+      
+      const fetchedMessages = backendMessages.messages as Message[];
+      // Always call setStoreMessages - it handles empty arrays by using default message
+      setStoreMessages(conversationId, fetchedMessages);
+      setLastSyncedAt(conversationId, Date.now());
+      initialSyncDoneRef.current = conversationId;
     }
-  }, [backendMessages, conversationId, hasConversation, setStoreMessages, setLastSyncedAt]);
+  }, [backendMessages, conversationId, setStoreMessages, setLastSyncedAt]);
 
   // Track context injection to prevent duplicates
   const contextInjectedRef = useRef<string | null>(null);
