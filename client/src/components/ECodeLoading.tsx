@@ -34,27 +34,41 @@ export function ECodeLoading({
   const loadingContent = (
     <div className={cn('flex flex-col items-center justify-center gap-3', className)}>
       <div className="relative">
+        {/* Spinning ring around the logo */}
         <svg
-          className={cn(sizes[size], 'animate-spin')}
+          className={cn(sizes[size], 'animate-spin absolute inset-0')}
           viewBox="0 0 40 40"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Background circle with opacity */}
-          <circle cx="20" cy="20" r="20" fill="url(#loading-gradient)" opacity="0.2" />
-          
-          {/* Spinning circle */}
           <circle 
             cx="20" 
             cy="20" 
             r="18" 
             fill="none"
-            stroke="url(#loading-gradient)"
-            strokeWidth="4"
+            stroke="url(#loading-ring-gradient)"
+            strokeWidth="3"
             strokeLinecap="round"
-            strokeDasharray="80 20"
-            className="origin-center"
+            strokeDasharray="70 30"
+            opacity="0.8"
           />
+          <defs>
+            <linearGradient id="loading-ring-gradient" x1="0" y1="0" x2="40" y2="40">
+              <stop offset="0%" stopColor="#F26207" />
+              <stop offset="100%" stopColor="#F99D25" />
+            </linearGradient>
+          </defs>
+        </svg>
+        
+        {/* Static E-Code logo in center */}
+        <svg
+          className={cn(sizes[size])}
+          viewBox="0 0 40 40"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Background circle */}
+          <circle cx="20" cy="20" r="16" fill="url(#loading-logo-gradient)" />
           
           {/* Letter E stylized as code brackets */}
           <path
@@ -76,7 +90,7 @@ export function ECodeLoading({
           
           {/* Gradient definition */}
           <defs>
-            <linearGradient id="loading-gradient" x1="0" y1="0" x2="40" y2="40">
+            <linearGradient id="loading-logo-gradient" x1="0" y1="0" x2="40" y2="40">
               <stop offset="0%" stopColor="#F26207" />
               <stop offset="100%" stopColor="#F99D25" />
             </linearGradient>
@@ -85,7 +99,7 @@ export function ECodeLoading({
         
         {/* Pulsing effect */}
         <div className={cn(
-          'absolute inset-0 rounded-full bg-gradient-to-br from-primary to-secondary opacity-20 animate-pulse',
+          'absolute inset-0 rounded-full bg-gradient-to-br from-[#F26207] to-[#F99D25] opacity-20 animate-pulse',
           sizes[size]
         )} />
       </div>
