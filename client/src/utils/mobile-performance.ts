@@ -69,17 +69,17 @@ export const throttle = <T extends (...args: any[]) => any>(
 // Request Idle Callback wrapper
 export const whenIdle = (callback: () => void): number => {
   if ('requestIdleCallback' in window) {
-    return window.requestIdleCallback(callback);
+    return (window as Window & { requestIdleCallback: (cb: () => void) => number }).requestIdleCallback(callback);
   }
-  return window.setTimeout(callback, 1);
+  return setTimeout(callback, 1) as unknown as number;
 };
 
 // Cancel idle callback
 export const cancelWhenIdle = (id: number): void => {
   if ('cancelIdleCallback' in window) {
-    window.cancelIdleCallback(id);
+    (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(id);
   } else {
-    window.clearTimeout(id);
+    clearTimeout(id);
   }
 };
 

@@ -31,9 +31,10 @@ export function createSuspenseWrapper<P extends object>(
   fallback?: ReactNode
 ): React.FC<P> {
   return function SuspenseWrapper(props: P) {
+    const Component = LazyComponent as unknown as React.ComponentType<P>;
     return (
       <Suspense fallback={fallback || <ECodeLoading size="md" text="Loading..." />}>
-        <LazyComponent {...props} />
+        <Component {...props} />
       </Suspense>
     );
   };
