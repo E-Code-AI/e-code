@@ -43,8 +43,8 @@ class ErrorBoundary extends React.Component<
             <p className="text-muted-foreground mb-4">
               We encountered an unexpected error. Please try refreshing the page.
             </p>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <pre className="text-xs text-left bg-muted p-3 rounded-md mb-4 overflow-auto">
+            {this.state.error && (
+              <pre className="text-xs text-left bg-muted p-3 rounded-md mb-4 overflow-auto max-h-32">
                 {this.state.error.message}
               </pre>
             )}
