@@ -94,6 +94,15 @@ export function AutonomousWorkspaceViewer({
     onCompleteRef.current = onComplete;
     onErrorRef.current = onError;
   }, [onComplete, onError]);
+  
+  // ✅ FIX (Dec 10, 2025): Sync isOpen with bootstrapToken changes
+  // This ensures the dialog opens when bootstrapToken becomes available after initial render
+  useEffect(() => {
+    if (bootstrapToken && !isOpen && !isComplete) {
+      console.log('[AutonomousWorkspaceViewer] Opening dialog - bootstrapToken received');
+      setIsOpen(true);
+    }
+  }, [bootstrapToken, isOpen, isComplete]);
 
   // Auto-scroll logs to bottom
   useEffect(() => {
@@ -132,7 +141,10 @@ export function AutonomousWorkspaceViewer({
 
   // Connect to WebSocket
   useEffect(() => {
+    console.log('[AutonomousWorkspaceViewer] useEffect triggered', { bootstrapToken: !!bootstrapToken, isOpen });
+    
     if (!bootstrapToken || !isOpen) {
+      console.log('[AutonomousWorkspaceViewer] Skipping WebSocket connection - missing token or not open');
       return;
     }
 
@@ -143,6 +155,8 @@ export function AutonomousWorkspaceViewer({
       onErrorRef.current?.('Invalid bootstrap token');
       return;
     }
+    
+    console.log('[AutonomousWorkspaceViewer] Token decoded:', { projectId: tokenData.projectId, sessionId: tokenData.sessionId });
 
     const connectWebSocket = () => {
       // Determine WebSocket protocol based on current protocol
@@ -152,10 +166,14 @@ export function AutonomousWorkspaceViewer({
       // SOLUTION: Use only projectId and sessionId - the session is already authenticated
       const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${tokenData.projectId}&sessionId=${tokenData.sessionId}`;
       
+      console.log('[AutonomousWorkspaceViewer] Connecting to WebSocket:', wsUrl);
+      
       let ws: WebSocket;
       try {
         ws = new WebSocket(wsUrl);
+        console.log('[AutonomousWorkspaceViewer] WebSocket object created');
       } catch (error) {
+        console.error('[AutonomousWorkspaceViewer] WebSocket creation failed:', error);
         setConnectionStatus('error');
         addLog(`❌ Failed to create WebSocket: ${(error as Error).message}`);
         setErrorMessage(`WebSocket construction failed: ${(error as Error).message}`);
@@ -165,6 +183,7 @@ export function AutonomousWorkspaceViewer({
       wsRef.current = ws;
 
       ws.onopen = () => {
+        console.log('[AutonomousWorkspaceViewer] WebSocket CONNECTED');
         setConnectionStatus('connected');
         reconnectAttempts.current = 0;
         // ✅ FIX (Dec 1, 2025): Clear reconnect timer on successful connection to prevent duplicate sockets
