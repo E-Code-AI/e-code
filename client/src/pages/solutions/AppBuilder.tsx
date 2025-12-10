@@ -96,7 +96,7 @@ export default function AppBuilder() {
           <div className="text-center">
             <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Ready to Build Your App?</h2>
             <p className="text-sm sm:text-base md:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-2xl mx-auto px-4 sm:px-0">
-              Join thousands of developers who are building amazing applications with E-Code's AI-powered platform.
+              Build amazing applications with E-Code's AI-powered platform. Start for free today.
             </p>
             <Link href="/register">
               <Button size="lg" className="gap-2 min-h-[44px]" data-testid="button-appbuilder-cta">

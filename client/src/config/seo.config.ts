@@ -12,7 +12,7 @@ export const seoConfig: Record<string, SEOProps> = {
   // ============================================
   landing: {
     title: 'E-Code - AI-Powered Development Platform | Build & Deploy in Minutes',
-    description: 'Build and deploy production-ready applications in minutes with AI agents. Enterprise-grade security, real-time collaboration, and global edge deployment. Join 2M+ developers.',
+    description: 'Build and deploy production-ready applications in minutes with AI agents. Enterprise-grade security, real-time collaboration, and global edge deployment. Start building today.',
     keywords: [
       'AI development platform', 'code editor online', 'cloud IDE',
       'AI code generation', 'deploy applications', 'enterprise development',
@@ -257,7 +257,7 @@ export const seoConfig: Record<string, SEOProps> = {
 
   community: {
     title: 'Community - E-Code | Connect with Developers',
-    description: 'Join the E-Code community of 2M+ developers. Share projects, get help, and collaborate with builders worldwide.',
+    description: 'Join the E-Code community of developers and creators. Share projects, get help, and collaborate with builders worldwide.',
     keywords: [
       'developer community', 'coding community', 'E-Code users',
       'programming forum', 'developer network'

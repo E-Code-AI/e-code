@@ -1164,7 +1164,7 @@ export default function Landing() {
               Ready to Build Something Amazing?
             </h2>
             <p className="text-xl opacity-90 max-w-2xl mx-auto">
-              Join 2 million developers who are shipping faster with E-Code. 
+              Join developers worldwide who are shipping faster with E-Code. 
               Start for free, scale to millions.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">

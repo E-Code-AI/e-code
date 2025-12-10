@@ -13,8 +13,27 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Cpu, Brain, Lightbulb, Zap, CheckCircle2, Database } from 'lucide-react';
+import { Sparkles, Cpu, Zap, CheckCircle2 } from 'lucide-react';
+import { SiOpenai, SiGoogle } from 'react-icons/si';
 import { RAGToggle, RAGStatusBadge, useRAGStats } from './RAGControls';
+
+const AnthropicIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
+    <path d="M17.304 3.541h-3.672l6.696 16.918h3.672zm-10.608 0L0 20.459h3.744l1.368-3.541h6.912l1.368 3.541h3.744L10.44 3.541zm-.456 10.295l2.304-5.975 2.304 5.975z"/>
+  </svg>
+);
+
+const XAIIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
+    <path d="M3 3l8.5 9.5L3 21h2l7-7 7 7h2l-8.5-8.5L19 3h-2l-6 6-6-6z"/>
+  </svg>
+);
+
+const MoonshotIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+  </svg>
+);
 
 interface AIModel {
   id: string;
@@ -24,7 +43,7 @@ interface AIModel {
   maxTokens: number;
   supportsStreaming: boolean;
   costPer1kTokens?: number;
-  available?: boolean; // Flag to indicate if provider is configured/initialized
+  available?: boolean;
 }
 
 interface AIModelSelectorProps {
@@ -38,11 +57,11 @@ interface AIModelSelectorProps {
 
 const getProviderIcon = (provider: string) => {
   const icons: Record<string, React.ElementType> = {
-    openai: Brain,
-    anthropic: Lightbulb,
-    gemini: Sparkles,
-    xai: Zap,
-    moonshot: Sparkles,  // Kimi-K2 (Moonshot AI)
+    openai: SiOpenai,
+    anthropic: AnthropicIcon,
+    gemini: SiGoogle,
+    xai: XAIIcon,
+    moonshot: MoonshotIcon,
     default: Cpu
   };
   return icons[provider] || icons.default;
@@ -173,7 +192,7 @@ export function AIModelSelector({
                             )}
                             {!isAvailable && <Badge variant="destructive" className="text-[10px] px-1.5 py-0">N/A</Badge>}
                           </div>
-                          <div className="text-xs text-muted-foreground mt-0.5 whitespace-normal leading-relaxed">{model.description}</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5 whitespace-normal leading-tight">{model.description}</div>
                         </div>
                       </div>
                     </SelectItem>
@@ -291,9 +310,9 @@ export function AIModelSelector({
                           <Badge variant="destructive" className="text-[10px] px-1.5 py-0">N/A</Badge>
                         )}
                       </div>
-                      <div className="text-xs text-muted-foreground mt-0.5 whitespace-normal leading-relaxed">{model.description}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5 whitespace-normal leading-tight">{model.description}</div>
                       {model.costPer1kTokens && (
-                        <div className="text-[10px] text-muted-foreground/70 mt-1">
+                        <div className="text-[9px] text-muted-foreground/70 mt-0.5">
                           ${model.costPer1kTokens.toFixed(4)} / 1K tokens
                         </div>
                       )}

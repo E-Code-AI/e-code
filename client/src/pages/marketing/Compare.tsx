@@ -117,7 +117,7 @@ export default function Compare() {
           <CardContent className="pt-6 text-center">
             <h2 className="text-2xl font-bold mb-2">Ready to Experience the Difference?</h2>
             <p className="text-muted-foreground mb-4">
-              Join thousands of developers building faster with E-Code Platform
+              Start building faster with E-Code Platform today
             </p>
             <Link href="/register">
               <Button size="lg" data-testid="button-get-started">

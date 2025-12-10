@@ -1151,7 +1151,7 @@ session.share({ team: "Field Ops" });
               Ready to code anywhere?
             </h2>
             <p className="text-xl text-muted-foreground mb-12">
-              Join millions of developers who code on the go with E-Code Mobile
+              Code on the go with E-Code Mobile - your full IDE in your pocket
             </p>
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">

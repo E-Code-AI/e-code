@@ -419,7 +419,7 @@ export default function Features() {
             Experience the future of development
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Join millions of developers who are building faster with E-Code
+            Join developers worldwide who are building faster with E-Code
           </p>
           <div className="flex gap-4 justify-center">
             <Button size="lg" onClick={() => navigate(user ? '/dashboard' : '/login')}>
