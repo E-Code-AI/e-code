@@ -195,4 +195,49 @@ router.delete('/api/shell/sessions/:sessionId', ensureAuthenticated, (req, res) 
   }
 });
 
+// API endpoint to generate shell command with AI
+router.post('/api/shell/generate-command', ensureAuthenticated, async (req, res) => {
+  try {
+    const { prompt, projectId } = req.body;
+    
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    // Use OpenAI to generate shell command
+    const OpenAI = (await import('openai')).default;
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a shell command generator. Given a natural language description, output ONLY the shell command that accomplishes the task. No explanations, no markdown, just the raw command. The command should work in a bash shell on Linux. Be concise and accurate.`
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: 200,
+      temperature: 0.3
+    });
+
+    const command = completion.choices[0]?.message?.content?.trim() || '';
+    
+    res.json({ command, prompt });
+  } catch (error) {
+    console.error('Shell command generation error:', error);
+    res.status(500).json({ error: 'Failed to generate command' });
+  }
+});
+
+// API endpoint to clear shell output (reset session buffer)
+router.post('/api/shell/clear', ensureAuthenticated, (req, res) => {
+  const { sessionId } = req.body;
+  // Clear is handled client-side, just acknowledge
+  res.json({ success: true, sessionId });
+});
+
 export { router as default, setupShellWebSocket };
