@@ -86,35 +86,42 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
       isConnected: false
     };
 
-    const socket = createWebSocket(sessionId);
-    
-    socket.onopen = () => {
-      setTabs(prev => prev.map(tab => 
-        tab.id === sessionId ? { ...tab, isConnected: true, output: [...tab.output, '\x1b[32m● Connected to E-Code Shell\x1b[0m\r\n'] } : tab
-      ));
-    };
-    
-    socket.onmessage = (event) => {
-      setTabs(prev => prev.map(tab => 
-        tab.id === sessionId ? { ...tab, output: [...tab.output, event.data] } : tab
-      ));
-    };
-    
-    socket.onclose = () => {
-      setTabs(prev => prev.map(tab => 
-        tab.id === sessionId ? { ...tab, isConnected: false, output: [...tab.output, '\r\n\x1b[31m● Disconnected\x1b[0m\r\n'] } : tab
-      ));
-    };
-    
-    socket.onerror = () => {
-      setTabs(prev => prev.map(tab => 
-        tab.id === sessionId ? { ...tab, isConnected: false } : tab
-      ));
-    };
-
-    newTab.ws = socket;
     setTabs(prev => [...prev, newTab]);
     setActiveTabId(sessionId);
+
+    const connectWithRetry = (retries = 3) => {
+      const socket = createWebSocket(sessionId);
+      
+      socket.onopen = () => {
+        setTabs(prev => prev.map(tab => 
+          tab.id === sessionId ? { ...tab, ws: socket, isConnected: true, output: [...tab.output, '\x1b[32m● Connected to E-Code Shell\x1b[0m\r\n'] } : tab
+        ));
+      };
+      
+      socket.onmessage = (event) => {
+        setTabs(prev => prev.map(tab => 
+          tab.id === sessionId ? { ...tab, output: [...tab.output, event.data] } : tab
+        ));
+      };
+      
+      socket.onclose = () => {
+        setTabs(prev => prev.map(tab => 
+          tab.id === sessionId ? { ...tab, isConnected: false, output: [...tab.output, '\r\n\x1b[31m● Disconnected\x1b[0m\r\n'] } : tab
+        ));
+      };
+      
+      socket.onerror = () => {
+        if (retries > 0) {
+          setTimeout(() => connectWithRetry(retries - 1), 1000);
+        } else {
+          setTabs(prev => prev.map(tab => 
+            tab.id === sessionId ? { ...tab, isConnected: false, output: [...tab.output, '\r\n\x1b[31m● Connection failed\x1b[0m\r\n'] } : tab
+          ));
+        }
+      };
+    };
+
+    setTimeout(() => connectWithRetry(), 100);
     
     return newTab;
   }, [createWebSocket]);
@@ -278,13 +285,13 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
 
   const parseAnsiToHtml = (text: string, highlightQuery?: string): string => {
     let parsed = text
-      .replace(/\x1b\[32m/g, '<span class="text-green-500">')
-      .replace(/\x1b\[31m/g, '<span class="text-red-500">')
-      .replace(/\x1b\[33m/g, '<span class="text-yellow-500">')
-      .replace(/\x1b\[34m/g, '<span class="text-blue-500">')
-      .replace(/\x1b\[35m/g, '<span class="text-purple-500">')
-      .replace(/\x1b\[36m/g, '<span class="text-cyan-500">')
-      .replace(/\x1b\[90m/g, '<span class="text-muted-foreground">')
+      .replace(/\x1b\[32m/g, '<span style="color: hsl(var(--chart-2))">')
+      .replace(/\x1b\[31m/g, '<span style="color: hsl(var(--destructive))">')
+      .replace(/\x1b\[33m/g, '<span style="color: hsl(var(--chart-4))">')
+      .replace(/\x1b\[34m/g, '<span style="color: hsl(var(--primary))">')
+      .replace(/\x1b\[35m/g, '<span style="color: hsl(var(--chart-5))">')
+      .replace(/\x1b\[36m/g, '<span style="color: hsl(var(--chart-3))">')
+      .replace(/\x1b\[90m/g, '<span style="color: hsl(var(--muted-foreground))">')
       .replace(/\x1b\[0m/g, '</span>')
       .replace(/\x1b\[\d+m/g, '')
       .replace(/\r\n/g, '<br/>')
@@ -292,7 +299,7 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
     
     if (highlightQuery) {
       const regex = new RegExp(`(${highlightQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-      parsed = parsed.replace(regex, '<mark class="bg-yellow-400 text-black px-0.5 rounded">$1</mark>');
+      parsed = parsed.replace(regex, '<mark style="background: hsl(var(--chart-4)); color: hsl(var(--background)); padding: 0 2px; border-radius: 2px;">$1</mark>');
     }
     
     return parsed;
@@ -322,7 +329,7 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
         <div className="flex items-center gap-2">
           <ShellIcon className="h-4 w-4 text-primary" />
           <span className="font-medium text-sm">Shell</span>
-          <span className={`h-2 w-2 rounded-full ${activeTab.isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+          <span className={`h-2 w-2 rounded-full ${activeTab.isConnected ? 'bg-[hsl(var(--chart-2))]' : 'bg-destructive'}`} />
         </div>
         
         <Button 
@@ -358,7 +365,7 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
                 className="text-xs"
                 data-testid={`shell-tab-${tab.id}`}
               >
-                <span className={`h-1.5 w-1.5 rounded-full mr-2 ${tab.isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                <span className={`h-1.5 w-1.5 rounded-full mr-2 ${tab.isConnected ? 'bg-[hsl(var(--chart-2))]' : 'bg-destructive'}`} />
                 {tab.cwd}: {tab.name}
               </DropdownMenuItem>
             ))}
