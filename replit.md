@@ -44,6 +44,30 @@ function useAIModels() {
 
 **Backend caching:** Server-side caching is handled by `AgentStepCacheService` (database-backed, TTL, version tracking).
 
+### Fortune 500 Offline Cache Architecture (Phase 2.5)
+The platform uses a **3-layer cache architecture** for enterprise-grade offline UX:
+
+1. **TanStack Query + IndexedDB Persistence** (`query-persister.ts`)
+   - Query cache persists to IndexedDB via `@tanstack/react-query-persist-client`
+   - Auto-hydrates on app bootstrap (24-hour max age, version tracking)
+   - Survives browser restarts and offline periods
+
+2. **Service Worker Cache** (`sw.js` - 616 lines)
+   - `networkFirst` for API routes, `cacheFirst` for static assets
+   - API responses tagged with `sw-cached-time` for TTL management
+   - Graceful offline fallback with JSON error responses
+
+3. **Cache Reconciliation Layer** (`cache-reconciliation.ts`)
+   - Coordinates SW ↔ TanStack Query state
+   - Debounced invalidation (2s) prevents refetch loops
+   - Only triggers on background sync events (NOT foreground fetches)
+   - `wasOffline` flag ensures refresh only on offline→online transitions
+
+**CRITICAL RULES:**
+- SW cache updates do NOT trigger TanStack Query invalidation (prevents loops)
+- Only `OFFLINE_SYNC_COMPLETE` with `isBackgroundSync: true` triggers reconciliation
+- Use `refetchType: 'none'` when invalidating to prevent auto-refetch
+
 ## Component Architecture
 
 ### Unified IDE Layout (Phase 1 Complete)
