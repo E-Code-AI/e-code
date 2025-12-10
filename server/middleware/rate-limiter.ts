@@ -472,6 +472,19 @@ export const logRateLimitViolations = (
   res: Response,
   next: NextFunction
 ) => {
+  // ✅ PRODUCTION FIX (Dec 10, 2025): Skip logging for static assets
+  const path = req.path || req.originalUrl || '';
+  if (path.startsWith('/assets/') || 
+      path.startsWith('/static/') || 
+      path.endsWith('.js') || 
+      path.endsWith('.css') || 
+      path.endsWith('.png') || 
+      path.endsWith('.jpg') || 
+      path.endsWith('.svg') || 
+      path.endsWith('.ico')) {
+    return next();
+  }
+  
   const originalSend = res.send;
   
   res.send = function(body: any) {

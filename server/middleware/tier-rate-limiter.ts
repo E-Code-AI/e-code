@@ -117,6 +117,24 @@ export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming'
         (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
       return next();
     }
+    
+    // ✅ PRODUCTION FIX (Dec 10, 2025): Skip rate limiting for static assets
+    // Problem: Rate limiter was blocking /assets/* requests in production
+    // Solution: Only rate limit API routes, skip all static files
+    const path = req.path || req.originalUrl || '';
+    if (path.startsWith('/assets/') || 
+        path.startsWith('/static/') || 
+        path.endsWith('.js') || 
+        path.endsWith('.css') || 
+        path.endsWith('.png') || 
+        path.endsWith('.jpg') || 
+        path.endsWith('.svg') || 
+        path.endsWith('.ico') ||
+        path.endsWith('.woff') ||
+        path.endsWith('.woff2') ||
+        path.endsWith('.ttf')) {
+      return next();
+    }
 
     try {
       // Determine user tier (default to 'free' if not authenticated or no tier)
