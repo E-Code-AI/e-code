@@ -24,18 +24,21 @@ import {
   Plus,
   Square,
   Sparkles,
-  ChevronRight,
+  ChevronUp,
   Shell as ShellIcon,
   Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ShellTab {
   id: string;
   name: string;
   cwd: string;
+  output: string[];
+  ws: WebSocket | null;
+  isConnected: boolean;
 }
 
 interface ReplitMobileShellProps {
@@ -47,93 +50,110 @@ interface ReplitMobileShellProps {
 export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileShellProps) {
   const { toast } = useToast();
   
-  const [tabs, setTabs] = useState<ShellTab[]>([
-    { id: 'shell-1', name: 'bash', cwd: '~/workspace' }
-  ]);
-  const [activeTabId, setActiveTabId] = useState('shell-1');
+  const [tabs, setTabs] = useState<ShellTab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string>('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFindMode, setIsFindMode] = useState(false);
   const [isGenerateMode, setIsGenerateMode] = useState(false);
   const [findQuery, setFindQuery] = useState('');
+  const [findMatches, setFindMatches] = useState<number[]>([]);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [generatePrompt, setGeneratePrompt] = useState('');
-  const [terminalOutput, setTerminalOutput] = useState<string[]>([]);
   const [currentCommand, setCurrentCommand] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
-  const [ws, setWs] = useState<WebSocket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
   
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const findInputRef = useRef<HTMLInputElement>(null);
   const generateInputRef = useRef<HTMLInputElement>(null);
 
-  const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
+  const activeTab = tabs.find(t => t.id === activeTabId);
 
-  const connectWebSocket = useCallback(() => {
+  const createWebSocket = useCallback((sessionId: string, userId: number = 1): WebSocket => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/api/terminal/ws?projectId=${projectId}`;
-    
-    const socket = new WebSocket(wsUrl);
+    const wsUrl = `${protocol}//${window.location.host}/shell?sessionId=${sessionId}&userId=${userId}`;
+    return new WebSocket(wsUrl);
+  }, []);
+
+  const createNewTab = useCallback(() => {
+    const sessionId = `shell-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const newTab: ShellTab = {
+      id: sessionId,
+      name: 'bash',
+      cwd: '~/workspace',
+      output: [],
+      ws: null,
+      isConnected: false
+    };
+
+    const socket = createWebSocket(sessionId);
     
     socket.onopen = () => {
-      setIsConnected(true);
-      setTerminalOutput(prev => [...prev, '\x1b[32m● Connected to shell\x1b[0m\r\n']);
+      setTabs(prev => prev.map(tab => 
+        tab.id === sessionId ? { ...tab, isConnected: true, output: [...tab.output, '\x1b[32m● Connected to E-Code Shell\x1b[0m\r\n'] } : tab
+      ));
     };
     
     socket.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        if (message.type === 'output') {
-          setTerminalOutput(prev => [...prev, message.data]);
-        } else if (message.type === 'connected') {
-          setTerminalOutput(prev => [...prev, `\x1b[90m${message.data}\x1b[0m\r\n`]);
-        }
-      } catch {
-        setTerminalOutput(prev => [...prev, event.data]);
-      }
+      setTabs(prev => prev.map(tab => 
+        tab.id === sessionId ? { ...tab, output: [...tab.output, event.data] } : tab
+      ));
     };
     
     socket.onclose = () => {
-      setIsConnected(false);
-      setTerminalOutput(prev => [...prev, '\r\n\x1b[31m● Disconnected\x1b[0m\r\n']);
+      setTabs(prev => prev.map(tab => 
+        tab.id === sessionId ? { ...tab, isConnected: false, output: [...tab.output, '\r\n\x1b[31m● Disconnected\x1b[0m\r\n'] } : tab
+      ));
     };
     
     socket.onerror = () => {
-      setIsConnected(false);
+      setTabs(prev => prev.map(tab => 
+        tab.id === sessionId ? { ...tab, isConnected: false } : tab
+      ));
     };
+
+    newTab.ws = socket;
+    setTabs(prev => [...prev, newTab]);
+    setActiveTabId(sessionId);
     
-    setWs(socket);
-    
-    return socket;
-  }, [projectId]);
+    return newTab;
+  }, [createWebSocket]);
 
   useEffect(() => {
-    const socket = connectWebSocket();
+    if (tabs.length === 0) {
+      createNewTab();
+    }
+  }, [tabs.length, createNewTab]);
+
+  useEffect(() => {
     return () => {
-      socket.close();
+      tabs.forEach(tab => {
+        tab.ws?.close();
+      });
     };
-  }, [connectWebSocket]);
+  }, []);
 
   useEffect(() => {
-    if (terminalRef.current) {
+    if (terminalRef.current && activeTab) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
-  }, [terminalOutput]);
+  }, [activeTab?.output]);
 
   const sendCommand = useCallback((command: string) => {
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
+    if (!activeTab?.ws || activeTab.ws.readyState !== WebSocket.OPEN) {
       toast({
         title: 'Not connected',
-        description: 'Shell is not connected. Reconnecting...',
+        description: 'Shell is not connected',
         variant: 'destructive'
       });
-      connectWebSocket();
       return;
     }
     
-    ws.send(JSON.stringify({ type: 'input', data: command + '\r' }));
+    activeTab.ws.send(command + '\r');
     setCurrentCommand('');
-  }, [ws, toast, connectWebSocket]);
+    setIsExecuting(true);
+    setTimeout(() => setIsExecuting(false), 500);
+  }, [activeTab, toast]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && currentCommand.trim()) {
@@ -142,7 +162,10 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
   };
 
   const clearShell = () => {
-    setTerminalOutput([]);
+    if (!activeTab) return;
+    setTabs(prev => prev.map(tab => 
+      tab.id === activeTabId ? { ...tab, output: [] } : tab
+    ));
     setIsMenuOpen(false);
     toast({ title: 'Shell cleared' });
   };
@@ -156,6 +179,38 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
   const closeFindMode = () => {
     setIsFindMode(false);
     setFindQuery('');
+    setFindMatches([]);
+    setCurrentMatchIndex(0);
+  };
+
+  const handleFindChange = (query: string) => {
+    setFindQuery(query);
+    if (!query || !activeTab) {
+      setFindMatches([]);
+      return;
+    }
+    
+    const output = activeTab.output.join('').replace(/\x1b\[[0-9;]*m/g, '');
+    const matches: number[] = [];
+    let index = 0;
+    while ((index = output.toLowerCase().indexOf(query.toLowerCase(), index)) !== -1) {
+      matches.push(index);
+      index += query.length;
+    }
+    setFindMatches(matches);
+    setCurrentMatchIndex(matches.length > 0 ? 0 : -1);
+  };
+
+  const findNext = () => {
+    if (findMatches.length === 0) return;
+    setCurrentMatchIndex(prev => (prev + 1) % findMatches.length);
+    toast({ title: `Match ${currentMatchIndex + 2} of ${findMatches.length}` });
+  };
+
+  const findPrevious = () => {
+    if (findMatches.length === 0) return;
+    setCurrentMatchIndex(prev => prev === 0 ? findMatches.length - 1 : prev - 1);
+    toast({ title: `Match ${currentMatchIndex} of ${findMatches.length}` });
   };
 
   const openGenerateMode = () => {
@@ -200,53 +255,29 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
   };
 
   const stopExecution = () => {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'input', data: '\x03' }));
+    if (activeTab?.ws && activeTab.ws.readyState === WebSocket.OPEN) {
+      activeTab.ws.send('\x03');
       setIsExecuting(false);
     }
   };
 
-  const createNewTab = () => {
-    const newId = `shell-${Date.now()}`;
-    setTabs(prev => [...prev, { id: newId, name: 'bash', cwd: '~/workspace' }]);
-    setActiveTabId(newId);
-  };
-
   const closeTab = () => {
+    if (!activeTab) return;
+    activeTab.ws?.close();
+    
     if (tabs.length <= 1) {
       onClose?.();
       return;
     }
+    
     const remainingTabs = tabs.filter(t => t.id !== activeTabId);
     setTabs(remainingTabs);
     setActiveTabId(remainingTabs[0].id);
     setIsMenuOpen(false);
   };
 
-  const findNext = () => {
-    if (!findQuery) return;
-    const output = terminalOutput.join('');
-    const index = output.toLowerCase().indexOf(findQuery.toLowerCase());
-    if (index !== -1) {
-      toast({ title: 'Found match' });
-    } else {
-      toast({ title: 'No matches found' });
-    }
-  };
-
-  const findPrevious = () => {
-    if (!findQuery) return;
-    const output = terminalOutput.join('');
-    const index = output.toLowerCase().lastIndexOf(findQuery.toLowerCase());
-    if (index !== -1) {
-      toast({ title: 'Found match' });
-    } else {
-      toast({ title: 'No matches found' });
-    }
-  };
-
-  const parseAnsiToHtml = (text: string): string => {
-    return text
+  const parseAnsiToHtml = (text: string, highlightQuery?: string): string => {
+    let parsed = text
       .replace(/\x1b\[32m/g, '<span class="text-green-500">')
       .replace(/\x1b\[31m/g, '<span class="text-red-500">')
       .replace(/\x1b\[33m/g, '<span class="text-yellow-500">')
@@ -258,7 +289,22 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
       .replace(/\x1b\[\d+m/g, '')
       .replace(/\r\n/g, '<br/>')
       .replace(/\n/g, '<br/>');
+    
+    if (highlightQuery) {
+      const regex = new RegExp(`(${highlightQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+      parsed = parsed.replace(regex, '<mark class="bg-yellow-400 text-black px-0.5 rounded">$1</mark>');
+    }
+    
+    return parsed;
   };
+
+  if (!activeTab) {
+    return (
+      <div className="flex items-center justify-center h-full bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -276,6 +322,7 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
         <div className="flex items-center gap-2">
           <ShellIcon className="h-4 w-4 text-primary" />
           <span className="font-medium text-sm">Shell</span>
+          <span className={`h-2 w-2 rounded-full ${activeTab.isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
         </div>
         
         <Button 
@@ -309,11 +356,13 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
                 key={tab.id}
                 onClick={() => setActiveTabId(tab.id)}
                 className="text-xs"
+                data-testid={`shell-tab-${tab.id}`}
               >
+                <span className={`h-1.5 w-1.5 rounded-full mr-2 ${tab.isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                 {tab.cwd}: {tab.name}
               </DropdownMenuItem>
             ))}
-            <DropdownMenuItem onClick={createNewTab} className="text-xs gap-2">
+            <DropdownMenuItem onClick={createNewTab} className="text-xs gap-2" data-testid="shell-new-tab">
               <Plus className="h-3 w-3" />
               New Shell
             </DropdownMenuItem>
@@ -365,16 +414,23 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
           <Input
             ref={findInputRef}
             value={findQuery}
-            onChange={(e) => setFindQuery(e.target.value)}
+            onChange={(e) => handleFindChange(e.target.value)}
             placeholder="Find"
             className="h-7 text-xs flex-1"
             data-testid="shell-find-input"
           />
+          {findMatches.length > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {currentMatchIndex + 1}/{findMatches.length}
+            </span>
+          )}
           <Button 
             variant="outline" 
             size="sm" 
             className="h-7 text-xs"
             onClick={findNext}
+            disabled={findMatches.length === 0}
+            data-testid="shell-find-next"
           >
             Next
           </Button>
@@ -383,14 +439,17 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
             size="sm" 
             className="h-7 text-xs"
             onClick={findPrevious}
+            disabled={findMatches.length === 0}
+            data-testid="shell-find-prev"
           >
-            Previous
+            <ChevronUp className="h-3 w-3" />
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
             className="h-7 text-xs"
             onClick={closeFindMode}
+            data-testid="shell-find-close"
           >
             Exit
           </Button>
@@ -405,7 +464,7 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
       >
         <div 
           dangerouslySetInnerHTML={{ 
-            __html: parseAnsiToHtml(terminalOutput.join('')) 
+            __html: parseAnsiToHtml(activeTab.output.join(''), isFindMode ? findQuery : undefined) 
           }} 
         />
         
@@ -433,6 +492,7 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
               className="absolute right-1 top-1 h-7 w-7"
               onClick={handleGenerateSubmit}
               disabled={generateCommandMutation.isPending}
+              data-testid="shell-generate-submit"
             >
               {generateCommandMutation.isPending ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -481,33 +541,6 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
         </Button>
         
         <div className="flex items-center bg-muted rounded-full px-1 py-1 gap-1">
-          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="2" y="3" width="20" height="14" rx="2" />
-              <line x1="8" y1="21" x2="16" y2="21" />
-              <line x1="12" y1="17" x2="12" y2="21" />
-            </svg>
-          </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="6" cy="6" r="2" />
-              <circle cx="12" cy="6" r="2" />
-              <circle cx="18" cy="6" r="2" />
-              <circle cx="6" cy="12" r="2" />
-              <circle cx="12" cy="12" r="2" />
-              <circle cx="18" cy="12" r="2" />
-              <circle cx="6" cy="18" r="2" />
-              <circle cx="12" cy="18" r="2" />
-              <circle cx="18" cy="18" r="2" />
-            </svg>
-          </Button>
-          <div className="w-px h-5 bg-border mx-1" />
-          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-              <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
-          </Button>
           <Button 
             variant="default" 
             size="icon" 
@@ -522,12 +555,10 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
           variant="outline"
           size="icon"
           className="h-11 w-11 rounded-lg"
+          onClick={createNewTab}
           data-testid="shell-split-button"
         >
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <line x1="12" y1="3" x2="12" y2="21" />
-          </svg>
+          <Plus className="h-4 w-4" />
         </Button>
       </div>
 

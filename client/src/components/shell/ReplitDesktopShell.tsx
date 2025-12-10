@@ -27,7 +27,7 @@ import {
   Settings,
   Search,
   Download,
-  ChevronDown,
+  ChevronUp,
   Sparkles,
   Square,
   Loader2,
@@ -41,26 +41,13 @@ import { useToast } from '@/hooks/use-toast';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
-const themes = {
-  default: {
-    background: '#1e1e1e',
-    foreground: '#d4d4d4',
-  },
-  monokai: {
-    background: '#272822',
-    foreground: '#f8f8f2',
-  },
-  light: {
-    background: '#ffffff',
-    foreground: '#1e1e1e',
-  }
-};
-
 interface ShellTab {
   id: string;
   name: string;
   cwd: string;
   output: string[];
+  ws: WebSocket | null;
+  isConnected: boolean;
 }
 
 interface ReplitDesktopShellProps {
@@ -76,99 +63,108 @@ export function ReplitDesktopShell({
 }: ReplitDesktopShellProps) {
   const { toast } = useToast();
   
-  const [tabs, setTabs] = useState<ShellTab[]>([
-    { id: 'shell-1', name: 'Main Shell', cwd: '~/workspace', output: [] }
-  ]);
-  const [activeTabId, setActiveTabId] = useState('shell-1');
-  const [selectedTheme, setSelectedTheme] = useState<'default' | 'monokai' | 'light'>('default');
+  const [tabs, setTabs] = useState<ShellTab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string>('');
   const [fontSize, setFontSize] = useState(14);
   const [isFindMode, setIsFindMode] = useState(false);
   const [isGenerateMode, setIsGenerateMode] = useState(false);
   const [findQuery, setFindQuery] = useState('');
+  const [findMatches, setFindMatches] = useState<number[]>([]);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [generatePrompt, setGeneratePrompt] = useState('');
   const [currentCommand, setCurrentCommand] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
-  const [ws, setWs] = useState<WebSocket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
 
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
-  const theme = themes[selectedTheme];
+  const activeTab = tabs.find(t => t.id === activeTabId);
 
-  const connectWebSocket = useCallback(() => {
+  const createWebSocket = useCallback((sessionId: string, userId: number = 1): WebSocket => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/api/terminal/ws?projectId=${projectId}`;
-    
-    const socket = new WebSocket(wsUrl);
+    const wsUrl = `${protocol}//${window.location.host}/shell?sessionId=${sessionId}&userId=${userId}`;
+    return new WebSocket(wsUrl);
+  }, []);
+
+  const createNewTab = useCallback(() => {
+    const sessionId = `shell-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const newTab: ShellTab = {
+      id: sessionId,
+      name: `Shell ${tabs.length + 1}`,
+      cwd: '~/workspace',
+      output: [],
+      ws: null,
+      isConnected: false
+    };
+
+    const socket = createWebSocket(sessionId);
     
     socket.onopen = () => {
-      setIsConnected(true);
-      updateTabOutput(activeTabId, '\x1b[32m● Connected to E-Code Shell\x1b[0m\r\n');
+      setTabs(prev => prev.map(tab => 
+        tab.id === sessionId ? { ...tab, isConnected: true, output: [...tab.output, '\x1b[32m● Connected to E-Code Shell\x1b[0m\r\n'] } : tab
+      ));
     };
     
     socket.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        if (message.type === 'output') {
-          updateTabOutput(activeTabId, message.data);
-        } else if (message.type === 'connected') {
-          updateTabOutput(activeTabId, `\x1b[90m${message.data}\x1b[0m\r\n`);
-        }
-      } catch {
-        updateTabOutput(activeTabId, event.data);
-      }
+      setTabs(prev => prev.map(tab => 
+        tab.id === sessionId ? { ...tab, output: [...tab.output, event.data] } : tab
+      ));
     };
     
     socket.onclose = () => {
-      setIsConnected(false);
-      updateTabOutput(activeTabId, '\r\n\x1b[31m● Disconnected\x1b[0m\r\n');
+      setTabs(prev => prev.map(tab => 
+        tab.id === sessionId ? { ...tab, isConnected: false, output: [...tab.output, '\r\n\x1b[31m● Disconnected\x1b[0m\r\n'] } : tab
+      ));
     };
     
     socket.onerror = () => {
-      setIsConnected(false);
+      setTabs(prev => prev.map(tab => 
+        tab.id === sessionId ? { ...tab, isConnected: false } : tab
+      ));
     };
-    
-    setWs(socket);
-    return socket;
-  }, [projectId, activeTabId]);
 
-  const updateTabOutput = (tabId: string, data: string) => {
-    setTabs(prev => prev.map(tab => 
-      tab.id === tabId 
-        ? { ...tab, output: [...tab.output, data] }
-        : tab
-    ));
-  };
+    newTab.ws = socket;
+    setTabs(prev => [...prev, newTab]);
+    setActiveTabId(sessionId);
+    
+    return newTab;
+  }, [tabs.length, createWebSocket]);
 
   useEffect(() => {
-    const socket = connectWebSocket();
+    if (tabs.length === 0) {
+      createNewTab();
+    }
+  }, [tabs.length, createNewTab]);
+
+  useEffect(() => {
     return () => {
-      socket.close();
+      tabs.forEach(tab => {
+        tab.ws?.close();
+      });
     };
   }, []);
 
   useEffect(() => {
-    if (terminalRef.current) {
+    if (terminalRef.current && activeTab) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
-  }, [tabs]);
+  }, [activeTab?.output]);
 
   const sendCommand = useCallback((command: string) => {
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
+    if (!activeTab?.ws || activeTab.ws.readyState !== WebSocket.OPEN) {
       toast({
         title: 'Not connected',
         description: 'Reconnecting to shell...',
         variant: 'destructive'
       });
-      connectWebSocket();
       return;
     }
     
-    ws.send(JSON.stringify({ type: 'input', data: command + '\r' }));
+    activeTab.ws.send(command + '\r');
     setCurrentCommand('');
-  }, [ws, toast, connectWebSocket]);
+    setIsExecuting(true);
+    setTimeout(() => setIsExecuting(false), 500);
+  }, [activeTab, toast]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && currentCommand.trim()) {
@@ -176,19 +172,10 @@ export function ReplitDesktopShell({
     }
   };
 
-  const createNewTab = () => {
-    const newId = `shell-${Date.now()}`;
-    const newTab: ShellTab = {
-      id: newId,
-      name: `Shell ${tabs.length + 1}`,
-      cwd: '~/workspace',
-      output: []
-    };
-    setTabs(prev => [...prev, newTab]);
-    setActiveTabId(newId);
-  };
-
   const closeTab = (tabId: string) => {
+    const tab = tabs.find(t => t.id === tabId);
+    tab?.ws?.close();
+    
     if (tabs.length <= 1) return;
     const remaining = tabs.filter(t => t.id !== tabId);
     setTabs(remaining);
@@ -198,18 +185,21 @@ export function ReplitDesktopShell({
   };
 
   const clearTerminal = () => {
+    if (!activeTab) return;
     setTabs(prev => prev.map(tab => 
       tab.id === activeTabId ? { ...tab, output: [] } : tab
     ));
   };
 
   const copyTerminalContent = () => {
+    if (!activeTab) return;
     const content = activeTab.output.join('').replace(/\x1b\[[0-9;]*m/g, '');
     navigator.clipboard.writeText(content);
     toast({ title: 'Copied to clipboard' });
   };
 
   const downloadLog = () => {
+    if (!activeTab) return;
     const content = activeTab.output.join('').replace(/\x1b\[[0-9;]*m/g, '');
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -218,6 +208,34 @@ export function ReplitDesktopShell({
     a.download = `shell-${activeTab.name}-${new Date().toISOString()}.log`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleFindChange = (query: string) => {
+    setFindQuery(query);
+    if (!query || !activeTab) {
+      setFindMatches([]);
+      return;
+    }
+    
+    const output = activeTab.output.join('').replace(/\x1b\[[0-9;]*m/g, '');
+    const matches: number[] = [];
+    let index = 0;
+    while ((index = output.toLowerCase().indexOf(query.toLowerCase(), index)) !== -1) {
+      matches.push(index);
+      index += query.length;
+    }
+    setFindMatches(matches);
+    setCurrentMatchIndex(matches.length > 0 ? 0 : -1);
+  };
+
+  const findNext = () => {
+    if (findMatches.length === 0) return;
+    setCurrentMatchIndex(prev => (prev + 1) % findMatches.length);
+  };
+
+  const findPrevious = () => {
+    if (findMatches.length === 0) return;
+    setCurrentMatchIndex(prev => prev === 0 ? findMatches.length - 1 : prev - 1);
   };
 
   const generateCommandMutation = useMutation({
@@ -239,14 +257,14 @@ export function ReplitDesktopShell({
   });
 
   const stopExecution = () => {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'input', data: '\x03' }));
+    if (activeTab?.ws && activeTab.ws.readyState === WebSocket.OPEN) {
+      activeTab.ws.send('\x03');
       setIsExecuting(false);
     }
   };
 
-  const parseAnsiToHtml = (text: string): string => {
-    return text
+  const parseAnsiToHtml = (text: string, highlightQuery?: string): string => {
+    let parsed = text
       .replace(/\x1b\[32m/g, '<span class="text-green-500">')
       .replace(/\x1b\[31m/g, '<span class="text-red-500">')
       .replace(/\x1b\[33m/g, '<span class="text-yellow-500">')
@@ -258,16 +276,25 @@ export function ReplitDesktopShell({
       .replace(/\x1b\[\d+m/g, '')
       .replace(/\r\n/g, '<br/>')
       .replace(/\n/g, '<br/>');
+    
+    if (highlightQuery) {
+      const regex = new RegExp(`(${highlightQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+      parsed = parsed.replace(regex, '<mark class="bg-yellow-400 text-black px-0.5 rounded">$1</mark>');
+    }
+    
+    return parsed;
   };
 
+  if (!activeTab) {
+    return (
+      <div className="flex items-center justify-center h-full bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
-    <div 
-      className={`flex flex-col bg-background ${isFullscreen ? 'fixed inset-0 z-50' : 'h-full'}`}
-      style={{ 
-        '--terminal-bg': theme.background,
-        '--terminal-fg': theme.foreground 
-      } as React.CSSProperties}
-    >
+    <div className={`flex flex-col bg-background ${isFullscreen ? 'fixed inset-0 z-50' : 'h-full'}`}>
       <div className="flex items-center justify-between px-4 py-2 border-b bg-card">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -282,7 +309,9 @@ export function ReplitDesktopShell({
                   key={tab.id} 
                   value={tab.id}
                   className="text-xs px-3 py-1 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  data-testid={`desktop-shell-tab-${tab.id}`}
                 >
+                  <span className={`h-1.5 w-1.5 rounded-full ${tab.isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                   <span className="max-w-[100px] truncate">{tab.name}</span>
                   {tabs.length > 1 && (
                     <Button
@@ -293,6 +322,7 @@ export function ReplitDesktopShell({
                         e.stopPropagation();
                         closeTab(tab.id);
                       }}
+                      data-testid={`desktop-shell-close-tab-${tab.id}`}
                     >
                       <X className="h-3 w-3" />
                     </Button>
@@ -304,7 +334,7 @@ export function ReplitDesktopShell({
                 size="icon"
                 className="h-6 w-6 ml-1"
                 onClick={createNewTab}
-                data-testid="shell-new-tab"
+                data-testid="desktop-shell-new-tab"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -328,6 +358,7 @@ export function ReplitDesktopShell({
             size="icon"
             onClick={copyTerminalContent}
             className="h-8 w-8"
+            data-testid="desktop-shell-copy"
           >
             <Copy className="h-4 w-4" />
           </Button>
@@ -337,37 +368,24 @@ export function ReplitDesktopShell({
             size="icon"
             onClick={clearTerminal}
             className="h-8 w-8"
+            data-testid="desktop-shell-clear"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button variant="ghost" size="icon" className="h-8 w-8" data-testid="desktop-shell-settings">
                 <Settings className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={downloadLog}>
+              <DropdownMenuItem onClick={downloadLog} data-testid="desktop-shell-download">
                 <Download className="h-4 w-4 mr-2" />
                 Download Log
               </DropdownMenuItem>
               
               <DropdownMenuSeparator />
-              
-              <div className="px-2 py-1.5">
-                <label className="text-sm font-medium">Theme</label>
-                <Select value={selectedTheme} onValueChange={(v) => setSelectedTheme(v as any)}>
-                  <SelectTrigger className="w-full mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="default">Default (Dark)</SelectItem>
-                    <SelectItem value="monokai">Monokai</SelectItem>
-                    <SelectItem value="light">Light</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
               
               <div className="px-2 py-1.5">
                 <label className="text-sm font-medium">Font Size</label>
@@ -391,6 +409,7 @@ export function ReplitDesktopShell({
             size="icon"
             onClick={() => onFullscreenChange?.(!isFullscreen)}
             className="h-8 w-8"
+            data-testid="desktop-shell-fullscreen"
           >
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </Button>
@@ -412,8 +431,8 @@ export function ReplitDesktopShell({
             <span>Bash</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-            <span>{isConnected ? 'Connected' : 'Disconnected'}</span>
+            <span className={`h-2 w-2 rounded-full ${activeTab.isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+            <span>{activeTab.isConnected ? 'Connected' : 'Disconnected'}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -422,11 +441,12 @@ export function ReplitDesktopShell({
             size="sm" 
             className="h-6 text-xs gap-1"
             onClick={() => setIsGenerateMode(!isGenerateMode)}
+            data-testid="desktop-shell-generate"
           >
             <Sparkles className="h-3 w-3" />
             Generate
           </Button>
-          <Button variant="ghost" size="sm" className="h-6 text-xs gap-1">
+          <Button variant="ghost" size="sm" className="h-6 text-xs gap-1" data-testid="desktop-shell-help">
             <HelpCircle className="h-3 w-3" />
             Help
           </Button>
@@ -437,13 +457,37 @@ export function ReplitDesktopShell({
         <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/50">
           <Input
             value={findQuery}
-            onChange={(e) => setFindQuery(e.target.value)}
+            onChange={(e) => handleFindChange(e.target.value)}
             placeholder="Find in shell..."
             className="h-8 text-sm flex-1 max-w-xs"
             autoFocus
+            data-testid="desktop-shell-find-input"
           />
-          <Button variant="outline" size="sm" className="h-8">Next</Button>
-          <Button variant="outline" size="sm" className="h-8">Previous</Button>
+          {findMatches.length > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {currentMatchIndex + 1}/{findMatches.length}
+            </span>
+          )}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-8"
+            onClick={findNext}
+            disabled={findMatches.length === 0}
+            data-testid="desktop-shell-find-next"
+          >
+            Next
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-8"
+            onClick={findPrevious}
+            disabled={findMatches.length === 0}
+            data-testid="desktop-shell-find-prev"
+          >
+            <ChevronUp className="h-4 w-4" />
+          </Button>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -451,7 +495,9 @@ export function ReplitDesktopShell({
             onClick={() => {
               setIsFindMode(false);
               setFindQuery('');
+              setFindMatches([]);
             }}
+            data-testid="desktop-shell-find-close"
           >
             Close
           </Button>
@@ -475,12 +521,14 @@ export function ReplitDesktopShell({
               }
             }}
             autoFocus
+            data-testid="desktop-shell-generate-input"
           />
           <Button 
             size="sm" 
             className="h-8 gap-1"
             onClick={() => generateCommandMutation.mutate(generatePrompt)}
             disabled={!generatePrompt.trim() || generateCommandMutation.isPending}
+            data-testid="desktop-shell-generate-submit"
           >
             {generateCommandMutation.isPending ? (
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -497,6 +545,7 @@ export function ReplitDesktopShell({
               setIsGenerateMode(false);
               setGeneratePrompt('');
             }}
+            data-testid="desktop-shell-generate-cancel"
           >
             Cancel
           </Button>
@@ -505,23 +554,19 @@ export function ReplitDesktopShell({
 
       <div 
         ref={terminalRef}
-        className="flex-1 overflow-auto p-4 font-mono"
-        style={{ 
-          backgroundColor: theme.background,
-          color: theme.foreground,
-          fontSize: `${fontSize}px`,
-          minHeight: '300px'
-        }}
+        className="flex-1 overflow-auto p-4 font-mono bg-[#1e1e1e]"
+        style={{ fontSize: `${fontSize}px`, minHeight: '300px' }}
         onClick={() => inputRef.current?.focus()}
         data-testid="desktop-shell-output"
       >
         <div 
+          className="text-[#d4d4d4]"
           dangerouslySetInnerHTML={{ 
-            __html: parseAnsiToHtml(activeTab.output.join('')) 
+            __html: parseAnsiToHtml(activeTab.output.join(''), isFindMode ? findQuery : undefined) 
           }} 
         />
         
-        <div className="flex items-start gap-1 mt-1">
+        <div className="flex items-start gap-1 mt-1 text-[#d4d4d4]">
           <span style={{ color: '#4ade80' }}>{activeTab.cwd}$</span>
           <span>{currentCommand}</span>
           <span className="animate-pulse">▊</span>
@@ -536,6 +581,7 @@ export function ReplitDesktopShell({
             className="h-8 w-8"
             onClick={stopExecution}
             disabled={!isExecuting}
+            data-testid="desktop-shell-stop"
           >
             <Square className="h-3 w-3" />
           </Button>
@@ -556,7 +602,7 @@ export function ReplitDesktopShell({
       <div className="border-t bg-muted/30 px-4 py-1">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-4">
-            <span>{isConnected ? 'Connected' : 'Disconnected'}</span>
+            <span>{activeTab.isConnected ? 'Connected' : 'Disconnected'}</span>
             <span>•</span>
             <span>UTF-8</span>
             <span>•</span>
