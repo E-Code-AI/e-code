@@ -28,14 +28,16 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
   const { data: initialMetrics } = useQuery<ResourceMetric[]>({
     queryKey: ['/api/workspace/projects', projectId, 'resource-metrics'],
     enabled: !!projectId,
-    refetchInterval: 10000, // Fallback polling every 10s
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 10s to 30s
+    refetchIntervalInBackground: false
   });
 
   // Fetch latest metrics
   const { data: initialLatest } = useQuery<ResourceMetric>({
     queryKey: ['/api/workspace/projects', projectId, 'resource-metrics', 'latest'],
     enabled: !!projectId,
-    refetchInterval: 5000, // Fallback polling every 5s
+    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
+    refetchIntervalInBackground: false,
   });
 
   // Use realtime data if available, fallback to initial data
