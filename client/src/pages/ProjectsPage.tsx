@@ -138,8 +138,9 @@ const ProjectsPage = () => {
   const [filterLanguage, setFilterLanguage] = useState<string[]>([]);
   const [filterVisibility, setFilterVisibility] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
-  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
-  const [showFilters, setShowFilters] = useState(true);
+  const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
+  const isMobileView = typeof window !== 'undefined' && window.innerWidth < 768;
+  const [showFilters, setShowFilters] = useState(!isMobileView);
   
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
@@ -269,7 +270,7 @@ const ProjectsPage = () => {
     setSelectedProjects([]);
   };
 
-  const toggleProjectSelection = (projectId: string) => {
+  const toggleProjectSelection = (projectId: number) => {
     setSelectedProjects(prev => 
       prev.includes(projectId) 
         ? prev.filter(id => id !== projectId)
