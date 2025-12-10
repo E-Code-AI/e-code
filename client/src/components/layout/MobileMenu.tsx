@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
+import { ECodeLogo } from '@/components/ECodeLogo';
 import {
   Menu, Home, Code, Globe, Users, Database, Book,
   Settings, User, HelpCircle, Crown, Plus, Search,
@@ -75,12 +76,7 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-200 dark:border-zinc-800">
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-                    <Code className="h-4 w-4 text-white" />
-                  </div>
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">E-Code</h2>
-                </div>
+                <ECodeLogo size="sm" showText />
               </div>
 
               {/* User Profile */}
