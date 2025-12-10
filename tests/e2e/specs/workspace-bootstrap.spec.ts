@@ -161,7 +161,7 @@ function decodeBootstrapToken(token: string): {
       base64 += new Array(5 - pad).join('=');
     }
     
-    return JSON.parse(atob(base64));
+    return JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
   } catch {
     return null;
   }

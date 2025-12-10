@@ -18,7 +18,7 @@ const VIEWPORTS = {
 } as const;
 
 const TEST_PROJECT_ID = 'test-project';
-const IDE_URL = `/projects/${TEST_PROJECT_ID}/ide`;
+const IDE_URL = `/ide/${TEST_PROJECT_ID}`;
 
 async function waitForIDELoad(page: Page): Promise<void> {
   await page.waitForLoadState('networkidle');
