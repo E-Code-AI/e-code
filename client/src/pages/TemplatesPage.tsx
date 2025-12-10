@@ -52,11 +52,21 @@ export default function TemplatesPage() {
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   // Fetch templates from API
+  const buildQueryUrl = () => {
+    const params = new URLSearchParams();
+    if (selectedCategory !== 'all') params.append('category', selectedCategory);
+    if (debouncedSearch) params.append('q', debouncedSearch);
+    const queryString = params.toString();
+    return queryString ? `/api/marketplace/templates?${queryString}` : '/api/marketplace/templates';
+  };
+
   const { data: templates, isLoading } = useQuery<Template[]>({
     queryKey: ['/api/marketplace/templates', selectedCategory, debouncedSearch],
-    queryParams: {
-      category: selectedCategory !== 'all' ? selectedCategory : undefined,
-      search: debouncedSearch || undefined
+    queryFn: async () => {
+      const response = await fetch(buildQueryUrl(), { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch templates');
+      const data = await response.json();
+      return Array.isArray(data) ? data : data.templates || [];
     }
   });
 
