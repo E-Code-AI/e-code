@@ -2,7 +2,26 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Playwright E2E Test Configuration
+ * 
+ * URL Resolution Priority:
+ * 1. BASE_URL env var (explicit override)
+ * 2. REPLIT_DEV_URL env var (Replit dev URL with :5000 auto-appended)
+ * 3. APP_URL env var (production URL)
+ * 4. localhost:5000 fallback
  */
+function getBaseURL(): string {
+  if (process.env.BASE_URL) return process.env.BASE_URL;
+  
+  const replitDevUrl = process.env.REPLIT_DEV_URL;
+  if (replitDevUrl) {
+    return replitDevUrl.includes(':') ? replitDevUrl : `${replitDevUrl}:5000`;
+  }
+  
+  if (process.env.APP_URL) return process.env.APP_URL;
+  
+  return 'http://localhost:5000';
+}
+
 export default defineConfig({
   testDir: './test/e2e',
   fullyParallel: true,
@@ -16,7 +35,7 @@ export default defineConfig({
   ],
   
   use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:5000',
+    baseURL: getBaseURL(),
     trace: process.env.TRACE || 'on-first-retry',
     screenshot: process.env.SCREENSHOT || 'only-on-failure',
     video: process.env.VIDEO || 'retain-on-failure',
