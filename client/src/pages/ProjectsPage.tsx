@@ -520,31 +520,28 @@ const ProjectsPage = () => {
                 transition={{ duration: 0.3 }}
                 className="w-full lg:w-72 flex-shrink-0"
               >
-                <Card className="sticky top-6 border border-[var(--ecode-border)] bg-[var(--ecode-surface)] shadow-[0_4px_16px_-4px_rgba(0,0,0,0.1)]">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-lg text-[var(--ecode-text)]">Filters</CardTitle>
+                <Card className="sticky top-4 border border-[var(--ecode-border)] bg-[var(--ecode-surface)] shadow-sm">
+                  <CardHeader className="py-2 px-3">
+                    <CardTitle className="text-sm font-medium text-[var(--ecode-text)]">Filters</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="p-3 pt-0 space-y-3">
                     {/* Search */}
-                    <div>
-                      <Label className="text-sm font-medium mb-2 text-[var(--ecode-text)]">Search</Label>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--ecode-text-muted)]" />
-                        <Input
-                          placeholder="Search projects..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-9 border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40"
-                          data-testid="input-search-projects"
-                        />
-                      </div>
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--ecode-text-muted)]" />
+                      <Input
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="h-8 pl-8 text-sm border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40"
+                        data-testid="input-search-projects"
+                      />
                     </div>
 
                     {/* Language/Framework Filter */}
                     <div>
-                      <Label className="text-sm font-medium mb-2 text-[var(--ecode-text)]">Languages & Frameworks</Label>
-                      <ScrollArea className="h-48">
-                        <div className="space-y-2">
+                      <Label className="text-xs font-medium text-[var(--ecode-text-muted)]">Languages</Label>
+                      <ScrollArea className="h-24 mt-1">
+                        <div className="space-y-1">
                           {availableLanguages.map(lang => (
                             <div key={lang} className="flex items-center space-x-2">
                               <Checkbox
@@ -557,12 +554,12 @@ const ProjectsPage = () => {
                                     setFilterLanguage(filterLanguage.filter(l => l !== lang));
                                   }
                                 }}
-                                className="border-[var(--ecode-border)] data-[state=checked]:bg-[var(--ecode-accent)] data-[state=checked]:border-[var(--ecode-accent)]"
+                                className="h-3.5 w-3.5 border-[var(--ecode-border)] data-[state=checked]:bg-[var(--ecode-accent)] data-[state=checked]:border-[var(--ecode-accent)]"
                                 data-testid={`checkbox-lang-${lang}`}
                               />
                               <Label
                                 htmlFor={`lang-${lang}`}
-                                className="text-sm font-normal cursor-pointer text-[var(--ecode-text)]"
+                                className="text-xs font-normal cursor-pointer text-[var(--ecode-text)]"
                               >
                                 {lang}
                               </Label>
@@ -574,8 +571,8 @@ const ProjectsPage = () => {
 
                     {/* Visibility Filter */}
                     <div>
-                      <Label className="text-sm font-medium mb-2 text-[var(--ecode-text)]">Visibility</Label>
-                      <div className="space-y-2">
+                      <Label className="text-xs font-medium text-[var(--ecode-text-muted)]">Visibility</Label>
+                      <div className="space-y-1 mt-1">
                         {['public', 'private', 'unlisted'].map(vis => (
                           <div key={vis} className="flex items-center space-x-2">
                             <Checkbox
@@ -588,12 +585,12 @@ const ProjectsPage = () => {
                                   setFilterVisibility(filterVisibility.filter(v => v !== vis));
                                 }
                               }}
-                              className="border-[var(--ecode-border)] data-[state=checked]:bg-[var(--ecode-accent)] data-[state=checked]:border-[var(--ecode-accent)]"
+                              className="h-3.5 w-3.5 border-[var(--ecode-border)] data-[state=checked]:bg-[var(--ecode-accent)] data-[state=checked]:border-[var(--ecode-accent)]"
                               data-testid={`checkbox-visibility-${vis}`}
                             />
                             <Label
                               htmlFor={`vis-${vis}`}
-                              className="text-sm font-normal cursor-pointer capitalize text-[var(--ecode-text)]"
+                              className="text-xs font-normal cursor-pointer capitalize text-[var(--ecode-text)]"
                             >
                               {vis}
                             </Label>
@@ -604,9 +601,9 @@ const ProjectsPage = () => {
 
                     {/* Clear Filters */}
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="w-full border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)] hover:border-[var(--ecode-accent)]/30"
+                      className="w-full h-7 text-xs text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
                       onClick={() => {
                         setSearchQuery('');
                         setFilterLanguage([]);
@@ -615,7 +612,7 @@ const ProjectsPage = () => {
                       }}
                       data-testid="button-clear-filters"
                     >
-                      Clear All Filters
+                      Clear Filters
                     </Button>
                   </CardContent>
                 </Card>
