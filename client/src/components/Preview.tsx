@@ -142,7 +142,8 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           : preview.primaryPort;
         
         setSelectedPort(targetPort);
-        setPreviewUrl(`http://localhost:${targetPort}`);
+        // Use the API preview route for serving project content
+        setPreviewUrl(`/api/preview/projects/${projectId}/preview/`);
         
         toast({
           title: "Preview Started",
@@ -204,7 +205,8 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
       
       if (data.success) {
         setSelectedPort(port);
-        setPreviewUrl(`http://localhost:${port}`);
+        // Use the API preview route (port info for future multi-service support)
+        setPreviewUrl(`/api/preview/projects/${projectId}/preview/`);
         savePreference('port', port.toString());
         
         // Update status
@@ -235,8 +237,8 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     if (!previewUrl) return;
     
     try {
-      // For sharing, we'd use the actual domain
-      const shareableUrl = previewUrl.replace('localhost', `${projectId}-user.preview.e-code.com`);
+      // Build shareable URL with full origin
+      const shareableUrl = `${window.location.origin}${previewUrl}`;
       await navigator.clipboard.writeText(shareableUrl);
       
       toast({
