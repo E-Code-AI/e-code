@@ -153,7 +153,7 @@ const ProjectsPage = () => {
     },
   });
 
-  const { data: projects = [], isLoading, error } = useQuery<ProjectWithOwner[]>({
+  const { data: projectsData, isLoading, error } = useQuery<{ projects: ProjectWithOwner[], pagination: { total: number, limit: number, offset: number, hasMore: boolean } }>({
     queryKey: ['/api/projects'],
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/projects');
@@ -165,7 +165,7 @@ const ProjectsPage = () => {
     enabled: !!user,
   });
 
-  const projectsArray = Array.isArray(projects) ? projects : [];
+  const projectsArray = projectsData?.projects && Array.isArray(projectsData.projects) ? projectsData.projects : [];
 
   const availableLanguages = useMemo(() => {
     const langs = new Set<string>();
