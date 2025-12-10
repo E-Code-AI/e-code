@@ -3,8 +3,12 @@ import { type IStorage, getStorage } from '../storage';
 import type { Project } from '@shared/schema';
 import { createLogger } from '../utils/logger';
 import { normalizeModelName } from '../utils/model-normalizer';
+import { redisCache } from './redis-cache';
+import crypto from 'crypto';
 
 const logger = createLogger('AIPlanGenerator');
+
+const PLAN_CACHE_TTL = 3600; // 1 hour TTL for cached plans
 
 /**
  * AI Plan Generator Service
@@ -62,6 +66,32 @@ export class AIPlanGeneratorService {
 
   constructor(storage: IStorage) {
     this.storage = storage;
+  }
+
+  /**
+   * Generate a SHA256 hash for cache key based on goal and context
+   * Used for intelligent plan caching to avoid regenerating identical plans
+   * 
+   * @param goal - User's natural language prompt
+   * @param context - Additional context (projectType, technologies, etc.)
+   * @returns SHA256 hash string
+   */
+  private generatePromptHash(
+    goal: string,
+    context?: {
+      projectType?: string;
+      technologies?: string[];
+      constraints?: string[];
+    }
+  ): string {
+    const hashInput = JSON.stringify({
+      goal: goal.toLowerCase().trim(),
+      projectType: context?.projectType?.toLowerCase().trim() || '',
+      technologies: (context?.technologies || []).map(t => t.toLowerCase().trim()).sort(),
+      constraints: (context?.constraints || []).map(c => c.toLowerCase().trim()).sort()
+    });
+    
+    return crypto.createHash('sha256').update(hashInput).digest('hex');
   }
 
   /**
@@ -221,8 +251,31 @@ export class AIPlanGeneratorService {
       constraints?: string[];
     },
     preferredModel?: string
-  ): AsyncGenerator<{ type: 'chunk' | 'plan' | 'error' | 'warning'; data: any }> {
+  ): AsyncGenerator<{ type: 'chunk' | 'plan' | 'error' | 'warning' | 'cached_plan'; data: any }> {
     try {
+      // ✅ INTELLIGENT CACHING: Check Redis cache before generating new plan
+      const promptHash = this.generatePromptHash(goal, context);
+      const cacheKey = `plan:${promptHash}`;
+      
+      try {
+        const cachedPlan = await redisCache.get<ExecutionPlan>(cacheKey);
+        if (cachedPlan) {
+          logger.info(`[generatePlan] ✅ CACHE HIT - Returning cached plan for hash: ${promptHash.substring(0, 8)}...`);
+          yield { 
+            type: 'cached_plan', 
+            data: { 
+              ...cachedPlan, 
+              cached: true 
+            } 
+          };
+          return;
+        }
+        logger.info(`[generatePlan] CACHE MISS - Generating new plan for hash: ${promptHash.substring(0, 8)}...`);
+      } catch (cacheError) {
+        // Redis unavailable - proceed with plan generation
+        logger.warn(`[generatePlan] Redis cache unavailable, proceeding with generation:`, cacheError);
+      }
+
       // Get project details
       const project = await this.storage.getProject(projectId);
       if (!project) {
@@ -571,6 +624,15 @@ Remember:
         };
         
         return;
+      }
+
+      // ✅ INTELLIGENT CACHING: Save newly generated plan to Redis cache
+      try {
+        await redisCache.set(cacheKey, successfulPlan, PLAN_CACHE_TTL);
+        logger.info(`[generatePlan] ✅ CACHE SAVE - Stored plan with hash: ${promptHash.substring(0, 8)}... (TTL: ${PLAN_CACHE_TTL}s)`);
+      } catch (cacheError) {
+        // Redis unavailable - plan still valid, just not cached
+        logger.warn(`[generatePlan] Failed to cache plan (Redis unavailable):`, cacheError);
       }
 
       // ✅ SUCCESS: Yield the successfully generated plan
