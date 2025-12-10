@@ -1,7 +1,7 @@
 import { useEffect, useState, lazy, Suspense } from "react";
 import { Switch, Route, useLocation, useRoute, Redirect } from "wouter";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "./lib/queryClient";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { queryClient, queryPersister } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { AppToaster } from "@/components/ui/AppToaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -1066,13 +1066,20 @@ function AppContent() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider 
+      client={queryClient} 
+      persistOptions={{ 
+        persister: queryPersister,
+        maxAge: 24 * 60 * 60 * 1000,
+        buster: 'v1',
+      }}
+    >
       <ThemeProvider>
         <AuthProvider>
           <AppContent />
         </AuthProvider>
       </ThemeProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }
 

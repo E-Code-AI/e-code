@@ -1,5 +1,8 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { handleUnauthorized } from "./auth-redirect";
+import { createIDBPersister } from "./query-persister";
+
+export const queryPersister = createIDBPersister();
 
 interface HttpError extends Error {
   status: number;

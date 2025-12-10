@@ -195,6 +195,13 @@ function getCacheStrategy(url, request) {
   return 'networkFirst';
 }
 
+async function notifyClients(type, data = {}) {
+  const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+  clients.forEach(client => {
+    client.postMessage({ type, ...data, timestamp: Date.now() });
+  });
+}
+
 async function networkFirstWithApiCache(request) {
   const isApiRequest = request.url.includes('/api/');
   const cacheName = isApiRequest ? API_CACHE_NAME : DYNAMIC_CACHE_NAME;
@@ -474,10 +481,9 @@ async function syncFailedRequests() {
           await removeFailedRequest(requestData.id);
           console.log('[ServiceWorker] Successfully synced request:', requestData.id);
 
-          await notifyClients({
-            type: 'SYNC_SUCCESS',
-            requestId: requestData.id,
-            url: requestData.url,
+          await notifyClients('OFFLINE_SYNC_COMPLETE', {
+            urls: [requestData.url],
+            isBackgroundSync: true,
           });
         } else {
           console.warn('[ServiceWorker] Sync request failed with status:', response.status);
@@ -494,12 +500,6 @@ async function syncFailedRequests() {
   }
 }
 
-async function notifyClients(message) {
-  const clients = await self.clients.matchAll({ type: 'window' });
-  for (const client of clients) {
-    client.postMessage(message);
-  }
-}
 
 self.addEventListener('message', (event) => {
   const { type, payload } = event.data || {};
