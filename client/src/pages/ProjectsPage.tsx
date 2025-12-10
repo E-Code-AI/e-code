@@ -165,16 +165,18 @@ const ProjectsPage = () => {
     enabled: !!user,
   });
 
+  const projectsArray = Array.isArray(projects) ? projects : [];
+
   const availableLanguages = useMemo(() => {
     const langs = new Set<string>();
-    projects.forEach(p => {
+    projectsArray.forEach(p => {
       if (p.language) langs.add(p.language);
     });
     return Array.from(langs).sort();
-  }, [projects]);
+  }, [projectsArray]);
 
   const filteredAndSortedProjects = useMemo(() => {
-    let filtered = [...projects];
+    let filtered = [...projectsArray];
 
     if (debouncedSearchQuery) {
       filtered = filtered.filter(p => 
@@ -215,7 +217,7 @@ const ProjectsPage = () => {
     });
 
     return filtered;
-  }, [projects, debouncedSearchQuery, filterLanguage, filterVisibility, dateRange, sortBy]);
+  }, [projectsArray, debouncedSearchQuery, filterLanguage, filterVisibility, dateRange, sortBy]);
 
   const createProjectMutation = useMutation({
     mutationFn: async (values: ProjectFormValues) => {
@@ -507,8 +509,8 @@ const ProjectsPage = () => {
           </div>
         </motion.div>
 
-        <div className="flex gap-6">
-          {/* Sidebar Filters - E-Code Styled */}
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+          {/* Sidebar Filters - E-Code Styled - Hidden on mobile */}
           <AnimatePresence>
             {showFilters && (
               <motion.aside
@@ -516,7 +518,7 @@ const ProjectsPage = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
-                className="w-72 flex-shrink-0"
+                className="w-full lg:w-72 flex-shrink-0"
               >
                 <Card className="sticky top-6 border border-[var(--ecode-border)] bg-[var(--ecode-surface)] shadow-[0_4px_16px_-4px_rgba(0,0,0,0.1)]">
                   <CardHeader className="pb-4">
@@ -624,10 +626,10 @@ const ProjectsPage = () => {
           {/* Main Content */}
           <div className="flex-1">
             {/* Toolbar - E-Code Styled */}
-            <Card className="mb-6 border border-[var(--ecode-border)] bg-[var(--ecode-surface)] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)]">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+            <Card className="mb-4 md:mb-6 border border-[var(--ecode-border)] bg-[var(--ecode-surface)] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)]">
+              <CardContent className="p-3 md:p-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-2 md:gap-4">
                     {/* View Mode Toggle */}
                     <div className="flex items-center gap-1 border border-[var(--ecode-border)] rounded-lg p-1 bg-[var(--ecode-surface)]">
                       <Button
@@ -767,7 +769,7 @@ const ProjectsPage = () => {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
                     <Checkbox
                       id="select-all"
                       checked={selectedProjects.length === filteredAndSortedProjects.length && filteredAndSortedProjects.length > 0}
@@ -775,7 +777,7 @@ const ProjectsPage = () => {
                       className="border-[var(--ecode-border)] data-[state=checked]:bg-[var(--ecode-accent)] data-[state=checked]:border-[var(--ecode-accent)]"
                       data-testid="checkbox-select-all"
                     />
-                    <Label htmlFor="select-all" className="text-sm cursor-pointer text-[var(--ecode-text)]">
+                    <Label htmlFor="select-all" className="text-sm cursor-pointer text-[var(--ecode-text)] whitespace-nowrap">
                       Select All
                     </Label>
                   </div>
@@ -785,7 +787,7 @@ const ProjectsPage = () => {
 
             {/* Projects Grid/List */}
             {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {[...Array(6)].map((_, i) => (
                   <Card key={i} className="border border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
                     <div className="aspect-video">
@@ -823,7 +825,7 @@ const ProjectsPage = () => {
               </Card>
             ) : viewMode === 'grid' ? (
               <motion.div 
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
                 variants={containerVariants}
                 initial="hidden"
                 animate="show"
