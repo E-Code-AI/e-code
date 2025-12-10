@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/use-auth';
 import {
   Menu, Home, Code, Globe, Users, Database, Book,
   Settings, User, HelpCircle, Crown, Plus, Search,
-  GitBranch, Shield, LogOut,
+  Shield, LogOut,
   ChevronRight, Zap, Briefcase, GraduationCap, Workflow, HardDrive
 } from 'lucide-react';
 
@@ -43,7 +43,6 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
   ];
 
   const toolsLinks = [
-    { icon: GitBranch, label: 'Version Control', path: '/git' },
     { icon: Shield, label: 'Security', path: '/security' },
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];
