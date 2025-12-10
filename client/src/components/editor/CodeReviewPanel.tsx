@@ -111,15 +111,13 @@ export default function CodeReviewPanel({
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
     queryKey: ['/api/code-review/issues', projectId],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/code-review/issues/${projectId}?limit=50`);
-      return response.json();
+      return await apiRequest('GET', `/api/code-review/issues/${projectId}?limit=50`);
     }
   });
 
   const exportReportMutation = useMutation({
     mutationFn: async (format: 'json' | 'html' | 'markdown') => {
-      const response = await apiRequest('GET', `/api/code-review/report/${projectId}?format=${format}`);
-      const data = await response.json();
+      const data = await apiRequest('GET', `/api/code-review/report/${projectId}?format=${format}`);
       
       // Create download
       const blob = new Blob([JSON.stringify(data)], { 
@@ -143,8 +141,7 @@ export default function CodeReviewPanel({
   const batchFixMutation = useMutation({
     mutationFn: async (issueIds: number[]) => {
       const promises = issueIds.map(async id => {
-        const response = await apiRequest('POST', `/api/code-review/fix/${id}`, { fixCode: '' });
-        return response.json();
+        return await apiRequest('POST', `/api/code-review/fix/${id}`, { fixCode: '' });
       });
       
       return Promise.all(promises);

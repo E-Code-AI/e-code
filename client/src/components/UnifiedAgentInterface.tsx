@@ -246,8 +246,7 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
   // Execute MCP tool - Used by AI agent for all operations
   const executeMCPTool = async (toolName: string, args: any) => {
     try {
-      const response = await apiRequest('POST', `http://localhost:3200/tools/${toolName}`, args);
-      const result = await response.json();
+      const result = await apiRequest('POST', `http://localhost:3200/tools/${toolName}`, args);
       return result;
     } catch (error) {
       console.error(`[MCP] ❌ Failed to execute tool ${toolName}:`, error);

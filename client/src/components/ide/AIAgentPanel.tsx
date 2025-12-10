@@ -71,13 +71,11 @@ export function AIAgentPanel({ projectId, onFileCreate }: AIAgentPanelProps) {
       setMessages(prev => [...prev, userMessage]);
       
       // Call AI endpoint
-      const response = await apiRequest('POST', '/api/agent/chat', {
+      const data = await apiRequest('POST', '/api/agent/chat', {
         projectId,
         message,
         conversationHistory: messages
       });
-      
-      const data = await response.json();
       
       // Add assistant response
       const assistantMessage: Message = {

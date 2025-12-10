@@ -271,13 +271,7 @@ export function AllModelsSelector() {
         };
       }
 
-      const response = await apiRequest('POST', endpoint, payload);
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Generation failed');
-      }
+      const data = await apiRequest('POST', endpoint, payload);
 
       toast({
         title: "Model Test Successful",

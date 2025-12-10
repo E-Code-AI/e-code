@@ -65,7 +65,7 @@ export function ShareSnippetDialog({
         }
       }
 
-      const response = await apiRequest('POST', `/api/snippets/${projectId}`, {
+      const data = await apiRequest('POST', `/api/snippets/${projectId}`, {
         fileName,
         filePath,
         lineStart,
@@ -78,7 +78,6 @@ export function ShareSnippetDialog({
         expiresAt,
       });
 
-      const data = await response.json();
       const fullUrl = `${window.location.origin}${data.shareUrl}`;
       setShareUrl(fullUrl);
       

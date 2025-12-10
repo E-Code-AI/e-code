@@ -155,14 +155,13 @@ export function ReplitCoreServices() {
     setLoading(true);
     
     try {
-      const response = await apiRequest('POST', '/api/export/1', {
+      const result = await apiRequest('POST', '/api/export/1', {
         format: exportType,
         includeFiles: true,
         includeSecrets: false,
         includeGitHistory: true
       });
 
-      const result = await response.json();
       setExportStatus({
         id: result.exportId,
         status: 'processing',
@@ -215,12 +214,11 @@ export function ReplitCoreServices() {
     setLoading(true);
     
     try {
-      const response = await apiRequest('POST', '/api/ssh/keys', {
+      const newKey = await apiRequest('POST', '/api/ssh/keys', {
         name: newKeyName,
         type: keyType
       });
 
-      const newKey = await response.json();
       setSSHKeys(prev => [...prev, newKey]);
       setNewKeyName('');
       
@@ -254,14 +252,13 @@ export function ReplitCoreServices() {
     setLoading(true);
     
     try {
-      const response = await apiRequest('POST', '/api/database/create', {
+      const newDb = await apiRequest('POST', '/api/database/create', {
         name: newDbName,
         type: dbType,
         plan: dbPlan,
         projectId: 1
       });
 
-      const newDb = await response.json();
       setDatabases(prev => [...prev, newDb]);
       setNewDbName('');
       
