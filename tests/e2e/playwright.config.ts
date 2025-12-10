@@ -1,9 +1,28 @@
 /**
  * Playwright End-to-End Test Configuration
  * Tests all platforms: web, mobile, tablet, desktop
+ * 
+ * URL Resolution Priority:
+ * 1. BASE_URL env var (explicit override)
+ * 2. REPLIT_DEV_URL env var (Replit dev URL with :5000 auto-appended)
+ * 3. APP_URL env var (production URL)
+ * 4. localhost:5000 fallback
  */
 
 import { defineConfig, devices } from '@playwright/test';
+
+function getBaseURL(): string {
+  if (process.env.BASE_URL) return process.env.BASE_URL;
+  
+  const replitDevUrl = process.env.REPLIT_DEV_URL;
+  if (replitDevUrl) {
+    return replitDevUrl.includes(':') ? replitDevUrl : `${replitDevUrl}:5000`;
+  }
+  
+  if (process.env.APP_URL) return process.env.APP_URL;
+  
+  return 'http://localhost:5000';
+}
 
 export default defineConfig({
   testDir: './specs',
@@ -17,7 +36,7 @@ export default defineConfig({
     ['junit', { outputFile: 'test-results/junit.xml' }],
   ],
   use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:5173',
+    baseURL: getBaseURL(),
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
