@@ -2335,6 +2335,75 @@ export const agentPlans = pgTable('agent_plans', {
   index('agent_plans_status_idx').on(table.status),
 ]);
 
+// Agent Step Cache - Cache intermediate agent phases for cost savings
+// Stores SPECIFICATION, ARCHITECTURE_PLAN, FILE_LAYOUT, INITIAL_SCAFFOLD phases
+// Allows partial regeneration: "regenerate but change just X" without redoing everything
+export const agentStepCache = pgTable('agent_step_cache', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  stepType: text('step_type').notNull(), // SPECIFICATION, ARCHITECTURE_PLAN, FILE_LAYOUT, INITIAL_SCAFFOLD
+  version: integer('version').notNull().default(1),
+  promptHash: text('prompt_hash').notNull(), // Hash of the original prompt
+  contentHash: text('content_hash').notNull(), // Hash of generated content for cache validation
+  content: jsonb('content').$type<{
+    specification?: {
+      title: string;
+      description: string;
+      features: string[];
+      technologies: string[];
+      complexity: 'simple' | 'moderate' | 'complex';
+    };
+    architecturePlan?: {
+      structure: string[];
+      dataModels: Record<string, any>[];
+      apiEndpoints: string[];
+      dependencies: string[];
+    };
+    fileLayout?: {
+      files: Array<{
+        path: string;
+        purpose: string;
+        language: string;
+      }>;
+      directories: string[];
+    };
+    initialScaffold?: {
+      files: Array<{
+        path: string;
+        content: string;
+        language: string;
+      }>;
+      commands: string[];
+    };
+    raw?: string; // Raw AI response for complex data
+  }>().notNull(),
+  provider: text('provider'), // Which AI provider generated this
+  model: text('model'), // Which model was used
+  tokensUsed: integer('tokens_used').default(0),
+  cost: decimal('cost', { precision: 10, scale: 6 }).default('0'),
+  generationTimeMs: integer('generation_time_ms'),
+  hitCount: integer('hit_count').default(0), // How many times this was reused
+  isValid: boolean('is_valid').default(true), // For invalidation
+  createdAt: timestamp('created_at').defaultNow(),
+  expiresAt: timestamp('expires_at'), // Optional TTL for cache entries
+  lastAccessedAt: timestamp('last_accessed_at').defaultNow(),
+  metadata: jsonb('metadata').$type<{
+    buildMode?: 'design-first' | 'full-app' | 'continue-planning';
+    parentVersion?: number; // For version chains
+    changeReason?: string; // Why this version was created
+    contextFiles?: string[]; // Files that were in context during generation
+  }>(),
+}, (table) => [
+  index('agent_step_cache_project_id_idx').on(table.projectId),
+  index('agent_step_cache_user_id_idx').on(table.userId),
+  index('agent_step_cache_step_type_idx').on(table.stepType),
+  index('agent_step_cache_prompt_hash_idx').on(table.promptHash),
+  index('agent_step_cache_valid_idx').on(table.isValid),
+  // Composite index for efficient lookups: project + step + version
+  index('agent_step_cache_lookup_idx').on(table.projectId, table.stepType, table.version),
+]);
+
 // File Operations - Track all file system operations
 export const fileOperations = pgTable('file_operations', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -3132,6 +3201,13 @@ export const insertAgentPlanSchema = createInsertSchema(agentPlans).omit({
   completedAt: true,
 });
 
+export const insertAgentStepCacheSchema = createInsertSchema(agentStepCache).omit({
+  id: true,
+  createdAt: true,
+  lastAccessedAt: true,
+  hitCount: true,
+});
+
 export const insertFileOperationSchema = createInsertSchema(fileOperations).omit({
   id: true,
   executedAt: true,
@@ -3198,6 +3274,9 @@ export type InsertAgentSession = z.infer<typeof insertAgentSessionSchema>;
 
 export type AgentPlan = typeof agentPlans.$inferSelect;
 export type InsertAgentPlan = z.infer<typeof insertAgentPlanSchema>;
+
+export type AgentStepCache = typeof agentStepCache.$inferSelect;
+export type InsertAgentStepCache = z.infer<typeof insertAgentStepCacheSchema>;
 
 export type FileOperation = typeof fileOperations.$inferSelect;
 export type InsertFileOperation = z.infer<typeof insertFileOperationSchema>;

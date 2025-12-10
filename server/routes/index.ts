@@ -68,6 +68,7 @@ import { authCompleteRouter } from "./auth-complete";
 import placeholderRouter from "./placeholder.router";
 import analyticsRouter from "./analytics.router";
 import ragRouter from "./rag.router";
+import agentStepCacheRouter from "./agent-step-cache.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -162,6 +163,9 @@ export class MainRouter {
     
     // Agent workflow routes (feature generation, build selection) - authenticated users
     app.use('/api/agent', tierRateLimiters.api, agentWorkflowRouter);
+    
+    // Agent step cache routes (caching intermediate agent phases for cost optimization)
+    app.use('/api/agent/step-cache', tierRateLimiters.api, agentStepCacheRouter);
     
     // Agent testing routes (browser testing, element selector, recording) - Phase 2 (ADMIN ONLY)
     app.use('/api/admin/agent', tierRateLimiters.api, agentTestingRouter);
