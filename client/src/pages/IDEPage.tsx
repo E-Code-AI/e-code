@@ -44,7 +44,7 @@ const ReplitAgentPanelV3 = lazy(() => import('@/components/ai/ReplitAgentPanelV3
 const AutonomousWorkspaceViewer = lazy(() => import('@/components/ide/AutonomousWorkspaceViewer').then(mod => ({ default: mod.AutonomousWorkspaceViewer })));
 const ReplitGitPanel = lazy(() => import('@/components/editor/ReplitGitPanel').then(mod => ({ default: mod.ReplitGitPanel })));
 const DatabasePanel = lazy(() => import('@/components/ide/DatabasePanel').then(mod => ({ default: mod.DatabasePanel })));
-const ReplitConsole = lazy(() => import('@/components/editor/ReplitConsole').then(mod => ({ default: mod.ReplitConsole })));
+const ConsolePanel = lazy(() => import('@/components/ide/ConsolePanel').then(mod => ({ default: mod.ConsolePanel })));
 const ResponsiveWebPreview = lazy(() => import('@/components/editor/ResponsiveWebPreview').then(mod => ({ default: mod.ResponsiveWebPreview })));
 
 // Secondary panels - lazy loaded
@@ -874,7 +874,7 @@ export default function IDEPage() {
       case 'preview':
         return <ResponsiveWebPreview projectId={projectId} />;
       case 'console':
-        return <ReplitConsole projectId={projectId} />;
+        return <ConsolePanel projectId={projectId} userId={user?.id} />;
       case 'terminal':
         return <ReplitTerminalPanel projectId={projectId} />;
       case 'git':
@@ -929,7 +929,7 @@ export default function IDEPage() {
       case 'test-runner':
         return <TestRunner projectId={projectId} />;
       case 'shell':
-        return <Shell projectId={parseInt(projectId, 10)} />;
+        return <ConsolePanel projectId={projectId} userId={user?.id} />;
       case 'webpreview':
         return (
           <Suspense fallback={<ECodeLoading centered size="md" text="Loading web preview..." />}>

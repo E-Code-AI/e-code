@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import FileExplorer from '@/components/FileExplorer';
 import CodeEditor from '@/components/CodeEditor';
 import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
-import { ReplitConsole } from '@/components/editor/ReplitConsole';
+import { ConsolePanel } from '@/components/ide/ConsolePanel';
 import { RunButton } from '@/components/RunButton';
 import { WebPreview } from '@/components/WebPreview';
 import { File } from '@shared/schema';
@@ -357,7 +357,7 @@ export function ApplicationIDEWrapper({
                   </Button>
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <ReplitConsole 
+                  <ConsolePanel 
                     projectId={projectId}
                     isRunning={isRunning}
                     executionId={executionId}
