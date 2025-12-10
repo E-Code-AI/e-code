@@ -1371,13 +1371,6 @@ export function ReplitAgentPanelV3({
                 Working
               </Badge>
             )}
-            {capabilities.find(c => c.id === 'extended_thinking')?.enabled && (
-              <Badge variant="outline" className="text-xs" data-testid="header-badge-thinking">
-                <Brain className="h-3 w-3 mr-1" />
-                Thinking
-              </Badge>
-            )}
-            
             <CurrentModelChip
               modelName={model?.name}
               provider={provider || undefined}
