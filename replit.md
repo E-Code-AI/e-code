@@ -44,6 +44,24 @@ function useAIModels() {
 
 **Backend caching:** Server-side caching is handled by `AgentStepCacheService` (database-backed, TTL, version tracking).
 
+## Component Architecture
+
+### Mobile Component Pattern (Enhanced Wrappers)
+The mobile components use a **wrapper pattern**, NOT duplicates:
+- `EnhancedMobileTerminal` imports and wraps `MobileTerminal` with additional UI chrome
+- `EnhancedMobileIDEView` imports and wraps `MobileIDEView` with `IDEProvider`
+- `LazyMobileCodeEditor` provides code-split loading of the editor
+
+**DO NOT delete "Normal" components** - they are the base implementations used by Enhanced wrappers.
+
+### State Management Layers (Intentional Architecture)
+Three distinct layers serve different purposes:
+1. **localStorage** (96 usages): Session persistence across browser refreshes
+2. **TanStack Query** (983 usages): API response caching with automatic invalidation
+3. **Zustand stores** (2 stores): Local UI state (`splits-store.ts`, `agentConversationStore.ts`)
+
+This is standard React architecture, not duplication.
+
 ## System Architecture
 
 ### UI/UX Decisions
