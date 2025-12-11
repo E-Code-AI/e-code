@@ -3,10 +3,12 @@
  * 
  * Displays plan, build options, and progress directly in the chat stream
  * instead of a separate dialog (like Replit Agent does)
+ * 
+ * Features rich animated states: Working, Vibing, Thinking, Building, Styling
  */
 
-import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { motion, AnimatePresence, useAnimation, useReducedMotion } from 'framer-motion';
 import { 
   Sparkles, 
   Loader2, 
@@ -21,7 +23,19 @@ import {
   ExternalLink,
   Code,
   Terminal,
-  Package
+  Package,
+  Zap,
+  Brain,
+  Wand2,
+  Palette,
+  Rocket,
+  Music,
+  FolderOpen,
+  Settings,
+  Database,
+  Shield,
+  Globe,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,22 +43,402 @@ import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
-export type BuildMode = 'design-first' | 'full-app';
+// =============================================================================
+// REPLIT-STYLE STATUS STATES
+// =============================================================================
+export type AgentStatus = 
+  | 'idle' 
+  | 'thinking' 
+  | 'vibing' 
+  | 'working' 
+  | 'building' 
+  | 'styling' 
+  | 'testing' 
+  | 'deploying'
+  | 'complete'
+  | 'error';
 
-interface InlineWorkingIndicatorProps {
-  message?: string;
+interface StatusConfig {
+  label: string;
+  icon: typeof Sparkles;
+  color: string;
+  bgColor: string;
+  animation: 'pulse' | 'spin' | 'bounce' | 'wave' | 'glow';
+  emoji?: string;
 }
 
-export function InlineWorkingIndicator({ message = 'Working...' }: InlineWorkingIndicatorProps) {
+const STATUS_CONFIGS: Record<AgentStatus, StatusConfig> = {
+  idle: {
+    label: 'Ready',
+    icon: Sparkles,
+    color: 'text-muted-foreground',
+    bgColor: 'bg-muted/50',
+    animation: 'pulse',
+  },
+  thinking: {
+    label: 'Thinking',
+    icon: Brain,
+    color: 'text-purple-500',
+    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+    animation: 'pulse',
+    emoji: '🧠',
+  },
+  vibing: {
+    label: 'Vibing',
+    icon: Music,
+    color: 'text-pink-500',
+    bgColor: 'bg-pink-100 dark:bg-pink-900/30',
+    animation: 'wave',
+    emoji: '✨',
+  },
+  working: {
+    label: 'Working',
+    icon: Wand2,
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+    animation: 'spin',
+    emoji: '🔧',
+  },
+  building: {
+    label: 'Building',
+    icon: Hammer,
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+    animation: 'bounce',
+    emoji: '🏗️',
+  },
+  styling: {
+    label: 'Styling',
+    icon: Palette,
+    color: 'text-fuchsia-500',
+    bgColor: 'bg-fuchsia-100 dark:bg-fuchsia-900/30',
+    animation: 'glow',
+    emoji: '🎨',
+  },
+  testing: {
+    label: 'Testing',
+    icon: Shield,
+    color: 'text-cyan-500',
+    bgColor: 'bg-cyan-100 dark:bg-cyan-900/30',
+    animation: 'pulse',
+    emoji: '🧪',
+  },
+  deploying: {
+    label: 'Deploying',
+    icon: Rocket,
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-100 dark:bg-orange-900/30',
+    animation: 'bounce',
+    emoji: '🚀',
+  },
+  complete: {
+    label: 'Complete',
+    icon: CheckCircle2,
+    color: 'text-green-500',
+    bgColor: 'bg-green-100 dark:bg-green-900/30',
+    animation: 'glow',
+    emoji: '✅',
+  },
+  error: {
+    label: 'Error',
+    icon: Package,
+    color: 'text-red-500',
+    bgColor: 'bg-red-100 dark:bg-red-900/30',
+    animation: 'pulse',
+    emoji: '❌',
+  },
+};
+
+// Animation variants for different status animations
+const animationVariants = {
+  pulse: {
+    scale: [1, 1.1, 1],
+    opacity: [1, 0.8, 1],
+  },
+  spin: {
+    rotate: 360,
+  },
+  bounce: {
+    y: [0, -4, 0],
+  },
+  wave: {
+    rotate: [0, 15, -15, 0],
+  },
+  glow: {
+    boxShadow: [
+      '0 0 0 0 rgba(var(--primary-rgb), 0)',
+      '0 0 20px 4px rgba(var(--primary-rgb), 0.3)',
+      '0 0 0 0 rgba(var(--primary-rgb), 0)',
+    ],
+  },
+};
+
+// =============================================================================
+// REPLIT-STYLE STATUS INDICATOR
+// =============================================================================
+interface ReplitStatusIndicatorProps {
+  status: AgentStatus;
+  message?: string;
+  subMessage?: string;
+  showEmoji?: boolean;
+  compact?: boolean;
+}
+
+export function ReplitStatusIndicator({ 
+  status, 
+  message, 
+  subMessage,
+  showEmoji = true,
+  compact = false
+}: ReplitStatusIndicatorProps) {
+  const config = STATUS_CONFIGS[status];
+  const Icon = config.icon;
+  const prefersReducedMotion = useReducedMotion();
+  
+  // Use simpler animations or none when reduced motion is preferred
+  const shouldAnimate = !prefersReducedMotion;
+  
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex items-center gap-2 text-sm text-muted-foreground"
+      initial={shouldAnimate ? { opacity: 0, y: 10, scale: 0.95 } : { opacity: 1 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={shouldAnimate ? { opacity: 0, y: -10, scale: 0.95 } : { opacity: 0 }}
+      transition={shouldAnimate ? { type: 'spring', stiffness: 300, damping: 20 } : { duration: 0.2 }}
+      className={cn(
+        "flex items-center gap-3 rounded-xl border transition-all duration-300",
+        compact ? "py-2 px-3" : "py-3 px-4",
+        config.bgColor,
+        "border-transparent"
+      )}
+      data-testid={`status-indicator-${status}`}
     >
-      <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-      <span>{message}</span>
+      {/* Icon container - respects reduced motion */}
+      <motion.div
+        className={cn("relative", compact ? "p-1.5" : "p-2")}
+        animate={shouldAnimate ? (config.animation === 'spin' ? { rotate: 360 } : animationVariants[config.animation]) : undefined}
+        transition={shouldAnimate ? {
+          duration: config.animation === 'spin' ? 1.5 : 2,
+          repeat: Infinity,
+          ease: config.animation === 'spin' ? 'linear' : 'easeInOut',
+        } : undefined}
+      >
+        <div className={cn(
+          "rounded-full flex items-center justify-center",
+          config.bgColor,
+          compact ? "p-1.5" : "p-2"
+        )}>
+          <Icon className={cn(
+            config.color,
+            compact ? "h-4 w-4" : "h-5 w-5"
+          )} />
+        </div>
+        
+        {/* Ripple effect for active states - only if animation is enabled */}
+        {shouldAnimate && status !== 'idle' && status !== 'complete' && status !== 'error' && (
+          <motion.div
+            className={cn(
+              "absolute inset-0 rounded-full",
+              config.bgColor
+            )}
+            animate={{
+              scale: [1, 1.8],
+              opacity: [0.5, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: 'easeOut',
+            }}
+          />
+        )}
+      </motion.div>
+      
+      {/* Text content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          {showEmoji && config.emoji && (
+            <span className={compact ? "text-base" : "text-lg"}>
+              {config.emoji}
+            </span>
+          )}
+          <span className={cn(
+            "font-medium",
+            config.color,
+            compact ? "text-sm" : "text-base"
+          )}>
+            {message || config.label}
+          </span>
+          
+          {/* Animated dots for active states - only if animation is enabled */}
+          {shouldAnimate && (status === 'thinking' || status === 'working' || status === 'building') && (
+            <span className="flex gap-0.5">
+              {[0, 1, 2].map((i) => (
+                <motion.span
+                  key={i}
+                  className={cn("rounded-full", config.bgColor, compact ? "w-1 h-1" : "w-1.5 h-1.5")}
+                  animate={{ 
+                    y: [0, -3, 0],
+                    opacity: [0.4, 1, 0.4]
+                  }}
+                  transition={{
+                    duration: 1,
+                    repeat: Infinity,
+                    delay: i * 0.2
+                  }}
+                  style={{ backgroundColor: 'currentColor' }}
+                />
+              ))}
+            </span>
+          )}
+        </div>
+        
+        {subMessage && (
+          <motion.p
+            initial={shouldAnimate ? { opacity: 0, height: 0 } : { opacity: 1 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className={cn(
+              "text-muted-foreground mt-0.5",
+              compact ? "text-xs" : "text-sm"
+            )}
+          >
+            {subMessage}
+          </motion.p>
+        )}
+      </div>
     </motion.div>
+  );
+}
+
+// =============================================================================
+// TASK PROGRESS ITEM
+// =============================================================================
+interface TaskProgressItemProps {
+  name: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'error';
+  index: number;
+  isLast?: boolean;
+}
+
+export function TaskProgressItem({ name, status, index, isLast }: TaskProgressItemProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const shouldAnimate = !prefersReducedMotion;
+  
+  const getStatusIcon = () => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      case 'in_progress':
+        // Respect reduced motion preference
+        if (shouldAnimate) {
+          return (
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+            >
+              <Loader2 className="h-4 w-4 text-primary" />
+            </motion.div>
+          );
+        }
+        // Static fallback for reduced motion
+        return <Loader2 className="h-4 w-4 text-primary" />;
+      case 'error':
+        return <Package className="h-4 w-4 text-red-500" />;
+      default:
+        return <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />;
+    }
+  };
+
+  return (
+    <motion.div
+      initial={shouldAnimate ? { opacity: 0, x: -20 } : { opacity: 1, x: 0 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={shouldAnimate ? { delay: index * 0.05, type: 'spring' } : { duration: 0.1 }}
+      className="flex items-start gap-3 relative"
+    >
+      {/* Connection line */}
+      {!isLast && (
+        <div className={cn(
+          "absolute left-[9px] top-5 w-0.5 h-[calc(100%+8px)]",
+          status === 'completed' ? 'bg-green-200 dark:bg-green-800' : 'bg-border'
+        )} />
+      )}
+      
+      {/* Status icon */}
+      <div className="relative z-10 bg-background rounded-full p-0.5">
+        {getStatusIcon()}
+      </div>
+      
+      {/* Task content */}
+      <div className="flex-1 min-w-0 pb-3">
+        <p className={cn(
+          "text-sm truncate",
+          status === 'completed' && "text-muted-foreground line-through",
+          status === 'in_progress' && "text-foreground font-medium",
+          status === 'pending' && "text-muted-foreground",
+          status === 'error' && "text-red-500"
+        )}>
+          {name}
+        </p>
+        
+        {status === 'in_progress' && (
+          <motion.div
+            className="flex items-center gap-1.5 mt-1"
+            initial={shouldAnimate ? { opacity: 0 } : { opacity: 1 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="flex gap-0.5">
+              {shouldAnimate ? (
+                // Animated dots when motion is allowed
+                [0, 1, 2].map((i) => (
+                  <motion.span
+                    key={i}
+                    className="w-1 h-1 rounded-full bg-primary"
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                  />
+                ))
+              ) : (
+                // Static dots for reduced motion
+                [0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className="w-1 h-1 rounded-full bg-primary opacity-60"
+                  />
+                ))
+              )}
+            </div>
+            <span className="text-xs text-muted-foreground">In progress</span>
+          </motion.div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+export type BuildMode = 'design-first' | 'full-app';
+
+// =============================================================================
+// INLINE WORKING INDICATOR (Enhanced with Replit-style)
+// =============================================================================
+interface InlineWorkingIndicatorProps {
+  message?: string;
+  status?: AgentStatus;
+  subMessage?: string;
+}
+
+export function InlineWorkingIndicator({ 
+  message = 'Working...', 
+  status = 'working',
+  subMessage 
+}: InlineWorkingIndicatorProps) {
+  // Use the status directly from props (authoritative server data)
+  return (
+    <ReplitStatusIndicator
+      status={status}
+      message={message}
+      subMessage={subMessage}
+      compact={true}
+    />
   );
 }
 
@@ -305,6 +699,20 @@ interface InlineBuildProgressProps {
   isStreaming?: boolean;
 }
 
+// Map phase values from autonomousPayload to agent status - uses authoritative server data
+function mapPhaseToAgentStatus(phase: 'planning' | 'executing' | 'complete'): AgentStatus {
+  switch (phase) {
+    case 'planning':
+      return 'thinking';
+    case 'executing':
+      return 'building';
+    case 'complete':
+      return 'complete';
+    default:
+      return 'working';
+  }
+}
+
 export function InlineBuildProgressCard({ 
   phase, 
   currentTask, 
@@ -314,75 +722,151 @@ export function InlineBuildProgressCard({
   isStreaming 
 }: InlineBuildProgressProps) {
   const [showTasks, setShowTasks] = useState(true);
+  const prefersReducedMotion = useReducedMotion();
+  const shouldAnimate = !prefersReducedMotion;
+  
+  // Map phase to agent status using authoritative server data
+  const currentStatus = useMemo(
+    () => mapPhaseToAgentStatus(phase),
+    [phase]
+  );
+  
+  // Calculate completed and total tasks
+  const completedTasks = tasks.filter(t => t.status === 'completed').length;
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 10 }}
+      initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-3 my-2"
+      className="space-y-4 my-3 border rounded-xl bg-card/50 p-4"
+      data-testid="inline-build-progress-card"
     >
-      {phase === 'planning' && (
-        <div className="flex items-center gap-2 text-sm">
-          <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-          <span className="text-muted-foreground">
-            {planText ? 'Generating design guidelines...' : 'Analyzing your request...'}
-          </span>
-        </div>
-      )}
+      {/* Status header with Replit-style indicator */}
+      <ReplitStatusIndicator
+        status={currentStatus}
+        message={
+          phase === 'planning' 
+            ? (planText ? 'Generating design guidelines...' : 'Analyzing your request...') 
+            : currentTask || STATUS_CONFIGS[currentStatus].label
+        }
+        subMessage={
+          phase === 'executing' 
+            ? `${completedTasks}/${tasks.length} tasks • ${Math.round(progress)}% complete` 
+            : undefined
+        }
+        compact={false}
+      />
       
+      {/* Progress bar for executing phase */}
       {phase === 'executing' && (
-        <>
-          <div className="flex items-center gap-2 text-sm">
-            <Loader2 className="h-4 w-4 animate-spin text-primary" />
-            <span>{currentTask || 'Building...'}</span>
-            <span className="text-muted-foreground ml-auto">{Math.round(progress)}%</span>
+        <div className="space-y-2">
+          <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+            {shouldAnimate ? (
+              <motion.div
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary via-primary to-primary/80 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ type: 'spring', stiffness: 50 }}
+              />
+            ) : (
+              <div
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary via-primary to-primary/80 rounded-full"
+                style={{ width: `${progress}%` }}
+              />
+            )}
+            {/* Shimmer effect - only when animation is enabled */}
+            {shouldAnimate && (
+              <motion.div
+                className="absolute inset-y-0 w-20 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                animate={{ x: ['-80px', '400px'] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+              />
+            )}
           </div>
-          
-          <Progress value={progress} className="h-1.5" />
-          
-          {tasks.length > 0 && (
-            <div className="space-y-1">
-              <div 
-                className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer"
-                onClick={() => setShowTasks(!showTasks)}
-              >
-                <span>{tasks.filter(t => t.status === 'completed').length}/{tasks.length} tasks</span>
-                {showTasks ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-              </div>
-              
-              <AnimatePresence>
-                {showTasks && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="space-y-1 overflow-hidden"
-                  >
-                    {tasks.slice(-5).map((task) => (
-                      <div key={task.id} className="flex items-center gap-2 text-xs py-0.5">
-                        {task.status === 'completed' ? (
-                          <CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />
-                        ) : task.status === 'in_progress' ? (
-                          <Loader2 className="h-3 w-3 animate-spin text-primary flex-shrink-0" />
-                        ) : (
-                          <div className="h-3 w-3 rounded-full border border-muted-foreground/30 flex-shrink-0" />
-                        )}
-                        <span className="truncate text-muted-foreground">{task.name}</span>
-                      </div>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-        </>
+        </div>
       )}
       
-      {phase === 'complete' && (
-        <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-          <CheckCircle2 className="h-4 w-4" />
-          <span>Build complete!</span>
+      {/* Task list with timeline */}
+      {phase === 'executing' && tasks.length > 0 && (
+        <div className="space-y-2">
+          <button
+            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
+            onClick={() => setShowTasks(!showTasks)}
+            data-testid="toggle-tasks-button"
+          >
+            <span className="font-medium">{completedTasks}/{tasks.length} tasks</span>
+            {shouldAnimate ? (
+              <motion.div animate={{ rotate: showTasks ? 180 : 0 }}>
+                <ChevronDown className="h-3 w-3" />
+              </motion.div>
+            ) : (
+              <div style={{ transform: showTasks ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                <ChevronDown className="h-3 w-3" />
+              </div>
+            )}
+          </button>
+          
+          {shouldAnimate ? (
+            <AnimatePresence>
+              {showTasks && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="space-y-1 overflow-hidden pl-1"
+                >
+                  {tasks.map((task, index) => (
+                    <TaskProgressItem
+                      key={task.id}
+                      name={task.name}
+                      status={task.status}
+                      index={index}
+                      isLast={index === tasks.length - 1}
+                    />
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          ) : (
+            showTasks && (
+              <div className="space-y-1 pl-1">
+                {tasks.map((task, index) => (
+                  <TaskProgressItem
+                    key={task.id}
+                    name={task.name}
+                    status={task.status}
+                    index={index}
+                    isLast={index === tasks.length - 1}
+                  />
+                ))}
+              </div>
+            )
+          )}
         </div>
+      )}
+      
+      {/* Complete phase with celebration - respects reduced motion */}
+      {phase === 'complete' && (
+        <motion.div 
+          initial={shouldAnimate ? { scale: 0.9, opacity: 0 } : { opacity: 1 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="flex items-center gap-3 py-2"
+        >
+          {shouldAnimate ? (
+            <motion.div
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 0.5, repeat: 2 }}
+            >
+              <CheckCircle2 className="h-6 w-6 text-green-500" />
+            </motion.div>
+          ) : (
+            <CheckCircle2 className="h-6 w-6 text-green-500" />
+          )}
+          <div>
+            <p className="font-medium text-green-600 dark:text-green-400">Build complete!</p>
+            <p className="text-xs text-muted-foreground">All tasks finished successfully</p>
+          </div>
+        </motion.div>
       )}
     </motion.div>
   );
