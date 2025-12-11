@@ -87,8 +87,8 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 mobile-safe-bottom">
-      {/* Backdrop blur effect with solid background */}
-      <div className="absolute inset-0 bg-[var(--mobile-ide-bg)] backdrop-blur-xl border-t border-[var(--ecode-border)]" />
+      {/* Solid background */}
+      <div className="absolute inset-0 bg-[var(--mobile-ide-bg)] border-t border-[var(--ecode-border)]" />
       
       {/* Active tab slide indicator */}
       <motion.div
