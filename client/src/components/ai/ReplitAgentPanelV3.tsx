@@ -78,7 +78,7 @@ import { UsageTrackingIcon } from './UsageTrackingIcon';
 import { VideoReplayViewer } from './VideoReplayViewer';
 import { ECodeLogo } from '@/components/ECodeLogo';
 import { RAGToggle, RAGStatsDisplay, RetrievedContextPanel, useRAGStats } from './RAGControls';
-import { History, X, MousePointer2, Coins, Database } from 'lucide-react';
+import { History, X, MousePointer2, Coins, Database, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   EnhancedChatMessage, 
@@ -1480,6 +1480,18 @@ export function ReplitAgentPanelV3({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem 
+                  onClick={() => setAudioEnabled(!isAudioEnabled)} 
+                  data-testid="dropdown-toggle-audio"
+                >
+                  {isAudioEnabled ? (
+                    <Volume2 className="h-4 w-4 mr-2" />
+                  ) : (
+                    <VolumeX className="h-4 w-4 mr-2" />
+                  )}
+                  {isAudioEnabled ? 'Mute notifications' : 'Enable sounds'}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleClearChat} className="text-destructive" data-testid="dropdown-clear-chat">
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Clear conversation
