@@ -11,7 +11,7 @@ import {
   EmptyState,
   TerminalSkeleton,
 } from '@/design-system';
-import { useToast } from '@/hooks/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 
 interface EnhancedMobileTerminalProps {
   projectId: string | number;
@@ -35,7 +35,7 @@ interface EnhancedMobileTerminalProps {
  * ```
  */
 export function EnhancedMobileTerminal(props: EnhancedMobileTerminalProps) {
-  const { toast } = useToast();
+  // Remove toast hook - use Toaster component instead
   const [isLoading, setIsLoading] = useState(false);
   const [isEmpty, setIsEmpty] = useState(true);
   const terminalContainerRef = useRef<HTMLDivElement>(null);
@@ -50,9 +50,9 @@ export function EnhancedMobileTerminal(props: EnhancedMobileTerminalProps) {
     // Emit clear event
     window.dispatchEvent(new CustomEvent('terminal:clear'));
 
-    toast({ title: 'Terminal cleared' });
+    // toast({ title: 'Terminal cleared' }); // This line is removed as toast hook is removed
     setIsLoading(false);
-  }, [toast]);
+  }, []); // Removed toast from dependency array as it's no longer used here
 
   // Pull-to-refresh gesture
   const pullToRefreshProps = usePullToRefresh({
@@ -92,47 +92,50 @@ export function EnhancedMobileTerminal(props: EnhancedMobileTerminalProps) {
   }
 
   return (
-    <motion.div
-      ref={terminalContainerRef}
-      {...pullToRefreshProps}
-      style={{
-        height: '100%',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Pull-to-refresh indicator */}
+    <>
+      <Toaster />
       <motion.div
+        ref={terminalContainerRef}
+        {...pullToRefreshProps}
         style={{
-          position: 'absolute',
-          top: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 10,
-          pointerEvents: 'none',
+          height: '100%',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        {isLoading && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 10 }}
-            exit={{ opacity: 0, y: -20 }}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: 'hsl(var(--background))',
-              borderRadius: '20px',
-              color: 'white',
-              fontSize: '14px',
-            }}
-          >
-            Clearing terminal...
-          </motion.div>
-        )}
-      </motion.div>
+        {/* Pull-to-refresh indicator */}
+        <motion.div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10,
+            pointerEvents: 'none',
+          }}
+        >
+          {isLoading && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 10 }}
+              exit={{ opacity: 0, y: -20 }}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: 'hsl(var(--background))',
+                borderRadius: '20px',
+                color: 'white',
+                fontSize: '14px',
+              }}
+            >
+              Clearing terminal...
+            </motion.div>
+          )}
+        </motion.div>
 
-      {/* Base Terminal */}
-      <MobileTerminal {...props} />
-    </motion.div>
+        {/* Base Terminal */}
+        <MobileTerminal {...props} />
+      </motion.div>
+    </>
   );
 }
 
