@@ -85,6 +85,8 @@ export function AutonomousWorkspaceViewer({
   const maxReconnectAttempts = 5;
   // ✅ FIX (Dec 1, 2025): Track reconnect timer to clear on successful connection
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // ✅ FIX (Dec 11, 2025): Track if user intentionally hid the dialog to prevent auto-reopen
+  const userHiddenRef = useRef(false);
   
   // ✅ FIX (Dec 1, 2025): Use refs for callbacks to prevent WebSocket reconnection on re-renders
   const onCompleteRef = useRef(onComplete);
@@ -98,8 +100,9 @@ export function AutonomousWorkspaceViewer({
   
   // ✅ FIX (Dec 10, 2025): Sync isOpen with bootstrapToken changes
   // This ensures the dialog opens when bootstrapToken becomes available after initial render
+  // ✅ FIX (Dec 11, 2025): Don't auto-reopen if user intentionally hid the dialog
   useEffect(() => {
-    if (bootstrapToken && !isOpen && !isComplete) {
+    if (bootstrapToken && !isOpen && !isComplete && !userHiddenRef.current) {
       console.log('[AutonomousWorkspaceViewer] Opening dialog - bootstrapToken received');
       setIsOpen(true);
     }
@@ -416,11 +419,13 @@ export function AutonomousWorkspaceViewer({
 
   // ✅ FIX (Dec 11, 2025): Separate hide (just closes dialog) from close (stops process)
   const handleHide = () => {
+    userHiddenRef.current = true; // Prevent auto-reopen from useEffect
     setIsOpen(false);
     // Keep WebSocket running - user can reopen to see progress
   };
 
   const handleClose = () => {
+    userHiddenRef.current = false; // Reset on close
     setIsOpen(false);
     if (wsRef.current) {
       wsRef.current.close(1000, 'User closed dialog');
@@ -430,6 +435,7 @@ export function AutonomousWorkspaceViewer({
 
   // Reopen the dialog to show progress again
   const handleShowProgress = () => {
+    userHiddenRef.current = false; // Clear the hidden flag when user wants to see progress
     setIsOpen(true);
   };
 
