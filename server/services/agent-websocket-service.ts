@@ -187,6 +187,17 @@ class AgentWebSocketService {
       // Handle close, pong, message events here (moved from below)
       this.setupConnectionHandlers(ws, connectionKey, deviceConnection);
       
+      // ✅ FIX (Dec 11, 2025): Send 'connected' message to client immediately
+      // This ensures the client knows the connection is established before workflow starts
+      ws.send(JSON.stringify({
+        type: 'connected',
+        sessionId,
+        projectId,
+        deviceId,
+        deviceType,
+        message: 'WebSocket connection established'
+      }));
+      
       // Trigger workflow check/start
       this.checkAndStartWorkflow(projectId, sessionId, ws);
     });
