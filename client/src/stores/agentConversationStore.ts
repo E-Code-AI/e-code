@@ -71,6 +71,29 @@ type WorkflowPhase =
   | 'extended_build'
   | 'complete';
 
+export type AutonomousBuildMode = 'design-first' | 'full-app';
+
+export interface AutonomousBuildTask {
+  id: string;
+  name: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'error';
+  progress?: number;
+}
+
+export interface AutonomousWorkspacePayload {
+  phase?: 'planning' | 'awaiting_approval' | 'executing' | 'complete' | 'error';
+  searchQuery?: string;
+  appType?: string;
+  featureList?: string[];
+  planTitle?: string;
+  buildMode?: AutonomousBuildMode;
+  progress?: number;
+  currentTask?: string;
+  tasks?: AutonomousBuildTask[];
+  planText?: string;
+  errorMessage?: string;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -80,7 +103,9 @@ export interface Message {
   thinking?: ThinkingStep[];
   toolExecutions?: ToolExecution[];
   isStreaming?: boolean;
-  type?: 'text' | 'workflow_features' | 'workflow_build_choice' | 'workflow_design' | 'workflow_mvp';
+  type?: 'text' | 'workflow_features' | 'workflow_build_choice' | 'workflow_design' | 'workflow_mvp' 
+    | 'autonomous_working' | 'autonomous_search' | 'autonomous_plan' | 'autonomous_build_options' 
+    | 'autonomous_progress' | 'autonomous_complete' | 'autonomous_error';
   workflowPhase?: WorkflowPhase;
   workflowPayload?: {
     featureList?: string[];
@@ -88,6 +113,7 @@ export interface Message {
     designPreviewUrl?: string;
     buildChoice?: 'full' | 'design';
   };
+  autonomousPayload?: AutonomousWorkspacePayload;
   tasks?: Task[];
   actions?: Action[];
   checkpoint?: {

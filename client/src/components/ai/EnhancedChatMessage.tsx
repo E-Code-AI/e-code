@@ -23,7 +23,16 @@ import {
   type Task,
   type Action
 } from '@/components/agent/messages';
-import type { Message } from '@/stores/agentConversationStore';
+import {
+  InlineWorkingIndicator,
+  InlineSearchIndicator,
+  InlineAppType,
+  InlinePlanCard,
+  InlineBuildOptions,
+  InlineBuildProgressCard,
+  type BuildMode
+} from './InlineBuildProgress';
+import type { Message, AutonomousBuildMode } from '@/stores/agentConversationStore';
 
 interface EnhancedChatMessageProps {
   message: Message;
@@ -32,6 +41,8 @@ interface EnhancedChatMessageProps {
   onRetry?: () => void;
   onApproveAction?: (action: Action) => void;
   onRejectAction?: (action: Action) => void;
+  onSelectBuildMode?: (mode: AutonomousBuildMode) => void;
+  onChangePlan?: () => void;
 }
 
 const springConfig = {
@@ -66,10 +77,13 @@ export const EnhancedChatMessage = memo(function EnhancedChatMessage({
   onCopy,
   onRetry,
   onApproveAction,
-  onRejectAction
+  onRejectAction,
+  onSelectBuildMode,
+  onChangePlan
 }: EnhancedChatMessageProps) {
   const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [selectedBuildMode, setSelectedBuildMode] = useState<AutonomousBuildMode | null>(null);
   
   const handleCopy = useCallback(async () => {
     try {
@@ -93,6 +107,11 @@ export const EnhancedChatMessage = memo(function EnhancedChatMessage({
       console.warn('Copy failed:', err);
     }
   }, [message.content, onCopy]);
+
+  const handleSelectBuildMode = useCallback((mode: BuildMode) => {
+    setSelectedBuildMode(mode as AutonomousBuildMode);
+    onSelectBuildMode?.(mode as AutonomousBuildMode);
+  }, [onSelectBuildMode]);
   
   const isUser = message.role === 'user';
   const isError = message.status === 'error' || message.metadata?.error;
@@ -100,6 +119,8 @@ export const EnhancedChatMessage = memo(function EnhancedChatMessage({
   const hasTools = message.toolExecutions && message.toolExecutions.length > 0;
   const hasTasks = message.tasks && message.tasks.length > 0;
   const hasActions = message.actions && message.actions.length > 0;
+  const isAutonomousMessage = message.type?.startsWith('autonomous_');
+  const autonomousPayload = message.autonomousPayload;
   
   return (
     <motion.div
@@ -304,6 +325,63 @@ export const EnhancedChatMessage = memo(function EnhancedChatMessage({
                 </motion.div>
               )}
             </AnimatePresence>
+          </motion.div>
+        )}
+
+        {/* Autonomous Workspace Inline Components - Replit-style */}
+        {isAutonomousMessage && autonomousPayload && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="w-full mt-2"
+            data-testid={`enhanced-autonomous-${message.id}`}
+          >
+            {/* Search indicator */}
+            {message.type === 'autonomous_search' && autonomousPayload.searchQuery && (
+              <InlineSearchIndicator query={autonomousPayload.searchQuery} />
+            )}
+
+            {/* App type indicator */}
+            {autonomousPayload.appType && (
+              <InlineAppType appType={autonomousPayload.appType} />
+            )}
+
+            {/* Plan card with features */}
+            {message.type === 'autonomous_plan' && autonomousPayload.featureList && autonomousPayload.featureList.length > 0 && (
+              <InlinePlanCard
+                title={autonomousPayload.planTitle || "I'll include the following features:"}
+                features={autonomousPayload.featureList}
+                onChangePlan={onChangePlan}
+              />
+            )}
+
+            {/* Build mode options */}
+            {message.type === 'autonomous_build_options' && (
+              <InlineBuildOptions
+                onSelectMode={handleSelectBuildMode}
+                selectedMode={selectedBuildMode || autonomousPayload.buildMode}
+                disabled={autonomousPayload.phase === 'executing'}
+              />
+            )}
+
+            {/* Build progress */}
+            {message.type === 'autonomous_progress' && (
+              <InlineBuildProgressCard
+                phase={autonomousPayload.phase === 'complete' ? 'complete' : 
+                       autonomousPayload.phase === 'executing' ? 'executing' : 'planning'}
+                currentTask={autonomousPayload.currentTask}
+                progress={autonomousPayload.progress || 0}
+                tasks={autonomousPayload.tasks || []}
+                planText={autonomousPayload.planText}
+                isStreaming={message.isStreaming}
+              />
+            )}
+
+            {/* Working indicator */}
+            {message.type === 'autonomous_working' && (
+              <InlineWorkingIndicator message={message.content || 'Working...'} />
+            )}
           </motion.div>
         )}
 
