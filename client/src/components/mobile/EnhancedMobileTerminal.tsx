@@ -9,9 +9,9 @@ import { MobileTerminal } from './MobileTerminal';
 import {
   usePullToRefresh,
   EmptyState,
-  useToast,
   TerminalSkeleton,
 } from '@/design-system';
+import { useToast } from '@/hooks/use-toast';
 
 interface EnhancedMobileTerminalProps {
   projectId: string | number;
@@ -35,7 +35,7 @@ interface EnhancedMobileTerminalProps {
  * ```
  */
 export function EnhancedMobileTerminal(props: EnhancedMobileTerminalProps) {
-  const toast = useToast();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isEmpty, setIsEmpty] = useState(true);
   const terminalContainerRef = useRef<HTMLDivElement>(null);
@@ -50,7 +50,7 @@ export function EnhancedMobileTerminal(props: EnhancedMobileTerminalProps) {
     // Emit clear event
     window.dispatchEvent(new CustomEvent('terminal:clear'));
 
-    toast.success('Terminal cleared');
+    toast({ title: 'Terminal cleared' });
     setIsLoading(false);
   }, [toast]);
 
