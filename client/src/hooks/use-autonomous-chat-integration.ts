@@ -462,22 +462,26 @@ export function useAutonomousChatIntegration({
         return;
       }
 
-      console.log('[AutonomousChatIntegration] Connecting to WebSocket:', wsUrl.substring(0, 100) + '...', 
+      console.log('[AutonomousChatIntegration] 🚀 Connecting to WebSocket:', wsUrl.substring(0, 100) + '...', 
         `(attempt ${reconnectAttemptRef.current + 1}/${maxReconnectAttempts})`);
 
       try {
+        console.log('[AutonomousChatIntegration] 📡 Creating WebSocket instance...');
         const ws = new WebSocket(wsUrl);
+        console.log('[AutonomousChatIntegration] 📡 WebSocket created, initial readyState:', ws.readyState);
         wsRef.current = ws;
 
         ws.onopen = () => {
-          console.log('[AutonomousChatIntegration] ✅ WebSocket connected successfully');
+          console.log('[AutonomousChatIntegration] ✅ WebSocket connected successfully, readyState:', ws.readyState);
           hasConnectedRef.current = true;
           reconnectAttemptRef.current = 0; // Reset reconnect counter on success
         };
 
         ws.onmessage = (event) => {
+          console.log('[AutonomousChatIntegration] 📥 Message received:', event.data.substring(0, 100) + '...');
           try {
             const data = JSON.parse(event.data);
+            console.log('[AutonomousChatIntegration] 📥 Parsed message type:', data.type);
             // Use ref to call handler to avoid stale closure issues
             handleProgressEventRef.current?.(data as AutonomousProgressEvent);
           } catch (err) {
@@ -486,7 +490,7 @@ export function useAutonomousChatIntegration({
         };
 
         ws.onerror = (error) => {
-          console.error('[AutonomousChatIntegration] WebSocket error:', error);
+          console.error('[AutonomousChatIntegration] ❌ WebSocket error:', error, 'readyState:', ws.readyState);
           // Note: onclose will be called after onerror, which will trigger reconnect
         };
 
