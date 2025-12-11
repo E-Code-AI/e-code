@@ -10,10 +10,10 @@ import { CM6Editor } from '@/components/editor/CM6Editor';
 import {
   SearchReplace,
   StatusBar,
-  useToast,
   type SearchOptions,
   type SearchResult,
 } from '@/design-system';
+import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Undo2, Redo2, Save, Search, 
@@ -54,7 +54,7 @@ interface EnhancedMobileCodeEditorProps {
  * ```
  */
 export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
-  const toast = useToast();
+  const { toast } = useToast();
   const [showSearch, setShowSearch] = useState(false);
   const [showKeyboardToolbar, setShowKeyboardToolbar] = useState(true);
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
@@ -68,11 +68,11 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
       apiRequest('PUT', `/api/files/${props.fileId}`, { content }),
     onSuccess: () => {
       setHasUnsavedChanges(false);
-      toast.success('File saved');
+      toast({ title: 'File saved' });
       queryClient.invalidateQueries({ queryKey: [`/api/files/${props.projectId}`] });
     },
     onError: () => {
-      toast.error('Failed to save file');
+      toast({ title: 'Failed to save file', variant: 'destructive' });
     },
   });
 
@@ -108,12 +108,12 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
       if (props.onSave && editorViewRef.current) {
         const currentContent = editorViewRef.current.state.doc.toString();
         props.onSave(currentContent);
-        toast.success('File saved');
+        toast({ title: 'File saved' });
       }
     };
 
     const handleFormat = () => {
-      toast.success('Document formatted');
+      toast({ title: 'Document formatted' });
     };
 
     window.addEventListener('ide:find', handleFind as EventListener);
@@ -219,7 +219,7 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
 
       editorViewRef.current.dispatch({ changes });
 
-      toast.success(`Replaced ${results.length} occurrence${results.length !== 1 ? 's' : ''}`);
+      toast({ title: `Replaced ${results.length} occurrence${results.length !== 1 ? 's' : ''}` });
 
       return results.length;
     },
