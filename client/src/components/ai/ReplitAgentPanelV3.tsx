@@ -36,7 +36,9 @@ import {
   RefreshCw,
   Pause,
   Play,
-  AlertCircle
+  AlertCircle,
+  Paperclip,
+  Mic
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThinkingDisplay, ThinkingDisplayCompact, ThinkingStep } from './ThinkingDisplay';
@@ -1632,7 +1634,7 @@ export function ReplitAgentPanelV3({
             />
           )}
           
-          {/* Chat input with inline toolbar - Enhanced for mobile touch */}
+          {/* Chat input with inline toolbar - Replit-style with attachment/voice/send */}
           <div className="relative">
             <Textarea
               ref={textareaRef}
@@ -1645,39 +1647,80 @@ export function ReplitAgentPanelV3({
                 "Ask a question or describe what you want to plan..."
               }
               className={cn(
-                "pr-14 resize-none text-sm min-h-[60px] max-h-[200px]",
-                "rounded-xl border-2 border-border/50 focus:border-primary/50",
+                "pr-24 resize-none text-sm min-h-[52px] max-h-[200px]",
+                "rounded-xl border border-border/50 focus:border-primary/50",
                 "transition-all duration-200 shadow-sm focus:shadow-md",
                 "placeholder:text-muted-foreground/70"
               )}
               disabled={isWorking}
               data-testid="input-message"
             />
-            <motion.div 
-              className="absolute bottom-2 right-2"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Button
-                size="icon"
-                onClick={handleSend}
-                disabled={!input.trim() || isWorking || !conversationId}
-                className={cn(
-                  "h-10 w-10 sm:h-8 sm:w-8 rounded-xl",
-                  "shadow-md transition-all duration-200",
-                  "min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0",
-                  input.trim() && conversationId && !isWorking && "bg-primary hover:bg-primary/90"
-                )}
-                data-testid="button-send"
-                title={!conversationId ? "Initializing conversation..." : undefined}
+            {/* Replit-style action buttons - attachment, voice, send */}
+            <div className="absolute bottom-2 right-2 flex items-center gap-1">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      data-testid="button-attach"
+                      title="Attach file"
+                    >
+                      <Paperclip className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>Attach file</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      data-testid="button-voice"
+                      title="Voice input"
+                    >
+                      <Mic className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>Voice input</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
+              <motion.div 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                {isWorking ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
-            </motion.div>
+                <Button
+                  size="icon"
+                  onClick={handleSend}
+                  disabled={!input.trim() || isWorking || !conversationId}
+                  className={cn(
+                    "h-7 w-7 rounded-lg",
+                    "transition-all duration-200",
+                    input.trim() && conversationId && !isWorking 
+                      ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
+                      : "bg-muted text-muted-foreground"
+                  )}
+                  data-testid="button-send"
+                  title={!conversationId ? "Initializing conversation..." : "Send message"}
+                >
+                  {isWorking ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Send className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              </motion.div>
+            </div>
           </div>
           
           {/* Chat Toolbar - Replit Agent 3 inline icons for quick toggle access */}
