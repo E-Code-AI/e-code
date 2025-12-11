@@ -1,0 +1,878 @@
+2025-12-11 13:24:17.244 [http] info: GET /@fs/home/runner/workspace/attached_assets/stock_images/coding_programming_l_3c65a90d.jpg 304 [req:4c67df1d] (168ms) {"statusCode":304,"correlationId":"4c67df1d-8401-40fc-be0e-f7e39aae254b"}
+2025-12-11 13:24:17.267 [http] info: GET /src/components/ai/RAGControls.tsx 304 [req:abcd62fe] (173ms) {"statusCode":304,"correlationId":"abcd62fe-c45a-409c-9db3-65b1151e4100"}
+2025-12-11 13:24:17.270 [http] info: GET /@fs/home/runner/workspace/attached_assets/stock_images/cloud_computing_tech_ffd053c9.jpg 304 [req:3068bd2b] (173ms) {"statusCode":304,"correlationId":"3068bd2b-52af-4643-9566-35b636d8ebad"}
+2025-12-11 13:24:17.276 [http] info: GET /src/components/layout/PublicFooter.tsx 304 [req:137361dc] (178ms) {"statusCode":304,"correlationId":"137361dc-bdd2-4811-9aba-1e13b71bfd36"}
+2025-12-11 13:24:17.343 [http] info: GET /src/components/ui/switch.tsx 304 [req:fe9d6276] (173ms) {"statusCode":304,"correlationId":"fe9d6276-89e6-44e8-8fe1-c64947532bb7"}
+2025-12-11 13:24:17.399 [http] info: GET /src/components/ui/skeleton.tsx [req:c6c3963e] {"correlationId":"c6c3963e-2357-454f-beb3-bb07d470a0ea"}
+2025-12-11 13:24:17.414 [http] info: GET /src/components/layout/PublicNavbar.tsx [req:c17c4537] {"correlationId":"c17c4537-a1d1-4638-903f-1c61971cdcfe"}
+2025-12-11 13:24:17.438 [http] info: GET /src/components/ThemeSwitcher.tsx [req:568c1a26] (1ms) {"correlationId":"568c1a26-284c-4ab8-ba71-a0521ab9a7ae"}
+2025-12-11 13:24:17.446 [http] info: GET /src/components/ui/navigation-menu.tsx [req:85b452d6] {"correlationId":"85b452d6-e0c1-4e62-95fb-45701a97632b"}
+2025-12-11 13:24:17.449 [http] info: GET /src/components/ui/select.tsx [req:cf97caaf] {"correlationId":"cf97caaf-f164-4f2e-9d73-c39bbc8961e2"}
+2025-12-11 13:24:17.514 [http] info: GET /src/components/ui/switch.tsx [req:d484c828] {"correlationId":"d484c828-33e7-45b2-9d04-0eeec8c2d72a"}
+2025-12-11 13:24:17.565 [http] info: GET /src/components/ui/skeleton.tsx 304 [req:c6c3963e] (166ms) {"statusCode":304,"correlationId":"c6c3963e-2357-454f-beb3-bb07d470a0ea"}
+2025-12-11 13:24:17.587 [http] info: GET /src/components/layout/PublicNavbar.tsx 304 [req:c17c4537] (173ms) {"statusCode":304,"correlationId":"c17c4537-a1d1-4638-903f-1c61971cdcfe"}
+2025-12-11 13:24:17.605 [http] info: GET /src/components/ThemeSwitcher.tsx 304 [req:568c1a26] (169ms) {"statusCode":304,"correlationId":"568c1a26-284c-4ab8-ba71-a0521ab9a7ae"}
+2025-12-11 13:24:17.620 [http] info: GET /src/components/ui/select.tsx 304 [req:cf97caaf] (171ms) {"statusCode":304,"correlationId":"cf97caaf-f164-4f2e-9d73-c39bbc8961e2"}
+2025-12-11 13:24:17.624 [http] info: GET /src/components/ui/navigation-menu.tsx 304 [req:85b452d6] (178ms) {"statusCode":304,"correlationId":"85b452d6-e0c1-4e62-95fb-45701a97632b"}
+2025-12-11 13:24:17.692 [http] info: GET /src/components/ui/switch.tsx 304 [req:d484c828] (178ms) {"statusCode":304,"correlationId":"d484c828-33e7-45b2-9d04-0eeec8c2d72a"}
+2025-12-11 13:24:17.777 [http] info: GET /src/components/ThemeSwitcher.tsx [req:fbbdef7d] {"correlationId":"fbbdef7d-9ba2-4215-98c0-585e044fbd61"}
+2025-12-11 13:24:17.795 [http] info: GET /src/components/ui/navigation-menu.tsx [req:b1b6890b] {"correlationId":"b1b6890b-53bc-4032-aaf5-f6e3c17161aa"}
+2025-12-11 13:24:17.813 [http] info: GET /@fs/home/runner/workspace/attached_assets/stock_images/cloud_computing_tech_ffd053c9.jpg [req:52df28c6] {"correlationId":"52df28c6-2273-481a-a8b9-e78268737467"}
+2025-12-11 13:24:17.817 [http] info: GET /@fs/home/runner/workspace/attached_assets/stock_images/modern_software_deve_ff7f5fd4.jpg [req:c87d84b6] {"correlationId":"c87d84b6-1164-4f9c-b7d5-7cdac0ee132a"}
+2025-12-11 13:24:17.824 [http] info: GET /assets/platform-demo.mp4 [req:c5d3bf3d] {"correlationId":"c5d3bf3d-6824-4b39-b065-fe45ca8d8c0d"}
+2025-12-11 13:24:17.860 [http] info: GET /api/rag/stats [req:3a3553b1] {"correlationId":"3a3553b1-a535-413f-b195-211ad64d24f9"}
+2025-12-11 13:24:17.946 [http] info: GET /src/components/ThemeSwitcher.tsx 304 [req:fbbdef7d] (169ms) {"statusCode":304,"correlationId":"fbbdef7d-9ba2-4215-98c0-585e044fbd61"}
+2025-12-11 13:24:17.966 [http] info: GET /src/components/ui/navigation-menu.tsx 304 [req:b1b6890b] (171ms) {"statusCode":304,"correlationId":"b1b6890b-53bc-4032-aaf5-f6e3c17161aa"}
+2025-12-11 13:24:17.987 [http] info: GET /home/runner/workspace/attached_assets/stock_images/cloud_computing_tech_ffd053c9.jpg 304 [req:52df28c6] (174ms) {"statusCode":304,"correlationId":"52df28c6-2273-481a-a8b9-e78268737467"}
+2025-12-11 13:24:17.990 [http] info: GET /home/runner/workspace/attached_assets/stock_images/modern_software_deve_ff7f5fd4.jpg 304 [req:c87d84b6] (173ms) {"statusCode":304,"correlationId":"c87d84b6-1164-4f9c-b7d5-7cdac0ee132a"}
+2025-12-11 13:24:18.001 [http] info: GET /assets/platform-demo.mp4 304 [req:c5d3bf3d] (177ms) {"statusCode":304,"correlationId":"c5d3bf3d-6824-4b39-b065-fe45ca8d8c0d"}
+2025-12-11 13:24:18 [rag-router] warn: Knowledge graph tables may not exist yet: {"environment":"development","details":[{}]}
+2025-12-11 13:24:18.117 [http] info: GET /stats 200 [req:3a3553b1] (257ms) {"statusCode":200,"contentLength":"171","correlationId":"3a3553b1-a535-413f-b195-211ad64d24f9"}
+2025-12-11 13:24:18.129 [http] info: GET /api/models [req:2404eb43] {"correlationId":"2404eb43-eee1-49a4-a2ae-c63a02fb30a9"}
+2025-12-11 13:24:18.136 [http] info: GET /api/models/preferred [req:63c4e6a6] {"correlationId":"63c4e6a6-e231-4b35-a17a-7f2745f80dd6"}
+2025-12-11 13:24:18.157 [http] info: GET /api/marketplace/templates [req:320f7b52] {"correlationId":"320f7b52-428b-486f-8619-ecaef943fab1"}
+2025-12-11 13:24:18.166 [http] info: GET /@fs/home/runner/workspace/attached_assets/stock_images/coding_programming_l_3c65a90d.jpg [req:7fdd4005] {"correlationId":"7fdd4005-873f-45b9-b9c4-4a86b7fd97f8"}
+2025-12-11 13:24:18.173 [http] info: GET /@fs/home/runner/workspace/attached_assets/stock_images/cloud_computing_tech_ffd053c9.jpg [req:702c5f2a] (1ms) {"correlationId":"702c5f2a-a9bc-40f6-9b84-5d7981f5348d"}
+2025-12-11 13:24:18.295 [http] info: GET /api/rag/stats [req:e3160a07] {"correlationId":"e3160a07-87ca-4ece-b56d-74745c00edfe"}
+2025-12-11 13:24:18.314 [http] info: GET / 200 [req:2404eb43] (185ms) {"statusCode":200,"contentLength":"5038","correlationId":"2404eb43-eee1-49a4-a2ae-c63a02fb30a9"}
+2025-12-11 13:24:18.330 [http] info: GET /templates 200 [req:320f7b52] (173ms) {"statusCode":200,"contentLength":"15639","correlationId":"320f7b52-428b-486f-8619-ecaef943fab1"}
+2025-12-11 13:24:18.334 [http] info: GET /home/runner/workspace/attached_assets/stock_images/cloud_computing_tech_ffd053c9.jpg 304 [req:702c5f2a] (162ms) {"statusCode":304,"correlationId":"702c5f2a-a9bc-40f6-9b84-5d7981f5348d"}
+2025-12-11 13:24:18.341 [http] info: GET /home/runner/workspace/attached_assets/stock_images/coding_programming_l_3c65a90d.jpg 304 [req:7fdd4005] (175ms) {"statusCode":304,"correlationId":"7fdd4005-873f-45b9-b9c4-4a86b7fd97f8"}
+2025-12-11 13:24:18.398 [http] info: GET /preferred 200 [req:63c4e6a6] (262ms) {"statusCode":200,"contentLength":"64","correlationId":"63c4e6a6-e231-4b35-a17a-7f2745f80dd6"}
+2025-12-11 13:24:18 [rag-router] warn: Knowledge graph tables may not exist yet: {"environment":"development","details":[{}]}
+2025-12-11 13:24:18.484 [http] info: GET /api/models [req:e084f513] {"correlationId":"e084f513-0091-49c9-8b66-af8172f985ca"}
+2025-12-11 13:24:18.506 [http] info: GET /@fs/home/runner/workspace/attached_assets/stock_images/modern_software_deve_ff7f5fd4.jpg [req:4ddc886e] {"correlationId":"4ddc886e-8e7d-4cd5-9080-a98fff235223"}
+2025-12-11 13:24:18.509 [http] info: GET /api/marketplace/templates [req:aa8d4a67] {"correlationId":"aa8d4a67-ec66-43d9-a063-a7c3ba56ff81"}
+2025-12-11 13:24:18.565 [http] info: GET /stats 200 [req:e3160a07] (270ms) {"statusCode":200,"contentLength":"171","correlationId":"e3160a07-87ca-4ece-b56d-74745c00edfe"}
+2025-12-11 13:24:18.568 [http] info: GET /api/models/preferred [req:59ffea95] (1ms) {"correlationId":"59ffea95-b234-48bb-a1eb-de608c9271c9"}
+2025-12-11 13:24:18.619 [http] info: GET /assets/platform-demo.mp4 [req:e799c3d2] (1ms) {"correlationId":"e799c3d2-80f3-48d7-b29f-fb3694000ec1"}
+2025-12-11 13:24:18.649 [http] info: GET / 200 [req:e084f513] (165ms) {"statusCode":200,"contentLength":"5038","correlationId":"e084f513-0091-49c9-8b66-af8172f985ca"}
+2025-12-11 13:24:18.674 [http] info: GET /templates 200 [req:aa8d4a67] (165ms) {"statusCode":200,"contentLength":"15639","correlationId":"aa8d4a67-ec66-43d9-a063-a7c3ba56ff81"}
+2025-12-11 13:24:18.685 [http] info: GET /home/runner/workspace/attached_assets/stock_images/modern_software_deve_ff7f5fd4.jpg 304 [req:4ddc886e] (179ms) {"statusCode":304,"correlationId":"4ddc886e-8e7d-4cd5-9080-a98fff235223"}
+2025-12-11 13:24:18.739 [http] info: GET /@fs/home/runner/workspace/attached_assets/stock_images/coding_programming_l_3c65a90d.jpg [req:bd15f2a3] {"correlationId":"bd15f2a3-0214-4865-b3df-47aa9ab47bdc"}
+2025-12-11 13:24:18.804 [http] info: GET /assets/platform-demo.mp4 304 [req:e799c3d2] (185ms) {"statusCode":304,"correlationId":"e799c3d2-80f3-48d7-b29f-fb3694000ec1"}
+2025-12-11 13:24:18.835 [http] info: GET /preferred 200 [req:59ffea95] (267ms) {"statusCode":200,"contentLength":"64","correlationId":"59ffea95-b234-48bb-a1eb-de608c9271c9"}
+2025-12-11 13:24:18.915 [http] info: GET /home/runner/workspace/attached_assets/stock_images/coding_programming_l_3c65a90d.jpg 304 [req:bd15f2a3] (176ms) {"statusCode":304,"correlationId":"bd15f2a3-0214-4865-b3df-47aa9ab47bdc"}
+2025-12-11 13:24:18.972 [http] info: POST /api/logs/ingest [req:851cd64c] {"contentLength":"4915","correlationId":"851cd64c-9e02-41a8-8e2a-de07359aefdc"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:24:19.150 [http] info: POST /api/logs/ingest 202 [req:851cd64c] (178ms) {"statusCode":202,"contentLength":"70","correlationId":"851cd64c-9e02-41a8-8e2a-de07359aefdc"}
+2025-12-11 13:24:20.628 [http] info: POST /api/logs/ingest [req:51b35cc0] {"contentLength":"4532","correlationId":"51b35cc0-f757-4e96-8335-9454a1a364a0"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:24:20.808 [http] info: POST /api/logs/ingest 202 [req:51b35cc0] (180ms) {"statusCode":202,"contentLength":"69","correlationId":"51b35cc0-f757-4e96-8335-9454a1a364a0"}
+2025-12-11 13:24:21.027 [http] info: POST /api/logs/ingest [req:f1638565] {"contentLength":"656","correlationId":"f1638565-110c-4662-96cb-65f055c7bea2"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:24:21.206 [http] info: POST /api/logs/ingest 202 [req:f1638565] (179ms) {"statusCode":202,"contentLength":"69","correlationId":"f1638565-110c-4662-96cb-65f055c7bea2"}
+2025-12-11 13:24:55.709 [http] info: GET /api/preview/url [req:c1af87a0] {"query":{"projectId":"671"},"correlationId":"c1af87a0-facb-4d24-a754-e472a1c31bfc"}
+2025-12-11 13:24:56.202 [http] info: GET /url 200 [req:c1af87a0] (493ms) {"statusCode":200,"contentLength":"77","correlationId":"c1af87a0-facb-4d24-a754-e472a1c31bfc"}
+2025-12-11 13:24:57.679 [http] info: GET /ide/671 [req:30bfef30] {"query":{"bootstrap":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjcxIiwiY29udmVyc2F0aW9uSWQiOiI0YTI5MjM4MS00MWU4LTQ1MjktYmFkOS04MDdlNDc4OWQ3ZWIiLCJzZXNzaW9uSWQiOiI0YTI5MjM4MS00MWU4LTQ1MjktYmFkOS04MDdlNDc4OWQ3ZWIiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NTkyMzYwMDEsImlhdCI6MTc2NTQ1OTIzNiwiZXhwIjoxNzY1NTQ1NjM2LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM"},"correlationId":"30bfef30-5aa6-4a75-bff5-d1f1afbb7ac3"}
+2025-12-11 13:24:57.871 [http] info: GET / 200 [req:30bfef30] (192ms) {"statusCode":200,"correlationId":"30bfef30-5aa6-4a75-bff5-d1f1afbb7ac3"}
+2025-12-11 13:24:58.027 [http] info: GET /@vite/client [req:3992a04e] {"correlationId":"3992a04e-edc6-4e1c-9cb2-5191a604a38d"}
+2025-12-11 13:24:58.044 [http] info: GET /@react-refresh [req:3bf17a37] {"correlationId":"3bf17a37-2646-440a-ae1a-077b3fcd9c25"}
+2025-12-11 13:24:58.237 [http] info: GET /@vite/client 200 [req:3992a04e] (210ms) {"statusCode":200,"correlationId":"3992a04e-edc6-4e1c-9cb2-5191a604a38d"}
+2025-12-11 13:24:58.244 [http] info: GET /@react-refresh 304 [req:3bf17a37] (200ms) {"statusCode":304,"correlationId":"3bf17a37-2646-440a-ae1a-077b3fcd9c25"}
+2025-12-11 13:24:58.326 [http] info: GET /src/main.tsx [req:74cc1b49] (1ms) {"query":{"v":"6fNbBhbUKWThBI9MwCmTg"},"correlationId":"74cc1b49-57d8-4d71-a150-28f237b27ee2"}
+2025-12-11 13:24:58.503 [http] info: GET /src/main.tsx 200 [req:74cc1b49] (178ms) {"statusCode":200,"correlationId":"74cc1b49-57d8-4d71-a150-28f237b27ee2"}
+2025-12-11 13:24:58.734 [http] info: GET /src/index.css [req:67dd962c] {"correlationId":"67dd962c-81f7-4742-b2ed-bfb1d2620444"}
+2025-12-11 13:24:58.736 [http] info: GET /src/App.tsx [req:b7dbe34c] {"correlationId":"b7dbe34c-7fc0-454d-85b3-36ac56e8ef39"}
+2025-12-11 13:24:58.866 [http] info: GET /src/lib/monaco-config.ts [req:0824f6cf] {"correlationId":"0824f6cf-7f37-401a-af7e-846b1ca00146"}
+2025-12-11 13:24:58.909 [http] info: GET /src/index.css 304 [req:67dd962c] (175ms) {"statusCode":304,"correlationId":"67dd962c-81f7-4742-b2ed-bfb1d2620444"}
+2025-12-11 13:24:58.912 [http] info: GET /src/App.tsx 304 [req:b7dbe34c] (176ms) {"statusCode":304,"correlationId":"b7dbe34c-7fc0-454d-85b3-36ac56e8ef39"}
+2025-12-11 13:24:59.037 [http] info: GET /src/lib/monaco-config.ts 304 [req:0824f6cf] (171ms) {"statusCode":304,"correlationId":"0824f6cf-7f37-401a-af7e-846b1ca00146"}
+2025-12-11 13:24:59.091 [http] info: GET /src/lib/telemetry.ts [req:d88d8e3c] {"correlationId":"d88d8e3c-2d47-4689-b799-0461e4dcc9cf"}
+2025-12-11 13:24:59.095 [http] info: GET /src/utils/service-worker-registration.ts [req:f532ab63] {"correlationId":"f532ab63-85f9-47d4-ab5f-c8de1a1c639a"}
+2025-12-11 13:24:59.214 [http] info: GET /src/lib/cache-reconciliation.ts [req:bf66fddd] {"correlationId":"bf66fddd-bf49-4ca5-9709-f3528007dddd"}
+2025-12-11 13:24:59.272 [http] info: GET /src/lib/telemetry.ts 304 [req:d88d8e3c] (181ms) {"statusCode":304,"correlationId":"d88d8e3c-2d47-4689-b799-0461e4dcc9cf"}
+2025-12-11 13:24:59.273 [http] info: GET /src/utils/service-worker-registration.ts 304 [req:f532ab63] (178ms) {"statusCode":304,"correlationId":"f532ab63-85f9-47d4-ab5f-c8de1a1c639a"}
+2025-12-11 13:24:59.393 [http] info: GET /src/lib/cache-reconciliation.ts 304 [req:bf66fddd] (179ms) {"statusCode":304,"correlationId":"bf66fddd-bf49-4ca5-9709-f3528007dddd"}
+2025-12-11 13:24:59.451 [http] info: GET /@fs/home/runner/workspace/node_modules/vite/dist/client/env.mjs [req:0d191147] {"correlationId":"0d191147-ac6e-4dbb-b5c6-4f68a078bd4b"}
+2025-12-11 13:24:59.460 [http] info: GET /src/lib/queryClient.ts [req:378a9155] {"correlationId":"378a9155-1013-4591-b975-1e577eca5c2b"}
+2025-12-11 13:24:59.569 [http] info: GET /src/components/ui/toaster.tsx [req:e54a22da] {"correlationId":"e54a22da-d0ab-4aeb-bd5e-62cc69aa5636"}
+2025-12-11 13:24:59.624 [http] info: GET /@fs/home/runner/workspace/node_modules/vite/dist/client/env.mjs 304 [req:0d191147] (173ms) {"statusCode":304,"correlationId":"0d191147-ac6e-4dbb-b5c6-4f68a078bd4b"}
+2025-12-11 13:24:59.646 [http] info: GET /src/lib/queryClient.ts 304 [req:378a9155] (186ms) {"statusCode":304,"correlationId":"378a9155-1013-4591-b975-1e577eca5c2b"}
+2025-12-11 13:24:59.743 [http] info: GET /src/components/ui/toaster.tsx 304 [req:e54a22da] (174ms) {"statusCode":304,"correlationId":"e54a22da-d0ab-4aeb-bd5e-62cc69aa5636"}
+2025-12-11 13:24:59.795 [http] info: GET /src/components/ui/AppToaster.tsx [req:cfef81f6] {"correlationId":"cfef81f6-d011-4f79-a334-11e355f3bd34"}
+2025-12-11 13:24:59.817 [http] info: GET /src/components/ui/tooltip.tsx [req:db7141f5] {"correlationId":"db7141f5-6f94-4e67-8284-dce5df84315f"}
+2025-12-11 13:24:59.914 [http] info: GET /src/components/ECodeLoading.tsx [req:f3209bfe] {"correlationId":"f3209bfe-b853-4870-9933-6e31966d5cf8"}
+2025-12-11 13:24:59.970 [http] info: GET /src/components/ui/AppToaster.tsx 304 [req:cfef81f6] (175ms) {"statusCode":304,"correlationId":"cfef81f6-d011-4f79-a334-11e355f3bd34"}
+2025-12-11 13:24:59.992 [http] info: GET /src/components/ui/tooltip.tsx 304 [req:db7141f5] (175ms) {"statusCode":304,"correlationId":"db7141f5-6f94-4e67-8284-dce5df84315f"}
+2025-12-11 13:25:00.088 [http] info: GET /src/components/ECodeLoading.tsx 304 [req:f3209bfe] (174ms) {"statusCode":304,"correlationId":"f3209bfe-b853-4870-9933-6e31966d5cf8"}
+2025-12-11 13:25:00.143 [http] info: GET /src/components/ThemeProvider.tsx [req:e3edbba2] {"correlationId":"e3edbba2-bb31-4957-8a8c-a7ed1a875632"}
+2025-12-11 13:25:00.167 [http] info: GET /src/components/ScrollToTop.tsx [req:1e1f47ef] {"correlationId":"1e1f47ef-b7aa-47a8-977b-da8f1ad132b2"}
+2025-12-11 13:25:00.266 [http] info: GET /src/components/LazyAnimatedRoutes.tsx [req:626edfa8] {"correlationId":"626edfa8-bd45-44bc-ad0b-82361148d051"}
+2025-12-11 13:25:00.310 [http] info: GET /src/components/ThemeProvider.tsx 304 [req:e3edbba2] (167ms) {"statusCode":304,"correlationId":"e3edbba2-bb31-4957-8a8c-a7ed1a875632"}
+2025-12-11 13:25:00.346 [http] info: GET /src/components/ScrollToTop.tsx 304 [req:1e1f47ef] (179ms) {"statusCode":304,"correlationId":"1e1f47ef-b7aa-47a8-977b-da8f1ad132b2"}
+2025-12-11 13:25:00.439 [http] info: GET /src/components/LazyAnimatedRoutes.tsx 304 [req:626edfa8] (173ms) {"statusCode":304,"correlationId":"626edfa8-bd45-44bc-ad0b-82361148d051"}
+2025-12-11 13:25:00.481 [http] info: GET /src/utils/instrumented-lazy.ts [req:588ece7f] {"correlationId":"588ece7f-ad05-47d0-aba5-7d973f09e1a9"}
+2025-12-11 13:25:00.520 [http] info: GET /src/utils/performance.ts [req:7023e849] {"correlationId":"7023e849-ae78-443c-b89c-0b3ca449ea69"}
+2025-12-11 13:25:00.618 [http] info: GET /src/utils/service-worker.ts [req:1833a053] {"correlationId":"1833a053-40b6-414f-b6dc-378f6ba67e90"}
+2025-12-11 13:25:00.657 [http] info: GET /src/utils/instrumented-lazy.ts 304 [req:588ece7f] (176ms) {"statusCode":304,"correlationId":"588ece7f-ad05-47d0-aba5-7d973f09e1a9"}
+2025-12-11 13:25:00.695 [http] info: GET /src/utils/performance.ts 304 [req:7023e849] (175ms) {"statusCode":304,"correlationId":"7023e849-ae78-443c-b89c-0b3ca449ea69"}
+2025-12-11 13:25:00.799 [http] info: GET /src/utils/service-worker.ts 304 [req:1833a053] (181ms) {"statusCode":304,"correlationId":"1833a053-40b6-414f-b6dc-378f6ba67e90"}
+2025-12-11 13:25:00.829 [http] info: GET /src/utils/performance-budget.ts [req:4de035aa] {"correlationId":"4de035aa-0e23-4b1a-b9f0-34e014cebf4b"}
+2025-12-11 13:25:00.863 [http] info: GET /src/utils/network-optimization.ts [req:9b05777c] {"correlationId":"9b05777c-5c0e-42b5-9828-8b6e1486d637"}
+2025-12-11 13:25:00.970 [http] info: GET /src/utils/image-optimization.tsx [req:d806117d] {"correlationId":"d806117d-d92b-4a32-8d73-f3145b5b5d0b"}
+2025-12-11 13:25:00.997 [http] info: GET /src/utils/performance-budget.ts 304 [req:4de035aa] (168ms) {"statusCode":304,"correlationId":"4de035aa-0e23-4b1a-b9f0-34e014cebf4b"}
+2025-12-11 13:25:01.034 [http] info: POST /api/logs/ingest [req:61651eb7] (1ms) {"contentLength":"594","correlationId":"61651eb7-66a3-4cf5-bcaa-9a65725daa88"}
+2025-12-11 13:25:01.043 [http] info: GET /src/utils/network-optimization.ts 304 [req:9b05777c] (180ms) {"statusCode":304,"correlationId":"9b05777c-5c0e-42b5-9828-8b6e1486d637"}
+2025-12-11 13:25:01.138 [http] info: GET /src/utils/image-optimization.tsx 304 [req:d806117d] (168ms) {"statusCode":304,"correlationId":"d806117d-d92b-4a32-8d73-f3145b5b5d0b"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:25:01.204 [http] info: GET /src/lib/protected-route.tsx [req:e46b850f] {"correlationId":"e46b850f-8f45-4179-a6f9-a09c75c24956"}
+2025-12-11 13:25:01.208 [http] info: POST /api/logs/ingest 202 [req:61651eb7] (175ms) {"statusCode":202,"contentLength":"69","correlationId":"61651eb7-66a3-4cf5-bcaa-9a65725daa88"}
+2025-12-11 13:25:01.212 [http] info: GET /src/hooks/use-auth.tsx [req:68e116c0] {"correlationId":"68e116c0-ff32-4532-bf23-16ebd31fc751"}
+2025-12-11 13:25:01.313 [http] info: GET /src/components/layout/ReplitLayout.tsx [req:19e4e1b9] {"correlationId":"19e4e1b9-bff5-47ac-b135-bfe0fb3c7d42"}
+2025-12-11 13:25:01.382 [http] info: GET /src/lib/protected-route.tsx 304 [req:e46b850f] (178ms) {"statusCode":304,"correlationId":"e46b850f-8f45-4179-a6f9-a09c75c24956"}
+2025-12-11 13:25:01.385 [http] info: GET /src/hooks/use-auth.tsx 304 [req:68e116c0] (173ms) {"statusCode":304,"correlationId":"68e116c0-ff32-4532-bf23-16ebd31fc751"}
+2025-12-11 13:25:01.481 [http] info: GET /src/components/layout/ReplitLayout.tsx 304 [req:19e4e1b9] (168ms) {"statusCode":304,"correlationId":"19e4e1b9-bff5-47ac-b135-bfe0fb3c7d42"}
+2025-12-11 13:25:01.559 [http] info: GET /src/components/ErrorBoundary.tsx [req:59a995a3] (1ms) {"correlationId":"59a995a3-2589-4a1f-a5cd-a4db55824038"}
+2025-12-11 13:25:01.560 [http] info: GET /src/components/LazyShellWidgets.tsx [req:a06c78ea] {"correlationId":"a06c78ea-c586-47d1-a429-3ee8876aed6a"}
+2025-12-11 13:25:01.663 [http] info: GET /src/lib/auth-redirect.ts [req:19d5dcd1] {"correlationId":"19d5dcd1-6d15-4eb9-a318-4be23f339853"}
+2025-12-11 13:25:01.732 [http] info: GET /src/components/LazyShellWidgets.tsx 304 [req:a06c78ea] (172ms) {"statusCode":304,"correlationId":"a06c78ea-c586-47d1-a429-3ee8876aed6a"}
+2025-12-11 13:25:01.734 [http] info: GET /src/components/ErrorBoundary.tsx 304 [req:59a995a3] (176ms) {"statusCode":304,"correlationId":"59a995a3-2589-4a1f-a5cd-a4db55824038"}
+2025-12-11 13:25:01.836 [http] info: GET /src/lib/auth-redirect.ts 304 [req:19d5dcd1] (173ms) {"statusCode":304,"correlationId":"19d5dcd1-6d15-4eb9-a318-4be23f339853"}
+2025-12-11 13:25:01.902 [http] info: GET /src/lib/query-persister.ts [req:60b83f29] (1ms) {"correlationId":"60b83f29-b0ce-4be8-ba7e-109cf38214e4"}
+2025-12-11 13:25:01.909 [http] info: GET /src/components/ui/toast.tsx [req:acf4c1ff] {"correlationId":"acf4c1ff-3230-4bc6-99ea-79f000484954"}
+2025-12-11 13:25:02.008 [http] info: GET /src/hooks/use-toast.ts [req:b61ed325] {"correlationId":"b61ed325-ee46-433f-b62d-34a2457b2951"}
+2025-12-11 13:25:02.074 [http] info: GET /src/lib/query-persister.ts 304 [req:60b83f29] (172ms) {"statusCode":304,"correlationId":"60b83f29-b0ce-4be8-ba7e-109cf38214e4"}
+2025-12-11 13:25:02.085 [http] info: GET /src/components/ui/toast.tsx 304 [req:acf4c1ff] (176ms) {"statusCode":304,"correlationId":"acf4c1ff-3230-4bc6-99ea-79f000484954"}
+2025-12-11 13:25:02.179 [http] info: GET /src/hooks/use-toast.ts 304 [req:b61ed325] (172ms) {"statusCode":304,"correlationId":"b61ed325-ee46-433f-b62d-34a2457b2951"}
+2025-12-11 13:25:02.254 [http] info: GET /src/lib/utils.ts [req:2c14f5ed] (1ms) {"correlationId":"2c14f5ed-1dee-400f-b892-11d6cb08c4cd"}
+2025-12-11 13:25:02.275 [http] info: GET /src/components/layout/ReplitHeader.tsx [req:db3d9842] {"correlationId":"db3d9842-607c-460e-935c-165389015b55"}
+2025-12-11 13:25:02.354 [http] info: GET /src/components/layout/ReplitSidebar.tsx [req:b2cfb172] {"correlationId":"b2cfb172-6b9b-497c-a271-175536b5f80d"}
+2025-12-11 13:25:02.428 [http] info: GET /src/lib/utils.ts 304 [req:2c14f5ed] (175ms) {"statusCode":304,"correlationId":"2c14f5ed-1dee-400f-b892-11d6cb08c4cd"}
+2025-12-11 13:25:02.449 [http] info: GET /src/components/layout/ReplitHeader.tsx 304 [req:db3d9842] (174ms) {"statusCode":304,"correlationId":"db3d9842-607c-460e-935c-165389015b55"}
+2025-12-11 13:25:02.525 [http] info: GET /src/components/layout/ReplitSidebar.tsx 304 [req:b2cfb172] (171ms) {"statusCode":304,"correlationId":"b2cfb172-6b9b-497c-a271-175536b5f80d"}
+2025-12-11 13:25:02.598 [http] info: GET /src/components/mobile/MobileNavigation.tsx [req:8c6501bc] {"correlationId":"8c6501bc-ed81-4e66-9d37-420aa27bf62e"}
+2025-12-11 13:25:02.627 [http] info: GET /src/components/mobile/MobileFileExplorer.tsx [req:b23309cd] {"correlationId":"b23309cd-b7c9-4c5b-91d0-c95a0d4aaa2c"}
+2025-12-11 13:25:02.700 [http] info: GET /src/components/mobile/MobileToolsPanel.tsx [req:c21f5393] {"correlationId":"c21f5393-7108-4d7b-9492-dc78e3d5ccd2"}
+2025-12-11 13:25:02.769 [http] info: GET /src/components/mobile/MobileNavigation.tsx 304 [req:8c6501bc] (171ms) {"statusCode":304,"correlationId":"8c6501bc-ed81-4e66-9d37-420aa27bf62e"}
+2025-12-11 13:25:02.804 [http] info: GET /src/components/mobile/MobileFileExplorer.tsx 304 [req:b23309cd] (177ms) {"statusCode":304,"correlationId":"b23309cd-b7c9-4c5b-91d0-c95a0d4aaa2c"}
+2025-12-11 13:25:02.871 [http] info: GET /src/components/mobile/MobileToolsPanel.tsx 304 [req:c21f5393] (171ms) {"statusCode":304,"correlationId":"c21f5393-7108-4d7b-9492-dc78e3d5ccd2"}
+2025-12-11 13:25:02.940 [http] info: GET /src/components/mobile/MobileCreateModal.tsx [req:6190b714] {"correlationId":"6190b714-a218-48c0-99cf-f4c29a229fdf"}
+2025-12-11 13:25:02.976 [http] info: GET /src/components/ui/mobile-gestures.tsx [req:d17cae08] {"correlationId":"d17cae08-c8ac-470d-b429-eb132f0da797"}
+2025-12-11 13:25:03.043 [http] info: GET /src/hooks/use-media-query.ts [req:20d12e1f] {"correlationId":"20d12e1f-f42a-42ff-9bd6-3ed43dd2edeb"}
+2025-12-11 13:25:03.117 [http] info: GET /src/components/mobile/MobileCreateModal.tsx 304 [req:6190b714] (178ms) {"statusCode":304,"correlationId":"6190b714-a218-48c0-99cf-f4c29a229fdf"}
+2025-12-11 13:25:03.152 [http] info: GET /src/components/ui/mobile-gestures.tsx 304 [req:d17cae08] (176ms) {"statusCode":304,"correlationId":"d17cae08-c8ac-470d-b429-eb132f0da797"}
+2025-12-11 13:25:03.214 [http] info: GET /src/hooks/use-media-query.ts 304 [req:20d12e1f] (171ms) {"statusCode":304,"correlationId":"20d12e1f-f42a-42ff-9bd6-3ed43dd2edeb"}
+2025-12-11 13:25:03.289 [http] info: GET /src/hooks/use-mobile.tsx [req:2722670e] {"correlationId":"2722670e-e86e-4b5c-b951-96075656baf2"}
+2025-12-11 13:25:03.335 [http] info: GET /src/components/ui/button.tsx [req:224f1c92] {"correlationId":"224f1c92-7b8e-4a76-8f6b-fd73a0114c97"}
+2025-12-11 13:25:03.423 [http] info: GET /src/components/ui/dropdown-menu.tsx [req:7534d0d6] {"correlationId":"7534d0d6-eeea-4967-a0a0-e0aa14133165"}
+2025-12-11 13:25:03.466 [http] info: GET /src/hooks/use-mobile.tsx 304 [req:2722670e] (177ms) {"statusCode":304,"correlationId":"2722670e-e86e-4b5c-b951-96075656baf2"}
+2025-12-11 13:25:03.511 [http] info: GET /src/components/ui/button.tsx 304 [req:224f1c92] (176ms) {"statusCode":304,"correlationId":"224f1c92-7b8e-4a76-8f6b-fd73a0114c97"}
+2025-12-11 13:25:03.596 [http] info: GET /src/components/ui/dropdown-menu.tsx 304 [req:7534d0d6] (173ms) {"statusCode":304,"correlationId":"7534d0d6-eeea-4967-a0a0-e0aa14133165"}
+2025-12-11 13:25:03.638 [http] info: GET /src/components/ui/avatar.tsx [req:73c5226c] {"correlationId":"73c5226c-6d55-4538-bb18-e147ff0d5c85"}
+2025-12-11 13:25:03.690 [http] info: GET /src/components/NotificationCenter.tsx [req:c3e1efd2] (1ms) {"correlationId":"c3e1efd2-f052-4bb3-ac04-1ac735b8cead"}
+2025-12-11 13:25:03.771 [http] info: GET /src/components/SpotlightSearch.tsx [req:4b989b06] {"correlationId":"4b989b06-b3c0-4973-a76d-8c1adae178a7"}
+2025-12-11 13:25:03.815 [http] info: GET /src/components/ui/avatar.tsx 304 [req:73c5226c] (177ms) {"statusCode":304,"correlationId":"73c5226c-6d55-4538-bb18-e147ff0d5c85"}
+2025-12-11 13:25:03.873 [http] info: GET /src/components/NotificationCenter.tsx 304 [req:c3e1efd2] (183ms) {"statusCode":304,"correlationId":"c3e1efd2-f052-4bb3-ac04-1ac735b8cead"}
+2025-12-11 13:25:03.948 [http] info: GET /src/components/SpotlightSearch.tsx 304 [req:4b989b06] (177ms) {"statusCode":304,"correlationId":"4b989b06-b3c0-4973-a76d-8c1adae178a7"}
+2025-12-11 13:25:03.989 [http] info: GET /src/components/ECodeLogo.tsx [req:f1c01faf] {"correlationId":"f1c01faf-707d-4b61-b2c9-2307b3926d72"}
+2025-12-11 13:25:04.046 [http] info: GET /src/components/layout/MobileMenu.tsx [req:4172d103] {"correlationId":"4172d103-8d8d-428a-a09a-f89cb65c5f5f"}
+2025-12-11 13:25:04.124 [http] info: GET /src/constants/navigation.ts [req:d0bf6b02] {"correlationId":"d0bf6b02-84ef-4fe0-ac5f-f55385959ecb"}
+2025-12-11 13:25:04.172 [http] info: GET /src/components/ECodeLogo.tsx 304 [req:f1c01faf] (183ms) {"statusCode":304,"correlationId":"f1c01faf-707d-4b61-b2c9-2307b3926d72"}
+2025-12-11 13:25:04.225 [http] info: GET /src/components/layout/MobileMenu.tsx 304 [req:4172d103] (179ms) {"statusCode":304,"correlationId":"4172d103-8d8d-428a-a09a-f89cb65c5f5f"}
+2025-12-11 13:25:04.295 [http] info: GET /src/constants/navigation.ts 304 [req:d0bf6b02] (171ms) {"statusCode":304,"correlationId":"d0bf6b02-84ef-4fe0-ac5f-f55385959ecb"}
+2025-12-11 13:25:04.343 [http] info: GET /src/components/ui/scroll-area.tsx [req:034e7caf] {"correlationId":"034e7caf-e976-443c-b334-06ed265926d2"}
+2025-12-11 13:25:04.400 [http] info: GET /src/components/ui/badge.tsx [req:1c3c4513] {"correlationId":"1c3c4513-63b1-4436-8679-898602398880"}
+2025-12-11 13:25:04.480 [http] info: GET /src/components/ui/collapsible.tsx [req:fa808b58] (1ms) {"correlationId":"fa808b58-f193-4ba0-abb0-3742726cea85"}
+2025-12-11 13:25:04.518 [http] info: GET /src/components/ui/scroll-area.tsx 304 [req:034e7caf] (175ms) {"statusCode":304,"correlationId":"034e7caf-e976-443c-b334-06ed265926d2"}
+2025-12-11 13:25:04.583 [http] info: GET /src/components/ui/badge.tsx 304 [req:1c3c4513] (183ms) {"statusCode":304,"correlationId":"1c3c4513-63b1-4436-8679-898602398880"}
+2025-12-11 13:25:04.657 [http] info: GET /src/components/ui/collapsible.tsx 304 [req:fa808b58] (177ms) {"statusCode":304,"correlationId":"fa808b58-f193-4ba0-abb0-3742726cea85"}
+2025-12-11 13:25:04.745 [http] info: GET /src/components/ui/input.tsx [req:6596a734] {"correlationId":"6596a734-1538-4581-a286-147c71cef97f"}
+2025-12-11 13:25:04.780 [http] info: GET /src/hooks/use-mobile-gestures.ts [req:ab6afc37] {"correlationId":"ab6afc37-c844-4fe7-b3e3-382b591338f6"}
+2025-12-11 13:25:04.830 [http] info: GET /src/components/mobile/VirtualFileTree.tsx [req:18f6edfd] {"correlationId":"18f6edfd-9a5c-47eb-8a39-c872e7e670e2"}
+2025-12-11 13:25:04.921 [http] info: GET /src/components/ui/input.tsx 304 [req:6596a734] (176ms) {"statusCode":304,"correlationId":"6596a734-1538-4581-a286-147c71cef97f"}
+2025-12-11 13:25:04.957 [http] info: GET /src/hooks/use-mobile-gestures.ts 304 [req:ab6afc37] (177ms) {"statusCode":304,"correlationId":"ab6afc37-c844-4fe7-b3e3-382b591338f6"}
+2025-12-11 13:25:05.002 [http] info: GET /src/components/mobile/VirtualFileTree.tsx 304 [req:18f6edfd] (172ms) {"statusCode":304,"correlationId":"18f6edfd-9a5c-47eb-8a39-c872e7e670e2"}
+2025-12-11 13:25:05.094 [http] info: GET /src/hooks/use-mobile-persistence.ts [req:bed55ff5] {"correlationId":"bed55ff5-646c-4c5a-af39-81b850e2edc8"}
+2025-12-11 13:25:05.136 [http] info: GET /src/components/mobile/MobileLoadingSkeleton.tsx [req:a9ac3737] {"correlationId":"a9ac3737-3f74-4319-a248-c6fd4140cfc0"}
+2025-12-11 13:25:05.176 [http] info: GET /src/components/mobile/MobileEmptyState.tsx [req:f744c6fb] {"correlationId":"f744c6fb-cf93-4483-9aa2-19289204f03f"}
+2025-12-11 13:25:05.270 [http] info: GET /src/hooks/use-mobile-persistence.ts 304 [req:bed55ff5] (176ms) {"statusCode":304,"correlationId":"bed55ff5-646c-4c5a-af39-81b850e2edc8"}
+2025-12-11 13:25:05.317 [http] info: GET /src/components/mobile/MobileLoadingSkeleton.tsx 304 [req:a9ac3737] (181ms) {"statusCode":304,"correlationId":"a9ac3737-3f74-4319-a248-c6fd4140cfc0"}
+2025-12-11 13:25:05.352 [http] info: GET /src/components/mobile/MobileEmptyState.tsx 304 [req:f744c6fb] (176ms) {"statusCode":304,"correlationId":"f744c6fb-cf93-4483-9aa2-19289204f03f"}
+2025-12-11 13:25:05.440 [http] info: GET /src/components/ui/dialog.tsx [req:220a4a2b] {"correlationId":"220a4a2b-fca1-4c5a-a438-0934f4353dd2"}
+2025-12-11 13:25:05.575 [http] info: GET /src/components/ui/label.tsx [req:d44a6cde] {"correlationId":"d44a6cde-c6e6-4467-ab19-cf2f88d29bb5"}
+2025-12-11 13:25:05.585 [http] info: GET /src/components/ai/BuildModeSelector.tsx [req:58bbe488] {"correlationId":"58bbe488-bc1d-44b7-8397-72967afa40ee"}
+2025-12-11 13:25:05.619 [http] info: GET /src/components/ui/dialog.tsx 304 [req:220a4a2b] (179ms) {"statusCode":304,"correlationId":"220a4a2b-fca1-4c5a-a438-0934f4353dd2"}
+2025-12-11 13:25:05.750 [http] info: GET /src/components/ui/label.tsx 304 [req:d44a6cde] (175ms) {"statusCode":304,"correlationId":"d44a6cde-c6e6-4467-ab19-cf2f88d29bb5"}
+2025-12-11 13:25:05.753 [http] info: GET /src/components/ai/BuildModeSelector.tsx 304 [req:58bbe488] (168ms) {"statusCode":304,"correlationId":"58bbe488-bc1d-44b7-8397-72967afa40ee"}
+2025-12-11 13:25:05.806 [http] info: GET /src/components/ui/popover.tsx [req:65483518] {"correlationId":"65483518-07bc-4f23-babe-2e2fdfa84464"}
+2025-12-11 13:25:05.923 [http] info: GET /src/components/ui/separator.tsx [req:ecc9c52a] {"correlationId":"ecc9c52a-598a-4406-8359-579131db2421"}
+2025-12-11 13:25:05.932 [http] info: GET /src/components/ui/tabs.tsx [req:a784e1f9] {"correlationId":"a784e1f9-db33-41ac-94d8-11458734a20e"}
+2025-12-11 13:25:05.979 [http] info: GET /src/components/ui/popover.tsx 304 [req:65483518] (173ms) {"statusCode":304,"correlationId":"65483518-07bc-4f23-babe-2e2fdfa84464"}
+2025-12-11 13:25:06.105 [http] info: GET /src/components/ui/separator.tsx 304 [req:ecc9c52a] (182ms) {"statusCode":304,"correlationId":"ecc9c52a-598a-4406-8359-579131db2421"}
+2025-12-11 13:25:06.107 [http] info: GET /src/components/ui/tabs.tsx 304 [req:a784e1f9] (175ms) {"statusCode":304,"correlationId":"a784e1f9-db33-41ac-94d8-11458734a20e"}
+2025-12-11 13:25:06.154 [http] info: GET /src/components/ui/command.tsx [req:284e20bc] {"correlationId":"284e20bc-4d07-4187-8160-e8699b6d8bf1"}
+2025-12-11 13:25:06.281 [http] info: GET /src/components/ui/sheet.tsx [req:18490fb2] {"correlationId":"18490fb2-aff0-4b3b-8347-a393e5ba6a60"}
+2025-12-11 13:25:06.292 [http] info: GET /src/hooks/use-reduced-motion.ts [req:4277a29e] {"correlationId":"4277a29e-3c84-410a-b8bb-5b77800bcd4c"}
+2025-12-11 13:25:06.331 [http] info: GET /src/components/ui/command.tsx 304 [req:284e20bc] (177ms) {"statusCode":304,"correlationId":"284e20bc-4d07-4187-8160-e8699b6d8bf1"}
+2025-12-11 13:25:06.459 [http] info: GET /src/components/ui/sheet.tsx 304 [req:18490fb2] (178ms) {"statusCode":304,"correlationId":"18490fb2-aff0-4b3b-8347-a393e5ba6a60"}
+2025-12-11 13:25:06.460 [http] info: GET /src/hooks/use-reduced-motion.ts 304 [req:4277a29e] (168ms) {"statusCode":304,"correlationId":"4277a29e-3c84-410a-b8bb-5b77800bcd4c"}
+2025-12-11 13:25:06.762 [http] info: GET /src/components/CommandPalette.tsx [req:7406540f] {"correlationId":"7406540f-b893-49f0-b3ae-4f8707b61597"}
+2025-12-11 13:25:06.769 [http] info: GET /src/pages/IDEPage.tsx [req:80c14248] {"correlationId":"80c14248-c93b-4238-84f0-34bb6d31681f"}
+2025-12-11 13:25:06.831 [http] info: GET /favicon.ico [req:7a80405c] {"correlationId":"7a80405c-e529-41c0-b480-247286e416e0"}
+2025-12-11 13:25:06.838 [http] info: GET /manifest.json [req:edf3721b] {"correlationId":"edf3721b-0b06-41f8-a638-0ba0d90273ef"}
+2025-12-11 13:25:06.840 [http] info: GET /manifest.json 304 [req:edf3721b] (2ms) {"statusCode":304,"correlationId":"edf3721b-0b06-41f8-a638-0ba0d90273ef"}
+2025-12-11 13:25:06.842 [http] info: GET /api/monitoring/health/summary [req:0575c2ab] {"correlationId":"0575c2ab-25b5-4881-82cf-6744d4f6c96f"}
+2025-12-11 13:25:06.844 [http] info: GET /api/projects [req:24b0c309] {"correlationId":"24b0c309-a100-4ad8-886f-c46da5a6d435"}
+2025-12-11 13:25:06.968 [http] info: GET /src/components/CommandPalette.tsx 304 [req:7406540f] (206ms) {"statusCode":304,"correlationId":"7406540f-b893-49f0-b3ae-4f8707b61597"}
+2025-12-11 13:25:07.032 [http] info: GET /src/pages/IDEPage.tsx 304 [req:80c14248] (263ms) {"statusCode":304,"correlationId":"80c14248-c93b-4238-84f0-34bb6d31681f"}
+2025-12-11 13:25:07.060 [http] info: GET /api/monitoring/health/summary 200 [req:0575c2ab] (218ms) {"statusCode":200,"contentLength":"595","correlationId":"0575c2ab-25b5-4881-82cf-6744d4f6c96f"}
+2025-12-11 13:25:07.067 [http] info: GET / 200 [req:7a80405c] (236ms) {"statusCode":200,"correlationId":"7a80405c-e529-41c0-b480-247286e416e0"}
+2025-12-11 13:25:07.141 [http] info: GET /favicon.svg [req:93e145bb] {"correlationId":"93e145bb-c2e1-4b68-9bac-661980e75d86"}
+2025-12-11 13:25:07.220 [http] info: GET /src/components/ide/UnifiedIDELayout.tsx [req:b2dca6a4] {"correlationId":"b2dca6a4-a790-46b0-8700-2db3730eac6a"}
+2025-12-11 13:25:07.836 [http] info: GET /favicon.svg 304 [req:93e145bb] (695ms) {"statusCode":304,"correlationId":"93e145bb-c2e1-4b68-9bac-661980e75d86"}
+2025-12-11 13:25:07.837 [http] info: GET /api/projects 200 [req:24b0c309] (993ms) {"statusCode":200,"contentLength":"114516","correlationId":"24b0c309-a100-4ad8-886f-c46da5a6d435"}
+2025-12-11 13:25:08.132 [http] info: GET /favicon.svg [req:75fd0e74] {"correlationId":"75fd0e74-ada2-4681-93d7-5178b3ff98a5"}
+2025-12-11 13:25:08.635 [http] info: GET /src/components/ide/UnifiedIDELayout.tsx 304 [req:b2dca6a4] (1415ms) {"statusCode":304,"correlationId":"b2dca6a4-a790-46b0-8700-2db3730eac6a"}
+2025-12-11 13:25:08.882 [http] info: GET /src/hooks/index.ts [req:317177d8] {"correlationId":"317177d8-78d3-4497-8bb3-028a86457de1"}
+2025-12-11 13:25:08.883 [http] info: GET /src/hooks/use-connection-status.ts [req:b9c63111] {"correlationId":"b9c63111-1fe5-48fc-8d33-d4833a8c4459"}
+2025-12-11 13:25:08.889 [http] info: GET /favicon.svg 304 [req:75fd0e74] (757ms) {"statusCode":304,"correlationId":"75fd0e74-ada2-4681-93d7-5178b3ff98a5"}
+2025-12-11 13:25:09.086 [http] info: GET /src/hooks/use-problems-count.ts [req:2fc57d07] (8ms) {"correlationId":"2fc57d07-c85f-4168-9f68-d4555f4f3d59"}
+2025-12-11 13:25:09.110 [http] info: GET /src/hooks/use-connection-status.ts 304 [req:b9c63111] (227ms) {"statusCode":304,"correlationId":"b9c63111-1fe5-48fc-8d33-d4833a8c4459"}
+2025-12-11 13:25:09.120 [http] info: GET /src/hooks/index.ts 304 [req:317177d8] (238ms) {"statusCode":304,"correlationId":"317177d8-78d3-4497-8bb3-028a86457de1"}
+2025-12-11 13:25:09.270 [http] info: GET /src/hooks/use-problems-count.ts 304 [req:2fc57d07] (192ms) {"statusCode":304,"correlationId":"2fc57d07-c85f-4168-9f68-d4555f4f3d59"}
+2025-12-11 13:25:09.285 [http] info: GET /src/components/ui/resizable.tsx [req:81320b40] {"correlationId":"81320b40-5017-4b12-a518-bcac27ef83b9"}
+2025-12-11 13:25:09.295 [http] info: GET /src/components/ide/TopNavBar.tsx [req:e20381e7] {"correlationId":"e20381e7-f9bd-4431-90f3-54830bc7014d"}
+2025-12-11 13:25:09.443 [http] info: GET /src/components/ide/StatusBar.tsx [req:cda46484] {"correlationId":"cda46484-fa77-483f-a443-53345eb1c65d"}
+2025-12-11 13:25:09.462 [http] info: GET /src/components/ui/resizable.tsx 304 [req:81320b40] (177ms) {"statusCode":304,"correlationId":"81320b40-5017-4b12-a518-bcac27ef83b9"}
+2025-12-11 13:25:09.464 [http] info: GET /src/components/ide/TopNavBar.tsx 304 [req:e20381e7] (169ms) {"statusCode":304,"correlationId":"e20381e7-f9bd-4431-90f3-54830bc7014d"}
+2025-12-11 13:25:09.618 [http] info: GET /src/components/ide/StatusBar.tsx 304 [req:cda46484] (175ms) {"statusCode":304,"correlationId":"cda46484-fa77-483f-a443-53345eb1c65d"}
+2025-12-11 13:25:09.637 [http] info: GET /src/components/ide/ReplitActivityBar.tsx [req:24eb18e2] {"correlationId":"24eb18e2-6b6e-4e3c-80d8-3cd891ad39a9"}
+2025-12-11 13:25:09.643 [http] info: GET /src/components/ide/ReplitTabBar.tsx [req:ef7d946b] {"correlationId":"ef7d946b-41a6-44a7-8d26-a46312bc4322"}
+2025-12-11 13:25:09.790 [http] info: GET /src/components/ide/ReplitToolsSheet.tsx [req:6cbf3c2f] (1ms) {"correlationId":"6cbf3c2f-f2ee-4767-99ff-8a2365bd2278"}
+2025-12-11 13:25:09.812 [http] info: GET /src/components/ide/ReplitActivityBar.tsx 304 [req:24eb18e2] (175ms) {"statusCode":304,"correlationId":"24eb18e2-6b6e-4e3c-80d8-3cd891ad39a9"}
+2025-12-11 13:25:09.819 [http] info: GET /src/components/ide/ReplitTabBar.tsx 304 [req:ef7d946b] (176ms) {"statusCode":304,"correlationId":"ef7d946b-41a6-44a7-8d26-a46312bc4322"}
+2025-12-11 13:25:09.961 [http] info: GET /src/components/ide/ReplitToolsSheet.tsx 304 [req:6cbf3c2f] (172ms) {"statusCode":304,"correlationId":"6cbf3c2f-f2ee-4767-99ff-8a2365bd2278"}
+2025-12-11 13:25:09.983 [http] info: GET /src/components/ide/QuickFileSearch.tsx [req:030ae660] {"correlationId":"030ae660-75f4-43b5-b5b5-d6763cf881dd"}
+2025-12-11 13:25:09.991 [http] info: GET /src/components/ide/KeyboardShortcutsOverlay.tsx [req:7b726664] {"correlationId":"7b726664-d8af-40e4-8a9a-65224d8d4a7e"}
+2025-12-11 13:25:10.135 [http] info: GET /src/components/editor/ReplitFileExplorer.tsx [req:39ee4a53] (1ms) {"correlationId":"39ee4a53-406b-477d-8fb8-65c86f115824"}
+2025-12-11 13:25:10.157 [http] info: GET /src/components/ide/QuickFileSearch.tsx 304 [req:030ae660] (174ms) {"statusCode":304,"correlationId":"030ae660-75f4-43b5-b5b5-d6763cf881dd"}
+2025-12-11 13:25:10.164 [http] info: GET /src/components/ide/KeyboardShortcutsOverlay.tsx 304 [req:7b726664] (173ms) {"statusCode":304,"correlationId":"7b726664-d8af-40e4-8a9a-65224d8d4a7e"}
+2025-12-11 13:25:10.333 [http] info: GET /src/components/mobile/ReplitBottomTabs.tsx [req:b5256654] {"correlationId":"b5256654-7287-4b45-bb48-412c85a8238f"}
+2025-12-11 13:25:10.334 [http] info: GET /src/components/utilities/index.ts [req:4abb51f2] {"correlationId":"4abb51f2-50ac-4831-b586-22e2213ff5ef"}
+2025-12-11 13:25:10.361 [http] info: GET /src/components/editor/ReplitFileExplorer.tsx 304 [req:39ee4a53] (227ms) {"statusCode":304,"correlationId":"39ee4a53-406b-477d-8fb8-65c86f115824"}
+2025-12-11 13:25:10.503 [http] info: GET /src/components/utilities/index.ts 304 [req:4abb51f2] (169ms) {"statusCode":304,"correlationId":"4abb51f2-50ac-4831-b586-22e2213ff5ef"}
+2025-12-11 13:25:10.513 [http] info: GET /src/components/mobile/ReplitBottomTabs.tsx 304 [req:b5256654] (180ms) {"statusCode":304,"correlationId":"b5256654-7287-4b45-bb48-412c85a8238f"}
+2025-12-11 13:25:10.565 [http] info: GET /src/stores/autonomousBuildStore.ts [req:d67cb86e] {"correlationId":"d67cb86e-e021-412d-bd4b-7213f92de9c7"}
+2025-12-11 13:25:10.676 [http] info: GET /src/hooks/useResponsive.ts [req:3837e607] {"correlationId":"3837e607-7129-4f27-ab4c-d9d7008350e9"}
+2025-12-11 13:25:10.686 [http] info: GET /src/hooks/use-tablet.ts [req:1d343420] {"correlationId":"1d343420-191a-4452-9c51-ff471584220a"}
+2025-12-11 13:25:10.744 [http] info: GET /src/stores/autonomousBuildStore.ts 304 [req:d67cb86e] (179ms) {"statusCode":304,"correlationId":"d67cb86e-e021-412d-bd4b-7213f92de9c7"}
+2025-12-11 13:25:10.854 [http] info: GET /src/hooks/useResponsive.ts 304 [req:3837e607] (178ms) {"statusCode":304,"correlationId":"3837e607-7129-4f27-ab4c-d9d7008350e9"}
+2025-12-11 13:25:10.867 [http] info: GET /src/hooks/use-tablet.ts 304 [req:1d343420] (181ms) {"statusCode":304,"correlationId":"1d343420-191a-4452-9c51-ff471584220a"}
+2025-12-11 13:25:10.916 [http] info: GET /src/hooks/use-ai-code-actions.ts [req:34d21b61] {"correlationId":"34d21b61-e311-447d-b1e5-ac770be9b7f1"}
+2025-12-11 13:25:11.035 [http] info: GET /src/hooks/useIDEWorkspace.ts [req:8ec33777] {"correlationId":"8ec33777-d013-417d-b7f4-f80536ed7b0c"}
+2025-12-11 13:25:11.063 [http] info: GET /src/components/WorkspaceSettings.tsx [req:b322c76a] {"correlationId":"b322c76a-83b0-4446-bcd8-7d75658641a5"}
+2025-12-11 13:25:11.095 [http] info: GET /src/hooks/use-ai-code-actions.ts 304 [req:34d21b61] (179ms) {"statusCode":304,"correlationId":"34d21b61-e311-447d-b1e5-ac770be9b7f1"}
+2025-12-11 13:25:11.212 [http] info: GET /src/hooks/useIDEWorkspace.ts 304 [req:8ec33777] (178ms) {"statusCode":304,"correlationId":"8ec33777-d013-417d-b7f4-f80536ed7b0c"}
+2025-12-11 13:25:11.233 [http] info: GET /src/components/WorkspaceSettings.tsx 304 [req:b322c76a] (170ms) {"statusCode":304,"correlationId":"b322c76a-83b0-4446-bcd8-7d75658641a5"}
+2025-12-11 13:25:11.268 [http] info: GET /src/components/ide/AddTabMenu.tsx [req:60252339] {"correlationId":"60252339-9427-40e1-8bf1-b57eeaa61677"}
+2025-12-11 13:25:11.385 [http] info: GET /src/components/ide/ReplitPublishButton.tsx [req:b9cb7ad2] {"correlationId":"b9cb7ad2-72a6-44ac-aa5c-f1a6299e46fd"}
+2025-12-11 13:25:11.406 [http] info: GET /src/components/ui/context-menu.tsx [req:afaecb34] {"correlationId":"afaecb34-a424-4a0f-91ea-c4ad0cf0ee31"}
+2025-12-11 13:25:11.443 [http] info: GET /src/components/ide/AddTabMenu.tsx 304 [req:60252339] (175ms) {"statusCode":304,"correlationId":"60252339-9427-40e1-8bf1-b57eeaa61677"}
+2025-12-11 13:25:11.559 [http] info: GET /src/components/ide/ReplitPublishButton.tsx 304 [req:b9cb7ad2] (174ms) {"statusCode":304,"correlationId":"b9cb7ad2-72a6-44ac-aa5c-f1a6299e46fd"}
+2025-12-11 13:25:11.577 [http] info: GET /src/components/ui/context-menu.tsx 304 [req:afaecb34] (171ms) {"statusCode":304,"correlationId":"afaecb34-a424-4a0f-91ea-c4ad0cf0ee31"}
+2025-12-11 13:25:11.615 [http] info: GET /src/components/utilities/VirtualScrollList.tsx [req:b7434a3a] {"correlationId":"b7434a3a-18c3-4842-ab11-39839a43b82a"}
+2025-12-11 13:25:11.749 [http] info: GET /src/components/utilities/ShortcutHint.tsx [req:8eb8715d] {"correlationId":"8eb8715d-2920-4409-9a51-5f436d08395b"}
+2025-12-11 13:25:11.755 [http] info: GET /src/components/utilities/ShortcutTester.tsx [req:ea82e9f1] {"correlationId":"ea82e9f1-3da4-4875-9aba-bcc9c4c1224f"}
+2025-12-11 13:25:11.792 [http] info: GET /src/components/utilities/VirtualScrollList.tsx 304 [req:b7434a3a] (177ms) {"statusCode":304,"correlationId":"b7434a3a-18c3-4842-ab11-39839a43b82a"}
+2025-12-11 13:25:11.924 [http] info: GET /src/components/utilities/ShortcutHint.tsx 304 [req:8eb8715d] (176ms) {"statusCode":304,"correlationId":"8eb8715d-2920-4409-9a51-5f436d08395b"}
+2025-12-11 13:25:11.933 [http] info: GET /src/components/utilities/ShortcutTester.tsx 304 [req:ea82e9f1] (178ms) {"statusCode":304,"correlationId":"ea82e9f1-3da4-4875-9aba-bcc9c4c1224f"}
+2025-12-11 13:25:11.963 [http] info: GET /@fs/home/runner/workspace/shared/responsive-config.ts [req:cf333d5d] {"correlationId":"cf333d5d-04d6-48a6-8d23-3ddb0d49abcc"}
+2025-12-11 13:25:12.095 [http] info: GET /src/utils/tablet-detection.ts [req:a57b6e72] {"correlationId":"a57b6e72-5655-4035-9cb2-4925507afcf8"}
+2025-12-11 13:25:12.105 [http] info: GET /src/components/ui/card.tsx [req:3301e418] {"correlationId":"3301e418-6de0-4e2e-a86d-6e543d3ecda1"}
+2025-12-11 13:25:12.134 [http] info: GET /@fs/home/runner/workspace/shared/responsive-config.ts 304 [req:cf333d5d] (171ms) {"statusCode":304,"correlationId":"cf333d5d-04d6-48a6-8d23-3ddb0d49abcc"}
+2025-12-11 13:25:12.270 [http] info: GET /src/utils/tablet-detection.ts 304 [req:a57b6e72] (175ms) {"statusCode":304,"correlationId":"a57b6e72-5655-4035-9cb2-4925507afcf8"}
+2025-12-11 13:25:12.282 [http] info: GET /src/components/ui/card.tsx 304 [req:3301e418] (177ms) {"statusCode":304,"correlationId":"3301e418-6de0-4e2e-a86d-6e543d3ecda1"}
+2025-12-11 13:25:12.305 [http] info: GET /src/components/ui/switch.tsx [req:d13943b6] {"correlationId":"d13943b6-d2f1-428c-9dfc-41626d5321dd"}
+2025-12-11 13:25:12.444 [http] info: GET /src/components/ui/select.tsx [req:dff192fd] {"correlationId":"dff192fd-b877-46bc-868b-6f2fd01ee97b"}
+2025-12-11 13:25:12.459 [http] info: GET /src/lib/tool-registry.ts [req:cbcfaa1a] {"correlationId":"cbcfaa1a-78c7-400a-8f5b-71611ec049fe"}
+2025-12-11 13:25:12.480 [http] info: POST /api/logs/ingest [req:73fa524b] {"contentLength":"3552","correlationId":"73fa524b-5cf1-4412-9c83-f64f76971ac0"}
+2025-12-11 13:25:12.487 [http] info: GET /src/components/ui/switch.tsx 304 [req:d13943b6] (182ms) {"statusCode":304,"correlationId":"d13943b6-d2f1-428c-9dfc-41626d5321dd"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:25:12.612 [http] info: GET /src/components/ui/select.tsx 304 [req:dff192fd] (168ms) {"statusCode":304,"correlationId":"dff192fd-b877-46bc-868b-6f2fd01ee97b"}
+2025-12-11 13:25:12.634 [http] info: GET /src/lib/tool-registry.ts 304 [req:cbcfaa1a] (175ms) {"statusCode":304,"correlationId":"cbcfaa1a-78c7-400a-8f5b-71611ec049fe"}
+2025-12-11 13:25:12.645 [http] info: POST /api/logs/ingest 202 [req:73fa524b] (165ms) {"statusCode":202,"contentLength":"69","correlationId":"73fa524b-5cf1-4412-9c83-f64f76971ac0"}
+2025-12-11 13:25:12.657 [http] info: GET /src/components/ui/skeleton.tsx [req:9f7db5ba] {"correlationId":"9f7db5ba-e5b4-469c-8719-122cc8b0e37e"}
+2025-12-11 13:25:12.782 [http] info: GET /src/components/ui/alert-dialog.tsx [req:a6883d77] {"correlationId":"a6883d77-cb8f-4c71-90a2-f50bf55559ea"}
+2025-12-11 13:25:12.834 [http] info: GET /src/components/ui/skeleton.tsx 304 [req:9f7db5ba] (177ms) {"statusCode":304,"correlationId":"9f7db5ba-e5b4-469c-8719-122cc8b0e37e"}
+2025-12-11 13:25:12.962 [http] info: GET /src/components/ui/alert-dialog.tsx 304 [req:a6883d77] (180ms) {"statusCode":304,"correlationId":"a6883d77-cb8f-4c71-90a2-f50bf55559ea"}
+2025-12-11 13:25:13.332 [http] info: GET /src/components/ai/ReplitAgentPanelV3.tsx [req:f504e8c4] {"correlationId":"f504e8c4-b1ac-46a3-aed0-4a33983fed4c"}
+2025-12-11 13:25:13.339 [http] info: GET /src/components/editor/ResponsiveWebPreview.tsx [req:27095918] (1ms) {"correlationId":"27095918-3d64-4660-87c3-a9907f24d29a"}
+2025-12-11 13:25:13.376 [http] info: GET /src/components/GlobalSearch.tsx [req:da7ca601] {"correlationId":"da7ca601-9716-4bba-a4b2-b271699fecbb"}
+2025-12-11 13:25:13.422 [http] info: GET /api/projects [req:f37dd943] {"correlationId":"f37dd943-1271-4d62-bdea-636242e23eda"}
+2025-12-11 13:25:13.430 [http] info: GET /api/git/status [req:7c970c4d] (1ms) {"correlationId":"7c970c4d-65ff-40a1-9360-2de381a28083"}
+2025-12-11 13:25:13.439 [http] info: GET /api/csrf-token [req:beaa96b3] {"correlationId":"beaa96b3-2f74-4139-a39d-f2c133f65197"}
+2025-12-11 13:25:13.754 [http] info: GET /src/components/editor/ResponsiveWebPreview.tsx 304 [req:27095918] (416ms) {"statusCode":304,"correlationId":"27095918-3d64-4660-87c3-a9907f24d29a"}
+2025-12-11 13:25:13.755 [http] info: GET /src/components/ai/ReplitAgentPanelV3.tsx 304 [req:f504e8c4] (423ms) {"statusCode":304,"correlationId":"f504e8c4-b1ac-46a3-aed0-4a33983fed4c"}
+2025-12-11 13:25:14.051 [http] info: GET /src/components/GlobalSearch.tsx 304 [req:da7ca601] (675ms) {"statusCode":304,"correlationId":"da7ca601-9716-4bba-a4b2-b271699fecbb"}
+2025-12-11 13:25:14.158 [http] info: GET /status 200 [req:7c970c4d] (728ms) {"statusCode":200,"contentLength":"80","correlationId":"7c970c4d-65ff-40a1-9360-2de381a28083"}
+2025-12-11 13:25:14.159 [http] info: GET /api/csrf-token 200 [req:beaa96b3] (720ms) {"statusCode":200,"contentLength":"80","correlationId":"beaa96b3-2f74-4139-a39d-f2c133f65197"}
+2025-12-11 13:25:14.160 [http] info: GET /src/components/ui/textarea.tsx [req:2053decc] {"correlationId":"2053decc-56d9-4ce1-b2a6-dbf4b12a5845"}
+2025-12-11 13:25:14.161 [http] info: GET /src/stores/agentConversationStore.ts [req:ad6ad2b4] {"correlationId":"ad6ad2b4-cb26-42d7-9629-354ff71378fa"}
+2025-12-11 13:25:14.251 [http] info: GET /api/preview/url [req:f0712d25] {"query":{"projectId":"671"},"correlationId":"f0712d25-ab3e-45e2-a519-5299eb156e96"}
+2025-12-11 13:25:14.498 [http] info: GET /src/hooks/use-autonomous-chat-integration.ts [req:43f2dd7c] {"correlationId":"43f2dd7c-537f-4e81-9251-0c4cf02777b2"}
+2025-12-11 13:25:14.502 [http] info: POST /api/runtime/start [req:38150066] (1ms) {"contentLength":"35","correlationId":"38150066-3adf-4ceb-8ce0-02f7e44aa20c"}
+2025-12-11 13:25:15.349 [http] info: GET /src/hooks/use-autonomous-chat-integration.ts 200 [req:43f2dd7c] (851ms) {"statusCode":200,"correlationId":"43f2dd7c-537f-4e81-9251-0c4cf02777b2"}
+2025-12-11 13:25:15.350 [http] info: GET /src/components/ui/textarea.tsx 304 [req:2053decc] (1190ms) {"statusCode":304,"correlationId":"2053decc-56d9-4ce1-b2a6-dbf4b12a5845"}
+2025-12-11 13:25:15.350 [http] info: GET /api/projects 200 [req:f37dd943] (1928ms) {"statusCode":200,"contentLength":"114516","correlationId":"f37dd943-1271-4d62-bdea-636242e23eda"}
+2025-12-11 13:25:15.351 [http] info: GET /src/stores/agentConversationStore.ts 304 [req:ad6ad2b4] (1190ms) {"statusCode":304,"correlationId":"ad6ad2b4-cb26-42d7-9629-354ff71378fa"}
+2025-12-11 13:25:15 [runtime-api] info: Starting runtime for project 671, executionId: 28069ad1-805d-4673-bffa-e092bfec5d76 {"environment":"development","details":[]}
+2025-12-11 13:25:15.693 [http] info: GET /api/csrf-token [req:76f41977] {"correlationId":"76f41977-aee5-45f3-b13a-eafb331336b7"}
+2025-12-11 13:25:15.695 [http] info: GET /src/components/ai/ThinkingDisplay.tsx [req:b4f4f52a] {"correlationId":"b4f4f52a-5281-41a7-a4d9-9a2258466b64"}
+2025-12-11 13:25:15.697 [http] info: GET /src/hooks/use-agent-model-preference.ts [req:5e1feef3] {"correlationId":"5e1feef3-e3e6-4911-9600-1787a1c406d2"}
+2025-12-11 13:25:15.786 [http] info: GET /url 200 [req:f0712d25] (1535ms) {"statusCode":200,"contentLength":"77","correlationId":"f0712d25-ab3e-45e2-a519-5299eb156e96"}
+2025-12-11 13:25:15.800 [http] info: GET /src/components/ai/ModeSelector.tsx [req:ad4272e0] {"correlationId":"ad4272e0-fe57-4311-9068-70cb6d979d5f"}
+2025-12-11 13:25:15 [runtime] info: Creating project directory for project 671 {"environment":"development","details":[]}
+2025-12-11 13:25:15 [runtime] info: Created new project directory: /home/runner/workspace/projects/project-671 {"environment":"development","details":[]}
+2025-12-11 13:25:15 [runtime] info: Wrote 2 files to project directory {"environment":"development","details":[]}
+2025-12-11 13:25:15 [runtime] info: Detecting project language from 2 files {"environment":"development","details":[]}
+2025-12-11 13:25:15 [runtime] info: Language detected as typescript by .ts/.tsx files or tsconfig.json {"environment":"development","details":[]}
+2025-12-11 13:25:15 [runtime] info: Starting project 671 with language typescript {"environment":"development","details":[]}
+2025-12-11 13:25:15 [runtime] warn: Docker not available - using direct execution mode {"environment":"development","details":[]}
+2025-12-11 13:25:15.863 [http] info: GET /src/components/ai/ThinkingDisplay.tsx 304 [req:b4f4f52a] (168ms) {"statusCode":304,"correlationId":"b4f4f52a-5281-41a7-a4d9-9a2258466b64"}
+2025-12-11 13:25:15.873 [http] info: GET /api/csrf-token 200 [req:76f41977] (180ms) {"statusCode":200,"contentLength":"80","correlationId":"76f41977-aee5-45f3-b13a-eafb331336b7"}
+2025-12-11 13:25:15.875 [http] info: GET /src/hooks/use-agent-model-preference.ts 304 [req:5e1feef3] (178ms) {"statusCode":304,"correlationId":"5e1feef3-e3e6-4911-9600-1787a1c406d2"}
+2025-12-11 13:25:15.975 [http] info: GET /src/components/ai/ModeSelector.tsx 304 [req:ad4272e0] (175ms) {"statusCode":304,"correlationId":"ad4272e0-fe57-4311-9068-70cb6d979d5f"}
+2025-12-11 13:25:16.046 [http] info: GET /src/components/ai/AIModelSelector.tsx [req:0a1f0f8c] {"correlationId":"0a1f0f8c-0839-421b-afca-21018f3d5897"}
+2025-12-11 13:25:16.049 [http] info: GET /src/components/ai/CurrentModelChip.tsx [req:31a46a20] {"correlationId":"31a46a20-817c-42d9-a4aa-505a8a0abce5"}
+2025-12-11 13:25:16.053 [http] info: POST /api/workspace/bootstrap [req:76735f1b] {"contentLength":"392","correlationId":"76735f1b-f97a-4b6b-b221-806e671f7073"}
+2025-12-11 13:25:16.155 [http] info: GET /src/lib/sse-warning-handler.ts [req:e9c0d2f2] {"correlationId":"e9c0d2f2-8abb-4805-9939-1f77ade7c6fe"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:25:16 [workspace-bootstrap] info: [Bootstrap] 🚀 POST /bootstrap REQUEST RECEIVED {"environment":"development","details":[{"body":{"prompt":"Build a full-stack e-commerce marketplace with Stripe payments, product catalog with search and filters, shopping cart with checkout flow, user authentication, order management dashboard, inventory tracking, email notifications for orders, and mobile-responsive design with dark mode","buildMode":"full-app","options":{"autoStart":true,"language":"typescript","framework":"react"}},"hasPrompt":true,"hasOptions":true,"rawBody":"{\"prompt\":\"Build a full-stack e-commerce marketplace with Stripe payments, product catalog with search and filters, shopping cart with checkout flow, user authentication, order management dashboard, inventory tracking, email notifications for orders, and mobile-responsive design with dark mode\",\"buildMode\":\"full-app\",\"options\":{\"autoStart\":true,\"language\":\"typescript\",\"framework\":\"react\"}}","idempotencyKey":"none"}]}
+2025-12-11 13:25:16 [workspace-bootstrap] info: [Bootstrap] Attempting to parse request body... {"environment":"development","details":[]}
+2025-12-11 13:25:16 [workspace-bootstrap] info: [Bootstrap] ✅ Request validated successfully {"environment":"development","details":[{"promptLength":283,"buildMode":"full-app","autoStart":true,"language":"typescript","framework":"react"}]}
+2025-12-11 13:25:16 [workspace-bootstrap] info: [Bootstrap] Authenticated user 98 {"environment":"development","details":[{"username":"quicklogin_1764572574557"}]}
+🚀 [Bootstrap] RECEIVED REQUEST from user 98 prompt: Build a full-stack e-commerce marketplace with Str
+2025-12-11 13:25:16 [workspace-bootstrap] info: [Bootstrap] Starting workspace creation for user 98 {"environment":"development","details":[{"prompt":"Build a full-stack e-commerce marketplace with Stripe payments, product catalog with search and filters, shopping cart with checkout flow, user authentication, order management dashboard, inventory tracking, email notifications for orders, and mobile-responsive design with dark mode","options":{"language":"typescript","framework":"react","autoStart":true,"visibility":"private","designFirst":false}}]}
+2025-12-11 13:25:16.214 [http] info: GET /src/components/ai/AIModelSelector.tsx 304 [req:0a1f0f8c] (168ms) {"statusCode":304,"correlationId":"0a1f0f8c-0839-421b-afca-21018f3d5897"}
+2025-12-11 13:25:16.216 [http] info: GET /src/components/ai/CurrentModelChip.tsx 304 [req:31a46a20] (167ms) {"statusCode":304,"correlationId":"31a46a20-817c-42d9-a4aa-505a8a0abce5"}
+2025-12-11 13:25:16 [workspace-bootstrap] info: [Bootstrap] Project created: 672 {"environment":"development","details":[{"projectId":672,"slug":"quicklogin_1764572574557-build-a-full-stack-e-commerce-marketplac-b40d"}]}
+2025-12-11 13:25:16 [workspace-bootstrap] info: [Bootstrap] Using user's preferred model: gpt-5.1 {"environment":"development","details":[]}
+2025-12-11 13:25:16 [runtime-logs] info: [RuntimeLogs] Execution 28069ad1-805d-4673-bffa-e092bfec5d76 exited with code 0 in 493ms {"environment":"development","details":[]}
+2025-12-11 13:25:16 [runtime] info: Cleaned up project directory: /home/runner/workspace/projects/project-671 {"environment":"development","details":[]}
+2025-12-11 13:25:16.332 [http] info: GET /src/lib/sse-warning-handler.ts 304 [req:e9c0d2f2] (177ms) {"statusCode":304,"correlationId":"e9c0d2f2-8abb-4805-9939-1f77ade7c6fe"}
+2025-12-11 13:25:16 [runtime-api] warn: Failed to save runtime logs: Error: Failed query: delete from "terminal_logs" where "terminal_logs"."project_id" = $1
+params: 671 {"environment":"development","details":[]}
+2025-12-11 13:25:16 [workspace-bootstrap] info: [Bootstrap] Agent session created: 2e42d74e-e8c2-4eaf-a034-ebc223b1dcd3 {"environment":"development","details":[{"sessionId":"2e42d74e-e8c2-4eaf-a034-ebc223b1dcd3","modelId":"gpt-5.1"}]}
+2025-12-11 13:25:16 [workspace-bootstrap] info: [Bootstrap] Workspace ready in 196ms - returning token IMMEDIATELY {"environment":"development","details":[{"projectId":672,"sessionId":"2e42d74e-e8c2-4eaf-a034-ebc223b1dcd3","modelId":"gpt-5.1","elapsed":196}]}
+2025-12-11 13:25:16 [workspace-bootstrap] info: [Bootstrap] ✅ HTTP response sent - workflow will start when client connects via WebSocket {"environment":"development","details":[{"sessionId":"2e42d74e-e8c2-4eaf-a034-ebc223b1dcd3","projectId":672,"promptPreview":"Build a full-stack e-commerce marketplace with Str"}]}
+[Bootstrap] 📋 Workflow deferred until WebSocket connection for session 2e42d74e-e8c2-4eaf-a034-ebc223b1dcd3
+2025-12-11 13:25:16.389 [http] info: GET /src/components/ai/MaxAutonomyProgress.tsx [req:22aecd70] {"correlationId":"22aecd70-d57d-4779-a54b-183e1f6a8f7f"}
+2025-12-11 13:25:16.395 [http] info: GET /src/components/grids/AgentHistoryModal.tsx [req:487bc0e0] {"correlationId":"487bc0e0-af4c-434c-b5ca-db10559c972b"}
+2025-12-11 13:25:16.418 [http] info: POST /api/runtime/start 200 [req:38150066] (1917ms) {"statusCode":200,"contentLength":"286","correlationId":"38150066-3adf-4ceb-8ce0-02f7e44aa20c"}
+2025-12-11 13:25:16.425 [http] info: POST /bootstrap 200 [req:76735f1b] (372ms) {"statusCode":200,"contentLength":"992","correlationId":"76735f1b-f97a-4b6b-b221-806e671f7073"}
+2025-12-11 13:25:16.516 [http] info: GET /src/hooks/useMaxAutonomy.ts [req:03415f24] {"correlationId":"03415f24-87a3-4f6a-b252-c43fbedebc28"}
+2025-12-11 13:25:16.563 [http] info: GET /src/components/grids/AgentHistoryModal.tsx 304 [req:487bc0e0] (168ms) {"statusCode":304,"correlationId":"487bc0e0-af4c-434c-b5ca-db10559c972b"}
+2025-12-11 13:25:16.564 [http] info: GET /src/components/ai/MaxAutonomyProgress.tsx 304 [req:22aecd70] (176ms) {"statusCode":304,"correlationId":"22aecd70-d57d-4779-a54b-183e1f6a8f7f"}
+2025-12-11 13:25:16.617 [http] info: GET /src/pages/IDEPage.tsx [req:f53e882d] (1ms) {"correlationId":"f53e882d-f66c-4070-914e-3bcc1a43d5db"}
+2025-12-11 13:25:16.688 [http] info: GET /src/hooks/useMaxAutonomy.ts 304 [req:03415f24] (172ms) {"statusCode":304,"correlationId":"03415f24-87a3-4f6a-b252-c43fbedebc28"}
+2025-12-11 13:25:16.736 [http] info: GET /src/components/ai/AgentToolsPanel.tsx [req:28398162] {"correlationId":"28398162-941a-4602-95ac-cf12a05597d1"}
+2025-12-11 13:25:16.740 [http] info: GET /src/components/ai/ElementEditor.tsx [req:6047d192] {"correlationId":"6047d192-d819-4663-86f7-f092a6c0c2b5"}
+2025-12-11 13:25:16.798 [http] info: GET /src/pages/IDEPage.tsx 304 [req:f53e882d] (181ms) {"statusCode":304,"correlationId":"f53e882d-f66c-4070-914e-3bcc1a43d5db"}
+2025-12-11 13:25:16.857 [http] info: GET /src/components/ai/ChatToolbar.tsx [req:6bcdf94e] {"correlationId":"6bcdf94e-05ea-453c-9e1e-265945aa1cc4"}
+2025-12-11 13:25:16.910 [http] info: GET /src/components/ai/AgentToolsPanel.tsx 304 [req:28398162] (174ms) {"statusCode":304,"correlationId":"28398162-941a-4602-95ac-cf12a05597d1"}
+2025-12-11 13:25:16.912 [http] info: GET /src/components/ai/ElementEditor.tsx 304 [req:6047d192] (172ms) {"statusCode":304,"correlationId":"6047d192-d819-4663-86f7-f092a6c0c2b5"}
+2025-12-11 13:25:16.968 [http] info: GET /api/projects/672 [req:268e131c] {"correlationId":"268e131c-5064-444f-bf18-61824d3b706f"}
+2025-12-11 13:25:16.969 [http] info: GET /api/projects/672 [req:c257b9ba] {"query":{"bootstrap":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjcyIiwiY29udmVyc2F0aW9uSWQiOiIyZTQyZDc0ZS1lOGMyLTRlYWYtYTAzNC1lYmMyMjNiMWRjZDMiLCJzZXNzaW9uSWQiOiIyZTQyZDc0ZS1lOGMyLTRlYWYtYTAzNC1lYmMyMjNiMWRjZDMiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NTk1MTYzODMsImlhdCI6MTc2NTQ1OTUxNiwiZXhwIjoxNzY1NTQ1OTE2LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.PuMUcaeC5YfOwvrKuhmblsxWJtaPCOs-NFTc2q-nclM"},"correlationId":"c257b9ba-f389-4beb-ba35-001540451d4a"}
+2025-12-11 13:25:17.036 [http] info: GET /src/components/ai/ChatToolbar.tsx 304 [req:6bcdf94e] (179ms) {"statusCode":304,"correlationId":"6bcdf94e-05ea-453c-9e1e-265945aa1cc4"}
+2025-12-11 13:25:17.087 [http] info: GET /src/components/ai/UsageTrackingIcon.tsx [req:3f6c2bbb] {"correlationId":"3f6c2bbb-584a-4a48-bca9-b553fb5a3a1b"}
+2025-12-11 13:25:17.089 [http] info: GET /src/components/ai/VideoReplayViewer.tsx [req:a839b751] {"correlationId":"a839b751-ac5d-4359-ae17-ce9a49978e41"}
+2025-12-11 13:25:17.210 [http] info: GET /src/components/ai/RAGControls.tsx [req:e2e2957a] {"correlationId":"e2e2957a-8cd8-4f21-ac59-7c113102fadf"}
+2025-12-11 13:25:17.260 [http] info: GET /src/components/ai/UsageTrackingIcon.tsx 304 [req:3f6c2bbb] (173ms) {"statusCode":304,"correlationId":"3f6c2bbb-584a-4a48-bca9-b553fb5a3a1b"}
+2025-12-11 13:25:17.261 [http] info: GET /src/components/ai/VideoReplayViewer.tsx 304 [req:a839b751] (172ms) {"statusCode":304,"correlationId":"a839b751-ac5d-4359-ae17-ce9a49978e41"}
+2025-12-11 13:25:17.380 [http] info: GET /src/components/ai/RAGControls.tsx 304 [req:e2e2957a] (170ms) {"statusCode":304,"correlationId":"e2e2957a-8cd8-4f21-ac59-7c113102fadf"}
+2025-12-11 13:25:17.382 [http] info: GET /api/projects/672 200 [req:268e131c] (414ms) {"statusCode":200,"contentLength":"2319","correlationId":"268e131c-5064-444f-bf18-61824d3b706f"}
+2025-12-11 13:25:17.402 [http] info: GET /api/projects/672 200 [req:c257b9ba] (433ms) {"statusCode":200,"contentLength":"2319","correlationId":"c257b9ba-f389-4beb-ba35-001540451d4a"}
+2025-12-11 13:25:17.435 [http] info: GET /src/components/ui/checkbox.tsx [req:807c0665] (1ms) {"correlationId":"807c0665-3941-4472-9152-1b2499517774"}
+2025-12-11 13:25:17.437 [http] info: GET /src/components/ai/EnhancedChatMessage.tsx [req:29d949c2] {"correlationId":"29d949c2-80ea-4414-a010-59b3bf930697"}
+2025-12-11 13:25:17.479 [http] info: POST /api/logs/ingest [req:f43dd074] (1ms) {"contentLength":"5550","correlationId":"f43dd074-c050-4ada-9ae0-1f93c9368b67"}
+2025-12-11 13:25:17.553 [http] info: GET /src/hooks/use-debounce.ts [req:d0742b3b] {"correlationId":"d0742b3b-7697-4d5f-a4fa-3a19146d0a13"}
+2025-12-11 13:25:17.576 [http] info: GET /src/components/ide/UnifiedIDELayout.tsx [req:e1f001f0] {"correlationId":"e1f001f0-91aa-484b-bc5e-e1dc068fac2b"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:25:17.609 [http] info: GET /src/components/ai/EnhancedChatMessage.tsx 304 [req:29d949c2] (172ms) {"statusCode":304,"correlationId":"29d949c2-80ea-4414-a010-59b3bf930697"}
+2025-12-11 13:25:17.611 [http] info: GET /src/components/ui/checkbox.tsx 304 [req:807c0665] (176ms) {"statusCode":304,"correlationId":"807c0665-3941-4472-9152-1b2499517774"}
+2025-12-11 13:25:17.643 [http] info: POST /api/logs/ingest 202 [req:f43dd074] (165ms) {"statusCode":202,"contentLength":"69","correlationId":"f43dd074-c050-4ada-9ae0-1f93c9368b67"}
+2025-12-11 13:25:17.717 [http] info: GET /src/hooks/use-debounce.ts 304 [req:d0742b3b] (164ms) {"statusCode":304,"correlationId":"d0742b3b-7697-4d5f-a4fa-3a19146d0a13"}
+2025-12-11 13:25:17.746 [http] info: GET /src/components/ide/UnifiedIDELayout.tsx 304 [req:e1f001f0] (170ms) {"statusCode":304,"correlationId":"e1f001f0-91aa-484b-bc5e-e1dc068fac2b"}
+2025-12-11 13:25:17.782 [http] info: GET /src/components/ui/progress.tsx [req:d31ce6ab] {"correlationId":"d31ce6ab-4896-4d8b-847f-7180036dc31d"}
+2025-12-11 13:25:17.826 [http] info: GET /src/components/grids/AgentSessionsGrid.tsx [req:3c6b2f53] (1ms) {"correlationId":"3c6b2f53-48ac-4f08-8721-2f8afae6874e"}
+2025-12-11 13:25:17.888 [http] info: GET /src/components/grids/AgentActionsGrid.tsx [req:b2bfc03b] {"correlationId":"b2bfc03b-53c8-48e3-97ef-7b696874a29c"}
+2025-12-11 13:25:17.922 [http] info: GET /src/hooks/index.ts [req:a0540b33] {"correlationId":"a0540b33-0a08-45a7-ac68-5fb39d46e2ed"}
+2025-12-11 13:25:17.923 [http] info: GET /src/hooks/use-connection-status.ts [req:1ffb0d17] {"correlationId":"1ffb0d17-5df2-4bd1-8e24-56a98148b27a"}
+2025-12-11 13:25:17.927 [http] info: GET /src/components/ui/resizable.tsx [req:d748914b] {"correlationId":"d748914b-3877-4849-9be7-aa96c4e16349"}
+2025-12-11 13:25:17.928 [http] info: GET /src/components/ide/ReplitActivityBar.tsx [req:05093319] {"correlationId":"05093319-e340-44c8-a3a3-f7dfa0d7c0f1"}
+2025-12-11 13:25:17.929 [http] info: GET /src/hooks/use-problems-count.ts [req:e15803b4] {"correlationId":"e15803b4-db2e-4607-83cd-343a0a324947"}
+2025-12-11 13:25:17.930 [http] info: GET /src/components/ide/TopNavBar.tsx [req:8d7067c9] {"correlationId":"8d7067c9-5d95-476c-8584-c374d49f68ca"}
+2025-12-11 13:25:17.953 [http] info: GET /src/components/ui/progress.tsx 304 [req:d31ce6ab] (171ms) {"statusCode":304,"correlationId":"d31ce6ab-4896-4d8b-847f-7180036dc31d"}
+2025-12-11 13:25:17.995 [http] info: GET /src/components/grids/AgentSessionsGrid.tsx 304 [req:3c6b2f53] (170ms) {"statusCode":304,"correlationId":"3c6b2f53-48ac-4f08-8721-2f8afae6874e"}
+2025-12-11 13:25:18.059 [http] info: GET /src/components/grids/AgentActionsGrid.tsx 304 [req:b2bfc03b] (171ms) {"statusCode":304,"correlationId":"b2bfc03b-53c8-48e3-97ef-7b696874a29c"}
+2025-12-11 13:25:18.092 [http] info: GET /src/hooks/use-connection-status.ts 304 [req:1ffb0d17] (169ms) {"statusCode":304,"correlationId":"1ffb0d17-5df2-4bd1-8e24-56a98148b27a"}
+2025-12-11 13:25:18.101 [http] info: GET /src/components/ui/resizable.tsx 304 [req:d748914b] (174ms) {"statusCode":304,"correlationId":"d748914b-3877-4849-9be7-aa96c4e16349"}
+2025-12-11 13:25:18.115 [http] info: GET /src/hooks/index.ts 304 [req:a0540b33] (193ms) {"statusCode":304,"correlationId":"a0540b33-0a08-45a7-ac68-5fb39d46e2ed"}
+2025-12-11 13:25:18.125 [http] info: GET /src/components/grids/FileOperationsGrid.tsx [req:167a4b8e] (1ms) {"correlationId":"167a4b8e-960d-4370-bfe6-5a50defc4456"}
+2025-12-11 13:25:18.173 [http] info: GET /src/components/grids/ConversationHistoryGrid.tsx [req:b885f554] {"correlationId":"b885f554-0627-46bb-a515-9c6aee29f2ce"}
+2025-12-11 13:25:18.240 [http] info: GET /src/hooks/useAgentTools.ts [req:1d87f6ee] {"correlationId":"1d87f6ee-ebf6-4d60-aa48-71c68969fcc3"}
+2025-12-11 13:25:18.260 [http] info: GET /src/components/ide/ReplitTabBar.tsx [req:f1a49693] {"correlationId":"f1a49693-ef49-40d6-ac6c-cf568ec23bac"}
+2025-12-11 13:25:18.273 [http] info: GET /src/components/ide/StatusBar.tsx [req:c0436996] {"correlationId":"c0436996-a5dc-4538-a1b7-0c427d357b83"}
+2025-12-11 13:25:18.293 [http] info: GET /src/components/ide/ReplitToolsSheet.tsx [req:ca2c32d9] {"correlationId":"ca2c32d9-9a4e-456c-9e7a-c40e20310167"}
+2025-12-11 13:25:18.297 [http] info: GET /src/components/grids/FileOperationsGrid.tsx 304 [req:167a4b8e] (172ms) {"statusCode":304,"correlationId":"167a4b8e-960d-4370-bfe6-5a50defc4456"}
+2025-12-11 13:25:18.353 [http] info: GET /src/components/grids/ConversationHistoryGrid.tsx 304 [req:b885f554] (180ms) {"statusCode":304,"correlationId":"b885f554-0627-46bb-a515-9c6aee29f2ce"}
+2025-12-11 13:25:18.364 [http] info: GET /src/hooks/use-problems-count.ts 304 [req:e15803b4] (435ms) {"statusCode":304,"correlationId":"e15803b4-db2e-4607-83cd-343a0a324947"}
+2025-12-11 13:25:18.376 [http] info: GET /src/components/ide/ReplitActivityBar.tsx 304 [req:05093319] (448ms) {"statusCode":304,"correlationId":"05093319-e340-44c8-a3a3-f7dfa0d7c0f1"}
+2025-12-11 13:25:18.377 [http] info: GET /src/components/ide/TopNavBar.tsx 304 [req:8d7067c9] (447ms) {"statusCode":304,"correlationId":"8d7067c9-5d95-476c-8584-c374d49f68ca"}
+2025-12-11 13:25:18.412 [http] info: GET /src/hooks/useAgentTools.ts 304 [req:1d87f6ee] (172ms) {"statusCode":304,"correlationId":"1d87f6ee-ebf6-4d60-aa48-71c68969fcc3"}
+2025-12-11 13:25:18.433 [http] info: GET /src/components/ide/ReplitTabBar.tsx 304 [req:f1a49693] (173ms) {"statusCode":304,"correlationId":"f1a49693-ef49-40d6-ac6c-cf568ec23bac"}
+2025-12-11 13:25:18.447 [http] info: GET /src/components/ide/StatusBar.tsx 304 [req:c0436996] (174ms) {"statusCode":304,"correlationId":"c0436996-a5dc-4538-a1b7-0c427d357b83"}
+2025-12-11 13:25:18.467 [http] info: GET /src/components/ide/ReplitToolsSheet.tsx 304 [req:ca2c32d9] (174ms) {"statusCode":304,"correlationId":"ca2c32d9-9a4e-456c-9e7a-c40e20310167"}
+2025-12-11 13:25:18.474 [http] info: GET /src/components/ai/VideoReplayPlayer.tsx [req:9230e30e] (1ms) {"correlationId":"9230e30e-ca23-4fc2-a009-5df4f4d21707"}
+2025-12-11 13:25:18.532 [http] info: GET /src/components/ai/ToolExecutionDisplay.tsx [req:0ae2b92a] (1ms) {"correlationId":"0ae2b92a-d001-4fb4-843e-b68a9d22e18d"}
+2025-12-11 13:25:18.536 [http] info: GET /src/components/ide/QuickFileSearch.tsx [req:7dcf7529] {"correlationId":"7dcf7529-9898-4db1-a908-027e1f07e828"}
+2025-12-11 13:25:18.543 [http] info: GET /src/components/ide/KeyboardShortcutsOverlay.tsx [req:8680b385] {"correlationId":"8680b385-741e-4209-9c4d-f7a42fa80876"}
+2025-12-11 13:25:18.551 [http] info: GET /src/components/editor/ReplitFileExplorer.tsx [req:1f5d202e] {"correlationId":"1f5d202e-0dc1-4449-ba85-0307d530ea7b"}
+2025-12-11 13:25:18.590 [http] info: GET /src/components/ai/MessageMetadataFooter.tsx [req:3233e221] {"correlationId":"3233e221-54ce-434d-8beb-978f9af34cf8"}
+2025-12-11 13:25:18.600 [http] info: GET /src/components/mobile/ReplitBottomTabs.tsx [req:b06f7432] {"correlationId":"b06f7432-53fe-433d-9588-6922a836b168"}
+2025-12-11 13:25:18.617 [http] info: GET /src/components/utilities/index.ts [req:c8295709] {"correlationId":"c8295709-574d-426b-8370-226c8360c756"}
+2025-12-11 13:25:18.635 [http] info: GET /src/stores/autonomousBuildStore.ts [req:04b34e5e] {"correlationId":"04b34e5e-476b-4185-b3d0-f7b21236385a"}
+2025-12-11 13:25:18.649 [http] info: GET /src/components/ai/VideoReplayPlayer.tsx 304 [req:9230e30e] (176ms) {"statusCode":304,"correlationId":"9230e30e-ca23-4fc2-a009-5df4f4d21707"}
+2025-12-11 13:25:18.707 [http] info: GET /src/components/ai/ToolExecutionDisplay.tsx 304 [req:0ae2b92a] (176ms) {"statusCode":304,"correlationId":"0ae2b92a-d001-4fb4-843e-b68a9d22e18d"}
+2025-12-11 13:25:18.708 [http] info: GET /src/components/ide/QuickFileSearch.tsx 304 [req:7dcf7529] (173ms) {"statusCode":304,"correlationId":"7dcf7529-9898-4db1-a908-027e1f07e828"}
+2025-12-11 13:25:18.717 [http] info: GET /src/components/ide/KeyboardShortcutsOverlay.tsx 304 [req:8680b385] (174ms) {"statusCode":304,"correlationId":"8680b385-741e-4209-9c4d-f7a42fa80876"}
+2025-12-11 13:25:18.723 [http] info: GET /src/components/editor/ReplitFileExplorer.tsx 304 [req:1f5d202e] (172ms) {"statusCode":304,"correlationId":"1f5d202e-0dc1-4449-ba85-0307d530ea7b"}
+2025-12-11 13:25:18.764 [http] info: GET /src/components/ai/MessageMetadataFooter.tsx 304 [req:3233e221] (174ms) {"statusCode":304,"correlationId":"3233e221-54ce-434d-8beb-978f9af34cf8"}
+2025-12-11 13:25:18.774 [http] info: GET /src/components/mobile/ReplitBottomTabs.tsx 304 [req:b06f7432] (174ms) {"statusCode":304,"correlationId":"b06f7432-53fe-433d-9588-6922a836b168"}
+2025-12-11 13:25:18.792 [http] info: GET /src/components/utilities/index.ts 304 [req:c8295709] (175ms) {"statusCode":304,"correlationId":"c8295709-574d-426b-8370-226c8360c756"}
+2025-12-11 13:25:18.800 [http] info: GET /src/stores/autonomousBuildStore.ts 304 [req:04b34e5e] (165ms) {"statusCode":304,"correlationId":"04b34e5e-476b-4185-b3d0-f7b21236385a"}
+2025-12-11 13:25:18.820 [http] info: GET /src/components/agent/messages/index.ts [req:5a880e4d] {"correlationId":"5a880e4d-0586-4993-9fcf-4589cd974351"}
+2025-12-11 13:25:18.883 [http] info: GET /src/hooks/useIDEWorkspace.ts [req:660bf968] {"correlationId":"660bf968-77cc-4ab5-baea-a875deb6e5fe"}
+2025-12-11 13:25:18.885 [http] info: GET /src/components/ai/InlineBuildProgress.tsx [req:df3e511d] {"correlationId":"df3e511d-ae7b-4639-96ff-7a8d7a4784c5"}
+2025-12-11 13:25:18.891 [http] info: GET /src/hooks/useResponsive.ts [req:abe8fa8e] {"correlationId":"abe8fa8e-7c4f-4fb2-bbc2-5d486b62e790"}
+2025-12-11 13:25:18.899 [http] info: GET /src/hooks/use-tablet.ts [req:7211a27e] {"correlationId":"7211a27e-5ca2-4d5c-86b2-84714e4152c7"}
+2025-12-11 13:25:18.945 [http] info: GET /src/hooks/use-ai-code-actions.ts [req:5000c62a] {"correlationId":"5000c62a-5c15-4187-af78-2644735be952"}
+2025-12-11 13:25:18.971 [http] info: GET /src/components/ide/AddTabMenu.tsx [req:146f1363] {"correlationId":"146f1363-9556-4536-8152-3a05c4532f71"}
+2025-12-11 13:25:18.974 [http] info: GET /src/components/ide/ReplitPublishButton.tsx [req:b81fd75f] {"correlationId":"b81fd75f-de12-4e29-bbc1-56223215200f"}
+2025-12-11 13:25:18.988 [http] info: GET /src/components/ui/calendar.tsx [req:4409add2] {"correlationId":"4409add2-9abd-4e23-96d3-7ba083601cc9"}
+2025-12-11 13:25:18.993 [http] info: GET /src/components/agent/messages/index.ts 304 [req:5a880e4d] (173ms) {"statusCode":304,"correlationId":"5a880e4d-0586-4993-9fcf-4589cd974351"}
+2025-12-11 13:25:19.067 [http] info: GET /src/components/ai/InlineBuildProgress.tsx 304 [req:df3e511d] (182ms) {"statusCode":304,"correlationId":"df3e511d-ae7b-4639-96ff-7a8d7a4784c5"}
+2025-12-11 13:25:19.070 [http] info: GET /src/hooks/useIDEWorkspace.ts 304 [req:660bf968] (187ms) {"statusCode":304,"correlationId":"660bf968-77cc-4ab5-baea-a875deb6e5fe"}
+2025-12-11 13:25:19.071 [http] info: GET /src/hooks/useResponsive.ts 304 [req:abe8fa8e] (180ms) {"statusCode":304,"correlationId":"abe8fa8e-7c4f-4fb2-bbc2-5d486b62e790"}
+2025-12-11 13:25:19.072 [http] info: GET /src/hooks/use-tablet.ts 304 [req:7211a27e] (173ms) {"statusCode":304,"correlationId":"7211a27e-5ca2-4d5c-86b2-84714e4152c7"}
+2025-12-11 13:25:19.123 [http] info: GET /src/hooks/use-ai-code-actions.ts 304 [req:5000c62a] (178ms) {"statusCode":304,"correlationId":"5000c62a-5c15-4187-af78-2644735be952"}
+2025-12-11 13:25:19.148 [http] info: GET /src/components/ide/AddTabMenu.tsx 304 [req:146f1363] (177ms) {"statusCode":304,"correlationId":"146f1363-9556-4536-8152-3a05c4532f71"}
+2025-12-11 13:25:19.154 [http] info: GET /src/components/ide/ReplitPublishButton.tsx 304 [req:b81fd75f] (180ms) {"statusCode":304,"correlationId":"b81fd75f-de12-4e29-bbc1-56223215200f"}
+2025-12-11 13:25:19.162 [http] info: GET /src/components/grids/ag-grid-config.ts [req:3a5d3863] {"correlationId":"3a5d3863-7d90-4a06-b7d2-6300edc39316"}
+2025-12-11 13:25:19.163 [http] info: GET /src/components/ui/calendar.tsx 304 [req:4409add2] (175ms) {"statusCode":304,"correlationId":"4409add2-9abd-4e23-96d3-7ba083601cc9"}
+2025-12-11 13:25:19.238 [http] info: GET /src/components/ui/context-menu.tsx [req:83019607] {"correlationId":"83019607-8be4-48e4-a599-661804292cda"}
+2025-12-11 13:25:19.240 [http] info: GET /src/components/WorkspaceSettings.tsx [req:efd3031e] {"correlationId":"efd3031e-f630-4dfb-93bb-bfcf8d4af83e"}
+2025-12-11 13:25:19.245 [http] info: GET /src/components/utilities/ShortcutHint.tsx [req:30740484] {"correlationId":"30740484-b433-44e3-8f06-4ea4ccb2d2d9"}
+2025-12-11 13:25:19.253 [http] info: GET /src/components/grids/GridCellRenderers.tsx [req:6cae6c68] {"correlationId":"6cae6c68-4537-479e-9796-848e931da974"}
+2025-12-11 13:25:19.290 [http] info: GET /src/components/utilities/VirtualScrollList.tsx [req:4dbda920] {"correlationId":"4dbda920-3fb8-433e-aec3-a5ea30802b09"}
+2025-12-11 13:25:19.318 [http] info: GET /src/components/utilities/ShortcutTester.tsx [req:0c006dea] {"correlationId":"0c006dea-eaa6-48c3-b26f-2fcfc2aad8ca"}
+2025-12-11 13:25:19.327 [http] info: GET /@fs/home/runner/workspace/shared/responsive-config.ts [req:307d57f2] {"correlationId":"307d57f2-29d8-4a39-aab6-50509b8833cd"}
+2025-12-11 13:25:19.336 [http] info: GET /@fs/home/runner/workspace/node_modules/ag-grid-community/styles/ag-grid.css [req:adf2745d] {"correlationId":"adf2745d-57bc-4381-a186-ebfc9181f921"}
+2025-12-11 13:25:19.337 [http] info: GET /src/components/grids/ag-grid-config.ts 304 [req:3a5d3863] (175ms) {"statusCode":304,"correlationId":"3a5d3863-7d90-4a06-b7d2-6300edc39316"}
+2025-12-11 13:25:19.413 [http] info: GET /src/components/ui/context-menu.tsx 304 [req:83019607] (175ms) {"statusCode":304,"correlationId":"83019607-8be4-48e4-a599-661804292cda"}
+2025-12-11 13:25:19.415 [http] info: GET /src/components/WorkspaceSettings.tsx 304 [req:efd3031e] (175ms) {"statusCode":304,"correlationId":"efd3031e-f630-4dfb-93bb-bfcf8d4af83e"}
+2025-12-11 13:25:19.419 [http] info: GET /src/components/utilities/ShortcutHint.tsx 304 [req:30740484] (174ms) {"statusCode":304,"correlationId":"30740484-b433-44e3-8f06-4ea4ccb2d2d9"}
+2025-12-11 13:25:19.426 [http] info: GET /src/components/grids/GridCellRenderers.tsx 304 [req:6cae6c68] (173ms) {"statusCode":304,"correlationId":"6cae6c68-4537-479e-9796-848e931da974"}
+2025-12-11 13:25:19.466 [http] info: GET /src/components/utilities/VirtualScrollList.tsx 304 [req:4dbda920] (176ms) {"statusCode":304,"correlationId":"4dbda920-3fb8-433e-aec3-a5ea30802b09"}
+2025-12-11 13:25:19.497 [http] info: GET /src/components/utilities/ShortcutTester.tsx 304 [req:0c006dea] (179ms) {"statusCode":304,"correlationId":"0c006dea-eaa6-48c3-b26f-2fcfc2aad8ca"}
+2025-12-11 13:25:19.503 [http] info: GET /@fs/home/runner/workspace/shared/responsive-config.ts 304 [req:307d57f2] (176ms) {"statusCode":304,"correlationId":"307d57f2-29d8-4a39-aab6-50509b8833cd"}
+2025-12-11 13:25:19.512 [http] info: GET /src/components/grids/ag-grid-theme.css [req:62076639] {"correlationId":"62076639-13ac-4506-b1a8-ed5ef3369aef"}
+2025-12-11 13:25:19.513 [http] info: GET /@fs/home/runner/workspace/node_modules/ag-grid-community/styles/ag-grid.css 304 [req:adf2745d] (177ms) {"statusCode":304,"correlationId":"adf2745d-57bc-4381-a186-ebfc9181f921"}
+2025-12-11 13:25:19.582 [http] info: GET /src/utils/tablet-detection.ts [req:5bc0eb37] (1ms) {"correlationId":"5bc0eb37-9871-44c7-ac70-8c0f3c191e4c"}
+2025-12-11 13:25:19.585 [http] info: GET /src/lib/tool-registry.ts [req:a236918d] {"correlationId":"a236918d-505d-4727-9c99-e66f75313ddd"}
+2025-12-11 13:25:19.591 [http] info: GET /src/components/ui/alert-dialog.tsx [req:17ec1fac] {"correlationId":"17ec1fac-eab1-47c6-b482-680d14d38d41"}
+2025-12-11 13:25:19.602 [http] info: GET /src/components/ui/slider.tsx [req:8543e1bd] {"correlationId":"8543e1bd-fe18-4ab2-89f6-3c15b997413a"}
+2025-12-11 13:25:19.686 [http] info: GET /src/components/agent/messages/types.ts [req:5e0ad8c7] {"correlationId":"5e0ad8c7-2069-44df-b91b-41dd6696aa5f"}
+2025-12-11 13:25:19.688 [http] info: GET /src/components/grids/ag-grid-theme.css 304 [req:62076639] (176ms) {"statusCode":304,"correlationId":"62076639-13ac-4506-b1a8-ed5ef3369aef"}
+2025-12-11 13:25:19.749 [http] info: GET /src/utils/tablet-detection.ts 304 [req:5bc0eb37] (168ms) {"statusCode":304,"correlationId":"5bc0eb37-9871-44c7-ac70-8c0f3c191e4c"}
+2025-12-11 13:25:19.759 [http] info: GET /src/components/ui/alert-dialog.tsx 304 [req:17ec1fac] (168ms) {"statusCode":304,"correlationId":"17ec1fac-eab1-47c6-b482-680d14d38d41"}
+2025-12-11 13:25:19.773 [http] info: GET /src/components/ui/slider.tsx 304 [req:8543e1bd] (171ms) {"statusCode":304,"correlationId":"8543e1bd-fe18-4ab2-89f6-3c15b997413a"}
+2025-12-11 13:25:19.796 [http] info: GET /src/lib/tool-registry.ts 304 [req:a236918d] (211ms) {"statusCode":304,"correlationId":"a236918d-505d-4727-9c99-e66f75313ddd"}
+2025-12-11 13:25:19.860 [http] info: GET /src/components/agent/messages/MessageRenderer.tsx [req:340b4ce9] {"correlationId":"340b4ce9-c511-42a0-9079-82c9708ff26b"}
+2025-12-11 13:25:19.864 [http] info: GET /src/components/agent/messages/types.ts 304 [req:5e0ad8c7] (178ms) {"statusCode":304,"correlationId":"5e0ad8c7-2069-44df-b91b-41dd6696aa5f"}
+2025-12-11 13:25:19.945 [http] info: GET /src/components/agent/messages/ThinkingMessage.tsx [req:8cd98564] {"correlationId":"8cd98564-2334-4c66-91e9-d54ec4fbd1b4"}
+2025-12-11 13:25:19.991 [http] info: GET /src/components/ai/ReplitAgentPanelV3.tsx [req:c4f6dcb5] {"correlationId":"c4f6dcb5-8524-4626-89ee-55dd8d7ccd8d"}
+2025-12-11 13:25:20.000 [http] info: GET /src/components/editor/ResponsiveWebPreview.tsx [req:b0675efe] {"correlationId":"b0675efe-a1b9-43c8-80c0-3b1909b0f46d"}
+2025-12-11 13:25:20.023 [http] info: GET /src/components/GlobalSearch.tsx [req:58d1ffd8] {"correlationId":"58d1ffd8-bcc8-4f7f-b910-c1fce0e81e6d"}
+2025-12-11 13:25:20.026 [http] info: GET /api/projects [req:9a7af8c8] {"correlationId":"9a7af8c8-53fa-487c-895e-8d8673cd2412"}
+2025-12-11 13:25:20.032 [http] info: GET /src/components/agent/messages/MessageRenderer.tsx 304 [req:340b4ce9] (172ms) {"statusCode":304,"correlationId":"340b4ce9-c511-42a0-9079-82c9708ff26b"}
+2025-12-11 13:25:20.034 [http] info: GET /src/components/agent/messages/TaskMessage.tsx [req:cb72cd0f] {"correlationId":"cb72cd0f-4f15-45b6-86dc-6e03bdcde920"}
+2025-12-11 13:25:20.038 [http] info: GET /api/projects/672/files [req:7295700e] {"query":{"bootstrap":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjcyIiwiY29udmVyc2F0aW9uSWQiOiIyZTQyZDc0ZS1lOGMyLTRlYWYtYTAzNC1lYmMyMjNiMWRjZDMiLCJzZXNzaW9uSWQiOiIyZTQyZDc0ZS1lOGMyLTRlYWYtYTAzNC1lYmMyMjNiMWRjZDMiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NTk1MTYzODMsImlhdCI6MTc2NTQ1OTUxNiwiZXhwIjoxNzY1NTQ1OTE2LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.PuMUcaeC5YfOwvrKuhmblsxWJtaPCOs-NFTc2q-nclM"},"correlationId":"7295700e-7a7c-4c65-ae46-fa10c4169e5b"}
+2025-12-11 13:25:20.040 [http] info: GET /api/projects/672/files [req:2a2484fc] {"correlationId":"2a2484fc-9d46-4fd4-8a39-34a3698777d9"}
+2025-12-11 13:25:20.122 [http] info: GET /src/components/agent/messages/ThinkingMessage.tsx 304 [req:8cd98564] (177ms) {"statusCode":304,"correlationId":"8cd98564-2334-4c66-91e9-d54ec4fbd1b4"}
+2025-12-11 13:25:20.166 [http] info: GET /src/components/ai/ReplitAgentPanelV3.tsx 304 [req:c4f6dcb5] (175ms) {"statusCode":304,"correlationId":"c4f6dcb5-8524-4626-89ee-55dd8d7ccd8d"}
+2025-12-11 13:25:20.199 [http] info: GET /src/components/editor/ResponsiveWebPreview.tsx 304 [req:b0675efe] (200ms) {"statusCode":304,"correlationId":"b0675efe-a1b9-43c8-80c0-3b1909b0f46d"}
+2025-12-11 13:25:20.201 [http] info: GET /src/components/GlobalSearch.tsx 304 [req:58d1ffd8] (178ms) {"statusCode":304,"correlationId":"58d1ffd8-bcc8-4f7f-b910-c1fce0e81e6d"}
+2025-12-11 13:25:20.209 [http] info: GET /src/components/agent/messages/TaskMessage.tsx 304 [req:cb72cd0f] (176ms) {"statusCode":304,"correlationId":"cb72cd0f-4f15-45b6-86dc-6e03bdcde920"}
+2025-12-11 13:25:20.214 [http] info: GET /src/components/agent/messages/ActionMessage.tsx [req:ada8fa83] {"correlationId":"ada8fa83-0ce3-4110-9c7f-dc0bb2e422b6"}
+2025-12-11 13:25:20.296 [http] info: GET /src/components/agent/messages/RichMessageContent.tsx [req:bc677d1d] {"correlationId":"bc677d1d-f178-4cca-bf8c-fd201afdf4c2"}
+2025-12-11 13:25:20.370 [http] info: GET /api/git/status [req:1428d951] {"correlationId":"1428d951-2fe2-45d1-bcf8-2355f68f6b41"}
+2025-12-11 13:25:20.374 [http] info: POST /api/runtime/start [req:2d467149] {"contentLength":"35","correlationId":"2d467149-00d8-4b3b-95db-d50c495e3c5e"}
+2025-12-11 13:25:20.375 [http] info: GET /src/components/ui/textarea.tsx [req:1047803d] {"correlationId":"1047803d-09a9-407c-a3a6-b84cb50d28a1"}
+2025-12-11 13:25:20.383 [http] info: GET /src/components/agent/messages/VibingAnimation.tsx [req:3f7bd111] {"correlationId":"3f7bd111-7999-46a6-8b1c-7d8b0a515a0f"}
+2025-12-11 13:25:20.413 [http] info: GET /src/components/agent/messages/ActionMessage.tsx 304 [req:ada8fa83] (199ms) {"statusCode":304,"correlationId":"ada8fa83-0ce3-4110-9c7f-dc0bb2e422b6"}
+2025-12-11 13:25:20.414 [http] info: GET /api/projects/672/files 200 [req:2a2484fc] (374ms) {"statusCode":200,"contentLength":"2","correlationId":"2a2484fc-9d46-4fd4-8a39-34a3698777d9"}
+2025-12-11 13:25:20.416 [http] info: GET /api/projects/672/files 200 [req:7295700e] (378ms) {"statusCode":200,"contentLength":"2","correlationId":"7295700e-7a7c-4c65-ae46-fa10c4169e5b"}
+2025-12-11 13:25:20.584 [http] info: GET /src/stores/agentConversationStore.ts [req:f9d42ca3] {"correlationId":"f9d42ca3-2aa6-48ad-8c42-cfc7f0a66a55"}
+2025-12-11 13:25:20.585 [http] info: GET /src/components/ai/ModeSelector.tsx [req:10e2c1c2] {"correlationId":"10e2c1c2-b72a-4288-8227-abf04acdcda0"}
+2025-12-11 13:25:20.597 [http] info: GET /src/components/agent/messages/CollapsibleSection.tsx [req:6c4b8048] {"correlationId":"6c4b8048-71f3-431d-89ad-d74be85d7fe7"}
+2025-12-11 13:25:20.727 [http] info: GET /api/projects 200 [req:9a7af8c8] (701ms) {"statusCode":200,"contentLength":"114523","correlationId":"9a7af8c8-53fa-487c-895e-8d8673cd2412"}
+2025-12-11 13:25:20.729 [http] info: GET /src/components/agent/messages/RichMessageContent.tsx 304 [req:bc677d1d] (433ms) {"statusCode":304,"correlationId":"bc677d1d-f178-4cca-bf8c-fd201afdf4c2"}
+2025-12-11 13:25:20.730 [http] info: GET /src/components/agent/messages/VibingAnimation.tsx 304 [req:3f7bd111] (347ms) {"statusCode":304,"correlationId":"3f7bd111-7999-46a6-8b1c-7d8b0a515a0f"}
+2025-12-11 13:25:20.730 [http] info: GET /src/components/ui/textarea.tsx 304 [req:1047803d] (355ms) {"statusCode":304,"correlationId":"1047803d-09a9-407c-a3a6-b84cb50d28a1"}
+2025-12-11 13:25:20 [runtime-api] info: Starting runtime for project 672, executionId: 87bedeaa-6b7e-4e55-907e-2b6db0fcf807 {"environment":"development","details":[]}
+2025-12-11 13:25:20.780 [http] info: GET /status 200 [req:1428d951] (410ms) {"statusCode":200,"contentLength":"80","correlationId":"1428d951-2fe2-45d1-bcf8-2355f68f6b41"}
+2025-12-11 13:25:20.816 [http] info: GET /src/components/ai/ModeSelector.tsx 304 [req:10e2c1c2] (231ms) {"statusCode":304,"correlationId":"10e2c1c2-b72a-4288-8227-abf04acdcda0"}
+2025-12-11 13:25:20.818 [http] info: GET /src/stores/agentConversationStore.ts 304 [req:f9d42ca3] (234ms) {"statusCode":304,"correlationId":"f9d42ca3-2aa6-48ad-8c42-cfc7f0a66a55"}
+2025-12-11 13:25:20.822 [http] info: GET /src/components/agent/messages/CollapsibleSection.tsx 304 [req:6c4b8048] (225ms) {"statusCode":304,"correlationId":"6c4b8048-71f3-431d-89ad-d74be85d7fe7"}
+2025-12-11 13:25:20.902 [http] info: GET /src/hooks/use-autonomous-chat-integration.ts [req:86b7a58a] {"correlationId":"86b7a58a-ef6b-4b21-bd6c-1086afb2b667"}
+2025-12-11 13:25:20.907 [http] info: GET /src/components/agent/messages/ToolExecutionBadge.tsx [req:8a85ec4b] {"correlationId":"8a85ec4b-1f57-497b-9d32-a27702852b7d"}
+2025-12-11 13:25:20.909 [http] info: GET /src/components/agent/messages/FileDiffViewer.tsx [req:5d7a506e] {"correlationId":"5d7a506e-1d93-48a0-be06-f3c0433b2f09"}
+2025-12-11 13:25:20 [runtime] info: Creating default project files for typescript {"environment":"development","details":[]}
+2025-12-11 13:25:20 [runtime] info: Generated 2 default files for typescript {"environment":"development","details":[]}
+2025-12-11 13:25:20.953 [http] info: GET /src/components/ai/ThinkingDisplay.tsx [req:2e28446e] {"correlationId":"2e28446e-4030-4701-88ea-45c3407fb659"}
+2025-12-11 13:25:20.985 [http] info: GET /src/hooks/use-agent-model-preference.ts [req:94025ff9] {"correlationId":"94025ff9-6f59-4243-89ed-041728a494fd"}
+2025-12-11 13:25:20.986 [http] info: GET /src/components/ai/CurrentModelChip.tsx [req:16cbf674] {"correlationId":"16cbf674-a9eb-46ef-9760-6c1bf054cf68"}
+2025-12-11 13:25:20.994 [http] info: GET /src/components/agent/messages/StreamingSkeleton.tsx [req:25663007] {"correlationId":"25663007-53b8-47b9-b621-93fbb2030b7c"}
+2025-12-11 13:25:21.066 [http] info: GET /src/hooks/use-autonomous-chat-integration.ts 200 [req:86b7a58a] (164ms) {"statusCode":200,"correlationId":"86b7a58a-ef6b-4b21-bd6c-1086afb2b667"}
+2025-12-11 13:25:21.074 [http] info: GET /src/components/agent/messages/FileDiffViewer.tsx 304 [req:5d7a506e] (165ms) {"statusCode":304,"correlationId":"5d7a506e-1d93-48a0-be06-f3c0433b2f09"}
+2025-12-11 13:25:21.075 [http] info: GET /src/components/agent/messages/ToolExecutionBadge.tsx 304 [req:8a85ec4b] (168ms) {"statusCode":304,"correlationId":"8a85ec4b-1f57-497b-9d32-a27702852b7d"}
+2025-12-11 13:25:21.122 [http] info: GET /src/components/ai/ThinkingDisplay.tsx 304 [req:2e28446e] (169ms) {"statusCode":304,"correlationId":"2e28446e-4030-4701-88ea-45c3407fb659"}
+2025-12-11 13:25:21.153 [http] info: GET /src/hooks/use-agent-model-preference.ts 304 [req:94025ff9] (168ms) {"statusCode":304,"correlationId":"94025ff9-6f59-4243-89ed-041728a494fd"}
+2025-12-11 13:25:21.153 [http] info: GET /src/components/ai/CurrentModelChip.tsx 304 [req:16cbf674] (167ms) {"statusCode":304,"correlationId":"16cbf674-a9eb-46ef-9760-6c1bf054cf68"}
+2025-12-11 13:25:21.166 [http] info: GET /src/components/agent/messages/StreamingSkeleton.tsx 304 [req:25663007] (172ms) {"statusCode":304,"correlationId":"25663007-53b8-47b9-b621-93fbb2030b7c"}
+2025-12-11 13:25:21 [runtime-api] info: Created default files for project 672 {"environment":"development","details":[]}
+2025-12-11 13:25:21 [runtime] info: Creating project directory for project 672 {"environment":"development","details":[]}
+2025-12-11 13:25:21 [runtime] info: Created new project directory: /home/runner/workspace/projects/project-672 {"environment":"development","details":[]}
+2025-12-11 13:25:21 [runtime] info: Wrote 2 files to project directory {"environment":"development","details":[]}
+2025-12-11 13:25:21 [runtime] info: Detecting project language from 2 files {"environment":"development","details":[]}
+2025-12-11 13:25:21 [runtime] info: Language detected as typescript by .ts/.tsx files or tsconfig.json {"environment":"development","details":[]}
+2025-12-11 13:25:21 [runtime] info: Starting project 672 with language typescript {"environment":"development","details":[]}
+2025-12-11 13:25:21.265 [http] info: GET /src/components/ui/LightSyntaxHighlighter.tsx [req:260101fc] {"correlationId":"260101fc-2859-4c54-befa-64d57c83d55a"}
+2025-12-11 13:25:21.291 [http] info: GET /src/components/grids/AgentHistoryModal.tsx [req:2f6241b1] {"correlationId":"2f6241b1-c433-4838-ad0f-b40b10d61f77"}
+2025-12-11 13:25:21.297 [http] info: GET /src/hooks/useMaxAutonomy.ts [req:24efb619] (1ms) {"correlationId":"24efb619-4922-47bf-9570-d09f3b454998"}
+2025-12-11 13:25:21.327 [http] info: GET /src/lib/sse-warning-handler.ts [req:88abe214] {"correlationId":"88abe214-1fa8-4add-ad64-9ec8ca9ce792"}
+2025-12-11 13:25:21.328 [http] info: GET /src/components/ai/MaxAutonomyProgress.tsx [req:d89a41e3] {"correlationId":"d89a41e3-785d-4afd-91e3-28aadb73e1ae"}
+2025-12-11 13:25:21.476 [http] info: GET /src/components/ui/LightSyntaxHighlighter.tsx 304 [req:260101fc] (211ms) {"statusCode":304,"correlationId":"260101fc-2859-4c54-befa-64d57c83d55a"}
+2025-12-11 13:25:21.477 [http] info: GET /src/components/grids/AgentHistoryModal.tsx 304 [req:2f6241b1] (186ms) {"statusCode":304,"correlationId":"2f6241b1-c433-4838-ad0f-b40b10d61f77"}
+2025-12-11 13:25:21.511 [http] info: GET /src/lib/sse-warning-handler.ts 304 [req:88abe214] (184ms) {"statusCode":304,"correlationId":"88abe214-1fa8-4add-ad64-9ec8ca9ce792"}
+2025-12-11 13:25:21.512 [http] info: GET /src/hooks/useMaxAutonomy.ts 304 [req:24efb619] (215ms) {"statusCode":304,"correlationId":"24efb619-4922-47bf-9570-d09f3b454998"}
+2025-12-11 13:25:21.520 [http] info: GET /src/components/ai/MaxAutonomyProgress.tsx 304 [req:d89a41e3] (192ms) {"statusCode":304,"correlationId":"d89a41e3-785d-4afd-91e3-28aadb73e1ae"}
+2025-12-11 13:25:21.532 [http] info: GET /src/components/ai/ElementEditor.tsx [req:3e58e5e4] {"correlationId":"3e58e5e4-4416-4579-beea-b8df539ddf48"}
+2025-12-11 13:25:21.656 [http] info: GET /src/components/ai/ChatToolbar.tsx [req:b739989c] (1ms) {"correlationId":"b739989c-723f-40bd-a12d-d971f5cb04c1"}
+2025-12-11 13:25:21.682 [http] info: GET /src/components/ai/AgentToolsPanel.tsx [req:f64a2c14] {"correlationId":"f64a2c14-2b44-4f4d-bf03-7d2b2adfb68e"}
+2025-12-11 13:25:21.683 [http] info: GET /src/components/ai/UsageTrackingIcon.tsx [req:197c0b8e] {"correlationId":"197c0b8e-fdf8-49d4-966e-06f243e2d412"}
+2025-12-11 13:25:21.695 [http] info: GET /src/components/ai/EnhancedChatMessage.tsx [req:7f83026d] {"correlationId":"7f83026d-1eac-4c8c-aaae-1d552c2f752b"}
+2025-12-11 13:25:21.710 [http] info: GET /src/components/ai/ElementEditor.tsx 304 [req:3e58e5e4] (178ms) {"statusCode":304,"correlationId":"3e58e5e4-4416-4579-beea-b8df539ddf48"}
+2025-12-11 13:25:21 [runtime-logs] info: [RuntimeLogs] Execution 87bedeaa-6b7e-4e55-907e-2b6db0fcf807 exited with code 0 in 638ms {"environment":"development","details":[]}
+2025-12-11 13:25:21 [runtime] info: Cleaned up project directory: /home/runner/workspace/projects/project-672 {"environment":"development","details":[]}
+2025-12-11 13:25:21.837 [http] info: GET /src/components/ai/ChatToolbar.tsx 304 [req:b739989c] (181ms) {"statusCode":304,"correlationId":"b739989c-723f-40bd-a12d-d971f5cb04c1"}
+2025-12-11 13:25:21.856 [http] info: GET /src/components/ai/EnhancedChatMessage.tsx 304 [req:7f83026d] (161ms) {"statusCode":304,"correlationId":"7f83026d-1eac-4c8c-aaae-1d552c2f752b"}
+2025-12-11 13:25:21.858 [http] info: GET /src/components/ai/UsageTrackingIcon.tsx 304 [req:197c0b8e] (175ms) {"statusCode":304,"correlationId":"197c0b8e-fdf8-49d4-966e-06f243e2d412"}
+2025-12-11 13:25:21.861 [http] info: GET /src/components/ai/AgentToolsPanel.tsx 304 [req:f64a2c14] (179ms) {"statusCode":304,"correlationId":"f64a2c14-2b44-4f4d-bf03-7d2b2adfb68e"}
+2025-12-11 13:25:21 [runtime-api] warn: Failed to save runtime logs: Error: Failed query: delete from "terminal_logs" where "terminal_logs"."project_id" = $1
+params: 672 {"environment":"development","details":[]}
+2025-12-11 13:25:21.884 [http] info: GET /src/components/ai/VideoReplayViewer.tsx [req:3ef5bac5] {"correlationId":"3ef5bac5-fa6f-43a6-a5d4-f982fb6118f1"}
+2025-12-11 13:25:21.915 [http] info: POST /api/runtime/start 200 [req:2d467149] (1541ms) {"statusCode":200,"contentLength":"286","correlationId":"2d467149-00d8-4b3b-95db-d50c495e3c5e"}
+2025-12-11 13:25:22.008 [http] info: GET /api/preview/url [req:4de340a4] (1ms) {"query":{"projectId":"672"},"correlationId":"4de340a4-f9e7-459d-a57d-9946cd880ea2"}
+2025-12-11 13:25:22.030 [http] info: GET /src/hooks/use-debounce.ts [req:cf67c1cf] {"correlationId":"cf67c1cf-b1cb-46c4-baca-41ad66d94bd2"}
+2025-12-11 13:25:22.031 [http] info: GET /api/projects [req:21386fc4] {"correlationId":"21386fc4-7a31-4345-868c-111d800d3992"}
+2025-12-11 13:25:22.032 [http] info: GET /src/components/ui/checkbox.tsx [req:7d58f6d8] {"correlationId":"7d58f6d8-f2ad-494d-862c-08cbeeff6765"}
+2025-12-11 13:25:22.054 [http] info: GET /src/components/ai/VideoReplayViewer.tsx 304 [req:3ef5bac5] (170ms) {"statusCode":304,"correlationId":"3ef5bac5-fa6f-43a6-a5d4-f982fb6118f1"}
+2025-12-11 13:25:22.081 [http] info: POST /api/logs/ingest [req:c35617da] {"contentLength":"10374","correlationId":"c35617da-701a-4ba7-abb1-61a5d226a16d"}
+2025-12-11 13:25:22.198 [http] info: GET /src/hooks/use-debounce.ts 304 [req:cf67c1cf] (168ms) {"statusCode":304,"correlationId":"cf67c1cf-b1cb-46c4-baca-41ad66d94bd2"}
+2025-12-11 13:25:22.203 [http] info: GET /src/components/ui/checkbox.tsx 304 [req:7d58f6d8] (171ms) {"statusCode":304,"correlationId":"7d58f6d8-f2ad-494d-862c-08cbeeff6765"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:25:22.226 [http] info: GET /src/components/ui/progress.tsx [req:4d6acaf4] {"correlationId":"4d6acaf4-dc50-47aa-9a0a-f0d73ee47823"}
+2025-12-11 13:25:22.256 [http] info: POST /api/logs/ingest 202 [req:c35617da] (175ms) {"statusCode":202,"contentLength":"69","correlationId":"c35617da-701a-4ba7-abb1-61a5d226a16d"}
+2025-12-11 13:25:22.355 [http] info: GET /url 200 [req:4de340a4] (348ms) {"statusCode":200,"contentLength":"77","correlationId":"4de340a4-f9e7-459d-a57d-9946cd880ea2"}
+2025-12-11 13:25:22.367 [http] info: GET /src/components/grids/AgentActionsGrid.tsx [req:2be2458e] {"correlationId":"2be2458e-556d-48a6-8040-2c3a0b095f3e"}
+2025-12-11 13:25:22.374 [http] info: GET /src/components/grids/FileOperationsGrid.tsx [req:7aeee928] {"correlationId":"7aeee928-b183-474d-b3a1-92dbb83ef8d3"}
+2025-12-11 13:25:22.402 [http] info: GET /src/components/ui/progress.tsx 304 [req:4d6acaf4] (176ms) {"statusCode":304,"correlationId":"4d6acaf4-dc50-47aa-9a0a-f0d73ee47823"}
+2025-12-11 13:25:22.430 [http] info: GET /src/components/grids/ConversationHistoryGrid.tsx [req:0129dc3b] (2ms) {"correlationId":"0129dc3b-9475-418f-8a0a-59ec3c1847fd"}
+2025-12-11 13:25:22.525 [http] info: GET /src/components/grids/AgentSessionsGrid.tsx [req:6e758d8b] {"correlationId":"6e758d8b-7586-48b0-b5ed-13f0731fd372"}
+2025-12-11 13:25:22.574 [http] info: GET /src/components/ai/ToolExecutionDisplay.tsx [req:0c61fd10] (1ms) {"correlationId":"0c61fd10-0e6f-4535-a551-cedfd79ad7d8"}
+2025-12-11 13:25:22.652 [http] info: GET /src/components/grids/FileOperationsGrid.tsx 200 [req:7aeee928] (278ms) {"statusCode":200,"correlationId":"7aeee928-b183-474d-b3a1-92dbb83ef8d3"}
+2025-12-11 13:25:22.658 [http] info: GET /api/projects 200 [req:21386fc4] (627ms) {"statusCode":200,"contentLength":"114523","correlationId":"21386fc4-7a31-4345-868c-111d800d3992"}
+2025-12-11 13:25:22.659 [http] info: GET /src/components/grids/ConversationHistoryGrid.tsx 200 [req:0129dc3b] (231ms) {"statusCode":200,"correlationId":"0129dc3b-9475-418f-8a0a-59ec3c1847fd"}
+2025-12-11 13:25:22.660 [http] info: GET /src/components/grids/AgentActionsGrid.tsx 200 [req:2be2458e] (293ms) {"statusCode":200,"correlationId":"2be2458e-556d-48a6-8040-2c3a0b095f3e"}
+2025-12-11 13:25:22.704 [http] info: GET /src/components/grids/AgentSessionsGrid.tsx 304 [req:6e758d8b] (179ms) {"statusCode":304,"correlationId":"6e758d8b-7586-48b0-b5ed-13f0731fd372"}
+2025-12-11 13:25:22.749 [http] info: GET /src/components/ai/ToolExecutionDisplay.tsx 200 [req:0c61fd10] (175ms) {"statusCode":200,"correlationId":"0c61fd10-0e6f-4535-a551-cedfd79ad7d8"}
+2025-12-11 13:25:22.874 [http] info: GET /src/components/ai/MessageMetadataFooter.tsx [req:ce30ee2b] {"correlationId":"ce30ee2b-3608-4cbf-888c-c5038df84c88"}
+2025-12-11 13:25:23.005 [http] info: GET /api/agent/preferences [req:e397e692] {"correlationId":"e397e692-d323-482e-9a66-ff2058f24ba8"}
+2025-12-11 13:25:23.008 [http] info: GET /api/agent/tools/testing/replays [req:4a320cce] {"query":{"projectId":"671"},"correlationId":"4a320cce-14f3-4b5e-8fe1-3d703d15139a"}
+2025-12-11 13:25:23.009 [http] info: GET /api/agent/effective-model [req:3e22a054] {"correlationId":"3e22a054-e256-44ed-aeb7-ececf843ff0b"}
+2025-12-11 13:25:23.010 [http] info: GET /api/agent/testing/sessions [req:c320e145] {"query":{"projectId":"671"},"correlationId":"c320e145-3a87-4a5f-b60f-9ff46ecf0a7d"}
+2025-12-11 13:25:23.011 [http] info: GET /api/models/preferred [req:f96557cc] {"correlationId":"f96557cc-824c-42af-bb88-957bfdd64c5b"}
+2025-12-11 13:25:23.012 [http] info: GET /api/models [req:43ab64ba] {"correlationId":"43ab64ba-95db-4efa-b2a5-e826ac9e6b56"}
+2025-12-11 13:25:23.046 [http] info: GET /src/components/agent/messages/index.ts [req:a93994fb] {"correlationId":"a93994fb-e86f-46cb-b8d5-3abc0247c9f3"}
+2025-12-11 13:25:23.048 [http] info: GET /src/components/ai/MessageMetadataFooter.tsx 200 [req:ce30ee2b] (174ms) {"statusCode":200,"correlationId":"ce30ee2b-3608-4cbf-888c-c5038df84c88"}
+2025-12-11 13:25:23.108 [http] info: GET /src/components/ai/InlineBuildProgress.tsx [req:18654f37] {"correlationId":"18654f37-a74b-4952-bb5a-be43015569b3"}
+2025-12-11 13:25:23.111 [http] info: GET /src/hooks/useAgentTools.ts [req:69f59b0f] {"correlationId":"69f59b0f-d697-4b2c-b7b7-843cc648eb98"}
+2025-12-11 13:25:23.121 [http] info: GET /src/components/ai/VideoReplayPlayer.tsx [req:6ee18def] (1ms) {"correlationId":"6ee18def-341d-4dbe-b488-0e72abed47db"}
+2025-12-11 13:25:23.174 [http] info: GET / 200 [req:43ab64ba] (162ms) {"statusCode":200,"contentLength":"5038","correlationId":"43ab64ba-95db-4efa-b2a5-e826ac9e6b56"}
+2025-12-11 13:25:23.212 [http] info: GET /src/components/agent/messages/index.ts 200 [req:a93994fb] (166ms) {"statusCode":200,"correlationId":"a93994fb-e86f-46cb-b8d5-3abc0247c9f3"}
+2025-12-11 13:25:23.262 [http] info: GET /preferred 200 [req:f96557cc] (251ms) {"statusCode":200,"contentLength":"64","correlationId":"f96557cc-824c-42af-bb88-957bfdd64c5b"}
+2025-12-11 13:25:23.268 [http] info: GET /tools/testing/replays 200 [req:4a320cce] (260ms) {"statusCode":200,"contentLength":"24","correlationId":"4a320cce-14f3-4b5e-8fe1-3d703d15139a"}
+2025-12-11 13:25:23.270 [http] info: GET /effective-model 200 [req:3e22a054] (261ms) {"statusCode":200,"contentLength":"366","correlationId":"3e22a054-e256-44ed-aeb7-ececf843ff0b"}
+2025-12-11 13:25:23.272 [http] info: GET /src/components/ui/calendar.tsx [req:2ac1e0a5] {"correlationId":"2ac1e0a5-fa41-4ed2-b5d1-6253974e3b20"}
+2025-12-11 13:25:23.278 [http] info: GET /src/components/ai/InlineBuildProgress.tsx 200 [req:18654f37] (170ms) {"statusCode":200,"correlationId":"18654f37-a74b-4952-bb5a-be43015569b3"}
+2025-12-11 13:25:23.284 [http] info: GET /src/hooks/useAgentTools.ts 200 [req:69f59b0f] (173ms) {"statusCode":200,"correlationId":"69f59b0f-d697-4b2c-b7b7-843cc648eb98"}
+2025-12-11 13:25:23.285 [http] info: GET /src/components/ai/VideoReplayPlayer.tsx 200 [req:6ee18def] (166ms) {"statusCode":200,"correlationId":"6ee18def-341d-4dbe-b488-0e72abed47db"}
+2025-12-11 13:25:23.297 [http] info: GET /preferences 200 [req:e397e692] (292ms) {"statusCode":200,"contentLength":"247","correlationId":"e397e692-d323-482e-9a66-ff2058f24ba8"}
+2025-12-11 13:25:23.344 [http] info: GET /src/components/grids/ag-grid-config.ts [req:bfb06513] {"correlationId":"bfb06513-4b25-4913-ab10-e9a6c2fa5f2a"}
+2025-12-11 13:25:23.345 [http] info: GET /api/rag/stats [req:4a43fd95] {"correlationId":"4a43fd95-824f-46ad-ad4a-78408ca78c58"}
+2025-12-11 13:25:23.349 [http] info: GET /testing/sessions 200 [req:c320e145] (339ms) {"statusCode":200,"contentLength":"25","correlationId":"c320e145-3a87-4a5f-b60f-9ff46ecf0a7d"}
+2025-12-11 13:25:23.382 [http] info: GET /src/components/grids/GridCellRenderers.tsx [req:bc6f5182] (1ms) {"correlationId":"bc6f5182-be82-45fc-90b8-81acce39b738"}
+2025-12-11 13:25:23.432 [http] info: POST /api/agent/conversation [req:5f24a34a] {"contentLength":"19","correlationId":"5f24a34a-bea9-4960-95e8-568e07148e7c"}
+2025-12-11 13:25:23.439 [http] info: GET /api/autonomy/sessions [req:def3fcf0] {"query":{"limit":"10"},"correlationId":"def3fcf0-216e-47e9-b738-0638f9c8697e"}
+2025-12-11 13:25:23.446 [http] info: GET /src/components/ui/calendar.tsx 200 [req:2ac1e0a5] (174ms) {"statusCode":200,"correlationId":"2ac1e0a5-fa41-4ed2-b5d1-6253974e3b20"}
+2025-12-11 13:25:23.450 [http] info: GET /@fs/home/runner/workspace/node_modules/ag-grid-community/styles/ag-grid.css [req:0ba39358] {"correlationId":"0ba39358-d7da-45cf-9e17-67689ca8ec81"}
+2025-12-11 13:25:23 [rag-router] warn: Knowledge graph tables may not exist yet: {"environment":"development","details":[{}]}
+2025-12-11 13:25:23.522 [http] info: GET /src/components/grids/ag-grid-config.ts 200 [req:bfb06513] (178ms) {"statusCode":200,"correlationId":"bfb06513-4b25-4913-ab10-e9a6c2fa5f2a"}
+2025-12-11 13:25:23.559 [http] info: GET /src/components/grids/GridCellRenderers.tsx 200 [req:bc6f5182] (178ms) {"statusCode":200,"correlationId":"bc6f5182-be82-45fc-90b8-81acce39b738"}
+2025-12-11 13:25:23.580 [http] info: GET /src/components/grids/ag-grid-theme.css [req:f5c8b16e] {"correlationId":"f5c8b16e-4e97-4c38-ba43-431bdcc98391"}
+2025-12-11 13:25:23.582 [http] info: GET /src/components/agent/messages/types.ts [req:d1a7b304] {"correlationId":"d1a7b304-a211-4e30-84ed-0a291f1962ee"}
+2025-12-11 13:25:23.603 [http] info: GET /stats 200 [req:4a43fd95] (258ms) {"statusCode":200,"contentLength":"171","correlationId":"4a43fd95-824f-46ad-ad4a-78408ca78c58"}
+2025-12-11 13:25:23.614 [http] info: GET /src/components/agent/messages/ActionMessage.tsx [req:a53683eb] {"correlationId":"a53683eb-2337-4039-a8dd-f085afa6c375"}
+2025-12-11 13:25:23.635 [http] info: GET /@fs/home/runner/workspace/node_modules/ag-grid-community/styles/ag-grid.css 200 [req:0ba39358] (185ms) {"statusCode":200,"correlationId":"0ba39358-d7da-45cf-9e17-67689ca8ec81"}
+2025-12-11 13:25:23 [model-normalizer] debug: Model alias normalized: "claude-sonnet-4-5-20250929" → "claude-sonnet-4-5-20250929" {"environment":"development","details":[]}
+2025-12-11 13:25:23.692 [http] info: GET /src/components/agent/messages/RichMessageContent.tsx [req:4b6d19ed] {"correlationId":"4b6d19ed-4577-4fdc-b890-380d9b221a46"}
+2025-12-11 13:25:23.695 [http] info: GET /sessions 200 [req:def3fcf0] (256ms) {"statusCode":200,"contentLength":"40","correlationId":"def3fcf0-216e-47e9-b738-0638f9c8697e"}
+2025-12-11 13:25:23.704 [http] info: POST /conversation 200 [req:5f24a34a] (272ms) {"statusCode":200,"contentLength":"220","correlationId":"5f24a34a-bea9-4960-95e8-568e07148e7c"}
+2025-12-11 13:25:23.731 [http] info: GET /src/components/agent/messages/MessageRenderer.tsx [req:120c1f07] {"correlationId":"120c1f07-6f5c-4508-bae6-a37eee62d8e4"}
+2025-12-11 13:25:23 [ai-metering] info: Tracked AI usage: user=98, model=claude-sonnet-4-5-20250929, tokens=0, cost=$0.000000 {"environment":"development","details":[]}
+2025-12-11 13:25:23 [ai-metering] debug: No subscription ID - skipping Stripe queue {"environment":"development","details":[]}
+2025-12-11 13:25:23 [ai-usage-tracker] info: AI usage tracked: user=98, model=claude-sonnet-4-5-20250929, tokens=0 {"environment":"development","details":[]}
+2025-12-11 13:25:23.751 [http] info: GET /src/components/grids/ag-grid-theme.css 200 [req:f5c8b16e] (171ms) {"statusCode":200,"correlationId":"f5c8b16e-4e97-4c38-ba43-431bdcc98391"}
+2025-12-11 13:25:23.751 [http] info: GET /src/components/agent/messages/types.ts 304 [req:d1a7b304] (169ms) {"statusCode":304,"correlationId":"d1a7b304-a211-4e30-84ed-0a291f1962ee"}
+2025-12-11 13:25:23.793 [http] info: GET /src/components/agent/messages/ActionMessage.tsx 304 [req:a53683eb] (181ms) {"statusCode":304,"correlationId":"a53683eb-2337-4039-a8dd-f085afa6c375"}
+2025-12-11 13:25:23.872 [http] info: GET /src/components/agent/messages/RichMessageContent.tsx 304 [req:4b6d19ed] (180ms) {"statusCode":304,"correlationId":"4b6d19ed-4577-4fdc-b890-380d9b221a46"}
+2025-12-11 13:25:23.906 [http] info: GET /src/components/agent/messages/MessageRenderer.tsx 304 [req:120c1f07] (175ms) {"statusCode":304,"correlationId":"120c1f07-6f5c-4508-bae6-a37eee62d8e4"}
+2025-12-11 13:25:23.927 [http] info: GET /src/components/agent/messages/TaskMessage.tsx [req:c3f013a6] {"correlationId":"c3f013a6-59c1-45ab-8ca9-4d080fa715d9"}
+2025-12-11 13:25:23.934 [http] info: GET /src/components/agent/messages/VibingAnimation.tsx [req:144f0ffb] {"correlationId":"144f0ffb-3e6c-4acd-b910-ab2934b5eab6"}
+2025-12-11 13:25:23.936 [http] info: GET /src/components/agent/messages/ToolExecutionBadge.tsx [req:e3ba058a] {"correlationId":"e3ba058a-8c23-4335-ab71-1dbca3409c83"}
+2025-12-11 13:25:23.962 [http] info: GET /src/components/agent/messages/ThinkingMessage.tsx [req:93fc9ad8] {"correlationId":"93fc9ad8-a5c1-4f85-847e-37995adc72a0"}
+2025-12-11 13:25:24.042 [http] info: GET /src/components/agent/messages/FileDiffViewer.tsx [req:72d8539c] {"correlationId":"72d8539c-5709-4ec6-96ce-3780946ba0e8"}
+2025-12-11 13:25:24.076 [http] info: GET /src/components/agent/messages/CollapsibleSection.tsx [req:67c19c63] {"correlationId":"67c19c63-ff97-4772-96fa-03cad5a84948"}
+2025-12-11 13:25:24.095 [http] info: GET /src/components/agent/messages/TaskMessage.tsx 304 [req:c3f013a6] (168ms) {"statusCode":304,"correlationId":"c3f013a6-59c1-45ab-8ca9-4d080fa715d9"}
+2025-12-11 13:25:24.104 [http] info: GET /src/components/agent/messages/ToolExecutionBadge.tsx 304 [req:e3ba058a] (168ms) {"statusCode":304,"correlationId":"e3ba058a-8c23-4335-ab71-1dbca3409c83"}
+2025-12-11 13:25:24.105 [http] info: GET /src/components/agent/messages/VibingAnimation.tsx 304 [req:144f0ffb] (171ms) {"statusCode":304,"correlationId":"144f0ffb-3e6c-4acd-b910-ab2934b5eab6"}
+2025-12-11 13:25:24.143 [http] info: GET /src/components/agent/messages/ThinkingMessage.tsx 304 [req:93fc9ad8] (181ms) {"statusCode":304,"correlationId":"93fc9ad8-a5c1-4f85-847e-37995adc72a0"}
+2025-12-11 13:25:24.217 [http] info: GET /src/components/agent/messages/FileDiffViewer.tsx 304 [req:72d8539c] (175ms) {"statusCode":304,"correlationId":"72d8539c-5709-4ec6-96ce-3780946ba0e8"}
+2025-12-11 13:25:24.247 [http] info: GET /src/components/agent/messages/CollapsibleSection.tsx 304 [req:67c19c63] (171ms) {"statusCode":304,"correlationId":"67c19c63-ff97-4772-96fa-03cad5a84948"}
+2025-12-11 13:25:24.263 [http] info: GET /src/components/agent/messages/StreamingSkeleton.tsx [req:b1de796f] {"correlationId":"b1de796f-5593-4916-8935-dc050492bbdd"}
+2025-12-11 13:25:24.274 [http] info: GET /src/components/ui/slider.tsx [req:77ec1442] {"correlationId":"77ec1442-1119-4e2b-93b1-678d8d2f5ec5"}
+2025-12-11 13:25:24.282 [http] info: GET /src/components/ui/LightSyntaxHighlighter.tsx [req:0ced2586] {"correlationId":"0ced2586-0c44-46b0-8ddc-6659c733f29a"}
+2025-12-11 13:25:24.372 [http] info: POST /api/logs/ingest [req:134de1fe] {"contentLength":"18099","correlationId":"134de1fe-e8d3-40b5-97e5-3f54d58c8fc1"}
+2025-12-11 13:25:24.428 [http] info: GET /src/components/agent/messages/StreamingSkeleton.tsx 304 [req:b1de796f] (165ms) {"statusCode":304,"correlationId":"b1de796f-5593-4916-8935-dc050492bbdd"}
+2025-12-11 13:25:24.447 [http] info: GET /src/components/ui/slider.tsx 304 [req:77ec1442] (173ms) {"statusCode":304,"correlationId":"77ec1442-1119-4e2b-93b1-678d8d2f5ec5"}
+2025-12-11 13:25:24.454 [http] info: GET /src/components/ui/LightSyntaxHighlighter.tsx 304 [req:0ced2586] (173ms) {"statusCode":304,"correlationId":"0ced2586-0c44-46b0-8ddc-6659c733f29a"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:25:24.498 [ecode-platform] error: Frontend error: Console error: Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s 
+
+Check the render method of `PopChild`. 
+    at EnhancedChatMessage2 (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ai/EnhancedChatMessage.tsx:76:3)
+    at PopChildMeasure (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:63:23)
+    at PopChild (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:84:21)
+    at PresenceChild (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:122:24)
+    at AnimatePresence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:211:26)
+    at div
+    at div
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=8deb9ffd:114:13
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:54:15)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=8deb9ffd:52:7
+    at _c (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/scroll-area.tsx:21:11)
+    at div
+    at div
+    at ReplitAgentPanelV3 (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ai/ReplitAgentPanelV3.tsx:139:3)
+    at Suspense
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at Presence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-XLLYOLWP.js?v=8deb9ffd:24:11)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=8deb9ffd:174:13
+    at _c5 (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/tabs.tsx:72:12)
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:54:15)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=8deb9ffd:51:7
+    at div
+    at div
+    at PanelWithForwardedRef (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/react-resizable-panels.js?v=8deb9ffd:41:3)
+    at forwardRef(Panel)
+    at div
+    at PanelGroupWithForwardedRef (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/react-resizable-panels.js?v=8deb9ffd:1440:3)
+    at forwardRef(PanelGroup)
+    at ResizablePanelGroup (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/resizable.tsx:21:3)
+    at div
+    at div
+    at UnifiedIDELayout (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ide/UnifiedIDELayout.tsx:116:3)
+    at Suspense
+    at ErrorBoundary (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ErrorBoundary.tsx:9:5)
+    at IDEPage (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/pages/IDEPage.tsx:31:18)
+    at component
+    at Route (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=8deb9ffd:221:16)
+    at Switch (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=8deb9ffd:277:17)
+    at Suspense
+    at div
+    at MotionComponent (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:946:40)
+    at PresenceChild (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:122:24)
+    at AnimatePresence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:211:26)
+    at default (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/LazyAnimatedRoutes.tsx:22:17)
+    at Suspense
+    at LazyAnimatedRoutes (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/LazyAnimatedRoutes.tsx:49:38)
+    at div
+    at AtSymbolRedirectHandler (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/App.tsx:386:36)
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:54:15)
+    at TooltipProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=8deb9ffd:159:5)
+    at ErrorBoundary (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ErrorBoundary.tsx:9:5)
+    at AppContent (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/App.tsx:417:22)
+    at AuthProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/hooks/use-auth.tsx:26:32)
+    at ThemeProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ThemeProvider.tsx:89:33)
+    at QueryClientProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-V7DLPMS6.js?v=8deb9ffd:3030:3)
+    at PersistQueryClientProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query-persist-client.js?v=8deb9ffd:298:3)
+    at App [req:134de1fe] (126ms) {"correlationId":"134de1fe-e8d3-40b5-97e5-3f54d58c8fc1"}
+2025-12-11 13:25:24.539 [http] info: POST /api/logs/ingest 202 [req:134de1fe] (167ms) {"statusCode":202,"contentLength":"70","correlationId":"134de1fe-e8d3-40b5-97e5-3f54d58c8fc1"}
+2025-12-11 13:25:24.965 [http] info: GET /api/usage/current [req:4ca399a9] {"correlationId":"4ca399a9-b342-4ffb-923b-e4edf468caa0"}
+2025-12-11 13:25:24.967 [http] info: GET /api/agent/preferences [req:28d316f7] {"correlationId":"28d316f7-5875-4767-a215-43391b4bdeeb"}
+2025-12-11 13:25:24.968 [http] info: GET /api/agent/models [req:567476bc] {"correlationId":"567476bc-689b-4103-a0cb-806b5f473fe8"}
+2025-12-11 13:25:24.970 [http] info: GET /api/agent/tools/status [req:852abb74] {"correlationId":"852abb74-82d2-41da-a557-cda8a3f8d307"}
+2025-12-11 13:25:24.971 [http] info: GET /api/agent/tools/testing/replays [req:dd08da4f] {"query":{"projectId":"672"},"correlationId":"dd08da4f-d646-43df-8dc4-9dbac38d127b"}
+2025-12-11 13:25:24.972 [http] info: GET /api/agent/effective-model [req:0a60c83d] {"correlationId":"0a60c83d-a47b-403d-b2a3-1d357d357326"}
+2025-12-11 13:25:25.141 [http] info: GET /tools/status 200 [req:852abb74] (171ms) {"statusCode":200,"contentLength":"521","correlationId":"852abb74-82d2-41da-a557-cda8a3f8d307"}
+2025-12-11 13:25:25.144 [http] info: GET /models 200 [req:567476bc] (176ms) {"statusCode":200,"contentLength":"3908","correlationId":"567476bc-689b-4103-a0cb-806b5f473fe8"}
+2025-12-11 13:25:25.226 [http] info: GET /preferences 200 [req:28d316f7] (259ms) {"statusCode":200,"contentLength":"247","correlationId":"28d316f7-5875-4767-a215-43391b4bdeeb"}
+2025-12-11 13:25:25.228 [http] info: GET /tools/testing/replays 200 [req:dd08da4f] (257ms) {"statusCode":200,"contentLength":"24","correlationId":"dd08da4f-d646-43df-8dc4-9dbac38d127b"}
+2025-12-11 13:25:25.233 [http] info: GET /effective-model 200 [req:0a60c83d] (261ms) {"statusCode":200,"contentLength":"366","correlationId":"0a60c83d-a47b-403d-b2a3-1d357d357326"}
+2025-12-11 13:25:25.372 [http] info: GET /api/models [req:9dcd0971] {"correlationId":"9dcd0971-deff-4b3f-b695-30c6ef89b64b"}
+2025-12-11 13:25:25.374 [http] info: GET /api/agent/testing/sessions [req:561dece3] {"query":{"projectId":"672"},"correlationId":"561dece3-c87c-43ec-b37e-5a3db89a152f"}
+2025-12-11 13:25:25.392 [http] info: GET /current 200 [req:4ca399a9] (427ms) {"statusCode":200,"contentLength":"288","correlationId":"4ca399a9-b342-4ffb-923b-e4edf468caa0"}
+2025-12-11 13:25:25.458 [http] info: GET /api/models/preferred [req:b668473d] {"correlationId":"b668473d-ec50-4166-a997-0be99f8732d8"}
+2025-12-11 13:25:25.478 [http] info: POST /api/agent/conversation [req:300de539] {"contentLength":"19","correlationId":"300de539-1ae6-4483-a514-60b91849bbe8"}
+2025-12-11 13:25:25.546 [http] info: GET / 200 [req:9dcd0971] (174ms) {"statusCode":200,"contentLength":"5038","correlationId":"9dcd0971-deff-4b3f-b695-30c6ef89b64b"}
+2025-12-11 13:25:25.603 [http] info: GET /api/autonomy/sessions [req:2893163a] {"query":{"limit":"10"},"correlationId":"2893163a-f7ce-4c3d-baab-af10bbef121a"}
+2025-12-11 13:25:25.709 [http] info: GET /testing/sessions 200 [req:561dece3] (335ms) {"statusCode":200,"contentLength":"25","correlationId":"561dece3-c87c-43ec-b37e-5a3db89a152f"}
+2025-12-11 13:25:25.723 [http] info: GET /preferred 200 [req:b668473d] (265ms) {"statusCode":200,"contentLength":"64","correlationId":"b668473d-ec50-4166-a997-0be99f8732d8"}
+2025-12-11 13:25:25.762 [http] info: POST /api/logs/ingest [req:398f3e38] {"contentLength":"18039","correlationId":"398f3e38-d1b0-4893-a0b1-2d6afe8b2cb4"}
+2025-12-11 13:25:25 [model-normalizer] debug: Model alias normalized: "claude-sonnet-4-5-20250929" → "claude-sonnet-4-5-20250929" {"environment":"development","details":[]}
+2025-12-11 13:25:25.818 [http] info: GET /api/rag/stats [req:d7963cd1] {"correlationId":"d7963cd1-47c6-4552-8ba5-72713eb9ca2f"}
+2025-12-11 13:25:25.836 [http] info: POST /conversation 200 [req:300de539] (358ms) {"statusCode":200,"contentLength":"220","correlationId":"300de539-1ae6-4483-a514-60b91849bbe8"}
+2025-12-11 13:25:25.880 [http] info: GET /sessions 200 [req:2893163a] (277ms) {"statusCode":200,"contentLength":"40","correlationId":"2893163a-f7ce-4c3d-baab-af10bbef121a"}
+2025-12-11 13:25:25 [ai-metering] info: Tracked AI usage: user=98, model=claude-sonnet-4-5-20250929, tokens=0, cost=$0.000000 {"environment":"development","details":[]}
+2025-12-11 13:25:25 [ai-metering] debug: No subscription ID - skipping Stripe queue {"environment":"development","details":[]}
+2025-12-11 13:25:25 [ai-usage-tracker] info: AI usage tracked: user=98, model=claude-sonnet-4-5-20250929, tokens=0 {"environment":"development","details":[]}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:25:25.891 [ecode-platform] error: Frontend error: Console error: Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s 
+
+Check the render method of `PopChild`. 
+    at EnhancedChatMessage2 (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ai/EnhancedChatMessage.tsx:76:3)
+    at PopChildMeasure (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:63:23)
+    at PopChild (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:84:21)
+    at PresenceChild (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:122:24)
+    at AnimatePresence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:211:26)
+    at div
+    at div
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-N36BPREP.js?v=8deb9ffd:227:13
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=8deb9ffd:114:13
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-N36BPREP.js?v=8deb9ffd:227:13
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-N36BPREP.js?v=8deb9ffd:43:15)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=8deb9ffd:52:7
+    at _c (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/scroll-area.tsx:21:11)
+    at div
+    at div
+    at ReplitAgentPanelV3 (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ai/ReplitAgentPanelV3.tsx:139:3)
+    at Suspense
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-N36BPREP.js?v=8deb9ffd:227:13
+    at Presence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-XLLYOLWP.js?v=8deb9ffd:24:11)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=8deb9ffd:174:13
+    at _c5 (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/tabs.tsx:72:12)
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-N36BPREP.js?v=8deb9ffd:227:13
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-N36BPREP.js?v=8deb9ffd:43:15)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=8deb9ffd:51:7
+    at div
+    at div
+    at PanelWithForwardedRef (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/react-resizable-panels.js?v=8deb9ffd:41:3)
+    at forwardRef(Panel)
+    at div
+    at PanelGroupWithForwardedRef (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/react-resizable-panels.js?v=8deb9ffd:1440:3)
+    at forwardRef(PanelGroup)
+    at ResizablePanelGroup (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/resizable.tsx:21:3)
+    at div
+    at div
+    at UnifiedIDELayout (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ide/UnifiedIDELayout.tsx:116:3)
+    at Suspense
+    at ErrorBoundary (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ErrorBoundary.tsx:9:5)
+    at IDEPage (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/pages/IDEPage.tsx:31:18)
+    at component
+    at Route (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=8deb9ffd:221:16)
+    at Switch (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=8deb9ffd:277:17)
+    at Suspense
+    at div
+    at MotionComponent (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:946:40)
+    at PresenceChild (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:122:24)
+    at AnimatePresence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:211:26)
+    at default (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/LazyAnimatedRoutes.tsx:22:17)
+    at Suspense
+    at LazyAnimatedRoutes (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/LazyAnimatedRoutes.tsx:49:38)
+    at div
+    at AtSymbolRedirectHandler (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/App.tsx:386:36)
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-N36BPREP.js?v=8deb9ffd:43:15)
+    at TooltipProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=8deb9ffd:159:5)
+    at ErrorBoundary (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ErrorBoundary.tsx:9:5)
+    at AppContent (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/App.tsx:417:22)
+    at AuthProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/hooks/use-auth.tsx:26:32)
+    at ThemeProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ThemeProvider.tsx:89:33)
+    at QueryClientProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-V7DLPMS6.js?v=8deb9ffd:3030:3)
+    at PersistQueryClientProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query-persist-client.js?v=8deb9ffd:298:3)
+    at App [req:398f3e38] (129ms) {"correlationId":"398f3e38-d1b0-4893-a0b1-2d6afe8b2cb4"}
+2025-12-11 13:25:25.969 [http] info: POST /api/logs/ingest 202 [req:398f3e38] (207ms) {"statusCode":202,"contentLength":"70","correlationId":"398f3e38-d1b0-4893-a0b1-2d6afe8b2cb4"}
+2025-12-11 13:25:25 [rag-router] warn: Knowledge graph tables may not exist yet: {"environment":"development","details":[{}]}
+2025-12-11 13:25:26.077 [http] info: POST /api/logs/ingest [req:5109e5f0] {"contentLength":"7656","correlationId":"5109e5f0-0daa-4b97-9d7b-984191e11b58"}
+2025-12-11 13:25:26.089 [http] info: GET /stats 200 [req:d7963cd1] (271ms) {"statusCode":200,"contentLength":"171","correlationId":"d7963cd1-47c6-4552-8ba5-72713eb9ca2f"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:25:26.257 [http] info: POST /api/logs/ingest 202 [req:5109e5f0] (180ms) {"statusCode":202,"contentLength":"69","correlationId":"5109e5f0-0daa-4b97-9d7b-984191e11b58"}
+2025-12-11 13:25:27.526 [http] info: GET /api/preview/url [req:e5f84c82] {"query":{"projectId":"672"},"correlationId":"e5f84c82-e7bf-470c-acaf-e24cc39e272e"}
+2025-12-11 13:25:27.873 [http] info: GET /url 200 [req:e5f84c82] (347ms) {"statusCode":200,"contentLength":"77","correlationId":"e5f84c82-e7bf-470c-acaf-e24cc39e272e"}
+2025-12-11 13:25:31.031 [http] info: POST /api/logs/ingest [req:17e6dc37] {"contentLength":"3644","correlationId":"17e6dc37-9af4-4b42-8402-1bf7abe9d61f"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:25:31.205 [http] info: POST /api/logs/ingest 202 [req:17e6dc37] (174ms) {"statusCode":202,"contentLength":"69","correlationId":"17e6dc37-9af4-4b42-8402-1bf7abe9d61f"}
+2025-12-11 13:25:33.055 [http] info: GET /api/preview/url [req:ae2ab9c1] {"query":{"projectId":"672"},"correlationId":"ae2ab9c1-d4f2-467a-8ebd-53fe1f2042a1"}
+2025-12-11 13:25:33.407 [http] info: GET /url 200 [req:ae2ab9c1] (352ms) {"statusCode":200,"contentLength":"77","correlationId":"ae2ab9c1-d4f2-467a-8ebd-53fe1f2042a1"}
+2025-12-11 13:25:36.034 [http] info: POST /api/logs/ingest [req:126de15f] {"contentLength":"1656","correlationId":"126de15f-af1e-4f51-98a9-44c8c0f4baa0"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:25:36.214 [http] info: POST /api/logs/ingest 202 [req:126de15f] (180ms) {"statusCode":202,"contentLength":"69","correlationId":"126de15f-af1e-4f51-98a9-44c8c0f4baa0"}
+2025-12-11 13:25:38.604 [http] info: GET /api/preview/url [req:19922a8c] {"query":{"projectId":"672"},"correlationId":"19922a8c-33c6-4859-925a-beb93efc1173"}
+2025-12-11 13:25:38.951 [http] info: GET /url 200 [req:19922a8c] (347ms) {"statusCode":200,"contentLength":"77","correlationId":"19922a8c-33c6-4859-925a-beb93efc1173"}
+2025-12-11 13:25:41.027 [http] info: POST /api/logs/ingest [req:7301ea4b] {"contentLength":"1644","correlationId":"7301ea4b-d724-4b03-b59c-b5ce4d70c54c"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:25:41.201 [http] info: POST /api/logs/ingest 202 [req:7301ea4b] (174ms) {"statusCode":202,"contentLength":"69","correlationId":"7301ea4b-d724-4b03-b59c-b5ce4d70c54c"}
+2025-12-11 13:25:44.132 [http] info: GET /api/preview/url [req:bb60489c] (1ms) {"query":{"projectId":"672"},"correlationId":"bb60489c-8e18-478d-91e0-fa4cf4cdfd97"}
+2025-12-11 13:25:44.485 [http] info: GET /url 200 [req:bb60489c] (353ms) {"statusCode":200,"contentLength":"77","correlationId":"bb60489c-8e18-478d-91e0-fa4cf4cdfd97"}
+2025-12-11 13:25:46.031 [http] info: POST /api/logs/ingest [req:2d97dcdd] {"contentLength":"1642","correlationId":"2d97dcdd-c20c-445f-beae-dbb13800dcdb"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:25:46.207 [http] info: POST /api/logs/ingest 202 [req:2d97dcdd] (176ms) {"statusCode":202,"contentLength":"69","correlationId":"2d97dcdd-c20c-445f-beae-dbb13800dcdb"}
+2025-12-11 13:25:47.568 [http] info: POST /api/logs/ingest [req:242b8322] {"contentLength":"10258","correlationId":"242b8322-6c9c-4f14-8867-89196da0200f"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:25:47.749 [http] info: POST /api/logs/ingest 202 [req:242b8322] (181ms) {"statusCode":202,"contentLength":"70","correlationId":"242b8322-6c9c-4f14-8867-89196da0200f"}
+2025-12-11 13:25:49.677 [http] info: GET /api/preview/url [req:7bff4baf] {"query":{"projectId":"672"},"correlationId":"7bff4baf-7d9c-4f37-b639-726da72b4ff8"}
+2025-12-11 13:25:50.032 [http] info: GET /url 200 [req:7bff4baf] (355ms) {"statusCode":200,"contentLength":"77","correlationId":"7bff4baf-7d9c-4f37-b639-726da72b4ff8"}
+2025-12-11 13:25:51.036 [http] info: POST /api/logs/ingest [req:f3df5f14] (1ms) {"contentLength":"1656","correlationId":"f3df5f14-f372-4211-a6ad-e615ac11df36"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:25:51.213 [http] info: POST /api/logs/ingest 202 [req:f3df5f14] (178ms) {"statusCode":202,"contentLength":"69","correlationId":"f3df5f14-f372-4211-a6ad-e615ac11df36"}
+2025-12-11 13:25:53.273 [http] info: GET /api/projects [req:9f18d11d] {"correlationId":"9f18d11d-a357-47c6-b572-b846a9b1ac1c"}
+2025-12-11 13:25:53.913 [http] info: GET /api/projects 200 [req:9f18d11d] (640ms) {"statusCode":200,"contentLength":"114523","correlationId":"9f18d11d-a357-47c6-b572-b846a9b1ac1c"}
+2025-12-11 13:25:55.213 [http] info: GET /api/preview/url [req:b9bfef1f] {"query":{"projectId":"672"},"correlationId":"b9bfef1f-ceee-4517-abdb-b91c20ebf3d1"}
+2025-12-11 13:25:55.572 [http] info: GET /url 200 [req:b9bfef1f] (359ms) {"statusCode":200,"contentLength":"77","correlationId":"b9bfef1f-ceee-4517-abdb-b91c20ebf3d1"}
+2025-12-11 13:25:56.031 [http] info: POST /api/logs/ingest [req:28db2819] {"contentLength":"2643","correlationId":"28db2819-bfb2-479f-a12c-c835f947dd75"}
+⚠️  SECURITY WARNING: CSRF protection bypassed in development mode
+2025-12-11 13:25:56.215 [http] info: POST /api/logs/ingest 202 [req:28db2819] (184ms) {"statusCode":202,"contentLength":"69","correlationId":"28db2819-bfb2-479f-a12c-c835f947dd75"}
+2025-12-11 13:26:00.765 [http] info: GET /
