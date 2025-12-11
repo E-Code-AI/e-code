@@ -1363,26 +1363,27 @@ export function ReplitAgentPanelV3({
 
   return (
     <div className={cn("h-full flex flex-col bg-background", className)} data-testid="replit-agent-panel-v3">
-      {/* Header with Tabs */}
-      <div className="px-4 py-2 border-b border-border bg-card space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ECodeLogo size="xs" showText={true} />
+      {/* Header - Optimized for all screen sizes */}
+      <div className="px-2 sm:px-4 py-2 border-b border-border bg-card">
+        <div className="flex items-center justify-between gap-1">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-shrink">
+            <ECodeLogo size="xs" showText={!isCompactMode} />
             {isWorking && (
-              <Badge variant="secondary" className="text-xs animate-pulse" data-testid="header-badge-working">
-                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                Working
+              <Badge variant="secondary" className="text-[10px] sm:text-xs animate-pulse flex-shrink-0" data-testid="header-badge-working">
+                <Loader2 className="h-3 w-3 mr-0.5 sm:mr-1 animate-spin" />
+                <span className="hidden sm:inline">Working</span>
               </Badge>
             )}
             {/* Model chip with dropdown for quick model selection */}
             <DropdownMenu open={isModelSelectorOpen} onOpenChange={setIsModelSelectorOpen}>
               <DropdownMenuTrigger asChild>
-                <button className="focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-md">
+                <button className="focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-md flex-shrink-0">
                   <CurrentModelChip
                     modelName={model?.name}
                     provider={provider || undefined}
                     supportsExtendedThinking={modelSupportsExtendedThinking}
                     extendedThinkingEnabled={capabilities.find(c => c.id === 'extended_thinking')?.enabled}
+                    compact={isCompactMode}
                     data-testid="current-model-chip"
                   />
                 </button>
@@ -1718,80 +1719,6 @@ export function ReplitAgentPanelV3({
             actualModelName={model?.name}
           />
         </div>
-        
-        {/* Quick actions - Enhanced with 44pt touch targets for mobile */}
-        <AnimatePresence>
-        {!isWorking && messages.length === 1 && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="grid grid-cols-2 gap-1.5 sm:gap-2 mt-2 sm:mt-3" 
-            data-testid="quick-actions"
-          >
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setInput("Build a full-stack dashboard with real-time charts, data tables with sorting/filtering, user authentication, and dark mode support")}
-              className={cn(
-                "flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg sm:rounded-xl",
-                "bg-muted/50 hover:bg-muted border border-border/50",
-                "transition-all duration-200 hover:shadow-md",
-                "text-left min-h-[36px] sm:min-h-[44px]"
-              )}
-              data-testid="quick-action-dashboard"
-            >
-              <span className="text-sm sm:text-lg">📊</span>
-              <span className="text-[11px] sm:text-sm font-medium">Dashboard</span>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setInput("Add Stripe payment integration with subscription billing, usage tracking, and customer portal")}
-              className={cn(
-                "flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg sm:rounded-xl",
-                "bg-muted/50 hover:bg-muted border border-border/50",
-                "transition-all duration-200 hover:shadow-md",
-                "text-left min-h-[36px] sm:min-h-[44px]"
-              )}
-              data-testid="quick-action-payments"
-            >
-              <span className="text-sm sm:text-lg">💳</span>
-              <span className="text-[11px] sm:text-sm font-medium">Payments</span>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setInput("Implement user authentication with email/password, social login (Google, GitHub), session management, and protected routes")}
-              className={cn(
-                "flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg sm:rounded-xl",
-                "bg-muted/50 hover:bg-muted border border-border/50",
-                "transition-all duration-200 hover:shadow-md",
-                "text-left min-h-[36px] sm:min-h-[44px]"
-              )}
-              data-testid="quick-action-auth"
-            >
-              <span className="text-sm sm:text-lg">🔐</span>
-              <span className="text-[11px] sm:text-sm font-medium">Auth</span>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setInput("Debug and fix all TypeScript errors, optimize performance bottlenecks, and add proper error handling throughout the codebase")}
-              className={cn(
-                "flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg sm:rounded-xl",
-                "bg-muted/50 hover:bg-muted border border-border/50",
-                "transition-all duration-200 hover:shadow-md",
-                "text-left min-h-[36px] sm:min-h-[44px]"
-              )}
-              data-testid="quick-action-debug"
-            >
-              <span className="text-sm sm:text-lg">🔧</span>
-              <span className="text-[11px] sm:text-sm font-medium">Debug</span>
-            </motion.button>
-          </motion.div>
-        )}
-        </AnimatePresence>
       </div>
         </>
 

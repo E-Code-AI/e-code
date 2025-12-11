@@ -15,6 +15,7 @@ interface CurrentModelChipProps {
   extendedThinkingEnabled?: boolean;
   onClick?: () => void;
   className?: string;
+  compact?: boolean;
 }
 
 const getProviderIcon = (provider: string) => {
@@ -47,7 +48,8 @@ export function CurrentModelChip({
   supportsExtendedThinking,
   extendedThinkingEnabled,
   onClick,
-  className
+  className,
+  compact = false
 }: CurrentModelChipProps) {
   const ProviderIcon = provider ? getProviderIcon(provider) : Cpu;
   const providerColor = provider ? getProviderColor(provider) : 'text-gray-500';
@@ -72,12 +74,13 @@ export function CurrentModelChip({
             variant="outline"
             className={cn(
               "text-xs cursor-pointer hover:bg-accent transition-colors",
+              compact && "px-1.5",
               className
             )}
             onClick={onClick}
           >
-            <ProviderIcon className={cn("h-3 w-3 mr-1", providerColor)} />
-            <span className="max-w-24 truncate">{shortModelName}</span>
+            <ProviderIcon className={cn("h-3 w-3", !compact && "mr-1", providerColor)} />
+            {!compact && <span className="max-w-20 truncate">{shortModelName}</span>}
             {showWarning && (
               <AlertCircle className="h-3 w-3 ml-1 text-yellow-500" />
             )}
