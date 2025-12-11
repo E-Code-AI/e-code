@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useAgentConversationStore, type Message } from '@/stores/agentConversationStore';
+import { useAutonomousChatIntegration } from '@/hooks/use-autonomous-chat-integration';
+import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
 import {
   Tooltip,
   TooltipContent,
@@ -135,6 +137,8 @@ interface ReplitAgentPanelV3Props {
   onAgentToolsSettingsChange?: (settings: AgentToolsSettings) => void;
   // ✅ FIX (Dec 11, 2025): Show ModeSelector immediately during bootstrap
   isBootstrapping?: boolean;
+  // ✅ FIX (Dec 11, 2025): Bootstrap token for inline autonomous workspace creation
+  bootstrapToken?: string | null;
 }
 
 function categorizeError(error: unknown): { title: string; message: string } {
@@ -216,10 +220,14 @@ export function ReplitAgentPanelV3({
   autoStart = true,
   agentToolsSettings: externalAgentToolsSettings,
   onAgentToolsSettingsChange,
-  isBootstrapping = false
+  isBootstrapping = false,
+  bootstrapToken
 }: ReplitAgentPanelV3Props) {
   // AI Model preference hook
   const { modelId, provider, supportsExtendedThinking: modelSupportsExtendedThinking, model, setPreferredModel } = useAgentModelPreference();
+  
+  // Autonomous build store for inline chat integration
+  const autonomousBuildStore = useAutonomousBuildStore();
   
   // State for model selector dropdown (CurrentModelChip click)
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
@@ -317,6 +325,16 @@ export function ReplitAgentPanelV3({
   const [ragEnabled, setRagEnabled] = useState(true);
   const [showRAGContext, setShowRAGContext] = useState(false);
   const { data: ragStats } = useRAGStats();
+  
+  // Autonomous chat integration - bridges WebSocket events to inline chat messages
+  // This hook connects to the autonomous workspace WebSocket and pushes messages to the chat
+  const { sendBuildModeSelection, requestPlanChange } = useAutonomousChatIntegration({
+    conversationId,
+    projectId: typeof projectId === 'string' ? parseInt(projectId, 10) : projectId,
+    sessionId: externalSessionId,
+    enabled: !!bootstrapToken && autonomousBuildStore.inlineMode,
+    bootstrapToken
+  });
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
