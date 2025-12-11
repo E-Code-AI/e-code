@@ -29,6 +29,16 @@ export default function IDEPage() {
 
   const searchParams = new URLSearchParams(window.location.search);
   const bootstrapToken = searchParams.get('bootstrap');
+  
+  // ✅ CRITICAL DEBUG (Dec 11, 2025): Trace bootstrapToken extraction
+  console.log('[Telemetry] [IDEPage] Component render:', {
+    projectId,
+    hasBootstrapToken: !!bootstrapToken,
+    tokenLength: bootstrapToken?.length,
+    tokenPreview: bootstrapToken ? bootstrapToken.substring(0, 30) : null,
+    fullUrl: window.location.href,
+    searchString: window.location.search
+  });
 
   const handleWorkspaceComplete = useCallback(() => {
     const url = new URL(window.location.href);

@@ -70,7 +70,8 @@ const CommandPalette = lazy(() => import('@/components/CommandPalette').then(mod
 const GlobalSearch = lazy(() => import('@/components/GlobalSearch').then(mod => ({ default: mod.GlobalSearch })));
 const CollaborationPanel = lazy(() => import('@/components/CollaborationPanel').then(mod => ({ default: mod.CollaborationPanel })));
 const ReplitDB = lazy(() => import('@/components/ReplitDB').then(mod => ({ default: mod.ReplitDB })));
-const AutonomousWorkspaceViewer = lazy(() => import('@/components/ide/AutonomousWorkspaceViewer').then(mod => ({ default: mod.AutonomousWorkspaceViewer })));
+// ✅ FIX (Dec 11, 2025): Use default export for simpler lazy loading
+const AutonomousWorkspaceViewer = lazy(() => import('@/components/ide/AutonomousWorkspaceViewer'));
 
 const ReplitGitPanel = lazy(() => import('@/components/editor/ReplitGitPanel').then(mod => ({ default: mod.ReplitGitPanel })));
 const ReplitPackagesPanel = lazy(() => import('@/components/editor/ReplitPackagesPanel').then(mod => ({ default: mod.ReplitPackagesPanel })));
@@ -1119,14 +1120,24 @@ function UnifiedIDELayout({
         </div>
       )}
 
-      <Suspense fallback={null}>
-        <AutonomousWorkspaceViewer
-          bootstrapToken={bootstrapToken ?? null}
-          projectId={projectId}
-          onComplete={onWorkspaceComplete}
-          onError={onWorkspaceError}
-        />
-      </Suspense>
+      {/* Autonomous Workspace Viewer - Shows bootstrap progress */}
+      {bootstrapToken && (
+        <Suspense fallback={
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center" data-testid="workspace-viewer-loading">
+            <div className="text-center space-y-4">
+              <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="text-sm text-muted-foreground">Loading workspace viewer...</p>
+            </div>
+          </div>
+        }>
+          <AutonomousWorkspaceViewer
+            bootstrapToken={bootstrapToken}
+            projectId={projectId}
+            onComplete={onWorkspaceComplete}
+            onError={onWorkspaceError}
+          />
+        </Suspense>
+      )}
 
       {enableShortcutHint && <ShortcutHint />}
       {enableShortcutTester && <ShortcutTester />}
