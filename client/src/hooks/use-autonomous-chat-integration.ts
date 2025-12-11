@@ -388,10 +388,28 @@ export function useAutonomousChatIntegration({
   }, []);
 
   useEffect(() => {
-    if (!enabled || !conversationId) return;
+    // DEBUG: Log activation conditions
+    console.log('[AutonomousChatIntegration] useEffect triggered:', {
+      enabled,
+      conversationId,
+      externalConversationId,
+      tempConversationId: tempConversationIdRef.current,
+      projectId,
+      sessionId,
+      hasBootstrapToken: !!bootstrapToken,
+      hasConnected: hasConnectedRef.current
+    });
+    
+    if (!enabled || !conversationId) {
+      console.log('[AutonomousChatIntegration] Skipping - enabled:', enabled, 'conversationId:', conversationId);
+      return;
+    }
     
     // Prevent multiple WebSocket connections
-    if (hasConnectedRef.current) return;
+    if (hasConnectedRef.current) {
+      console.log('[AutonomousChatIntegration] Skipping - already connected');
+      return;
+    }
     
     let wsProjectId = projectId;
     let wsSessionId = sessionId;
