@@ -7,10 +7,10 @@ interface ECodeLogoProps {
 }
 
 const sizeMap: Record<NonNullable<ECodeLogoProps['size']>, { icon: string; text: string }> = {
-  xs: { icon: 'h-5 w-5', text: 'text-base' },
-  sm: { icon: 'h-6 w-6', text: 'text-lg' },
-  md: { icon: 'h-8 w-8', text: 'text-xl' },
-  lg: { icon: 'h-10 w-10', text: 'text-2xl' }
+  xs: { icon: 'h-6 w-6', text: 'text-base' },
+  sm: { icon: 'h-7 w-7', text: 'text-lg' },
+  md: { icon: 'h-9 w-9', text: 'text-xl' },
+  lg: { icon: 'h-11 w-11', text: 'text-2xl' }
 };
 
 export function ECodeLogo({ className, size = 'md', showText = true }: ECodeLogoProps) {
