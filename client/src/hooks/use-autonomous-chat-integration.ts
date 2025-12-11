@@ -14,7 +14,7 @@ import type { Message, AutonomousWorkspacePayload, AutonomousBuildTask } from '@
 import type { AutonomousBuildPhase } from '@/stores/autonomousBuildStore';
 
 interface AutonomousProgressEvent {
-  type: 'planning' | 'plan_ready' | 'awaiting_approval' | 'executing' | 'step_update' | 'complete' | 'error' | 'connected' | 'status' | 'plan_chunk' | 'plan_generated' | 'task_start' | 'task_progress' | 'task_complete' | 'step' | 'summary' | 'file_created' | 'command_output' | 'agent_message';
+  type: 'planning' | 'plan_ready' | 'awaiting_approval' | 'executing' | 'step_update' | 'complete' | 'error' | 'connected' | 'status' | 'plan_chunk' | 'plan_generated' | 'task_start' | 'task_progress' | 'task_complete' | 'step' | 'summary' | 'file_created' | 'command_output' | 'agent_message' | 'step_start' | 'step_complete' | 'checkpoint_created';
   projectId?: number;
   sessionId?: string;
   status?: string;
@@ -579,7 +579,9 @@ export function useAutonomousChatIntegration({
       case 'file_created': {
         const fileName = event.fileName || event.filePath;
         if (fileName) {
-          store.setProgress(Math.min(store.progress + 2, 95));
+          // Compute new progress BEFORE setting to store (avoid stale snapshot)
+          const newProgress = Math.min(store.progress + 2, 95);
+          store.setProgress(newProgress);
           
           // Update existing progress message with file creation info
           if (lastMessageIdRef.current) {
@@ -589,7 +591,7 @@ export function useAutonomousChatIntegration({
               autonomousPayload: {
                 phase: 'executing',
                 currentTask: `Created: ${fileName}`,
-                progress: store.progress
+                progress: newProgress
               }
             });
           } else {
@@ -599,7 +601,7 @@ export function useAutonomousChatIntegration({
               {
                 phase: 'executing',
                 currentTask: `Created: ${fileName}`,
-                progress: store.progress
+                progress: newProgress
               }
             );
             addMessage(conversationId, msg);
@@ -645,6 +647,70 @@ export function useAutonomousChatIntegration({
           addMessage(conversationId, msg);
           console.log('[AutonomousChatIntegration] ✅ Agent message:', msgContent.substring(0, 50));
         }
+        break;
+      }
+
+      // Handle step_start from workflow engine
+      case 'step_start': {
+        const stepTitle = data?.stepTitle || data?.stepType || 'Working on step...';
+        store.setPhase('building');
+        store.setCurrentTask(stepTitle);
+        
+        // Update or create progress message
+        if (lastMessageIdRef.current) {
+          updateMessage(conversationId, lastMessageIdRef.current, {
+            content: `🔧 ${stepTitle}`,
+            isStreaming: true,
+            autonomousPayload: {
+              phase: 'executing',
+              currentTask: stepTitle,
+              progress: store.progress
+            }
+          });
+        } else {
+          const msg = createAutonomousMessage(
+            'autonomous_progress',
+            `🔧 ${stepTitle}`,
+            {
+              phase: 'executing',
+              currentTask: stepTitle,
+              progress: store.progress
+            }
+          );
+          addMessage(conversationId, msg);
+          lastMessageIdRef.current = msg.id;
+        }
+        console.log('[AutonomousChatIntegration] ✅ Step started:', stepTitle);
+        break;
+      }
+
+      // Handle step_complete from workflow engine
+      case 'step_complete': {
+        const completedStep = data?.stepTitle || data?.stepType || 'Step';
+        // Compute new progress BEFORE setting to store (avoid stale snapshot)
+        const newProgress = Math.min(store.progress + 5, 95);
+        store.setProgress(newProgress);
+        
+        // Update progress message with completed step using computed newProgress
+        if (lastMessageIdRef.current) {
+          updateMessage(conversationId, lastMessageIdRef.current, {
+            content: `✅ Completed: ${completedStep}`,
+            isStreaming: true,
+            autonomousPayload: {
+              phase: 'executing',
+              currentTask: `Completed: ${completedStep}`,
+              progress: newProgress
+            }
+          });
+        }
+        console.log('[AutonomousChatIntegration] ✅ Step completed:', completedStep, 'Progress:', newProgress);
+        break;
+      }
+
+      // Handle checkpoint creation notifications
+      case 'checkpoint_created': {
+        console.log('[AutonomousChatIntegration] ✅ Checkpoint created');
+        // Silent - don't create message for checkpoint (internal state)
         break;
       }
     }
