@@ -363,7 +363,7 @@ export function MobileMoreMenu({
       {isOpen && (
         <>
           <motion.div
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[60]"
             variants={backdropVariants}
             initial="hidden"
             animate="visible"
@@ -375,7 +375,7 @@ export function MobileMoreMenu({
           
           <motion.div
             className={cn(
-              'fixed bottom-0 left-0 right-0 bg-card dark:bg-[var(--ecode-surface)] rounded-t-2xl shadow-2xl z-50 max-h-[70vh] flex flex-col',
+              'fixed bottom-0 left-0 right-0 bg-card dark:bg-[var(--ecode-surface)] rounded-t-2xl shadow-2xl z-[70] max-h-[70vh] flex flex-col',
               className
             )}
             variants={sheetVariants}
