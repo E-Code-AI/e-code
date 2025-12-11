@@ -918,10 +918,9 @@ function UnifiedIDELayout({
             </Button>
           </div>
           <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <ReplitDB
-              projectId={parseInt(projectId, 10)}
-              className="h-[calc(100%-48px)]"
-            />
+            <div className="h-[calc(100%-48px)]">
+              <ReplitDB projectId={parseInt(projectId, 10)} />
+            </div>
           </Suspense>
         </div>
       )}
@@ -935,7 +934,9 @@ function UnifiedIDELayout({
             </Button>
           </div>
           <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <ReplitGitPanel projectId={parseInt(projectId, 10)} className="h-[calc(100%-48px)]" />
+            <div className="h-[calc(100%-48px)]">
+              <ReplitGitPanel projectId={projectId} />
+            </div>
           </Suspense>
         </div>
       )}
@@ -949,7 +950,9 @@ function UnifiedIDELayout({
             </Button>
           </div>
           <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <ReplitPackagesPanel projectId={parseInt(projectId, 10)} className="h-[calc(100%-48px)]" />
+            <div className="h-[calc(100%-48px)]">
+              <ReplitPackagesPanel projectId={projectId} />
+            </div>
           </Suspense>
         </div>
       )}
@@ -963,7 +966,9 @@ function UnifiedIDELayout({
             </Button>
           </div>
           <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <ReplitDebuggerPanel projectId={parseInt(projectId, 10)} className="h-[calc(100%-48px)]" />
+            <div className="h-[calc(100%-48px)]">
+              <ReplitDebuggerPanel projectId={projectId} />
+            </div>
           </Suspense>
         </div>
       )}
@@ -977,7 +982,9 @@ function UnifiedIDELayout({
             </Button>
           </div>
           <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <ReplitSecretsPanel projectId={parseInt(projectId, 10)} className="h-[calc(100%-48px)]" />
+            <div className="h-[calc(100%-48px)]">
+              <ReplitSecretsPanel projectId={projectId} />
+            </div>
           </Suspense>
         </div>
       )}
@@ -991,7 +998,9 @@ function UnifiedIDELayout({
             </Button>
           </div>
           <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <WorkflowsPanel projectId={parseInt(projectId, 10)} className="h-[calc(100%-48px)]" />
+            <div className="h-[calc(100%-48px)]">
+              <WorkflowsPanel projectId={projectId} />
+            </div>
           </Suspense>
         </div>
       )}
@@ -1005,7 +1014,9 @@ function UnifiedIDELayout({
             </Button>
           </div>
           <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <ReplitHistoryPanel projectId={parseInt(projectId, 10)} className="h-[calc(100%-48px)]" />
+            <div className="h-[calc(100%-48px)]">
+              <ReplitHistoryPanel projectId={projectId} />
+            </div>
           </Suspense>
         </div>
       )}
@@ -1033,7 +1044,9 @@ function UnifiedIDELayout({
             </Button>
           </div>
           <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <ReplitSettingsPanel projectId={parseInt(projectId, 10)} className="h-[calc(100%-48px)]" />
+            <div className="h-[calc(100%-48px)]">
+              <ReplitSettingsPanel projectId={projectId} />
+            </div>
           </Suspense>
         </div>
       )}
