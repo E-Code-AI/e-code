@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Project } from '@shared/schema';
 import { ECodeLoading } from '@/components/ECodeLoading';
 import { Button } from '@/components/ui/button';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
 
 const UnifiedIDELayout = lazy(() => import('@/components/ide/UnifiedIDELayout'));
