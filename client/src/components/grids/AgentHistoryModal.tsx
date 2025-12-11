@@ -32,7 +32,7 @@ const AgentMetricsDashboard = lazy(() => import('./AgentMetricsDashboard').then(
 interface AgentHistoryModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projectId?: number;
+  projectId: number;
   initialSessionId?: string;
 }
 

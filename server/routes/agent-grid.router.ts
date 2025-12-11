@@ -49,12 +49,18 @@ function parseQueryParams(query: any, userId?: number) {
 /**
  * GET /api/agent-grid/sessions
  * Get paginated list of agent sessions
+ * REQUIRES projectId parameter to scope sessions to current project
  */
 router.get('/sessions', requireAuth, asyncHandler(async (req: Request, res: Response) => {
   const userId = (req.user as any)?.id;
   const params = parseQueryParams(req.query, userId);
   
-  logger.debug('Fetching sessions grid data', { userId: params.userId, page: params.page });
+  if (!params.projectId) {
+    logger.warn('Sessions request missing required projectId parameter');
+    return res.status(400).json({ error: 'projectId parameter is required' });
+  }
+  
+  logger.debug('Fetching sessions grid data', { userId: params.userId, projectId: params.projectId, page: params.page });
   const result = await agentGridDataService.getSessions(params);
   
   if (result.error) {
@@ -143,10 +149,16 @@ router.get('/conversations', requireAuth, asyncHandler(async (req: Request, res:
 /**
  * GET /api/agent-grid/metrics
  * Get aggregated metrics for dashboard
+ * REQUIRES projectId parameter to scope metrics to current project
  */
 router.get('/metrics', requireAuth, asyncHandler(async (req: Request, res: Response) => {
   const userId = (req.user as any)?.id;
   const params = parseQueryParams(req.query, userId);
+  
+  if (!params.projectId) {
+    logger.warn('Metrics request missing required projectId parameter');
+    return res.status(400).json({ error: 'projectId parameter is required' });
+  }
   
   logger.debug('Fetching metrics dashboard data', { userId: params.userId, projectId: params.projectId });
   const result = await agentGridDataService.getMetrics(params);
