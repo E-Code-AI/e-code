@@ -90,6 +90,16 @@ export function useAutonomousChatIntegration({
   enabled = true,
   bootstrapToken
 }: UseAutonomousChatIntegrationOptions) {
+  // DEBUG: Log on every render to trace hook execution
+  console.log('[AutonomousChatIntegration] Hook render:', {
+    externalConversationId,
+    projectId,
+    sessionId,
+    enabled,
+    hasBootstrapToken: !!bootstrapToken,
+    tokenPreview: bootstrapToken ? bootstrapToken.substring(0, 30) + '...' : null
+  });
+  
   const { addMessage, updateMessage } = useAgentConversationStore();
   const wsRef = useRef<WebSocket | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
