@@ -107,10 +107,36 @@ interface DeviceConnection {
   isAlive: boolean; // For heartbeat tracking
 }
 
+// ✅ Build State Cache (Dec 11, 2025): Store current build progress for reconnecting clients
+// This solves the issue where clients lose connection during build and miss updates
+interface BuildStateCache {
+  projectId: string;
+  sessionId: string;
+  status: 'planning' | 'in_progress' | 'completed' | 'failed';
+  phase: string;
+  phaseName?: string;
+  progress: number;
+  currentTask?: string;
+  completedTasks: string[];
+  recentSteps: Array<{
+    type: string;
+    title: string;
+    timestamp: Date;
+    details?: string[];
+  }>;
+  plan?: any;
+  error?: string;
+  lastUpdated: Date;
+}
+
 class AgentWebSocketService {
   public wss: WebSocketServer | null = null;
   private connections = new Map<string, Set<DeviceConnection>>();
   private pingInterval: NodeJS.Timeout | null = null;
+  
+  // ✅ Build State Cache: connectionKey -> BuildStateCache
+  // Stores current build state so reconnecting clients get immediate state sync
+  private buildStateCache = new Map<string, BuildStateCache>();
   
   initialize(server: Server) {
     // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
@@ -448,15 +474,75 @@ class AgentWebSocketService {
               workflowId: workflow.id
             }));
           } else if (workflow.status === 'in_progress') {
-            ws.send(JSON.stringify({
-              type: 'status',
-              sessionId,
-              projectId,
-              message: 'Workspace creation in progress...',
-              status: 'in_progress',
-              progress: workflow.progress || 0,
-              workflowId: workflow.id
-            }));
+            // ✅ Build State Cache (Dec 11, 2025): Send cached build state for reconnecting clients
+            const cachedState = this.getBuildState(projectId, sessionId);
+            
+            if (cachedState && cachedState.recentSteps.length > 0) {
+              // Send full cached state so client can reconstruct progress
+              logger.info(`[Agent WebSocket] 📦 Sending cached build state to reconnecting client (${cachedState.recentSteps.length} steps, ${cachedState.progress}% progress)`);
+              
+              // First send current status
+              ws.send(JSON.stringify({
+                type: 'status',
+                sessionId,
+                projectId,
+                message: cachedState.phaseName || 'Workspace creation in progress...',
+                status: cachedState.phase,
+                progress: cachedState.progress,
+                workflowId: workflow.id
+              }));
+              
+              // Send cached plan if available
+              if (cachedState.plan) {
+                ws.send(JSON.stringify({
+                  type: 'plan_generated',
+                  sessionId,
+                  projectId,
+                  plan: cachedState.plan,
+                  message: 'Plan restored from cache'
+                }));
+              }
+              
+              // Replay recent steps so client can render progress
+              for (const step of cachedState.recentSteps) {
+                ws.send(JSON.stringify({
+                  type: step.type === 'file_created' ? 'file_created' : 'step_update',
+                  sessionId,
+                  projectId,
+                  filePath: step.type === 'file_created' ? step.title.replace('Created file: ', '') : undefined,
+                  data: step.type !== 'file_created' ? {
+                    step: {
+                      title: step.title,
+                      details: step.details
+                    }
+                  } : undefined,
+                  message: step.title,
+                  isReplay: true // Flag so client knows this is historical
+                }));
+              }
+              
+              // Send current task if one is active
+              if (cachedState.currentTask) {
+                ws.send(JSON.stringify({
+                  type: 'task_start',
+                  sessionId,
+                  projectId,
+                  taskName: cachedState.currentTask,
+                  message: cachedState.currentTask
+                }));
+              }
+            } else {
+              // No cached state, send simple status
+              ws.send(JSON.stringify({
+                type: 'status',
+                sessionId,
+                projectId,
+                message: 'Workspace creation in progress...',
+                status: 'in_progress',
+                progress: workflow.progress || 0,
+                workflowId: workflow.id
+              }));
+            }
           }
         }
       } else {
@@ -822,11 +908,144 @@ class AgentWebSocketService {
     });
   }
 
+  // ✅ Build State Cache Methods (Dec 11, 2025)
+  
+  /**
+   * Update the build state cache with new progress information
+   * Called on every broadcast to keep cache current
+   */
+  private updateBuildStateCache(connectionKey: string, message: any) {
+    const existingState = this.buildStateCache.get(connectionKey);
+    const now = new Date();
+    
+    // Initialize or update cache based on message type
+    const state: BuildStateCache = existingState || {
+      projectId: message.projectId?.toString() || '',
+      sessionId: message.sessionId || '',
+      status: 'planning',
+      phase: 'planning',
+      progress: 0,
+      completedTasks: [],
+      recentSteps: [],
+      lastUpdated: now
+    };
+    
+    // Update based on message type
+    switch (message.type) {
+      case 'status':
+        state.status = message.status === 'complete' ? 'completed' : 
+                      message.status === 'error' ? 'failed' : 'in_progress';
+        state.phase = message.status || state.phase;
+        state.phaseName = message.phaseName || message.message;
+        if (typeof message.progress === 'number') {
+          state.progress = message.progress;
+        }
+        break;
+        
+      case 'plan_generated':
+      case 'plan_ready':
+        state.plan = message.plan || message.data?.plan;
+        state.phase = 'executing';
+        state.status = 'in_progress';
+        break;
+        
+      case 'task_start':
+        state.currentTask = message.taskName || message.message;
+        state.phase = 'building';
+        break;
+        
+      case 'task_complete':
+        if (message.taskId) {
+          state.completedTasks.push(message.taskId);
+        }
+        if (typeof message.progress === 'number') {
+          state.progress = message.progress;
+        }
+        state.currentTask = undefined;
+        break;
+        
+      case 'step_start':
+      case 'step_update':
+        state.recentSteps.push({
+          type: message.type,
+          title: message.data?.step?.title || message.message || 'Processing...',
+          timestamp: now,
+          details: message.data?.step?.details
+        });
+        // Keep only last 10 steps
+        if (state.recentSteps.length > 10) {
+          state.recentSteps = state.recentSteps.slice(-10);
+        }
+        break;
+        
+      case 'file_created':
+        state.recentSteps.push({
+          type: 'file_created',
+          title: `Created file: ${message.filePath}`,
+          timestamp: now
+        });
+        if (state.recentSteps.length > 10) {
+          state.recentSteps = state.recentSteps.slice(-10);
+        }
+        break;
+        
+      case 'complete':
+        state.status = 'completed';
+        state.phase = 'complete';
+        state.progress = 100;
+        break;
+        
+      case 'error':
+        state.status = 'failed';
+        state.phase = 'error';
+        state.error = message.message || message.data?.error;
+        break;
+    }
+    
+    state.lastUpdated = now;
+    this.buildStateCache.set(connectionKey, state);
+    
+    // Clean up old cache entries (older than 1 hour)
+    this.cleanupOldCacheEntries();
+  }
+  
+  /**
+   * Get cached build state for a session
+   */
+  getBuildState(projectId: string | number, sessionId: string): BuildStateCache | undefined {
+    const connectionKey = `${projectId}-${sessionId}`;
+    return this.buildStateCache.get(connectionKey);
+  }
+  
+  /**
+   * Clear build state cache for a session (call on completion or error)
+   */
+  clearBuildState(projectId: string | number, sessionId: string) {
+    const connectionKey = `${projectId}-${sessionId}`;
+    this.buildStateCache.delete(connectionKey);
+  }
+  
+  /**
+   * Clean up cache entries older than 1 hour
+   */
+  private cleanupOldCacheEntries() {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    for (const [key, state] of this.buildStateCache.entries()) {
+      if (state.lastUpdated < oneHourAgo) {
+        this.buildStateCache.delete(key);
+      }
+    }
+  }
+
   // Generic broadcast method for autonomous agent events (sends to ALL devices)
   broadcast(message: any, projectId: string | number) {
     const sessionId = message.sessionId || 'default';
     const connectionKey = `${projectId}-${sessionId}`;
     const devices = this.connections.get(connectionKey);
+
+    // ✅ Always update build state cache, even if no devices connected
+    // This ensures reconnecting clients can get current state
+    this.updateBuildStateCache(connectionKey, message);
 
     if (!devices || devices.size === 0) {
       // Changed to debug - this is expected during autonomous workspace creation without UI
