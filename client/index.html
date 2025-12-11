@@ -113,6 +113,7 @@
               // CRITICAL: Allow essential WebSocket paths for core functionality
               const isViteHMR = url.includes('/@vite') || url.includes('__vite') || url.includes('?token=');
               const isEssentialWebSocket = url.includes('/ws/agent') || 
+                                           url.includes('channel=agent') ||
                                            url.includes('/api/terminal/ws') ||
                                            url.includes('/ws/collaboration') ||
                                            url.includes('/ws/background-tests') ||
