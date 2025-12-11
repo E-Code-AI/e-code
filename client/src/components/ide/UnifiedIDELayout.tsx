@@ -64,6 +64,7 @@ const LazyMobileCodeEditor = lazy(() => import('@/components/mobile/LazyMobileCo
 const EnhancedMobileTerminal = lazy(() => import('@/components/mobile/EnhancedMobileTerminal').then(mod => ({ default: mod.EnhancedMobileTerminal })));
 const MobilePreviewPanel = lazy(() => import('@/components/mobile/MobilePreviewPanel').then(mod => ({ default: mod.MobilePreviewPanel })));
 const MobileMoreMenu = lazy(() => import('@/components/mobile/MobileMoreMenu').then(mod => ({ default: mod.MobileMoreMenu })));
+const MobileSecurityPanel = lazy(() => import('@/components/mobile/MobileSecurityPanel').then(mod => ({ default: mod.MobileSecurityPanel })));
 
 const CommandPalette = lazy(() => import('@/components/CommandPalette').then(mod => ({ default: mod.CommandPalette })));
 const GlobalSearch = lazy(() => import('@/components/GlobalSearch').then(mod => ({ default: mod.GlobalSearch })));
@@ -233,6 +234,7 @@ function UnifiedIDELayout({
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   const [showExtensionsPanel, setShowExtensionsPanel] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+  const [showSecurityPanel, setShowSecurityPanel] = useState(false);
 
   const closePanel = useCallback((setter: (v: boolean) => void) => {
     setter(false);
@@ -391,11 +393,14 @@ function UnifiedIDELayout({
               onOpenWorkflows={() => setShowWorkflowsPanel(true)}
               onOpenHistory={() => setShowHistoryPanel(true)}
               onOpenExtensions={() => setShowExtensionsPanel(true)}
+              onOpenSecurity={() => setShowSecurityPanel(true)}
               onOpenActions={() => { setLeftPanelTab('actions'); setMobileActiveTab('agent'); }}
               onOpenTools={() => { setLeftPanelTab('tools'); setMobileActiveTab('agent'); }}
               onOpenDeploy={() => { setLeftPanelTab('deployment'); setMobileActiveTab('agent'); }}
               onOpenCommandPalette={() => setShowCommandPalette(true)}
               onOpenGlobalSearch={() => setShowGlobalSearch(true)}
+              onOpenQuickFileSearch={() => setShowQuickFileSearch(true)}
+              onOpenKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
             />
           </Suspense>
         );
@@ -457,11 +462,14 @@ function UnifiedIDELayout({
               onOpenWorkflows={() => setShowWorkflowsPanel(true)}
               onOpenHistory={() => setShowHistoryPanel(true)}
               onOpenExtensions={() => setShowExtensionsPanel(true)}
+              onOpenSecurity={() => setShowSecurityPanel(true)}
               onOpenActions={() => { setLeftPanelTab('actions'); setTabletPanel('agent'); }}
               onOpenTools={() => { setLeftPanelTab('tools'); setTabletPanel('agent'); }}
               onOpenDeploy={() => { setLeftPanelTab('deployment'); setTabletPanel('agent'); }}
               onOpenCommandPalette={() => setShowCommandPalette(true)}
               onOpenGlobalSearch={() => setShowGlobalSearch(true)}
+              onOpenQuickFileSearch={() => setShowQuickFileSearch(true)}
+              onOpenKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
             />
           </Suspense>
         );
@@ -1090,6 +1098,22 @@ function UnifiedIDELayout({
           <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
             <div className="h-[calc(100%-48px)]">
               <ReplitSettingsPanel projectId={projectId} />
+            </div>
+          </Suspense>
+        </div>
+      )}
+
+      {showSecurityPanel && (
+        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-50 shadow-xl border-l bg-background">
+          <div className="flex items-center justify-between p-2 border-b">
+            <span className="font-medium text-sm">Security Scanner</span>
+            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowSecurityPanel)} className="h-7 w-7" data-testid="button-close-security">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+            <div className="h-[calc(100%-48px)]">
+              <MobileSecurityPanel projectId={projectId} />
             </div>
           </Suspense>
         </div>

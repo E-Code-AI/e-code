@@ -11,7 +11,7 @@ import {
   FileText, Server, Shield, Variable,
   FolderOpen, FileCode, FilePlus,
   Workflow, History, Puzzle,
-  Zap, Layers, Rocket, Command, FileSearch
+  Zap, Layers, Rocket, Command, FileSearch, Keyboard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,8 @@ interface MobileMoreMenuProps {
   onOpenDeploy?: () => void;
   onOpenCommandPalette?: () => void;
   onOpenGlobalSearch?: () => void;
+  onOpenQuickFileSearch?: () => void;
+  onOpenKeyboardShortcuts?: () => void;
   problemsCount?: number;
   className?: string;
 }
@@ -81,6 +83,8 @@ export function MobileMoreMenu({
   onOpenDeploy,
   onOpenCommandPalette,
   onOpenGlobalSearch,
+  onOpenQuickFileSearch,
+  onOpenKeyboardShortcuts,
   problemsCount = 0,
   className 
 }: MobileMoreMenuProps) {
@@ -453,6 +457,24 @@ export function MobileMoreMenu({
     onClose();
   };
 
+  const handleQuickFileSearch = () => {
+    if (onOpenQuickFileSearch) {
+      onOpenQuickFileSearch();
+    } else {
+      toast({ title: 'Quick File Search', description: 'Opening quick file search...' });
+    }
+    onClose();
+  };
+
+  const handleKeyboardShortcuts = () => {
+    if (onOpenKeyboardShortcuts) {
+      onOpenKeyboardShortcuts();
+    } else {
+      toast({ title: 'Keyboard Shortcuts', description: 'Opening keyboard shortcuts...' });
+    }
+    onClose();
+  };
+
   // Note: Files section removed - use dedicated Files tab in bottom navigation instead
   const menuSections: MenuSection[] = [
     {
@@ -461,6 +483,8 @@ export function MobileMoreMenu({
       items: [
         { id: 'command-palette', label: 'Command Palette', icon: Command, onClick: handleCommandPalette },
         { id: 'quick-search', label: 'Global Search', icon: FileSearch, onClick: handleQuickSearch },
+        { id: 'quick-file-search', label: 'Quick File Search', icon: Search, onClick: handleQuickFileSearch },
+        { id: 'keyboard-shortcuts', label: 'Keyboard Shortcuts', icon: Keyboard, onClick: handleKeyboardShortcuts },
       ],
     },
     {
