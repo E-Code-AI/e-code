@@ -866,8 +866,17 @@ export class AIProviderManager {
       completionParams.max_tokens = options?.max_tokens || 4000;
     }
 
+    // ✅ FIX (Dec 11, 2025): reasoning_effort='none' only supported by GPT-5.1, not GPT-5
+    // GPT-5 supports: 'minimal', 'low', 'medium', 'high'
+    // GPT-5.1 supports: 'none', 'minimal', 'low', 'medium', 'high'
     if (options?.reasoning_effort && modelId.startsWith('gpt-5')) {
-      completionParams.reasoning_effort = options.reasoning_effort;
+      const isGpt51 = modelId.includes('5.1');
+      if (options.reasoning_effort === 'none' && !isGpt51) {
+        // For GPT-5 (non-5.1), use 'minimal' instead of unsupported 'none'
+        completionParams.reasoning_effort = 'minimal';
+      } else {
+        completionParams.reasoning_effort = options.reasoning_effort;
+      }
     }
 
     try {
