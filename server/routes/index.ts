@@ -72,6 +72,7 @@ import ragRouter from "./rag.router";
 import agentStepCacheRouter from "./agent-step-cache.router";
 import { prometheusRouter } from "../monitoring/prometheus";
 import aiHealthRouter from "./ai-health";
+import generationMetricsRouter from "./generation-metrics.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -214,6 +215,9 @@ export class MainRouter {
     
     // Admin Monitoring routes (Fortune 500 Rate Limit Dashboard)
     app.use('/api/admin/monitoring', tierRateLimiters.api, adminMonitoringRouter);
+    
+    // Generation Metrics routes (App generation performance monitoring)
+    app.use('/api/metrics/generation', tierRateLimiters.api, generationMetricsRouter);
     
     // AI Usage Tracking (Pay-As-You-Go) - Track AI routes for billing
     // CRITICAL: Apply BEFORE mounting routers to ensure all AI endpoints are tracked
