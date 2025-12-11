@@ -457,18 +457,16 @@ export function useAutonomousChatIntegration({
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     // Build WebSocket URL with all necessary parameters
-    // ✅ CRITICAL FIX (Dec 11, 2025): Use root path with ?channel= query parameter
-    // Reason: Replit's edge proxy silently drops WebSocket upgrades on non-root paths (e.g., /ws/agent)
-    // Solution: Connect to /?channel=agent&... instead of /ws/agent?...
-    // The server's Central Dispatcher routes based on the channel parameter
+    // FIXED (Dec 11, 2025): Use /ws/agent path, NOT /?channel=agent
+    // Reason: Replit's edge proxy routes /ws/* paths correctly, but root path with query params fails
+    // Evidence: Server logs show /ws/agent connections succeed, but /?channel=agent returns channel:null
     const params = new URLSearchParams();
-    params.set('channel', 'agent'); // Route identifier for Central Dispatcher
     params.set('projectId', String(wsProjectId));
     if (wsSessionId) params.set('sessionId', wsSessionId);
     // Include bootstrap token for server-side authentication
     if (bootstrapToken) params.set('bootstrap', bootstrapToken);
     
-    const wsUrl = `${protocol}//${window.location.host}/?${params.toString()}`;
+    const wsUrl = `${protocol}//${window.location.host}/ws/agent?${params.toString()}`;
 
     // Connection function for initial connect and reconnects
     const connectWebSocket = () => {
