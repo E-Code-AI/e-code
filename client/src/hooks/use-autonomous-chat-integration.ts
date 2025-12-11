@@ -90,16 +90,6 @@ export function useAutonomousChatIntegration({
   enabled = true,
   bootstrapToken
 }: UseAutonomousChatIntegrationOptions) {
-  // DEBUG: Log on every render to trace hook execution
-  console.log('[AutonomousChatIntegration] Hook render:', {
-    externalConversationId,
-    projectId,
-    sessionId,
-    enabled,
-    hasBootstrapToken: !!bootstrapToken,
-    tokenPreview: bootstrapToken ? bootstrapToken.substring(0, 30) + '...' : null
-  });
-  
   const { addMessage, updateMessage } = useAgentConversationStore();
   const wsRef = useRef<WebSocket | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
@@ -118,10 +108,22 @@ export function useAutonomousChatIntegration({
   if (!tempConversationIdRef.current && bootstrapToken) {
     // Use a large negative number to avoid collision with real IDs
     tempConversationIdRef.current = -Date.now();
+    console.log('[AutonomousChatIntegration] 🆔 Generated temp conversationId:', tempConversationIdRef.current);
   }
   
   // Use external conversationId if available, otherwise use temp ID for bootstrap flow
   const conversationId = externalConversationId ?? tempConversationIdRef.current;
+
+  // DEBUG: Log on every render with COMPLETE state
+  console.log('[AutonomousChatIntegration] 🔄 Hook render:', {
+    externalConversationId,
+    tempConversationId: tempConversationIdRef.current,
+    finalConversationId: conversationId,
+    projectId,
+    enabled,
+    hasBootstrapToken: !!bootstrapToken,
+    willConnectWebSocket: enabled && conversationId && projectId
+  });
 
   const createAutonomousMessage = useCallback((
     type: Message['type'],
@@ -404,20 +406,21 @@ export function useAutonomousChatIntegration({
   }, []);
 
   useEffect(() => {
-    // DEBUG: Log activation conditions
-    console.log('[AutonomousChatIntegration] useEffect triggered:', {
+    // DEBUG: Log activation conditions IMMEDIATELY
+    console.log('[AutonomousChatIntegration] ⚡ useEffect TRIGGERED:', {
       enabled,
       conversationId,
-      externalConversationId,
-      tempConversationId: tempConversationIdRef.current,
       projectId,
-      sessionId,
-      hasBootstrapToken: !!bootstrapToken,
-      hasConnected: hasConnectedRef.current
+      hasBootstrapToken: !!bootstrapToken
     });
     
-    if (!enabled || !conversationId) {
-      console.log('[AutonomousChatIntegration] Skipping - enabled:', enabled, 'conversationId:', conversationId);
+    if (!enabled) {
+      console.log('[AutonomousChatIntegration] ❌ Skipping - not enabled');
+      return;
+    }
+    
+    if (!conversationId) {
+      console.log('[AutonomousChatIntegration] ❌ Skipping - no conversationId');
       return;
     }
     
@@ -427,13 +430,19 @@ export function useAutonomousChatIntegration({
     // Try to extract from bootstrap token if not provided directly
     if (bootstrapToken && (!wsProjectId || !wsSessionId)) {
       const tokenData = decodeToken(bootstrapToken);
+      console.log('[AutonomousChatIntegration] 🔑 Decoded token:', tokenData);
       if (tokenData) {
         wsProjectId = wsProjectId || tokenData.projectId;
         wsSessionId = wsSessionId || tokenData.sessionId;
       }
     }
     
-    if (!wsProjectId) return;
+    if (!wsProjectId) {
+      console.log('[AutonomousChatIntegration] ❌ Skipping - no projectId');
+      return;
+    }
+    
+    console.log('[AutonomousChatIntegration] ✅ All conditions met, proceeding with WebSocket connection');
 
     // Initialize build store directly via getState to avoid dependency issues (only once)
     if (!hasConnectedRef.current) {
