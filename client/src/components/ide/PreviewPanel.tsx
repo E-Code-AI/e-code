@@ -6,11 +6,18 @@ import { cn } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { PreviewSplashScreen } from './PreviewSplashScreen';
+
+export type AutonomousBuildPhase = 'planning' | 'scaffolding' | 'building' | 'styling' | 'finalizing' | 'complete' | null;
 
 interface PreviewPanelProps {
   projectId: string;
   isRunning?: boolean;
   autoStart?: boolean;
+  autonomousBuildPhase?: AutonomousBuildPhase;
+  autonomousBuildProgress?: number;
+  autonomousBuildTask?: string;
+  appName?: string;
 }
 
 interface PreviewStatus {
@@ -24,7 +31,15 @@ interface PreviewStatus {
   frameworkType?: string;
 }
 
-export function PreviewPanel({ projectId, isRunning: externalIsRunning, autoStart = true }: PreviewPanelProps) {
+export function PreviewPanel({ 
+  projectId, 
+  isRunning: externalIsRunning, 
+  autoStart = true,
+  autonomousBuildPhase,
+  autonomousBuildProgress,
+  autonomousBuildTask,
+  appName
+}: PreviewPanelProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const hasAttemptedAutoStart = useRef(false);
@@ -228,7 +243,15 @@ export function PreviewPanel({ projectId, isRunning: externalIsRunning, autoStar
       
       {/* Preview Content */}
       <div className="flex-1 relative bg-background dark:bg-background">
-        {isStatusLoading ? (
+        {/* Autonomous build splash screen - shows during AI-driven builds */}
+        {autonomousBuildPhase && autonomousBuildPhase !== 'complete' ? (
+          <PreviewSplashScreen
+            phase={autonomousBuildPhase}
+            currentTask={autonomousBuildTask}
+            progress={autonomousBuildProgress}
+            appName={appName}
+          />
+        ) : isStatusLoading ? (
           <div className="h-full flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
