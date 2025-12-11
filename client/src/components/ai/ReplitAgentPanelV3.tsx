@@ -10,6 +10,9 @@ import { Label } from '@/components/ui/label';
 import { useAgentConversationStore, type Message } from '@/stores/agentConversationStore';
 import { useAutonomousChatIntegration } from '@/hooks/use-autonomous-chat-integration';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
+import { useAgentAudioNotifications } from '@/hooks/use-agent-audio-notifications';
+import { useAgentDockNotifications } from '@/hooks/use-agent-dock-notifications';
+import { useAgentFavicon } from '@/hooks/use-agent-favicon';
 import {
   Tooltip,
   TooltipContent,
@@ -272,6 +275,11 @@ export function ReplitAgentPanelV3({
     enabled: !!bootstrapToken && autonomousBuildStore.inlineMode,
     bootstrapToken
   });
+  
+  // Replit-style notifications: Audio, Favicon, and Dock notifications
+  const { isEnabled: isAudioEnabled, setEnabled: setAudioEnabled } = useAgentAudioNotifications();
+  useAgentDockNotifications();
+  useAgentFavicon();
   
   // Use effective conversation ID for displaying autonomous build messages during bootstrap
   // This allows messages to be shown even before the backend provides a real conversation ID
