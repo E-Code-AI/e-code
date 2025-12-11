@@ -29,10 +29,22 @@ class AgentEventBusClass {
 
     const typeListeners = this.listeners.get(type);
     if (typeListeners) {
-      typeListeners.forEach(listener => listener(event));
+      typeListeners.forEach(listener => {
+        try {
+          listener(event);
+        } catch (err) {
+          console.error(`[AgentEventBus] Error in listener for ${type}:`, err);
+        }
+      });
     }
 
-    this.globalListeners.forEach(listener => listener(event));
+    this.globalListeners.forEach(listener => {
+      try {
+        listener(event);
+      } catch (err) {
+        console.error(`[AgentEventBus] Error in global listener for ${type}:`, err);
+      }
+    });
   }
 
   on(type: AgentEventType, listener: AgentEventListener): () => void {

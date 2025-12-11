@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { AgentEventBus } from '@/lib/agentEvents';
 import { useReducedMotion } from './use-reduced-motion';
 
@@ -44,38 +44,53 @@ export function useAgentAudioNotifications() {
     complete: null,
     error: null,
   });
-  const settingsRef = useRef<AudioNotificationSettings>(getStoredSettings());
+  
+  // Use state for enabled to trigger re-renders when toggled
+  const [isEnabled, setIsEnabledState] = useState(() => getStoredSettings().enabled);
+  const volumeRef = useRef(getStoredSettings().volume);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    audioRef.current.complete = new Audio(AUDIO_URLS.complete);
-    audioRef.current.complete.volume = settingsRef.current.volume;
-    audioRef.current.complete.preload = 'auto';
+    // Create audio elements
+    const completeAudio = new Audio(AUDIO_URLS.complete);
+    completeAudio.volume = volumeRef.current;
+    completeAudio.preload = 'auto';
+    audioRef.current.complete = completeAudio;
 
-    audioRef.current.error = new Audio(AUDIO_URLS.error);
-    audioRef.current.error.volume = settingsRef.current.volume;
-    audioRef.current.error.preload = 'auto';
+    const errorAudio = new Audio(AUDIO_URLS.error);
+    errorAudio.volume = volumeRef.current;
+    errorAudio.preload = 'auto';
+    audioRef.current.error = errorAudio;
 
     return () => {
-      audioRef.current.complete?.pause();
-      audioRef.current.error?.pause();
+      // Full cleanup: pause, remove src, and null refs
+      if (audioRef.current.complete) {
+        audioRef.current.complete.pause();
+        audioRef.current.complete.src = '';
+        audioRef.current.complete = null;
+      }
+      if (audioRef.current.error) {
+        audioRef.current.error.pause();
+        audioRef.current.error.src = '';
+        audioRef.current.error = null;
+      }
     };
   }, []);
 
   const playSound = useCallback((type: 'complete' | 'error') => {
     if (prefersReducedMotion) return;
-    if (!settingsRef.current.enabled) return;
+    if (!isEnabled) return;
 
     const audio = audioRef.current[type];
     if (audio) {
       audio.currentTime = 0;
-      audio.volume = settingsRef.current.volume;
+      audio.volume = volumeRef.current;
       audio.play().catch(() => {
         // Ignore autoplay errors (user hasn't interacted yet)
       });
     }
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, isEnabled]);
 
   useEffect(() => {
     const unsubComplete = AgentEventBus.on('agent:complete', () => {
@@ -93,28 +108,27 @@ export function useAgentAudioNotifications() {
   }, [playSound]);
 
   const setEnabled = useCallback((enabled: boolean) => {
-    settingsRef.current.enabled = enabled;
-    saveSettings(settingsRef.current);
+    setIsEnabledState(enabled);
+    saveSettings({ enabled, volume: volumeRef.current });
   }, []);
 
   const setVolume = useCallback((volume: number) => {
-    settingsRef.current.volume = Math.max(0, Math.min(1, volume));
-    saveSettings(settingsRef.current);
+    volumeRef.current = Math.max(0, Math.min(1, volume));
+    saveSettings({ enabled: isEnabled, volume: volumeRef.current });
     if (audioRef.current.complete) {
-      audioRef.current.complete.volume = settingsRef.current.volume;
+      audioRef.current.complete.volume = volumeRef.current;
     }
     if (audioRef.current.error) {
-      audioRef.current.error.volume = settingsRef.current.volume;
+      audioRef.current.error.volume = volumeRef.current;
     }
-  }, []);
+  }, [isEnabled]);
 
-  const isEnabled = useCallback(() => settingsRef.current.enabled, []);
-  const getVolume = useCallback(() => settingsRef.current.volume, []);
+  const getVolume = useCallback(() => volumeRef.current, []);
 
   return {
+    isEnabled,
     setEnabled,
     setVolume,
-    isEnabled,
     getVolume,
     playSound,
   };
