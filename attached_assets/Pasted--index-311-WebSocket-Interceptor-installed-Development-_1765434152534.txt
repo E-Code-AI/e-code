@@ -1,0 +1,32 @@
+(index):311 [WebSocket] Interceptor installed (Development mode: true)
+(index):287 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=zkr-aFVATBhN isEssential: false isViteHMR: true isDev: true
+(index):294 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=zkr-aFVATBhN
+chunk-E22KYI7D.js?v=8deb9ffd:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Telemetry initialized', timestamp: '2025-12-11T06:21:57.809Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+service-worker-registration.ts:14 [SW] Skipping in development mode
+cache-reconciliation.ts:37 [CacheReconciliation] Service initialized
+query-persister.ts:74 [QueryPersister] Cache restored (age: 384s)
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/me 200', timestamp: '2025-12-11T06:21:58.243Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+(index):1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/rag/stats 200', timestamp: '2025-12-11T06:21:59.994Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/models 200', timestamp: '2025-12-11T06:22:00.154Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/models/preferred 200', timestamp: '2025-12-11T06:22:00.320Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/marketplace/templates 200', timestamp: '2025-12-11T06:22:00.408Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: FID = 4.4000000059604645ms', timestamp: '2025-12-11T06:22:04.424Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/csrf-token 200', timestamp: '2025-12-11T06:22:06.706Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/workspace/bootstrap 200', timestamp: '2025-12-11T06:22:07.389Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 1.5270204766413589ms', timestamp: '2025-12-11T06:22:07.416Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 8.334977517701168ms', timestamp: '2025-12-11T06:22:08.239Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects/622?bootstrap=eyJhbGciO…0.kKRaV3BGOGJ7jOd44jd4mNs6rnxmqPKzDqBxsn9xM_g 200', timestamp: '2025-12-11T06:22:08.630Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
