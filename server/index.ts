@@ -551,8 +551,24 @@ app.get('/api/cors-health', async (_req, res) => {
   // Setup Vite with graceful fallback handling
   // Uses safe loader that isolates Vite failures and provides fallback HTML server
   try {
+    // ✅ FIX (Dec 11, 2025): Restore upgrade listener methods BEFORE Vite initialization
+    // Vite's HMR needs to register its own WebSocket upgrade handler
+    // Without this, Vite's upgrade listener is silently blocked and WebSocket connections fail after restart
+    const restoreUpgrade = (global as any).__restoreUpgradeListenerMethods;
+    if (restoreUpgrade) {
+      restoreUpgrade();
+      console.log('[HTTP Server] 🔓 Temporarily restored upgrade listeners for Vite HMR initialization');
+    }
+    
     const { safeSetupVite, setupFallbackServer } = await import("./vite-loader");
     const viteSuccess = await safeSetupVite(app, httpServer);
+    
+    // ✅ Re-block upgrade listeners AFTER Vite has registered its HMR handler
+    // Now both Central Dispatcher AND Vite HMR are properly registered
+    httpServer.on = blockUpgradeListener(originalHttpServerOn);
+    httpServer.addListener = blockUpgradeListener(originalHttpServerAddListener);
+    httpServer.prependListener = blockUpgradeListener(originalHttpServerPrependListener);
+    console.log('[HTTP Server] 🔒 Re-blocked upgrade listeners after Vite initialization');
     
     if (!viteSuccess) {
       // Vite failed - setup fallback HTML server
