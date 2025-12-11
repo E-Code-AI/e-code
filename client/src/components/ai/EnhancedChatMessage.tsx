@@ -1,4 +1,4 @@
-import { useState, useCallback, memo } from 'react';
+import { useState, useCallback, memo, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,8 @@ interface EnhancedChatMessageProps {
   onChangePlan?: () => void;
 }
 
+type EnhancedChatMessageRef = HTMLDivElement;
+
 const springConfig = {
   type: "spring" as const,
   stiffness: 500,
@@ -73,7 +75,7 @@ const messageVariants = {
   }
 };
 
-export const EnhancedChatMessage = memo(function EnhancedChatMessage({
+export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, EnhancedChatMessageProps>(function EnhancedChatMessage({
   message,
   isCompactMode = false,
   onCopy,
@@ -82,7 +84,7 @@ export const EnhancedChatMessage = memo(function EnhancedChatMessage({
   onRejectAction,
   onSelectBuildMode,
   onChangePlan
-}: EnhancedChatMessageProps) {
+}, ref) {
   const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const [selectedBuildMode, setSelectedBuildMode] = useState<AutonomousBuildMode | null>(null);
@@ -126,6 +128,7 @@ export const EnhancedChatMessage = memo(function EnhancedChatMessage({
   
   return (
     <motion.div
+      ref={ref}
       layout
       variants={messageVariants}
       initial="hidden"
@@ -420,7 +423,7 @@ export const EnhancedChatMessage = memo(function EnhancedChatMessage({
       </div>
     </motion.div>
   );
-});
+}));
 
 export const StreamingSkeleton = memo(function StreamingSkeleton() {
   return (
