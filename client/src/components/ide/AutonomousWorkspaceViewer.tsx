@@ -141,22 +141,23 @@ export function AutonomousWorkspaceViewer({
 
   // Connect to WebSocket
   useEffect(() => {
-    console.log('[AutonomousWorkspaceViewer] useEffect triggered', { bootstrapToken: !!bootstrapToken, isOpen });
+    console.log('[Telemetry] [AutonomousWorkspaceViewer] useEffect triggered:', { hasBootstrapToken: !!bootstrapToken, isOpen });
     
     if (!bootstrapToken || !isOpen) {
-      console.log('[AutonomousWorkspaceViewer] Skipping WebSocket connection - missing token or not open');
+      console.log('[Telemetry] [AutonomousWorkspaceViewer] Skipping WebSocket - missing token or not open');
       return;
     }
 
     const tokenData = decodeToken(bootstrapToken);
     if (!tokenData) {
+      console.log('[Telemetry] [AutonomousWorkspaceViewer] ERROR: Invalid bootstrap token');
       setErrorMessage('Invalid bootstrap token');
       setConnectionStatus('error');
       onErrorRef.current?.('Invalid bootstrap token');
       return;
     }
     
-    console.log('[AutonomousWorkspaceViewer] Token decoded:', { projectId: tokenData.projectId, sessionId: tokenData.sessionId });
+    console.log('[Telemetry] [AutonomousWorkspaceViewer] Token decoded:', { projectId: tokenData.projectId, sessionId: tokenData.sessionId });
 
     const connectWebSocket = () => {
       // Determine WebSocket protocol based on current protocol
@@ -166,7 +167,7 @@ export function AutonomousWorkspaceViewer({
       // SOLUTION: Use only projectId and sessionId - the session is already authenticated
       const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${tokenData.projectId}&sessionId=${tokenData.sessionId}`;
       
-      console.log('[AutonomousWorkspaceViewer] Connecting to WebSocket:', wsUrl);
+      console.log('[Telemetry] [AutonomousWorkspaceViewer] Connecting to WebSocket:', wsUrl);
       
       let ws: WebSocket;
       try {
@@ -393,7 +394,14 @@ export function AutonomousWorkspaceViewer({
     onCompleteRef.current?.();
   };
 
-  if (!bootstrapToken) return null;
+  if (!bootstrapToken) {
+    // ✅ CRITICAL DEBUG: Return a visible indicator when token is missing
+    return (
+      <div data-testid="autonomous-workspace-no-token" className="hidden">
+        AutonomousWorkspaceViewer: No bootstrap token
+      </div>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -590,3 +598,6 @@ export function AutonomousWorkspaceViewer({
     </Dialog>
   );
 }
+
+// Default export for React.lazy() compatibility
+export default AutonomousWorkspaceViewer;

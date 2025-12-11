@@ -1,0 +1,1343 @@
+(index):311 [WebSocket] Interceptor installed (Development mode: true)
+(index):287 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=zkr-aFVATBhN isEssential: false isViteHMR: true isDev: true
+(index):294 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=zkr-aFVATBhN
+chunk-E22KYI7D.js?v=8deb9ffd:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Telemetry initialized', timestamp: '2025-12-11T06:21:57.809Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+service-worker-registration.ts:14 [SW] Skipping in development mode
+cache-reconciliation.ts:37 [CacheReconciliation] Service initialized
+query-persister.ts:74 [QueryPersister] Cache restored (age: 384s)
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/me 200', timestamp: '2025-12-11T06:21:58.243Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+(index):1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/rag/stats 200', timestamp: '2025-12-11T06:21:59.994Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/models 200', timestamp: '2025-12-11T06:22:00.154Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/models/preferred 200', timestamp: '2025-12-11T06:22:00.320Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/marketplace/templates 200', timestamp: '2025-12-11T06:22:00.408Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: FID = 4.4000000059604645ms', timestamp: '2025-12-11T06:22:04.424Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/csrf-token 200', timestamp: '2025-12-11T06:22:06.706Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/workspace/bootstrap 200', timestamp: '2025-12-11T06:22:07.389Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 1.5270204766413589ms', timestamp: '2025-12-11T06:22:07.416Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 8.334977517701168ms', timestamp: '2025-12-11T06:22:08.239Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects/622?bootstrap=eyJhbGciO…0.kKRaV3BGOGJ7jOd44jd4mNs6rnxmqPKzDqBxsn9xM_g 200', timestamp: '2025-12-11T06:22:08.630Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:297  POST https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/logs/ingest 400 (Bad Request)
+flush @ telemetry.ts:297
+(anonyme) @ telemetry.ts:279
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects/622/files?bootstrap=eyJ…0.kKRaV3BGOGJ7jOd44jd4mNs6rnxmqPKzDqBxsn9xM_g 200', timestamp: '2025-12-11T06:22:16.107Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects/622/files 200', timestamp: '2025-12-11T06:22:16.193Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/git/status 200', timestamp: '2025-12-11T06:22:17.597Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects 200', timestamp: '2025-12-11T06:22:17.601Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:22:17.755Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects 200', timestamp: '2025-12-11T06:22:18.513Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/runtime/start 200', timestamp: '2025-12-11T06:22:18.944Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+AutonomousWorkspaceViewer.tsx:144 [AutonomousWorkspaceViewer] useEffect triggered {bootstrapToken: true, isOpen: true}
+AutonomousWorkspaceViewer.tsx:159 [AutonomousWorkspaceViewer] Token decoded: {projectId: '622', sessionId: 'bcebea4b-811f-4c0f-b568-7c9518564294'}
+AutonomousWorkspaceViewer.tsx:169 [AutonomousWorkspaceViewer] Connecting to WebSocket: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294
+(index):287 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294 isEssential: true isViteHMR: false isDev: true
+(index):294 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294
+AutonomousWorkspaceViewer.tsx:174 [AutonomousWorkspaceViewer] WebSocket object created
+agentConversationStore.ts:249 [AgentConversationStore] Rehydrated from localStorage
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:201 Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `PopChild`.
+    at EnhancedChatMessage2 (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ai/EnhancedChatMessage.tsx:66:3)
+    at PopChildMeasure (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:63:23)
+    at PopChild (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:84:21)
+    at PresenceChild (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:122:24)
+    at AnimatePresence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:211:26)
+    at div
+    at div
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=8deb9ffd:114:13
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:54:15)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=8deb9ffd:52:7
+    at _c (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/scroll-area.tsx:21:11)
+    at div
+    at div
+    at ReplitAgentPanelV3 (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ai/ReplitAgentPanelV3.tsx:135:3)
+    at Suspense
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at Presence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-XLLYOLWP.js?v=8deb9ffd:24:11)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=8deb9ffd:174:13
+    at _c5 (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/tabs.tsx:72:12)
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:54:15)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=8deb9ffd:51:7
+    at div
+    at div
+    at PanelWithForwardedRef (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/react-resizable-panels.js?v=8deb9ffd:41:3)
+    at forwardRef(Panel)
+    at div
+    at PanelGroupWithForwardedRef (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/react-resizable-panels.js?v=8deb9ffd:1440:3)
+    at forwardRef(PanelGroup)
+    at ResizablePanelGroup (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/resizable.tsx:21:3)
+    at div
+    at div
+    at UnifiedIDELayout (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ide/UnifiedIDELayout.tsx:115:3)
+    at Suspense
+    at ErrorBoundary (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ErrorBoundary.tsx:9:5)
+    at IDEPage (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/pages/IDEPage.tsx:31:18)
+    at component
+    at Route (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=8deb9ffd:221:16)
+    at Switch (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=8deb9ffd:277:17)
+    at Suspense
+    at div
+    at MotionComponent (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:946:40)
+    at PresenceChild (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:122:24)
+    at AnimatePresence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:211:26)
+    at default (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/LazyAnimatedRoutes.tsx:22:17)
+    at Suspense
+    at LazyAnimatedRoutes (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/LazyAnimatedRoutes.tsx:49:38)
+    at div
+    at AtSymbolRedirectHandler (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/App.tsx:386:36)
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:54:15)
+    at TooltipProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=8deb9ffd:159:5)
+    at ErrorBoundary (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ErrorBoundary.tsx:9:5)
+    at AppContent (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/App.tsx:417:22)
+    at AuthProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/hooks/use-auth.tsx:26:32)
+    at ThemeProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ThemeProvider.tsx:89:33)
+    at QueryClientProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-V7DLPMS6.js?v=8deb9ffd:3030:3)
+    at PersistQueryClientProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query-persist-client.js?v=8deb9ffd:298:3)
+    at App
+console.<computed> @ telemetry.ts:201
+printWarning @ chunk-E22KYI7D.js?v=8deb9ffd:521
+error @ chunk-E22KYI7D.js?v=8deb9ffd:505
+validateFunctionComponentInDev @ chunk-E22KYI7D.js?v=8deb9ffd:15061
+updateMemoComponent @ chunk-E22KYI7D.js?v=8deb9ffd:14412
+beginWork @ chunk-E22KYI7D.js?v=8deb9ffd:16025
+beginWork$1 @ chunk-E22KYI7D.js?v=8deb9ffd:19806
+performUnitOfWork @ chunk-E22KYI7D.js?v=8deb9ffd:19251
+workLoopConcurrent @ chunk-E22KYI7D.js?v=8deb9ffd:19242
+renderRootConcurrent @ chunk-E22KYI7D.js?v=8deb9ffd:19217
+performConcurrentWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18728
+workLoop @ chunk-E22KYI7D.js?v=8deb9ffd:197
+flushWork @ chunk-E22KYI7D.js?v=8deb9ffd:176
+performWorkUntilDeadline @ chunk-E22KYI7D.js?v=8deb9ffd:384
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Console error: Warning: Function components cannot…ry-persist-client.js?v=8deb9ffd:298:3)\n    at App', timestamp: '2025-12-11T06:23:30.007Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/tools/status 200', timestamp: '2025-12-11T06:23:30.438Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/models 200', timestamp: '2025-12-11T06:23:30.438Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/preferences 200', timestamp: '2025-12-11T06:23:30.542Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/usage/current 200', timestamp: '2025-12-11T06:23:30.688Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/models 200', timestamp: '2025-12-11T06:23:30.781Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/tools/testing/replays?projectId=622 200', timestamp: '2025-12-11T06:23:30.807Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/testing/sessions?projectId=622 200', timestamp: '2025-12-11T06:23:30.892Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/models/preferred 200', timestamp: '2025-12-11T06:23:30.914Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/rag/stats 200', timestamp: '2025-12-11T06:23:31.021Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/autonomy/sessions?limit=10 200', timestamp: '2025-12-11T06:23:31.252Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/effective-model 200', timestamp: '2025-12-11T06:23:31.271Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/agent/conversation 200', timestamp: '2025-12-11T06:23:31.271Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+:5000/ide/622?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjIyIiwiY29udmVyc2F0aW9uSWQiOiJiY2ViZWE0Yi04MTFmLTRjMGYtYjU2OC03Yzk1MTg1NjQyOTQiLCJzZXNzaW9uSWQiOiJiY2ViZWE0Yi04MTFmLTRjMGYtYjU2OC03Yzk1MTg1NjQyOTQiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0MzQxMjc0MDgsImlhdCI6MTc2NTQzNDEyNywiZXhwIjoxNzY1NTIwNTI3LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.kKRaV3BGOGJ7jOd44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app:1 Blocked aria-hidden on an element because its descendant retained focus. The focus must not be hidden from assistive technology users. Avoid using aria-hidden on a focused element or its ancestor. Consider using the inert attribute instead, which will also prevent focus. For more details, see the aria-hidden section of the WAI-ARIA specification at https://w3c.github.io/aria/#aria-hidden.
+Element with focus: <textarea.flex w-full bg-[var(--ecode-surface)] px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ecode-accent)] focus-visible:border-[var(--ecode-accent)] disabled:cursor-not-allowed disabled:opacity-50 pr-14 resize-none text-sm min-h-[60px] max-h-[200px] rounded-xl border-2 border-border/50 focus:border-primary/50 transition-all duration-200 shadow-sm focus:shadow-md placeholder:text-muted-foreground/70>
+Ancestor with aria-hidden: <div> <div data-replit-metadata=​"client/​src/​components/​LazyAnimatedRoutes.tsx:​9:​8" data-component-name=​"undefined.div" style=​"opacity:​ 1;​ transform:​ none;​">​…​</div>​<div role=​"region" aria-label=​"Notifications (F8)​" tabindex=​"-1" style>​…​</div>​<div data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​681:​4" data-component-name=​"div" class=​"flex h-screen bg-[var(--ecode-background)​]​ overflow-hidden" data-testid=​"desktop-layout">​…​</div>​flex<div data-replit-metadata=​"client/​src/​components/​ide/​ReplitActivityBar.tsx:​165:​6" data-component-name=​"div" class=​"flex flex-col h-full w-12 py-1.5 bg-[var(--ecode-sidebar-bg)​]​ border-r border-[var(--ecode-border)​]​ transition-all duration-200" data-testid=​"activity-bar">​…​</div>​flex<div data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​693:​6" data-component-name=​"div" class=​"flex flex-col flex-1 min-w-0">​…​</div>​flex<div data-replit-metadata=​"client/​src/​components/​ide/​TopNavBar.tsx:​135:​4" data-component-name=​"div" class=​"h-12 border-b border-[var(--ecode-border)​]​ bg-[var(--ecode-surface)​]​ flex items-center px-3 gap-2 shadow-sm" data-testid=​"top-nav">​…​</div>​flex<div data-replit-metadata=​"client/​src/​components/​ide/​ReplitTabBar.tsx:​305:​4" data-component-name=​"div" class=​"flex items-center h-[36px]​ bg-[var(--ecode-sidebar-bg)​]​ border-b border-[var(--ecode-border)​]​" data-testid=​"tab-bar">​…​</div>​flex<div data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​741:​8" data-component-name=​"ResizablePanelGroup" data-testid=​"desktop-panel-group" class=​"flex h-full w-full data-[panel-group-direction=vertical]​:​flex-col flex-1" data-panel-group data-panel-group-direction=​"horizontal" data-panel-group-id=​":​r5l:​" style=​"display:​ flex;​ flex-direction:​ row;​ height:​ 100%;​ overflow:​ hidden;​ width:​ 100%;​">​…​</div>​flex<div data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​743:​12" data-component-name=​"ResizablePanel" data-testid=​"desktop-left-panel" class id=​":​r5m:​" data-panel-group-id=​":​r5l:​" data-panel data-panel-id=​":​r5m:​" data-panel-size=​"30.0" style=​"flex:​ 30 1 0px;​ overflow:​ hidden;​">​…​</div>​<div data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​744:​14" data-component-name=​"div" class=​"h-full flex flex-col border-r">​…​</div>​flex<div dir=​"ltr" data-orientation=​"horizontal" data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​745:​16" data-component-name=​"Tabs" class=​"h-full flex flex-col">​…​</div>​flex<div role=​"tablist" aria-orientation=​"horizontal" data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​746:​18" data-component-name=​"TabsList" class=​"inline-flex h-10 items-center bg-background p-1 text-muted-foreground w-full justify-start rounded-none border-b" tabindex=​"0" data-orientation=​"horizontal" style=​"outline:​ none;​">​…​</div>​flex<div data-state=​"active" data-orientation=​"horizontal" role=​"tabpanel" aria-labelledby=​"radix-:​r5n:​-trigger-agent" id=​"radix-:​r5n:​-content-agent" tabindex=​"0" data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​770:​18" data-component-name=​"TabsContent" class=​"ring-offset-background focus-visible:​outline-none focus-visible:​ring-2 focus-visible:​ring-ring focus-visible:​ring-offset-2 flex-1 mt-0 overflow-hidden" style>​…​</div>​<div data-replit-metadata=​"client/​src/​components/​ai/​ReplitAgentPanelV3.tsx:​1361:​4" data-component-name=​"div" class=​"h-full flex flex-col bg-background" data-testid=​"replit-agent-panel-v3">​…​</div>​flex<div data-replit-metadata=​"client/​src/​components/​ai/​ReplitAgentPanelV3.tsx:​1363:​6" data-component-name=​"div" class=​"px-4 py-2 border-b border-border bg-card space-y-2">​…​</div>​<div data-replit-metadata=​"client/​src/​components/​ai/​ReplitAgentPanelV3.tsx:​1473:​6" data-component-name=​"div" class=​"flex flex-1 flex-col overflow-hidden">​…​</div>​flex<div data-replit-metadata=​"client/​src/​components/​ai/​ReplitAgentPanelV3.tsx:​1574:​6" data-component-name=​"div" class=​"p-4 border-t border-border">​…​</div>​<div data-replit-metadata=​"client/​src/​components/​ai/​ReplitAgentPanelV3.tsx:​1575:​8" data-component-name=​"div" class=​"space-y-2">​…​</div>​<div data-replit-metadata=​"client/​src/​components/​ai/​ReplitAgentPanelV3.tsx:​1617:​10" data-component-name=​"div" class=​"relative">​…​</div>​<textarea data-replit-metadata=​"client/​src/​components/​ai/​ReplitAgentPanelV3.tsx:​1618:​12" data-component-name=​"Textarea" class=​"flex w-full bg-[var(--ecode-surface)​]​ px-3 py-2 focus-visible:​outline-none focus-visible:​ring-2 focus-visible:​ring-[var(--ecode-accent)​]​ focus-visible:​border-[var(--ecode-accent)​]​ disabled:​cursor-not-allowed disabled:​opacity-50 pr-14 resize-none text-sm min-h-[60px]​ max-h-[200px]​ rounded-xl border-2 border-border/​50 focus:​border-primary/​50 transition-all duration-200 shadow-sm focus:​shadow-md placeholder:​text-muted-foreground/​70" placeholder=​"What would you like me to build?" data-testid=​"input-message">​</textarea>​flex<div data-replit-metadata=​"client/​src/​components/​ai/​ReplitAgentPanelV3.tsx:​1637:​12" data-component-name=​"motion.div" class=​"absolute bottom-2 right-2" tabindex=​"0">​…​</div>​</div>​<div data-replit-metadata=​"client/​src/​components/​ai/​ChatToolbar.tsx:​50:​4" data-component-name=​"div" class=​"flex items-center gap-1 px-2 py-1.5 rounded-lg bg-muted/​50 border" data-testid=​"chat-toolbar">​…​</div>​flex<div data-replit-metadata=​"client/​src/​components/​ai/​AgentToolsPanel.tsx:​165:​4" data-component-name=​"div" class=​"bg-card border rounded-lg">​…​</div>​</div>​<div data-replit-metadata=​"client/​src/​components/​ai/​ReplitAgentPanelV3.tsx:​1707:​10" data-component-name=​"motion.div" class=​"grid grid-cols-2 gap-1.5 sm:​gap-2 mt-2 sm:​mt-3" data-testid=​"quick-actions" style=​"opacity:​ 0;​ transform:​ translateY(2.50088px)​;​">​…​</div>​grid</div>​</div>​</div>​<div data-state=​"inactive" data-orientation=​"horizontal" role=​"tabpanel" aria-labelledby=​"radix-:​r5n:​-trigger-actions" hidden id=​"radix-:​r5n:​-content-actions" tabindex=​"0" data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​782:​18" data-component-name=​"TabsContent" class=​"ring-offset-background focus-visible:​outline-none focus-visible:​ring-2 focus-visible:​ring-ring focus-visible:​ring-offset-2 flex-1 mt-0 overflow-hidden">​</div>​<div data-state=​"inactive" data-orientation=​"horizontal" role=​"tabpanel" aria-labelledby=​"radix-:​r5n:​-trigger-tools" hidden id=​"radix-:​r5n:​-content-tools" tabindex=​"0" data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​788:​18" data-component-name=​"TabsContent" class=​"ring-offset-background focus-visible:​outline-none focus-visible:​ring-2 focus-visible:​ring-ring focus-visible:​ring-offset-2 flex-1 mt-0 overflow-hidden">​</div>​<div data-state=​"inactive" data-orientation=​"horizontal" role=​"tabpanel" aria-labelledby=​"radix-:​r5n:​-trigger-deployment" hidden id=​"radix-:​r5n:​-content-deployment" tabindex=​"0" data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​798:​18" data-component-name=​"TabsContent" class=​"ring-offset-background focus-visible:​outline-none focus-visible:​ring-2 focus-visible:​ring-ring focus-visible:​ring-offset-2 flex-1 mt-0 overflow-hidden">​</div>​</div>​</div>​</div>​<div data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​811:​34" data-component-name=​"ResizableHandle" class=​"relative flex w-px items-center justify-center bg-border after:​absolute after:​inset-y-0 after:​left-1/​2 after:​w-1 after:​-translate-x-1/​2 focus-visible:​outline-none focus-visible:​ring-1 focus-visible:​ring-ring focus-visible:​ring-offset-1 data-[panel-group-direction=vertical]​:​h-px data-[panel-group-direction=vertical]​:​w-full data-[panel-group-direction=vertical]​:​after:​left-0 data-[panel-group-direction=vertical]​:​after:​h-1 data-[panel-group-direction=vertical]​:​after:​w-full data-[panel-group-direction=vertical]​:​after:​-translate-y-1/​2 data-[panel-group-direction=vertical]​:​after:​translate-x-0 [&[data-panel-group-direction=vertical]​>div]​:​rotate-90" role=​"separator" tabindex=​"0" data-panel-group-direction=​"horizontal" data-panel-group-id=​":​r5l:​" data-resize-handle data-panel-resize-handle-enabled=​"true" data-panel-resize-handle-id=​":​r6l:​" data-resize-handle-state=​"inactive" aria-controls=​":​r5m:​" aria-valuemax=​"40" aria-valuemin=​"20" aria-valuenow=​"30" style=​"touch-action:​ none;​ user-select:​ none;​">​…​</div>​flex<div data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​813:​10" data-component-name=​"ResizablePanel" data-testid=​"desktop-main-panel" class id=​":​r6m:​" data-panel-group-id=​":​r5l:​" data-panel data-panel-id=​":​r6m:​" data-panel-size=​"52.0" style=​"flex:​ 52 1 0px;​ overflow:​ hidden;​">​…​</div>​<div data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​821:​14" data-component-name=​"ResizableHandle" class=​"relative flex w-px items-center justify-center bg-border after:​absolute after:​inset-y-0 after:​left-1/​2 after:​w-1 after:​-translate-x-1/​2 focus-visible:​outline-none focus-visible:​ring-1 focus-visible:​ring-ring focus-visible:​ring-offset-1 data-[panel-group-direction=vertical]​:​h-px data-[panel-group-direction=vertical]​:​w-full data-[panel-group-direction=vertical]​:​after:​left-0 data-[panel-group-direction=vertical]​:​after:​h-1 data-[panel-group-direction=vertical]​:​after:​w-full data-[panel-group-direction=vertical]​:​after:​-translate-y-1/​2 data-[panel-group-direction=vertical]​:​after:​translate-x-0 [&[data-panel-group-direction=vertical]​>div]​:​rotate-90" role=​"separator" tabindex=​"0" data-panel-group-direction=​"horizontal" data-panel-group-id=​":​r5l:​" data-resize-handle data-panel-resize-handle-enabled=​"true" data-panel-resize-handle-id=​":​r6n:​" data-resize-handle-state=​"inactive" aria-controls=​":​r6m:​" aria-valuemax=​"65" aria-valuemin=​"30" aria-valuenow=​"52" style=​"touch-action:​ none;​ user-select:​ none;​">​…​</div>​flex<div data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​823:​14" data-component-name=​"ResizablePanel" data-testid=​"desktop-right-panel" class id=​":​r6o:​" data-panel-group-id=​":​r5l:​" data-panel data-panel-id=​":​r6o:​" data-panel-size=​"18.0" style=​"flex:​ 18 1 0px;​ overflow:​ hidden;​">​…​</div>​<div data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​824:​16" data-component-name=​"div" class=​"h-full flex flex-col border-l">​…​</div>​flex<div data-replit-metadata=​"client/​src/​components/​ide/​UnifiedIDELayout.tsx:​825:​18" data-component-name=​"div" class=​"h-10 border-b flex items-center justify-between px-3">​…​</div>​flex<div data-replit-metadata=​"client/​src/​components/​editor/​ReplitFileExplorer.tsx:​472:​6" data-component-name=​"div" class=​"flex flex-col h-full bg-[var(--ecode-sidebar-bg)​]​">​…​</div>​flex<div data-replit-metadata=​"client/​src/​components/​editor/​ReplitFileExplorer.tsx:​474:​8" data-component-name=​"div" class=​"p-3 border-b border-[var(--ecode-border)​]​">​…​</div>​<div data-replit-metadata=​"client/​src/​components/​editor/​ReplitFileExplorer.tsx:​475:​10" data-component-name=​"div" class=​"flex items-center justify-between mb-2">​…​</div>​flex<div data-replit-metadata=​"client/​src/​components/​editor/​ReplitFileExplorer.tsx:​551:​10" data-component-name=​"div" class=​"relative">​…​</div>​<svg xmlns=​"http:​/​/​www.w3.org/​2000/​svg" width=​"24" height=​"24" viewBox=​"0 0 24 24" fill=​"none" stroke=​"currentColor" stroke-width=​"2" stroke-linecap=​"round" stroke-linejoin=​"round" class=​"lucide lucide-search absolute left-2 top-1/​2 transform -translate-y-1/​2 h-3 w-3 text-[var(--ecode-text-secondary)​]​" data-replit-metadata=​"client/​src/​components/​editor/​ReplitFileExplorer.tsx:​552:​12" data-component-name=​"Search">​…​</svg>​<input data-replit-metadata=​"client/​src/​components/​editor/​ReplitFileExplorer.tsx:​553:​12" data-component-name=​"Input" type=​"text" class=​"flex w-full rounded-md border px-3 py-2 placeholder:​text-[var(--ecode-text-secondary)​]​ focus-visible:​outline-none focus-visible:​ring-2 focus-visible:​ring-[var(--ecode-accent)​]​ focus-visible:​border-[var(--ecode-accent)​]​ disabled:​cursor-not-allowed disabled:​opacity-50 transition-all h-7 pl-7 pr-7 text-xs bg-[var(--ecode-bg)​]​ border-[var(--ecode-border)​]​" placeholder=​"Search files..." value>​flex</div>​</div>​<div dir=​"ltr" data-replit-metadata=​"client/​src/​components/​editor/​ReplitFileExplorer.tsx:​574:​8" data-component-name=​"ScrollArea" class=​"relative overflow-hidden flex-1" style=​"position:​ relative;​ --radix-scroll-area-corner-width:​ 0px;​ --radix-scroll-area-corner-height:​ 0px;​">​…​</div>​<input data-replit-metadata=​"client/​src/​components/​editor/​ReplitFileExplorer.tsx:​591:​8" data-component-name=​"input" type=​"file" multiple class=​"hidden">​</div>​</div>​</div>​</div>​<div data-replit-metadata=​"client/​src/​components/​ide/​StatusBar.tsx:​74:​6" data-component-name=​"div" class=​"h-[22px]​ flex items-center text-[11px]​ bg-[var(--ecode-sidebar-bg)​]​ border-t border-[var(--ecode-border)​]​ font-[var(--ecode-font-sans)​]​" data-testid=​"status-bar">​…​</div>​flex</div>​</div>​</div>​
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:24:28.369Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 0.05526721255669071ms', timestamp: '2025-12-11T06:24:28.377Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/usage/current 200', timestamp: '2025-12-11T06:24:31.300Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:24:33.896Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:24:39.415Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:24:59.967Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…Od44jd4mNs6rnxmqPKzDqBxsn9xM_g&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+AutonomousWorkspaceViewer.tsx:391 WebSocket connection to 'wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294' failed: WebSocket is closed before the connection is established.
+handleClose @ AutonomousWorkspaceViewer.tsx:391
+onOpenChange @ AutonomousWorkspaceViewer.tsx:402
+(anonyme) @ chunk-DQHKJYG2.js?v=8deb9ffd:54
+(anonyme) @ chunk-TSZV4UFF.js?v=8deb9ffd:392
+handleEvent @ chunk-HS62ZVBA.js?v=8deb9ffd:23
+callCallback2 @ chunk-E22KYI7D.js?v=8deb9ffd:3680
+invokeGuardedCallbackDev @ chunk-E22KYI7D.js?v=8deb9ffd:3705
+invokeGuardedCallback @ chunk-E22KYI7D.js?v=8deb9ffd:3739
+invokeGuardedCallbackAndCatchFirstError @ chunk-E22KYI7D.js?v=8deb9ffd:3742
+executeDispatch @ chunk-E22KYI7D.js?v=8deb9ffd:7046
+processDispatchQueueItemsInOrder @ chunk-E22KYI7D.js?v=8deb9ffd:7066
+processDispatchQueue @ chunk-E22KYI7D.js?v=8deb9ffd:7075
+dispatchEventsForPlugins @ chunk-E22KYI7D.js?v=8deb9ffd:7083
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:7206
+batchedUpdates$1 @ chunk-E22KYI7D.js?v=8deb9ffd:18966
+batchedUpdates @ chunk-E22KYI7D.js?v=8deb9ffd:3585
+dispatchEventForPluginEventSystem @ chunk-E22KYI7D.js?v=8deb9ffd:7205
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-E22KYI7D.js?v=8deb9ffd:5484
+dispatchEvent @ chunk-E22KYI7D.js?v=8deb9ffd:5478
+dispatchDiscreteEvent @ chunk-E22KYI7D.js?v=8deb9ffd:5455
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects/622/files 200', timestamp: '2025-12-11T06:25:00.908Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects/622 200', timestamp: '2025-12-11T06:25:01.308Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+AutonomousWorkspaceViewer.tsx:144 [AutonomousWorkspaceViewer] useEffect triggered {bootstrapToken: false, isOpen: false}
+AutonomousWorkspaceViewer.tsx:147 [AutonomousWorkspaceViewer] Skipping WebSocket connection - missing token or not open
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/models 200', timestamp: '2025-12-11T06:25:01.665Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/models/preferred 200', timestamp: '2025-12-11T06:25:01.798Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/rag/stats 200', timestamp: '2025-12-11T06:25:02.059Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/autonomy/sessions?limit=10 200', timestamp: '2025-12-11T06:25:02.123Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/agent/conversation 200', timestamp: '2025-12-11T06:25:02.125Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/git/status 200', timestamp: '2025-12-11T06:25:02.226Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+AutonomousWorkspaceViewer.tsx:169 [AutonomousWorkspaceViewer] Connecting to WebSocket: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294
+(index):287 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294 isEssential: true isViteHMR: false isDev: true
+(index):294 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294
+AutonomousWorkspaceViewer.tsx:174 [AutonomousWorkspaceViewer] WebSocket object created
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects 200', timestamp: '2025-12-11T06:25:02.724Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects/622/files 200', timestamp: '2025-12-11T06:25:02.725Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/runtime/start 200', timestamp: '2025-12-11T06:25:03.435Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 0.04275960524089613ms', timestamp: '2025-12-11T06:25:03.460Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:25:06.885Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+(index):298 WebSocket connection to 'wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=zkr-aFVATBhN' failed: 
+construct @ (index):298
+(index):287 [WebSocket] Connection attempt: wss://localhost:5173/?token=zkr-aFVATBhN isEssential: false isViteHMR: true isDev: true
+(index):294 [WebSocket] ✅ Allowing real connection: wss://localhost:5173/?token=zkr-aFVATBhN
+(index):298 WebSocket connection to 'wss://localhost:5173/?token=zkr-aFVATBhN' failed: 
+construct @ (index):298
+createConnection @ client:755
+connect @ client:411
+connect @ client:759
+telemetry.ts:201 [vite] failed to connect to websocket.
+your current setup:
+  (browser) f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ <--[HTTP]--> localhost:5173/ (server)
+  (browser) f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ <--[WebSocket (failing)]--> localhost:5173/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+console.<computed> @ telemetry.ts:201
+connect @ client:765
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Console error: [vite] failed to connect to websock…/vite.dev/config/server-options.html#server-hmr .', timestamp: '2025-12-11T06:25:49.388Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+(index):298 WebSocket connection to 'wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294' failed: 
+construct @ (index):298
+connectWebSocket @ AutonomousWorkspaceViewer.tsx:173
+telemetry.ts:247  POST https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/logs/ingest 502 (Bad Gateway)
+window.fetch @ telemetry.ts:247
+flush @ telemetry.ts:302
+(anonyme) @ telemetry.ts:270
+setInterval
+startFlushTimer @ telemetry.ts:269
+init @ telemetry.ts:81
+initTelemetry @ telemetry.ts:337
+(anonyme) @ main.tsx:14
+AutonomousWorkspaceViewer.tsx:169 [AutonomousWorkspaceViewer] Connecting to WebSocket: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294
+(index):287 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294 isEssential: true isViteHMR: false isDev: true
+(index):294 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294
+AutonomousWorkspaceViewer.tsx:174 [AutonomousWorkspaceViewer] WebSocket object created
+(index):298 WebSocket connection to 'wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294' failed: 
+construct @ (index):298
+connectWebSocket @ AutonomousWorkspaceViewer.tsx:173
+AutonomousWorkspaceViewer.tsx:169 [AutonomousWorkspaceViewer] Connecting to WebSocket: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294
+(index):287 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294 isEssential: true isViteHMR: false isDev: true
+(index):294 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294
+AutonomousWorkspaceViewer.tsx:174 [AutonomousWorkspaceViewer] WebSocket object created
+AutonomousWorkspaceViewer.tsx:186 [AutonomousWorkspaceViewer] WebSocket CONNECTED
+:5000/ide/622?buildMode=full-app:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+:5000/ide/622?buildMode=full-app:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+:5000/ide/622?buildMode=full-app:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+:5000/ide/622?buildMode=full-app:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+:5000/ide/622?buildMode=full-app:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+:5000/ide/622?buildMode=full-app:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+:5000/ide/622?buildMode=full-app:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:28:50.743Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects 200', timestamp: '2025-12-11T06:28:50.837Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 0.05526721255669071ms', timestamp: '2025-12-11T06:28:51.365Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:28:56.363Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/git/log 200', timestamp: '2025-12-11T06:28:56.842Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: GET /api/git/remotes 200', timestamp: '2025-12-11T06:28:57.019Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Performance: CLS = 4.532395700281769ms', timestamp: '2025-12-11T06:28:57.038Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: GET /api/git/github/status 200', timestamp: '2025-12-11T06:28:57.079Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/git/branches 200', timestamp: '2025-12-11T06:29:00.129Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/usage/current 200', timestamp: '2025-12-11T06:29:01.970Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:29:01.980Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/git/status 200', timestamp: '2025-12-11T06:29:02.613Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Performance: CLS = 5.546411227829894ms', timestamp: '2025-12-11T06:29:02.659Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:29:07.629Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:32:08.000Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:32:13.708Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+console.<computed> @ telemetry.ts:127
+(anonyme) @ chunk-TSZV4UFF.js?v=8deb9ffd:430
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19469
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18948
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:18677
+ [Telemetry] {level: 'warn', message: 'Console warn: Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.', timestamp: '2025-12-11T06:32:14.306Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/agent-grid/sessions 200', timestamp: '2025-12-11T06:32:14.745Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ AG Grid: error #272 No AG Grid modules are registered! It is recommended to start with all Community features via the AllCommunityModule:
+                    
+    import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
+    
+    ModuleRegistry.registerModules([ AllCommunityModule ]);
+     
+Visit https://www.ag-grid.com/react-data-grid/errors/272?_version_=34.3.1
+console.<computed> @ telemetry.ts:127
+(anonyme) @ ag-grid-react.js?v=8deb9ffd:1299
+_doOnce @ ag-grid-react.js?v=8deb9ffd:940
+_errorOnce @ ag-grid-react.js?v=8deb9ffd:1299
+getMsgOrDefault @ ag-grid-react.js?v=8deb9ffd:1406
+_logPreInitErr @ ag-grid-react.js?v=8deb9ffd:1478
+createBeansList @ ag-grid-react.js?v=8deb9ffd:27562
+create @ ag-grid-react.js?v=8deb9ffd:27481
+(anonyme) @ ag-grid-react.js?v=8deb9ffd:30445
+commitAttachRef @ chunk-E22KYI7D.js?v=8deb9ffd:17327
+commitLayoutEffectOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:17216
+commitLayoutMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18030
+commitLayoutEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18019
+commitLayoutEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18000
+commitLayoutEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18000
+commitLayoutEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18000
+commitLayoutEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18000
+commitLayoutEffects @ chunk-E22KYI7D.js?v=8deb9ffd:17970
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19406
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18948
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:18677
+setTimeout
+systemSetTimeoutZero @ chunk-V7DLPMS6.js?v=8deb9ffd:95
+flush @ chunk-V7DLPMS6.js?v=8deb9ffd:597
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:615
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+onSubscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:1305
+subscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:19
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:3245
+subscribeToStore @ chunk-E22KYI7D.js?v=8deb9ffd:12032
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19469
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18948
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:18677
+ [Telemetry] {level: 'error', message: 'Console error: AG Grid: error #272 No AG Grid modu…d.com/react-data-grid/errors/272?_version_=34.3.1', timestamp: '2025-12-11T06:32:14.912Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Performance: CLS = 116.98716097257139ms', timestamp: '2025-12-11T06:32:14.927Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:32:17.811Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:32:17.812Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:32:59.470Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/agent-grid/metrics 200', timestamp: '2025-12-11T06:33:01.027Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Performance: CLS = 2.885745634060882ms', timestamp: '2025-12-11T06:33:01.150Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Performance: CLS = 1.9459353231800884ms', timestamp: '2025-12-11T06:33:01.167Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/usage/current 200', timestamp: '2025-12-11T06:33:02.580Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:33:02.810Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:33:02.811Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: GET /api/git/status 200', timestamp: '2025-12-11T06:33:03.090Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:33:05.289Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [AutonomousWorkspaceViewer] Connecting to WebSocket: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294
+ [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294 isEssential: true isViteHMR: false isDev: true
+ [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294
+ [AutonomousWorkspaceViewer] WebSocket object created
+ WebSocket connection to 'wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294' failed: 
+construct @ (index):298
+connectWebSocket @ AutonomousWorkspaceViewer.tsx:119
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/preview/url?projectId=622 502 (Bad Gateway)
+window.fetch @ telemetry.ts:165
+(anonyme) @ queryClient.ts:83
+fetchFn @ chunk-V7DLPMS6.js?v=8deb9ffd:1066
+run @ chunk-V7DLPMS6.js?v=8deb9ffd:776
+start @ chunk-V7DLPMS6.js?v=8deb9ffd:818
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1113
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onSubscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:1309
+subscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:19
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:3245
+subscribeToStore @ chunk-E22KYI7D.js?v=8deb9ffd:12032
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19469
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18948
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:18677
+setTimeout
+systemSetTimeoutZero @ chunk-V7DLPMS6.js?v=8deb9ffd:95
+flush @ chunk-V7DLPMS6.js?v=8deb9ffd:597
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:615
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+setOptions @ chunk-V7DLPMS6.js?v=8deb9ffd:1362
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:3255
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19469
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18948
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:18677
+ [Telemetry] {level: 'error', message: 'Network: GET /api/preview/url?projectId=622 502', timestamp: '2025-12-11T06:40:07.712Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/usage/current 502 (Bad Gateway)
+window.fetch @ telemetry.ts:165
+(anonyme) @ queryClient.ts:83
+fetchFn @ chunk-V7DLPMS6.js?v=8deb9ffd:1066
+run @ chunk-V7DLPMS6.js?v=8deb9ffd:776
+start @ chunk-V7DLPMS6.js?v=8deb9ffd:818
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1113
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onSubscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:1309
+subscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:19
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:3245
+subscribeToStore @ chunk-E22KYI7D.js?v=8deb9ffd:12032
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19469
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18948
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:18677
+setTimeout
+systemSetTimeoutZero @ chunk-V7DLPMS6.js?v=8deb9ffd:95
+flush @ chunk-V7DLPMS6.js?v=8deb9ffd:597
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:615
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+setOptions @ chunk-V7DLPMS6.js?v=8deb9ffd:1362
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:3255
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19469
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18948
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:18677
+ [Telemetry] {level: 'error', message: 'Network: GET /api/usage/current 502', timestamp: '2025-12-11T06:40:07.737Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/git/status 502 (Bad Gateway)
+window.fetch @ telemetry.ts:165
+(anonyme) @ queryClient.ts:83
+fetchFn @ chunk-V7DLPMS6.js?v=8deb9ffd:1066
+run @ chunk-V7DLPMS6.js?v=8deb9ffd:776
+start @ chunk-V7DLPMS6.js?v=8deb9ffd:818
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1113
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+onSubscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:1305
+subscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:19
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:3245
+subscribeToStore @ chunk-E22KYI7D.js?v=8deb9ffd:12032
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19469
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18948
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:18677
+setTimeout
+systemSetTimeoutZero @ chunk-V7DLPMS6.js?v=8deb9ffd:95
+flush @ chunk-V7DLPMS6.js?v=8deb9ffd:597
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:615
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+setOptions @ chunk-V7DLPMS6.js?v=8deb9ffd:1362
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:3255
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19469
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18948
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:18677
+ [Telemetry] {level: 'error', message: 'Network: GET /api/git/status 502', timestamp: '2025-12-11T06:40:07.738Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:40:07.807Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:40:07.807Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/preview/url?projectId=622 502 (Bad Gateway)
+window.fetch @ telemetry.ts:165
+(anonyme) @ queryClient.ts:83
+fetchFn @ chunk-V7DLPMS6.js?v=8deb9ffd:1066
+run @ chunk-V7DLPMS6.js?v=8deb9ffd:776
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:800
+Promise.then
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:796
+Promise.catch
+run @ chunk-V7DLPMS6.js?v=8deb9ffd:780
+start @ chunk-V7DLPMS6.js?v=8deb9ffd:818
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1113
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onSubscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:1309
+subscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:19
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:3245
+subscribeToStore @ chunk-E22KYI7D.js?v=8deb9ffd:12032
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19469
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18948
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:18677
+setTimeout
+systemSetTimeoutZero @ chunk-V7DLPMS6.js?v=8deb9ffd:95
+flush @ chunk-V7DLPMS6.js?v=8deb9ffd:597
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:615
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+setOptions @ chunk-V7DLPMS6.js?v=8deb9ffd:1362
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:3255
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19469
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18948
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:18677
+ [Telemetry] {level: 'error', message: 'Network: GET /api/preview/url?projectId=622 502', timestamp: '2025-12-11T06:40:08.899Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/usage/current 502 (Bad Gateway)
+window.fetch @ telemetry.ts:165
+(anonyme) @ queryClient.ts:83
+fetchFn @ chunk-V7DLPMS6.js?v=8deb9ffd:1066
+run @ chunk-V7DLPMS6.js?v=8deb9ffd:776
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:800
+Promise.then
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:796
+Promise.catch
+run @ chunk-V7DLPMS6.js?v=8deb9ffd:780
+start @ chunk-V7DLPMS6.js?v=8deb9ffd:818
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1113
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onSubscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:1309
+subscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:19
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:3245
+subscribeToStore @ chunk-E22KYI7D.js?v=8deb9ffd:12032
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19469
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18948
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:18677
+setTimeout
+systemSetTimeoutZero @ chunk-V7DLPMS6.js?v=8deb9ffd:95
+flush @ chunk-V7DLPMS6.js?v=8deb9ffd:597
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:615
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+setOptions @ chunk-V7DLPMS6.js?v=8deb9ffd:1362
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:3255
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19469
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18948
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:18677
+ [Telemetry] {level: 'error', message: 'Network: GET /api/usage/current 502', timestamp: '2025-12-11T06:40:08.918Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/git/status 502 (Bad Gateway)
+window.fetch @ telemetry.ts:165
+(anonyme) @ queryClient.ts:83
+fetchFn @ chunk-V7DLPMS6.js?v=8deb9ffd:1066
+run @ chunk-V7DLPMS6.js?v=8deb9ffd:776
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:800
+Promise.then
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:796
+Promise.catch
+run @ chunk-V7DLPMS6.js?v=8deb9ffd:780
+start @ chunk-V7DLPMS6.js?v=8deb9ffd:818
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1113
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1469
+setInterval
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:48
+setInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:87
+#updateRefetchInterval @ chunk-V7DLPMS6.js?v=8deb9ffd:1467
+#updateTimers @ chunk-V7DLPMS6.js?v=8deb9ffd:1475
+onQueryUpdate @ chunk-V7DLPMS6.js?v=8deb9ffd:1678
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1224
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:1223
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:611
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+onSubscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:1305
+subscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:19
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:3245
+subscribeToStore @ chunk-E22KYI7D.js?v=8deb9ffd:12032
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19469
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18948
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:18677
+setTimeout
+systemSetTimeoutZero @ chunk-V7DLPMS6.js?v=8deb9ffd:95
+flush @ chunk-V7DLPMS6.js?v=8deb9ffd:597
+batch @ chunk-V7DLPMS6.js?v=8deb9ffd:615
+#dispatch @ chunk-V7DLPMS6.js?v=8deb9ffd:1222
+setData @ chunk-V7DLPMS6.js?v=8deb9ffd:904
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1122
+await in fetch
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+setOptions @ chunk-V7DLPMS6.js?v=8deb9ffd:1362
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:3255
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19469
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18948
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:18677
+ [Telemetry] {level: 'error', message: 'Network: GET /api/git/status 502', timestamp: '2025-12-11T06:40:08.921Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [AutonomousWorkspaceViewer] Connecting to WebSocket: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294
+ [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294 isEssential: true isViteHMR: false isDev: true
+ [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294
+ [AutonomousWorkspaceViewer] WebSocket object created
+ WebSocket connection to 'wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294' failed: 
+construct @ (index):298
+connectWebSocket @ AutonomousWorkspaceViewer.tsx:119
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:40:12.809Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:40:12.810Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: GET /api/git/status 200', timestamp: '2025-12-11T06:40:13.169Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:40:13.171Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:40:13.172Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/usage/current 200', timestamp: '2025-12-11T06:40:14.366Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:40:14.367Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:40:14.367Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [AutonomousWorkspaceViewer] Connecting to WebSocket: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294
+ [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294 isEssential: true isViteHMR: false isDev: true
+ [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=622&sessionId=bcebea4b-811f-4c0f-b568-7c9518564294
+ [AutonomousWorkspaceViewer] WebSocket object created
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:40:17.808Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:40:17.808Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [AutonomousWorkspaceViewer] WebSocket CONNECTED
+ [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:40:19.373Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/projects/622/files 200', timestamp: '2025-12-11T06:40:23.005Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:40:23.475Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:40:23.475Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:40:28.652Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:40:28.652Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:40:33.476Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:40:33.477Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:40:38.462Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:40:38.463Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:40:43.457Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:40:43.458Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:40:48.460Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:40:48.461Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:40:53.457Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:40:53.458Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:40:58.456Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:40:58.457Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:41:03.456Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:41:03.456Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:41:08.460Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:41:08.461Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:41:13.455Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:41:13.455Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:41:18.870Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:41:18.874Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:41:57.666Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:41:57.678Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:42:57.523Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:42:57.524Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:43:57.605Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:43:57.619Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:44:57.571Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:44:57.572Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:45:58.090Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:45:58.095Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:46:57.559Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:46:57.574Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:47:14.638Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:47:14.638Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Performance: CLS = 4.373255212108386ms', timestamp: '2025-12-11T06:47:14.640Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:47:14.643Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:47:14.643Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/git/status 200', timestamp: '2025-12-11T06:47:15.669Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:47:15.670Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:47:15.670Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Performance: CLS = 15.185750188147468ms', timestamp: '2025-12-11T06:47:15.732Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:47:15.734Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:47:15.734Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: GET /api/usage/current 200', timestamp: '2025-12-11T06:47:15.876Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:47:15.877Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:47:15.877Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:47:15.947Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:47:15.947Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:47:15.947Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:47:17.781Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:47:17.781Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=622 200', timestamp: '2025-12-11T06:47:21.663Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:47:21.667Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:47:21.667Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
+ [Telemetry] {level: 'info', message: 'Network: GET /api/projects 200', timestamp: '2025-12-11T06:47:22.338Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:47:22.341Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:47:22.341Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T06:47:22.780Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T06:47:22.780Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng….riker.replit.dev:5000/ide/622?buildMode=full-app', …}
+ [QueryPersister] Cache persisted to IndexedDB
