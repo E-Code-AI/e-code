@@ -14,7 +14,7 @@ import type { Message, AutonomousWorkspacePayload, AutonomousBuildTask } from '@
 import type { AutonomousBuildPhase } from '@/stores/autonomousBuildStore';
 
 interface AutonomousProgressEvent {
-  type: 'planning' | 'plan_ready' | 'awaiting_approval' | 'executing' | 'step_update' | 'complete' | 'error' | 'connected' | 'status' | 'plan_chunk' | 'plan_generated' | 'task_start' | 'task_progress' | 'task_complete';
+  type: 'planning' | 'plan_ready' | 'awaiting_approval' | 'executing' | 'step_update' | 'complete' | 'error' | 'connected' | 'status' | 'plan_chunk' | 'plan_generated' | 'task_start' | 'task_progress' | 'task_complete' | 'step' | 'summary' | 'file_created' | 'command_output' | 'agent_message';
   projectId?: number;
   sessionId?: string;
   status?: string;
@@ -24,6 +24,26 @@ interface AutonomousProgressEvent {
   taskId?: string;
   taskName?: string;
   plan?: any;
+  // Direct step/summary payloads from server
+  step?: {
+    id: string;
+    type: string;
+    title: string;
+    status?: string;
+    details?: string[];
+    output?: string;
+  };
+  summary?: {
+    title?: string;
+    content: string;
+    filesCreated?: string[];
+    filesModified?: string[];
+  };
+  filePath?: string;
+  fileName?: string;
+  content?: string;
+  command?: string;
+  output?: string;
   data?: {
     phase?: string;
     planTitle?: string;
@@ -180,13 +200,19 @@ export function useAutonomousChatIntegration({
           store.setProgress(eventProgress);
         }
         
+        // Map splash phase to payload phase (AutonomousWorkspacePayload only accepts specific phases)
+        const payloadPhase: 'planning' | 'awaiting_approval' | 'executing' | 'complete' | 'error' = 
+          splashPhase === 'planning' ? 'planning' :
+          splashPhase === 'complete' ? 'complete' :
+          splashPhase === 'error' ? 'error' : 'executing';
+        
         // Add status update message to chat (update existing if same phase, or add new)
         const statusContent = phaseName || eventMessage || `${splashPhase}...`;
         const statusMsg = createAutonomousMessage(
           'autonomous_working',
           statusContent,
           {
-            phase: splashPhase,
+            phase: payloadPhase,
             progress: eventProgress || store.progress
           }
         );
@@ -195,7 +221,7 @@ export function useAutonomousChatIntegration({
         if (lastMessageIdRef.current && splashPhase === store.phase) {
           updateMessage(conversationId, lastMessageIdRef.current, {
             content: statusContent,
-            autonomousPayload: { phase: splashPhase, progress: eventProgress || store.progress }
+            autonomousPayload: { phase: payloadPhase, progress: eventProgress || store.progress }
           });
         } else {
           addMessage(conversationId, statusMsg);
@@ -235,13 +261,30 @@ export function useAutonomousChatIntegration({
       case 'plan_generated': {
         if (plan) {
           const features = plan.tasks?.map((t: any) => t.description || t.name) || [];
+          const planTitle = plan.summary || 'Generated Plan';
           store.setPlan({
-            planTitle: plan.summary || 'Generated Plan',
+            planTitle,
             featureList: features,
             planText: planTextRef.current
           });
           store.setPhase('scaffolding');
           store.setProgress(35);
+          
+          // Create rich inline plan card message
+          const planMsg = createAutonomousMessage(
+            'autonomous_plan',
+            "I've created a plan for your app:",
+            {
+              phase: 'awaiting_approval',
+              planTitle,
+              featureList: features,
+              planText: planTextRef.current,
+              appType: plan.appType || 'web-app'
+            }
+          );
+          addMessage(conversationId, planMsg);
+          lastMessageIdRef.current = planMsg.id;
+          console.log('[AutonomousChatIntegration] ✅ Added plan_generated message with features:', features.length);
         }
         break;
       }
@@ -285,14 +328,43 @@ export function useAutonomousChatIntegration({
 
       case 'task_start': {
         if (taskId && taskName) {
-          const newTask = {
+          const newTask: AutonomousBuildTask = {
             id: taskId,
             name: taskName,
-            status: 'in_progress' as const
+            status: 'in_progress'
           };
-          store.setTasks([...store.tasks, newTask]);
+          const updatedTasks = [...store.tasks, newTask];
+          store.setTasks(updatedTasks);
           store.setCurrentTask(taskName);
           store.setPhase('building');
+          
+          // Create or update progress message
+          if (lastMessageIdRef.current) {
+            updateMessage(conversationId, lastMessageIdRef.current, {
+              content: `Working on: ${taskName}`,
+              isStreaming: true,
+              autonomousPayload: {
+                phase: 'executing',
+                currentTask: taskName,
+                progress: store.progress,
+                tasks: updatedTasks
+              }
+            });
+          } else {
+            const msg = createAutonomousMessage(
+              'autonomous_progress',
+              `Working on: ${taskName}`,
+              {
+                phase: 'executing',
+                currentTask: taskName,
+                progress: store.progress,
+                tasks: updatedTasks
+              }
+            );
+            addMessage(conversationId, msg);
+            lastMessageIdRef.current = msg.id;
+          }
+          console.log('[AutonomousChatIntegration] ✅ Task started:', taskName);
         }
         break;
       }
@@ -300,6 +372,18 @@ export function useAutonomousChatIntegration({
       case 'task_progress': {
         if (taskId && eventProgress !== undefined) {
           store.updateTask(taskId, { progress: eventProgress });
+          
+          // Update existing progress message
+          if (lastMessageIdRef.current) {
+            updateMessage(conversationId, lastMessageIdRef.current, {
+              autonomousPayload: {
+                phase: 'executing',
+                currentTask: store.currentTask || undefined,
+                progress: store.progress,
+                tasks: store.tasks
+              }
+            });
+          }
         }
         break;
       }
@@ -309,10 +393,25 @@ export function useAutonomousChatIntegration({
           store.updateTask(taskId, { status: 'completed', progress: 100 });
           const completedCount = store.tasks.filter(t => t.status === 'completed').length + 1;
           const totalTasks = store.tasks.length;
+          let newProgress = store.progress;
           if (totalTasks > 0) {
-            const progressFromTasks = 35 + (completedCount / totalTasks) * 60;
-            store.setProgress(Math.min(95, progressFromTasks));
+            newProgress = Math.min(95, 35 + (completedCount / totalTasks) * 60);
+            store.setProgress(newProgress);
           }
+          
+          // Update progress message with completed task
+          if (lastMessageIdRef.current) {
+            updateMessage(conversationId, lastMessageIdRef.current, {
+              content: `Completed: ${taskName || taskId}`,
+              autonomousPayload: {
+                phase: 'executing',
+                currentTask: `Completed: ${taskName || taskId}`,
+                progress: newProgress,
+                tasks: store.tasks
+              }
+            });
+          }
+          console.log('[AutonomousChatIntegration] ✅ Task completed:', taskId);
         }
         break;
       }
@@ -414,6 +513,138 @@ export function useAutonomousChatIntegration({
           addMessage(conversationId, msg);
         }
         lastMessageIdRef.current = null;
+        break;
+      }
+
+      // Handle step updates from workflow execution
+      case 'step': {
+        const stepData = event.step;
+        if (stepData) {
+          store.setCurrentTask(stepData.title || 'Processing step...');
+          store.setPhase('building');
+          
+          // Update or create progress message
+          if (lastMessageIdRef.current) {
+            updateMessage(conversationId, lastMessageIdRef.current, {
+              content: `📝 ${stepData.title}`,
+              isStreaming: true,
+              autonomousPayload: {
+                phase: 'executing',
+                currentTask: stepData.title,
+                progress: store.progress
+              }
+            });
+          } else {
+            const msg = createAutonomousMessage(
+              'autonomous_progress',
+              `📝 ${stepData.title}`,
+              {
+                phase: 'executing',
+                currentTask: stepData.title,
+                progress: store.progress
+              }
+            );
+            addMessage(conversationId, msg);
+            lastMessageIdRef.current = msg.id;
+          }
+          console.log('[AutonomousChatIntegration] ✅ Step update:', stepData.title);
+        }
+        break;
+      }
+
+      // Handle summary updates (usually at end of phases)
+      case 'summary': {
+        const summaryData = event.summary;
+        if (summaryData) {
+          const content = summaryData.content || summaryData.title || 'Summary';
+          
+          // Create a new summary message
+          const msg = createAutonomousMessage(
+            'autonomous_progress',
+            `📊 ${content}`,
+            {
+              phase: 'executing',
+              currentTask: content,
+              progress: store.progress
+            }
+          );
+          addMessage(conversationId, msg);
+          lastMessageIdRef.current = msg.id;
+          console.log('[AutonomousChatIntegration] ✅ Summary:', content);
+        }
+        break;
+      }
+
+      // Handle file creation notifications
+      case 'file_created': {
+        const fileName = event.fileName || event.filePath;
+        if (fileName) {
+          store.setProgress(Math.min(store.progress + 2, 95));
+          
+          // Update existing progress message with file creation info
+          if (lastMessageIdRef.current) {
+            updateMessage(conversationId, lastMessageIdRef.current, {
+              content: `📄 Created: ${fileName}`,
+              isStreaming: true,
+              autonomousPayload: {
+                phase: 'executing',
+                currentTask: `Created: ${fileName}`,
+                progress: store.progress
+              }
+            });
+          } else {
+            const msg = createAutonomousMessage(
+              'autonomous_progress',
+              `📄 Created: ${fileName}`,
+              {
+                phase: 'executing',
+                currentTask: `Created: ${fileName}`,
+                progress: store.progress
+              }
+            );
+            addMessage(conversationId, msg);
+            lastMessageIdRef.current = msg.id;
+          }
+          console.log('[AutonomousChatIntegration] ✅ File created:', fileName);
+        }
+        break;
+      }
+
+      // Handle command output (terminal commands)
+      case 'command_output': {
+        const cmd = event.command;
+        if (cmd) {
+          if (lastMessageIdRef.current) {
+            updateMessage(conversationId, lastMessageIdRef.current, {
+              content: `💻 Running: ${cmd}`,
+              isStreaming: true,
+              autonomousPayload: {
+                phase: 'executing',
+                currentTask: `Running: ${cmd}`,
+                progress: store.progress
+              }
+            });
+          }
+        }
+        break;
+      }
+
+      // Handle agent messages (thinking/reasoning)
+      case 'agent_message': {
+        const msgContent = event.content || eventMessage;
+        if (msgContent) {
+          const msg = createAutonomousMessage(
+            'autonomous_working',
+            `💭 ${msgContent}`,
+            {
+              phase: 'executing',
+              currentTask: msgContent,
+              progress: store.progress
+            }
+          );
+          addMessage(conversationId, msg);
+          console.log('[AutonomousChatIntegration] ✅ Agent message:', msgContent.substring(0, 50));
+        }
         break;
       }
     }
