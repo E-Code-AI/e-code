@@ -10,7 +10,8 @@ import {
   Globe, Package, TestTube, Search,
   FileText, Server, Shield, Variable,
   FolderOpen, FileCode, FilePlus,
-  Workflow, History, Puzzle
+  Workflow, History, Puzzle,
+  Zap, Layers, Rocket, Command, FileSearch
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,11 @@ interface MobileMoreMenuProps {
   onOpenWorkflows?: () => void;
   onOpenHistory?: () => void;
   onOpenExtensions?: () => void;
+  onOpenActions?: () => void;
+  onOpenTools?: () => void;
+  onOpenDeploy?: () => void;
+  onOpenCommandPalette?: () => void;
+  onOpenGlobalSearch?: () => void;
   problemsCount?: number;
   className?: string;
 }
@@ -70,6 +76,11 @@ export function MobileMoreMenu({
   onOpenWorkflows,
   onOpenHistory,
   onOpenExtensions,
+  onOpenActions,
+  onOpenTools,
+  onOpenDeploy,
+  onOpenCommandPalette,
+  onOpenGlobalSearch,
   problemsCount = 0,
   className 
 }: MobileMoreMenuProps) {
@@ -397,8 +408,70 @@ export function MobileMoreMenu({
     }
   };
 
+  const handleActions = () => {
+    if (onOpenActions) {
+      onOpenActions();
+    } else {
+      toast({ title: 'Actions', description: 'Opening agent actions panel...' });
+    }
+    onClose();
+  };
+
+  const handleTools = () => {
+    if (onOpenTools) {
+      onOpenTools();
+    } else {
+      toast({ title: 'Tools', description: 'Opening tools panel...' });
+    }
+    onClose();
+  };
+
+  const handleDeploy = () => {
+    if (onOpenDeploy) {
+      onOpenDeploy();
+    } else {
+      toast({ title: 'Deploy', description: 'Opening deployment panel...' });
+    }
+    onClose();
+  };
+
+  const handleCommandPalette = () => {
+    if (onOpenCommandPalette) {
+      onOpenCommandPalette();
+    } else {
+      toast({ title: 'Command Palette', description: 'Opening command palette...' });
+    }
+    onClose();
+  };
+
+  const handleQuickSearch = () => {
+    if (onOpenGlobalSearch) {
+      onOpenGlobalSearch();
+    } else {
+      toast({ title: 'Global Search', description: 'Opening global search...' });
+    }
+    onClose();
+  };
+
   // Note: Files section removed - use dedicated Files tab in bottom navigation instead
   const menuSections: MenuSection[] = [
+    {
+      title: 'Quick Access',
+      icon: Command,
+      items: [
+        { id: 'command-palette', label: 'Command Palette', icon: Command, onClick: handleCommandPalette },
+        { id: 'quick-search', label: 'Global Search', icon: FileSearch, onClick: handleQuickSearch },
+      ],
+    },
+    {
+      title: 'Agent',
+      icon: Zap,
+      items: [
+        { id: 'agent-actions', label: 'Actions', icon: Zap, onClick: handleActions },
+        { id: 'agent-tools', label: 'Tools', icon: Layers, onClick: handleTools },
+        { id: 'agent-deploy', label: 'Deploy', icon: Rocket, onClick: handleDeploy },
+      ],
+    },
     {
       title: 'Collaboration',
       icon: Users,
@@ -449,7 +522,6 @@ export function MobileMoreMenu({
         { id: 'webview', label: 'Web Preview', icon: Globe, onClick: handleWebview },
         { id: 'packages', label: 'Packages', icon: Package, onClick: handlePackages },
         { id: 'tests', label: 'Tests', icon: TestTube, onClick: handleTests },
-        { id: 'search', label: 'Global Search', icon: Search, onClick: handleGlobalSearch },
       ],
     },
     {
