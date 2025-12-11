@@ -130,6 +130,8 @@ interface ReplitAgentPanelV3Props {
   // Lifted agent tools settings to parent to survive remounts (Dec 2025)
   agentToolsSettings?: AgentToolsSettings;
   onAgentToolsSettingsChange?: (settings: AgentToolsSettings) => void;
+  // ✅ FIX (Dec 11, 2025): Show ModeSelector immediately during bootstrap
+  isBootstrapping?: boolean;
 }
 
 function categorizeError(error: unknown): { title: string; message: string } {
@@ -210,7 +212,8 @@ export function ReplitAgentPanelV3({
   externalConversationId,
   autoStart = true,
   agentToolsSettings: externalAgentToolsSettings,
-  onAgentToolsSettingsChange
+  onAgentToolsSettingsChange,
+  isBootstrapping = false
 }: ReplitAgentPanelV3Props) {
   // AI Model preference hook
   const { modelId, provider, supportsExtendedThinking: modelSupportsExtendedThinking, model, setPreferredModel } = useAgentModelPreference();
@@ -1574,6 +1577,17 @@ export function ReplitAgentPanelV3({
       <div className="p-4 border-t border-border">
         <div className="space-y-2">
           {/* Mode selector and Element Editor row - above input like Replit */}
+          {/* Show loading state during bootstrap until conversationId is set */}
+          {isBootstrapping && !conversationId && (
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-24 bg-muted/50 rounded animate-pulse" />
+                <span className="text-[10px] text-muted-foreground">
+                  Initializing agent...
+                </span>
+              </div>
+            </div>
+          )}
           {conversationId && (
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">

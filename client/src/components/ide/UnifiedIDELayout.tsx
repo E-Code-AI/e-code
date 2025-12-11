@@ -336,6 +336,7 @@ function UnifiedIDELayout({
               mode="mobile"
               agentToolsSettings={agentToolsSettings}
               onAgentToolsSettingsChange={setAgentToolsSettings}
+              isBootstrapping={!!bootstrapToken}
             />
           </Suspense>
         );
@@ -442,6 +443,7 @@ function UnifiedIDELayout({
               mode="tablet"
               agentToolsSettings={agentToolsSettings}
               onAgentToolsSettingsChange={setAgentToolsSettings}
+              isBootstrapping={!!bootstrapToken}
             />
           </Suspense>
         );
@@ -776,6 +778,7 @@ function UnifiedIDELayout({
                         mode="desktop"
                         agentToolsSettings={agentToolsSettings}
                         onAgentToolsSettingsChange={setAgentToolsSettings}
+                        isBootstrapping={!!bootstrapToken}
                       />
                     </Suspense>
                   </TabsContent>
