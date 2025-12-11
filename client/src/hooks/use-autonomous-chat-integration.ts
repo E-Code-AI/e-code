@@ -156,6 +156,19 @@ export function useAutonomousChatIntegration({
         store.setPhase('planning');
         store.setCurrentTask('Connected to AI agent');
         store.setProgress(5);
+        
+        // Add welcome message to chat
+        const connectedMsg = createAutonomousMessage(
+          'autonomous_working',
+          '🔗 Connected to AI agent. Starting workspace creation...',
+          {
+            phase: 'planning',
+            progress: 5
+          }
+        );
+        addMessage(conversationId, connectedMsg);
+        lastMessageIdRef.current = connectedMsg.id;
+        console.log('[AutonomousChatIntegration] ✅ Added connected message to chat:', connectedMsg.id);
         break;
       }
 
@@ -166,6 +179,29 @@ export function useAutonomousChatIntegration({
         if (eventProgress !== undefined) {
           store.setProgress(eventProgress);
         }
+        
+        // Add status update message to chat (update existing if same phase, or add new)
+        const statusContent = phaseName || eventMessage || `${splashPhase}...`;
+        const statusMsg = createAutonomousMessage(
+          'autonomous_working',
+          statusContent,
+          {
+            phase: splashPhase,
+            progress: eventProgress || store.progress
+          }
+        );
+        
+        // Update existing message or add new one based on phase changes
+        if (lastMessageIdRef.current && splashPhase === store.phase) {
+          updateMessage(conversationId, lastMessageIdRef.current, {
+            content: statusContent,
+            autonomousPayload: { phase: splashPhase, progress: eventProgress || store.progress }
+          });
+        } else {
+          addMessage(conversationId, statusMsg);
+          lastMessageIdRef.current = statusMsg.id;
+        }
+        console.log('[AutonomousChatIntegration] ✅ Status update:', { status, phaseName, progress: eventProgress });
         break;
       }
 
