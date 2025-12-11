@@ -1,0 +1,110 @@
+697?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app:312 [WebSocket] Interceptor installed (Development mode: true)
+697?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app:288 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=cB7RC7pbkK1f isEssential: false isViteHMR: true isDev: true
+697?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app:295 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=cB7RC7pbkK1f
+chunk-E22KYI7D.js?v=8deb9ffd:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Telemetry initialized', timestamp: '2025-12-11T17:06:28.251Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+service-worker-registration.ts:14 [SW] Skipping in development mode
+cache-reconciliation.ts:37 [CacheReconciliation] Service initialized
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: LCP = 6784ms', timestamp: '2025-12-11T17:06:28.387Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:74 [QueryPersister] Cache restored (age: 7s)
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: LCP = 6884ms', timestamp: '2025-12-11T17:06:28.488Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+IDEPage.tsx:57 [IDEPage] Component render: {projectId: '697', hasStableToken: false, hasUrlToken: true, tokenLength: undefined}
+IDEPage.tsx:41 [IDEPage] Capturing bootstrap token in stable state: {tokenLength: 448, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+IDEPage.tsx:57 [IDEPage] Component render: {projectId: '697', hasStableToken: true, hasUrlToken: true, tokenLength: 448}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/me 200', timestamp: '2025-12-11T17:06:28.817Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: LCP = 7216ms', timestamp: '2025-12-11T17:06:28.818Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/monitoring/health/summary 200', timestamp: '2025-12-11T17:06:28.823Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 8.334977517701168ms', timestamp: '2025-12-11T17:06:28.931Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects 200', timestamp: '2025-12-11T17:06:29.266Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+697?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElk…:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects/697?bootstrap=eyJhbGciO…0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668 200', timestamp: '2025-12-11T17:06:29.601Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects/697 200', timestamp: '2025-12-11T17:06:29.608Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+UnifiedIDELayout.tsx:247 [UnifiedIDELayout] Bootstrap token detected - forcing agent tab and ensuring sidebar is visible
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: LCP = 10784ms', timestamp: '2025-12-11T17:06:32.387Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects/697/files 200', timestamp: '2025-12-11T17:06:32.532Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects/697/files?bootstrap=eyJ…0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668 200', timestamp: '2025-12-11T17:06:32.534Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects 200', timestamp: '2025-12-11T17:06:32.743Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/csrf-token 200', timestamp: '2025-12-11T17:06:32.828Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/git/status 200', timestamp: '2025-12-11T17:06:32.926Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T17:06:33.046Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects 200', timestamp: '2025-12-11T17:06:34.977Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/runtime/start 200', timestamp: '2025-12-11T17:06:35.669Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 0.04275960524089613ms', timestamp: '2025-12-11T17:06:35.687Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+agentConversationStore.ts:249 [AgentConversationStore] Rehydrated from localStorage
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:113 [AutonomousChatIntegration] 🆔 Generated STABLE temp conversationId: -697 for projectId: 697
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: null, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+use-autonomous-chat-integration.ts:448 [AutonomousChatIntegration] ⚡ useEffect TRIGGERED: {enabled: true, conversationId: -697, projectId: 697, hasBootstrapToken: true}
+use-autonomous-chat-integration.ts:471 [AutonomousChatIntegration] 🔑 Decoded token: {projectId: '697', sessionId: 'cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a', userId: 98}
+use-autonomous-chat-integration.ts:483 [AutonomousChatIntegration] ✅ All conditions met, proceeding with WebSocket connection
+use-autonomous-chat-integration.ts:515 [AutonomousChatIntegration] 🚀 Connecting to WebSocket: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=... (attempt 1/10)
+use-autonomous-chat-integration.ts:519 [AutonomousChatIntegration] 📡 Creating WebSocket instance...
+697?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app:288 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=697&sessionId=cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a&bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668 isEssential: true isViteHMR: false isDev: true
+697?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app:295 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=697&sessionId=cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a&bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668
+use-autonomous-chat-integration.ts:521 [AutonomousChatIntegration] 📡 WebSocket created, initial readyState: 0
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: null, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/models 200', timestamp: '2025-12-11T17:06:37.747Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/tools/status 200', timestamp: '2025-12-11T17:06:37.800Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/effective-model 200', timestamp: '2025-12-11T17:06:37.846Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/preferences 200', timestamp: '2025-12-11T17:06:37.869Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/tools/testing/replays?projectId=697 200', timestamp: '2025-12-11T17:06:37.902Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/testing/sessions?projectId=697 200', timestamp: '2025-12-11T17:06:37.974Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/models 200', timestamp: '2025-12-11T17:06:38.077Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/models/preferred 200', timestamp: '2025-12-11T17:06:38.297Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/rag/stats 200', timestamp: '2025-12-11T17:06:38.342Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/agent/conversation 200', timestamp: '2025-12-11T17:06:38.354Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: undefined, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/autonomy/sessions?limit=10 200', timestamp: '2025-12-11T17:06:38.389Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T17:06:38.585Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T17:06:44.118Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T17:06:49.676Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
