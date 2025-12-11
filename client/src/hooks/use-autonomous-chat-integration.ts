@@ -10,6 +10,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useAgentConversationStore } from '@/stores/agentConversationStore';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
+import { AgentEventBus } from '@/lib/agentEvents';
 import type { Message, AutonomousWorkspacePayload, AutonomousBuildTask } from '@/stores/agentConversationStore';
 import type { AutonomousBuildPhase } from '@/stores/autonomousBuildStore';
 
@@ -177,6 +178,10 @@ export function useAutonomousChatIntegration({
         store.setCurrentTask('Connected to AI agent');
         store.setProgress(5);
         
+        // Emit connected event for favicon/audio/notifications
+        AgentEventBus.emit('agent:connected', { projectId, sessionId });
+        AgentEventBus.emit('agent:status', { status: 'working', phase: 'planning' });
+        
         // Add welcome message to chat
         const connectedMsg = createAutonomousMessage(
           'autonomous_working',
@@ -199,6 +204,9 @@ export function useAutonomousChatIntegration({
         if (eventProgress !== undefined) {
           store.setProgress(eventProgress);
         }
+        
+        // Emit status event for favicon/audio/notifications
+        AgentEventBus.emit('agent:status', { status: splashPhase, phase: status, progress: eventProgress });
         
         // Map splash phase to payload phase (AutonomousWorkspacePayload only accepts specific phases)
         const payloadPhase: 'planning' | 'awaiting_approval' | 'executing' | 'complete' | 'error' = 
@@ -468,6 +476,10 @@ export function useAutonomousChatIntegration({
       case 'complete': {
         store.setComplete();
         
+        // Emit complete event for favicon/audio/notifications
+        AgentEventBus.emit('agent:complete', { projectId, sessionId });
+        AgentEventBus.emit('agent:status', { status: 'complete' });
+        
         if (lastMessageIdRef.current) {
           updateMessage(conversationId, lastMessageIdRef.current, {
             content: 'Build complete! Your app is ready.',
@@ -492,6 +504,10 @@ export function useAutonomousChatIntegration({
       case 'error': {
         const errorMsg = data?.errorMessage || eventMessage || 'An error occurred';
         store.setError(errorMsg);
+        
+        // Emit error event for favicon/audio/notifications
+        AgentEventBus.emit('agent:error', { projectId, sessionId, message: errorMsg });
+        AgentEventBus.emit('agent:status', { status: 'error' });
 
         if (lastMessageIdRef.current) {
           updateMessage(conversationId, lastMessageIdRef.current, {
@@ -579,6 +595,9 @@ export function useAutonomousChatIntegration({
       case 'file_created': {
         const fileName = event.fileName || event.filePath;
         if (fileName) {
+          // Emit file created event for notifications
+          AgentEventBus.emit('agent:file-created', { filename: fileName, projectId });
+          
           // Compute new progress BEFORE setting to store (avoid stale snapshot)
           const newProgress = Math.min(store.progress + 2, 95);
           store.setProgress(newProgress);
@@ -849,6 +868,9 @@ export function useAutonomousChatIntegration({
           });
           hasConnectedRef.current = false;
           wsRef.current = null;
+          
+          // Emit disconnected event for favicon reset
+          AgentEventBus.emit('agent:disconnected', { code: event.code, reason: event.reason });
           
           // Attempt reconnection if not intentionally closed (code 1000) and under max attempts
           if (event.code !== 1000 && reconnectAttemptRef.current < maxReconnectAttempts) {
