@@ -253,6 +253,7 @@ export function AutonomousWorkspaceViewer({
       // ✅ FIX (Dec 1, 2025): Handle 'connected' message from server
       case 'connected':
         addLog('🔌 Connected to AI agent');
+        setOverallProgress(5); // Show initial progress
         break;
 
       case 'status':
@@ -261,14 +262,17 @@ export function AutonomousWorkspaceViewer({
         if (message.status === 'waiting_for_plan') {
           setPhase('planning');
           setCurrentTask('Connecting to AI...');
+          setOverallProgress(8);
           addLog('⏳ Waiting for AI to begin planning...');
         } else if (message.status === 'planning') {
           setPhase('planning');
           setCurrentTask('Generating execution plan...');
+          setOverallProgress(15);
           addLog('🧠 AI is analyzing your request...');
         } else if (message.status === 'executing') {
           setPhase('executing');
           setCurrentTask('Executing plan...');
+          setOverallProgress(35);
         }
         if (message.message && message.status !== 'waiting_for_plan') {
           addLog(`📌 ${message.message}`);
@@ -278,6 +282,8 @@ export function AutonomousWorkspaceViewer({
       case 'plan_chunk':
         if (message.data?.content) {
           setPlanText(prev => prev + message.data.content);
+          // ✅ FIX (Dec 11, 2025): Update progress during planning (15-30%)
+          setOverallProgress(prev => Math.min(30, prev + 0.5));
         }
         break;
 
@@ -294,16 +300,25 @@ export function AutonomousWorkspaceViewer({
           }
           // ✅ FIX (Dec 1, 2025): Don't reset planText - preserve streaming plan history through phase transitions
           setPhase('executing');
+          setOverallProgress(35); // Plan complete, starting execution
         }
         break;
 
       case 'task_start':
         if (message.taskId && message.taskName) {
-          setTasks(prev => [...prev, {
-            id: message.taskId!,
-            name: message.taskName!,
-            status: 'in_progress'
-          }]);
+          setTasks(prev => {
+            const newTasks = [...prev, {
+              id: message.taskId!,
+              name: message.taskName!,
+              status: 'in_progress' as const
+            }];
+            // ✅ FIX (Dec 11, 2025): Update progress when tasks start (35-95%)
+            const totalTasks = generatedPlan?.tasks?.length || newTasks.length;
+            const startedTasks = newTasks.length;
+            const progressFromTasks = 35 + (startedTasks / totalTasks) * 30; // 35-65%
+            setOverallProgress(Math.min(65, progressFromTasks));
+            return newTasks;
+          });
           setCurrentTask(message.taskName);
           addLog(`🚀 Starting: ${message.taskName}`);
         } else if (message.message) {
@@ -318,6 +333,10 @@ export function AutonomousWorkspaceViewer({
               ? { ...task, progress: message.progress }
               : task
           ));
+          // ✅ FIX (Dec 11, 2025): Update overall progress during task execution
+          if (message.progress !== undefined) {
+            setOverallProgress(prev => Math.min(90, prev + 0.2));
+          }
           if (message.message) {
             addLog(`⏳ ${message.message}`);
           }
@@ -326,22 +345,22 @@ export function AutonomousWorkspaceViewer({
 
       case 'task_complete':
         if (message.taskId) {
-          setTasks(prev => prev.map(task => 
-            task.id === message.taskId 
-              ? { ...task, status: 'completed', progress: 100 }
-              : task
-          ));
-          addLog(`✅ Completed: ${message.taskName || message.taskId}`);
-          
-          // Update overall progress
-          setTasks(currentTasks => {
-            const completed = currentTasks.filter(t => t.status === 'completed').length;
-            const total = currentTasks.length;
+          setTasks(prev => {
+            const updatedTasks = prev.map(task => 
+              task.id === message.taskId 
+                ? { ...task, status: 'completed' as const, progress: 100 }
+                : task
+            );
+            // ✅ FIX (Dec 11, 2025): Calculate progress based on completed tasks (65-95%)
+            const completed = updatedTasks.filter(t => t.status === 'completed').length;
+            const total = generatedPlan?.tasks?.length || updatedTasks.length;
             if (total > 0) {
-              setOverallProgress((completed / total) * 100);
+              const progressFromTasks = 65 + (completed / total) * 30; // 65-95%
+              setOverallProgress(Math.min(95, progressFromTasks));
             }
-            return currentTasks;
+            return updatedTasks;
           });
+          addLog(`✅ Completed: ${message.taskName || message.taskId}`);
         }
         break;
 
