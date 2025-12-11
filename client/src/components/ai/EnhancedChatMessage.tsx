@@ -114,28 +114,7 @@ export const EnhancedChatMessage = memo(function EnhancedChatMessage({
       )}
       data-testid={`enhanced-message-${message.id}`}
     >
-      {/* Avatar - hidden on mobile for compact design */}
-      {!isCompactMode && (
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.1, ...springConfig }}
-          className="hidden sm:block"
-        >
-          <Avatar 
-            className={cn(
-              "h-8 w-8 shrink-0 ring-2 ring-offset-2 ring-offset-background transition-shadow duration-200",
-              isUser 
-                ? "ring-primary/20" 
-                : isError 
-                  ? "ring-destructive/20" 
-                  : "ring-primary/30",
-              "shadow-lg"
-            )}
-            data-testid={`enhanced-avatar-${message.role}-${message.id}`}
-          />
-        </motion.div>
-      )}
+      
 
       <div className={cn(
         "flex-1 space-y-2 max-w-[85%] sm:max-w-[80%]",
