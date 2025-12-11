@@ -3,16 +3,27 @@
  * 
  * Converts autonomous workspace progress events into inline chat messages
  * for a Replit-style inline chat experience
+ * 
+ * Also updates the shared autonomousBuildStore for PreviewPanel splash screens
  */
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useAgentConversationStore } from '@/stores/agentConversationStore';
+import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
 import type { Message, AutonomousWorkspacePayload, AutonomousBuildTask } from '@/stores/agentConversationStore';
+import type { AutonomousBuildPhase } from '@/stores/autonomousBuildStore';
 
 interface AutonomousProgressEvent {
-  type: 'planning' | 'plan_ready' | 'awaiting_approval' | 'executing' | 'step_update' | 'complete' | 'error';
+  type: 'planning' | 'plan_ready' | 'awaiting_approval' | 'executing' | 'step_update' | 'complete' | 'error' | 'connected' | 'status' | 'plan_chunk' | 'plan_generated' | 'task_start' | 'task_progress' | 'task_complete';
   projectId?: number;
   sessionId?: string;
+  status?: string;
+  phaseName?: string;
+  progress?: number;
+  message?: string;
+  taskId?: string;
+  taskName?: string;
+  plan?: any;
   data?: {
     phase?: string;
     planTitle?: string;
@@ -30,6 +41,7 @@ interface AutonomousProgressEvent {
     planText?: string;
     buildMode?: 'design-first' | 'full-app';
     errorMessage?: string;
+    content?: string;
     step?: {
       id: string;
       type: string;
@@ -42,17 +54,47 @@ interface AutonomousProgressEvent {
 interface UseAutonomousChatIntegrationOptions {
   conversationId: number | null;
   projectId?: number;
+  sessionId?: string | null;
   enabled?: boolean;
+  bootstrapToken?: string | null;
+}
+
+function mapPhaseToSplashPhase(phase: string | undefined): AutonomousBuildPhase {
+  switch (phase) {
+    case 'planning':
+    case 'waiting_for_plan':
+      return 'planning';
+    case 'scaffolding':
+      return 'scaffolding';
+    case 'building':
+    case 'executing':
+    case 'in_progress':
+      return 'building';
+    case 'styling':
+      return 'styling';
+    case 'finalizing':
+      return 'finalizing';
+    case 'complete':
+      return 'complete';
+    case 'error':
+      return 'error';
+    default:
+      return 'planning';
+  }
 }
 
 export function useAutonomousChatIntegration({
   conversationId,
   projectId,
-  enabled = true
+  sessionId,
+  enabled = true,
+  bootstrapToken
 }: UseAutonomousChatIntegrationOptions) {
-  const { addMessage, updateMessage, getMessages } = useAgentConversationStore();
+  const { addMessage, updateMessage } = useAgentConversationStore();
+  const buildStore = useAutonomousBuildStore();
   const wsRef = useRef<WebSocket | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
+  const planTextRef = useRef<string>('');
 
   const createAutonomousMessage = useCallback((
     type: Message['type'],
@@ -71,10 +113,30 @@ export function useAutonomousChatIntegration({
   const handleProgressEvent = useCallback((event: AutonomousProgressEvent) => {
     if (!conversationId) return;
 
-    const { type, data } = event;
+    const { type, data, status, phaseName, progress: eventProgress, message: eventMessage, taskId, taskName, plan } = event;
     
     switch (type) {
+      case 'connected': {
+        buildStore.setPhase('planning');
+        buildStore.setCurrentTask('Connected to AI agent');
+        buildStore.setProgress(5);
+        break;
+      }
+
+      case 'status': {
+        const splashPhase = mapPhaseToSplashPhase(status);
+        buildStore.setPhase(splashPhase);
+        buildStore.setCurrentTask(phaseName || eventMessage || 'Processing...');
+        if (eventProgress !== undefined) {
+          buildStore.setProgress(eventProgress);
+        }
+        break;
+      }
+
       case 'planning': {
+        buildStore.setPhase('planning');
+        buildStore.setCurrentTask(data?.searchQuery ? `Searching for "${data.searchQuery}"...` : 'Analyzing your request...');
+        
         const msg = createAutonomousMessage(
           'autonomous_working',
           data?.searchQuery ? `Searching for "${data.searchQuery}"...` : 'Analyzing your request...',
@@ -89,7 +151,36 @@ export function useAutonomousChatIntegration({
         break;
       }
 
+      case 'plan_chunk': {
+        if (data?.content) {
+          planTextRef.current += data.content;
+          buildStore.setPlan({ planText: planTextRef.current });
+          buildStore.setProgress(Math.min(30, buildStore.progress + 0.5));
+        }
+        break;
+      }
+
+      case 'plan_generated': {
+        if (plan) {
+          const features = plan.tasks?.map((t: any) => t.description || t.name) || [];
+          buildStore.setPlan({
+            planTitle: plan.summary || 'Generated Plan',
+            featureList: features,
+            planText: planTextRef.current
+          });
+          buildStore.setPhase('scaffolding');
+          buildStore.setProgress(35);
+        }
+        break;
+      }
+
       case 'plan_ready': {
+        buildStore.setPhase('scaffolding');
+        buildStore.setPlan({
+          planTitle: data?.planTitle || "I'll include the following features:",
+          featureList: data?.features || []
+        });
+        
         const msg = createAutonomousMessage(
           'autonomous_plan',
           "I've created a plan for your app:",
@@ -120,6 +211,40 @@ export function useAutonomousChatIntegration({
         break;
       }
 
+      case 'task_start': {
+        if (taskId && taskName) {
+          const newTask = {
+            id: taskId,
+            name: taskName,
+            status: 'in_progress' as const
+          };
+          buildStore.setTasks([...buildStore.tasks, newTask]);
+          buildStore.setCurrentTask(taskName);
+          buildStore.setPhase('building');
+        }
+        break;
+      }
+
+      case 'task_progress': {
+        if (taskId && eventProgress !== undefined) {
+          buildStore.updateTask(taskId, { progress: eventProgress });
+        }
+        break;
+      }
+
+      case 'task_complete': {
+        if (taskId) {
+          buildStore.updateTask(taskId, { status: 'completed', progress: 100 });
+          const completedCount = buildStore.tasks.filter(t => t.status === 'completed').length + 1;
+          const totalTasks = buildStore.tasks.length;
+          if (totalTasks > 0) {
+            const progressFromTasks = 35 + (completedCount / totalTasks) * 60;
+            buildStore.setProgress(Math.min(95, progressFromTasks));
+          }
+        }
+        break;
+      }
+
       case 'executing':
       case 'step_update': {
         const tasks: AutonomousBuildTask[] = (data?.tasks || []).map(t => ({
@@ -128,6 +253,16 @@ export function useAutonomousChatIntegration({
           status: t.status,
           progress: t.progress
         }));
+
+        buildStore.setPhase('building');
+        buildStore.setTasks(tasks);
+        buildStore.setCurrentTask(data?.currentTask || 'Building...');
+        if (data?.progress !== undefined) {
+          buildStore.setProgress(data.progress);
+        }
+        if (data?.buildMode) {
+          buildStore.setBuildMode(data.buildMode);
+        }
 
         if (lastMessageIdRef.current && type === 'step_update') {
           updateMessage(conversationId, lastMessageIdRef.current, {
@@ -160,6 +295,8 @@ export function useAutonomousChatIntegration({
       }
 
       case 'complete': {
+        buildStore.setComplete();
+        
         if (lastMessageIdRef.current) {
           updateMessage(conversationId, lastMessageIdRef.current, {
             content: 'Build complete! Your app is ready.',
@@ -182,21 +319,24 @@ export function useAutonomousChatIntegration({
       }
 
       case 'error': {
+        const errorMsg = data?.errorMessage || eventMessage || 'An error occurred';
+        buildStore.setError(errorMsg);
+
         if (lastMessageIdRef.current) {
           updateMessage(conversationId, lastMessageIdRef.current, {
-            content: data?.errorMessage || 'An error occurred',
+            content: errorMsg,
             isStreaming: false,
             status: 'error',
             autonomousPayload: {
               phase: 'error',
-              errorMessage: data?.errorMessage
+              errorMessage: errorMsg
             }
           });
         } else {
           const msg = createAutonomousMessage(
             'autonomous_error',
-            data?.errorMessage || 'An error occurred',
-            { phase: 'error', errorMessage: data?.errorMessage }
+            errorMsg,
+            { phase: 'error', errorMessage: errorMsg }
           );
           msg.status = 'error';
           addMessage(conversationId, msg);
@@ -205,13 +345,60 @@ export function useAutonomousChatIntegration({
         break;
       }
     }
-  }, [conversationId, addMessage, updateMessage, createAutonomousMessage]);
+  }, [conversationId, addMessage, updateMessage, createAutonomousMessage, buildStore]);
+
+  // Decode bootstrap token to extract session info
+  const decodeToken = useCallback((token: string) => {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      
+      let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const pad = base64.length % 4;
+      if (pad) {
+        if (pad === 1) return null;
+        base64 += new Array(5 - pad).join('=');
+      }
+      
+      const payload = JSON.parse(atob(base64));
+      return {
+        projectId: payload.projectId,
+        sessionId: payload.sessionId,
+        userId: payload.userId
+      };
+    } catch {
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
-    if (!enabled || !conversationId || !projectId) return;
+    if (!enabled || !conversationId) return;
+    
+    let wsProjectId = projectId;
+    let wsSessionId = sessionId;
+    
+    // Try to extract from bootstrap token if not provided directly
+    if (bootstrapToken && (!wsProjectId || !wsSessionId)) {
+      const tokenData = decodeToken(bootstrapToken);
+      if (tokenData) {
+        wsProjectId = wsProjectId || tokenData.projectId;
+        wsSessionId = wsSessionId || tokenData.sessionId;
+      }
+    }
+    
+    if (!wsProjectId) return;
+
+    // Initialize build store
+    buildStore.startBuild({ 
+      projectId: wsProjectId, 
+      sessionId: wsSessionId || undefined, 
+      conversationId 
+    });
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${projectId}`;
+    const wsUrl = wsSessionId 
+      ? `${protocol}//${window.location.host}/ws/agent?projectId=${wsProjectId}&sessionId=${wsSessionId}`
+      : `${protocol}//${window.location.host}/ws/agent?projectId=${wsProjectId}`;
 
     try {
       const ws = new WebSocket(wsUrl);
@@ -224,17 +411,7 @@ export function useAutonomousChatIntegration({
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if (data.type && (
-            data.type === 'planning' ||
-            data.type === 'plan_ready' ||
-            data.type === 'awaiting_approval' ||
-            data.type === 'executing' ||
-            data.type === 'step_update' ||
-            data.type === 'complete' ||
-            data.type === 'error'
-          )) {
-            handleProgressEvent(data as AutonomousProgressEvent);
-          }
+          handleProgressEvent(data as AutonomousProgressEvent);
         } catch (err) {
           console.warn('[AutonomousChatIntegration] Failed to parse message:', err);
         }
@@ -257,9 +434,10 @@ export function useAutonomousChatIntegration({
         wsRef.current = null;
       }
     };
-  }, [enabled, conversationId, projectId, handleProgressEvent]);
+  }, [enabled, conversationId, projectId, sessionId, bootstrapToken, handleProgressEvent, decodeToken, buildStore]);
 
   const sendBuildModeSelection = useCallback((mode: 'design-first' | 'full-app') => {
+    buildStore.setBuildMode(mode);
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
         type: 'build_mode_selected',
@@ -267,7 +445,7 @@ export function useAutonomousChatIntegration({
         projectId
       }));
     }
-  }, [projectId]);
+  }, [projectId, buildStore]);
 
   const requestPlanChange = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
