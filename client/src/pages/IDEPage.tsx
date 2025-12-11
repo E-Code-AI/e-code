@@ -62,6 +62,10 @@ export default function IDEPage() {
   });
 
   const handleWorkspaceComplete = useCallback(() => {
+    // Clear the stable bootstrap token - workspace creation is complete
+    setStableBootstrapToken(null);
+    initialTokenRef.current = null;
+    
     const url = new URL(window.location.href);
     url.searchParams.delete('bootstrap');
     window.history.replaceState({}, '', url);

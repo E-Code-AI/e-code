@@ -219,7 +219,7 @@ export function ReplitAgentPanelV3({
   const { modelId, provider, supportsExtendedThinking: modelSupportsExtendedThinking, model, setPreferredModel } = useAgentModelPreference();
   
   // State for model selector dropdown
-  const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
+  // Model selector moved to AgentToolsPanel - no longer needed here
   
   // Conversation state
   const [conversationId, setConversationId] = useState<number | null>(null);
@@ -1379,7 +1379,6 @@ export function ReplitAgentPanelV3({
               provider={provider || undefined}
               supportsExtendedThinking={modelSupportsExtendedThinking}
               extendedThinkingEnabled={capabilities.find(c => c.id === 'extended_thinking')?.enabled}
-              onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
               data-testid="current-model-chip"
             />
           </div>
@@ -1403,7 +1402,8 @@ export function ReplitAgentPanelV3({
               </TooltipProvider>
             )}
             
-            <DropdownMenu open={isModelSelectorOpen} onOpenChange={setIsModelSelectorOpen}>
+            {/* Settings dropdown - simplified (model selector moved to AgentToolsPanel) */}
+            <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -1414,19 +1414,7 @@ export function ReplitAgentPanelV3({
                   <Settings className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 sm:w-72">
-                <div className="p-2 space-y-2">
-                  <div className="font-medium text-xs text-muted-foreground uppercase tracking-wide">AI Model</div>
-                  <AIModelSelector 
-                    variant="inline" 
-                    className="mb-2" 
-                    onModelChange={(newModelId) => setPreferredModel(newModelId)}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Configure capabilities in Agent Tools panel below
-                  </p>
-                </div>
-                <DropdownMenuSeparator />
+              <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onClick={handleClearChat} className="text-destructive" data-testid="dropdown-clear-chat">
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Clear conversation
