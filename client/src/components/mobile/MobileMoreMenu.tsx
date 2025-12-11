@@ -9,7 +9,8 @@ import {
   ChevronRight, X,
   Globe, Package, TestTube, Search,
   FileText, Server, Shield, Variable,
-  FolderOpen, FileCode, FilePlus
+  FolderOpen, FileCode, FilePlus,
+  Workflow, History, Puzzle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,9 @@ interface MobileMoreMenuProps {
   onOpenSettings?: () => void;
   onOpenDebug?: () => void;
   onOpenSecurity?: () => void;
+  onOpenWorkflows?: () => void;
+  onOpenHistory?: () => void;
+  onOpenExtensions?: () => void;
   problemsCount?: number;
   className?: string;
 }
@@ -63,6 +67,9 @@ export function MobileMoreMenu({
   onOpenSettings,
   onOpenDebug,
   onOpenSecurity,
+  onOpenWorkflows,
+  onOpenHistory,
+  onOpenExtensions,
   problemsCount = 0,
   className 
 }: MobileMoreMenuProps) {
@@ -363,6 +370,33 @@ export function MobileMoreMenu({
     onClose();
   };
 
+  const handleWorkflows = () => {
+    if (onOpenWorkflows) {
+      onOpenWorkflows();
+    } else {
+      toast({ title: 'Workflows', description: 'Opening workflows panel...' });
+      onClose();
+    }
+  };
+
+  const handleHistory = () => {
+    if (onOpenHistory) {
+      onOpenHistory();
+    } else {
+      toast({ title: 'History', description: 'Opening history panel...' });
+      onClose();
+    }
+  };
+
+  const handleExtensions = () => {
+    if (onOpenExtensions) {
+      onOpenExtensions();
+    } else {
+      toast({ title: 'Extensions', description: 'Opening extensions marketplace...' });
+      onClose();
+    }
+  };
+
   // Note: Files section removed - use dedicated Files tab in bottom navigation instead
   const menuSections: MenuSection[] = [
     {
@@ -423,6 +457,9 @@ export function MobileMoreMenu({
       icon: Server,
       items: [
         { id: 'output', label: 'Output & Logs', icon: FileText, onClick: handleOutput },
+        { id: 'workflows', label: 'Workflows', icon: Workflow, onClick: handleWorkflows },
+        { id: 'history', label: 'History', icon: History, onClick: handleHistory },
+        { id: 'extensions', label: 'Extensions', icon: Puzzle, onClick: handleExtensions },
         { id: 'resources', label: 'Resources', icon: Server, onClick: handleResources },
         { id: 'security', label: 'Security Scanner', icon: Shield, onClick: handleSecurity },
         { id: 'env-vars', label: 'Environment Variables', icon: Variable, onClick: handleEnvVars },
