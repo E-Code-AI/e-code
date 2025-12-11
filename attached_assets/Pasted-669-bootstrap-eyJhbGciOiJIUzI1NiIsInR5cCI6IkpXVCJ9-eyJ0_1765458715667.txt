@@ -1,0 +1,351 @@
+669?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjY5IiwiY29udmVyc2F0aW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJzZXNzaW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NTg0NjY0MjEsImlhdCI6MTc2NTQ1ODQ2NiwiZXhwIjoxNzY1NTQ0ODY2LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups:311 [WebSocket] Interceptor installed (Development mode: true)
+669?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjY5IiwiY29udmVyc2F0aW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJzZXNzaW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NTg0NjY0MjEsImlhdCI6MTc2NTQ1ODQ2NiwiZXhwIjoxNzY1NTQ0ODY2LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups:287 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=blZM6L9rvvXA isEssential: false isViteHMR: true isDev: true
+669?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjY5IiwiY29udmVyc2F0aW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJzZXNzaW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NTg0NjY0MjEsImlhdCI6MTc2NTQ1ODQ2NiwiZXhwIjoxNzY1NTQ0ODY2LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups:294 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=blZM6L9rvvXA
+chunk-E22KYI7D.js?v=8deb9ffd:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Telemetry initialized', timestamp: '2025-12-11T13:11:34.587Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+service-worker-registration.ts:14 [SW] Skipping in development mode
+cache-reconciliation.ts:37 [CacheReconciliation] Service initialized
+query-persister.ts:74 [QueryPersister] Cache restored (age: 4s)
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: LCP = 4024ms', timestamp: '2025-12-11T13:11:34.713Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+telemetry.ts:247  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/projects 401 (Unauthorized)
+window.fetch @ telemetry.ts:247
+executeRequest @ network-optimization.ts:212
+request @ network-optimization.ts:75
+(anonyme) @ network-optimization.ts:421
+(anonyme) @ network-optimization.ts:421
+requestIdleCallback
+prefetch @ network-optimization.ts:420
+prefetchResources @ network-optimization.ts:442
+(anonyme) @ App.tsx:322
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18921
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19485
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+finishConcurrentRender @ chunk-E22KYI7D.js?v=8deb9ffd:18836
+performConcurrentWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18768
+workLoop @ chunk-E22KYI7D.js?v=8deb9ffd:197
+flushWork @ chunk-E22KYI7D.js?v=8deb9ffd:176
+performWorkUntilDeadline @ chunk-E22KYI7D.js?v=8deb9ffd:384
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network: GET /api/projects 401', timestamp: '2025-12-11T13:11:34.853Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/monitoring/health/summary 200', timestamp: '2025-12-11T13:11:34.881Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+IDEPage.tsx:57 [IDEPage] Component render: {projectId: '669', hasStableToken: false, hasUrlToken: true, tokenLength: undefined}
+IDEPage.tsx:41 [IDEPage] Capturing bootstrap token in stable state: {tokenLength: 448, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+IDEPage.tsx:57 [IDEPage] Component render: {projectId: '669', hasStableToken: true, hasUrlToken: true, tokenLength: 448}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: LCP = 4540ms', timestamp: '2025-12-11T13:11:35.229Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+669?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElk…:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: LCP = 6192ms', timestamp: '2025-12-11T13:11:36.881Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+telemetry.ts:247  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/preview/url?projectId=669 401 (Unauthorized)
+window.fetch @ telemetry.ts:247
+(anonyme) @ queryClient.ts:153
+fetchFn @ chunk-V7DLPMS6.js?v=8deb9ffd:1066
+run @ chunk-V7DLPMS6.js?v=8deb9ffd:776
+start @ chunk-V7DLPMS6.js?v=8deb9ffd:818
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1113
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+onSubscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:1305
+subscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:19
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:3245
+subscribeToStore @ chunk-E22KYI7D.js?v=8deb9ffd:12032
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:19381
+workLoop @ chunk-E22KYI7D.js?v=8deb9ffd:197
+flushWork @ chunk-E22KYI7D.js?v=8deb9ffd:176
+performWorkUntilDeadline @ chunk-E22KYI7D.js?v=8deb9ffd:384
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network: GET /api/preview/url?projectId=669 401', timestamp: '2025-12-11T13:11:37.141Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:247  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/git/status 401 (Unauthorized)
+window.fetch @ telemetry.ts:247
+(anonyme) @ queryClient.ts:153
+fetchFn @ chunk-V7DLPMS6.js?v=8deb9ffd:1066
+run @ chunk-V7DLPMS6.js?v=8deb9ffd:776
+start @ chunk-V7DLPMS6.js?v=8deb9ffd:818
+fetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1113
+#executeFetch @ chunk-V7DLPMS6.js?v=8deb9ffd:1432
+onSubscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:1305
+subscribe @ chunk-V7DLPMS6.js?v=8deb9ffd:19
+(anonyme) @ chunk-V7DLPMS6.js?v=8deb9ffd:3245
+subscribeToStore @ chunk-E22KYI7D.js?v=8deb9ffd:12032
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18921
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19485
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+finishConcurrentRender @ chunk-E22KYI7D.js?v=8deb9ffd:18836
+performConcurrentWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18768
+workLoop @ chunk-E22KYI7D.js?v=8deb9ffd:197
+flushWork @ chunk-E22KYI7D.js?v=8deb9ffd:176
+performWorkUntilDeadline @ chunk-E22KYI7D.js?v=8deb9ffd:384
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network: GET /api/git/status 401', timestamp: '2025-12-11T13:11:37.144Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/csrf-token 200', timestamp: '2025-12-11T13:11:37.190Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+telemetry.ts:247  POST https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/runtime/start 401 (Unauthorized)
+window.fetch @ telemetry.ts:247
+apiRequest @ queryClient.ts:97
+await in apiRequest
+(anonyme) @ useIDEWorkspace.ts:387
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18921
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19485
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+finishConcurrentRender @ chunk-E22KYI7D.js?v=8deb9ffd:18836
+performConcurrentWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18768
+workLoop @ chunk-E22KYI7D.js?v=8deb9ffd:197
+flushWork @ chunk-E22KYI7D.js?v=8deb9ffd:176
+performWorkUntilDeadline @ chunk-E22KYI7D.js?v=8deb9ffd:384
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network: POST /api/runtime/start 401', timestamp: '2025-12-11T13:11:37.454Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+useIDEWorkspace.ts:394 [useIDEWorkspace] Auto-start runtime failed: Unauthorized
+telemetry.ts:247  POST https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/logs/ingest 401 (Unauthorized)
+window.fetch @ telemetry.ts:247
+flush @ telemetry.ts:302
+log @ telemetry.ts:129
+trackNetwork @ telemetry.ts:169
+window.fetch @ telemetry.ts:251
+await in window.fetch
+apiRequest @ queryClient.ts:97
+await in apiRequest
+(anonyme) @ useIDEWorkspace.ts:387
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18921
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19485
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+finishConcurrentRender @ chunk-E22KYI7D.js?v=8deb9ffd:18836
+performConcurrentWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18768
+workLoop @ chunk-E22KYI7D.js?v=8deb9ffd:197
+flushWork @ chunk-E22KYI7D.js?v=8deb9ffd:176
+performWorkUntilDeadline @ chunk-E22KYI7D.js?v=8deb9ffd:384
+669?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjY5IiwiY29udmVyc2F0aW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJzZXNzaW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NTg0NjY0MjEsImlhdCI6MTc2NTQ1ODQ2NiwiZXhwIjoxNzY1NTQ0ODY2LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups:298 WebSocket connection to 'wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=blZM6L9rvvXA' failed: 
+construct @ 669?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjY5IiwiY29udmVyc2F0aW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJzZXNzaW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NTg0NjY0MjEsImlhdCI6MTc2NTQ1ODQ2NiwiZXhwIjoxNzY1NTQ0ODY2LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups:298
+createConnection @ client:745
+connect @ client:411
+connect @ client:751
+connect @ client:289
+connect @ client:373
+(anonyme) @ client:823
+669?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjY5IiwiY29udmVyc2F0aW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJzZXNzaW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NTg0NjY0MjEsImlhdCI6MTc2NTQ1ODQ2NiwiZXhwIjoxNzY1NTQ0ODY2LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups:287 [WebSocket] Connection attempt: wss://localhost:5173/?token=blZM6L9rvvXA isEssential: false isViteHMR: true isDev: true
+669?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjY5IiwiY29udmVyc2F0aW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJzZXNzaW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NTg0NjY0MjEsImlhdCI6MTc2NTQ1ODQ2NiwiZXhwIjoxNzY1NTQ0ODY2LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups:294 [WebSocket] ✅ Allowing real connection: wss://localhost:5173/?token=blZM6L9rvvXA
+index.ts:7  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/agent/messages/VibingAnimation.tsx net::ERR_ABORTED 502 (Bad Gateway)
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Uncaught error: Uncaught TypeError: Failed to fetc…ponents/ai/ReplitAgentPanelV3.tsx?t=1765458600388', timestamp: '2025-12-11T13:11:40.119Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+chunk-CYZG5QNB.js?v=8deb9ffd:903 Uncaught TypeError: Failed to fetch dynamically imported module: https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ai/ReplitAgentPanelV3.tsx?t=1765458600388
+index.ts:3  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/agent/messages/ThinkingMessage.tsx net::ERR_ABORTED 502 (Bad Gateway)
+index.ts:4  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/agent/messages/TaskMessage.tsx net::ERR_ABORTED 502 (Bad Gateway)
+index.ts:5  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/agent/messages/ActionMessage.tsx net::ERR_ABORTED 502 (Bad Gateway)
+index.ts:8  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/agent/messages/CollapsibleSection.tsx net::ERR_ABORTED 502 (Bad Gateway)
+index.ts:1  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/agent/messages/types.ts net::ERR_ABORTED 502 (Bad Gateway)
+669?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjY5IiwiY29udmVyc2F0aW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJzZXNzaW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NTg0NjY0MjEsImlhdCI6MTc2NTQ1ODQ2NiwiZXhwIjoxNzY1NTQ0ODY2LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups:298 WebSocket connection to 'wss://localhost:5173/?token=blZM6L9rvvXA' failed: 
+construct @ 669?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjY5IiwiY29udmVyc2F0aW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJzZXNzaW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NTg0NjY0MjEsImlhdCI6MTc2NTQ1ODQ2NiwiZXhwIjoxNzY1NTQ0ODY2LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups:298
+createConnection @ client:755
+connect @ client:411
+connect @ client:759
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Uncaught error: Uncaught TypeError: Failed to fetc…ponents/ai/ReplitAgentPanelV3.tsx?t=1765458600388', timestamp: '2025-12-11T13:11:40.127Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+chunk-CYZG5QNB.js?v=8deb9ffd:903 Uncaught TypeError: Failed to fetch dynamically imported module: https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ai/ReplitAgentPanelV3.tsx?t=1765458600388
+telemetry.ts:201 The above error occurred in one of your React components:
+
+    at Lazy
+    at Suspense
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at Presence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-XLLYOLWP.js?v=8deb9ffd:24:11)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=8deb9ffd:174:13
+    at _c5 (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/tabs.tsx:72:12)
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:54:15)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=8deb9ffd:51:7
+    at div
+    at div
+    at PanelWithForwardedRef (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/react-resizable-panels.js?v=8deb9ffd:41:3)
+    at forwardRef(Panel)
+    at div
+    at PanelGroupWithForwardedRef (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/react-resizable-panels.js?v=8deb9ffd:1440:3)
+    at forwardRef(PanelGroup)
+    at ResizablePanelGroup (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/resizable.tsx:21:3)
+    at div
+    at div
+    at UnifiedIDELayout (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ide/UnifiedIDELayout.tsx?t=1765458600388:116:3)
+    at Suspense
+    at ErrorBoundary (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ErrorBoundary.tsx:9:5)
+    at IDEPage (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/pages/IDEPage.tsx?t=1765458600388:31:18)
+    at component
+    at Route (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=8deb9ffd:221:16)
+    at Switch (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=8deb9ffd:277:17)
+    at Suspense
+    at div
+    at MotionComponent (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:946:40)
+    at PresenceChild (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:122:24)
+    at AnimatePresence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:211:26)
+    at default (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/LazyAnimatedRoutes.tsx:22:17)
+    at Suspense
+    at LazyAnimatedRoutes (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/LazyAnimatedRoutes.tsx:49:38)
+    at div
+    at AtSymbolRedirectHandler (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/App.tsx?t=1765458600388:386:36)
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:54:15)
+    at TooltipProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=8deb9ffd:159:5)
+    at ErrorBoundary (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ErrorBoundary.tsx:9:5)
+    at AppContent (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/App.tsx?t=1765458600388:417:22)
+    at AuthProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/hooks/use-auth.tsx:26:32)
+    at ThemeProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ThemeProvider.tsx:89:33)
+    at QueryClientProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-V7DLPMS6.js?v=8deb9ffd:3030:3)
+    at PersistQueryClientProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query-persist-client.js?v=8deb9ffd:298:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+console.<computed> @ telemetry.ts:201
+logCapturedError @ chunk-E22KYI7D.js?v=8deb9ffd:14080
+callback @ chunk-E22KYI7D.js?v=8deb9ffd:14126
+callCallback @ chunk-E22KYI7D.js?v=8deb9ffd:11296
+commitUpdateQueue @ chunk-E22KYI7D.js?v=8deb9ffd:11313
+commitLayoutEffectOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:17123
+commitLayoutMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18030
+commitLayoutEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18019
+commitLayoutEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18000
+commitLayoutEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18000
+commitLayoutEffects @ chunk-E22KYI7D.js?v=8deb9ffd:17970
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19406
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+finishConcurrentRender @ chunk-E22KYI7D.js?v=8deb9ffd:18813
+performConcurrentWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18768
+workLoop @ chunk-E22KYI7D.js?v=8deb9ffd:197
+flushWork @ chunk-E22KYI7D.js?v=8deb9ffd:176
+performWorkUntilDeadline @ chunk-E22KYI7D.js?v=8deb9ffd:384
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Console error: The above error occurred in one of …g the error boundary you provided, ErrorBoundary.', timestamp: '2025-12-11T13:11:40.129Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+telemetry.ts:201 Error caught by boundary: {message: 'Failed to fetch dynamically imported module: https…ponents/ai/ReplitAgentPanelV3.tsx?t=1765458600388', name: 'TypeError', stack: 'TypeError: Failed to fetch dynamically imported mo…ponents/ai/ReplitAgentPanelV3.tsx?t=1765458600388', errorInfo: '\n    at Lazy\n    at Suspense\n    at div\n    at htt…ry-persist-client.js?v=8deb9ffd:298:3)\n    at App'}
+console.<computed> @ telemetry.ts:201
+componentDidCatch @ ErrorBoundary.tsx:24
+callback @ chunk-E22KYI7D.js?v=8deb9ffd:14132
+callCallback @ chunk-E22KYI7D.js?v=8deb9ffd:11296
+commitUpdateQueue @ chunk-E22KYI7D.js?v=8deb9ffd:11313
+commitLayoutEffectOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:17123
+commitLayoutMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18030
+commitLayoutEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18019
+commitLayoutEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18000
+commitLayoutEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18000
+commitLayoutEffects @ chunk-E22KYI7D.js?v=8deb9ffd:17970
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19406
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+finishConcurrentRender @ chunk-E22KYI7D.js?v=8deb9ffd:18813
+performConcurrentWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18768
+workLoop @ chunk-E22KYI7D.js?v=8deb9ffd:197
+flushWork @ chunk-E22KYI7D.js?v=8deb9ffd:176
+performWorkUntilDeadline @ chunk-E22KYI7D.js?v=8deb9ffd:384
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Console error: Error caught by boundary: {"message…persist-client.js?v=8deb9ffd:298:3)\\n    at App"}', timestamp: '2025-12-11T13:11:40.129Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+telemetry.ts:201 [vite] failed to connect to websocket.
+your current setup:
+  (browser) f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ <--[HTTP]--> localhost:5173/ (server)
+  (browser) f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ <--[WebSocket (failing)]--> localhost:5173/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+console.<computed> @ telemetry.ts:201
+connect @ client:765
+await in connect
+connect @ client:289
+connect @ client:373
+(anonyme) @ client:823
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Console error: [vite] failed to connect to websock…/vite.dev/config/server-options.html#server-hmr .', timestamp: '2025-12-11T13:11:40.131Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+telemetry.ts:201 [vite] TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (client:449:7)
+    at Object.send (client:780:16)
+    at Object.send (client:318:23)
+    at Object.send (client:396:30)
+console.<computed> @ telemetry.ts:201
+error @ client:809
+(anonyme) @ client:158
+Promise.catch
+send @ client:157
+send @ client:119
+sendError @ 669?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjY5IiwiY29udmVyc2F0aW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJzZXNzaW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NTg0NjY0MjEsImlhdCI6MTc2NTQ1ODQ2NiwiZXhwIjoxNzY1NTQ0ODY2LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups:61
+(anonyme) @ 669?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjY5IiwiY29udmVyc2F0aW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJzZXNzaW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NTg0NjY0MjEsImlhdCI6MTc2NTQ1ODQ2NiwiZXhwIjoxNzY1NTQ0ODY2LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups:65
+invokeGuardedCallbackDev @ chunk-E22KYI7D.js?v=8deb9ffd:3705
+invokeGuardedCallback @ chunk-E22KYI7D.js?v=8deb9ffd:3739
+beginWork$1 @ chunk-E22KYI7D.js?v=8deb9ffd:19818
+performUnitOfWork @ chunk-E22KYI7D.js?v=8deb9ffd:19251
+workLoopConcurrent @ chunk-E22KYI7D.js?v=8deb9ffd:19242
+renderRootConcurrent @ chunk-E22KYI7D.js?v=8deb9ffd:19217
+performConcurrentWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18728
+workLoop @ chunk-E22KYI7D.js?v=8deb9ffd:197
+flushWork @ chunk-E22KYI7D.js?v=8deb9ffd:176
+performWorkUntilDeadline @ chunk-E22KYI7D.js?v=8deb9ffd:384
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Console error: [vite] {}', timestamp: '2025-12-11T13:11:40.132Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+telemetry.ts:201 [vite] TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (client:449:7)
+    at Object.send (client:780:16)
+    at Object.send (client:318:23)
+    at Object.send (client:396:30)
+console.<computed> @ telemetry.ts:201
+error @ client:809
+(anonyme) @ client:158
+Promise.catch
+send @ client:157
+send @ client:119
+sendError @ 669?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjY5IiwiY29udmVyc2F0aW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJzZXNzaW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NTg0NjY0MjEsImlhdCI6MTc2NTQ1ODQ2NiwiZXhwIjoxNzY1NTQ0ODY2LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups:61
+(anonyme) @ 669?bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjY5IiwiY29udmVyc2F0aW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJzZXNzaW9uSWQiOiI3NzRkMzlhYi03N2M1LTRlYjgtYWMwOS05OWZmNzkwNmFkMGYiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NTg0NjY0MjEsImlhdCI6MTc2NTQ1ODQ2NiwiZXhwIjoxNzY1NTQ0ODY2LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups:65
+invokeGuardedCallbackDev @ chunk-E22KYI7D.js?v=8deb9ffd:3705
+invokeGuardedCallback @ chunk-E22KYI7D.js?v=8deb9ffd:3739
+beginWork$1 @ chunk-E22KYI7D.js?v=8deb9ffd:19818
+performUnitOfWork @ chunk-E22KYI7D.js?v=8deb9ffd:19251
+workLoopSync @ chunk-E22KYI7D.js?v=8deb9ffd:19190
+renderRootSync @ chunk-E22KYI7D.js?v=8deb9ffd:19169
+recoverFromConcurrentError @ chunk-E22KYI7D.js?v=8deb9ffd:18786
+performConcurrentWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18734
+workLoop @ chunk-E22KYI7D.js?v=8deb9ffd:197
+flushWork @ chunk-E22KYI7D.js?v=8deb9ffd:176
+performWorkUntilDeadline @ chunk-E22KYI7D.js?v=8deb9ffd:384
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Console error: [vite] {}', timestamp: '2025-12-11T13:11:40.132Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: LCP = 9492ms', timestamp: '2025-12-11T13:11:40.180Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+index.ts:9  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/agent/messages/ToolExecutionBadge.tsx net::ERR_ABORTED 502 (Bad Gateway)
+index.ts:10  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/agent/messages/FileDiffViewer.tsx net::ERR_ABORTED 502 (Bad Gateway)
+index.ts:11  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/agent/messages/StreamingSkeleton.tsx net::ERR_ABORTED 502 (Bad Gateway)
+telemetry.ts:247  POST https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/logs/ingest 502 (Bad Gateway)
+window.fetch @ telemetry.ts:247
+flush @ telemetry.ts:302
+(anonyme) @ telemetry.ts:270
+setInterval
+startFlushTimer @ telemetry.ts:269
+init @ telemetry.ts:81
+initTelemetry @ telemetry.ts:337
+(anonyme) @ main.tsx:14
+RichMessageContent.tsx:20  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/LightSyntaxHighlighter.tsx net::ERR_ABORTED 502 (Bad Gateway)
+telemetry.ts:247  POST https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/logs/ingest 502 (Bad Gateway)
+window.fetch @ telemetry.ts:247
+flush @ telemetry.ts:302
+(anonyme) @ telemetry.ts:270
+setInterval
+startFlushTimer @ telemetry.ts:269
+init @ telemetry.ts:81
+initTelemetry @ telemetry.ts:337
+(anonyme) @ main.tsx:14
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T13:11:49.591Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T13:11:49.591Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.qh8gvjExtH0wkwhQP9fI_QxKnM48PyV7-CbJDZRFups', …}
