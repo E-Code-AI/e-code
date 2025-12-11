@@ -5,7 +5,7 @@
  * which handles all responsive layouts (desktop/tablet/mobile).
  */
 
-import { useCallback, lazy, Suspense } from 'react';
+import { useCallback, lazy, Suspense, useState, useEffect, useRef } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
@@ -27,17 +27,38 @@ export default function IDEPage() {
 
   const projectId = (params.projectId || params.id) as string;
 
-  const searchParams = new URLSearchParams(window.location.search);
-  const bootstrapToken = searchParams.get('bootstrap');
+  // ✅ FIX (Dec 11, 2025): Persist bootstrap token in state to survive URL changes
+  // Extract token from URL only once on mount or when projectId changes
+  const initialTokenRef = useRef<string | null>(null);
+  const [stableBootstrapToken, setStableBootstrapToken] = useState<string | null>(null);
   
-  // ✅ CRITICAL DEBUG (Dec 11, 2025): Trace bootstrapToken extraction
-  console.log('[Telemetry] [IDEPage] Component render:', {
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const urlToken = searchParams.get('bootstrap');
+    
+    // Only set if we have a token and haven't already captured one for this project
+    if (urlToken && initialTokenRef.current !== urlToken) {
+      console.log('[IDEPage] Capturing bootstrap token in stable state:', {
+        tokenLength: urlToken.length,
+        tokenPreview: urlToken.substring(0, 30) + '...'
+      });
+      initialTokenRef.current = urlToken;
+      setStableBootstrapToken(urlToken);
+    }
+  }, [projectId]);
+  
+  // For query purposes, still extract from URL each time
+  const searchParams = new URLSearchParams(window.location.search);
+  const urlBootstrapToken = searchParams.get('bootstrap');
+  
+  // Use stable token for AutonomousWorkspaceViewer, URL token for queries
+  const bootstrapToken = stableBootstrapToken;
+  
+  console.log('[IDEPage] Component render:', {
     projectId,
-    hasBootstrapToken: !!bootstrapToken,
-    tokenLength: bootstrapToken?.length,
-    tokenPreview: bootstrapToken ? bootstrapToken.substring(0, 30) : null,
-    fullUrl: window.location.href,
-    searchString: window.location.search
+    hasStableToken: !!stableBootstrapToken,
+    hasUrlToken: !!urlBootstrapToken,
+    tokenLength: stableBootstrapToken?.length
   });
 
   const handleWorkspaceComplete = useCallback(() => {
