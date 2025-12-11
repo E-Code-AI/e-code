@@ -140,7 +140,7 @@ export class AIPlanGeneratorService {
             max_tokens: 16384,
             temperature: 0.7,
             reasoning_effort: 'none',
-            timeoutMs: 45000
+            timeoutMs: 120000 // 120s - plan generation can take time with complex prompts
           }
         );
 
@@ -166,7 +166,7 @@ export class AIPlanGeneratorService {
     // Race the providers
     const result = await providerRacing.race(raceId, requests, {
       maxRacers: 2,
-      timeoutMs: 50000,
+      timeoutMs: 150000, // 150s - race overall timeout should exceed individual stream timeout
       requireValidJson: false // We validate JSON ourselves
     });
 

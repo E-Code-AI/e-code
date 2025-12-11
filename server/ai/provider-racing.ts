@@ -45,7 +45,7 @@ export interface ProviderRequest<T> {
 
 const DEFAULT_OPTIONS: RaceOptions = {
   maxRacers: 2,
-  timeoutMs: 45000,
+  timeoutMs: 120000, // 120s - AI streams need sufficient time for complex generations
   costBudgetTokens: 10000,
   requireValidJson: true
 };
