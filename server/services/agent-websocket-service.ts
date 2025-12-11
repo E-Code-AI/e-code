@@ -477,10 +477,13 @@ class AgentWebSocketService {
         if (session.workflowStatus === 'idle' || !session.workflowStatus) {
           logger.info(`[Agent WebSocket] 🚀 Session ${sessionId} is idle - starting autonomous workspace NOW!`);
 
+          // ✅ FIX (Dec 11, 2025): Send waiting_for_plan status with progress percentage
           ws.send(JSON.stringify({
             type: 'status',
-            status: 'starting',
-            message: 'Starting AI workspace generation...',
+            status: 'waiting_for_plan',
+            message: 'Connecting to AI...',
+            progress: 8,
+            phaseName: 'Waiting for AI',
             sessionId,
             projectId
           }));

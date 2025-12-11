@@ -1307,11 +1307,14 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       }
       
       // Emit executing status via WebSocket (only after DB confirmed)
+      // ✅ FIX (Dec 11, 2025): Include progress percentage and phaseName for real-time UI updates
       agentWebSocketService.broadcast({
         type: 'status',
         sessionId,
         projectId,
         status: 'executing',
+        progress: 35,
+        phaseName: 'Tasks starting',
         message: 'Starting autonomous execution...'
       }, projectId);
 
@@ -1740,11 +1743,14 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         .where(eq(agentSessions.id, sessionId));
       
       // Emit planning started event via WebSocket
+      // ✅ FIX (Dec 11, 2025): Include progress percentage and phaseName for real-time UI updates
       agentWebSocketService.broadcast({
         type: 'status',
         sessionId,
         projectId,
         status: 'planning',
+        progress: 15,
+        phaseName: 'Planning started',
         message: 'AI is analyzing your request and generating execution plan...'
       }, projectId);
       
@@ -1880,11 +1886,14 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         .where(eq(agentSessions.id, sessionId));
       
       // Emit execution started event
+      // ✅ FIX (Dec 11, 2025): Include progress percentage and phaseName for real-time UI updates
       agentWebSocketService.broadcast({
         type: 'status',
         sessionId,
         projectId,
         status: 'executing',
+        progress: 35,
+        phaseName: 'Tasks starting',
         message: 'Starting autonomous execution...'
       }, projectId);
       

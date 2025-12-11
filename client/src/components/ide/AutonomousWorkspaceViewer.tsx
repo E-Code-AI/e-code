@@ -51,6 +51,7 @@ interface AgentMessage {
   timestamp?: string;
   status?: string;
   plan?: any;
+  phaseName?: string; // ✅ FIX (Dec 11, 2025): Phase name for UI display
 }
 
 interface Task {
@@ -257,22 +258,29 @@ export function AutonomousWorkspaceViewer({
         break;
 
       case 'status':
-        // ✅ FIX (Dec 1, 2025): Handle 'waiting_for_plan' status gracefully
-        // This happens when WebSocket connects before plan generation starts (race condition fix)
+        // ✅ FIX (Dec 11, 2025): Use phaseName and progress from server for real-time updates
+        // This ensures the UI displays exactly what the backend sends
         if (message.status === 'waiting_for_plan') {
           setPhase('planning');
-          setCurrentTask('Connecting to AI...');
-          setOverallProgress(8);
+          setCurrentTask(message.phaseName || 'Waiting for AI');
+          setOverallProgress(message.progress ?? 8);
           addLog('⏳ Waiting for AI to begin planning...');
         } else if (message.status === 'planning') {
           setPhase('planning');
-          setCurrentTask('Generating execution plan...');
-          setOverallProgress(15);
+          setCurrentTask(message.phaseName || 'Planning started');
+          setOverallProgress(message.progress ?? 15);
           addLog('🧠 AI is analyzing your request...');
         } else if (message.status === 'executing') {
           setPhase('executing');
-          setCurrentTask('Executing plan...');
-          setOverallProgress(35);
+          setCurrentTask(message.phaseName || 'Tasks starting');
+          setOverallProgress(message.progress ?? 35);
+        } else if (message.status === 'in_progress') {
+          // Handle in_progress status with server-sent progress
+          setPhase('executing');
+          setCurrentTask(message.phaseName || 'Building...');
+          if (message.progress !== undefined) {
+            setOverallProgress(message.progress);
+          }
         }
         if (message.message && message.status !== 'waiting_for_plan') {
           addLog(`📌 ${message.message}`);
@@ -298,8 +306,9 @@ export function AutonomousWorkspaceViewer({
           if (message.plan.technologies?.length) {
             addLog(`🔧 Technologies: ${message.plan.technologies.join(', ')}`);
           }
-          // ✅ FIX (Dec 1, 2025): Don't reset planText - preserve streaming plan history through phase transitions
+          // ✅ FIX (Dec 11, 2025): Set proper phase name when plan is generated
           setPhase('executing');
+          setCurrentTask('Plan generated');
           setOverallProgress(35); // Plan complete, starting execution
         }
         break;
