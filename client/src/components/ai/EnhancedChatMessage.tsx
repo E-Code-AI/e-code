@@ -30,6 +30,8 @@ import {
   InlinePlanCard,
   InlineBuildOptions,
   InlineBuildProgressCard,
+  InlineCompleteIndicator,
+  InlineErrorIndicator,
   type BuildMode
 } from './InlineBuildProgress';
 import type { Message, AutonomousBuildMode } from '@/stores/agentConversationStore';
@@ -381,6 +383,23 @@ export const EnhancedChatMessage = memo(function EnhancedChatMessage({
             {/* Working indicator */}
             {message.type === 'autonomous_working' && (
               <InlineWorkingIndicator message={message.content || 'Working...'} />
+            )}
+
+            {/* Complete indicator */}
+            {message.type === 'autonomous_complete' && (
+              <InlineCompleteIndicator 
+                message={message.content || 'Build complete!'}
+                projectUrl={autonomousPayload.projectUrl}
+              />
+            )}
+
+            {/* Error indicator */}
+            {message.type === 'autonomous_error' && (
+              <InlineErrorIndicator 
+                message={message.content || 'An error occurred'}
+                details={autonomousPayload.errorDetails}
+                onRetry={onRetry}
+              />
             )}
           </motion.div>
         )}
