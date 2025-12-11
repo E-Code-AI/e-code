@@ -223,6 +223,15 @@ export function ReplitAgentPanelV3({
   isBootstrapping = false,
   bootstrapToken
 }: ReplitAgentPanelV3Props) {
+  // DEBUG: Log component render
+  console.log('[ReplitAgentPanelV3] Component render:', {
+    projectId,
+    mode,
+    isBootstrapping,
+    hasBootstrapToken: !!bootstrapToken,
+    tokenPreview: bootstrapToken ? bootstrapToken.substring(0, 30) + '...' : null
+  });
+  
   // AI Model preference hook
   const { modelId, provider, supportsExtendedThinking: modelSupportsExtendedThinking, model, setPreferredModel } = useAgentModelPreference();
   
