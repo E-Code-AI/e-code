@@ -391,6 +391,11 @@ function UnifiedIDELayout({
               onOpenWorkflows={() => setShowWorkflowsPanel(true)}
               onOpenHistory={() => setShowHistoryPanel(true)}
               onOpenExtensions={() => setShowExtensionsPanel(true)}
+              onOpenActions={() => { setLeftPanelTab('actions'); setMobileActiveTab('agent'); }}
+              onOpenTools={() => { setLeftPanelTab('tools'); setMobileActiveTab('agent'); }}
+              onOpenDeploy={() => { setLeftPanelTab('deployment'); setMobileActiveTab('agent'); }}
+              onOpenCommandPalette={() => setShowCommandPalette(true)}
+              onOpenGlobalSearch={() => setShowGlobalSearch(true)}
             />
           </Suspense>
         );
@@ -452,6 +457,11 @@ function UnifiedIDELayout({
               onOpenWorkflows={() => setShowWorkflowsPanel(true)}
               onOpenHistory={() => setShowHistoryPanel(true)}
               onOpenExtensions={() => setShowExtensionsPanel(true)}
+              onOpenActions={() => { setLeftPanelTab('actions'); setTabletPanel('agent'); }}
+              onOpenTools={() => { setLeftPanelTab('tools'); setTabletPanel('agent'); }}
+              onOpenDeploy={() => { setLeftPanelTab('deployment'); setTabletPanel('agent'); }}
+              onOpenCommandPalette={() => setShowCommandPalette(true)}
+              onOpenGlobalSearch={() => setShowGlobalSearch(true)}
             />
           </Suspense>
         );
