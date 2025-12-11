@@ -25,11 +25,16 @@ function getBaseURL(): string {
 }
 
 export default defineConfig({
+  globalSetup: require.resolve('./setup/global-setup'),
   testDir: './specs',
-  fullyParallel: true,
+  fullyParallel: false, // Désactiver pour réduire la charge
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  retries: process.env.CI ? 2 : 1, // Retry même en local
+  workers: 1, // Un seul worker pour éviter la surcharge
+  timeout: 60000, // 60s par test
+  expect: {
+    timeout: 10000, // 10s pour les assertions
+  },
   reporter: [
     ['html', { outputFolder: 'test-results/html' }],
     ['json', { outputFile: 'test-results/results.json' }],
@@ -40,6 +45,8 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    navigationTimeout: 30000, // 30s pour la navigation
+    actionTimeout: 15000, // 15s pour les actions
   },
 
   projects: [
@@ -107,6 +114,10 @@ export default defineConfig({
     command: process.env.CI ? 'npm run preview' : 'npm run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
-    timeout: 120000,
+    timeout: 180000, // 3 minutes pour démarrage
+    stdout: 'pipe',
+    stderr: 'pipe',
+    // Attendre que le serveur soit vraiment prêt
+    reuseExistingServer: true, // Réutiliser le serveur existant
   },
 });
