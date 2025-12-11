@@ -434,7 +434,7 @@ export function MobileFileExplorer({
             onDragEnd={handleDragEnd}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] backdrop-blur-sm">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
               <h2 className="text-lg font-semibold text-foreground">Fichiers</h2>
               <Button
                 variant="ghost"

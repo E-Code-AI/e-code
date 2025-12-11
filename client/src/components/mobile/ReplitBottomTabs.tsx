@@ -91,13 +91,11 @@ export function ReplitBottomTabs({
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       data-testid="mobile-bottom-navigation"
     >
-      {/* Premium Glass Container */}
+      {/* Solid Navigation Container */}
       <div 
         className="absolute inset-x-3 bottom-2 rounded-[var(--mobile-nav-radius)]"
         style={{
           background: 'var(--mobile-nav-gradient)',
-          backdropFilter: 'blur(var(--mobile-nav-blur)) saturate(180%)',
-          WebkitBackdropFilter: 'blur(var(--mobile-nav-blur)) saturate(180%)',
           boxShadow: 'var(--mobile-nav-shadow), var(--mobile-nav-inner-shadow)',
           border: '1px solid var(--mobile-nav-border)',
           borderTop: '1px solid var(--mobile-nav-border-top)',
@@ -107,7 +105,7 @@ export function ReplitBottomTabs({
         <div 
           className="absolute top-0 left-4 right-4 h-px"
           style={{
-            background: 'linear-gradient(90deg, transparent, var(--mobile-nav-border-top), transparent)',
+            background: 'var(--mobile-nav-border-top)',
           }}
         />
       </div>
