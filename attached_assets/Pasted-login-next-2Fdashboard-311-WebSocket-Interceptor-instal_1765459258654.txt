@@ -1,0 +1,291 @@
+login?next=%2Fdashboard:311 [WebSocket] Interceptor installed (Development mode: true)
+login?next=%2Fdashboard:287 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=z2jr0G4KvF1a isEssential: false isViteHMR: true isDev: true
+login?next=%2Fdashboard:294 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=z2jr0G4KvF1a
+chunk-E22KYI7D.js?v=8deb9ffd:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Telemetry initialized', timestamp: '2025-12-11T13:20:13.757Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…s19.riker.replit.dev:5000/login?next=%2Fdashboard', …}
+service-worker-registration.ts:14 [SW] Skipping in development mode
+cache-reconciliation.ts:37 [CacheReconciliation] Service initialized
+query-persister.ts:74 [QueryPersister] Cache restored (age: 5s)
+login?next=%2Fdashboard:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: LCP = 8684ms', timestamp: '2025-12-11T13:20:17.719Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…s19.riker.replit.dev:5000/login?next=%2Fdashboard', …}
+telemetry.ts:247  POST https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/logs/ingest 401 (Unauthorized)
+window.fetch @ telemetry.ts:247
+flush @ telemetry.ts:302
+(anonyme) @ telemetry.ts:270
+setInterval
+startFlushTimer @ telemetry.ts:269
+init @ telemetry.ts:81
+initTelemetry @ telemetry.ts:337
+(anonyme) @ main.tsx:14
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: FID = 3ms', timestamp: '2025-12-11T13:20:19.411Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…s19.riker.replit.dev:5000/login?next=%2Fdashboard', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/csrf-token 200', timestamp: '2025-12-11T13:20:19.617Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…s19.riker.replit.dev:5000/login?next=%2Fdashboard', …}
+telemetry.ts:247  POST https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/login 401 (Unauthorized)
+window.fetch @ telemetry.ts:247
+apiRequest @ queryClient.ts:97
+await in apiRequest
+mutationFn @ use-auth.tsx:50
+fn @ chunk-V7DLPMS6.js?v=8deb9ffd:1970
+run @ chunk-V7DLPMS6.js?v=8deb9ffd:776
+start @ chunk-V7DLPMS6.js?v=8deb9ffd:818
+execute @ chunk-V7DLPMS6.js?v=8deb9ffd:2009
+await in execute
+mutate @ chunk-V7DLPMS6.js?v=8deb9ffd:2332
+handleLogin @ Login.tsx:108
+callCallback2 @ chunk-E22KYI7D.js?v=8deb9ffd:3680
+invokeGuardedCallbackDev @ chunk-E22KYI7D.js?v=8deb9ffd:3705
+invokeGuardedCallback @ chunk-E22KYI7D.js?v=8deb9ffd:3739
+invokeGuardedCallbackAndCatchFirstError @ chunk-E22KYI7D.js?v=8deb9ffd:3742
+executeDispatch @ chunk-E22KYI7D.js?v=8deb9ffd:7046
+processDispatchQueueItemsInOrder @ chunk-E22KYI7D.js?v=8deb9ffd:7066
+processDispatchQueue @ chunk-E22KYI7D.js?v=8deb9ffd:7075
+dispatchEventsForPlugins @ chunk-E22KYI7D.js?v=8deb9ffd:7083
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:7206
+batchedUpdates$1 @ chunk-E22KYI7D.js?v=8deb9ffd:18966
+batchedUpdates @ chunk-E22KYI7D.js?v=8deb9ffd:3585
+dispatchEventForPluginEventSystem @ chunk-E22KYI7D.js?v=8deb9ffd:7205
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-E22KYI7D.js?v=8deb9ffd:5484
+dispatchEvent @ chunk-E22KYI7D.js?v=8deb9ffd:5478
+dispatchDiscreteEvent @ chunk-E22KYI7D.js?v=8deb9ffd:5455
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network: POST /api/login 401', timestamp: '2025-12-11T13:20:19.970Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…s19.riker.replit.dev:5000/login?next=%2Fdashboard', …}
+telemetry.ts:201 Login error: Error: Unauthorized
+    at throwIfResNotOk (queryClient.ts:17:21)
+    at apiRequest (queryClient.ts:113:9)
+    at async Object.mutationFn (use-auth.tsx:50:14)
+console.<computed> @ telemetry.ts:201
+handleLogin @ Login.tsx:110
+await in handleLogin
+callCallback2 @ chunk-E22KYI7D.js?v=8deb9ffd:3680
+invokeGuardedCallbackDev @ chunk-E22KYI7D.js?v=8deb9ffd:3705
+invokeGuardedCallback @ chunk-E22KYI7D.js?v=8deb9ffd:3739
+invokeGuardedCallbackAndCatchFirstError @ chunk-E22KYI7D.js?v=8deb9ffd:3742
+executeDispatch @ chunk-E22KYI7D.js?v=8deb9ffd:7046
+processDispatchQueueItemsInOrder @ chunk-E22KYI7D.js?v=8deb9ffd:7066
+processDispatchQueue @ chunk-E22KYI7D.js?v=8deb9ffd:7075
+dispatchEventsForPlugins @ chunk-E22KYI7D.js?v=8deb9ffd:7083
+(anonyme) @ chunk-E22KYI7D.js?v=8deb9ffd:7206
+batchedUpdates$1 @ chunk-E22KYI7D.js?v=8deb9ffd:18966
+batchedUpdates @ chunk-E22KYI7D.js?v=8deb9ffd:3585
+dispatchEventForPluginEventSystem @ chunk-E22KYI7D.js?v=8deb9ffd:7205
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-E22KYI7D.js?v=8deb9ffd:5484
+dispatchEvent @ chunk-E22KYI7D.js?v=8deb9ffd:5478
+dispatchDiscreteEvent @ chunk-E22KYI7D.js?v=8deb9ffd:5455
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Console error: Login error: {"status":401}', timestamp: '2025-12-11T13:20:19.971Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…s19.riker.replit.dev:5000/login?next=%2Fdashboard', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/login 200', timestamp: '2025-12-11T13:20:22.839Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…s19.riker.replit.dev:5000/login?next=%2Fdashboard', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/me 200', timestamp: '2025-12-11T13:20:23.197Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/dashboard', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 6.026047293870032ms', timestamp: '2025-12-11T13:20:23.210Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/dashboard', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 5.981572100938484ms', timestamp: '2025-12-11T13:20:23.691Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/dashboard', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/notifications 200', timestamp: '2025-12-11T13:20:24.766Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/dashboard', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 6.026047293870032ms', timestamp: '2025-12-11T13:20:25.161Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/dashboard', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects 200', timestamp: '2025-12-11T13:20:25.163Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/dashboard', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/models 200', timestamp: '2025-12-11T13:20:25.973Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/dashboard', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/rag/stats 200', timestamp: '2025-12-11T13:20:26.095Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/dashboard', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/models/preferred 200', timestamp: '2025-12-11T13:20:26.100Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/dashboard', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 1.570468849319276ms', timestamp: '2025-12-11T13:20:26.114Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/dashboard', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/workspace/bootstrap 200', timestamp: '2025-12-11T13:20:36.017Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/dashboard', …}
+IDEPage.tsx:57 [IDEPage] Component render: {projectId: '671', hasStableToken: false, hasUrlToken: true, tokenLength: undefined}
+IDEPage.tsx:41 [IDEPage] Capturing bootstrap token in stable state: {tokenLength: 448, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+IDEPage.tsx:57 [IDEPage] Component render: {projectId: '671', hasStableToken: true, hasUrlToken: true, tokenLength: 448}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 8.334977517701168ms', timestamp: '2025-12-11T13:20:36.860Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects/671?bootstrap=eyJhbGciO…0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM 200', timestamp: '2025-12-11T13:20:36.967Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+IDEPage.tsx:57 [IDEPage] Component render: {projectId: '671', hasStableToken: true, hasUrlToken: true, tokenLength: 448}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects/671 200', timestamp: '2025-12-11T13:20:36.975Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+UnifiedIDELayout.tsx:247 [UnifiedIDELayout] Bootstrap token detected - forcing agent tab and ensuring sidebar is visible
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects/671/files?bootstrap=eyJ…0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM 200', timestamp: '2025-12-11T13:20:39.739Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects/671/files 200', timestamp: '2025-12-11T13:20:39.777Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects 200', timestamp: '2025-12-11T13:20:39.992Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/git/status 200', timestamp: '2025-12-11T13:20:40.101Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=671 200', timestamp: '2025-12-11T13:20:40.232Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 0.059228622653422595ms', timestamp: '2025-12-11T13:20:40.508Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/runtime/start 200', timestamp: '2025-12-11T13:20:41.309Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 0.04275960524089613ms', timestamp: '2025-12-11T13:20:41.324Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects 200', timestamp: '2025-12-11T13:20:41.935Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+agentConversationStore.ts:249 [AgentConversationStore] Rehydrated from localStorage
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '671', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:94 [AutonomousChatIntegration] Hook render: {externalConversationId: null, projectId: 671, sessionId: undefined, enabled: true, hasBootstrapToken: true, …}
+telemetry.ts:201 Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `PopChild`.
+    at EnhancedChatMessage2 (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ai/EnhancedChatMessage.tsx:76:3)
+    at PopChildMeasure (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:63:23)
+    at PopChild (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:84:21)
+    at PresenceChild (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:122:24)
+    at AnimatePresence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:211:26)
+    at div
+    at div
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=8deb9ffd:114:13
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:54:15)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=8deb9ffd:52:7
+    at _c (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/scroll-area.tsx:21:11)
+    at div
+    at div
+    at ReplitAgentPanelV3 (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ai/ReplitAgentPanelV3.tsx:139:3)
+    at Suspense
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at Presence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-XLLYOLWP.js?v=8deb9ffd:24:11)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=8deb9ffd:174:13
+    at _c5 (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/tabs.tsx:72:12)
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:54:15)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=8deb9ffd:51:7
+    at div
+    at div
+    at PanelWithForwardedRef (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/react-resizable-panels.js?v=8deb9ffd:41:3)
+    at forwardRef(Panel)
+    at div
+    at PanelGroupWithForwardedRef (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/react-resizable-panels.js?v=8deb9ffd:1440:3)
+    at forwardRef(PanelGroup)
+    at ResizablePanelGroup (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/resizable.tsx:21:3)
+    at div
+    at div
+    at UnifiedIDELayout (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ide/UnifiedIDELayout.tsx:116:3)
+    at Suspense
+    at ErrorBoundary (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ErrorBoundary.tsx:9:5)
+    at IDEPage (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/pages/IDEPage.tsx:31:18)
+    at component
+    at Route (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=8deb9ffd:221:16)
+    at Switch (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=8deb9ffd:277:17)
+    at Suspense
+    at div
+    at MotionComponent (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:946:40)
+    at PresenceChild (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:122:24)
+    at AnimatePresence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:211:26)
+    at default (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/LazyAnimatedRoutes.tsx:22:17)
+    at Suspense
+    at LazyAnimatedRoutes (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/LazyAnimatedRoutes.tsx:49:38)
+    at div
+    at AtSymbolRedirectHandler (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/App.tsx:386:36)
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:54:15)
+    at TooltipProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=8deb9ffd:159:5)
+    at ErrorBoundary (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ErrorBoundary.tsx:9:5)
+    at AppContent (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/App.tsx:417:22)
+    at AuthProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/hooks/use-auth.tsx:26:32)
+    at ThemeProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ThemeProvider.tsx:89:33)
+    at QueryClientProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-V7DLPMS6.js?v=8deb9ffd:3030:3)
+    at PersistQueryClientProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query-persist-client.js?v=8deb9ffd:298:3)
+    at App
+console.<computed> @ telemetry.ts:201
+printWarning @ chunk-E22KYI7D.js?v=8deb9ffd:521
+error @ chunk-E22KYI7D.js?v=8deb9ffd:505
+validateFunctionComponentInDev @ chunk-E22KYI7D.js?v=8deb9ffd:15061
+updateMemoComponent @ chunk-E22KYI7D.js?v=8deb9ffd:14412
+beginWork @ chunk-E22KYI7D.js?v=8deb9ffd:16025
+beginWork$1 @ chunk-E22KYI7D.js?v=8deb9ffd:19806
+performUnitOfWork @ chunk-E22KYI7D.js?v=8deb9ffd:19251
+workLoopConcurrent @ chunk-E22KYI7D.js?v=8deb9ffd:19242
+renderRootConcurrent @ chunk-E22KYI7D.js?v=8deb9ffd:19217
+performConcurrentWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18728
+workLoop @ chunk-E22KYI7D.js?v=8deb9ffd:197
+flushWork @ chunk-E22KYI7D.js?v=8deb9ffd:176
+performWorkUntilDeadline @ chunk-E22KYI7D.js?v=8deb9ffd:384
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Console error: Warning: Function components cannot…ry-persist-client.js?v=8deb9ffd:298:3)\n    at App', timestamp: '2025-12-11T13:20:43.607Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+use-autonomous-chat-integration.ts:402 [AutonomousChatIntegration] useEffect triggered: {enabled: true, conversationId: -1765459243594, externalConversationId: null, tempConversationId: -1765459243594, projectId: 671, …}
+login?next=%2Fdashboard:287 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=671&sessionId=4a292381-41e8-4529-bad9-807e4789d7eb isEssential: true isViteHMR: false isDev: true
+login?next=%2Fdashboard:294 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=671&sessionId=4a292381-41e8-4529-bad9-807e4789d7eb
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '671', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:94 [AutonomousChatIntegration] Hook render: {externalConversationId: null, projectId: 671, sessionId: undefined, enabled: true, hasBootstrapToken: true, …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/tools/status 200', timestamp: '2025-12-11T13:20:43.964Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/models 200', timestamp: '2025-12-11T13:20:43.966Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/tools/testing/replays?projectId=671 200', timestamp: '2025-12-11T13:20:44.044Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/preferences 200', timestamp: '2025-12-11T13:20:44.060Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 37.09174060339094ms', timestamp: '2025-12-11T13:20:44.079Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 0.0006868594939821465ms', timestamp: '2025-12-11T13:20:44.126Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 0.4385993333633147ms', timestamp: '2025-12-11T13:20:44.142Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 2.955363028241956ms', timestamp: '2025-12-11T13:20:44.159Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/usage/current 200', timestamp: '2025-12-11T13:20:44.228Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/autonomy/sessions?limit=10 200', timestamp: '2025-12-11T13:20:44.394Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '671', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:94 [AutonomousChatIntegration] Hook render: {externalConversationId: null, projectId: 671, sessionId: undefined, enabled: true, hasBootstrapToken: true, …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/testing/sessions?projectId=671 200', timestamp: '2025-12-11T13:20:44.478Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/agent/conversation 200', timestamp: '2025-12-11T13:20:44.502Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '671', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:94 [AutonomousChatIntegration] Hook render: {externalConversationId: undefined, projectId: 671, sessionId: undefined, enabled: true, hasBootstrapToken: true, …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/effective-model 200', timestamp: '2025-12-11T13:20:44.511Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=671 200', timestamp: '2025-12-11T13:20:45.750Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=671 200', timestamp: '2025-12-11T13:20:51.275Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.BKHZO-65xiFk_u0Y3Zzb9YB5oxIIx4lAEr6R7ObIWFM', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
