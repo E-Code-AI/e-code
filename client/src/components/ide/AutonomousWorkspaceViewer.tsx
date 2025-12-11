@@ -405,12 +405,23 @@ export function AutonomousWorkspaceViewer({
     setLogs(prev => [...prev, `[${timestamp}] ${message}`]);
   };
 
+  // ✅ FIX (Dec 11, 2025): Separate hide (just closes dialog) from close (stops process)
+  const handleHide = () => {
+    setIsOpen(false);
+    // Keep WebSocket running - user can reopen to see progress
+  };
+
   const handleClose = () => {
     setIsOpen(false);
     if (wsRef.current) {
       wsRef.current.close(1000, 'User closed dialog');
     }
     onCompleteRef.current?.();
+  };
+
+  // Reopen the dialog to show progress again
+  const handleShowProgress = () => {
+    setIsOpen(true);
   };
 
   if (!bootstrapToken) {
@@ -423,10 +434,11 @@ export function AutonomousWorkspaceViewer({
   }
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={(open) => {
-      // Allow user to close at any time
+      // ✅ FIX (Dec 11, 2025): Use handleHide instead of handleClose to keep process running
       setIsOpen(open);
-      if (!open) handleClose();
+      // Don't call handleClose here - just hide the dialog, process continues
     }}>
       <DialogContent className="w-[calc(100vw-1rem)] max-w-[98vw] sm:max-w-2xl lg:max-w-3xl max-h-[95vh] sm:max-h-[85vh] flex flex-col p-3 sm:p-6 overflow-y-auto" data-testid="autonomous-workspace-viewer">
         <DialogHeader>
@@ -603,7 +615,7 @@ export function AutonomousWorkspaceViewer({
             </Button>
           ) : (
             <>
-              <Button variant="ghost" onClick={handleClose} className="text-xs sm:text-sm" data-testid="button-hide">
+              <Button variant="ghost" onClick={handleHide} className="text-xs sm:text-sm" data-testid="button-hide">
                 <span>Hide Progress</span>
               </Button>
               <Button variant="outline" disabled className="text-xs sm:text-sm" data-testid="button-cancel">
@@ -615,6 +627,20 @@ export function AutonomousWorkspaceViewer({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* ✅ FIX (Dec 11, 2025): Floating button to show progress when dialog is hidden */}
+    {!isOpen && !isComplete && !errorMessage && connectionStatus === 'connected' && (
+      <Button
+        onClick={handleShowProgress}
+        className="fixed bottom-4 right-4 z-50 shadow-lg gap-2"
+        size="sm"
+        data-testid="button-show-progress"
+      >
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span>Building... {Math.round(overallProgress)}%</span>
+      </Button>
+    )}
+  </>
   );
 }
 
