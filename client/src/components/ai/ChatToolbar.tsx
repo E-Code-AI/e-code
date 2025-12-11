@@ -196,55 +196,79 @@ export function ChatToolbarMobile({
   return (
     <div 
       className={cn(
-        "flex items-center justify-center gap-2 py-2",
+        "flex items-center justify-start gap-1",
         className
       )}
       data-testid="chat-toolbar-mobile"
     >
-      <Button
-        variant={extendedThinking ? "default" : "outline"}
-        size="sm"
-        onClick={onToggleExtendedThinking}
-        disabled={isUpdating}
-        className={cn(
-          "h-10 min-h-[44px] gap-1.5 px-3",
-          extendedThinking && "bg-purple-600 hover:bg-purple-700"
-        )}
-        data-testid="toolbar-mobile-thinking"
-      >
-        <Brain className="h-4 w-4" />
-        <span className="text-xs">Think</span>
-      </Button>
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant={extendedThinking ? "default" : "ghost"}
+              size="sm"
+              onClick={onToggleExtendedThinking}
+              disabled={isUpdating}
+              className={cn(
+                "h-8 w-8 p-0 min-h-[32px] min-w-[32px]",
+                extendedThinking && "bg-purple-600 hover:bg-purple-700 text-white"
+              )}
+              data-testid="toolbar-mobile-thinking"
+            >
+              {isUpdating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Brain className="h-4 w-4" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p className="font-medium">Extended Thinking</p>
+          </TooltipContent>
+        </Tooltip>
 
-      <Button
-        variant={highPowerModels ? "default" : "outline"}
-        size="sm"
-        onClick={onToggleHighPowerModels}
-        disabled={isUpdating}
-        className={cn(
-          "h-10 min-h-[44px] gap-1.5 px-3",
-          highPowerModels && "bg-orange-500 hover:bg-orange-600"
-        )}
-        data-testid="toolbar-mobile-power"
-      >
-        <Sparkles className="h-4 w-4" />
-        <span className="text-xs">Power</span>
-      </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant={highPowerModels ? "default" : "ghost"}
+              size="sm"
+              onClick={onToggleHighPowerModels}
+              disabled={isUpdating}
+              className={cn(
+                "h-8 w-8 p-0 min-h-[32px] min-w-[32px]",
+                highPowerModels && "bg-orange-500 hover:bg-orange-600 text-white"
+              )}
+              data-testid="toolbar-mobile-power"
+            >
+              <Sparkles className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p className="font-medium">High Power Mode</p>
+          </TooltipContent>
+        </Tooltip>
 
-      <Button
-        variant={webSearch ? "default" : "outline"}
-        size="sm"
-        onClick={onToggleWebSearch}
-        disabled={isUpdating}
-        className={cn(
-          "h-10 min-h-[44px] gap-1.5 px-3",
-          webSearch && "bg-blue-500 hover:bg-blue-600"
-        )}
-        data-testid="toolbar-mobile-search"
-      >
-        <Globe className="h-4 w-4" />
-        <span className="text-xs">Search</span>
-      </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant={webSearch ? "default" : "ghost"}
+              size="sm"
+              onClick={onToggleWebSearch}
+              disabled={isUpdating}
+              className={cn(
+                "h-8 w-8 p-0 min-h-[32px] min-w-[32px]",
+                webSearch && "bg-blue-500 hover:bg-blue-600 text-white"
+              )}
+              data-testid="toolbar-mobile-search"
+            >
+              <Globe className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p className="font-medium">Web Search</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }
