@@ -226,18 +226,17 @@ export const EnhancedChatMessage = memo(function EnhancedChatMessage({
                 variant="secondary"
                 size="icon"
                 className={cn(
-                  "h-7 w-7 rounded-full shadow-md",
+                  "h-6 w-6 rounded-full shadow-sm",
                   "bg-background/95 hover:bg-background",
-                  "border border-border/50",
-                  "min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 sm:w-7"
+                  "border border-border/50"
                 )}
                 onClick={handleCopy}
                 data-testid={`enhanced-button-copy-${message.id}`}
               >
                 {copied ? (
-                  <Check className="h-3.5 w-3.5 text-green-500" />
+                  <Check className="h-3 w-3 text-green-500" />
                 ) : (
-                  <Copy className="h-3.5 w-3.5" />
+                  <Copy className="h-3 w-3" />
                 )}
               </Button>
               
@@ -246,15 +245,14 @@ export const EnhancedChatMessage = memo(function EnhancedChatMessage({
                   variant="secondary"
                   size="icon"
                   className={cn(
-                    "h-7 w-7 rounded-full shadow-md",
+                    "h-6 w-6 rounded-full shadow-sm",
                     "bg-background/95 hover:bg-background",
-                    "border border-border/50",
-                    "min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 sm:w-7"
+                    "border border-border/50"
                   )}
                   onClick={onRetry}
                   data-testid={`enhanced-button-retry-${message.id}`}
                 >
-                  <RotateCcw className="h-3.5 w-3.5" />
+                  <RotateCcw className="h-3 w-3" />
                 </Button>
               )}
             </motion.div>
