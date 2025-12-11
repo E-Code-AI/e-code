@@ -218,8 +218,8 @@ export function ReplitAgentPanelV3({
   // AI Model preference hook
   const { modelId, provider, supportsExtendedThinking: modelSupportsExtendedThinking, model, setPreferredModel } = useAgentModelPreference();
   
-  // State for model selector dropdown
-  // Model selector moved to AgentToolsPanel - no longer needed here
+  // State for model selector dropdown (CurrentModelChip click)
+  const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   
   // Conversation state
   const [conversationId, setConversationId] = useState<number | null>(null);
@@ -1374,13 +1374,29 @@ export function ReplitAgentPanelV3({
                 Working
               </Badge>
             )}
-            <CurrentModelChip
-              modelName={model?.name}
-              provider={provider || undefined}
-              supportsExtendedThinking={modelSupportsExtendedThinking}
-              extendedThinkingEnabled={capabilities.find(c => c.id === 'extended_thinking')?.enabled}
-              data-testid="current-model-chip"
-            />
+            {/* Model chip with dropdown for quick model selection */}
+            <DropdownMenu open={isModelSelectorOpen} onOpenChange={setIsModelSelectorOpen}>
+              <DropdownMenuTrigger asChild>
+                <button className="focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-md">
+                  <CurrentModelChip
+                    modelName={model?.name}
+                    provider={provider || undefined}
+                    supportsExtendedThinking={modelSupportsExtendedThinking}
+                    extendedThinkingEnabled={capabilities.find(c => c.id === 'extended_thinking')?.enabled}
+                    data-testid="current-model-chip"
+                  />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-72 p-2">
+                <AIModelSelector 
+                  variant="inline" 
+                  onModelChange={(newModelId) => {
+                    setPreferredModel(newModelId);
+                    setIsModelSelectorOpen(false);
+                  }}
+                />
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className="flex items-center gap-1">
             {isWorking && (
