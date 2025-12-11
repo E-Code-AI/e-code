@@ -13,6 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Project } from '@shared/schema';
 import { ECodeLoading } from '@/components/ECodeLoading';
 import { Button } from '@/components/ui/button';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Toaster } from '@/components/ui/toaster';
 
 const UnifiedIDELayout = lazy(() => import('@/components/ide/UnifiedIDELayout'));
 
@@ -22,26 +24,26 @@ export default function IDEPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const projectId = (params.projectId || params.id) as string;
-  
+
   const searchParams = new URLSearchParams(window.location.search);
   const bootstrapToken = searchParams.get('bootstrap');
-  
+
   const handleWorkspaceComplete = useCallback(() => {
     const url = new URL(window.location.href);
     url.searchParams.delete('bootstrap');
     window.history.replaceState({}, '', url);
-    
+
     queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
     queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
-    
+
     toast({
       title: "Workspace Ready!",
       description: "Your AI-powered workspace has been created successfully.",
     });
   }, [projectId, queryClient, toast]);
-  
+
   const handleWorkspaceError = useCallback((error: string) => {
     toast({
       title: "Workspace Creation Failed",
@@ -49,7 +51,7 @@ export default function IDEPage() {
       variant: "destructive",
     });
   }, [toast]);
-  
+
   const { data: project, isLoading: isLoadingProject } = useQuery<Project>({
     queryKey: ['/api/projects', projectId, { bootstrap: !!bootstrapToken }],
     queryFn: async () => {
@@ -62,11 +64,11 @@ export default function IDEPage() {
     },
     enabled: !!projectId && (!!user || !!bootstrapToken),
   });
-  
+
   if (isLoadingProject) {
     return <ECodeLoading fullScreen size="lg" text="Loading workspace..." />;
   }
-  
+
   if (!project) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -79,17 +81,22 @@ export default function IDEPage() {
       </div>
     );
   }
-  
+
   const normalizedProjectId = String(project?.id ?? projectId);
-  
+
   return (
-    <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading workspace..." />}>
-      <UnifiedIDELayout 
-        projectId={normalizedProjectId}
-        bootstrapToken={bootstrapToken}
-        onWorkspaceComplete={handleWorkspaceComplete}
-        onWorkspaceError={handleWorkspaceError}
-      />
-    </Suspense>
+    <>
+      <Toaster />
+      <ErrorBoundary>
+        <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading workspace..." />}>
+          <UnifiedIDELayout 
+            projectId={normalizedProjectId}
+            bootstrapToken={bootstrapToken}
+            onWorkspaceComplete={handleWorkspaceComplete}
+            onWorkspaceError={handleWorkspaceError}
+          />
+        </Suspense>
+      </ErrorBoundary>
+    </>
   );
 }
