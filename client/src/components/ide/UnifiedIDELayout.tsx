@@ -37,6 +37,7 @@ import {
   Terminal,
   Monitor,
   Bot,
+  MoreHorizontal,
 } from 'lucide-react';
 import { ECodeLoading } from '@/components/ECodeLoading';
 
@@ -90,7 +91,7 @@ interface UnifiedIDELayoutProps {
 }
 
 type MobileTab = 'agent' | 'files' | 'console' | 'preview' | 'more';
-type TabletPanel = 'editor' | 'terminal' | 'preview' | 'agent';
+type TabletPanel = 'editor' | 'terminal' | 'preview' | 'agent' | 'more';
 
 const SWIPE_THRESHOLD = 50;
 const SWIPE_VELOCITY_THRESHOLD = 0.3;
@@ -387,6 +388,9 @@ function UnifiedIDELayout({
               onOpenSettings={() => setShowSettingsPanel(true)}
               onOpenDebug={() => setShowDebugPanel(true)}
               onOpenCollaboration={() => setShowCollaboration(true)}
+              onOpenWorkflows={() => setShowWorkflowsPanel(true)}
+              onOpenHistory={() => setShowHistoryPanel(true)}
+              onOpenExtensions={() => setShowExtensionsPanel(true)}
             />
           </Suspense>
         );
@@ -427,6 +431,27 @@ function UnifiedIDELayout({
               mode="tablet"
               agentToolsSettings={agentToolsSettings}
               onAgentToolsSettingsChange={setAgentToolsSettings}
+            />
+          </Suspense>
+        );
+      case 'more':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading..." /></div>}>
+            <MobileMoreMenu 
+              projectId={projectId}
+              isOpen={true}
+              onClose={() => setTabletPanel('editor')}
+              onOpenFiles={() => setTabletDrawerOpen(true)}
+              onOpenGit={() => setShowGitPanel(true)}
+              onOpenPackages={() => setShowPackagesPanel(true)}
+              onOpenSecrets={() => setShowSecretsPanel(true)}
+              onOpenDatabase={() => setShowReplitDB(true)}
+              onOpenSettings={() => setShowSettingsPanel(true)}
+              onOpenDebug={() => setShowDebugPanel(true)}
+              onOpenCollaboration={() => setShowCollaboration(true)}
+              onOpenWorkflows={() => setShowWorkflowsPanel(true)}
+              onOpenHistory={() => setShowHistoryPanel(true)}
+              onOpenExtensions={() => setShowExtensionsPanel(true)}
             />
           </Suspense>
         );
@@ -593,7 +618,7 @@ function UnifiedIDELayout({
           </div>
 
           <div className="flex items-center gap-1 border-b border-border bg-background/95 backdrop-blur p-1" data-testid="tablet-panel-tabs">
-            {(['editor', 'preview', 'terminal', 'agent'] as TabletPanel[]).map((panel) => (
+            {(['editor', 'preview', 'terminal', 'agent', 'more'] as TabletPanel[]).map((panel) => (
               <Button
                 key={panel}
                 variant={tabletPanel === panel ? 'default' : 'ghost'}
@@ -606,6 +631,7 @@ function UnifiedIDELayout({
                 {panel === 'preview' && <Monitor className="h-4 w-4 mr-1" />}
                 {panel === 'terminal' && <Terminal className="h-4 w-4 mr-1" />}
                 {panel === 'agent' && <Bot className="h-4 w-4 mr-1" />}
+                {panel === 'more' && <MoreHorizontal className="h-4 w-4 mr-1" />}
                 <span className="text-xs capitalize">{panel}</span>
               </Button>
             ))}
