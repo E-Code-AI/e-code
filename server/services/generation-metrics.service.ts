@@ -236,6 +236,74 @@ class GenerationMetricsService {
   }
 
   /**
+   * Record plan generation phase completion
+   * Helper method that combines startPhase and endPhase
+   */
+  recordPlanGeneration(sessionId: string, durationMs: number, taskCount: number): void {
+    const session = this.activeSessions.get(sessionId);
+    if (!session) {
+      logger.warn(`[Metrics] Session not found for plan generation: ${sessionId}`);
+      return;
+    }
+
+    const phase: PhaseMetrics = {
+      name: 'plan_generation',
+      startTime: Date.now() - durationMs,
+      endTime: Date.now(),
+      durationMs,
+      metadata: { taskCount }
+    };
+
+    session.phases.set('plan_generation', phase);
+    logger.info(`[Metrics] Plan generation recorded: ${durationMs}ms, ${taskCount} tasks`, { sessionId });
+  }
+
+  /**
+   * Record workflow execution phase completion
+   * Helper method that combines startPhase and endPhase
+   */
+  recordWorkflowExecution(sessionId: string, durationMs: number, stepCount: number): void {
+    const session = this.activeSessions.get(sessionId);
+    if (!session) {
+      logger.warn(`[Metrics] Session not found for workflow execution: ${sessionId}`);
+      return;
+    }
+
+    const phase: PhaseMetrics = {
+      name: 'workflow_execution',
+      startTime: Date.now() - durationMs,
+      endTime: Date.now(),
+      durationMs,
+      metadata: { stepCount }
+    };
+
+    session.phases.set('workflow_execution', phase);
+    logger.info(`[Metrics] Workflow execution recorded: ${durationMs}ms, ${stepCount} steps`, { sessionId });
+  }
+
+  /**
+   * Record file creation phase
+   */
+  recordFileCreation(sessionId: string, durationMs: number, fileCount: number): void {
+    const session = this.activeSessions.get(sessionId);
+    if (!session) {
+      logger.warn(`[Metrics] Session not found for file creation: ${sessionId}`);
+      return;
+    }
+
+    const phase: PhaseMetrics = {
+      name: 'file_creation',
+      startTime: Date.now() - durationMs,
+      endTime: Date.now(),
+      durationMs,
+      metadata: { fileCount }
+    };
+
+    session.phases.set('file_creation', phase);
+    logger.info(`[Metrics] File creation recorded: ${durationMs}ms, ${fileCount} files`, { sessionId });
+  }
+
+  /**
    * Helper to summarize phases for logging
    */
   private summarizePhases(session: GenerationSession): Record<string, number> {
