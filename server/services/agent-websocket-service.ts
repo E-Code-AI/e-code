@@ -109,25 +109,27 @@ interface DeviceConnection {
 
 // ✅ Build State Cache (Dec 11, 2025): Store current build progress for reconnecting clients
 // This solves the issue where clients lose connection during build and miss updates
+// IMPORTANT: Only caches specific message types needed for replay, stores original message shape
 interface BuildStateCache {
   projectId: string;
   sessionId: string;
   status: 'planning' | 'in_progress' | 'completed' | 'failed';
   phase: string;
-  phaseName?: string;
   progress: number;
-  currentTask?: string;
-  completedTasks: string[];
-  recentSteps: Array<{
-    type: string;
-    title: string;
-    timestamp: Date;
-    details?: string[];
-  }>;
-  plan?: any;
+  plan?: any;  // The generated plan for replay
   error?: string;
+  // Store original messages for faithful replay (max 15 messages)
+  replayMessages: Array<{ message: any; timestamp: Date }>;
   lastUpdated: Date;
 }
+
+// Message types worth caching for reconnection replay
+const CACHEABLE_MESSAGE_TYPES = new Set([
+  'plan_generated', 'plan_ready',
+  'task_start', 'task_complete',
+  'file_created',
+  'status'  // Only status updates with progress
+]);
 
 class AgentWebSocketService {
   public wss: WebSocketServer | null = null;
@@ -477,58 +479,40 @@ class AgentWebSocketService {
             // ✅ Build State Cache (Dec 11, 2025): Send cached build state for reconnecting clients
             const cachedState = this.getBuildState(projectId, sessionId);
             
-            if (cachedState && cachedState.recentSteps.length > 0) {
+            if (cachedState && cachedState.replayMessages.length > 0) {
               // Send full cached state so client can reconstruct progress
-              logger.info(`[Agent WebSocket] 📦 Sending cached build state to reconnecting client (${cachedState.recentSteps.length} steps, ${cachedState.progress}% progress)`);
+              logger.info(`[Agent WebSocket] 📦 Replaying ${cachedState.replayMessages.length} cached messages to reconnecting client (${cachedState.progress}% progress)`);
               
-              // First send current status
+              // First send current status with progress
               ws.send(JSON.stringify({
                 type: 'status',
                 sessionId,
                 projectId,
-                message: cachedState.phaseName || 'Workspace creation in progress...',
+                message: 'Workspace creation in progress...',
                 status: cachedState.phase,
                 progress: cachedState.progress,
-                workflowId: workflow.id
+                workflowId: workflow.id,
+                isReplay: true
               }));
               
-              // Send cached plan if available
+              // Send cached plan if available (always send plan first for UI to render properly)
               if (cachedState.plan) {
                 ws.send(JSON.stringify({
                   type: 'plan_generated',
                   sessionId,
                   projectId,
                   plan: cachedState.plan,
-                  message: 'Plan restored from cache'
+                  message: 'Plan restored from cache',
+                  isReplay: true
                 }));
               }
               
-              // Replay recent steps so client can render progress
-              for (const step of cachedState.recentSteps) {
+              // Replay cached messages in original format
+              for (const { message } of cachedState.replayMessages) {
+                // Add isReplay flag but preserve original message structure
                 ws.send(JSON.stringify({
-                  type: step.type === 'file_created' ? 'file_created' : 'step_update',
-                  sessionId,
-                  projectId,
-                  filePath: step.type === 'file_created' ? step.title.replace('Created file: ', '') : undefined,
-                  data: step.type !== 'file_created' ? {
-                    step: {
-                      title: step.title,
-                      details: step.details
-                    }
-                  } : undefined,
-                  message: step.title,
-                  isReplay: true // Flag so client knows this is historical
-                }));
-              }
-              
-              // Send current task if one is active
-              if (cachedState.currentTask) {
-                ws.send(JSON.stringify({
-                  type: 'task_start',
-                  sessionId,
-                  projectId,
-                  taskName: cachedState.currentTask,
-                  message: cachedState.currentTask
+                  ...message,
+                  isReplay: true
                 }));
               }
             } else {
@@ -912,101 +896,73 @@ class AgentWebSocketService {
   
   /**
    * Update the build state cache with new progress information
-   * Called on every broadcast to keep cache current
+   * Only caches specific message types for replay, stores original message shape
    */
   private updateBuildStateCache(connectionKey: string, message: any) {
-    const existingState = this.buildStateCache.get(connectionKey);
     const now = new Date();
     
-    // Initialize or update cache based on message type
-    const state: BuildStateCache = existingState || {
-      projectId: message.projectId?.toString() || '',
-      sessionId: message.sessionId || '',
-      status: 'planning',
-      phase: 'planning',
-      progress: 0,
-      completedTasks: [],
-      recentSteps: [],
-      lastUpdated: now
-    };
+    // Skip non-cacheable message types
+    if (!CACHEABLE_MESSAGE_TYPES.has(message.type)) {
+      // Still update status for complete/error to trigger cleanup
+      if (message.type === 'complete' || message.type === 'error') {
+        const existingState = this.buildStateCache.get(connectionKey);
+        if (existingState) {
+          existingState.status = message.type === 'complete' ? 'completed' : 'failed';
+          existingState.phase = message.type;
+          existingState.lastUpdated = now;
+          if (message.type === 'error') {
+            existingState.error = message.message || message.data?.error;
+          }
+          // Don't delete immediately - keep for potential reconnection
+          // Will be cleaned up by cleanupOldCacheEntries
+        }
+      }
+      return;
+    }
+    
+    // Initialize or get existing state
+    let state = this.buildStateCache.get(connectionKey);
+    if (!state) {
+      state = {
+        projectId: message.projectId?.toString() || '',
+        sessionId: message.sessionId || '',
+        status: 'planning',
+        phase: 'planning',
+        progress: 0,
+        replayMessages: [],
+        lastUpdated: now
+      };
+      this.buildStateCache.set(connectionKey, state);
+    }
     
     // Update based on message type
-    switch (message.type) {
-      case 'status':
-        state.status = message.status === 'complete' ? 'completed' : 
-                      message.status === 'error' ? 'failed' : 'in_progress';
-        state.phase = message.status || state.phase;
-        state.phaseName = message.phaseName || message.message;
-        if (typeof message.progress === 'number') {
-          state.progress = message.progress;
-        }
-        break;
-        
-      case 'plan_generated':
-      case 'plan_ready':
-        state.plan = message.plan || message.data?.plan;
-        state.phase = 'executing';
-        state.status = 'in_progress';
-        break;
-        
-      case 'task_start':
-        state.currentTask = message.taskName || message.message;
-        state.phase = 'building';
-        break;
-        
-      case 'task_complete':
-        if (message.taskId) {
-          state.completedTasks.push(message.taskId);
-        }
-        if (typeof message.progress === 'number') {
-          state.progress = message.progress;
-        }
-        state.currentTask = undefined;
-        break;
-        
-      case 'step_start':
-      case 'step_update':
-        state.recentSteps.push({
-          type: message.type,
-          title: message.data?.step?.title || message.message || 'Processing...',
-          timestamp: now,
-          details: message.data?.step?.details
-        });
-        // Keep only last 10 steps
-        if (state.recentSteps.length > 10) {
-          state.recentSteps = state.recentSteps.slice(-10);
-        }
-        break;
-        
-      case 'file_created':
-        state.recentSteps.push({
-          type: 'file_created',
-          title: `Created file: ${message.filePath}`,
-          timestamp: now
-        });
-        if (state.recentSteps.length > 10) {
-          state.recentSteps = state.recentSteps.slice(-10);
-        }
-        break;
-        
-      case 'complete':
-        state.status = 'completed';
-        state.phase = 'complete';
-        state.progress = 100;
-        break;
-        
-      case 'error':
-        state.status = 'failed';
-        state.phase = 'error';
-        state.error = message.message || message.data?.error;
-        break;
+    if (message.type === 'status' && typeof message.progress === 'number') {
+      state.progress = message.progress;
+      state.phase = message.status || state.phase;
+      state.status = 'in_progress';
+    } else if (message.type === 'plan_generated' || message.type === 'plan_ready') {
+      state.plan = message.plan || message.data?.plan;
+      state.phase = 'executing';
+      state.status = 'in_progress';
+    } else if (message.type === 'task_complete' && typeof message.progress === 'number') {
+      state.progress = message.progress;
+    }
+    
+    // Store original message for replay (except status updates which are redundant)
+    if (message.type !== 'status') {
+      state.replayMessages.push({ message: { ...message }, timestamp: now });
+      // Keep only last 15 messages for replay
+      if (state.replayMessages.length > 15) {
+        state.replayMessages = state.replayMessages.slice(-15);
+      }
     }
     
     state.lastUpdated = now;
-    this.buildStateCache.set(connectionKey, state);
     
-    // Clean up old cache entries (older than 1 hour)
-    this.cleanupOldCacheEntries();
+    // Periodic cleanup (every 20 updates)
+    if (Math.random() < 0.05) {
+      this.cleanupOldCacheEntries();
+    }
   }
   
   /**
@@ -1018,21 +974,29 @@ class AgentWebSocketService {
   }
   
   /**
-   * Clear build state cache for a session (call on completion or error)
+   * Clear build state cache for a session
    */
   clearBuildState(projectId: string | number, sessionId: string) {
     const connectionKey = `${projectId}-${sessionId}`;
     this.buildStateCache.delete(connectionKey);
+    logger.debug(`[Agent WebSocket] Cleared build state cache for ${connectionKey}`);
   }
   
   /**
-   * Clean up cache entries older than 1 hour
+   * Clean up cache entries older than 30 minutes (completed/failed) or 2 hours (in_progress)
    */
   private cleanupOldCacheEntries() {
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const now = Date.now();
+    const thirtyMinutesAgo = new Date(now - 30 * 60 * 1000);
+    const twoHoursAgo = new Date(now - 2 * 60 * 60 * 1000);
+    
     for (const [key, state] of this.buildStateCache.entries()) {
-      if (state.lastUpdated < oneHourAgo) {
+      const isFinished = state.status === 'completed' || state.status === 'failed';
+      const maxAge = isFinished ? thirtyMinutesAgo : twoHoursAgo;
+      
+      if (state.lastUpdated < maxAge) {
         this.buildStateCache.delete(key);
+        logger.debug(`[Agent WebSocket] Cleaned up stale build cache for ${key}`);
       }
     }
   }
