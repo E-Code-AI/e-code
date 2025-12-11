@@ -83,6 +83,7 @@ const WorkflowsPanel = lazy(() => import('@/components/ide/WorkflowsPanel').then
 const ExtensionsMarketplace = lazy(() => import('@/components/ExtensionsMarketplace').then(mod => ({ default: mod.ExtensionsMarketplace })));
 
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
+import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
 
 interface UnifiedIDELayoutProps {
   projectId: string;
@@ -111,6 +112,9 @@ function UnifiedIDELayout({
   const { toast } = useToast();
   const isConnected = useConnectionStatus();
   const { errorsCount } = useProblemsCount(projectId);
+  
+  // Autonomous build store for inline chat integration and preview splash screens
+  const autonomousBuildStore = useAutonomousBuildStore();
   
   const workspace = useIDEWorkspace(projectId);
   const {
@@ -337,6 +341,7 @@ function UnifiedIDELayout({
               agentToolsSettings={agentToolsSettings}
               onAgentToolsSettingsChange={setAgentToolsSettings}
               isBootstrapping={!!bootstrapToken}
+              bootstrapToken={bootstrapToken}
             />
           </Suspense>
         );
@@ -444,6 +449,7 @@ function UnifiedIDELayout({
               agentToolsSettings={agentToolsSettings}
               onAgentToolsSettingsChange={setAgentToolsSettings}
               isBootstrapping={!!bootstrapToken}
+              bootstrapToken={bootstrapToken}
             />
           </Suspense>
         );
@@ -779,6 +785,7 @@ function UnifiedIDELayout({
                         agentToolsSettings={agentToolsSettings}
                         onAgentToolsSettingsChange={setAgentToolsSettings}
                         isBootstrapping={!!bootstrapToken}
+                        bootstrapToken={bootstrapToken}
                       />
                     </Suspense>
                   </TabsContent>
@@ -1123,8 +1130,9 @@ function UnifiedIDELayout({
         </div>
       )}
 
-      {/* Autonomous Workspace Viewer - Shows bootstrap progress */}
-      {bootstrapToken && (
+      {/* Autonomous Workspace Viewer - Shows bootstrap progress as dialog (only when inline mode is disabled) */}
+      {/* When inline mode is enabled (default), progress appears in the agent chat instead */}
+      {bootstrapToken && !autonomousBuildStore.inlineMode && (
         <Suspense fallback={
           <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center" data-testid="workspace-viewer-loading">
             <div className="text-center space-y-4">
