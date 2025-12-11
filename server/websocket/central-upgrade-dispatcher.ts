@@ -97,14 +97,24 @@ class CentralUpgradeDispatcher {
   /**
    * The single authoritative upgrade handler
    * Routes all WebSocket upgrades to the appropriate service
+   * 
+   * CRITICAL FIX (Dec 11, 2025): Support channel-based routing via query parameter
+   * Reason: Replit's edge proxy silently drops WebSocket upgrades on non-root paths (e.g., /ws/agent)
+   * Solution: Route by ?channel= query parameter when pathname is '/' or empty
    */
   private handleUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): void {
-    // Extract pathname safely
-    const pathname = this.extractPathname(request);
+    // Extract pathname and channel safely
+    const { pathname, channel } = this.extractPathnameAndChannel(request);
+    
+    // For channel-based routing (e.g., /?channel=agent), synthesize an effective path
+    // This allows root-path WebSocket connections to be routed to the correct handler
+    const effectivePath = channel ? `/ws/${channel}` : pathname;
     
     // Detailed connection logging
     logger.info('[Central Dispatcher] New connection', {
       pathname,
+      channel,
+      effectivePath,
       ip: request.socket?.remoteAddress,
       origin: request.headers.origin,
       userAgent: request.headers['user-agent'],
@@ -114,12 +124,12 @@ class CentralUpgradeDispatcher {
     
     // Check if already handled (safety net)
     if (isSocketHandled(request, socket)) {
-      logger.debug(`[Central Dispatcher] Socket already handled for ${pathname} - skipping`);
+      logger.debug(`[Central Dispatcher] Socket already handled for ${effectivePath} - skipping`);
       return;
     }
     
-    // Find matching handler
-    const handler = this.findHandler(pathname);
+    // Find matching handler using effective path (supports both /ws/agent and /?channel=agent)
+    const handler = this.findHandler(effectivePath);
     
     if (handler) {
       // Update connection stats
@@ -140,7 +150,7 @@ class CentralUpgradeDispatcher {
       // This prevents race conditions with other upgrade listeners.
       markSocketAsHandled(request, socket);
       
-      logger.info(`[Central Dispatcher] Routing ${pathname} to registered handler`);
+      logger.info(`[Central Dispatcher] Routing ${effectivePath} to registered handler`);
       
       // Delegate to the registered handler (socket is already marked above)
       try {
@@ -186,14 +196,24 @@ class CentralUpgradeDispatcher {
   }
   
   /**
-   * Safely extract pathname from request
+   * Safely extract pathname and channel from request
+   * 
+   * CRITICAL FIX (Dec 11, 2025): Also extract `channel` query parameter
+   * Reason: Replit's edge proxy only forwards WebSocket upgrades on root path '/'
+   * Solution: Use ?channel= to specify the intended endpoint when connecting to root
    */
-  private extractPathname(request: IncomingMessage): string {
+  private extractPathnameAndChannel(request: IncomingMessage): { pathname: string; channel: string | null } {
     try {
       const url = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`);
-      return url.pathname;
+      return {
+        pathname: url.pathname,
+        channel: url.searchParams.get('channel')
+      };
     } catch {
-      return request.url || '/';
+      return {
+        pathname: request.url || '/',
+        channel: null
+      };
     }
   }
   
