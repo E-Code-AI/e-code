@@ -1,0 +1,276 @@
+VM201 login:111 [WebSocket] Interceptor installed (Development mode: true)
+VM201 login:87 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=ONI19s1EglZH isEssential: false isViteHMR: true isDev: true
+VM201 login:94 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=ONI19s1EglZH
+chunk-E22KYI7D.js?v=8deb9ffd:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+telemetry.ts:125 [Telemetry] Object
+service-worker-registration.ts:14 [SW] Skipping in development mode
+cache-reconciliation.ts:37 [CacheReconciliation] Service initialized
+query-persister.ts:74 [QueryPersister] Cache restored (age: 4s)
+telemetry.ts:125 [Telemetry] Object
+:5000/login:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:201 Select is changing from uncontrolled to controlled. Components should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled value for the lifetime of the component.
+console.<computed> @ telemetry.ts:201
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+IDEPage.tsx:57 [IDEPage] Component render: Object
+IDEPage.tsx:41 [IDEPage] Capturing bootstrap token in stable state: Object
+IDEPage.tsx:57 [IDEPage] Component render: Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+IDEPage.tsx:57 [IDEPage] Component render: Object
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+UnifiedIDELayout.tsx:247 [UnifiedIDELayout] Bootstrap token detected - forcing agent tab and ensuring sidebar is visible
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+agentConversationStore.ts:249 [AgentConversationStore] Rehydrated from localStorage
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: Object
+use-autonomous-chat-integration.ts:111 [AutonomousChatIntegration] 🆔 Generated temp conversationId: -1765466121262
+use-autonomous-chat-integration.ts:118 [AutonomousChatIntegration] 🔄 Hook render: Object
+telemetry.ts:201 Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `PopChild`.
+    at EnhancedChatMessage2 (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ai/EnhancedChatMessage.tsx:76:3)
+    at PopChildMeasure (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:63:23)
+    at PopChild (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:84:21)
+    at PresenceChild (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:122:24)
+    at AnimatePresence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:211:26)
+    at div
+    at div
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=8deb9ffd:114:13
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:54:15)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=8deb9ffd:52:7
+    at _c (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/scroll-area.tsx:21:11)
+    at div
+    at div
+    at ReplitAgentPanelV3 (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ai/ReplitAgentPanelV3.tsx:139:3)
+    at Suspense
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at Presence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-XLLYOLWP.js?v=8deb9ffd:24:11)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=8deb9ffd:174:13
+    at _c5 (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/tabs.tsx:72:12)
+    at div
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:227:13
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:54:15)
+    at https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=8deb9ffd:51:7
+    at div
+    at div
+    at PanelWithForwardedRef (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/react-resizable-panels.js?v=8deb9ffd:41:3)
+    at forwardRef(Panel)
+    at div
+    at PanelGroupWithForwardedRef (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/react-resizable-panels.js?v=8deb9ffd:1440:3)
+    at forwardRef(PanelGroup)
+    at ResizablePanelGroup (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ui/resizable.tsx:21:3)
+    at div
+    at div
+    at UnifiedIDELayout (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ide/UnifiedIDELayout.tsx:116:3)
+    at Suspense
+    at ErrorBoundary (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ErrorBoundary.tsx:9:5)
+    at IDEPage (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/pages/IDEPage.tsx:31:18)
+    at component
+    at Route (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=8deb9ffd:221:16)
+    at Switch (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=8deb9ffd:277:17)
+    at Suspense
+    at div
+    at MotionComponent (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:946:40)
+    at PresenceChild (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:122:24)
+    at AnimatePresence (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=8deb9ffd:211:26)
+    at default (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/LazyAnimatedRoutes.tsx:22:17)
+    at Suspense
+    at LazyAnimatedRoutes (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/LazyAnimatedRoutes.tsx:49:38)
+    at div
+    at AtSymbolRedirectHandler (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/App.tsx:386:36)
+    at Provider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HS62ZVBA.js?v=8deb9ffd:54:15)
+    at TooltipProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=8deb9ffd:159:5)
+    at ErrorBoundary (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ErrorBoundary.tsx:9:5)
+    at AppContent (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/App.tsx:417:22)
+    at AuthProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/hooks/use-auth.tsx:26:32)
+    at ThemeProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/src/components/ThemeProvider.tsx:89:33)
+    at QueryClientProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-V7DLPMS6.js?v=8deb9ffd:3030:3)
+    at PersistQueryClientProvider (https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query-persist-client.js?v=8deb9ffd:298:3)
+    at App
+console.<computed> @ telemetry.ts:201
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+use-autonomous-chat-integration.ts:410 [AutonomousChatIntegration] ⚡ useEffect TRIGGERED: Object
+use-autonomous-chat-integration.ts:433 [AutonomousChatIntegration] 🔑 Decoded token: Object
+use-autonomous-chat-integration.ts:445 [AutonomousChatIntegration] ✅ All conditions met, proceeding with WebSocket connection
+use-autonomous-chat-integration.ts:479 [AutonomousChatIntegration] 🚀 Connecting to WebSocket: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?channel=agent&proj... (attempt 1/10)
+use-autonomous-chat-integration.ts:483 [AutonomousChatIntegration] 📡 Creating WebSocket instance...
+VM201 login:87 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?channel=agent&projectId=686&sessionId=d9601d60-32de-4cbc-9130-b9c313b30340&bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjg2IiwiY29udmVyc2F0aW9uSWQiOiJkOTYwMWQ2MC0zMmRlLTRjYmMtOTEzMC1iOWMzMTNiMzAzNDAiLCJzZXNzaW9uSWQiOiJkOTYwMWQ2MC0zMmRlLTRjYmMtOTEzMC1iOWMzMTNiMzAzNDAiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NjYxMTM2NTYsImlhdCI6MTc2NTQ2NjExMywiZXhwIjoxNzY1NTUyNTEzLCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.yJqLcpFWZiE-Y0QXq7OfQ-4_tgSKRnTRniSL9gOMNS4 isEssential: false isViteHMR: false isDev: true
+VM201 login:90 [WebSocket] Suppressed connection in development: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?channel=agent&projectId=686&sessionId=d9601d60-32de-4cbc-9130-b9c313b30340&bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjg2IiwiY29udmVyc2F0aW9uSWQiOiJkOTYwMWQ2MC0zMmRlLTRjYmMtOTEzMC1iOWMzMTNiMzAzNDAiLCJzZXNzaW9uSWQiOiJkOTYwMWQ2MC0zMmRlLTRjYmMtOTEzMC1iOWMzMTNiMzAzNDAiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NjYxMTM2NTYsImlhdCI6MTc2NTQ2NjExMywiZXhwIjoxNzY1NTUyNTEzLCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.yJqLcpFWZiE-Y0QXq7OfQ-4_tgSKRnTRniSL9gOMNS4
+use-autonomous-chat-integration.ts:485 [AutonomousChatIntegration] 📡 WebSocket created, initial readyState: 0
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: Object
+use-autonomous-chat-integration.ts:118 [AutonomousChatIntegration] 🔄 Hook render: Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+use-autonomous-chat-integration.ts:512 [AutonomousChatIntegration] WebSocket closed: Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: Object
+use-autonomous-chat-integration.ts:118 [AutonomousChatIntegration] 🔄 Hook render: Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+VM201 login:98 WebSocket connection to 'wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=ONI19s1EglZH' failed: 
+construct @ VM201 login:98
+VM201 login:87 [WebSocket] Connection attempt: wss://localhost:5173/?token=ONI19s1EglZH isEssential: false isViteHMR: true isDev: true
+VM201 login:94 [WebSocket] ✅ Allowing real connection: wss://localhost:5173/?token=ONI19s1EglZH
+VM201 login:98 WebSocket connection to 'wss://localhost:5173/?token=ONI19s1EglZH' failed: 
+construct @ VM201 login:98
+telemetry.ts:201 [vite] failed to connect to websocket.
+your current setup:
+  (browser) f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ <--[HTTP]--> localhost:5173/ (server)
+  (browser) f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ <--[WebSocket (failing)]--> localhost:5173/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+console.<computed> @ telemetry.ts:201
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+:5000/api/preview/url?projectId=686:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+:5000/api/preview/url?projectId=686:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+:5000/api/logs/ingest:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+:5000/api/preview/url?projectId=686:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: Object
+use-autonomous-chat-integration.ts:118 [AutonomousChatIntegration] 🔄 Hook render: Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/git/status 200', timestamp: '2025-12-11T15:16:18.132Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.yJqLcpFWZiE-Y0QXq7OfQ-4_tgSKRnTRniSL9gOMNS4', …}
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '686', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:118 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: undefined, tempConversationId: -1765466121262, finalConversationId: -1765466121262, projectId: 686, enabled: true, …}
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '686', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:118 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: undefined, tempConversationId: -1765466121262, finalConversationId: -1765466121262, projectId: 686, enabled: true, …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 0.05526721255669071ms', timestamp: '2025-12-11T15:16:18.165Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.yJqLcpFWZiE-Y0QXq7OfQ-4_tgSKRnTRniSL9gOMNS4', …}
+:5000/api/preview/url?projectId=686:1  Failed to load resource: net::ERR_TIMED_OUT
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=686 0', timestamp: '2025-12-11T15:16:19.946Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.yJqLcpFWZiE-Y0QXq7OfQ-4_tgSKRnTRniSL9gOMNS4', …}
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network error: GET /api/preview/url?projectId=686', timestamp: '2025-12-11T15:16:19.946Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.yJqLcpFWZiE-Y0QXq7OfQ-4_tgSKRnTRniSL9gOMNS4', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/usage/current 200', timestamp: '2025-12-11T15:16:22.593Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.yJqLcpFWZiE-Y0QXq7OfQ-4_tgSKRnTRniSL9gOMNS4', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects 200', timestamp: '2025-12-11T15:16:22.858Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.yJqLcpFWZiE-Y0QXq7OfQ-4_tgSKRnTRniSL9gOMNS4', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=686 200', timestamp: '2025-12-11T15:16:25.503Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…FwIn0.yJqLcpFWZiE-Y0QXq7OfQ-4_tgSKRnTRniSL9gOMNS4', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
