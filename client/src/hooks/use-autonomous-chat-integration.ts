@@ -102,13 +102,15 @@ export function useAutonomousChatIntegration({
   const maxReconnectAttempts = 10;
   const baseReconnectDelayMs = 1000; // 1 second initial delay, doubles each attempt
   
-  // Generate a temporary conversation ID for autonomous bootstrap flow
+  // Generate a STABLE temporary conversation ID for autonomous bootstrap flow
   // This allows messages to be added to the store even before the backend provides a real ID
+  // CRITICAL: Use projectId-based ID so messages persist across page refreshes
   const tempConversationIdRef = useRef<number | null>(null);
-  if (!tempConversationIdRef.current && bootstrapToken) {
-    // Use a large negative number to avoid collision with real IDs
-    tempConversationIdRef.current = -Date.now();
-    console.log('[AutonomousChatIntegration] 🆔 Generated temp conversationId:', tempConversationIdRef.current);
+  if (!tempConversationIdRef.current && bootstrapToken && projectId) {
+    // Use a negative projectId to avoid collision with real IDs but ensure stability
+    // Same projectId will always get the same tempConversationId
+    tempConversationIdRef.current = -projectId;
+    console.log('[AutonomousChatIntegration] 🆔 Generated STABLE temp conversationId:', tempConversationIdRef.current, 'for projectId:', projectId);
   }
   
   // Use external conversationId if available, otherwise use temp ID for bootstrap flow
