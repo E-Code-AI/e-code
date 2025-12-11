@@ -189,14 +189,22 @@ class AgentWebSocketService {
       
       // ✅ FIX (Dec 11, 2025): Send 'connected' message to client immediately
       // This ensures the client knows the connection is established before workflow starts
-      ws.send(JSON.stringify({
+      const connectedMsg = JSON.stringify({
         type: 'connected',
         sessionId,
         projectId,
         deviceId,
         deviceType,
         message: 'WebSocket connection established'
-      }));
+      });
+      
+      console.log(`[Agent WebSocket] 📤 SENDING 'connected' message, ws.readyState: ${ws.readyState}, OPEN=${ws.readyState === 1}`);
+      try {
+        ws.send(connectedMsg);
+        console.log(`[Agent WebSocket] ✅ 'connected' message SENT successfully to ${connectionKey}`);
+      } catch (sendError: any) {
+        console.error(`[Agent WebSocket] ❌ FAILED to send 'connected' message:`, sendError.message);
+      }
       
       // Trigger workflow check/start
       this.checkAndStartWorkflow(projectId, sessionId, ws);
@@ -521,13 +529,20 @@ class AgentWebSocketService {
           });
         } else {
           logger.info(`[Agent WebSocket] Session ${sessionId} already in status: ${session.workflowStatus}`);
-          ws.send(JSON.stringify({
+          const statusMsg = JSON.stringify({
             type: 'status',
             status: session.workflowStatus,
             message: `Workspace creation ${session.workflowStatus}...`,
             sessionId,
             projectId
-          }));
+          });
+          console.log(`[Agent WebSocket] 📤 SENDING 'status' message (${session.workflowStatus}), ws.readyState: ${ws.readyState}`);
+          try {
+            ws.send(statusMsg);
+            console.log(`[Agent WebSocket] ✅ 'status' message SENT for session ${sessionId}`);
+          } catch (sendError: any) {
+            console.error(`[Agent WebSocket] ❌ FAILED to send 'status' message:`, sendError.message);
+          }
         }
       }
     } catch (error: any) {
