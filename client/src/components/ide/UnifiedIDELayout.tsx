@@ -241,6 +241,16 @@ function UnifiedIDELayout({
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [showSecurityPanel, setShowSecurityPanel] = useState(false);
 
+  // Force agent tab when bootstrapToken is present for inline chat experience
+  useEffect(() => {
+    if (bootstrapToken) {
+      console.log('[UnifiedIDELayout] Bootstrap token detected - forcing agent tab and ensuring sidebar is visible');
+      setLeftPanelTab('agent');
+      setMobileActiveTab('agent');
+      setIsSidebarCollapsed(false);
+    }
+  }, [bootstrapToken, setLeftPanelTab, setIsSidebarCollapsed]);
+
   const closePanel = useCallback((setter: (v: boolean) => void) => {
     setter(false);
     setActiveActivityItem('files');
