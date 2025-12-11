@@ -69,6 +69,7 @@ import { ElementEditor, type ElementSelection } from './ElementEditor';
 import { ChatToolbar, ChatToolbarMobile } from './ChatToolbar';
 import { UsageTrackingIcon } from './UsageTrackingIcon';
 import { VideoReplayViewer } from './VideoReplayViewer';
+import { ECodeLogo } from '@/components/ECodeLogo';
 import { RAGToggle, RAGStatsDisplay, RetrievedContextPanel, useRAGStats } from './RAGControls';
 import { History, X, MousePointer2, Coins, Database } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -1366,8 +1367,7 @@ export function ReplitAgentPanelV3({
       <div className="px-4 py-2 border-b border-border bg-card space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">AI Agent</h3>
+            <ECodeLogo size="xs" showText={true} />
             {isWorking && (
               <Badge variant="secondary" className="text-xs animate-pulse" data-testid="header-badge-working">
                 <Loader2 className="h-3 w-3 mr-1 animate-spin" />
