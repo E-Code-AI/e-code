@@ -446,9 +446,15 @@ export function useAutonomousChatIntegration({
     });
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = wsSessionId 
-      ? `${protocol}//${window.location.host}/ws/agent?projectId=${wsProjectId}&sessionId=${wsSessionId}`
-      : `${protocol}//${window.location.host}/ws/agent?projectId=${wsProjectId}`;
+    // Build WebSocket URL with all necessary parameters
+    const params = new URLSearchParams();
+    params.set('projectId', String(wsProjectId));
+    if (wsSessionId) params.set('sessionId', wsSessionId);
+    // ✅ FIX (Dec 11, 2025): Include bootstrap token for server-side authentication
+    if (bootstrapToken) params.set('bootstrap', bootstrapToken);
+    
+    const wsUrl = `${protocol}//${window.location.host}/ws/agent?${params.toString()}`;
+    console.log('[AutonomousChatIntegration] Connecting to WebSocket:', wsUrl.substring(0, 100) + '...');
 
     try {
       const ws = new WebSocket(wsUrl);
