@@ -128,7 +128,9 @@ const CACHEABLE_MESSAGE_TYPES = new Set([
   'plan_generated', 'plan_ready',
   'task_start', 'task_complete',
   'file_created',
-  'status'  // Only status updates with progress
+  'step',     // Step updates from sendStepUpdate
+  'summary',  // Summary updates from sendSummaryUpdate
+  'status'    // Only status updates with progress
 ]);
 
 class AgentWebSocketService {
@@ -833,12 +835,16 @@ class AgentWebSocketService {
   }
   
   // Send progress update to ALL connected devices for a session
+  // ✅ Updated Dec 11, 2025: Also updates build state cache for reconnection support
   sendProgress(update: AgentProgressUpdate) {
     const connectionKey = `${update.projectId}-${update.sessionId}`;
+    
+    // ✅ Always update build state cache, even if no devices connected
+    this.updateBuildStateCache(connectionKey, update);
+    
     const devices = this.connections.get(connectionKey);
     
     if (!devices || devices.size === 0) {
-      // Changed to debug - this is expected during autonomous workspace creation without UI
       logger.debug(`Cannot broadcast status: No active connections for ${connectionKey}`);
       return;
     }

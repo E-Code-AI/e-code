@@ -1,0 +1,322 @@
+VM43:112 [WebSocket] Interceptor installed (Development mode: true)
+VM43:88 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=jIX8Ghq5SE_8 isEssential: false isViteHMR: true isDev: true
+VM43:95 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=jIX8Ghq5SE_8
+chunk-E22KYI7D.js?v=8deb9ffd:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+telemetry.ts:125 [Telemetry] Object
+service-worker-registration.ts:14 [SW] Skipping in development mode
+cache-reconciliation.ts:37 [CacheReconciliation] Service initialized
+query-persister.ts:74 [QueryPersister] Cache restored (age: 5s)
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+:5000/:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+IDEPage.tsx:57 [IDEPage] Component render: Object
+IDEPage.tsx:41 [IDEPage] Capturing bootstrap token in stable state: Object
+IDEPage.tsx:57 [IDEPage] Component render: Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+IDEPage.tsx:57 [IDEPage] Component render: Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+UnifiedIDELayout.tsx:247 [UnifiedIDELayout] Bootstrap token detected - forcing agent tab and ensuring sidebar is visible
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+IDEPage.tsx:57 [IDEPage] Component render: Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+IDEPage.tsx:57 [IDEPage] Component render: Object
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects 200', timestamp: '2025-12-11T16:55:36.945Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/git/status 200', timestamp: '2025-12-11T16:55:36.956Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:55:37.093Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/runtime/start 200', timestamp: '2025-12-11T16:55:38.186Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects 200', timestamp: '2025-12-11T16:55:38.784Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+agentConversationStore.ts:249 [AgentConversationStore] Rehydrated from localStorage
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:113 [AutonomousChatIntegration] 🆔 Generated STABLE temp conversationId: -697 for projectId: 697
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: null, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+use-autonomous-chat-integration.ts:448 [AutonomousChatIntegration] ⚡ useEffect TRIGGERED: {enabled: true, conversationId: -697, projectId: 697, hasBootstrapToken: true}
+use-autonomous-chat-integration.ts:471 [AutonomousChatIntegration] 🔑 Decoded token: {projectId: '697', sessionId: 'cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a', userId: 98}
+use-autonomous-chat-integration.ts:483 [AutonomousChatIntegration] ✅ All conditions met, proceeding with WebSocket connection
+use-autonomous-chat-integration.ts:515 [AutonomousChatIntegration] 🚀 Connecting to WebSocket: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=... (attempt 1/10)
+use-autonomous-chat-integration.ts:519 [AutonomousChatIntegration] 📡 Creating WebSocket instance...
+VM43:88 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=697&sessionId=cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a&bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668 isEssential: true isViteHMR: false isDev: true
+VM43:95 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=697&sessionId=cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a&bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668
+use-autonomous-chat-integration.ts:521 [AutonomousChatIntegration] 📡 WebSocket created, initial readyState: 0
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: null, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/tools/status 200', timestamp: '2025-12-11T16:55:41.097Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/models 200', timestamp: '2025-12-11T16:55:41.106Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/preferences 200', timestamp: '2025-12-11T16:55:41.188Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/tools/testing/replays?projectId=697 200', timestamp: '2025-12-11T16:55:41.197Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/testing/sessions?projectId=697 200', timestamp: '2025-12-11T16:55:41.278Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/usage/current 200', timestamp: '2025-12-11T16:55:41.360Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/autonomy/sessions?limit=10 200', timestamp: '2025-12-11T16:55:41.542Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: null, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/agent/conversation 200', timestamp: '2025-12-11T16:55:41.632Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: undefined, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/agent/effective-model 200', timestamp: '2025-12-11T16:55:41.638Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:55:42.637Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:55:48.161Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:55:53.696Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:55:59.237Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:297  POST https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/logs/ingest 400 (Bad Request)
+flush @ telemetry.ts:297
+(anonyme) @ telemetry.ts:279
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:56:14.778Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:56:20.300Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:56:25.848Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:56:31.370Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:56:36.908Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: undefined, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/git/status 200', timestamp: '2025-12-11T16:56:37.449Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: undefined, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: undefined, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: undefined, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects 200', timestamp: '2025-12-11T16:56:40.055Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/usage/current 200', timestamp: '2025-12-11T16:56:41.975Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:56:42.434Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:56:47.960Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:57:23.503Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:57:49.033Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:58:09.569Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/projects 200', timestamp: '2025-12-11T16:58:11.286Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: undefined, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:58:15.107Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:58:20.643Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+VM43:99 WebSocket connection to 'wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/?token=jIX8Ghq5SE_8' failed: 
+construct @ VM43:99
+VM43:88 [WebSocket] Connection attempt: wss://localhost:5173/?token=jIX8Ghq5SE_8 isEssential: false isViteHMR: true isDev: true
+VM43:95 [WebSocket] ✅ Allowing real connection: wss://localhost:5173/?token=jIX8Ghq5SE_8
+VM43:99 WebSocket connection to 'wss://localhost:5173/?token=jIX8Ghq5SE_8' failed: 
+construct @ VM43:99
+createConnection @ client:755
+connect @ client:411
+connect @ client:759
+telemetry.ts:201 [vite] failed to connect to websocket.
+your current setup:
+  (browser) f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ <--[HTTP]--> localhost:5173/ (server)
+  (browser) f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ <--[WebSocket (failing)]--> localhost:5173/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+console.<computed> @ telemetry.ts:201
+connect @ client:765
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Console error: [vite] failed to connect to websock…/vite.dev/config/server-options.html#server-hmr .', timestamp: '2025-12-11T16:58:56.410Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+VM43:99 WebSocket connection to 'wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=697&sessionId=cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a&bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668' failed: 
+construct @ VM43:99
+connectWebSocket @ use-autonomous-chat-integration.ts:520
+(anonyme) @ use-autonomous-chat-integration.ts:582
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=8deb9ffd:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=8deb9ffd:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=8deb9ffd:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=8deb9ffd:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=8deb9ffd:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=8deb9ffd:19500
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18921
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=8deb9ffd:9166
+commitRootImpl @ chunk-E22KYI7D.js?v=8deb9ffd:19485
+commitRoot @ chunk-E22KYI7D.js?v=8deb9ffd:19330
+finishConcurrentRender @ chunk-E22KYI7D.js?v=8deb9ffd:18858
+performConcurrentWorkOnRoot @ chunk-E22KYI7D.js?v=8deb9ffd:18768
+workLoop @ chunk-E22KYI7D.js?v=8deb9ffd:197
+flushWork @ chunk-E22KYI7D.js?v=8deb9ffd:176
+performWorkUntilDeadline @ chunk-E22KYI7D.js?v=8deb9ffd:384
+telemetry.ts:201 [AutonomousChatIntegration] ❌ WebSocket error: Event {isTrusted: true, type: 'error', target: WebSocket, currentTarget: WebSocket, eventPhase: 2, …} readyState: 3
+console.<computed> @ telemetry.ts:201
+ws.onerror @ use-autonomous-chat-integration.ts:543
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Console error: [AutonomousChatIntegration] ❌ WebSocket error: {"isTrusted":true} readyState: 3', timestamp: '2025-12-11T16:58:57.093Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+use-autonomous-chat-integration.ts:548 [AutonomousChatIntegration] WebSocket closed: {code: 1006, reason: '', wasClean: false}
+use-autonomous-chat-integration.ts:560 [AutonomousChatIntegration] Scheduling reconnect in 1000ms (attempt 1/10)
+telemetry.ts:247  POST https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/logs/ingest 502 (Bad Gateway)
+window.fetch @ telemetry.ts:247
+flush @ telemetry.ts:302
+(anonyme) @ telemetry.ts:270
+use-autonomous-chat-integration.ts:515 [AutonomousChatIntegration] 🚀 Connecting to WebSocket: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=... (attempt 2/10)
+use-autonomous-chat-integration.ts:519 [AutonomousChatIntegration] 📡 Creating WebSocket instance...
+VM43:88 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=697&sessionId=cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a&bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668 isEssential: true isViteHMR: false isDev: true
+VM43:95 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=697&sessionId=cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a&bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668
+use-autonomous-chat-integration.ts:521 [AutonomousChatIntegration] 📡 WebSocket created, initial readyState: 0
+VM43:99 WebSocket connection to 'wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=697&sessionId=cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a&bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668' failed: 
+construct @ VM43:99
+connectWebSocket @ use-autonomous-chat-integration.ts:520
+(anonyme) @ use-autonomous-chat-integration.ts:568
+telemetry.ts:201 [AutonomousChatIntegration] ❌ WebSocket error: Event {isTrusted: true, type: 'error', target: WebSocket, currentTarget: WebSocket, eventPhase: 2, …} readyState: 3
+console.<computed> @ telemetry.ts:201
+ws.onerror @ use-autonomous-chat-integration.ts:543
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Console error: [AutonomousChatIntegration] ❌ WebSocket error: {"isTrusted":true} readyState: 3', timestamp: '2025-12-11T16:58:58.994Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+use-autonomous-chat-integration.ts:548 [AutonomousChatIntegration] WebSocket closed: {code: 1006, reason: '', wasClean: false}
+use-autonomous-chat-integration.ts:560 [AutonomousChatIntegration] Scheduling reconnect in 2000ms (attempt 2/10)
+use-autonomous-chat-integration.ts:515 [AutonomousChatIntegration] 🚀 Connecting to WebSocket: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=... (attempt 3/10)
+use-autonomous-chat-integration.ts:519 [AutonomousChatIntegration] 📡 Creating WebSocket instance...
+VM43:88 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=697&sessionId=cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a&bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668 isEssential: true isViteHMR: false isDev: true
+VM43:95 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=697&sessionId=cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a&bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668
+use-autonomous-chat-integration.ts:521 [AutonomousChatIntegration] 📡 WebSocket created, initial readyState: 0
+VM43:99 WebSocket connection to 'wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=697&sessionId=cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a&bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668' failed: 
+construct @ VM43:99
+connectWebSocket @ use-autonomous-chat-integration.ts:520
+(anonyme) @ use-autonomous-chat-integration.ts:568
+telemetry.ts:201 [AutonomousChatIntegration] ❌ WebSocket error: Event {isTrusted: true, type: 'error', target: WebSocket, currentTarget: WebSocket, eventPhase: 2, …} readyState: 3
+console.<computed> @ telemetry.ts:201
+ws.onerror @ use-autonomous-chat-integration.ts:543
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Console error: [AutonomousChatIntegration] ❌ WebSocket error: {"isTrusted":true} readyState: 3', timestamp: '2025-12-11T16:59:02.018Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+use-autonomous-chat-integration.ts:548 [AutonomousChatIntegration] WebSocket closed: {code: 1006, reason: '', wasClean: false}
+use-autonomous-chat-integration.ts:560 [AutonomousChatIntegration] Scheduling reconnect in 4000ms (attempt 3/10)
+telemetry.ts:247  POST https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/api/logs/ingest 502 (Bad Gateway)
+window.fetch @ telemetry.ts:247
+flush @ telemetry.ts:302
+(anonyme) @ telemetry.ts:270
+use-autonomous-chat-integration.ts:515 [AutonomousChatIntegration] 🚀 Connecting to WebSocket: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=... (attempt 4/10)
+use-autonomous-chat-integration.ts:519 [AutonomousChatIntegration] 📡 Creating WebSocket instance...
+VM43:88 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=697&sessionId=cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a&bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668 isEssential: true isViteHMR: false isDev: true
+VM43:95 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000/ws/agent?projectId=697&sessionId=cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a&bootstrap=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYWdlbnRfYm9vdHN0cmFwIiwicHJvamVjdElkIjoiNjk3IiwiY29udmVyc2F0aW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJzZXNzaW9uSWQiOiJjYmRjMjdmNi1kNjdkLTQyOTYtODBmNy04YWU5ZjJjNmU0NWEiLCJ1c2VySWQiOjk4LCJ0aW1lc3RhbXAiOjE3NjU0NzIxMjg5ODYsImlhdCI6MTc2NTQ3MjEyOCwiZXhwIjoxNzY1NTU4NTI4LCJpc3MiOiJlLWNvZGUtcGxhdGZvcm0iLCJzdWIiOiJ3b3Jrc3BhY2UtYm9vdHN0cmFwIn0.gvH2lqLVOMCQu9mAi7SsWZPAf5lhQXwQgcjGF6FJ668
+use-autonomous-chat-integration.ts:521 [AutonomousChatIntegration] 📡 WebSocket created, initial readyState: 0
+use-autonomous-chat-integration.ts:525 [AutonomousChatIntegration] ✅ WebSocket connected successfully, readyState: 1
+use-autonomous-chat-integration.ts:531 [AutonomousChatIntegration] 📥 Message received: {"type":"connected","sessionId":"cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a","projectId":"697","deviceId":...
+use-autonomous-chat-integration.ts:534 [AutonomousChatIntegration] 📥 Parsed message type: connected
+use-autonomous-chat-integration.ts:171 [AutonomousChatIntegration] ✅ Added connected message to chat: autonomous-1765472347164-u7jlrh1ns
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: undefined, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T16:59:07.305Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T16:59:07.305Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+use-autonomous-chat-integration.ts:531 [AutonomousChatIntegration] 📥 Message received: {"type":"status","status":"waiting_for_plan","message":"Connecting to AI...","progress":8,"phaseName...
+use-autonomous-chat-integration.ts:534 [AutonomousChatIntegration] 📥 Parsed message type: status
+use-autonomous-chat-integration.ts:204 [AutonomousChatIntegration] ✅ Status update: {status: 'waiting_for_plan', phaseName: 'Waiting for AI', progress: 8}
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: undefined, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+use-autonomous-chat-integration.ts:531 [AutonomousChatIntegration] 📥 Message received: {"type":"status","sessionId":"cbdc27f6-d67d-4296-80f7-8ae9f2c6e45a","projectId":"697","status":"plan...
+use-autonomous-chat-integration.ts:534 [AutonomousChatIntegration] 📥 Parsed message type: status
+use-autonomous-chat-integration.ts:204 [AutonomousChatIntegration] ✅ Status update: {status: 'planning', phaseName: 'Planning started', progress: 15}
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: undefined, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T16:59:12.318Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T16:59:12.319Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T16:59:17.319Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T16:59:17.321Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T16:59:22.317Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T16:59:22.330Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T16:59:31.066Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T16:59:31.066Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:59:31.604Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T16:59:31.605Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T16:59:31.605Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T16:59:32.091Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T16:59:32.092Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T16:59:37.097Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T16:59:37.098Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T16:59:37.157Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T16:59:37.159Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T16:59:37.159Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/git/status 200', timestamp: '2025-12-11T16:59:37.868Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: POST /api/logs/ingest 0', timestamp: '2025-12-11T16:59:37.869Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network error: POST /api/logs/ingest', timestamp: '2025-12-11T16:59:37.869Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: undefined, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+ReplitAgentPanelV3.tsx:227 [ReplitAgentPanelV3] Component render: {projectId: '697', mode: 'desktop', isBootstrapping: true, hasBootstrapToken: true, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'}
+use-autonomous-chat-integration.ts:120 [AutonomousChatIntegration] 🔄 Hook render: {externalConversationId: undefined, tempConversationId: -697, finalConversationId: -697, projectId: 697, enabled: true, …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/preview/url?projectId=697 200', timestamp: '2025-12-11T17:00:02.696Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ng…9mAi7SsWZPAf5lhQXwQgcjGF6FJ668&buildMode=full-app', …}
+query-persister.ts:41 [QueryPersister] Cache persisted to IndexedDB
