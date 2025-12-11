@@ -84,7 +84,7 @@ function mapPhaseToSplashPhase(phase: string | undefined): AutonomousBuildPhase 
 }
 
 export function useAutonomousChatIntegration({
-  conversationId,
+  conversationId: externalConversationId,
   projectId,
   sessionId,
   enabled = true,
@@ -95,6 +95,17 @@ export function useAutonomousChatIntegration({
   const wsRef = useRef<WebSocket | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
   const planTextRef = useRef<string>('');
+  
+  // Generate a temporary conversation ID for autonomous bootstrap flow
+  // This allows messages to be added to the store even before the backend provides a real ID
+  const tempConversationIdRef = useRef<number | null>(null);
+  if (!tempConversationIdRef.current && bootstrapToken) {
+    // Use a large negative number to avoid collision with real IDs
+    tempConversationIdRef.current = -Date.now();
+  }
+  
+  // Use external conversationId if available, otherwise use temp ID for bootstrap flow
+  const conversationId = externalConversationId ?? tempConversationIdRef.current;
 
   const createAutonomousMessage = useCallback((
     type: Message['type'],
@@ -459,7 +470,11 @@ export function useAutonomousChatIntegration({
   return {
     sendBuildModeSelection,
     requestPlanChange,
-    isConnected: wsRef.current?.readyState === WebSocket.OPEN
+    isConnected: wsRef.current?.readyState === WebSocket.OPEN,
+    // Expose effective conversationId for parent components to use when displaying messages
+    effectiveConversationId: conversationId,
+    // Flag to indicate if we're using a temporary ID (for bootstrap flow)
+    isUsingTempConversationId: conversationId !== null && conversationId < 0
   };
 }
 
