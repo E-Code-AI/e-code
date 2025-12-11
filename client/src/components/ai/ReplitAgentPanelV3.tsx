@@ -1796,11 +1796,13 @@ export function ReplitAgentPanelV3({
         </>
 
       {/* Agent History Modal - For viewing full session history */}
-      <AgentHistoryModal
-        open={historyModalOpen}
-        onOpenChange={setHistoryModalOpen}
-        projectId={typeof projectId === 'number' ? projectId : parseInt(projectId as string, 10) || undefined}
-      />
+      {projectIdNum > 0 && (
+        <AgentHistoryModal
+          open={historyModalOpen}
+          onOpenChange={setHistoryModalOpen}
+          projectId={projectIdNum}
+        />
+      )}
       
       {/* Video Replay Viewer - For viewing test session recordings */}
       <VideoReplayViewer

@@ -40,7 +40,7 @@ import 'ag-grid-community/styles/ag-grid.css';
 import './ag-grid-theme.css';
 
 interface AgentSessionsGridProps {
-  projectId?: number;
+  projectId: number;
   onSessionSelect?: (session: AgentSessionRow) => void;
   height?: string | number;
 }
@@ -132,8 +132,7 @@ export function AgentSessionsGrid({
     params.set('page', String(page));
     params.set('pageSize', String(pageSize));
     params.set('sortDirection', 'desc');
-    
-    if (projectId) params.set('projectId', String(projectId));
+    params.set('projectId', String(projectId));
     if (statusFilter !== 'all') params.set('status', statusFilter);
     if (modelFilter !== 'all') params.set('model', modelFilter);
     if (dateRange.start) params.set('startDate', dateRange.start.toISOString());
@@ -143,7 +142,8 @@ export function AgentSessionsGrid({
   }, [page, pageSize, projectId, statusFilter, modelFilter, dateRange]);
 
   const { data, isLoading, error, refetch } = useQuery<SessionsGridResponse>({
-    queryKey: ['/api/agent-grid/sessions', buildQueryParams()],
+    queryKey: ['/api/agent-grid/sessions', projectId, buildQueryParams()],
+    enabled: !!projectId,
   });
 
   const onGridReady = useCallback((params: GridReadyEvent) => {
