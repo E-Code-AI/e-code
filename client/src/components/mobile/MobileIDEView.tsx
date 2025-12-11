@@ -61,7 +61,7 @@ const AgentFallback = () => (
   <AgentSkeleton className="h-full" />
 );
 
-export type MobilePanelType = 'git' | 'packages' | 'secrets' | 'database' | 'settings' | 'debug' | 'security' | null;
+export type MobilePanelType = 'git' | 'packages' | 'secrets' | 'database' | 'settings' | 'debug' | 'security' | 'workflows' | 'history' | 'extensions' | 'actions' | 'tools' | 'deploy' | null;
 
 export type MobileTab = 'agent' | 'files' | 'console' | 'preview' | 'more';
 
@@ -805,6 +805,21 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
         onOpenSettings={() => handleOpenPanel('settings')}
         onOpenDebug={() => handleOpenPanel('debug')}
         onOpenSecurity={() => handleOpenPanel('security')}
+        onOpenWorkflows={() => handleOpenPanel('workflows')}
+        onOpenHistory={() => handleOpenPanel('history')}
+        onOpenExtensions={() => handleOpenPanel('extensions')}
+        onOpenActions={() => handleOpenPanel('actions')}
+        onOpenTools={() => handleOpenPanel('tools')}
+        onOpenDeploy={() => handleOpenPanel('deploy')}
+        onOpenCommandPalette={() => {
+          toast({ title: 'Commands', description: 'Command palette coming to mobile soon!' });
+          setIsMoreMenuOpen(false);
+        }}
+        onOpenGlobalSearch={() => {
+          toast({ title: 'Search', description: 'Global search coming to mobile soon!' });
+          setIsMoreMenuOpen(false);
+        }}
+        problemsCount={errorsCount}
       />
       
       <MobileCollaborationPanel
@@ -869,6 +884,102 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
         title="Security Scanner"
       >
         <MobileSecurityPanel projectId={normalizedProjectId} className="h-full" />
+      </MobileSlidePanel>
+      
+      <MobileSlidePanel
+        isOpen={activePanel === 'workflows'}
+        onClose={handleClosePanel}
+        title="Workflows"
+      >
+        <div className="h-full flex items-center justify-center p-6 text-center">
+          <div className="space-y-3">
+            <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center">
+              <Terminal className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="font-medium text-lg">Workflows</h3>
+            <p className="text-sm text-muted-foreground">Manage your project workflows and automation scripts.</p>
+          </div>
+        </div>
+      </MobileSlidePanel>
+      
+      <MobileSlidePanel
+        isOpen={activePanel === 'history'}
+        onClose={handleClosePanel}
+        title="History"
+      >
+        <div className="h-full flex items-center justify-center p-6 text-center">
+          <div className="space-y-3">
+            <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center">
+              <ArrowLeft className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="font-medium text-lg">Project History</h3>
+            <p className="text-sm text-muted-foreground">View recent changes and restore previous versions.</p>
+          </div>
+        </div>
+      </MobileSlidePanel>
+      
+      <MobileSlidePanel
+        isOpen={activePanel === 'extensions'}
+        onClose={handleClosePanel}
+        title="Extensions"
+      >
+        <div className="h-full flex items-center justify-center p-6 text-center">
+          <div className="space-y-3">
+            <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center">
+              <Code className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="font-medium text-lg">Extensions</h3>
+            <p className="text-sm text-muted-foreground">Browse and install extensions to enhance your IDE.</p>
+          </div>
+        </div>
+      </MobileSlidePanel>
+      
+      <MobileSlidePanel
+        isOpen={activePanel === 'actions'}
+        onClose={handleClosePanel}
+        title="Agent Actions"
+      >
+        <div className="h-full flex items-center justify-center p-6 text-center">
+          <div className="space-y-3">
+            <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center">
+              <Sparkles className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="font-medium text-lg">Agent Actions</h3>
+            <p className="text-sm text-muted-foreground">Review and approve AI-generated changes.</p>
+          </div>
+        </div>
+      </MobileSlidePanel>
+      
+      <MobileSlidePanel
+        isOpen={activePanel === 'tools'}
+        onClose={handleClosePanel}
+        title="Development Tools"
+      >
+        <div className="h-full flex items-center justify-center p-6 text-center">
+          <div className="space-y-3">
+            <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center">
+              <Code className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="font-medium text-lg">Development Tools</h3>
+            <p className="text-sm text-muted-foreground">Access developer tools and utilities.</p>
+          </div>
+        </div>
+      </MobileSlidePanel>
+      
+      <MobileSlidePanel
+        isOpen={activePanel === 'deploy'}
+        onClose={handleClosePanel}
+        title="Deploy"
+      >
+        <div className="h-full flex items-center justify-center p-6 text-center">
+          <div className="space-y-3">
+            <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <Rocket className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="font-medium text-lg">Deploy Your App</h3>
+            <p className="text-sm text-muted-foreground">Use the publish button to deploy your app live.</p>
+          </div>
+        </div>
       </MobileSlidePanel>
       
       {enableShortcutHint && <ShortcutHint />}
