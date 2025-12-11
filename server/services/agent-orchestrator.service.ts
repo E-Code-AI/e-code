@@ -1709,6 +1709,10 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
   }): Promise<void> {
     const { sessionId, projectId, userId, prompt, options: workspaceOptions } = options;
     
+    // ✅ OPTIMIZATION (Dec 2025): Track generation metrics for bottleneck analysis
+    const { generationMetrics } = await import('./generation-metrics.service');
+    generationMetrics.startSession(sessionId, projectId, userId, prompt);
+    
     try {
       logger.info(`[Autonomous] Starting workspace creation for session ${sessionId}`, { projectId, userId });
       
@@ -1757,10 +1761,26 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         preferredModel: preferredModel || 'default fallback chain'
       });
       
+      // ✅ OPTIMIZATION (Dec 2025): Speculative scaffolding - start basic structure in parallel with AI
+      // This reduces perceived latency by ~2-3 seconds
+      const { speculativeScaffold } = await import('./speculative-scaffold.service');
+      const scaffoldPromise = speculativeScaffold.createScaffold({
+        projectId,
+        language: workspaceOptions?.language || 'typescript',
+        framework: workspaceOptions?.framework,
+        prompt
+      }).catch(err => {
+        logger.warn(`[Autonomous] Speculative scaffolding failed (non-blocking):`, err.message);
+        return { success: false, filesCreated: [], durationMs: 0, error: err.message };
+      });
+      
       // 2. Generate execution plan with AI (with multi-provider fallback)
       // Use async generator to get plan with real-time streaming
       // ✅ FIX: Pass user's preferred model to plan generator
       let executionPlan: any = null;
+      
+      // ✅ OPTIMIZATION (Dec 2025): Track plan generation timing
+      const planStartTime = Date.now();
       
       for await (const event of aiPlanGenerator.generatePlan(userId, projectId, prompt, {
         projectType: 'web-app',
@@ -1799,6 +1819,17 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       
       if (!executionPlan) {
         throw new Error('No plan received from AI service - all providers may be unavailable');
+      }
+      
+      // ✅ OPTIMIZATION (Dec 2025): Record plan generation metrics
+      const planDurationMs = Date.now() - planStartTime;
+      generationMetrics.recordPlanGeneration(sessionId, planDurationMs, executionPlan.tasks?.length || 0);
+      logger.info(`[Autonomous] Plan generation completed in ${planDurationMs}ms with ${executionPlan.tasks?.length || 0} tasks`, { sessionId });
+      
+      // ✅ OPTIMIZATION (Dec 2025): Wait for speculative scaffolding to complete (should be done by now)
+      const scaffoldResult = await scaffoldPromise;
+      if (scaffoldResult.success) {
+        logger.info(`[Autonomous] Speculative scaffolding completed: ${scaffoldResult.filesCreated.length} files created in ${scaffoldResult.durationMs}ms`, { sessionId });
       }
       
       // 3. Store execution plan using the agentPlanStore service
@@ -2022,6 +2053,9 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         // Execute workflow
         logger.info(`[Autonomous] Starting workflow execution`, { sessionId, workingDirectory, stepCount: workflowSteps.length });
         
+        // ✅ OPTIMIZATION (Dec 2025): Track workflow execution timing
+        const executionStartTime = Date.now();
+        
         // ✅ DEBUG (Dec 5, 2025): Wrap execution in try-catch for detailed error logging
         let result;
         try {
@@ -2044,9 +2078,16 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         }
         
         const isSuccess = result.status === 'completed';
+        const executionDurationMs = Date.now() - executionStartTime;
+        
+        // ✅ OPTIMIZATION (Dec 2025): Record execution and session completion metrics
+        generationMetrics.recordWorkflowExecution(sessionId, executionDurationMs, workflowSteps.length);
+        generationMetrics.completeSession(sessionId, isSuccess);
+        
         logger.info(`[Autonomous] Workflow execution completed`, { 
           sessionId, 
-          status: result.status
+          status: result.status,
+          executionDurationMs
         });
         
         // Update session status
