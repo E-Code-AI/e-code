@@ -1,0 +1,10 @@
+Utilisateur Admin :
+
+Email: admin@test.com
+Mot de passe: adminpass123
+Rôle: admin
+Utilisateur Test :
+
+Email: testuser@test.com
+Mot de passe: testpass123
+Rôle: user
