@@ -106,6 +106,12 @@ export function useAutonomousChatIntegration({
   const planTextRef = useRef<string>('');
   const hasConnectedRef = useRef(false);
   
+  // Reconnection logic with exponential backoff
+  const reconnectAttemptRef = useRef(0);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const maxReconnectAttempts = 10;
+  const baseReconnectDelayMs = 1000; // 1 second initial delay, doubles each attempt
+  
   // Generate a temporary conversation ID for autonomous bootstrap flow
   // This allows messages to be added to the store even before the backend provides a real ID
   const tempConversationIdRef = useRef<number | null>(null);
@@ -415,12 +421,6 @@ export function useAutonomousChatIntegration({
       return;
     }
     
-    // Prevent multiple WebSocket connections
-    if (hasConnectedRef.current) {
-      console.log('[AutonomousChatIntegration] Skipping - already connected');
-      return;
-    }
-    
     let wsProjectId = projectId;
     let wsSessionId = sessionId;
     
@@ -435,15 +435,14 @@ export function useAutonomousChatIntegration({
     
     if (!wsProjectId) return;
 
-    // Mark as connected to prevent re-connections
-    hasConnectedRef.current = true;
-
-    // Initialize build store directly via getState to avoid dependency issues
-    useAutonomousBuildStore.getState().startBuild({ 
-      projectId: wsProjectId, 
-      sessionId: wsSessionId || undefined, 
-      conversationId 
-    });
+    // Initialize build store directly via getState to avoid dependency issues (only once)
+    if (!hasConnectedRef.current) {
+      useAutonomousBuildStore.getState().startBuild({ 
+        projectId: wsProjectId, 
+        sessionId: wsSessionId || undefined, 
+        conversationId 
+      });
+    }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     // Build WebSocket URL with all necessary parameters
@@ -454,45 +453,93 @@ export function useAutonomousChatIntegration({
     if (bootstrapToken) params.set('bootstrap', bootstrapToken);
     
     const wsUrl = `${protocol}//${window.location.host}/ws/agent?${params.toString()}`;
-    console.log('[AutonomousChatIntegration] Connecting to WebSocket:', wsUrl.substring(0, 100) + '...');
 
-    try {
-      const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
+    // Connection function for initial connect and reconnects
+    const connectWebSocket = () => {
+      // Prevent duplicate connections
+      if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) {
+        console.log('[AutonomousChatIntegration] WebSocket already open or connecting, skipping');
+        return;
+      }
 
-      ws.onopen = () => {
-        console.log('[AutonomousChatIntegration] WebSocket connected');
-      };
+      console.log('[AutonomousChatIntegration] Connecting to WebSocket:', wsUrl.substring(0, 100) + '...', 
+        `(attempt ${reconnectAttemptRef.current + 1}/${maxReconnectAttempts})`);
 
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          // Use ref to call handler to avoid stale closure issues
-          handleProgressEventRef.current?.(data as AutonomousProgressEvent);
-        } catch (err) {
-          console.warn('[AutonomousChatIntegration] Failed to parse message:', err);
-        }
-      };
+      try {
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
 
-      ws.onerror = (error) => {
-        console.error('[AutonomousChatIntegration] WebSocket error:', error);
-      };
+        ws.onopen = () => {
+          console.log('[AutonomousChatIntegration] ✅ WebSocket connected successfully');
+          hasConnectedRef.current = true;
+          reconnectAttemptRef.current = 0; // Reset reconnect counter on success
+        };
 
-      ws.onclose = () => {
-        console.log('[AutonomousChatIntegration] WebSocket closed');
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            // Use ref to call handler to avoid stale closure issues
+            handleProgressEventRef.current?.(data as AutonomousProgressEvent);
+          } catch (err) {
+            console.warn('[AutonomousChatIntegration] Failed to parse message:', err);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error('[AutonomousChatIntegration] WebSocket error:', error);
+          // Note: onclose will be called after onerror, which will trigger reconnect
+        };
+
+        ws.onclose = (event) => {
+          console.log('[AutonomousChatIntegration] WebSocket closed:', {
+            code: event.code,
+            reason: event.reason,
+            wasClean: event.wasClean
+          });
+          hasConnectedRef.current = false;
+          wsRef.current = null;
+          
+          // Attempt reconnection if not intentionally closed (code 1000) and under max attempts
+          if (event.code !== 1000 && reconnectAttemptRef.current < maxReconnectAttempts) {
+            reconnectAttemptRef.current++;
+            const delay = Math.min(baseReconnectDelayMs * Math.pow(2, reconnectAttemptRef.current - 1), 30000);
+            console.log(`[AutonomousChatIntegration] Scheduling reconnect in ${delay}ms (attempt ${reconnectAttemptRef.current}/${maxReconnectAttempts})`);
+            
+            // Clear any existing timeout
+            if (reconnectTimeoutRef.current) {
+              clearTimeout(reconnectTimeoutRef.current);
+            }
+            
+            reconnectTimeoutRef.current = setTimeout(() => {
+              connectWebSocket();
+            }, delay);
+          } else if (reconnectAttemptRef.current >= maxReconnectAttempts) {
+            console.error('[AutonomousChatIntegration] Max reconnection attempts reached, giving up');
+            useAutonomousBuildStore.getState().setError('Connection lost. Please refresh the page.');
+          }
+        };
+      } catch (err) {
+        console.error('[AutonomousChatIntegration] Failed to connect WebSocket:', err);
         hasConnectedRef.current = false;
-      };
-    } catch (err) {
-      console.error('[AutonomousChatIntegration] Failed to connect WebSocket:', err);
-      hasConnectedRef.current = false;
-    }
+      }
+    };
+
+    // Initial connection
+    connectWebSocket();
 
     return () => {
+      // Clear reconnection timeout on cleanup
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      
       if (wsRef.current) {
-        wsRef.current.close();
+        wsRef.current.close(1000, 'Component unmounted'); // Clean close
         wsRef.current = null;
       }
       hasConnectedRef.current = false;
+      reconnectAttemptRef.current = 0;
     };
   // Only depend on stable values - not on callbacks or store objects
   // eslint-disable-next-line react-hooks/exhaustive-deps
