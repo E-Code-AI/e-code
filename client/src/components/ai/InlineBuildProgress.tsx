@@ -416,3 +416,103 @@ export function InlineStartBuildingButton({ onClick, timestamp }: InlineStartBui
     </motion.div>
   );
 }
+
+interface InlineCompleteIndicatorProps {
+  message?: string;
+  projectUrl?: string;
+}
+
+export function InlineCompleteIndicator({ message = 'Build complete!', projectUrl }: InlineCompleteIndicatorProps) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="border rounded-lg bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-800 p-4 my-2"
+      data-testid="inline-complete-indicator"
+    >
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-full bg-green-100 dark:bg-green-900/30">
+          <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+        </div>
+        <div className="flex-1">
+          <p className="font-medium text-green-700 dark:text-green-300">{message}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Your workspace is ready to use</p>
+        </div>
+      </div>
+      {projectUrl && (
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-3 gap-2" 
+          onClick={() => window.open(projectUrl, '_blank')}
+          data-testid="button-open-project"
+        >
+          <ExternalLink className="h-4 w-4" />
+          Open Project
+        </Button>
+      )}
+    </motion.div>
+  );
+}
+
+interface InlineErrorIndicatorProps {
+  message: string;
+  details?: string;
+  onRetry?: () => void;
+}
+
+export function InlineErrorIndicator({ message, details, onRetry }: InlineErrorIndicatorProps) {
+  const [showDetails, setShowDetails] = useState(false);
+  
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="border rounded-lg bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-800 p-4 my-2"
+      data-testid="inline-error-indicator"
+    >
+      <div className="flex items-start gap-3">
+        <div className="p-2 rounded-full bg-red-100 dark:bg-red-900/30 flex-shrink-0">
+          <Package className="h-5 w-5 text-red-600 dark:text-red-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-red-700 dark:text-red-300">{message}</p>
+          {details && (
+            <>
+              <button 
+                onClick={() => setShowDetails(!showDetails)}
+                className="text-xs text-muted-foreground mt-1 flex items-center gap-1 hover:text-foreground"
+              >
+                {showDetails ? 'Hide' : 'Show'} details
+                {showDetails ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              </button>
+              <AnimatePresence>
+                {showDetails && (
+                  <motion.pre
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="text-xs bg-red-100/50 dark:bg-red-900/20 p-2 rounded mt-2 overflow-auto max-h-32"
+                  >
+                    {details}
+                  </motion.pre>
+                )}
+              </AnimatePresence>
+            </>
+          )}
+        </div>
+      </div>
+      {onRetry && (
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-3 gap-2 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30" 
+          onClick={onRetry}
+          data-testid="button-retry-build"
+        >
+          Try again
+        </Button>
+      )}
+    </motion.div>
+  );
+}

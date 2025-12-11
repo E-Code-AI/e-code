@@ -92,6 +92,8 @@ export interface AutonomousWorkspacePayload {
   tasks?: AutonomousBuildTask[];
   planText?: string;
   errorMessage?: string;
+  projectUrl?: string;
+  errorDetails?: string;
 }
 
 export interface Message {
