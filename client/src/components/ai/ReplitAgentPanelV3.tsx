@@ -386,12 +386,15 @@ export function ReplitAgentPanelV3({
         // During bootstrap, messages are stored under a temporary negative projectId (-712)
         // Once we get the real conversationId, migrate those messages so they remain visible
         const tempConversationId = -parseInt(projectId.toString(), 10);
-        if (tempConversationId && response.conversationId !== tempConversationId) {
-          console.log('[ReplitAgentPanelV3] Migrating messages from temp', tempConversationId, 'to real', response.conversationId);
-          migrateMessages(tempConversationId, response.conversationId);
+        const realConversationId = response.conversationId;
+        
+        // Only migrate if we have a valid real conversationId (not null/undefined)
+        if (realConversationId && tempConversationId && realConversationId !== tempConversationId) {
+          console.log('[ReplitAgentPanelV3] Migrating messages from temp', tempConversationId, 'to real', realConversationId);
+          migrateMessages(tempConversationId, realConversationId);
         }
 
-        setConversationId(response.conversationId);
+        setConversationId(realConversationId);
         setAgentMode(response.agentMode);
       } catch (error) {
         console.error('Failed to bootstrap conversation:', error);
@@ -1549,13 +1552,13 @@ export function ReplitAgentPanelV3({
       {/* Main Chat Content */}
       <>
       {/* Messages */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden min-h-0">
         {/* Sync Indicator */}
         <ConversationSyncIndicator
           lastSyncedAt={conversationId ? getLastSyncedAt(conversationId) : undefined}
         />
         
-        <ScrollArea ref={scrollRef} className="flex-1 px-3 sm:px-4 py-3">
+        <ScrollArea ref={scrollRef} className="flex-1 min-h-0 px-3 sm:px-4 py-3">
           <div className="space-y-4 sm:space-y-5">
           <AnimatePresence mode="popLayout">
           {messages.map((message) => (
