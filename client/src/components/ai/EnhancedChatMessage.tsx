@@ -357,6 +357,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
               <InlinePlanCard
                 title={autonomousPayload.planTitle || "I'll include the following features:"}
                 features={autonomousPayload.featureList}
+                planText={autonomousPayload.planText}
                 onChangePlan={onChangePlan}
               />
             )}
