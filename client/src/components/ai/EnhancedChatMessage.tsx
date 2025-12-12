@@ -352,11 +352,13 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
               <InlineAppType appType={autonomousPayload.appType} />
             )}
 
-            {/* Plan card with features */}
-            {message.type === 'autonomous_plan' && autonomousPayload.featureList && autonomousPayload.featureList.length > 0 && (
+            {/* Plan card with features - show when featureList OR planText exists */}
+            {message.type === 'autonomous_plan' && (
+              (autonomousPayload.featureList && autonomousPayload.featureList.length > 0) || autonomousPayload.planText
+            ) && (
               <InlinePlanCard
                 title={autonomousPayload.planTitle || "I'll include the following features:"}
-                features={autonomousPayload.featureList}
+                features={autonomousPayload.featureList || []}
                 planText={autonomousPayload.planText}
                 onChangePlan={onChangePlan}
               />
