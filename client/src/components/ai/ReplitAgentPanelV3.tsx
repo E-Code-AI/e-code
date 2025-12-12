@@ -273,7 +273,8 @@ export function ReplitAgentPanelV3({
     projectId: typeof projectId === 'string' ? parseInt(projectId, 10) : projectId,
     sessionId: externalSessionId,
     enabled: !!bootstrapToken && autonomousBuildStore.inlineMode,
-    bootstrapToken
+    bootstrapToken,
+    initialPrompt
   });
   
   // Replit-style notifications: Audio, Favicon, and Dock notifications
