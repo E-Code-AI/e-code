@@ -7,7 +7,7 @@
  * Also updates the shared autonomousBuildStore for PreviewPanel splash screens
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAgentConversationStore } from '@/stores/agentConversationStore';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
 import { AgentEventBus } from '@/lib/agentEvents';
@@ -186,6 +186,26 @@ export function useAutonomousChatIntegration({
   // Use external conversationId if available, otherwise use temp ID for bootstrap flow
   const conversationId = externalConversationId ?? tempConversationIdRef.current;
 
+  // ✅ CRITICAL FIX (Dec 12, 2025): Resolve prompt from multiple sources
+  // The prop might be null, but the prompt might be in sessionStorage
+  // Priority: prop > URL param > sessionStorage
+  const resolvedPrompt = useMemo(() => {
+    if (initialPrompt) return initialPrompt;
+    
+    // Check URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const promptFromUrl = urlParams.get('prompt');
+    if (promptFromUrl) return promptFromUrl;
+    
+    // Check sessionStorage (bootstrap flow stores prompt here)
+    if (projectId) {
+      const promptFromSession = window.sessionStorage.getItem(`agent-prompt-${projectId}`);
+      if (promptFromSession) return promptFromSession;
+    }
+    
+    return null;
+  }, [initialPrompt, projectId]);
+
   // DEBUG: Log on every render with COMPLETE state
   console.log('[AutonomousChatIntegration] 🔄 Hook render:', {
     externalConversationId,
@@ -195,26 +215,27 @@ export function useAutonomousChatIntegration({
     enabled,
     hasBootstrapToken: !!bootstrapToken,
     willConnectWebSocket: enabled && conversationId && projectId,
-    initialPrompt: initialPrompt ? initialPrompt.substring(0, 30) + '...' : null
+    initialPrompt: initialPrompt ? initialPrompt.substring(0, 30) + '...' : null,
+    resolvedPrompt: resolvedPrompt ? resolvedPrompt.substring(0, 30) + '...' : null
   });
 
   // ✅ CRITICAL FIX (Dec 12, 2025): Add user's prompt IMMEDIATELY on hook init
   // This ensures the prompt is visible BEFORE WebSocket connects, not after
   // Solves: "Je dois voir mon prompt pas le message de bienvenu"
   useEffect(() => {
-    if (!conversationId || !initialPrompt || hasAddedUserPromptRef.current) return;
+    if (!conversationId || !resolvedPrompt || hasAddedUserPromptRef.current) return;
     
     hasAddedUserPromptRef.current = true;
     const userPromptMsg: Message = {
       id: `user-prompt-${Date.now()}`,
       role: 'user',
-      content: initialPrompt,
+      content: resolvedPrompt,
       timestamp: new Date(),
       type: 'text'
     };
     addMessage(conversationId, userPromptMsg);
-    console.log('[AutonomousChatIntegration] ✅ IMMEDIATE: Added user prompt as first message:', initialPrompt.substring(0, 50));
-  }, [conversationId, initialPrompt, addMessage]);
+    console.log('[AutonomousChatIntegration] ✅ IMMEDIATE: Added user prompt as first message:', resolvedPrompt.substring(0, 50));
+  }, [conversationId, resolvedPrompt, addMessage]);
 
   const createAutonomousMessage = useCallback((
     type: Message['type'],
