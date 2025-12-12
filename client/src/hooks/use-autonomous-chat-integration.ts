@@ -194,8 +194,27 @@ export function useAutonomousChatIntegration({
     projectId,
     enabled,
     hasBootstrapToken: !!bootstrapToken,
-    willConnectWebSocket: enabled && conversationId && projectId
+    willConnectWebSocket: enabled && conversationId && projectId,
+    initialPrompt: initialPrompt ? initialPrompt.substring(0, 30) + '...' : null
   });
+
+  // ✅ CRITICAL FIX (Dec 12, 2025): Add user's prompt IMMEDIATELY on hook init
+  // This ensures the prompt is visible BEFORE WebSocket connects, not after
+  // Solves: "Je dois voir mon prompt pas le message de bienvenu"
+  useEffect(() => {
+    if (!conversationId || !initialPrompt || hasAddedUserPromptRef.current) return;
+    
+    hasAddedUserPromptRef.current = true;
+    const userPromptMsg: Message = {
+      id: `user-prompt-${Date.now()}`,
+      role: 'user',
+      content: initialPrompt,
+      timestamp: new Date(),
+      type: 'text'
+    };
+    addMessage(conversationId, userPromptMsg);
+    console.log('[AutonomousChatIntegration] ✅ IMMEDIATE: Added user prompt as first message:', initialPrompt.substring(0, 50));
+  }, [conversationId, initialPrompt, addMessage]);
 
   const createAutonomousMessage = useCallback((
     type: Message['type'],
@@ -231,20 +250,8 @@ export function useAutonomousChatIntegration({
         AgentEventBus.emit('agent:connected', { projectId, sessionId });
         AgentEventBus.emit('agent:status', { status: 'working', phase: 'planning' });
         
-        // ✅ FIX (Dec 12, 2025): Add user's initial prompt as the FIRST message in chat
-        // This ensures Replit-like chat wall with user prompt visible at top
-        if (initialPrompt && !hasAddedUserPromptRef.current) {
-          hasAddedUserPromptRef.current = true;
-          const userPromptMsg: Message = {
-            id: `user-prompt-${Date.now()}`,
-            role: 'user',
-            content: initialPrompt,
-            timestamp: new Date(),
-            type: 'text'
-          };
-          addMessage(conversationId, userPromptMsg);
-          console.log('[AutonomousChatIntegration] ✅ Added user prompt as first message:', initialPrompt.substring(0, 50));
-        }
+        // NOTE: User's initial prompt is now added IMMEDIATELY via useEffect (lines 204-220)
+        // This ensures the prompt is visible before WebSocket connects
         
         // Add welcome message to chat
         const connectedMsg = createAutonomousMessage(
