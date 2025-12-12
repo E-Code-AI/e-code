@@ -257,7 +257,8 @@ export function ReplitAgentPanelV3({
     clearMessages: clearStoreMessages,
     setLastSyncedAt,
     getLastSyncedAt,
-    hasConversation
+    hasConversation,
+    migrateMessages
   } = useAgentConversationStore();
   
   // Autonomous chat integration - bridges WebSocket events to inline chat messages
@@ -381,6 +382,15 @@ export function ReplitAgentPanelV3({
           projectId: projectId.toString()
         }) as { conversationId: number; agentMode: 'plan' | 'build'; existing: boolean };
 
+        // ✅ FIX (Dec 12, 2025): Migrate messages from temp conversationId to real conversationId
+        // During bootstrap, messages are stored under a temporary negative projectId (-712)
+        // Once we get the real conversationId, migrate those messages so they remain visible
+        const tempConversationId = -parseInt(projectId.toString(), 10);
+        if (tempConversationId && response.conversationId !== tempConversationId) {
+          console.log('[ReplitAgentPanelV3] Migrating messages from temp', tempConversationId, 'to real', response.conversationId);
+          migrateMessages(tempConversationId, response.conversationId);
+        }
+
         setConversationId(response.conversationId);
         setAgentMode(response.agentMode);
       } catch (error) {
@@ -394,7 +404,7 @@ export function ReplitAgentPanelV3({
     };
 
     bootstrapConversation();
-  }, [projectId, toast]);
+  }, [projectId, toast, migrateMessages]);
 
   // Track if initial sync from backend has been completed for this conversation
   const initialSyncDoneRef = useRef<number | null>(null);
