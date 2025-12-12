@@ -184,17 +184,12 @@ export class PromptRefinementService {
       // In a production system, this would update ML models or refinement rules
 
       // Track in checkpoint for billing
-      await checkpointService.createComprehensiveCheckpoint({
-        projectId: 0, // System-level learning
-        userId: 0,
-        message: 'Prompt refinement feedback processed',
-        agentTaskDescription: 'Learning from user feedback',
-        filesModified: 0,
-        linesOfCodeWritten: 0,
-        tokensUsed: 10,
-        executionTimeMs: 50,
-        apiCallsCount: 0
-      });
+      await checkpointService.createAgentCheckpoint(
+        0, // System-level learning
+        0,
+        'Prompt refinement feedback processed',
+        { promptId, feedback }
+      );
     } catch (error) {
       logger.error('Failed to process feedback:', error);
     }

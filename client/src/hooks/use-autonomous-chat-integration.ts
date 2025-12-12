@@ -15,7 +15,7 @@ import type { Message, AutonomousWorkspacePayload, AutonomousBuildTask } from '@
 import type { AutonomousBuildPhase } from '@/stores/autonomousBuildStore';
 
 interface AutonomousProgressEvent {
-  type: 'planning' | 'plan_ready' | 'awaiting_approval' | 'executing' | 'step_update' | 'complete' | 'error' | 'connected' | 'status' | 'plan_chunk' | 'plan_generated' | 'task_start' | 'task_progress' | 'task_complete' | 'step' | 'summary' | 'file_created' | 'command_output' | 'agent_message' | 'step_start' | 'step_complete' | 'checkpoint_created';
+  type: 'planning' | 'plan_ready' | 'awaiting_approval' | 'executing' | 'step_update' | 'complete' | 'error' | 'connected' | 'status' | 'plan_chunk' | 'plan_generated' | 'task_start' | 'task_progress' | 'task_complete' | 'step' | 'summary' | 'file_created' | 'command_output' | 'agent_message' | 'step_start' | 'step_complete' | 'checkpoint_created' | 'autonomous_timeline_event' | 'autonomous_checkpoint' | 'autonomous_task_list' | 'autonomous_preview' | 'autonomous_file_operation';
   projectId?: number;
   sessionId?: string;
   status?: string;
@@ -72,6 +72,50 @@ interface AutonomousProgressEvent {
     stepTitle?: string;
     stepType?: string;
   };
+  event?: {
+    id: string;
+    type: 'file_create' | 'file_edit' | 'file_delete' | 'command' | 'checkpoint' | 'info';
+    title: string;
+    description?: string;
+    timestamp: string;
+    filePath?: string;
+    status?: 'pending' | 'in_progress' | 'completed' | 'error';
+  };
+  checkpoint?: {
+    title: string;
+    description?: string;
+    number?: number;
+    completedTasks?: number;
+    totalTasks?: number;
+    eta?: string;
+  };
+  taskList?: {
+    title?: string;
+    items: Array<{
+      id: string;
+      title: string;
+      status: 'pending' | 'in_progress' | 'completed' | 'error';
+      filePath?: string;
+      duration?: number;
+    }>;
+    showProgress?: boolean;
+    compact?: boolean;
+  };
+  preview?: {
+    url?: string;
+    title?: string;
+    isLoading?: boolean;
+    isLive?: boolean;
+  };
+  fileOperation?: {
+    type: 'create' | 'update' | 'delete' | 'rename';
+    filePath: string;
+    language?: string;
+    content?: string;
+    linesAdded?: number;
+    linesRemoved?: number;
+  };
+  timestamp?: string;
 }
 
 interface UseAutonomousChatIntegrationOptions {
@@ -750,6 +794,125 @@ export function useAutonomousChatIntegration({
       case 'checkpoint_created': {
         console.log('[AutonomousChatIntegration] ✅ Checkpoint created');
         // Silent - don't create message for checkpoint (internal state)
+        break;
+      }
+
+      // ============================================================================
+      // ✅ NEW: Replit Agent 2024 Inline Progress Messages (Dec 12, 2025)
+      // These handlers convert WebSocket events into rich inline chat components
+      // ============================================================================
+
+      // Handle timeline event (file operations, commands, etc.)
+      case 'autonomous_timeline_event': {
+        const timelineEvent = event.event;
+        if (timelineEvent) {
+          // Create a new message with timeline payload
+          const msg = createAutonomousMessage(
+            'autonomous_timeline',
+            `${timelineEvent.title}`,
+            {
+              phase: 'executing',
+              progress: store.progress,
+              timeline: {
+                events: [timelineEvent],
+                maxHeight: '200px'
+              }
+            }
+          );
+          addMessage(conversationId, msg);
+          console.log('[AutonomousChatIntegration] ✅ Timeline event:', timelineEvent.type, timelineEvent.title);
+        }
+        break;
+      }
+
+      // Handle checkpoint milestone marker
+      case 'autonomous_checkpoint': {
+        const checkpointData = event.checkpoint;
+        if (checkpointData) {
+          const msg = createAutonomousMessage(
+            'autonomous_checkpoint',
+            `Checkpoint: ${checkpointData.title}`,
+            {
+              phase: 'executing',
+              progress: store.progress,
+              checkpoint: checkpointData
+            }
+          );
+          addMessage(conversationId, msg);
+          console.log('[AutonomousChatIntegration] ✅ Checkpoint:', checkpointData.title);
+        }
+        break;
+      }
+
+      // Handle task list with progress
+      case 'autonomous_task_list': {
+        const taskListData = event.taskList;
+        if (taskListData) {
+          const msg = createAutonomousMessage(
+            'autonomous_task_list',
+            taskListData.title || 'Task Progress',
+            {
+              phase: 'executing',
+              progress: store.progress,
+              taskList: taskListData
+            }
+          );
+          addMessage(conversationId, msg);
+          console.log('[AutonomousChatIntegration] ✅ Task list:', taskListData.items?.length, 'items');
+        }
+        break;
+      }
+
+      // Handle preview window update
+      case 'autonomous_preview': {
+        const previewData = event.preview;
+        if (previewData) {
+          const msg = createAutonomousMessage(
+            'autonomous_preview',
+            previewData.title || 'Preview',
+            {
+              phase: 'executing',
+              progress: store.progress,
+              preview: previewData
+            }
+          );
+          addMessage(conversationId, msg);
+          console.log('[AutonomousChatIntegration] ✅ Preview:', previewData.url);
+        }
+        break;
+      }
+
+      // Handle file operation notification
+      case 'autonomous_file_operation': {
+        const fileOp = event.fileOperation;
+        if (fileOp) {
+          // Emit file event for notifications
+          if (fileOp.type === 'create') {
+            AgentEventBus.emit('agent:file-created', { filename: fileOp.filePath, projectId });
+          }
+          
+          const opIcon = fileOp.type === 'create' ? '📄' : 
+                        fileOp.type === 'update' ? '✏️' : 
+                        fileOp.type === 'delete' ? '🗑️' : '📝';
+          
+          const msg = createAutonomousMessage(
+            'autonomous_file_operation',
+            `${opIcon} ${fileOp.type}: ${fileOp.filePath}`,
+            {
+              phase: 'executing',
+              progress: store.progress,
+              fileOperation: {
+                type: fileOp.type === 'update' ? 'edit' : fileOp.type === 'rename' ? 'move' : fileOp.type as 'create' | 'delete' | 'edit' | 'read' | 'move',
+                filePath: fileOp.filePath,
+                language: fileOp.language,
+                linesAdded: fileOp.linesAdded,
+                linesRemoved: fileOp.linesRemoved
+              }
+            }
+          );
+          addMessage(conversationId, msg);
+          console.log('[AutonomousChatIntegration] ✅ File operation:', fileOp.type, fileOp.filePath);
+        }
         break;
       }
     }

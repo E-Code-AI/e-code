@@ -99,16 +99,12 @@ export class FeedbackService {
 
     // Create checkpoint for important feedback
     if (params.type === 'negative' || params.type === 'bug') {
-      await checkpointService.createComprehensiveCheckpoint({
-        projectId: params.projectId,
-        userId: params.userId,
-        message: `User feedback: ${params.type} - ${params.category}`,
-        metadata: {
-          feedbackId,
-          rating: params.rating,
-          message: params.message.substring(0, 200)
-        }
-      });
+      await checkpointService.createAgentCheckpoint(
+        params.projectId,
+        params.userId,
+        `User feedback: ${params.type} - ${params.category}`,
+        { feedbackId, rating: params.rating }
+      );
     }
 
     return feedback;

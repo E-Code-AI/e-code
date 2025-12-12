@@ -898,6 +898,142 @@ class AgentWebSocketService {
     });
   }
 
+  // ============================================================================
+  // ✅ Replit Agent 2024 Inline Progress Methods (Dec 12, 2025)
+  // These methods emit rich UI messages for the new inline chat components
+  // ============================================================================
+
+  /**
+   * Send a timeline event (file create/edit/delete, commands, checkpoints)
+   * Renders as InlineProgressTimeline in the chat
+   */
+  sendTimelineEvent(projectId: number, sessionId: string, event: {
+    id: string;
+    type: 'file_create' | 'file_edit' | 'file_delete' | 'command' | 'checkpoint' | 'info';
+    title: string;
+    description?: string;
+    filePath?: string;
+    status?: 'pending' | 'in_progress' | 'completed' | 'error';
+  }) {
+    this.broadcastToSession(projectId, sessionId, {
+      type: 'autonomous_timeline_event',
+      projectId: projectId.toString(),
+      sessionId,
+      event: {
+        ...event,
+        timestamp: new Date().toISOString()
+      }
+    });
+  }
+
+  /**
+   * Send a checkpoint milestone marker
+   * Renders as InlineCheckpoint in the chat
+   */
+  sendCheckpoint(projectId: number, sessionId: string, checkpoint: {
+    title: string;
+    description?: string;
+    number?: number;
+    completedTasks?: number;
+    totalTasks?: number;
+    eta?: string;
+  }) {
+    this.broadcastToSession(projectId, sessionId, {
+      type: 'autonomous_checkpoint',
+      projectId: projectId.toString(),
+      sessionId,
+      checkpoint
+    });
+  }
+
+  /**
+   * Send task list with progress
+   * Renders as InlineTaskListEnhanced in the chat
+   */
+  sendTaskList(projectId: number, sessionId: string, taskList: {
+    title?: string;
+    items: Array<{
+      id: string;
+      title: string;
+      status: 'pending' | 'in_progress' | 'completed' | 'error';
+      filePath?: string;
+      duration?: number;
+    }>;
+    showProgress?: boolean;
+    compact?: boolean;
+  }) {
+    this.broadcastToSession(projectId, sessionId, {
+      type: 'autonomous_task_list',
+      projectId: projectId.toString(),
+      sessionId,
+      taskList
+    });
+  }
+
+  /**
+   * Send preview window update
+   * Renders as InlinePreviewWindow in the chat
+   */
+  sendPreview(projectId: number, sessionId: string, preview: {
+    url?: string;
+    title?: string;
+    isLoading?: boolean;
+    isLive?: boolean;
+  }) {
+    this.broadcastToSession(projectId, sessionId, {
+      type: 'autonomous_preview',
+      projectId: projectId.toString(),
+      sessionId,
+      preview
+    });
+  }
+
+  /**
+   * Send a file operation notification
+   * Renders as InlineFileOperation in the chat
+   */
+  sendFileOperation(projectId: number, sessionId: string, operation: {
+    type: 'create' | 'update' | 'delete' | 'rename';
+    filePath: string;
+    language?: string;
+    content?: string;
+    linesAdded?: number;
+    linesRemoved?: number;
+  }) {
+    this.broadcastToSession(projectId, sessionId, {
+      type: 'autonomous_file_operation',
+      projectId: projectId.toString(),
+      sessionId,
+      fileOperation: operation,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  /**
+   * Broadcast a message to all devices connected to a session
+   */
+  private broadcastToSession(projectId: number, sessionId: string, message: any) {
+    const connectionKey = `${projectId}-${sessionId}`;
+    const devices = this.connections.get(connectionKey);
+    
+    if (!devices || devices.size === 0) {
+      logger.debug(`[Agent WebSocket] No active connections for ${connectionKey}, skipping broadcast`);
+      return;
+    }
+    
+    const messageStr = JSON.stringify(message);
+    let sentCount = 0;
+    
+    devices.forEach((device) => {
+      if (device.ws.readyState === WebSocket.OPEN) {
+        device.ws.send(messageStr);
+        sentCount++;
+      }
+    });
+    
+    logger.debug(`[Agent WebSocket] Broadcasted ${message.type} to ${sentCount} device(s)`);
+  }
+
   // ✅ Build State Cache Methods (Dec 11, 2025)
   
   /**

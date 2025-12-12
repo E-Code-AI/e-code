@@ -392,17 +392,12 @@ export class AgentProgressService extends EventEmitter {
     this.emitProgress(taskId, 'complete', { metrics: task.metrics });
 
     // Create checkpoint for billing
-    await checkpointService.createComprehensiveCheckpoint({
-      projectId: task.projectId,
-      userId: task.userId,
-      message: `Completed agent task: ${task.title}`,
-      agentTaskDescription: task.description,
-      filesModified: task.metrics.filesModified,
-      linesOfCodeWritten: task.metrics.linesWritten,
-      tokensUsed: task.metrics.tokensUsed,
-      executionTimeMs: task.metrics.executionTime,
-      apiCallsCount: task.steps.length
-    });
+    await checkpointService.createAgentCheckpoint(
+      task.projectId,
+      task.userId,
+      `Completed agent task: ${task.title}`,
+      { taskId: task.id, metrics: task.metrics }
+    );
 
     logger.info(`Completed task: ${taskId}`);
   }
