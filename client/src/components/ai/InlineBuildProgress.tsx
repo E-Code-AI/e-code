@@ -1124,3 +1124,525 @@ export function InlineErrorIndicator({ message, details, onRetry }: InlineErrorI
     </motion.div>
   );
 }
+
+// =============================================================================
+// INLINE FILE OPERATION - Shows file creates/edits/deletes with visual feedback
+// =============================================================================
+export type FileOperationType = 'create' | 'edit' | 'delete' | 'read' | 'move';
+
+interface InlineFileOperationProps {
+  operation: FileOperationType;
+  filePath: string;
+  language?: string;
+  linesChanged?: number;
+  preview?: string;
+  status?: 'pending' | 'in_progress' | 'completed' | 'error';
+}
+
+const FILE_OPERATION_CONFIG: Record<FileOperationType, { 
+  label: string; 
+  icon: typeof FileCode; 
+  color: string; 
+  bgColor: string;
+}> = {
+  create: { 
+    label: 'Created', 
+    icon: FileCode, 
+    color: 'text-green-600 dark:text-green-400',
+    bgColor: 'bg-green-100 dark:bg-green-900/30'
+  },
+  edit: { 
+    label: 'Edited', 
+    icon: FileText, 
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-100 dark:bg-blue-900/30'
+  },
+  delete: { 
+    label: 'Deleted', 
+    icon: FileCode, 
+    color: 'text-red-600 dark:text-red-400',
+    bgColor: 'bg-red-100 dark:bg-red-900/30'
+  },
+  read: { 
+    label: 'Read', 
+    icon: FolderOpen, 
+    color: 'text-amber-600 dark:text-amber-400',
+    bgColor: 'bg-amber-100 dark:bg-amber-900/30'
+  },
+  move: { 
+    label: 'Moved', 
+    icon: FolderOpen, 
+    color: 'text-purple-600 dark:text-purple-400',
+    bgColor: 'bg-purple-100 dark:bg-purple-900/30'
+  }
+};
+
+export function InlineFileOperation({ 
+  operation, 
+  filePath, 
+  language,
+  linesChanged,
+  preview,
+  status = 'completed'
+}: InlineFileOperationProps) {
+  const [showPreview, setShowPreview] = useState(false);
+  const config = FILE_OPERATION_CONFIG[operation];
+  const Icon = config.icon;
+  const prefersReducedMotion = useReducedMotion();
+  const shouldAnimate = !prefersReducedMotion;
+  
+  const fileName = filePath.split('/').pop() || filePath;
+  const dirPath = filePath.includes('/') ? filePath.substring(0, filePath.lastIndexOf('/')) : '';
+
+  const previewToggleId = `file-preview-${filePath.replace(/[^a-zA-Z0-9]/g, '-')}`;
+
+  const handleTogglePreview = () => {
+    if (preview) {
+      setShowPreview(!showPreview);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (preview && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      handleTogglePreview();
+    }
+  };
+
+  const contentRow = (
+    <>
+      <div className={cn("p-1.5 rounded", config.bgColor)}>
+        {status === 'in_progress' ? (
+          <Loader2 className={cn("h-3.5 w-3.5 animate-spin", config.color)} />
+        ) : (
+          <Icon className={cn("h-3.5 w-3.5", config.color)} />
+        )}
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className={cn("text-xs font-medium", config.color)}>{config.label}</span>
+          <code className="text-xs font-mono truncate text-foreground">{fileName}</code>
+        </div>
+        {dirPath && (
+          <p className="text-[10px] text-muted-foreground truncate">{dirPath}</p>
+        )}
+      </div>
+      
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {language && (
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">{language}</Badge>
+        )}
+        {linesChanged !== undefined && (
+          <span className={cn(
+            "text-[10px] font-mono",
+            operation === 'delete' ? 'text-red-500' : 'text-green-500'
+          )}>
+            {operation === 'delete' ? '-' : '+'}{linesChanged} lines
+          </span>
+        )}
+        {preview && (
+          showPreview 
+            ? <ChevronUp className="h-3 w-3 text-muted-foreground" aria-hidden="true" /> 
+            : <ChevronDown className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
+        )}
+      </div>
+    </>
+  );
+
+  return (
+    <motion.div
+      initial={shouldAnimate ? { opacity: 0, x: -10 } : { opacity: 1 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="border rounded-lg bg-card/50 overflow-hidden my-1.5"
+      data-testid={`inline-file-operation-${operation}`}
+    >
+      {preview ? (
+        <button
+          type="button"
+          className="flex items-center gap-2 px-3 py-2 w-full text-left transition-colors cursor-pointer hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
+          onClick={handleTogglePreview}
+          onKeyDown={handleKeyDown}
+          aria-expanded={showPreview}
+          aria-controls={previewToggleId}
+          aria-label={`${config.label} ${fileName}, ${showPreview ? 'preview visible, press to hide' : 'press to show preview'}`}
+          data-testid={`file-operation-toggle-${operation}`}
+        >
+          {contentRow}
+        </button>
+      ) : (
+        <div 
+          className="flex items-center gap-2 px-3 py-2"
+          role="status"
+          aria-label={`${config.label} ${fileName}`}
+          data-testid={`file-operation-info-${operation}`}
+        >
+          {contentRow}
+        </div>
+      )}
+      
+      <AnimatePresence>
+        {showPreview && preview && (
+          <motion.div
+            id={previewToggleId}
+            initial={shouldAnimate ? { height: 0, opacity: 0 } : { opacity: 1 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={shouldAnimate ? { height: 0, opacity: 0 } : { opacity: 0 }}
+            className="border-t border-border/50"
+          >
+            <pre className="text-[11px] font-mono p-3 bg-muted/30 overflow-x-auto max-h-40 overflow-y-auto">
+              {preview}
+            </pre>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// =============================================================================
+// INLINE TERMINAL OUTPUT - Shows command executions with rich formatting
+// =============================================================================
+interface InlineTerminalOutputProps {
+  command: string;
+  output?: string;
+  status?: 'running' | 'success' | 'error';
+  exitCode?: number;
+  duration?: number;
+}
+
+export function InlineTerminalOutput({ 
+  command, 
+  output, 
+  status = 'success',
+  exitCode,
+  duration
+}: InlineTerminalOutputProps) {
+  const [showOutput, setShowOutput] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  const shouldAnimate = !prefersReducedMotion;
+  
+  const terminalOutputId = `terminal-output-${command.replace(/[^a-zA-Z0-9]/g, '-').substring(0, 40)}`;
+
+  const handleToggleOutput = () => {
+    if (output) {
+      setShowOutput(!showOutput);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (output && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      handleToggleOutput();
+    }
+  };
+
+  const terminalContentRow = (
+    <>
+      <div className="flex items-center gap-1.5">
+        {status === 'running' ? (
+          <Loader2 className="h-3.5 w-3.5 text-yellow-400 animate-spin" />
+        ) : status === 'success' ? (
+          <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
+        ) : (
+          <Package className="h-3.5 w-3.5 text-red-400" />
+        )}
+        <Terminal className="h-3.5 w-3.5 text-zinc-400" aria-hidden="true" />
+      </div>
+      
+      <code className="flex-1 text-xs font-mono text-zinc-200 truncate">
+        $ {command}
+      </code>
+      
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {duration !== undefined && (
+          <span className="text-[10px] text-zinc-500">{duration}ms</span>
+        )}
+        {exitCode !== undefined && exitCode !== 0 && (
+          <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4">
+            Exit {exitCode}
+          </Badge>
+        )}
+        {output && (
+          showOutput 
+            ? <ChevronUp className="h-3 w-3 text-zinc-500" aria-hidden="true" /> 
+            : <ChevronDown className="h-3 w-3 text-zinc-500" aria-hidden="true" />
+        )}
+      </div>
+    </>
+  );
+
+  return (
+    <motion.div
+      initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="border rounded-lg overflow-hidden my-2 bg-zinc-950"
+      data-testid="inline-terminal-output"
+    >
+      {output ? (
+        <button
+          type="button"
+          className="flex items-center gap-2 px-3 py-2 w-full text-left transition-colors cursor-pointer hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
+          onClick={handleToggleOutput}
+          onKeyDown={handleKeyDown}
+          aria-expanded={showOutput}
+          aria-controls={terminalOutputId}
+          aria-label={`Terminal command: ${command}, ${showOutput ? 'output visible, press to hide' : 'press to show output'}`}
+          data-testid="terminal-output-toggle"
+        >
+          {terminalContentRow}
+        </button>
+      ) : (
+        <div 
+          className="flex items-center gap-2 px-3 py-2"
+          role="status"
+          aria-label={`Terminal command: ${command}, ${status === 'running' ? 'running' : status === 'success' ? 'completed successfully' : 'completed with error'}`}
+          data-testid="terminal-output-info"
+        >
+          {terminalContentRow}
+        </div>
+      )}
+      
+      <AnimatePresence>
+        {showOutput && output && (
+          <motion.div
+            id={terminalOutputId}
+            initial={shouldAnimate ? { height: 0, opacity: 0 } : { opacity: 1 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={shouldAnimate ? { height: 0, opacity: 0 } : { opacity: 0 }}
+            className="border-t border-zinc-800"
+          >
+            <pre className="text-[11px] font-mono p-3 text-zinc-300 overflow-x-auto max-h-48 overflow-y-auto whitespace-pre-wrap">
+              {output}
+            </pre>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// =============================================================================
+// INLINE CODE BLOCK - Shows code snippets with syntax highlighting indication
+// =============================================================================
+interface InlineCodeBlockProps {
+  code: string;
+  language?: string;
+  filename?: string;
+  action?: 'adding' | 'removing' | 'modifying';
+}
+
+export function InlineCodeBlock({ code, language, filename, action }: InlineCodeBlockProps) {
+  const [copied, setCopied] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  const shouldAnimate = !prefersReducedMotion;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.warn('Copy failed:', err);
+    }
+  };
+
+  const actionColors = {
+    adding: 'border-l-green-500 bg-green-50/30 dark:bg-green-950/20',
+    removing: 'border-l-red-500 bg-red-50/30 dark:bg-red-950/20',
+    modifying: 'border-l-blue-500 bg-blue-50/30 dark:bg-blue-950/20'
+  };
+
+  return (
+    <motion.div
+      initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn(
+        "border rounded-lg overflow-hidden my-2 border-l-4",
+        action ? actionColors[action] : "border-l-primary"
+      )}
+      data-testid="inline-code-block"
+    >
+      <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 border-b border-border/50">
+        <div className="flex items-center gap-2">
+          <Code className="h-3.5 w-3.5 text-muted-foreground" />
+          {filename && <code className="text-xs font-mono text-foreground">{filename}</code>}
+          {language && <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">{language}</Badge>}
+          {action && (
+            <span className={cn(
+              "text-[10px] font-medium",
+              action === 'adding' && 'text-green-600 dark:text-green-400',
+              action === 'removing' && 'text-red-600 dark:text-red-400',
+              action === 'modifying' && 'text-blue-600 dark:text-blue-400'
+            )}>
+              {action === 'adding' ? '+ Adding' : action === 'removing' ? '- Removing' : '~ Modifying'}
+            </span>
+          )}
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6"
+          onClick={handleCopy}
+          data-testid="button-copy-code"
+        >
+          {copied ? (
+            <CheckCircle2 className="h-3 w-3 text-green-500" />
+          ) : (
+            <Code className="h-3 w-3" />
+          )}
+        </Button>
+      </div>
+      <pre className="text-[11px] font-mono p-3 overflow-x-auto max-h-60 overflow-y-auto">
+        {code}
+      </pre>
+    </motion.div>
+  );
+}
+
+// =============================================================================
+// INLINE THINKING STEP - Shows what the agent is thinking with Replit-style
+// =============================================================================
+interface InlineThinkingStepProps {
+  step: string;
+  isActive?: boolean;
+  index?: number;
+}
+
+export function InlineThinkingStep({ step, isActive = false, index = 0 }: InlineThinkingStepProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const shouldAnimate = !prefersReducedMotion;
+
+  return (
+    <motion.div
+      initial={shouldAnimate ? { opacity: 0, x: -10 } : { opacity: 1 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.1 }}
+      className={cn(
+        "flex items-center gap-2 py-1.5 px-3 rounded-lg text-sm",
+        isActive 
+          ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300" 
+          : "text-muted-foreground"
+      )}
+      data-testid={`inline-thinking-step-${index}`}
+    >
+      {isActive ? (
+        shouldAnimate ? (
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+          >
+            <Brain className="h-3.5 w-3.5" />
+          </motion.div>
+        ) : (
+          <Brain className="h-3.5 w-3.5" />
+        )
+      ) : (
+        <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+      )}
+      <span>{step}</span>
+    </motion.div>
+  );
+}
+
+// =============================================================================
+// INLINE AGENT ACTION - Shows a specific action the agent is taking
+// =============================================================================
+interface InlineAgentActionProps {
+  action: string;
+  description?: string;
+  type?: 'info' | 'warning' | 'success' | 'error';
+  icon?: typeof Sparkles;
+}
+
+export function InlineAgentAction({ 
+  action, 
+  description, 
+  type = 'info',
+  icon: CustomIcon
+}: InlineAgentActionProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const shouldAnimate = !prefersReducedMotion;
+
+  const typeStyles = {
+    info: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300', icon: Zap },
+    warning: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300', icon: Settings },
+    success: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-300', icon: CheckCircle2 },
+    error: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-300', icon: Package }
+  };
+
+  const style = typeStyles[type];
+  const Icon = CustomIcon || style.icon;
+
+  return (
+    <motion.div
+      initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn("flex items-start gap-2 py-2 px-3 rounded-lg my-1", style.bg)}
+      data-testid={`inline-agent-action-${type}`}
+    >
+      <Icon className={cn("h-4 w-4 mt-0.5 flex-shrink-0", style.text)} />
+      <div className="flex-1 min-w-0">
+        <p className={cn("text-sm font-medium", style.text)}>{action}</p>
+        {description && (
+          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// =============================================================================
+// INLINE DEPENDENCY INSTALL - Shows package installation progress
+// =============================================================================
+interface InlineDependencyInstallProps {
+  packages: string[];
+  status?: 'installing' | 'success' | 'error';
+  manager?: 'npm' | 'yarn' | 'pnpm' | 'bun';
+}
+
+export function InlineDependencyInstall({ 
+  packages, 
+  status = 'success',
+  manager = 'npm'
+}: InlineDependencyInstallProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const shouldAnimate = !prefersReducedMotion;
+
+  return (
+    <motion.div
+      initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="border rounded-lg bg-card/50 p-3 my-2"
+      data-testid="inline-dependency-install"
+    >
+      <div className="flex items-center gap-2 mb-2">
+        {status === 'installing' ? (
+          <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
+        ) : status === 'success' ? (
+          <CheckCircle2 className="h-4 w-4 text-green-500" />
+        ) : (
+          <Package className="h-4 w-4 text-red-500" />
+        )}
+        <span className="text-sm font-medium">
+          {status === 'installing' ? 'Installing dependencies...' : 
+           status === 'success' ? 'Dependencies installed' : 'Installation failed'}
+        </span>
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 ml-auto">{manager}</Badge>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {packages.map((pkg, i) => (
+          <motion.span
+            key={pkg}
+            initial={shouldAnimate ? { opacity: 0, scale: 0.8 } : { opacity: 1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: i * 0.05 }}
+            className="text-xs font-mono bg-muted px-2 py-0.5 rounded"
+          >
+            {pkg}
+          </motion.span>
+        ))}
+      </div>
+    </motion.div>
+  );
+}

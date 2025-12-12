@@ -32,7 +32,14 @@ import {
   InlineBuildProgressCard,
   InlineCompleteIndicator,
   InlineErrorIndicator,
-  type BuildMode
+  InlineFileOperation,
+  InlineTerminalOutput,
+  InlineCodeBlock,
+  InlineThinkingStep,
+  InlineAgentAction,
+  InlineDependencyInstall,
+  type BuildMode,
+  type FileOperationType
 } from './InlineBuildProgress';
 import type { Message, AutonomousBuildMode } from '@/stores/agentConversationStore';
 
@@ -388,7 +395,76 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
 
             {/* Working indicator */}
             {message.type === 'autonomous_working' && (
-              <InlineWorkingIndicator message={message.content || 'Working...'} />
+              <InlineWorkingIndicator 
+                message={message.content || 'Working...'} 
+                status={autonomousPayload.agentStatus || 'working'}
+                subMessage={autonomousPayload.subMessage}
+              />
+            )}
+
+            {/* File operations - show file creates/edits/deletes */}
+            {message.type === 'autonomous_file_operation' && autonomousPayload.fileOperation && (
+              <InlineFileOperation
+                operation={autonomousPayload.fileOperation.type as FileOperationType}
+                filePath={autonomousPayload.fileOperation.path}
+                language={autonomousPayload.fileOperation.language}
+                linesChanged={autonomousPayload.fileOperation.linesChanged}
+                preview={autonomousPayload.fileOperation.preview}
+                status={autonomousPayload.fileOperation.status}
+              />
+            )}
+
+            {/* Terminal output - show command executions */}
+            {message.type === 'autonomous_terminal' && autonomousPayload.terminal && (
+              <InlineTerminalOutput
+                command={autonomousPayload.terminal.command}
+                output={autonomousPayload.terminal.output}
+                status={autonomousPayload.terminal.status}
+                exitCode={autonomousPayload.terminal.exitCode}
+                duration={autonomousPayload.terminal.duration}
+              />
+            )}
+
+            {/* Code block - show code snippets */}
+            {message.type === 'autonomous_code' && autonomousPayload.code && (
+              <InlineCodeBlock
+                code={autonomousPayload.code.content}
+                language={autonomousPayload.code.language}
+                filename={autonomousPayload.code.filename}
+                action={autonomousPayload.code.action}
+              />
+            )}
+
+            {/* Dependency installation */}
+            {message.type === 'autonomous_dependencies' && autonomousPayload.dependencies && (
+              <InlineDependencyInstall
+                packages={autonomousPayload.dependencies.packages}
+                status={autonomousPayload.dependencies.status}
+                manager={autonomousPayload.dependencies.manager}
+              />
+            )}
+
+            {/* Agent action - show specific actions */}
+            {message.type === 'autonomous_action' && autonomousPayload.action && (
+              <InlineAgentAction
+                action={autonomousPayload.action.title}
+                description={autonomousPayload.action.description}
+                type={autonomousPayload.action.type}
+              />
+            )}
+
+            {/* Thinking steps - show agent thought process */}
+            {message.type === 'autonomous_thinking' && autonomousPayload.thinkingSteps && (
+              <div className="space-y-1">
+                {autonomousPayload.thinkingSteps.map((step: string, index: number) => (
+                  <InlineThinkingStep
+                    key={index}
+                    step={step}
+                    isActive={index === autonomousPayload.thinkingSteps!.length - 1 && message.isStreaming}
+                    index={index}
+                  />
+                ))}
+              </div>
             )}
 
             {/* Complete indicator */}
