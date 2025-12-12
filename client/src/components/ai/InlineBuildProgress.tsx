@@ -477,9 +477,18 @@ export function InlineAppType({ appType }: InlineAppTypeProps) {
   );
 }
 
+interface PlanPhase {
+  number: number;
+  title: string;
+  description?: string;
+  tasks?: string[];
+}
+
 interface InlinePlanCardProps {
   title: string;
   features: string[];
+  planText?: string;
+  phases?: PlanPhase[];
   isExpanded?: boolean;
   onToggle?: () => void;
   onChangePlan?: () => void;
@@ -488,17 +497,58 @@ interface InlinePlanCardProps {
 export function InlinePlanCard({ 
   title, 
   features, 
+  planText,
+  phases,
   isExpanded = true, 
   onToggle,
   onChangePlan 
 }: InlinePlanCardProps) {
   const [expanded, setExpanded] = useState(isExpanded);
+  const [showFullPlan, setShowFullPlan] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  const shouldAnimate = !prefersReducedMotion;
+
+  const parsePlanIntoPhases = (text: string): PlanPhase[] => {
+    if (!text) return [];
+    const lines = text.split('\n').filter(line => line.trim());
+    const parsedPhases: PlanPhase[] = [];
+    let currentPhase: PlanPhase | null = null;
+    
+    lines.forEach(line => {
+      const phaseMatch = line.match(/^(?:Phase\s*)?(\d+)[.:\s-]+(.+)/i);
+      const taskMatch = line.match(/^\s*[-•*]\s*(.+)/);
+      
+      if (phaseMatch) {
+        if (currentPhase) parsedPhases.push(currentPhase);
+        currentPhase = {
+          number: parseInt(phaseMatch[1]),
+          title: phaseMatch[2].trim(),
+          tasks: []
+        };
+      } else if (taskMatch && currentPhase) {
+        currentPhase.tasks?.push(taskMatch[1].trim());
+      } else if (currentPhase && line.trim() && !line.startsWith('#')) {
+        if (!currentPhase.description) {
+          currentPhase.description = line.trim();
+        } else {
+          currentPhase.tasks?.push(line.trim());
+        }
+      }
+    });
+    
+    if (currentPhase) parsedPhases.push(currentPhase);
+    return parsedPhases;
+  };
+
+  const displayPhases = phases || (planText ? parsePlanIntoPhases(planText) : []);
+  const hasPhases = displayPhases.length > 0;
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 10 }}
+      initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0 }}
       className="border rounded-lg bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 overflow-hidden my-2"
+      data-testid="inline-plan-card"
     >
       <div 
         className="p-3 cursor-pointer flex items-center justify-between"
@@ -506,8 +556,17 @@ export function InlinePlanCard({
           setExpanded(!expanded);
           onToggle?.();
         }}
+        data-testid="plan-card-header"
       >
-        <span className="text-sm font-medium">{title}</span>
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-blue-500" />
+          <span className="text-sm font-medium">{title}</span>
+          {features.length > 0 && (
+            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+              {features.length} features
+            </span>
+          )}
+        </div>
         {expanded ? (
           <ChevronUp className="h-4 w-4 text-muted-foreground" />
         ) : (
@@ -518,32 +577,97 @@ export function InlinePlanCard({
       <AnimatePresence>
         {expanded && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
+            initial={shouldAnimate ? { height: 0, opacity: 0 } : { opacity: 1 }}
             animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            exit={shouldAnimate ? { height: 0, opacity: 0 } : { opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="px-3 pb-3">
-              <ul className="space-y-1.5">
-                {features.map((feature, i) => (
-                  <motion.li 
-                    key={i}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="flex items-start gap-2 text-sm"
+            <div className="px-3 pb-3 space-y-3">
+              {hasPhases ? (
+                <div className="space-y-3">
+                  {displayPhases.map((phase, i) => (
+                    <motion.div
+                      key={i}
+                      initial={shouldAnimate ? { opacity: 0, x: -10 } : { opacity: 1 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.08 }}
+                      className="border-l-2 border-blue-300 dark:border-blue-700 pl-3"
+                      data-testid={`plan-phase-${phase.number}`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 px-1.5 py-0.5 rounded">
+                          Phase {phase.number}
+                        </span>
+                        <span className="text-sm font-medium">{phase.title}</span>
+                      </div>
+                      {phase.description && (
+                        <p className="text-xs text-muted-foreground mb-1.5">{phase.description}</p>
+                      )}
+                      {phase.tasks && phase.tasks.length > 0 && (
+                        <ul className="space-y-1 ml-2">
+                          {phase.tasks.map((task, j) => (
+                            <li key={j} className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                              <span className="mt-1">○</span>
+                              <span>{task}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <ul className="space-y-1.5">
+                  {features.map((feature, i) => (
+                    <motion.li 
+                      key={i}
+                      initial={shouldAnimate ? { opacity: 0, x: -10 } : { opacity: 1 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="flex items-start gap-2 text-sm"
+                    >
+                      <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span>{feature}</span>
+                    </motion.li>
+                  ))}
+                </ul>
+              )}
+              
+              {planText && (
+                <div className="pt-2 border-t border-blue-200 dark:border-blue-800">
+                  <button
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowFullPlan(!showFullPlan);
+                    }}
+                    data-testid="button-toggle-full-plan"
                   >
-                    <span className="text-muted-foreground mt-1.5">•</span>
-                    <span>{feature}</span>
-                  </motion.li>
-                ))}
-              </ul>
+                    {showFullPlan ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                    {showFullPlan ? 'Hide full plan' : 'Show full plan'}
+                  </button>
+                  
+                  <AnimatePresence>
+                    {showFullPlan && (
+                      <motion.div
+                        initial={shouldAnimate ? { height: 0, opacity: 0 } : { opacity: 1 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={shouldAnimate ? { height: 0, opacity: 0 } : { opacity: 0 }}
+                        className="mt-2 p-2 bg-muted/50 rounded text-xs font-mono whitespace-pre-wrap overflow-x-auto max-h-60 overflow-y-auto"
+                        data-testid="full-plan-text"
+                      >
+                        {planText}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
               
               {onChangePlan && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-3 text-xs text-muted-foreground hover:text-foreground gap-1"
+                  className="mt-2 text-xs text-muted-foreground hover:text-foreground gap-1"
                   onClick={(e) => {
                     e.stopPropagation();
                     onChangePlan();
