@@ -94,6 +94,40 @@ export interface AutonomousWorkspacePayload {
   errorMessage?: string;
   projectUrl?: string;
   errorDetails?: string;
+  agentStatus?: 'idle' | 'thinking' | 'vibing' | 'working' | 'building' | 'styling' | 'testing' | 'deploying' | 'complete' | 'error';
+  subMessage?: string;
+  fileOperation?: {
+    type: 'create' | 'edit' | 'delete' | 'read' | 'move';
+    path: string;
+    language?: string;
+    linesChanged?: number;
+    preview?: string;
+    status?: 'pending' | 'in_progress' | 'completed' | 'error';
+  };
+  terminal?: {
+    command: string;
+    output?: string;
+    status?: 'running' | 'success' | 'error';
+    exitCode?: number;
+    duration?: number;
+  };
+  code?: {
+    content: string;
+    language?: string;
+    filename?: string;
+    action?: 'adding' | 'removing' | 'modifying';
+  };
+  dependencies?: {
+    packages: string[];
+    status?: 'installing' | 'success' | 'error';
+    manager?: 'npm' | 'yarn' | 'pnpm' | 'bun';
+  };
+  action?: {
+    title: string;
+    description?: string;
+    type?: 'info' | 'warning' | 'success' | 'error';
+  };
+  thinkingSteps?: string[];
 }
 
 export interface Message {
@@ -107,7 +141,9 @@ export interface Message {
   isStreaming?: boolean;
   type?: 'text' | 'workflow_features' | 'workflow_build_choice' | 'workflow_design' | 'workflow_mvp' 
     | 'autonomous_working' | 'autonomous_search' | 'autonomous_plan' | 'autonomous_build_options' 
-    | 'autonomous_progress' | 'autonomous_complete' | 'autonomous_error';
+    | 'autonomous_progress' | 'autonomous_complete' | 'autonomous_error' 
+    | 'autonomous_file_operation' | 'autonomous_terminal' | 'autonomous_code' 
+    | 'autonomous_dependencies' | 'autonomous_action' | 'autonomous_thinking';
   workflowPhase?: WorkflowPhase;
   workflowPayload?: {
     featureList?: string[];
