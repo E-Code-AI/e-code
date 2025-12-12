@@ -69,6 +69,8 @@ interface AutonomousProgressEvent {
       title: string;
       details?: string[];
     };
+    stepTitle?: string;
+    stepType?: string;
   };
 }
 
@@ -78,6 +80,7 @@ interface UseAutonomousChatIntegrationOptions {
   sessionId?: string | null;
   enabled?: boolean;
   bootstrapToken?: string | null;
+  initialPrompt?: string | null;
 }
 
 function mapPhaseToSplashPhase(phase: string | undefined): AutonomousBuildPhase {
@@ -109,13 +112,15 @@ export function useAutonomousChatIntegration({
   projectId,
   sessionId,
   enabled = true,
-  bootstrapToken
+  bootstrapToken,
+  initialPrompt
 }: UseAutonomousChatIntegrationOptions) {
   const { addMessage, updateMessage } = useAgentConversationStore();
   const wsRef = useRef<WebSocket | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
   const planTextRef = useRef<string>('');
   const hasConnectedRef = useRef(false);
+  const hasAddedUserPromptRef = useRef(false);
   
   // Reconnection logic with exponential backoff
   const reconnectAttemptRef = useRef(0);
@@ -181,6 +186,21 @@ export function useAutonomousChatIntegration({
         // Emit connected event for favicon/audio/notifications
         AgentEventBus.emit('agent:connected', { projectId, sessionId });
         AgentEventBus.emit('agent:status', { status: 'working', phase: 'planning' });
+        
+        // ✅ FIX (Dec 12, 2025): Add user's initial prompt as the FIRST message in chat
+        // This ensures Replit-like chat wall with user prompt visible at top
+        if (initialPrompt && !hasAddedUserPromptRef.current) {
+          hasAddedUserPromptRef.current = true;
+          const userPromptMsg: Message = {
+            id: `user-prompt-${Date.now()}`,
+            role: 'user',
+            content: initialPrompt,
+            timestamp: new Date(),
+            type: 'text'
+          };
+          addMessage(conversationId, userPromptMsg);
+          console.log('[AutonomousChatIntegration] ✅ Added user prompt as first message:', initialPrompt.substring(0, 50));
+        }
         
         // Add welcome message to chat
         const connectedMsg = createAutonomousMessage(
