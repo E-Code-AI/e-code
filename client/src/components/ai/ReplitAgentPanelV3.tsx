@@ -296,6 +296,15 @@ export function ReplitAgentPanelV3({
     timestamp: new Date()
   }];
   
+  // DEBUG: Log message count for debugging
+  console.log('[ReplitAgentPanelV3] 📊 Messages:', {
+    displayConversationId,
+    effectiveConversationId,
+    conversationId,
+    messageCount: messages.length,
+    firstMessageId: messages[0]?.id
+  });
+  
   // Wrapper to update messages in zustand store
   const setMessages = useCallback((updater: Message[] | ((prev: Message[]) => Message[])) => {
     if (!conversationId) return;
