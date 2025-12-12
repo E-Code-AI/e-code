@@ -230,6 +230,7 @@ interface AgentConversationStore extends ConversationState {
   setLastSyncedAt: (conversationId: number, timestamp: number) => void;
   getLastSyncedAt: (conversationId: number) => number | undefined;
   hasConversation: (conversationId: number) => boolean;
+  migrateMessages: (fromId: number, toId: number) => void;
 }
 
 const DEFAULT_ASSISTANT_MESSAGE: Message = {
@@ -329,6 +330,34 @@ export const useAgentConversationStore = create<AgentConversationStore>()(
 
       hasConversation: (conversationId: number) => {
         return !!get().messages[conversationId];
+      },
+
+      migrateMessages: (fromId: number, toId: number) => {
+        set((state) => {
+          const sourceMessages = state.messages[fromId];
+          if (!sourceMessages || sourceMessages.length === 0) {
+            console.log('[AgentConversationStore] No messages to migrate from', fromId, 'to', toId);
+            return state;
+          }
+          
+          // Filter out the default message and merge with existing target messages
+          const existingTargetMessages = state.messages[toId] || [];
+          const filteredSourceMessages = sourceMessages.filter(msg => msg.id !== '1');
+          
+          console.log('[AgentConversationStore] Migrating', filteredSourceMessages.length, 'messages from', fromId, 'to', toId);
+          
+          // Create new messages object without the source key
+          const { [fromId]: _, ...restMessages } = state.messages;
+          
+          return {
+            messages: {
+              ...restMessages,
+              [toId]: existingTargetMessages.length > 1 
+                ? [...existingTargetMessages, ...filteredSourceMessages]
+                : [existingTargetMessages[0] || DEFAULT_ASSISTANT_MESSAGE, ...filteredSourceMessages]
+            }
+          };
+        });
       }
     }),
     {
