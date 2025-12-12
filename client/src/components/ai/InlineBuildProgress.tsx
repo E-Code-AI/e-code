@@ -1646,3 +1646,482 @@ export function InlineDependencyInstall({
     </motion.div>
   );
 }
+
+// =============================================================================
+// INLINE PROGRESS TIMELINE - Replit-style chronological activity feed
+// =============================================================================
+export interface ProgressEvent {
+  id: string;
+  type: 'file_create' | 'file_edit' | 'file_delete' | 'command' | 'checkpoint' | 'info';
+  title: string;
+  description?: string;
+  timestamp: Date | string;
+  filePath?: string;
+  status?: 'pending' | 'in_progress' | 'completed' | 'error';
+}
+
+interface InlineProgressTimelineProps {
+  events: ProgressEvent[];
+  onFileClick?: (filePath: string) => void;
+  maxHeight?: string;
+}
+
+export function InlineProgressTimeline({ 
+  events, 
+  onFileClick,
+  maxHeight = '300px'
+}: InlineProgressTimelineProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const shouldAnimate = !prefersReducedMotion;
+
+  const getEventIcon = (type: ProgressEvent['type']) => {
+    switch (type) {
+      case 'file_create': return FileCode;
+      case 'file_edit': return Code;
+      case 'file_delete': return Package;
+      case 'command': return Terminal;
+      case 'checkpoint': return CheckCircle2;
+      case 'info': return Zap;
+      default: return Sparkles;
+    }
+  };
+
+  const getEventColor = (type: ProgressEvent['type'], status?: ProgressEvent['status']) => {
+    if (status === 'error') return 'text-red-500';
+    if (status === 'in_progress') return 'text-blue-500';
+    
+    switch (type) {
+      case 'file_create': return 'text-green-500';
+      case 'file_edit': return 'text-blue-500';
+      case 'file_delete': return 'text-red-500';
+      case 'command': return 'text-amber-500';
+      case 'checkpoint': return 'text-purple-500';
+      default: return 'text-muted-foreground';
+    }
+  };
+
+  const formatTime = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(dateObj.getTime())) return '--:--:--';
+    return new Intl.DateTimeFormat('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }).format(dateObj);
+  };
+
+  return (
+    <motion.div
+      initial={shouldAnimate ? { opacity: 0 } : { opacity: 1 }}
+      animate={{ opacity: 1 }}
+      className="border rounded-lg bg-card/30 overflow-hidden my-2"
+      data-testid="inline-progress-timeline"
+    >
+      <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
+        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-xs font-medium">Progress</span>
+        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 ml-auto">
+          {events.length} events
+        </Badge>
+      </div>
+      
+      <div 
+        className="overflow-y-auto px-3 py-2 space-y-1"
+        style={{ maxHeight }}
+      >
+        {events.map((event, index) => {
+          const Icon = getEventIcon(event.type);
+          const color = getEventColor(event.type, event.status);
+          
+          return (
+            <motion.div
+              key={event.id}
+              initial={shouldAnimate ? { opacity: 0, x: -10 } : { opacity: 1 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.03 }}
+              className="flex items-start gap-2 py-1.5 group"
+              data-testid={`progress-event-${event.id}`}
+            >
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-[10px] text-muted-foreground font-mono w-16">
+                  {formatTime(event.timestamp)}
+                </span>
+                <div className={cn(
+                  "w-0.5 h-full min-h-[20px] rounded-full",
+                  event.type === 'checkpoint' ? 'bg-purple-500' : 'bg-border'
+                )} />
+                {event.status === 'in_progress' ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  >
+                    <Loader2 className={cn("h-3.5 w-3.5", color)} />
+                  </motion.div>
+                ) : (
+                  <Icon className={cn("h-3.5 w-3.5", color)} />
+                )}
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium truncate">{event.title}</span>
+                  {event.status === 'completed' && (
+                    <CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />
+                  )}
+                </div>
+                {event.description && (
+                  <p className="text-[10px] text-muted-foreground truncate">{event.description}</p>
+                )}
+                {event.filePath && onFileClick && (
+                  <button
+                    className="text-[10px] text-primary hover:underline flex items-center gap-1 mt-0.5 focus:outline-none focus:ring-1 focus:ring-primary focus:ring-offset-1 rounded"
+                    onClick={() => onFileClick(event.filePath!)}
+                    data-testid={`file-link-${event.id}`}
+                  >
+                    <FolderOpen className="h-2.5 w-2.5" />
+                    {event.filePath}
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
+// =============================================================================
+// INLINE CHECKPOINT - Replit-style milestone marker in chat
+// =============================================================================
+interface InlineCheckpointProps {
+  title: string;
+  description?: string;
+  checkpointNumber?: number;
+  completedTasks?: number;
+  totalTasks?: number;
+  eta?: string;
+}
+
+export function InlineCheckpoint({
+  title,
+  description,
+  checkpointNumber,
+  completedTasks,
+  totalTasks,
+  eta
+}: InlineCheckpointProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const shouldAnimate = !prefersReducedMotion;
+  
+  const progress = totalTasks && completedTasks !== undefined 
+    ? Math.round((completedTasks / totalTasks) * 100) 
+    : undefined;
+
+  return (
+    <motion.div
+      initial={shouldAnimate ? { opacity: 0, scale: 0.95 } : { opacity: 1 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="relative my-4"
+      data-testid={`inline-checkpoint-${checkpointNumber || 0}`}
+    >
+      <div className="absolute left-0 right-0 top-1/2 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
+      
+      <div className="relative flex justify-center">
+        <div className="bg-background px-4">
+          <div className="flex items-center gap-2 bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-full px-3 py-1.5">
+            {shouldAnimate ? (
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+              </motion.div>
+            ) : (
+              <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+            )}
+            <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">
+              {checkpointNumber !== undefined && `#${checkpointNumber} · `}
+              {title}
+            </span>
+            {progress !== undefined && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-purple-200 dark:bg-purple-800 text-purple-700 dark:text-purple-300">
+                {progress}%
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {(description || eta) && (
+        <div className="flex justify-center mt-2">
+          <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+            {description && <span>{description}</span>}
+            {eta && (
+              <span className="flex items-center gap-1">
+                <Clock className="h-2.5 w-2.5" />
+                ETA: {eta}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+// =============================================================================
+// INLINE TASK LIST ENHANCED - Replit-style task list with progress
+// =============================================================================
+interface TaskItem {
+  id: string;
+  title: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'error';
+  filePath?: string;
+  duration?: number;
+}
+
+interface InlineTaskListEnhancedProps {
+  title?: string;
+  tasks: TaskItem[];
+  showProgress?: boolean;
+  onFileClick?: (filePath: string) => void;
+  compact?: boolean;
+}
+
+export function InlineTaskListEnhanced({
+  title = 'Tasks',
+  tasks,
+  showProgress = true,
+  onFileClick,
+  compact = false
+}: InlineTaskListEnhancedProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const shouldAnimate = !prefersReducedMotion;
+  
+  const completedCount = tasks.filter(t => t.status === 'completed').length;
+  const inProgressCount = tasks.filter(t => t.status === 'in_progress').length;
+  const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
+
+  const getTaskIcon = (status: TaskItem['status']) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />;
+      case 'in_progress':
+        return shouldAnimate ? (
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          >
+            <Loader2 className="h-3.5 w-3.5 text-blue-500" />
+          </motion.div>
+        ) : (
+          <Loader2 className="h-3.5 w-3.5 text-blue-500" />
+        );
+      case 'error':
+        return <Package className="h-3.5 w-3.5 text-red-500" />;
+      default:
+        return <div className="h-3.5 w-3.5 rounded-full border-2 border-muted-foreground/30" />;
+    }
+  };
+
+  return (
+    <motion.div
+      initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="border rounded-lg bg-card/50 overflow-hidden my-2"
+      data-testid="inline-task-list-enhanced"
+    >
+      <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-xs font-medium">{title}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {inProgressCount > 0 && (
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+              {inProgressCount} in progress
+            </Badge>
+          )}
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+            {completedCount}/{tasks.length}
+          </Badge>
+        </div>
+      </div>
+      
+      {showProgress && (
+        <div className="px-3 py-2 border-b">
+          <div className="flex items-center gap-2">
+            <Progress value={progress} className="h-1.5 flex-1" />
+            <span className="text-[10px] font-medium text-muted-foreground w-8 text-right">
+              {progress}%
+            </span>
+          </div>
+        </div>
+      )}
+      
+      <div className={cn("divide-y divide-border/50", compact && "max-h-48 overflow-y-auto")}>
+        {tasks.map((task, index) => (
+          <motion.div
+            key={task.id}
+            initial={shouldAnimate ? { opacity: 0, x: -10 } : { opacity: 1 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.03 }}
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 group",
+              task.status === 'in_progress' && "bg-blue-50/50 dark:bg-blue-950/20"
+            )}
+            data-testid={`task-item-${task.id}`}
+          >
+            {getTaskIcon(task.status)}
+            <div className="flex-1 min-w-0">
+              <span className={cn(
+                "text-xs",
+                task.status === 'completed' && "text-muted-foreground line-through",
+                task.status === 'error' && "text-red-500"
+              )}>
+                {task.title}
+              </span>
+              {task.filePath && onFileClick && (
+                <button
+                  className="text-[10px] text-primary hover:underline flex items-center gap-1 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-primary rounded"
+                  onClick={() => onFileClick(task.filePath!)}
+                >
+                  <ExternalLink className="h-2.5 w-2.5" />
+                  Open file
+                </button>
+              )}
+            </div>
+            {task.duration !== undefined && task.status === 'completed' && (
+              <span className="text-[10px] text-muted-foreground">
+                {task.duration}ms
+              </span>
+            )}
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+// =============================================================================
+// INLINE PREVIEW WINDOW - Replit-style realtime design preview
+// =============================================================================
+interface InlinePreviewWindowProps {
+  previewUrl?: string;
+  title?: string;
+  isLoading?: boolean;
+  isLive?: boolean;
+  onRefresh?: () => void;
+  onOpenExternal?: () => void;
+}
+
+export function InlinePreviewWindow({
+  previewUrl,
+  title = 'Preview',
+  isLoading = false,
+  isLive = false,
+  onRefresh,
+  onOpenExternal
+}: InlinePreviewWindowProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const shouldAnimate = !prefersReducedMotion;
+
+  return (
+    <motion.div
+      initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="border rounded-lg overflow-hidden my-3 bg-card"
+      data-testid="inline-preview-window"
+    >
+      <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/50">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+            <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+          </div>
+          <span className="text-xs font-medium ml-2">{title}</span>
+          {isLive && (
+            <Badge className="text-[10px] px-1.5 py-0 h-4 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 gap-1">
+              {shouldAnimate ? (
+                <motion.span
+                  className="w-1.5 h-1.5 rounded-full bg-green-500"
+                  animate={{ scale: [1, 1.3, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                />
+              ) : (
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              )}
+              Live
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          {onRefresh && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={onRefresh}
+              disabled={isLoading}
+              data-testid="button-refresh-preview"
+            >
+              <motion.div
+                animate={isLoading && shouldAnimate ? { rotate: 360 } : undefined}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              >
+                <Loader2 className={cn("h-3.5 w-3.5", isLoading && "text-blue-500")} />
+              </motion.div>
+            </Button>
+          )}
+          {onOpenExternal && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={onOpenExternal}
+              data-testid="button-open-external"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+      </div>
+      
+      <div className="relative aspect-video bg-muted/30">
+        {isLoading ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2">
+              {shouldAnimate ? (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                >
+                  <Loader2 className="h-6 w-6 text-muted-foreground" />
+                </motion.div>
+              ) : (
+                <Loader2 className="h-6 w-6 text-muted-foreground" />
+              )}
+              <span className="text-xs text-muted-foreground">Loading preview...</span>
+            </div>
+          </div>
+        ) : previewUrl ? (
+          <iframe
+            src={previewUrl}
+            className="w-full h-full border-0"
+            title="Live Preview"
+            sandbox="allow-scripts allow-same-origin allow-forms"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+              <Globe className="h-8 w-8" />
+              <span className="text-xs">Preview will appear here</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}

@@ -38,8 +38,13 @@ import {
   InlineThinkingStep,
   InlineAgentAction,
   InlineDependencyInstall,
+  InlineProgressTimeline,
+  InlineCheckpoint,
+  InlineTaskListEnhanced,
+  InlinePreviewWindow,
   type BuildMode,
-  type FileOperationType
+  type FileOperationType,
+  type ProgressEvent
 } from './InlineBuildProgress';
 import type { Message, AutonomousBuildMode } from '@/stores/agentConversationStore';
 
@@ -52,6 +57,9 @@ interface EnhancedChatMessageProps {
   onRejectAction?: (action: Action) => void;
   onSelectBuildMode?: (mode: AutonomousBuildMode) => void;
   onChangePlan?: () => void;
+  onFileClick?: (filePath: string) => void;
+  onRefreshPreview?: () => void;
+  onOpenPreviewExternal?: () => void;
 }
 
 type EnhancedChatMessageRef = HTMLDivElement;
@@ -90,7 +98,10 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
   onApproveAction,
   onRejectAction,
   onSelectBuildMode,
-  onChangePlan
+  onChangePlan,
+  onFileClick,
+  onRefreshPreview,
+  onOpenPreviewExternal
 }, ref) {
   const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
@@ -481,6 +492,50 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
                 message={message.content || 'An error occurred'}
                 details={autonomousPayload.errorDetails}
                 onRetry={onRetry}
+              />
+            )}
+
+            {/* Progress timeline - chronological activity feed */}
+            {message.type === 'autonomous_timeline' && autonomousPayload.timeline && (
+              <InlineProgressTimeline
+                events={autonomousPayload.timeline.events}
+                onFileClick={onFileClick}
+                maxHeight={autonomousPayload.timeline.maxHeight}
+              />
+            )}
+
+            {/* Checkpoint marker - milestone in chat */}
+            {message.type === 'autonomous_checkpoint' && autonomousPayload.checkpoint && (
+              <InlineCheckpoint
+                title={autonomousPayload.checkpoint.title}
+                description={autonomousPayload.checkpoint.description}
+                checkpointNumber={autonomousPayload.checkpoint.number}
+                completedTasks={autonomousPayload.checkpoint.completedTasks}
+                totalTasks={autonomousPayload.checkpoint.totalTasks}
+                eta={autonomousPayload.checkpoint.eta}
+              />
+            )}
+
+            {/* Task list with progress */}
+            {message.type === 'autonomous_task_list' && autonomousPayload.taskList && (
+              <InlineTaskListEnhanced
+                title={autonomousPayload.taskList.title}
+                tasks={autonomousPayload.taskList.items}
+                showProgress={autonomousPayload.taskList.showProgress}
+                onFileClick={onFileClick}
+                compact={autonomousPayload.taskList.compact}
+              />
+            )}
+
+            {/* Live preview window */}
+            {message.type === 'autonomous_preview' && autonomousPayload.preview && (
+              <InlinePreviewWindow
+                previewUrl={autonomousPayload.preview.url}
+                title={autonomousPayload.preview.title}
+                isLoading={autonomousPayload.preview.isLoading}
+                isLive={autonomousPayload.preview.isLive}
+                onRefresh={onRefreshPreview}
+                onOpenExternal={onOpenPreviewExternal}
               />
             )}
           </motion.div>

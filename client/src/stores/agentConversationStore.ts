@@ -128,6 +128,44 @@ export interface AutonomousWorkspacePayload {
     type?: 'info' | 'warning' | 'success' | 'error';
   };
   thinkingSteps?: string[];
+  timeline?: {
+    events: Array<{
+      id: string;
+      type: 'file_create' | 'file_edit' | 'file_delete' | 'command' | 'checkpoint' | 'info';
+      title: string;
+      description?: string;
+      timestamp: Date | string;
+      filePath?: string;
+      status?: 'pending' | 'in_progress' | 'completed' | 'error';
+    }>;
+    maxHeight?: string;
+  };
+  checkpoint?: {
+    title: string;
+    description?: string;
+    number?: number;
+    completedTasks?: number;
+    totalTasks?: number;
+    eta?: string;
+  };
+  taskList?: {
+    title?: string;
+    items: Array<{
+      id: string;
+      title: string;
+      status: 'pending' | 'in_progress' | 'completed' | 'error';
+      filePath?: string;
+      duration?: number;
+    }>;
+    showProgress?: boolean;
+    compact?: boolean;
+  };
+  preview?: {
+    url?: string;
+    title?: string;
+    isLoading?: boolean;
+    isLive?: boolean;
+  };
 }
 
 export interface Message {
@@ -143,7 +181,8 @@ export interface Message {
     | 'autonomous_working' | 'autonomous_search' | 'autonomous_plan' | 'autonomous_build_options' 
     | 'autonomous_progress' | 'autonomous_complete' | 'autonomous_error' 
     | 'autonomous_file_operation' | 'autonomous_terminal' | 'autonomous_code' 
-    | 'autonomous_dependencies' | 'autonomous_action' | 'autonomous_thinking';
+    | 'autonomous_dependencies' | 'autonomous_action' | 'autonomous_thinking'
+    | 'autonomous_timeline' | 'autonomous_checkpoint' | 'autonomous_task_list' | 'autonomous_preview';
   workflowPhase?: WorkflowPhase;
   workflowPayload?: {
     featureList?: string[];
