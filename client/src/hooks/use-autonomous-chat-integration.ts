@@ -159,7 +159,7 @@ export function useAutonomousChatIntegration({
   bootstrapToken,
   initialPrompt
 }: UseAutonomousChatIntegrationOptions) {
-  const { addMessage, updateMessage } = useAgentConversationStore();
+  const { addMessage, updateMessage, setMessages } = useAgentConversationStore();
   const wsRef = useRef<WebSocket | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
   const planTextRef = useRef<string>('');
@@ -219,9 +219,10 @@ export function useAutonomousChatIntegration({
     resolvedPrompt: resolvedPrompt ? resolvedPrompt.substring(0, 30) + '...' : null
   });
 
-  // ✅ CRITICAL FIX (Dec 12, 2025): Add user's prompt IMMEDIATELY on hook init
+  // ✅ CRITICAL FIX (Dec 13, 2025): Add user's prompt IMMEDIATELY on hook init
   // This ensures the prompt is visible BEFORE WebSocket connects, not after
   // Solves: "Je dois voir mon prompt pas le message de bienvenu"
+  // Uses setMessages to REPLACE any existing messages (like welcome message) with the user prompt
   useEffect(() => {
     if (!conversationId || !resolvedPrompt || hasAddedUserPromptRef.current) return;
     
@@ -233,9 +234,11 @@ export function useAutonomousChatIntegration({
       timestamp: new Date(),
       type: 'text'
     };
-    addMessage(conversationId, userPromptMsg);
-    console.log('[AutonomousChatIntegration] ✅ IMMEDIATE: Added user prompt as first message:', resolvedPrompt.substring(0, 50));
-  }, [conversationId, resolvedPrompt, addMessage]);
+    // Use setMessages to REPLACE messages, ensuring user prompt is FIRST
+    // This clears any welcome message that may have been rehydrated from localStorage
+    setMessages(conversationId, [userPromptMsg]);
+    console.log('[AutonomousChatIntegration] ✅ IMMEDIATE: Set user prompt as FIRST message:', resolvedPrompt.substring(0, 50));
+  }, [conversationId, resolvedPrompt, setMessages]);
 
   const createAutonomousMessage = useCallback((
     type: Message['type'],
