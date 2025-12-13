@@ -185,6 +185,10 @@ router.put('/:projectId/files/:filename', async (req: Request, res: Response) =>
       validation.data.content
     );
 
+    if (!file) {
+      return res.status(400).json({ error: 'Invalid filename. Only alphanumeric characters, underscores, and hyphens allowed.' });
+    }
+
     res.json({
       message: 'File updated successfully',
       file
