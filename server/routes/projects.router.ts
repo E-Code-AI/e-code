@@ -10,6 +10,7 @@ import { getProjectAIAgent } from '../services/project-ai-agent.service';
 import { aiApprovalQueue } from '../services/ai-approval-queue.service';
 import { aiSecurityService } from '../services/ai-security.service';
 import { createRateLimitMiddleware } from '../middleware/rate-limiter';
+import { memoryBankService } from '../services/memory-bank.service';
 
 export class ProjectsRouter {
   private router: Router;
@@ -258,6 +259,18 @@ export class ProjectsRouter {
           slug,
           visibility: validatedData.visibility || 'private'
         });
+        
+        // Auto-initialize memory bank for new project
+        try {
+          await memoryBankService.initialize(
+            project.id, 
+            validatedData.description || validatedData.name
+          );
+          console.log(`[Projects] Memory bank initialized for project ${project.id}`);
+        } catch (mbError) {
+          // Memory bank initialization failure should not block project creation
+          console.warn(`[Projects] Failed to initialize memory bank for project ${project.id}:`, mbError);
+        }
         
         const owner = await this.storage.getUser(String(userId));
         

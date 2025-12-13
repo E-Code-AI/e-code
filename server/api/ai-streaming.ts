@@ -11,6 +11,7 @@ import { ToolExecutor } from '../agent/tool-executor';
 import { ProjectContextProvider } from '../agent/project-context';
 import { truncateContext } from '../agent/context-manager';
 import { memoryMCP } from '../mcp/servers/memory-mcp';
+import { memoryBankService } from '../services/memory-bank.service';
 import { db } from '../db';
 import { agentSessions } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
@@ -359,7 +360,36 @@ ${historyItems}
       });
     }
     
-    // Build messages array with context (including RAG if enabled)
+    // ============================================================
+    // MEMORY BANK INTEGRATION - Persistent project context across sessions
+    // ============================================================
+    let memoryBankContext = '';
+    
+    if (projectId) {
+      try {
+        memoryBankContext = await memoryBankService.getContextForAgent(projectId);
+        if (memoryBankContext) {
+          logger.info(`[MemoryBank] Injected memory bank context for project ${projectId} (${memoryBankContext.length} chars)`);
+          sendSSE(res, 'memory_bank_status', {
+            enabled: true,
+            projectId,
+            hasContext: true,
+            contextLength: memoryBankContext.length
+          });
+        } else {
+          logger.info(`[MemoryBank] No memory bank initialized for project ${projectId}`);
+          sendSSE(res, 'memory_bank_status', {
+            enabled: false,
+            projectId,
+            hasContext: false
+          });
+        }
+      } catch (mbError: any) {
+        logger.warn(`[MemoryBank] Failed to fetch memory bank context: ${mbError.message}`);
+      }
+    }
+    
+    // Build messages array with context (including RAG and Memory Bank if enabled)
     const rawMessages = [
       {
         role: 'system',
@@ -370,6 +400,8 @@ ${historyItems}
         ${modeSystemPrompt}
         
         ${contextPrompt}
+        
+        ${memoryBankContext}
         
         ${ragContextPrompt}`
       },
