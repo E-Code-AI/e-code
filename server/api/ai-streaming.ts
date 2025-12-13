@@ -518,6 +518,23 @@ ${historyItems}
       }
     }
     
+    // ============================================================
+    // AUTO-CHECKPOINT - Create checkpoint after successful AI response
+    // ============================================================
+    if (projectId && agentMode === 'build') {
+      try {
+        const { checkpointService } = await import('../services/checkpoint.service');
+        await checkpointService.createCheckpoint(Number(projectId), {
+          type: 'auto',
+          triggerSource: 'ai_response',
+          aiSummary: 'AI interaction checkpoint',
+        });
+        logger.info(`[Checkpoint] Auto-created checkpoint for project ${projectId}`);
+      } catch (cpError: any) {
+        logger.warn(`[Checkpoint] Failed to create auto-checkpoint: ${cpError.message}`);
+      }
+    }
+    
     // Send completion event
     sendSSE(res, 'done', { 
       conversationId,

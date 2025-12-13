@@ -561,4 +561,217 @@ router.delete('/checkpoints/:id', csrfProtection, async (req: Request, res: Resp
   }
 });
 
+// ============================================================
+// AUTO-CHECKPOINT SYSTEM ROUTES (New Replit-style checkpoints)
+// Uses checkpoint.service.ts and autoCheckpoints table
+// ============================================================
+
+import { checkpointService as autoCheckpointService } from '../services/checkpoint.service';
+import { checkpointRestoreService } from '../services/checkpoint-restore.service';
+import { autoCheckpoints } from '@shared/schema';
+
+/**
+ * GET /api/projects/:projectId/auto-checkpoints
+ * List all auto-checkpoints for a project
+ */
+router.get('/projects/:projectId/auto-checkpoints', ensureAuthenticated, ensureProjectAccess, async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    const limit = parseInt(req.query.limit as string, 10) || 50;
+
+    if (isNaN(projectId)) {
+      return res.status(400).json({ success: false, error: 'Invalid project ID' });
+    }
+
+    const checkpointsList = await autoCheckpointService.getCheckpoints(projectId, limit);
+
+    res.json({
+      success: true,
+      checkpoints: checkpointsList,
+      count: checkpointsList.length,
+    });
+  } catch (error) {
+    logger.error('Failed to list auto-checkpoints:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to list auto-checkpoints',
+    });
+  }
+});
+
+/**
+ * GET /api/auto-checkpoints/:id
+ * Get a specific auto-checkpoint with files
+ */
+router.get('/auto-checkpoints/:id', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const checkpointId = parseInt(req.params.id, 10);
+
+    if (isNaN(checkpointId)) {
+      return res.status(400).json({ success: false, error: 'Invalid checkpoint ID' });
+    }
+
+    const checkpoint = await autoCheckpointService.getCheckpointWithFiles(checkpointId);
+
+    if (!checkpoint) {
+      return res.status(404).json({ success: false, error: 'Checkpoint not found' });
+    }
+
+    // Verify ownership
+    const hasAccess = await verifyProjectOwnership(userId, checkpoint.projectId);
+    if (!hasAccess) {
+      return res.status(404).json({ success: false, error: 'Checkpoint not found' });
+    }
+
+    res.json({ success: true, checkpoint });
+  } catch (error) {
+    logger.error('Failed to get auto-checkpoint:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get auto-checkpoint',
+    });
+  }
+});
+
+/**
+ * POST /api/projects/:projectId/auto-checkpoints
+ * Create a manual auto-checkpoint
+ */
+router.post('/projects/:projectId/auto-checkpoints', ensureAuthenticated, csrfProtection, ensureProjectAccess, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const projectId = parseInt(req.params.projectId, 10);
+    const { aiSummary, type = 'manual' } = req.body;
+
+    if (isNaN(projectId)) {
+      return res.status(400).json({ success: false, error: 'Invalid project ID' });
+    }
+
+    const checkpoint = await autoCheckpointService.createCheckpoint(projectId, {
+      type: type as 'manual' | 'auto' | 'milestone',
+      triggerSource: 'user_manual',
+      aiSummary: aiSummary || 'Manual checkpoint',
+      createdBy: userId,
+    });
+
+    logger.info(`Created manual auto-checkpoint ${checkpoint.id} for project ${projectId}`);
+
+    res.status(201).json({
+      success: true,
+      checkpoint,
+      message: 'Checkpoint created successfully',
+    });
+  } catch (error) {
+    logger.error('Failed to create auto-checkpoint:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create auto-checkpoint',
+    });
+  }
+});
+
+/**
+ * POST /api/auto-checkpoints/:id/restore
+ * Restore to an auto-checkpoint
+ */
+router.post('/auto-checkpoints/:id/restore', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const checkpointId = parseInt(req.params.id, 10);
+    const { createBackup = true } = req.body;
+
+    if (isNaN(checkpointId)) {
+      return res.status(400).json({ success: false, error: 'Invalid checkpoint ID' });
+    }
+
+    // Verify ownership
+    const checkpoint = await autoCheckpointService.getCheckpoint(checkpointId);
+    if (!checkpoint) {
+      return res.status(404).json({ success: false, error: 'Checkpoint not found' });
+    }
+
+    const hasAccess = await verifyProjectOwnership(userId, checkpoint.projectId);
+    if (!hasAccess) {
+      return res.status(404).json({ success: false, error: 'Checkpoint not found' });
+    }
+
+    logger.info(`Restoring to auto-checkpoint ${checkpointId} for project ${checkpoint.projectId}`);
+
+    const result = await checkpointRestoreService.restoreToCheckpoint(checkpointId, {
+      restoreFiles: true,
+      createBackupCheckpoint: createBackup,
+      userId,
+    });
+
+    res.json({
+      success: result.success,
+      result,
+      message: result.success ? 'Restored successfully' : `Restore failed: ${result.errors.join(', ')}`,
+    });
+  } catch (error) {
+    logger.error('Failed to restore auto-checkpoint:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to restore auto-checkpoint',
+    });
+  }
+});
+
+/**
+ * GET /api/projects/:projectId/auto-checkpoints/latest
+ * Get the latest auto-checkpoint for a project
+ */
+router.get('/projects/:projectId/auto-checkpoints/latest', ensureAuthenticated, ensureProjectAccess, async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+
+    if (isNaN(projectId)) {
+      return res.status(400).json({ success: false, error: 'Invalid project ID' });
+    }
+
+    const checkpoint = await autoCheckpointService.getLatestCheckpoint(projectId);
+
+    res.json({
+      success: true,
+      checkpoint,
+    });
+  } catch (error) {
+    logger.error('Failed to get latest auto-checkpoint:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get latest auto-checkpoint',
+    });
+  }
+});
+
+/**
+ * GET /api/projects/:projectId/auto-checkpoints/restore-history
+ * Get restore history for a project
+ */
+router.get('/projects/:projectId/auto-checkpoints/restore-history', ensureAuthenticated, ensureProjectAccess, async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    const limit = parseInt(req.query.limit as string, 10) || 20;
+
+    if (isNaN(projectId)) {
+      return res.status(400).json({ success: false, error: 'Invalid project ID' });
+    }
+
+    const history = await autoCheckpointService.getRestoreHistory(projectId, limit);
+
+    res.json({
+      success: true,
+      history,
+      count: history.length,
+    });
+  } catch (error) {
+    logger.error('Failed to get restore history:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get restore history',
+    });
+  }
+});
+
 export default router;
