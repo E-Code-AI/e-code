@@ -236,6 +236,9 @@ export function ReplitAgentPanelV3({
     tokenPreview: bootstrapToken ? bootstrapToken.substring(0, 30) + '...' : null
   });
   
+  // Convert projectId to number early for consistent usage throughout component
+  const projectIdNum = typeof projectId === 'string' ? parseInt(projectId) : projectId;
+  
   // AI Model preference hook
   const { modelId, provider, supportsExtendedThinking: modelSupportsExtendedThinking, model, setPreferredModel } = useAgentModelPreference();
   
@@ -480,7 +483,6 @@ export function ReplitAgentPanelV3({
   }, [selectedFile, selectedCode]);
 
   // Max Autonomy hook
-  const projectIdNum = typeof projectId === 'string' ? parseInt(projectId) : projectId;
   const {
     startSession: startAutonomySession,
     isStartingSession: isStartingAutonomy,
@@ -1577,6 +1579,13 @@ export function ReplitAgentPanelV3({
         
         <ScrollArea ref={scrollRef} className="flex-1 min-h-0 px-3 sm:px-4 py-3">
           <div className="space-y-4 sm:space-y-5">
+          {/* Memory Bank Inline Card - Replit-style: appears at top of chat */}
+          <MemoryBankPanel
+            projectId={projectIdNum}
+            compact={true}
+            className="mb-2"
+          />
+          
           <AnimatePresence mode="popLayout">
           {messages.map((message) => (
             <EnhancedChatMessage
@@ -1839,13 +1848,6 @@ export function ReplitAgentPanelV3({
           
           {/* RAG Context - Automatic (Replit-style: no visible toggle, always enabled) */}
           {/* Knowledge retrieval happens automatically behind the scenes like Replit's Agent */}
-          
-          {/* Memory Bank - Persistent project context that prevents AI amnesia (Dec 2025) */}
-          <MemoryBankPanel
-            projectId={projectIdNum}
-            compact={true}
-            className="border-t pt-2"
-          />
           
           {/* Agent Tools Panel - Replit Agent 3 toggles: Max Autonomy, App Testing, Extended Thinking, High Power Models, Web Search */}
           <AgentToolsPanel
