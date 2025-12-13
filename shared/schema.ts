@@ -3902,3 +3902,84 @@ export type InsertRole = z.infer<typeof insertRoleSchema>;
 export type UserRole = typeof userRoles.$inferSelect;
 export type InsertUserRole = z.infer<typeof insertUserRoleSchema>;
 
+// ============================================
+// REPLIT-STYLE AUTOMATIC CHECKPOINT SYSTEM
+// ============================================
+
+// Auto Checkpoints - Replit-style automatic checkpoint system
+export const autoCheckpoints = pgTable('auto_checkpoints', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  type: varchar('type', { length: 50 }).notNull().default('auto'), // auto, manual, milestone
+  triggerSource: varchar('trigger_source', { length: 100 }), // ai_response, feature_complete, manual
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, creating, complete, failed
+  aiSummary: text('ai_summary'), // AI-generated description
+  includesDatabase: boolean('includes_database').notNull().default(false),
+  filesSnapshot: jsonb('files_snapshot').$type<Record<string, { hash: string; size: number }>>().default({}), // file paths and content/hashes
+  conversationSnapshot: jsonb('conversation_snapshot').$type<Array<{ role: string; content: string; timestamp?: string }>>(), // AI conversation state
+  retainedUntil: timestamp('retained_until'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  createdBy: integer('created_by').references(() => users.id),
+}, (table) => [
+  index('auto_checkpoints_project_idx').on(table.projectId),
+  index('auto_checkpoints_status_idx').on(table.status),
+  index('auto_checkpoints_created_at_idx').on(table.createdAt),
+  index('auto_checkpoints_type_idx').on(table.type),
+]);
+
+// Auto Checkpoint Files - Individual file storage for checkpoints
+export const autoCheckpointFiles = pgTable('auto_checkpoint_files', {
+  id: serial('id').primaryKey(),
+  checkpointId: integer('checkpoint_id').notNull().references(() => autoCheckpoints.id, { onDelete: 'cascade' }),
+  filePath: varchar('file_path', { length: 500 }).notNull(),
+  fileHash: varchar('file_hash', { length: 64 }), // SHA-256 hash
+  fileContent: text('file_content'),
+  diffFromPrevious: text('diff_from_previous'), // Unified diff from previous checkpoint
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('auto_checkpoint_files_checkpoint_idx').on(table.checkpointId),
+  index('auto_checkpoint_files_path_idx').on(table.filePath),
+]);
+
+// Checkpoint Restores - Audit log for checkpoint restoration
+export const checkpointRestores = pgTable('checkpoint_restores', {
+  id: serial('id').primaryKey(),
+  checkpointId: integer('checkpoint_id').notNull().references(() => autoCheckpoints.id),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  restoredBy: integer('restored_by').notNull().references(() => users.id),
+  includedDatabase: boolean('included_database').notNull().default(false),
+  status: varchar('status', { length: 20 }).notNull(), // pending, in_progress, completed, failed
+  restoredAt: timestamp('restored_at').defaultNow().notNull(),
+}, (table) => [
+  index('checkpoint_restores_checkpoint_idx').on(table.checkpointId),
+  index('checkpoint_restores_project_idx').on(table.projectId),
+  index('checkpoint_restores_user_idx').on(table.restoredBy),
+  index('checkpoint_restores_restored_at_idx').on(table.restoredAt),
+]);
+
+// Insert schemas for Replit-style checkpoint tables
+export const insertAutoCheckpointSchema = createInsertSchema(autoCheckpoints).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAutoCheckpointFileSchema = createInsertSchema(autoCheckpointFiles).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCheckpointRestoreSchema = createInsertSchema(checkpointRestores).omit({
+  id: true,
+  restoredAt: true,
+});
+
+// Types for Replit-style checkpoint tables
+export type AutoCheckpoint = typeof autoCheckpoints.$inferSelect;
+export type InsertAutoCheckpoint = z.infer<typeof insertAutoCheckpointSchema>;
+
+export type AutoCheckpointFile = typeof autoCheckpointFiles.$inferSelect;
+export type InsertAutoCheckpointFile = z.infer<typeof insertAutoCheckpointFileSchema>;
+
+export type CheckpointRestore = typeof checkpointRestores.$inferSelect;
+export type InsertCheckpointRestore = z.infer<typeof insertCheckpointRestoreSchema>;
+
