@@ -71,119 +71,100 @@ function isPathWithinDirectory(filePath: string, directory: string): boolean {
 }
 
 const DEFAULT_FILES: Record<string, { template: string; description: string }> = {
-  'project-brief.md': {
-    description: 'High-level project description and goals',
+  'projectbrief.md': {
+    description: 'Foundation document defining core requirements and goals',
     template: `# Project Brief
 
-## Purpose
-[Describe what this project does]
+## Overview
+[High-level description of what this project does]
+
+## Core Requirements
+- Requirement 1
+- Requirement 2
+- Requirement 3
+
+## Project Goals
+[What success looks like for this project]
+
+## Scope
+[What is in and out of scope]
+`
+  },
+  'productContext.md': {
+    description: 'Why this project exists and problems it solves',
+    template: `# Product Context
+
+## Problem Statement
+[What problem does this solve?]
 
 ## Target Users
-[Who will use this application]
+[Who will use this application?]
 
-## Key Features
-- Feature 1
-- Feature 2
-- Feature 3
+## User Experience Goals
+[How should users feel when using this?]
 
-## Success Criteria
-[How do we know the project is complete]
+## How It Should Work
+[Key user flows and interactions]
 `
   },
-  'architecture.md': {
-    description: 'Technical architecture and design decisions',
-    template: `# Architecture
+  'systemPatterns.md': {
+    description: 'System architecture and key technical decisions',
+    template: `# System Patterns
+
+## Architecture Overview
+[High-level system design]
+
+## Key Technical Decisions
+1. [Decision]: [Rationale]
+2. [Decision]: [Rationale]
+
+## Design Patterns in Use
+- [Pattern 1]: [Where/Why]
+- [Pattern 2]: [Where/Why]
+
+## Component Relationships
+[How major components interact]
+`
+  },
+  'techContext.md': {
+    description: 'Technologies, dependencies, and development setup',
+    template: `# Technical Context
 
 ## Tech Stack
-- Frontend: 
-- Backend: 
-- Database: 
-- Hosting: 
+- Frontend: React, TypeScript, Tailwind CSS
+- Backend: Express, Node.js
+- Database: PostgreSQL
+- AI: Multi-provider (OpenAI, Anthropic, Gemini)
 
-## Project Structure
-\`\`\`
-/
-├── client/          # Frontend React app
-├── server/          # Backend Express API
-├── shared/          # Shared types and schemas
-└── ...
-\`\`\`
+## Development Setup
+[How to run the project locally]
 
-## Key Design Decisions
-1. Decision 1: [Reason]
-2. Decision 2: [Reason]
+## Key Dependencies
+[Important libraries and their purposes]
 
-## API Design
-[Describe key API endpoints]
+## Environment Variables
+[Required configuration]
 `
   },
-  'dependencies.md': {
-    description: 'External dependencies and integrations',
-    template: `# Dependencies
+  'activeContext.md': {
+    description: 'Current work focus and recent changes',
+    template: `# Active Context
 
-## Core Dependencies
-| Package | Purpose | Version |
-|---------|---------|---------|
-| react | UI framework | ^18.x |
-| express | API server | ^4.x |
+## Current Focus
+[What is being worked on right now]
 
-## External Services
-- Database: [Provider]
-- Auth: [Provider]
-- Payments: [Provider]
-- Email: [Provider]
+## Recent Changes
+- [Date]: [Change description]
 
-## Environment Variables Required
-- \`DATABASE_URL\`: Database connection string
-- \`API_KEY\`: External API key
-`
-  },
-  'patterns.md': {
-    description: 'Code patterns and conventions',
-    template: `# Code Patterns & Conventions
+## Next Steps
+- [ ] Task 1
+- [ ] Task 2
 
-## Naming Conventions
-- Components: PascalCase (e.g., \`UserProfile.tsx\`)
-- Hooks: camelCase with 'use' prefix (e.g., \`useAuth.ts\`)
-- Utils: camelCase (e.g., \`formatDate.ts\`)
-- Constants: SCREAMING_SNAKE_CASE
-
-## File Organization
-- One component per file
-- Co-locate tests with source files
-- Group by feature, not by type
-
-## TypeScript Rules
-- Strict mode enabled
-- No \`any\` types - use \`unknown\` or proper types
-- Export interfaces alongside implementations
-
-## React Patterns
-- Functional components only
-- Custom hooks for shared logic
-- TanStack Query for server state
-- Zustand for client state
-
-## Testing
-- data-testid pattern: \`{action}-{target}\`
-- E2E with Playwright
-- Unit tests with Vitest
-`
-  },
-  'recent-changes.md': {
-    description: 'Log of recent significant changes',
-    template: `# Recent Changes
-
-## Latest Updates
-
-### [Date]
-- Change description
-- Files affected: \`file1.ts\`, \`file2.ts\`
-- Reason: [Why this change was made]
+## Active Decisions
+[Decisions that need to be made]
 
 ---
-
-*This file is auto-updated by the agent after significant changes*
+*Updated automatically as work progresses*
 `
   }
 };
@@ -240,19 +221,19 @@ export class MemoryBankService extends EventEmitter {
       let content = config.template;
       
       // If project description provided, enhance the brief
-      if (filename === 'project-brief.md' && projectDescription) {
+      if (filename === 'projectbrief.md' && projectDescription) {
         content = `# Project Brief
 
-## Purpose
+## Overview
 ${projectDescription}
 
-## Target Users
-[To be defined]
-
-## Key Features
+## Core Requirements
 [To be extracted from requirements]
 
-## Success Criteria
+## Project Goals
+[To be defined]
+
+## Scope
 [To be defined]
 `;
       }
