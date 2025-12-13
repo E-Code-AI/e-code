@@ -504,6 +504,20 @@ ${historyItems}
       tokensOutput = usage.tokensOutput;
     }
     
+    // ============================================================
+    // AUTO-UPDATE MEMORY BANK - Log AI activity to activeContext.md
+    // ============================================================
+    if (projectId && agentMode === 'build') {
+      try {
+        await memoryBankService.updateActiveContext(Number(projectId), {
+          action: 'AI assistant interaction completed'
+        });
+        logger.info(`[MemoryBank] Auto-updated activeContext.md for project ${projectId}`);
+      } catch (mbError: any) {
+        logger.warn(`[MemoryBank] Failed to auto-update: ${mbError.message}`);
+      }
+    }
+    
     // Send completion event
     sendSSE(res, 'done', { 
       conversationId,

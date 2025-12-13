@@ -3,7 +3,6 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -17,15 +16,12 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronRight,
-  Save,
   Plus,
   Loader2,
-  CheckCircle2,
-  AlertCircle,
   FolderOpen,
   Clock,
-  Edit3,
-  X
+  Sparkles,
+  Eye
 } from 'lucide-react';
 
 interface MemoryBankFile {
@@ -72,9 +68,11 @@ export function useMemoryBank(projectId: number | string) {
 
 export function MemoryBankStatusBadge({ 
   initialized, 
+  autoUpdated = false,
   className 
 }: { 
   initialized: boolean; 
+  autoUpdated?: boolean;
   className?: string;
 }) {
   return (
@@ -85,18 +83,32 @@ export function MemoryBankStatusBadge({
             variant={initialized ? "default" : "outline"}
             className={cn(
               "gap-1",
-              initialized ? "bg-green-600 hover:bg-green-700" : "text-muted-foreground border-muted",
+              initialized 
+                ? autoUpdated 
+                  ? "bg-blue-600 hover:bg-blue-700" 
+                  : "bg-green-600 hover:bg-green-700" 
+                : "text-muted-foreground border-muted",
               className
             )}
             data-testid="badge-memory-bank-status"
           >
-            <Brain className="h-3 w-3" />
-            {initialized ? "Memory Active" : "Memory N/A"}
+            {autoUpdated ? (
+              <Sparkles className="h-3 w-3" />
+            ) : (
+              <Brain className="h-3 w-3" />
+            )}
+            {initialized 
+              ? autoUpdated 
+                ? "Auto-Updated" 
+                : "Memory Active" 
+              : "Memory N/A"}
           </Badge>
         </TooltipTrigger>
         <TooltipContent>
           {initialized 
-            ? "Memory Bank is active - project context persists across AI sessions"
+            ? autoUpdated
+              ? "Memory Bank auto-updates as you work with AI"
+              : "Memory Bank is active - project context persists across AI sessions"
             : "Memory Bank not initialized - AI may forget project context between sessions"
           }
         </TooltipContent>
@@ -107,8 +119,6 @@ export function MemoryBankStatusBadge({
 
 export function MemoryBankPanel({ projectId, className, compact = false }: MemoryBankPanelProps) {
   const [isOpen, setIsOpen] = useState(!compact);
-  const [editingFile, setEditingFile] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState('');
   
   const { data: memoryBank, isLoading, error, refetch } = useMemoryBank(projectId);
   const { data: status } = useMemoryBankStatus(projectId);
@@ -122,32 +132,9 @@ export function MemoryBankPanel({ projectId, className, compact = false }: Memor
       queryClient.invalidateQueries({ queryKey: ['/api/memory-bank', projectId, 'status'] });
     },
   });
-  
-  const updateFileMutation = useMutation({
-    mutationFn: async ({ filename, content }: { filename: string; content: string }) => {
-      return apiRequest('PUT', `/api/memory-bank/${projectId}/files/${filename}`, { content });
-    },
-    onSuccess: () => {
-      setEditingFile(null);
-      setEditContent('');
-      queryClient.invalidateQueries({ queryKey: ['/api/memory-bank', projectId] });
-    },
-  });
-  
-  const handleStartEdit = (file: MemoryBankFile) => {
-    setEditingFile(file.name);
-    setEditContent(file.content);
-  };
-  
-  const handleSaveEdit = () => {
-    if (editingFile) {
-      updateFileMutation.mutate({ filename: editingFile, content: editContent });
-    }
-  };
-  
-  const handleCancelEdit = () => {
-    setEditingFile(null);
-    setEditContent('');
+
+  const handleRefetch = async () => {
+    await refetch();
   };
 
   if (compact) {
@@ -165,8 +152,9 @@ export function MemoryBankPanel({ projectId, className, compact = false }: Memor
             </div>
             <div className="flex items-center gap-2">
               {status?.initialized && (
-                <Badge variant="secondary" className="text-xs">
-                  {memoryBank?.files?.length || 0} files
+                <Badge variant="secondary" className="text-xs gap-1">
+                  <Sparkles className="h-3 w-3" />
+                  Auto
                 </Badge>
               )}
               {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -179,16 +167,9 @@ export function MemoryBankPanel({ projectId, className, compact = false }: Memor
             memoryBank={memoryBank}
             isLoading={isLoading}
             error={error}
-            editingFile={editingFile}
-            editContent={editContent}
-            setEditContent={setEditContent}
-            onStartEdit={handleStartEdit}
-            onSaveEdit={handleSaveEdit}
-            onCancelEdit={handleCancelEdit}
-            onInitialize={() => initializeMutation.mutate()}
-            onRefetch={() => refetch()}
+            onInitialize={() => initializeMutation.mutate(undefined)}
+            onRefetch={handleRefetch}
             isInitializing={initializeMutation.isPending}
-            isSaving={updateFileMutation.isPending}
           />
         </CollapsibleContent>
       </Collapsible>
@@ -205,7 +186,7 @@ export function MemoryBankPanel({ projectId, className, compact = false }: Memor
           </div>
           <div className="flex items-center gap-2">
             {status?.initialized && (
-              <MemoryBankStatusBadge initialized={true} />
+              <MemoryBankStatusBadge initialized={true} autoUpdated={true} />
             )}
             <TooltipProvider>
               <Tooltip>
@@ -213,7 +194,7 @@ export function MemoryBankPanel({ projectId, className, compact = false }: Memor
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    onClick={() => refetch()}
+                    onClick={handleRefetch}
                     data-testid="button-memory-bank-refresh"
                   >
                     <RefreshCw className="h-4 w-4" />
@@ -224,8 +205,9 @@ export function MemoryBankPanel({ projectId, className, compact = false }: Memor
             </TooltipProvider>
           </div>
         </div>
-        <CardDescription>
-          Persistent project context that prevents AI amnesia between sessions
+        <CardDescription className="flex items-center gap-2">
+          <Eye className="h-3 w-3" />
+          Read-only view - automatically updated by AI actions
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -234,16 +216,9 @@ export function MemoryBankPanel({ projectId, className, compact = false }: Memor
           memoryBank={memoryBank}
           isLoading={isLoading}
           error={error}
-          editingFile={editingFile}
-          editContent={editContent}
-          setEditContent={setEditContent}
-          onStartEdit={handleStartEdit}
-          onSaveEdit={handleSaveEdit}
-          onCancelEdit={handleCancelEdit}
-          onInitialize={() => initializeMutation.mutate()}
-          onRefetch={() => refetch()}
+          onInitialize={() => initializeMutation.mutate(undefined)}
+          onRefetch={handleRefetch}
           isInitializing={initializeMutation.isPending}
-          isSaving={updateFileMutation.isPending}
         />
       </CardContent>
     </Card>
@@ -255,31 +230,17 @@ interface MemoryBankContentProps {
   memoryBank: MemoryBank | undefined;
   isLoading: boolean;
   error: Error | null;
-  editingFile: string | null;
-  editContent: string;
-  setEditContent: (content: string) => void;
-  onStartEdit: (file: MemoryBankFile) => void;
-  onSaveEdit: () => void;
-  onCancelEdit: () => void;
   onInitialize: () => void;
   onRefetch: () => void;
   isInitializing: boolean;
-  isSaving: boolean;
 }
 
 function MemoryBankContent({
   memoryBank,
   isLoading,
   error,
-  editingFile,
-  editContent,
-  setEditContent,
-  onStartEdit,
-  onSaveEdit,
-  onCancelEdit,
   onInitialize,
   isInitializing,
-  isSaving,
 }: MemoryBankContentProps) {
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
 
@@ -342,7 +303,7 @@ function MemoryBankContent({
         {memoryBank.files.map((file) => (
           <Collapsible
             key={file.name}
-            open={expandedFiles.has(file.name) || editingFile === file.name}
+            open={expandedFiles.has(file.name)}
             onOpenChange={() => toggleFile(file.name)}
           >
             <div className="border rounded-lg">
@@ -355,6 +316,12 @@ function MemoryBankContent({
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
                     <span className="font-mono text-sm">{file.name}</span>
+                    {file.name === 'activeContext.md' && (
+                      <Badge variant="secondary" className="text-xs gap-1 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                        <Sparkles className="h-2.5 w-2.5" />
+                        Auto
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground">
                     <span className="hidden sm:inline-flex items-center gap-1">
@@ -373,62 +340,25 @@ function MemoryBankContent({
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="px-3 pb-3">
-                  {editingFile === file.name ? (
-                    <div className="space-y-2">
-                      <Textarea
-                        value={editContent}
-                        onChange={(e) => setEditContent(e.target.value)}
-                        className="min-h-[200px] font-mono text-sm"
-                        data-testid={`textarea-memory-file-${file.name}`}
-                      />
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={onCancelEdit}
-                          disabled={isSaving}
-                          data-testid="button-cancel-edit"
-                        >
-                          <X className="h-4 w-4 mr-1" />
-                          Cancel
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={onSaveEdit}
-                          disabled={isSaving}
-                          data-testid="button-save-memory-file"
-                        >
-                          {isSaving ? (
-                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                          ) : (
-                            <Save className="h-4 w-4 mr-1" />
-                          )}
-                          Save
-                        </Button>
-                      </div>
+                  <div className="space-y-2">
+                    <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap max-h-[200px] overflow-y-auto">
+                      {file.content.substring(0, 1500)}
+                      {file.content.length > 1500 && (
+                        <span className="text-muted-foreground italic">
+                          {'\n\n'}... ({file.content.length - 1500} more characters)
+                        </span>
+                      )}
+                    </pre>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Eye className="h-3 w-3" />
+                        Read-only
+                      </span>
+                      <span>
+                        Last updated: {new Date(file.lastUpdated).toLocaleString()}
+                      </span>
                     </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap max-h-[200px] overflow-y-auto">
-                        {file.content.substring(0, 1000)}
-                        {file.content.length > 1000 && '...'}
-                      </pre>
-                      <div className="flex justify-end">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onStartEdit(file);
-                          }}
-                          data-testid={`button-edit-memory-file-${file.name}`}
-                        >
-                          <Edit3 className="h-4 w-4 mr-1" />
-                          Edit
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  </div>
                 </div>
               </CollapsibleContent>
             </div>
@@ -443,9 +373,15 @@ function MemoryBankContent({
         )}
       </div>
       
-      <div className="mt-4 pt-3 border-t text-xs text-muted-foreground flex justify-between">
+      <div className="mt-4 pt-3 border-t text-xs text-muted-foreground flex justify-between items-center">
         <span>Total: {memoryBank.files.length} files</span>
-        <span>{formatBytes(memoryBank.totalSize)}</span>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-xs gap-1">
+            <Sparkles className="h-2.5 w-2.5" />
+            Auto-updating
+          </Badge>
+          <span>{formatBytes(memoryBank.totalSize)}</span>
+        </div>
       </div>
     </ScrollArea>
   );

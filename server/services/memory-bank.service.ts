@@ -582,6 +582,149 @@ ${structure || 'Structure to be analyzed'}
   clearCache(projectId: number): void {
     this.memoryCache.delete(projectId);
   }
+
+  /**
+   * Auto-update activeContext.md after AI completes a response
+   * This provides automatic memory updates without user intervention
+   */
+  async updateActiveContext(
+    projectId: number,
+    update: {
+      action: string;
+      filesChanged?: string[];
+    }
+  ): Promise<void> {
+    try {
+      const existingFile = await this.getFile(projectId, 'activeContext.md');
+      const timestamp = new Date().toLocaleString();
+      
+      // Sanitize action - remove sensitive data patterns
+      const sanitizedAction = this.sanitizeForLogging(update.action);
+      const newEntry = `- [${timestamp}] ${sanitizedAction}${update.filesChanged?.length ? ` (Files: ${update.filesChanged.slice(0, 5).join(', ')})` : ''}`;
+      
+      let content: string;
+      if (existingFile) {
+        // Parse existing content into sections
+        const sections = this.parseMarkdownSections(existingFile.content);
+        
+        // Update Recent Changes section
+        let recentChanges = sections.get('Recent Changes') || '';
+        const existingEntries = recentChanges.split('\n').filter(l => l.startsWith('- ['));
+        
+        // Add new entry at the top, limit to 15 entries
+        const allEntries = [newEntry, ...existingEntries].slice(0, 15);
+        sections.set('Recent Changes', allEntries.join('\n'));
+        
+        // Rebuild the document
+        content = this.rebuildMarkdownFromSections(existingFile.content, sections);
+      } else {
+        // Create new activeContext.md
+        content = `# Active Context
+
+## Current Focus
+Working with AI agent
+
+## Recent Changes
+${newEntry}
+
+## Next Steps
+- [ ] Continue development
+
+---
+*Auto-updated by E-Code AI Agent*
+`;
+      }
+      
+      await this.updateFile(projectId, 'activeContext.md', content);
+      console.log(`[MemoryBank] Auto-updated activeContext.md for project ${projectId}`);
+      
+      this.emit('autoUpdated', { projectId, file: 'activeContext.md', update });
+    } catch (error) {
+      console.error(`[MemoryBank] Failed to auto-update activeContext.md:`, error);
+    }
+  }
+
+  /**
+   * Parse markdown content into sections by ## headers
+   */
+  private parseMarkdownSections(content: string): Map<string, string> {
+    const sections = new Map<string, string>();
+    const lines = content.split('\n');
+    let currentSection = '';
+    let currentContent: string[] = [];
+    
+    for (const line of lines) {
+      if (line.startsWith('## ')) {
+        if (currentSection) {
+          sections.set(currentSection, currentContent.join('\n').trim());
+        }
+        currentSection = line.substring(3).trim();
+        currentContent = [];
+      } else if (currentSection) {
+        currentContent.push(line);
+      }
+    }
+    
+    if (currentSection) {
+      sections.set(currentSection, currentContent.join('\n').trim());
+    }
+    
+    return sections;
+  }
+
+  /**
+   * Rebuild markdown content with updated sections
+   */
+  private rebuildMarkdownFromSections(originalContent: string, sections: Map<string, string>): string {
+    const lines = originalContent.split('\n');
+    const result: string[] = [];
+    let currentSection = '';
+    let skipUntilNextSection = false;
+    
+    for (const line of lines) {
+      if (line.startsWith('## ')) {
+        currentSection = line.substring(3).trim();
+        result.push(line);
+        
+        if (sections.has(currentSection)) {
+          result.push(sections.get(currentSection)!);
+          skipUntilNextSection = true;
+        } else {
+          skipUntilNextSection = false;
+        }
+      } else if (line.startsWith('# ') || line.startsWith('---')) {
+        skipUntilNextSection = false;
+        result.push(line);
+      } else if (!skipUntilNextSection) {
+        result.push(line);
+      }
+    }
+    
+    return result.join('\n');
+  }
+
+  /**
+   * Sanitize content for logging - remove potential sensitive data
+   */
+  private sanitizeForLogging(text: string, maxLength: number = 80): string {
+    if (!text) return 'AI interaction';
+    
+    // Remove potential API keys, tokens, passwords
+    let clean = text
+      .replace(/[a-zA-Z0-9_-]{20,}/g, '[REDACTED]')
+      .replace(/password[:\s]*\S+/gi, 'password: [REDACTED]')
+      .replace(/api[_-]?key[:\s]*\S+/gi, 'api_key: [REDACTED]')
+      .replace(/token[:\s]*\S+/gi, 'token: [REDACTED]')
+      .replace(/secret[:\s]*\S+/gi, 'secret: [REDACTED]')
+      .trim();
+    
+    // Truncate to max length
+    if (clean.length > maxLength) {
+      return clean.substring(0, maxLength - 3) + '...';
+    }
+    
+    return clean || 'AI interaction';
+  }
 }
 
 // Singleton instance
