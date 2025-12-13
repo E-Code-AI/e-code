@@ -337,7 +337,7 @@ function MemoryBankContent({
   }
 
   return (
-    <ScrollArea className="max-h-[400px]">
+    <ScrollArea className="max-h-[250px] sm:max-h-[300px] md:max-h-[400px]">
       <div className="space-y-2">
         {memoryBank.files.map((file) => (
           <Collapsible
@@ -356,10 +356,12 @@ function MemoryBankContent({
                     <FileText className="h-4 w-4 text-muted-foreground" />
                     <span className="font-mono text-sm">{file.name}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    <span>{new Date(file.lastUpdated).toLocaleDateString()}</span>
-                    <span className="text-muted-foreground/50">•</span>
+                  <div className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground">
+                    <span className="hidden sm:inline-flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      <span>{new Date(file.lastUpdated).toLocaleDateString()}</span>
+                      <span className="text-muted-foreground/50">•</span>
+                    </span>
                     <span>{formatBytes(file.size)}</span>
                     {expandedFiles.has(file.name) ? (
                       <ChevronDown className="h-4 w-4 ml-1" />
