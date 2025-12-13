@@ -73,6 +73,7 @@ import agentStepCacheRouter from "./agent-step-cache.router";
 import { prometheusRouter } from "../monitoring/prometheus";
 import aiHealthRouter from "./ai-health";
 import generationMetricsRouter from "./generation-metrics.router";
+import memoryBankRouter from "./memory-bank.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -237,6 +238,9 @@ export class MainRouter {
     
     // RAG (Retrieval-Augmented Generation) routes
     app.use('/api/rag', tierRateLimiters.api, ragRouter);
+    
+    // Memory Bank routes (Kilocode-inspired persistent project context)
+    app.use('/api/memory-bank', tierRateLimiters.api, memoryBankRouter);
     
     // AI Health Check routes (Fortune 500 - validates all 21 models with 60s cache)
     app.use('/api/ai/health', tierRateLimiters.api, aiHealthRouter);
