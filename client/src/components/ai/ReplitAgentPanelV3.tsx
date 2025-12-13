@@ -78,6 +78,7 @@ import { UsageTrackingIcon } from './UsageTrackingIcon';
 import { VideoReplayViewer } from './VideoReplayViewer';
 import { ECodeLogo } from '@/components/ECodeLogo';
 import { RAGToggle, RAGStatsDisplay, RetrievedContextPanel, useRAGStats } from './RAGControls';
+import { MemoryBankPanel, MemoryBankStatusBadge, useMemoryBankStatus } from './MemoryBankPanel';
 import { History, X, MousePointer2, Coins, Database, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -374,6 +375,9 @@ export function ReplitAgentPanelV3({
   const [ragEnabled, setRagEnabled] = useState(true);
   const [showRAGContext, setShowRAGContext] = useState(false);
   const { data: ragStats } = useRAGStats();
+  
+  // Memory Bank status for persistent project context
+  const { data: memoryBankStatus } = useMemoryBankStatus(projectIdNum);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -1445,6 +1449,10 @@ export function ReplitAgentPanelV3({
                 <span className="hidden sm:inline">Working</span>
               </Badge>
             )}
+            {/* Memory Bank status indicator - shows if persistent context is active */}
+            {memoryBankStatus?.initialized && (
+              <MemoryBankStatusBadge initialized={true} className="hidden sm:flex text-[10px]" />
+            )}
             {/* Model chip with dropdown for quick model selection */}
             <DropdownMenu open={isModelSelectorOpen} onOpenChange={setIsModelSelectorOpen}>
               <DropdownMenuTrigger asChild>
@@ -1831,6 +1839,13 @@ export function ReplitAgentPanelV3({
           
           {/* RAG Context - Automatic (Replit-style: no visible toggle, always enabled) */}
           {/* Knowledge retrieval happens automatically behind the scenes like Replit's Agent */}
+          
+          {/* Memory Bank - Persistent project context that prevents AI amnesia (Dec 2025) */}
+          <MemoryBankPanel
+            projectId={projectIdNum}
+            compact={true}
+            className="border-t pt-2"
+          />
           
           {/* Agent Tools Panel - Replit Agent 3 toggles: Max Autonomy, App Testing, Extended Thinking, High Power Models, Web Search */}
           <AgentToolsPanel
