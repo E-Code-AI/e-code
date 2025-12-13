@@ -39,6 +39,37 @@ export interface MemoryBankContext {
 const MEMORY_BANK_DIR = '.ecode/memory-bank';
 const MAX_CONTEXT_TOKENS = 8000; // ~32KB of text for context injection
 
+// Security: Allowed characters for memory bank filenames
+const SAFE_FILENAME_REGEX = /^[a-zA-Z0-9_-]+\.md$/;
+
+/**
+ * Validate and sanitize filename to prevent path traversal attacks
+ * Only allows alphanumeric, underscore, hyphen, and .md extension
+ */
+function sanitizeFilename(filename: string): string | null {
+  // Get just the basename, stripping any path components
+  const basename = path.basename(filename);
+  
+  // Ensure it ends with .md
+  const safeName = basename.endsWith('.md') ? basename : `${basename}.md`;
+  
+  // Validate against safe pattern
+  if (!SAFE_FILENAME_REGEX.test(safeName)) {
+    return null;
+  }
+  
+  return safeName;
+}
+
+/**
+ * Validate that resolved path is within the memory bank directory
+ */
+function isPathWithinDirectory(filePath: string, directory: string): boolean {
+  const resolvedPath = path.resolve(filePath);
+  const resolvedDir = path.resolve(directory);
+  return resolvedPath.startsWith(resolvedDir + path.sep) || resolvedPath === resolvedDir;
+}
+
 const DEFAULT_FILES: Record<string, { template: string; description: string }> = {
   'project-brief.md': {
     description: 'High-level project description and goals',
@@ -309,15 +340,28 @@ ${projectDescription}
    * Get a specific memory file
    */
   async getFile(projectId: number, filename: string): Promise<MemoryBankFile | null> {
+    // Security: Sanitize filename to prevent path traversal
+    const safeFilename = sanitizeFilename(filename);
+    if (!safeFilename) {
+      console.warn(`[MemoryBank] Rejected unsafe filename: ${filename}`);
+      return null;
+    }
+    
     const mbPath = this.getMemoryBankPath(projectId);
-    const filePath = path.join(mbPath, filename);
+    const filePath = path.join(mbPath, safeFilename);
+    
+    // Security: Verify path is within memory bank directory
+    if (!isPathWithinDirectory(filePath, mbPath)) {
+      console.warn(`[MemoryBank] Path traversal attempt blocked: ${filename}`);
+      return null;
+    }
     
     try {
       const stats = await fs.stat(filePath);
       const content = await fs.readFile(filePath, 'utf-8');
       
       return {
-        name: filename,
+        name: safeFilename,
         content,
         lastUpdated: stats.mtime,
         size: stats.size
@@ -330,17 +374,31 @@ ${projectDescription}
   /**
    * Update or create a memory file
    */
-  async updateFile(projectId: number, filename: string, content: string): Promise<MemoryBankFile> {
+  async updateFile(projectId: number, filename: string, content: string): Promise<MemoryBankFile | null> {
+    // Security: Sanitize filename to prevent path traversal
+    const safeFilename = sanitizeFilename(filename);
+    if (!safeFilename) {
+      console.warn(`[MemoryBank] Rejected unsafe filename for update: ${filename}`);
+      return null;
+    }
+    
     const mbPath = this.getMemoryBankPath(projectId);
     
     // Ensure directory exists
     await fs.mkdir(mbPath, { recursive: true });
     
-    const filePath = path.join(mbPath, filename);
+    const filePath = path.join(mbPath, safeFilename);
+    
+    // Security: Verify path is within memory bank directory
+    if (!isPathWithinDirectory(filePath, mbPath)) {
+      console.warn(`[MemoryBank] Path traversal attempt blocked on update: ${filename}`);
+      return null;
+    }
+    
     await fs.writeFile(filePath, content, 'utf-8');
     
     const file: MemoryBankFile = {
-      name: filename,
+      name: safeFilename,
       content,
       lastUpdated: new Date(),
       size: Buffer.byteLength(content, 'utf-8')
@@ -350,7 +408,7 @@ ${projectDescription}
     this.memoryCache.delete(projectId);
     
     this.emit('fileUpdated', { projectId, file });
-    console.log(`[MemoryBank] Updated ${filename} for project ${projectId}`);
+    console.log(`[MemoryBank] Updated ${safeFilename} for project ${projectId}`);
     
     return file;
   }
@@ -359,13 +417,26 @@ ${projectDescription}
    * Delete a memory file
    */
   async deleteFile(projectId: number, filename: string): Promise<boolean> {
+    // Security: Sanitize filename to prevent path traversal
+    const safeFilename = sanitizeFilename(filename);
+    if (!safeFilename) {
+      console.warn(`[MemoryBank] Rejected unsafe filename for delete: ${filename}`);
+      return false;
+    }
+    
     const mbPath = this.getMemoryBankPath(projectId);
-    const filePath = path.join(mbPath, filename);
+    const filePath = path.join(mbPath, safeFilename);
+    
+    // Security: Verify path is within memory bank directory
+    if (!isPathWithinDirectory(filePath, mbPath)) {
+      console.warn(`[MemoryBank] Path traversal attempt blocked on delete: ${filename}`);
+      return false;
+    }
     
     try {
       await fs.unlink(filePath);
       this.memoryCache.delete(projectId);
-      this.emit('fileDeleted', { projectId, filename });
+      this.emit('fileDeleted', { projectId, filename: safeFilename });
       return true;
     } catch {
       return false;
