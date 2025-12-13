@@ -12,9 +12,11 @@ import { ProjectContextProvider } from '../agent/project-context';
 import { truncateContext } from '../agent/context-manager';
 import { memoryMCP } from '../mcp/servers/memory-mcp';
 import { memoryBankService } from '../services/memory-bank.service';
+import { workspaceSnapshotService } from '../services/workspace-snapshot.service';
 import { db } from '../db';
 import { agentSessions } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
+import * as path from 'path';
 
 // Create logger instance
 const logger = winston.createLogger({
@@ -520,16 +522,50 @@ ${historyItems}
     
     // ============================================================
     // AUTO-CHECKPOINT - Create checkpoint after successful AI response
+    // Captures actual file content for restore functionality
     // ============================================================
     if (projectId && agentMode === 'build') {
       try {
         const { checkpointService } = await import('../services/checkpoint.service');
-        await checkpointService.createCheckpoint(Number(projectId), {
+        const projectIdNum = Number(projectId);
+        
+        // Compute project base path (follows pattern used in checkpoint-restore.service.ts)
+        const projectBasePath = path.join(process.cwd(), 'projects', String(projectIdNum));
+        
+        // Capture actual file state from the project directory
+        const snapshot = await workspaceSnapshotService.captureFileState(
+          projectBasePath,
+          projectIdNum,
+          { includeHidden: false } // Skip hidden files like .git
+        );
+        
+        // Build filesSnapshot metadata for the checkpoint record
+        const filesSnapshot: Record<string, { hash: string; size: number }> = {};
+        for (const file of snapshot.files) {
+          filesSnapshot[file.path] = { hash: file.hash, size: file.size };
+        }
+        
+        // Create the checkpoint record with metadata
+        const checkpoint = await checkpointService.createCheckpoint(projectIdNum, {
           type: 'auto',
           triggerSource: 'ai_response',
-          aiSummary: 'AI interaction checkpoint',
+          aiSummary: `AI build checkpoint - ${snapshot.totalFiles} files captured`,
+          filesSnapshot,
         });
-        logger.info(`[Checkpoint] Auto-created checkpoint for project ${projectId}`);
+        
+        // Store actual file content in autoCheckpointFiles table for restore
+        if (snapshot.files.length > 0) {
+          const filesToStore = snapshot.files.map(file => ({
+            filePath: file.path,
+            fileHash: file.hash,
+            fileContent: file.content,
+          }));
+          
+          await checkpointService.addCheckpointFiles(checkpoint.id, filesToStore);
+          logger.info(`[Checkpoint] Stored ${filesToStore.length} files for checkpoint ${checkpoint.id}`);
+        }
+        
+        logger.info(`[Checkpoint] Auto-created checkpoint ${checkpoint.id} for project ${projectId} with ${snapshot.totalFiles} files`);
       } catch (cpError: any) {
         logger.warn(`[Checkpoint] Failed to create auto-checkpoint: ${cpError.message}`);
       }
