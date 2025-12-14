@@ -422,6 +422,9 @@ export function ReplitAgentPanelV3({
     setStoreMessages(conversationId, newMessages);
   }, [conversationId, messages, setStoreMessages]);
   const [input, setInput] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [isWorking, setIsWorking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isPendingResponse, setIsPendingResponse] = useState(false); // True when waiting for first AI response chunk
@@ -781,6 +784,103 @@ export function ReplitAgentPanelV3({
     setAutonomySessionId(null);
     setAgentMode('build');
   };
+
+  // Handler for file attachment button click
+  const handleAttachmentClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  // Handler for file selection
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      toast({
+        title: "File Attachment",
+        description: "File attachment coming soon. This feature is under development.",
+      });
+      // Reset the input so the same file can be selected again
+      e.target.value = '';
+    }
+  }, [toast]);
+
+  // Handler for voice input button click
+  const handleVoiceClick = useCallback(() => {
+    // Check for Web Speech API support
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      toast({
+        title: "Voice Input Not Supported",
+        description: "Voice input is not supported in this browser. Please try Chrome or Edge.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (isRecording) {
+      // Stop recording
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      }
+      setIsRecording(false);
+      return;
+    }
+
+    // Start recording
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsRecording(true);
+      toast({
+        title: "Listening...",
+        description: "Speak now. Click the mic button again to stop.",
+      });
+    };
+
+    recognition.onresult = (event: any) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      // Append transcript to input
+      setInput(prev => prev + (prev ? ' ' : '') + transcript);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      setIsRecording(false);
+      recognitionRef.current = null;
+      if (event.error !== 'aborted') {
+        toast({
+          title: "Voice Input Error",
+          description: `Error: ${event.error}. Please try again.`,
+          variant: "destructive"
+        });
+      }
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  }, [isRecording, toast]);
+
+  // Cleanup speech recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      }
+    };
+  }, []);
 
   // Auto-scroll to bottom using instant scroll for reliability
   useEffect(() => {
@@ -1803,6 +1903,22 @@ export function ReplitAgentPanelV3({
           lastSyncedAt={conversationId ? getLastSyncedAt(conversationId) : undefined}
         />
         
+        {/* Effort-based Pricing Display - OUTSIDE ScrollArea to prevent virtualization issues */}
+        {/* ✅ FIX (Dec 14, 2025): Moved outside ScrollArea so panel stays open on conversation changes */}
+        <AnimatePresence>
+          {showPricing && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="px-3 sm:px-4 py-2 border-b border-border/50"
+              data-testid="pricing-panel"
+            >
+              <EffortPricingDisplay projectId={projectIdNum} onClose={() => setShowPricing(false)} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
         <ScrollArea ref={scrollRef} className="flex-1 min-h-0 px-3 sm:px-4 py-3">
           <div className="space-y-4 sm:space-y-5">
           {/* Memory Bank Inline Card - Replit-style: appears at top of chat */}
@@ -1811,21 +1927,6 @@ export function ReplitAgentPanelV3({
             compact={true}
             className="mb-2"
           />
-          
-          {/* Effort-based Pricing Display - Replit Agent 3 checkpoint cost tracking */}
-          <AnimatePresence>
-            {showPricing && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-4"
-                data-testid="pricing-panel"
-              >
-                <EffortPricingDisplay projectId={projectIdNum} onClose={() => setShowPricing(false)} />
-              </motion.div>
-            )}
-          </AnimatePresence>
           
           {/* Checkpoints Panel with Rollback UI */}
           <AnimatePresence>
@@ -1993,6 +2094,16 @@ export function ReplitAgentPanelV3({
           
           {/* Chat input with inline toolbar - Replit-style with attachment/voice/send */}
           <div className="relative">
+            {/* Hidden file input for attachment button */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              multiple
+              accept="image/*,.pdf,.txt,.md,.json,.js,.ts,.jsx,.tsx,.py,.html,.css"
+              data-testid="input-file-hidden"
+            />
             <Textarea
               ref={textareaRef}
               value={input}
@@ -2020,6 +2131,7 @@ export function ReplitAgentPanelV3({
                     <Button
                       variant="ghost"
                       size="icon"
+                      onClick={handleAttachmentClick}
                       className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50"
                       data-testid="button-attach"
                       title="Attach file"
@@ -2039,15 +2151,21 @@ export function ReplitAgentPanelV3({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      onClick={handleVoiceClick}
+                      className={cn(
+                        "h-7 w-7 rounded-lg transition-all duration-200",
+                        isRecording 
+                          ? "text-red-500 bg-red-500/10 hover:bg-red-500/20 animate-pulse" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      )}
                       data-testid="button-voice"
-                      title="Voice input"
+                      title={isRecording ? "Stop recording" : "Voice input"}
                     >
                       <Mic className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    <p>Voice input</p>
+                    <p>{isRecording ? "Stop recording" : "Voice input"}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

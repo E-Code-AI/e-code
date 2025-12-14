@@ -10,8 +10,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronRight, CheckCircle2, Clock, Code2,
   Sparkles, Plus, Github, BookMarked, FileText,
-  Loader2, Sun, Moon, Sunrise, Coffee, Search, Edit, Play, ArrowLeft
+  Loader2, Sun, Moon, Sunrise, Coffee, Search, Edit, Play, ArrowLeft,
+  Zap, Calendar
 } from 'lucide-react';
+import { SiSlack, SiTelegram } from 'react-icons/si';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { ECodeLoading } from '@/components/ECodeLoading';
@@ -166,6 +168,33 @@ export default function Dashboard() {
     setAiPrompt('');
   };
 
+  const agentsAutomations = [
+    {
+      icon: SiSlack,
+      title: 'Slack Bot',
+      description: 'Build a Slack bot',
+      action: () => navigate('/templates?category=slack')
+    },
+    {
+      icon: SiTelegram,
+      title: 'Telegram Bot',
+      description: 'Build a Telegram bot',
+      action: () => navigate('/templates?category=telegram')
+    },
+    {
+      icon: Zap,
+      title: 'Automations',
+      description: 'Automate workflows',
+      action: () => navigate('/templates?category=automation')
+    },
+    {
+      icon: Calendar,
+      title: 'Meeting Prep',
+      description: 'AI meeting assistant',
+      action: () => navigate('/templates?category=meeting')
+    },
+  ];
+
   const quickActions = [
     {
       icon: Plus,
@@ -284,6 +313,35 @@ export default function Dashboard() {
             </form>
           </div>
         </motion.div>
+
+        {/* Agents & Automations Section */}
+        <div>
+          <h2 className="text-lg font-semibold mb-4 text-[var(--ecode-text)]">Agents & Automations</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {agentsAutomations.map((item, index) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.3 }}
+              >
+                <Card
+                  className="cursor-pointer group border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[var(--ecode-accent)]/30 hover:shadow-[0_4px_16px_-4px_rgba(var(--ecode-accent-rgb,242,98,7),0.15)] transition-all duration-200"
+                  onClick={item.action}
+                  data-testid={`agent-${item.title.toLowerCase().replace(/\s/g, '-')}`}
+                >
+                  <CardContent className="p-6 flex flex-col items-center text-center">
+                    <div className="p-3 rounded-xl bg-[var(--ecode-accent)]/10 group-hover:bg-[var(--ecode-accent)]/15 transition-colors mb-3">
+                      <item.icon className="h-6 w-6 text-[var(--ecode-accent)]" />
+                    </div>
+                    <h3 className="font-medium text-sm mb-1 text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors">{item.title}</h3>
+                    <p className="text-xs text-[var(--ecode-text-muted)] hidden md:block">{item.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
 
         {/* Quick Actions - E-Code Styled */}
         <div>
