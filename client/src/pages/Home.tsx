@@ -36,7 +36,12 @@ import {
   Copy, 
   Lock, 
   Globe,
-  Sparkles
+  Sparkles,
+  Bot,
+  Timer,
+  MessageSquare,
+  Zap,
+  ArrowRight
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -260,6 +265,107 @@ export default function Home() {
                   AI Assistant
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Agents & Automations Section - Replit Agent 3 Parity */}
+        <div className="border-b bg-muted/30 py-6 px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Bot className="h-5 w-5 text-primary" />
+                <h2 className="text-lg font-semibold">Agents & Automations</h2>
+                <Badge variant="secondary" className="text-[10px]">New</Badge>
+              </div>
+              <Button variant="ghost" size="sm" className="text-xs" data-testid="view-all-agents">
+                View all <ArrowRight className="h-3 w-3 ml-1" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <Card 
+                className="cursor-pointer hover:border-primary/50 transition-colors group"
+                onClick={() => setSearchQuery("Create a Slack bot that answers questions about my codebase, searches documentation, and helps team members find information")}
+                data-testid="agent-template-slack"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                      <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-sm">Slack Agent</h3>
+                      <p className="text-[11px] text-muted-foreground">Q&A, research, codebase help</p>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground group-hover:text-primary transition-colors">
+                    Click to build →
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className="cursor-pointer hover:border-primary/50 transition-colors group"
+                onClick={() => setSearchQuery("Build a Telegram bot for customer service with appointment scheduling, FAQ responses, and calendar integration")}
+                data-testid="agent-template-telegram"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                      <Bot className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-sm">Telegram Bot</h3>
+                      <p className="text-[11px] text-muted-foreground">Support, scheduling, FAQs</p>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground group-hover:text-primary transition-colors">
+                    Click to build →
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className="cursor-pointer hover:border-primary/50 transition-colors group"
+                onClick={() => setSearchQuery("Create a timed automation that sends daily email summaries from Linear issues, with AI-powered analysis and priority recommendations")}
+                data-testid="agent-template-automation"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                      <Timer className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-sm">Timed Automation</h3>
+                      <p className="text-[11px] text-muted-foreground">Scheduled workflows, reports</p>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground group-hover:text-primary transition-colors">
+                    Click to build →
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className="cursor-pointer hover:border-primary/50 transition-colors group"
+                onClick={() => setSearchQuery("Build a meeting prep automation that searches the web for attendee info, summarizes with AI, and saves notes to Google Drive before each meeting")}
+                data-testid="agent-template-meeting"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                      <Zap className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-sm">Meeting Prep</h3>
+                      <p className="text-[11px] text-muted-foreground">Web research, AI summaries</p>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground group-hover:text-primary transition-colors">
+                    Click to build →
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

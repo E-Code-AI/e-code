@@ -5,10 +5,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown, Hammer, MessageSquare, Pencil } from 'lucide-react';
+import { ChevronDown, Hammer, MessageSquare, Pencil, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type AgentMode = 'plan' | 'build' | 'edit';
+export type AgentMode = 'plan' | 'build' | 'edit' | 'fast';
 
 interface ModeSelectorProps {
   mode: AgentMode;
@@ -39,6 +39,14 @@ export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
       icon: Pencil,
       description: 'Targeted changes to specific files',
       color: 'purple'
+    },
+    {
+      id: 'fast' as const,
+      label: 'Fast',
+      icon: Zap,
+      description: 'Quick, precise changes in seconds',
+      badge: 'Speed',
+      color: 'amber'
     }
   ];
 
@@ -70,6 +78,14 @@ export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
         text: "text-purple-600 dark:text-purple-400",
         dot: "bg-purple-500",
         badge: "bg-purple-500"
+      },
+      amber: {
+        trigger: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950/50",
+        bg: "bg-amber-50 dark:bg-amber-950/30",
+        icon: "bg-amber-100 dark:bg-amber-900/50",
+        text: "text-amber-600 dark:text-amber-400",
+        dot: "bg-amber-500",
+        badge: "bg-amber-500"
       }
     };
     return colors[color]?.[type] || colors.blue[type];
