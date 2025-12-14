@@ -4,15 +4,20 @@ import {
   agentWorkflows,
   agentSessions,
   agentAuditTrail,
+  autoCheckpoints,
+  autoCheckpointFiles,
   type AgentWorkflow,
   type InsertAgentWorkflow,
-  type AgentSession
+  type AgentSession,
+  type InsertAutoCheckpoint,
+  type InsertAutoCheckpointFile
 } from '@shared/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { agentFileOperations } from './agent-file-operations.service';
 import { agentCommandExecution } from './agent-command-execution.service';
 import { agentToolFramework } from './agent-tool-framework.service';
 import { OpenAI } from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { createLogger } from '../utils/logger';
 import { redisIdempotency } from './redis-idempotency.service';
 
@@ -86,6 +91,7 @@ export interface WorkflowState {
   completedSteps: string[];
   failedSteps: string[];
   currentStepIndex: number;
+  modifiedFiles: string[];
 }
 
 // Workflow execution event
@@ -112,6 +118,7 @@ const DEFAULT_STEP_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 export class AgentWorkflowEngineService extends EventEmitter {
   private activeWorkflows: Map<string, { workflow: AgentWorkflow; state: WorkflowState }> = new Map();
   private openai: OpenAI;
+  private anthropic: Anthropic;
   private circuitBreaker: CircuitBreakerState = {
     failures: 0,
     lastFailureTime: 0,
@@ -124,6 +131,9 @@ export class AgentWorkflowEngineService extends EventEmitter {
     super();
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
+    });
+    this.anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY
     });
   }
 
@@ -203,7 +213,8 @@ export class AgentWorkflowEngineService extends EventEmitter {
         errors: {},
         completedSteps: [],
         failedSteps: [],
-        currentStepIndex: 0
+        currentStepIndex: 0,
+        modifiedFiles: []
       };
       
       this.activeWorkflows.set(workflow.id, { workflow, state });
@@ -786,39 +797,53 @@ export class AgentWorkflowEngineService extends EventEmitter {
     
     const { operation, path, content } = this.resolveVariables(effectiveConfig, state);
     
+    let result: any;
+    
     switch (operation) {
       case 'read':
-        return await agentFileOperations.readFile(
+        result = await agentFileOperations.readFile(
           context.sessionId,
           path,
           context.userId
         );
+        break;
       
       case 'write':
-        return await agentFileOperations.createOrUpdateFile(
+        result = await agentFileOperations.createOrUpdateFile(
           context.sessionId,
           path,
           content,
           context.userId
         );
+        if (path && !state.modifiedFiles.includes(path)) {
+          state.modifiedFiles.push(path);
+        }
+        break;
       
       case 'delete':
-        return await agentFileOperations.deleteFile(
+        result = await agentFileOperations.deleteFile(
           context.sessionId,
           path,
           context.userId
         );
+        if (path && !state.modifiedFiles.includes(path)) {
+          state.modifiedFiles.push(path);
+        }
+        break;
       
       case 'list':
-        return await agentFileOperations.listDirectory(
+        result = await agentFileOperations.listDirectory(
           context.sessionId,
           path,
           config.recursive
         );
+        break;
       
       default:
         throw new Error(`Unknown file operation: ${operation}`);
     }
+    
+    return result;
   }
 
   // Execute command step
@@ -1145,21 +1170,58 @@ export class AgentWorkflowEngineService extends EventEmitter {
     return false;
   }
 
-  // Create checkpoint
+  // Generate AI summary for checkpoint using Anthropic
+  private async generateCheckpointSummary(
+    completedSteps: string[],
+    modifiedFiles: string[]
+  ): Promise<string> {
+    try {
+      const stepsDescription = completedSteps.length > 0 
+        ? `Completed steps: ${completedSteps.join(', ')}`
+        : 'No steps completed yet';
+      
+      const filesDescription = modifiedFiles.length > 0
+        ? `Modified files: ${modifiedFiles.join(', ')}`
+        : 'No files modified';
+
+      const message = await this.anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 150,
+        messages: [{
+          role: 'user',
+          content: `Generate a brief summary (max 100 words) of this workflow checkpoint. Be concise and technical.\n\n${stepsDescription}\n${filesDescription}`
+        }]
+      });
+
+      const textContent = message.content.find(block => block.type === 'text');
+      return textContent?.text || 'Workflow checkpoint created';
+    } catch (error) {
+      logger.warn('[WorkflowEngine] Failed to generate AI summary for checkpoint', { error });
+      return `Checkpoint: ${completedSteps.length} steps completed, ${modifiedFiles.length} files modified`;
+    }
+  }
+
+  // Create checkpoint with auto_checkpoints integration
   private async createCheckpoint(
     workflowId: string,
     state: WorkflowState
   ): Promise<void> {
-    const checkpoints = await db.select()
-      .from(agentWorkflows)
-      .where(eq(agentWorkflows.id, workflowId));
-    
-    if (checkpoints.length > 0) {
-      const workflow = checkpoints[0];
+    try {
+      const [workflow] = await db.select()
+        .from(agentWorkflows)
+        .where(eq(agentWorkflows.id, workflowId));
+      
+      if (!workflow) {
+        logger.warn(`[WorkflowEngine] Workflow not found for checkpoint: ${workflowId}`);
+        return;
+      }
+
+      // 1. Keep existing functionality - store in agentWorkflows.checkpoints
       const currentCheckpoints = workflow.checkpoints || [];
+      const checkpointStepId = state.completedSteps[state.completedSteps.length - 1];
       
       currentCheckpoints.push({
-        stepId: state.completedSteps[state.completedSteps.length - 1],
+        stepId: checkpointStepId,
         timestamp: new Date().toISOString(),
         state: JSON.parse(JSON.stringify(state))
       });
@@ -1167,7 +1229,79 @@ export class AgentWorkflowEngineService extends EventEmitter {
       await db.update(agentWorkflows)
         .set({ checkpoints: currentCheckpoints })
         .where(eq(agentWorkflows.id, workflowId));
-      
+
+      // 2. Create record in autoCheckpoints table
+      const projectId = workflow.projectId;
+      if (!projectId) {
+        logger.warn(`[WorkflowEngine] No projectId found for workflow ${workflowId}, skipping autoCheckpoints`);
+        this.emitEvent({
+          type: 'checkpoint_created',
+          workflowId,
+          progress: (state.completedSteps.length / state.completedSteps.length) * 100
+        });
+        return;
+      }
+
+      // Generate AI summary
+      const aiSummary = await this.generateCheckpointSummary(
+        state.completedSteps,
+        state.modifiedFiles || []
+      );
+
+      // Build files snapshot from modified files
+      const filesSnapshot: Record<string, { hash: string; size: number }> = {};
+      for (const filePath of (state.modifiedFiles || [])) {
+        filesSnapshot[filePath] = {
+          hash: `sha256:${Date.now()}`, // Placeholder hash - could be computed from actual content
+          size: 0 // Size would come from actual file
+        };
+      }
+
+      // Insert into autoCheckpoints
+      const [autoCheckpoint] = await db.insert(autoCheckpoints)
+        .values({
+          projectId,
+          type: 'auto',
+          triggerSource: 'workflow_step',
+          status: 'complete',
+          aiSummary,
+          includesDatabase: false,
+          filesSnapshot
+        } as InsertAutoCheckpoint)
+        .returning();
+
+      // 3. Store file paths in autoCheckpointFiles
+      const modifiedFiles = state.modifiedFiles || [];
+      if (modifiedFiles.length > 0 && autoCheckpoint) {
+        const fileRecords: InsertAutoCheckpointFile[] = modifiedFiles.map(filePath => ({
+          checkpointId: autoCheckpoint.id,
+          filePath,
+          fileHash: null,
+          fileContent: null,
+          diffFromPrevious: null
+        }));
+
+        await db.insert(autoCheckpointFiles)
+          .values(fileRecords);
+
+        logger.info(`[WorkflowEngine] Stored ${fileRecords.length} files in autoCheckpointFiles for checkpoint ${autoCheckpoint.id}`);
+      }
+
+      // Clear modifiedFiles for next checkpoint
+      state.modifiedFiles = [];
+
+      // 4. Emit checkpoint_created event with the new checkpointId
+      this.emitEvent({
+        type: 'checkpoint_created',
+        workflowId,
+        stepId: autoCheckpoint?.id?.toString(),
+        progress: (state.completedSteps.length / state.completedSteps.length) * 100
+      });
+
+      logger.info(`[WorkflowEngine] Checkpoint created: workflow=${workflowId}, autoCheckpoint=${autoCheckpoint?.id}`);
+    } catch (error) {
+      logger.error('[WorkflowEngine] Failed to create checkpoint', { workflowId, error });
+      // Still emit event even if autoCheckpoint creation fails
       this.emitEvent({
         type: 'checkpoint_created',
         workflowId,
