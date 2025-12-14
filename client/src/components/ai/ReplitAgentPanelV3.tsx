@@ -1822,7 +1822,7 @@ export function ReplitAgentPanelV3({
                 className="mb-4"
                 data-testid="pricing-panel"
               >
-                <EffortPricingDisplay projectId={projectIdNum} />
+                <EffortPricingDisplay projectId={projectIdNum} onClose={() => setShowPricing(false)} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -1951,47 +1951,36 @@ export function ReplitAgentPanelV3({
       {/* Input area */}
       <div className="p-4 border-t border-border">
         <div className="space-y-2">
-          {/* Mode selector and Element Editor row - above input like Replit */}
-          {/* Show loading state during bootstrap until conversationId is set */}
-          {isBootstrapping && !conversationId && (
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-24 bg-muted/50 rounded animate-pulse" />
-                <span className="hidden sm:inline text-[10px] text-muted-foreground">
-                  Initializing agent...
-                </span>
-              </div>
+          {/* Mode selector and Element Editor row - always visible like Replit Agent 3 */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <ModeSelector 
+                mode={agentMode} 
+                onChange={handleModeChange}
+              />
+              <span className="hidden sm:inline text-[10px] text-muted-foreground">
+                {isBootstrapping && !conversationId && "Initializing agent..."}
+                {(!isBootstrapping || conversationId) && agentMode === 'build' && "Agent will autonomously make changes"}
+                {(!isBootstrapping || conversationId) && agentMode === 'plan' && "Agent will brainstorm without changes"}
+                {(!isBootstrapping || conversationId) && agentMode === 'edit' && "Targeted changes to specific files"}
+                {(!isBootstrapping || conversationId) && agentMode === 'fast' && "Quick, precise changes in seconds"}
+              </span>
             </div>
-          )}
-          {conversationId && (
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <ModeSelector 
-                  mode={agentMode} 
-                  onChange={handleModeChange}
-                />
-                <span className="hidden sm:inline text-[10px] text-muted-foreground">
-                  {agentMode === 'build' && "Agent will autonomously make changes"}
-                  {agentMode === 'plan' && "Agent will brainstorm without changes"}
-                  {agentMode === 'edit' && "Targeted changes to specific files"}
-                </span>
-              </div>
-              
-              {/* Element Editor toggle - Replit Nov 2025 feature */}
-              <div className="relative">
-                <ElementEditor
-                  isActive={elementEditorActive}
-                  onToggle={() => setElementEditorActive(!elementEditorActive)}
-                  selectedElement={selectedElement}
-                  onSave={handleElementSave}
-                  onCancel={() => {
-                    setSelectedElement(null);
-                    setElementEditorActive(false);
-                  }}
-                />
-              </div>
+            
+            {/* Element Editor toggle - Replit Nov 2025 feature */}
+            <div className="relative">
+              <ElementEditor
+                isActive={elementEditorActive}
+                onToggle={() => setElementEditorActive(!elementEditorActive)}
+                selectedElement={selectedElement}
+                onSave={handleElementSave}
+                onCancel={() => {
+                  setSelectedElement(null);
+                  setElementEditorActive(false);
+                }}
+              />
             </div>
-          )}
+          </div>
           
           {/* Max Autonomy Progress - shown when toggle is on */}
           {agentToolsSettings.maxAutonomy && autonomySessionId && (
