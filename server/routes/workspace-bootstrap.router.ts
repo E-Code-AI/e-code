@@ -273,8 +273,11 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
       await db.update(agentSessions)
         .set({
           context: {
-            ...(session.context || {}),
+            files: session.context?.files || [],
+            currentFile: session.context?.currentFile,
             workingDirectory: scaffoldPath,
+            environment: session.context?.environment || {},
+            capabilities: session.context?.capabilities || [],
             projectId: project.id
           }
         })
@@ -436,12 +439,19 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
           await db.update(agentSessions)
             .set({
               context: {
-                ...(session.context || {}),
+                files: session.context?.files || [],
+                currentFile: session.context?.currentFile,
+                workingDirectory: session.context?.workingDirectory || scaffoldPath,
+                environment: session.context?.environment || {},
+                capabilities: session.context?.capabilities || [],
+                projectId: session.context?.projectId || project.id,
                 viewportValidation: {
                   success: validationResult.success,
                   score: validationResult.overallScore,
                   issues: validationResult.issues,
-                  testedAt: validationResult.testedAt
+                  testedAt: typeof validationResult.testedAt === 'string' 
+                    ? validationResult.testedAt 
+                    : new Date(validationResult.testedAt).toISOString()
                 }
               }
             })

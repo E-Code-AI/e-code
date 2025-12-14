@@ -33,6 +33,7 @@ export interface ViewportResult {
   height: number;
   success: boolean;
   screenshot?: string;
+  videoPath?: string;
   loadTimeMs?: number;
   jsErrors: string[];
   consoleErrors: string[];
@@ -45,6 +46,14 @@ export interface ViewportValidationResult {
   viewports: ViewportResult[];
   overallScore: number;
   issues: string[];
+  videoPaths?: string[];
+}
+
+export interface ValidationOptions {
+  timeout?: number;
+  waitForSelector?: string;
+  recordVideo?: boolean;
+  videoDir?: string;
 }
 
 const REQUIRED_VIEWPORTS: ViewportConfig[] = [
@@ -59,9 +68,11 @@ type Page = any;
 export class ViewportValidationService {
   private browser: Browser | null = null;
   private screenshotDir: string;
+  private videoDir: string;
 
   constructor() {
     this.screenshotDir = path.join(os.tmpdir(), 'viewport-validation-screenshots');
+    this.videoDir = path.join(os.tmpdir(), 'viewport-validation-videos');
   }
 
   async initialize(): Promise<void> {
@@ -79,6 +90,7 @@ export class ViewportValidationService {
       }
 
       await fs.mkdir(this.screenshotDir, { recursive: true });
+      await fs.mkdir(this.videoDir, { recursive: true });
     } catch (error) {
       logger.error('Failed to initialize ViewportValidationService:', error);
     }
@@ -86,12 +98,14 @@ export class ViewportValidationService {
 
   async validateViewports(
     url: string,
-    options: { timeout?: number; waitForSelector?: string } = {}
+    options: ValidationOptions = {}
   ): Promise<ViewportValidationResult> {
     const startTime = Date.now();
     const timeout = options.timeout || 30000;
+    const recordVideo = options.recordVideo ?? true;
     const issues: string[] = [];
     const viewportResults: ViewportResult[] = [];
+    const videoPaths: string[] = [];
 
     if (!this.browser) {
       await this.initialize();
@@ -115,11 +129,15 @@ export class ViewportValidationService {
       };
     }
 
-    logger.info(`Starting viewport validation for ${url} across ${REQUIRED_VIEWPORTS.length} viewports`);
+    logger.info(`Starting viewport validation for ${url} across ${REQUIRED_VIEWPORTS.length} viewports${recordVideo ? ' with video recording' : ''}`);
 
     for (const viewport of REQUIRED_VIEWPORTS) {
-      const result = await this.testViewport(url, viewport, timeout, options.waitForSelector);
+      const result = await this.testViewport(url, viewport, timeout, options.waitForSelector, recordVideo);
       viewportResults.push(result);
+
+      if (result.videoPath) {
+        videoPaths.push(result.videoPath);
+      }
 
       if (!result.success) {
         issues.push(`[${viewport.name}] ${result.jsErrors.join('; ') || result.consoleErrors.join('; ') || 'Failed to load'}`);
@@ -131,7 +149,7 @@ export class ViewportValidationService {
     const success = overallScore === 100;
 
     const totalTime = Date.now() - startTime;
-    logger.info(`Viewport validation complete in ${totalTime}ms. Score: ${overallScore}%, Success: ${success}`);
+    logger.info(`Viewport validation complete in ${totalTime}ms. Score: ${overallScore}%, Success: ${success}${videoPaths.length > 0 ? `, Videos: ${videoPaths.length}` : ''}`);
 
     return {
       success,
@@ -139,7 +157,8 @@ export class ViewportValidationService {
       url,
       viewports: viewportResults,
       overallScore,
-      issues
+      issues,
+      videoPaths: videoPaths.length > 0 ? videoPaths : undefined
     };
   }
 
@@ -147,18 +166,18 @@ export class ViewportValidationService {
     url: string,
     viewport: ViewportConfig,
     timeout: number,
-    waitForSelector?: string
+    waitForSelector?: string,
+    recordVideo: boolean = false
   ): Promise<ViewportResult> {
     const startTime = Date.now();
     const jsErrors: string[] = [];
     const consoleErrors: string[] = [];
     let screenshot: string | undefined;
+    let videoPath: string | undefined;
     let context: any = null;
     let page: Page | null = null;
 
     try {
-      // ✅ FIX (Dec 14, 2025): Use Playwright's browser.newContext() instead of page.emulate()
-      // Playwright doesn't have page.emulate() - that's Puppeteer-only API
       const contextOptions: any = {
         viewport: { width: viewport.width, height: viewport.height }
       };
@@ -167,6 +186,13 @@ export class ViewportValidationService {
         contextOptions.userAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1';
         contextOptions.hasTouch = true;
         contextOptions.isMobile = true;
+      }
+      
+      if (recordVideo) {
+        contextOptions.recordVideo = {
+          dir: this.videoDir,
+          size: { width: viewport.width, height: viewport.height }
+        };
       }
       
       context = await this.browser!.newContext(contextOptions);
@@ -208,7 +234,19 @@ export class ViewportValidationService {
 
       const loadTimeMs = Date.now() - startTime;
 
-      logger.debug(`Viewport ${viewport.name} (${viewport.width}x${viewport.height}) validated successfully in ${loadTimeMs}ms`);
+      if (recordVideo && page) {
+        try {
+          const video = page.video();
+          if (video) {
+            videoPath = await video.path();
+            logger.debug(`Video recorded for ${viewport.name}: ${videoPath}`);
+          }
+        } catch (e) {
+          logger.warn(`Failed to get video path for ${viewport.name}:`, e);
+        }
+      }
+
+      logger.debug(`Viewport ${viewport.name} (${viewport.width}x${viewport.height}) validated successfully in ${loadTimeMs}ms${videoPath ? ' with video' : ''}`);
 
       return {
         viewport: viewport.name,
@@ -216,6 +254,7 @@ export class ViewportValidationService {
         height: viewport.height,
         success: jsErrors.length === 0 && consoleErrors.length === 0,
         screenshot,
+        videoPath,
         loadTimeMs,
         jsErrors,
         consoleErrors

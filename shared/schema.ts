@@ -2272,6 +2272,13 @@ export const agentSessions = pgTable('agent_sessions', {
     workingDirectory: string;
     environment: Record<string, string>;
     capabilities: string[];
+    projectId?: number;
+    viewportValidation?: {
+      success: boolean;
+      score: number;
+      issues: string[];
+      testedAt: string;
+    };
   }>(),
   isActive: boolean('is_active').default(true),
   totalTokensUsed: integer('total_tokens_used').default(0),
