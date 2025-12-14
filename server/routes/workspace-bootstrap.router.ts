@@ -32,6 +32,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { redisIdempotency } from '../services/redis-idempotency.service';
 import { speculativeScaffold } from '../services/speculative-scaffold.service';
+import { ViewportValidationService } from '../services/viewport-validation.service';
 import * as path from 'path';
 
 const logger = createLogger('workspace-bootstrap');
@@ -371,6 +372,90 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
           }
         } catch (buildError: any) {
           logger.warn(`[Bootstrap] Build verification warning: ${buildError.message}`);
+        }
+        
+        // ✅ Task 3 (Dec 14, 2025): Cross-format viewport validation
+        try {
+          logger.info(`[Bootstrap] Running viewport validation across mobile/tablet/desktop`);
+          const viewportValidator = new ViewportValidationService();
+          
+          // Start dev server for validation on port 3099
+          const { spawn } = require('child_process');
+          const http = require('http');
+          const validationPort = 3099;
+          
+          // Spawn with explicit port argument for Vite
+          const devServer = spawn('npx', ['vite', '--port', String(validationPort), '--host', '0.0.0.0'], { 
+            cwd: scaffoldPath,
+            stdio: 'pipe',
+            env: { ...process.env }
+          });
+          
+          // Wait for server to be ready with health check polling
+          const maxWaitMs = 30000;
+          const pollIntervalMs = 500;
+          let serverReady = false;
+          const startWait = Date.now();
+          
+          while (Date.now() - startWait < maxWaitMs && !serverReady) {
+            try {
+              await new Promise<void>((resolve, reject) => {
+                const req = http.get(`http://localhost:${validationPort}`, (res: any) => {
+                  if (res.statusCode && res.statusCode < 500) {
+                    serverReady = true;
+                  }
+                  res.resume();
+                  resolve();
+                });
+                req.on('error', () => resolve());
+                req.setTimeout(1000, () => { req.destroy(); resolve(); });
+              });
+            } catch (e) { /* ignore connection errors during startup */ }
+            
+            if (!serverReady) {
+              await new Promise(r => setTimeout(r, pollIntervalMs));
+            }
+          }
+          
+          if (!serverReady) {
+            devServer.kill('SIGTERM');
+            throw new Error('Dev server failed to start within 30 seconds');
+          }
+          
+          logger.info(`[Bootstrap] Dev server ready on port ${validationPort}, running viewport tests`);
+          
+          // Run viewport validation
+          const validationResult = await viewportValidator.validateViewports(`http://localhost:${validationPort}`, {
+            timeout: 30000
+          });
+          
+          // Kill dev server
+          devServer.kill('SIGTERM');
+          
+          // Store validation results in session context
+          await db.update(agentSessions)
+            .set({
+              context: {
+                ...(session.context || {}),
+                viewportValidation: {
+                  success: validationResult.success,
+                  score: validationResult.overallScore,
+                  issues: validationResult.issues,
+                  testedAt: validationResult.testedAt
+                }
+              }
+            })
+            .where(eq(agentSessions.id, session.id));
+          
+          if (validationResult.success) {
+            logger.info(`[Bootstrap] ✅ Viewport validation passed: ${validationResult.overallScore}% score`);
+          } else {
+            logger.error(`[Bootstrap] ❌ Viewport validation FAILED: ${validationResult.issues.join(', ')}`);
+            // Log as error but don't block bootstrap - the issues are recorded for review
+          }
+            
+        } catch (viewportError: any) {
+          logger.error(`[Bootstrap] Viewport validation error: ${viewportError.message}`);
         }
       } catch (installError: any) {
         logger.warn(`[Bootstrap] npm install warning: ${installError.message}`);
