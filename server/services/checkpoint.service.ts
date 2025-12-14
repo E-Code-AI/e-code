@@ -268,6 +268,107 @@ export class CheckpointService extends EventEmitter {
   }
 
   /**
+   * Update checkpoint with database and conversation snapshot
+   * 
+   * Note: dbSnapshotPath is stored in filesSnapshot under reserved key '__db_snapshot__'
+   * to persist the path location for restore operations without schema changes.
+   */
+  async updateCheckpointData(
+    id: number,
+    data: {
+      includesDatabase?: boolean;
+      conversationSnapshot?: Array<{ role: string; content: string; timestamp?: string }>;
+      aiSummary?: string;
+      dbSnapshotPath?: string;
+      conversationId?: number;
+    }
+  ): Promise<AutoCheckpoint | null> {
+    // Build update data
+    const updatePayload: Record<string, any> = {};
+    
+    if (data.includesDatabase !== undefined) {
+      updatePayload.includesDatabase = data.includesDatabase;
+    }
+    if (data.conversationSnapshot !== undefined) {
+      updatePayload.conversationSnapshot = data.conversationSnapshot;
+    }
+    if (data.aiSummary !== undefined) {
+      updatePayload.aiSummary = data.aiSummary;
+    }
+    
+    // If dbSnapshotPath or conversationId provided, merge into filesSnapshot
+    // Using reserved keys to store metadata without schema changes
+    if (data.dbSnapshotPath || data.conversationId) {
+      const [existing] = await db
+        .select({ filesSnapshot: autoCheckpoints.filesSnapshot })
+        .from(autoCheckpoints)
+        .where(eq(autoCheckpoints.id, id))
+        .limit(1);
+      
+      const currentSnapshot = (existing?.filesSnapshot as Record<string, any>) || {};
+      
+      // Store metadata under reserved keys
+      if (data.dbSnapshotPath) {
+        currentSnapshot['__db_snapshot__'] = { 
+          path: data.dbSnapshotPath,
+          hash: 'db_dump',
+          size: 0 
+        };
+      }
+      if (data.conversationId) {
+        currentSnapshot['__conversation_id__'] = {
+          id: data.conversationId,
+          hash: 'conv_meta',
+          size: 0
+        };
+      }
+      
+      updatePayload.filesSnapshot = currentSnapshot;
+    }
+    
+    if (Object.keys(updatePayload).length === 0) {
+      return this.getCheckpoint(id);
+    }
+    
+    const [updated] = await db
+      .update(autoCheckpoints)
+      .set(updatePayload)
+      .where(eq(autoCheckpoints.id, id))
+      .returning();
+
+    if (updated) {
+      console.log(`[CheckpointService] Updated checkpoint ${id} with database=${data.includesDatabase}, conversation=${!!data.conversationSnapshot}, dbPath=${!!data.dbSnapshotPath}`);
+    }
+
+    return updated || null;
+  }
+
+  /**
+   * Get database snapshot path from checkpoint metadata
+   * Returns the stored path or computes default path if not stored
+   */
+  getDbSnapshotPath(checkpoint: AutoCheckpoint): string {
+    const filesSnapshot = checkpoint.filesSnapshot as Record<string, any> | undefined;
+    const dbMeta = filesSnapshot?.['__db_snapshot__'];
+    
+    if (dbMeta?.path) {
+      return dbMeta.path;
+    }
+    
+    // Fallback to default computed path for backwards compatibility
+    return `${process.cwd()}/.checkpoints/${checkpoint.id}/database.sql`;
+  }
+
+  /**
+   * Get conversation ID from checkpoint metadata (if stored)
+   */
+  getCheckpointConversationId(checkpoint: AutoCheckpoint): number | undefined {
+    const filesSnapshot = checkpoint.filesSnapshot as Record<string, any> | undefined;
+    const convMeta = filesSnapshot?.['__conversation_id__'];
+    return convMeta?.id;
+  }
+
+  /**
    * Get the latest checkpoint for a project
    */
   async getLatestCheckpoint(projectId: number): Promise<AutoCheckpoint | null> {
