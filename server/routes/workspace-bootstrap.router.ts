@@ -31,6 +31,8 @@ import { getJwtSecret } from '../utils/secrets-manager';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { redisIdempotency } from '../services/redis-idempotency.service';
+import { speculativeScaffold } from '../services/speculative-scaffold.service';
+import * as path from 'path';
 
 const logger = createLogger('workspace-bootstrap');
 const router = Router();
@@ -247,6 +249,44 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     );
     
     logger.info(`[Bootstrap] Agent session created: ${session.id}`, { sessionId: session.id, modelId });
+    
+    // 4.5 ✅ FIX (Dec 14, 2025): Call speculative scaffold to create project structure
+    // This ensures files are generated in projects/${projectId} BEFORE validation runs
+    const scaffoldPath = path.join(process.cwd(), 'projects', String(project.id));
+    try {
+      const scaffoldResult = await speculativeScaffold.createScaffold({
+        projectId: String(project.id),
+        language: options.language,
+        framework: options.framework,
+        prompt: prompt,
+        projectName: projectName
+      });
+      
+      logger.info(`[Bootstrap] ✅ Scaffold created in ${scaffoldResult.durationMs}ms`, {
+        projectId: project.id,
+        filesCreated: scaffoldResult.filesCreated.length,
+        framework: scaffoldResult.framework
+      });
+      
+      // Update session context with the correct working directory
+      await db.update(agentSessions)
+        .set({
+          context: {
+            ...(session.context || {}),
+            workingDirectory: scaffoldPath,
+            projectId: project.id
+          }
+        })
+        .where(eq(agentSessions.id, session.id));
+      
+      logger.info(`[Bootstrap] ✅ Session context updated with workingDirectory: ${scaffoldPath}`);
+    } catch (scaffoldError: any) {
+      // Log but don't fail - scaffold can be regenerated during workflow
+      logger.warn(`[Bootstrap] Scaffold creation warning: ${scaffoldError.message}`, {
+        projectId: project.id,
+        error: scaffoldError.message
+      });
+    }
     
     // 5. Setup WebSocket streaming
     // WebSocket service is already initialized on server startup
