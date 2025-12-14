@@ -86,6 +86,8 @@ import {
   StreamingSkeleton, 
   ConversationSyncIndicator 
 } from './EnhancedChatMessage';
+import { Progress } from '@/components/ui/progress';
+import { Package, Hammer, Smartphone, CheckCircle2, XCircle } from 'lucide-react';
 
 interface ToolExecution {
   id: string;
@@ -111,6 +113,106 @@ type WorkflowPhase =
   | 'mvp_complete'
   | 'extended_build'
   | 'complete';
+
+type ValidationStep = 'idle' | 'post_validation' | 'installing_deps' | 'deps_complete' | 'deps_failed' | 'verifying_build' | 'build_complete' | 'build_failed' | 'running_qa' | 'qa_complete';
+
+interface BuildValidationProgressProps {
+  currentStep: ValidationStep;
+  depsResult?: { success: boolean; installed: number; failed: number; total: number };
+  buildResult?: { success: boolean; errorCount: number; warningCount: number };
+  qaResult?: { score: number; passedTests: number; totalTests: number };
+}
+
+function BuildValidationProgress({ currentStep, depsResult, buildResult, qaResult }: BuildValidationProgressProps) {
+  if (currentStep === 'idle') return null;
+
+  const steps = [
+    { key: 'deps', label: 'Dependencies', icon: Package },
+    { key: 'build', label: 'Build', icon: Hammer },
+    { key: 'qa', label: 'QA', icon: Smartphone },
+  ];
+
+  const getStepStatus = (stepKey: string) => {
+    switch (stepKey) {
+      case 'deps':
+        if (currentStep === 'installing_deps') return 'active';
+        if (currentStep === 'deps_complete') return 'success';
+        if (currentStep === 'deps_failed') return 'error';
+        if (['verifying_build', 'build_complete', 'build_failed', 'running_qa', 'qa_complete'].includes(currentStep)) return depsResult?.success !== false ? 'success' : 'error';
+        return 'pending';
+      case 'build':
+        if (currentStep === 'verifying_build') return 'active';
+        if (currentStep === 'build_complete') return 'success';
+        if (currentStep === 'build_failed') return 'error';
+        if (['running_qa', 'qa_complete'].includes(currentStep)) return buildResult?.success !== false ? 'success' : 'error';
+        return 'pending';
+      case 'qa':
+        if (currentStep === 'running_qa') return 'active';
+        if (currentStep === 'qa_complete') return qaResult && qaResult.score >= 0.8 ? 'success' : qaResult && qaResult.score >= 0.5 ? 'warning' : 'error';
+        return 'pending';
+      default:
+        return 'pending';
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      className="bg-muted/50 rounded-lg p-3 mb-3 border border-border/50"
+      data-testid="build-validation-progress"
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+        <span className="text-sm font-medium">Post-Build Validation</span>
+      </div>
+      
+      <div className="flex items-center gap-2">
+        {steps.map((step, idx) => {
+          const status = getStepStatus(step.key);
+          const Icon = step.icon;
+          
+          return (
+            <div key={step.key} className="flex items-center">
+              <div className={cn(
+                "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs",
+                status === 'active' && "bg-primary/20 text-primary",
+                status === 'success' && "bg-green-500/20 text-green-600 dark:text-green-400",
+                status === 'error' && "bg-red-500/20 text-red-600 dark:text-red-400",
+                status === 'warning' && "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400",
+                status === 'pending' && "bg-muted text-muted-foreground"
+              )}>
+                {status === 'active' ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : status === 'success' ? (
+                  <CheckCircle2 className="h-3 w-3" />
+                ) : status === 'error' ? (
+                  <XCircle className="h-3 w-3" />
+                ) : (
+                  <Icon className="h-3 w-3" />
+                )}
+                <span>{step.label}</span>
+                {step.key === 'qa' && status !== 'pending' && status !== 'active' && qaResult && (
+                  <span className="font-medium">{Math.round(qaResult.score * 100)}%</span>
+                )}
+              </div>
+              {idx < steps.length - 1 && (
+                <div className="w-4 h-px bg-border mx-1" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      
+      {qaResult && currentStep === 'qa_complete' && (
+        <div className="mt-2 text-xs text-muted-foreground">
+          {qaResult.passedTests}/{qaResult.totalTests} responsive tests passed
+        </div>
+      )}
+    </motion.div>
+  );
+}
 
 
 interface AgentCapability {
@@ -374,6 +476,12 @@ export function ReplitAgentPanelV3({
   const [selectedElement, setSelectedElement] = useState<ElementSelection | null>(null);
   const [videoReplayCount, setVideoReplayCount] = useState(0);
   
+  // Build/Install/QA validation progress state (Task 6)
+  const [validationStep, setValidationStep] = useState<ValidationStep>('idle');
+  const [depsResult, setDepsResult] = useState<{ success: boolean; installed: number; failed: number; total: number } | undefined>();
+  const [buildResult, setBuildResult] = useState<{ success: boolean; errorCount: number; warningCount: number } | undefined>();
+  const [qaResult, setQaResult] = useState<{ score: number; passedTests: number; totalTests: number } | undefined>();
+  
   // RAG (Retrieval-Augmented Generation) state
   const [ragEnabled, setRagEnabled] = useState(true);
   const [showRAGContext, setShowRAGContext] = useState(false);
@@ -381,6 +489,41 @@ export function ReplitAgentPanelV3({
   
   // Memory Bank status for persistent project context
   const { data: memoryBankStatus } = useMemoryBankStatus(projectIdNum);
+  
+  // Derive validation step from autonomousBuildStore current task (Task 6)
+  useEffect(() => {
+    const currentTask = autonomousBuildStore.currentTask?.toLowerCase() || '';
+    const phase = autonomousBuildStore.phase;
+    
+    if (currentTask.includes('post-build validation') || currentTask.includes('running post-build')) {
+      setValidationStep('post_validation');
+    } else if (currentTask.includes('installing dependencies')) {
+      setValidationStep('installing_deps');
+    } else if (currentTask.includes('dependencies installed successfully')) {
+      setValidationStep('deps_complete');
+      setDepsResult({ success: true, installed: 0, failed: 0, total: 0 });
+    } else if (currentTask.includes('dependencies failed')) {
+      setValidationStep('deps_failed');
+      setDepsResult({ success: false, installed: 0, failed: 1, total: 1 });
+    } else if (currentTask.includes('verifying build')) {
+      setValidationStep('verifying_build');
+    } else if (currentTask.includes('build verified')) {
+      setValidationStep('build_complete');
+      setBuildResult({ success: true, errorCount: 0, warningCount: 0 });
+    } else if (currentTask.includes('build failed')) {
+      setValidationStep('build_failed');
+      setBuildResult({ success: false, errorCount: 1, warningCount: 0 });
+    } else if (currentTask.includes('running responsive qa') || currentTask.includes('responsive qa tests')) {
+      setValidationStep('running_qa');
+    } else if (currentTask.includes('qa score')) {
+      setValidationStep('qa_complete');
+      const match = currentTask.match(/(\d+)%/);
+      const score = match ? parseInt(match[1]) / 100 : 0.8;
+      setQaResult({ score, passedTests: Math.round(score * 5), totalTests: 5 });
+    } else if (phase === 'complete' && validationStep !== 'idle') {
+      setTimeout(() => setValidationStep('idle'), 5000);
+    }
+  }, [autonomousBuildStore.currentTask, autonomousBuildStore.phase, validationStep]);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -1609,6 +1752,18 @@ export function ReplitAgentPanelV3({
             compact={true}
             className="mb-2"
           />
+          
+          {/* Build/Install/QA Validation Progress (Task 6) */}
+          <AnimatePresence>
+            {validationStep !== 'idle' && (
+              <BuildValidationProgress
+                currentStep={validationStep}
+                depsResult={depsResult}
+                buildResult={buildResult}
+                qaResult={qaResult}
+              />
+            )}
+          </AnimatePresence>
           
           <AnimatePresence mode="popLayout">
           {messages.map((message) => (

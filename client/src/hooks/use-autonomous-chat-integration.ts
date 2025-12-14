@@ -15,7 +15,7 @@ import type { Message, AutonomousWorkspacePayload, AutonomousBuildTask } from '@
 import type { AutonomousBuildPhase } from '@/stores/autonomousBuildStore';
 
 interface AutonomousProgressEvent {
-  type: 'planning' | 'plan_ready' | 'awaiting_approval' | 'executing' | 'step_update' | 'complete' | 'error' | 'connected' | 'status' | 'plan_chunk' | 'plan_generated' | 'task_start' | 'task_progress' | 'task_complete' | 'step' | 'summary' | 'file_created' | 'command_output' | 'agent_message' | 'step_start' | 'step_complete' | 'checkpoint_created' | 'autonomous_timeline_event' | 'autonomous_checkpoint' | 'autonomous_task_list' | 'autonomous_preview' | 'autonomous_file_operation';
+  type: 'planning' | 'plan_ready' | 'awaiting_approval' | 'executing' | 'step_update' | 'complete' | 'error' | 'connected' | 'status' | 'plan_chunk' | 'plan_generated' | 'task_start' | 'task_progress' | 'task_complete' | 'step' | 'summary' | 'file_created' | 'command_output' | 'agent_message' | 'step_start' | 'step_complete' | 'checkpoint_created' | 'autonomous_timeline_event' | 'autonomous_checkpoint' | 'autonomous_task_list' | 'autonomous_preview' | 'autonomous_file_operation' | 'post_validation_start' | 'install_dependencies_start' | 'install_dependencies_complete' | 'verify_build_start' | 'verify_build_complete' | 'responsive_qa_start' | 'responsive_qa_complete';
   projectId?: number;
   sessionId?: string;
   status?: string;
@@ -116,6 +116,28 @@ interface AutonomousProgressEvent {
     linesRemoved?: number;
   };
   timestamp?: string;
+  success?: boolean;
+  dependencies?: {
+    installed: string[];
+    failed: string[];
+    total: number;
+  };
+  buildResult?: {
+    success: boolean;
+    errors?: string[];
+    warnings?: string[];
+  };
+  qaResult?: {
+    score: number;
+    breakpoints: {
+      name: string;
+      width: number;
+      passed: boolean;
+      issues?: string[];
+    }[];
+    totalTests: number;
+    passedTests: number;
+  };
 }
 
 interface UseAutonomousChatIntegrationOptions {
@@ -624,6 +646,147 @@ export function useAutonomousChatIntegration({
           addMessage(conversationId, msg);
         }
         lastMessageIdRef.current = null;
+        break;
+      }
+
+      // Post-build validation events (Task 6: Build/Install/QA progress indicators)
+      case 'post_validation_start': {
+        store.setCurrentTask('Running post-build validation...');
+        store.setPhase('finalizing');
+        
+        const msg = createAutonomousMessage(
+          'autonomous_working',
+          '🔍 Running post-build validation...',
+          { phase: 'executing', progress: store.progress }
+        );
+        addMessage(conversationId, msg);
+        lastMessageIdRef.current = msg.id;
+        console.log('[AutonomousChatIntegration] ✅ Post-validation started');
+        break;
+      }
+
+      case 'install_dependencies_start': {
+        store.setCurrentTask('Installing dependencies...');
+        
+        const msg = createAutonomousMessage(
+          'autonomous_working',
+          '📦 Installing dependencies...',
+          { phase: 'executing', progress: store.progress }
+        );
+        addMessage(conversationId, msg);
+        lastMessageIdRef.current = msg.id;
+        console.log('[AutonomousChatIntegration] ✅ Dependency installation started');
+        break;
+      }
+
+      case 'install_dependencies_complete': {
+        const deps = event.dependencies;
+        const success = event.success !== false && (!deps || deps.failed.length === 0);
+        const statusIcon = success ? '✅' : '⚠️';
+        const statusText = success 
+          ? `${statusIcon} Dependencies installed successfully${deps ? ` (${deps.installed.length}/${deps.total})` : ''}`
+          : `${statusIcon} Some dependencies failed to install${deps ? ` (${deps.failed.length} failed)` : ''}`;
+        
+        store.setCurrentTask(statusText);
+        
+        if (lastMessageIdRef.current) {
+          updateMessage(conversationId, lastMessageIdRef.current, {
+            content: statusText,
+            isStreaming: false
+          });
+        }
+        console.log('[AutonomousChatIntegration] ✅ Dependency installation complete:', { success, deps });
+        break;
+      }
+
+      case 'verify_build_start': {
+        store.setCurrentTask('Verifying build...');
+        
+        const msg = createAutonomousMessage(
+          'autonomous_working',
+          '🔨 Verifying build...',
+          { phase: 'executing', progress: store.progress }
+        );
+        addMessage(conversationId, msg);
+        lastMessageIdRef.current = msg.id;
+        console.log('[AutonomousChatIntegration] ✅ Build verification started');
+        break;
+      }
+
+      case 'verify_build_complete': {
+        const result = event.buildResult;
+        const success = event.success !== false && (!result || result.success);
+        const statusIcon = success ? '✅' : '❌';
+        let statusText = success 
+          ? `${statusIcon} Build verified successfully`
+          : `${statusIcon} Build verification failed`;
+        
+        if (result?.errors?.length) {
+          statusText += `\n\nErrors:\n${result.errors.slice(0, 3).map(e => `• ${e}`).join('\n')}`;
+        }
+        if (result?.warnings?.length) {
+          statusText += `\n\nWarnings: ${result.warnings.length}`;
+        }
+        
+        store.setCurrentTask(success ? 'Build verified' : 'Build failed');
+        
+        if (lastMessageIdRef.current) {
+          updateMessage(conversationId, lastMessageIdRef.current, {
+            content: statusText,
+            isStreaming: false,
+            status: success ? undefined : 'error'
+          });
+        }
+        console.log('[AutonomousChatIntegration] ✅ Build verification complete:', { success, result });
+        break;
+      }
+
+      case 'responsive_qa_start': {
+        store.setCurrentTask('Running responsive QA...');
+        
+        const msg = createAutonomousMessage(
+          'autonomous_working',
+          '📱 Running responsive QA tests...',
+          { phase: 'executing', progress: store.progress }
+        );
+        addMessage(conversationId, msg);
+        lastMessageIdRef.current = msg.id;
+        console.log('[AutonomousChatIntegration] ✅ Responsive QA started');
+        break;
+      }
+
+      case 'responsive_qa_complete': {
+        const qa = event.qaResult;
+        const score = qa?.score ?? 0;
+        const scorePercent = Math.round(score * 100);
+        const scoreIcon = scorePercent >= 80 ? '🟢' : scorePercent >= 50 ? '🟡' : '🔴';
+        
+        let statusText = `${scoreIcon} Responsive QA Score: ${scorePercent}%`;
+        if (qa?.passedTests !== undefined && qa?.totalTests !== undefined) {
+          statusText += ` (${qa.passedTests}/${qa.totalTests} tests passed)`;
+        }
+        
+        if (qa?.breakpoints?.length) {
+          statusText += '\n\n**Breakpoint Results:**\n';
+          statusText += qa.breakpoints.map(bp => {
+            const icon = bp.passed ? '✅' : '❌';
+            let line = `${icon} ${bp.name} (${bp.width}px)`;
+            if (!bp.passed && bp.issues?.length) {
+              line += `: ${bp.issues[0]}`;
+            }
+            return line;
+          }).join('\n');
+        }
+        
+        store.setCurrentTask(`QA Score: ${scorePercent}%`);
+        
+        if (lastMessageIdRef.current) {
+          updateMessage(conversationId, lastMessageIdRef.current, {
+            content: statusText,
+            isStreaming: false
+          });
+        }
+        console.log('[AutonomousChatIntegration] ✅ Responsive QA complete:', { score: scorePercent, qa });
         break;
       }
 
