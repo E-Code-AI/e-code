@@ -135,7 +135,53 @@ router.get('/url', ensureAuthenticated, async (req, res) => {
   }
 });
 
-// Live preview for HTML/CSS/JS projects
+// Live preview for HTML/CSS/JS projects - root path (serves index.html)
+// Note: This route handles /api/preview/projects/:id/preview and /api/preview/projects/:id/preview/
+router.get('/projects/:id/preview/', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    
+    // Get all project files
+    const files = await storage.getFilesByProject(projectId);
+    
+    // Find index.html as default
+    const indexFile = files.find(f => f.name === 'index.html' && !f.isDirectory);
+    if (indexFile) {
+      // Handle empty or existing content
+      const content = indexFile.content ?? '';
+      if (!content) {
+        // Empty file, just serve it as-is
+        res.type('html').send('');
+        return;
+      }
+      const modifiedContent = content.replace(
+        /<head>/i,
+        `<head>
+        <base href="/api/preview/projects/${projectId}/preview/">
+        <script>
+          // Handle relative imports for JS modules
+          const originalFetch = window.fetch;
+          window.fetch = function(url, ...args) {
+            if (typeof url === 'string' && !url.startsWith('http') && !url.startsWith('/api')) {
+              url = '/api/preview/projects/${projectId}/preview/' + url;
+            }
+            return originalFetch(url, ...args);
+          };
+        </script>`
+      );
+      res.type('html').send(modifiedContent);
+      return;
+    }
+    
+    // No index.html found, return 404
+    return res.status(404).send('No index.html found in project');
+  } catch (error) {
+    console.error('Error serving preview root:', error);
+    res.status(500).send('Failed to serve preview');
+  }
+});
+
+// Live preview for HTML/CSS/JS projects - specific files
 // Note: This route handles /api/preview/projects/:id/preview/:filepath
 router.get('/projects/:id/preview/:filepath(*)', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
