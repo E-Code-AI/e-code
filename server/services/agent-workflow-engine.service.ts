@@ -1161,7 +1161,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
     });
 
     try {
-      const depResult = await installDependencies(projectPath);
+      const depResult = await installDependencies(projectPath, { frozen: false });
       results.dependencies = {
         success: depResult.success,
         packagesInstalled: depResult.packagesInstalled,

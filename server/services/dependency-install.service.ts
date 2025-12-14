@@ -172,8 +172,11 @@ export class DependencyInstallService extends EventEmitter {
 
     switch (packageManager) {
       case 'npm':
-        args.push('install');
-        if (options.frozen) args.push('--frozen-lockfile');
+        if (options.frozen) {
+          args.push('ci');
+        } else {
+          args.push('install');
+        }
         if (options.silent) args.push('--silent');
         if (options.production) args.push('--production');
         args.push('--no-fund', '--no-audit');
