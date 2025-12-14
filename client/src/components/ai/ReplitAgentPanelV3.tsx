@@ -79,7 +79,9 @@ import { VideoReplayViewer } from './VideoReplayViewer';
 import { ECodeLogo } from '@/components/ECodeLogo';
 import { RAGToggle, RAGStatsDisplay, RetrievedContextPanel, useRAGStats } from './RAGControls';
 import { MemoryBankPanel, MemoryBankStatusBadge, useMemoryBankStatus } from './MemoryBankPanel';
-import { History, X, MousePointer2, Coins, Database, Volume2, VolumeX } from 'lucide-react';
+import { EffortPricingDisplay } from '@/components/EffortPricingDisplay';
+import { CheckpointsPanel } from '@/components/CheckpointsPanel';
+import { History, X, MousePointer2, Coins, Database, Volume2, VolumeX, DollarSign, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   EnhancedChatMessage, 
@@ -451,6 +453,8 @@ export function ReplitAgentPanelV3({
   
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [videoReplayViewerOpen, setVideoReplayViewerOpen] = useState(false);
+  const [showPricing, setShowPricing] = useState(false);
+  const [showCheckpoints, setShowCheckpoints] = useState(false);
   
   // Agent Tools Panel settings (Replit Agent 3 exact toggles)
   // Use external settings if provided (lifted state pattern), otherwise use internal state
@@ -1702,6 +1706,42 @@ export function ReplitAgentPanelV3({
             {/* Usage Tracking - Replit Agent 3 style credits icon */}
             <UsageTrackingIcon />
 
+            {/* Pricing Display Toggle - Replit Agent 3 effort-based pricing */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={showPricing ? "secondary" : "ghost"}
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setShowPricing(!showPricing)}
+                    data-testid="button-pricing"
+                  >
+                    <DollarSign className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Session pricing</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Checkpoints & Rollback Toggle */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={showCheckpoints ? "secondary" : "ghost"}
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setShowCheckpoints(!showCheckpoints)}
+                    data-testid="button-checkpoints"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Checkpoints & Rollback</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -1752,6 +1792,36 @@ export function ReplitAgentPanelV3({
             compact={true}
             className="mb-2"
           />
+          
+          {/* Effort-based Pricing Display - Replit Agent 3 checkpoint cost tracking */}
+          <AnimatePresence>
+            {showPricing && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-4"
+                data-testid="pricing-panel"
+              >
+                <EffortPricingDisplay projectId={projectIdNum} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          {/* Checkpoints Panel with Rollback UI */}
+          <AnimatePresence>
+            {showCheckpoints && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-4"
+                data-testid="checkpoints-panel"
+              >
+                <CheckpointsPanel projectId={projectIdNum} />
+              </motion.div>
+            )}
+          </AnimatePresence>
           
           {/* Build/Install/QA Validation Progress (Task 6) */}
           <AnimatePresence>
