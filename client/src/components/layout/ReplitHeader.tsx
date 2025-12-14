@@ -394,20 +394,23 @@ export function ReplitHeader() {
         </nav>
       </div>
 
-      <div className="flex-1 max-w-md mx-4 sm:mx-6 hidden lg:block">
-        <Button
-          variant="ghost"
-          className="replit-header-search"
-          onClick={() => setSpotlightOpen(true)}
-        >
-          <Search className="mr-2 h-4 w-4" />
-          <span className="hidden xl:inline">Search or run a command...</span>
-          <span className="xl:hidden">Search...</span>
-          <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-            <span className="text-xs">⌘</span>K
-          </kbd>
-        </Button>
-      </div>
+      {/* Hide search bar in IDE view - the IDE has its own file search */}
+      {!projectId && (
+        <div className="flex-1 max-w-md mx-4 sm:mx-6 hidden lg:block">
+          <Button
+            variant="ghost"
+            className="replit-header-search"
+            onClick={() => setSpotlightOpen(true)}
+          >
+            <Search className="mr-2 h-4 w-4" />
+            <span className="hidden xl:inline">Search or run a command...</span>
+            <span className="xl:hidden">Search...</span>
+            <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+              <span className="text-xs">⌘</span>K
+            </kbd>
+          </Button>
+        </div>
+      )}
 
       <div className="replit-header-controls flex items-center gap-2 md:gap-3">
         <Button
