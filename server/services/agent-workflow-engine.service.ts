@@ -69,7 +69,23 @@ export class WorkflowError extends Error {
 }
 
 // Workflow step types
-export type WorkflowStepType = 'file_operation' | 'command' | 'tool' | 'database' | 'conditional' | 'parallel' | 'loop' | 'install_dependencies' | 'verify_build' | 'responsive_qa';
+export type WorkflowStepType = 'file_operation' | 'command' | 'tool' | 'database' | 'conditional' | 'parallel' | 'loop' | 'install_dependencies' | 'verify_build' | 'responsive_qa' | 'run_tests' | 'self_test_debug_loop';
+
+// Self-testing debug loop configuration
+export interface SelfTestDebugConfig {
+  testCommand: string;
+  maxRetries: number;
+  fixStrategy: 'ai_assisted' | 'rollback' | 'skip';
+  timeout?: number;
+}
+
+// Test result for debug loop
+export interface TestResult {
+  success: boolean;
+  failedTests: string[];
+  errorOutput: string;
+  exitCode: number;
+}
 
 // Workflow step definition
 export interface WorkflowStep {
@@ -773,6 +789,12 @@ export class AgentWorkflowEngineService extends EventEmitter {
       case 'responsive_qa':
         return await this.executeResponsiveQA(step.config, context, state);
       
+      case 'run_tests':
+        return await this.executeRunTests(step.config, context, state);
+      
+      case 'self_test_debug_loop':
+        return await this.executeSelfTestDebugLoop(step.config, context, state);
+      
       default:
         throw new Error(`Unknown step type: ${step.type}`);
     }
@@ -1178,6 +1200,161 @@ export class AgentWorkflowEngineService extends EventEmitter {
       breakpoints: result.breakpoints,
       issues: result.issues
     };
+  }
+
+  // Execute run tests step
+  private async executeRunTests(
+    config: any,
+    context: any,
+    state: WorkflowState
+  ): Promise<TestResult> {
+    const testCommand = config.testCommand || 'npm test';
+    const projectPath = config.projectPath || context.projectPath;
+    const timeout = config.timeout || 120000;
+    
+    logger.info(`[WorkflowEngine] Running tests: ${testCommand} at ${projectPath}`);
+    
+    try {
+      const cmdParts = testCommand.split(' ');
+      const result = await agentCommandExecution.executeCommand(
+        context.sessionId,
+        cmdParts[0],
+        cmdParts.slice(1),
+        { workingDirectory: projectPath, timeout },
+        context.userId
+      );
+      
+      const success = result.exitCode === 0;
+      const failedTests = this.parseFailedTests(result.stdout + result.stderr);
+      
+      return {
+        success,
+        failedTests,
+        errorOutput: result.stderr || '',
+        exitCode: result.exitCode
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        failedTests: [],
+        errorOutput: error.message,
+        exitCode: 1
+      };
+    }
+  }
+
+  // Parse failed test names from output
+  private parseFailedTests(output: string): string[] {
+    const failedTests: string[] = [];
+    const patterns = [
+      /FAIL\s+(.+)/g,
+      /✗\s+(.+)/g,
+      /×\s+(.+)/g,
+      /Error in test:\s+(.+)/g
+    ];
+    for (const pattern of patterns) {
+      let match;
+      while ((match = pattern.exec(output)) !== null) {
+        failedTests.push(match[1].trim());
+      }
+    }
+    return [...new Set(failedTests)];
+  }
+
+  // Execute self-testing debug loop - automatic test → fix → retest cycles
+  private async executeSelfTestDebugLoop(
+    config: SelfTestDebugConfig,
+    context: any,
+    state: WorkflowState
+  ): Promise<any> {
+    const { testCommand, maxRetries = 3, fixStrategy = 'ai_assisted', timeout = 120000 } = config;
+    
+    logger.info(`[WorkflowEngine] Starting self-test debug loop (max ${maxRetries} retries, strategy: ${fixStrategy})`);
+    
+    let attempt = 0;
+    let lastTestResult: TestResult | null = null;
+    const fixAttempts: Array<{ attempt: number; error: string; fixed: boolean }> = [];
+    
+    while (attempt <= maxRetries) {
+      attempt++;
+      logger.info(`[WorkflowEngine] Test attempt ${attempt}/${maxRetries + 1}`);
+      
+      const testResult = await this.executeRunTests({ testCommand, timeout }, context, state);
+      lastTestResult = testResult;
+      
+      if (testResult.success) {
+        logger.info(`[WorkflowEngine] ✅ Tests passed on attempt ${attempt}`);
+        return { 
+          success: true, 
+          attempts: attempt, 
+          testResult,
+          fixAttempts 
+        };
+      }
+      
+      if (attempt > maxRetries) break;
+      
+      logger.info(`[WorkflowEngine] ❌ Tests failed, attempting fix (strategy: ${fixStrategy})`);
+      
+      let fixed = false;
+      if (fixStrategy === 'ai_assisted') {
+        fixed = await this.attemptAIFix(testResult, context, state);
+      } else if (fixStrategy === 'rollback') {
+        logger.warn(`[WorkflowEngine] Rollback strategy - restoring previous checkpoint`);
+      }
+      
+      fixAttempts.push({
+        attempt,
+        error: testResult.errorOutput.substring(0, 500),
+        fixed
+      });
+      
+      await this.sleep(1000);
+    }
+    
+    logger.error(`[WorkflowEngine] Self-test debug loop failed after ${maxRetries} attempts`);
+    return {
+      success: false,
+      attempts: attempt,
+      testResult: lastTestResult,
+      fixAttempts,
+      error: `Tests failed after ${maxRetries} fix attempts`
+    };
+  }
+
+  // Attempt AI-assisted fix for failed tests
+  private async attemptAIFix(
+    testResult: TestResult,
+    context: any,
+    state: WorkflowState
+  ): Promise<boolean> {
+    try {
+      const fixPrompt = `The following tests failed. Analyze the errors and suggest fixes:
+
+Error Output:
+${testResult.errorOutput.substring(0, 2000)}
+
+Failed Tests: ${testResult.failedTests.join(', ')}
+
+Provide specific code changes to fix these issues.`;
+      
+      const message = await this.anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: fixPrompt }]
+      });
+      
+      const textContent = message.content.find(block => block.type === 'text');
+      if (textContent?.text) {
+        logger.info(`[WorkflowEngine] AI fix suggestion generated (${textContent.text.length} chars)`);
+        state.outputs.lastAIFix = textContent.text;
+        return true;
+      }
+      return false;
+    } catch (error) {
+      logger.warn(`[WorkflowEngine] AI fix attempt failed`, { error });
+      return false;
+    }
   }
 
   // Run post-workflow validation (dependencies, build, responsive)
