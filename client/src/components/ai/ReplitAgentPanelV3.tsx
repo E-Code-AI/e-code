@@ -1,4 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+
+// Web Speech API - use 'any' since TypeScript doesn't have built-in types for this browser API
+type SpeechRecognitionInstance = any;
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -425,7 +428,7 @@ export function ReplitAgentPanelV3({
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const [isWorking, setIsWorking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isPendingResponse, setIsPendingResponse] = useState(false); // True when waiting for first AI response chunk
@@ -727,7 +730,8 @@ export function ReplitAgentPanelV3({
       const modeDescriptions: Record<AgentMode, string> = {
         build: "Agent will autonomously make changes",
         plan: "Agent will brainstorm without making code changes",
-        edit: "Targeted changes to specific files with precise control"
+        edit: "Targeted changes to specific files with precise control",
+        fast: "Quick responses with reduced reasoning for speed"
       };
       
       toast({
