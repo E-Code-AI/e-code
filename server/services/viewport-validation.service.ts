@@ -103,9 +103,14 @@ export class ViewportValidationService {
     const startTime = Date.now();
     const timeout = options.timeout || 30000;
     const recordVideo = options.recordVideo ?? true;
+    const videoOutputDir = options.videoDir || this.videoDir;
     const issues: string[] = [];
     const viewportResults: ViewportResult[] = [];
     const videoPaths: string[] = [];
+    
+    if (options.videoDir) {
+      await fs.mkdir(options.videoDir, { recursive: true }).catch(() => {});
+    }
 
     if (!this.browser) {
       await this.initialize();
@@ -132,7 +137,7 @@ export class ViewportValidationService {
     logger.info(`Starting viewport validation for ${url} across ${REQUIRED_VIEWPORTS.length} viewports${recordVideo ? ' with video recording' : ''}`);
 
     for (const viewport of REQUIRED_VIEWPORTS) {
-      const result = await this.testViewport(url, viewport, timeout, options.waitForSelector, recordVideo);
+      const result = await this.testViewport(url, viewport, timeout, options.waitForSelector, recordVideo, videoOutputDir);
       viewportResults.push(result);
 
       if (result.videoPath) {
@@ -167,7 +172,8 @@ export class ViewportValidationService {
     viewport: ViewportConfig,
     timeout: number,
     waitForSelector?: string,
-    recordVideo: boolean = false
+    recordVideo: boolean = false,
+    videoOutputDir?: string
   ): Promise<ViewportResult> {
     const startTime = Date.now();
     const jsErrors: string[] = [];
@@ -190,7 +196,7 @@ export class ViewportValidationService {
       
       if (recordVideo) {
         contextOptions.recordVideo = {
-          dir: this.videoDir,
+          dir: videoOutputDir || this.videoDir,
           size: { width: viewport.width, height: viewport.height }
         };
       }
@@ -359,7 +365,7 @@ const viewportValidationService = new ViewportValidationService();
 
 export async function validateViewports(
   url: string,
-  options?: { timeout?: number; waitForSelector?: string }
+  options?: ValidationOptions
 ): Promise<ViewportValidationResult> {
   return viewportValidationService.validateViewports(url, options);
 }
