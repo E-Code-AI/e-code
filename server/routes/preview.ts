@@ -135,8 +135,13 @@ router.get('/url', ensureAuthenticated, async (req, res) => {
   }
 });
 
+// Redirect non-trailing-slash to trailing-slash for preview root
+router.get('/projects/:id/preview', (req, res) => {
+  res.redirect(301, `/api/preview/projects/${req.params.id}/preview/`);
+});
+
 // Live preview for HTML/CSS/JS projects - root path (serves index.html)
-// Note: This route handles /api/preview/projects/:id/preview and /api/preview/projects/:id/preview/
+// Note: This route handles /api/preview/projects/:id/preview/
 router.get('/projects/:id/preview/', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
     const projectId = req.params.id;
