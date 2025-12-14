@@ -380,6 +380,18 @@ app.get('/api/cors-health', async (_req, res) => {
       console.error('[WORKING SERVER] Failed to setup Deployment WebSocket:', error);
     }
     
+    // Setup Checkpoint WebSocket server for real-time checkpoint notifications (Replit parity)
+    try {
+      const { setupCheckpointWebSocket } = await import("./websocket/checkpoint-ws");
+      const checkpointWss = setupCheckpointWebSocket(httpServer);
+      
+      // Make checkpoint websocket service available globally
+      (global as any).checkpointWebSocketService = checkpointWss;
+      console.log('[Checkpoint WebSocket] Service initialized at /ws/checkpoints');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to setup Checkpoint WebSocket:', error);
+    }
+    
     // Make session store available globally for WebSocket authentication
     (global as any).sessionStore = sessionStore;
     
