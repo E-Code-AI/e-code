@@ -1,6 +1,68 @@
 /* Replit Exact Design System - E-Code Branded */
+/* RUI Design Token System */
 :root {
   color-scheme: light;
+
+  /* ========================================
+   * RUI Design Tokens - Light Mode
+   * Naming: foreground (default/dimmer/dimmest)
+   *         background (root/default/higher/highest)
+   * ======================================== */
+  
+  /* RUI Foreground Colors */
+  --foreground-default: #1A1A1A;
+  --foreground-dimmer: #666666;
+  --foreground-dimmest: #999999;
+  
+  /* RUI Background Colors */
+  --background-root: #FFFFFF;
+  --background-default: #F8F9FA;
+  --background-higher: #F0F1F3;
+  --background-highest: #E5E7EB;
+  
+  /* RUI Accent Colors */
+  --accent-default: #F26207;
+  --accent-dimmer: #D04E00;
+  --accent-dimmest: #FFE4D3;
+  --accent-stronger: #FF7A2B;
+  
+  /* RUI Border Colors */
+  --border-default: #E0E0E0;
+  --border-dimmer: #F0F1F3;
+  --border-stronger: #C1C8CD;
+  
+  /* RUI Status Colors */
+  --status-success: #22C55E;
+  --status-warning: #F59E0B;
+  --status-error: #EF4444;
+  --status-info: #3B82F6;
+  
+  /* RUI Typography */
+  --fontSizeSmall: 12px;
+  --fontSizeDefault: 14px;
+  --fontSizeMedium: 16px;
+  --fontSizeLarge: 18px;
+  --fontSizeXLarge: 24px;
+  
+  /* RUI Spacing */
+  --space4: 4px;
+  --space8: 8px;
+  --space12: 12px;
+  --space16: 16px;
+  --space24: 24px;
+  --space32: 32px;
+  
+  /* RUI Border Radius */
+  --borderRadius4: 4px;
+  --borderRadius8: 8px;
+  --borderRadius12: 12px;
+  --borderRadiusFull: 9999px;
+  
+  /* RUI Shadows */
+  --shadow1: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow2: 0 2px 4px rgba(0, 0, 0, 0.08);
+  --shadow3: 0 4px 8px rgba(0, 0, 0, 0.12);
+  --shadow4: 0 8px 16px rgba(0, 0, 0, 0.16);
 
   /* Design tokens used by the Tailwind theme */
   --background: 0 0% 99%;
@@ -160,6 +222,46 @@
 
 .dark {
   color-scheme: dark;
+
+  /* ========================================
+   * RUI Design Tokens - Dark Mode
+   * Naming: foreground (default/dimmer/dimmest)
+   *         background (root/default/higher/highest)
+   * ======================================== */
+  
+  /* RUI Foreground Colors */
+  --foreground-default: #F5F9FC;
+  --foreground-dimmer: #9BA3B3;
+  --foreground-dimmest: #6B7280;
+  
+  /* RUI Background Colors */
+  --background-root: #0E1525;
+  --background-default: #1C2333;
+  --background-higher: #262C3B;
+  --background-highest: #313744;
+  
+  /* RUI Accent Colors */
+  --accent-default: #F26207;
+  --accent-dimmer: #D04E00;
+  --accent-dimmest: #7C2D12;
+  --accent-stronger: #FF7A2B;
+  
+  /* RUI Border Colors */
+  --border-default: #313744;
+  --border-dimmer: #262C3B;
+  --border-stronger: #3A4358;
+  
+  /* RUI Status Colors */
+  --status-success: #22C55E;
+  --status-warning: #F59E0B;
+  --status-error: #EF4444;
+  --status-info: #3B82F6;
+  
+  /* RUI Shadows (darker for dark mode) */
+  --shadow1: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow2: 0 2px 4px rgba(0, 0, 0, 0.25);
+  --shadow3: 0 4px 8px rgba(0, 0, 0, 0.3);
+  --shadow4: 0 8px 16px rgba(0, 0, 0, 0.35);
 
   --background: 221.7 45.1% 10%;
   --foreground: 205.7 53.8% 97.5%;
