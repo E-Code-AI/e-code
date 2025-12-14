@@ -674,7 +674,12 @@ ${historyItems}
         
         logger.info(`[Checkpoint] Auto-created checkpoint ${checkpoint.id} for project ${projectId} with ${snapshot.totalFiles} files, db=${includesDatabase}, conv=${!!conversationSnapshot}`);
       } catch (cpError: any) {
-        logger.warn(`[Checkpoint] Failed to create auto-checkpoint: ${cpError.message}`);
+        // Handle rate-limited checkpoints silently - this is expected behavior
+        if (cpError.code === 'RATE_LIMITED') {
+          logger.debug(`[Checkpoint] Rate-limited auto-checkpoint for project ${projectId} - skipping silently`);
+        } else {
+          logger.warn(`[Checkpoint] Failed to create auto-checkpoint: ${cpError.message}`);
+        }
       }
     }
     
