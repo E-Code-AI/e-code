@@ -214,7 +214,7 @@ export class ViewportValidationService {
         viewport: viewport.name,
         width: viewport.width,
         height: viewport.height,
-        success: jsErrors.length === 0,
+        success: jsErrors.length === 0 && consoleErrors.length === 0,
         screenshot,
         loadTimeMs,
         jsErrors,
