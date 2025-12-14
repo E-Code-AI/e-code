@@ -182,7 +182,8 @@ export interface Message {
     | 'autonomous_progress' | 'autonomous_complete' | 'autonomous_error' 
     | 'autonomous_file_operation' | 'autonomous_terminal' | 'autonomous_code' 
     | 'autonomous_dependencies' | 'autonomous_action' | 'autonomous_thinking'
-    | 'autonomous_timeline' | 'autonomous_checkpoint' | 'autonomous_task_list' | 'autonomous_preview';
+    | 'autonomous_timeline' | 'autonomous_checkpoint' | 'autonomous_task_list' | 'autonomous_preview'
+    | 'auto_checkpoint_created';
   workflowPhase?: WorkflowPhase;
   workflowPayload?: {
     featureList?: string[];
@@ -198,6 +199,13 @@ export interface Message {
     name: string;
     diff: FileDiff[];
     rollbackAvailable: boolean;
+  };
+  autoCheckpoint?: {
+    id: number;
+    aiSummary?: string;
+    filesCount?: number;
+    createdAt: string;
+    type?: 'auto' | 'manual' | 'milestone';
   };
   metadata?: {
     model?: string;
