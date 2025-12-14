@@ -137,7 +137,26 @@ This is standard React architecture, not duplication.
 ## System Architecture
 
 ### UI/UX Decisions
-The frontend uses Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to iOS Dynamic Color System principles, San Francisco Pro Typography, 8pt Grid Spacing, Apple-quality animation, iOS-style shadows, continuous corners, and appropriate touch targets for a mobile-first experience. The autonomous agent interface is platform-agnostic and responsive, featuring real-time progress tracking. QA instrumentation includes minimum touch targets, comprehensive `data-testid` coverage, and mobile-first grid implementations. Key IDE components like the Activity Bar, Tab Bar, and Status Bar mirror Replit's design, with a Replit-identical 5-tab navigation for mobile, spring-based animations, loading skeletons, and touch enhancements.
+The frontend uses Shadcn/UI with Tailwind CSS and Monaco Editor, implementing the **Replit RUI Design System** with E-Code branding. The design follows mobile-first responsive patterns with appropriate touch targets (44px minimum) and supports light/dark modes.
+
+**RUI Design Token System** (`theme.json`, `client/src/styles/replit-theme.css`):
+- **Colors**: RUI naming convention with semantic layers
+  - Foreground: `default` (#F5F9FC dark, #1A1A1A light), `dimmer`, `dimmest`
+  - Background: `root`, `default`, `higher`, `highest`
+  - Accent: E-Code Orange (#F26207) with `default`, `dimmer`, `dimmest`, `stronger` variants
+  - Status: success (#22C55E), warning (#F59E0B), error (#EF4444), info (#3B82F6)
+- **Typography**: `fontSizeSmall` (12px) to `fontSizeXLarge` (24px)
+- **Spacing**: 4px grid system (`space4` to `space32`)
+- **Border Radius**: `borderRadius4`, `borderRadius8`, `borderRadius12`, `borderRadiusFull`
+- **Shadows**: `shadow1` to `shadow4` with theme-appropriate opacity
+
+**Responsive Breakpoints** (Tailwind standard):
+- `sm:` 640px (tablet portrait)
+- `md:` 768px (tablet landscape)
+- `lg:` 1024px (desktop)
+- `xl:` 1280px (large desktop)
+
+QA instrumentation includes minimum touch targets, comprehensive `data-testid` coverage, and mobile-first grid implementations. Key IDE components like the Activity Bar, Tab Bar, and Status Bar mirror Replit's design, with a Replit-identical 5-tab navigation for mobile, spring-based animations, loading skeletons, and touch enhancements.
 
 ### Technical Implementations
 The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Wouter. The backend is a Node.js/Express.js application in TypeScript, utilizing Drizzle ORM for PostgreSQL and Passport.js for authentication, following a RESTful API design. Real-time features are powered by WebSockets. AI optimization includes a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching (Prompt Caching, Batch API Manager, Provider Latency Monitor), and Observability. Environment variables are AES-256-GCM encrypted, and SSE streaming is used for code generation. Anonymous bootstrap authentication provides ephemeral guest users. AI Agent enhancements include structured XML-based system prompts, a repository overview service, a context window manager with token optimization, a unified AI provider system, and AI-powered inline code actions. A Checkpoints & Rollback System ensures atomic transactions, and a Background Auto-Testing System uses Playwright. Max Autonomy Mode enables extended autonomous sessions with AI task decomposition, auto-execution, ETA estimation, and cost tracking. The platform provides process-based code execution without Docker, leveraging native Nix-managed language runtimes. A centralized Winston-based logging system with correlation IDs and multi-transport support is implemented. The Agent Step Cache system provides database-backed intermediate step caching for agent phases like SPECIFICATION, ARCHITECTURE_PLAN, FILE_LAYOUT, and INITIAL_SCAFFOLD, enabling partial regeneration and cost savings.
