@@ -328,8 +328,12 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
               });
               
               const devCheckResult = await new Promise<{success: boolean, error?: string}>((resolve) => {
+                // ✅ FIX (Dec 14, 2025): Track if WE killed the process vs crash
+                let killedByTimeout = false;
+                
                 const timeout = setTimeout(() => {
                   // Process ran for 5 seconds without crashing - that's a pass
+                  killedByTimeout = true;
                   try {
                     devProcess.kill('SIGTERM');
                   } catch (e) { /* ignore */ }
@@ -341,12 +345,18 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
                   resolve({ success: false, error: err.message });
                 });
                 
-                devProcess.on('exit', (code: number | null) => {
+                devProcess.on('exit', (code: number | null, signal: NodeJS.Signals | null) => {
                   clearTimeout(timeout);
-                  if (code !== null && code !== 0) {
-                    resolve({ success: false, error: `Exited with code ${code}` });
+                  if (killedByTimeout && signal === 'SIGTERM') {
+                    // We killed it after 5s - success
+                    resolve({ success: true });
+                  } else if (code === 0) {
+                    // Clean exit with code 0 - success
+                    resolve({ success: true });
+                  } else {
+                    // Crashed or exited with error
+                    resolve({ success: false, error: signal ? `Crashed with ${signal}` : `Exited with code ${code}` });
                   }
-                  // If code is 0 or null (killed by us), don't resolve - let timeout handle it
                 });
               });
               
