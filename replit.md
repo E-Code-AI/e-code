@@ -30,6 +30,21 @@ Target: 40-60% reduction in time from user description to live application.
 - Tracks per-phase timing: plan generation, workflow execution, session completion
 - Enables bottleneck analysis and optimization targeting
 
+### Frontend Bundle Analysis (Dec 2025)
+Production build completes in ~52s. Key bundle sizes (gzipped):
+- Monaco Editor: 230KB (index-VNtDes-g.js)
+- AG Grid (ConversationHistoryGrid): 162KB
+- CodeMirror languages: 134KB
+- Recharts: 105KB
+- Terminal components: 71KB
+
+**Current optimizations in place:**
+- 100+ routes lazy-loaded via `instrumentedLazy()` and `lazy()`
+- TanStack Query with IndexedDB persistence
+- Service Worker caching for static assets
+
+**Note:** vite.config.ts is protected and cannot be modified. Further chunk optimization would require manual chunks configuration.
+
 ## User Preferences
 - **Communication:** Simple, everyday language
 - **Code Style:** TypeScript with strict typing
