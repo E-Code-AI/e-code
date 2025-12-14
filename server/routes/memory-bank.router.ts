@@ -9,6 +9,18 @@ import { z } from 'zod';
 
 const router = Router();
 
+/**
+ * GET /api/memory-bank
+ * Base route - returns empty data for frontend compatibility
+ */
+router.get('/', async (_req: Request, res: Response) => {
+  res.json({
+    initialized: false,
+    files: [],
+    message: 'No project specified. Use /api/memory-bank/:projectId to access project memory bank.'
+  });
+});
+
 // Validation schemas
 const updateFileSchema = z.object({
   content: z.string().min(1).max(100000) // Max 100KB per file

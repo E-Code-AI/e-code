@@ -181,7 +181,116 @@ router.get('/projects/:id/preview/', ensureAuthenticated, ensureProjectAccess, a
   }
 });
 
+// IMPORTANT: These specific routes MUST come BEFORE the wildcard route below
+// to prevent Express from matching "status", "start", "stop", "switch-port" as filepath
+
+// Get preview status and health
+// Note: This route handles /api/preview/projects/:id/preview/status
+router.get('/projects/:id/preview/status', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    
+    const { previewService } = await import('../preview/preview-service');
+    const preview = previewService.getPreview(projectId);
+    
+    if (!preview) {
+      return res.json({
+        status: 'stopped',
+        message: 'No preview session found'
+      });
+    }
+    
+    res.json({
+      status: preview.status,
+      runId: preview.runId,
+      ports: preview.ports,
+      primaryPort: preview.primaryPort,
+      services: preview.exposedServices,
+      healthChecks: Object.fromEntries(preview.healthChecks),
+      lastHealthCheck: preview.lastHealthCheck,
+      frameworkType: preview.frameworkType,
+      logs: preview.logs.slice(-50)
+    });
+  } catch (error) {
+    console.error('Error getting preview status:', error);
+    res.status(500).json({ error: 'Failed to get preview status' });
+  }
+});
+
+// Start preview server
+// Note: This route handles /api/preview/projects/:id/preview/start
+router.post('/projects/:id/preview/start', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const { runId } = req.body;
+    
+    const { previewService } = await import('../preview/preview-service');
+    const preview = await previewService.startPreview(projectId, runId);
+    
+    res.json({
+      success: true,
+      preview: {
+        runId: preview.runId,
+        status: preview.status,
+        ports: preview.ports,
+        primaryPort: preview.primaryPort,
+        services: preview.exposedServices,
+        frameworkType: preview.frameworkType
+      }
+    });
+  } catch (error) {
+    console.error('Error starting preview:', error);
+    res.status(500).json({ error: 'Failed to start preview server' });
+  }
+});
+
+// Stop preview server
+// Note: This route handles /api/preview/projects/:id/preview/stop
+router.post('/projects/:id/preview/stop', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    
+    const { previewService } = await import('../preview/preview-service');
+    await previewService.stopPreview(projectId);
+    
+    res.json({ success: true, message: 'Preview server stopped' });
+  } catch (error) {
+    console.error('Error stopping preview:', error);
+    res.status(500).json({ error: 'Failed to stop preview server' });
+  }
+});
+
+// Switch preview port
+// Note: This route handles /api/preview/projects/:id/preview/switch-port
+router.post('/projects/:id/preview/switch-port', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const { port } = req.body;
+    
+    if (!port || typeof port !== 'number') {
+      return res.status(400).json({ error: 'Port number is required' });
+    }
+    
+    const { previewService } = await import('../preview/preview-service');
+    const success = await previewService.switchPort(projectId, port);
+    
+    if (success) {
+      res.json({ 
+        success: true, 
+        port,
+        url: previewService.getPreviewUrl(projectId, port)
+      });
+    } else {
+      res.status(400).json({ error: 'Failed to switch to port. Port may not be available or unhealthy.' });
+    }
+  } catch (error) {
+    console.error('Error switching preview port:', error);
+    res.status(500).json({ error: 'Failed to switch preview port' });
+  }
+});
+
 // Live preview for HTML/CSS/JS projects - specific files
+// IMPORTANT: This wildcard route MUST come AFTER the specific routes above
 // Note: This route handles /api/preview/projects/:id/preview/:filepath
 router.get('/projects/:id/preview/:filepath(*)', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
@@ -317,111 +426,6 @@ router.get('/projects/:id/preview-url', ensureAuthenticated, ensureProjectAccess
   } catch (error) {
     console.error('Error getting preview URL:', error);
     res.status(500).json({ error: 'Failed to get preview URL' });
-  }
-});
-
-// Start preview server
-// Note: This route handles /api/preview/projects/:id/preview/start
-router.post('/projects/:id/preview/start', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
-  try {
-    const projectId = req.params.id;
-    const { runId } = req.body;
-    
-    const { previewService } = await import('../preview/preview-service');
-    const preview = await previewService.startPreview(projectId, runId);
-    
-    res.json({
-      success: true,
-      preview: {
-        runId: preview.runId,
-        status: preview.status,
-        ports: preview.ports,
-        primaryPort: preview.primaryPort,
-        services: preview.exposedServices,
-        frameworkType: preview.frameworkType
-      }
-    });
-  } catch (error) {
-    console.error('Error starting preview:', error);
-    res.status(500).json({ error: 'Failed to start preview server' });
-  }
-});
-
-// Stop preview server
-// Note: This route handles /api/preview/projects/:id/preview/stop
-router.post('/projects/:id/preview/stop', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
-  try {
-    const projectId = req.params.id;
-    
-    const { previewService } = await import('../preview/preview-service');
-    await previewService.stopPreview(projectId);
-    
-    res.json({ success: true, message: 'Preview server stopped' });
-  } catch (error) {
-    console.error('Error stopping preview:', error);
-    res.status(500).json({ error: 'Failed to stop preview server' });
-  }
-});
-
-// Switch preview port
-// Note: This route handles /api/preview/projects/:id/preview/switch-port
-router.post('/projects/:id/preview/switch-port', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
-  try {
-    const projectId = req.params.id;
-    const { port } = req.body;
-    
-    if (!port || typeof port !== 'number') {
-      return res.status(400).json({ error: 'Port number is required' });
-    }
-    
-    const { previewService } = await import('../preview/preview-service');
-    const success = await previewService.switchPort(projectId, port);
-    
-    if (success) {
-      res.json({ 
-        success: true, 
-        port,
-        url: previewService.getPreviewUrl(projectId, port)
-      });
-    } else {
-      res.status(400).json({ error: 'Failed to switch to port. Port may not be available or unhealthy.' });
-    }
-  } catch (error) {
-    console.error('Error switching preview port:', error);
-    res.status(500).json({ error: 'Failed to switch preview port' });
-  }
-});
-
-// Get preview status and health
-// Note: This route handles /api/preview/projects/:id/preview/status
-router.get('/projects/:id/preview/status', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
-  try {
-    const projectId = req.params.id;
-    
-    const { previewService } = await import('../preview/preview-service');
-    const preview = previewService.getPreview(projectId);
-    
-    if (!preview) {
-      return res.json({
-        status: 'stopped',
-        message: 'No preview session found'
-      });
-    }
-    
-    res.json({
-      status: preview.status,
-      runId: preview.runId,
-      ports: preview.ports,
-      primaryPort: preview.primaryPort,
-      services: preview.exposedServices,
-      healthChecks: Object.fromEntries(preview.healthChecks),
-      lastHealthCheck: preview.lastHealthCheck,
-      frameworkType: preview.frameworkType,
-      logs: preview.logs.slice(-50) // Return last 50 log lines
-    });
-  } catch (error) {
-    console.error('Error getting preview status:', error);
-    res.status(500).json({ error: 'Failed to get preview status' });
   }
 });
 
