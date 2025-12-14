@@ -110,7 +110,7 @@ export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
           <ChevronDown className="w-3 h-3 opacity-60" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-64">
+      <DropdownMenuContent align="start" className="w-64 z-[60]">
         {modes.map((m) => {
           const Icon = m.icon;
           const isActive = m.id === mode;
