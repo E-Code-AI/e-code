@@ -512,6 +512,7 @@ router.delete('/auto-checkpoints/:id', requireAuth, async (req: Request, res: Re
 
 /**
  * WebSocket setup for real-time checkpoint events
+ * Uses room-scoped broadcasting to ensure events only go to subscribed clients
  */
 export function setupCheckpointWebSocket(io: SocketIOServer) {
   const checkpointNamespace = io.of('/checkpoints');
@@ -519,37 +520,24 @@ export function setupCheckpointWebSocket(io: SocketIOServer) {
   checkpointNamespace.on('connection', (socket) => {
     console.log('[Checkpoint WS] Client connected:', socket.id);
 
-    // Handle restore events from CheckpointRestoreService
-    const handleRestored = (event: {
-      checkpointId: number;
-      projectId: number;
-      restoredFiles: number;
-      restoredDatabase: boolean;
-      restoredConversation: boolean;
-      duration: number;
-    }) => {
-      socket.emit('checkpoint:restored', event);
-    };
-
-    checkpointRestoreService.on('restored', handleRestored);
-
-    socket.on('disconnect', () => {
-      console.log('[Checkpoint WS] Client disconnected:', socket.id);
-      checkpointRestoreService.off('restored', handleRestored);
-    });
-
     // Allow clients to subscribe to specific project checkpoints
     socket.on('subscribe:project', (projectId: number) => {
-      socket.join(`project:${projectId}`);
-      console.log(`[Checkpoint WS] Socket ${socket.id} subscribed to project ${projectId}`);
+      if (typeof projectId === 'number' && projectId > 0) {
+        socket.join(`project:${projectId}`);
+        console.log(`[Checkpoint WS] Socket ${socket.id} subscribed to project ${projectId}`);
+      }
     });
 
     socket.on('unsubscribe:project', (projectId: number) => {
       socket.leave(`project:${projectId}`);
     });
+
+    socket.on('disconnect', () => {
+      console.log('[Checkpoint WS] Client disconnected:', socket.id);
+    });
   });
 
-  // Broadcast restore events to project-specific rooms
+  // Single namespace-level listener for room-scoped broadcasting only
   checkpointRestoreService.on('restored', (event) => {
     checkpointNamespace.to(`project:${event.projectId}`).emit('checkpoint:restored', event);
   });
