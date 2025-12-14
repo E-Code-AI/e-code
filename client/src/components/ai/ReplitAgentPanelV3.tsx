@@ -541,6 +541,8 @@ export function ReplitAgentPanelV3({
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const isUserNearBottomRef = useRef(true);
+  const lastScrollTimeRef = useRef(0);
   const { toast } = useToast();
 
   // Bootstrap conversation on mount
@@ -887,15 +889,58 @@ export function ReplitAgentPanelV3({
     };
   }, []);
 
-  // Auto-scroll to bottom using instant scroll for reliability
+  // ✅ FIX (Dec 14, 2025): Fortune 500-grade scroll behavior
+  // Track if user is near bottom to prevent jumping when user is reading history
+  const checkIfNearBottom = useCallback(() => {
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (scrollContainer) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+      isUserNearBottomRef.current = distanceFromBottom < 150; // Within 150px of bottom
+    }
+  }, []);
+
+  // Attach scroll listener to track user position
   useEffect(() => {
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (scrollContainer) {
+      const handleScroll = () => {
+        lastScrollTimeRef.current = Date.now();
+        checkIfNearBottom();
+      };
+      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, [checkIfNearBottom]);
+
+  // Auto-scroll to bottom - only when user is near bottom and not actively scrolling
+  useEffect(() => {
+    // Don't auto-scroll if user recently scrolled (prevents jumping during manual scroll)
+    const timeSinceLastScroll = Date.now() - lastScrollTimeRef.current;
+    if (timeSinceLastScroll < 100) return;
+
+    // Only auto-scroll if user is near bottom (reading new messages)
+    if (!isUserNearBottomRef.current) return;
+
     if (lastMessageRef.current) {
-      // Use requestAnimationFrame to ensure DOM is updated
+      // Use requestAnimationFrame for smooth rendering
       requestAnimationFrame(() => {
-        lastMessageRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+        lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       });
     }
-  }, [messages, streamingContent, activeThinking]);
+  }, [messages.length]); // Only trigger on new messages, not streaming updates
+
+  // Scroll to bottom on streaming completion (when streaming stops)
+  const prevStreamingRef = useRef(streamingContent);
+  useEffect(() => {
+    // Detect when streaming ends (content was streaming, now stopped)
+    if (prevStreamingRef.current && !streamingContent && isUserNearBottomRef.current) {
+      requestAnimationFrame(() => {
+        lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      });
+    }
+    prevStreamingRef.current = streamingContent;
+  }, [streamingContent]);
 
   // Auto-focus input
   useEffect(() => {
