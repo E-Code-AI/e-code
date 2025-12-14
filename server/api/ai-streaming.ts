@@ -522,11 +522,16 @@ ${historyItems}
     
     // ============================================================
     // AUTO-CHECKPOINT - Create checkpoint after successful AI response
-    // Captures actual file content for restore functionality
+    // Captures actual file content, database snapshot, and conversation history
     // ============================================================
     if (projectId && agentMode === 'build') {
       try {
         const { checkpointService } = await import('../services/checkpoint.service');
+        const { exec } = await import('child_process');
+        const { promisify } = await import('util');
+        const fs = await import('fs/promises');
+        const execAsync = promisify(exec);
+        
         const projectIdNum = Number(projectId);
         
         // Compute project base path (relative to cwd where projects are stored)
@@ -565,7 +570,109 @@ ${historyItems}
           logger.info(`[Checkpoint] Stored ${filesToStore.length} files for checkpoint ${checkpoint.id}`);
         }
         
-        logger.info(`[Checkpoint] Auto-created checkpoint ${checkpoint.id} for project ${projectId} with ${snapshot.totalFiles} files`);
+        // ============================================================
+        // DATABASE SNAPSHOT - Capture database state with pg_dump
+        // SECURITY: Use spawn with args array to prevent command injection
+        // ============================================================
+        let includesDatabase = false;
+        let dbSnapshotPath: string | undefined;
+        const databaseUrl = process.env.DATABASE_URL;
+        if (databaseUrl) {
+          try {
+            const { spawn } = await import('child_process');
+            const checkpointDir = path.join(process.cwd(), '.checkpoints', String(checkpoint.id));
+            await fs.mkdir(checkpointDir, { recursive: true });
+            
+            const dumpFile = path.join(checkpointDir, 'database.sql');
+            
+            // Parse DATABASE_URL safely to extract components
+            const dbUrlParsed = new URL(databaseUrl);
+            const pgDumpArgs = [
+              '-h', dbUrlParsed.hostname,
+              '-p', dbUrlParsed.port || '5432',
+              '-U', dbUrlParsed.username,
+              '-d', dbUrlParsed.pathname.slice(1), // remove leading /
+              '--schema=public',
+              '--no-owner',
+              '--no-acl',
+              '-f', dumpFile
+            ];
+            
+            // Execute pg_dump using spawn with args array (secure - no shell injection)
+            await new Promise<void>((resolve, reject) => {
+              const child = spawn('pg_dump', pgDumpArgs, {
+                env: { ...process.env, PGPASSWORD: dbUrlParsed.password },
+                stdio: ['pipe', 'pipe', 'pipe']
+              });
+              
+              let stderr = '';
+              child.stderr?.on('data', (data) => { stderr += data.toString(); });
+              
+              child.on('close', (code) => {
+                if (code === 0) {
+                  resolve();
+                } else {
+                  reject(new Error(`pg_dump exited with code ${code}: ${stderr}`));
+                }
+              });
+              
+              child.on('error', (err) => reject(err));
+            });
+            
+            includesDatabase = true;
+            dbSnapshotPath = dumpFile;
+            logger.info(`[Checkpoint] Database snapshot saved to ${dumpFile}`);
+          } catch (dbError: any) {
+            logger.warn(`[Checkpoint] Database snapshot failed (non-fatal): ${dbError.message}`);
+          }
+        }
+        
+        // ============================================================
+        // CONVERSATION SNAPSHOT - Capture AI conversation history
+        // ============================================================
+        let conversationSnapshot: Array<{ role: string; content: string; timestamp?: string }> | undefined;
+        if (conversationId) {
+          try {
+            const { aiConversations, agentMessages } = await import('../../shared/schema');
+            const { eq, desc } = await import('drizzle-orm');
+            
+            // Get conversation messages from agentMessages table
+            const messages = await db
+              .select({
+                role: agentMessages.role,
+                content: agentMessages.content,
+                createdAt: agentMessages.createdAt,
+              })
+              .from(agentMessages)
+              .where(eq(agentMessages.conversationId, Number(conversationId)))
+              .orderBy(agentMessages.createdAt)
+              .limit(100); // Limit to prevent huge snapshots
+            
+            if (messages.length > 0) {
+              conversationSnapshot = messages.map(m => ({
+                role: m.role,
+                content: m.content,
+                timestamp: m.createdAt?.toISOString(),
+              }));
+              logger.info(`[Checkpoint] Captured ${messages.length} conversation messages`);
+            }
+          } catch (convError: any) {
+            logger.warn(`[Checkpoint] Conversation snapshot failed (non-fatal): ${convError.message}`);
+          }
+        }
+        
+        // Update checkpoint with database and conversation data
+        // RELIABILITY: Persist dbSnapshotPath and conversationId for reliable restore
+        if (includesDatabase || conversationSnapshot || dbSnapshotPath) {
+          await checkpointService.updateCheckpointData(checkpoint.id, {
+            includesDatabase,
+            conversationSnapshot,
+            dbSnapshotPath,
+            conversationId: conversationId ? Number(conversationId) : undefined,
+          });
+        }
+        
+        logger.info(`[Checkpoint] Auto-created checkpoint ${checkpoint.id} for project ${projectId} with ${snapshot.totalFiles} files, db=${includesDatabase}, conv=${!!conversationSnapshot}`);
       } catch (cpError: any) {
         logger.warn(`[Checkpoint] Failed to create auto-checkpoint: ${cpError.message}`);
       }
