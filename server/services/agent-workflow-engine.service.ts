@@ -20,6 +20,9 @@ import { OpenAI } from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { createLogger } from '../utils/logger';
 import { redisIdempotency } from './redis-idempotency.service';
+import { dependencyInstallService, installDependencies } from './dependency-install.service';
+import { buildVerificationService, verifyBuild } from './build-verification.service';
+import { responsiveValidationService, validateResponsive } from './responsive-validation.service';
 
 const logger = createLogger('agent-workflow-engine');
 
@@ -64,7 +67,7 @@ export class WorkflowError extends Error {
 }
 
 // Workflow step types
-export type WorkflowStepType = 'file_operation' | 'command' | 'tool' | 'database' | 'conditional' | 'parallel' | 'loop';
+export type WorkflowStepType = 'file_operation' | 'command' | 'tool' | 'database' | 'conditional' | 'parallel' | 'loop' | 'install_dependencies' | 'verify_build' | 'responsive_qa';
 
 // Workflow step definition
 export interface WorkflowStep {
@@ -485,6 +488,28 @@ export class AgentWorkflowEngineService extends EventEmitter {
         await this.createCheckpoint(workflowId, state);
       }
       
+      // Run post-workflow validation before marking complete
+      const projectPath = session.context?.workingDirectory || '.';
+      const previewUrl = session.context?.previewUrl || state.variables?.previewUrl;
+      
+      try {
+        const validationResult = await this.runPostWorkflowValidation(
+          workflowId,
+          projectPath,
+          previewUrl
+        );
+        
+        // Store validation results in outputs
+        state.outputs.postValidation = validationResult.results;
+        
+        if (!validationResult.success) {
+          logger.warn(`[WorkflowEngine] Post-workflow validation had issues but workflow completed`);
+        }
+      } catch (validationError: any) {
+        logger.error(`[WorkflowEngine] Post-workflow validation failed: ${validationError.message}`);
+        state.outputs.postValidation = { error: validationError.message };
+      }
+      
       // Workflow completed successfully
       await db.update(agentWorkflows)
         .set({ 
@@ -699,6 +724,15 @@ export class AgentWorkflowEngineService extends EventEmitter {
       
       case 'loop':
         return await this.executeLoop(step.config, context, state);
+      
+      case 'install_dependencies':
+        return await this.executeInstallDependencies(step.config, context, state);
+      
+      case 'verify_build':
+        return await this.executeVerifyBuild(step.config, context, state);
+      
+      case 'responsive_qa':
+        return await this.executeResponsiveQA(step.config, context, state);
       
       default:
         throw new Error(`Unknown step type: ${step.type}`);
@@ -1020,6 +1054,235 @@ export class AgentWorkflowEngineService extends EventEmitter {
     }
     
     return results;
+  }
+
+  // Execute install dependencies step
+  private async executeInstallDependencies(
+    config: any,
+    context: any,
+    state: WorkflowState
+  ): Promise<any> {
+    const projectPath = config.projectPath || context.projectPath;
+    
+    logger.info(`[WorkflowEngine] Installing dependencies at ${projectPath}`);
+    
+    const result = await installDependencies(projectPath, {
+      packageManager: config.packageManager,
+      timeout: config.timeout,
+      frozen: config.frozen,
+      silent: config.silent,
+      production: config.production
+    });
+    
+    return {
+      success: result.success,
+      packagesInstalled: result.packagesInstalled,
+      durationMs: result.durationMs,
+      error: result.error
+    };
+  }
+
+  // Execute verify build step
+  private async executeVerifyBuild(
+    config: any,
+    context: any,
+    state: WorkflowState
+  ): Promise<any> {
+    const projectPath = config.projectPath || context.projectPath;
+    
+    logger.info(`[WorkflowEngine] Verifying build at ${projectPath}`);
+    
+    const result = await verifyBuild(projectPath, {
+      timeout: config.timeout,
+      buildCommand: config.buildCommand,
+      env: config.env
+    });
+    
+    return {
+      success: result.success,
+      exitCode: result.exitCode,
+      durationMs: result.durationMs,
+      artifactsDir: result.artifactsDir,
+      error: result.error
+    };
+  }
+
+  // Execute responsive QA step
+  private async executeResponsiveQA(
+    config: any,
+    context: any,
+    state: WorkflowState
+  ): Promise<any> {
+    const url = config.url || config.previewUrl;
+    
+    if (!url) {
+      return {
+        success: false,
+        error: 'No URL provided for responsive validation'
+      };
+    }
+    
+    logger.info(`[WorkflowEngine] Running responsive validation on ${url}`);
+    
+    const result = await validateResponsive(url, {
+      breakpoints: config.breakpoints,
+      timeout: config.timeout,
+      waitForSelector: config.waitForSelector,
+      checkTouchTargets: config.checkTouchTargets,
+      checkHorizontalScroll: config.checkHorizontalScroll,
+      testIds: config.testIds
+    });
+    
+    return {
+      success: result.success,
+      overallScore: result.overallScore,
+      breakpoints: result.breakpoints,
+      issues: result.issues
+    };
+  }
+
+  // Run post-workflow validation (dependencies, build, responsive)
+  async runPostWorkflowValidation(
+    workflowId: string,
+    projectPath: string,
+    previewUrl?: string
+  ): Promise<{ success: boolean; results: Record<string, any> }> {
+    const results: Record<string, any> = {};
+    let overallSuccess = true;
+
+    logger.info(`[WorkflowEngine] Running post-workflow validation for ${workflowId}`);
+
+    // Step 1: Install dependencies
+    this.emitEvent({
+      type: 'step_start',
+      workflowId,
+      stepId: 'post_validation_dependencies',
+      progress: 90
+    });
+
+    try {
+      const depResult = await installDependencies(projectPath);
+      results.dependencies = {
+        success: depResult.success,
+        packagesInstalled: depResult.packagesInstalled,
+        durationMs: depResult.durationMs,
+        error: depResult.error
+      };
+
+      if (!depResult.success) {
+        overallSuccess = false;
+        logger.warn(`[WorkflowEngine] Dependency installation failed: ${depResult.error}`);
+      }
+
+      this.emitEvent({
+        type: depResult.success ? 'step_complete' : 'step_failed',
+        workflowId,
+        stepId: 'post_validation_dependencies',
+        progress: 93,
+        error: depResult.error
+      });
+    } catch (error: any) {
+      overallSuccess = false;
+      results.dependencies = { success: false, error: error.message };
+      this.emitEvent({
+        type: 'step_failed',
+        workflowId,
+        stepId: 'post_validation_dependencies',
+        progress: 93,
+        error: error.message
+      });
+    }
+
+    // Step 2: Verify build
+    this.emitEvent({
+      type: 'step_start',
+      workflowId,
+      stepId: 'post_validation_build',
+      progress: 93
+    });
+
+    try {
+      const buildResult = await verifyBuild(projectPath);
+      results.build = {
+        success: buildResult.success,
+        exitCode: buildResult.exitCode,
+        durationMs: buildResult.durationMs,
+        artifactsDir: buildResult.artifactsDir,
+        error: buildResult.error
+      };
+
+      if (!buildResult.success) {
+        overallSuccess = false;
+        logger.warn(`[WorkflowEngine] Build verification failed: ${buildResult.error}`);
+      }
+
+      this.emitEvent({
+        type: buildResult.success ? 'step_complete' : 'step_failed',
+        workflowId,
+        stepId: 'post_validation_build',
+        progress: 96,
+        error: buildResult.error
+      });
+    } catch (error: any) {
+      overallSuccess = false;
+      results.build = { success: false, error: error.message };
+      this.emitEvent({
+        type: 'step_failed',
+        workflowId,
+        stepId: 'post_validation_build',
+        progress: 96,
+        error: error.message
+      });
+    }
+
+    // Step 3: Responsive validation (only if preview URL provided)
+    if (previewUrl) {
+      this.emitEvent({
+        type: 'step_start',
+        workflowId,
+        stepId: 'post_validation_responsive',
+        progress: 96
+      });
+
+      try {
+        const responsiveResult = await validateResponsive(previewUrl);
+        results.responsive = {
+          success: responsiveResult.success,
+          overallScore: responsiveResult.overallScore,
+          breakpoints: responsiveResult.breakpoints.length,
+          issues: responsiveResult.issues
+        };
+
+        if (!responsiveResult.success) {
+          // Responsive issues are warnings, not hard failures
+          logger.warn(`[WorkflowEngine] Responsive validation issues: ${responsiveResult.issues.join(', ')}`);
+        }
+
+        this.emitEvent({
+          type: responsiveResult.success ? 'step_complete' : 'step_failed',
+          workflowId,
+          stepId: 'post_validation_responsive',
+          progress: 99,
+          error: responsiveResult.success ? undefined : responsiveResult.issues.join('; ')
+        });
+      } catch (error: any) {
+        results.responsive = { success: false, error: error.message };
+        this.emitEvent({
+          type: 'step_failed',
+          workflowId,
+          stepId: 'post_validation_responsive',
+          progress: 99,
+          error: error.message
+        });
+        // Don't fail overall for responsive issues
+      }
+    } else {
+      results.responsive = { skipped: true, reason: 'No preview URL provided' };
+    }
+
+    logger.info(`[WorkflowEngine] Post-workflow validation complete. Success: ${overallSuccess}`);
+
+    return { success: overallSuccess, results };
   }
 
   // Build execution order respecting dependencies
