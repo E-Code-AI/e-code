@@ -61,6 +61,7 @@ export class AgentFileOperationsService extends EventEmitter {
   private readonly ALLOWED_SPECIAL_FILES = [
     '.env', '.env.local', '.env.development', '.env.production', '.env.staging', '.env.test', '.env.example',
     '.gitignore', '.gitattributes', '.editorconfig', '.prettierrc', '.eslintrc', '.babelrc',
+    '.eslintignore', '.prettierignore', '.dockerignore', '.npmignore', '.stylelintignore',
     '.nvmrc', '.npmrc', '.yarnrc', 'Dockerfile', 'Makefile', 'CMakeLists.txt',
     'package.json', 'tsconfig.json', 'tailwind.config.js', 'vite.config.ts',
     'next.config.js', 'next.config.mjs', 'postcss.config.js', 'webpack.config.js'
