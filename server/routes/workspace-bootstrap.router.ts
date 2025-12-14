@@ -280,6 +280,91 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
         .where(eq(agentSessions.id, session.id));
       
       logger.info(`[Bootstrap] ✅ Session context updated with workingDirectory: ${scaffoldPath}`);
+      
+      // ✅ Task 1 (Dec 14, 2025): Auto-install dependencies immediately after scaffold
+      try {
+        logger.info(`[Bootstrap] Running npm install in ${scaffoldPath}`);
+        const { exec } = require('child_process');
+        const { promisify } = require('util');
+        const execAsync = promisify(exec);
+        const { stdout, stderr } = await execAsync('npm install', { 
+          cwd: scaffoldPath, 
+          timeout: 120000 
+        });
+        logger.info(`[Bootstrap] ✅ npm install completed`, { 
+          stdout: stdout.substring(0, 500) 
+        });
+        
+        // ✅ Task 2 (Dec 14, 2025): Build verification after npm install
+        try {
+          // Check if build script exists in package.json
+          const fs = require('fs');
+          const packageJsonPath = path.join(scaffoldPath, 'package.json');
+          let hasBuildScript = false;
+          
+          if (fs.existsSync(packageJsonPath)) {
+            const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+            hasBuildScript = !!(packageJson.scripts && packageJson.scripts.build);
+          }
+          
+          if (hasBuildScript) {
+            logger.info(`[Bootstrap] Running npm run build in ${scaffoldPath}`);
+            const buildResult = await execAsync('npm run build', { 
+              cwd: scaffoldPath, 
+              timeout: 180000 
+            });
+            logger.info(`[Bootstrap] ✅ Build completed successfully`, { 
+              stdout: buildResult.stdout.substring(0, 500) 
+            });
+          } else {
+            // No build script - try npm run dev as health check (with quick timeout)
+            // ✅ FIX (Dec 14, 2025): Properly await process and check exit code
+            logger.info(`[Bootstrap] No build script found, running npm run dev health check`);
+            try {
+              const { spawn } = require('child_process');
+              const devProcess = spawn('npm', ['run', 'dev'], { 
+                cwd: scaffoldPath,
+                stdio: 'pipe'
+              });
+              
+              const devCheckResult = await new Promise<{success: boolean, error?: string}>((resolve) => {
+                const timeout = setTimeout(() => {
+                  // Process ran for 5 seconds without crashing - that's a pass
+                  try {
+                    devProcess.kill('SIGTERM');
+                  } catch (e) { /* ignore */ }
+                  resolve({ success: true });
+                }, 5000);
+                
+                devProcess.on('error', (err: Error) => {
+                  clearTimeout(timeout);
+                  resolve({ success: false, error: err.message });
+                });
+                
+                devProcess.on('exit', (code: number | null) => {
+                  clearTimeout(timeout);
+                  if (code !== null && code !== 0) {
+                    resolve({ success: false, error: `Exited with code ${code}` });
+                  }
+                  // If code is 0 or null (killed by us), don't resolve - let timeout handle it
+                });
+              });
+              
+              if (devCheckResult.success) {
+                logger.info(`[Bootstrap] ✅ Dev server health check passed`);
+              } else {
+                logger.warn(`[Bootstrap] Dev check failed: ${devCheckResult.error}`);
+              }
+            } catch (devError: any) {
+              logger.warn(`[Bootstrap] Dev server health check warning: ${devError.message}`);
+            }
+          }
+        } catch (buildError: any) {
+          logger.warn(`[Bootstrap] Build verification warning: ${buildError.message}`);
+        }
+      } catch (installError: any) {
+        logger.warn(`[Bootstrap] npm install warning: ${installError.message}`);
+      }
     } catch (scaffoldError: any) {
       // Log but don't fail - scaffold can be regenerated during workflow
       logger.warn(`[Bootstrap] Scaffold creation warning: ${scaffoldError.message}`, {
