@@ -821,10 +821,38 @@ export function useAutonomousChatIntegration({
         break;
       }
 
-      // Handle checkpoint creation notifications
+      // Handle checkpoint creation notifications - create inline chat card
       case 'checkpoint_created': {
-        console.log('[AutonomousChatIntegration] ✅ Checkpoint created');
-        // Silent - don't create message for checkpoint (internal state)
+        const checkpointData = event.checkpoint || (event as any);
+        // ✅ FIX: Server emits checkpoint ID as `stepId` (string), not `id` or `checkpointId`
+        // Priority: event.stepId > checkpointData.stepId > checkpointData.id > checkpointData.checkpointId
+        const rawCheckpointId = (event as any).stepId || checkpointData.stepId || checkpointData.id || checkpointData.checkpointId;
+        const checkpointId = rawCheckpointId ? (typeof rawCheckpointId === 'string' ? parseInt(rawCheckpointId, 10) : rawCheckpointId) : undefined;
+        const aiSummary = checkpointData.aiSummary || checkpointData.summary || checkpointData.title;
+        const filesCount = checkpointData.filesCount || checkpointData.fileCount;
+        const createdAt = checkpointData.createdAt || event.timestamp || new Date().toISOString();
+        const checkpointType = checkpointData.type || 'auto';
+        
+        if (checkpointId) {
+          const checkpointMsg: Message = {
+            id: `checkpoint-${checkpointId}-${Date.now()}`,
+            role: 'assistant',
+            content: aiSummary || `Checkpoint #${checkpointId} created`,
+            timestamp: new Date(createdAt),
+            type: 'auto_checkpoint_created',
+            autoCheckpoint: {
+              id: checkpointId,
+              aiSummary,
+              filesCount,
+              createdAt,
+              type: checkpointType
+            }
+          };
+          addMessage(conversationId, checkpointMsg);
+          console.log('[AutonomousChatIntegration] ✅ Checkpoint created message added:', checkpointId);
+        } else {
+          console.log('[AutonomousChatIntegration] ⚠️ Checkpoint event without ID:', event);
+        }
         break;
       }
 

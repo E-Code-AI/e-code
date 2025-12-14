@@ -1436,6 +1436,30 @@ export function ReplitAgentPanelV3({
     })));
   }, [toast]);
 
+  const [isRestoringCheckpoint, setIsRestoringCheckpoint] = useState(false);
+
+  const handleRestoreCheckpoint = useCallback(async (checkpointId: number) => {
+    setIsRestoringCheckpoint(true);
+    try {
+      await apiRequest('POST', `/api/auto-checkpoints/${checkpointId}/restore`, {
+        createBackup: true,
+        includeDatabase: false
+      });
+      toast({
+        title: 'Checkpoint Restored',
+        description: `Successfully restored checkpoint #${checkpointId}`
+      });
+    } catch (error) {
+      toast({
+        title: 'Restore Failed',
+        description: error instanceof Error ? error.message : 'Failed to restore checkpoint',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsRestoringCheckpoint(false);
+    }
+  }, [toast]);
+
   const isCompactMode = mode === 'mobile' || mode === 'tablet';
 
   return (
@@ -1595,6 +1619,8 @@ export function ReplitAgentPanelV3({
               onCopy={handleCopyMessage}
               onApproveAction={handleApproveAction}
               onRejectAction={handleRejectAction}
+              onRestoreCheckpoint={handleRestoreCheckpoint}
+              isRestoringCheckpoint={isRestoringCheckpoint}
             />
           ))}
 

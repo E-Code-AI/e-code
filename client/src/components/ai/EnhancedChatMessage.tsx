@@ -47,6 +47,7 @@ import {
   type ProgressEvent
 } from './InlineBuildProgress';
 import type { Message, AutonomousBuildMode } from '@/stores/agentConversationStore';
+import { CheckpointCard } from './CheckpointCard';
 
 interface EnhancedChatMessageProps {
   message: Message;
@@ -60,6 +61,8 @@ interface EnhancedChatMessageProps {
   onFileClick?: (filePath: string) => void;
   onRefreshPreview?: () => void;
   onOpenPreviewExternal?: () => void;
+  onRestoreCheckpoint?: (checkpointId: number) => void;
+  isRestoringCheckpoint?: boolean;
 }
 
 type EnhancedChatMessageRef = HTMLDivElement;
@@ -101,7 +104,9 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
   onChangePlan,
   onFileClick,
   onRefreshPreview,
-  onOpenPreviewExternal
+  onOpenPreviewExternal,
+  onRestoreCheckpoint,
+  isRestoringCheckpoint
 }, ref) {
   const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
@@ -538,6 +543,25 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
                 onOpenExternal={onOpenPreviewExternal}
               />
             )}
+          </motion.div>
+        )}
+
+        {/* Auto-saved checkpoint card - inline in chat */}
+        {message.type === 'auto_checkpoint_created' && message.autoCheckpoint && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <CheckpointCard
+              checkpointId={message.autoCheckpoint.id}
+              aiSummary={message.autoCheckpoint.aiSummary}
+              filesCount={message.autoCheckpoint.filesCount}
+              createdAt={message.autoCheckpoint.createdAt}
+              type={message.autoCheckpoint.type}
+              onRestore={onRestoreCheckpoint}
+              isRestoring={isRestoringCheckpoint}
+            />
           </motion.div>
         )}
 
