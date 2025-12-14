@@ -84,6 +84,7 @@ import { EffortPricingDisplay } from '@/components/EffortPricingDisplay';
 import { CheckpointsPanel } from '@/components/CheckpointsPanel';
 import { PreviewDeploymentButton } from './PreviewDeploymentPanel';
 import { History, X, MousePointer2, Coins, Database, Volume2, VolumeX, DollarSign, RotateCcw } from 'lucide-react';
+import { SiFigma } from 'react-icons/si';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   EnhancedChatMessage, 
@@ -2166,6 +2167,26 @@ export function ReplitAgentPanelV3({
                   </TooltipTrigger>
                   <TooltipContent side="top">
                     <p>{isRecording ? "Stop recording" : "Voice input"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      data-testid="button-figma-import"
+                      title="Import from Figma"
+                      onClick={() => toast({ title: "Figma Import", description: "Connect your Figma account in settings to import designs." })}
+                    >
+                      <SiFigma className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>Import from Figma</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
