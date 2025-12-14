@@ -4,7 +4,7 @@ import {
   GitBranch, Bug, Settings, Database,
   Share2, Users, X,
   Globe, Package, Search, Shield, Key,
-  Workflow, History, Puzzle,
+  Workflow, History, Puzzle, RotateCcw,
   Zap, Layers, Rocket, Command, Keyboard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -29,6 +29,7 @@ interface MobileMoreMenuProps {
   onOpenSecurity?: () => void;
   onOpenWorkflows?: () => void;
   onOpenHistory?: () => void;
+  onOpenCheckpoints?: () => void;
   onOpenExtensions?: () => void;
   onOpenActions?: () => void;
   onOpenTools?: () => void;
@@ -63,6 +64,7 @@ export function MobileMoreMenu({
   onOpenSecurity,
   onOpenWorkflows,
   onOpenHistory,
+  onOpenCheckpoints,
   onOpenExtensions,
   onOpenActions,
   onOpenTools,
@@ -277,6 +279,15 @@ export function MobileMoreMenu({
       icon: History, 
       onClick: () => {
         if (onOpenHistory) onOpenHistory();
+        onClose();
+      }
+    },
+    { 
+      id: 'checkpoints', 
+      label: 'Checkpoints', 
+      icon: RotateCcw, 
+      onClick: () => {
+        if (onOpenCheckpoints) onOpenCheckpoints();
         onClose();
       }
     },
