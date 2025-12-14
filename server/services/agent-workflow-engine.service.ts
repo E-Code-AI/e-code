@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import * as path from 'path';
 import { db } from '../db';
 import {
   agentWorkflows,
@@ -489,7 +490,18 @@ export class AgentWorkflowEngineService extends EventEmitter {
       }
       
       // Run post-workflow validation before marking complete
-      const projectPath = session.context?.workingDirectory || '.';
+      // ✅ FIX (Dec 14, 2025): Use correct project path instead of defaulting to '.'
+      // Priority: 1) session.context.workingDirectory, 2) projects/${projectId}, 3) workflow variable
+      let projectPath = session.context?.workingDirectory;
+      if (!projectPath || projectPath === '.') {
+        // Fall back to the standard project directory pattern
+        const projectId = session.projectId || state.variables?.projectId;
+        if (projectId) {
+          projectPath = path.join(process.cwd(), 'projects', String(projectId));
+        } else {
+          projectPath = '.';
+        }
+      }
       const previewUrl = session.context?.previewUrl || state.variables?.previewUrl;
       
       try {
@@ -502,12 +514,38 @@ export class AgentWorkflowEngineService extends EventEmitter {
         // Store validation results in outputs
         state.outputs.postValidation = validationResult.results;
         
+        // ✅ FIX (Dec 14, 2025): Don't silently swallow validation failures
+        // If validation fails, mark the workflow as failed so user sees the error
         if (!validationResult.success) {
-          logger.warn(`[WorkflowEngine] Post-workflow validation had issues but workflow completed`);
+          const failureDetails = Object.entries(validationResult.results)
+            .filter(([_, v]) => v && typeof v === 'object' && 'success' in v && !v.success)
+            .map(([k, v]) => `${k}: ${(v as any).error || 'failed'}`)
+            .join('; ');
+          
+          logger.error(`[WorkflowEngine] Post-workflow validation FAILED: ${failureDetails}`);
+          
+          // Emit failure event so user sees the error
+          this.emitEvent({
+            type: 'step_failed',
+            workflowId,
+            stepId: 'post_validation',
+            progress: 99,
+            error: `Validation failed: ${failureDetails}`
+          });
+          
+          // Throw to trigger workflow failure instead of silent success
+          throw new WorkflowError(
+            `Build validation failed: ${failureDetails}`,
+            'POST_VALIDATION_FAILED',
+            true // retriable
+          );
         }
       } catch (validationError: any) {
         logger.error(`[WorkflowEngine] Post-workflow validation failed: ${validationError.message}`);
         state.outputs.postValidation = { error: validationError.message };
+        
+        // ✅ FIX (Dec 14, 2025): Re-throw to ensure workflow is marked as failed
+        throw validationError;
       }
       
       // Workflow completed successfully
