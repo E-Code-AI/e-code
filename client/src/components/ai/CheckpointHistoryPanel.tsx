@@ -117,7 +117,7 @@ function CheckpointItem({
   
   return (
     <div 
-      className="group relative flex gap-3 py-3 px-2 hover:bg-muted/50 rounded-lg transition-colors"
+      className="group relative flex gap-2 md:gap-3 py-2 px-1.5 md:py-3 md:px-2 hover:bg-muted/50 rounded-lg transition-colors"
       data-testid={`checkpoint-item-${checkpoint.id}`}
     >
       <div className="flex flex-col items-center">
@@ -133,11 +133,11 @@ function CheckpointItem({
               <CheckpointStatusBadge status={checkpoint.status} />
             </div>
             
-            <p className="text-sm text-foreground leading-relaxed">
+            <p className="text-xs md:text-sm text-foreground leading-relaxed line-clamp-2 md:line-clamp-none">
               {checkpoint.aiSummary || 'Checkpoint created'}
             </p>
             
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-xs text-muted-foreground flex-wrap">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger className="flex items-center gap-1">
@@ -173,7 +173,7 @@ function CheckpointItem({
                   variant="outline"
                   onClick={onRestore}
                   disabled={isRestoring || checkpoint.status !== 'complete'}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0 min-h-[44px] min-w-[44px] touch-manipulation"
                   data-testid={`button-restore-checkpoint-${checkpoint.id}`}
                 >
                   {isRestoring ? (
@@ -266,11 +266,11 @@ export function CheckpointHistoryPanel({
   return (
     <>
       <Card className={cn("", className)} data-testid="card-checkpoint-history">
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-2 md:pb-3 px-3 md:px-6">
           <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <History className="h-4 w-4" />
+            <div className="space-y-0.5 md:space-y-1">
+              <CardTitle className="flex items-center gap-1.5 md:gap-2 text-sm md:text-base">
+                <History className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 Checkpoint History
               </CardTitle>
               {!compact && (
@@ -299,8 +299,8 @@ export function CheckpointHistoryPanel({
           </div>
         </CardHeader>
         
-        <CardContent className="pt-0">
-          <ScrollArea style={{ maxHeight }} className="pr-4">
+        <CardContent className="pt-0 px-2 md:px-6">
+          <ScrollArea style={{ maxHeight }} className="pr-2 md:pr-4">
             {isLoading ? (
               <div className="space-y-1">
                 {[1, 2, 3].map((i) => (
@@ -308,10 +308,10 @@ export function CheckpointHistoryPanel({
                 ))}
               </div>
             ) : checkpoints.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-                <History className="h-8 w-8 mb-2 opacity-50" />
-                <p className="text-sm">No checkpoints yet</p>
-                <p className="text-xs">Checkpoints are created automatically as you build</p>
+              <div className="flex flex-col items-center justify-center py-6 md:py-8 text-center text-muted-foreground">
+                <History className="h-6 w-6 md:h-8 md:w-8 mb-2 opacity-50" />
+                <p className="text-xs md:text-sm">No checkpoints yet</p>
+                <p className="text-[10px] md:text-xs">Checkpoints are created automatically as you build</p>
               </div>
             ) : (
               <div className="space-y-1">
@@ -330,10 +330,10 @@ export function CheckpointHistoryPanel({
       </Card>
       
       <AlertDialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
-        <AlertDialogContent data-testid="dialog-restore-checkpoint">
+        <AlertDialogContent className="max-w-[95vw] md:max-w-lg mx-auto" data-testid="dialog-restore-checkpoint">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <RotateCcw className="h-5 w-5" />
+            <AlertDialogTitle className="flex items-center gap-2 text-base md:text-lg">
+              <RotateCcw className="h-4 w-4 md:h-5 md:w-5" />
               Restore Checkpoint
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -342,7 +342,7 @@ export function CheckpointHistoryPanel({
                   <p>
                     Are you sure you want to restore to this checkpoint? This will revert your project files to the state at that point in time.
                   </p>
-                  <div className="bg-muted p-3 rounded-lg space-y-2">
+                  <div className="bg-muted p-2 md:p-3 rounded-lg space-y-1.5 md:space-y-2">
                     <div className="flex items-center gap-2">
                       <CheckpointTypeBadge type={selectedCheckpoint.type} />
                       <span className="text-xs text-muted-foreground">
@@ -360,12 +360,12 @@ export function CheckpointHistoryPanel({
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-cancel-restore">Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <AlertDialogCancel className="min-h-[44px] touch-manipulation" data-testid="button-cancel-restore">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmRestore}
               disabled={restoreMutation.isPending}
-              className="bg-primary"
+              className="bg-primary min-h-[44px] touch-manipulation"
               data-testid="button-confirm-restore"
             >
               {restoreMutation.isPending ? (

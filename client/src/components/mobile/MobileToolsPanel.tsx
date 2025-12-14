@@ -4,7 +4,7 @@ import {
   X, Search,
   FileText, Bot, Sparkles, Rocket, HardDrive, UserCheck,
   Terminal, Database, Code, GitBranch, Puzzle, Users,
-  Eye, Key, Shield, TerminalSquare, Settings, Zap, Store
+  Eye, Key, Shield, TerminalSquare, Settings, Zap, Store, History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,7 @@ const defaultTools: ToolItem[] = [
   { id: 'shell', icon: TerminalSquare, title: 'Shell', description: 'Directly access your App through a command line interface (CLI)', section: 'tools' },
   { id: 'settings', icon: Settings, title: 'User Settings', description: 'Configure personal editor preferences and workspace settings', section: 'tools' },
   { id: 'workflows', icon: Zap, title: 'Workflows', description: 'Configure different ways to run your App', section: 'tools' },
+  { id: 'checkpoints', icon: History, title: 'Checkpoints', description: 'View and restore project checkpoints created during AI builds', section: 'tools' },
 ];
 
 interface MobileToolsPanelProps {

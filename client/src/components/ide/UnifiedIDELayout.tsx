@@ -78,6 +78,7 @@ const ReplitPackagesPanel = lazy(() => import('@/components/editor/ReplitPackage
 const ReplitDebuggerPanel = lazy(() => import('@/components/editor/ReplitDebuggerPanel').then(mod => ({ default: mod.ReplitDebuggerPanel })));
 const ReplitSecretsPanel = lazy(() => import('@/components/editor/ReplitSecretsPanel').then(mod => ({ default: mod.ReplitSecretsPanel })));
 const ReplitHistoryPanel = lazy(() => import('@/components/editor/ReplitHistoryPanel').then(mod => ({ default: mod.ReplitHistoryPanel })));
+const CheckpointHistoryPanel = lazy(() => import('@/components/ai/CheckpointHistoryPanel').then(mod => ({ default: mod.CheckpointHistoryPanel })));
 const ReplitSettingsPanel = lazy(() => import('@/components/editor/ReplitSettingsPanel').then(mod => ({ default: mod.ReplitSettingsPanel })));
 const WorkflowsPanel = lazy(() => import('@/components/ide/WorkflowsPanel').then(mod => ({ default: mod.WorkflowsPanel })));
 const ExtensionsMarketplace = lazy(() => import('@/components/ExtensionsMarketplace').then(mod => ({ default: mod.ExtensionsMarketplace })));
@@ -237,6 +238,7 @@ function UnifiedIDELayout({
   const [showSecretsPanel, setShowSecretsPanel] = useState(false);
   const [showWorkflowsPanel, setShowWorkflowsPanel] = useState(false);
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  const [showCheckpointsPanel, setShowCheckpointsPanel] = useState(false);
   const [showExtensionsPanel, setShowExtensionsPanel] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [showSecurityPanel, setShowSecurityPanel] = useState(false);
@@ -409,6 +411,7 @@ function UnifiedIDELayout({
               onOpenCollaboration={() => setShowCollaboration(true)}
               onOpenWorkflows={() => setShowWorkflowsPanel(true)}
               onOpenHistory={() => setShowHistoryPanel(true)}
+              onOpenCheckpoints={() => setShowCheckpointsPanel(true)}
               onOpenExtensions={() => setShowExtensionsPanel(true)}
               onOpenSecurity={() => setShowSecurityPanel(true)}
               onOpenActions={() => { setLeftPanelTab('actions'); setMobileActiveTab('agent'); }}
@@ -480,6 +483,7 @@ function UnifiedIDELayout({
               onOpenCollaboration={() => setShowCollaboration(true)}
               onOpenWorkflows={() => setShowWorkflowsPanel(true)}
               onOpenHistory={() => setShowHistoryPanel(true)}
+              onOpenCheckpoints={() => setShowCheckpointsPanel(true)}
               onOpenExtensions={() => setShowExtensionsPanel(true)}
               onOpenSecurity={() => setShowSecurityPanel(true)}
               onOpenActions={() => { setLeftPanelTab('actions'); setTabletPanel('agent'); }}
@@ -1089,6 +1093,22 @@ function UnifiedIDELayout({
           <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
             <div className="h-[calc(100%-48px)]">
               <ReplitHistoryPanel projectId={projectId} />
+            </div>
+          </Suspense>
+        </div>
+      )}
+
+      {showCheckpointsPanel && (
+        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-50 shadow-xl border-l bg-background">
+          <div className="flex items-center justify-between p-2 border-b">
+            <span className="font-medium text-sm">AI Checkpoints</span>
+            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowCheckpointsPanel)} className="h-7 w-7" data-testid="button-close-checkpoints">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+            <div className="h-[calc(100%-48px)] overflow-auto p-2">
+              <CheckpointHistoryPanel projectId={projectId} maxHeight="calc(100vh - 80px)" />
             </div>
           </Suspense>
         </div>

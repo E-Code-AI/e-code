@@ -200,7 +200,6 @@ export function ReplitLayout({
       <MobileToolsPanel
         isOpen={showToolsPanel}
         onClose={() => setShowToolsPanel(false)}
-        activeTab="console"
       />
       
       {/* Mobile Create Modal */}
