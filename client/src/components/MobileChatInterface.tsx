@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -59,9 +59,61 @@ export function MobileChatInterface({ isOpen, onClose, onStartBuilding }: Mobile
   const [isBuilding, setIsBuilding] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isUserNearBottomRef = useRef(true);
+  const lastScrollTimeRef = useRef(0);
+
+  // Smart scroll: Check if user is near bottom
+  const checkIfNearBottom = useCallback(() => {
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (!scrollContainer) {
+      const container = messagesEndRef.current?.parentElement;
+      if (container) {
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+        isUserNearBottomRef.current = distanceFromBottom < 150;
+      }
+      return;
+    }
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    isUserNearBottomRef.current = distanceFromBottom < 150;
+  }, []);
+
+  // Smart scroll: Listen for scroll events
+  useEffect(() => {
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]') || 
+                            messagesEndRef.current?.parentElement;
+    if (scrollContainer) {
+      const handleScroll = () => {
+        lastScrollTimeRef.current = Date.now();
+        checkIfNearBottom();
+      };
+      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, [checkIfNearBottom]);
+
+  // Smart auto-scroll to bottom only if user is near bottom
+  useEffect(() => {
+    const timeSinceLastScroll = Date.now() - lastScrollTimeRef.current;
+    if (timeSinceLastScroll < 100) return;
+    if (!isUserNearBottomRef.current) return;
+    
+    if (messagesEndRef.current) {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      });
+    }
+  }, [messages]);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      isUserNearBottomRef.current = true;
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      });
+    }
   }, []);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -253,7 +305,7 @@ Would you like me to start building this for you?`;
         <div className="flex-1 flex flex-col">
           {messages.length > 0 ? (
             /* Chat History */
-            <ScrollArea className="flex-1 p-4">
+            <ScrollArea ref={scrollRef} className="flex-1 p-4">
               <div className="max-w-4xl mx-auto space-y-4">
                 {messages.map((msg) => (
                   <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>

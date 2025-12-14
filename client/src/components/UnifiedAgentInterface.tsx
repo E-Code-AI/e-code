@@ -119,6 +119,9 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isUserNearBottomRef = useRef(true);
+  const lastScrollTimeRef = useRef(0);
 
   // Set up WebSocket connection for real-time AI progress updates
   useEffect(() => {
@@ -280,12 +283,57 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
     }
   }, [progressData]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  // Smart scroll: Check if user is near bottom
+  const checkIfNearBottom = useCallback(() => {
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (!scrollContainer) {
+      const container = messagesEndRef.current?.parentElement;
+      if (container) {
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+        isUserNearBottomRef.current = distanceFromBottom < 150;
+      }
+      return;
+    }
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    isUserNearBottomRef.current = distanceFromBottom < 150;
+  }, []);
 
+  // Smart scroll: Listen for scroll events
   useEffect(() => {
-    scrollToBottom();
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]') || 
+                            messagesEndRef.current?.parentElement;
+    if (scrollContainer) {
+      const handleScroll = () => {
+        lastScrollTimeRef.current = Date.now();
+        checkIfNearBottom();
+      };
+      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, [checkIfNearBottom]);
+
+  const scrollToBottom = useCallback(() => {
+    if (messagesEndRef.current) {
+      isUserNearBottomRef.current = true;
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      });
+    }
+  }, []);
+
+  // Smart auto-scroll to bottom only if user is near bottom
+  useEffect(() => {
+    const timeSinceLastScroll = Date.now() - lastScrollTimeRef.current;
+    if (timeSinceLastScroll < 100) return;
+    if (!isUserNearBottomRef.current) return;
+    
+    if (messagesEndRef.current) {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      });
+    }
   }, [messages]);
 
   // Start V2 build mutation

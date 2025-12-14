@@ -124,6 +124,8 @@ export function UniversalAgentInterface({
   const pullToRefreshControls = useAnimation();
   
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const isUserNearBottomRef = useRef(true);
+  const lastScrollTimeRef = useRef(0);
   
   // Detect viewport size for responsive layout
   useEffect(() => {
@@ -345,10 +347,49 @@ export function UniversalAgentInterface({
     }
   });
   
-  // Auto-scroll to latest action
+  // Smart scroll: Check if user is near bottom
+  const checkIfNearBottom = useCallback(() => {
+    const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (!scrollContainer) {
+      const container = scrollAreaRef.current;
+      if (container) {
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+        isUserNearBottomRef.current = distanceFromBottom < 150;
+      }
+      return;
+    }
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    isUserNearBottomRef.current = distanceFromBottom < 150;
+  }, []);
+
+  // Smart scroll: Listen for scroll events
   useEffect(() => {
-    if (scrollAreaRef.current && activeSession?.actions.length) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') || 
+                            scrollAreaRef.current;
+    if (scrollContainer) {
+      const handleScroll = () => {
+        lastScrollTimeRef.current = Date.now();
+        checkIfNearBottom();
+      };
+      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, [checkIfNearBottom]);
+
+  // Smart auto-scroll to latest action only if user is near bottom
+  useEffect(() => {
+    const timeSinceLastScroll = Date.now() - lastScrollTimeRef.current;
+    if (timeSinceLastScroll < 100) return;
+    if (!isUserNearBottomRef.current) return;
+    
+    if (scrollAreaRef.current) {
+      requestAnimationFrame(() => {
+        if (scrollAreaRef.current) {
+          scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+        }
+      });
     }
   }, [activeSession?.actions.length]);
   
