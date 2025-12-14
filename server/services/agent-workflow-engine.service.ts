@@ -25,6 +25,7 @@ import { dependencyInstallService, installDependencies } from './dependency-inst
 import { buildVerificationService, verifyBuild } from './build-verification.service';
 import { responsiveValidationService, validateResponsive } from './responsive-validation.service';
 import { viewportValidationService, validateViewports } from './viewport-validation.service';
+import { checkpointService } from './checkpoint.service';
 
 const logger = createLogger('agent-workflow-engine');
 
@@ -1788,18 +1789,28 @@ Provide specific code changes to fix these issues.`;
         };
       }
 
-      // Insert into autoCheckpoints
-      const [autoCheckpoint] = await db.insert(autoCheckpoints)
-        .values({
-          projectId,
+      // Insert into autoCheckpoints using checkpointService (supports rate limiting)
+      let autoCheckpoint;
+      try {
+        autoCheckpoint = await checkpointService.createCheckpoint(projectId, {
           type: 'auto',
           triggerSource: 'workflow_step',
-          status: 'complete',
           aiSummary,
           includesDatabase: false,
           filesSnapshot
-        } as InsertAutoCheckpoint)
-        .returning();
+        });
+      } catch (cpError: any) {
+        if (cpError.code === 'RATE_LIMITED') {
+          logger.debug(`[WorkflowEngine] Checkpoint rate-limited for project ${projectId} - skipping silently`);
+          this.emitEvent({
+            type: 'checkpoint_created',
+            workflowId,
+            progress: (state.completedSteps.length / state.completedSteps.length) * 100
+          });
+          return;
+        }
+        throw cpError;
+      }
 
       // 3. Store file paths in autoCheckpointFiles
       const modifiedFiles = state.modifiedFiles || [];

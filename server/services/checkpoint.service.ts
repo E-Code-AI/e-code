@@ -39,12 +39,16 @@ export interface RestoreOptions {
 }
 
 export class CheckpointService extends EventEmitter {
+  private lastCheckpointTime: Map<number, number> = new Map();
+  private static MIN_CHECKPOINT_INTERVAL_MS = 30000; // 30 seconds minimum between auto-checkpoints
+
   constructor() {
     super();
   }
 
   /**
    * Create a new checkpoint for a project
+   * Rate-limited for 'auto' type checkpoints to prevent spam (minimum 30 seconds between auto-checkpoints)
    */
   async createCheckpoint(
     projectId: number, 
@@ -59,6 +63,22 @@ export class CheckpointService extends EventEmitter {
       conversationSnapshot,
       createdBy
     } = options;
+
+    // Rate-limit auto checkpoints to prevent spam (only for 'auto' type, not manual or milestone)
+    const isRateLimited = type === 'auto' && (() => {
+      const lastTime = this.lastCheckpointTime.get(projectId);
+      const now = Date.now();
+      return lastTime && (now - lastTime) < CheckpointService.MIN_CHECKPOINT_INTERVAL_MS;
+    })();
+
+    if (isRateLimited) {
+      console.log(`[CheckpointService] Rate-limited auto-checkpoint for project ${projectId} - skipping silently`);
+      // Throw a specific error that callers can catch and handle gracefully
+      const error = new Error('CHECKPOINT_RATE_LIMITED');
+      (error as any).code = 'RATE_LIMITED';
+      (error as any).projectId = projectId;
+      throw error;
+    }
 
     const insertData: InsertAutoCheckpoint = {
       projectId,
@@ -76,6 +96,11 @@ export class CheckpointService extends EventEmitter {
       .insert(autoCheckpoints)
       .values(insertData)
       .returning();
+
+    // Only update last checkpoint time AFTER successful insert
+    if (type === 'auto') {
+      this.lastCheckpointTime.set(projectId, Date.now());
+    }
 
     this.emit('checkpointCreated', { projectId, checkpoint });
     console.log(`[CheckpointService] Created checkpoint ${checkpoint.id} for project ${projectId}`);

@@ -220,21 +220,30 @@ export class EnhancedAutonomousAgent {
       // Calculate effort metrics
       this.calculateEffortMetrics(buildActions);
       
-      // Create checkpoint
-      const checkpoint = await checkpointService.createCheckpoint({
-        projectId: context.projectId,
-        userId: context.userId,
-        name: `AI Agent: ${context.message.substring(0, 50)}`,
-        description: `AI Agent response to: ${context.message.substring(0, 100)}...`,
-        type: 'automatic',
-        includeDatabase: false,
-        includeEnvironment: false,
-        agentState: {
-          filesModified: this.filesModified,
-          linesOfCodeWritten: this.linesOfCodeWritten,
-          actions: buildActions.length
+      // Create checkpoint (wrapped to handle rate limiting gracefully)
+      let checkpoint = null;
+      try {
+        checkpoint = await checkpointService.createCheckpoint({
+          projectId: context.projectId,
+          userId: context.userId,
+          name: `AI Agent: ${context.message.substring(0, 50)}`,
+          description: `AI Agent response to: ${context.message.substring(0, 100)}...`,
+          type: 'automatic',
+          includeDatabase: false,
+          includeEnvironment: false,
+          agentState: {
+            filesModified: this.filesModified,
+            linesOfCodeWritten: this.linesOfCodeWritten,
+            actions: buildActions.length
+          }
+        });
+      } catch (cpError: any) {
+        if (cpError.code === 'RATE_LIMITED') {
+          logger.debug(`[Agent] Checkpoint rate-limited for project ${context.projectId} - skipping silently`);
+        } else {
+          logger.warn(`[Agent] Failed to create checkpoint: ${cpError.message}`);
         }
-      });
+      }
       
       // Calculate pricing based on effort with correct interface
       const pricingInfo = effortPricingService.calculatePricing({
