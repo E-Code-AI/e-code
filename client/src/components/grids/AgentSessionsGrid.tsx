@@ -40,7 +40,7 @@ import 'ag-grid-community/styles/ag-grid.css';
 import './ag-grid-theme.css';
 
 interface AgentSessionsGridProps {
-  projectId: number;
+  projectId?: number;
   onSessionSelect?: (session: AgentSessionRow) => void;
   height?: string | number;
 }
