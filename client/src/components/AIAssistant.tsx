@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Bot, Send, Sparkles, Code, FileText, HelpCircle,
   Lightbulb, Zap, RefreshCw, Copy, ThumbsUp, ThumbsDown,
@@ -79,6 +79,9 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
   const [activePromptRules, setActivePromptRules] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isUserNearBottomRef = useRef(true);
+  const lastScrollTimeRef = useRef(0);
   const { toast } = useToast();
 
   // Fetch active AI rules for this project
@@ -94,8 +97,48 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
     }
   }, [projectRules]);
 
+  // Smart scroll: Check if user is near bottom
+  const checkIfNearBottom = useCallback(() => {
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (!scrollContainer) {
+      const container = messagesEndRef.current?.parentElement;
+      if (container) {
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+        isUserNearBottomRef.current = distanceFromBottom < 150;
+      }
+      return;
+    }
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    isUserNearBottomRef.current = distanceFromBottom < 150;
+  }, []);
+
+  // Smart scroll: Listen for scroll events
   useEffect(() => {
-    scrollToBottom();
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]') || 
+                            messagesEndRef.current?.parentElement;
+    if (scrollContainer) {
+      const handleScroll = () => {
+        lastScrollTimeRef.current = Date.now();
+        checkIfNearBottom();
+      };
+      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, [checkIfNearBottom]);
+
+  // Smart auto-scroll to bottom only if user is near bottom
+  useEffect(() => {
+    const timeSinceLastScroll = Date.now() - lastScrollTimeRef.current;
+    if (timeSinceLastScroll < 100) return;
+    if (!isUserNearBottomRef.current) return;
+    
+    if (messagesEndRef.current) {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      });
+    }
   }, [messages, streamingMessage]);
 
   useEffect(() => {
@@ -110,9 +153,14 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
     }
   }, [input]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const scrollToBottom = useCallback(() => {
+    if (messagesEndRef.current) {
+      isUserNearBottomRef.current = true;
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      });
+    }
+  }, []);
 
   const loadChatHistory = async () => {
     try {
@@ -403,7 +451,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
             </div>
 
             {/* Messages */}
-            <ScrollArea className="h-96 px-3 py-3">
+            <ScrollArea ref={scrollRef} className="h-96 px-3 py-3">
               {messages.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
                   <Bot className="h-12 w-12 mx-auto mb-3 opacity-50" />

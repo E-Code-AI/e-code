@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Bot, Send, Sparkles, Pause, Play, 
   ChevronDown, ChevronRight, CheckCircle, AlertCircle,
@@ -145,6 +145,9 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isUserNearBottomRef = useRef(true);
+  const lastScrollTimeRef = useRef(0);
 
   // Initialize WebSocket for real-time updates - ROUTES THROUGH GO SERVICE (Polyglot)
   useEffect(() => {
@@ -222,9 +225,48 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
     }
   }, []);
 
-  // Auto-scroll to bottom
+  // Smart scroll: Check if user is near bottom
+  const checkIfNearBottom = useCallback(() => {
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (!scrollContainer) {
+      const container = messagesEndRef.current?.parentElement;
+      if (container) {
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+        isUserNearBottomRef.current = distanceFromBottom < 150;
+      }
+      return;
+    }
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    isUserNearBottomRef.current = distanceFromBottom < 150;
+  }, []);
+
+  // Smart scroll: Listen for scroll events
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]') || 
+                            messagesEndRef.current?.parentElement;
+    if (scrollContainer) {
+      const handleScroll = () => {
+        lastScrollTimeRef.current = Date.now();
+        checkIfNearBottom();
+      };
+      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, [checkIfNearBottom]);
+
+  // Smart auto-scroll to bottom only if user is near bottom
+  useEffect(() => {
+    const timeSinceLastScroll = Date.now() - lastScrollTimeRef.current;
+    if (timeSinceLastScroll < 100) return;
+    if (!isUserNearBottomRef.current) return;
+    
+    if (messagesEndRef.current) {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      });
+    }
   }, [messages]);
 
   const toggleMode = (modeId: string) => {
@@ -539,7 +581,7 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 px-4 py-4">
+      <ScrollArea ref={scrollRef} className="flex-1 px-4 py-4">
         <div className="space-y-4">
           {messages.length === 0 ? (
             <div className="text-center py-12 space-y-4">
