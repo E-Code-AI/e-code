@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import type { MetricsDashboardResponse } from '@shared/types/agent-grid.types';
 
 interface AgentMetricsDashboardProps {
-  projectId: number;
+  projectId?: number;
   className?: string;
 }
 
@@ -91,14 +91,15 @@ function formatNumber(num: number): string {
 export function AgentMetricsDashboard({ projectId, className }: AgentMetricsDashboardProps) {
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
-    params.set('projectId', String(projectId));
+    if (projectId) {
+      params.set('projectId', String(projectId));
+    }
     params.set('granularity', 'day');
     return params.toString();
   }, [projectId]);
 
   const { data, isLoading, error } = useQuery<MetricsDashboardResponse>({
-    queryKey: ['/api/agent-grid/metrics', projectId, queryParams],
-    enabled: !!projectId,
+    queryKey: ['/api/agent-grid/metrics', projectId ?? 'all', queryParams],
   });
 
   if (isLoading) {

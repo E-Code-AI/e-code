@@ -1938,7 +1938,7 @@ export function ReplitAgentPanelV3({
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-24 bg-muted/50 rounded animate-pulse" />
-                <span className="text-[10px] text-muted-foreground">
+                <span className="hidden sm:inline text-[10px] text-muted-foreground">
                   Initializing agent...
                 </span>
               </div>
@@ -1951,7 +1951,7 @@ export function ReplitAgentPanelV3({
                   mode={agentMode} 
                   onChange={handleModeChange}
                 />
-                <span className="text-[10px] text-muted-foreground">
+                <span className="hidden sm:inline text-[10px] text-muted-foreground">
                   {agentMode === 'build' && "Agent will autonomously make changes"}
                   {agentMode === 'plan' && "Agent will brainstorm without changes"}
                   {agentMode === 'edit' && "Targeted changes to specific files"}
