@@ -24,6 +24,7 @@ import { redisIdempotency } from './redis-idempotency.service';
 import { dependencyInstallService, installDependencies } from './dependency-install.service';
 import { buildVerificationService, verifyBuild } from './build-verification.service';
 import { responsiveValidationService, validateResponsive } from './responsive-validation.service';
+import { viewportValidationService, validateViewports } from './viewport-validation.service';
 
 const logger = createLogger('agent-workflow-engine');
 
@@ -1316,6 +1317,58 @@ export class AgentWorkflowEngineService extends EventEmitter {
       }
     } else {
       results.responsive = { skipped: true, reason: 'No preview URL provided' };
+    }
+
+    // Step 4: Viewport validation at 3 specific sizes (Mobile, Tablet, Desktop)
+    if (previewUrl) {
+      this.emitEvent({
+        type: 'step_start',
+        workflowId,
+        stepId: 'post_validation_viewport',
+        progress: 98
+      });
+
+      try {
+        const viewportResult = await validateViewports(previewUrl);
+        results.viewport = {
+          success: viewportResult.success,
+          overallScore: viewportResult.overallScore,
+          testedViewports: viewportResult.viewports.map(v => ({
+            name: v.viewport,
+            size: `${v.width}x${v.height}`,
+            success: v.success,
+            loadTimeMs: v.loadTimeMs,
+            errors: v.jsErrors.length + v.consoleErrors.length
+          })),
+          issues: viewportResult.issues
+        };
+
+        if (!viewportResult.success) {
+          logger.warn(`[WorkflowEngine] Viewport validation issues: ${viewportResult.issues.join(', ')}`);
+        } else {
+          logger.info(`[WorkflowEngine] ✅ Viewport validation passed for all 3 sizes (Mobile 375x667, Tablet 768x1024, Desktop 1280x720)`);
+        }
+
+        this.emitEvent({
+          type: viewportResult.success ? 'step_complete' : 'step_failed',
+          workflowId,
+          stepId: 'post_validation_viewport',
+          progress: 99,
+          error: viewportResult.success ? undefined : viewportResult.issues.join('; ')
+        });
+      } catch (error: any) {
+        results.viewport = { success: false, error: error.message };
+        this.emitEvent({
+          type: 'step_failed',
+          workflowId,
+          stepId: 'post_validation_viewport',
+          progress: 99,
+          error: error.message
+        });
+        // Don't fail overall for viewport issues
+      }
+    } else {
+      results.viewport = { skipped: true, reason: 'No preview URL provided' };
     }
 
     logger.info(`[WorkflowEngine] Post-workflow validation complete. Success: ${overallSuccess}`);
