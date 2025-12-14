@@ -74,6 +74,7 @@ import { useMaxAutonomy } from '@/hooks/useMaxAutonomy';
 import { AgentToolsPanel, type AgentToolsSettings } from './AgentToolsPanel';
 import { ElementEditor, type ElementSelection } from './ElementEditor';
 import { ChatToolbar, ChatToolbarMobile } from './ChatToolbar';
+import { WebSearchToggle, WebSearchBadge } from './WebSearchToggle';
 import { UsageTrackingIcon } from './UsageTrackingIcon';
 import { VideoReplayViewer } from './VideoReplayViewer';
 import { ECodeLogo } from '@/components/ECodeLogo';
@@ -81,6 +82,7 @@ import { RAGToggle, RAGStatsDisplay, RetrievedContextPanel, useRAGStats } from '
 import { MemoryBankPanel, MemoryBankStatusBadge, useMemoryBankStatus } from './MemoryBankPanel';
 import { EffortPricingDisplay } from '@/components/EffortPricingDisplay';
 import { CheckpointsPanel } from '@/components/CheckpointsPanel';
+import { PreviewDeploymentButton } from './PreviewDeploymentPanel';
 import { History, X, MousePointer2, Coins, Database, Volume2, VolumeX, DollarSign, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -1626,6 +1628,20 @@ export function ReplitAgentPanelV3({
             {memoryBankStatus?.initialized && (
               <MemoryBankStatusBadge initialized={true} className="hidden sm:flex text-[10px]" />
             )}
+            {/* Web Search Toggle - Prominent first-class feature (Task 8: Replit Agent 3 parity) */}
+            <WebSearchToggle
+              enabled={agentToolsSettings.webSearch}
+              onToggle={() => handleAgentToolsChange({ ...agentToolsSettings, webSearch: !agentToolsSettings.webSearch })}
+              variant="button"
+              size="sm"
+              showLabel={false}
+            />
+            {/* Web Search Badge - Shows when web search is active */}
+            <AnimatePresence>
+              {agentToolsSettings.webSearch && !isCompactMode && (
+                <WebSearchBadge enabled={agentToolsSettings.webSearch} />
+              )}
+            </AnimatePresence>
             {/* Model chip with dropdown for quick model selection */}
             <DropdownMenu open={isModelSelectorOpen} onOpenChange={setIsModelSelectorOpen}>
               <DropdownMenuTrigger asChild>
@@ -1741,6 +1757,9 @@ export function ReplitAgentPanelV3({
                 <TooltipContent>Checkpoints & Rollback</TooltipContent>
               </Tooltip>
             </TooltipProvider>
+
+            {/* Preview Deployment - Quick access to app preview */}
+            <PreviewDeploymentButton projectId={projectId} />
 
             <TooltipProvider>
               <Tooltip>
