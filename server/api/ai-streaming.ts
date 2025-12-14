@@ -529,7 +529,7 @@ ${historyItems}
         const { checkpointService } = await import('../services/checkpoint.service');
         const projectIdNum = Number(projectId);
         
-        // Compute project base path (follows pattern used in checkpoint-restore.service.ts)
+        // Compute project base path (relative to cwd where projects are stored)
         const projectBasePath = path.join(process.cwd(), 'projects', String(projectIdNum));
         
         // Capture actual file state from the project directory
