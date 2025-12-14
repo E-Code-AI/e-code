@@ -18,6 +18,8 @@ import {
   type AutoCheckpointFile
 } from '@shared/schema';
 import { ensureAuthenticated as requireAuth } from '../middleware/auth';
+import { checkpointRestoreService } from '../services/checkpoint-restore.service';
+import { Server as SocketIOServer } from 'socket.io';
 
 const router = Router();
 
@@ -338,7 +340,7 @@ router.post('/auto-checkpoints/:id/files', requireAuth, async (req: Request, res
 
 /**
  * POST /api/auto-checkpoints/:id/restore
- * Restore a checkpoint (with optional backup creation)
+ * Restore a checkpoint with actual file system rollback
  */
 router.post('/auto-checkpoints/:id/restore', requireAuth, async (req: Request, res: Response) => {
   try {
@@ -357,7 +359,7 @@ router.post('/auto-checkpoints/:id/restore', requireAuth, async (req: Request, r
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    // Get the checkpoint to restore
+    // Verify checkpoint exists and is restorable
     const [checkpoint] = await db
       .select()
       .from(autoCheckpoints)
@@ -375,75 +377,38 @@ router.post('/auto-checkpoints/:id/restore', requireAuth, async (req: Request, r
       });
     }
 
-    let backupCheckpoint: AutoCheckpoint | null = null;
+    // Use the CheckpointRestoreService for actual file restoration
+    const restoreResult = await checkpointRestoreService.restoreToCheckpoint(
+      checkpointId,
+      {
+        restoreFiles: true,
+        restoreDatabase: validation.data.includeDatabase,
+        restoreConversation: false,
+        createBackupCheckpoint: validation.data.createBackup,
+        userId,
+      }
+    );
 
-    // Create backup checkpoint before restoring if requested
-    if (validation.data.createBackup) {
-      const [backup] = await db
-        .insert(autoCheckpoints)
-        .values({
-          projectId: checkpoint.projectId,
-          type: 'auto',
-          triggerSource: 'pre_restore_backup',
-          aiSummary: `Automatic backup created before restoring to checkpoint #${checkpointId}`,
-          includesDatabase: validation.data.includeDatabase,
-          filesSnapshot: {},
-          status: 'pending',
-          createdBy: userId,
-        })
-        .returning();
-      
-      backupCheckpoint = backup;
+    if (!restoreResult.success) {
+      return res.status(500).json({ 
+        error: 'Checkpoint restore failed',
+        errors: restoreResult.errors,
+        duration: restoreResult.duration,
+      });
     }
 
-    // Record the restore operation
-    const [restoreRecord] = await db
-      .insert(checkpointRestores)
-      .values({
-        checkpointId,
-        projectId: checkpoint.projectId,
-        restoredBy: userId,
-        includedDatabase: validation.data.includeDatabase,
-        status: 'pending',
-      })
-      .returning();
-
-    // Update restore status to in_progress
-    await db
-      .update(checkpointRestores)
-      .set({ status: 'in_progress' })
-      .where(eq(checkpointRestores.id, restoreRecord.id));
-
-    // Get checkpoint files to restore
-    const filesToRestore = await db
-      .select()
-      .from(autoCheckpointFiles)
-      .where(eq(autoCheckpointFiles.checkpointId, checkpointId));
-
-    // Mark restore as completed
-    await db
-      .update(checkpointRestores)
-      .set({ status: 'completed' })
-      .where(eq(checkpointRestores.id, restoreRecord.id));
-
     res.json({
-      message: 'Checkpoint restore initiated successfully',
+      message: 'Checkpoint restored successfully',
       restore: {
-        id: restoreRecord.id,
         checkpointId,
-        projectId: checkpoint.projectId,
+        projectId: restoreResult.projectId,
         status: 'completed',
-        includedDatabase: validation.data.includeDatabase,
-        filesCount: filesToRestore.length,
+        restoredFiles: restoreResult.restoredFiles,
+        restoredDatabase: restoreResult.restoredDatabase,
+        restoredConversation: restoreResult.restoredConversation,
+        duration: restoreResult.duration,
       },
-      backupCheckpoint: backupCheckpoint ? {
-        id: backupCheckpoint.id,
-        message: 'Backup checkpoint created before restore',
-      } : null,
-      filesToRestore: filesToRestore.map(f => ({
-        filePath: f.filePath,
-        fileHash: f.fileHash,
-      })),
+      errors: restoreResult.errors.length > 0 ? restoreResult.errors : undefined,
     });
   } catch (error) {
     console.error('[AutoCheckpoints API] Error restoring checkpoint:', error);
@@ -544,5 +509,50 @@ router.delete('/auto-checkpoints/:id', requireAuth, async (req: Request, res: Re
     res.status(500).json({ error: 'Failed to delete checkpoint' });
   }
 });
+
+/**
+ * WebSocket setup for real-time checkpoint events
+ */
+export function setupCheckpointWebSocket(io: SocketIOServer) {
+  const checkpointNamespace = io.of('/checkpoints');
+
+  checkpointNamespace.on('connection', (socket) => {
+    console.log('[Checkpoint WS] Client connected:', socket.id);
+
+    // Handle restore events from CheckpointRestoreService
+    const handleRestored = (event: {
+      checkpointId: number;
+      projectId: number;
+      restoredFiles: number;
+      restoredDatabase: boolean;
+      restoredConversation: boolean;
+      duration: number;
+    }) => {
+      socket.emit('checkpoint:restored', event);
+    };
+
+    checkpointRestoreService.on('restored', handleRestored);
+
+    socket.on('disconnect', () => {
+      console.log('[Checkpoint WS] Client disconnected:', socket.id);
+      checkpointRestoreService.off('restored', handleRestored);
+    });
+
+    // Allow clients to subscribe to specific project checkpoints
+    socket.on('subscribe:project', (projectId: number) => {
+      socket.join(`project:${projectId}`);
+      console.log(`[Checkpoint WS] Socket ${socket.id} subscribed to project ${projectId}`);
+    });
+
+    socket.on('unsubscribe:project', (projectId: number) => {
+      socket.leave(`project:${projectId}`);
+    });
+  });
+
+  // Broadcast restore events to project-specific rooms
+  checkpointRestoreService.on('restored', (event) => {
+    checkpointNamespace.to(`project:${event.projectId}`).emit('checkpoint:restored', event);
+  });
+}
 
 export default router;
