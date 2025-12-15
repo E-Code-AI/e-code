@@ -26,10 +26,6 @@ const updateFileSchema = z.object({
   content: z.string().min(1).max(100000) // Max 100KB per file
 });
 
-const initializeSchema = z.object({
-  projectDescription: z.string().optional()
-});
-
 const logChangeSchema = z.object({
   description: z.string().min(1),
   filesAffected: z.array(z.string()),
@@ -70,46 +66,6 @@ router.get('/:projectId', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('[MemoryBank API] Error getting memory bank:', error);
     res.status(500).json({ error: 'Failed to get memory bank' });
-  }
-});
-
-/**
- * POST /api/memory-bank/:projectId/initialize
- * Initialize memory bank with default files
- */
-router.post('/:projectId/initialize', async (req: Request, res: Response) => {
-  try {
-    const projectId = parseInt(req.params.projectId, 10);
-    if (isNaN(projectId)) {
-      return res.status(400).json({ error: 'Invalid project ID' });
-    }
-
-    const validation = initializeSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({ error: validation.error.errors });
-    }
-
-    const isAlreadyInitialized = await memoryBankService.isInitialized(projectId);
-    if (isAlreadyInitialized) {
-      const existing = await memoryBankService.getMemoryBank(projectId);
-      return res.json({ 
-        message: 'Memory bank already initialized',
-        memoryBank: existing 
-      });
-    }
-
-    const memoryBank = await memoryBankService.initialize(
-      projectId, 
-      validation.data.projectDescription
-    );
-
-    res.status(201).json({
-      message: 'Memory bank initialized successfully',
-      memoryBank
-    });
-  } catch (error) {
-    console.error('[MemoryBank API] Error initializing:', error);
-    res.status(500).json({ error: 'Failed to initialize memory bank' });
   }
 });
 
