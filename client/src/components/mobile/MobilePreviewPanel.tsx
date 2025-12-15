@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Smartphone, Tablet, Monitor, RotateCw, RefreshCw,
   ExternalLink, ChevronDown, Lock, Copy, Globe,
-  Signal, Wifi, BatteryFull
+  Signal, Wifi, BatteryFull, MoreVertical, MonitorX,
+  Code, Trees, X, Play
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
+import { PreviewSplashScreen } from '@/components/ide/PreviewSplashScreen';
 
 const colors = {
   primary: '#0079f2',
@@ -214,87 +223,139 @@ function PhysicalButtons({ isLandscape, scale }: {
   );
 }
 
-function ShimmerSkeleton() {
+function AppNotRunningState({ onRun }: { onRun: () => void }) {
   return (
     <motion.div 
-      className="absolute inset-0 z-40 flex flex-col items-center justify-center rounded-[24px] overflow-hidden"
-      style={{ backgroundColor: colors.dark }}
+      className="absolute inset-0 z-40 flex flex-col items-center justify-center rounded-[24px]"
+      style={{ backgroundColor: colors.white }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-      data-testid="mobile-preview-loading"
+      data-testid="mobile-preview-not-running"
     >
-      <div className="w-full h-full relative">
-        <div className="p-4 space-y-3">
-          <motion.div 
-            className="h-4 rounded-lg w-3/4"
-            style={{ backgroundColor: colors.surface }}
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div 
-            className="h-3 rounded-lg w-1/2"
-            style={{ backgroundColor: colors.surface }}
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
-          />
-        </div>
-        
-        <div className="px-4 space-y-4">
-          {[1, 2, 3].map((i) => (
-            <motion.div
-              key={i}
-              className="h-20 rounded-lg"
-              style={{ backgroundColor: colors.surface }}
-              animate={{ opacity: [0.3, 0.6, 0.3] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: i * 0.15 }}
-            />
-          ))}
-        </div>
-
-        <motion.div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: `linear-gradient(90deg, transparent 0%, ${colors.surfaceAlt}40 50%, transparent 100%)` }}
-          animate={{ x: ['-100%', '200%'] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-        />
-      </div>
-      
-      <span 
-        className="absolute bottom-8 text-[15px] leading-[20px] font-medium"
-        style={{ color: colors.textSecondary }}
+      <MonitorX 
+        className="mb-4"
+        style={{ width: 48, height: 48, color: colors.textMuted }}
+      />
+      <h3 
+        className="text-[17px] font-semibold leading-tight mb-2"
+        style={{ color: colors.dark }}
+        data-testid="text-not-running-title"
       >
-        Loading preview...
-      </span>
+        Your app is not running
+      </h3>
+      <p 
+        className="text-[15px] leading-[20px] text-center max-w-[200px] mb-6"
+        style={{ color: colors.textMuted }}
+        data-testid="text-not-running-description"
+      >
+        Run to preview your app.
+      </p>
+      <Button
+        onClick={onRun}
+        className="h-11 px-6 text-[15px] font-medium rounded-lg gap-2"
+        style={{ backgroundColor: '#22c55e', color: colors.white }}
+        data-testid="button-run-app"
+      >
+        <Play className="w-4 h-4" />
+        Run
+      </Button>
     </motion.div>
   );
 }
 
-function EmptyState() {
+interface PreviewOptionsSheetProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onShareDevLink: () => void;
+  onSharePublishedLink: () => void;
+  onRepublish: () => void;
+  onCloseTab: () => void;
+}
+
+function PreviewOptionsSheet({
+  open,
+  onOpenChange,
+  onShareDevLink,
+  onSharePublishedLink,
+  onRepublish,
+  onCloseTab,
+}: PreviewOptionsSheetProps) {
+  const optionButtonClass = "flex items-center gap-3 w-full p-4 text-left hover:bg-gray-100 transition-colors min-h-[56px]";
+  
   return (
-    <div 
-      className="absolute inset-0 z-40 flex flex-col items-center justify-center rounded-[24px]"
-      style={{ backgroundColor: colors.dark }}
-      data-testid="mobile-preview-empty"
-    >
-      <Globe 
-        className="mb-4"
-        style={{ width: 48, height: 48, opacity: 0.4, color: colors.textSecondary }}
-      />
-      <h3 
-        className="text-[17px] font-medium leading-tight mb-2"
-        style={{ color: colors.white }}
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent 
+        side="bottom" 
+        className="rounded-t-[20px] bg-white p-0"
+        data-testid="preview-options-sheet"
       >
-        No preview available
-      </h3>
-      <p 
-        className="text-[15px] leading-[20px] text-center max-w-[200px]"
-        style={{ color: colors.textMuted }}
-      >
-        Run your application to see a live preview here
-      </p>
-    </div>
+        <SheetHeader className="p-4 pb-2 border-b border-gray-100">
+          <SheetTitle 
+            className="text-[17px] font-semibold text-black"
+            data-testid="text-sheet-title"
+          >
+            Preview
+          </SheetTitle>
+          <SheetDescription 
+            className="text-[15px] text-gray-500"
+            data-testid="text-sheet-description"
+          >
+            Preview your App.
+          </SheetDescription>
+        </SheetHeader>
+        
+        <div className="py-2">
+          <button
+            onClick={() => {
+              onShareDevLink();
+              onOpenChange(false);
+            }}
+            className={optionButtonClass}
+            data-testid="button-share-dev-link"
+          >
+            <Code className="w-5 h-5 text-gray-600" />
+            <span className="text-[15px] font-medium text-black">Share development link</span>
+          </button>
+          
+          <button
+            onClick={() => {
+              onSharePublishedLink();
+              onOpenChange(false);
+            }}
+            className={optionButtonClass}
+            data-testid="button-share-published-link"
+          >
+            <Globe className="w-5 h-5 text-gray-600" />
+            <span className="text-[15px] font-medium text-black">Share published link</span>
+          </button>
+          
+          <button
+            onClick={() => {
+              onRepublish();
+              onOpenChange(false);
+            }}
+            className={optionButtonClass}
+            data-testid="button-republish"
+          >
+            <Trees className="w-5 h-5 text-gray-600" />
+            <span className="text-[15px] font-medium text-black">Republish</span>
+          </button>
+          
+          <button
+            onClick={() => {
+              onCloseTab();
+              onOpenChange(false);
+            }}
+            className={optionButtonClass}
+            data-testid="button-close-tab"
+          >
+            <X className="w-5 h-5 text-gray-600" />
+            <span className="text-[15px] font-medium text-black">Close tab</span>
+          </button>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -342,6 +403,7 @@ export function MobilePreviewPanel({
   const [showDeviceFrame, setShowDeviceFrame] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [isOptionsSheetOpen, setIsOptionsSheetOpen] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { toast } = useToast();
 
@@ -405,6 +467,47 @@ export function MobilePreviewPanel({
     toast({
       title: 'URL copied',
       description: 'Preview URL copied to clipboard',
+    });
+  };
+
+  const handleRun = () => {
+    setIsLoading(true);
+    setHasError(false);
+    setIframeKey(prev => prev + 1);
+    toast({
+      title: 'Starting app',
+      description: 'Running your application...',
+    });
+  };
+
+  const handleShareDevLink = () => {
+    navigator.clipboard.writeText(computedPreviewUrl);
+    toast({
+      title: 'Development link copied',
+      description: 'Share this link for development preview',
+    });
+  };
+
+  const handleSharePublishedLink = () => {
+    const publishedUrl = computedPreviewUrl.replace('/preview/', '/');
+    navigator.clipboard.writeText(publishedUrl);
+    toast({
+      title: 'Published link copied',
+      description: 'Share this link with others',
+    });
+  };
+
+  const handleRepublish = () => {
+    toast({
+      title: 'Republishing',
+      description: 'Your app is being republished...',
+    });
+  };
+
+  const handleCloseTab = () => {
+    toast({
+      title: 'Tab closed',
+      description: 'Preview tab has been closed',
     });
   };
 
@@ -572,6 +675,16 @@ export function MobilePreviewPanel({
           >
             {showDeviceFrame ? 'Hide Frame' : 'Show Frame'}
           </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            className="w-11 h-11 p-0 rounded-lg"
+            onClick={() => setIsOptionsSheetOpen(true)}
+            data-testid="mobile-preview-options-menu"
+          >
+            <MoreVertical className="w-[18px] h-[18px]" style={{ color: colors.textSecondary }} />
+          </Button>
         </div>
 
         <div className="mt-2 flex items-center gap-2 text-[13px]" style={{ color: colors.textMuted }}>
@@ -631,11 +744,21 @@ export function MobilePreviewPanel({
           )}
 
           <AnimatePresence>
-            {isLoading && <ShimmerSkeleton />}
+            {isLoading && (
+              <motion.div 
+                className="absolute inset-0 z-40 rounded-[24px] overflow-hidden"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                data-testid="mobile-preview-loading"
+              >
+                <PreviewSplashScreen isBuilding={isLoading} />
+              </motion.div>
+            )}
           </AnimatePresence>
 
           <AnimatePresence>
-            {hasError && !isLoading && <EmptyState />}
+            {hasError && !isLoading && <AppNotRunningState onRun={handleRun} />}
           </AnimatePresence>
 
           <iframe
@@ -652,6 +775,15 @@ export function MobilePreviewPanel({
           />
         </motion.div>
       </div>
+
+      <PreviewOptionsSheet
+        open={isOptionsSheetOpen}
+        onOpenChange={setIsOptionsSheetOpen}
+        onShareDevLink={handleShareDevLink}
+        onSharePublishedLink={handleSharePublishedLink}
+        onRepublish={handleRepublish}
+        onCloseTab={handleCloseTab}
+      />
     </div>
   );
 }
