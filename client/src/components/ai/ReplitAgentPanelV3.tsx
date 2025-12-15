@@ -89,6 +89,7 @@ import { PreviewDeploymentButton } from './PreviewDeploymentPanel';
 import { TaskDecompositionDisplay, type DecomposedTask } from '@/components/agent/TaskDecompositionDisplay';
 import { AIModelIndicator, AIModelBadge, type DelegationInfo } from '@/components/agent/AIModelIndicator';
 import { OrchestratorProgress, MiniProgressIndicator, type SessionProgressData } from '@/components/agent/OrchestratorProgress';
+import { MessageQueue, type QueuedMessage } from '@/components/agent/MessageQueue';
 import { History, X, MousePointer2, Coins, Database, Volume2, VolumeX, DollarSign, RotateCcw } from 'lucide-react';
 import { SiFigma } from 'react-icons/si';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -614,6 +615,13 @@ export function ReplitAgentPanelV3({
     } 
   }>({
     queryKey: ['/api/autonomy/sessions', autonomySessionId, 'progress'],
+    enabled: Boolean(autonomySessionId),
+    refetchInterval: 3000,
+  });
+
+  // Fetch queued messages for autonomy session
+  const { data: queuedMessagesData, isLoading: isLoadingQueuedMessages } = useQuery<{ messages: QueuedMessage[] }>({
+    queryKey: ['/api/autonomy/sessions', autonomySessionId, 'messages'],
     enabled: Boolean(autonomySessionId),
     refetchInterval: 3000,
   });
@@ -2194,6 +2202,15 @@ export function ReplitAgentPanelV3({
                   tasks={orchestratorTasks.tasks}
                   currentTaskId={orchestratorProgress?.progress?.currentTaskId}
                   isExpanded={true}
+                />
+              )}
+              
+              {/* Message Queue - shows pending follow-up messages */}
+              {autonomySessionId && queuedMessagesData?.messages && (
+                <MessageQueue
+                  sessionId={autonomySessionId}
+                  messages={queuedMessagesData.messages}
+                  isLoading={isLoadingQueuedMessages}
                 />
               )}
               
