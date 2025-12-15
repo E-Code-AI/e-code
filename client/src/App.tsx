@@ -12,6 +12,7 @@ import { LazyAnimatedRoutes } from "@/components/LazyAnimatedRoutes";
 import { instrumentedLazy } from "./utils/instrumented-lazy";
 import { ConnectionStatusProvider } from "./hooks/use-connection-status";
 import { ConnectionStatusBanner } from "./components/ConnectionStatusBanner";
+import { GlobalErrorChannelProvider } from "./hooks/use-global-error-channel";
 
 // Performance optimizations imports
 import performanceMonitor from "./utils/performance";
@@ -1079,9 +1080,11 @@ function App() {
     >
       <ThemeProvider>
         <ConnectionStatusProvider>
-          <AuthProvider>
-            <AppContent />
-          </AuthProvider>
+          <GlobalErrorChannelProvider>
+            <AuthProvider>
+              <AppContent />
+            </AuthProvider>
+          </GlobalErrorChannelProvider>
         </ConnectionStatusProvider>
       </ThemeProvider>
     </PersistQueryClientProvider>

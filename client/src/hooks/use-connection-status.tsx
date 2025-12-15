@@ -189,7 +189,7 @@ export function ConnectionStatusProvider({ children }: { children: ReactNode }) 
   );
 }
 
-export function useConnectionStatus() {
+export function useConnectionStatus(): ConnectionStatusContextValue {
   const context = useContext(ConnectionStatusContext);
   if (!context) {
     return {
