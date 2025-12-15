@@ -111,7 +111,8 @@ function UnifiedIDELayout({
 }: UnifiedIDELayoutProps) {
   const deviceType = useDeviceType();
   const { toast } = useToast();
-  const isConnected = useConnectionStatus();
+  const connectionStatus = useConnectionStatus();
+  const isConnected = connectionStatus.isOnline && connectionStatus.backendHealthy;
   const { errorsCount } = useProblemsCount(projectId);
   
   // Autonomous build store for inline chat integration and preview splash screens
