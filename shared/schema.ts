@@ -3705,6 +3705,10 @@ export const maxAutonomyTasks = pgTable('max_autonomy_tasks', {
     commandsExecuted?: string[];
     aiResponse?: string;
     testResults?: { passed: boolean; total: number; failures: any[] };
+    citations?: Array<{ url: string; title: string; snippet: string; domain: string }>;
+    tokensUsed?: number;
+    costUsd?: number;
+    modelUsed?: string;
   }>(),
 }, (table) => [
   index('max_autonomy_tasks_session_id_idx').on(table.sessionId),
@@ -3729,6 +3733,36 @@ export type InsertMaxAutonomySession = z.infer<typeof insertMaxAutonomySessionSc
 
 export type MaxAutonomyTask = typeof maxAutonomyTasks.$inferSelect;
 export type InsertMaxAutonomyTask = z.infer<typeof insertMaxAutonomyTaskSchema>;
+
+// Message Queue for queuing follow-up requests while agent is busy
+export const autonomyMessageQueue = pgTable('autonomy_message_queue', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: varchar('session_id').notNull().references(() => maxAutonomySessions.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id),
+  
+  content: text('content').notNull(),
+  priority: integer('priority').default(0), // Higher = processed first
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, processing, completed, cancelled
+  
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  processedAt: timestamp('processed_at'),
+  
+  metadata: jsonb('metadata').$type<{
+    source?: string;
+    context?: any;
+  }>(),
+}, (table) => [
+  index('autonomy_message_queue_session_id_idx').on(table.sessionId),
+  index('autonomy_message_queue_status_idx').on(table.status),
+]);
+
+export const insertAutonomyMessageQueueSchema = createInsertSchema(autonomyMessageQueue).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type AutonomyMessageQueue = typeof autonomyMessageQueue.$inferSelect;
+export type InsertAutonomyMessageQueue = z.infer<typeof insertAutonomyMessageQueueSchema>;
 
 // ============================================
 // BOUNTIES SYSTEM - Stripe Connect Marketplace
