@@ -21,9 +21,7 @@ import {
   PlayCircle,
   Brain,
   Sparkles,
-  Globe,
   Loader2,
-  Search,
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
@@ -131,10 +129,9 @@ export function AgentToolsPanel({
   const appTestingOn = effectiveSettings.appTesting;
   const extendedThinkingOn = effectiveSettings.extendedThinking;
   const highPowerModelsOn = effectiveSettings.highPowerModels;
-  const webSearchOn = effectiveSettings.webSearch;
   
 
-  const activeCount = [maxAutonomyOn, appTestingOn, extendedThinkingOn, highPowerModelsOn, webSearchOn].filter(Boolean).length;
+  const activeCount = [maxAutonomyOn, appTestingOn, extendedThinkingOn, highPowerModelsOn].filter(Boolean).length;
 
   if (isLoadingPreferences) {
     return (
@@ -357,44 +354,6 @@ export function AgentToolsPanel({
                 data-testid="toggle-high-power-models"
                 disabled={isUpdating}
                 className="data-[state=checked]:bg-orange-500"
-              />
-            </div>
-
-            <Separator />
-
-            {/* Web Search Toggle - Replit Advanced Options */}
-            <div className="flex items-start justify-between gap-3 py-2 min-h-[44px]">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center shrink-0">
-                  <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div className="space-y-0.5">
-                  <Label 
-                    htmlFor="web-search" 
-                    className="font-medium text-sm cursor-pointer"
-                  >
-                    Web search
-                  </Label>
-                  <p className="text-[11px] text-muted-foreground leading-tight">
-                    Agent searches the web for up-to-date docs and APIs
-                  </p>
-                  {webSearchOn && (
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <Globe className="w-3 h-3 text-blue-500" />
-                      <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
-                        Live search enabled
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <Switch
-                id="web-search"
-                checked={webSearchOn}
-                onCheckedChange={(checked) => handleToggle('webSearch', checked)}
-                data-testid="toggle-web-search"
-                disabled={isUpdating}
-                className="data-[state=checked]:bg-blue-500"
               />
             </div>
 
