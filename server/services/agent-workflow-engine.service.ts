@@ -330,7 +330,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
             projectId,
             name,
             description,
-            steps,
+            steps: steps as any,
             status: 'pending',
             progress: 0,
             metadata: idempotencyKey ? { idempotencyKey } : undefined
@@ -520,7 +520,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
           projectPath = '.';
         }
       }
-      const previewUrl = session.context?.previewUrl || state.variables?.previewUrl;
+      const previewUrl = (session.context as any)?.previewUrl || state.variables?.previewUrl;
       
       try {
         const validationResult = await this.runPostWorkflowValidation(
@@ -1226,13 +1226,13 @@ export class AgentWorkflowEngineService extends EventEmitter {
       );
       
       const success = result.exitCode === 0;
-      const failedTests = this.parseFailedTests(result.stdout + result.stderr);
+      const failedTests = this.parseFailedTests((result.stdout || '') + (result.stderr || ''));
       
       return {
         success,
         failedTests,
         errorOutput: result.stderr || '',
-        exitCode: result.exitCode
+        exitCode: result.exitCode ?? 1
       };
     } catch (error: any) {
       return {
