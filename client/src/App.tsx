@@ -10,6 +10,8 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { LazyAnimatedRoutes } from "@/components/LazyAnimatedRoutes";
 import { instrumentedLazy } from "./utils/instrumented-lazy";
+import { ConnectionStatusProvider } from "./hooks/use-connection-status";
+import { ConnectionStatusBanner } from "./components/ConnectionStatusBanner";
 
 // Performance optimizations imports
 import performanceMonitor from "./utils/performance";
@@ -367,6 +369,7 @@ function AppContent() {
       <TooltipProvider>
         <AtSymbolRedirectHandler>
           <div className="min-h-screen replit-layout-main">
+            <ConnectionStatusBanner />
             <ScrollToTop />
             <Toaster />
             <AppToaster />
@@ -1075,9 +1078,11 @@ function App() {
       }}
     >
       <ThemeProvider>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
+        <ConnectionStatusProvider>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </ConnectionStatusProvider>
       </ThemeProvider>
     </PersistQueryClientProvider>
   );
