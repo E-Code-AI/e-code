@@ -361,32 +361,33 @@ function PreviewOptionsSheet({
 
 function URLBar({ url, onCopy }: { url: string; onCopy: () => void }) {
   const displayUrl = url.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  const truncatedUrl = displayUrl.length > 40 
-    ? displayUrl.substring(0, 37) + '...' 
-    : displayUrl;
 
   return (
     <div 
-      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px]"
+      className="flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] w-full min-w-0"
       style={{ backgroundColor: colors.surfaceAlt, border: `1px solid ${colors.surface}` }}
       data-testid="mobile-preview-url-bar"
     >
       <Lock 
-        className="w-[18px] h-[18px] flex-shrink-0" 
+        className="w-4 h-4 sm:w-[18px] sm:h-[18px] flex-shrink-0" 
         style={{ color: '#22c55e' }}
         data-testid="mobile-preview-lock-icon" 
       />
-      <span className="truncate" title={url} style={{ color: colors.textSecondary }}>
-        {truncatedUrl}
+      <span 
+        className="truncate flex-1 min-w-0 text-[12px] sm:text-[13px]" 
+        title={url} 
+        style={{ color: colors.textSecondary }}
+      >
+        {displayUrl}
       </span>
       <Button
         size="sm"
         variant="ghost"
-        className="w-11 h-11 p-0 flex-shrink-0 rounded-lg"
+        className="w-9 h-9 sm:w-11 sm:h-11 p-0 flex-shrink-0 rounded-lg"
         onClick={onCopy}
         data-testid="mobile-preview-copy-url"
       >
-        <Copy className="w-[18px] h-[18px]" style={{ color: colors.textSecondary }} />
+        <Copy className="w-4 h-4 sm:w-[18px] sm:h-[18px]" style={{ color: colors.textSecondary }} />
       </Button>
     </div>
   );
@@ -524,22 +525,28 @@ export function MobilePreviewPanel({
       ref={containerRef}
     >
       <div 
-        className="flex-shrink-0 p-4 min-h-[56px]"
+        className="flex-shrink-0 p-3 sm:p-4"
         style={{ borderBottom: `1px solid ${colors.surface}`, backgroundColor: colors.dark }}
         data-testid="mobile-preview-toolbar"
       >
-        <div className="flex items-center gap-2">
+        {/* URL Bar - Full width on mobile, first row */}
+        <div className="mb-2 w-full">
+          <URLBar url={computedPreviewUrl} onCopy={handleCopyUrl} />
+        </div>
+        
+        {/* Controls row */}
+        <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-11 px-3 text-[15px] leading-[20px] rounded-lg flex items-center gap-2"
+                className="h-10 sm:h-11 px-2 sm:px-3 text-[14px] sm:text-[15px] leading-[20px] rounded-lg flex items-center gap-1 sm:gap-2"
                 data-testid="mobile-preview-device-selector"
               >
-                <selectedDevice.icon className="w-[18px] h-[18px]" />
+                <selectedDevice.icon className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
                 <span className="hidden sm:inline font-medium" style={{ color: colors.white }}>{selectedDevice.name}</span>
-                <ChevronDown className="w-[18px] h-[18px]" style={{ color: colors.textSecondary }} />
+                <ChevronDown className="w-4 h-4 sm:w-[18px] sm:h-[18px]" style={{ color: colors.textSecondary }} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent 
@@ -628,22 +635,22 @@ export function MobilePreviewPanel({
           <Button
             size="sm"
             variant="ghost"
-            className="w-11 h-11 p-0 rounded-lg"
+            className="w-10 h-10 sm:w-11 sm:h-11 p-0 rounded-lg"
             onClick={handleRotate}
             data-testid="mobile-preview-rotate"
           >
-            <RotateCw className="w-[18px] h-[18px]" style={{ color: colors.textSecondary }} />
+            <RotateCw className="w-4 h-4 sm:w-[18px] sm:h-[18px]" style={{ color: colors.textSecondary }} />
           </Button>
 
           <Button
             size="sm"
             variant="ghost"
-            className={cn("w-11 h-11 p-0 rounded-lg", isLoading && "animate-pulse")}
+            className={cn("w-10 h-10 sm:w-11 sm:h-11 p-0 rounded-lg", isLoading && "animate-pulse")}
             onClick={handleRefresh}
             data-testid="mobile-preview-refresh"
           >
             <RefreshCw 
-              className={cn("w-[18px] h-[18px]", isLoading && "animate-spin")} 
+              className={cn("w-4 h-4 sm:w-[18px] sm:h-[18px]", isLoading && "animate-spin")} 
               style={{ color: colors.textSecondary }}
             />
           </Button>
@@ -651,21 +658,19 @@ export function MobilePreviewPanel({
           <Button
             size="sm"
             variant="ghost"
-            className="w-11 h-11 p-0 rounded-lg"
+            className="w-10 h-10 sm:w-11 sm:h-11 p-0 rounded-lg hidden sm:flex"
             onClick={handleOpenExternal}
             data-testid="mobile-preview-external"
           >
-            <ExternalLink className="w-[18px] h-[18px]" style={{ color: colors.textSecondary }} />
+            <ExternalLink className="w-4 h-4 sm:w-[18px] sm:h-[18px]" style={{ color: colors.textSecondary }} />
           </Button>
 
-          <div className="flex-1 flex justify-center">
-            <URLBar url={computedPreviewUrl} onCopy={handleCopyUrl} />
-          </div>
+          <div className="flex-1" />
 
           <Button
             size="sm"
             variant={showDeviceFrame ? 'default' : 'ghost'}
-            className="h-11 px-4 text-[15px] leading-[20px] font-medium rounded-lg"
+            className="h-10 sm:h-11 px-3 sm:px-4 text-[13px] sm:text-[15px] leading-[20px] font-medium rounded-lg"
             style={{ 
               backgroundColor: showDeviceFrame ? colors.primary : 'transparent',
               color: showDeviceFrame ? colors.white : colors.textSecondary,
@@ -673,26 +678,27 @@ export function MobilePreviewPanel({
             onClick={() => setShowDeviceFrame(prev => !prev)}
             data-testid="mobile-preview-frame-toggle"
           >
-            {showDeviceFrame ? 'Hide Frame' : 'Show Frame'}
+            <span className="hidden sm:inline">{showDeviceFrame ? 'Hide Frame' : 'Show Frame'}</span>
+            <span className="sm:hidden">{showDeviceFrame ? 'Hide' : 'Frame'}</span>
           </Button>
 
           <Button
             size="sm"
             variant="ghost"
-            className="w-11 h-11 p-0 rounded-lg"
+            className="w-10 h-10 sm:w-11 sm:h-11 p-0 rounded-lg"
             onClick={() => setIsOptionsSheetOpen(true)}
             data-testid="mobile-preview-options-menu"
           >
-            <MoreVertical className="w-[18px] h-[18px]" style={{ color: colors.textSecondary }} />
+            <MoreVertical className="w-4 h-4 sm:w-[18px] sm:h-[18px]" style={{ color: colors.textSecondary }} />
           </Button>
         </div>
 
-        <div className="mt-2 flex items-center gap-2 text-[13px]" style={{ color: colors.textMuted }}>
+        <div className="mt-2 flex items-center gap-1 sm:gap-2 text-[11px] sm:text-[13px] flex-wrap" style={{ color: colors.textMuted }}>
           <span>{isLandscape ? 'Landscape' : 'Portrait'}</span>
           <span>•</span>
-          <span>{deviceWidth}×{deviceHeight}px</span>
-          <span>•</span>
-          <span>{Math.round(scale * 100)}% scale</span>
+          <span>{deviceWidth}×{deviceHeight}</span>
+          <span className="hidden sm:inline">•</span>
+          <span className="hidden sm:inline">{Math.round(scale * 100)}% scale</span>
           {selectedDevice.hasDynamicIsland && (
             <>
               <span>•</span>
