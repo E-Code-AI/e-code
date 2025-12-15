@@ -141,7 +141,7 @@ export function MobileMoreMenu({
       const shareUrl = `${window.location.origin}/projects/${projectId}`;
       await navigator.clipboard.writeText(shareUrl);
       toast({ title: 'Link Copied', description: 'Project link copied to clipboard' });
-      onClose();
+      if (!inline) onClose();
     } catch (error) {
       toast({ 
         title: 'Copy Failed', 
@@ -158,7 +158,7 @@ export function MobileMoreMenu({
       icon: Globe, 
       onClick: () => {
         toast({ title: 'Web Preview', description: 'Opening web preview...' });
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -167,7 +167,7 @@ export function MobileMoreMenu({
       icon: Rocket, 
       onClick: () => {
         if (onOpenDeploy) onOpenDeploy();
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -176,7 +176,7 @@ export function MobileMoreMenu({
       icon: GitBranch, 
       onClick: () => {
         if (onOpenGit) onOpenGit();
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -185,7 +185,7 @@ export function MobileMoreMenu({
       icon: Package, 
       onClick: () => {
         if (onOpenPackages) onOpenPackages();
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -194,7 +194,7 @@ export function MobileMoreMenu({
       icon: Database, 
       onClick: () => {
         if (onOpenDatabase) onOpenDatabase();
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -203,7 +203,7 @@ export function MobileMoreMenu({
       icon: Key, 
       onClick: () => {
         if (onOpenSecrets) onOpenSecrets();
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -213,7 +213,7 @@ export function MobileMoreMenu({
       badge: problemsCount > 0 ? problemsCount : undefined,
       onClick: () => {
         if (onOpenDebug) onOpenDebug();
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -222,7 +222,7 @@ export function MobileMoreMenu({
       icon: Search, 
       onClick: () => {
         if (onOpenGlobalSearch) onOpenGlobalSearch();
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -231,7 +231,7 @@ export function MobileMoreMenu({
       icon: Command, 
       onClick: () => {
         if (onOpenCommandPalette) onOpenCommandPalette();
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -240,7 +240,7 @@ export function MobileMoreMenu({
       icon: Workflow, 
       onClick: () => {
         if (onOpenWorkflows) onOpenWorkflows();
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -249,7 +249,7 @@ export function MobileMoreMenu({
       icon: Zap, 
       onClick: () => {
         if (onOpenActions) onOpenActions();
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -258,7 +258,7 @@ export function MobileMoreMenu({
       icon: Layers, 
       onClick: () => {
         if (onOpenTools) onOpenTools();
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -267,7 +267,7 @@ export function MobileMoreMenu({
       icon: Users, 
       onClick: () => {
         if (onOpenCollaboration) onOpenCollaboration();
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -282,7 +282,7 @@ export function MobileMoreMenu({
       icon: History, 
       onClick: () => {
         if (onOpenHistory) onOpenHistory();
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -291,7 +291,7 @@ export function MobileMoreMenu({
       icon: RotateCcw, 
       onClick: () => {
         if (onOpenCheckpoints) onOpenCheckpoints();
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -300,7 +300,7 @@ export function MobileMoreMenu({
       icon: Puzzle, 
       onClick: () => {
         if (onOpenExtensions) onOpenExtensions();
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -309,7 +309,7 @@ export function MobileMoreMenu({
       icon: Shield, 
       onClick: () => {
         if (onOpenSecurity) onOpenSecurity();
-        onClose();
+        if (!inline) onClose();
       }
     },
     { 
@@ -318,7 +318,7 @@ export function MobileMoreMenu({
       icon: Settings, 
       onClick: () => {
         if (onOpenSettings) onOpenSettings();
-        onClose();
+        if (!inline) onClose();
       }
     },
   ];
