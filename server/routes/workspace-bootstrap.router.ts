@@ -33,6 +33,7 @@ import jwt from 'jsonwebtoken';
 import { redisIdempotency } from '../services/redis-idempotency.service';
 import { speculativeScaffold } from '../services/speculative-scaffold.service';
 import { ViewportValidationService } from '../services/viewport-validation.service';
+import { memoryBankService } from '../services/memory-bank.service';
 import * as path from 'path';
 
 const logger = createLogger('workspace-bootstrap');
@@ -218,6 +219,16 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     const [userData] = userDataResult;
     
     logger.info(`[Bootstrap] Project created: ${project.id}`, { projectId: project.id, slug });
+    
+    // 2.5 ✅ AUTO-INITIALIZE MEMORY BANK (Dec 15, 2025)
+    // Replit-identical: Memory Bank is created automatically with each project
+    try {
+      await memoryBankService.initialize(project.id, prompt);
+      logger.info(`[Bootstrap] ✅ Memory Bank auto-initialized for project ${project.id}`);
+    } catch (memoryError) {
+      // Non-blocking: Memory Bank failure shouldn't block project creation
+      logger.warn(`[Bootstrap] Memory Bank init failed (non-blocking):`, memoryError);
+    }
     
     let modelId = userData?.preferredAiModel || null;
     
