@@ -400,7 +400,7 @@ export function MobilePreviewPanel({
   const [selectedDevice, setSelectedDevice] = useState<DevicePreset>(devicePresets[2]);
   const [isLandscape, setIsLandscape] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
-  const [showDeviceFrame, setShowDeviceFrame] = useState(true);
+  const [showDeviceFrame, setShowDeviceFrame] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isOptionsSheetOpen, setIsOptionsSheetOpen] = useState(false);
