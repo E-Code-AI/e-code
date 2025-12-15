@@ -13,8 +13,8 @@ import { maxAutonomyService } from '../services/max-autonomy-service';
 import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
 import { db } from '../db';
-import { maxAutonomySessions } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { maxAutonomySessions, autonomyMessageQueue } from '@shared/schema';
+import { eq, and, desc, asc } from 'drizzle-orm';
 import type { RiskThreshold } from '@shared/schema';
 
 const router = Router();
@@ -330,6 +330,87 @@ router.get('/health', (_req: Request, res: Response) => {
       autoRollback: true
     }
   });
+});
+
+// GET /api/autonomy/sessions/:id/messages - Get queued messages
+router.get('/sessions/:id/messages', ensureSessionOwnership, async (req: Request, res: Response) => {
+  try {
+    const sessionId = req.params.id;
+    const messages = await db.select()
+      .from(autonomyMessageQueue)
+      .where(eq(autonomyMessageQueue.sessionId, sessionId))
+      .orderBy(desc(autonomyMessageQueue.priority), asc(autonomyMessageQueue.createdAt));
+    
+    res.json({ success: true, messages });
+  } catch (error: any) {
+    logger.error('Error getting queued messages:', error);
+    res.status(500).json({ error: 'Failed to get queued messages' });
+  }
+});
+
+// POST /api/autonomy/sessions/:id/messages - Queue a new message
+router.post('/sessions/:id/messages', ensureSessionOwnership, async (req: Request, res: Response) => {
+  try {
+    const sessionId = req.params.id;
+    const userId = req.user!.id;
+    const { content, priority = 0 } = req.body;
+    
+    if (!content?.trim()) {
+      return res.status(400).json({ error: 'Message content is required' });
+    }
+    
+    const [message] = await db.insert(autonomyMessageQueue).values({
+      sessionId,
+      userId,
+      content: content.trim(),
+      priority,
+      status: 'pending',
+    }).returning();
+    
+    logger.info(`Message queued for session ${sessionId}: ${message.id}`);
+    res.status(201).json({ success: true, message });
+  } catch (error: any) {
+    logger.error('Error queuing message:', error);
+    res.status(500).json({ error: 'Failed to queue message' });
+  }
+});
+
+// DELETE /api/autonomy/sessions/:id/messages/:messageId - Cancel a queued message
+router.delete('/sessions/:id/messages/:messageId', ensureSessionOwnership, async (req: Request, res: Response) => {
+  try {
+    const { messageId } = req.params;
+    
+    await db.update(autonomyMessageQueue)
+      .set({ status: 'cancelled' })
+      .where(eq(autonomyMessageQueue.id, messageId));
+    
+    res.json({ success: true, message: 'Message cancelled' });
+  } catch (error: any) {
+    logger.error('Error cancelling message:', error);
+    res.status(500).json({ error: 'Failed to cancel message' });
+  }
+});
+
+// PATCH /api/autonomy/sessions/:id/messages/:messageId/priority - Update message priority
+router.patch('/sessions/:id/messages/:messageId/priority', ensureSessionOwnership, async (req: Request, res: Response) => {
+  try {
+    const { messageId } = req.params;
+    const { priority } = req.body;
+    
+    if (typeof priority !== 'number') {
+      return res.status(400).json({ error: 'Priority must be a number' });
+    }
+    
+    const [updated] = await db.update(autonomyMessageQueue)
+      .set({ priority })
+      .where(eq(autonomyMessageQueue.id, messageId))
+      .returning();
+    
+    res.json({ success: true, message: updated });
+  } catch (error: any) {
+    logger.error('Error updating message priority:', error);
+    res.status(500).json({ error: 'Failed to update priority' });
+  }
 });
 
 export default router;
