@@ -86,6 +86,9 @@ import { MemoryBankPanel, MemoryBankStatusBadge, useMemoryBankStatus } from './M
 import { EffortPricingDisplay } from '@/components/EffortPricingDisplay';
 import { CheckpointsPanel } from '@/components/CheckpointsPanel';
 import { PreviewDeploymentButton } from './PreviewDeploymentPanel';
+import { TaskDecompositionDisplay, type DecomposedTask } from '@/components/agent/TaskDecompositionDisplay';
+import { AIModelIndicator, AIModelBadge, type DelegationInfo } from '@/components/agent/AIModelIndicator';
+import { OrchestratorProgress, MiniProgressIndicator, type SessionProgressData } from '@/components/agent/OrchestratorProgress';
 import { History, X, MousePointer2, Coins, Database, Volume2, VolumeX, DollarSign, RotateCcw } from 'lucide-react';
 import { SiFigma } from 'react-icons/si';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -593,6 +596,26 @@ export function ReplitAgentPanelV3({
   const { data: backendMessages, isLoading: isLoadingMessages } = useQuery({
     queryKey: ['/api/agent/conversation', conversationId, 'messages'],
     enabled: !!conversationId,
+  });
+
+  // Fetch decomposed tasks for autonomy session
+  const { data: orchestratorTasks, isLoading: isLoadingTasks } = useQuery<{ tasks: DecomposedTask[] }>({
+    queryKey: ['/api/autonomy/sessions', autonomySessionId, 'tasks'],
+    enabled: Boolean(autonomySessionId),
+    refetchInterval: 5000,
+  });
+
+  // Fetch progress/ETA for autonomy session
+  const { data: orchestratorProgress, isLoading: isLoadingProgress } = useQuery<{ 
+    progress: SessionProgressData & { 
+      metadata?: { 
+        delegation?: DelegationInfo 
+      } 
+    } 
+  }>({
+    queryKey: ['/api/autonomy/sessions', autonomySessionId, 'progress'],
+    enabled: Boolean(autonomySessionId),
+    refetchInterval: 3000,
   });
 
   // Sync backend messages to zustand store on fetch
@@ -2133,13 +2156,54 @@ export function ReplitAgentPanelV3({
             </div>
           </div>
           
-          {/* Max Autonomy Progress - shown when toggle is on */}
+          {/* Max Autonomy Progress with Orchestrator Display - shown when toggle is on */}
           {agentToolsSettings.maxAutonomy && autonomySessionId && (
-            <MaxAutonomyProgress
-              sessionId={autonomySessionId}
-              projectId={projectIdNum}
-              onStop={handleStopAutonomy}
-            />
+            <div className="space-y-3">
+              {/* AI Model Indicator - shows current delegation tier and model */}
+              {orchestratorProgress?.progress?.metadata?.delegation && (
+                <div className="flex items-center justify-between">
+                  <AIModelIndicator
+                    delegation={orchestratorProgress.progress.metadata.delegation}
+                    showDetails={true}
+                  />
+                  <MiniProgressIndicator
+                    completed={orchestratorProgress.progress.tasksCompleted || 0}
+                    total={orchestratorProgress.progress.tasksTotal || 0}
+                    eta={orchestratorProgress.progress.estimatedRemainingMs}
+                  />
+                </div>
+              )}
+              
+              {/* Orchestrator Progress - shows task progress, ETA, and controls */}
+              {orchestratorProgress?.progress && (
+                <OrchestratorProgress
+                  progress={orchestratorProgress.progress}
+                  onPause={async () => {
+                    await apiRequest('POST', `/api/autonomy/sessions/${autonomySessionId}/pause`);
+                  }}
+                  onResume={async () => {
+                    await apiRequest('POST', `/api/autonomy/sessions/${autonomySessionId}/resume`);
+                  }}
+                  onStop={handleStopAutonomy}
+                />
+              )}
+              
+              {/* Task Decomposition Display - shows breakdown of tasks */}
+              {orchestratorTasks?.tasks && orchestratorTasks.tasks.length > 0 && (
+                <TaskDecompositionDisplay
+                  tasks={orchestratorTasks.tasks}
+                  currentTaskId={orchestratorProgress?.progress?.currentTaskId}
+                  isExpanded={true}
+                />
+              )}
+              
+              {/* Legacy MaxAutonomyProgress for compatibility */}
+              <MaxAutonomyProgress
+                sessionId={autonomySessionId}
+                projectId={projectIdNum}
+                onStop={handleStopAutonomy}
+              />
+            </div>
           )}
           
           {/* Chat input with inline toolbar - Replit-style with attachment/voice/send */}
