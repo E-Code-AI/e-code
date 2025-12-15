@@ -54,8 +54,7 @@ interface EnvVarsResponse {
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
     <motion.div
-      className={cn("rounded-lg", className)}
-      style={{ backgroundColor: '#242b3d' }}
+      className={cn("rounded-lg bg-gray-200 dark:bg-[#242b3d]", className)}
       animate={{
         opacity: [0.5, 0.8, 0.5],
       }}
@@ -228,12 +227,11 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
   if (!projectId) {
     return (
       <div 
-        className="h-full flex flex-col items-center justify-center p-3" 
-        style={{ backgroundColor: '#0e1525' }}
+        className="h-full flex flex-col items-center justify-center p-3 bg-gray-50 dark:bg-[#0e1525]" 
         data-testid="secrets-panel-no-project"
       >
-        <Lock className="w-[48px] h-[48px] mb-4" style={{ color: '#5c6670', opacity: 0.4 }} />
-        <p className="text-[15px] leading-[20px]" style={{ color: '#9da2a6' }}>
+        <Lock className="w-[48px] h-[48px] mb-4 text-gray-400 dark:text-[#5c6670] opacity-40" />
+        <p className="text-[15px] leading-[20px] text-gray-600 dark:text-[#9da2a6]">
           Select a project to manage secrets
         </p>
       </div>
@@ -242,20 +240,18 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
 
   return (
     <div 
-      className="h-full flex flex-col" 
-      style={{ backgroundColor: '#0e1525' }}
+      className="h-full flex flex-col bg-gray-50 dark:bg-[#0e1525]" 
       data-testid="secrets-panel"
     >
-      <div className="p-3 min-h-[48px]" style={{ borderBottom: '1px solid #3d4452' }}>
+      <div className="p-3 min-h-[48px] border-b border-gray-200 dark:border-[#3d4452]">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Shield className="w-[18px] h-[18px]" style={{ color: '#9da2a6' }} />
-            <h3 className="text-[17px] font-medium leading-tight" style={{ color: '#ffffff' }}>
+            <Shield className="w-[18px] h-[18px] text-gray-500 dark:text-[#9da2a6]" />
+            <h3 className="text-[17px] font-medium leading-tight text-gray-900 dark:text-white">
               Secrets
             </h3>
             <Badge 
-              className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded"
-              style={{ backgroundColor: '#242b3d', color: '#9da2a6', border: 'none' }}
+              className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded bg-gray-200 dark:bg-[#242b3d] text-gray-600 dark:text-[#9da2a6] border-none"
             >
               {variables.length}
             </Badge>
@@ -263,17 +259,15 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
-              className="h-8 w-8 rounded-lg p-0"
+              className="h-8 w-8 rounded-lg p-0 text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#242b3d]"
               onClick={() => refetch()}
               disabled={isLoading}
-              style={{ color: '#9da2a6' }}
               data-testid="button-refresh-secrets"
             >
               <RefreshCw className={cn("w-[18px] h-[18px]", isLoading && "animate-spin")} />
             </Button>
             <Button
-              className="h-8 rounded-lg px-3 text-[13px]"
-              style={{ backgroundColor: '#0079f2', color: '#ffffff' }}
+              className="h-8 rounded-lg px-3 text-[13px] bg-blue-600 hover:bg-blue-700 text-white"
               onClick={() => setShowAddDialog(true)}
               data-testid="button-add-secret"
             >
@@ -285,19 +279,13 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
 
         <div className="relative">
           <Search 
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-[18px] h-[18px]" 
-            style={{ color: '#5c6670' }} 
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-gray-400 dark:text-[#5c6670]" 
           />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search secrets..."
-            className="pl-10 h-8 rounded-lg text-[13px] border"
-            style={{ 
-              backgroundColor: '#1c2333', 
-              borderColor: '#3d4452', 
-              color: '#ffffff',
-            }}
+            className="pl-10 h-8 rounded-lg text-[13px] border bg-white dark:bg-[#1c2333] border-gray-300 dark:border-[#3d4452] text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-[#5c6670]"
             data-testid="input-search-secrets"
           />
         </div>
@@ -313,14 +301,13 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <AlertCircle className="w-[48px] h-[48px] mb-3" style={{ color: '#ef4444', opacity: 0.4 }} />
-              <p className="text-[15px] leading-[20px]" style={{ color: '#9da2a6' }}>
+              <AlertCircle className="w-[48px] h-[48px] mb-3 text-red-500 opacity-40" />
+              <p className="text-[15px] leading-[20px] text-gray-600 dark:text-[#9da2a6]">
                 Failed to load secrets
               </p>
               <Button 
                 variant="link" 
-                className="text-[13px] mt-2"
-                style={{ color: '#0079f2' }}
+                className="text-[13px] mt-2 text-blue-600 dark:text-[#0079f2]"
                 onClick={() => refetch()}
               >
                 Try again
@@ -329,21 +316,19 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
           ) : filteredVariables.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Lock 
-                className="w-[48px] h-[48px] mb-4" 
-                style={{ color: '#5c6670', opacity: 0.4 }} 
+                className="w-[48px] h-[48px] mb-4 text-gray-400 dark:text-[#5c6670] opacity-40" 
               />
-              <h4 className="text-[17px] font-medium leading-tight mb-2" style={{ color: '#ffffff' }}>
+              <h4 className="text-[17px] font-medium leading-tight mb-2 text-gray-900 dark:text-white">
                 {searchQuery ? 'No matching secrets' : 'No secrets configured'}
               </h4>
-              <p className="text-[13px] mb-4" style={{ color: '#9da2a6' }}>
+              <p className="text-[13px] mb-4 text-gray-600 dark:text-[#9da2a6]">
                 {searchQuery 
                   ? 'Try adjusting your search query' 
                   : 'Store sensitive data like API keys and tokens securely'}
               </p>
               {!searchQuery && (
                 <Button
-                  className="h-8 rounded-lg px-4 text-[13px]"
-                  style={{ backgroundColor: '#0079f2', color: '#ffffff' }}
+                  className="h-8 rounded-lg px-4 text-[13px] bg-blue-600 hover:bg-blue-700 text-white"
                   onClick={() => setShowAddDialog(true)}
                 >
                   <Plus className="w-[18px] h-[18px] mr-1" />
@@ -355,35 +340,25 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
             filteredVariables.map((secret) => (
               <div
                 key={secret.id}
-                className="mb-2 p-3 rounded-lg transition-colors"
-                style={{ 
-                  backgroundColor: '#1c2333',
-                  border: '1px solid #3d4452'
-                }}
+                className="mb-2 p-3 rounded-lg transition-colors bg-white dark:bg-[#1c2333] border border-gray-200 dark:border-[#3d4452]"
                 data-testid={`secret-item-${secret.key}`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       {secret.isSecret ? (
-                        <Lock className="w-[18px] h-[18px] shrink-0" style={{ color: '#f59e0b' }} />
+                        <Lock className="w-[18px] h-[18px] shrink-0 text-amber-500" />
                       ) : (
-                        <Key className="w-[18px] h-[18px] shrink-0" style={{ color: '#9da2a6' }} />
+                        <Key className="w-[18px] h-[18px] shrink-0 text-gray-500 dark:text-[#9da2a6]" />
                       )}
                       <span 
-                        className="font-mono text-[15px] leading-[20px] font-medium truncate"
-                        style={{ color: '#ffffff' }}
+                        className="font-mono text-[15px] leading-[20px] font-medium truncate text-gray-900 dark:text-white"
                       >
                         {secret.key}
                       </span>
                       {secret.isSecret && (
                         <Badge 
-                          className="text-[11px] uppercase tracking-wider px-1.5 py-0 rounded"
-                          style={{ 
-                            backgroundColor: 'transparent', 
-                            color: '#f59e0b', 
-                            border: '1px solid #f59e0b' 
-                          }}
+                          className="text-[11px] uppercase tracking-wider px-1.5 py-0 rounded bg-transparent text-amber-500 border border-amber-500"
                         >
                           encrypted
                         </Badge>
@@ -391,8 +366,7 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
                     </div>
                     <div className="mt-2 flex items-center gap-2">
                       <code 
-                        className="text-[13px] font-mono px-2 py-1 rounded max-w-[200px] truncate"
-                        style={{ backgroundColor: '#242b3d', color: '#9da2a6' }}
+                        className="text-[13px] font-mono px-2 py-1 rounded max-w-[200px] truncate bg-gray-100 dark:bg-[#242b3d] text-gray-600 dark:text-[#9da2a6]"
                       >
                         {revealedSecrets[secret.id] || secret.value}
                       </code>
@@ -403,10 +377,9 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
                     {secret.isSecret && (
                       <Button
                         variant="ghost"
-                        className="h-8 w-8 rounded-lg p-0"
+                        className="h-8 w-8 rounded-lg p-0 text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#242b3d]"
                         onClick={() => handleToggleReveal(secret)}
                         disabled={revealMutation.isPending}
-                        style={{ color: '#9da2a6' }}
                         data-testid={`button-reveal-${secret.key}`}
                       >
                         {revealMutation.isPending && revealMutation.variables === secret.id ? (
@@ -420,37 +393,34 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
                     )}
                     <Button
                       variant="ghost"
-                      className="h-8 w-8 rounded-lg p-0"
+                      className="h-8 w-8 rounded-lg p-0 text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#242b3d]"
                       onClick={() => handleCopyValue(secret)}
-                      style={{ color: '#9da2a6' }}
                       data-testid={`button-copy-${secret.key}`}
                     >
                       {copiedId === secret.id ? (
-                        <Check className="w-[18px] h-[18px]" style={{ color: '#22c55e' }} />
+                        <Check className="w-[18px] h-[18px] text-green-500" />
                       ) : (
                         <Copy className="w-[18px] h-[18px]" />
                       )}
                     </Button>
                     <Button
                       variant="ghost"
-                      className="h-8 w-8 rounded-lg p-0"
+                      className="h-8 w-8 rounded-lg p-0 text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#242b3d]"
                       onClick={() => {
                         setEditingSecret(secret);
                         setNewKey(secret.key);
                         setNewValue('');
                         setIsSecretToggle(secret.isSecret);
                       }}
-                      style={{ color: '#9da2a6' }}
                       data-testid={`button-edit-${secret.key}`}
                     >
                       <Edit className="w-[18px] h-[18px]" />
                     </Button>
                     <Button
                       variant="ghost"
-                      className="h-8 w-8 rounded-lg p-0"
+                      className="h-8 w-8 rounded-lg p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                       onClick={() => deleteMutation.mutate(secret.id)}
                       disabled={deleteMutation.isPending}
-                      style={{ color: '#ef4444' }}
                       data-testid={`button-delete-${secret.key}`}
                     >
                       {deleteMutation.isPending && deleteMutation.variables === secret.id ? (
@@ -468,18 +438,18 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
       </ScrollArea>
 
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent style={{ backgroundColor: '#1c2333', borderColor: '#3d4452' }}>
+        <DialogContent className="bg-white dark:bg-[#1c2333] border-gray-200 dark:border-[#3d4452]">
           <DialogHeader>
-            <DialogTitle className="text-[17px] font-medium leading-tight" style={{ color: '#ffffff' }}>
+            <DialogTitle className="text-[17px] font-medium leading-tight text-gray-900 dark:text-white">
               Add Environment Variable
             </DialogTitle>
-            <DialogDescription className="text-[15px] leading-[20px]" style={{ color: '#9da2a6' }}>
+            <DialogDescription className="text-[15px] leading-[20px] text-gray-600 dark:text-[#9da2a6]">
               Add a new environment variable or secret to your project.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label className="text-[11px] uppercase tracking-wider" style={{ color: '#9da2a6' }}>
+              <Label className="text-[11px] uppercase tracking-wider text-gray-600 dark:text-[#9da2a6]">
                 Key
               </Label>
               <Input
@@ -487,16 +457,15 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
                 value={newKey}
                 onChange={(e) => setNewKey(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_'))}
                 placeholder="MY_SECRET_KEY"
-                className="font-mono h-8 rounded-lg text-[15px] border"
-                style={{ backgroundColor: '#242b3d', borderColor: '#3d4452', color: '#ffffff' }}
+                className="font-mono h-8 rounded-lg text-[15px] border bg-gray-100 dark:bg-[#242b3d] border-gray-300 dark:border-[#3d4452] text-gray-900 dark:text-white"
                 data-testid="input-new-key"
               />
-              <p className="text-[13px]" style={{ color: '#5c6670' }}>
+              <p className="text-[13px] text-gray-500 dark:text-[#5c6670]">
                 Uppercase with underscores only
               </p>
             </div>
             <div className="space-y-2">
-              <Label className="text-[11px] uppercase tracking-wider" style={{ color: '#9da2a6' }}>
+              <Label className="text-[11px] uppercase tracking-wider text-gray-600 dark:text-[#9da2a6]">
                 Value
               </Label>
               <Input
@@ -505,13 +474,12 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
                 onChange={(e) => setNewValue(e.target.value)}
                 placeholder="Enter value..."
                 type={isSecretToggle ? 'password' : 'text'}
-                className="h-8 rounded-lg text-[15px] border"
-                style={{ backgroundColor: '#242b3d', borderColor: '#3d4452', color: '#ffffff' }}
+                className="h-8 rounded-lg text-[15px] border bg-gray-100 dark:bg-[#242b3d] border-gray-300 dark:border-[#3d4452] text-gray-900 dark:text-white"
                 data-testid="input-new-value"
               />
             </div>
             <div className="flex items-center justify-between">
-              <Label className="text-[15px] leading-[20px]" style={{ color: '#ffffff' }}>
+              <Label className="text-[15px] leading-[20px] text-gray-900 dark:text-white">
                 Encrypt as secret
               </Label>
               <Switch
@@ -525,15 +493,13 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
           <DialogFooter>
             <Button 
               variant="outline" 
-              className="h-8 rounded-lg text-[13px] border"
-              style={{ borderColor: '#3d4452', color: '#9da2a6', backgroundColor: 'transparent' }}
+              className="h-8 rounded-lg text-[13px] border border-gray-300 dark:border-[#3d4452] text-gray-600 dark:text-[#9da2a6] bg-transparent hover:bg-gray-100 dark:hover:bg-[#242b3d]"
               onClick={() => { setShowAddDialog(false); resetForm(); }}
             >
               Cancel
             </Button>
             <Button
-              className="h-8 rounded-lg text-[13px]"
-              style={{ backgroundColor: '#0079f2', color: '#ffffff' }}
+              className="h-8 rounded-lg text-[13px] bg-blue-600 hover:bg-blue-700 text-white"
               onClick={() => createMutation.mutate({ key: newKey, value: newValue, isSecret: isSecretToggle })}
               disabled={!newKey || !newValue || createMutation.isPending}
               data-testid="button-save-secret"
@@ -549,29 +515,28 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
       </Dialog>
 
       <Dialog open={!!editingSecret} onOpenChange={(open) => { if (!open) { setEditingSecret(null); resetForm(); } }}>
-        <DialogContent style={{ backgroundColor: '#1c2333', borderColor: '#3d4452' }}>
+        <DialogContent className="bg-white dark:bg-[#1c2333] border-gray-200 dark:border-[#3d4452]">
           <DialogHeader>
-            <DialogTitle className="text-[17px] font-medium leading-tight" style={{ color: '#ffffff' }}>
+            <DialogTitle className="text-[17px] font-medium leading-tight text-gray-900 dark:text-white">
               Edit Environment Variable
             </DialogTitle>
-            <DialogDescription className="text-[15px] leading-[20px]" style={{ color: '#9da2a6' }}>
+            <DialogDescription className="text-[15px] leading-[20px] text-gray-600 dark:text-[#9da2a6]">
               Update the value for {editingSecret?.key}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label className="text-[11px] uppercase tracking-wider" style={{ color: '#9da2a6' }}>
+              <Label className="text-[11px] uppercase tracking-wider text-gray-600 dark:text-[#9da2a6]">
                 Key
               </Label>
               <div 
-                className="font-mono text-[15px] leading-[20px] px-3 py-2 rounded-lg"
-                style={{ backgroundColor: '#242b3d', color: '#ffffff' }}
+                className="font-mono text-[15px] leading-[20px] px-3 py-2 rounded-lg bg-gray-100 dark:bg-[#242b3d] text-gray-900 dark:text-white"
               >
                 {editingSecret?.key}
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-[11px] uppercase tracking-wider" style={{ color: '#9da2a6' }}>
+              <Label className="text-[11px] uppercase tracking-wider text-gray-600 dark:text-[#9da2a6]">
                 New Value
               </Label>
               <Input
@@ -580,16 +545,15 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
                 onChange={(e) => setNewValue(e.target.value)}
                 placeholder="Enter new value..."
                 type={isSecretToggle ? 'password' : 'text'}
-                className="h-8 rounded-lg text-[15px] border"
-                style={{ backgroundColor: '#242b3d', borderColor: '#3d4452', color: '#ffffff' }}
+                className="h-8 rounded-lg text-[15px] border bg-gray-100 dark:bg-[#242b3d] border-gray-300 dark:border-[#3d4452] text-gray-900 dark:text-white"
                 data-testid="input-edit-value"
               />
-              <p className="text-[13px]" style={{ color: '#5c6670' }}>
+              <p className="text-[13px] text-gray-500 dark:text-[#5c6670]">
                 Leave empty to keep current value
               </p>
             </div>
             <div className="flex items-center justify-between">
-              <Label className="text-[15px] leading-[20px]" style={{ color: '#ffffff' }}>
+              <Label className="text-[15px] leading-[20px] text-gray-900 dark:text-white">
                 Encrypt as secret
               </Label>
               <Switch
@@ -603,15 +567,13 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
           <DialogFooter>
             <Button 
               variant="outline" 
-              className="h-8 rounded-lg text-[13px] border"
-              style={{ borderColor: '#3d4452', color: '#9da2a6', backgroundColor: 'transparent' }}
+              className="h-8 rounded-lg text-[13px] border border-gray-300 dark:border-[#3d4452] text-gray-600 dark:text-[#9da2a6] bg-transparent hover:bg-gray-100 dark:hover:bg-[#242b3d]"
               onClick={() => { setEditingSecret(null); resetForm(); }}
             >
               Cancel
             </Button>
             <Button
-              className="h-8 rounded-lg text-[13px]"
-              style={{ backgroundColor: '#0079f2', color: '#ffffff' }}
+              className="h-8 rounded-lg text-[13px] bg-blue-600 hover:bg-blue-700 text-white"
               onClick={() => {
                 if (editingSecret) {
                   updateMutation.mutate({
