@@ -48,15 +48,14 @@ interface Checkpoint {
 function SkeletonShimmer({ className }: { className?: string }) {
   return (
     <motion.div
-      className={cn("rounded-lg", className)}
-      style={{ background: 'linear-gradient(90deg, #242b3d 0%, #3d4452 50%, #242b3d 100%)', backgroundSize: '200% 100%' }}
+      className={cn("rounded-lg bg-gray-200 dark:bg-[#242b3d]", className)}
       animate={{
-        backgroundPosition: ['200% 0', '-200% 0'],
+        opacity: [0.5, 0.8, 0.5],
       }}
       transition={{
         duration: 1.5,
         repeat: Infinity,
-        ease: 'linear',
+        ease: 'easeInOut',
       }}
     />
   );
@@ -66,7 +65,7 @@ function LoadingSkeleton() {
   return (
     <div className="p-3 space-y-3" data-testid="history-loading-skeleton">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="ml-10 p-3 rounded-lg" style={{ backgroundColor: '#242b3d' }}>
+        <div key={i} className="ml-10 p-3 rounded-lg bg-gray-100 dark:bg-[#242b3d]">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-2 flex-1">
               <SkeletonShimmer className="w-[18px] h-[18px] rounded" />
@@ -91,18 +90,15 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full p-6 text-center" data-testid="history-empty-state">
       <History 
-        className="w-12 h-12 mb-4" 
-        style={{ color: '#5c6670', opacity: 0.4 }}
+        className="w-12 h-12 mb-4 text-gray-400 dark:text-[#5c6670] opacity-40"
       />
       <h3 
-        className="text-[17px] font-medium leading-tight mb-2"
-        style={{ color: '#ffffff' }}
+        className="text-[17px] font-medium leading-tight mb-2 text-gray-900 dark:text-white"
       >
         No History Yet
       </h3>
       <p 
-        className="text-[15px] leading-[20px] max-w-[240px]"
-        style={{ color: '#9da2a6' }}
+        className="text-[15px] leading-[20px] max-w-[240px] text-gray-600 dark:text-[#9da2a6]"
       >
         Your project checkpoints and version history will appear here as you work.
       </p>
@@ -220,36 +216,36 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
     const iconClass = "w-[18px] h-[18px]";
     switch (type) {
       case 'auto':
-        return <Clock className={iconClass} style={{ color: '#9da2a6' }} />;
+        return <Clock className={cn(iconClass, "text-gray-500 dark:text-[#9da2a6]")} />;
       case 'manual':
-        return <Save className={iconClass} style={{ color: '#0079f2' }} />;
+        return <Save className={cn(iconClass, "text-blue-600 dark:text-[#0079f2]")} />;
       case 'deploy':
-        return <GitCommit className={iconClass} style={{ color: '#22c55e' }} />;
+        return <GitCommit className={cn(iconClass, "text-green-500")} />;
       default:
-        return <History className={iconClass} style={{ color: '#9da2a6' }} />;
+        return <History className={cn(iconClass, "text-gray-500 dark:text-[#9da2a6]")} />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'added':
-        return '#22c55e';
+        return 'text-green-500';
       case 'modified':
-        return '#0079f2';
+        return 'text-blue-600 dark:text-[#0079f2]';
       case 'deleted':
-        return '#ef4444';
+        return 'text-red-500';
       default:
-        return '#9da2a6';
+        return 'text-gray-500 dark:text-[#9da2a6]';
     }
   };
 
   if (isLoading) {
     return (
-      <div className="h-full flex flex-col" style={{ backgroundColor: '#0e1525' }} data-testid="history-panel">
-        <div className="p-3 min-h-[48px] flex items-center" style={{ borderBottom: '1px solid #3d4452' }}>
+      <div className="h-full flex flex-col bg-gray-50 dark:bg-[#0e1525]" data-testid="history-panel">
+        <div className="p-3 min-h-[48px] flex items-center border-b border-gray-200 dark:border-[#3d4452]">
           <div className="flex items-center gap-2">
-            <History className="w-[18px] h-[18px]" style={{ color: '#9da2a6' }} />
-            <h3 className="text-[17px] font-medium leading-tight" style={{ color: '#ffffff' }}>
+            <History className="w-[18px] h-[18px] text-gray-500 dark:text-[#9da2a6]" />
+            <h3 className="text-[17px] font-medium leading-tight text-gray-900 dark:text-white">
               History
             </h3>
           </div>
@@ -261,11 +257,11 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
 
   if (checkpoints.length === 0) {
     return (
-      <div className="h-full flex flex-col" style={{ backgroundColor: '#0e1525' }} data-testid="history-panel">
-        <div className="p-3 min-h-[48px] flex items-center" style={{ borderBottom: '1px solid #3d4452' }}>
+      <div className="h-full flex flex-col bg-gray-50 dark:bg-[#0e1525]" data-testid="history-panel">
+        <div className="p-3 min-h-[48px] flex items-center border-b border-gray-200 dark:border-[#3d4452]">
           <div className="flex items-center gap-2">
-            <History className="w-[18px] h-[18px]" style={{ color: '#9da2a6' }} />
-            <h3 className="text-[17px] font-medium leading-tight" style={{ color: '#ffffff' }}>
+            <History className="w-[18px] h-[18px] text-gray-500 dark:text-[#9da2a6]" />
+            <h3 className="text-[17px] font-medium leading-tight text-gray-900 dark:text-white">
               History
             </h3>
           </div>
@@ -276,25 +272,20 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
   }
 
   return (
-    <div className="h-full flex flex-col" style={{ backgroundColor: '#0e1525' }} data-testid="history-panel">
+    <div className="h-full flex flex-col bg-gray-50 dark:bg-[#0e1525]" data-testid="history-panel">
       {/* Header */}
-      <div className="p-3 min-h-[48px]" style={{ borderBottom: '1px solid #3d4452' }}>
+      <div className="p-3 min-h-[48px] border-b border-gray-200 dark:border-[#3d4452]">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <History className="w-[18px] h-[18px]" style={{ color: '#9da2a6' }} />
-            <h3 className="text-[17px] font-medium leading-tight" style={{ color: '#ffffff' }}>
+            <History className="w-[18px] h-[18px] text-gray-500 dark:text-[#9da2a6]" />
+            <h3 className="text-[17px] font-medium leading-tight text-gray-900 dark:text-white">
               History
             </h3>
           </div>
           <Button
             size="sm"
             variant="outline"
-            className="h-8 rounded-lg text-[13px]"
-            style={{ 
-              borderColor: '#3d4452',
-              color: '#d4d8dd',
-              backgroundColor: 'transparent'
-            }}
+            className="h-8 rounded-lg text-[13px] border-gray-300 dark:border-[#3d4452] text-gray-700 dark:text-[#d4d8dd] bg-transparent hover:bg-gray-100 dark:hover:bg-[#242b3d]"
             data-testid="button-save-checkpoint"
           >
             <Save className="w-[18px] h-[18px] mr-1.5" />
@@ -304,24 +295,22 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
 
         {/* Auto-save Status */}
         <div 
-          className="flex items-center justify-between p-2 rounded-lg"
-          style={{ backgroundColor: '#1c2333' }}
+          className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-[#1c2333]"
         >
           <div className="flex items-center gap-2">
             {autoSaveEnabled ? (
-              <CheckCircle className="w-[18px] h-[18px]" style={{ color: '#22c55e' }} />
+              <CheckCircle className="w-[18px] h-[18px] text-green-500" />
             ) : (
-              <AlertCircle className="w-[18px] h-[18px]" style={{ color: '#f59e0b' }} />
+              <AlertCircle className="w-[18px] h-[18px] text-amber-500" />
             )}
-            <span className="text-[15px] leading-[20px]" style={{ color: '#ffffff' }}>
+            <span className="text-[15px] leading-[20px] text-gray-900 dark:text-white">
               Auto-save {autoSaveEnabled ? 'enabled' : 'disabled'}
             </span>
           </div>
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 rounded-lg text-[13px]"
-            style={{ color: '#0079f2' }}
+            className="h-8 rounded-lg text-[13px] text-blue-600 dark:text-[#0079f2]"
             onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
             data-testid="button-toggle-autosave"
           >
@@ -337,30 +326,24 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
           <div className="relative">
             {/* Timeline line */}
             <div 
-              className="absolute left-5 top-0 bottom-0 w-px" 
-              style={{ backgroundColor: '#3d4452' }} 
+              className="absolute left-5 top-0 bottom-0 w-px bg-gray-300 dark:bg-[#3d4452]" 
             />
 
             {checkpoints.map((checkpoint, index) => (
               <div key={checkpoint.id} className="relative mb-3" data-testid={`checkpoint-item-${checkpoint.id}`}>
                 {/* Timeline dot */}
                 <div 
-                  className="absolute left-3.5 w-3 h-3 rounded-full"
-                  style={{ 
-                    backgroundColor: '#0e1525',
-                    border: '2px solid #3d4452'
-                  }} 
+                  className="absolute left-3.5 w-3 h-3 rounded-full bg-gray-50 dark:bg-[#0e1525] border-2 border-gray-300 dark:border-[#3d4452]"
                 />
 
                 <div className="ml-10">
                   <div
                     className={cn(
-                      "p-3 rounded-lg cursor-pointer transition-all"
+                      "p-3 rounded-lg cursor-pointer transition-all",
+                      selectedCheckpoint === checkpoint.id 
+                        ? "bg-gray-100 dark:bg-[#242b3d] border border-blue-500 dark:border-[#0079f2]"
+                        : "bg-white dark:bg-[#1c2333] border border-gray-200 dark:border-[#3d4452]"
                     )}
-                    style={{
-                      backgroundColor: selectedCheckpoint === checkpoint.id ? '#242b3d' : '#1c2333',
-                      border: `1px solid ${selectedCheckpoint === checkpoint.id ? '#0079f2' : '#3d4452'}`
-                    }}
                     onClick={() => {
                       setSelectedCheckpoint(checkpoint.id);
                       if (checkpoint.files) {
@@ -375,30 +358,21 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <h4 
-                              className="text-[15px] font-medium leading-[20px]"
-                              style={{ color: '#ffffff' }}
+                              className="text-[15px] font-medium leading-[20px] text-gray-900 dark:text-white"
                             >
                               {checkpoint.title}
                             </h4>
                             {checkpoint.type === 'auto' && (
                               <Badge 
                                 variant="outline" 
-                                className="text-[11px] uppercase tracking-wider px-1.5 py-0 rounded"
-                                style={{ 
-                                  borderColor: '#3d4452',
-                                  color: '#9da2a6'
-                                }}
+                                className="text-[11px] uppercase tracking-wider px-1.5 py-0 rounded border-gray-300 dark:border-[#3d4452] text-gray-500 dark:text-[#9da2a6]"
                               >
                                 Auto
                               </Badge>
                             )}
                             {index === 0 && (
                               <Badge 
-                                className="text-[11px] uppercase tracking-wider px-1.5 py-0 rounded"
-                                style={{ 
-                                  backgroundColor: '#2B3245',
-                                  color: '#f59e0b'
-                                }}
+                                className="text-[11px] uppercase tracking-wider px-1.5 py-0 rounded bg-amber-100 dark:bg-[#2B3245] text-amber-600 dark:text-[#f59e0b]"
                               >
                                 Current
                               </Badge>
@@ -406,15 +380,13 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                           </div>
                           {checkpoint.description && (
                             <p 
-                              className="text-[13px] mt-0.5"
-                              style={{ color: '#9da2a6' }}
+                              className="text-[13px] mt-0.5 text-gray-600 dark:text-[#9da2a6]"
                             >
                               {checkpoint.description}
                             </p>
                           )}
                           <div 
-                            className="flex items-center gap-3 mt-1 text-[13px]"
-                            style={{ color: '#5c6670' }}
+                            className="flex items-center gap-3 mt-1 text-[13px] text-gray-500 dark:text-[#5c6670]"
                           >
                             <span>{checkpoint.author}</span>
                             <span>•</span>
@@ -425,10 +397,10 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
 
                       <div className="text-[13px] text-right ml-2">
                         <div className="flex items-center gap-2">
-                          <span style={{ color: '#22c55e' }}>+{checkpoint.changes.additions}</span>
-                          <span style={{ color: '#ef4444' }}>-{checkpoint.changes.deletions}</span>
+                          <span className="text-green-500">+{checkpoint.changes.additions}</span>
+                          <span className="text-red-500">-{checkpoint.changes.deletions}</span>
                         </div>
-                        <div className="mt-0.5" style={{ color: '#5c6670' }}>
+                        <div className="mt-0.5 text-gray-500 dark:text-[#5c6670]">
                           {checkpoint.changes.files} file{checkpoint.changes.files !== 1 ? 's' : ''}
                         </div>
                       </div>
@@ -437,8 +409,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                     {/* File Changes */}
                     {checkpoint.files && expandedCheckpoints.has(checkpoint.id) && (
                       <motion.div 
-                        className="mt-3 pt-3 space-y-1"
-                        style={{ borderTop: '1px solid #3d4452' }}
+                        className="mt-3 pt-3 space-y-1 border-t border-gray-200 dark:border-[#3d4452]"
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
@@ -447,19 +418,18 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                         {checkpoint.files.map((file, fileIndex) => (
                           <div
                             key={fileIndex}
-                            className="flex items-center justify-between py-1 px-2 rounded-lg text-[13px]"
-                            style={{ backgroundColor: '#242b3d' }}
+                            className="flex items-center justify-between py-1 px-2 rounded-lg text-[13px] bg-gray-100 dark:bg-[#242b3d]"
                             data-testid={`file-change-${checkpoint.id}-${fileIndex}`}
                           >
                             <div className="flex items-center gap-2">
-                              <FileText className="w-[18px] h-[18px]" style={{ color: '#9da2a6' }} />
-                              <span style={{ color: getStatusColor(file.status) }}>
+                              <FileText className="w-[18px] h-[18px] text-gray-500 dark:text-[#9da2a6]" />
+                              <span className={getStatusColor(file.status)}>
                                 {file.name}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-[13px]">
-                              <span style={{ color: '#22c55e' }}>+{file.additions}</span>
-                              <span style={{ color: '#ef4444' }}>-{file.deletions}</span>
+                              <span className="text-green-500">+{file.additions}</span>
+                              <span className="text-red-500">-{file.deletions}</span>
                             </div>
                           </div>
                         ))}
@@ -469,18 +439,12 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                     {/* Actions */}
                     {index > 0 && (
                       <div 
-                        className="flex gap-2 mt-3 pt-3"
-                        style={{ borderTop: '1px solid #3d4452' }}
+                        className="flex gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-[#3d4452]"
                       >
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-8 rounded-lg text-[13px]"
-                          style={{ 
-                            borderColor: '#3d4452',
-                            color: '#d4d8dd',
-                            backgroundColor: 'transparent'
-                          }}
+                          className="h-8 rounded-lg text-[13px] border-gray-300 dark:border-[#3d4452] text-gray-700 dark:text-[#d4d8dd] bg-transparent hover:bg-gray-100 dark:hover:bg-[#242b3d]"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleRestore(checkpoint);
@@ -493,8 +457,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-8 rounded-lg text-[13px]"
-                          style={{ color: '#9da2a6' }}
+                          className="h-8 rounded-lg text-[13px] text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white"
                           onClick={(e) => {
                             e.stopPropagation();
                           }}
@@ -506,8 +469,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-8 rounded-lg text-[13px]"
-                          style={{ color: '#9da2a6' }}
+                          className="h-8 rounded-lg text-[13px] text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white"
                           onClick={(e) => {
                             e.stopPropagation();
                           }}
@@ -529,21 +491,16 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
       {/* Restore Confirmation Dialog */}
       <Dialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
         <DialogContent 
-          style={{ 
-            backgroundColor: '#1c2333',
-            border: '1px solid #3d4452'
-          }}
+          className="bg-white dark:bg-[#1c2333] border border-gray-200 dark:border-[#3d4452]"
         >
           <DialogHeader>
             <DialogTitle 
-              className="text-[17px] font-medium leading-tight"
-              style={{ color: '#ffffff' }}
+              className="text-[17px] font-medium leading-tight text-gray-900 dark:text-white"
             >
               Restore Checkpoint
             </DialogTitle>
             <DialogDescription 
-              className="text-[15px] leading-[20px]"
-              style={{ color: '#9da2a6' }}
+              className="text-[15px] leading-[20px] text-gray-600 dark:text-[#9da2a6]"
             >
               Are you sure you want to restore to "{restoreTarget?.title}"? This will replace your current workspace with the selected checkpoint.
             </DialogDescription>
@@ -552,24 +509,18 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
           {restoreTarget && (
             <div className="py-3">
               <div 
-                className="p-3 rounded-lg"
-                style={{ 
-                  backgroundColor: '#2B3245',
-                  border: '1px solid #f59e0b'
-                }}
+                className="p-3 rounded-lg bg-amber-50 dark:bg-[#2B3245] border border-amber-500"
               >
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="w-[18px] h-[18px] mt-0.5" style={{ color: '#f59e0b' }} />
+                  <AlertCircle className="w-[18px] h-[18px] mt-0.5 text-amber-500" />
                   <div>
                     <p 
-                      className="text-[15px] font-medium leading-[20px]"
-                      style={{ color: '#f59e0b' }}
+                      className="text-[15px] font-medium leading-[20px] text-amber-600 dark:text-[#f59e0b]"
                     >
                       Warning
                     </p>
                     <p 
-                      className="text-[13px] mt-1"
-                      style={{ color: '#f59e0b' }}
+                      className="text-[13px] mt-1 text-amber-600 dark:text-[#f59e0b]"
                     >
                       Your current unsaved changes will be lost. Consider saving a checkpoint first.
                     </p>
@@ -582,23 +533,14 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
           <DialogFooter>
             <Button 
               variant="outline" 
-              className="h-8 rounded-lg text-[13px]"
-              style={{ 
-                borderColor: '#3d4452',
-                color: '#d4d8dd',
-                backgroundColor: 'transparent'
-              }}
+              className="h-8 rounded-lg text-[13px] border-gray-300 dark:border-[#3d4452] text-gray-700 dark:text-[#d4d8dd] bg-transparent hover:bg-gray-100 dark:hover:bg-[#242b3d]"
               onClick={() => setShowRestoreDialog(false)}
               data-testid="button-cancel-restore"
             >
               Cancel
             </Button>
             <Button 
-              className="h-8 rounded-lg text-[13px]"
-              style={{ 
-                backgroundColor: '#0079f2',
-                color: '#ffffff'
-              }}
+              className="h-8 rounded-lg text-[13px] bg-blue-600 hover:bg-blue-700 text-white"
               onClick={confirmRestore}
               data-testid="button-confirm-restore"
             >

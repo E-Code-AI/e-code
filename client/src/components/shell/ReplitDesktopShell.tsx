@@ -40,6 +40,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
 
 interface ShellTab {
   id: string;
@@ -294,7 +295,7 @@ export function ReplitDesktopShell({
   }
 
   return (
-    <div className={`flex flex-col bg-background ${isFullscreen ? 'fixed inset-0 z-50' : 'h-full'}`}>
+    <div className={cn("flex flex-col bg-background", isFullscreen ? 'fixed inset-0 z-50' : 'h-full')}>
       <div className="flex items-center justify-between px-4 py-2 border-b bg-card">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -311,7 +312,7 @@ export function ReplitDesktopShell({
                   className="text-xs px-3 py-1 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   data-testid={`desktop-shell-tab-${tab.id}`}
                 >
-                  <span className={`h-1.5 w-1.5 rounded-full ${tab.isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <span className={cn("h-1.5 w-1.5 rounded-full", tab.isConnected ? 'bg-green-500' : 'bg-red-500')} />
                   <span className="max-w-[100px] truncate">{tab.name}</span>
                   {tabs.length > 1 && (
                     <Button
@@ -431,7 +432,7 @@ export function ReplitDesktopShell({
             <span>Bash</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className={`h-2 w-2 rounded-full ${activeTab.isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+            <span className={cn("h-2 w-2 rounded-full", activeTab.isConnected ? 'bg-green-500' : 'bg-red-500')} />
             <span>{activeTab.isConnected ? 'Connected' : 'Disconnected'}</span>
           </div>
         </div>
@@ -554,20 +555,20 @@ export function ReplitDesktopShell({
 
       <div 
         ref={terminalRef}
-        className="flex-1 overflow-auto p-4 font-mono bg-[#1e1e1e]"
+        className="flex-1 overflow-auto p-4 font-mono bg-gray-900 dark:bg-[#1e1e1e]"
         style={{ fontSize: `${fontSize}px`, minHeight: '300px' }}
         onClick={() => inputRef.current?.focus()}
         data-testid="desktop-shell-output"
       >
         <div 
-          className="text-[#d4d4d4]"
+          className="text-gray-200 dark:text-[#d4d4d4]"
           dangerouslySetInnerHTML={{ 
             __html: parseAnsiToHtml(activeTab.output.join(''), isFindMode ? findQuery : undefined) 
           }} 
         />
         
-        <div className="flex items-start gap-1 mt-1 text-[#d4d4d4]">
-          <span style={{ color: '#4ade80' }}>{activeTab.cwd}$</span>
+        <div className="flex items-start gap-1 mt-1 text-gray-200 dark:text-[#d4d4d4]">
+          <span className="text-green-400">{activeTab.cwd}$</span>
           <span>{currentCommand}</span>
           <span className="animate-pulse">▊</span>
         </div>

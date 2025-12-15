@@ -26,18 +26,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { PreviewSplashScreen } from '@/components/ide/PreviewSplashScreen';
 
-const colors = {
-  primary: '#0079f2',
-  background: '#0e1525',
-  textMuted: '#5c6670',
-  border: '#d4d8dd',
-  surface: '#3d4452',
-  white: '#ffffff',
-  dark: '#1c2333',
-  textSecondary: '#9da2a6',
-  surfaceAlt: '#242b3d',
-};
-
 interface DevicePreset {
   name: string;
   width: number;
@@ -79,13 +67,12 @@ function SimulatedStatusBar({ isLandscape }: { isLandscape: boolean }) {
     <div 
       className={cn(
         "absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-1",
-        "text-[13px] font-medium",
+        "text-[13px] font-medium text-white",
         isLandscape ? "h-5" : "h-6"
       )}
       style={{ 
         background: 'linear-gradient(to bottom, rgba(255,255,255,0.1), transparent)',
         backdropFilter: 'blur(4px)',
-        color: colors.white,
       }}
       data-testid="mobile-preview-status-bar"
     >
@@ -109,23 +96,21 @@ function DynamicIsland({ scale }: { scale: number }) {
       data-testid="mobile-preview-dynamic-island"
     >
       <div 
-        className="rounded-[22px] flex items-center justify-center"
+        className="rounded-[22px] flex items-center justify-center bg-gray-900 dark:bg-[#0e1525]"
         style={{ 
           width: 126 * Math.min(scale, 1), 
           height: 37 * Math.min(scale, 1),
           minWidth: 90,
           minHeight: 26,
-          backgroundColor: colors.background,
         }}
       >
         <div 
-          className="rounded-full mr-1"
+          className="rounded-full mr-1 bg-gray-700 dark:bg-[#3d4452]"
           style={{ 
             width: 12 * Math.min(scale, 1), 
             height: 12 * Math.min(scale, 1),
             minWidth: 8,
             minHeight: 8,
-            backgroundColor: colors.surface,
           }}
         />
       </div>
@@ -136,17 +121,15 @@ function DynamicIsland({ scale }: { scale: number }) {
 function ClassicNotch({ scale }: { scale: number }) {
   return (
     <div 
-      className="absolute top-0 left-1/2 -translate-x-1/2 rounded-b-3xl z-30"
+      className="absolute top-0 left-1/2 -translate-x-1/2 rounded-b-3xl z-30 bg-gray-700 dark:bg-[#3d4452]"
       style={{ 
         width: Math.max(120 * Math.min(scale, 1), 80), 
         height: Math.max(24 * Math.min(scale, 1), 16),
-        backgroundColor: colors.surface,
       }}
       data-testid="mobile-preview-notch"
     >
       <div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full"
-        style={{ backgroundColor: colors.dark }}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-gray-800 dark:bg-[#1c2333]"
       />
     </div>
   );
@@ -167,13 +150,13 @@ function PhysicalButtons({ isLandscape, scale }: {
           data-testid="mobile-preview-volume-buttons"
         >
           <div 
-            className="rounded-sm"
-            style={{ width: 24 * buttonScale, height: 4, backgroundColor: colors.textMuted }}
+            className="rounded-sm bg-gray-400 dark:bg-[#5c6670]"
+            style={{ width: 24 * buttonScale, height: 4 }}
             data-testid="mobile-preview-volume-up"
           />
           <div 
-            className="rounded-sm"
-            style={{ width: 24 * buttonScale, height: 4, backgroundColor: colors.textMuted }}
+            className="rounded-sm bg-gray-400 dark:bg-[#5c6670]"
+            style={{ width: 24 * buttonScale, height: 4 }}
             data-testid="mobile-preview-volume-down"
           />
         </div>
@@ -183,8 +166,8 @@ function PhysicalButtons({ isLandscape, scale }: {
           data-testid="mobile-preview-power-button"
         >
           <div 
-            className="rounded-sm"
-            style={{ width: 40 * buttonScale, height: 4, backgroundColor: colors.textMuted }}
+            className="rounded-sm bg-gray-400 dark:bg-[#5c6670]"
+            style={{ width: 40 * buttonScale, height: 4 }}
           />
         </div>
       </>
@@ -199,13 +182,13 @@ function PhysicalButtons({ isLandscape, scale }: {
         data-testid="mobile-preview-volume-buttons"
       >
         <div 
-          className="rounded-sm"
-          style={{ width: 4, height: 24 * buttonScale, backgroundColor: colors.textMuted }}
+          className="rounded-sm bg-gray-400 dark:bg-[#5c6670]"
+          style={{ width: 4, height: 24 * buttonScale }}
           data-testid="mobile-preview-volume-up"
         />
         <div 
-          className="rounded-sm"
-          style={{ width: 4, height: 24 * buttonScale, backgroundColor: colors.textMuted }}
+          className="rounded-sm bg-gray-400 dark:bg-[#5c6670]"
+          style={{ width: 4, height: 24 * buttonScale }}
           data-testid="mobile-preview-volume-down"
         />
       </div>
@@ -215,8 +198,8 @@ function PhysicalButtons({ isLandscape, scale }: {
         data-testid="mobile-preview-power-button"
       >
         <div 
-          className="rounded-sm"
-          style={{ width: 4, height: 40 * buttonScale, backgroundColor: colors.textMuted }}
+          className="rounded-sm bg-gray-400 dark:bg-[#5c6670]"
+          style={{ width: 4, height: 40 * buttonScale }}
         />
       </div>
     </>
@@ -226,35 +209,30 @@ function PhysicalButtons({ isLandscape, scale }: {
 function AppNotRunningState({ onRun }: { onRun: () => void }) {
   return (
     <motion.div 
-      className="absolute inset-0 z-40 flex flex-col items-center justify-center rounded-[24px]"
-      style={{ backgroundColor: colors.white }}
+      className="absolute inset-0 z-40 flex flex-col items-center justify-center rounded-[24px] bg-white dark:bg-gray-900"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       data-testid="mobile-preview-not-running"
     >
       <MonitorX 
-        className="mb-4"
-        style={{ width: 48, height: 48, color: colors.textMuted }}
+        className="mb-4 w-12 h-12 text-gray-400 dark:text-[#5c6670]"
       />
       <h3 
-        className="text-[17px] font-semibold leading-tight mb-2"
-        style={{ color: colors.dark }}
+        className="text-[17px] font-semibold leading-tight mb-2 text-gray-900 dark:text-white"
         data-testid="text-not-running-title"
       >
         Your app is not running
       </h3>
       <p 
-        className="text-[15px] leading-[20px] text-center max-w-[200px] mb-6"
-        style={{ color: colors.textMuted }}
+        className="text-[15px] leading-[20px] text-center max-w-[200px] mb-6 text-gray-500 dark:text-[#5c6670]"
         data-testid="text-not-running-description"
       >
         Run to preview your app.
       </p>
       <Button
         onClick={onRun}
-        className="h-11 px-6 text-[15px] font-medium rounded-lg gap-2"
-        style={{ backgroundColor: '#22c55e', color: colors.white }}
+        className="h-11 px-6 text-[15px] font-medium rounded-lg gap-2 bg-green-500 hover:bg-green-600 text-white"
         data-testid="button-run-app"
       >
         <Play className="w-4 h-4" />
@@ -281,24 +259,24 @@ function PreviewOptionsSheet({
   onRepublish,
   onCloseTab,
 }: PreviewOptionsSheetProps) {
-  const optionButtonClass = "flex items-center gap-3 w-full p-4 text-left hover:bg-gray-100 transition-colors min-h-[56px]";
+  const optionButtonClass = "flex items-center gap-3 w-full p-4 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-h-[56px]";
   
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side="bottom" 
-        className="rounded-t-[20px] bg-white p-0"
+        className="rounded-t-[20px] bg-white dark:bg-gray-900 p-0"
         data-testid="preview-options-sheet"
       >
-        <SheetHeader className="p-4 pb-2 border-b border-gray-100">
+        <SheetHeader className="p-4 pb-2 border-b border-gray-100 dark:border-gray-800">
           <SheetTitle 
-            className="text-[17px] font-semibold text-black"
+            className="text-[17px] font-semibold text-gray-900 dark:text-white"
             data-testid="text-sheet-title"
           >
             Preview
           </SheetTitle>
           <SheetDescription 
-            className="text-[15px] text-gray-500"
+            className="text-[15px] text-gray-500 dark:text-gray-400"
             data-testid="text-sheet-description"
           >
             Preview your App.
@@ -314,8 +292,8 @@ function PreviewOptionsSheet({
             className={optionButtonClass}
             data-testid="button-share-dev-link"
           >
-            <Code className="w-5 h-5 text-gray-600" />
-            <span className="text-[15px] font-medium text-black">Share development link</span>
+            <Code className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <span className="text-[15px] font-medium text-gray-900 dark:text-white">Share development link</span>
           </button>
           
           <button
@@ -326,8 +304,8 @@ function PreviewOptionsSheet({
             className={optionButtonClass}
             data-testid="button-share-published-link"
           >
-            <Globe className="w-5 h-5 text-gray-600" />
-            <span className="text-[15px] font-medium text-black">Share published link</span>
+            <Globe className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <span className="text-[15px] font-medium text-gray-900 dark:text-white">Share published link</span>
           </button>
           
           <button
@@ -338,8 +316,8 @@ function PreviewOptionsSheet({
             className={optionButtonClass}
             data-testid="button-republish"
           >
-            <Trees className="w-5 h-5 text-gray-600" />
-            <span className="text-[15px] font-medium text-black">Republish</span>
+            <Trees className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <span className="text-[15px] font-medium text-gray-900 dark:text-white">Republish</span>
           </button>
           
           <button
@@ -350,8 +328,8 @@ function PreviewOptionsSheet({
             className={optionButtonClass}
             data-testid="button-close-tab"
           >
-            <X className="w-5 h-5 text-gray-600" />
-            <span className="text-[15px] font-medium text-black">Close tab</span>
+            <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <span className="text-[15px] font-medium text-gray-900 dark:text-white">Close tab</span>
           </button>
         </div>
       </SheetContent>
@@ -364,30 +342,27 @@ function URLBar({ url, onCopy }: { url: string; onCopy: () => void }) {
 
   return (
     <div 
-      className="flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] w-full min-w-0"
-      style={{ backgroundColor: colors.surfaceAlt, border: `1px solid ${colors.surface}` }}
+      className="flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] w-full min-w-0 bg-gray-100 dark:bg-[#242b3d] border border-gray-200 dark:border-[#3d4452]"
       data-testid="mobile-preview-url-bar"
     >
       <Lock 
-        className="w-4 h-4 sm:w-[18px] sm:h-[18px] flex-shrink-0" 
-        style={{ color: '#22c55e' }}
+        className="w-4 h-4 sm:w-[18px] sm:h-[18px] flex-shrink-0 text-green-500"
         data-testid="mobile-preview-lock-icon" 
       />
       <span 
-        className="truncate flex-1 min-w-0 text-[12px] sm:text-[13px]" 
-        title={url} 
-        style={{ color: colors.textSecondary }}
+        className="truncate flex-1 min-w-0 text-[12px] sm:text-[13px] text-gray-600 dark:text-[#9da2a6]" 
+        title={url}
       >
         {displayUrl}
       </span>
       <Button
         size="sm"
         variant="ghost"
-        className="w-9 h-9 sm:w-11 sm:h-11 p-0 flex-shrink-0 rounded-lg"
+        className="w-9 h-9 sm:w-11 sm:h-11 p-0 flex-shrink-0 rounded-lg text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white"
         onClick={onCopy}
         data-testid="mobile-preview-copy-url"
       >
-        <Copy className="w-4 h-4 sm:w-[18px] sm:h-[18px]" style={{ color: colors.textSecondary }} />
+        <Copy className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
       </Button>
     </div>
   );
@@ -520,13 +495,11 @@ export function MobilePreviewPanel({
 
   return (
     <div 
-      className={cn('flex flex-col h-full', className)}
-      style={{ backgroundColor: colors.background }}
+      className={cn('flex flex-col h-full bg-gray-100 dark:bg-[#0e1525]', className)}
       ref={containerRef}
     >
       <div 
-        className="flex-shrink-0 p-3 sm:p-4"
-        style={{ borderBottom: `1px solid ${colors.surface}`, backgroundColor: colors.dark }}
+        className="flex-shrink-0 p-3 sm:p-4 border-b border-gray-200 dark:border-[#3d4452] bg-white dark:bg-[#1c2333]"
         data-testid="mobile-preview-toolbar"
       >
         {/* URL Bar - Full width on mobile, first row */}
@@ -545,16 +518,15 @@ export function MobilePreviewPanel({
                 data-testid="mobile-preview-device-selector"
               >
                 <selectedDevice.icon className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
-                <span className="hidden sm:inline font-medium" style={{ color: colors.white }}>{selectedDevice.name}</span>
-                <ChevronDown className="w-4 h-4 sm:w-[18px] sm:h-[18px]" style={{ color: colors.textSecondary }} />
+                <span className="hidden sm:inline font-medium text-gray-900 dark:text-white">{selectedDevice.name}</span>
+                <ChevronDown className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-gray-500 dark:text-[#9da2a6]" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent 
               align="start" 
-              className="w-56"
-              style={{ backgroundColor: colors.dark, borderColor: colors.surface }}
+              className="w-56 bg-white dark:bg-[#1c2333] border-gray-200 dark:border-[#3d4452]"
             >
-              <DropdownMenuLabel className="text-[13px]" style={{ color: colors.textSecondary }}>
+              <DropdownMenuLabel className="text-[13px] text-gray-500 dark:text-[#9da2a6]">
                 Phone Devices
               </DropdownMenuLabel>
               {devicePresets.filter(d => d.type === 'phone').map((device) => (
@@ -564,28 +536,26 @@ export function MobilePreviewPanel({
                     setSelectedDevice(device);
                     setIsLoading(true);
                   }}
-                  className="flex items-center gap-2 text-[15px] leading-[20px]"
-                  style={{ color: colors.white }}
+                  className="flex items-center gap-2 text-[15px] leading-[20px] text-gray-900 dark:text-white"
                   data-testid={`mobile-preview-device-${device.name.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   <device.icon className="w-[18px] h-[18px]" />
                   <span>{device.name}</span>
                   {device.hasDynamicIsland && (
                     <span 
-                      className="ml-1 text-[13px] px-1.5 py-0.5 rounded-full"
-                      style={{ backgroundColor: `${colors.primary}20`, color: colors.primary }}
+                      className="ml-1 text-[13px] px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                     >
                       Dynamic Island
                     </span>
                   )}
-                  <span className="ml-auto text-[13px]" style={{ color: colors.textMuted }}>
+                  <span className="ml-auto text-[13px] text-gray-400 dark:text-[#5c6670]">
                     {device.width}×{device.height}
                   </span>
                 </DropdownMenuItem>
               ))}
               
-              <DropdownMenuSeparator style={{ backgroundColor: colors.surface }} />
-              <DropdownMenuLabel className="text-[13px]" style={{ color: colors.textSecondary }}>
+              <DropdownMenuSeparator className="bg-gray-200 dark:bg-[#3d4452]" />
+              <DropdownMenuLabel className="text-[13px] text-gray-500 dark:text-[#9da2a6]">
                 Tablet Devices
               </DropdownMenuLabel>
               {devicePresets.filter(d => d.type === 'tablet').map((device) => (
@@ -595,20 +565,19 @@ export function MobilePreviewPanel({
                     setSelectedDevice(device);
                     setIsLoading(true);
                   }}
-                  className="flex items-center gap-2 text-[15px] leading-[20px]"
-                  style={{ color: colors.white }}
+                  className="flex items-center gap-2 text-[15px] leading-[20px] text-gray-900 dark:text-white"
                   data-testid={`mobile-preview-device-${device.name.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   <device.icon className="w-[18px] h-[18px]" />
                   <span>{device.name}</span>
-                  <span className="ml-auto text-[13px]" style={{ color: colors.textMuted }}>
+                  <span className="ml-auto text-[13px] text-gray-400 dark:text-[#5c6670]">
                     {device.width}×{device.height}
                   </span>
                 </DropdownMenuItem>
               ))}
               
-              <DropdownMenuSeparator style={{ backgroundColor: colors.surface }} />
-              <DropdownMenuLabel className="text-[13px]" style={{ color: colors.textSecondary }}>
+              <DropdownMenuSeparator className="bg-gray-200 dark:bg-[#3d4452]" />
+              <DropdownMenuLabel className="text-[13px] text-gray-500 dark:text-[#9da2a6]">
                 Desktop
               </DropdownMenuLabel>
               {devicePresets.filter(d => d.type === 'desktop').map((device) => (
@@ -618,13 +587,12 @@ export function MobilePreviewPanel({
                     setSelectedDevice(device);
                     setIsLoading(true);
                   }}
-                  className="flex items-center gap-2 text-[15px] leading-[20px]"
-                  style={{ color: colors.white }}
+                  className="flex items-center gap-2 text-[15px] leading-[20px] text-gray-900 dark:text-white"
                   data-testid={`mobile-preview-device-${device.name.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   <device.icon className="w-[18px] h-[18px]" />
                   <span>{device.name}</span>
-                  <span className="ml-auto text-[13px]" style={{ color: colors.textMuted }}>
+                  <span className="ml-auto text-[13px] text-gray-400 dark:text-[#5c6670]">
                     {device.width}×{device.height}
                   </span>
                 </DropdownMenuItem>
@@ -635,34 +603,33 @@ export function MobilePreviewPanel({
           <Button
             size="sm"
             variant="ghost"
-            className="w-10 h-10 sm:w-11 sm:h-11 p-0 rounded-lg"
+            className="w-10 h-10 sm:w-11 sm:h-11 p-0 rounded-lg text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white"
             onClick={handleRotate}
             data-testid="mobile-preview-rotate"
           >
-            <RotateCw className="w-4 h-4 sm:w-[18px] sm:h-[18px]" style={{ color: colors.textSecondary }} />
+            <RotateCw className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
           </Button>
 
           <Button
             size="sm"
             variant="ghost"
-            className={cn("w-10 h-10 sm:w-11 sm:h-11 p-0 rounded-lg", isLoading && "animate-pulse")}
+            className={cn("w-10 h-10 sm:w-11 sm:h-11 p-0 rounded-lg text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white", isLoading && "animate-pulse")}
             onClick={handleRefresh}
             data-testid="mobile-preview-refresh"
           >
             <RefreshCw 
               className={cn("w-4 h-4 sm:w-[18px] sm:h-[18px]", isLoading && "animate-spin")} 
-              style={{ color: colors.textSecondary }}
             />
           </Button>
 
           <Button
             size="sm"
             variant="ghost"
-            className="w-10 h-10 sm:w-11 sm:h-11 p-0 rounded-lg hidden sm:flex"
+            className="w-10 h-10 sm:w-11 sm:h-11 p-0 rounded-lg hidden sm:flex text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white"
             onClick={handleOpenExternal}
             data-testid="mobile-preview-external"
           >
-            <ExternalLink className="w-4 h-4 sm:w-[18px] sm:h-[18px]" style={{ color: colors.textSecondary }} />
+            <ExternalLink className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
           </Button>
 
           <div className="flex-1" />
@@ -671,123 +638,96 @@ export function MobilePreviewPanel({
             size="sm"
             variant={showDeviceFrame ? 'default' : 'ghost'}
             className="h-10 sm:h-11 px-3 sm:px-4 text-[13px] sm:text-[15px] leading-[20px] font-medium rounded-lg"
-            style={{ 
-              backgroundColor: showDeviceFrame ? colors.primary : 'transparent',
-              color: showDeviceFrame ? colors.white : colors.textSecondary,
-            }}
-            onClick={() => setShowDeviceFrame(prev => !prev)}
-            data-testid="mobile-preview-frame-toggle"
+            onClick={() => setShowDeviceFrame(!showDeviceFrame)}
+            data-testid="mobile-preview-device-frame-toggle"
           >
-            <span className="hidden sm:inline">{showDeviceFrame ? 'Hide Frame' : 'Show Frame'}</span>
-            <span className="sm:hidden">{showDeviceFrame ? 'Hide' : 'Frame'}</span>
+            <Smartphone className="w-4 h-4 sm:w-[18px] sm:h-[18px] mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Device Frame</span>
           </Button>
 
           <Button
             size="sm"
             variant="ghost"
-            className="w-10 h-10 sm:w-11 sm:h-11 p-0 rounded-lg"
+            className="w-10 h-10 sm:w-11 sm:h-11 p-0 rounded-lg text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white"
             onClick={() => setIsOptionsSheetOpen(true)}
-            data-testid="mobile-preview-options-menu"
+            data-testid="mobile-preview-more-options"
           >
-            <MoreVertical className="w-4 h-4 sm:w-[18px] sm:h-[18px]" style={{ color: colors.textSecondary }} />
+            <MoreVertical className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
           </Button>
-        </div>
-
-        <div className="mt-2 flex items-center gap-1 sm:gap-2 text-[11px] sm:text-[13px] flex-wrap" style={{ color: colors.textMuted }}>
-          <span>{isLandscape ? 'Landscape' : 'Portrait'}</span>
-          <span>•</span>
-          <span>{deviceWidth}×{deviceHeight}</span>
-          <span className="hidden sm:inline">•</span>
-          <span className="hidden sm:inline">{Math.round(scale * 100)}% scale</span>
-          {selectedDevice.hasDynamicIsland && (
-            <>
-              <span>•</span>
-              <span style={{ color: colors.primary }}>Dynamic Island</span>
-            </>
-          )}
         </div>
       </div>
 
-      <div 
-        className={cn(
-          "flex-1 min-h-0 flex overflow-auto",
-          showDeviceFrame ? "items-center justify-center p-4" : "p-0"
-        )}
-        style={{ perspective: showDeviceFrame ? '1500px' : undefined }}
-      >
+      {/* Preview Area */}
+      <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
         <motion.div
-          key={`${selectedDevice.name}-${isLandscape}-${showDeviceFrame}`}
-          className={cn('relative', showDeviceFrame && 'shadow-2xl', !showDeviceFrame && 'w-full h-full')}
-          style={showDeviceFrame ? {
+          className="relative"
+          animate={{
             width: deviceWidth * scale,
             height: deviceHeight * scale,
-            transformStyle: 'preserve-3d',
-          } : {
-            width: '100%',
-            height: '100%',
           }}
-          initial={{ opacity: 0, rotateY: showDeviceFrame && isLandscape ? -90 : showDeviceFrame ? 90 : 0, scale: showDeviceFrame ? 0.8 : 1 }}
-          animate={{ opacity: 1, rotateY: 0, scale: 1 }}
           transition={springTransition}
-          data-testid="mobile-preview-container"
+          data-testid="mobile-preview-device-container"
         >
           {showDeviceFrame && selectedDevice.type === 'phone' && (
-            <PhysicalButtons isLandscape={isLandscape} scale={scale} />
-          )}
-
-          {showDeviceFrame && (
-            <div 
-              className="absolute inset-0 border-[12px] rounded-[36px] pointer-events-none z-10"
-              style={{ borderColor: colors.surface }}
-              data-testid="mobile-preview-frame"
-            >
-              {selectedDevice.type === 'phone' && !isLandscape && (
-                selectedDevice.hasDynamicIsland ? (
-                  <DynamicIsland scale={scale} />
-                ) : (
-                  <ClassicNotch scale={scale} />
-                )
+            <>
+              {/* Device frame */}
+              <div 
+                className="absolute -inset-3 rounded-[40px] bg-gray-800 dark:bg-[#1c2333] border-4 border-gray-700 dark:border-[#3d4452] shadow-2xl"
+                data-testid="mobile-preview-device-frame"
+              />
+              <PhysicalButtons isLandscape={isLandscape} scale={scale} />
+              {selectedDevice.hasDynamicIsland ? (
+                <DynamicIsland scale={scale} />
+              ) : (
+                <ClassicNotch scale={scale} />
               )}
-            </div>
+              <SimulatedStatusBar isLandscape={isLandscape} />
+            </>
           )}
 
-          {showDeviceFrame && selectedDevice.type === 'phone' && (
-            <SimulatedStatusBar isLandscape={isLandscape} />
-          )}
-
-          <AnimatePresence>
-            {isLoading && (
-              <motion.div 
-                className={cn("absolute inset-0 z-40 overflow-hidden", showDeviceFrame ? "rounded-[24px]" : "rounded-none")}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                data-testid="mobile-preview-loading"
-              >
-                <PreviewSplashScreen isBuilding={isLoading} />
-              </motion.div>
+          {/* Iframe container */}
+          <div 
+            className={cn(
+              "relative overflow-hidden bg-white dark:bg-gray-900",
+              showDeviceFrame && selectedDevice.type === 'phone' ? "rounded-[24px]" : "rounded-lg"
             )}
-          </AnimatePresence>
+            style={{
+              width: deviceWidth * scale,
+              height: deviceHeight * scale,
+            }}
+          >
+            <AnimatePresence mode="wait">
+              {isLoading && (
+                <PreviewSplashScreen key="splash" />
+              )}
+            </AnimatePresence>
 
-          <AnimatePresence>
-            {hasError && !isLoading && <AppNotRunningState onRun={handleRun} />}
-          </AnimatePresence>
-
-          <iframe
-            key={iframeKey}
-            ref={iframeRef}
-            src={computedPreviewUrl}
-            className={cn('w-full h-full', showDeviceFrame ? 'rounded-[24px]' : 'rounded-none')}
-            style={{ backgroundColor: colors.white, border: 'none' }}
-            title={`Preview - ${selectedDevice.name}`}
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-            onLoad={handleIframeLoad}
-            onError={handleIframeError}
-            data-testid="mobile-preview-iframe"
-          />
+            {hasError ? (
+              <AppNotRunningState onRun={handleRun} />
+            ) : (
+              <iframe
+                ref={iframeRef}
+                key={iframeKey}
+                src={computedPreviewUrl}
+                className="w-full h-full border-0"
+                style={{
+                  transform: `scale(${scale})`,
+                  transformOrigin: 'top left',
+                  width: deviceWidth,
+                  height: deviceHeight,
+                }}
+                onLoad={handleIframeLoad}
+                onError={handleIframeError}
+                title="Preview"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                data-testid="mobile-preview-iframe"
+              />
+            )}
+          </div>
         </motion.div>
       </div>
 
+      {/* Options Sheet */}
       <PreviewOptionsSheet
         open={isOptionsSheetOpen}
         onOpenChange={setIsOptionsSheetOpen}
