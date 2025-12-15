@@ -105,7 +105,10 @@ router.post('/:projectId/initialize', async (req: Request, res: Response) => {
 
 /**
  * GET /api/memory-bank/:projectId/status
- * Check if memory bank is initialized
+ * Check if memory bank is initialized - AUTO-INITIALIZES if not (Replit-identical)
+ * 
+ * ✅ AUTO-INIT (Dec 15, 2025): Memory Bank now initializes automatically
+ * when status is first checked for existing projects without Memory Bank.
  */
 router.get('/:projectId/status', async (req: Request, res: Response) => {
   try {
@@ -114,7 +117,20 @@ router.get('/:projectId/status', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
 
-    const initialized = await memoryBankService.isInitialized(projectId);
+    let initialized = await memoryBankService.isInitialized(projectId);
+    
+    // ✅ AUTO-INIT FALLBACK: Initialize automatically for existing projects
+    if (!initialized) {
+      try {
+        await memoryBankService.initialize(projectId, undefined);
+        initialized = true;
+        console.log(`[MemoryBank] ✅ Auto-initialized for existing project ${projectId}`);
+      } catch (initError) {
+        // Non-blocking: return uninitialized status if auto-init fails
+        console.warn(`[MemoryBank] Auto-init failed for project ${projectId}:`, initError);
+      }
+    }
+    
     res.json({ initialized });
   } catch (error) {
     console.error('[MemoryBank API] Error checking status:', error);
