@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,13 +9,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import {
-  Database,
   Brain,
   FileText,
   RefreshCw,
   ChevronDown,
   ChevronRight,
-  Plus,
   Loader2,
   FolderOpen,
   Clock,
@@ -109,7 +106,7 @@ export function MemoryBankStatusBadge({
             ? autoUpdated
               ? "Memory Bank auto-updates as you work with AI"
               : "Memory Bank is active - project context persists across AI sessions"
-            : "Memory Bank not initialized - AI may forget project context between sessions"
+            : "Memory Bank is initializing - AI context will be available shortly"
           }
         </TooltipContent>
       </Tooltip>
@@ -122,16 +119,6 @@ export function MemoryBankPanel({ projectId, className, compact = false }: Memor
   
   const { data: memoryBank, isLoading, error, refetch } = useMemoryBank(projectId);
   const { data: status } = useMemoryBankStatus(projectId);
-  
-  const initializeMutation = useMutation({
-    mutationFn: async () => {
-      return apiRequest('POST', `/api/memory-bank/${projectId}/initialize`, {});
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/memory-bank', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/memory-bank', projectId, 'status'] });
-    },
-  });
 
   const handleRefetch = async () => {
     await refetch();
@@ -163,13 +150,9 @@ export function MemoryBankPanel({ projectId, className, compact = false }: Memor
         </CollapsibleTrigger>
         <CollapsibleContent>
           <MemoryBankContent 
-            projectId={projectId}
             memoryBank={memoryBank}
             isLoading={isLoading}
             error={error}
-            onInitialize={() => initializeMutation.mutate(undefined)}
-            onRefetch={handleRefetch}
-            isInitializing={initializeMutation.isPending}
           />
         </CollapsibleContent>
       </Collapsible>
@@ -212,13 +195,9 @@ export function MemoryBankPanel({ projectId, className, compact = false }: Memor
       </CardHeader>
       <CardContent>
         <MemoryBankContent 
-          projectId={projectId}
           memoryBank={memoryBank}
           isLoading={isLoading}
           error={error}
-          onInitialize={() => initializeMutation.mutate(undefined)}
-          onRefetch={handleRefetch}
-          isInitializing={initializeMutation.isPending}
         />
       </CardContent>
     </Card>
@@ -226,21 +205,15 @@ export function MemoryBankPanel({ projectId, className, compact = false }: Memor
 }
 
 interface MemoryBankContentProps {
-  projectId: number | string;
   memoryBank: MemoryBank | undefined;
   isLoading: boolean;
   error: Error | null;
-  onInitialize: () => void;
-  onRefetch: () => void;
-  isInitializing: boolean;
 }
 
 function MemoryBankContent({
   memoryBank,
   isLoading,
   error,
-  onInitialize,
-  isInitializing,
 }: MemoryBankContentProps) {
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
 
@@ -271,28 +244,15 @@ function MemoryBankContent({
       <div className="text-center py-6 space-y-4">
         <div className="flex justify-center">
           <div className="p-3 rounded-full bg-muted">
-            <Database className="h-8 w-8 text-muted-foreground" />
+            <Loader2 className="h-8 w-8 text-primary animate-spin" />
           </div>
         </div>
         <div>
-          <h4 className="font-medium">Memory Bank Not Initialized</h4>
+          <h4 className="font-medium">Initializing Memory Bank...</h4>
           <p className="text-sm text-muted-foreground mt-1">
-            Initialize the memory bank to give AI persistent context about your project
+            Setting up persistent AI context for your project
           </p>
         </div>
-        <Button 
-          onClick={onInitialize}
-          disabled={isInitializing}
-          className="gap-2"
-          data-testid="button-initialize-memory-bank"
-        >
-          {isInitializing ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Plus className="h-4 w-4" />
-          )}
-          Initialize Memory Bank
-        </Button>
       </div>
     );
   }
