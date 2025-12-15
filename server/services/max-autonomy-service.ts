@@ -25,6 +25,7 @@ import { createLogger } from '../utils/logger';
 import { CheckpointService } from './checkpoint-service';
 import { BackgroundTestingService } from './background-testing-service';
 import { AutonomyTaskExecutor, type TaskExecutionResult } from './autonomy-task-executor';
+import { orchestratorMetrics, type TaskMetric } from './orchestrator-metrics.service';
 import crypto from 'crypto';
 
 const logger = createLogger('MaxAutonomyService');
@@ -61,6 +62,8 @@ export interface SessionProgress {
   totalCostUsd: string;
   elapsedTimeMs: number;
   estimatedRemainingMs: number;
+  etaConfidence: number;
+  etaBasedOnSamples: number;
   startedAt: Date | null;
   pausedAt: Date | null;
 }
@@ -209,7 +212,10 @@ class MaxAutonomyService extends EventEmitter {
           input: task.input,
           requiresCheckpoint: task.requiresCheckpoint || false,
           requiresTest: task.requiresTest || false,
-          estimatedDurationMs: task.estimatedDurationMs
+          estimatedDurationMs: task.estimatedDurationMs,
+          complexityScore: task.complexityScore,
+          confidenceScore: task.confidenceScore,
+          estimatedTokens: task.estimatedTokens
         });
       }
       
@@ -252,6 +258,25 @@ class MaxAutonomyService extends EventEmitter {
         updatedAt: new Date()
       })
       .where(eq(maxAutonomySessions.id, sessionId));
+    
+    const pendingTasks = await db.select()
+      .from(maxAutonomyTasks)
+      .where(and(
+        eq(maxAutonomyTasks.sessionId, sessionId),
+        eq(maxAutonomyTasks.status, 'pending')
+      ));
+    
+    const provider = (session.metadata as any)?.model?.includes('claude') ? 'anthropic' : 'openai';
+    let totalImprovedEtaMs = 0;
+    for (const task of pendingTasks) {
+      const etaInfo = orchestratorMetrics.getImprovedETA(
+        task.type,
+        provider,
+        task.estimatedDurationMs || 5000
+      );
+      totalImprovedEtaMs += etaInfo.adjustedEstimateMs;
+    }
+    logger.info(`Session ${sessionId} initial improved ETA: ${totalImprovedEtaMs}ms for ${pendingTasks.length} tasks`);
     
     const intervalMs = session.executionIntervalMs || 2000;
     const maxDurationMs = (session.maxDurationMinutes || 240) * 60 * 1000;
@@ -408,10 +433,37 @@ class MaxAutonomyService extends EventEmitter {
           await this.runTests(sessionId, task.id, result.filesModified);
         }
         
+        orchestratorMetrics.recordTaskExecution({
+          taskType: task.type,
+          complexity: (task.metadata as any)?.complexity ?? 5,
+          estimatedDurationMs: task.estimatedDurationMs ?? 5000,
+          actualDurationMs: actualDurationMs || 0,
+          estimatedTokens: (task.metadata as any)?.estimatedTokens ?? 0,
+          actualTokens: result.tokensUsed ?? 0,
+          success: true,
+          provider: (session?.metadata as any)?.model?.includes('claude') ? 'anthropic' : 'openai',
+          model: (session?.metadata as any)?.model || 'gpt-5.1',
+          timestamp: new Date()
+        });
+        
         this.emit('task:completed', { sessionId, taskId: task.id, result });
         logger.info(`Task ${task.id} completed successfully in ${actualDurationMs}ms`);
         
       } else {
+        const failureDurationMs = Date.now() - startTime;
+        orchestratorMetrics.recordTaskExecution({
+          taskType: task.type,
+          complexity: (task.metadata as any)?.complexity ?? 5,
+          estimatedDurationMs: task.estimatedDurationMs ?? 5000,
+          actualDurationMs: failureDurationMs || 0,
+          estimatedTokens: (task.metadata as any)?.estimatedTokens ?? 0,
+          actualTokens: result.tokensUsed ?? 0,
+          success: false,
+          provider: (session?.metadata as any)?.model?.includes('claude') ? 'anthropic' : 'openai',
+          model: (session?.metadata as any)?.model || 'gpt-5.1',
+          timestamp: new Date()
+        });
+        
         await this.handleTaskFailure(sessionId, task, result, session!);
       }
       
@@ -783,7 +835,21 @@ class MaxAutonomyService extends EventEmitter {
     const totalCount = session.tasksTotal || 1;
     const avgTimePerTask = completedCount > 0 ? elapsedTimeMs / completedCount : 0;
     const remainingTasks = totalCount - completedCount - (session.tasksFailed || 0) - (session.tasksSkipped || 0);
-    const estimatedRemainingMs = Math.round(avgTimePerTask * remainingTasks);
+    const rawEstimatedRemainingMs = Math.round(avgTimePerTask * remainingTasks);
+    
+    let currentTask: typeof pendingTasks[0] | null = null;
+    if (session.currentTaskId) {
+      const [task] = await db.select()
+        .from(maxAutonomyTasks)
+        .where(eq(maxAutonomyTasks.id, session.currentTaskId));
+      currentTask = task || null;
+    }
+    
+    const etaInfo = orchestratorMetrics.getImprovedETA(
+      currentTask?.type || 'unknown',
+      (session.metadata as any)?.model?.includes('claude') ? 'anthropic' : 'openai',
+      rawEstimatedRemainingMs
+    );
     
     return {
       sessionId: session.id,
@@ -803,7 +869,9 @@ class MaxAutonomyService extends EventEmitter {
       totalTokensUsed: session.totalTokensUsed || 0,
       totalCostUsd: session.totalCostUsd || '0',
       elapsedTimeMs,
-      estimatedRemainingMs,
+      estimatedRemainingMs: etaInfo.adjustedEstimateMs,
+      etaConfidence: etaInfo.confidence,
+      etaBasedOnSamples: etaInfo.basedOnSamples,
       startedAt: session.startedAt,
       pausedAt: session.pausedAt
     };

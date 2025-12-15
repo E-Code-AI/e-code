@@ -35,6 +35,17 @@ export interface TaskDefinition {
   requiresCheckpoint?: boolean;
   requiresTest?: boolean;
   estimatedDurationMs?: number;
+  complexityScore?: number; // 1-10 scale indicating task difficulty
+  confidenceScore?: number; // 0-1 probability that task definition is accurate
+  estimatedTokens?: number; // Estimated AI tokens needed to complete task
+}
+
+export interface GoalComplexityAnalysis {
+  overallComplexity: number; // 1-10 scale
+  suggestedTaskCount: number;
+  recommendedModel: string;
+  keywordCategories: string[];
+  riskLevel: 'low' | 'medium' | 'high';
 }
 
 export interface TaskExecutionResult {
@@ -59,13 +70,40 @@ export interface ExecutorOptions {
 
 const TASK_DECOMPOSITION_PROMPT = `You are an expert software architect and project manager. Your task is to decompose a user's goal into actionable, atomic tasks that can be executed by an AI coding agent.
 
-Rules:
-1. Each task should be small and focused (single responsibility)
-2. Tasks should be ordered by dependency (prerequisites first)
-3. Include explicit dependencies between tasks
-4. Mark tasks that modify critical files as requiring checkpoints
-5. Mark tasks that modify code as requiring tests
-6. Estimate duration for each task (in milliseconds)
+CRITICAL RULES:
+1. Each task should be small and focused (single responsibility principle)
+2. Tasks MUST be ordered by dependency - prerequisites always come first
+3. Include explicit dependencies using task indices (e.g., ["task-0", "task-1"])
+4. Mark tasks that modify critical files (package.json, config files, entry points) as requiring checkpoints
+5. Mark tasks that modify code logic as requiring tests
+6. Estimate realistic duration for each task (in milliseconds)
+
+COMPLEXITY SCORING (1-10):
+- 1-2: Trivial (simple file creation, adding comments)
+- 3-4: Easy (basic CRUD operations, simple edits)
+- 5-6: Moderate (feature implementation, multiple file changes)
+- 7-8: Complex (refactoring, integration work, architecture changes)
+- 9-10: Very Complex (system redesign, complex algorithms, security-critical)
+
+CONFIDENCE SCORING (0-1):
+- 0.9-1.0: Very confident - clear requirements, well-defined scope
+- 0.7-0.8: Confident - some ambiguity but approach is clear
+- 0.5-0.6: Moderate - multiple valid approaches, needs validation
+- 0.3-0.4: Low confidence - unclear requirements, may need clarification
+- 0.0-0.2: Very uncertain - speculative, high risk of rework
+
+DEPENDENCY RESOLUTION RULES:
+- Use "task-N" format for dependencies (N is zero-indexed position)
+- A task cannot depend on itself or tasks that come after it
+- Database/schema tasks must precede related API/UI tasks
+- Package installation must precede code using those packages
+- Config changes often need to precede related code changes
+
+TOKEN ESTIMATION GUIDELINES:
+- Simple file operations: 500-1000 tokens
+- Moderate code generation: 1000-2500 tokens
+- Complex implementations: 2500-5000 tokens
+- Large refactoring: 5000-8000 tokens
 
 Task types available:
 - file_create: Create a new file with content
@@ -73,24 +111,28 @@ Task types available:
 - file_delete: Delete a file
 - command: Run a shell command
 - install_package: Install npm/pip packages
-- database: Database operations
+- database: Database operations (migrations, schema changes)
 - config: Configuration changes
 - analysis: Code analysis without modifications
 
-Priority levels: critical, high, medium, low
+Priority levels: critical (blocking), high (important), medium (standard), low (nice-to-have)
 
 Respond with a JSON array of tasks in this format:
 [
   {
+    "id": "task-0",
     "title": "Short task title",
-    "description": "Detailed description of what to do",
+    "description": "Detailed description of what to do and why",
     "type": "file_create|file_edit|command|etc",
-    "priority": "high|medium|low",
-    "dependencies": ["id-of-previous-task"],
+    "priority": "critical|high|medium|low",
+    "dependencies": [],
     "input": { "filePath": "/path/to/file", "content": "..." },
     "requiresCheckpoint": true/false,
     "requiresTest": true/false,
-    "estimatedDurationMs": 5000
+    "estimatedDurationMs": 5000,
+    "complexityScore": 5,
+    "confidenceScore": 0.85,
+    "estimatedTokens": 1500
   }
 ]
 
@@ -170,21 +212,34 @@ export class AutonomyTaskExecutor {
     try {
       const projectContext = await this.getProjectContext();
       
+      const complexityAnalysis = this.calculateGoalComplexity(goal, projectContext);
+      logger.info(`Goal complexity analysis: ${JSON.stringify(complexityAnalysis)}`);
+      
+      const useModel = complexityAnalysis.recommendedModel !== this.model 
+        ? complexityAnalysis.recommendedModel 
+        : this.model;
+      
       const prompt = `${TASK_DECOMPOSITION_PROMPT}
 ${goal}
 
 Current Project Structure:
 ${projectContext}
 
-Generate the task breakdown:`;
+Complexity Hints:
+- Detected categories: ${complexityAnalysis.keywordCategories.join(', ')}
+- Suggested task count: ${complexityAnalysis.suggestedTaskCount}
+- Overall complexity estimate: ${complexityAnalysis.overallComplexity}/10
+- Risk level: ${complexityAnalysis.riskLevel}
+
+Generate the task breakdown (aim for ${complexityAnalysis.suggestedTaskCount} tasks):`;
 
       const messages = [
         { role: 'user', content: prompt }
       ];
       
       let response = '';
-      for await (const chunk of this.aiProvider.streamChat(this.model, messages, {
-        system: 'You are an expert software architect. Respond only with valid JSON.',
+      for await (const chunk of this.aiProvider.streamChat(useModel, messages, {
+        system: 'You are an expert software architect. Respond only with valid JSON. Ensure all tasks have proper complexity and confidence scores.',
         max_tokens: 8000,
         temperature: 0.3
       })) {
@@ -193,7 +248,11 @@ Generate the task breakdown:`;
       
       const tasks = this.parseTasksFromResponse(response);
       
-      logger.info(`Decomposed goal into ${tasks.length} tasks`);
+      const totalComplexity = tasks.reduce((sum, t) => sum + (t.complexityScore || 5), 0) / tasks.length;
+      const avgConfidence = tasks.reduce((sum, t) => sum + (t.confidenceScore || 0.7), 0) / tasks.length;
+      const totalTokens = tasks.reduce((sum, t) => sum + (t.estimatedTokens || 1500), 0);
+      
+      logger.info(`Decomposed goal into ${tasks.length} tasks (avg complexity: ${totalComplexity.toFixed(1)}, avg confidence: ${avgConfidence.toFixed(2)}, total tokens: ${totalTokens})`);
       return tasks;
       
     } catch (error: any) {
@@ -224,17 +283,71 @@ Generate the task breakdown:`;
         description: task.description || '',
         type: this.validateTaskType(task.type),
         priority: this.validatePriority(task.priority),
-        dependencies: Array.isArray(task.dependencies) ? task.dependencies : [],
+        dependencies: this.validateDependencies(task.dependencies, index),
         input: task.input || {},
         requiresCheckpoint: Boolean(task.requiresCheckpoint),
         requiresTest: Boolean(task.requiresTest),
-        estimatedDurationMs: task.estimatedDurationMs || 5000
+        estimatedDurationMs: this.validateEstimatedDuration(task.estimatedDurationMs),
+        complexityScore: this.validateComplexityScore(task.complexityScore),
+        confidenceScore: this.validateConfidenceScore(task.confidenceScore),
+        estimatedTokens: this.validateEstimatedTokens(task.estimatedTokens)
       }));
       
     } catch (error: any) {
       logger.error('Failed to parse tasks from response:', error);
       throw error;
     }
+  }
+  
+  /**
+   * Validate complexity score (1-10 scale)
+   */
+  private validateComplexityScore(score: any): number {
+    const numScore = Number(score);
+    if (isNaN(numScore)) return 5; // Default to medium complexity
+    return Math.max(1, Math.min(10, Math.round(numScore)));
+  }
+  
+  /**
+   * Validate confidence score (0-1 scale)
+   */
+  private validateConfidenceScore(score: any): number {
+    const numScore = Number(score);
+    if (isNaN(numScore)) return 0.7; // Default to reasonably confident
+    return Math.max(0, Math.min(1, numScore));
+  }
+  
+  /**
+   * Validate estimated tokens
+   */
+  private validateEstimatedTokens(tokens: any): number {
+    const numTokens = Number(tokens);
+    if (isNaN(numTokens) || numTokens < 0) return 1500; // Default estimate
+    return Math.min(numTokens, 50000); // Cap at 50k tokens
+  }
+  
+  /**
+   * Validate estimated duration
+   */
+  private validateEstimatedDuration(duration: any): number {
+    const numDuration = Number(duration);
+    if (isNaN(numDuration) || numDuration < 0) return 5000; // Default 5 seconds
+    return Math.min(numDuration, 600000); // Cap at 10 minutes
+  }
+  
+  /**
+   * Validate dependencies - ensure they only reference earlier tasks
+   */
+  private validateDependencies(deps: any, currentIndex: number): string[] {
+    if (!Array.isArray(deps)) return [];
+    
+    return deps.filter((dep: any) => {
+      if (typeof dep !== 'string') return false;
+      const match = dep.match(/^task-(\d+)$/);
+      if (!match) return true; // Keep non-standard deps for backward compat
+      const depIndex = parseInt(match[1], 10);
+      return depIndex < currentIndex; // Only allow deps on earlier tasks
+    });
   }
   
   /**
@@ -254,40 +367,252 @@ Generate the task breakdown:`;
   }
   
   /**
+   * Keyword patterns for goal analysis
+   */
+  private readonly GOAL_KEYWORDS = {
+    database: ['database', 'db', 'sql', 'postgres', 'mysql', 'mongo', 'schema', 'migration', 'table', 'query'],
+    api: ['api', 'endpoint', 'rest', 'graphql', 'route', 'controller', 'request', 'response', 'fetch'],
+    auth: ['auth', 'login', 'logout', 'register', 'password', 'session', 'jwt', 'token', 'oauth', 'permission'],
+    ui: ['component', 'page', 'button', 'form', 'modal', 'ui', 'ux', 'layout', 'style', 'css', 'design'],
+    testing: ['test', 'spec', 'jest', 'vitest', 'cypress', 'e2e', 'unit', 'integration', 'mock'],
+    deployment: ['deploy', 'build', 'docker', 'ci', 'cd', 'pipeline', 'production', 'staging'],
+    refactor: ['refactor', 'restructure', 'reorganize', 'clean', 'optimize', 'improve', 'update'],
+    feature: ['add', 'create', 'implement', 'build', 'develop', 'feature', 'functionality'],
+    fix: ['fix', 'bug', 'error', 'issue', 'problem', 'debug', 'resolve', 'patch'],
+    config: ['config', 'configure', 'setup', 'install', 'environment', 'env', 'settings']
+  };
+  
+  /**
+   * Analyze goal to detect keyword categories
+   */
+  private analyzeGoalKeywords(goal: string): string[] {
+    const lowerGoal = goal.toLowerCase();
+    const detectedCategories: string[] = [];
+    
+    for (const [category, keywords] of Object.entries(this.GOAL_KEYWORDS)) {
+      if (keywords.some(kw => lowerGoal.includes(kw))) {
+        detectedCategories.push(category);
+      }
+    }
+    
+    return detectedCategories.length > 0 ? detectedCategories : ['feature'];
+  }
+  
+  /**
    * Create fallback tasks when AI decomposition fails
+   * Uses goal analysis to create more specific and relevant tasks
    */
   private createFallbackTasks(goal: string): TaskDefinition[] {
-    return [
-      {
-        title: 'Analyze requirements',
-        description: `Analyze the goal: ${goal}`,
-        type: 'analysis',
+    const categories = this.analyzeGoalKeywords(goal);
+    const tasks: TaskDefinition[] = [];
+    
+    tasks.push({
+      title: 'Analyze requirements and project structure',
+      description: `Analyze the goal "${goal.substring(0, 100)}..." and understand the current project structure, dependencies, and constraints.`,
+      type: 'analysis',
+      priority: 'critical',
+      dependencies: [],
+      requiresCheckpoint: false,
+      requiresTest: false,
+      estimatedDurationMs: 3000,
+      complexityScore: 2,
+      confidenceScore: 0.9,
+      estimatedTokens: 800
+    });
+    
+    if (categories.includes('database')) {
+      tasks.push({
+        title: 'Define or update database schema',
+        description: 'Create or modify database schema, tables, and relationships required for the goal.',
+        type: 'database',
         priority: 'high',
-        requiresCheckpoint: false,
+        dependencies: ['task-0'],
+        requiresCheckpoint: true,
         requiresTest: false,
-        estimatedDurationMs: 3000
-      },
-      {
-        title: 'Implement solution',
-        description: `Implement the solution for: ${goal}`,
-        type: 'file_edit',
+        estimatedDurationMs: 8000,
+        complexityScore: 6,
+        confidenceScore: 0.7,
+        estimatedTokens: 2000
+      });
+    }
+    
+    if (categories.includes('config') || categories.includes('deployment')) {
+      tasks.push({
+        title: 'Update configuration files',
+        description: 'Modify configuration files, environment variables, or deployment settings as needed.',
+        type: 'config',
         priority: 'high',
-        dependencies: [],
+        dependencies: ['task-0'],
+        requiresCheckpoint: true,
+        requiresTest: false,
+        estimatedDurationMs: 5000,
+        complexityScore: 4,
+        confidenceScore: 0.75,
+        estimatedTokens: 1200
+      });
+    }
+    
+    if (categories.includes('api')) {
+      tasks.push({
+        title: 'Implement API endpoints',
+        description: 'Create or modify API routes, controllers, and request handlers.',
+        type: 'file_create',
+        priority: 'high',
+        dependencies: categories.includes('database') ? ['task-0', 'task-1'] : ['task-0'],
         requiresCheckpoint: true,
         requiresTest: true,
-        estimatedDurationMs: 10000
-      },
-      {
-        title: 'Verify implementation',
-        description: 'Verify the implementation works correctly',
-        type: 'analysis',
+        estimatedDurationMs: 12000,
+        complexityScore: 6,
+        confidenceScore: 0.7,
+        estimatedTokens: 3000
+      });
+    }
+    
+    if (categories.includes('ui')) {
+      tasks.push({
+        title: 'Create UI components',
+        description: 'Build or update user interface components, pages, and styling.',
+        type: 'file_create',
+        priority: 'high',
+        dependencies: ['task-0'],
+        requiresCheckpoint: true,
+        requiresTest: true,
+        estimatedDurationMs: 15000,
+        complexityScore: 5,
+        confidenceScore: 0.7,
+        estimatedTokens: 3500
+      });
+    }
+    
+    if (categories.includes('auth')) {
+      tasks.push({
+        title: 'Implement authentication logic',
+        description: 'Add or modify authentication, authorization, and session management.',
+        type: 'file_edit',
+        priority: 'critical',
+        dependencies: ['task-0'],
+        requiresCheckpoint: true,
+        requiresTest: true,
+        estimatedDurationMs: 15000,
+        complexityScore: 8,
+        confidenceScore: 0.6,
+        estimatedTokens: 4000
+      });
+    }
+    
+    if (categories.includes('refactor') || categories.includes('fix')) {
+      tasks.push({
+        title: 'Refactor or fix existing code',
+        description: `${categories.includes('fix') ? 'Debug and fix issues' : 'Refactor code'} as specified in the goal.`,
+        type: 'file_edit',
+        priority: 'high',
+        dependencies: ['task-0'],
+        requiresCheckpoint: true,
+        requiresTest: true,
+        estimatedDurationMs: 10000,
+        complexityScore: 6,
+        confidenceScore: 0.65,
+        estimatedTokens: 2500
+      });
+    }
+    
+    if (categories.includes('feature') && !categories.includes('api') && !categories.includes('ui')) {
+      tasks.push({
+        title: 'Implement core functionality',
+        description: `Implement the main functionality for: ${goal.substring(0, 80)}...`,
+        type: 'file_edit',
+        priority: 'high',
+        dependencies: ['task-0'],
+        requiresCheckpoint: true,
+        requiresTest: true,
+        estimatedDurationMs: 12000,
+        complexityScore: 5,
+        confidenceScore: 0.7,
+        estimatedTokens: 2800
+      });
+    }
+    
+    if (categories.includes('testing')) {
+      tasks.push({
+        title: 'Write or update tests',
+        description: 'Create or modify test files to verify the implementation.',
+        type: 'file_create',
         priority: 'medium',
-        dependencies: [],
+        dependencies: tasks.length > 1 ? [`task-${tasks.length - 1}`] : ['task-0'],
         requiresCheckpoint: false,
         requiresTest: false,
-        estimatedDurationMs: 5000
-      }
-    ];
+        estimatedDurationMs: 8000,
+        complexityScore: 4,
+        confidenceScore: 0.8,
+        estimatedTokens: 2000
+      });
+    }
+    
+    tasks.push({
+      title: 'Verify and validate implementation',
+      description: 'Verify the implementation works correctly and meets the requirements.',
+      type: 'analysis',
+      priority: 'medium',
+      dependencies: [`task-${tasks.length - 1}`],
+      requiresCheckpoint: false,
+      requiresTest: false,
+      estimatedDurationMs: 5000,
+      complexityScore: 3,
+      confidenceScore: 0.85,
+      estimatedTokens: 1000
+    });
+    
+    logger.info(`Created ${tasks.length} fallback tasks for categories: ${categories.join(', ')}`);
+    return tasks;
+  }
+  
+  /**
+   * Calculate complexity analysis for a goal
+   */
+  calculateGoalComplexity(goal: string, projectContext: string): GoalComplexityAnalysis {
+    const categories = this.analyzeGoalKeywords(goal);
+    const goalLength = goal.length;
+    const contextSize = projectContext.length;
+    
+    let baseComplexity = 3;
+    
+    if (categories.includes('auth')) baseComplexity += 2;
+    if (categories.includes('database')) baseComplexity += 1.5;
+    if (categories.includes('refactor')) baseComplexity += 1.5;
+    if (categories.includes('api') && categories.includes('ui')) baseComplexity += 1;
+    if (categories.includes('deployment')) baseComplexity += 1;
+    if (categories.includes('testing')) baseComplexity += 0.5;
+    
+    if (goalLength > 500) baseComplexity += 1;
+    if (goalLength > 1000) baseComplexity += 1;
+    
+    const overallComplexity = Math.min(10, Math.max(1, Math.round(baseComplexity)));
+    
+    const suggestedTaskCount = Math.max(3, Math.min(15, 
+      Math.round(overallComplexity * 1.5) + categories.length
+    ));
+    
+    let recommendedModel = 'gpt-4o';
+    if (overallComplexity >= 8) {
+      recommendedModel = 'gpt-5.1';
+    } else if (overallComplexity <= 3) {
+      recommendedModel = 'gpt-4o-mini';
+    }
+    
+    let riskLevel: 'low' | 'medium' | 'high' = 'low';
+    if (overallComplexity >= 7 || categories.includes('auth') || categories.includes('database')) {
+      riskLevel = 'high';
+    } else if (overallComplexity >= 5) {
+      riskLevel = 'medium';
+    }
+    
+    return {
+      overallComplexity,
+      suggestedTaskCount,
+      recommendedModel,
+      keywordCategories: categories,
+      riskLevel
+    };
   }
   
   /**
