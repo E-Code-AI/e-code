@@ -38,7 +38,10 @@ const logChangeSchema = z.object({
 
 /**
  * GET /api/memory-bank/:projectId
- * Get entire memory bank for a project
+ * Get entire memory bank for a project - AUTO-INITIALIZES if not exists (Replit-identical)
+ * 
+ * ✅ AUTO-INIT (Dec 15, 2025): Memory Bank now initializes automatically
+ * when first requested, eliminating race conditions with /status endpoint.
  */
 router.get('/:projectId', async (req: Request, res: Response) => {
   try {
@@ -47,13 +50,20 @@ router.get('/:projectId', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
 
-    const memoryBank = await memoryBankService.getMemoryBank(projectId);
+    let memoryBank = await memoryBankService.getMemoryBank(projectId);
     
+    // ✅ AUTO-INIT: Initialize automatically if not exists
     if (!memoryBank) {
-      return res.status(404).json({ 
-        error: 'Memory bank not initialized',
-        initialized: false 
-      });
+      try {
+        memoryBank = await memoryBankService.initialize(projectId, undefined);
+        console.log(`[MemoryBank] ✅ Auto-initialized for project ${projectId} on first fetch`);
+      } catch (initError) {
+        console.warn(`[MemoryBank] Auto-init failed for project ${projectId}:`, initError);
+        return res.status(404).json({ 
+          error: 'Memory bank not initialized',
+          initialized: false 
+        });
+      }
     }
 
     res.json(memoryBank);
