@@ -201,6 +201,43 @@ export interface PendingRecoveryItem {
   lastError?: string;
 }
 
+/**
+ * ✅ INTELLIGENT DELEGATION (Dec 15, 2025): Decision structure for complexity-based model routing
+ */
+export interface DelegationDecision {
+  selectedModel: string;
+  selectedProvider: 'openai' | 'anthropic' | 'google' | 'xai';
+  mode: 'fast' | 'balanced' | 'quality';
+  reason: string;
+  estimatedCost: number;
+  estimatedLatency: number;
+}
+
+/**
+ * ✅ MODEL TIERS: Provider-specific models organized by performance/cost trade-offs
+ * Each tier maps provider -> model name (null if provider doesn't have a model in that tier)
+ */
+const MODEL_TIERS: Record<string, Record<string, string | null>> = {
+  fast: {
+    openai: 'gpt-5-nano',
+    anthropic: 'claude-haiku-4.5-20251015',
+    google: 'gemini-2.0-flash',
+    xai: null
+  },
+  balanced: {
+    openai: 'gpt-5-mini',
+    anthropic: 'claude-sonnet-4.5-20250929',
+    google: 'gemini-2.5-flash',
+    xai: null
+  },
+  quality: {
+    openai: 'gpt-5.1',
+    anthropic: 'claude-opus-4.5-20251124',
+    google: 'gemini-2.5-pro',
+    xai: 'grok-4'
+  }
+};
+
 export class AgentOrchestratorService extends EventEmitter {
   private openai: OpenAI;
   private activeSessions: Map<string, AgentSession> = new Map();
@@ -593,6 +630,152 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
     }
   }
 
+  /**
+   * ✅ INTELLIGENT DELEGATION (Dec 15, 2025): Make complexity-based model routing decisions
+   * Uses task classification and prompt analysis to select optimal model tier
+   * ✅ CAPABILITY CHECK: Validates provider availability before selection
+   * ✅ PROVIDER-SPECIFIC: Uses MODEL_TIERS[tier][provider] for correct model selection
+   */
+  private makeIntelligentDelegationDecision(
+    taskClassification: any,
+    sessionModel: string,
+    promptLength: number
+  ): DelegationDecision {
+    const complexity = taskClassification.complexity ?? 
+      (taskClassification.confidence ? Math.round((1 - taskClassification.confidence) * 10) : 5);
+    
+    let mode: 'fast' | 'balanced' | 'quality';
+    let selectedModel: string;
+    let selectedProvider: 'openai' | 'anthropic' | 'google' | 'xai';
+    let reason: string;
+    let estimatedCost: number;
+    let estimatedLatency: number;
+
+    const preferredProvider = this.getProviderFromModel(sessionModel);
+    const sessionProviderAvailable = this.isProviderAvailable(preferredProvider);
+
+    // Fallback provider order when preferred provider is unavailable or doesn't have a model in the tier
+    const FALLBACK_PROVIDERS: Array<'openai' | 'anthropic' | 'google' | 'xai'> = ['openai', 'anthropic', 'google', 'xai'];
+
+    // Determine tier based on complexity
+    if (complexity < 3) {
+      mode = 'fast';
+      estimatedCost = promptLength * 0.00001;
+      estimatedLatency = 500;
+    } else if (complexity <= 7) {
+      mode = 'balanced';
+      estimatedCost = promptLength * 0.000015;
+      estimatedLatency = 1500;
+    } else {
+      mode = 'quality';
+      estimatedCost = promptLength * 0.00004;
+      estimatedLatency = 3000;
+    }
+
+    // Get tier models
+    const tierModels = MODEL_TIERS[mode];
+
+    // Try preferred provider first if available and has a model in this tier
+    const preferredModel = tierModels[preferredProvider];
+    if (preferredModel && this.isProviderAvailable(preferredProvider)) {
+      selectedModel = preferredModel;
+      selectedProvider = preferredProvider;
+      logger.info(`[makeIntelligentDelegationDecision] ✓ Using preferred provider ${preferredProvider} with model ${selectedModel} for ${mode} tier`);
+    } else {
+      // Find fallback provider that is available and has a model in this tier
+      const fallback = this.findAvailableProviderInTier(mode, FALLBACK_PROVIDERS);
+      
+      if (fallback) {
+        selectedModel = fallback.model;
+        selectedProvider = fallback.provider;
+        const fallbackReason = !preferredModel 
+          ? `${preferredProvider} has no model in ${mode} tier`
+          : `${preferredProvider} is unavailable`;
+        logger.warn(`[makeIntelligentDelegationDecision] ⚠️ ${fallbackReason}, falling back to ${fallback.provider} with model ${fallback.model}`);
+      } else if (sessionProviderAvailable) {
+        // Last resort: use session model directly
+        selectedModel = sessionModel;
+        selectedProvider = preferredProvider;
+        logger.warn(`[makeIntelligentDelegationDecision] ⚠️ No ${mode} tier providers available, using session model ${sessionModel}`);
+      } else {
+        // Absolute fallback: default to openai (may fail)
+        selectedModel = tierModels['openai'] || 'gpt-5.1';
+        selectedProvider = 'openai';
+        logger.warn(`[makeIntelligentDelegationDecision] ⚠️ No providers available, defaulting to openai with ${selectedModel} (may fail)`);
+      }
+    }
+
+    // Build reason string
+    const complexityDesc = mode === 'fast' ? 'Simple' : mode === 'balanced' ? 'Medium complexity' : 'Complex';
+    reason = `${complexityDesc} task (complexity: ${complexity}/10) - using ${mode} tier with ${selectedProvider}`;
+
+    if (promptLength > 10000) {
+      reason += ` | Large prompt (${promptLength} chars) factored into cost estimation`;
+      estimatedCost *= 1.5;
+    }
+
+    return {
+      selectedModel,
+      selectedProvider,
+      mode,
+      reason,
+      estimatedCost,
+      estimatedLatency
+    };
+  }
+
+  /**
+   * Helper to determine provider from model name
+   */
+  private getProviderFromModel(model: string): 'openai' | 'anthropic' | 'google' | 'xai' {
+    if (!model || typeof model !== 'string') return 'openai';
+    if (model.includes('claude')) return 'anthropic';
+    if (model.includes('gemini')) return 'google';
+    if (model.includes('grok')) return 'xai';
+    return 'openai';
+  }
+
+  /**
+   * ✅ CAPABILITY CHECK (Dec 15, 2025): Check if a provider is available/configured
+   * Verifies that the necessary API key/integration exists for the provider
+   */
+  private isProviderAvailable(provider: string): boolean {
+    const providerKeys: Record<string, string[]> = {
+      'openai': ['OPENAI_API_KEY', 'AI_INTEGRATIONS_OPENAI_API_KEY'],
+      'anthropic': ['ANTHROPIC_API_KEY'],
+      'google': ['GOOGLE_GENERATIVE_AI_API_KEY', 'GEMINI_API_KEY'],
+      'xai': ['XAI_API_KEY']
+    };
+    
+    const keys = providerKeys[provider] || [];
+    return keys.some(key => !!process.env[key]);
+  }
+
+  /**
+   * ✅ FALLBACK HELPER (Dec 15, 2025): Find an available provider from a tier
+   * Returns the first available provider/model from the tier, or null if none available
+   * ✅ PROVIDER-SPECIFIC: Uses MODEL_TIERS[tierName][provider] for correct model lookup
+   */
+  private findAvailableProviderInTier(
+    tierName: string,
+    fallbackProviders: Array<'openai' | 'anthropic' | 'google' | 'xai'>
+  ): { model: string; provider: 'openai' | 'anthropic' | 'google' | 'xai' } | null {
+    const tierModels = MODEL_TIERS[tierName];
+    if (!tierModels) {
+      logger.warn(`[findAvailableProviderInTier] Unknown tier: ${tierName}`);
+      return null;
+    }
+
+    for (const provider of fallbackProviders) {
+      const model = tierModels[provider];
+      // Only consider providers that have a model (not null) and are available
+      if (model && this.isProviderAvailable(provider)) {
+        return { model, provider };
+      }
+    }
+    return null;
+  }
+
   // Stream agent execution for real-time updates
   async *streamAgentExecution(
     sessionId: string,
@@ -624,26 +807,43 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       sessionId
     });
 
-    // ✅ AI OPTIMIZATION INTEGRATION: Determine provider with null safety (40-year engineering: prevent undefined crashes)
-    let provider = 'openai'; // Safe default
-    if (session.model && typeof session.model === 'string') {
-      if (session.model.includes('gpt') || session.model.includes('o1')) {
-        provider = 'openai';
-      } else if (session.model.includes('claude')) {
-        provider = 'anthropic';
-      } else if (session.model.includes('gemini')) {
-        provider = 'google';
-      } else if (session.model.includes('grok')) {
-        provider = 'xai';
-      }
-    }
-    logger.info(`[streamAgentExecution] ✓ Provider determined: ${provider} (model: ${session.model || 'default'})`);
+    // ✅ INTELLIGENT DELEGATION (Dec 15, 2025): Make complexity-based model routing decision
+    const delegationDecision = this.makeIntelligentDelegationDecision(
+      taskClassification,
+      session.model || 'gpt-5.1',
+      prompt.length
+    );
+    
+    logger.info(`[streamAgentExecution] ✓ Delegation decision - Mode: ${delegationDecision.mode}, Model: ${delegationDecision.selectedModel}, Provider: ${delegationDecision.selectedProvider}`);
+    logger.info(`[streamAgentExecution] ✓ Delegation reason: ${delegationDecision.reason}`);
+    logger.info(`[streamAgentExecution] ✓ Estimated cost: $${delegationDecision.estimatedCost.toFixed(6)}, latency: ${delegationDecision.estimatedLatency}ms`);
+
+    // ✅ OBSERVABILITY: Log intelligent delegation decision
+    observability.info('AI delegation decision', {
+      operation: 'intelligent_delegation',
+      mode: delegationDecision.mode,
+      selectedModel: delegationDecision.selectedModel,
+      selectedProvider: delegationDecision.selectedProvider,
+      reason: delegationDecision.reason,
+      estimatedCost: delegationDecision.estimatedCost,
+      estimatedLatency: delegationDecision.estimatedLatency,
+      promptLength: prompt.length,
+      userId,
+      projectId: session.projectId?.toString(),
+      sessionId
+    });
+
+    // Use the delegated provider and model
+    const provider = delegationDecision.selectedProvider;
+    const selectedModel = delegationDecision.selectedModel;
     
     // ✅ OBSERVABILITY: Log provider selection with context
     observability.info('AI provider selected', {
       operation: 'provider_selection',
       provider,
-      model: session.model || 'default',
+      model: selectedModel,
+      originalSessionModel: session.model || 'default',
+      delegationMode: delegationDecision.mode,
       userId,
       projectId: session.projectId?.toString(),
       sessionId
@@ -714,8 +914,9 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
 
     try {
       // Create streaming completion (INSIDE try/catch to catch provider failures)
+      // ✅ INTELLIGENT DELEGATION: Use selected model from delegation decision
       const stream = await this.openai.chat.completions.create({
-        model: session.model,
+        model: selectedModel,
         messages: [
           {
             role: 'system',
@@ -784,11 +985,12 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       logger.info(`[streamAgentExecution] ✅ Success - Provider: ${provider}, Response time: ${responseTime}ms, Tokens: ${totalTokens}, Task type: ${taskClassification.taskType}`);
 
       // ✅ REPLIT-STYLE METADATA: Send final metadata chunk with model, tokens, latency, cost
-      const estimatedCost = this.calculateCost(provider, session.model || 'default', totalTokens);
+      // ✅ INTELLIGENT DELEGATION: Use selected model and include delegation metadata
+      const estimatedCost = this.calculateCost(provider, selectedModel, totalTokens);
       yield {
         type: 'metadata',
         metadata: {
-          model: session.model || 'default',
+          model: selectedModel,
           provider,
           tokens: totalTokens,
           promptTokens: Math.floor(totalTokens * 0.7), // Estimate: 70% prompt
@@ -798,8 +1000,13 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           streamingDuration: responseTime,
           finishReason: 'stop',
           cacheHit: false,
-          extendedThinking: session.model?.includes('thinking') || session.model?.includes('opus') || false,
-          webSearchUsed: false
+          extendedThinking: selectedModel.includes('thinking') || selectedModel.includes('opus') || false,
+          webSearchUsed: false,
+          delegation: {
+            mode: delegationDecision.mode,
+            reason: delegationDecision.reason,
+            originalModel: session.model || 'default'
+          }
         }
       };
       
@@ -813,7 +1020,8 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         context: {
           operation: 'streaming_agent_execution',
           provider,
-          model: session.model,
+          model: selectedModel,
+          delegationMode: delegationDecision.mode,
           userId,
           projectId: session.projectId?.toString(),
           sessionId,
@@ -845,7 +1053,8 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         context: {
           operation: 'streaming_agent_execution',
           provider,
-          model: session.model,
+          model: selectedModel,
+          delegationMode: delegationDecision.mode,
           userId,
           projectId: session.projectId?.toString(),
           sessionId,
@@ -863,7 +1072,8 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         context: {
           operation: 'streaming_agent_execution',
           provider,
-          model: session.model,
+          model: selectedModel,
+          delegationMode: delegationDecision.mode,
           userId,
           projectId: session.projectId?.toString(),
           sessionId,

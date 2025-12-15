@@ -3685,6 +3685,10 @@ export const maxAutonomyTasks = pgTable('max_autonomy_tasks', {
   estimatedDurationMs: integer('estimated_duration_ms'),
   actualDurationMs: integer('actual_duration_ms'),
   
+  complexityScore: integer('complexity_score'),
+  confidenceScore: real('confidence_score'),
+  estimatedTokens: integer('estimated_tokens'),
+  
   checkpointId: integer('checkpoint_id'),
   requiresCheckpoint: boolean('requires_checkpoint').default(false),
   requiresTest: boolean('requires_test').default(false),
