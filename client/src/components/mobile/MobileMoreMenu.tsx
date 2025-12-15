@@ -40,6 +40,8 @@ interface MobileMoreMenuProps {
   onOpenKeyboardShortcuts?: () => void;
   problemsCount?: number;
   className?: string;
+  /** Render as inline content instead of fixed overlay */
+  inline?: boolean;
 }
 
 interface MenuItem {
@@ -72,7 +74,8 @@ export function MobileMoreMenu({
   onOpenCommandPalette,
   onOpenGlobalSearch,
   problemsCount = 0,
-  className 
+  className,
+  inline = false,
 }: MobileMoreMenuProps) {
   const { toast } = useToast();
   const prefersReducedMotion = useReducedMotion();
@@ -368,6 +371,47 @@ export function MobileMoreMenu({
           },
         },
       };
+
+  if (inline && isOpen) {
+    return (
+      <div 
+        className={cn('h-full flex flex-col bg-background', className)}
+        data-testid="mobile-more-menu-inline"
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <h2 className="font-semibold text-foreground">Tools</h2>
+        </div>
+
+        <ScrollArea className="flex-1 overflow-y-auto">
+          <div className="grid grid-cols-4 gap-3 p-4 pb-safe">
+            {menuItems.map((item) => (
+              <button
+                key={item.id}
+                className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl hover:bg-muted active:bg-muted/80 transition-colors touch-manipulation min-h-[80px]"
+                onClick={item.onClick}
+                data-testid={`mobile-more-menu-${item.id}`}
+              >
+                <div className="relative w-11 h-11 flex items-center justify-center bg-muted rounded-xl">
+                  <item.icon className="h-5 w-5 text-foreground" />
+                  {item.badge !== undefined && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px]"
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground font-medium text-center">
+                  {item.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+    );
+  }
 
   return (
     <AnimatePresence>

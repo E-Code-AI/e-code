@@ -400,6 +400,7 @@ function UnifiedIDELayout({
             <MobileMoreMenu 
               projectId={projectId}
               isOpen={true}
+              inline={true}
               onClose={() => setMobileActiveTab('agent')}
               onOpenFiles={() => setMobileActiveTab('files')}
               onOpenGit={() => setShowGitPanel(true)}
@@ -472,6 +473,7 @@ function UnifiedIDELayout({
             <MobileMoreMenu 
               projectId={projectId}
               isOpen={true}
+              inline={true}
               onClose={() => setTabletPanel('editor')}
               onOpenFiles={() => setTabletDrawerOpen(true)}
               onOpenGit={() => setShowGitPanel(true)}
@@ -550,7 +552,7 @@ function UnifiedIDELayout({
       >
         <motion.div 
           className="flex-1 overflow-hidden"
-          drag="x"
+          drag={mobileActiveTab !== 'more' && mobileActiveTab !== 'files' ? "x" : false}
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.1}
           onDragEnd={(_, info) => handleMobileSwipe(info)}
