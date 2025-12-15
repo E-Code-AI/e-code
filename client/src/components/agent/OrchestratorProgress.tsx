@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, TrendingUp, Target, CheckCircle2, XCircle, Pause, Play, BarChart3 } from 'lucide-react';
+import { Clock, TrendingUp, Target, CheckCircle2, XCircle, Pause, Play, BarChart3, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -194,7 +194,7 @@ export function OrchestratorProgress({
           />
         </div>
         
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Clock className="h-3 w-3" />
@@ -260,6 +260,16 @@ export function OrchestratorProgress({
                   ({Math.round(testPassRate)}%)
                 </span>
               )}
+            </p>
+          </div>
+          
+          <div className="space-y-1">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <DollarSign className="h-3 w-3" />
+              Cost
+            </div>
+            <p className="text-sm font-medium tabular-nums text-green-600 dark:text-green-400">
+              ${parseFloat(progress.totalCostUsd).toFixed(4)}
             </p>
           </div>
         </div>

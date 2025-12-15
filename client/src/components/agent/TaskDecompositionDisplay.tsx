@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, CheckCircle2, Circle, Loader2, XCircle, AlertTriangle, Clock, Zap, Brain, Target, ArrowRight } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle2, Circle, Loader2, XCircle, AlertTriangle, Clock, Zap, Brain, Target, ArrowRight, FileCode, Link2, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +31,12 @@ export interface DecomposedTask {
   estimatedDurationMs?: number;
   actualDurationMs?: number;
   estimatedTokens?: number;
+  metadata?: {
+    filesModified?: string[];
+    citations?: Array<{ url: string; title: string; snippet: string; domain: string }>;
+    tokensUsed?: number;
+    costUsd?: number;
+  };
 }
 
 interface TaskDecompositionDisplayProps {
@@ -283,6 +289,47 @@ export function TaskDecompositionDisplay({
                           </span>
                         )}
                       </div>
+
+                      {task.metadata?.filesModified && task.metadata.filesModified.length > 0 && (
+                        <div className="mt-2 flex items-center gap-2 flex-wrap">
+                          <FileCode className="h-3 w-3 text-muted-foreground" />
+                          {task.metadata.filesModified.map((file, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => {}}
+                              className="text-xs px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                              data-testid={`button-file-link-${task.id}-${idx}`}
+                            >
+                              {file.split('/').pop()}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {task.metadata?.citations && task.metadata.citations.length > 0 && (
+                        <div className="mt-2 flex items-center gap-2 flex-wrap">
+                          <Link2 className="h-3 w-3 text-muted-foreground" />
+                          {task.metadata.citations.map((citation, idx) => (
+                            <a
+                              key={idx}
+                              href={citation.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors flex items-center gap-1"
+                              data-testid={`link-citation-${task.id}-${idx}`}
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              {citation.domain || new URL(citation.url).hostname}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+
+                      {task.metadata?.costUsd !== undefined && task.metadata.costUsd > 0 && (
+                        <span className="text-xs text-green-600 dark:text-green-400 ml-auto">
+                          ${task.metadata.costUsd.toFixed(4)}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
