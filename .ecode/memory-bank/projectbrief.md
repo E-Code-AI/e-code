@@ -1,15 +1,13 @@
 # Project Brief
 
 ## Overview
-[High-level description of what this project does]
+Build a full-stack e-commerce marketplace with Stripe payments, product catalog with search and filters, shopping cart with checkout flow, user authentication, order management dashboard, inventory tracking, email notifications for orders, and mobile-responsive design with dark mode
 
 ## Core Requirements
-- Requirement 1
-- Requirement 2
-- Requirement 3
+[To be extracted from requirements]
 
 ## Project Goals
-[What success looks like for this project]
+[To be defined]
 
 ## Scope
-[What is in and out of scope]
+[To be defined]
