@@ -957,7 +957,7 @@ function UnifiedIDELayout({
       </Suspense>
 
       {showCollaboration && user && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-80 z-50 shadow-xl border-l bg-background">
+        <div className="fixed inset-y-0 right-0 w-full sm:w-80 z-[100] shadow-xl border-l bg-background">
           <div className="flex items-center justify-between p-2 border-b">
             <span className="font-medium text-sm">Collaboration</span>
             <Button
@@ -983,7 +983,7 @@ function UnifiedIDELayout({
       )}
 
       {showReplitDB && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-[600px] z-50 shadow-xl border-l bg-background">
+        <div className="fixed inset-y-0 right-0 w-full sm:w-[600px] z-[100] shadow-xl border-l bg-background">
           <div className="flex items-center justify-between p-2 border-b">
             <span className="font-medium text-sm">Database Browser</span>
             <Button
@@ -1005,7 +1005,7 @@ function UnifiedIDELayout({
       )}
 
       {showGitPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-80 z-50 shadow-xl border-l bg-background">
+        <div className="fixed inset-y-0 right-0 w-full sm:w-80 z-[100] shadow-xl border-l bg-background">
           <div className="flex items-center justify-between p-2 border-b">
             <span className="font-medium text-sm">Git</span>
             <Button size="icon" variant="ghost" onClick={() => closePanel(setShowGitPanel)} className="h-7 w-7" data-testid="button-close-git">
@@ -1021,7 +1021,7 @@ function UnifiedIDELayout({
       )}
 
       {showPackagesPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-80 z-50 shadow-xl border-l bg-background">
+        <div className="fixed inset-y-0 right-0 w-full sm:w-80 z-[100] shadow-xl border-l bg-background">
           <div className="flex items-center justify-between p-2 border-b">
             <span className="font-medium text-sm">Packages</span>
             <Button size="icon" variant="ghost" onClick={() => closePanel(setShowPackagesPanel)} className="h-7 w-7" data-testid="button-close-packages">
@@ -1037,7 +1037,7 @@ function UnifiedIDELayout({
       )}
 
       {showDebugPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-50 shadow-xl border-l bg-background">
+        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-[100] shadow-xl border-l bg-background">
           <div className="flex items-center justify-between p-2 border-b">
             <span className="font-medium text-sm">Debugger</span>
             <Button size="icon" variant="ghost" onClick={() => closePanel(setShowDebugPanel)} className="h-7 w-7" data-testid="button-close-debug">
@@ -1053,7 +1053,7 @@ function UnifiedIDELayout({
       )}
 
       {showSecretsPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-80 z-50 shadow-xl border-l bg-background">
+        <div className="fixed inset-y-0 right-0 w-full sm:w-80 z-[100] shadow-xl border-l bg-background">
           <div className="flex items-center justify-between p-2 border-b">
             <span className="font-medium text-sm">Secrets</span>
             <Button size="icon" variant="ghost" onClick={() => closePanel(setShowSecretsPanel)} className="h-7 w-7" data-testid="button-close-secrets">
@@ -1069,7 +1069,7 @@ function UnifiedIDELayout({
       )}
 
       {showWorkflowsPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-50 shadow-xl border-l bg-background">
+        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-[100] shadow-xl border-l bg-background">
           <div className="flex items-center justify-between p-2 border-b">
             <span className="font-medium text-sm">Workflows</span>
             <Button size="icon" variant="ghost" onClick={() => closePanel(setShowWorkflowsPanel)} className="h-7 w-7" data-testid="button-close-workflows">
@@ -1085,7 +1085,7 @@ function UnifiedIDELayout({
       )}
 
       {showHistoryPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-50 shadow-xl border-l bg-background">
+        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-[100] shadow-xl border-l bg-background">
           <div className="flex items-center justify-between p-2 border-b">
             <span className="font-medium text-sm">History</span>
             <Button size="icon" variant="ghost" onClick={() => closePanel(setShowHistoryPanel)} className="h-7 w-7" data-testid="button-close-history">
@@ -1101,7 +1101,7 @@ function UnifiedIDELayout({
       )}
 
       {showCheckpointsPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-50 shadow-xl border-l bg-background">
+        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-[100] shadow-xl border-l bg-background">
           <div className="flex items-center justify-between p-2 border-b">
             <span className="font-medium text-sm">AI Checkpoints</span>
             <Button size="icon" variant="ghost" onClick={() => closePanel(setShowCheckpointsPanel)} className="h-7 w-7" data-testid="button-close-checkpoints">
@@ -1117,7 +1117,7 @@ function UnifiedIDELayout({
       )}
 
       {showExtensionsPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-[500px] z-50 shadow-xl border-l bg-background">
+        <div className="fixed inset-y-0 right-0 w-full sm:w-[500px] z-[100] shadow-xl border-l bg-background">
           <div className="flex items-center justify-between p-2 border-b">
             <span className="font-medium text-sm">Extensions</span>
             <Button size="icon" variant="ghost" onClick={() => closePanel(setShowExtensionsPanel)} className="h-7 w-7" data-testid="button-close-extensions">
@@ -1131,7 +1131,7 @@ function UnifiedIDELayout({
       )}
 
       {showSettingsPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-[500px] z-50 shadow-xl border-l bg-background">
+        <div className="fixed inset-y-0 right-0 w-full sm:w-[500px] z-[100] shadow-xl border-l bg-background">
           <div className="flex items-center justify-between p-2 border-b">
             <span className="font-medium text-sm">Settings</span>
             <Button size="icon" variant="ghost" onClick={() => closePanel(setShowSettingsPanel)} className="h-7 w-7" data-testid="button-close-settings">
@@ -1147,7 +1147,7 @@ function UnifiedIDELayout({
       )}
 
       {showSecurityPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-50 shadow-xl border-l bg-background">
+        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-[100] shadow-xl border-l bg-background">
           <div className="flex items-center justify-between p-2 border-b">
             <span className="font-medium text-sm">Security Scanner</span>
             <Button size="icon" variant="ghost" onClick={() => closePanel(setShowSecurityPanel)} className="h-7 w-7" data-testid="button-close-security">
