@@ -1,84 +1,204 @@
 /**
- * PreviewSplashScreen - Shows "Preview will be available soon" during autonomous builds
+ * PreviewSplashScreen - Replit-identical preview splash screen
  * 
- * Displays a beautiful animated splash screen in the Preview tab while
- * the autonomous agent is building the app
+ * Shows "Preview will be available soon" with animated dot logo
+ * and rotating tips during app building/loading
  */
 
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Sparkles, 
-  Loader2, 
-  Code, 
-  Layers, 
-  Paintbrush,
-  Rocket,
-  CheckCircle2
+  MessageSquare,
+  Cloud,
+  Pencil,
+  UserPlus,
+  History,
+  Settings,
+  ExternalLink,
+  Puzzle,
+  Sparkles,
+  Shield,
+  Globe,
+  Database,
+  Smartphone,
+  Trees,
+  Play
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface PreviewSplashScreenProps {
+  isBuilding?: boolean;
+  appName?: string;
+  onRunClick?: () => void;
   phase?: 'planning' | 'scaffolding' | 'building' | 'styling' | 'finalizing' | 'complete';
   currentTask?: string;
   progress?: number;
-  appName?: string;
   onComplete?: () => void;
 }
 
-const phaseConfig = {
-  planning: {
-    icon: Sparkles,
-    title: 'Planning Your App',
-    subtitle: 'Analyzing requirements and designing architecture...',
-    color: 'text-purple-500',
-    bgColor: 'from-purple-500/10 to-purple-600/5'
-  },
-  scaffolding: {
-    icon: Layers,
-    title: 'Setting Up Project',
-    subtitle: 'Creating file structure and installing dependencies...',
-    color: 'text-blue-500',
-    bgColor: 'from-blue-500/10 to-blue-600/5'
-  },
-  building: {
-    icon: Code,
-    title: 'Building Components',
-    subtitle: 'Writing code and implementing features...',
-    color: 'text-green-500',
-    bgColor: 'from-green-500/10 to-green-600/5'
-  },
-  styling: {
-    icon: Paintbrush,
-    title: 'Applying Styles',
-    subtitle: 'Making everything look beautiful...',
-    color: 'text-pink-500',
-    bgColor: 'from-pink-500/10 to-pink-600/5'
-  },
-  finalizing: {
-    icon: Rocket,
-    title: 'Finalizing',
-    subtitle: 'Running final checks and optimizations...',
-    color: 'text-orange-500',
-    bgColor: 'from-orange-500/10 to-orange-600/5'
-  },
-  complete: {
-    icon: CheckCircle2,
-    title: 'Ready!',
-    subtitle: 'Your app is ready to preview',
-    color: 'text-emerald-500',
-    bgColor: 'from-emerald-500/10 to-emerald-600/5'
-  }
-};
+const DOT_COLOR = '#8B7EC8';
+
+const tips = [
+  { icon: MessageSquare, text: "Use Plan Mode to chat without code changes" },
+  { icon: Cloud, text: "Use App Storage for images/videos" },
+  { icon: Pencil, text: "Use Edit Mode to change individual elements" },
+  { icon: UserPlus, text: "Invite collaborators in real-time" },
+  { icon: History, text: "Use Rollbacks to undo changes" },
+  { icon: Settings, text: "Turn on Dynamic Intelligence for more power" },
+  { icon: ExternalLink, text: "Send message while Agent is working to add to queue" },
+  { icon: Puzzle, text: "Seamless integrations with 3rd party tools" },
+  { icon: Sparkles, text: "Generate images with AI, automatically" },
+  { icon: Shield, text: "Agent checks its work with App Testing" },
+  { icon: Globe, text: "Custom domains for professional apps" },
+  { icon: Database, text: "Built-in database (just ask Agent!)" },
+  { icon: Smartphone, text: "Develop on the go with the mobile app" },
+  { icon: Trees, text: "Press 'Publish' to put your app online" },
+];
+
+type DotPosition = { x: number; y: number };
+
+const dotPatterns: DotPosition[][] = [
+  [
+    { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 },
+    { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 },
+  ],
+  [
+    { x: 1, y: 0 },
+    { x: 0.5, y: 0.5 }, { x: 1.5, y: 0.5 },
+    { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 },
+  ],
+  [
+    { x: 0, y: 0.3 }, { x: 0.8, y: 0 }, { x: 1.6, y: 0.3 },
+    { x: 0.4, y: 1 }, { x: 1.2, y: 0.7 }, { x: 2, y: 1 },
+  ],
+  [
+    { x: 0.5, y: 0 }, { x: 1.5, y: 0 },
+    { x: 0, y: 0.75 }, { x: 1, y: 0.75 }, { x: 2, y: 0.75 },
+    { x: 1, y: 1.5 },
+  ],
+  [
+    { x: 0, y: 0 }, { x: 2, y: 0 },
+    { x: 1, y: 0.5 },
+    { x: 1, y: 1 },
+    { x: 0, y: 1.5 }, { x: 2, y: 1.5 },
+  ],
+];
+
+function AnimatedDotLogo() {
+  const [patternIndex, setPatternIndex] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPatternIndex((prev) => (prev + 1) % dotPatterns.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentPattern = dotPatterns[patternIndex];
+  const dotSize = 12;
+  const spacing = 20;
+
+  return (
+    <div 
+      className="relative mb-8"
+      style={{ width: 80, height: 60 }}
+      data-testid="splash-animated-logo"
+    >
+      {currentPattern.map((pos, index) => (
+        <motion.div
+          key={index}
+          className="absolute rounded-full"
+          style={{
+            width: dotSize,
+            height: dotSize,
+            backgroundColor: DOT_COLOR,
+          }}
+          initial={false}
+          animate={{
+            left: pos.x * spacing + 10,
+            top: pos.y * spacing + 5,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 25,
+            duration: 0.6,
+          }}
+          data-testid={`splash-dot-${index}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function RotatingTip() {
+  const [tipIndex, setTipIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTipIndex((prev) => (prev + 1) % tips.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentTip = tips[tipIndex];
+  const Icon = currentTip.icon;
+
+  return (
+    <div 
+      className="h-8 flex items-center justify-center"
+      data-testid="splash-rotating-tip"
+    >
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={tipIndex}
+          className="flex items-center gap-2 text-sm text-muted-foreground dark:text-gray-400"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.3 }}
+          data-testid={`splash-tip-${tipIndex}`}
+        >
+          <Icon className="w-4 h-4 flex-shrink-0" />
+          <span>{currentTip.text}</span>
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export function PreviewSplashScreen({ 
-  phase = 'planning',
+  isBuilding = true,
+  appName,
+  onRunClick,
+  phase,
   currentTask,
-  progress = 0,
-  appName
+  progress,
+  onComplete,
 }: PreviewSplashScreenProps) {
-  const config = phaseConfig[phase];
-  const Icon = config.icon;
-  const isComplete = phase === 'complete';
+  // Handle phase completion - call onComplete and return null to hide splash
+  useEffect(() => {
+    if (phase === 'complete' || (!isBuilding && !onRunClick)) {
+      // Give a brief moment to show completion, then call onComplete
+      const timer = setTimeout(() => {
+        onComplete?.();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [phase, isBuilding, onRunClick, onComplete]);
+
+  // If build is complete and no run button needed, hide the splash
+  if (phase === 'complete') {
+    return null;
+  }
+
+  // If not building and no run click handler, don't show splash
+  if (!isBuilding && !onRunClick) {
+    return null;
+  }
+
+  const showNotRunningState = !isBuilding && onRunClick;
 
   return (
     <motion.div 
@@ -87,113 +207,101 @@ export function PreviewSplashScreen({
       exit={{ opacity: 0 }}
       className={cn(
         "absolute inset-0 flex flex-col items-center justify-center",
-        "bg-gradient-to-br",
-        config.bgColor,
-        "dark:from-zinc-900 dark:to-zinc-950"
+        "bg-white dark:bg-zinc-900"
       )}
       data-testid="preview-splash-screen"
     >
       <div className="flex flex-col items-center max-w-md px-6 text-center">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
-          className={cn(
-            "w-20 h-20 rounded-2xl flex items-center justify-center mb-6",
-            "bg-white dark:bg-zinc-800 shadow-xl",
-            "ring-1 ring-black/5 dark:ring-white/10"
-          )}
-        >
-          {isComplete ? (
-            <Icon className={cn("h-10 w-10", config.color)} />
-          ) : (
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-            >
-              <Loader2 className={cn("h-10 w-10", config.color)} />
-            </motion.div>
-          )}
-        </motion.div>
+        <AnimatedDotLogo />
 
         <motion.h2 
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-2xl font-semibold text-foreground mb-2"
+          transition={{ delay: 0.1 }}
+          className="text-xl font-bold text-black dark:text-white mb-6"
+          data-testid="splash-title"
         >
-          {config.title}
+          Preview will be available soon
         </motion.h2>
 
-        <motion.p 
-          initial={{ y: 10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-muted-foreground mb-6"
-        >
-          {config.subtitle}
-        </motion.p>
-
-        {currentTask && !isComplete && (
+        {showNotRunningState ? (
           <motion.div
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="w-full mb-4"
+            transition={{ delay: 0.2 }}
+            className="flex flex-col items-center gap-4"
           >
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/50 dark:bg-zinc-800/50 border border-border/50">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              <span className="text-sm text-muted-foreground truncate">
-                {currentTask}
-              </span>
-            </div>
-          </motion.div>
-        )}
-
-        {!isComplete && progress > 0 && (
-          <motion.div 
-            initial={{ scaleX: 0, opacity: 0 }}
-            animate={{ scaleX: 1, opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="w-full"
-          >
-            <div className="h-2 rounded-full bg-muted overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                className={cn(
-                  "h-full rounded-full",
-                  "bg-gradient-to-r from-primary to-primary/80"
-                )}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {progress}% complete
+            <p className="text-sm text-muted-foreground dark:text-gray-400">
+              Your app is not running. Click below to start it.
             </p>
+            <Button
+              onClick={onRunClick}
+              className="gap-2"
+              data-testid="splash-run-button"
+            >
+              <Play className="w-4 h-4" />
+              Run App
+            </Button>
           </motion.div>
+        ) : (
+          <>
+            {currentTask && (
+              <motion.p
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.15 }}
+                className="text-sm text-muted-foreground dark:text-gray-400 mb-4"
+                data-testid="splash-current-task"
+              >
+                {currentTask}
+              </motion.p>
+            )}
+
+            {progress !== undefined && progress > 0 && (
+              <motion.div 
+                initial={{ scaleX: 0, opacity: 0 }}
+                animate={{ scaleX: 1, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="w-full max-w-xs mb-6"
+                data-testid="splash-progress-container"
+              >
+                <div className="h-1.5 rounded-full bg-gray-200 dark:bg-zinc-700 overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progress}%` }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: DOT_COLOR }}
+                    data-testid="splash-progress-bar"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground dark:text-gray-500 mt-2">
+                  {progress}% complete
+                </p>
+              </motion.div>
+            )}
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <RotatingTip />
+            </motion.div>
+          </>
         )}
 
         {appName && (
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="mt-8 text-xs text-muted-foreground/60"
+            transition={{ delay: 0.4 }}
+            className="mt-8 text-xs text-muted-foreground/60 dark:text-gray-600"
+            data-testid="splash-app-name"
           >
             Building: {appName}
           </motion.p>
         )}
-
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.5 }}
-          transition={{ delay: 1, duration: 1 }}
-          className="absolute bottom-6 flex items-center gap-2 text-xs text-muted-foreground"
-        >
-          <Sparkles className="h-3 w-3" />
-          <span>Preview will be available soon</span>
-        </motion.div>
       </div>
     </motion.div>
   );
