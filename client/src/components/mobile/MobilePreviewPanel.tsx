@@ -703,18 +703,24 @@ export function MobilePreviewPanel({
       </div>
 
       <div 
-        className="flex-1 min-h-0 flex items-center justify-center p-4 overflow-auto"
-        style={{ perspective: '1500px' }}
+        className={cn(
+          "flex-1 min-h-0 flex overflow-auto",
+          showDeviceFrame ? "items-center justify-center p-4" : "p-0"
+        )}
+        style={{ perspective: showDeviceFrame ? '1500px' : undefined }}
       >
         <motion.div
-          key={`${selectedDevice.name}-${isLandscape}`}
-          className={cn('relative', showDeviceFrame && 'shadow-2xl')}
-          style={{
+          key={`${selectedDevice.name}-${isLandscape}-${showDeviceFrame}`}
+          className={cn('relative', showDeviceFrame && 'shadow-2xl', !showDeviceFrame && 'w-full h-full')}
+          style={showDeviceFrame ? {
             width: deviceWidth * scale,
             height: deviceHeight * scale,
             transformStyle: 'preserve-3d',
+          } : {
+            width: '100%',
+            height: '100%',
           }}
-          initial={{ opacity: 0, rotateY: isLandscape ? -90 : 90, scale: 0.8 }}
+          initial={{ opacity: 0, rotateY: showDeviceFrame && isLandscape ? -90 : showDeviceFrame ? 90 : 0, scale: showDeviceFrame ? 0.8 : 1 }}
           animate={{ opacity: 1, rotateY: 0, scale: 1 }}
           transition={springTransition}
           data-testid="mobile-preview-container"
@@ -746,7 +752,7 @@ export function MobilePreviewPanel({
           <AnimatePresence>
             {isLoading && (
               <motion.div 
-                className="absolute inset-0 z-40 rounded-[24px] overflow-hidden"
+                className={cn("absolute inset-0 z-40 overflow-hidden", showDeviceFrame ? "rounded-[24px]" : "rounded-none")}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -765,8 +771,8 @@ export function MobilePreviewPanel({
             key={iframeKey}
             ref={iframeRef}
             src={computedPreviewUrl}
-            className={cn('w-full h-full', showDeviceFrame ? 'rounded-[24px]' : 'rounded-lg')}
-            style={{ backgroundColor: colors.white }}
+            className={cn('w-full h-full', showDeviceFrame ? 'rounded-[24px]' : 'rounded-none')}
+            style={{ backgroundColor: colors.white, border: 'none' }}
             title={`Preview - ${selectedDevice.name}`}
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
             onLoad={handleIframeLoad}
