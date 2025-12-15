@@ -63,7 +63,7 @@ export function ChatToolbar({
               onClick={onToggleExtendedThinking}
               disabled={isUpdating}
               className={cn(
-                "h-9 w-9 p-0 md:h-8 md:w-8 min-h-[36px] min-w-[36px]",
+                "h-11 w-11 p-0 md:h-9 md:w-9 min-h-[44px] min-w-[44px] md:min-h-[36px] md:min-w-[36px] touch-manipulation",
                 extendedThinking && "bg-purple-600 hover:bg-purple-700 text-white"
               )}
               data-testid="toolbar-extended-thinking"
@@ -91,7 +91,7 @@ export function ChatToolbar({
               onClick={onToggleHighPowerModels}
               disabled={isUpdating}
               className={cn(
-                "h-9 w-9 p-0 md:h-8 md:w-8 min-h-[36px] min-w-[36px]",
+                "h-11 w-11 p-0 md:h-9 md:w-9 min-h-[44px] min-w-[44px] md:min-h-[36px] md:min-w-[36px] touch-manipulation",
                 highPowerModels && "bg-orange-500 hover:bg-orange-600 text-white"
               )}
               data-testid="toolbar-high-power"
@@ -115,7 +115,7 @@ export function ChatToolbar({
               onClick={onToggleWebSearch}
               disabled={isUpdating}
               className={cn(
-                "h-9 w-9 p-0 md:h-8 md:w-8 min-h-[36px] min-w-[36px]",
+                "h-11 w-11 p-0 md:h-9 md:w-9 min-h-[44px] min-w-[44px] md:min-h-[36px] md:min-w-[36px] touch-manipulation",
                 webSearch && "bg-blue-500 hover:bg-blue-600 text-white"
               )}
               data-testid="toolbar-web-search"
@@ -139,7 +139,7 @@ export function ChatToolbar({
                 size="sm"
                 onClick={onToggleElementSelector}
                 className={cn(
-                  "h-9 w-9 p-0 md:h-8 md:w-8 min-h-[36px] min-w-[36px]",
+                  "h-11 w-11 p-0 md:h-9 md:w-9 min-h-[44px] min-w-[44px] md:min-h-[36px] md:min-w-[36px] touch-manipulation",
                   elementSelectorActive && "bg-violet-600 hover:bg-violet-700 text-white"
                 )}
                 data-testid="toolbar-element-selector"
@@ -196,7 +196,7 @@ export function ChatToolbarMobile({
   return (
     <div 
       className={cn(
-        "flex items-center justify-start gap-1",
+        "flex items-center justify-start gap-2",
         className
       )}
       data-testid="chat-toolbar-mobile"
@@ -210,15 +210,15 @@ export function ChatToolbarMobile({
               onClick={onToggleExtendedThinking}
               disabled={isUpdating}
               className={cn(
-                "h-8 w-8 p-0 min-h-[32px] min-w-[32px]",
+                "h-11 w-11 p-0 min-h-[44px] min-w-[44px] touch-manipulation",
                 extendedThinking && "bg-purple-600 hover:bg-purple-700 text-white"
               )}
               data-testid="toolbar-mobile-thinking"
             >
               {isUpdating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <Brain className="h-4 w-4" />
+                <Brain className="h-5 w-5" />
               )}
             </Button>
           </TooltipTrigger>
@@ -235,12 +235,12 @@ export function ChatToolbarMobile({
               onClick={onToggleHighPowerModels}
               disabled={isUpdating}
               className={cn(
-                "h-8 w-8 p-0 min-h-[32px] min-w-[32px]",
+                "h-11 w-11 p-0 min-h-[44px] min-w-[44px] touch-manipulation",
                 highPowerModels && "bg-orange-500 hover:bg-orange-600 text-white"
               )}
               data-testid="toolbar-mobile-power"
             >
-              <Sparkles className="h-4 w-4" />
+              <Sparkles className="h-5 w-5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">
@@ -256,12 +256,12 @@ export function ChatToolbarMobile({
               onClick={onToggleWebSearch}
               disabled={isUpdating}
               className={cn(
-                "h-8 w-8 p-0 min-h-[32px] min-w-[32px]",
+                "h-11 w-11 p-0 min-h-[44px] min-w-[44px] touch-manipulation",
                 webSearch && "bg-blue-500 hover:bg-blue-600 text-white"
               )}
               data-testid="toolbar-mobile-search"
             >
-              <Globe className="h-4 w-4" />
+              <Globe className="h-5 w-5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">
