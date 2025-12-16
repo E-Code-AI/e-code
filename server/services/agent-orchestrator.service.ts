@@ -220,27 +220,45 @@ export interface DelegationDecision {
 const MODEL_TIERS: Record<string, Record<string, string | null>> = {
   fast: {
     openai: 'gpt-5-nano',
-    anthropic: 'claude-haiku-4.5-20251015',
+    anthropic: 'claude-haiku-4-5-20251015',
     google: 'gemini-2.0-flash',
     xai: null
   },
   balanced: {
     openai: 'gpt-5-mini',
-    anthropic: 'claude-sonnet-4.5-20250929',
+    anthropic: 'claude-sonnet-4-5-20250929',
     google: 'gemini-2.5-flash',
     xai: null
   },
   quality: {
     openai: 'gpt-5.1',
-    anthropic: 'claude-opus-4.5-20251124',
+    anthropic: 'claude-opus-4-5-20251124',
     google: 'gemini-2.5-pro',
     xai: 'grok-4'
   }
 };
 
+/**
+ * ✅ RATE LIMITING (Dec 16, 2025): Per-user rate limiting with sliding window
+ */
+interface RateLimitEntry {
+  timestamps: number[];
+  isPro: boolean;
+}
+
+const RATE_LIMIT_NORMAL = 60;  // 60 requests per minute for normal users
+const RATE_LIMIT_PRO = 120;    // 120 requests per minute for pro users
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute sliding window
+
 export class AgentOrchestratorService extends EventEmitter {
   private openai: OpenAI;
   private activeSessions: Map<string, AgentSession> = new Map();
+  
+  /**
+   * ✅ RATE LIMITING (Dec 16, 2025): Per-user rate limiting with sliding window
+   * Key: userId, Value: RateLimitEntry with request timestamps
+   */
+  private rateLimitMap: Map<string, RateLimitEntry> = new Map();
   
   /**
    * ✅ DURABLE RECOVERY (Dec 7, 2025): In-memory queue for sessions with failed DB status updates
@@ -266,6 +284,68 @@ export class AgentOrchestratorService extends EventEmitter {
     this.startRecoveryWorker();
   }
   
+  /**
+   * ✅ RATE LIMITING (Dec 16, 2025): Check and enforce per-user rate limits
+   * Returns error message if rate limit exceeded, null if allowed
+   */
+  private checkRateLimit(userId: string, isPro: boolean = false): string | null {
+    const now = Date.now();
+    const limit = isPro ? RATE_LIMIT_PRO : RATE_LIMIT_NORMAL;
+    
+    let entry = this.rateLimitMap.get(userId);
+    
+    if (!entry) {
+      entry = { timestamps: [], isPro };
+      this.rateLimitMap.set(userId, entry);
+    }
+    
+    // Remove timestamps outside the sliding window
+    entry.timestamps = entry.timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
+    
+    if (entry.timestamps.length >= limit) {
+      const oldestTimestamp = entry.timestamps[0];
+      const resetIn = Math.ceil((oldestTimestamp + RATE_LIMIT_WINDOW_MS - now) / 1000);
+      logger.warn(`[RateLimit] User ${userId} exceeded rate limit (${entry.timestamps.length}/${limit})`, {
+        userId,
+        requestCount: entry.timestamps.length,
+        limit,
+        resetInSeconds: resetIn
+      });
+      return `Rate limit exceeded. You have made ${entry.timestamps.length} requests in the last minute. Limit: ${limit}/min. Please try again in ${resetIn} seconds.`;
+    }
+    
+    // Record this request
+    entry.timestamps.push(now);
+    return null;
+  }
+  
+  /**
+   * Get rate limit status for a user (for API exposure)
+   */
+  getRateLimitStatus(userId: string, isPro: boolean = false): {
+    remaining: number;
+    limit: number;
+    resetIn: number;
+  } {
+    const now = Date.now();
+    const limit = isPro ? RATE_LIMIT_PRO : RATE_LIMIT_NORMAL;
+    const entry = this.rateLimitMap.get(userId);
+    
+    if (!entry) {
+      return { remaining: limit, limit, resetIn: 0 };
+    }
+    
+    const validTimestamps = entry.timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
+    const oldestTimestamp = validTimestamps[0];
+    const resetIn = oldestTimestamp ? Math.ceil((oldestTimestamp + RATE_LIMIT_WINDOW_MS - now) / 1000) : 0;
+    
+    return {
+      remaining: Math.max(0, limit - validTimestamps.length),
+      limit,
+      resetIn: resetIn > 0 ? resetIn : 0
+    };
+  }
+
   /**
    * Get recovery queue status for health monitoring
    * ✅ HEALTH ENDPOINT (Dec 7, 2025): Exposes pending recovery items for monitoring tools
@@ -344,9 +424,20 @@ export class AgentOrchestratorService extends EventEmitter {
   async executeAgent(
     sessionId: string,
     messages: AgentMessage[],
-    userId: string
+    userId: string,
+    isPro: boolean = false
   ): Promise<AgentExecutionResult> {
     try {
+      // ✅ RATE LIMITING (Dec 16, 2025): Check rate limit before processing
+      const rateLimitError = this.checkRateLimit(userId, isPro);
+      if (rateLimitError) {
+        return {
+          message: rateLimitError,
+          functionCalls: [],
+          sessionId
+        };
+      }
+      
       const session = await this.validateSession(sessionId);
       
       // Add system prompt with capabilities

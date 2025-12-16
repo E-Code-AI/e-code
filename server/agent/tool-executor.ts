@@ -5,11 +5,54 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import winston from 'winston';
 
-const execAsync = promisify(exec);
+const ALLOWED_COMMANDS = new Set([
+  'npm', 'npx', 'node', 'git', 'grep', 'find', 'ls', 'cat', 'echo', 
+  'mkdir', 'rm', 'cp', 'mv', 'touch', 'head', 'tail', 'wc', 'sort',
+  'yarn', 'pnpm', 'python', 'python3', 'pip', 'pip3', 'cargo', 'rustc',
+  'go', 'tsc', 'eslint', 'prettier', 'jest', 'vitest', 'tsx'
+]);
+
+function parseCommand(commandString: string): string[] {
+  const args: string[] = [];
+  let current = '';
+  let inQuote = false;
+  let quoteChar = '';
+  
+  for (let i = 0; i < commandString.length; i++) {
+    const char = commandString[i];
+    
+    if (inQuote) {
+      if (char === quoteChar) {
+        inQuote = false;
+      } else {
+        current += char;
+      }
+    } else if (char === '"' || char === "'") {
+      inQuote = true;
+      quoteChar = char;
+    } else if (char === ' ' || char === '\t') {
+      if (current) {
+        args.push(current);
+        current = '';
+      }
+    } else {
+      current += char;
+    }
+  }
+  
+  if (current) {
+    args.push(current);
+  }
+  
+  return args;
+}
+
+function sanitizeCommand(cmd: string): string {
+  return cmd.replace(/[;&|`$(){}[\]<>\\]/g, '');
+}
 
 // Create logger
 const logger = winston.createLogger({
@@ -39,6 +82,21 @@ export class ToolExecutor {
     // In production, map projectId to actual project directory
     // For now, use current working directory
     this.projectRoot = process.cwd();
+  }
+
+  /**
+   * Validate that a file path is within the project root (prevents path traversal attacks)
+   * @throws Error if path traversal is detected
+   */
+  private validatePath(filePath: string): string {
+    const resolvedPath = path.resolve(this.projectRoot, filePath);
+    const normalizedRoot = path.resolve(this.projectRoot);
+    
+    if (!resolvedPath.startsWith(normalizedRoot + path.sep) && resolvedPath !== normalizedRoot) {
+      throw new Error(`Path traversal detected: ${filePath} resolves outside project root`);
+    }
+    
+    return resolvedPath;
   }
 
   /**
@@ -131,7 +189,7 @@ export class ToolExecutor {
    * File Operations
    */
   private async createFile(params: { path: string; content: string; description?: string }): Promise<ToolExecutionResult> {
-    const filePath = path.join(this.projectRoot, params.path);
+    const filePath = this.validatePath(params.path);
     const dir = path.dirname(filePath);
 
     // Create directory if it doesn't exist
@@ -154,7 +212,7 @@ export class ToolExecutor {
   }
 
   private async editFile(params: { path: string; old_content: string; new_content: string; description?: string }): Promise<ToolExecutionResult> {
-    const filePath = path.join(this.projectRoot, params.path);
+    const filePath = this.validatePath(params.path);
 
     // Read current content
     const currentContent = await fs.readFile(filePath, 'utf-8');
@@ -184,7 +242,7 @@ export class ToolExecutor {
   }
 
   private async readFile(params: { path: string }): Promise<ToolExecutionResult> {
-    const filePath = path.join(this.projectRoot, params.path);
+    const filePath = this.validatePath(params.path);
     const content = await fs.readFile(filePath, 'utf-8');
 
     return {
@@ -198,7 +256,7 @@ export class ToolExecutor {
   }
 
   private async deleteFile(params: { path: string; reason: string }): Promise<ToolExecutionResult> {
-    const filePath = path.join(this.projectRoot, params.path);
+    const filePath = this.validatePath(params.path);
     await fs.unlink(filePath);
 
     return {
@@ -214,7 +272,7 @@ export class ToolExecutor {
   }
 
   private async listDirectory(params: { path: string; recursive?: boolean }): Promise<ToolExecutionResult> {
-    const dirPath = path.join(this.projectRoot, params.path || '.');
+    const dirPath = this.validatePath(params.path || '.');
     
     const listFiles = async (dir: string, prefix = ''): Promise<string[]> => {
       const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -251,39 +309,102 @@ export class ToolExecutor {
 
   /**
    * Command Execution
+   * Uses spawn() without shell to prevent command injection attacks
    */
   private async runCommand(params: { command: string; description: string; timeout?: number }): Promise<ToolExecutionResult> {
     const timeout = params.timeout || 30000;
 
-    try {
-      const { stdout, stderr } = await execAsync(params.command, {
-        cwd: this.projectRoot,
-        timeout
-      });
+    return new Promise((resolve) => {
+      try {
+        const parsedArgs = parseCommand(params.command);
+        if (parsedArgs.length === 0) {
+          resolve({
+            success: false,
+            error: 'Empty command provided'
+          });
+          return;
+        }
 
-      return {
-        success: true,
-        output: {
-          command: params.command,
-          description: params.description,
-          stdout: stdout.trim(),
-          stderr: stderr.trim()
-        },
-        metadata: {
-          commandOutput: stdout.trim()
+        const [cmd, ...args] = parsedArgs;
+        const sanitizedCmd = sanitizeCommand(cmd);
+        
+        if (!ALLOWED_COMMANDS.has(sanitizedCmd)) {
+          resolve({
+            success: false,
+            error: `Command not allowed: ${sanitizedCmd}. Allowed commands: ${Array.from(ALLOWED_COMMANDS).join(', ')}`
+          });
+          return;
         }
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message,
-        output: {
-          command: params.command,
-          stdout: error.stdout?.trim() || '',
-          stderr: error.stderr?.trim() || error.message
-        }
-      };
-    }
+
+        const sanitizedArgs = args.map(arg => sanitizeCommand(arg));
+        
+        let stdout = '';
+        let stderr = '';
+        
+        const childProcess = spawn(sanitizedCmd, sanitizedArgs, {
+          cwd: this.projectRoot,
+          shell: false,
+          timeout
+        });
+
+        childProcess.stdout?.on('data', (data) => {
+          stdout += data.toString();
+        });
+
+        childProcess.stderr?.on('data', (data) => {
+          stderr += data.toString();
+        });
+
+        childProcess.on('error', (error) => {
+          resolve({
+            success: false,
+            error: error.message,
+            output: {
+              command: params.command,
+              stdout: stdout.trim(),
+              stderr: stderr.trim() || error.message
+            }
+          });
+        });
+
+        childProcess.on('close', (code) => {
+          if (code === 0) {
+            resolve({
+              success: true,
+              output: {
+                command: params.command,
+                description: params.description,
+                stdout: stdout.trim(),
+                stderr: stderr.trim()
+              },
+              metadata: {
+                commandOutput: stdout.trim()
+              }
+            });
+          } else {
+            resolve({
+              success: false,
+              error: `Command exited with code ${code}`,
+              output: {
+                command: params.command,
+                stdout: stdout.trim(),
+                stderr: stderr.trim()
+              }
+            });
+          }
+        });
+      } catch (error: any) {
+        resolve({
+          success: false,
+          error: error.message,
+          output: {
+            command: params.command,
+            stdout: '',
+            stderr: error.message
+          }
+        });
+      }
+    });
   }
 
   private async installPackage(params: { package_name: string; dev?: boolean; version?: string }): Promise<ToolExecutionResult> {

@@ -223,8 +223,26 @@ export class AIService {
       content: m.content,
     }));
 
+    const ANTHROPIC_MODEL_MAP: Record<string, string> = {
+      'claude-4': 'claude-sonnet-4-5-20250929',
+      'claude-sonnet': 'claude-sonnet-4-5-20250929',
+      'claude-sonnet-4': 'claude-sonnet-4-5-20250929',
+      'claude-sonnet-4-5': 'claude-sonnet-4-5-20250929',
+      'claude-sonnet-4-5-20250929': 'claude-sonnet-4-5-20250929',
+      'claude-haiku': 'claude-haiku-4-5-20251015',
+      'claude-haiku-4': 'claude-haiku-4-5-20251015',
+      'claude-haiku-4-5': 'claude-haiku-4-5-20251015',
+      'claude-haiku-4-5-20251015': 'claude-haiku-4-5-20251015',
+      'claude-opus': 'claude-opus-4-5-20251124',
+      'claude-opus-4': 'claude-opus-4-5-20251124',
+      'claude-opus-4-5': 'claude-opus-4-5-20251124',
+      'claude-opus-4-5-20251124': 'claude-opus-4-5-20251124',
+    };
+    
+    const resolvedModel = ANTHROPIC_MODEL_MAP[model] || 'claude-sonnet-4-5-20250929';
+    
     const response = await anthropic.messages.create({
-      model: model === 'claude-4' ? 'claude-sonnet-4-5-20250929' : 'claude-sonnet-4-5-20250929',
+      model: resolvedModel,
       system: systemMessage,
       messages: anthropicMessages as any,
       temperature,
