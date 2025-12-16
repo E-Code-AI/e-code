@@ -75,6 +75,9 @@ import aiHealthRouter from "./ai-health";
 import generationMetricsRouter from "./generation-metrics.router";
 import memoryBankRouter from "./memory-bank.router";
 import autoCheckpointsRouter from "./auto-checkpoints.router";
+import mobileSessionsRouter from "./mobile-sessions.router";
+import mobileBuildsRouter from "./mobile-builds.router";
+import rollbackRouter from "./rollback.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -188,6 +191,9 @@ export class MainRouter {
     // Deployment routes
     app.use(tierRateLimiters.api, deploymentRouter);
     
+    // Deployment Rollback routes (Admin-only for destructive operations)
+    app.use(tierRateLimiters.api, rollbackRouter);
+    
     // File upload routes
     app.use('/api/upload', tierRateLimiters.api, fileUploadRouter);
     
@@ -285,6 +291,12 @@ export class MainRouter {
     
     // Mobile app routes
     app.use(tierRateLimiters.api, mobileRouter);
+    
+    // Mobile Sessions routes (session management for mobile apps)
+    app.use('/api/mobile', tierRateLimiters.api, mobileSessionsRouter);
+    
+    // Mobile Builds routes (EAS Build integration for iOS/Android)
+    app.use('/api/mobile', tierRateLimiters.api, mobileBuildsRouter);
     
     // Git integration routes
     app.use('/api/git', tierRateLimiters.api, GitRouter);

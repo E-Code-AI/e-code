@@ -14,6 +14,8 @@ export { MobileMoreMenu } from './MobileMoreMenu';
 export { MobileIDEView } from './MobileIDEView';
 export { MobileFAB } from './MobileFAB';
 export { EnhancedMobileIDEView } from './EnhancedMobileIDEView';
+export { MobileSessionsPanel } from './MobileSessionsPanel';
+export { MobileBuildDashboard } from './MobileBuildDashboard';
 
 export { 
   MobileLoadingSkeleton,

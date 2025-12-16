@@ -84,6 +84,25 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 - **SendGrid:** Email delivery
 - **Sentry:** Error monitoring
 - **Slack:** Production monitoring alerts
+- **Object Storage:** Replit built-in GCS-backed storage (production) / Local filesystem (development)
+
+### Object Storage Configuration
+The platform uses Replit's built-in Object Storage for production-grade file persistence. In production on Replit Reserved VMs, it uses Google Cloud Storage via Replit's sidecar endpoint. In development, it falls back to local filesystem storage.
+
+**Environment Variables:**
+- `PRIVATE_OBJECT_DIR` - Private object storage path (e.g., `/bucket-name/private`)
+- `PUBLIC_OBJECT_SEARCH_PATHS` - Comma-separated paths for public object search
+- `REPLIT_OBJECT_STORAGE_BUCKET` - GCS bucket name (auto-configured on Replit)
+- `REPL_ID` - Replit instance ID (auto-set by Replit runtime)
+- `STORAGE_PATH` - Local storage path for development (default: `./storage`)
+- `NODE_ENV` - Set to `production` to enable Replit GCS storage
+
+**Key Services:**
+- `server/objectStorage.ts` - Core GCS integration with Replit sidecar
+- `server/services/real-object-storage.ts` - High-level storage service with fallback
+- `server/services/agent-testing-orchestrator.service.ts` - Test artifacts storage
+- `server/services/agent-recording.service.ts` - Session recording storage
+- `server/services/screenshot-service.ts` - Screenshot/thumbnail storage
 
 ### Development Tools & Integrations
 - **GitHub:** OAuth integration

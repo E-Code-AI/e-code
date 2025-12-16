@@ -7,12 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Activity, ArrowLeft, BarChart3, FileCode, 
-  MessageSquare, Zap, Clock, Bot, TrendingUp
+  MessageSquare, Zap, Clock, Bot, TrendingUp,
+  Wrench, Workflow
 } from 'lucide-react';
 import { AgentSessionsGrid } from '@/components/grids/AgentSessionsGrid';
 import { AgentActionsGrid } from '@/components/grids/AgentActionsGrid';
 import { FileOperationsGrid } from '@/components/grids/FileOperationsGrid';
 import { ConversationHistoryGrid } from '@/components/grids/ConversationHistoryGrid';
+import { ToolCatalog } from '@/components/agent/ToolCatalog';
+import { WorkflowStatus } from '@/components/agent/WorkflowStatus';
 import type { AgentSessionRow } from '@shared/types/agent-grid.types';
 
 const AgentMetricsDashboard = lazy(() => import('@/components/grids/AgentMetricsDashboard').then(m => ({ default: m.AgentMetricsDashboard })));
@@ -92,7 +95,7 @@ export default function AgentActivity() {
 
       <div className="container mx-auto px-4 py-4 sm:py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-5 mx-auto h-auto p-1">
+          <TabsList className="grid w-full max-w-4xl grid-cols-7 mx-auto h-auto p-1">
             <TabsTrigger 
               value="dashboard" 
               className="gap-1 sm:gap-2 min-h-[44px] flex-col sm:flex-row py-2 px-1 sm:px-3" 
@@ -100,6 +103,22 @@ export default function AgentActivity() {
             >
               <BarChart3 className="h-4 w-4" />
               <span className="text-[10px] sm:text-sm">Dashboard</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="tools" 
+              className="gap-1 sm:gap-2 min-h-[44px] flex-col sm:flex-row py-2 px-1 sm:px-3" 
+              data-testid="tab-tools"
+            >
+              <Wrench className="h-4 w-4" />
+              <span className="text-[10px] sm:text-sm">Tools</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="workflows" 
+              className="gap-1 sm:gap-2 min-h-[44px] flex-col sm:flex-row py-2 px-1 sm:px-3" 
+              data-testid="tab-workflows"
+            >
+              <Workflow className="h-4 w-4" />
+              <span className="text-[10px] sm:text-sm">Workflows</span>
             </TabsTrigger>
             <TabsTrigger 
               value="sessions" 
@@ -150,6 +169,40 @@ export default function AgentActivity() {
                 <Suspense fallback={<DashboardSkeleton />}>
                   <AgentMetricsDashboard />
                 </Suspense>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="tools" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wrench className="h-5 w-5" />
+                  Agent Tool Catalog
+                </CardTitle>
+                <CardDescription>
+                  Browse all available tools the AI agent can use to complete tasks
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ToolCatalog />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="workflows" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Workflow className="h-5 w-5" />
+                  Workflow Status
+                </CardTitle>
+                <CardDescription>
+                  Monitor active and recent workflows with real-time progress updates
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <WorkflowStatus />
               </CardContent>
             </Card>
           </TabsContent>

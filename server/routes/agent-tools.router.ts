@@ -650,8 +650,204 @@ export default function createAgentToolsRouter(): Router {
   });
 
   // ============================================
+  // WORKFLOW STATUS ENDPOINTS
+  // ============================================
+
+  /**
+   * GET /api/agent/workflows
+   * Get active and recent workflows with their progress
+   */
+  router.get('/workflows', async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { projectId, status, limit = 20 } = req.query;
+      
+      const { agentWorkflows } = await import('@shared/schema');
+      
+      let query = db.select().from(agentWorkflows).$dynamic();
+      
+      if (projectId) {
+        query = query.where(eq(agentWorkflows.projectId, parseInt(projectId as string)));
+      }
+      
+      if (status) {
+        query = query.where(eq(agentWorkflows.status, status as any));
+      }
+      
+      const workflows = await query
+        .orderBy(desc(agentWorkflows.createdAt))
+        .limit(parseInt(limit as string));
+      
+      res.json({
+        workflows: workflows.map(w => ({
+          id: w.id,
+          name: w.name,
+          description: w.description,
+          status: w.status,
+          progress: w.progress,
+          currentStep: w.currentStep,
+          steps: w.steps,
+          error: w.error,
+          sessionId: w.sessionId,
+          projectId: w.projectId,
+          createdAt: w.createdAt,
+          startedAt: w.startedAt,
+          completedAt: w.completedAt,
+          metadata: w.metadata
+        })),
+        total: workflows.length
+      });
+    } catch (error: any) {
+      logger.error('Error fetching workflows:', error);
+      res.status(500).json({ error: 'Failed to fetch workflows' });
+    }
+  });
+
+  /**
+   * GET /api/agent/workflows/:workflowId
+   * Get detailed workflow status including step progress
+   */
+  router.get('/workflows/:workflowId', async (req, res) => {
+    try {
+      const { workflowId } = req.params;
+      const { agentWorkflows } = await import('@shared/schema');
+      
+      const [workflow] = await db.select()
+        .from(agentWorkflows)
+        .where(eq(agentWorkflows.id, workflowId));
+      
+      if (!workflow) {
+        return res.status(404).json({ error: 'Workflow not found' });
+      }
+      
+      const steps = (workflow.steps as any[]) || [];
+      const completedSteps = steps.filter((s: any) => s.status === 'completed');
+      const failedSteps = steps.filter((s: any) => s.status === 'failed');
+      const runningSteps = steps.filter((s: any) => s.status === 'running');
+      
+      res.json({
+        workflow: {
+          id: workflow.id,
+          name: workflow.name,
+          description: workflow.description,
+          status: workflow.status,
+          progress: workflow.progress,
+          currentStep: workflow.currentStep,
+          steps: steps.map((step: any, idx: number) => ({
+            id: step.id || `step-${idx}`,
+            name: step.name,
+            type: step.type,
+            status: step.status || 'pending',
+            error: step.error,
+            output: step.output,
+            startedAt: step.startedAt,
+            completedAt: step.completedAt,
+            duration: step.completedAt && step.startedAt 
+              ? new Date(step.completedAt).getTime() - new Date(step.startedAt).getTime()
+              : null
+          })),
+          error: workflow.error,
+          sessionId: workflow.sessionId,
+          projectId: workflow.projectId,
+          createdAt: workflow.createdAt,
+          startedAt: workflow.startedAt,
+          completedAt: workflow.completedAt,
+          duration: workflow.completedAt && workflow.startedAt
+            ? new Date(workflow.completedAt).getTime() - new Date(workflow.startedAt).getTime()
+            : null,
+          stats: {
+            totalSteps: steps.length,
+            completed: completedSteps.length,
+            failed: failedSteps.length,
+            running: runningSteps.length,
+            pending: steps.length - completedSteps.length - failedSteps.length - runningSteps.length
+          }
+        }
+      });
+    } catch (error: any) {
+      logger.error('Error fetching workflow details:', error);
+      res.status(500).json({ error: 'Failed to fetch workflow details' });
+    }
+  });
+
+  // ============================================
   // TOOL STATUS ENDPOINT
   // ============================================
+
+  /**
+   * GET /api/agent/tools
+   * List all available agent tools with their details
+   */
+  router.get('/tools', async (req, res) => {
+    try {
+      const { capability, search } = req.query;
+      
+      // Import tool framework service
+      const { agentToolFramework } = await import('../services/agent-tool-framework.service');
+      
+      // Get tools from the framework (lazy init ensures they're registered)
+      let tools = await agentToolFramework.getAvailableTools(
+        capability as string | undefined
+      );
+      
+      // Apply search filter if provided
+      if (search && typeof search === 'string') {
+        const searchLower = search.toLowerCase();
+        tools = tools.filter(tool => 
+          tool.name.toLowerCase().includes(searchLower) ||
+          tool.displayName?.toLowerCase().includes(searchLower) ||
+          tool.description?.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      // Group tools by capability for organized display
+      const grouped: Record<string, typeof tools> = {};
+      for (const tool of tools) {
+        const cap = tool.capability || 'other';
+        if (!grouped[cap]) {
+          grouped[cap] = [];
+        }
+        grouped[cap].push(tool);
+      }
+      
+      // Category metadata for display
+      const categoryMeta: Record<string, { label: string; description: string }> = {
+        file_system: { label: 'File Operations', description: 'Read, write, and manage files' },
+        command_execution: { label: 'Shell Commands', description: 'Execute shell commands and scripts' },
+        database: { label: 'Database', description: 'SQL queries and database operations' },
+        git_operations: { label: 'Git', description: 'Version control operations' },
+        package_management: { label: 'Package Management', description: 'NPM and dependency management' },
+        testing: { label: 'Testing & Browser', description: 'Automated testing and browser automation' },
+        deployment: { label: 'Deployment', description: 'Build and deploy applications' },
+        monitoring: { label: 'Monitoring', description: 'Health checks and performance monitoring' },
+        security: { label: 'Security', description: 'Security scans and vulnerability analysis' },
+        api_integration: { label: 'API Integration', description: 'HTTP requests and web scraping' },
+        ai_analysis: { label: 'AI Analysis', description: 'AI-powered code analysis' },
+        ide_integration: { label: 'IDE Integration', description: 'Environment and IDE operations' }
+      };
+      
+      res.json({
+        tools: tools.map(t => ({
+          id: t.id,
+          name: t.name,
+          displayName: t.displayName,
+          description: t.description,
+          capability: t.capability,
+          version: t.version,
+          isEnabled: t.isEnabled,
+          requiresAuth: t.requiresAuth,
+          inputSchema: t.inputSchema,
+          configuration: t.configuration
+        })),
+        grouped,
+        categories: categoryMeta,
+        total: tools.length
+      });
+    } catch (error: any) {
+      logger.error('Error fetching agent tools:', error);
+      res.status(500).json({ error: 'Failed to fetch agent tools' });
+    }
+  });
 
   /**
    * GET /api/agent/tools/status

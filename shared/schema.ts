@@ -4055,3 +4055,55 @@ export type InsertAutoCheckpointFile = z.infer<typeof insertAutoCheckpointFileSc
 export type CheckpointRestore = typeof checkpointRestores.$inferSelect;
 export type InsertCheckpointRestore = z.infer<typeof insertCheckpointRestoreSchema>;
 
+// ============================================
+// MOBILE BUILDS TABLE
+// ============================================
+
+export const mobileBuildStatusEnum = pgEnum('mobile_build_status', ['queued', 'building', 'completed', 'failed', 'cancelled']);
+
+export const mobileBuilds = pgTable('mobile_builds', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'set null' }),
+  platform: mobilePlatformEnum('platform').notNull(),
+  status: mobileBuildStatusEnum('status').notNull().default('queued'),
+  bundleId: varchar('bundle_id', { length: 255 }).notNull(),
+  version: varchar('version', { length: 50 }).notNull(),
+  buildNumber: varchar('build_number', { length: 50 }),
+  externalBuildId: varchar('external_build_id', { length: 255 }),
+  artifactPath: varchar('artifact_path', { length: 500 }),
+  artifactSize: integer('artifact_size'),
+  artifactUrl: varchar('artifact_url', { length: 1000 }),
+  artifactExpiresAt: timestamp('artifact_expires_at'),
+  errorMessage: text('error_message'),
+  logs: text('logs'),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+  startedAt: timestamp('started_at'),
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('mobile_builds_user_id_idx').on(table.userId),
+  index('mobile_builds_project_id_idx').on(table.projectId),
+  index('mobile_builds_status_idx').on(table.status),
+  index('mobile_builds_created_at_idx').on(table.createdAt),
+]);
+
+export const insertMobileBuildSchema = createInsertSchema(mobileBuilds).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const mobileBuildRequestSchema = z.object({
+  platform: z.enum(['ios', 'android']),
+  bundleId: z.string().min(1).max(255).regex(/^[a-zA-Z][a-zA-Z0-9._-]*(\.[a-zA-Z][a-zA-Z0-9._-]*)+$/, 'Invalid bundle ID format'),
+  version: z.string().min(1).max(50).regex(/^\d+\.\d+(\.\d+)?$/, 'Version must be in format X.Y or X.Y.Z'),
+  buildNumber: z.string().optional(),
+  projectId: z.number().optional(),
+});
+
+export type MobileBuild = typeof mobileBuilds.$inferSelect;
+export type InsertMobileBuild = z.infer<typeof insertMobileBuildSchema>;
+export type MobileBuildRequest = z.infer<typeof mobileBuildRequestSchema>;
+
