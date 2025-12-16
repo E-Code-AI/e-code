@@ -1,7 +1,8 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import { collaborativeEditingService } from '../services/collaborative-editing';
-// Authentication will be handled through the session
+import jwt from 'jsonwebtoken';
+import { storage } from '../storage';
 import * as Y from 'yjs';
 import { applyUpdate } from 'yjs';
 
@@ -112,8 +113,6 @@ export class CollaborativeEditingWebSocketHandler {
 
   private async handleAuth(ws: AuthenticatedWebSocket, data: { token: string }) {
     try {
-      // Authentication accepts session tokens or JWT tokens
-      // This collaborative editing socket uses simplified authentication for real-time updates
       if (!data.token) {
         ws.send(JSON.stringify({
           type: 'auth-failed',
@@ -123,29 +122,39 @@ export class CollaborativeEditingWebSocketHandler {
         return;
       }
 
-      // Token format is userId:username (extracted from session or JWT)
-      // Frontend passes this after authenticating via main auth system
-      const [userId, username] = data.token.split(':');
-      
-      if (!userId || !username) {
+      let decoded: { userId: number };
+      try {
+        decoded = jwt.verify(data.token, process.env.JWT_SECRET || 'dev-secret') as { userId: number };
+      } catch (jwtError) {
+        console.error('JWT verification failed:', jwtError);
         ws.send(JSON.stringify({
           type: 'auth-failed',
-          data: { message: 'Invalid token format' },
+          data: { message: 'Invalid or expired token' },
         }));
         ws.close();
         return;
       }
 
-      ws.userId = userId;
-      ws.username = username || 'Anonymous';
+      const user = await storage.getUser(decoded.userId);
+      if (!user) {
+        ws.send(JSON.stringify({
+          type: 'auth-failed',
+          data: { message: 'User not found' },
+        }));
+        ws.close();
+        return;
+      }
+
+      ws.userId = String(user.id);
+      ws.username = user.username || 'Anonymous';
       
       // Store connection
-      this.connections.set(userId, ws);
+      this.connections.set(ws.userId, ws);
 
       ws.send(JSON.stringify({
         type: 'auth-success',
         data: {
-          userId: user.id,
+          userId: ws.userId,
           username: ws.username,
         },
       }));

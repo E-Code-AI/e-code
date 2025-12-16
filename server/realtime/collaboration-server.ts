@@ -10,6 +10,7 @@ import { Server, IncomingMessage } from 'http';
 import type { Duplex } from 'stream';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
+import jwt from 'jsonwebtoken';
 
 interface CollaborationClient {
   ws: WebSocket;
@@ -184,22 +185,49 @@ export class CollaborationServer {
     const client = this.clients.get(ws);
     if (!client) return;
 
-    // Verify user access
-    const userId = message.userId!;
-    const user = await storage.getUser(userId);
+    if (!message.data?.token) {
+      this.send(ws, {
+        type: 'auth_failed',
+        error: 'Authentication token required',
+        timestamp: Date.now()
+      });
+      ws.close(1008, 'Authentication token required');
+      return;
+    }
+
+    let decoded: { userId: number };
+    try {
+      decoded = jwt.verify(message.data.token, process.env.JWT_SECRET || 'dev-secret') as { userId: number };
+    } catch (jwtError) {
+      console.error('[CollaborationServer] JWT verification failed:', jwtError);
+      this.send(ws, {
+        type: 'auth_failed',
+        error: 'Invalid or expired token',
+        timestamp: Date.now()
+      });
+      ws.close(1008, 'Invalid token');
+      return;
+    }
+
+    const user = await storage.getUser(decoded.userId);
     if (!user) {
+      this.send(ws, {
+        type: 'auth_failed',
+        error: 'User not found',
+        timestamp: Date.now()
+      });
       ws.close(1008, 'Invalid user');
       return;
     }
 
-    // Update client info
-    client.userId = userId;
+    // Update client info with verified user data
+    client.userId = user.id;
     client.username = user.username;
 
     // Send auth success
     this.send(ws, {
       type: 'auth_success',
-      userId,
+      userId: user.id,
       username: user.username,
       timestamp: Date.now()
     });
