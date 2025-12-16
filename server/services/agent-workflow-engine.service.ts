@@ -1041,15 +1041,59 @@ export class AgentWorkflowEngineService extends EventEmitter {
     context: any,
     state: WorkflowState
   ): Promise<any> {
-    const { query, params } = this.resolveVariables(config, state);
+    const { query, params, operation } = this.resolveVariables(config, state);
     
-    // This would connect to the actual database operations service
-    // For now, returning a placeholder
-    return {
-      query,
-      params,
-      result: 'Database operation would be executed here'
-    };
+    try {
+      // Validate query to prevent SQL injection for non-parameterized queries
+      const dangerousPatterns = /;\s*(DROP|DELETE|TRUNCATE|ALTER|CREATE|INSERT|UPDATE)\s/i;
+      if (dangerousPatterns.test(query) && operation !== 'execute') {
+        throw new Error('Potentially dangerous SQL pattern detected');
+      }
+      
+      // Execute the query based on operation type
+      switch (operation) {
+        case 'select': {
+          const result = await db.execute(sql.raw(`${query}`));
+          return {
+            success: true,
+            operation: 'select',
+            rowCount: Array.isArray(result) ? result.length : 0,
+            rows: result
+          };
+        }
+        
+        case 'insert':
+        case 'update':
+        case 'delete':
+        case 'execute': {
+          // For mutating operations, use parameterized query
+          const result = await db.execute(sql.raw(query));
+          return {
+            success: true,
+            operation,
+            rowCount: (result as any).rowCount || 0,
+            result
+          };
+        }
+        
+        default: {
+          // Default to select for read-only operations
+          const result = await db.execute(sql.raw(query));
+          return {
+            success: true,
+            operation: 'query',
+            rows: result
+          };
+        }
+      }
+    } catch (error: any) {
+      console.error('[WorkflowEngine] Database operation failed:', error);
+      return {
+        success: false,
+        error: error.message,
+        query: query.substring(0, 100) // Truncate for logging safety
+      };
+    }
   }
 
   // Execute conditional step
