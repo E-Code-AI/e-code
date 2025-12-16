@@ -33,6 +33,15 @@ Enterprise-grade WebSocket connection management for mobile network reliability:
 - **Mobile resilience**: Auto-reconnect on network online/offline events, visibility change detection for backgrounded apps
 - **Factory functions**: `createTerminalWebSocket()` (15 attempts, 500ms-30s backoff) and `createAgentWebSocket()` (20 attempts, 1s-60s backoff)
 
+### Intersection Observer Animation System (Fortune 500-Grade)
+Scroll-triggered animations using native Intersection Observer for zero main-thread blocking:
+- **useInView hook** (`client/src/lib/motion/useInView.ts`): Returns `{ ref, isInView }`, respects `prefers-reduced-motion`, supports `once` option, proper cleanup on unmount
+- **CSS Animation Components** (`client/src/lib/motion/CSSAnimations.tsx`): `CSSInViewFade`, `CSSInViewSlide`, `CSSInViewScale` - GPU-accelerated animations on compositor thread
+- **Hybrid Fallback** (`client/src/lib/motion/LazyMotionComponents.tsx`): Auto-detects `whileInView` props and routes to CSS fallback when performance drops
+- **Variant Resolution**: Supports both object `whileInView={{ opacity: 1, y: 0 }}` and string `whileInView="animate"` with variants
+- **Variable Slide Distance**: Extracts actual distance from variant values (e.g., `y: 40` → 40px slide)
+- **Stagger Support**: Basic child staggering via CSS animation-delay when `transition.staggerChildren` is present
+
 ### Memory Bank System (Replit-Identical)
 Auto-initializing context storage in `.ecode/memory-bank/` for each project:
 - **AI-Generated Content**: When a workspace is created, Claude generates 5 contextual markdown files based on the user's prompt
