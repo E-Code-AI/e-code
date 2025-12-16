@@ -185,12 +185,18 @@ export default function createAgentToolsRouter(): Router {
       // Start the actual test asynchronously
       const testingService = new BackgroundTestingService();
       testingService.scheduleTest(projectId, []).catch(err => {
-        logger.error(`Test session ${sessionId} failed to start:`, err);
+        logger.error(`Test session ${sessionId} failed to start:`, { error: err.message, projectId, sessionId });
         // Update status to failed
         db.update(testingSessionRecordings)
           .set({ status: 'failed' })
           .where(eq(testingSessionRecordings.id, recording.id))
-          .catch(() => {});
+          .catch((dbErr: any) => {
+            logger.error(`Failed to update test recording status to failed:`, { 
+              error: dbErr.message, 
+              recordingId: recording.id, 
+              sessionId 
+            });
+          });
       });
 
       logger.info(`Test session ${sessionId} started for project ${projectId}`);
@@ -551,11 +557,17 @@ export default function createAgentToolsRouter(): Router {
 
       const testingService = new BackgroundTestingService();
       testingService.scheduleTest(projectId, []).catch(err => {
-        logger.error(`Test session ${sessionId} failed to start:`, err);
+        logger.error(`Test session ${sessionId} failed to start:`, { error: err.message, projectId, sessionId });
         db.update(testingSessionRecordings)
           .set({ status: 'failed' })
           .where(eq(testingSessionRecordings.id, recording.id))
-          .catch(() => {});
+          .catch((dbErr: any) => {
+            logger.error(`Failed to update test recording status to failed:`, { 
+              error: dbErr.message, 
+              recordingId: recording.id, 
+              sessionId 
+            });
+          });
       });
 
       logger.info(`Test session ${sessionId} started for project ${projectId}`);
