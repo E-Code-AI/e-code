@@ -11,7 +11,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { EventEmitter } from 'events';
-import Anthropic from '@anthropic-ai/sdk';
+import { aiProviderManager } from '../ai/ai-provider-manager';
 
 export interface MemoryBankFile {
   name: string;
@@ -281,6 +281,7 @@ ${projectDescription}
       language?: string;
       framework?: string;
       buildMode?: string;
+      preferredModel?: string; // ✅ User's preferred AI model (supports ALL providers)
     }
   ): Promise<MemoryBank> {
     const mbPath = this.getMemoryBankPath(projectId);
@@ -326,7 +327,8 @@ ${projectDescription}
 
   /**
    * Generate AI content for all Memory Bank files based on user prompt
-   * Uses Claude for intelligent context generation
+   * ✅ Uses UNIFIED AI Provider System - respects user's model preference
+   * Supports: OpenAI, Anthropic, Gemini, xAI, Moonshot, etc.
    */
   private async generateAIContent(
     userPrompt: string,
@@ -334,6 +336,7 @@ ${projectDescription}
       language?: string;
       framework?: string;
       buildMode?: string;
+      preferredModel?: string; // User's preferred model ID
     }
   ): Promise<Record<string, string>> {
     const language = options?.language || 'typescript';
@@ -341,8 +344,7 @@ ${projectDescription}
     const buildMode = options?.buildMode || 'full-app';
     
     try {
-      const anthropic = new Anthropic();
-      
+      // ✅ Use unified AI provider system - supports all configured models
       const systemPrompt = `You are an expert software architect. Generate project documentation for a Memory Bank system.
 The user wants to build: "${userPrompt}"
 Tech stack: ${language} with ${framework}
@@ -358,29 +360,28 @@ Generate JSON with exactly 5 keys, each containing markdown content:
 Keep each file concise (10-30 lines). Be specific to this project, not generic.
 Output valid JSON only, no markdown code blocks.`;
 
-      const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
-        messages: [
-          {
-            role: 'user',
-            content: `Generate Memory Bank documentation for this project. Return JSON only.\n\nProject: ${userPrompt}`
-          }
+      const userMessage = `Generate Memory Bank documentation for this project. Return JSON only.\n\nProject: ${userPrompt}`;
+      
+      // ✅ Determine which model to use (user preference or intelligent default)
+      const modelId = options?.preferredModel || this.selectBestAvailableModel();
+      
+      console.log(`[MemoryBank] 🤖 Using model: ${modelId} for Memory Bank generation`);
+      
+      // ✅ Call unified AI provider (works with ANY configured model)
+      const response = await aiProviderManager.generateChat(
+        modelId,
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
         ],
-        system: systemPrompt
-      });
-
-      // Extract text content from response
-      const textContent = response.content.find(c => c.type === 'text');
-      if (!textContent || textContent.type !== 'text') {
-        throw new Error('No text content in AI response');
-      }
+        { maxTokens: 4000 }
+      );
 
       // Parse JSON response
       let parsed: Record<string, string>;
       try {
         // Clean potential markdown code blocks
-        let jsonStr = textContent.text.trim();
+        let jsonStr = response.trim();
         if (jsonStr.startsWith('```')) {
           jsonStr = jsonStr.replace(/^```json?\n?/, '').replace(/\n?```$/, '');
         }
@@ -404,6 +405,38 @@ Output valid JSON only, no markdown code blocks.`;
       console.error('[MemoryBank] AI generation failed, using fallback:', error);
       return this.generateFallbackContent(userPrompt, options);
     }
+  }
+  
+  /**
+   * Select the best available model for Memory Bank generation
+   * Priority: Claude Sonnet > GPT-4o > Gemini Pro > Any available
+   */
+  private selectBestAvailableModel(): string {
+    const preferredModels = [
+      'claude-sonnet-4-20250514',      // Anthropic Claude Sonnet 4
+      'claude-3-5-sonnet-20241022',    // Anthropic Claude 3.5 Sonnet
+      'gpt-4o',                        // OpenAI GPT-4o
+      'gpt-4-turbo',                   // OpenAI GPT-4 Turbo
+      'gemini-2.0-flash',              // Google Gemini 2.0 Flash
+      'gemini-1.5-pro',                // Google Gemini 1.5 Pro
+      'grok-3',                        // xAI Grok 3
+    ];
+    
+    // Return first available model or fallback
+    for (const modelId of preferredModels) {
+      try {
+        // Check if model is available (provider is configured)
+        const providers = aiProviderManager.getAvailableProviders();
+        if (providers.length > 0) {
+          return modelId;
+        }
+      } catch {
+        continue;
+      }
+    }
+    
+    // Ultimate fallback
+    return 'claude-sonnet-4-20250514';
   }
 
   /**
