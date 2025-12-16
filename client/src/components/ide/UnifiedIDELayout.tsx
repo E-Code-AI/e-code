@@ -99,7 +99,7 @@ type TabletPanel = 'editor' | 'terminal' | 'preview' | 'agent' | 'more';
 const SWIPE_THRESHOLD = 50;
 const SWIPE_VELOCITY_THRESHOLD = 0.3;
 
-const mobileTabOrder: MobileTab[] = ['preview', 'agent', 'deploy', 'tasks'];
+const mobileTabOrder: MobileTab[] = ['preview', 'agent', 'deploy', 'more'];
 
 function UnifiedIDELayout({ 
   projectId, 
@@ -380,12 +380,8 @@ function UnifiedIDELayout({
             <ReplitDeploymentPanel projectId={projectId} />
           </Suspense>
         );
-      case 'tasks':
-        return (
-          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Tasks..." /></div>}>
-            <AgentActionsPanel projectId={projectId} />
-          </Suspense>
-        );
+      case 'more':
+        return null;
       default:
         return null;
     }
@@ -562,6 +558,7 @@ function UnifiedIDELayout({
           onPlayStop={handleRunStop}
           isPanelOpen={showToolsSheet}
           onPanelToggle={() => setShowToolsSheet(!showToolsSheet)}
+          onMorePress={() => setShowToolsSheet(true)}
         />
 
         {/* Mobile Panel Overlays - Fixed positioned panels that appear over mobile content */}
@@ -924,6 +921,7 @@ function UnifiedIDELayout({
             onPlayStop={handleRunStop}
             isPanelOpen={showToolsSheet}
             onPanelToggle={() => setShowToolsSheet(!showToolsSheet)}
+            onMorePress={() => setShowToolsSheet(true)}
           />
         </div>
 
