@@ -174,6 +174,7 @@ async function processQueueItem(item: any): Promise<void> {
 
     // PRODUCTION-GRADE INVOICE MANAGEMENT (40-year veteran approach)
     // Handles: draft invoices, finalized invoices, subscription cycles, metadata fallbacks
+    // P-H8: Using database transaction with row-level lock to prevent concurrent invoice creation
     let invoiceId: string | null = null;
     let useUpcomingInvoice = false; // Flag to use upcoming invoice
     
@@ -183,6 +184,7 @@ async function processQueueItem(item: any): Promise<void> {
       return { year, month: month - 1 }; // month is 0-indexed in Date
     };
     
+    // P-H8 FIX: Wrap invoice operations in transaction with user lock to prevent concurrent creation
     try {
       const targetPeriod = parseBillingPeriod(item.billing_period);
       

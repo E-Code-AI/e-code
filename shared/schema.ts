@@ -390,7 +390,7 @@ export const payAsYouGoQueue = pgTable("pay_as_you_go_queue", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   usageEventId: integer("usage_event_id").references(() => usageEvents.id, { onDelete: 'set null' }),
-  idempotencyKey: varchar("idempotency_key", { length: 255 }).notNull(), // Critical for deduplication
+  idempotencyKey: varchar("idempotency_key", { length: 255 }).notNull().unique(), // Critical for deduplication - UNIQUE prevents double-charging
   
   // Billing details
   metric: varchar("metric", { length: 50 }).notNull(), // 'compute', 'storage', 'bandwidth', 'deployment'

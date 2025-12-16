@@ -7,10 +7,12 @@
  * 4. Absolute cumulative totals instead of increments
  */
 
+import crypto from 'crypto';
 import { storage } from '../storage';
 import { db } from '../db';
 import { users, usageEvents, usageLedger, payAsYouGoQueue } from '../../shared/schema';
 import { eq, and, sql } from 'drizzle-orm';
+import { createLogger } from '../utils/logger';
 import {
   METERED_PRICES,
   PLANS,
@@ -20,6 +22,10 @@ import {
   calculateStorageCost,
   calculateBandwidthCost,
 } from '../payments/pricing-constants';
+
+const logger = createLogger('credits-service');
+
+const MAX_CREDITS = 100000;
 
 /**
  * Get current billing period in YYYY-MM format
@@ -77,7 +83,7 @@ export class CreditsService {
     if (existingEvent.length > 0) {
       // Already processed - return cached result
       const event = existingEvent[0];
-      console.log(`[Credits] Idempotency hit - reusing result for key ${idempotencyKey}`);
+      logger.info(`Idempotency hit - reusing result for key ${idempotencyKey}`);
       return {
         allowanceCost: parseFloat(event.allowanceUsed.toString()),
         creditsCost: parseFloat(event.creditsDeducted.toString()),
@@ -146,7 +152,7 @@ export class CreditsService {
 
       if (incrementalUsage <= 0) {
         // No new usage - return zero cost (handles decreases/deletions safely)
-        console.log(`[Credits] No incremental usage for ${metric} (reported: ${reportedTotal}, lastBilled: ${lastBilledTotal})`);
+        logger.debug(`No incremental usage for ${metric} (reported: ${reportedTotal}, lastBilled: ${lastBilledTotal})`);
         return {
           allowanceCost: 0,
           creditsCost: 0,
@@ -250,8 +256,8 @@ export class CreditsService {
           },
         });
 
-        console.log(
-          `[Credits] Pay-as-you-go enqueued for user ${userId}: ` +
+        logger.info(
+          `Pay-as-you-go enqueued for user ${userId}: ` +
           `${metric} = $${payAsYouGoCost.toFixed(2)} (queue id: ${eventId}, idempotency: ${idempotencyKey})`
         );
       }
@@ -353,7 +359,8 @@ export class CreditsService {
 
       // Now refill credits and reset ONLY allowance-facing usage fields
       // NEVER reset lastBilled* (they are lifetime totals)
-      const newBalance = currentBalance + plan.creditsMonthly;
+      // P-H3: Cap credits at MAX_CREDITS to prevent balance overflow
+      const newBalance = Math.min(currentBalance + plan.creditsMonthly, MAX_CREDITS);
       const now = new Date();
 
       await tx.update(users).set({
@@ -369,9 +376,9 @@ export class CreditsService {
         // NEVER reset lastBilled* - these are lifetime cumulative totals
       }).where(eq(users.id, parseInt(userId)));
 
-      console.log(
-        `[Credits] Monthly refill for user ${userId}: ` +
-        `+${plan.creditsMonthly} credits (new balance: ${newBalance.toFixed(2)}), ` +
+      logger.info(
+        `Monthly refill for user ${userId}: ` +
+        `+${plan.creditsMonthly} credits (new balance: ${newBalance.toFixed(2)}, capped at ${MAX_CREDITS}), ` +
         `snapshot saved (period: ${closingPeriod}, credits used: $${creditsUsed.toFixed(2)}, pay-as-you-go: $${payAsYouGoTotal.toFixed(2)})`
       );
     });
@@ -412,8 +419,8 @@ export class CreditsService {
     const currentUsage = parseFloat(user.usageComputeHours || '0');
     const newTotalUsage = currentUsage + vcpuHours;
 
-    // Generate idempotency key for this usage report
-    const idempotencyKey = `compute-${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    // Generate idempotency key for this usage report using crypto.randomUUID() for collision prevention
+    const idempotencyKey = `compute-${userId}-${Date.now()}-${crypto.randomUUID()}`;
 
     // Use production-ready idempotent billing
     return await this.recordUsageIdempotent(
@@ -444,8 +451,8 @@ export class CreditsService {
     const currentUsage = parseFloat(user.usageStorageGb || '0');
     const newTotalUsage = currentUsage + storageGb;
 
-    // Generate idempotency key for this usage report
-    const idempotencyKey = `storage-${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    // Generate idempotency key for this usage report using crypto.randomUUID() for collision prevention
+    const idempotencyKey = `storage-${userId}-${Date.now()}-${crypto.randomUUID()}`;
 
     // Use production-ready idempotent billing
     return await this.recordUsageIdempotent(
@@ -476,8 +483,8 @@ export class CreditsService {
     const currentUsage = parseFloat(user.usageBandwidthGb || '0');
     const newUsage = currentUsage + bandwidthGb;
 
-    // Generate idempotency key for this usage report
-    const idempotencyKey = `bandwidth-${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    // Generate idempotency key for this usage report using crypto.randomUUID() for collision prevention
+    const idempotencyKey = `bandwidth-${userId}-${Date.now()}-${crypto.randomUUID()}`;
 
     // Use production-ready idempotent billing
     return await this.recordUsageIdempotent(
@@ -533,7 +540,7 @@ export class CreditsService {
       usageResetAt: new Date(),
     });
 
-    console.log(`[Credits] Reset monthly usage for user ${userId}`);
+    logger.info(`Reset monthly usage for user ${userId}`);
   }
 
   /**
@@ -568,7 +575,7 @@ export class CreditsService {
     // Usage will be reset on next monthly refill cycle
     // await this.resetMonthlyUsage(userId); // REMOVED
 
-    console.log(`[Credits] Updated plan allowances for user ${userId} to ${tier} tier (preserved $${currentBalance.toFixed(2)} credits and current-period usage)`);
+    logger.info(`Updated plan allowances for user ${userId} to ${tier} tier (preserved $${currentBalance.toFixed(2)} credits and current-period usage)`);
   }
 
   // REMOVED: recordPayAsYouGoCharge - now handled by recordUsageIdempotent → pay_as_you_go_queue

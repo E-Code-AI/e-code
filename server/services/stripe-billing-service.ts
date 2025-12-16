@@ -323,7 +323,7 @@ export class StripeBillingService {
             invoice: invoice.id,
             description: `${metricType.replace(/_/g, ' ')} usage: ${used}${unit ? ` ${unit}` : ''}`,
             amount: Math.round(cost * 100), // Convert to cents
-            currency: 'eur',
+            currency: 'usd', // P-C3 FIX: Default to USD instead of EUR
           });
         }
       }
