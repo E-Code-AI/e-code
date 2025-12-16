@@ -38,6 +38,7 @@ export function ConnectionStatusProvider({ children }: { children: ReactNode }) 
   
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const wasOfflineRef = useRef(false);
+  const isOnlineRef = useRef(state.isOnline);
 
   const checkBackendHealth = useCallback(async () => {
     try {
@@ -137,12 +138,17 @@ export function ConnectionStatusProvider({ children }: { children: ReactNode }) 
     }
   }, [checkBackendHealth, toast]);
 
+  // Keep ref in sync with state
+  useEffect(() => {
+    isOnlineRef.current = state.isOnline;
+  }, [state.isOnline]);
+
   useEffect(() => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
     const unsubscribe = onlineManager.subscribe((isOnline) => {
-      if (isOnline && !state.isOnline) {
+      if (isOnline && !isOnlineRef.current) {
         handleOnline();
       }
     });
@@ -155,7 +161,7 @@ export function ConnectionStatusProvider({ children }: { children: ReactNode }) 
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
-  }, [handleOnline, handleOffline, state.isOnline]);
+  }, [handleOnline, handleOffline]);
 
   useEffect(() => {
     if (!state.isOnline && state.reconnectAttempt < MAX_RECONNECT_ATTEMPTS) {
