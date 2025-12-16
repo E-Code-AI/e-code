@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -70,6 +70,15 @@ export default function Settings() {
     updates: false,
     marketing: false,
   });
+
+  // Sync state when user data changes
+  useEffect(() => {
+    if (user) {
+      setDisplayName(user.displayName || '');
+      setEmail(user.email || '');
+      setBio(user.bio || '');
+    }
+  }, [user]);
 
   const [isSaving, setIsSaving] = useState(false);
 
