@@ -1,65 +1,59 @@
 /**
  * GPU Instance Manager
- * DEPRECATED: GPU compute is now handled via AI providers directly
+ * DEPRECATED: GPU providers have been completely removed from the codebase.
+ * AI compute is now handled directly through integrated AI providers.
  */
-
-const DEPRECATION_MESSAGE = 'GPU providers deprecated - use AI providers directly';
-
-const deprecatedResponse = {
-  available: false,
-  message: 'GPU compute is handled via AI providers'
-};
-
-console.log(DEPRECATION_MESSAGE);
-
-export class GPUInstanceManager {
-  async provisionInstance(): Promise<typeof deprecatedResponse> {
-    console.log(DEPRECATION_MESSAGE);
-    return deprecatedResponse;
-  }
-
-  async stopInstance(): Promise<typeof deprecatedResponse> {
-    console.log(DEPRECATION_MESSAGE);
-    return deprecatedResponse;
-  }
-
-  async restartInstance(): Promise<typeof deprecatedResponse> {
-    console.log(DEPRECATION_MESSAGE);
-    return deprecatedResponse;
-  }
-
-  async terminateInstance(): Promise<typeof deprecatedResponse> {
-    console.log(DEPRECATION_MESSAGE);
-    return deprecatedResponse;
-  }
-
-  async getInstanceMetrics(): Promise<typeof deprecatedResponse> {
-    console.log(DEPRECATION_MESSAGE);
-    return deprecatedResponse;
-  }
-
-  async getProjectInstances(): Promise<typeof deprecatedResponse> {
-    console.log(DEPRECATION_MESSAGE);
-    return deprecatedResponse;
-  }
-
-  async estimateCost(): Promise<typeof deprecatedResponse> {
-    console.log(DEPRECATION_MESSAGE);
-    return deprecatedResponse;
-  }
-
-  async getAvailableRegions(): Promise<typeof deprecatedResponse> {
-    console.log(DEPRECATION_MESSAGE);
-    return deprecatedResponse;
-  }
-
-  async checkQuota(): Promise<typeof deprecatedResponse> {
-    console.log(DEPRECATION_MESSAGE);
-    return deprecatedResponse;
-  }
-}
 
 export const gpuInstanceManager = {
   available: false,
-  message: 'GPU compute is handled via AI providers'
+  deprecated: true,
+  message: 'GPU compute is now handled via AI providers directly',
+  
+  async getInstance(id: string) {
+    console.log('GPU providers deprecated - use AI providers directly');
+    return null;
+  },
+  
+  async listInstances() {
+    return [];
+  },
+  
+  async createInstance() {
+    return { success: false, message: 'GPU providers deprecated' };
+  },
+  
+  async deleteInstance(id: string) {
+    return { success: false, message: 'GPU providers deprecated' };
+  },
+  
+  async getInstanceStatus(id: string) {
+    return null;
+  }
 };
+
+export class GPUInstanceManager {
+  available = false;
+  deprecated = true;
+  message = 'GPU compute is now handled via AI providers directly';
+  
+  async getInstance(id: string) {
+    console.log('GPU providers deprecated - use AI providers directly');
+    return null;
+  }
+  
+  async listInstances() {
+    return [];
+  }
+  
+  async createInstance() {
+    return { success: false, message: 'GPU providers deprecated' };
+  }
+  
+  async deleteInstance(id: string) {
+    return { success: false, message: 'GPU providers deprecated' };
+  }
+  
+  async getInstanceStatus(id: string) {
+    return null;
+  }
+}

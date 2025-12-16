@@ -1696,6 +1696,40 @@ export class DeploymentRollbackService extends EventEmitter {
     return this.rollbackStatus.get(rollbackId) || null;
   }
 
+  async getActiveRollback(deploymentId: string): Promise<RollbackStatus | null> {
+    for (const status of this.rollbackStatus.values()) {
+      if (status.deploymentId === deploymentId && 
+          (status.status === 'in_progress' || status.status === 'pending')) {
+        return status;
+      }
+    }
+    return null;
+  }
+
+  async getRollbackHistory(
+    deploymentId: string,
+    options: { limit?: number; offset?: number } = {}
+  ): Promise<RollbackStatus[]> {
+    const { limit = 10, offset = 0 } = options;
+    
+    const history: RollbackStatus[] = [];
+    for (const status of this.rollbackStatus.values()) {
+      if (status.deploymentId === deploymentId && 
+          (status.status === 'completed' || status.status === 'failed' || status.status === 'cancelled')) {
+        history.push(status);
+      }
+    }
+    
+    history.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+    
+    return history.slice(offset, offset + limit);
+  }
+
+  async getSnapshotById(deploymentId: string, snapshotId: string): Promise<DeploymentSnapshot | null> {
+    const snapshots = await this.listSnapshots(deploymentId);
+    return snapshots.find(s => s.id === snapshotId) || null;
+  }
+
   async cancelRollback(rollbackId: string): Promise<void> {
     const status = this.rollbackStatus.get(rollbackId);
     if (!status) return;
