@@ -168,13 +168,11 @@ function BuildValidationProgress({ currentStep, depsResult, buildResult, qaResul
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: 'auto' }}
-      exit={{ opacity: 0, height: 0 }}
-      className="bg-muted/50 rounded-lg p-3 mb-3 border border-border/50"
+    <div
+      className="collapsible-content expanded"
       data-testid="build-validation-progress"
     >
+      <div className="bg-muted/50 rounded-lg p-3 mb-3 border border-border/50">
       <div className="flex items-center gap-2 mb-2">
         <Loader2 className="h-4 w-4 animate-spin text-primary" />
         <span className="text-sm font-medium">Post-Build Validation</span>
@@ -222,7 +220,8 @@ function BuildValidationProgress({ currentStep, depsResult, buildResult, qaResul
           {qaResult.passedTests}/{qaResult.totalTests} responsive tests passed
         </div>
       )}
-    </motion.div>
+      </div>
+    </div>
   );
 }
 
@@ -1986,19 +1985,14 @@ export function ReplitAgentPanelV3({
         
         {/* Effort-based Pricing Display - OUTSIDE ScrollArea to prevent virtualization issues */}
         {/* ✅ FIX (Dec 14, 2025): Moved outside ScrollArea so panel stays open on conversation changes */}
-        <AnimatePresence>
-          {showPricing && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="px-3 sm:px-4 py-2 border-b border-border/50"
-              data-testid="pricing-panel"
-            >
-              <EffortPricingDisplay projectId={projectIdNum} onClose={() => setShowPricing(false)} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div
+          className={cn("collapsible-content", showPricing && "expanded")}
+          data-testid="pricing-panel"
+        >
+          <div className="px-3 sm:px-4 py-2 border-b border-border/50">
+            <EffortPricingDisplay projectId={projectIdNum} onClose={() => setShowPricing(false)} />
+          </div>
+        </div>
         
         <ScrollArea ref={scrollRef} className="flex-1 min-h-0 px-3 sm:px-4 py-3">
           <div className="space-y-4 sm:space-y-5">
@@ -2010,19 +2004,14 @@ export function ReplitAgentPanelV3({
           />
           
           {/* Checkpoints Panel with Rollback UI */}
-          <AnimatePresence>
-            {showCheckpoints && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-4"
-                data-testid="checkpoints-panel"
-              >
-                <CheckpointsPanel projectId={projectIdNum} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div
+            className={cn("collapsible-content", showCheckpoints && "expanded", "mb-4")}
+            data-testid="checkpoints-panel"
+          >
+            <div>
+              <CheckpointsPanel projectId={projectIdNum} />
+            </div>
+          </div>
           
           {/* Build/Install/QA Validation Progress (Task 6) */}
           <AnimatePresence>

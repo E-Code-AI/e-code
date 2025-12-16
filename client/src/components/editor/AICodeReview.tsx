@@ -444,14 +444,8 @@ export default function AICodeReview({
                           
                           <p className="font-medium text-sm">{issue.message}</p>
                           
-                          <AnimatePresence>
-                            {expandedIssues.has(issue.id) && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="mt-3 space-y-2 overflow-hidden"
-                              >
+                          <div className={cn("collapsible-content", expandedIssues.has(issue.id) && "expanded")}>
+                            <div className="mt-3 space-y-2 overflow-hidden">
                                 {issue.explanation && (
                                   <div className="p-3 rounded bg-muted/50 text-sm">
                                     <p className="font-medium mb-1">Explanation:</p>
@@ -480,9 +474,8 @@ export default function AICodeReview({
                                     Rule: {issue.rule}
                                   </p>
                                 )}
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
+                              </div>
+                            </div>
                         </div>
                         
                         <div className="flex items-center gap-2">

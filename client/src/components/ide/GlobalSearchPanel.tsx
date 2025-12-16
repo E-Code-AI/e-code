@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Search, Replace, X, FileText, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface SearchResult {
   filePath: string;
@@ -182,23 +182,17 @@ export function GlobalSearchPanel({ projectId, onFileSelect }: GlobalSearchPanel
             data-testid="input-search-query"
           />
 
-          <AnimatePresence>
-            {showReplace && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-              >
-                <Input
-                  placeholder="Replace with..."
-                  value={replacement}
-                  onChange={(e) => setReplacement(e.target.value)}
-                  className="font-mono text-sm"
-                  data-testid="input-replacement"
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div className={cn("collapsible-content", showReplace && "expanded")}>
+            <div>
+              <Input
+                placeholder="Replace with..."
+                value={replacement}
+                onChange={(e) => setReplacement(e.target.value)}
+                className="font-mono text-sm"
+                data-testid="input-replacement"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Options */}
@@ -319,34 +313,27 @@ export function GlobalSearchPanel({ projectId, onFileSelect }: GlobalSearchPanel
                   </span>
                 </button>
 
-                <AnimatePresence>
-                  {expandedFiles.has(result.filePath) && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="ml-6 mt-2 space-y-1"
-                    >
-                      {result.matches.map((match, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => onFileSelect?.(result.filePath, match.line)}
-                          className="block w-full text-left hover:bg-accent p-2 rounded text-xs font-mono"
-                          data-testid={`match-line-${match.line}`}
-                        >
-                          <div className="flex gap-2">
-                            <span className="text-muted-foreground min-w-[3rem]">
-                              {match.line}:{match.column}
-                            </span>
-                            <span className="flex-1 truncate">
-                              {highlightMatch(match.text.trim(), match.matchText)}
-                            </span>
-                          </div>
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                <div className={cn("collapsible-content", expandedFiles.has(result.filePath) && "expanded")}>
+                  <div className="ml-6 mt-2 space-y-1">
+                    {result.matches.map((match, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => onFileSelect?.(result.filePath, match.line)}
+                        className="block w-full text-left hover:bg-accent p-2 rounded text-xs font-mono"
+                        data-testid={`match-line-${match.line}`}
+                      >
+                        <div className="flex gap-2">
+                          <span className="text-muted-foreground min-w-[3rem]">
+                            {match.line}:{match.column}
+                          </span>
+                          <span className="flex-1 truncate">
+                            {highlightMatch(match.text.trim(), match.matchText)}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </Card>
             ))}
           </div>

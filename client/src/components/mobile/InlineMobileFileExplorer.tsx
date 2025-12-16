@@ -175,14 +175,9 @@ function FileTreeItem({
         <span className="truncate text-sm font-medium">{file.name}</span>
       </motion.button>
 
-      <AnimatePresence>
-        {isFolder && isExpanded && file.children && file.children.length > 0 && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={prefersReducedMotion ? { duration: 0.01 } : { duration: 0.2 }}
-          >
+      {isFolder && file.children && file.children.length > 0 && (
+        <div className={cn("collapsible-content", isExpanded && "expanded")}>
+          <div>
             {file.children.map(child => (
               <FileTreeItem
                 key={child.id}
@@ -194,9 +189,9 @@ function FileTreeItem({
                 onFileSelect={onFileSelect}
               />
             ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
     </>
   );
 }

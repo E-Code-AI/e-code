@@ -296,13 +296,8 @@ export function MobilePackagesPanel({ projectId, className }: MobilePackagesPane
           </div>
         </div>
 
-        {isExpanded && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mt-4 pt-4 border-t border-border space-y-4"
-          >
+        <div className={cn("collapsible-content", isExpanded && "expanded")}>
+          <div className="mt-4 pt-4 border-t border-border space-y-4">
             {pkg.dependencies && Object.keys(pkg.dependencies).length > 0 && (
               <div>
                 <p className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground mb-2">
@@ -339,8 +334,8 @@ export function MobilePackagesPanel({ projectId, className }: MobilePackagesPane
                 </div>
               </div>
             )}
-          </motion.div>
-        )}
+          </div>
+        </div>
       </motion.div>
     );
   };

@@ -425,18 +425,13 @@ export function EnhancedMobileFileExplorer({
         </motion.div>
 
         {/* Render children if folder is expanded */}
-        <AnimatePresence>
-          {item.type === 'folder' && isExpanded && item.children && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            >
+        {item.type === 'folder' && item.children && (
+          <div className={cn("collapsible-content", isExpanded && "expanded")}>
+            <div>
               {item.children.map(child => renderFileItem(child, level + 1))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          </div>
+        )}
       </div>
     );
   };

@@ -488,11 +488,9 @@ export function AgentWorkflowOrchestrator({
             </p>
             <div className="w-full max-w-md">
               <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-blue-500"
-                  initial={{ width: '0%' }}
-                  animate={{ width: `${buildProgress}%` }}
-                  transition={{ duration: 0.5 }}
+                <div
+                  className="h-full bg-blue-500 transition-transform duration-500 origin-left"
+                  style={{ transform: `scaleX(${buildProgress / 100})` }}
                 />
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-500 mt-2 text-center">

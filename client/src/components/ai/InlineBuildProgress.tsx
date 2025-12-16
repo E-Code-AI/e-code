@@ -8,7 +8,7 @@
  */
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence, useAnimation, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { 
   Sparkles, 
   Loader2, 
@@ -293,16 +293,18 @@ export function ReplitStatusIndicator({
         </div>
         
         {subMessage && (
-          <motion.p
-            initial={shouldAnimate ? { opacity: 0, height: 0 } : { opacity: 1 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className={cn(
-              "text-muted-foreground mt-0.5",
-              compact ? "text-xs" : "text-sm"
-            )}
-          >
-            {subMessage}
-          </motion.p>
+          <div className={cn("collapsible-content expanded")}>
+            <div>
+              <p
+                className={cn(
+                  "text-muted-foreground mt-0.5",
+                  compact ? "text-xs" : "text-sm"
+                )}
+              >
+                {subMessage}
+              </p>
+            </div>
+          </div>
         )}
       </div>
     </motion.div>
@@ -574,14 +576,9 @@ export function InlinePlanCard({
         )}
       </div>
       
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={shouldAnimate ? { height: 0, opacity: 0 } : { opacity: 1 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={shouldAnimate ? { height: 0, opacity: 0 } : { opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
+      <div className={cn("collapsible-content", expanded && "expanded")}>
+        <div>
+          {expanded && (
             <div className="px-3 pb-3 space-y-3">
               {hasPhases ? (
                 <div className="space-y-3">
@@ -647,19 +644,18 @@ export function InlinePlanCard({
                     {showFullPlan ? 'Hide full plan' : 'Show full plan'}
                   </button>
                   
-                  <AnimatePresence>
-                    {showFullPlan && (
-                      <motion.div
-                        initial={shouldAnimate ? { height: 0, opacity: 0 } : { opacity: 1 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={shouldAnimate ? { height: 0, opacity: 0 } : { opacity: 0 }}
-                        className="mt-2 p-2 bg-muted/50 rounded text-xs font-mono whitespace-pre-wrap overflow-x-auto max-h-60 overflow-y-auto"
-                        data-testid="full-plan-text"
-                      >
-                        {planText}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  <div className={cn("collapsible-content", showFullPlan && "expanded")}>
+                    <div>
+                      {showFullPlan && (
+                        <div
+                          className="mt-2 p-2 bg-muted/50 rounded text-xs font-mono whitespace-pre-wrap overflow-x-auto max-h-60 overflow-y-auto"
+                          data-testid="full-plan-text"
+                        >
+                          {planText}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
               
@@ -679,9 +675,9 @@ export function InlinePlanCard({
                 </Button>
               )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -881,23 +877,14 @@ export function InlineBuildProgressCard({
         compact={false}
       />
       
-      {/* Progress bar for executing phase */}
+      {/* Progress bar for executing phase - using scaleX for GPU acceleration */}
       {phase === 'executing' && (
         <div className="space-y-2">
           <div className="relative h-2 bg-muted rounded-full overflow-hidden">
-            {shouldAnimate ? (
-              <motion.div
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary via-primary to-primary/80 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ type: 'spring', stiffness: 50 }}
-              />
-            ) : (
-              <div
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary via-primary to-primary/80 rounded-full"
-                style={{ width: `${progress}%` }}
-              />
-            )}
+            <div
+              className="absolute inset-0 bg-gradient-to-r from-primary via-primary to-primary/80 rounded-full transition-transform duration-200 origin-left"
+              style={{ transform: `scaleX(${progress / 100})` }}
+            />
             {/* Shimmer effect - only when animation is enabled */}
             {shouldAnimate && (
               <motion.div
@@ -930,15 +917,10 @@ export function InlineBuildProgressCard({
             )}
           </button>
           
-          {shouldAnimate ? (
-            <AnimatePresence>
+          <div className={cn("collapsible-content", showTasks && "expanded")}>
+            <div>
               {showTasks && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="space-y-1 overflow-hidden pl-1"
-                >
+                <div className="space-y-1 pl-1">
                   {tasks.map((task, index) => (
                     <TaskProgressItem
                       key={task.id}
@@ -948,24 +930,10 @@ export function InlineBuildProgressCard({
                       isLast={index === tasks.length - 1}
                     />
                   ))}
-                </motion.div>
+                </div>
               )}
-            </AnimatePresence>
-          ) : (
-            showTasks && (
-              <div className="space-y-1 pl-1">
-                {tasks.map((task, index) => (
-                  <TaskProgressItem
-                    key={task.id}
-                    name={task.name}
-                    status={task.status}
-                    index={index}
-                    isLast={index === tasks.length - 1}
-                  />
-                ))}
-              </div>
-            )
-          )}
+            </div>
+          </div>
         </div>
       )}
       
@@ -1094,18 +1062,15 @@ export function InlineErrorIndicator({ message, details, onRetry }: InlineErrorI
                 {showDetails ? 'Hide' : 'Show'} details
                 {showDetails ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
               </button>
-              <AnimatePresence>
-                {showDetails && (
-                  <motion.pre
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="text-xs bg-red-100/50 dark:bg-red-900/20 p-2 rounded mt-2 overflow-auto max-h-32"
-                  >
-                    {details}
-                  </motion.pre>
-                )}
-              </AnimatePresence>
+              <div className={cn("collapsible-content", showDetails && "expanded")}>
+                <div>
+                  {showDetails && (
+                    <pre className="text-xs bg-red-100/50 dark:bg-red-900/20 p-2 rounded mt-2 overflow-auto max-h-32">
+                      {details}
+                    </pre>
+                  )}
+                </div>
+              </div>
             </>
           )}
         </div>
@@ -1281,21 +1246,20 @@ export function InlineFileOperation({
         </div>
       )}
       
-      <AnimatePresence>
-        {showPreview && preview && (
-          <motion.div
-            id={previewToggleId}
-            initial={shouldAnimate ? { height: 0, opacity: 0 } : { opacity: 1 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={shouldAnimate ? { height: 0, opacity: 0 } : { opacity: 0 }}
-            className="border-t border-border/50"
-          >
-            <pre className="text-[11px] font-mono p-3 bg-muted/30 overflow-x-auto max-h-40 overflow-y-auto">
-              {preview}
-            </pre>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div 
+        id={previewToggleId}
+        className={cn("collapsible-content", showPreview && preview && "expanded")}
+      >
+        <div>
+          {showPreview && preview && (
+            <div className="border-t border-border/50">
+              <pre className="text-[11px] font-mono p-3 bg-muted/30 overflow-x-auto max-h-40 overflow-y-auto">
+                {preview}
+              </pre>
+            </div>
+          )}
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -1403,21 +1367,20 @@ export function InlineTerminalOutput({
         </div>
       )}
       
-      <AnimatePresence>
-        {showOutput && output && (
-          <motion.div
-            id={terminalOutputId}
-            initial={shouldAnimate ? { height: 0, opacity: 0 } : { opacity: 1 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={shouldAnimate ? { height: 0, opacity: 0 } : { opacity: 0 }}
-            className="border-t border-zinc-800"
-          >
-            <pre className="text-[11px] font-mono p-3 text-zinc-300 overflow-x-auto max-h-48 overflow-y-auto whitespace-pre-wrap">
-              {output}
-            </pre>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div 
+        id={terminalOutputId}
+        className={cn("collapsible-content", showOutput && output && "expanded")}
+      >
+        <div>
+          {showOutput && output && (
+            <div className="border-t border-zinc-800">
+              <pre className="text-[11px] font-mono p-3 text-zinc-300 overflow-x-auto max-h-48 overflow-y-auto whitespace-pre-wrap">
+                {output}
+              </pre>
+            </div>
+          )}
+        </div>
+      </div>
     </motion.div>
   );
 }

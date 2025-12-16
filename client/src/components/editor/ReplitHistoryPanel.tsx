@@ -407,33 +407,31 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                     </div>
 
                     {/* File Changes */}
-                    {checkpoint.files && expandedCheckpoints.has(checkpoint.id) && (
-                      <motion.div 
-                        className="mt-3 pt-3 space-y-1 border-t border-gray-200 dark:border-[#3d4452]"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.2 }}
+                    {checkpoint.files && (
+                      <div 
+                        className={`collapsible-content ${expandedCheckpoints.has(checkpoint.id) ? 'expanded' : ''}`}
                       >
-                        {checkpoint.files.map((file, fileIndex) => (
-                          <div
-                            key={fileIndex}
-                            className="flex items-center justify-between py-1 px-2 rounded-lg text-[13px] bg-gray-100 dark:bg-[#242b3d]"
-                            data-testid={`file-change-${checkpoint.id}-${fileIndex}`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <FileText className="w-[18px] h-[18px] text-gray-500 dark:text-[#9da2a6]" />
-                              <span className={getStatusColor(file.status)}>
-                                {file.name}
-                              </span>
+                        <div className="mt-3 pt-3 space-y-1 border-t border-gray-200 dark:border-[#3d4452]">
+                          {checkpoint.files.map((file, fileIndex) => (
+                            <div
+                              key={fileIndex}
+                              className="flex items-center justify-between py-1 px-2 rounded-lg text-[13px] bg-gray-100 dark:bg-[#242b3d]"
+                              data-testid={`file-change-${checkpoint.id}-${fileIndex}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <FileText className="w-[18px] h-[18px] text-gray-500 dark:text-[#9da2a6]" />
+                                <span className={getStatusColor(file.status)}>
+                                  {file.name}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-[13px]">
+                                <span className="text-green-500">+{file.additions}</span>
+                                <span className="text-red-500">-{file.deletions}</span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 text-[13px]">
-                              <span className="text-green-500">+{file.additions}</span>
-                              <span className="text-red-500">-{file.deletions}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </motion.div>
+                          ))}
+                        </div>
+                      </div>
                     )}
 
                     {/* Actions */}

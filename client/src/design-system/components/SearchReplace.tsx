@@ -272,82 +272,74 @@ export const SearchReplace: React.FC<SearchReplaceProps> = ({
       </div>
 
       {/* Replace Input */}
-      <AnimatePresence>
-        {showReplace && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+      <div
+        className={`collapsible-content ${showReplace ? 'expanded' : ''}`}
+        style={{ marginBottom: showReplace ? ds.spacing[3] : 0 }}
+      >
+        <div>
+          <div
             style={{
-              overflow: 'hidden',
-              marginBottom: ds.spacing[3],
+              display: 'flex',
+              alignItems: 'center',
+              gap: ds.spacing[3],
             }}
           >
-            <div
+            <input
+              ref={replaceInputRef}
+              type="text"
+              value={replacement}
+              onChange={(e) => setReplacement(e.target.value)}
+              placeholder="Replace"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: ds.spacing[3],
+                ...ds.typography.textStyles.callout,
+                flex: 1,
+                padding: `${ds.spacing[3]} ${ds.spacing[4]}`,
+                backgroundColor: ds.colors.fill.tertiary,
+                border: 'none',
+                borderRadius: ds.borderRadius.md,
+                color: ds.colors.text.primary,
+                outline: 'none',
+              }}
+            />
+
+            <button
+              onClick={handleReplace}
+              disabled={results.length === 0}
+              className="tap-scale"
+              style={{
+                ...ds.typography.textStyles.caption1,
+                padding: `${ds.spacing[2]} ${ds.spacing[3]}`,
+                backgroundColor: ds.colors.interactive.primary,
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: ds.borderRadius.sm,
+                cursor: results.length === 0 ? 'not-allowed' : 'pointer',
+                opacity: results.length === 0 ? 0.5 : 1,
               }}
             >
-              <input
-                ref={replaceInputRef}
-                type="text"
-                value={replacement}
-                onChange={(e) => setReplacement(e.target.value)}
-                placeholder="Replace"
-                style={{
-                  ...ds.typography.textStyles.callout,
-                  flex: 1,
-                  padding: `${ds.spacing[3]} ${ds.spacing[4]}`,
-                  backgroundColor: ds.colors.fill.tertiary,
-                  border: 'none',
-                  borderRadius: ds.borderRadius.md,
-                  color: ds.colors.text.primary,
-                  outline: 'none',
-                }}
-              />
+              Replace
+            </button>
 
-              <motion.button
-                onClick={handleReplace}
-                whileTap={{ scale: 0.95 }}
-                disabled={results.length === 0}
-                style={{
-                  ...ds.typography.textStyles.caption1,
-                  padding: `${ds.spacing[2]} ${ds.spacing[3]}`,
-                  backgroundColor: ds.colors.interactive.primary,
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: ds.borderRadius.sm,
-                  cursor: results.length === 0 ? 'not-allowed' : 'pointer',
-                  opacity: results.length === 0 ? 0.5 : 1,
-                }}
-              >
-                Replace
-              </motion.button>
-
-              <motion.button
-                onClick={handleReplaceAll}
-                whileTap={{ scale: 0.95 }}
-                disabled={results.length === 0}
-                style={{
-                  ...ds.typography.textStyles.caption1,
-                  padding: `${ds.spacing[2]} ${ds.spacing[3]}`,
-                  backgroundColor: ds.colors.interactive.primary,
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: ds.borderRadius.sm,
-                  cursor: results.length === 0 ? 'not-allowed' : 'pointer',
-                  opacity: results.length === 0 ? 0.5 : 1,
-                }}
-              >
-                All
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <button
+              onClick={handleReplaceAll}
+              disabled={results.length === 0}
+              className="tap-scale"
+              style={{
+                ...ds.typography.textStyles.caption1,
+                padding: `${ds.spacing[2]} ${ds.spacing[3]}`,
+                backgroundColor: ds.colors.interactive.primary,
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: ds.borderRadius.sm,
+                cursor: results.length === 0 ? 'not-allowed' : 'pointer',
+                opacity: results.length === 0 ? 0.5 : 1,
+              }}
+            >
+              All
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Options */}
       <div

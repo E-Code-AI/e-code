@@ -279,29 +279,25 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       </motion.div>
 
       {/* Upload Progress */}
-      <AnimatePresence>
-        {uploadingFiles.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            style={{
-              marginTop: ds.spacing[5],
-              display: 'flex',
-              flexDirection: 'column',
-              gap: ds.spacing[3],
-            }}
-          >
-            {uploadingFiles.map((uploadingFile, index) => (
-              <UploadProgress
-                key={`${uploadingFile.file.name}-${index}`}
-                file={uploadingFile}
-              />
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div
+        className={`collapsible-content ${uploadingFiles.length > 0 ? 'expanded' : ''}`}
+        style={{ marginTop: uploadingFiles.length > 0 ? ds.spacing[5] : 0 }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: ds.spacing[3],
+          }}
+        >
+          {uploadingFiles.map((uploadingFile, index) => (
+            <UploadProgress
+              key={`${uploadingFile.file.name}-${index}`}
+              file={uploadingFile}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
@@ -403,13 +399,12 @@ const UploadProgress: React.FC<UploadProgressProps> = ({ file }) => {
             overflow: 'hidden',
           }}
         >
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${file.progress}%` }}
-            transition={{ duration: 0.3 }}
+          <div
+            className="transition-transform duration-200 origin-left"
             style={{
               height: '100%',
               backgroundColor: ds.colors.interactive.primary,
+              transform: `scaleX(${file.progress / 100})`,
             }}
           />
         </div>
