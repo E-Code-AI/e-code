@@ -1,4 +1,5 @@
 import { useEffect, useState, lazy, Suspense } from "react";
+import { LazyMotion, domAnimation } from "framer-motion";
 import { Switch, Route, useLocation, useRoute, Redirect } from "wouter";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { queryClient, queryPersister } from "./lib/queryClient";
@@ -1078,15 +1079,17 @@ function App() {
         buster: 'v1',
       }}
     >
-      <ThemeProvider>
-        <ConnectionStatusProvider>
-          <GlobalErrorChannelProvider>
-            <AuthProvider>
-              <AppContent />
-            </AuthProvider>
-          </GlobalErrorChannelProvider>
-        </ConnectionStatusProvider>
-      </ThemeProvider>
+      <LazyMotion features={domAnimation} strict>
+        <ThemeProvider>
+          <ConnectionStatusProvider>
+            <GlobalErrorChannelProvider>
+              <AuthProvider>
+                <AppContent />
+              </AuthProvider>
+            </GlobalErrorChannelProvider>
+          </ConnectionStatusProvider>
+        </ThemeProvider>
+      </LazyMotion>
     </PersistQueryClientProvider>
   );
 }
