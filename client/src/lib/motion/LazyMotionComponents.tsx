@@ -11,7 +11,25 @@
 import { lazy, Suspense, ReactNode, forwardRef } from 'react';
 import type { HTMLMotionProps, AnimatePresenceProps } from 'framer-motion';
 import { useAnimationPerformance } from './AnimationMonitor';
-import { CSSFade } from './CSSAnimations';
+import { CSSFade, CSSInViewFade, CSSInViewSlide, CSSInViewScale } from './CSSAnimations';
+
+function detectInViewAnimationType(whileInView: Record<string, unknown> | undefined): 'fade' | 'slide' | 'scale' | null {
+  if (!whileInView) return null;
+  if ('scale' in whileInView) return 'scale';
+  if ('y' in whileInView) return 'slide';
+  if ('x' in whileInView) return 'slide';
+  if ('opacity' in whileInView) return 'fade';
+  return null;
+}
+
+function getSlideDirection(initial: Record<string, unknown> | undefined): 'up' | 'down' | 'left' | 'right' {
+  if (!initial) return 'up';
+  const y = initial.y as number | undefined;
+  const x = initial.x as number | undefined;
+  if (typeof y === 'number') return y > 0 ? 'up' : 'down';
+  if (typeof x === 'number') return x > 0 ? 'left' : 'right';
+  return 'up';
+}
 
 type MotionDivProps = HTMLMotionProps<'div'>;
 type MotionButtonProps = HTMLMotionProps<'button'>;
@@ -37,6 +55,42 @@ export const LazyMotionDiv = forwardRef<HTMLDivElement, MotionDivProps>(({ class
   }
   
   if (shouldUseCSS) {
+    const whileInView = props.whileInView as Record<string, unknown> | undefined;
+    const initial = props.initial as Record<string, unknown> | undefined;
+    const viewport = props.viewport as { once?: boolean } | undefined;
+    const animationType = detectInViewAnimationType(whileInView);
+    
+    if (whileInView && animationType) {
+      const once = viewport?.once ?? true;
+      
+      switch (animationType) {
+        case 'scale':
+          return (
+            <CSSInViewScale className={className} once={once} ref={ref}>
+              {children as ReactNode}
+            </CSSInViewScale>
+          );
+        case 'slide':
+          return (
+            <CSSInViewSlide 
+              className={className} 
+              direction={getSlideDirection(initial)} 
+              once={once}
+              ref={ref}
+            >
+              {children as ReactNode}
+            </CSSInViewSlide>
+          );
+        case 'fade':
+        default:
+          return (
+            <CSSInViewFade className={className} once={once} ref={ref}>
+              {children as ReactNode}
+            </CSSInViewFade>
+          );
+      }
+    }
+    
     return (
       <CSSFade show={true} className={className}>
         {children as ReactNode}
