@@ -9,6 +9,7 @@
 
 import { Router } from 'express';
 import { db } from '../db';
+import { ensureAuthenticated as requireAuth } from '../middleware/auth';
 import {
   templates,
   templateCategories,
@@ -490,8 +491,9 @@ router.post('/api/templates/:id/rate', async (req, res) => {
 /**
  * POST /api/templates/:id/use
  * Increment usage count when template is used
+ * Requires authentication to prevent abuse
  */
-router.post('/api/templates/:id/use', async (req, res) => {
+router.post('/api/templates/:id/use', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
