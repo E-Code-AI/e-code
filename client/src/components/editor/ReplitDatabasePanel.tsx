@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -43,7 +43,7 @@ interface TableInfo {
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
     <div className={cn("relative overflow-hidden rounded-lg bg-muted", className)}>
-      <motion.div
+      <LazyMotionDiv
         className="absolute inset-0 -translate-x-full"
         style={{
           background: 'linear-gradient(90deg, transparent, hsl(var(--accent)), transparent)',

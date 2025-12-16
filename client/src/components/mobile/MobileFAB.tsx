@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
 import { Play, Square, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -177,7 +177,7 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
   const Icon = buttonState.icon;
 
   return (
-    <motion.div
+    <LazyMotionDiv
       className={cn(
         'fixed z-40',
         // Position: bottom-right with safe area padding, above 64px bottom tab bar
@@ -189,9 +189,9 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
     >
       {/* Pulse animation for running state */}
-      <AnimatePresence>
+      <LazyAnimatePresence>
         {showPulse && isRunning && (
-          <motion.div
+          <LazyMotionDiv
             className="absolute inset-0 rounded-full bg-primary"
             initial={{ scale: 1, opacity: 0.6 }}
             animate={{ scale: 2, opacity: 0 }}
@@ -199,10 +199,10 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
             transition={{ duration: 1.5, ease: 'easeOut' }}
           />
         )}
-      </AnimatePresence>
+      </LazyAnimatePresence>
 
       {/* FAB Button */}
-      <motion.button
+      <LazyMotionButton
         onClick={handleClick}
         disabled={isLoading}
         className={cn(
@@ -227,12 +227,12 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
             buttonState.animate && 'animate-spin'
           )} 
         />
-      </motion.button>
+      </LazyMotionButton>
 
       {/* Label tooltip (appears on long press or briefly on state change) */}
-      <AnimatePresence>
+      <LazyAnimatePresence>
         {showPulse && (
-          <motion.div
+          <LazyMotionDiv
             className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-background text-white text-xs font-medium rounded-lg whitespace-nowrap pointer-events-none"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -240,9 +240,9 @@ export function MobileFAB({ projectId, className }: MobileFABProps) {
             transition={{ duration: 0.2 }}
           >
             {buttonState.label}
-          </motion.div>
+          </LazyMotionDiv>
         )}
-      </AnimatePresence>
-    </motion.div>
+      </LazyAnimatePresence>
+    </LazyMotionDiv>
   );
 }

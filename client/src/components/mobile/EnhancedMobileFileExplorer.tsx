@@ -11,7 +11,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { 
   Folder, File, FileText, FileCode, Image, MoreVertical,
   Edit2, Copy, Trash2, FolderPlus, FilePlus, X, Loader2
@@ -326,7 +326,7 @@ export function EnhancedMobileFileExplorer({
 
     return (
       <div key={item.id} data-testid={`file-item-${item.id}`}>
-        <motion.div
+        <LazyMotionDiv
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           className={cn(
@@ -422,7 +422,7 @@ export function EnhancedMobileFileExplorer({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </motion.div>
+        </LazyMotionDiv>
 
         {/* Render children if folder is expanded */}
         {item.type === 'folder' && item.children && (

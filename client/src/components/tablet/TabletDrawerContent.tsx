@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { 
   FileText, 
@@ -75,7 +75,7 @@ export function TabletDrawerContent({
     <div className="h-full flex flex-col bg-[var(--ecode-background)]">
       <div className="flex items-center border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
         {(['files', 'tools'] as DrawerTab[]).map((tab) => (
-          <motion.button
+          <LazyMotionButton
             key={tab}
             onClick={() => handleTabSwitch(tab)}
             className={cn(
@@ -96,7 +96,7 @@ export function TabletDrawerContent({
             <span className="capitalize">{tab}</span>
             
             {activeTab === tab && (
-              <motion.div
+              <LazyMotionDiv
                 layoutId="tablet-drawer-tab-indicator"
                 className="absolute bottom-0 left-2 right-2 h-[3px] bg-[var(--ecode-accent)] rounded-full"
                 transition={getReducedMotionTransition(prefersReducedMotion, SPRING_CONFIG.default)}
@@ -105,7 +105,7 @@ export function TabletDrawerContent({
                 }}
               />
             )}
-          </motion.button>
+          </LazyMotionButton>
         ))}
       </div>
 
@@ -252,7 +252,7 @@ function ToolsPanel({
       {tools.map((tool, index) => {
         const Icon = tool.icon;
         return (
-          <motion.button
+          <LazyMotionButton
             key={tool.id}
             onClick={() => handleToolClick(tool)}
             initial={prefersReducedMotion ? false : { opacity: 0, x: -10 }}
@@ -272,13 +272,13 @@ function ToolsPanel({
                 <Icon className="h-4.5 w-4.5 text-[var(--ecode-text-muted)] group-hover:text-[var(--ecode-accent)] transition-colors" />
               </div>
               {tool.badge !== undefined && tool.badge > 0 && (
-                <motion.span 
+                <LazyMotionDiv 
                   initial={prefersReducedMotion ? false : { scale: 0 }}
                   animate={{ scale: 1 }}
                   className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full border-2 border-[var(--ecode-background)]"
                 >
                   {tool.badge > 99 ? '99+' : tool.badge}
-                </motion.span>
+                </LazyMotionDiv>
               )}
             </div>
             <div className="flex-1 min-w-0 py-0.5">
@@ -287,7 +287,7 @@ function ToolsPanel({
                 {tool.description}
               </div>
             </div>
-          </motion.button>
+          </LazyMotionButton>
         );
       })}
     </div>

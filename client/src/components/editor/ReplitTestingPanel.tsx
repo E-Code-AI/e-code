@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { 
   PlayCircle, 
   CheckCircle2, 
@@ -71,18 +71,18 @@ interface ReplitTestingPanelProps {
 
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
-    <motion.div
+    <LazyMotionDiv
       className={cn("bg-muted rounded-lg overflow-hidden", className)}
       initial={{ opacity: 0.5 }}
       animate={{ opacity: [0.5, 0.8, 0.5] }}
       transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
     >
-      <motion.div
+      <LazyMotionDiv
         className="h-full w-full bg-gradient-to-r from-transparent via-accent to-transparent"
         animate={{ x: ["-100%", "100%"] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
       />
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 

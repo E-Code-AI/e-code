@@ -23,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 
 interface Checkpoint {
   id: string;
@@ -47,7 +47,7 @@ interface Checkpoint {
 
 function SkeletonShimmer({ className }: { className?: string }) {
   return (
-    <motion.div
+    <LazyMotionDiv
       className={cn("rounded-lg bg-gray-200 dark:bg-[#242b3d]", className)}
       animate={{
         opacity: [0.5, 0.8, 0.5],

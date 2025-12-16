@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { LayoutGrid, Image, CheckCircle, ArrowUp } from 'lucide-react';
 
 interface AgentWorkflowSelectorProps {
@@ -20,7 +20,7 @@ export function AgentWorkflowSelector({
   const [selectedOption, setSelectedOption] = useState<'full' | 'design' | null>(null);
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-3xl mx-auto space-y-4"
@@ -165,6 +165,6 @@ export function AgentWorkflowSelector({
           </Button>
         </CardContent>
       </Card>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }

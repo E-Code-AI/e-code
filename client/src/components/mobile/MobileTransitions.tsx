@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from "react";
-import { motion, AnimatePresence, Variants } from "framer-motion";
+import { LazyMotionDiv, LazyAnimatePresence, type Variants } from '@/lib/motion';
 import { useLocation } from "wouter";
 
 // Page transition variants
@@ -66,8 +66,8 @@ export function PageTransition({
   const [location] = useLocation();
   
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
+    <LazyAnimatePresence mode="wait">
+      <LazyMotionDiv
         key={location}
         className={className}
         variants={pageVariants[variant]}
@@ -77,8 +77,8 @@ export function PageTransition({
         transition={{ duration, ease: "easeInOut" }}
       >
         {children}
-      </motion.div>
-    </AnimatePresence>
+      </LazyMotionDiv>
+    </LazyAnimatePresence>
   );
 }
 
@@ -113,11 +113,11 @@ export function BottomSheet({
   };
 
   return (
-    <AnimatePresence>
+    <LazyAnimatePresence>
       {isOpen && (
         <>
           {/* Backdrop */}
-          <motion.div
+          <LazyMotionDiv
             className="fixed inset-0 bg-background z-[90]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -126,7 +126,7 @@ export function BottomSheet({
           />
           
           {/* Bottom Sheet */}
-          <motion.div
+          <LazyMotionDiv
             className="fixed bottom-0 left-0 right-0 bg-background rounded-t-2xl shadow-xl z-[95]"
             style={{ height, maxHeight: "90vh" }}
             initial={{ y: "100%" }}
@@ -151,10 +151,10 @@ export function BottomSheet({
             <div className="overflow-auto" style={{ maxHeight: "calc(90vh - 2rem)" }}>
               {children}
             </div>
-          </motion.div>
+          </LazyMotionDiv>
         </>
       )}
-    </AnimatePresence>
+    </LazyAnimatePresence>
   );
 }
 
@@ -187,11 +187,11 @@ export function MobileModal({
   }, [isOpen]);
 
   return (
-    <AnimatePresence>
+    <LazyAnimatePresence>
       {isOpen && (
         <>
           {/* Backdrop */}
-          <motion.div
+          <LazyMotionDiv
             className="fixed inset-0 bg-background z-[90]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -201,7 +201,7 @@ export function MobileModal({
           
           {/* Modal */}
           {variant === "center" ? (
-            <motion.div
+            <LazyMotionDiv
               className="fixed inset-4 m-auto max-w-lg max-h-[80vh] bg-background rounded-2xl shadow-xl z-[95] overflow-hidden"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -220,9 +220,9 @@ export function MobileModal({
               <div className="overflow-auto max-h-[calc(80vh-4rem)]">
                 {children}
               </div>
-            </motion.div>
+            </LazyMotionDiv>
           ) : (
-            <motion.div
+            <LazyMotionDiv
               className="fixed inset-0 bg-background z-[95]"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
@@ -239,11 +239,11 @@ export function MobileModal({
                 </div>
               )}
               {children}
-            </motion.div>
+            </LazyMotionDiv>
           )}
         </>
       )}
-    </AnimatePresence>
+    </LazyAnimatePresence>
   );
 }
 
@@ -335,7 +335,7 @@ export function Spinner({ size = "md", color = "hsl(var(--primary))" }: SpinnerP
 
   return (
     <div className="flex items-center justify-center">
-      <motion.div
+      <LazyMotionDiv
         className={`${sizes[size]} border-2 border-t-transparent rounded-full`}
         style={{ borderColor: `${color}33`, borderTopColor: color }}
         animate={{ rotate: 360 }}
@@ -354,7 +354,7 @@ interface PullIndicatorProps {
 export function PullIndicator({ progress, isRefreshing }: PullIndicatorProps) {
   return (
     <div className="flex justify-center py-4">
-      <motion.div
+      <LazyMotionDiv
         animate={{
           rotate: isRefreshing ? 360 : progress * 180,
           scale: Math.min(progress, 1),
@@ -364,7 +364,7 @@ export function PullIndicator({ progress, isRefreshing }: PullIndicatorProps) {
         }}
       >
         <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
-      </motion.div>
+      </LazyMotionDiv>
     </div>
   );
 }

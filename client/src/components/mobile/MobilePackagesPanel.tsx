@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import {
   Package,
   Search,
@@ -40,7 +40,7 @@ interface MobilePackagesPanelProps {
 
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
-    <motion.div
+    <LazyMotionDiv
       className={cn("bg-muted rounded-lg", className)}
       animate={{
         opacity: [0.5, 0.8, 0.5]
@@ -211,7 +211,7 @@ export function MobilePackagesPanel({ projectId, className }: MobilePackagesPane
     const isExpanded = expandedPackages.has(pkg.name);
 
     return (
-      <motion.div 
+      <LazyMotionDiv 
         key={pkg.name}
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -336,7 +336,7 @@ export function MobilePackagesPanel({ projectId, className }: MobilePackagesPane
             )}
           </div>
         </div>
-      </motion.div>
+      </LazyMotionDiv>
     );
   };
 

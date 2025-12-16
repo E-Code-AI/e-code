@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { GitCommit, Package, Rocket, AlertCircle, CheckCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { usePrefersReducedMotion } from '@/lib/performance';
 
 interface ActivityItem {
@@ -66,10 +66,10 @@ const ActivityFeed = memo(function ActivityFeed() {
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-64 pr-4">
-          <AnimatePresence mode="popLayout">
+          <LazyAnimatePresence mode="popLayout">
             <div className="space-y-4">
               {activityFeed.map((item) => (
-                <motion.div
+                <LazyMotionDiv
                   key={item.id}
                   variants={itemVariants}
                   initial="hidden"
@@ -112,10 +112,10 @@ const ActivityFeed = memo(function ActivityFeed() {
                     )}
                     <p className="text-xs text-muted-foreground">{item.time}</p>
                   </div>
-                </motion.div>
+                </LazyMotionDiv>
               ))}
             </div>
-          </AnimatePresence>
+          </LazyAnimatePresence>
         </ScrollArea>
       </CardContent>
     </Card>

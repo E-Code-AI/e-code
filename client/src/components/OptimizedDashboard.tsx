@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { CreditBalance } from '@/components/CreditBalance';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -67,7 +67,7 @@ const ProjectCard = optimizedMemo(({
   }, [project, onOptionsClick]);
   
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={prefersReducedMotion ? false : { opacity: 0, y: -20 }}
@@ -131,7 +131,7 @@ const ProjectCard = optimizedMemo(({
           </div>
         </CardContent>
       </Card>
-    </motion.div>
+    </LazyMotionDiv>
   );
 });
 
@@ -276,7 +276,7 @@ export default function OptimizedDashboard() {
           "grid gap-6 contain-layout",
           viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'
         )}>
-          <AnimatePresence mode="popLayout">
+          <LazyAnimatePresence mode="popLayout">
             {filteredProjects.map((project) => (
               <ProjectCard
                 key={project.id}
@@ -285,7 +285,7 @@ export default function OptimizedDashboard() {
                 onOptionsClick={handleOptionsClick}
               />
             ))}
-          </AnimatePresence>
+          </LazyAnimatePresence>
         </div>
         
         {/* Lazy Load Charts */}

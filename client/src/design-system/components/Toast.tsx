@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { useDesignSystem } from '../hooks/useDesignSystem';
 import { triggerHaptic } from '../hooks/useGestures';
 
@@ -106,7 +106,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss }) => {
   };
 
   return (
-    <motion.div
+    <LazyMotionDiv
       layout
       initial={{
         opacity: 0,
@@ -241,7 +241,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss }) => {
       >
         ✕
       </button>
-    </motion.div>
+    </LazyMotionDiv>
   );
 };
 
@@ -279,7 +279,7 @@ const ToastContainer: React.FC<ToastContainerProps> = ({
         width: 'calc(100% - 32px)',
       }}
     >
-      <AnimatePresence mode="popLayout">
+      <LazyAnimatePresence mode="popLayout">
         {toasts.map((toast) => (
           <div
             key={toast.id}
@@ -288,7 +288,7 @@ const ToastContainer: React.FC<ToastContainerProps> = ({
             <ToastItem toast={toast} onDismiss={() => onDismiss(toast.id)} />
           </div>
         ))}
-      </AnimatePresence>
+      </LazyAnimatePresence>
     </div>
   );
 };

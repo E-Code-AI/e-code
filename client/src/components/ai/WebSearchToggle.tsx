@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Globe, Loader2, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 
 interface WebSearchToggleProps {
   enabled: boolean;
@@ -69,9 +69,9 @@ export function WebSearchToggle({
           className="data-[state=checked]:bg-blue-500"
           data-testid="web-search-switch"
         />
-        <AnimatePresence>
+        <LazyAnimatePresence>
           {enabled && (
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
@@ -82,16 +82,16 @@ export function WebSearchToggle({
               >
                 Web
               </Badge>
-            </motion.div>
+            </LazyMotionDiv>
           )}
-        </AnimatePresence>
+        </LazyAnimatePresence>
       </div>
     );
   }
 
   if (variant === 'prominent') {
     return (
-      <motion.div
+      <LazyMotionDiv
         className={cn(
           "flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors",
           enabled 
@@ -124,9 +124,9 @@ export function WebSearchToggle({
           <div className="flex-1 text-left">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Web Search</span>
-              <AnimatePresence>
+              <LazyAnimatePresence>
                 {enabled && (
-                  <motion.div
+                  <LazyMotionDiv
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
@@ -137,9 +137,9 @@ export function WebSearchToggle({
                     >
                       Active
                     </Badge>
-                  </motion.div>
+                  </LazyMotionDiv>
                 )}
-              </AnimatePresence>
+              </LazyAnimatePresence>
             </div>
             <p className="text-[11px] text-muted-foreground">
               {enabled ? "Searching web for docs & APIs" : "Enable to search the internet"}
@@ -150,7 +150,7 @@ export function WebSearchToggle({
             enabled ? "text-blue-500" : "text-muted-foreground"
           )} />
         </button>
-      </motion.div>
+      </LazyMotionDiv>
     );
   }
 
@@ -176,9 +176,9 @@ export function WebSearchToggle({
             ) : (
               <Globe className={iconSizes[size]} />
             )}
-            <AnimatePresence>
+            <LazyAnimatePresence>
               {enabled && (
-                <motion.div
+                <LazyMotionDiv
                   initial={{ opacity: 0, scale: 0.5 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.5 }}
@@ -188,9 +188,9 @@ export function WebSearchToggle({
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-300" />
                   </span>
-                </motion.div>
+                </LazyMotionDiv>
               )}
-            </AnimatePresence>
+            </LazyAnimatePresence>
           </Button>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-[200px]">
@@ -211,7 +211,7 @@ export function WebSearchBadge({ enabled }: { enabled: boolean }) {
   if (!enabled) return null;
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0, y: -5 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -5 }}
@@ -224,7 +224,7 @@ export function WebSearchBadge({ enabled }: { enabled: boolean }) {
         <Globe className="h-3 w-3" />
         Web
       </Badge>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 

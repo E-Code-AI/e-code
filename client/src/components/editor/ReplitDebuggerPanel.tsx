@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import {
   Bug,
   Play,
@@ -71,7 +71,7 @@ interface DebugSession {
 
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
-    <motion.div
+    <LazyMotionDiv
       className={cn("bg-muted rounded-lg", className)}
       animate={{
         backgroundPosition: ["200% 0", "-200% 0"],

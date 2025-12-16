@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -53,7 +53,7 @@ interface EnvVarsResponse {
 
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
-    <motion.div
+    <LazyMotionDiv
       className={cn("rounded-lg bg-gray-200 dark:bg-[#242b3d]", className)}
       animate={{
         opacity: [0.5, 0.8, 0.5],

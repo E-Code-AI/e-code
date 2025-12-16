@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
@@ -294,11 +294,8 @@ export default function Pricing() {
       <PublicNavbar />
 
       {/* Hero Section with Background */}
-      <motion.section 
-        className="relative py-20 overflow-hidden"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
+      <section 
+        className="relative py-20 overflow-hidden animate-fadeIn"
       >
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
@@ -311,13 +308,10 @@ export default function Pricing() {
         </div>
 
         <div className="container-responsive relative z-10 max-w-7xl">
-          <motion.div 
+          <div 
             className="text-center space-y-6 mb-16"
-            variants={staggerContainer}
-            initial="initial"
-            animate="animate"
           >
-            <motion.div variants={fadeInUp}>
+            <div className="animate-slide-in-up opacity-0" style={{ animationDelay: '0ms', animationFillMode: 'forwards' }}>
               <Badge 
                 variant="secondary" 
                 className="mb-4 px-6 py-2 text-sm font-semibold bg-[var(--ecode-accent)]/10 border-[var(--ecode-accent)]/20 text-[var(--ecode-accent)]"
@@ -326,11 +320,11 @@ export default function Pricing() {
                 <Sparkles className="h-4 w-4 mr-2 text-[var(--ecode-accent)]" />
                 Save up to 20% with annual billing
               </Badge>
-            </motion.div>
+            </div>
             
-            <motion.h1 
-              className="text-5xl sm:text-6xl lg:text-7xl font-bold"
-              variants={fadeInUp}
+            <h1 
+              className="text-5xl sm:text-6xl lg:text-7xl font-bold animate-slide-in-up opacity-0"
+              style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
             >
               <span className="text-[var(--ecode-text)]">
                 Pricing that scales
@@ -339,20 +333,20 @@ export default function Pricing() {
               <span className="bg-gradient-to-r from-[var(--ecode-accent)] to-[var(--ecode-accent)]/80 bg-clip-text text-transparent">
                 with your growth
               </span>
-            </motion.h1>
+            </h1>
             
-            <motion.p 
-              className="text-xl sm:text-2xl text-[var(--ecode-text-muted)] max-w-3xl mx-auto"
-              variants={fadeInUp}
+            <p 
+              className="text-xl sm:text-2xl text-[var(--ecode-text-muted)] max-w-3xl mx-auto animate-slide-in-up opacity-0"
+              style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}
             >
               Start free and upgrade as you grow. No hidden fees, no surprises. 
               Enterprise-grade features at startup-friendly prices.
-            </motion.p>
+            </p>
 
             {/* Billing Toggle with Animation */}
-            <motion.div 
-              className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-6 sm:pt-8"
-              variants={fadeInUp}
+            <div 
+              className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-6 sm:pt-8 animate-slide-in-up opacity-0"
+              style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}
             >
               <span className={`text-sm sm:text-lg font-medium transition-colors duration-200 ${billingPeriod === 'monthly' ? 'text-[var(--ecode-text)]' : 'text-[var(--ecode-text-muted)]'}`}>
                 Monthly
@@ -369,27 +363,21 @@ export default function Pricing() {
                   Save 20%
                 </Badge>
               </span>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
 
           {/* Pricing Cards with E-Code Design Tokens */}
-          <motion.div 
+          <div 
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-            variants={staggerContainer}
             data-testid="pricing-cards-grid"
           >
-            <AnimatePresence mode="wait">
               {tiers.map((tier, index) => (
-                <motion.div
+                <div
                   key={tier.name}
-                  variants={fadeInUp}
-                  whileHover={{ scale: 1.02, y: -5 }}
-                  onHoverStart={() => setHoveredCard(tier.name)}
-                  onHoverEnd={() => setHoveredCard(null)}
-                  className="relative"
+                  className="relative animate-slide-in-up opacity-0 hover:scale-[1.02] hover:-translate-y-1 transition-transform"
+                  style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
+                  onMouseEnter={() => setHoveredCard(tier.name)}
+                  onMouseLeave={() => setHoveredCard(null)}
                   data-testid={`pricing-card-${tier.name.toLowerCase()}`}
                 >
                   {/* Popular Badge - E-Code Orange */}
@@ -519,42 +507,33 @@ export default function Pricing() {
                       </div>
                     </CardContent>
                   </Card>
-                </motion.div>
+                </div>
               ))}
-            </AnimatePresence>
-          </motion.div>
+          </div>
         </div>
-      </motion.section>
+      </section>
 
       {/* Detailed Comparison Table - E-Code Styled */}
       <section className="py-20 bg-[var(--ecode-surface-tertiary,var(--ecode-surface))]" data-testid="section-comparison">
         <div className="container-responsive max-w-7xl">
-          <motion.div 
+          <div 
             className="text-center mb-12"
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-            variants={staggerContainer}
           >
-            <motion.h2 
-              className="text-4xl font-bold mb-4 text-[var(--ecode-text)]"
-              variants={fadeInUp}
+            <h2 
+              className="text-4xl font-bold mb-4 text-[var(--ecode-text)] animate-fadeIn"
             >
               Compare plans in detail
-            </motion.h2>
-            <motion.p 
-              className="text-xl text-[var(--ecode-text-muted)]"
-              variants={fadeInUp}
+            </h2>
+            <p 
+              className="text-xl text-[var(--ecode-text-muted)] animate-fadeIn"
             >
               Every feature, every detail, side by side
-            </motion.p>
-          </motion.div>
+            </p>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
+          <div
+            className="animate-slide-in-up opacity-0"
+            style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
           >
             <Card className="overflow-hidden backdrop-blur-sm bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
               <div className="overflow-x-auto">
@@ -609,7 +588,7 @@ export default function Pricing() {
                 </table>
               </div>
             </Card>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -620,7 +599,7 @@ export default function Pricing() {
       >
         <div className="container-responsive max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0, x: -50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -678,9 +657,9 @@ export default function Pricing() {
                   Learn More
                 </Button>
               </div>
-            </motion.div>
+            </LazyMotionDiv>
 
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -711,7 +690,7 @@ export default function Pricing() {
                   </ul>
                 </CardContent>
               </Card>
-            </motion.div>
+            </LazyMotionDiv>
           </div>
         </div>
       </section>
@@ -719,33 +698,23 @@ export default function Pricing() {
       {/* FAQ Section - E-Code Styled */}
       <section className="py-20 bg-[var(--ecode-background)]" data-testid="section-faq">
         <div className="container-responsive max-w-4xl">
-          <motion.div 
+          <div 
             className="text-center mb-12"
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-            variants={staggerContainer}
           >
-            <motion.h2 
-              className="text-4xl font-bold mb-4 text-[var(--ecode-text)]"
-              variants={fadeInUp}
+            <h2 
+              className="text-4xl font-bold mb-4 text-[var(--ecode-text)] animate-fadeIn"
             >
               Frequently asked questions
-            </motion.h2>
-            <motion.p 
-              className="text-xl text-[var(--ecode-text-muted)]"
-              variants={fadeInUp}
+            </h2>
+            <p 
+              className="text-xl text-[var(--ecode-text-muted)] animate-fadeIn"
             >
               Got questions? We've got answers
-            </motion.p>
-          </motion.div>
+            </p>
+          </div>
 
-          <motion.div 
+          <div 
             className="space-y-6"
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-            variants={staggerContainer}
           >
             {[
               {
@@ -773,7 +742,11 @@ export default function Pricing() {
                 answer: "Yes! We offer 50% discounts for verified students and registered nonprofits. Contact our support team with proof of eligibility to get started."
               }
             ].map((faq, idx) => (
-              <motion.div key={idx} variants={fadeInUp}>
+              <div 
+                key={idx}
+                className="animate-slide-in-up opacity-0"
+                style={{ animationDelay: `${idx * 50}ms`, animationFillMode: 'forwards' }}
+              >
                 <Card 
                   className="bg-[var(--ecode-surface)] border-[var(--ecode-border)] hover:border-[var(--ecode-accent)]/30 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.15)] transition-all duration-300"
                   data-testid={`faq-card-${idx}`}
@@ -787,9 +760,9 @@ export default function Pricing() {
                     </p>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -799,7 +772,7 @@ export default function Pricing() {
         data-testid="section-cta"
       >
         <div className="container-responsive max-w-4xl text-center">
-          <motion.div
+          <LazyMotionDiv
             initial={{ scale: 0.9, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
             viewport={{ once: true }}
@@ -834,7 +807,7 @@ export default function Pricing() {
                 Watch Demo
               </Button>
             </div>
-          </motion.div>
+          </LazyMotionDiv>
         </div>
       </section>
 

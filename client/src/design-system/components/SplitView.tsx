@@ -4,7 +4,8 @@
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { motion, PanInfo } from 'framer-motion';
+import type { PanInfo } from '@/lib/motion';
+import { LazyMotionDiv, LazyMotionButton, LazyMotionSpan } from '@/lib/motion';
 import { useDesignSystem } from '../hooks/useDesignSystem';
 import { triggerHaptic } from '../hooks/useGestures';
 
@@ -111,7 +112,7 @@ export const SplitView: React.FC<SplitViewProps> = ({
 
       {/* Resize Handle */}
       {resizable && (
-        <motion.div
+        <LazyMotionDiv
           drag={isHorizontal ? 'x' : 'y'}
           dragConstraints={containerRef}
           dragElastic={0}
@@ -150,7 +151,7 @@ export const SplitView: React.FC<SplitViewProps> = ({
                 : 'none',
             }}
           />
-        </motion.div>
+        </LazyMotionDiv>
       )}
 
       {/* Right/Bottom Pane */}
@@ -310,7 +311,7 @@ export const TabPanel: React.FC<TabPanelProps> = ({
           const isActive = tab.id === activeTab;
 
           return (
-            <motion.button
+            <LazyMotionButton
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
               whileTap={{ scale: 0.98 }}
@@ -338,7 +339,7 @@ export const TabPanel: React.FC<TabPanelProps> = ({
               <span>{tab.label}</span>
 
               {tab.closable && (
-                <motion.span
+                <LazyMotionSpan
                   onClick={(e) => handleTabClose(tab.id, e)}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -349,9 +350,9 @@ export const TabPanel: React.FC<TabPanelProps> = ({
                   }}
                 >
                   ✕
-                </motion.span>
+                </LazyMotionSpan>
               )}
-            </motion.button>
+            </LazyMotionButton>
           );
         })}
       </div>

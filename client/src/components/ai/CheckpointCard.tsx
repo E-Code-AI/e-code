@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { History, RotateCcw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 
 interface CheckpointCardProps {
   checkpointId: number;
@@ -28,7 +28,7 @@ export function CheckpointCard({
   const typeVariant = type === 'milestone' ? 'default' : 'outline';
 
   return (
-    <motion.div 
+    <LazyMotionDiv 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg border border-border/50 hover:border-primary/30 transition-colors" 
@@ -67,6 +67,6 @@ export function CheckpointCard({
           Restore
         </Button>
       )}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }

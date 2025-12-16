@@ -5,7 +5,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton, LazyMotionSpan, LazyAnimatePresence } from '@/lib/motion';
 import { 
   Folder, FolderOpen, File, FileText, FileCode, Image, 
   ChevronRight, ChevronDown, Plus, FolderPlus, FilePlus,
@@ -61,7 +61,7 @@ function FileTreeSkeleton() {
   return (
     <div className="space-y-2 p-4" data-testid="file-tree-skeleton">
       {[...Array(8)].map((_, i) => (
-        <motion.div 
+        <LazyMotionDiv 
           key={i} 
           className="flex items-center gap-3" 
           style={{ paddingLeft: `${(i % 3) * 16}px` }}
@@ -71,7 +71,7 @@ function FileTreeSkeleton() {
         >
           <Skeleton className="h-4 w-4 rounded" />
           <Skeleton className="h-4 flex-1 rounded" style={{ maxWidth: `${120 + (i * 20) % 80}px` }} />
-        </motion.div>
+        </LazyMotionDiv>
       ))}
     </div>
   );
@@ -81,7 +81,7 @@ function NoFilesEmptyState({ onCreateFile }: { onCreateFile?: () => void }) {
   const prefersReducedMotion = useReducedMotion();
   
   return (
-    <motion.div 
+    <LazyMotionDiv 
       className="flex flex-col items-center justify-center h-64 p-6 text-center"
       data-testid="no-files-empty-state"
       initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.95 }}
@@ -105,7 +105,7 @@ function NoFilesEmptyState({ onCreateFile }: { onCreateFile?: () => void }) {
           Create File
         </Button>
       )}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -145,7 +145,7 @@ function FileTreeItem({
 
   return (
     <>
-      <motion.button
+      <LazyMotionButton
         onClick={handleClick}
         className={cn(
           "w-full flex items-center gap-2 py-2.5 px-3 text-left",
@@ -161,19 +161,19 @@ function FileTreeItem({
         data-testid={`file-item-${file.name}`}
       >
         {isFolder && (
-          <motion.span
+          <LazyMotionSpan
             animate={{ rotate: isExpanded ? 90 : 0 }}
             transition={prefersReducedMotion ? { duration: 0.01 } : { duration: 0.2 }}
           >
             <ChevronRight className="h-4 w-4 text-[var(--ecode-text-muted)]" />
-          </motion.span>
+          </LazyMotionSpan>
         )}
         <FileIcon className={cn(
           "h-4 w-4 flex-shrink-0",
           isFolder ? "text-[var(--ecode-accent)]" : "text-[var(--ecode-text-muted)]"
         )} />
         <span className="truncate text-sm font-medium">{file.name}</span>
-      </motion.button>
+      </LazyMotionButton>
 
       {isFolder && file.children && file.children.length > 0 && (
         <div className={cn("collapsible-content", isExpanded && "expanded")}>
@@ -293,7 +293,7 @@ export function InlineMobileFileExplorer({
         ) : fileTree.length === 0 ? (
           <NoFilesEmptyState onCreateFile={onCreateFile} />
         ) : (
-          <motion.div 
+          <LazyMotionDiv 
             className="py-2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -309,7 +309,7 @@ export function InlineMobileFileExplorer({
                 onFileSelect={onFileSelect}
               />
             ))}
-          </motion.div>
+          </LazyMotionDiv>
         )}
       </ScrollArea>
 

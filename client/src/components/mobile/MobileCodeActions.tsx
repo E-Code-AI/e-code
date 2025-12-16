@@ -10,7 +10,7 @@ import { EditorView } from '@codemirror/view';
 import { openSearchPanel } from '@codemirror/search';
 import { undo, redo, indentMore, indentLess } from '@codemirror/commands';
 import { foldAll, unfoldAll } from '@codemirror/language';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
 import {
   Sparkles,
   Search,
@@ -301,7 +301,7 @@ export function MobileCodeActions({ editor, className }: MobileCodeActionsProps)
 
   return (
     <>
-      <motion.div
+      <LazyMotionDiv
         className={cn('fixed bottom-20 right-4 z-40', className)}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
@@ -319,18 +319,18 @@ export function MobileCodeActions({ editor, className }: MobileCodeActionsProps)
             <Zap className="h-6 w-6" />
           )}
         </Button>
-      </motion.div>
+      </LazyMotionDiv>
 
-      <AnimatePresence>
+      <LazyAnimatePresence>
         {isOpen && (
-          <motion.div
+          <LazyMotionDiv
             className="fixed inset-0 z-30 bg-background"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsOpen(false)}
           >
-            <motion.div
+            <LazyMotionDiv
               className="absolute bottom-0 left-0 right-0 bg-[var(--ecode-surface)] rounded-t-3xl shadow-2xl"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
@@ -366,9 +366,9 @@ export function MobileCodeActions({ editor, className }: MobileCodeActionsProps)
               </div>
 
               <ScrollArea className="max-h-[60vh]">
-                <AnimatePresence mode="wait">
+                <LazyAnimatePresence mode="wait">
                   {!activePanel ? (
-                    <motion.div
+                    <LazyMotionDiv
                       key="main"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -376,7 +376,7 @@ export function MobileCodeActions({ editor, className }: MobileCodeActionsProps)
                       className="grid grid-cols-2 gap-3 p-4"
                     >
                       {quickActions.map((action) => (
-                        <motion.button
+                        <LazyMotionButton
                           key={action.id}
                           whileTap={{ scale: 0.95 }}
                           onClick={action.action}
@@ -403,11 +403,11 @@ export function MobileCodeActions({ editor, className }: MobileCodeActionsProps)
                               </p>
                             </div>
                           </div>
-                        </motion.button>
+                        </LazyMotionButton>
                       ))}
-                    </motion.div>
+                    </LazyMotionDiv>
                   ) : activePanel === 'replace' ? (
-                    <motion.div
+                    <LazyMotionDiv
                       key="replace"
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -461,14 +461,14 @@ export function MobileCodeActions({ editor, className }: MobileCodeActionsProps)
                           Replace All
                         </Button>
                       </div>
-                    </motion.div>
+                    </LazyMotionDiv>
                   ) : null}
-                </AnimatePresence>
+                </LazyAnimatePresence>
               </ScrollArea>
-            </motion.div>
-          </motion.div>
+            </LazyMotionDiv>
+          </LazyMotionDiv>
         )}
-      </AnimatePresence>
+      </LazyAnimatePresence>
     </>
   );
 }

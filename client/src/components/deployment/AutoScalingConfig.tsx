@@ -17,7 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
@@ -236,7 +236,7 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
     const isActive = policy.enabled;
     
     return (
-      <motion.div
+      <LazyMotionDiv
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -313,7 +313,7 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+      </LazyMotionDiv>
     );
   };
 

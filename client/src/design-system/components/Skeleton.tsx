@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { useDesignSystem } from '../hooks/useDesignSystem';
 
 // ============================================================================
@@ -56,7 +56,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   };
 
   return (
-    <motion.div
+    <LazyMotionDiv
       className={className}
       style={{
         width,
@@ -78,7 +78,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
       })}
     >
       {animated && (
-        <motion.div
+        <LazyMotionDiv
           style={{
             position: 'absolute',
             top: 0,
@@ -97,7 +97,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
           }}
         />
       )}
-    </motion.div>
+    </LazyMotionDiv>
   );
 };
 
@@ -299,7 +299,7 @@ export const TerminalSkeleton: React.FC<{
             height="12px"
             animated={animated}
           />
-          <motion.div
+          <LazyMotionDiv
             style={{
               width: '8px',
               height: '14px',

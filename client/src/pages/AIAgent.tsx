@@ -13,7 +13,7 @@ import {
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { BRAND } from '@/constants/brand';
 
 export default function AIAgent() {
@@ -406,7 +406,7 @@ export default function AIAgent() {
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8 mb-12">
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
@@ -436,9 +436,9 @@ export default function AIAgent() {
                   <p className="text-sm text-white/80">{selectedSegment.description}</p>
                 </div>
               </div>
-            </motion.div>
+            </LazyMotionDiv>
 
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -515,18 +515,17 @@ export default function AIAgent() {
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
+            </LazyMotionDiv>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {quickReels.map((reel, index) => {
               const Icon = reel.icon;
               return (
-                <motion.div
+                <div
                   key={reel.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.1 * (index + 1) }}
+                  className="animate-slide-in-up opacity-0"
+                  style={{ animationDelay: `${100 * (index + 1)}ms`, animationFillMode: 'forwards' }}
                 >
                   <Card className="group hover:shadow-lg transition-all cursor-pointer">
                     <CardHeader className="pb-3">
@@ -552,7 +551,7 @@ export default function AIAgent() {
                       <p className="text-xs font-semibold text-primary">Watch Now →</p>
                     </CardContent>
                   </Card>
-                </motion.div>
+                </div>
               );
             })}
           </div>

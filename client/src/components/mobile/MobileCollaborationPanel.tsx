@@ -11,7 +11,7 @@
  */
 
 import { useState, useEffect, useRef, memo, useCallback } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence, type PanInfo } from '@/lib/motion';
 import { 
   Users, 
   UserPlus, 
@@ -52,7 +52,7 @@ const MobileCollaboratorItem = memo(({
   onFollow: () => void;
 }) => {
   return (
-    <motion.button
+    <LazyMotionButton
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
@@ -98,7 +98,7 @@ const MobileCollaboratorItem = memo(({
       </div>
       
       <ChevronDown className="h-4 w-4 text-muted-foreground" />
-    </motion.button>
+    </LazyMotionButton>
   );
 });
 
@@ -116,7 +116,7 @@ const MobileChatBubble = memo(({ message, isOwn }: { message: ChatMessage; isOwn
   }
   
   return (
-    <motion.div 
+    <LazyMotionDiv 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn("flex gap-2 my-3", isOwn && "flex-row-reverse")}
@@ -145,7 +145,7 @@ const MobileChatBubble = memo(({ message, isOwn }: { message: ChatMessage; isOwn
           {message.content}
         </div>
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 });
 
@@ -221,10 +221,10 @@ export function MobileCollaborationPanel({
   }, [onClose]);
   
   return (
-    <AnimatePresence>
+    <LazyAnimatePresence>
       {isOpen && (
         <>
-          <motion.div
+          <LazyMotionDiv
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -232,7 +232,7 @@ export function MobileCollaborationPanel({
             onClick={onClose}
           />
           
-          <motion.div
+          <LazyMotionDiv
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -393,9 +393,9 @@ export function MobileCollaborationPanel({
               </div>
             </div>
             
-            <AnimatePresence>
+            <LazyAnimatePresence>
               {showShareSheet && (
-                <motion.div
+                <LazyMotionDiv
                   initial={{ opacity: 0, y: 100 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 100 }}
@@ -437,13 +437,13 @@ export function MobileCollaborationPanel({
                       Copy Link
                     </Button>
                   </div>
-                </motion.div>
+                </LazyMotionDiv>
               )}
-            </AnimatePresence>
-          </motion.div>
+            </LazyAnimatePresence>
+          </LazyMotionDiv>
         </>
       )}
-    </AnimatePresence>
+    </LazyAnimatePresence>
   );
 }
 

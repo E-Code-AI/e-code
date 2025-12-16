@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence, type PanInfo } from '@/lib/motion';
 import { 
   X, Plus, Github, Upload, FileCode, Globe, Server, Bot,
   Database, Gamepad2, BookOpen, Briefcase, ShoppingCart,
@@ -157,11 +157,11 @@ export function MobileCreateModal({
   const snapHeights = snapPoints.map(point => `${(1 - point) * 100}%`);
   
   return (
-    <AnimatePresence>
+    <LazyAnimatePresence>
       {isOpen && (
         <>
           {/* Backdrop */}
-          <motion.div
+          <LazyMotionDiv
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.5 }}
             exit={{ opacity: 0 }}
@@ -170,7 +170,7 @@ export function MobileCreateModal({
           />
           
           {/* Bottom Sheet */}
-          <motion.div
+          <LazyMotionDiv
             className="fixed bottom-0 left-0 right-0 bg-background rounded-t-2xl shadow-2xl z-50 mobile-safe-bottom"
             initial={{ y: '100%' }}
             animate={{ 
@@ -189,7 +189,7 @@ export function MobileCreateModal({
           >
             {/* Handle */}
             <div className="flex justify-center py-3">
-              <motion.div 
+              <LazyMotionDiv 
                 className="w-12 h-1.5 bg-surface-hover-solid rounded-full"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
@@ -277,7 +277,7 @@ export function MobileCreateModal({
                     <h3 className="text-sm font-medium mb-3 text-muted-foreground">Recent</h3>
                     <div className="grid grid-cols-2 gap-3">
                       {recentTemplates.map((template) => (
-                        <motion.button
+                        <LazyMotionButton
                           key={`recent-${template.id}`}
                           className="bg-card border rounded-lg p-3 text-left hover:bg-accent transition-colors"
                           onClick={() => handleTemplateSelect(template)}
@@ -292,7 +292,7 @@ export function MobileCreateModal({
                               <p className="text-xs text-muted-foreground">Used 2 days ago</p>
                             </div>
                           </div>
-                        </motion.button>
+                        </LazyMotionButton>
                       ))}
                     </div>
                   </div>
@@ -305,7 +305,7 @@ export function MobileCreateModal({
                   </h3>
                   <div className="grid grid-cols-2 gap-3">
                     {filteredTemplates.map((template) => (
-                      <motion.button
+                      <LazyMotionButton
                         key={template.id}
                         className="bg-card border rounded-lg p-3 text-left hover:bg-accent transition-colors relative"
                         onClick={() => handleTemplateSelect(template)}
@@ -343,7 +343,7 @@ export function MobileCreateModal({
                             )}
                           </div>
                         </div>
-                      </motion.button>
+                      </LazyMotionButton>
                     ))}
                   </div>
                   
@@ -376,7 +376,7 @@ export function MobileCreateModal({
                 </div>
               </div>
             </ScrollArea>
-          </motion.div>
+          </LazyMotionDiv>
           
           {/* Build Mode Selector Dialog - touch-friendly for mobile */}
           <BuildModeSelector
@@ -387,6 +387,6 @@ export function MobileCreateModal({
           />
         </>
       )}
-    </AnimatePresence>
+    </LazyAnimatePresence>
   );
 }

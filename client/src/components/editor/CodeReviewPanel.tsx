@@ -49,7 +49,7 @@ import {
   CheckSquare,
   XCircle
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -444,7 +444,7 @@ export default function CodeReviewPanel({
                     </div>
                     
                     {filteredIssues.map(issue => (
-                      <motion.div
+                      <LazyMotionDiv
                         key={issue.id}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -513,7 +513,7 @@ export default function CodeReviewPanel({
                             </Button>
                           )}
                         </div>
-                      </motion.div>
+                      </LazyMotionDiv>
                     ))}
                   </>
                 ) : (

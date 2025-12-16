@@ -3,7 +3,7 @@ import { PublicFooter } from '@/components/layout/PublicFooter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { 
   Monitor, 
   Download, 
@@ -142,7 +142,7 @@ export default function Desktop() {
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10" />
         <div className="container-responsive relative">
           <div className="text-center max-w-4xl mx-auto">
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -185,7 +185,7 @@ export default function Desktop() {
                   <Badge variant="secondary" className="ml-2">Beta</Badge>
                 )}
               </p>
-            </motion.div>
+            </LazyMotionDiv>
           </div>
 
           {/* OS Selector */}
@@ -214,7 +214,7 @@ export default function Desktop() {
       {/* Screenshot */}
       <section className="py-20 bg-muted/30">
         <div className="container-responsive">
-          <motion.div
+          <LazyMotionDiv
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
@@ -237,7 +237,7 @@ export default function Desktop() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </LazyMotionDiv>
         </div>
       </section>
 
@@ -254,14 +254,13 @@ export default function Desktop() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature) => {
+            {features.map((feature, idx) => {
               const Icon = feature.icon;
               return (
-                <motion.div
+                <div
                   key={feature.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
+                  className="animate-slide-in-up opacity-0"
+                  style={{ animationDelay: `${idx * 100}ms`, animationFillMode: 'forwards' }}
                 >
                   <Card className="h-full hover:shadow-lg transition-shadow">
                     <CardHeader>
@@ -272,7 +271,7 @@ export default function Desktop() {
                       <CardDescription>{feature.description}</CardDescription>
                     </CardHeader>
                   </Card>
-                </motion.div>
+                </div>
               );
             })}
           </div>

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import {
   GitBranch,
   GitCommit,
@@ -81,7 +81,7 @@ type ViewMode = 'main' | 'settings' | 'branches';
 function ShimmerBar({ className }: { className?: string }) {
   return (
     <div className={cn("relative overflow-hidden bg-muted rounded", className)}>
-      <motion.div
+      <LazyMotionDiv
         className="absolute inset-0 bg-gradient-to-r from-transparent via-muted-foreground/20 to-transparent"
         animate={{ x: ['-100%', '100%'] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}

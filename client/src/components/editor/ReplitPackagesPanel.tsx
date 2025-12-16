@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -50,18 +50,18 @@ interface NpmSearchResult {
 
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
-    <motion.div
+    <LazyMotionDiv
       className={cn("bg-muted rounded-lg overflow-hidden relative", className)}
       initial={{ opacity: 0.5 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
     >
-      <motion.div
+      <LazyMotionDiv
         className="absolute inset-0 bg-gradient-to-r from-transparent via-muted-foreground/10 to-transparent"
         animate={{ x: ['-100%', '100%'] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
       />
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 

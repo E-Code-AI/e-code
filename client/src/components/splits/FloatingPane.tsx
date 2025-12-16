@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useRef } from 'react';
-import { motion, useDragControls } from 'framer-motion';
+import { LazyMotionDiv, useDragControls } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 import { FloatingPane as FloatingPaneType } from '@/types/splits';
 import useSplitsStore from '@/stores/splits-store';
@@ -129,7 +129,7 @@ export function FloatingPane({ floatingPane, className }: FloatingPaneProps) {
         style={{ zIndex: floatingPane.zIndex - 1 }}
       />
 
-      <motion.div
+      <LazyMotionDiv
         className={cn(
           "fixed shadow-2xl rounded-lg overflow-hidden bg-[var(--ecode-surface)] border border-[var(--ecode-border)]",
           isMinimized && "h-10",
@@ -227,7 +227,7 @@ export function FloatingPane({ floatingPane, className }: FloatingPaneProps) {
             />
           </>
         )}
-      </motion.div>
+      </LazyMotionDiv>
     </>
   );
 }

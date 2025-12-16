@@ -4,7 +4,7 @@
  */
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
 import { useDesignSystem } from '../hooks/useDesignSystem';
 import { triggerHaptic, useLongPress } from '../hooks/useGestures';
 
@@ -141,11 +141,11 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
       </div>
 
       {/* Menu Portal */}
-      <AnimatePresence>
+      <LazyAnimatePresence>
         {isOpen && (
           <>
             {/* Backdrop */}
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -162,7 +162,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             />
 
             {/* Menu */}
-            <motion.div
+            <LazyMotionDiv
               ref={menuRef}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -211,10 +211,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   ))}
                 </div>
               ))}
-            </motion.div>
+            </LazyMotionDiv>
           </>
         )}
-      </AnimatePresence>
+      </LazyAnimatePresence>
     </>
   );
 };
@@ -233,7 +233,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ item, onPress }) => {
   const [isPressed, setIsPressed] = useState(false);
 
   return (
-    <motion.button
+    <LazyMotionButton
       onMouseDown={() => setIsPressed(true)}
       onMouseUp={() => setIsPressed(false)}
       onMouseLeave={() => setIsPressed(false)}
@@ -289,7 +289,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ item, onPress }) => {
       >
         {item.label}
       </div>
-    </motion.button>
+    </LazyMotionButton>
   );
 };
 
@@ -400,9 +400,9 @@ export const Dropdown: React.FC<{
         {trigger}
       </div>
 
-      <AnimatePresence>
+      <LazyAnimatePresence>
         {isOpen && (
-          <motion.div
+          <LazyMotionDiv
             ref={menuRef}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -450,9 +450,9 @@ export const Dropdown: React.FC<{
                 ))}
               </div>
             ))}
-          </motion.div>
+          </LazyMotionDiv>
         )}
-      </AnimatePresence>
+      </LazyAnimatePresence>
     </>
   );
 };

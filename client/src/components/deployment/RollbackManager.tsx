@@ -19,7 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
@@ -258,7 +258,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
   };
 
   const SnapshotCard = ({ snapshot, isActive }: { snapshot: DeploymentSnapshot; isActive?: boolean }) => (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -358,7 +358,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
           </div>
         </CardContent>
       </Card>
-    </motion.div>
+    </LazyMotionDiv>
   );
 
   const RollbackStep = ({ step, index }: { step: RollbackStatus['steps'][0]; index: number }) => {

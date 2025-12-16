@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
 import { useDesignSystem } from '../hooks/useDesignSystem';
 import { triggerHaptic } from '../hooks/useGestures';
 
@@ -128,7 +128,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({
             zIndex: 10,
           }}
         >
-          <motion.button
+          <LazyMotionButton
             onClick={handleSkip}
             whileTap={{ scale: 0.95 }}
             style={{
@@ -143,7 +143,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({
             }}
           >
             Skip
-          </motion.button>
+          </LazyMotionButton>
         </div>
       )}
 
@@ -161,8 +161,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({
           overflow: 'hidden',
         }}
       >
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
+        <LazyAnimatePresence mode="wait" custom={direction}>
+          <LazyMotionDiv
             key={currentStep}
             custom={direction}
             variants={slideVariants}
@@ -226,7 +226,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({
 
             {/* Step-specific action */}
             {step.action && (
-              <motion.button
+              <LazyMotionButton
                 onClick={step.action.onPress}
                 whileTap={{ scale: 0.95 }}
                 whileHover={{ scale: 1.02 }}
@@ -244,10 +244,10 @@ export const Onboarding: React.FC<OnboardingProps> = ({
                 }}
               >
                 {step.action.label}
-              </motion.button>
+              </LazyMotionButton>
             )}
-          </motion.div>
-        </AnimatePresence>
+          </LazyMotionDiv>
+        </LazyAnimatePresence>
       </div>
 
       {/* Progress dots */}
@@ -261,7 +261,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({
         }}
       >
         {steps.map((_, index) => (
-          <motion.button
+          <LazyMotionButton
             key={index}
             onClick={() => handleDotPress(index)}
             whileTap={{ scale: 0.9 }}
@@ -293,7 +293,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({
           gap: ds.spacing[4],
         }}
       >
-        <motion.button
+        <LazyMotionButton
           onClick={handlePrevious}
           disabled={isFirstStep}
           whileTap={{ scale: 0.95 }}
@@ -313,9 +313,9 @@ export const Onboarding: React.FC<OnboardingProps> = ({
           }}
         >
           Previous
-        </motion.button>
+        </LazyMotionButton>
 
-        <motion.button
+        <LazyMotionButton
           onClick={handleNext}
           whileTap={{ scale: 0.95 }}
           whileHover={{ scale: 1.02 }}
@@ -334,7 +334,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({
           }}
         >
           {isLastStep ? 'Get Started' : 'Next'}
-        </motion.button>
+        </LazyMotionButton>
       </div>
     </div>
   );
@@ -426,7 +426,7 @@ export const FeatureSpotlight: React.FC<SpotlightProps> = ({
   return (
     <>
       {/* Backdrop */}
-      <motion.div
+      <LazyMotionDiv
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -441,7 +441,7 @@ export const FeatureSpotlight: React.FC<SpotlightProps> = ({
       />
 
       {/* Tooltip */}
-      <motion.div
+      <LazyMotionDiv
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
@@ -484,7 +484,7 @@ export const FeatureSpotlight: React.FC<SpotlightProps> = ({
           {description}
         </p>
         <div style={{ display: 'flex', gap: ds.spacing[3], justifyContent: 'flex-end' }}>
-          <motion.button
+          <LazyMotionButton
             onClick={onClose}
             whileTap={{ scale: 0.95 }}
             style={{
@@ -498,9 +498,9 @@ export const FeatureSpotlight: React.FC<SpotlightProps> = ({
             }}
           >
             {onNext ? 'Skip' : 'Got it'}
-          </motion.button>
+          </LazyMotionButton>
           {onNext && (
-            <motion.button
+            <LazyMotionButton
               onClick={onNext}
               whileTap={{ scale: 0.95 }}
               style={{
@@ -515,10 +515,10 @@ export const FeatureSpotlight: React.FC<SpotlightProps> = ({
               }}
             >
               Next
-            </motion.button>
+            </LazyMotionButton>
           )}
         </div>
-      </motion.div>
+      </LazyMotionDiv>
     </>
   );
 };

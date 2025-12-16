@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ExternalLink, Globe, Search, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 
 export interface WebSearchResult {
   id: string;
@@ -189,13 +189,13 @@ export function WebSearchResultsDisplay({
       >
         <div className="relative">
           <Globe className="h-4 w-4 text-blue-500" />
-          <motion.div
+          <LazyMotionDiv
             className="absolute inset-0"
             animate={{ rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           >
             <Search className="h-4 w-4 text-blue-400 opacity-50" />
-          </motion.div>
+          </LazyMotionDiv>
         </div>
         <span className="text-sm text-blue-700 dark:text-blue-300">
           Searching the web{query ? ` for "${query}"` : ''}...
@@ -309,9 +309,9 @@ export function WebSearchResultsDisplay({
         </Badge>
       </div>
       <div className="divide-y divide-border/50">
-        <AnimatePresence>
+        <LazyAnimatePresence>
           {displayResults.map((result, index) => (
-            <motion.div
+            <LazyMotionDiv
               key={result.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -319,9 +319,9 @@ export function WebSearchResultsDisplay({
               transition={{ delay: index * 0.05 }}
             >
               <WebSearchResultItem result={result} variant="inline" />
-            </motion.div>
+            </LazyMotionDiv>
           ))}
-        </AnimatePresence>
+        </LazyAnimatePresence>
       </div>
       {hasMore && (
         <div className="px-2 py-1.5 border-t">

@@ -27,7 +27,7 @@ import { ThroughputChart } from '@/components/monitoring/ThroughputChart';
 import { CustomMetricChart } from '@/components/monitoring/CustomMetricChart';
 import { AlertManager } from '@/components/monitoring/AlertManager';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { SkeletonCard, SkeletonChart } from '@/components/ui/skeleton-loader';
 
 const CHART_COLORS = {
@@ -284,7 +284,7 @@ export default function PerformanceDashboard() {
 
       {/* System Status Banner */}
       {summaryMetrics && (
-        <motion.div
+        <LazyMotionDiv
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className={cn(
@@ -313,7 +313,7 @@ export default function PerformanceDashboard() {
               {summaryMetrics.activeAlerts} Alerts
             </Badge>
           )}
-        </motion.div>
+        </LazyMotionDiv>
       )}
 
       {/* Metrics Overview Cards */}

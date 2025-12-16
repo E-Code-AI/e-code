@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useAnimation } from "framer-motion";
+import { LazyMotionDiv, LazyAnimatePresence, useAnimation } from '@/lib/motion';
 import { Bell, Heart, UserPlus, MessageCircle, Code, AlertCircle, Check, X, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -257,25 +257,25 @@ export function MobileNotifications() {
       </div>
 
       {/* Pull to refresh indicator */}
-      <AnimatePresence>
+      <LazyAnimatePresence>
         {isRefreshing && (
-          <motion.div
+          <LazyMotionDiv
             className="absolute top-16 left-0 right-0 z-20 flex justify-center py-4"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
             <div className="bg-secondary rounded-full p-3">
-              <motion.div
+              <LazyMotionDiv
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               >
                 <Bell className="h-5 w-5 text-primary" />
-              </motion.div>
+              </LazyMotionDiv>
             </div>
-          </motion.div>
+          </LazyMotionDiv>
         )}
-      </AnimatePresence>
+      </LazyAnimatePresence>
 
       {/* Notifications List */}
       <div ref={containerRef} className="pb-20 overflow-y-auto">
@@ -304,7 +304,7 @@ export function MobileNotifications() {
                 const isSwipedLeft = swipedItem === notification.id;
                 
                 return (
-                  <motion.div
+                  <LazyMotionDiv
                     key={notification.id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ 
@@ -387,9 +387,9 @@ export function MobileNotifications() {
                     </div>
                     
                     {/* Swipe actions */}
-                    <AnimatePresence>
+                    <LazyAnimatePresence>
                       {isSwipedLeft && (
-                        <motion.div
+                        <LazyMotionDiv
                           className="absolute right-0 top-0 bottom-0 flex items-center"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
@@ -401,10 +401,10 @@ export function MobileNotifications() {
                           >
                             <X className="h-5 w-5" />
                           </button>
-                        </motion.div>
+                        </LazyMotionDiv>
                       )}
-                    </AnimatePresence>
-                  </motion.div>
+                    </LazyAnimatePresence>
+                  </LazyMotionDiv>
                 );
               })}
             </div>

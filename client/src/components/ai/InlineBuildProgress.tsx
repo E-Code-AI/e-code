@@ -8,7 +8,7 @@
  */
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionSpan, LazyMotionLi, useReducedMotion } from '@/lib/motion';
 import { 
   Sparkles, 
   Loader2, 
@@ -199,7 +199,7 @@ export function ReplitStatusIndicator({
   const shouldAnimate = !prefersReducedMotion;
   
   return (
-    <motion.div 
+    <LazyMotionDiv 
       initial={shouldAnimate ? { opacity: 0, y: 10, scale: 0.95 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={shouldAnimate ? { opacity: 0, y: -10, scale: 0.95 } : { opacity: 0 }}
@@ -213,7 +213,7 @@ export function ReplitStatusIndicator({
       data-testid={`status-indicator-${status}`}
     >
       {/* Icon container - respects reduced motion */}
-      <motion.div
+      <LazyMotionDiv
         className={cn("relative", compact ? "p-1.5" : "p-2")}
         animate={shouldAnimate ? (config.animation === 'spin' ? { rotate: 360 } : animationVariants[config.animation]) : undefined}
         transition={shouldAnimate ? {
@@ -235,7 +235,7 @@ export function ReplitStatusIndicator({
         
         {/* Ripple effect for active states - only if animation is enabled */}
         {shouldAnimate && status !== 'idle' && status !== 'complete' && status !== 'error' && (
-          <motion.div
+          <LazyMotionDiv
             className={cn(
               "absolute inset-0 rounded-full",
               config.bgColor
@@ -251,7 +251,7 @@ export function ReplitStatusIndicator({
             }}
           />
         )}
-      </motion.div>
+      </LazyMotionDiv>
       
       {/* Text content */}
       <div className="flex-1 min-w-0">
@@ -273,7 +273,7 @@ export function ReplitStatusIndicator({
           {shouldAnimate && (status === 'thinking' || status === 'working' || status === 'building') && (
             <span className="flex gap-0.5">
               {[0, 1, 2].map((i) => (
-                <motion.span
+                <LazyMotionSpan
                   key={i}
                   className={cn("rounded-full", config.bgColor, compact ? "w-1 h-1" : "w-1.5 h-1.5")}
                   animate={{ 
@@ -307,7 +307,7 @@ export function ReplitStatusIndicator({
           </div>
         )}
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -333,12 +333,12 @@ export function TaskProgressItem({ name, status, index, isLast }: TaskProgressIt
         // Respect reduced motion preference
         if (shouldAnimate) {
           return (
-            <motion.div
+            <LazyMotionDiv
               animate={{ rotate: 360 }}
               transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
             >
               <Loader2 className="h-4 w-4 text-primary" />
-            </motion.div>
+            </LazyMotionDiv>
           );
         }
         // Static fallback for reduced motion
@@ -351,7 +351,7 @@ export function TaskProgressItem({ name, status, index, isLast }: TaskProgressIt
   };
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={shouldAnimate ? { opacity: 0, x: -20 } : { opacity: 1, x: 0 }}
       animate={{ opacity: 1, x: 0 }}
       transition={shouldAnimate ? { delay: index * 0.05, type: 'spring' } : { duration: 0.1 }}
@@ -383,7 +383,7 @@ export function TaskProgressItem({ name, status, index, isLast }: TaskProgressIt
         </p>
         
         {status === 'in_progress' && (
-          <motion.div
+          <LazyMotionDiv
             className="flex items-center gap-1.5 mt-1"
             initial={shouldAnimate ? { opacity: 0 } : { opacity: 1 }}
             animate={{ opacity: 1 }}
@@ -392,7 +392,7 @@ export function TaskProgressItem({ name, status, index, isLast }: TaskProgressIt
               {shouldAnimate ? (
                 // Animated dots when motion is allowed
                 [0, 1, 2].map((i) => (
-                  <motion.span
+                  <LazyMotionSpan
                     key={i}
                     className="w-1 h-1 rounded-full bg-primary"
                     animate={{ opacity: [0.3, 1, 0.3] }}
@@ -410,10 +410,10 @@ export function TaskProgressItem({ name, status, index, isLast }: TaskProgressIt
               )}
             </div>
             <span className="text-xs text-muted-foreground">In progress</span>
-          </motion.div>
+          </LazyMotionDiv>
         )}
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -450,14 +450,14 @@ interface InlineSearchIndicatorProps {
 
 export function InlineSearchIndicator({ query }: InlineSearchIndicatorProps) {
   return (
-    <motion.div 
+    <LazyMotionDiv 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex items-center gap-2 text-sm text-muted-foreground py-1"
     >
       <Search className="h-4 w-4" />
       <span>Searched Replit's integrations for "{query}"</span>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -467,7 +467,7 @@ interface InlineAppTypeProps {
 
 export function InlineAppType({ appType }: InlineAppTypeProps) {
   return (
-    <motion.div 
+    <LazyMotionDiv 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex items-center gap-2 text-sm py-1"
@@ -475,7 +475,7 @@ export function InlineAppType({ appType }: InlineAppTypeProps) {
       <span className="text-muted-foreground">App type</span>
       <span className="text-muted-foreground">○</span>
       <span className="font-medium">{appType}</span>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -546,7 +546,7 @@ export function InlinePlanCard({
   const hasPhases = displayPhases.length > 0;
 
   return (
-    <motion.div 
+    <LazyMotionDiv 
       initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0 }}
       className="border rounded-lg bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 overflow-hidden my-2"
@@ -583,7 +583,7 @@ export function InlinePlanCard({
               {hasPhases ? (
                 <div className="space-y-3">
                   {displayPhases.map((phase, i) => (
-                    <motion.div
+                    <LazyMotionDiv
                       key={i}
                       initial={shouldAnimate ? { opacity: 0, x: -10 } : { opacity: 1 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -610,13 +610,13 @@ export function InlinePlanCard({
                           ))}
                         </ul>
                       )}
-                    </motion.div>
+                    </LazyMotionDiv>
                   ))}
                 </div>
               ) : (
                 <ul className="space-y-1.5">
                   {features.map((feature, i) => (
-                    <motion.li 
+                    <LazyMotionLi 
                       key={i}
                       initial={shouldAnimate ? { opacity: 0, x: -10 } : { opacity: 1 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -625,7 +625,7 @@ export function InlinePlanCard({
                     >
                       <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
                       <span>{feature}</span>
-                    </motion.li>
+                    </LazyMotionLi>
                   ))}
                 </ul>
               )}
@@ -678,7 +678,7 @@ export function InlinePlanCard({
           )}
         </div>
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -711,7 +711,7 @@ export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: Inl
   ];
 
   return (
-    <motion.div 
+    <LazyMotionDiv 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="border rounded-lg bg-card p-4 my-3 space-y-4"
@@ -727,7 +727,7 @@ export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: Inl
           const isHovered = hoveredOption === option.id;
           
           return (
-            <motion.div
+            <LazyMotionDiv
               key={option.id}
               className={cn(
                 "relative border rounded-lg p-4 cursor-pointer transition-all",
@@ -774,7 +774,7 @@ export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: Inl
                   </p>
                 </div>
               </div>
-            </motion.div>
+            </LazyMotionDiv>
           );
         })}
       </div>
@@ -799,7 +799,7 @@ export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: Inl
           Agent tools
         </Button>
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -855,7 +855,7 @@ export function InlineBuildProgressCard({
   const completedTasks = tasks.filter(t => t.status === 'completed').length;
 
   return (
-    <motion.div 
+    <LazyMotionDiv 
       initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0 }}
       className="space-y-4 my-3 border rounded-xl bg-card/50 p-4"
@@ -887,7 +887,7 @@ export function InlineBuildProgressCard({
             />
             {/* Shimmer effect - only when animation is enabled */}
             {shouldAnimate && (
-              <motion.div
+              <LazyMotionDiv
                 className="absolute inset-y-0 w-20 bg-gradient-to-r from-transparent via-white/20 to-transparent"
                 animate={{ x: ['-80px', '400px'] }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
@@ -907,9 +907,9 @@ export function InlineBuildProgressCard({
           >
             <span className="font-medium">{completedTasks}/{tasks.length} tasks</span>
             {shouldAnimate ? (
-              <motion.div animate={{ rotate: showTasks ? 180 : 0 }}>
+              <LazyMotionDiv animate={{ rotate: showTasks ? 180 : 0 }}>
                 <ChevronDown className="h-3 w-3" />
-              </motion.div>
+              </LazyMotionDiv>
             ) : (
               <div style={{ transform: showTasks ? 'rotate(180deg)' : 'rotate(0deg)' }}>
                 <ChevronDown className="h-3 w-3" />
@@ -939,18 +939,18 @@ export function InlineBuildProgressCard({
       
       {/* Complete phase with celebration - respects reduced motion */}
       {phase === 'complete' && (
-        <motion.div 
+        <LazyMotionDiv 
           initial={shouldAnimate ? { scale: 0.9, opacity: 0 } : { opacity: 1 }}
           animate={{ scale: 1, opacity: 1 }}
           className="flex items-center gap-3 py-2"
         >
           {shouldAnimate ? (
-            <motion.div
+            <LazyMotionDiv
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 0.5, repeat: 2 }}
             >
               <CheckCircle2 className="h-6 w-6 text-green-500" />
-            </motion.div>
+            </LazyMotionDiv>
           ) : (
             <CheckCircle2 className="h-6 w-6 text-green-500" />
           )}
@@ -958,9 +958,9 @@ export function InlineBuildProgressCard({
             <p className="font-medium text-green-600 dark:text-green-400">Build complete!</p>
             <p className="text-xs text-muted-foreground">All tasks finished successfully</p>
           </div>
-        </motion.div>
+        </LazyMotionDiv>
       )}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -971,7 +971,7 @@ interface InlineStartBuildingButtonProps {
 
 export function InlineStartBuildingButton({ onClick, timestamp }: InlineStartBuildingButtonProps) {
   return (
-    <motion.div 
+    <LazyMotionDiv 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex items-center gap-3 my-2"
@@ -989,7 +989,7 @@ export function InlineStartBuildingButton({ onClick, timestamp }: InlineStartBui
           {timestamp}
         </span>
       )}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -1000,7 +1000,7 @@ interface InlineCompleteIndicatorProps {
 
 export function InlineCompleteIndicator({ message = 'Build complete!', projectUrl }: InlineCompleteIndicatorProps) {
   return (
-    <motion.div 
+    <LazyMotionDiv 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="border rounded-lg bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-800 p-4 my-2"
@@ -1027,7 +1027,7 @@ export function InlineCompleteIndicator({ message = 'Build complete!', projectUr
           Open Project
         </Button>
       )}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -1041,7 +1041,7 @@ export function InlineErrorIndicator({ message, details, onRetry }: InlineErrorI
   const [showDetails, setShowDetails] = useState(false);
   
   return (
-    <motion.div 
+    <LazyMotionDiv 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="border rounded-lg bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-800 p-4 my-2"
@@ -1086,7 +1086,7 @@ export function InlineErrorIndicator({ message, details, onRetry }: InlineErrorI
           Try again
         </Button>
       )}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -1216,7 +1216,7 @@ export function InlineFileOperation({
   );
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={shouldAnimate ? { opacity: 0, x: -10 } : { opacity: 1 }}
       animate={{ opacity: 1, x: 0 }}
       className="border rounded-lg bg-card/50 overflow-hidden my-1.5"
@@ -1260,7 +1260,7 @@ export function InlineFileOperation({
           )}
         </div>
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -1337,7 +1337,7 @@ export function InlineTerminalOutput({
   );
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0 }}
       className="border rounded-lg overflow-hidden my-2 bg-zinc-950"
@@ -1381,7 +1381,7 @@ export function InlineTerminalOutput({
           )}
         </div>
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -1417,7 +1417,7 @@ export function InlineCodeBlock({ code, language, filename, action }: InlineCode
   };
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
@@ -1459,7 +1459,7 @@ export function InlineCodeBlock({ code, language, filename, action }: InlineCode
       <pre className="text-[11px] font-mono p-3 overflow-x-auto max-h-60 overflow-y-auto">
         {code}
       </pre>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -1477,7 +1477,7 @@ export function InlineThinkingStep({ step, isActive = false, index = 0 }: Inline
   const shouldAnimate = !prefersReducedMotion;
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={shouldAnimate ? { opacity: 0, x: -10 } : { opacity: 1 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.1 }}
@@ -1491,12 +1491,12 @@ export function InlineThinkingStep({ step, isActive = false, index = 0 }: Inline
     >
       {isActive ? (
         shouldAnimate ? (
-          <motion.div
+          <LazyMotionDiv
             animate={{ rotate: 360 }}
             transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
           >
             <Brain className="h-3.5 w-3.5" />
-          </motion.div>
+          </LazyMotionDiv>
         ) : (
           <Brain className="h-3.5 w-3.5" />
         )
@@ -1504,7 +1504,7 @@ export function InlineThinkingStep({ step, isActive = false, index = 0 }: Inline
         <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
       )}
       <span>{step}</span>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -1538,7 +1538,7 @@ export function InlineAgentAction({
   const Icon = CustomIcon || style.icon;
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn("flex items-start gap-2 py-2 px-3 rounded-lg my-1", style.bg)}
@@ -1551,7 +1551,7 @@ export function InlineAgentAction({
           <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
         )}
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -1573,7 +1573,7 @@ export function InlineDependencyInstall({
   const shouldAnimate = !prefersReducedMotion;
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0 }}
       className="border rounded-lg bg-card/50 p-3 my-2"
@@ -1595,7 +1595,7 @@ export function InlineDependencyInstall({
       </div>
       <div className="flex flex-wrap gap-1.5">
         {packages.map((pkg, i) => (
-          <motion.span
+          <LazyMotionSpan
             key={pkg}
             initial={shouldAnimate ? { opacity: 0, scale: 0.8 } : { opacity: 1 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -1603,10 +1603,10 @@ export function InlineDependencyInstall({
             className="text-xs font-mono bg-muted px-2 py-0.5 rounded"
           >
             {pkg}
-          </motion.span>
+          </LazyMotionSpan>
         ))}
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -1674,7 +1674,7 @@ export function InlineProgressTimeline({
   };
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={shouldAnimate ? { opacity: 0 } : { opacity: 1 }}
       animate={{ opacity: 1 }}
       className="border rounded-lg bg-card/30 overflow-hidden my-2"
@@ -1697,7 +1697,7 @@ export function InlineProgressTimeline({
           const color = getEventColor(event.type, event.status);
           
           return (
-            <motion.div
+            <LazyMotionDiv
               key={event.id}
               initial={shouldAnimate ? { opacity: 0, x: -10 } : { opacity: 1 }}
               animate={{ opacity: 1, x: 0 }}
@@ -1714,12 +1714,12 @@ export function InlineProgressTimeline({
                   event.type === 'checkpoint' ? 'bg-purple-500' : 'bg-border'
                 )} />
                 {event.status === 'in_progress' ? (
-                  <motion.div
+                  <LazyMotionDiv
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                   >
                     <Loader2 className={cn("h-3.5 w-3.5", color)} />
-                  </motion.div>
+                  </LazyMotionDiv>
                 ) : (
                   <Icon className={cn("h-3.5 w-3.5", color)} />
                 )}
@@ -1746,11 +1746,11 @@ export function InlineProgressTimeline({
                   </button>
                 )}
               </div>
-            </motion.div>
+            </LazyMotionDiv>
           );
         })}
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -1782,7 +1782,7 @@ export function InlineCheckpoint({
     : undefined;
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={shouldAnimate ? { opacity: 0, scale: 0.95 } : { opacity: 1 }}
       animate={{ opacity: 1, scale: 1 }}
       className="relative my-4"
@@ -1794,12 +1794,12 @@ export function InlineCheckpoint({
         <div className="bg-background px-4">
           <div className="flex items-center gap-2 bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-full px-3 py-1.5">
             {shouldAnimate ? (
-              <motion.div
+              <LazyMotionDiv
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
                 <Sparkles className="h-3.5 w-3.5 text-purple-500" />
-              </motion.div>
+              </LazyMotionDiv>
             ) : (
               <Sparkles className="h-3.5 w-3.5 text-purple-500" />
             )}
@@ -1829,7 +1829,7 @@ export function InlineCheckpoint({
           </div>
         </div>
       )}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -1872,12 +1872,12 @@ export function InlineTaskListEnhanced({
         return <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />;
       case 'in_progress':
         return shouldAnimate ? (
-          <motion.div
+          <LazyMotionDiv
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           >
             <Loader2 className="h-3.5 w-3.5 text-blue-500" />
-          </motion.div>
+          </LazyMotionDiv>
         ) : (
           <Loader2 className="h-3.5 w-3.5 text-blue-500" />
         );
@@ -1889,7 +1889,7 @@ export function InlineTaskListEnhanced({
   };
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0 }}
       className="border rounded-lg bg-card/50 overflow-hidden my-2"
@@ -1925,7 +1925,7 @@ export function InlineTaskListEnhanced({
       
       <div className={cn("divide-y divide-border/50", compact && "max-h-48 overflow-y-auto")}>
         {tasks.map((task, index) => (
-          <motion.div
+          <LazyMotionDiv
             key={task.id}
             initial={shouldAnimate ? { opacity: 0, x: -10 } : { opacity: 1 }}
             animate={{ opacity: 1, x: 0 }}
@@ -1960,10 +1960,10 @@ export function InlineTaskListEnhanced({
                 {task.duration}ms
               </span>
             )}
-          </motion.div>
+          </LazyMotionDiv>
         ))}
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -1991,7 +1991,7 @@ export function InlinePreviewWindow({
   const shouldAnimate = !prefersReducedMotion;
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0 }}
       className="border rounded-lg overflow-hidden my-3 bg-card"
@@ -2008,7 +2008,7 @@ export function InlinePreviewWindow({
           {isLive && (
             <Badge className="text-[10px] px-1.5 py-0 h-4 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 gap-1">
               {shouldAnimate ? (
-                <motion.span
+                <LazyMotionSpan
                   className="w-1.5 h-1.5 rounded-full bg-green-500"
                   animate={{ scale: [1, 1.3, 1] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
@@ -2030,12 +2030,12 @@ export function InlinePreviewWindow({
               disabled={isLoading}
               data-testid="button-refresh-preview"
             >
-              <motion.div
+              <LazyMotionDiv
                 animate={isLoading && shouldAnimate ? { rotate: 360 } : undefined}
                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
               >
                 <Loader2 className={cn("h-3.5 w-3.5", isLoading && "text-blue-500")} />
-              </motion.div>
+              </LazyMotionDiv>
             </Button>
           )}
           {onOpenExternal && (
@@ -2057,12 +2057,12 @@ export function InlinePreviewWindow({
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="flex flex-col items-center gap-2">
               {shouldAnimate ? (
-                <motion.div
+                <LazyMotionDiv
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
                 >
                   <Loader2 className="h-6 w-6 text-muted-foreground" />
-                </motion.div>
+                </LazyMotionDiv>
               ) : (
                 <Loader2 className="h-6 w-6 text-muted-foreground" />
               )}
@@ -2085,6 +2085,6 @@ export function InlinePreviewWindow({
           </div>
         )}
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }

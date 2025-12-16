@@ -1,7 +1,7 @@
 import { LucideIcon, FolderOpen, Code, Terminal, Search, FileX, Inbox, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { useReducedMotion, getReducedMotionTransition, SPRING_CONFIG } from '@/hooks/use-reduced-motion';
 
 export type EmptyStateVariant = 
@@ -96,7 +96,7 @@ export function MobileEmptyState({
   };
   
   return (
-    <motion.div
+    <LazyMotionDiv
       className={cn(
         'flex flex-col items-center justify-center text-center',
         compact ? 'px-4 py-6 gap-3' : 'px-6 py-10 gap-4',
@@ -108,7 +108,7 @@ export function MobileEmptyState({
       transition={getReducedMotionTransition(prefersReducedMotion, SPRING_CONFIG.gentle)}
       data-testid={testId || `empty-state-${variant}`}
     >
-      <motion.div
+      <LazyMotionDiv
         className={cn(
           'flex items-center justify-center rounded-full bg-surface-solid',
           compact ? 'w-12 h-12' : 'w-16 h-16'
@@ -126,7 +126,7 @@ export function MobileEmptyState({
             iconClassName
           )} 
         />
-      </motion.div>
+      </LazyMotionDiv>
       
       <div className={cn('flex flex-col', compact ? 'gap-1' : 'gap-2')}>
         <h3 
@@ -180,7 +180,7 @@ export function MobileEmptyState({
           )}
         </div>
       )}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 

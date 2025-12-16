@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { LazyMotionDiv, LazyAnimatePresence } from "@/lib/motion";
 import {
   Plus,
   Search,
@@ -330,9 +330,9 @@ export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
           </div>
         ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <AnimatePresence mode="popLayout">
+            <LazyAnimatePresence mode="popLayout">
               {filteredProjects.map((project) => (
-                <motion.div
+                <LazyMotionDiv
                   key={project.id}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -399,15 +399,15 @@ export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
                       </Button>
                     </CardContent>
                   </Card>
-                </motion.div>
+                </LazyMotionDiv>
               ))}
-            </AnimatePresence>
+            </LazyAnimatePresence>
           </div>
         ) : (
           <div className="space-y-2">
-            <AnimatePresence mode="popLayout">
+            <LazyAnimatePresence mode="popLayout">
               {filteredProjects.map((project) => (
-                <motion.div
+                <LazyMotionDiv
                   key={project.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -471,9 +471,9 @@ export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
                       </div>
                     </CardContent>
                   </Card>
-                </motion.div>
+                </LazyMotionDiv>
               ))}
-            </AnimatePresence>
+            </LazyAnimatePresence>
           </div>
         )}
       </div>

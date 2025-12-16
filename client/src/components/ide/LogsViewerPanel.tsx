@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { FileText, Download, Search, Filter, AlertCircle, Info, AlertTriangle, Bug, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { Badge } from '@/components/ui/badge';
 
 interface LogEntry {
@@ -200,7 +200,7 @@ export function LogsViewerPanel({ deploymentId, buildId, projectId }: LogsViewer
         ) : (
           <div className="p-2 space-y-1 font-mono text-xs" data-testid="logs-list">
             {logs.map((log: LogEntry, index: number) => (
-              <motion.div
+              <LazyMotionDiv
                 key={index}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -230,7 +230,7 @@ export function LogsViewerPanel({ deploymentId, buildId, projectId }: LogsViewer
                     </div>
                   </div>
                 </Card>
-              </motion.div>
+              </LazyMotionDiv>
             ))}
           </div>
         )}

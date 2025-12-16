@@ -21,7 +21,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -81,7 +81,7 @@ export function TemplateCard({
 
   if (viewMode === 'list') {
     return (
-      <motion.div
+      <LazyMotionDiv
         layout
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -207,13 +207,13 @@ export function TemplateCard({
             </div>
           </div>
         </Card>
-      </motion.div>
+      </LazyMotionDiv>
     );
   }
 
   // Grid View
   return (
-    <motion.div
+    <LazyMotionDiv
       layout
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -367,6 +367,6 @@ export function TemplateCard({
           </div>
         </CardContent>
       </Card>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }

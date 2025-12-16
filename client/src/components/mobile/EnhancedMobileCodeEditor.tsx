@@ -14,7 +14,7 @@ import {
   type SearchResult,
 } from '@/design-system';
 import { useToast } from '@/hooks/use-toast';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
 import { 
   Undo2, Redo2, Save, Search, 
   Keyboard, X, Sparkles
@@ -273,7 +273,7 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
   return (
     <div className={cn('relative h-full flex flex-col', props.className)}>
       {showKeyboardToolbar && !props.readOnly && (
-        <motion.div 
+        <LazyMotionDiv 
           className="flex items-center gap-1 px-2 py-2 bg-card dark:bg-[var(--ecode-surface)] border-b border-border dark:border-[var(--ecode-border)] overflow-x-auto mobile-hide-scrollbar"
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -393,11 +393,11 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
           >
             <X className="h-5 w-5" />
           </Button>
-        </motion.div>
+        </LazyMotionDiv>
       )}
 
       {!showKeyboardToolbar && !props.readOnly && (
-        <motion.div 
+        <LazyMotionDiv 
           className="absolute top-2 right-2 z-10"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -411,7 +411,7 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
           >
             <Keyboard className="h-5 w-5" />
           </Button>
-        </motion.div>
+        </LazyMotionDiv>
       )}
 
       <div className="flex-1 relative min-h-0">

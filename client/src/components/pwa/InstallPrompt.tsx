@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { X, Download, Smartphone, Monitor } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -103,9 +103,9 @@ export function InstallPrompt() {
   }
 
   return (
-    <AnimatePresence>
+    <LazyAnimatePresence>
       {showPrompt && (
-        <motion.div
+        <LazyMotionDiv
           initial={{ opacity: 0, y: 100 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 100 }}
@@ -179,9 +179,9 @@ export function InstallPrompt() {
               </Button>
             </div>
           </div>
-        </motion.div>
+        </LazyMotionDiv>
       )}
-    </AnimatePresence>
+    </LazyAnimatePresence>
   );
 }
 
@@ -220,8 +220,8 @@ export function IOSInstallInstructions() {
   }
 
   return (
-    <AnimatePresence>
-      <motion.div
+    <LazyAnimatePresence>
+      <LazyMotionDiv
         initial={{ opacity: 0, y: 100 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 100 }}
@@ -284,7 +284,7 @@ export function IOSInstallInstructions() {
             Got it
           </Button>
         </div>
-      </motion.div>
-    </AnimatePresence>
+      </LazyMotionDiv>
+    </LazyAnimatePresence>
   );
 }

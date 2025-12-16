@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { 
   MessageSquare,
   Cloud,
@@ -106,7 +106,7 @@ function AnimatedDotLogo() {
       data-testid="splash-animated-logo"
     >
       {currentPattern.map((pos, index) => (
-        <motion.div
+        <LazyMotionDiv
           key={index}
           className="absolute rounded-full"
           style={{
@@ -150,8 +150,8 @@ function RotatingTip() {
       className="h-8 flex items-center justify-center"
       data-testid="splash-rotating-tip"
     >
-      <AnimatePresence mode="wait">
-        <motion.div
+      <LazyAnimatePresence mode="wait">
+        <LazyMotionDiv
           key={tipIndex}
           className="flex items-center gap-2 text-sm text-muted-foreground dark:text-gray-400"
           initial={{ opacity: 0, y: 10 }}
@@ -162,8 +162,8 @@ function RotatingTip() {
         >
           <Icon className="w-4 h-4 flex-shrink-0" />
           <span>{currentTip.text}</span>
-        </motion.div>
-      </AnimatePresence>
+        </LazyMotionDiv>
+      </LazyAnimatePresence>
     </div>
   );
 }
@@ -201,7 +201,7 @@ export function PreviewSplashScreen({
   const showNotRunningState = !isBuilding && onRunClick;
 
   return (
-    <motion.div 
+    <LazyMotionDiv 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -214,7 +214,7 @@ export function PreviewSplashScreen({
       <div className="flex flex-col items-center max-w-md px-6 text-center">
         <AnimatedDotLogo />
 
-        <motion.h2 
+        <LazyMotionDiv 
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
@@ -222,10 +222,10 @@ export function PreviewSplashScreen({
           data-testid="splash-title"
         >
           Preview will be available soon
-        </motion.h2>
+        </LazyMotionDiv>
 
         {showNotRunningState ? (
-          <motion.div
+          <LazyMotionDiv
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -242,11 +242,11 @@ export function PreviewSplashScreen({
               <Play className="w-4 h-4" />
               Run App
             </Button>
-          </motion.div>
+          </LazyMotionDiv>
         ) : (
           <>
             {currentTask && (
-              <motion.p
+              <LazyMotionDiv
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.15 }}
@@ -254,11 +254,11 @@ export function PreviewSplashScreen({
                 data-testid="splash-current-task"
               >
                 {currentTask}
-              </motion.p>
+              </LazyMotionDiv>
             )}
 
             {progress !== undefined && progress > 0 && (
-              <motion.div 
+              <LazyMotionDiv 
                 initial={{ scaleX: 0, opacity: 0 }}
                 animate={{ scaleX: 1, opacity: 1 }}
                 transition={{ delay: 0.2 }}
@@ -275,21 +275,21 @@ export function PreviewSplashScreen({
                 <p className="text-xs text-muted-foreground dark:text-gray-500 mt-2">
                   {progress}% complete
                 </p>
-              </motion.div>
+              </LazyMotionDiv>
             )}
 
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
               <RotatingTip />
-            </motion.div>
+            </LazyMotionDiv>
           </>
         )}
 
         {appName && (
-          <motion.p
+          <LazyMotionDiv
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
@@ -297,10 +297,10 @@ export function PreviewSplashScreen({
             data-testid="splash-app-name"
           >
             Building: {appName}
-          </motion.p>
+          </LazyMotionDiv>
         )}
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 

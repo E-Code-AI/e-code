@@ -28,3 +28,13 @@ export {
 } from './CSSAnimations';
 export { AnimationMonitor, useAnimationPerformance } from './AnimationMonitor';
 export { fadeVariants, slideVariants, scaleVariants, staggerVariants } from './variants';
+
+export type { PanInfo, AnimationControls, Variants, DragControls } from 'framer-motion';
+export { 
+  useAnimation, 
+  useReducedMotion, 
+  useMotionValue, 
+  useTransform,
+  useSpring,
+  useDragControls 
+} from 'framer-motion';

@@ -45,7 +45,7 @@ import {
   PieChart, LineChart, Award, Shield, Clock, Users, MousePointer,
   Gauge, Brain, Lightbulb, ChevronRight, Copy, Check
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { LazyMotionDiv, LazyAnimatePresence } from "@/lib/motion";
 import { AdminLayout } from "./AdminLayout";
 import { seoConfig } from "@/config/seo.config";
 import { useToast } from "@/hooks/use-toast";
@@ -134,7 +134,7 @@ function RadialProgress({ value, size = 120, strokeWidth = 10, color = "hsl(var(
           strokeWidth={strokeWidth}
           className="text-muted/20"
         />
-        <motion.circle
+        <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
@@ -142,10 +142,9 @@ function RadialProgress({ value, size = 120, strokeWidth = 10, color = "hsl(var(
           stroke={color}
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1, ease: "easeOut" }}
+          strokeDashoffset={offset}
           strokeLinecap="round"
+          style={{ transition: 'stroke-dashoffset 1s ease-out' }}
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
@@ -207,10 +206,8 @@ function InsightCard({ icon: Icon, title, description, action, type = "info" }: 
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`p-4 rounded-xl border-2 ${colors[type]} transition-all hover:scale-[1.02]`}
+    <div
+      className={`p-4 rounded-xl border-2 ${colors[type]} transition-all hover:scale-[1.02] animate-fadeIn`}
     >
       <div className="flex items-start gap-3">
         <div className={`p-2 rounded-lg bg-background ${iconColors[type]}`}>
@@ -226,7 +223,7 @@ function InsightCard({ icon: Icon, title, description, action, type = "info" }: 
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -598,14 +595,11 @@ export default function SEOManagement() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          <AnimatePresence>
                             {filteredPages.map((page, index) => (
-                              <motion.tr
+                              <tr
                                 key={page.path}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.02 }}
-                                className="group hover:bg-muted/50"
+                                className="group hover:bg-muted/50 animate-fadeIn"
+                                style={{ animationDelay: `${index * 20}ms` }}
                               >
                                 <TableCell>
                                   <div className="flex items-center gap-3">
@@ -741,9 +735,8 @@ export default function SEOManagement() {
                                     </Dialog>
                                   </div>
                                 </TableCell>
-                              </motion.tr>
+                              </tr>
                             ))}
-                          </AnimatePresence>
                         </TableBody>
                       </Table>
                     </ScrollArea>

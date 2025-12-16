@@ -6,7 +6,7 @@ import {
   Zap, Clock, Tag, ChevronRight, Play, Eye, Share2,
   MessageSquare, Award, TrendingUp, DollarSign, Copy, Check
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import {
   Dialog,
   DialogContent,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
 import { Moon, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -44,16 +44,16 @@ export function ThemeTransitionWrapper({
 
   return (
     <div className={cn('relative', className)}>
-      <AnimatePresence>
+      <LazyAnimatePresence>
         {isTransitioning && (
-          <motion.div
+          <LazyMotionDiv
             className="fixed inset-0 z-[100] pointer-events-none"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
           >
-            <motion.div
+            <LazyMotionDiv
               className="absolute inset-0 bg-gradient-to-br from-orange-100 to-yellow-100 dark:from-gray-900 dark:to-black"
               initial={{ scale: 0, borderRadius: '100%' }}
               animate={{ scale: 2, borderRadius: '0%' }}
@@ -63,9 +63,9 @@ export function ThemeTransitionWrapper({
                 transformOrigin: 'top right'
               }}
             />
-          </motion.div>
+          </LazyMotionDiv>
         )}
-      </AnimatePresence>
+      </LazyAnimatePresence>
       
       <div className="transition-colors duration-500">
         {children}
@@ -124,7 +124,7 @@ export function AnimatedThemeToggle({
   const buttonSize = size === 'sm' ? 'h-8 w-8' : size === 'lg' ? 'h-12 w-12' : 'h-10 w-10';
 
   return (
-    <motion.button
+    <LazyMotionButton
       className={cn(
         'relative rounded-full bg-gray-200 dark:bg-gray-800 p-2 transition-colors duration-300',
         buttonSize,
@@ -136,9 +136,9 @@ export function AnimatedThemeToggle({
       animate={{ rotate: isAnimating ? 360 : 0 }}
       transition={{ duration: 0.5, ease: 'easeInOut' }}
     >
-      <AnimatePresence mode="wait">
+      <LazyAnimatePresence mode="wait">
         {theme === 'light' ? (
-          <motion.div
+          <LazyMotionDiv
             key="sun"
             initial={{ rotate: -90, opacity: 0 }}
             animate={{ rotate: 0, opacity: 1 }}
@@ -146,9 +146,9 @@ export function AnimatedThemeToggle({
             transition={{ duration: 0.3 }}
           >
             <Sun className={cn(iconSize, 'text-yellow-500')} />
-          </motion.div>
+          </LazyMotionDiv>
         ) : (
-          <motion.div
+          <LazyMotionDiv
             key="moon"
             initial={{ rotate: -90, opacity: 0 }}
             animate={{ rotate: 0, opacity: 1 }}
@@ -156,10 +156,10 @@ export function AnimatedThemeToggle({
             transition={{ duration: 0.3 }}
           >
             <Moon className={cn(iconSize, 'text-blue-500')} />
-          </motion.div>
+          </LazyMotionDiv>
         )}
-      </AnimatePresence>
-    </motion.button>
+      </LazyAnimatePresence>
+    </LazyMotionButton>
   );
 }
 

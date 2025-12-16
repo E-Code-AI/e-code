@@ -1,5 +1,5 @@
 import { useState, useCallback, memo, forwardRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionSpan, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -150,7 +150,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
   const autonomousPayload = message.autonomousPayload;
   
   return (
-    <motion.div
+    <LazyMotionDiv
       ref={ref}
       layout
       variants={messageVariants}
@@ -188,7 +188,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
           </div>
         )}
 
-        <motion.div 
+        <LazyMotionDiv 
           className={cn(
             "relative rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-3 transition-all duration-200",
             "min-h-[36px] sm:min-h-[44px] min-w-[36px] sm:min-w-[44px]",
@@ -230,15 +230,15 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
           )}
 
           {message.isStreaming && (
-            <motion.span 
+            <LazyMotionSpan 
               className="inline-block w-0.5 h-4 bg-current ml-1 align-middle"
               animate={{ opacity: [1, 0] }}
               transition={{ duration: 0.8, repeat: Infinity }}
             />
           )}
 
-          <AnimatePresence>
-            <motion.div 
+          <LazyAnimatePresence>
+            <LazyMotionDiv 
               className={cn(
                 "absolute -top-2 flex gap-1",
                 isUser ? "-left-2" : "-right-2",
@@ -281,12 +281,12 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
                   <RotateCcw className="h-3 w-3" />
                 </Button>
               )}
-            </motion.div>
-          </AnimatePresence>
-        </motion.div>
+            </LazyMotionDiv>
+          </LazyAnimatePresence>
+        </LazyMotionDiv>
 
         {hasTasks && (
-          <motion.div 
+          <LazyMotionDiv 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
@@ -294,11 +294,11 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
             data-testid={`enhanced-tasks-${message.id}`}
           >
             <TaskMessage tasks={message.tasks!} />
-          </motion.div>
+          </LazyMotionDiv>
         )}
 
         {hasActions && onApproveAction && onRejectAction && (
-          <motion.div 
+          <LazyMotionDiv 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -310,11 +310,11 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
               onApprove={onApproveAction}
               onReject={onRejectAction}
             />
-          </motion.div>
+          </LazyMotionDiv>
         )}
 
         {hasTools && (
-          <motion.div 
+          <LazyMotionDiv 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
@@ -344,12 +344,12 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
                 />
               </div>
             </div>
-          </motion.div>
+          </LazyMotionDiv>
         )}
 
         {/* Autonomous Workspace Inline Components - Replit-style */}
         {isAutonomousMessage && autonomousPayload && (
-          <motion.div
+          <LazyMotionDiv
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -534,12 +534,12 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
                 onOpenExternal={onOpenPreviewExternal}
               />
             )}
-          </motion.div>
+          </LazyMotionDiv>
         )}
 
         {/* Auto-saved checkpoint card - inline in chat */}
         {message.type === 'auto_checkpoint_created' && message.autoCheckpoint && (
-          <motion.div
+          <LazyMotionDiv
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -553,11 +553,11 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
               onRestore={onRestoreCheckpoint}
               isRestoring={isRestoringCheckpoint}
             />
-          </motion.div>
+          </LazyMotionDiv>
         )}
 
         {message.metadata && !isUser && (
-          <motion.div
+          <LazyMotionDiv
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
@@ -567,16 +567,16 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
               messageId={message.id}
               compact={isCompactMode}
             />
-          </motion.div>
+          </LazyMotionDiv>
         )}
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }));
 
 export const StreamingSkeleton = memo(function StreamingSkeleton() {
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
@@ -592,17 +592,17 @@ export const StreamingSkeleton = memo(function StreamingSkeleton() {
       <div className="flex-1 space-y-2 sm:space-y-3 max-w-[85%] sm:max-w-[80%]">
         <div className="bg-muted/80 rounded-xl sm:rounded-2xl rounded-bl-md px-3 py-3 sm:px-4 sm:py-4 shadow-md border border-border/50">
           <div className="space-y-1.5 sm:space-y-2">
-            <motion.div 
+            <LazyMotionDiv 
               className="h-2.5 sm:h-3 bg-muted-foreground/20 rounded-full w-3/4"
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 1.5, repeat: Infinity }}
             />
-            <motion.div 
+            <LazyMotionDiv 
               className="h-2.5 sm:h-3 bg-muted-foreground/20 rounded-full w-1/2"
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
             />
-            <motion.div 
+            <LazyMotionDiv 
               className="h-2.5 sm:h-3 bg-muted-foreground/20 rounded-full w-2/3"
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}
@@ -610,13 +610,13 @@ export const StreamingSkeleton = memo(function StreamingSkeleton() {
           </div>
         </div>
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 });
 
 export const TypingIndicator = memo(function TypingIndicator({ text = "Thinking" }: { text?: string }) {
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
@@ -633,7 +633,7 @@ export const TypingIndicator = memo(function TypingIndicator({ text = "Thinking"
         <span className="text-sm text-muted-foreground">{text}</span>
         <div className="flex gap-1">
           {[0, 1, 2].map((i) => (
-            <motion.span
+            <LazyMotionSpan
               key={i}
               className="w-1.5 h-1.5 rounded-full bg-primary"
               animate={{ 
@@ -649,7 +649,7 @@ export const TypingIndicator = memo(function TypingIndicator({ text = "Thinking"
           ))}
         </div>
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 });
 
@@ -666,20 +666,20 @@ export const EmptyConversation = memo(function EmptyConversation({
   ];
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-center justify-center py-12 px-4"
       data-testid="empty-conversation"
     >
-      <motion.div
+      <LazyMotionDiv
         initial={{ scale: 0.8 }}
         animate={{ scale: 1 }}
         transition={springConfig}
         className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6 shadow-lg"
       >
         <Sparkles className="h-8 w-8 text-primary" />
-      </motion.div>
+      </LazyMotionDiv>
       
       <h3 className="text-lg font-semibold mb-2">How can I help you today?</h3>
       <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
@@ -689,7 +689,7 @@ export const EmptyConversation = memo(function EmptyConversation({
       {onQuickAction && (
         <div className="grid grid-cols-2 gap-2 w-full max-w-md">
           {quickActions.map((action, i) => (
-            <motion.button
+            <LazyMotionButton
               key={action.label}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -705,11 +705,11 @@ export const EmptyConversation = memo(function EmptyConversation({
             >
               <span className="text-lg">{action.icon}</span>
               <span className="text-sm font-medium">{action.label}</span>
-            </motion.button>
+            </LazyMotionButton>
           ))}
         </div>
       )}
-    </motion.div>
+    </LazyMotionDiv>
   );
 });
 

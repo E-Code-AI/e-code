@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { DndContext, DragOverlay, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 import useSplitsStore from '@/stores/splits-store';
 import { LayoutNode, Split, PaneGroup, isSplit, isPaneGroup } from '@/types/splits';
@@ -129,7 +129,7 @@ export function SplitsLayout({ className, onLayoutChange, defaultLayout }: Split
         >
           {node.children.map((child, index) => (
             <React.Fragment key={child.id}>
-              <motion.div
+              <LazyMotionDiv
                 className={cn(
                   "overflow-hidden",
                   node.direction === 'horizontal' ? "h-full" : "w-full"
@@ -145,7 +145,7 @@ export function SplitsLayout({ className, onLayoutChange, defaultLayout }: Split
                 }}
               >
                 {renderNode(child, node.direction)}
-              </motion.div>
+              </LazyMotionDiv>
               
               {/* Resize handle between children */}
               {index < node.children.length - 1 && (
@@ -196,14 +196,14 @@ export function SplitsLayout({ className, onLayoutChange, defaultLayout }: Split
         </div>
 
         {/* Floating panes */}
-        <AnimatePresence>
+        <LazyAnimatePresence>
           {Array.from(floatingPanes.values()).map((floatingPane) => (
             <FloatingPane
               key={floatingPane.id}
               floatingPane={floatingPane}
             />
           ))}
-        </AnimatePresence>
+        </LazyAnimatePresence>
 
         {/* Drag overlay */}
         <DragOverlay>
@@ -213,9 +213,9 @@ export function SplitsLayout({ className, onLayoutChange, defaultLayout }: Split
         </DragOverlay>
 
         {/* Global drop zone indicator */}
-        <AnimatePresence>
+        <LazyAnimatePresence>
           {isDragging && dragState.dropTarget && (
-            <motion.div
+            <LazyMotionDiv
               className="absolute inset-0 pointer-events-none"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -246,9 +246,9 @@ export function SplitsLayout({ className, onLayoutChange, defaultLayout }: Split
                   )}
                 </svg>
               </div>
-            </motion.div>
+            </LazyMotionDiv>
           )}
-        </AnimatePresence>
+        </LazyAnimatePresence>
       </div>
     </DndContext>
   );

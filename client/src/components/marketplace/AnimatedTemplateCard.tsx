@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -91,7 +91,7 @@ export function AnimatedTemplateCard({
     return (
       <div className="flex items-center gap-0.5">
         {[1, 2, 3, 4, 5].map((star) => (
-          <motion.div
+          <LazyMotionDiv
             key={star}
             initial={{ scale: 0, rotate: -180 }}
             animate={{ 
@@ -111,7 +111,7 @@ export function AnimatedTemplateCard({
                 star <= rating ? 'fill-yellow-500 text-yellow-500' : 'text-gray-300'
               )} 
             />
-          </motion.div>
+          </LazyMotionDiv>
         ))}
         <span className="ml-1 text-sm text-muted-foreground">
           ({template.reviewCount || 0})
@@ -122,7 +122,7 @@ export function AnimatedTemplateCard({
 
   if (viewMode === 'list') {
     return (
-      <motion.div
+      <LazyMotionDiv
         variants={cardVariants}
         initial="hidden"
         animate="visible"
@@ -201,13 +201,13 @@ export function AnimatedTemplateCard({
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+      </LazyMotionDiv>
     );
   }
 
   // Grid view with flip animation
   return (
-    <motion.div
+    <LazyMotionDiv
       variants={cardVariants}
       initial="hidden"
       animate="visible"
@@ -217,7 +217,7 @@ export function AnimatedTemplateCard({
       className={cn('relative perspective-1000', className)}
       style={{ transformStyle: 'preserve-3d' }}
     >
-      <motion.div
+      <LazyMotionDiv
         animate={isFlipped ? 'back' : 'front'}
         variants={flipCardVariants}
         className="relative w-full h-full"
@@ -235,7 +235,7 @@ export function AnimatedTemplateCard({
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             
             {template.featured && (
-              <motion.div
+              <LazyMotionDiv
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ delay: index * 0.1, type: 'spring' }}
@@ -244,7 +244,7 @@ export function AnimatedTemplateCard({
                   <Sparkles className="h-3 w-3 mr-1" />
                   Featured
                 </Badge>
-              </motion.div>
+              </LazyMotionDiv>
             )}
             
             <div className="absolute bottom-2 left-2 right-2">
@@ -358,7 +358,7 @@ export function AnimatedTemplateCard({
             </div>
           </CardContent>
         </Card>
-      </motion.div>
-    </motion.div>
+      </LazyMotionDiv>
+    </LazyMotionDiv>
   );
 }

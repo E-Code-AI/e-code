@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
 import { useDesignSystem } from '../hooks/useDesignSystem';
 
 // ============================================================================
@@ -104,7 +104,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   };
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       style={{
@@ -133,7 +133,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       >
         {/* Connection Status */}
         <StatusItem>
-          <motion.div
+          <LazyMotionDiv
             animate={{
               scale: connectionStatus === 'connecting' ? [1, 1.2, 1] : 1,
             }}
@@ -214,7 +214,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           {indentation}
         </StatusItem>
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 };
 
@@ -240,7 +240,7 @@ const StatusItem: React.FC<StatusItemProps> = ({
   const ds = useDesignSystem();
   const [showTooltip, setShowTooltip] = useState(false);
 
-  const Component = clickable || onClick ? motion.button : 'div';
+  const Component = clickable || onClick ? LazyMotionButton : 'div';
 
   return (
     <div style={{ position: 'relative' }}>
@@ -272,9 +272,9 @@ const StatusItem: React.FC<StatusItemProps> = ({
       </Component>
 
       {/* Tooltip */}
-      <AnimatePresence>
+      <LazyAnimatePresence>
         {tooltip && showTooltip && (
-          <motion.div
+          <LazyMotionDiv
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 5 }}
@@ -310,9 +310,9 @@ const StatusItem: React.FC<StatusItemProps> = ({
                 borderTop: `4px solid ${ds.colors.background.elevated}`,
               }}
             />
-          </motion.div>
+          </LazyMotionDiv>
         )}
-      </AnimatePresence>
+      </LazyAnimatePresence>
     </div>
   );
 };

@@ -17,7 +17,7 @@ import {
   TrendingUp,
   Star
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 
 const FEATURED_EXAMPLES = [
   {
@@ -93,7 +93,7 @@ export default function CodeGeneration() {
       {/* Hero Section */}
       <section className="py-20 px-4">
         <div className="container-responsive text-center">
-          <motion.div
+          <LazyMotionDiv
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -114,19 +114,17 @@ export default function CodeGeneration() {
               {STATS.map((stat, index) => {
                 const Icon = stat.icon;
                 return (
-                  <motion.div
+                  <div
                     key={stat.label}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 * index }}
-                    className="text-center"
+                    className="text-center animate-slide-in-up opacity-0"
+                    style={{ animationDelay: `${100 * index}ms`, animationFillMode: 'forwards' }}
                   >
                     <div className="flex items-center justify-center mb-2">
                       <Icon className="h-5 w-5 text-primary mr-2" />
                       <span className="text-2xl font-bold">{stat.value}</span>
                     </div>
                     <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>
@@ -148,7 +146,7 @@ export default function CodeGeneration() {
                 View Examples
               </Button>
             </div>
-          </motion.div>
+          </LazyMotionDiv>
         </div>
       </section>
 
@@ -183,11 +181,10 @@ export default function CodeGeneration() {
 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {FEATURED_EXAMPLES.map((example, index) => (
-                    <motion.div
+                    <div
                       key={example.title}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 * index }}
+                      className="animate-slide-in-up opacity-0"
+                      style={{ animationDelay: `${100 * index}ms`, animationFillMode: 'forwards' }}
                     >
                       <Card 
                         className="h-full cursor-pointer hover:shadow-lg transition-all group"
@@ -238,7 +235,7 @@ export default function CodeGeneration() {
                           </Button>
                         </CardContent>
                       </Card>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
 

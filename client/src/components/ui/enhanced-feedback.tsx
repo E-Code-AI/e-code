@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { 
   CheckCircle, 
   XCircle, 
@@ -57,9 +57,9 @@ export function EnhancedToast({
   };
 
   return (
-    <AnimatePresence>
+    <LazyAnimatePresence>
       {isVisible && (
-        <motion.div
+        <LazyMotionDiv
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -20, scale: 0.95 }}
@@ -90,9 +90,9 @@ export function EnhancedToast({
               <X className="w-4 h-4" />
             </Button>
           )}
-        </motion.div>
+        </LazyMotionDiv>
       )}
-    </AnimatePresence>
+    </LazyAnimatePresence>
   );
 }
 
@@ -120,7 +120,7 @@ export function LoadingSpinner({
             sizeClasses[size]
           )}
         />
-        <motion.div
+        <LazyMotionDiv
           className="absolute inset-0"
           animate={{ rotate: 360 }}
           transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
@@ -131,16 +131,12 @@ export function LoadingSpinner({
               sizeClasses[size]
             )}
           />
-        </motion.div>
+        </LazyMotionDiv>
       </div>
       {text && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-sm text-muted-foreground"
-        >
+        <p className="text-sm text-muted-foreground animate-fadeIn">
           {text}
-        </motion.p>
+        </p>
       )}
     </div>
   );
@@ -162,7 +158,7 @@ export function PulsingAlert({
   };
 
   return (
-    <motion.div
+    <LazyMotionDiv
       animate={{
         boxShadow: [
           '0 0 0 0 rgba(242, 98, 7, 0)',
@@ -182,7 +178,7 @@ export function PulsingAlert({
       )}
     >
       {children}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -194,14 +190,14 @@ export function SuccessCheckmark({
   onComplete?: () => void;
 }) {
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0, scale: 0 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
       onAnimationComplete={onComplete}
       className="flex flex-col items-center gap-4"
     >
-      <motion.div
+      <LazyMotionDiv
         initial={{ scale: 0, rotate: -180 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ 
@@ -213,16 +209,11 @@ export function SuccessCheckmark({
         className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center"
       >
         <CheckCircle className="w-10 h-10 text-green-500" />
-      </motion.div>
-      <motion.p
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="text-lg font-semibold"
-      >
+      </LazyMotionDiv>
+      <p className="text-lg font-semibold animate-fadeIn" style={{ animationDelay: '0.4s' }}>
         {text}
-      </motion.p>
-    </motion.div>
+      </p>
+    </LazyMotionDiv>
   );
 }
 
@@ -236,7 +227,7 @@ export function ErrorShake({
   onRetry?: () => void;
 }) {
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0 }}
       animate={{ 
         opacity: 1,
@@ -266,7 +257,7 @@ export function ErrorShake({
           Try Again
         </Button>
       )}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -292,14 +283,9 @@ export function AnimatedProgress({
         />
       </div>
       {showLabel && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-sm text-muted-foreground mt-2 text-center"
-        >
+        <p className="text-sm text-muted-foreground mt-2 text-center animate-fadeIn" style={{ animationDelay: '0.3s' }}>
           {Math.round(percentage)}%
-        </motion.p>
+        </p>
       )}
     </div>
   );

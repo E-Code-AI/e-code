@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
 import { useDesignSystem } from '../hooks/useDesignSystem';
 import { triggerHaptic } from '../hooks/useGestures';
 
@@ -89,7 +89,7 @@ export const Settings: React.FC<SettingsProps> = ({ sections, onClose }) => {
   const activeSectionData = sections.find((s) => s.id === activeSection);
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -123,7 +123,7 @@ export const Settings: React.FC<SettingsProps> = ({ sections, onClose }) => {
           Settings
         </h1>
         {onClose && (
-          <motion.button
+          <LazyMotionButton
             onClick={handleClose}
             whileTap={{ scale: 0.95 }}
             style={{
@@ -139,7 +139,7 @@ export const Settings: React.FC<SettingsProps> = ({ sections, onClose }) => {
             }}
           >
             Done
-          </motion.button>
+          </LazyMotionButton>
         )}
       </div>
 
@@ -162,7 +162,7 @@ export const Settings: React.FC<SettingsProps> = ({ sections, onClose }) => {
             }}
           >
             {sections.map((section) => (
-              <motion.button
+              <LazyMotionButton
                 key={section.id}
                 onClick={() => {
                   triggerHaptic('selection');
@@ -191,7 +191,7 @@ export const Settings: React.FC<SettingsProps> = ({ sections, onClose }) => {
               >
                 {section.icon && <span style={{ fontSize: '20px' }}>{section.icon}</span>}
                 {section.title}
-              </motion.button>
+              </LazyMotionButton>
             ))}
           </div>
         )}
@@ -205,9 +205,9 @@ export const Settings: React.FC<SettingsProps> = ({ sections, onClose }) => {
             paddingBottom: `calc(${ds.spacing[10]} + env(safe-area-inset-bottom, 0px))`,
           }}
         >
-          <AnimatePresence mode="wait">
+          <LazyAnimatePresence mode="wait">
             {activeSectionData && (
-              <motion.div
+              <LazyMotionDiv
                 key={activeSectionData.id}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -230,12 +230,12 @@ export const Settings: React.FC<SettingsProps> = ({ sections, onClose }) => {
                     <SettingItemRenderer key={item.id} item={item} />
                   ))}
                 </div>
-              </motion.div>
+              </LazyMotionDiv>
             )}
-          </AnimatePresence>
+          </LazyAnimatePresence>
         </div>
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 };
 
@@ -305,7 +305,7 @@ const ToggleSettingItem: React.FC<{ item: ToggleItem }> = ({ item }) => {
       </div>
 
       {/* Toggle Switch */}
-      <motion.button
+      <LazyMotionButton
         onClick={handleToggle}
         whileTap={{ scale: 0.95 }}
         style={{
@@ -322,7 +322,7 @@ const ToggleSettingItem: React.FC<{ item: ToggleItem }> = ({ item }) => {
           flexShrink: 0,
         }}
       >
-        <motion.div
+        <LazyMotionDiv
           animate={{
             x: item.value ? 20 : 0,
           }}
@@ -342,7 +342,7 @@ const ToggleSettingItem: React.FC<{ item: ToggleItem }> = ({ item }) => {
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
           }}
         />
-      </motion.button>
+      </LazyMotionButton>
     </div>
   );
 };
@@ -383,7 +383,7 @@ const SelectSettingItem: React.FC<{ item: SelectItem }> = ({ item }) => {
         {item.options.map((option) => {
           const isSelected = option.value === item.value;
           return (
-            <motion.button
+            <LazyMotionButton
               key={option.value}
               onClick={() => {
                 triggerHaptic('selection');
@@ -405,7 +405,7 @@ const SelectSettingItem: React.FC<{ item: SelectItem }> = ({ item }) => {
               }}
             >
               {option.label}
-            </motion.button>
+            </LazyMotionButton>
           );
         })}
       </div>
@@ -526,7 +526,7 @@ const ActionSettingItem: React.FC<{ item: ActionItem }> = ({ item }) => {
         </>
       )}
 
-      <motion.button
+      <LazyMotionButton
         onClick={() => {
           triggerHaptic(item.destructive ? 'warning' : 'medium');
           item.onPress();
@@ -548,7 +548,7 @@ const ActionSettingItem: React.FC<{ item: ActionItem }> = ({ item }) => {
         }}
       >
         {item.buttonLabel}
-      </motion.button>
+      </LazyMotionButton>
     </div>
   );
 };

@@ -22,7 +22,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DeploymentMetrics } from './deployment/DeploymentMetrics';
 import { AutoScalingConfig } from './deployment/AutoScalingConfig';
@@ -435,7 +435,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
   };
 
   return (
-    <motion.div 
+    <LazyMotionDiv 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -486,7 +486,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
 
         <TabsContent value="overview" className="mt-0 flex-1 overflow-auto animate-fadeIn">
           {/* Enhanced Deploy Button Section with Glassmorphism */}
-          <motion.div 
+          <LazyMotionDiv 
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1 }}
@@ -518,7 +518,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                 )}
               </Button>
             </div>
-          </motion.div>
+          </LazyMotionDiv>
 
           {/* Container Status */}
           {containerStatus && (
@@ -538,7 +538,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
           )}
           
           {/* Enhanced Deployment List with Skeleton Loaders */}
-          <motion.div 
+          <LazyMotionDiv 
             initial={{ y: -10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -548,9 +548,9 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
             <div className="space-y-3">
               {deployments.length === 0 && !stats ? (
                 // Skeleton Loaders for Deployments
-                <AnimatePresence>
+                <LazyAnimatePresence>
                   {[1, 2, 3].map((n) => (
-                    <motion.div
+                    <LazyMotionDiv
                       key={n}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -574,18 +574,18 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                           <Skeleton className="h-7 w-7 rounded" />
                         </div>
                       </div>
-                    </motion.div>
+                    </LazyMotionDiv>
                   ))}
-                </AnimatePresence>
+                </LazyAnimatePresence>
               ) : deployments.length === 0 ? (
                 <Card className="p-8 text-center border-dashed glassmorphism">
                   <Rocket className="h-12 w-12 mx-auto mb-3 text-primary" />
                   <p className="text-sm text-muted-foreground">No deployments yet. Click deploy to get started!</p>
                 </Card>
               ) : (
-                <AnimatePresence>
+                <LazyAnimatePresence>
                   {deployments.map((deployment, idx) => (
-                    <motion.div
+                    <LazyMotionDiv
                       key={deployment.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -603,12 +603,12 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2">
-                            <motion.div
+                            <LazyMotionDiv
                               animate={deployment.status === 'deploying' ? { rotate: 360 } : {}}
                               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                             >
                               {getStatusIcon(deployment.status)}
-                            </motion.div>
+                            </LazyMotionDiv>
                             <span className="font-semibold text-sm">Deployment #{deployment.id}</span>
                             <Badge 
                               variant="outline" 
@@ -657,12 +657,12 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                           </Button>
                         </div>
                       </div>
-                    </motion.div>
+                    </LazyMotionDiv>
                   ))}
-                </AnimatePresence>
+                </LazyAnimatePresence>
               )}
             </div>
-          </motion.div>
+          </LazyMotionDiv>
 
               {/* Deployment Details */}
               {selectedDeployment && (
