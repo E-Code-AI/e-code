@@ -488,10 +488,16 @@ router.post('/api-keys', async (req, res) => {
 
 router.patch('/api-keys/:id', async (req, res) => {
   try {
-    const updates = req.body;
-    // Don't allow updating the key itself through this endpoint
-    delete updates.key;
+    // SECURITY: Validate update data with Zod schema
+    const validation = updateApiKeySchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        message: 'Invalid API key update data',
+        errors: validation.error.errors
+      });
+    }
     
+    const updates = validation.data;
     const apiKey = await adminService.updateApiKey(parseInt(req.params.id), updates, getAuthUser(req).id.toString());
     if (!apiKey) {
       return res.status(404).json({ message: 'API key not found' });
@@ -736,7 +742,29 @@ router.post('/cms/pages', async (req, res) => {
 
 router.patch('/cms/pages/:id', async (req, res) => {
   try {
-    const page = await adminService.updateCmsPage(parseInt(req.params.id), req.body, getAuthUser(req).id.toString());
+    // SECURITY: Validate update data with Zod schema
+    const cmsPageUpdateSchema = z.object({
+      slug: z.string().min(1).max(200).optional(),
+      title: z.string().min(1).max(200).optional(),
+      content: z.string().optional(),
+      metaTitle: z.string().max(200).optional(),
+      metaDescription: z.string().max(500).optional(),
+      metaKeywords: z.string().max(500).optional(),
+      template: z.string().max(100).optional(),
+      customCss: z.string().max(50000).optional(),
+      customJs: z.string().max(50000).optional(),
+      status: z.enum(['draft', 'published']).optional()
+    }).strict();
+    
+    const validation = cmsPageUpdateSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        message: 'Invalid CMS page update data',
+        errors: validation.error.errors
+      });
+    }
+    
+    const page = await adminService.updateCmsPage(parseInt(req.params.id), validation.data, getAuthUser(req).id.toString());
     if (!page) {
       return res.status(404).json({ message: 'Page not found' });
     }
