@@ -14,13 +14,12 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { User } from '../types';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
+import { updateProfile } from '../services/api';
 
-type ProfileScreenProps = NativeStackScreenProps<RootStackParamList, 'Profile'> & {
-  user: User;
-  token: string;
-};
+type ProfileScreenProps = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
-const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, user, token }) => {
+const ProfileScreen: React.FC<ProfileScreenProps> = ({ route }) => {
+  const { token, user } = route.params;
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [displayName, setDisplayName] = useState(user.displayName || '');
@@ -31,17 +30,15 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation, user, token }
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      // TODO: API call to update profile
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-
-      Alert.alert('Success', 'Profile updated successfully');
+      const result = await updateProfile({ displayName, bio, location, website }, token);
+      Alert.alert('Success', result.message || 'Profile updated successfully');
       setEditing(false);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to update profile');
     } finally {
       setSaving(false);
     }
-  }, [displayName, bio, location, website]);
+  }, [displayName, bio, location, website, token]);
 
   const handleCancel = useCallback(() => {
     setDisplayName(user.displayName || '');

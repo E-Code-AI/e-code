@@ -6,16 +6,15 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
+  Alert
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
+import { getDeployments, createDeployment, Deployment as ApiDeployment } from '../services/api';
 
-type DeploymentsScreenProps = NativeStackScreenProps<RootStackParamList, 'Deployments'> & {
-  projectId: number;
-  token: string;
-};
+type DeploymentsScreenProps = NativeStackScreenProps<RootStackParamList, 'Deployments'>;
 
 type Deployment = {
   id: string;
@@ -26,50 +25,59 @@ type Deployment = {
   url?: string;
 };
 
-const DeploymentsScreen: React.FC<DeploymentsScreenProps> = ({ projectId, token }) => {
+const DeploymentsScreen: React.FC<DeploymentsScreenProps> = ({ route }) => {
+  const { projectId, token } = route.params;
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchDeployments = useCallback(async () => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const mockDeployments: Deployment[] = [
-        {
-          id: '1',
-          status: 'success',
-          branch: 'main',
-          commit: 'abc123',
-          timestamp: new Date(Date.now() - 3600000),
-          url: 'https://app.example.com'
-        },
-        {
-          id: '2',
-          status: 'building',
-          branch: 'develop',
-          commit: 'def456',
-          timestamp: new Date(Date.now() - 7200000)
-        },
-        {
-          id: '3',
-          status: 'failed',
-          branch: 'feature/ui',
-          commit: 'ghi789',
-          timestamp: new Date(Date.now() - 86400000)
-        }
-      ];
-
-      setDeployments(mockDeployments);
+      const apiDeployments = await getDeployments(projectId, token);
+      const transformed: Deployment[] = apiDeployments.map((d: ApiDeployment) => ({
+        ...d,
+        timestamp: new Date(d.timestamp)
+      }));
+      setDeployments(transformed);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to fetch deployments');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [projectId, token]);
 
   useEffect(() => {
     fetchDeployments();
   }, [fetchDeployments]);
+
+  const handleNewDeployment = useCallback(() => {
+    Alert.prompt(
+      'New Deployment',
+      'Enter branch name:',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Deploy',
+          onPress: async (branch) => {
+            if (branch) {
+              try {
+                setLoading(true);
+                await createDeployment(projectId, { branch }, token);
+                Alert.alert('Success', 'Deployment started successfully');
+                fetchDeployments();
+              } catch (error) {
+                Alert.alert('Error', 'Failed to create deployment');
+                setLoading(false);
+              }
+            }
+          }
+        }
+      ],
+      'plain-text',
+      'main'
+    );
+  }, [projectId, token, fetchDeployments]);
 
   const getStatusIcon = (status: Deployment['status']) => {
     switch (status) {
@@ -152,7 +160,7 @@ const DeploymentsScreen: React.FC<DeploymentsScreenProps> = ({ projectId, token 
         />
       )}
 
-      <TouchableOpacity style={styles.deployButton}>
+      <TouchableOpacity style={styles.deployButton} onPress={handleNewDeployment}>
         <Text style={styles.deployButtonText}>+ New Deployment</Text>
       </TouchableOpacity>
     </View>

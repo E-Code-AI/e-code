@@ -10,22 +10,13 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
-import { Project } from '../types';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
+import { searchAll, SearchResult } from '../services/api';
 
-type SearchScreenProps = NativeStackScreenProps<RootStackParamList, 'Search'> & {
-  token: string;
-};
+type SearchScreenProps = NativeStackScreenProps<RootStackParamList, 'Search'>;
 
-type SearchResult = {
-  type: 'project' | 'file' | 'user';
-  id: string;
-  title: string;
-  subtitle?: string;
-  icon?: string;
-};
-
-const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, token }) => {
+const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route }) => {
+  const { token } = route.params;
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -43,38 +34,15 @@ const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, token }) => {
 
     setLoading(true);
     try {
-      // TODO: Implement real search API
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const mockResults: SearchResult[] = [
-        {
-          type: 'project',
-          id: '1',
-          title: 'My React Project',
-          subtitle: 'React • 2 days ago',
-          icon: '📁'
-        },
-        {
-          type: 'file',
-          id: '2',
-          title: 'App.tsx',
-          subtitle: 'My React Project',
-          icon: '📄'
-        },
-        {
-          type: 'user',
-          id: '3',
-          title: 'John Doe',
-          subtitle: '@johndoe',
-          icon: '👤'
-        }
-      ];
-
-      setResults(mockResults);
+      const searchResults = await searchAll(searchQuery, token);
+      setResults(searchResults);
+    } catch (error) {
+      console.error('Search error:', error);
+      setResults([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -86,9 +54,9 @@ const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, token }) => {
 
   const handleResultPress = useCallback((result: SearchResult) => {
     if (result.type === 'project') {
-      navigation.navigate('Project', { projectId: parseInt(result.id), projectName: result.title });
+      navigation.navigate('Project', { projectId: parseInt(result.id), projectName: result.title, token });
     }
-  }, [navigation]);
+  }, [navigation, token]);
 
   const handleRecentSearch = useCallback((search: string) => {
     setQuery(search);

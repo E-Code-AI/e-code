@@ -11,11 +11,9 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
+import { getCollaborators, inviteCollaborator, removeCollaborator, Collaborator as ApiCollaborator } from '../services/api';
 
-type CollaborationScreenProps = NativeStackScreenProps<RootStackParamList, 'Collaboration'> & {
-  projectId: number;
-  token: string;
-};
+type CollaborationScreenProps = NativeStackScreenProps<RootStackParamList, 'Collaboration'>;
 
 type Collaborator = {
   id: string;
@@ -27,52 +25,54 @@ type Collaborator = {
   lastActive?: Date;
 };
 
-const CollaborationScreen: React.FC<CollaborationScreenProps> = ({ projectId, token }) => {
+const CollaborationScreen: React.FC<CollaborationScreenProps> = ({ route }) => {
+  const { projectId, token } = route.params;
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchCollaborators();
-  }, []);
-
-  const fetchCollaborators = async () => {
+  const fetchCollaborators = useCallback(async () => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const mockCollaborators: Collaborator[] = [
-        {
-          id: '1',
-          username: 'johndoe',
-          displayName: 'John Doe',
-          role: 'owner',
-          status: 'online'
-        },
-        {
-          id: '2',
-          username: 'janedoe',
-          displayName: 'Jane Doe',
-          role: 'admin',
-          status: 'online'
-        },
-        {
-          id: '3',
-          username: 'bobsmith',
-          displayName: 'Bob Smith',
-          role: 'member',
-          status: 'offline',
-          lastActive: new Date(Date.now() - 3600000)
-        }
-      ];
-
-      setCollaborators(mockCollaborators);
+      const apiCollaborators = await getCollaborators(projectId, token);
+      const transformed: Collaborator[] = apiCollaborators.map((c: ApiCollaborator) => ({
+        ...c,
+        lastActive: c.lastActive ? new Date(c.lastActive) : undefined
+      }));
+      setCollaborators(transformed);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to fetch collaborators');
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId, token]);
+
+  useEffect(() => {
+    fetchCollaborators();
+  }, [fetchCollaborators]);
 
   const handleInvite = useCallback(() => {
-    Alert.alert('Coming Soon', 'Invite collaborators feature coming soon');
-  }, []);
+    Alert.prompt(
+      'Invite Collaborator',
+      'Enter email address:',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Invite',
+          onPress: async (email) => {
+            if (email) {
+              try {
+                await inviteCollaborator(projectId, { email, role: 'member' }, token);
+                Alert.alert('Success', 'Invitation sent successfully');
+                fetchCollaborators();
+              } catch (error) {
+                Alert.alert('Error', 'Failed to send invitation');
+              }
+            }
+          }
+        }
+      ],
+      'plain-text'
+    );
+  }, [projectId, token, fetchCollaborators]);
 
   const handleRemove = useCallback((collaborator: Collaborator) => {
     Alert.alert(
@@ -80,10 +80,21 @@ const CollaborationScreen: React.FC<CollaborationScreenProps> = ({ projectId, to
       `Remove ${collaborator.displayName} from this project?`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Remove', style: 'destructive' }
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removeCollaborator(projectId, collaborator.id, token);
+              fetchCollaborators();
+            } catch (error) {
+              Alert.alert('Error', 'Failed to remove collaborator');
+            }
+          }
+        }
       ]
     );
-  }, []);
+  }, [projectId, token, fetchCollaborators]);
 
   const getRoleBadgeColor = (role: Collaborator['role']) => {
     switch (role) {

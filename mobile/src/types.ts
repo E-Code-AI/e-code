@@ -4,6 +4,13 @@ export interface User {
   email?: string | null;
   displayName?: string | null;
   avatarUrl?: string | null;
+  bio?: string | null;
+  location?: string | null;
+  website?: string | null;
+  profileImageUrl?: string | null;
+  projectCount?: number;
+  followersCount?: number;
+  followingCount?: number;
 }
 
 export interface AuthTokens {
@@ -35,10 +42,12 @@ export interface Project {
 
 export interface ProjectFile {
   id: number;
+  name: string;
   path: string;
-  content: string;
-  language: string;
+  content?: string;
+  language?: string;
   size: number;
+  isDirectory: boolean;
 }
 
 export interface RunResult {
