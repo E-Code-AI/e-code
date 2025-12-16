@@ -21,7 +21,8 @@ data:
   PORT: "5000"
   ENABLE_CONTAINER_ORCHESTRATION: "true"
   KUBERNETES_NAMESPACE_PREFIX: "project-"
-  USER_CONTAINER_IMAGE: "gcr.io/votre-projet-ecode/user-environment:latest"
+  # Replace with specific version tag in production
+  USER_CONTAINER_IMAGE: "${CONTAINER_REGISTRY}/${PROJECT_ID}/user-environment:${IMAGE_TAG}"
 
 ---
 # Main Platform Deployment
@@ -43,7 +44,9 @@ spec:
       serviceAccountName: e-code-orchestrator
       containers:
       - name: e-code-platform
-        image: gcr.io/votre-projet-ecode/e-code-platform:full
+        # Replace with specific version tag in production
+        image: ${CONTAINER_REGISTRY}/${PROJECT_ID}/e-code-platform:${IMAGE_TAG}
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
         env:
@@ -86,6 +89,11 @@ spec:
           limits:
             memory: "1Gi"
             cpu: "1000m"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         readinessProbe:
           httpGet:
             path: /api/monitoring/health
