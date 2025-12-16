@@ -66,164 +66,153 @@ export default function Pricing() {
     queryKey: ['/api/payments/plans'],
   });
 
-  const tiers: PricingTier[] = useMemo(() => {
-    const freeTier: PricingTier = {
-      name: 'Free',
-      description: 'Perfect for learning and personal projects',
-      monthlyPrice: 0,
-      yearlyPrice: 0,
+  // UI metadata for each tier (icons, gradients, descriptions) - static display properties
+  const tierUIMetadata: Record<string, { icon: ReactNode; gradient: string; description: string; popular?: boolean; enterprise?: boolean; ctaVariant: 'default' | 'outline' | 'secondary' }> = {
+    free: {
       icon: <Rocket className="h-6 w-6" />,
       gradient: 'from-gray-600 to-gray-700',
-      features: [
-        { text: '1 vCPU + 1 GB RAM', included: true },
-        { text: '10 GB storage', included: true },
-        { text: '50 GB bandwidth/month', included: true },
-        { text: '5 Active projects', included: true },
-        { text: 'Public projects only', included: true },
-        { text: 'Community support', included: true },
-        { text: 'Basic templates', included: true },
-        { text: 'GitHub integration', included: true },
-        { text: 'SSL certificates', included: true },
-        { text: '$0 monthly AI credits', included: true, tooltip: '100 AI requests/month included - Pay only for what you use beyond that' },
-        { text: 'Pay-as-you-go AI pricing', included: true, highlight: true },
-        { text: 'Private projects', included: false },
-        { text: 'Custom domains', included: false },
-        { text: 'Team collaboration', included: false },
-        { text: 'Priority support', included: false }
-      ],
-      cta: 'Start Free',
+      description: 'Perfect for learning and personal projects',
       ctaVariant: 'outline'
-    };
-
-    const coreTier: PricingTier = {
-      name: 'Core',
-      description: 'Essential tools for productive development',
-      monthlyPrice: 20,
-      yearlyPrice: 15,
-      popular: true,
+    },
+    core: {
       icon: <Star className="h-6 w-6" />,
       gradient: 'from-[var(--ecode-accent)] to-[var(--ecode-accent)]/80',
-      features: [
-        { text: '4 vCPUs + 8 GB RAM', included: true, highlight: true },
-        { text: '100 GB storage', included: true },
-        { text: '1 TB bandwidth/month', included: true },
-        { text: 'Unlimited active projects', included: true },
-        { text: 'Private projects', included: true, highlight: true },
-        { text: 'Custom domains (5)', included: true },
-        { text: 'Email support', included: true },
-        { text: 'Advanced templates', included: true },
-        { text: 'GitHub + GitLab integration', included: true },
-        { text: '$25 monthly AI credits', included: true, tooltip: 'Unlimited AI requests - $25 credits included monthly', highlight: true },
-      ],
-      cta: 'Start Core',
+      description: 'Essential tools for productive development',
+      popular: true,
       ctaVariant: 'default'
-    };
-
-    const teamsTier: PricingTier = {
-      name: 'Teams',
-      description: 'For professional developers and growing teams',
-      monthlyPrice: 40,
-      yearlyPrice: 33,
+    },
+    teams: {
       icon: <Users className="h-6 w-6" />,
       gradient: 'from-blue-600 to-cyan-600',
-      features: [
-        { text: '8 vCPUs + 16 GB RAM', included: true, highlight: true },
-        { text: '500 GB storage', included: true },
-        { text: 'Unlimited bandwidth', included: true },
-        { text: 'Unlimited projects', included: true },
-        { text: 'Team collaboration', included: true, highlight: true },
-        { text: 'Unlimited custom domains', included: true },
-        { text: 'Priority support + Chat', included: true },
-        { text: 'SSO/SAML integration', included: true },
-        { text: 'Audit logs', included: true },
-        { text: '$100 monthly AI credits', included: true, tooltip: 'Unlimited AI - $100 credits per team member', highlight: true },
-      ],
-      cta: 'Start Teams',
+      description: 'For professional developers and growing teams',
       ctaVariant: 'outline'
-    };
-
-    const enterpriseTier: PricingTier = {
-      name: 'Enterprise',
-      description: 'For large teams and Fortune 500 companies',
-      monthlyPrice: 0,
-      yearlyPrice: 0,
-      enterprise: true,
+    },
+    enterprise: {
       icon: <Building2 className="h-6 w-6" />,
       gradient: 'from-amber-600 to-orange-600',
-      features: [
-        { text: 'Custom infrastructure sizing', included: true, highlight: true },
-        { text: 'Unlimited storage', included: true },
-        { text: 'Dedicated account manager', included: true },
-        { text: '99.99% SLA', included: true, highlight: true },
-        { text: 'SOC 2 Type II Certified', included: true },
-        { text: 'HIPAA Compliant', included: true },
-        { text: '24/7 Phone support', included: true },
-        { text: 'Custom integrations', included: true },
-        { text: 'Air-gapped deployment', included: true },
-        { text: 'Custom AI credits', included: true, tooltip: 'Custom AI training and unlimited credits' },
-      ],
-      cta: 'Contact Sales',
+      description: 'For large teams and Fortune 500 companies',
+      enterprise: true,
       ctaVariant: 'default'
-    };
+    }
+  };
 
-    if (!apiPlans || apiPlans.length === 0) {
-      return [freeTier, coreTier, teamsTier, enterpriseTier];
+  // Default features for fallback when API is unavailable
+  const defaultFeatures: Record<string, PricingTier['features']> = {
+    free: [
+      { text: '1 vCPU + 1 GB RAM', included: true },
+      { text: '10 GB storage', included: true },
+      { text: '50 GB bandwidth/month', included: true },
+      { text: '5 Active projects', included: true },
+      { text: 'Public projects only', included: true },
+      { text: 'Community support', included: true },
+      { text: 'Basic templates', included: true },
+      { text: 'GitHub integration', included: true },
+      { text: 'SSL certificates', included: true },
+      { text: '$0 monthly AI credits', included: true, tooltip: '100 AI requests/month included - Pay only for what you use beyond that' },
+      { text: 'Pay-as-you-go AI pricing', included: true, highlight: true },
+      { text: 'Private projects', included: false },
+      { text: 'Custom domains', included: false },
+      { text: 'Team collaboration', included: false },
+      { text: 'Priority support', included: false }
+    ],
+    core: [
+      { text: '4 vCPUs + 8 GB RAM', included: true, highlight: true },
+      { text: '100 GB storage', included: true },
+      { text: '1 TB bandwidth/month', included: true },
+      { text: 'Unlimited active projects', included: true },
+      { text: 'Private projects', included: true, highlight: true },
+      { text: 'Custom domains (5)', included: true },
+      { text: 'Email support', included: true },
+      { text: 'Advanced templates', included: true },
+      { text: 'GitHub + GitLab integration', included: true },
+      { text: '$25 monthly AI credits', included: true, tooltip: 'Unlimited AI requests - $25 credits included monthly', highlight: true }
+    ],
+    teams: [
+      { text: '8 vCPUs + 16 GB RAM', included: true, highlight: true },
+      { text: '500 GB storage', included: true },
+      { text: 'Unlimited bandwidth', included: true },
+      { text: 'Unlimited projects', included: true },
+      { text: 'Team collaboration', included: true, highlight: true },
+      { text: 'Unlimited custom domains', included: true },
+      { text: 'Priority support + Chat', included: true },
+      { text: 'SSO/SAML integration', included: true },
+      { text: 'Audit logs', included: true },
+      { text: '$100 monthly AI credits', included: true, tooltip: 'Unlimited AI - $100 credits per team member', highlight: true }
+    ],
+    enterprise: [
+      { text: 'Custom infrastructure sizing', included: true, highlight: true },
+      { text: 'Unlimited storage', included: true },
+      { text: 'Dedicated account manager', included: true },
+      { text: '99.99% SLA', included: true, highlight: true },
+      { text: 'SOC 2 Type II Certified', included: true },
+      { text: 'HIPAA Compliant', included: true },
+      { text: '24/7 Phone support', included: true },
+      { text: 'Custom integrations', included: true },
+      { text: 'Air-gapped deployment', included: true },
+      { text: 'Custom AI credits', included: true, tooltip: 'Custom AI training and unlimited credits' }
+    ]
+  };
+
+  // Default prices (fallback when API unavailable)
+  const defaultPrices: Record<string, { monthly: number; yearly: number }> = {
+    free: { monthly: 0, yearly: 0 },
+    core: { monthly: 20, yearly: 15 },
+    teams: { monthly: 40, yearly: 33 },
+    enterprise: { monthly: 0, yearly: 0 }
+  };
+
+  const tiers: PricingTier[] = useMemo(() => {
+    // Group API plans by tier
+    const apiPrices: Record<string, { monthly?: number; yearly?: number; features?: string[] }> = {};
+    
+    if (apiPlans && apiPlans.length > 0) {
+      apiPlans.forEach((plan) => {
+        const tierName = (plan.tier || plan.name || '').toLowerCase();
+        if (!apiPrices[tierName]) {
+          apiPrices[tierName] = {};
+        }
+        if (plan.interval === 'month') {
+          apiPrices[tierName].monthly = plan.price;
+          if (plan.features) apiPrices[tierName].features = plan.features;
+        } else if (plan.interval === 'year') {
+          apiPrices[tierName].yearly = plan.price;
+          if (plan.features) apiPrices[tierName].features = plan.features;
+        }
+      });
     }
 
-    const tierGroups: Record<string, { monthly?: any; yearly?: any }> = {};
+    // Build tiers using API prices when available, fallback to defaults
+    const tierOrder = ['free', 'core', 'teams', 'enterprise'];
     
-    apiPlans.forEach((plan) => {
-      const tierName = plan.tier || plan.name.toLowerCase();
-      if (!tierGroups[tierName]) {
-        tierGroups[tierName] = {};
-      }
-      if (plan.interval === 'month') {
-        tierGroups[tierName].monthly = plan;
-      } else if (plan.interval === 'year') {
-        tierGroups[tierName].yearly = plan;
-      }
+    return tierOrder.map((tierKey): PricingTier => {
+      const ui = tierUIMetadata[tierKey];
+      const apiData = apiPrices[tierKey];
+      const fallbackPrices = defaultPrices[tierKey];
+      const fallbackFeatures = defaultFeatures[tierKey];
+
+      // Use API prices if available, otherwise use fallback
+      const monthlyPrice = apiData?.monthly ?? fallbackPrices.monthly;
+      const yearlyPrice = apiData?.yearly ?? fallbackPrices.yearly;
+
+      // Use API features if available, otherwise use default features
+      const features = apiData?.features 
+        ? apiData.features.map((f: string) => ({ text: f, included: true, highlight: false }))
+        : fallbackFeatures;
+
+      return {
+        name: tierKey.charAt(0).toUpperCase() + tierKey.slice(1),
+        description: ui.description,
+        monthlyPrice,
+        yearlyPrice,
+        popular: ui.popular,
+        enterprise: ui.enterprise,
+        icon: ui.icon,
+        gradient: ui.gradient,
+        features,
+        cta: ui.enterprise ? 'Contact Sales' : `Start ${tierKey.charAt(0).toUpperCase() + tierKey.slice(1)}`,
+        ctaVariant: ui.ctaVariant
+      };
     });
-
-    const mappedTiers: PricingTier[] = Object.entries(tierGroups)
-      .filter(([tierName]) => tierName !== 'free')
-      .map(([tierName, plans]) => {
-        const plan = plans.monthly || plans.yearly;
-        const isCore = tierName === 'core';
-        const isTeams = tierName === 'teams';
-        const isEnterprise = tierName === 'enterprise';
-
-        return {
-          name: plan.name,
-          description: isCore 
-            ? 'Essential tools for productive development'
-            : isTeams 
-              ? 'For professional developers and small teams'
-              : 'For large teams and Fortune 500 companies',
-          monthlyPrice: plans.monthly?.price || plans.yearly?.price || 0,
-          yearlyPrice: plans.yearly?.price || plans.monthly?.price || 0,
-          popular: isCore,
-          enterprise: isEnterprise,
-          icon: isCore 
-            ? <Star className="h-6 w-6" />
-            : isTeams
-              ? <Users className="h-6 w-6" />
-              : <Building2 className="h-6 w-6" />,
-          gradient: isCore
-            ? 'from-[var(--ecode-accent)] to-[var(--ecode-accent)]/80'
-            : isTeams
-              ? 'from-blue-600 to-cyan-600'
-              : 'from-amber-600 to-orange-600',
-          features: plan.features.map((f: string) => ({
-            text: f,
-            included: true,
-            highlight: false
-          })),
-          cta: isEnterprise ? 'Contact Sales' : `Start ${plan.name}`,
-          ctaVariant: isCore ? 'default' : isEnterprise ? 'default' : 'outline'
-        };
-      });
-
-    return [freeTier, ...mappedTiers];
   }, [apiPlans]);
 
   const comparisonFeatures = [
