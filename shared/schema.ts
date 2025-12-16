@@ -688,6 +688,27 @@ export const mobileDevices = pgTable("mobile_devices", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Mobile platform enum for sessions
+export const mobilePlatformEnum = pgEnum('mobile_platform', ['ios', 'android']);
+
+// Mobile Sessions table - for tracking authenticated mobile app sessions
+export const mobileSessions = pgTable("mobile_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  deviceId: varchar("device_id").notNull(),
+  deviceName: varchar("device_name"),
+  platform: mobilePlatformEnum("platform").notNull(),
+  pushToken: varchar("push_token"),
+  lastActiveAt: timestamp("last_active_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+}, (table) => ({
+  userDeviceUnique: unique("mobile_sessions_user_device_unique").on(table.userId, table.deviceId),
+  userIdIdx: index("mobile_sessions_user_id_idx").on(table.userId),
+  expiresAtIdx: index("mobile_sessions_expires_at_idx").on(table.expiresAt),
+}));
+
 export const pushNotifications = pgTable("push_notifications", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   userId: integer("user_id").notNull().references(() => users.id),
@@ -1630,6 +1651,9 @@ export const insertNewsletterDeliverySchema = createInsertSchema(newsletterDeliv
   sentAt: true,
 });
 
+// Mobile Sessions Insert Schema
+export const insertMobileSessionSchema = createInsertSchema(mobileSessions).omit({ id: true, createdAt: true });
+
 // Custom Prompts Insert Schemas
 export const insertPromptTemplateSchema = createInsertSchema(promptTemplates).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCustomPromptSchema = createInsertSchema(customPrompts).omit({ id: true, createdAt: true, updatedAt: true });
@@ -1669,6 +1693,9 @@ export type InsertMentorProfile = z.infer<typeof insertMentorProfileSchema>;
 export type ChallengeSubmission = typeof challengeSubmissions.$inferSelect;
 export type MentorshipSession = typeof mentorshipSessions.$inferSelect;
 export type MobileDevice = typeof mobileDevices.$inferSelect;
+
+export type MobileSession = typeof mobileSessions.$inferSelect;
+export type InsertMobileSession = z.infer<typeof insertMobileSessionSchema>;
 
 export type Deployment = typeof deployments.$inferSelect;
 export type InsertDeployment = z.infer<typeof insertDeploymentSchema>;

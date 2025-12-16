@@ -1,0 +1,209 @@
+# PARTIE 7: AI AGENT (40 issues)
+
+ 
+
+## 7.1 CRITIQUES (5)
+
+ 
+
+### PROBLÈME A-C1: Command injection dans tool-executor
+
+**Fichier:** `/server/agent/tool-executor.ts` lignes 255-287
+
+**Code actuel:**
+
+```typescript
+
+execAsync(params.command, { cwd: this.projectRoot, timeout });
+
+```
+
+**Solution:**
+
+```typescript
+
+import { spawn } from 'child_process';
+
+const args = parseCommand(params.command); // Parse safely
+
+spawn(args[0], args.slice(1), { cwd: this.projectRoot, shell: false });
+
+```
+
+ 
+
+---
+
+ 
+
+### PROBLÈME A-C2: Path traversal dans createFile
+
+**Fichier:** `/server/agent/tool-executor.ts` lignes 133-154
+
+**Code actuel:**
+
+```typescript
+
+const fullPath = path.join(this.projectRoot, params.path);
+
+// Pas de validation! ../../etc/passwd possible
+
+```
+
+**Solution:**
+
+```typescript
+
+const fullPath = path.join(this.projectRoot, params.path);
+
+if (!fullPath.startsWith(this.projectRoot)) {
+
+  throw new Error('Path traversal detected');
+
+}
+
+```
+
+ 
+
+---
+
+ 
+
+### PROBLÈME A-C3: Model fallback hardcodé
+
+**Fichier:** `/server/ai/ai-service.ts` ligne 227
+
+**Code actuel:**
+
+```typescript
+
+model: model === 'claude-4' ? 'claude-sonnet-4-5-20250929' : 'claude-sonnet-4-5-20250929'
+
+// Toujours le même modèle!
+
+```
+
+**Solution:** Implémenter vraie chaîne de fallback
+
+ 
+
+---
+
+ 
+
+### PROBLÈME A-C4: MODEL_TIERS typos
+
+**Fichier:** `/server/services/agent-orchestrator.service.ts` lignes 220-239
+
+**Code actuel:** `claude-haiku-4.5-20251015` (point au lieu de tiret)
+
+**Solution:** Corriger en `claude-haiku-4-5-20251015`
+
+ 
+
+---
+
+ 
+
+### PROBLÈME A-C5: No rate limiting AI calls
+
+**Impact:** DDoS possible, quota exhaustion
+
+**Solution:** Implémenter rate limiting per-user pour API providers
+
+ 
+
+---
+
+ 
+
+## 7.2 HAUTE PRIORITÉ (10)
+
+ 
+
+### PROBLÈME A-H1 à A-H10:
+
+- Context budgets trop bas (context-manager.ts lignes 56-94)
+
+- Token estimation inaccurate pour CJK (context-window-manager.ts lignes 135-140)
+
+- Cost calculation model mismatch (agent-orchestrator.service.ts lignes 1136-1189)
+
+- retryDbStatusUpdate toujours retourne true (lignes 1315-1340)
+
+- executeAutonomousPlan no error recovery (lignes 1478-1721)
+
+- listDirectory recursion illimitée (tool-executor.ts lignes 216-250)
+
+- executeFunctionCall trusts AI inputs (lignes 506-631)
+
+- Fake responses on API errors (lignes 405-464)
+
+- Provider fallback flawed (ai-provider-manager.ts lignes 255-261)
+
+- searchCode regex injection (tool-executor.ts lignes 360-369)
+
+ 
+
+---
+
+ 
+
+## 7.3 MOYENNE/BASSE (25)
+
+ 
+
+- Token counting never uses actual counts
+
+- Cost tracking hardcoded ratios
+
+- Pricing data outdated
+
+- Streaming chunk errors swallowed
+
+- Session persistence async issues
+
+- Memory corruption silent
+
+- ReDoS patterns in extractKeyFacts
+
+- pendingRecovery unbounded queue
+
+- No timeout on workflow execution
+
+- Context optimization drops tools
+
+- Multiple tool execution issues
+
+- Anthropic/OpenAI parsing differences
+
+- Gemini empty response handling
+
+- Circuit breaker timing unclear
+
+- Model name inconsistencies
+
+- AI billing service hardcoded rates
+
+- Usage tracking not persisted
+
+- Realtime metrics cumulative bug
+
+- Metric buffer memory only
+
+- Task dependency deadlocks
+
+- No concurrent model limits
+
+- Provider health check missing
+
+- Conversation history limits
+
+- Memory extraction issues
+
+- Tool result validation missing
+
+ 
+
+---

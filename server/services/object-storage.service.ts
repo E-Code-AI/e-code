@@ -1,22 +1,10 @@
-/**
- * Real Object Storage Service
- * Provides cloud storage capabilities using Replit's built-in Object Storage
- * For Replit Reserved VM deployment
- * 
- * Uses Google Cloud Storage via Replit's sidecar endpoint in production,
- * falls back to local filesystem storage in development.
- */
-
 import * as crypto from 'crypto';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import { createLogger } from '../utils/logger';
 import { Readable } from 'stream';
-import { storage as dbStorage } from '../storage';
-import { billingService } from './billing-service';
+import { createLogger } from '../utils/logger';
 
-const logger = createLogger('real-object-storage');
-const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
+const logger = createLogger('object-storage-service');
 
 export interface StorageObject {
   key: string;
@@ -32,7 +20,6 @@ export interface UploadOptions {
   contentType?: string;
   metadata?: Record<string, string>;
   public?: boolean;
-  resumable?: boolean;
 }
 
 export interface DownloadOptions {
@@ -40,10 +27,12 @@ export interface DownloadOptions {
   end?: number;
 }
 
-export class RealObjectStorageService {
+const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
+
+export class ObjectStorageService {
   private storagePath: string;
-  private bucketName: string;
   private useReplitStorage: boolean;
+  private bucketName: string;
 
   constructor() {
     this.bucketName = process.env.PRIVATE_OBJECT_DIR?.split('/')[1] || 
@@ -56,15 +45,15 @@ export class RealObjectStorageService {
   }
 
   private async initialize() {
-    try {
-      if (this.useReplitStorage) {
-        logger.info('Using Replit built-in Object Storage');
-      } else {
-        logger.info('Using local filesystem storage (development mode)');
+    if (this.useReplitStorage) {
+      logger.info('Using Replit built-in Object Storage');
+    } else {
+      logger.info('Using local filesystem storage (development mode)');
+      try {
         await fs.mkdir(this.storagePath, { recursive: true });
+      } catch (error) {
+        logger.error(`Failed to initialize local storage: ${error}`);
       }
-    } catch (error) {
-      logger.error(`Failed to initialize object storage: ${error}`);
     }
   }
 
@@ -77,33 +66,10 @@ export class RealObjectStorageService {
     return path.join(this.storagePath, key);
   }
 
-  private async getGcsStorage() {
-    const { Storage } = await import('@google-cloud/storage');
-    return new Storage({
-      credentials: {
-        audience: "replit",
-        subject_token_type: "access_token",
-        token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
-        type: "external_account",
-        credential_source: {
-          url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
-          format: {
-            type: "json",
-            subject_token_field_name: "access_token",
-          },
-        },
-        universe_domain: "googleapis.com",
-      } as any,
-      projectId: "",
-    });
-  }
-
   async uploadFile(
     key: string,
     content: Buffer | Readable | string,
-    options: UploadOptions = {},
-    projectId?: number,
-    userId?: number
+    options: UploadOptions = {}
   ): Promise<StorageObject> {
     logger.info(`[ObjectStorage] Uploading file: ${key}`);
 
@@ -120,20 +86,11 @@ export class RealObjectStorageService {
       buffer = Buffer.concat(chunks);
     }
 
-    let storageObject: StorageObject;
-
     if (this.useReplitStorage) {
-      storageObject = await this.uploadToReplit(key, buffer, options);
+      return this.uploadToReplit(key, buffer, options);
     } else {
-      storageObject = await this.uploadToLocal(key, buffer, options);
+      return this.uploadToLocal(key, buffer, options);
     }
-
-    if (projectId) {
-      await this.trackInDatabase(key, storageObject, options, projectId, userId);
-    }
-
-    logger.info(`[ObjectStorage] Uploaded file: ${key} (${storageObject.size} bytes)`);
-    return storageObject;
   }
 
   private async uploadToReplit(
@@ -142,7 +99,25 @@ export class RealObjectStorageService {
     options: UploadOptions
   ): Promise<StorageObject> {
     try {
-      const storage = await this.getGcsStorage();
+      const { Storage } = await import('@google-cloud/storage');
+      const storage = new Storage({
+        credentials: {
+          audience: "replit",
+          subject_token_type: "access_token",
+          token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
+          type: "external_account",
+          credential_source: {
+            url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
+            format: {
+              type: "json",
+              subject_token_field_name: "access_token",
+            },
+          },
+          universe_domain: "googleapis.com",
+        } as any,
+        projectId: "",
+      });
+
       const bucket = storage.bucket(this.bucketName);
       const file = bucket.file(key);
       
@@ -153,7 +128,7 @@ export class RealObjectStorageService {
 
       const etag = crypto.createHash('md5').update(buffer).digest('hex');
       
-      logger.info(`[ObjectStorage] Uploaded to Replit GCS: ${key}`);
+      logger.info(`[ObjectStorage] Uploaded to Replit: ${key} (${buffer.length} bytes)`);
       
       return {
         key,
@@ -182,6 +157,8 @@ export class RealObjectStorageService {
     const stats = await fs.stat(filePath);
     const etag = crypto.createHash('md5').update(buffer).digest('hex');
 
+    logger.info(`[ObjectStorage] Uploaded to local: ${key} (${buffer.length} bytes)`);
+
     return {
       key,
       size: stats.size,
@@ -193,56 +170,7 @@ export class RealObjectStorageService {
     };
   }
 
-  private async trackInDatabase(
-    key: string,
-    storageObject: StorageObject,
-    options: UploadOptions,
-    projectId: number,
-    userId?: number
-  ): Promise<void> {
-    try {
-      const buckets = await dbStorage.getProjectObjectStorageBuckets(projectId.toString());
-      let bucketRecord = buckets.find(b => b.bucketName === 'replit-storage');
-      
-      if (!bucketRecord) {
-        bucketRecord = await dbStorage.createObjectStorageBucket({
-          projectId: projectId,
-          bucketName: 'replit-storage',
-          region: 'replit',
-          storageClass: 'STANDARD',
-          metadata: {}
-        });
-      }
-
-      await dbStorage.createObjectStorageFile({
-        bucketId: bucketRecord.id,
-        fileName: key,
-        filePath: key,
-        size: storageObject.size,
-        contentType: storageObject.contentType,
-        metadata: options.metadata || {},
-        url: storageObject.url || '',
-        uploadedBy: userId || 1
-      });
-
-      if (userId) {
-        const sizeInGB = storageObject.size / (1024 * 1024 * 1024);
-        await billingService.trackResourceUsage(
-          userId,
-          'storage.gb_month',
-          sizeInGB,
-          { projectId, bucketId: bucketRecord.id, fileKey: key }
-        );
-      }
-    } catch (error) {
-      logger.error(`[ObjectStorage] Failed to track in database: ${error}`);
-    }
-  }
-
-  async downloadFile(
-    key: string,
-    options: DownloadOptions = {}
-  ): Promise<Buffer> {
+  async downloadFile(key: string, options: DownloadOptions = {}): Promise<Buffer> {
     logger.info(`[ObjectStorage] Downloading file: ${key}`);
 
     if (this.useReplitStorage) {
@@ -254,12 +182,30 @@ export class RealObjectStorageService {
 
   private async downloadFromReplit(key: string, options: DownloadOptions): Promise<Buffer> {
     try {
-      const storage = await this.getGcsStorage();
+      const { Storage } = await import('@google-cloud/storage');
+      const storage = new Storage({
+        credentials: {
+          audience: "replit",
+          subject_token_type: "access_token",
+          token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
+          type: "external_account",
+          credential_source: {
+            url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
+            format: {
+              type: "json",
+              subject_token_field_name: "access_token",
+            },
+          },
+          universe_domain: "googleapis.com",
+        } as any,
+        projectId: "",
+      });
+
       const bucket = storage.bucket(this.bucketName);
       const file = bucket.file(key);
       const [buffer] = await file.download();
       
-      logger.info(`[ObjectStorage] Downloaded from Replit GCS: ${key} (${buffer.length} bytes)`);
+      logger.info(`[ObjectStorage] Downloaded from Replit: ${key} (${buffer.length} bytes)`);
       
       if (options.start !== undefined || options.end !== undefined) {
         const start = options.start || 0;
@@ -295,7 +241,7 @@ export class RealObjectStorageService {
     return buffer;
   }
 
-  async deleteFile(key: string, projectId?: number): Promise<void> {
+  async deleteFile(key: string): Promise<void> {
     logger.info(`[ObjectStorage] Deleting file: ${key}`);
 
     if (this.useReplitStorage) {
@@ -307,11 +253,30 @@ export class RealObjectStorageService {
 
   private async deleteFromReplit(key: string): Promise<void> {
     try {
-      const storage = await this.getGcsStorage();
+      const { Storage } = await import('@google-cloud/storage');
+      const storage = new Storage({
+        credentials: {
+          audience: "replit",
+          subject_token_type: "access_token",
+          token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
+          type: "external_account",
+          credential_source: {
+            url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
+            format: {
+              type: "json",
+              subject_token_field_name: "access_token",
+            },
+          },
+          universe_domain: "googleapis.com",
+        } as any,
+        projectId: "",
+      });
+
       const bucket = storage.bucket(this.bucketName);
       const file = bucket.file(key);
       await file.delete();
-      logger.info(`[ObjectStorage] Deleted from Replit GCS: ${key}`);
+      
+      logger.info(`[ObjectStorage] Deleted from Replit: ${key}`);
     } catch (error) {
       logger.error(`[ObjectStorage] Replit delete failed, trying local: ${error}`);
       await this.deleteFromLocal(key);
@@ -319,8 +284,8 @@ export class RealObjectStorageService {
   }
 
   private async deleteFromLocal(key: string): Promise<void> {
+    const filePath = this.getFilePath(key);
     try {
-      const filePath = this.getFilePath(key);
       await fs.unlink(filePath);
       logger.info(`[ObjectStorage] Deleted from local: ${key}`);
     } catch (error) {
@@ -329,10 +294,7 @@ export class RealObjectStorageService {
     }
   }
 
-  async listFiles(
-    prefix?: string,
-    maxResults?: number
-  ): Promise<StorageObject[]> {
+  async listFiles(prefix?: string, maxResults?: number): Promise<StorageObject[]> {
     logger.info(`[ObjectStorage] Listing files with prefix: ${prefix || 'none'}`);
 
     if (this.useReplitStorage) {
@@ -344,7 +306,25 @@ export class RealObjectStorageService {
 
   private async listFromReplit(prefix?: string, maxResults?: number): Promise<StorageObject[]> {
     try {
-      const storage = await this.getGcsStorage();
+      const { Storage } = await import('@google-cloud/storage');
+      const storage = new Storage({
+        credentials: {
+          audience: "replit",
+          subject_token_type: "access_token",
+          token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
+          type: "external_account",
+          credential_source: {
+            url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
+            format: {
+              type: "json",
+              subject_token_field_name: "access_token",
+            },
+          },
+          universe_domain: "googleapis.com",
+        } as any,
+        projectId: "",
+      });
+
       const bucket = storage.bucket(this.bucketName);
       const [files] = await bucket.getFiles({ prefix, maxResults });
       
@@ -360,7 +340,7 @@ export class RealObjectStorageService {
         });
       }
       
-      logger.info(`[ObjectStorage] Listed ${results.length} files from Replit GCS`);
+      logger.info(`[ObjectStorage] Listed ${results.length} files from Replit`);
       return results;
     } catch (error) {
       logger.error(`[ObjectStorage] Replit list failed, trying local: ${error}`);
@@ -369,57 +349,47 @@ export class RealObjectStorageService {
   }
 
   private async listFromLocal(prefix?: string, maxResults?: number): Promise<StorageObject[]> {
-    try {
-      const searchPath = prefix ? this.getFilePath(prefix) : this.storagePath;
-      const files: StorageObject[] = [];
+    const searchPath = prefix ? this.getFilePath(prefix) : this.storagePath;
+    const files: StorageObject[] = [];
 
-      const walk = async (dir: string, baseDir: string) => {
-        try {
-          const entries = await fs.readdir(dir, { withFileTypes: true });
+    const walk = async (dir: string, baseDir: string) => {
+      try {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+        
+        for (const entry of entries) {
+          if (maxResults && files.length >= maxResults) break;
           
-          for (const entry of entries) {
-            if (maxResults && files.length >= maxResults) break;
+          const fullPath = path.join(dir, entry.name);
+          
+          if (entry.isDirectory()) {
+            await walk(fullPath, baseDir);
+          } else {
+            const stats = await fs.stat(fullPath);
+            const key = path.relative(baseDir, fullPath);
+            const buffer = await fs.readFile(fullPath);
+            const etag = crypto.createHash('md5').update(buffer).digest('hex');
             
-            const fullPath = path.join(dir, entry.name);
-            
-            if (entry.isDirectory()) {
-              await walk(fullPath, baseDir);
-            } else {
-              const stats = await fs.stat(fullPath);
-              const key = path.relative(baseDir, fullPath);
-              const buffer = await fs.readFile(fullPath);
-              const etag = crypto.createHash('md5').update(buffer).digest('hex');
-              
-              files.push({
-                key,
-                size: stats.size,
-                contentType: 'application/octet-stream',
-                lastModified: stats.mtime,
-                etag
-              });
-            }
+            files.push({
+              key,
+              size: stats.size,
+              contentType: 'application/octet-stream',
+              lastModified: stats.mtime,
+              etag,
+            });
           }
-        } catch (error) {
-          logger.warn(`[ObjectStorage] Error walking directory ${dir}: ${error}`);
         }
-      };
+      } catch (error) {
+        logger.warn(`[ObjectStorage] Error walking directory ${dir}: ${error}`);
+      }
+    };
 
-      await walk(searchPath, this.storagePath);
-
-      logger.info(`[ObjectStorage] Listed ${files.length} files from local`);
-      return files.slice(0, maxResults);
-
-    } catch (error) {
-      logger.error(`[ObjectStorage] Failed to list files: ${error}`);
-      return [];
-    }
+    await walk(searchPath, this.storagePath);
+    
+    logger.info(`[ObjectStorage] Listed ${files.length} files from local`);
+    return files.slice(0, maxResults);
   }
 
-  async getSignedUrl(
-    key: string,
-    expiresIn: number = 3600,
-    action: 'read' | 'write' = 'read'
-  ): Promise<string> {
+  async getSignedUrl(key: string, expiresIn: number = 3600, action: 'read' | 'write' = 'read'): Promise<string> {
     logger.info(`[ObjectStorage] Generating signed URL for: ${key}`);
 
     if (this.useReplitStorage) {
@@ -467,42 +437,42 @@ export class RealObjectStorageService {
     return url;
   }
 
-  async copyFile(sourceKey: string, destKey: string): Promise<StorageObject> {
-    try {
-      const sourcePath = this.getFilePath(sourceKey);
-      const destPath = this.getFilePath(destKey);
-      
-      await this.ensureDirectory(destPath);
-      await fs.copyFile(sourcePath, destPath);
-      
-      const stats = await fs.stat(destPath);
-      const buffer = await fs.readFile(destPath);
-      const etag = crypto.createHash('md5').update(buffer).digest('hex');
-      
-      const storageObject: StorageObject = {
-        key: destKey,
-        size: stats.size,
-        contentType: 'application/octet-stream',
-        lastModified: stats.mtime,
-        etag
-      };
+  async fileExists(key: string): Promise<boolean> {
+    if (this.useReplitStorage) {
+      try {
+        const { Storage } = await import('@google-cloud/storage');
+        const storage = new Storage({
+          credentials: {
+            audience: "replit",
+            subject_token_type: "access_token",
+            token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
+            type: "external_account",
+            credential_source: {
+              url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
+              format: {
+                type: "json",
+                subject_token_field_name: "access_token",
+              },
+            },
+            universe_domain: "googleapis.com",
+          } as any,
+          projectId: "",
+        });
 
-      logger.info(`Copied file from ${sourceKey} to ${destKey}`);
-      return storageObject;
-
-    } catch (error) {
-      logger.error(`Failed to copy file from ${sourceKey} to ${destKey}: ${error}`);
-      throw error;
+        const bucket = storage.bucket(this.bucketName);
+        const file = bucket.file(key);
+        const [exists] = await file.exists();
+        return exists;
+      } catch (error) {
+        logger.error(`[ObjectStorage] Replit file exists check failed: ${error}`);
+        return this.localFileExists(key);
+      }
+    } else {
+      return this.localFileExists(key);
     }
   }
 
-  async moveFile(sourceKey: string, destKey: string): Promise<StorageObject> {
-    const result = await this.copyFile(sourceKey, destKey);
-    await this.deleteFile(sourceKey);
-    return result;
-  }
-
-  async fileExists(key: string): Promise<boolean> {
+  private async localFileExists(key: string): Promise<boolean> {
     try {
       const filePath = this.getFilePath(key);
       await fs.access(filePath);
@@ -512,8 +482,52 @@ export class RealObjectStorageService {
     }
   }
 
+  async copyFile(sourceKey: string, destKey: string): Promise<StorageObject> {
+    logger.info(`[ObjectStorage] Copying file: ${sourceKey} -> ${destKey}`);
+    const content = await this.downloadFile(sourceKey);
+    return this.uploadFile(destKey, content);
+  }
+
+  async moveFile(sourceKey: string, destKey: string): Promise<StorageObject> {
+    logger.info(`[ObjectStorage] Moving file: ${sourceKey} -> ${destKey}`);
+    const result = await this.copyFile(sourceKey, destKey);
+    await this.deleteFile(sourceKey);
+    return result;
+  }
+
   async getFileMetadata(key: string): Promise<StorageObject> {
-    try {
+    if (this.useReplitStorage) {
+      const { Storage } = await import('@google-cloud/storage');
+      const storage = new Storage({
+        credentials: {
+          audience: "replit",
+          subject_token_type: "access_token",
+          token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
+          type: "external_account",
+          credential_source: {
+            url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
+            format: {
+              type: "json",
+              subject_token_field_name: "access_token",
+            },
+          },
+          universe_domain: "googleapis.com",
+        } as any,
+        projectId: "",
+      });
+
+      const bucket = storage.bucket(this.bucketName);
+      const file = bucket.file(key);
+      const [metadata] = await file.getMetadata();
+      
+      return {
+        key,
+        size: parseInt(metadata.size as string) || 0,
+        contentType: metadata.contentType || 'application/octet-stream',
+        lastModified: new Date(metadata.updated || Date.now()),
+        etag: metadata.etag || '',
+      };
+    } else {
       const filePath = this.getFilePath(key);
       const stats = await fs.stat(filePath);
       const buffer = await fs.readFile(filePath);
@@ -524,102 +538,11 @@ export class RealObjectStorageService {
         size: stats.size,
         contentType: 'application/octet-stream',
         lastModified: stats.mtime,
-        etag
+        etag,
       };
-    } catch (error) {
-      logger.error(`Failed to get metadata for ${key}: ${error}`);
-      throw error;
     }
   }
 
-  async createMultipartUpload(
-    key: string,
-    contentType?: string
-  ): Promise<string> {
-    const uploadId = crypto.randomUUID();
-    logger.info(`Created multipart upload for ${key}: ${uploadId}`);
-    return uploadId;
-  }
-
-  async uploadPart(
-    key: string,
-    uploadId: string,
-    partNumber: number,
-    content: Buffer
-  ): Promise<string> {
-    const etag = crypto.createHash('md5').update(content).digest('hex');
-    logger.info(`Uploaded part ${partNumber} for ${key} (${content.length} bytes)`);
-    return etag;
-  }
-
-  async completeMultipartUpload(
-    key: string,
-    uploadId: string,
-    parts: Array<{ partNumber: number; etag: string }>
-  ): Promise<StorageObject> {
-    return {
-      key,
-      size: 0,
-      contentType: 'application/octet-stream',
-      lastModified: new Date(),
-      etag: crypto.randomUUID()
-    };
-  }
-
-  // Specialized methods for different use cases
-
-  async uploadProjectFile(
-    projectId: number,
-    filePath: string,
-    content: Buffer | string
-  ): Promise<StorageObject> {
-    const key = `projects/${projectId}/${filePath}`;
-    return this.uploadFile(key, content, {
-      metadata: {
-        projectId: projectId.toString(),
-        filePath
-      }
-    });
-  }
-
-  async uploadUserAvatar(
-    userId: number,
-    imageBuffer: Buffer,
-    contentType: string
-  ): Promise<string> {
-    const key = `avatars/${userId}-${Date.now()}.${this.getExtension(contentType)}`;
-    const result = await this.uploadFile(key, imageBuffer, {
-      contentType,
-      public: true,
-      metadata: {
-        userId: userId.toString()
-      }
-    });
-    
-    return result.url || await this.getSignedUrl(key, 86400 * 365); // 1 year
-  }
-
-  async createProjectBackup(projectId: number): Promise<string> {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const key = `backups/project-${projectId}-${timestamp}.tar.gz`;
-    logger.info(`Created backup placeholder for project ${projectId}: ${key}`);
-    return key;
-  }
-
-  private getExtension(contentType: string): string {
-    const extensions: Record<string, string> = {
-      'image/jpeg': 'jpg',
-      'image/png': 'png',
-      'image/gif': 'gif',
-      'image/webp': 'webp',
-      'application/pdf': 'pdf',
-      'application/zip': 'zip'
-    };
-    
-    return extensions[contentType] || 'bin';
-  }
-
-  // Get storage usage statistics
   async getStorageStats(prefix?: string): Promise<{
     totalSize: number;
     fileCount: number;
@@ -637,12 +560,11 @@ export class RealObjectStorageService {
       }
     }
     
-    return {
-      totalSize,
-      fileCount: files.length,
-      largestFile
-    };
+    return { totalSize, fileCount: files.length, largestFile };
   }
 }
 
-export const realObjectStorageService = new RealObjectStorageService();
+export const objectStorageService = new ObjectStorageService();
+
+export { ObjectStorageService as RealObjectStorageService };
+export const realObjectStorageService = objectStorageService;

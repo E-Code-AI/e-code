@@ -1,0 +1,199 @@
+# PARTIE 8: PAIEMENT & FACTURATION (40 issues)
+
+ 
+
+## 8.1 CRITIQUES (5)
+
+ 
+
+### PROBLÈME P-C1: Webhook signature non validée
+
+**Fichier:** `/server/routes/payments.router.ts` lignes 132-146
+
+**Code actuel:**
+
+```typescript
+
+if (!signature) return res.status(400);
+
+// Signature présente mais jamais vérifiée!
+
+```
+
+**Solution:**
+
+```typescript
+
+const event = stripe.webhooks.constructEvent(
+
+  req.rawBody, // Besoin du raw buffer
+
+  signature,
+
+  process.env.STRIPE_WEBHOOK_SECRET
+
+);
+
+```
+
+ 
+
+---
+
+ 
+
+### PROBLÈME P-C2: Idempotency key non unique
+
+**Fichier:** `/server/workflows/payg-queue-processor.ts` lignes 290-292
+
+**Solution:** Ajouter UNIQUE constraint sur idempotency_key dans schema
+
+ 
+
+---
+
+ 
+
+### PROBLÈME P-C3: EUR hardcodé
+
+**Fichier:** `/server/services/stripe-billing-service.ts` ligne 326
+
+**Code actuel:**
+
+```typescript
+
+currency: 'eur', // Hardcodé!
+
+```
+
+**Solution:** Utiliser la currency du subscription/user
+
+ 
+
+---
+
+ 
+
+### PROBLÈME P-C4: Refund handling manquant
+
+**Fichier:** `/server/payments/stripe-service.ts` lignes 573-579
+
+**Code actuel:**
+
+```typescript
+
+private handlePaymentSucceeded() {} // Vide!
+
+private handlePaymentFailed() {}    // Vide!
+
+```
+
+**Solution:** Implémenter logique de refund
+
+ 
+
+---
+
+ 
+
+### PROBLÈME P-C5: Tax calculation manquante
+
+**Impact:** Non-conformité fiscale (TVA EU, sales tax US, GST)
+
+**Solution:** Intégrer Stripe Tax API
+
+ 
+
+---
+
+ 
+
+## 8.2 HAUTE PRIORITÉ (8)
+
+ 
+
+### PROBLÈME P-H1 à P-H8:
+
+- Credit deduction race condition (credits-service.ts lignes 90-97)
+
+- Idempotency key collision (Math.random weak) (lignes 416, 448, 480)
+
+- Monthly credit reset no cap (lignes 273-378)
+
+- Payment intent no validation (stripe-service.ts lignes 394-395)
+
+- Refund webhook missing (stripe-billing-service.ts lignes 347-370)
+
+- Tax not applied (billing-service.ts lignes 348-363)
+
+- Simple payment processor in-memory (simple-payment-processor.ts lignes 50-53)
+
+- Invoice concurrent creation (payg-queue-processor.ts lignes 250-263)
+
+ 
+
+---
+
+ 
+
+## 8.3 MOYENNE/BASSE (27)
+
+ 
+
+- Missing Stripe customer metadata
+
+- Plan naming inconsistencies
+
+- Currency conversion missing
+
+- Usage reporting fails silently
+
+- Invoice not always finalized
+
+- Missing Stripe error code handling
+
+- Email templates assume USD
+
+- AI pricing outdated
+
+- Billing period validation missing
+
+- Subscription status not synced
+
+- Usage event metadata redundant
+
+- No proration shown to user
+
+- Admin endpoints no rate limit
+
+- Webhook returns 400 on error
+
+- Payment method attachment error
+
+- Free tier can't use PAYG
+
+- Missing checkout idempotency
+
+- Hardcoded 10% platform fee
+
+- No invoice concurrency control
+
+- Timestamp conversion issues
+
+- No Stripe rate limiting
+
+- No backup payment method
+
+- Subscription metadata incomplete
+
+- No renewal reminder
+
+- Invoice description truncation
+
+- Float precision loss
+
+- No upcoming invoice handling
+
+ 
+
+---

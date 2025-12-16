@@ -1,0 +1,183 @@
+# PARTIE 9: DEVOPS & DÉPLOIEMENT (41 issues)
+
+ 
+
+## 9.1 CRITIQUES (8)
+
+ 
+
+### PROBLÈME V-C1: Dockerfile racine manquant
+
+**Fichiers:** `docker-compose.yml` ligne 5, `docker-compose.production.yml` ligne 8
+
+**Solution:** Créer `/Dockerfile` avec build multi-stage
+
+ 
+
+---
+
+ 
+
+### PROBLÈME V-C2: Secrets hardcodés Kubernetes
+
+**Fichier:** `/kubernetes/secrets.yaml` lignes 12-27
+
+**Solution:** Utiliser Sealed Secrets ou external secrets operator
+
+ 
+
+---
+
+ 
+
+### PROBLÈME V-C3: ConfigMap contient secrets
+
+**Fichier:** `/kubernetes/configmap.yaml` ligne 20
+
+**Solution:** Déplacer SESSION_SECRET vers Secret resource
+
+ 
+
+---
+
+ 
+
+### PROBLÈME V-C4: Image placeholders
+
+**Fichiers:** app-deployment.yaml, fixed-deployment.yaml, kubernetes.yaml
+
+**Code actuel:**
+
+```yaml
+
+image: gcr.io/PROJECT_ID/e-code-platform:latest
+
+```
+
+**Solution:** Remplacer par vraies références d'images
+
+ 
+
+---
+
+ 
+
+### PROBLÈME V-C5: CSRF désactivé
+
+**Fichier:** `/.env` ligne 28
+
+**Code actuel:**
+
+```
+
+DISABLE_CSRF=true
+
+```
+
+**Solution:** Activer CSRF en production
+
+ 
+
+---
+
+ 
+
+### PROBLÈME V-C6 à V-C8: Autres critiques
+
+- Credentials dans fixed-deployment.yaml
+
+- Credentials dans .env.staging
+
+- Production deploy script .env non validé
+
+ 
+
+---
+
+ 
+
+## 9.2 HAUTE PRIORITÉ (11)
+
+ 
+
+### PROBLÈME V-H1 à V-H11:
+
+- CORS_ORIGIN: "*" dans configmap.yaml
+
+- CSP unsafe-inline dans nginx.conf
+
+- Invalid integration dans .replit
+
+- imagePullPolicy manquant
+
+- :latest tag en production
+
+- Port conflict docker-compose (80)
+
+- Health check endpoint inconsistent
+
+- MCP server no readiness probe
+
+- Database credentials hardcodées
+
+- Missing security contexts
+
+- Redis single replica
+
+ 
+
+---
+
+ 
+
+## 9.3 MOYENNE/BASSE (22)
+
+ 
+
+- CI/CD triggers disabled
+
+- kubeconfig written to disk
+
+- Coverage threshold hardcoded
+
+- Test credentials in workflow
+
+- Missing backup configuration
+
+- Missing centralized logging
+
+- PostgreSQL version inconsistent
+
+- .replit config inconsistent
+
+- Missing log levels
+
+- Hardcoded domain names
+
+- No ResourceQuota most namespaces
+
+- MCP liveness probe incomplete
+
+- No rollback strategy
+
+- Fixed deployment replicas
+
+- Missing PodDisruptionBudget
+
+- Missing NetworkPolicies
+
+- SSL/TLS cert config incomplete
+
+- No HPA configuration
+
+- Missing node affinity
+
+- No pod topology spread
+
+- Ingress annotations missing
+
+- Service account not configured
+
+ 
+
+---
