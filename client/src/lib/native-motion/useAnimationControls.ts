@@ -30,28 +30,59 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+function buildTransformString(target: AnimationTarget): string {
+  const transforms: string[] = [];
+  
+  if ('x' in target) {
+    const value = target.x;
+    transforms.push(`translateX(${typeof value === 'number' ? `${value}px` : value})`);
+  }
+  if ('y' in target) {
+    const value = target.y;
+    transforms.push(`translateY(${typeof value === 'number' ? `${value}px` : value})`);
+  }
+  if ('scale' in target) {
+    transforms.push(`scale(${target.scale})`);
+  }
+  if ('scaleX' in target) {
+    transforms.push(`scaleX(${target.scaleX})`);
+  }
+  if ('scaleY' in target) {
+    transforms.push(`scaleY(${target.scaleY})`);
+  }
+  if ('rotate' in target) {
+    const value = target.rotate;
+    transforms.push(`rotate(${typeof value === 'number' ? `${value}deg` : value})`);
+  }
+  if ('skewX' in target) {
+    const value = target.skewX;
+    transforms.push(`skewX(${typeof value === 'number' ? `${value}deg` : value})`);
+  }
+  if ('skewY' in target) {
+    const value = target.skewY;
+    transforms.push(`skewY(${typeof value === 'number' ? `${value}deg` : value})`);
+  }
+  
+  return transforms.join(' ');
+}
+
+const TRANSFORM_KEYS = new Set(['x', 'y', 'scale', 'scaleX', 'scaleY', 'rotate', 'skewX', 'skewY']);
+
 function targetToKeyframes(target: AnimationTarget): Keyframe[] {
   const keyframe: Keyframe = {};
   
+  const transformString = buildTransformString(target);
+  if (transformString) {
+    keyframe.transform = transformString;
+  }
+  
   for (const [key, value] of Object.entries(target)) {
-    switch (key) {
-      case 'x':
-        keyframe.transform = `translateX(${typeof value === 'number' ? `${value}px` : value})`;
-        break;
-      case 'y':
-        keyframe.transform = `translateY(${typeof value === 'number' ? `${value}px` : value})`;
-        break;
-      case 'scale':
-        keyframe.transform = `scale(${value})`;
-        break;
-      case 'rotate':
-        keyframe.transform = `rotate(${typeof value === 'number' ? `${value}deg` : value})`;
-        break;
-      case 'opacity':
-        keyframe.opacity = String(value);
-        break;
-      default:
-        (keyframe as Record<string, string>)[key] = String(value);
+    if (TRANSFORM_KEYS.has(key)) continue;
+    
+    if (key === 'opacity') {
+      keyframe.opacity = String(value);
+    } else {
+      (keyframe as Record<string, string>)[key] = String(value);
     }
   }
   
@@ -59,25 +90,18 @@ function targetToKeyframes(target: AnimationTarget): Keyframe[] {
 }
 
 function applyStyles(element: HTMLElement, target: AnimationTarget) {
+  const transformString = buildTransformString(target);
+  if (transformString) {
+    element.style.transform = transformString;
+  }
+  
   for (const [key, value] of Object.entries(target)) {
-    switch (key) {
-      case 'x':
-        element.style.transform = `translateX(${typeof value === 'number' ? `${value}px` : value})`;
-        break;
-      case 'y':
-        element.style.transform = `translateY(${typeof value === 'number' ? `${value}px` : value})`;
-        break;
-      case 'scale':
-        element.style.transform = `scale(${value})`;
-        break;
-      case 'rotate':
-        element.style.transform = `rotate(${typeof value === 'number' ? `${value}deg` : value})`;
-        break;
-      case 'opacity':
-        element.style.opacity = String(value);
-        break;
-      default:
-        (element.style as unknown as Record<string, string>)[key] = String(value);
+    if (TRANSFORM_KEYS.has(key)) continue;
+    
+    if (key === 'opacity') {
+      element.style.opacity = String(value);
+    } else {
+      (element.style as unknown as Record<string, string>)[key] = String(value);
     }
   }
 }
