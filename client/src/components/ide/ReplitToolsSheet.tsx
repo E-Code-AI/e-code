@@ -1,12 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, ComponentType } from 'react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Search,
   FileText,
-  Bot,
   Sparkles,
   Rocket,
   HardDrive,
@@ -24,31 +22,45 @@ import {
   Settings,
   Zap,
   Store,
-  X,
+  ChevronRight,
 } from 'lucide-react';
+
+const ReplitAgentIcon = ({ className }: { className?: string }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    className={className}
+    fill="currentColor"
+  >
+    <circle cx="7" cy="7" r="2.5" />
+    <circle cx="17" cy="7" r="2.5" />
+    <circle cx="7" cy="17" r="2.5" />
+    <circle cx="17" cy="17" r="2.5" />
+  </svg>
+);
 
 export interface ToolItem {
   id: string;
-  icon: typeof Search;
+  icon: ComponentType<{ className?: string }>;
   title: string;
   description: string;
   section: 'search' | 'tools';
+  iconColor?: string;
 }
 
 const defaultTools: ToolItem[] = [
   { id: 'search', icon: Search, title: 'Search', description: 'Search through your files', section: 'search' },
   { id: 'files', icon: FileText, title: 'Files', description: 'Find a file', section: 'search' },
-  { id: 'agent', icon: Bot, title: 'Agent', description: 'Agent can make changes, review its work, and debug itself automatically.', section: 'tools' },
-  { id: 'assistant', icon: Sparkles, title: 'Assistant', description: 'Assistant answers questions, refines code, and makes precise edits.', section: 'tools' },
-  { id: 'publishing', icon: Rocket, title: 'Publishing', description: 'Publish a live, stable, public version of your App, unaffected by the changes you make in the workspace', section: 'tools' },
+  { id: 'agent', icon: ReplitAgentIcon, title: 'Agent', description: 'Agent can make changes, review its work, and debug itself automatically.', section: 'tools', iconColor: 'text-[#7C65C1]' },
+  { id: 'assistant', icon: Sparkles, title: 'Assistant', description: 'Assistant answers questions, refines code, and makes precise edits.', section: 'tools', iconColor: 'text-amber-500' },
+  { id: 'publishing', icon: Rocket, title: 'Publishing', description: 'Publish a live, stable, public version of your App, unaffected by the changes you make in the workspace', section: 'tools', iconColor: 'text-green-500' },
   { id: 'app-storage', icon: HardDrive, title: 'App Storage', description: "App Storage is Replit's built-in object storage that lets your app easily host and save uploads like images, videos, and documents.", section: 'tools' },
-  { id: 'auth', icon: UserCheck, title: 'Auth', description: 'Let users log in to your App using a prebuilt login page', section: 'tools' },
+  { id: 'auth', icon: UserCheck, title: 'Auth', description: 'Let users log in to your App using a prebuilt login page', section: 'tools', iconColor: 'text-blue-500' },
   { id: 'console', icon: Terminal, title: 'Console', description: 'View the terminal output after running your code', section: 'tools' },
-  { id: 'database', icon: Database, title: 'Database', description: 'Stores structured data such as user profiles, game scores, and product catalogs.', section: 'tools' },
+  { id: 'database', icon: Database, title: 'Database', description: 'Stores structured data such as user profiles, game scores, and product catalogs.', section: 'tools', iconColor: 'text-cyan-500' },
   { id: 'developer', icon: Code, title: 'Developer', description: 'Advanced developer tools and settings', section: 'tools' },
-  { id: 'git', icon: GitBranch, title: 'Git', description: 'Version control for your App', section: 'tools' },
+  { id: 'git', icon: GitBranch, title: 'Git', description: 'Version control for your App', section: 'tools', iconColor: 'text-orange-500' },
   { id: 'integrations', icon: Puzzle, title: 'Integrations', description: 'Connect to Replit-native and external services', section: 'tools' },
-  { id: 'multiplayer', icon: Users, title: 'Multiplayer', description: 'Invite real-time collaborators and manage access to your App', section: 'tools' },
+  { id: 'multiplayer', icon: Users, title: 'Multiplayer', description: 'Invite real-time collaborators and manage access to your App', section: 'tools', iconColor: 'text-pink-500' },
   { id: 'preview', icon: Eye, title: 'Preview', description: 'Preview your App', section: 'tools' },
   { id: 'kv-store', icon: Store, title: 'Replit Key-Value Store', description: 'Free, easy-to-use key value store suitable for unstructured data, caching, session management, fast lookups, and flexible data models', section: 'tools' },
   { id: 'secrets', icon: Key, title: 'Secrets', description: 'Store sensitive information (like API keys) securely in your App', section: 'tools' },
@@ -96,100 +108,93 @@ export function ReplitToolsSheet({
 
   return (
     <>
-      {/* Backdrop overlay */}
       <div 
-        className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm animate-in fade-in-0 duration-200"
+        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-in fade-in-0 duration-200"
         onClick={onClose}
         data-testid="tools-sheet-backdrop"
       />
       
       <div
         className={cn(
-          'fixed inset-0 z-50 bg-[var(--ecode-background)]',
+          'fixed inset-0 z-50 bg-white dark:bg-[#1C1C1C]',
           'flex flex-col animate-in fade-in-0 slide-in-from-bottom-4 duration-300',
           className
         )}
         data-testid="tools-sheet"
       >
-      {/* Header with Search */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--ecode-border)]">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--ecode-text-muted)]" />
-          <Input
-            type="text"
-            placeholder="Search for tools and files"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={cn(
-              'w-full pl-10 h-10',
-              'bg-[var(--ecode-surface)] border-[var(--ecode-border)]',
-              'text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-muted)]',
-              'focus:ring-1 focus:ring-[var(--ecode-accent)] focus:border-[var(--ecode-accent)]',
-              'font-[var(--ecode-font-sans)]'
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex-1 relative">
+            <Input
+              type="text"
+              placeholder="Search for tools and files"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={cn(
+                'w-full h-10 px-4',
+                'bg-gray-100 dark:bg-[#2A2A2A] border-0',
+                'text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400',
+                'rounded-lg text-[15px]',
+                'focus-visible:ring-1 focus-visible:ring-gray-300 dark:focus-visible:ring-gray-600'
+              )}
+              data-testid="tools-search-input"
+              autoFocus
+            />
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-900 dark:text-white font-medium text-[15px] hover:opacity-70 transition-opacity px-2"
+            data-testid="tools-sheet-close"
+          >
+            Close
+          </button>
+        </div>
+
+        <ScrollArea className="flex-1">
+          <div className="py-2">
+            {searchItems.length > 0 && (
+              <div className="mb-2">
+                <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 px-4">
+                  Search
+                </h3>
+                <div>
+                  {searchItems.map((item) => (
+                    <ToolItemRow
+                      key={item.id}
+                      item={item}
+                      onSelect={handleSelect}
+                      showArrow
+                    />
+                  ))}
+                </div>
+              </div>
             )}
-            data-testid="tools-search-input"
-            autoFocus
-          />
-        </div>
-        <Button
-          variant="ghost"
-          onClick={onClose}
-          className="text-[var(--ecode-text)] hover:bg-[var(--ecode-surface-hover)] font-medium"
-          data-testid="tools-sheet-close"
-        >
-          Close
-        </Button>
+
+            {toolItems.length > 0 && (
+              <div>
+                <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 px-4">
+                  Tools
+                </h3>
+                <div>
+                  {toolItems.map((item) => (
+                    <ToolItemRow
+                      key={item.id}
+                      item={item}
+                      onSelect={handleSelect}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {filteredTools.length === 0 && (
+              <div className="py-12 text-center text-gray-500 dark:text-gray-400">
+                <Search className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                <p className="text-[15px]">No tools found for "{searchQuery}"</p>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
       </div>
-
-      {/* Content */}
-      <ScrollArea className="flex-1">
-        <div className="px-4 py-2">
-          {/* Search Section */}
-          {searchItems.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-xs font-medium text-[var(--ecode-text-muted)] uppercase tracking-wider mb-2 px-1">
-                Search
-              </h3>
-              <div className="space-y-1">
-                {searchItems.map((item) => (
-                  <ToolItemRow
-                    key={item.id}
-                    item={item}
-                    onSelect={handleSelect}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Tools Section */}
-          {toolItems.length > 0 && (
-            <div>
-              <h3 className="text-xs font-medium text-[var(--ecode-text-muted)] uppercase tracking-wider mb-2 px-1">
-                Tools
-              </h3>
-              <div className="space-y-1">
-                {toolItems.map((item) => (
-                  <ToolItemRow
-                    key={item.id}
-                    item={item}
-                    onSelect={handleSelect}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* No Results */}
-          {filteredTools.length === 0 && (
-            <div className="py-12 text-center text-[var(--ecode-text-muted)]">
-              <Search className="h-8 w-8 mx-auto mb-3 opacity-50" />
-              <p>No tools found for "{searchQuery}"</p>
-            </div>
-          )}
-        </div>
-      </ScrollArea>
-    </div>
     </>
   );
 }
@@ -197,42 +202,43 @@ export function ReplitToolsSheet({
 interface ToolItemRowProps {
   item: ToolItem;
   onSelect: (id: string) => void;
+  showArrow?: boolean;
 }
 
-function ToolItemRow({ item, onSelect }: ToolItemRowProps) {
+function ToolItemRow({ item, onSelect, showArrow }: ToolItemRowProps) {
   const Icon = item.icon;
   
   return (
     <button
       onClick={() => onSelect(item.id)}
       className={cn(
-        'w-full flex items-start gap-3 p-3 rounded-lg',
+        'w-full flex items-start gap-3 px-4 py-3',
         'text-left transition-colors duration-150',
-        'hover:bg-[var(--ecode-surface-hover)]',
-        'focus:outline-none focus:ring-2 focus:ring-[var(--ecode-accent)] focus:ring-inset',
-        'group'
+        'hover:bg-gray-100 dark:hover:bg-[#2A2A2A]',
+        'focus:outline-none focus:bg-gray-100 dark:focus:bg-[#2A2A2A]',
+        'active:bg-gray-200 dark:active:bg-[#333]'
       )}
       data-testid={`tool-item-${item.id}`}
     >
       <div className={cn(
-        'flex-shrink-0 w-6 h-6 flex items-center justify-center',
-        'text-[var(--ecode-text-muted)] group-hover:text-[var(--ecode-text)]'
+        'flex-shrink-0 w-6 h-6 flex items-center justify-center mt-0.5',
+        item.iconColor || 'text-gray-600 dark:text-gray-400'
       )}>
         <Icon className="h-5 w-5" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-medium text-[var(--ecode-text)] text-[15px] leading-tight">
+        <div className="font-medium text-gray-900 dark:text-white text-[15px] leading-tight">
           {item.title}
         </div>
-        <div className="text-[13px] text-[var(--ecode-text-muted)] leading-snug mt-0.5 line-clamp-2">
+        <div className="text-[13px] text-gray-500 dark:text-gray-400 leading-snug mt-0.5">
           {item.description}
         </div>
       </div>
-      <div className="flex-shrink-0 text-[var(--ecode-text-muted)] opacity-0 group-hover:opacity-100 transition-opacity">
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </div>
+      {showArrow && (
+        <div className="flex-shrink-0 text-gray-400 dark:text-gray-500 mt-1">
+          <ChevronRight className="h-4 w-4" />
+        </div>
+      )}
     </button>
   );
 }
