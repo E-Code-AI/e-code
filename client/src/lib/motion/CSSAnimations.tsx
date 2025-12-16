@@ -10,6 +10,7 @@
 
 import { ReactNode, CSSProperties, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
+import { useInView } from './useInView';
 
 type TransitionTiming = 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out' | 'linear' | string;
 
@@ -200,6 +201,151 @@ export const CSSSpring = forwardRef<HTMLDivElement, CSSSpringProps>(({
   );
 });
 CSSSpring.displayName = 'CSSSpring';
+
+interface CSSInViewProps {
+  children: ReactNode;
+  className?: string;
+  style?: CSSProperties;
+  duration?: number;
+  delay?: number;
+  once?: boolean;
+  threshold?: number;
+}
+
+export const CSSInViewFade = forwardRef<HTMLDivElement, CSSInViewProps>(({
+  children,
+  className,
+  style,
+  duration = 500,
+  delay = 0,
+  once = true,
+  threshold = 0.1
+}, ref) => {
+  const { ref: inViewRef, isInView } = useInView({ threshold, once });
+
+  return (
+    <div
+      ref={(node) => {
+        (inViewRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) ref.current = node;
+      }}
+      className={cn(
+        'transition-all will-change-[transform,opacity]',
+        className
+      )}
+      style={{
+        opacity: isInView ? 1 : 0,
+        transform: isInView ? 'translateY(0)' : 'translateY(20px)',
+        transitionProperty: 'opacity, transform',
+        transitionDuration: `${duration}ms`,
+        transitionDelay: `${delay}ms`,
+        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        ...style
+      }}
+    >
+      {children}
+    </div>
+  );
+});
+CSSInViewFade.displayName = 'CSSInViewFade';
+
+interface CSSInViewSlideProps extends CSSInViewProps {
+  direction?: 'up' | 'down' | 'left' | 'right';
+  distance?: number;
+}
+
+export const CSSInViewSlide = forwardRef<HTMLDivElement, CSSInViewSlideProps>(({
+  children,
+  className,
+  style,
+  direction = 'up',
+  distance = 20,
+  duration = 500,
+  delay = 0,
+  once = true,
+  threshold = 0.1
+}, ref) => {
+  const { ref: inViewRef, isInView } = useInView({ threshold, once });
+
+  const hiddenTransforms: Record<string, string> = {
+    up: `translateY(${distance}px)`,
+    down: `translateY(-${distance}px)`,
+    left: `translateX(${distance}px)`,
+    right: `translateX(-${distance}px)`
+  };
+
+  return (
+    <div
+      ref={(node) => {
+        (inViewRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) ref.current = node;
+      }}
+      className={cn(
+        'transition-all will-change-[transform,opacity]',
+        className
+      )}
+      style={{
+        opacity: isInView ? 1 : 0,
+        transform: isInView ? 'translate(0, 0)' : hiddenTransforms[direction],
+        transitionProperty: 'opacity, transform',
+        transitionDuration: `${duration}ms`,
+        transitionDelay: `${delay}ms`,
+        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        ...style
+      }}
+    >
+      {children}
+    </div>
+  );
+});
+CSSInViewSlide.displayName = 'CSSInViewSlide';
+
+interface CSSInViewScaleProps extends CSSInViewProps {
+  from?: number;
+  to?: number;
+}
+
+export const CSSInViewScale = forwardRef<HTMLDivElement, CSSInViewScaleProps>(({
+  children,
+  className,
+  style,
+  from = 0.95,
+  to = 1,
+  duration = 500,
+  delay = 0,
+  once = true,
+  threshold = 0.1
+}, ref) => {
+  const { ref: inViewRef, isInView } = useInView({ threshold, once });
+
+  return (
+    <div
+      ref={(node) => {
+        (inViewRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) ref.current = node;
+      }}
+      className={cn(
+        'transition-all will-change-[transform,opacity]',
+        className
+      )}
+      style={{
+        opacity: isInView ? 1 : 0,
+        transform: isInView ? `scale(${to})` : `scale(${from})`,
+        transitionProperty: 'opacity, transform',
+        transitionDuration: `${duration}ms`,
+        transitionDelay: `${delay}ms`,
+        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        ...style
+      }}
+    >
+      {children}
+    </div>
+  );
+});
+CSSInViewScale.displayName = 'CSSInViewScale';
 
 export const cssKeyframes = `
 @keyframes fadeIn {

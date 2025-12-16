@@ -24,8 +24,12 @@ export {
   CSSFade,
   CSSSlide,
   CSSScale,
-  CSSSpring
+  CSSSpring,
+  CSSInViewFade,
+  CSSInViewSlide,
+  CSSInViewScale
 } from './CSSAnimations';
+export { useInView } from './useInView';
 export { AnimationMonitor, useAnimationPerformance } from './AnimationMonitor';
 export { fadeVariants, slideVariants, scaleVariants, staggerVariants } from './variants';
 
