@@ -4,7 +4,6 @@ import {
   PanelRightOpen, PanelRightClose
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 export type MobileTab = 'preview' | 'agent' | 'deploy' | 'tasks';
 
@@ -44,8 +43,6 @@ export function ReplitMobileNavigation({
   isPanelOpen = false,
   onPanelToggle,
 }: ReplitMobileNavigationProps) {
-  const isMobile = useIsMobile();
-  
   const handleTabClick = (tabId: MobileTab) => {
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
@@ -66,10 +63,6 @@ export function ReplitMobileNavigation({
     }
     onPanelToggle?.();
   };
-
-  if (!isMobile) {
-    return null;
-  }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 mobile-safe-bottom">
