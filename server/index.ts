@@ -719,6 +719,31 @@ app.get('/api/cors-health', async (_req, res) => {
     console.log('⏭️  Billing workers skipped in development (use NODE_ENV=production to enable)');
   }
 
+  // ✅ Mobile Sessions Cleanup Scheduler - runs every hour
+  try {
+    const { getStorage } = await import('./storage');
+    const MOBILE_SESSION_CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 hour
+    
+    const runMobileSessionCleanup = async () => {
+      try {
+        const storage = getStorage();
+        const deletedCount = await storage.cleanupExpiredMobileSessions();
+        if (deletedCount > 0) {
+          console.log(`[Cleanup] Removed ${deletedCount} expired mobile sessions`);
+        }
+      } catch (error) {
+        console.warn('[Cleanup] Mobile session cleanup failed:', error.message);
+      }
+    };
+    
+    // Run immediately on startup then every hour
+    runMobileSessionCleanup();
+    setInterval(runMobileSessionCleanup, MOBILE_SESSION_CLEANUP_INTERVAL);
+    console.log('✅ Mobile Session Cleanup Scheduler started - running every hour');
+  } catch (error) {
+    console.warn('[WORKING SERVER] Mobile session cleanup initialization failed (non-critical):', error.message);
+  }
+
   // ✅ CRITICAL FIX (Dec 1, 2025): Removed manual handleAgentUpgrade flow
   // The agent WebSocket now uses the standard { server, path, verifyClient } pattern
   // in agent-websocket-service.ts, which automatically short-circuits Express/Vite

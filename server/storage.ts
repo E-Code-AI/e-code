@@ -11,6 +11,7 @@ import {
   ChallengeSubmission,
   MentorshipSession,
   MobileDevice,
+  MobileSession, InsertMobileSession,
   Deployment, InsertDeployment,
   Comment, InsertComment,
   Checkpoint, InsertCheckpoint,
@@ -52,7 +53,7 @@ import {
   projects, files, users, apiKeys, codeReviews,
   emailVerificationTokens, passwordResetTokens,
   challenges, challengeSubmissions, challengeLeaderboard, mentorProfiles, mentorshipSessions,
-  mobileDevices, pushNotifications, notificationPreferences, teams, teamMembers, deployments,
+  mobileDevices, mobileSessions, pushNotifications, notificationPreferences, teams, teamMembers, deployments,
   comments, checkpoints, projectTimeTracking, projectScreenshots, taskSummaries, usageTracking,
   userCredits, budgetLimits, usageAlerts, autoscaleDeployments, reservedVmDeployments,
   scheduledDeployments, staticDeployments, objectStorageBuckets, objectStorageFiles,
@@ -602,10 +603,12 @@ export interface IStorage {
   getAdminApiKey(provider: string): Promise<any>;
   createCLIToken(userId: string): Promise<any>;
   getUserCLITokens(userId: string): Promise<any[]>;
-  getMobileSession(userId: string, deviceId?: string): Promise<any | undefined>;
-  createMobileSession(session: any): Promise<any>;
-  updateMobileSession(userId: string, deviceId: string, session: any): Promise<any | undefined>;
-  getUserMobileSessions(userId: string): Promise<any[]>;
+  getMobileSession(userId: string | number, deviceId: string): Promise<MobileSession | undefined>;
+  createMobileSession(session: InsertMobileSession): Promise<MobileSession>;
+  updateMobileSession(userId: string | number, deviceId: string, session: Partial<InsertMobileSession>): Promise<MobileSession | undefined>;
+  getUserMobileSessions(userId: string | number): Promise<MobileSession[]>;
+  deleteMobileSession(userId: string | number, deviceId: string): Promise<boolean>;
+  cleanupExpiredMobileSessions(): Promise<number>;
   getProjectDeployments(projectId: string): Promise<any[]>;
   getRecentDeployments(userId: string): Promise<any[]>;
 
@@ -2652,30 +2655,88 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(apiKeys.createdAt));
   }
 
-  // Mobile session methods
-  async getMobileSession(userId: string, deviceId?: string): Promise<any | undefined> {
-    // Mock implementation - would use mobile_sessions table
-    return undefined;
+  // Mobile session methods - REAL database implementations
+  async getMobileSession(userId: string | number, deviceId: string): Promise<MobileSession | undefined> {
+    const userIdNum = normalizeUserId(userId);
+    const [session] = await this.db
+      .select()
+      .from(mobileSessions)
+      .where(and(
+        eq(mobileSessions.userId, userIdNum),
+        eq(mobileSessions.deviceId, deviceId),
+        eq(mobileSessions.isActive, true)
+      ))
+      .limit(1);
+    return session;
   }
 
-  async createMobileSession(session: any): Promise<any> {
-    return {
-      id: crypto.randomBytes(16).toString('hex'),
-      ...session,
-      createdAt: new Date()
-    };
+  async createMobileSession(session: InsertMobileSession): Promise<MobileSession> {
+    const [created] = await this.db
+      .insert(mobileSessions)
+      .values(session)
+      .onConflictDoUpdate({
+        target: [mobileSessions.userId, mobileSessions.deviceId],
+        set: {
+          deviceName: session.deviceName,
+          platform: session.platform,
+          pushToken: session.pushToken,
+          lastActiveAt: new Date(),
+          expiresAt: session.expiresAt,
+          isActive: true,
+        }
+      })
+      .returning();
+    return created;
   }
 
-  async updateMobileSession(userId: string, deviceId: string, session: any): Promise<any | undefined> {
-    return {
-      id: deviceId, // Assuming deviceId is used as session identifier
-      ...session,
-      updatedAt: new Date()
-    };
+  async updateMobileSession(userId: string | number, deviceId: string, session: Partial<InsertMobileSession>): Promise<MobileSession | undefined> {
+    const userIdNum = normalizeUserId(userId);
+    const [updated] = await this.db
+      .update(mobileSessions)
+      .set({
+        ...session,
+        lastActiveAt: new Date(),
+      })
+      .where(and(
+        eq(mobileSessions.userId, userIdNum),
+        eq(mobileSessions.deviceId, deviceId)
+      ))
+      .returning();
+    return updated;
   }
 
-  async getUserMobileSessions(userId: string): Promise<any[]> {
-    return [];
+  async getUserMobileSessions(userId: string | number): Promise<MobileSession[]> {
+    const userIdNum = normalizeUserId(userId);
+    return await this.db
+      .select()
+      .from(mobileSessions)
+      .where(and(
+        eq(mobileSessions.userId, userIdNum),
+        eq(mobileSessions.isActive, true)
+      ))
+      .orderBy(desc(mobileSessions.lastActiveAt));
+  }
+
+  async deleteMobileSession(userId: string | number, deviceId: string): Promise<boolean> {
+    const userIdNum = normalizeUserId(userId);
+    const result = await this.db
+      .update(mobileSessions)
+      .set({ isActive: false })
+      .where(and(
+        eq(mobileSessions.userId, userIdNum),
+        eq(mobileSessions.deviceId, deviceId)
+      ))
+      .returning();
+    return result.length > 0;
+  }
+
+  async cleanupExpiredMobileSessions(): Promise<number> {
+    const now = new Date();
+    const result = await this.db
+      .delete(mobileSessions)
+      .where(lt(mobileSessions.expiresAt, now))
+      .returning();
+    return result.length;
   }
 
   // User Credits and Billing operations

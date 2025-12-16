@@ -1,0 +1,197 @@
+# PARTIE 5: BASE DE DONNÉES & SÉCURITÉ (25 issues)
+
+ 
+
+## 5.1 CRITIQUES (5)
+
+ 
+
+### PROBLÈME S-C1: API key en plain text
+
+**Fichier:** `/shared/admin-schema.ts` ligne 10
+
+**Code actuel:**
+
+```typescript
+
+key: text("key").notNull(), // Plain text!
+
+```
+
+**Solution:**
+
+```typescript
+
+keyHash: text("key_hash").notNull(), // Stocker hash SHA-256
+
+```
+
+ 
+
+---
+
+ 
+
+### PROBLÈME S-C2: Credentials dans .env.staging
+
+**Fichier:** `/.env.staging` lignes 15, 29-30
+
+**Solution:** Utiliser secrets manager, jamais commit credentials
+
+ 
+
+---
+
+ 
+
+### PROBLÈME S-C3: 52+ foreign keys sans cascade delete
+
+**Fichier:** `/shared/schema.ts` lignes 248+
+
+**Exemples:**
+
+- ligne 248: `ownerId` sans cascade
+
+- ligne 283: `userId` sans cascade
+
+- etc.
+
+ 
+
+**Solution:** Ajouter `onDelete: 'cascade'` ou `'set null'` selon le cas
+
+ 
+
+---
+
+ 
+
+### PROBLÈME S-C4: Session storage in-memory
+
+**Fichier:** `/server/auth/session-manager.ts` ligne 13
+
+**Code actuel:**
+
+```typescript
+
+private sessionStore = new Map<string, any>();
+
+```
+
+**Impact:** Sessions perdues au redémarrage, pas scalable
+
+**Solution:** Utiliser Redis ou PostgreSQL pour sessions
+
+ 
+
+---
+
+ 
+
+### PROBLÈME S-C5: Password validation trop faible
+
+**Fichier:** `/server/routes/auth-complete.ts` lignes 18, 24
+
+**Code actuel:**
+
+```typescript
+
+z.string().min(8).max(100) // Seulement longueur
+
+```
+
+**Solution:**
+
+```typescript
+
+z.string()
+
+  .min(8)
+
+  .regex(/[A-Z]/, 'Must contain uppercase')
+
+  .regex(/[a-z]/, 'Must contain lowercase')
+
+  .regex(/[0-9]/, 'Must contain number')
+
+```
+
+ 
+
+---
+
+ 
+
+## 5.2 HAUTE PRIORITÉ (8)
+
+ 
+
+### PROBLÈME S-H1: API keys in health response
+
+**Fichier:** `/server/routes/health.router.ts` lignes 243-248
+
+**Solution:** Masquer les API keys dans les réponses
+
+ 
+
+---
+
+ 
+
+### PROBLÈME S-H2: API key expiry non enforced
+
+**Fichier:** `/server/auth/api-key-manager.ts` lignes 385-401
+
+**Solution:** Vérifier expiry à chaque utilisation, pas juste cleanup
+
+ 
+
+---
+
+ 
+
+### PROBLÈME S-H3 à S-H8: Autres problèmes haute priorité
+
+- Missing indexes on users.email, tokens
+
+- Sensitive data in security logs (ligne 510)
+
+- Token revocation async non-awaited
+
+- No rate limiting file uploads
+
+- Hardcoded dev secrets (secrets-manager.ts)
+
+- JWT_SECRET validation manquante
+
+ 
+
+---
+
+ 
+
+## 5.3 MOYENNE PRIORITÉ (10)
+
+ 
+
+- Rate limiter no exponential backoff
+
+- Session fingerprinting optional
+
+- Admin API key no rate limit
+
+- Missing composite indexes
+
+- Request logging incomplete
+
+- API version header unused
+
+- No distributed session support
+
+- CORS dev mode permissive
+
+- Cleanup intervals not configurable
+
+ 
+
+---

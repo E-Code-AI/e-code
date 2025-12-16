@@ -1,0 +1,331 @@
+PROBLÈMES MOBILE APP (40 issues)
+
+ 
+
+## 3.1 CRITIQUES (8)
+
+ 
+
+### PROBLÈME M-C1: File save non implémenté
+
+**Fichier:** `/mobile/src/screens/EditorScreen.tsx` ligne 24
+
+**Code actuel:**
+
+```typescript
+
+// TODO: Save file
+
+console.log('Saving file:', fileName);
+
+```
+
+**Solution:** Implémenter appel API:
+
+```typescript
+
+const saveFile = async () => {
+
+  await api.put(`/api/files/${fileId}`, { content });
+
+  Toast.show({ text: 'File saved' });
+
+};
+
+```
+
+ 
+
+---
+
+ 
+
+### PROBLÈME M-C2: Search API mock
+
+**Fichier:** `/mobile/src/screens/SearchScreen.tsx` ligne 46
+
+**Code actuel:**
+
+```typescript
+
+// TODO: Implement real search API
+
+await new Promise(resolve => setTimeout(resolve, 500));
+
+```
+
+**Solution:** Implémenter vraie recherche via API
+
+ 
+
+---
+
+ 
+
+### PROBLÈME M-C3: Notifications mock data
+
+**Fichier:** `/mobile/src/screens/NotificationsScreen.tsx` ligne 36
+
+**Code actuel:**
+
+```typescript
+
+const mockNotifications = [...]; // Hardcodé
+
+```
+
+**Solution:** Fetch depuis `/api/notifications`
+
+ 
+
+---
+
+ 
+
+### PROBLÈME M-C4: Profile update non implémenté
+
+**Fichier:** `/mobile/src/screens/ProfileScreen.tsx` ligne 34
+
+**Solution:** Implémenter API call pour update profil
+
+ 
+
+---
+
+ 
+
+### PROBLÈME M-C5: File manager mock + Coming Soon
+
+**Fichier:** `/mobile/src/screens/FileManagerScreen.tsx` lignes 33, 64-65
+
+**Code actuel:**
+
+```typescript
+
+{ text: 'Rename', onPress: () => Alert.alert('Coming Soon') },
+
+{ text: 'Delete', onPress: () => Alert.alert('Coming Soon') },
+
+```
+
+**Solution:** Implémenter rename/delete via API
+
+ 
+
+---
+
+ 
+
+### PROBLÈME M-C6: Deployments mock data
+
+**Fichier:** `/mobile/src/screens/DeploymentsScreen.tsx` lignes 38-61
+
+**Solution:** Fetch réels déploiements depuis API
+
+ 
+
+---
+
+ 
+
+### PROBLÈME M-C7: Collaboration mock + Coming Soon
+
+**Fichier:** `/mobile/src/screens/CollaborationScreen.tsx` lignes 42-67, 73-75
+
+**Solution:** Implémenter vraie collaboration
+
+ 
+
+---
+
+ 
+
+### PROBLÈME M-C8: Templates mock data
+
+**Fichier:** `/mobile/src/screens/TemplatesScreen.tsx` lignes 45-87
+
+**Solution:** Fetch templates depuis API
+
+ 
+
+---
+
+ 
+
+## 3.2 HAUTE PRIORITÉ (12)
+
+ 
+
+### PROBLÈME M-H1: Push notifications non implémentées
+
+**Impact:** Pas de notifications push du tout
+
+**Solution:**
+
+```bash
+
+npx expo install expo-notifications
+
+```
+
+Puis implémenter handlers et device token registration
+
+ 
+
+---
+
+ 
+
+### PROBLÈME M-H2: Deep linking incomplet
+
+**Fichier:** `/mobile/app.config.js` ligne 64
+
+**Code actuel:** Scheme 'ecode' défini mais pas implémenté
+
+**Solution:** Implémenter handlers deep link avec expo-linking
+
+ 
+
+---
+
+ 
+
+### PROBLÈME M-H3: Biometric auth non implémenté
+
+**Fichier:** `/mobile/src/screens/SettingsScreen.tsx` ligne 24
+
+**Solution:** Installer expo-local-authentication et implémenter
+
+ 
+
+---
+
+ 
+
+### PROBLÈME M-H4: Error reporting manquant
+
+**Fichier:** `/mobile/src/components/ErrorBoundary.tsx` ligne 33
+
+**Code actuel:**
+
+```typescript
+
+// TODO: Log to error reporting service (Sentry, etc.)
+
+```
+
+**Solution:** Intégrer Sentry ou Bugsnag
+
+ 
+
+---
+
+ 
+
+### PROBLÈME M-H5: fileOperations getApiUrl manquant
+
+**Fichier:** `/mobile/src/services/fileOperations.ts` ligne 15
+
+**Solution:** Implémenter getApiUrl() correctement
+
+ 
+
+---
+
+ 
+
+### PROBLÈME M-H6: API parseResponse error handling
+
+**Fichier:** `/mobile/src/services/api.ts` lignes 14-25
+
+**Solution:** Améliorer gestion erreurs JSON parsing
+
+ 
+
+---
+
+ 
+
+### PROBLÈME M-H7 à M-H12: Autres problèmes haute priorité
+
+- Terminal hardcoded dev URL (`/mobile/src/components/Terminal.tsx` ligne 21-32)
+
+- Multiple 'any' type assertions (ProjectScreen 20+ instances)
+
+- AuthResponse interface mismatch (`/mobile/src/types.ts` lignes 14-17)
+
+- ProjectFile interface missing isDirectory
+
+- Navigation duplicate systems (App.tsx vs AppNavigator.tsx)
+
+- App icons/splash manquants (app.config.js)
+
+ 
+
+---
+
+ 
+
+## 3.3 MOYENNE PRIORITÉ (15)
+
+ 
+
+### PROBLÈME M-M1: Settings cache clearing non implémenté
+
+**Fichier:** `/mobile/src/screens/SettingsScreen.tsx` ligne 37
+
+**Solution:** Implémenter AsyncStorage.clear() avec confirmation
+
+ 
+
+---
+
+ 
+
+### PROBLÈME M-M2: Logout non implémenté
+
+**Fichier:** `/mobile/src/screens/SettingsScreen.tsx` ligne 277
+
+**Solution:** Appeler API logout + clear tokens + navigate login
+
+ 
+
+---
+
+ 
+
+### PROBLÈME M-M3 à M-M15: Autres problèmes moyens
+
+- Sync service non utilisé dans screens
+
+- Offline indicators manquants
+
+- Keyboard avoiding inconsistent
+
+- Package name verification needed
+
+- Permissions non déclarées
+
+- Privacy policy URL manquante
+
+- Missing navigation types
+
+- Large component files (ProjectScreen 722 lignes)
+
+- No memoization/useCallback
+
+- No image optimization
+
+- FlatList sans optimization
+
+- Missing accessibilityLabel
+
+- Missing expo packages (file-system, camera, etc.)
+
+- eas.json manquant pour builds
+
+- Environment validation incomplete
+
+ 
+
+---

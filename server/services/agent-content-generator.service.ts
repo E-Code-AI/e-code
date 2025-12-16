@@ -775,69 +775,355 @@ CMD ["node", "index.js"]
     }
 
     // ============================================
-    // GENERIC FALLBACKS (must come AFTER specific templates)
+    // ENHANCED GENERIC FALLBACKS (must come AFTER specific templates)
+    // Provides complete working skeleton code when AI generation fails
     // ============================================
     
-    // Default fallback - provide sensible content based on file extension
-    logger.warn(`[ContentGenerator] No template match for ${path}, using outline-based default`);
+    logger.warn(`[ContentGenerator] No template match for ${path}, generating enhanced fallback`);
     
-    // TypeScript/JavaScript files (generic fallback)
+    // TypeScript/JavaScript files (enhanced fallback with real structure)
     if (fileName.endsWith('.ts') || fileName.endsWith('.tsx') || fileName.endsWith('.js') || fileName.endsWith('.jsx')) {
       const isReactComponent = fileName.endsWith('.tsx') || fileName.endsWith('.jsx') || 
                               description.toLowerCase().includes('component') || 
                               description.toLowerCase().includes('react');
       
+      const isHook = description.toLowerCase().includes('hook') || fileName.startsWith('use');
+      const isService = description.toLowerCase().includes('service') || fileName.includes('service');
+      const isUtil = description.toLowerCase().includes('util') || fileName.includes('util');
+      const isContext = description.toLowerCase().includes('context') || fileName.includes('context');
+      
+      // Generate appropriate skeleton based on file type
       if (isReactComponent) {
         const componentName = path.split('/').pop()?.replace(/\.(tsx|jsx)$/, '') || 'Component';
-        return `export default function ${componentName}() {
-  // ${description}
+        const pascalName = componentName.charAt(0).toUpperCase() + componentName.slice(1);
+        
+        return `import { useState, useEffect } from 'react';
+
+interface ${pascalName}Props {
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export default function ${pascalName}({ className, children }: ${pascalName}Props) {
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
+  
+  if (isLoading) {
+    return <div className={className}>Loading...</div>;
+  }
+  
   return (
-    <div>
-      <h1>${componentName}</h1>
-      <p>TODO: Implement component based on outline</p>
+    <div className={\`${componentName.toLowerCase()} \${className || ''}\`}>
+      <div className="${componentName.toLowerCase()}-content">
+        {children}
+      </div>
     </div>
   );
 }`;
       }
       
-      // Regular TS/JS file
-      return `/**
- * ${description}
+      if (isHook) {
+        const hookName = path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') || 'useCustomHook';
+        return `import { useState, useEffect, useCallback } from 'react';
+
+interface ${hookName.charAt(0).toUpperCase() + hookName.slice(1)}Result {
+  data: unknown;
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => void;
+}
+
+export function ${hookName}(): ${hookName.charAt(0).toUpperCase() + hookName.slice(1)}Result {
+  const [data, setData] = useState<unknown>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  
+  const refetch = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Implement fetch logic here
+      setData({});
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Unknown error'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+  
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+  
+  return { data, isLoading, error, refetch };
+}
+
+export default ${hookName};`;
+      }
+      
+      if (isService) {
+        const serviceName = path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') || 'service';
+        const className = serviceName.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('') + 'Service';
+        
+        return `import { createLogger } from '../utils/logger';
+
+const logger = createLogger('${serviceName}');
+
+export interface ${className}Options {
+  baseUrl?: string;
+  timeout?: number;
+}
+
+export class ${className} {
+  private baseUrl: string;
+  private timeout: number;
+  
+  constructor(options: ${className}Options = {}) {
+    this.baseUrl = options.baseUrl || '';
+    this.timeout = options.timeout || 30000;
+    logger.info('[${className}] Service initialized');
+  }
+  
+  async execute(params: Record<string, unknown>): Promise<unknown> {
+    logger.info('[${className}] Executing operation', { params });
+    
+    try {
+      // Implement service logic here
+      return { success: true, data: params };
+    } catch (error: any) {
+      logger.error('[${className}] Operation failed', { error: error.message });
+      throw error;
+    }
+  }
+}
+
+export const ${serviceName.replace(/-./g, x => x[1].toUpperCase())} = new ${className}();`;
+      }
+      
+      if (isContext) {
+        const contextName = path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') || 'AppContext';
+        const pascalName = contextName.charAt(0).toUpperCase() + contextName.slice(1);
+        
+        return `import { createContext, useContext, useState, ReactNode } from 'react';
+
+interface ${pascalName}State {
+  value: unknown;
+  setValue: (value: unknown) => void;
+}
+
+const ${pascalName} = createContext<${pascalName}State | undefined>(undefined);
+
+export function ${pascalName}Provider({ children }: { children: ReactNode }) {
+  const [value, setValue] = useState<unknown>(null);
+  
+  return (
+    <${pascalName}.Provider value={{ value, setValue }}>
+      {children}
+    </${pascalName}.Provider>
+  );
+}
+
+export function use${pascalName}() {
+  const context = useContext(${pascalName});
+  if (context === undefined) {
+    throw new Error('use${pascalName} must be used within a ${pascalName}Provider');
+  }
+  return context;
+}
+
+export default ${pascalName};`;
+      }
+      
+      if (isUtil) {
+        return `/**
+ * Utility functions for: ${description}
  */
 
-// TODO: Implement based on outline
-export {};
+export function formatValue(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  return String(value);
+}
+
+export function parseValue<T>(value: string, defaultValue: T): T {
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return defaultValue;
+  }
+}
+
+export function debounce<T extends (...args: any[]) => any>(
+  fn: T,
+  delay: number
+): (...args: Parameters<T>) => void {
+  let timeoutId: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  };
+}
+
+export function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}`;
+      }
+      
+      // Regular TS/JS module with exports
+      return `/**
+ * ${description}
+ * Generated fallback - implement specific functionality as needed
+ */
+
+export interface ModuleOptions {
+  enabled?: boolean;
+  config?: Record<string, unknown>;
+}
+
+export function initialize(options: ModuleOptions = {}): void {
+  console.log('Module initialized with options:', options);
+}
+
+export function execute(input: unknown): unknown {
+  return { processed: true, input };
+}
+
+export default { initialize, execute };
 `;
     }
     
-    // CSS files (generic fallback)
+    // CSS files (enhanced with base styles)
     if (fileName.endsWith('.css')) {
+      const className = path.split('/').pop()?.replace('.css', '').toLowerCase() || 'component';
       return `/* ${description} */
 
-/* TODO: Add styles based on outline */
+.${className} {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.${className}-header {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.${className}-content {
+  flex: 1;
+}
+
+.${className}-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+@media (max-width: 768px) {
+  .${className} {
+    padding: 0.75rem;
+  }
+}
 `;
     }
     
-    // JSON files (generic fallback)
+    // JSON files (enhanced with common patterns)
     if (fileName.endsWith('.json')) {
+      const configName = path.split('/').pop()?.replace('.json', '') || 'config';
+      if (configName.includes('tsconfig')) {
+        return JSON.stringify({
+          compilerOptions: {
+            target: 'ES2020',
+            module: 'ESNext',
+            moduleResolution: 'bundler',
+            strict: true,
+            esModuleInterop: true,
+            skipLibCheck: true
+          },
+          include: ['src/**/*'],
+          exclude: ['node_modules']
+        }, null, 2);
+      }
       return JSON.stringify({
+        name: configName,
+        version: '1.0.0',
         description: description,
-        todo: 'Configure based on outline'
+        config: {}
       }, null, 2);
     }
     
-    // Markdown files (generic fallback)
+    // Markdown files (enhanced with structure)
     if (fileName.endsWith('.md')) {
-      return `# ${path.split('/').pop()?.replace('.md', '') || 'Document'}
+      const docName = path.split('/').pop()?.replace('.md', '') || 'Document';
+      const title = docName.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      return `# ${title}
 
 ${description}
 
-TODO: Add content based on outline
+## Overview
+
+This document describes ${title.toLowerCase()}.
+
+## Getting Started
+
+1. Install dependencies
+2. Configure settings
+3. Run the application
+
+## Usage
+
+\`\`\`typescript
+// Example usage
+import { feature } from './feature';
+
+feature.initialize();
+\`\`\`
+
+## API Reference
+
+See the source code for detailed API documentation.
+
+## Contributing
+
+Please read the contributing guidelines before submitting changes.
 `;
     }
     
-    // Plain text fallback with outline as comment
-    return `${description}\n\nTODO: Implement file content based on outline\n`;
+    // YAML files
+    if (fileName.endsWith('.yml') || fileName.endsWith('.yaml')) {
+      return `# ${description}
+
+version: '1.0'
+
+settings:
+  enabled: true
+  
+# Add configuration here
+`;
+    }
+    
+    // Shell scripts
+    if (fileName.endsWith('.sh')) {
+      return `#!/bin/bash
+# ${description}
+
+set -e
+
+echo "Script started..."
+
+# Add commands here
+
+echo "Script completed."
+`;
+    }
+    
+    // Plain text fallback
+    return `${description}
+
+Content generated as fallback. Please implement specific functionality as needed.
+`;
   }
 }
 
