@@ -271,24 +271,60 @@ export class ToolExecutor {
     };
   }
 
-  private async listDirectory(params: { path: string; recursive?: boolean }): Promise<ToolExecutionResult> {
+  /**
+   * List directory contents with protection against resource exhaustion
+   * ✅ A-H6 FIX (Dec 16, 2025): Added maxDepth and maxFiles limits to prevent DoS attacks
+   */
+  private async listDirectory(params: { path: string; recursive?: boolean; maxDepth?: number; maxFiles?: number }): Promise<ToolExecutionResult> {
     const dirPath = this.validatePath(params.path || '.');
     
-    const listFiles = async (dir: string, prefix = ''): Promise<string[]> => {
+    // ✅ A-H6: Configurable limits with safe defaults to prevent memory exhaustion
+    const MAX_DEPTH = params.maxDepth ?? 10;   // Default: 10 levels deep
+    const MAX_FILES = params.maxFiles ?? 5000; // Default: 5000 files max
+    
+    let totalFiles = 0;
+    let limitReached = false;
+    let limitType: 'depth' | 'files' | null = null;
+    
+    const listFiles = async (dir: string, prefix = '', currentDepth = 0): Promise<string[]> => {
+      // ✅ A-H6: Check depth limit
+      if (currentDepth > MAX_DEPTH) {
+        limitReached = true;
+        limitType = 'depth';
+        return [];
+      }
+      
+      // ✅ A-H6: Check file count limit before proceeding
+      if (totalFiles >= MAX_FILES) {
+        limitReached = true;
+        limitType = 'files';
+        return [];
+      }
+      
       const entries = await fs.readdir(dir, { withFileTypes: true });
       let files: string[] = [];
 
       for (const entry of entries) {
+        // ✅ A-H6: Check file limit during iteration
+        if (totalFiles >= MAX_FILES) {
+          limitReached = true;
+          limitType = 'files';
+          break;
+        }
+        
         const relativePath = path.join(prefix, entry.name);
         
         if (entry.isDirectory()) {
           files.push(`${relativePath}/`);
-          if (params.recursive) {
-            const subFiles = await listFiles(path.join(dir, entry.name), relativePath);
+          totalFiles++;
+          
+          if (params.recursive && !limitReached) {
+            const subFiles = await listFiles(path.join(dir, entry.name), relativePath, currentDepth + 1);
             files.push(...subFiles);
           }
         } else {
           files.push(relativePath);
+          totalFiles++;
         }
       }
 
@@ -297,13 +333,24 @@ export class ToolExecutor {
 
     const files = await listFiles(dirPath);
 
+    const output: any = {
+      path: params.path || '.',
+      files,
+      count: files.length
+    };
+    
+    // ✅ A-H6: Report if limits were reached
+    if (limitReached) {
+      output.truncated = true;
+      output.truncationReason = limitType === 'depth' 
+        ? `Maximum recursion depth of ${MAX_DEPTH} reached`
+        : `Maximum file count of ${MAX_FILES} reached`;
+      output.limits = { maxDepth: MAX_DEPTH, maxFiles: MAX_FILES };
+    }
+
     return {
       success: true,
-      output: {
-        path: params.path || '.',
-        files,
-        count: files.length
-      }
+      output
     };
   }
 
@@ -478,14 +525,129 @@ export class ToolExecutor {
     };
   }
 
-  private async searchCode(params: { pattern: string; file_pattern?: string }): Promise<ToolExecutionResult> {
-    const grepCommand = params.file_pattern 
-      ? `grep -r "${params.pattern}" --include="${params.file_pattern}" .`
-      : `grep -r "${params.pattern}" .`;
+  /**
+   * Search code with protection against regex injection and output flooding
+   * ✅ A-H10 FIX (Dec 16, 2025): Use spawn() directly with sanitized patterns
+   */
+  private async searchCode(params: { pattern: string; file_pattern?: string; max_results?: number }): Promise<ToolExecutionResult> {
+    // ✅ A-H10: Configurable result limit to prevent huge output
+    const MAX_RESULTS = params.max_results ?? 100;
+    
+    // ✅ A-H10: Escape regex metacharacters to prevent injection attacks
+    // This converts user input to a literal string search (safer default)
+    const escapeRegex = (str: string): string => {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    };
+    
+    const sanitizedPattern = escapeRegex(params.pattern);
+    
+    // ✅ A-H10: Build args array for spawn() instead of shell command string
+    const args: string[] = [
+      '-r',           // recursive
+      '-n',           // line numbers
+      '-l',           // only show filenames (for initial scan)
+      '--color=never' // no ANSI codes in output
+    ];
+    
+    // Add file pattern filter if specified (also sanitized)
+    if (params.file_pattern) {
+      // Sanitize file pattern - only allow safe glob characters
+      const safeFilePattern = params.file_pattern.replace(/[;&|`$(){}[\]<>\\]/g, '');
+      args.push(`--include=${safeFilePattern}`);
+    }
+    
+    // Add pattern and search path
+    args.push(sanitizedPattern);
+    args.push('.');
+    
+    return new Promise((resolve) => {
+      try {
+        let stdout = '';
+        let stderr = '';
+        let resultCount = 0;
+        let truncated = false;
+        
+        // ✅ A-H10: Use spawn() directly without shell to prevent injection
+        const childProcess = spawn('grep', args, {
+          cwd: this.projectRoot,
+          shell: false,  // CRITICAL: Never use shell for user-provided input
+          timeout: 30000
+        });
 
-    return await this.runCommand({
-      command: grepCommand,
-      description: `Searching for pattern: ${params.pattern}`
+        childProcess.stdout?.on('data', (data) => {
+          const lines = data.toString().split('\n').filter((l: string) => l.trim());
+          
+          // ✅ A-H10: Limit output to prevent memory exhaustion
+          for (const line of lines) {
+            if (resultCount >= MAX_RESULTS) {
+              truncated = true;
+              break;
+            }
+            stdout += line + '\n';
+            resultCount++;
+          }
+          
+          // Kill process if we've reached the limit
+          if (truncated && childProcess.pid) {
+            childProcess.kill('SIGTERM');
+          }
+        });
+
+        childProcess.stderr?.on('data', (data) => {
+          stderr += data.toString();
+        });
+
+        childProcess.on('error', (error) => {
+          resolve({
+            success: false,
+            error: error.message,
+            output: {
+              pattern: params.pattern,
+              sanitizedPattern,
+              matches: [],
+              error: error.message
+            }
+          });
+        });
+
+        childProcess.on('close', (code) => {
+          // grep returns 1 if no matches found (not an error)
+          const matches = stdout.trim().split('\n').filter(l => l);
+          
+          const output: any = {
+            pattern: params.pattern,
+            sanitizedPattern,
+            matches,
+            matchCount: matches.length
+          };
+          
+          // ✅ A-H10: Report if results were truncated
+          if (truncated) {
+            output.truncated = true;
+            output.truncationReason = `Maximum result count of ${MAX_RESULTS} reached`;
+            output.maxResults = MAX_RESULTS;
+          }
+          
+          if (params.file_pattern) {
+            output.filePattern = params.file_pattern;
+          }
+          
+          resolve({
+            success: true,
+            output
+          });
+        });
+      } catch (error: any) {
+        resolve({
+          success: false,
+          error: error.message,
+          output: {
+            pattern: params.pattern,
+            matches: [],
+            error: error.message
+          }
+        });
+      }
     });
   }
 
