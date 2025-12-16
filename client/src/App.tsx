@@ -1071,28 +1071,30 @@ function AppContent() {
 
 function App() {
   return (
-    <PersistQueryClientProvider 
-      client={queryClient} 
-      persistOptions={{ 
-        persister: queryPersister,
-        maxAge: 24 * 60 * 60 * 1000,
-        buster: 'v1',
-      }}
-    >
-      <OptimizedMotionProvider>
-        <AnimationMonitor>
-          <ThemeProvider>
-            <ConnectionStatusProvider>
-              <GlobalErrorChannelProvider>
-                <AuthProvider>
-                  <AppContent />
-                </AuthProvider>
-              </GlobalErrorChannelProvider>
-            </ConnectionStatusProvider>
-          </ThemeProvider>
-        </AnimationMonitor>
-      </OptimizedMotionProvider>
-    </PersistQueryClientProvider>
+    <ErrorBoundary>
+      <PersistQueryClientProvider 
+        client={queryClient} 
+        persistOptions={{ 
+          persister: queryPersister,
+          maxAge: 24 * 60 * 60 * 1000,
+          buster: 'v1',
+        }}
+      >
+        <OptimizedMotionProvider>
+          <AnimationMonitor>
+            <ThemeProvider>
+              <ConnectionStatusProvider>
+                <GlobalErrorChannelProvider>
+                  <AuthProvider>
+                    <AppContent />
+                  </AuthProvider>
+                </GlobalErrorChannelProvider>
+              </ConnectionStatusProvider>
+            </ThemeProvider>
+          </AnimationMonitor>
+        </OptimizedMotionProvider>
+      </PersistQueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
