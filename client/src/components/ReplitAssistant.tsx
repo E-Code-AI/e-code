@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { 
   Sparkles, Send, X, Copy, Check, ChevronDown, ChevronUp,
   Code, FileText, HelpCircle, Zap, RefreshCw, Play,
@@ -255,7 +255,7 @@ export function ReplitAssistant({
       <ScrollArea className="flex-1 px-4">
         <div className="py-4 space-y-4">
           {messages.map((message) => (
-            <motion.div
+            <LazyMotionDiv
               key={message.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -386,7 +386,7 @@ export function ReplitAssistant({
                   )}
                 </div>
               </div>
-            </motion.div>
+            </LazyMotionDiv>
           ))}
           <div ref={messagesEndRef} />
         </div>

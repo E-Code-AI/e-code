@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, PanInfo, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton, LazyMotionSpan, LazyAnimatePresence, PanInfo } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 
 interface SwipeableCardProps {
@@ -41,9 +41,9 @@ export function SwipeableCard({
   };
 
   return (
-    <AnimatePresence mode="wait">
+    <LazyAnimatePresence mode="wait">
       {!exitDirection && (
-        <motion.div
+        <LazyMotionDiv
           className={cn('touch-none', className)}
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
@@ -56,9 +56,9 @@ export function SwipeableCard({
           style={{ touchAction: 'pan-y' }}
         >
           {children}
-        </motion.div>
+        </LazyMotionDiv>
       )}
-    </AnimatePresence>
+    </LazyAnimatePresence>
   );
 }
 
@@ -110,10 +110,10 @@ export function BottomSheet({
   };
 
   return (
-    <AnimatePresence>
+    <LazyAnimatePresence>
       {isOpen && (
         <>
-          <motion.div
+          <LazyMotionDiv
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.5 }}
             exit={{ opacity: 0 }}
@@ -121,7 +121,7 @@ export function BottomSheet({
             onClick={onClose}
           />
           
-          <motion.div
+          <LazyMotionDiv
             className={cn(
               'fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl z-50 lg:hidden',
               className
@@ -154,10 +154,10 @@ export function BottomSheet({
             <div className="px-4 pb-safe">
               {children}
             </div>
-          </motion.div>
+          </LazyMotionDiv>
         </>
       )}
-    </AnimatePresence>
+    </LazyAnimatePresence>
   );
 }
 
@@ -196,13 +196,13 @@ export function PullToRefresh({
   return (
     <div className={cn('relative overflow-hidden', className)}>
       {/* Pull indicator */}
-      <motion.div
+      <LazyMotionDiv
         className="absolute top-0 left-0 right-0 flex justify-center items-center h-20 z-10"
         style={{
           translateY: pullDistance - 80
         }}
       >
-        <motion.div
+        <LazyMotionDiv
           animate={{ rotate: isRefreshing ? 360 : pullDistance * 3 }}
           transition={{ 
             duration: isRefreshing ? 1 : 0,
@@ -216,11 +216,11 @@ export function PullToRefresh({
               d="M12 2v6l4-4-4-4M12 22v-6l-4 4 4 4M2 12h6l-4-4-4 4M22 12h-6l4 4 4-4"
             />
           </svg>
-        </motion.div>
-      </motion.div>
+        </LazyMotionDiv>
+      </LazyMotionDiv>
 
       {/* Content */}
-      <motion.div
+      <LazyMotionDiv
         drag="y"
         dragConstraints={{ top: 0, bottom: 0 }}
         dragElastic={0.5}
@@ -231,7 +231,7 @@ export function PullToRefresh({
         style={{ touchAction: 'pan-x' }}
       >
         {children}
-      </motion.div>
+      </LazyMotionDiv>
     </div>
   );
 }
@@ -268,14 +268,14 @@ export function HapticButton({
 
   return (
     <>
-      <motion.button
+      <LazyMotionButton
         className={cn('relative overflow-hidden', className)}
         onClick={handleClick}
         whileTap={{ scale: 0.95 }}
         transition={{ type: 'spring', stiffness: 400, damping: 10 }}
       >
         {children}
-      </motion.button>
+      </LazyMotionButton>
       <style>{`
         @keyframes haptic-pulse {
           0% { transform: scale(1); }
@@ -324,9 +324,9 @@ export function TouchRipple({
       onMouseDown={handleTouch}
     >
       {children}
-      <AnimatePresence>
+      <LazyAnimatePresence>
         {ripples.map(ripple => (
-          <motion.span
+          <LazyMotionSpan
             key={ripple.id}
             className="absolute rounded-full pointer-events-none"
             style={{
@@ -346,7 +346,7 @@ export function TouchRipple({
             transition={{ duration: 0.6, ease: 'easeOut' }}
           />
         ))}
-      </AnimatePresence>
+      </LazyAnimatePresence>
     </div>
   );
 }
@@ -434,7 +434,7 @@ export function SwipeGesture({
   };
 
   return (
-    <motion.div
+    <LazyMotionDiv
       className={className}
       drag
       dragConstraints={{ top: 0, right: 0, bottom: 0, left: 0 }}
@@ -449,7 +449,7 @@ export function SwipeGesture({
       }
     >
       {children}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -486,7 +486,7 @@ export function LongPress({
   };
 
   return (
-    <motion.div
+    <LazyMotionDiv
       className={className}
       onTouchStart={handlePressStart}
       onTouchEnd={handlePressEnd}
@@ -498,7 +498,7 @@ export function LongPress({
       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
     >
       {children}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -552,13 +552,13 @@ export function PinchToZoom({
   };
 
   return (
-    <motion.div
+    <LazyMotionDiv
       className={cn('overflow-hidden', className)}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onDoubleClick={handleDoubleClick}
     >
-      <motion.div
+      <LazyMotionDiv
         drag={scale > 1}
         dragConstraints={{
           top: -(scale - 1) * 100,
@@ -571,7 +571,7 @@ export function PinchToZoom({
         style={{ touchAction: 'none' }}
       >
         {children}
-      </motion.div>
-    </motion.div>
+      </LazyMotionDiv>
+    </LazyMotionDiv>
   );
 }

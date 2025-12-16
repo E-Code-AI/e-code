@@ -34,7 +34,7 @@ import { cn } from '@/lib/utils';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 
 interface Template {
   id: string;
@@ -308,7 +308,7 @@ export function TemplatesMarketplace() {
   );
 
   const TemplateCard = ({ template }: { template: Template }) => (
-    <motion.div
+    <LazyMotionDiv
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -461,7 +461,7 @@ export function TemplatesMarketplace() {
           </div>
         </CardContent>
       </Card>
-    </motion.div>
+    </LazyMotionDiv>
   );
 
   return (

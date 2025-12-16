@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 import useSplitsStore from '@/stores/splits-store';
 
@@ -89,7 +89,7 @@ export function SplitsResizeHandle({
   }, [splitId, findNode, toggleMinimize]);
 
   return (
-    <motion.div
+    <LazyMotionDiv
       className={cn(
         "relative group",
         direction === 'horizontal' ? "w-1 cursor-col-resize" : "h-1 cursor-row-resize",
@@ -126,9 +126,9 @@ export function SplitsResizeHandle({
       />
 
       {/* Handle indicator dots */}
-      <AnimatePresence>
+      <LazyAnimatePresence>
         {(isHovered || isDragging) && (
-          <motion.div
+          <LazyMotionDiv
             className={cn(
               "absolute flex items-center justify-center",
               direction === 'horizontal'
@@ -149,9 +149,9 @@ export function SplitsResizeHandle({
               <div className="w-1 h-1 bg-blue-500 rounded-full" />
               <div className="w-1 h-1 bg-blue-500 rounded-full" />
             </div>
-          </motion.div>
+          </LazyMotionDiv>
         )}
-      </AnimatePresence>
-    </motion.div>
+      </LazyAnimatePresence>
+    </LazyMotionDiv>
   );
 }

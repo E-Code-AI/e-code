@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence, type PanInfo } from '@/lib/motion';
 import { 
   X, Search,
   FileText, Bot, Sparkles, Rocket, HardDrive, UserCheck,
@@ -82,11 +82,11 @@ export function MobileToolsPanel({
   };
   
   return (
-    <AnimatePresence>
+    <LazyAnimatePresence>
       {isOpen && (
         <>
           {/* Backdrop */}
-          <motion.div
+          <LazyMotionDiv
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.5 }}
             exit={{ opacity: 0 }}
@@ -96,7 +96,7 @@ export function MobileToolsPanel({
           />
           
           {/* Tools Panel */}
-          <motion.div
+          <LazyMotionDiv
             className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-[var(--ecode-background)] z-50 shadow-2xl flex flex-col"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
@@ -174,10 +174,10 @@ export function MobileToolsPanel({
                 )}
               </div>
             </ScrollArea>
-          </motion.div>
+          </LazyMotionDiv>
         </>
       )}
-    </AnimatePresence>
+    </LazyAnimatePresence>
   );
 }
 
@@ -191,7 +191,7 @@ function ToolRow({
   const Icon = tool.icon;
   
   return (
-    <motion.button
+    <LazyMotionButton
       onClick={() => onSelect(tool.id)}
       className={cn(
         "w-full px-4 py-3 flex items-start gap-3 text-left",
@@ -212,6 +212,6 @@ function ToolRow({
           {tool.description}
         </div>
       </div>
-    </motion.button>
+    </LazyMotionButton>
   );
 }

@@ -29,7 +29,7 @@ import {
   Lightbulb,
   Clock
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 
 interface CodeIssue {
@@ -396,9 +396,9 @@ export default function AICodeReview({
             
             <ScrollArea className="h-[400px] pr-4">
               <div className="space-y-3">
-                <AnimatePresence>
+                <LazyAnimatePresence>
                   {filteredIssues.map((issue: CodeIssue) => (
-                    <motion.div
+                    <LazyMotionDiv
                       key={issue.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -511,9 +511,9 @@ export default function AICodeReview({
                           )}
                         </div>
                       </div>
-                    </motion.div>
+                    </LazyMotionDiv>
                   ))}
-                </AnimatePresence>
+                </LazyAnimatePresence>
               </div>
             </ScrollArea>
           </>

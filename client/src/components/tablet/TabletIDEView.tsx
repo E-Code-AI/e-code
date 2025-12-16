@@ -6,7 +6,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import {
   ChevronLeft,
   ChevronRight,
@@ -391,9 +391,9 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
         data-testid="tablet-ide-view"
       >
       {/* Sliding Drawer Navigation */}
-      <AnimatePresence>
+      <LazyAnimatePresence>
         {drawerOpen && (
-          <motion.div
+          <LazyMotionDiv
             ref={drawerRef}
             initial={{ x: -layout.optimalSidebarWidth }}
             animate={{ x: 0 }}
@@ -444,13 +444,13 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
                 errorsCount={errorsCount}
               />
             </div>
-          </motion.div>
+          </LazyMotionDiv>
         )}
-      </AnimatePresence>
+      </LazyAnimatePresence>
       
       {/* Drawer Overlay (close on tap outside) */}
       {drawerOpen && (
-        <motion.div
+        <LazyMotionDiv
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

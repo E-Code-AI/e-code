@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 
 interface AnimatedChartWrapperProps {
@@ -44,7 +44,7 @@ export function AnimatedChartWrapper({
   };
 
   return (
-    <motion.div
+    <LazyMotionDiv
       className={cn('w-full h-full', className)}
       initial="hidden"
       animate={isVisible ? "visible" : "hidden"}
@@ -58,7 +58,7 @@ export function AnimatedChartWrapper({
       }}
     >
       {children}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -128,7 +128,7 @@ export function AnimatedChartTooltip({
   if (!active || !payload || !payload.length) return null;
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
@@ -154,24 +154,20 @@ export function AnimatedChartTooltip({
           />
         </div>
       ))}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
 export function ChartLoadingSkeleton({ type = 'line' }: { type?: 'line' | 'bar' | 'pie' }) {
   return (
     <div className="w-full h-full flex items-center justify-center">
-      <motion.div
-        animate={{ opacity: [0.5, 1, 0.5] }}
-        transition={{ duration: 1.5, repeat: Infinity }}
-        className="w-full h-full"
-      >
+      <div className="w-full h-full animate-pulse">
         {type === 'pie' ? (
-          <div className="w-48 h-48 mx-auto rounded-full bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 animate-pulse" />
+          <div className="w-48 h-48 mx-auto rounded-full bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 rounded animate-pulse" />
+          <div className="w-full h-full bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 rounded" />
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }

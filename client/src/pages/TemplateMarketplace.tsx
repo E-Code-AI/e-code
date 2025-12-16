@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { 
   Search, Filter, Grid3x3, List, TrendingUp, Star, Download,
   Code2, Sparkles, Rocket, ChevronDown, X, Plus, Upload,
@@ -303,9 +303,9 @@ export default function TemplateMarketplace() {
 
       <div className="flex gap-6">
         {/* Filters Sidebar */}
-        <AnimatePresence>
+        <LazyAnimatePresence>
           {showFilters && (
-            <motion.aside
+            <LazyMotionDiv
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -345,9 +345,9 @@ export default function TemplateMarketplace() {
                   />
                 </CardContent>
               </Card>
-            </motion.aside>
+            </LazyMotionDiv>
           )}
-        </AnimatePresence>
+        </LazyAnimatePresence>
 
         {/* Main Content */}
         <div className="flex-1 min-w-0" data-testid="templates-content">

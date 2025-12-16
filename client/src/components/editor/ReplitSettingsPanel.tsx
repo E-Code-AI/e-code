@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,7 +37,7 @@ function SettingsSkeleton() {
   return (
     <div className="space-y-3 p-3">
       {[1, 2, 3, 4].map((i) => (
-        <motion.div
+        <LazyMotionDiv
           key={i}
           className="h-10 rounded-lg bg-muted"
           animate={{
@@ -400,7 +400,7 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
           </ScrollArea>
 
           {isDirty && (
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="border-t border-border p-3 bg-card"
@@ -425,7 +425,7 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
                   </Button>
                 </div>
               </div>
-            </motion.div>
+            </LazyMotionDiv>
           )}
         </div>
       </div>

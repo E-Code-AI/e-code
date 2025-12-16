@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { 
   Play, 
   Square, 
@@ -135,7 +135,7 @@ export function MobileIDEHeader({
           </Button>
         )}
 
-        <motion.div
+        <LazyMotionDiv
           whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}
           transition={getReducedMotionTransition(prefersReducedMotion, SPRING_CONFIG.default)}
         >
@@ -151,9 +151,9 @@ export function MobileIDEHeader({
             )}
             data-testid="button-run-stop"
           >
-            <AnimatePresence mode="wait">
+            <LazyAnimatePresence mode="wait">
               {isRunning ? (
-                <motion.div
+                <LazyMotionDiv
                   key="stop"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -162,9 +162,9 @@ export function MobileIDEHeader({
                 >
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   <span className="text-xs">Stop</span>
-                </motion.div>
+                </LazyMotionDiv>
               ) : (
-                <motion.div
+                <LazyMotionDiv
                   key="run"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -173,11 +173,11 @@ export function MobileIDEHeader({
                 >
                   <Play className="h-3.5 w-3.5 fill-current" />
                   <span className="text-xs">Run</span>
-                </motion.div>
+                </LazyMotionDiv>
               )}
-            </AnimatePresence>
+            </LazyAnimatePresence>
           </Button>
-        </motion.div>
+        </LazyMotionDiv>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

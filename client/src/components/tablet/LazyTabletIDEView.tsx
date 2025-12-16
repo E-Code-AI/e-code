@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 
 const TabletIDEView = lazy(() => 
   import('./TabletIDEView').then(module => ({
@@ -17,7 +17,7 @@ interface LazyTabletIDEViewProps {
 }
 
 const TabletIDESkeleton = () => (
-  <motion.div 
+  <LazyMotionDiv 
     className="flex h-full w-full bg-background"
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -94,7 +94,7 @@ const TabletIDESkeleton = () => (
         </div>
       </div>
     </div>
-  </motion.div>
+  </LazyMotionDiv>
 );
 
 export function LazyTabletIDEView(props: LazyTabletIDEViewProps) {

@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 
 interface TemplateSearchProps {
   value: string;
@@ -152,9 +152,9 @@ export function TemplateSearch({ value, onChange, onSearch, className }: Templat
                 data-testid="search-input"
               />
               <div className="absolute right-2 flex items-center gap-1">
-                <AnimatePresence>
+                <LazyAnimatePresence>
                   {value && (
-                    <motion.div
+                    <LazyMotionDiv
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
@@ -169,9 +169,9 @@ export function TemplateSearch({ value, onChange, onSearch, className }: Templat
                       >
                         <X className="h-3 w-3" />
                       </Button>
-                    </motion.div>
+                    </LazyMotionDiv>
                   )}
-                </AnimatePresence>
+                </LazyAnimatePresence>
                 <Button
                   type="button"
                   variant="ghost"

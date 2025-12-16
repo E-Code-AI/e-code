@@ -23,7 +23,7 @@ import {
   Settings, Bot, Sparkles, RefreshCw, Save, Download, Upload,
   FileText, FolderOpen, Trash2, Edit, Eye, Copy, ChevronRight
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { io, Socket } from 'socket.io-client';
 import { format } from 'date-fns';
 import { CM6Editor } from '@/components/editor/CM6Editor';
@@ -630,9 +630,9 @@ export default function ChatGPTAdmin() {
               <TabsContent value="chat" className="flex-1 flex flex-col p-0">
                 <ScrollArea className="flex-1 p-4">
                   <div className="space-y-4">
-                    <AnimatePresence>
+                    <LazyAnimatePresence>
                       {messages.map(message => (
-                        <motion.div
+                        <LazyMotionDiv
                           key={message.id}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -655,9 +655,9 @@ export default function ChatGPTAdmin() {
                               <span className="text-sm font-medium">{user?.username?.[0]?.toUpperCase()}</span>
                             </div>
                           )}
-                        </motion.div>
+                        </LazyMotionDiv>
                       ))}
-                    </AnimatePresence>
+                    </LazyAnimatePresence>
                     <div ref={messagesEndRef} />
                   </div>
                 </ScrollArea>

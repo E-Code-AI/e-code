@@ -41,7 +41,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 
 interface PreviewDeploymentPanelProps {
   projectId: string | number;
@@ -336,9 +336,9 @@ export function PreviewDeploymentPanel({
           </div>
         ) : (
           <>
-            <AnimatePresence mode="wait">
+            <LazyAnimatePresence mode="wait">
               {isRunning ? (
-                <motion.div
+                <LazyMotionDiv
                   key="running"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -492,9 +492,9 @@ export function PreviewDeploymentPanel({
                       Publish to Production
                     </Button>
                   </div>
-                </motion.div>
+                </LazyMotionDiv>
               ) : isStarting || preview?.status === 'starting' ? (
-                <motion.div
+                <LazyMotionDiv
                   key="starting"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -507,9 +507,9 @@ export function PreviewDeploymentPanel({
                     <p className="text-xs text-muted-foreground mt-1">This may take a moment</p>
                   </div>
                   <Progress value={33} className="h-1" />
-                </motion.div>
+                </LazyMotionDiv>
               ) : preview?.status === 'error' ? (
-                <motion.div
+                <LazyMotionDiv
                   key="error"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -535,9 +535,9 @@ export function PreviewDeploymentPanel({
                     )}
                     Retry
                   </Button>
-                </motion.div>
+                </LazyMotionDiv>
               ) : (
-                <motion.div
+                <LazyMotionDiv
                   key="stopped"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -565,9 +565,9 @@ export function PreviewDeploymentPanel({
                     )}
                     Start Preview
                   </Button>
-                </motion.div>
+                </LazyMotionDiv>
               )}
-            </AnimatePresence>
+            </LazyAnimatePresence>
           </>
         )}
       </CardContent>

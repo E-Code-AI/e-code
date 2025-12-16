@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence, useMotionValue, useTransform, type PanInfo } from '@/lib/motion';
 import { Terminal, Monitor, MoreHorizontal, Sparkles, Loader2, CheckCircle, ExternalLink, FolderOpen, Rocket, Code, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EnhancedMobileFileExplorer } from './EnhancedMobileFileExplorer';
@@ -230,7 +230,7 @@ function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePu
   }
 
   return (
-    <motion.div
+    <LazyMotionDiv
       className={cn(
         'fixed z-40',
         'bottom-20 left-4',
@@ -240,9 +240,9 @@ function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePu
       animate={{ scale: 1, opacity: 1 }}
       transition={getReducedMotionTransition(prefersReducedMotion, SPRING_CONFIG.snappy)}
     >
-      <AnimatePresence>
+      <LazyAnimatePresence>
         {isLive && showLabel && !prefersReducedMotion && (
-          <motion.div
+          <LazyMotionDiv
             className="absolute inset-0 rounded-full bg-green-500"
             initial={{ scale: 1, opacity: 0.6 }}
             animate={{ scale: 2, opacity: 0 }}
@@ -250,9 +250,9 @@ function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePu
             transition={{ duration: 1.5, ease: 'easeOut' }}
           />
         )}
-      </AnimatePresence>
+      </LazyAnimatePresence>
 
-      <motion.button
+      <LazyMotionButton
         onClick={isLive ? handleViewLive : handlePublish}
         disabled={isPublishing}
         className={cn(
@@ -295,11 +295,11 @@ function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePu
             <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500 border-2 border-white" />
           </span>
         )}
-      </motion.button>
+      </LazyMotionButton>
 
-      <AnimatePresence>
+      <LazyAnimatePresence>
         {showLabel && (
-          <motion.div
+          <LazyMotionDiv
             className="absolute bottom-full left-0 mb-2 px-3 py-1.5 bg-background text-white text-xs font-medium rounded-lg whitespace-nowrap pointer-events-none"
             initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -313,10 +313,10 @@ function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePu
                 <span>Tap to view</span>
               </div>
             )}
-          </motion.div>
+          </LazyMotionDiv>
         )}
-      </AnimatePresence>
-    </motion.div>
+      </LazyAnimatePresence>
+    </LazyMotionDiv>
   );
 }
 
@@ -651,7 +651,7 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
         className="flex-1 overflow-hidden relative touch-pan-y"
         data-testid="mobile-ide-content"
       >
-        <motion.div
+        <LazyMotionDiv
           drag={activeTab === 'agent' || prefersReducedMotion ? false : "x"}
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.15}
@@ -661,8 +661,8 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
           style={{ x, opacity: prefersReducedMotion ? 1 : dragOpacity }}
           className={cn('h-full', isDragging && 'cursor-grabbing')}
         >
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
+          <LazyAnimatePresence mode="wait" initial={false}>
+            <LazyMotionDiv
               key={activeTab}
               variants={getTabVariants(swipeDirection)}
               initial="initial"
@@ -733,13 +733,13 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
                 </Suspense>
               )}
               
-            </motion.div>
-          </AnimatePresence>
-        </motion.div>
+            </LazyMotionDiv>
+          </LazyAnimatePresence>
+        </LazyMotionDiv>
 
         {isDragging && !prefersReducedMotion && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-between px-8">
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0, x: -20, scale: 0.8 }}
               animate={{ 
                 opacity: swipeDirection === 'right' ? 0.5 : 0.2, 
@@ -750,8 +750,8 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
               className="text-muted-foreground text-2xl font-light"
             >
               {activeIndex > 0 && '‹'}
-            </motion.div>
-            <motion.div
+            </LazyMotionDiv>
+            <LazyMotionDiv
               initial={{ opacity: 0, x: 20, scale: 0.8 }}
               animate={{ 
                 opacity: swipeDirection === 'left' ? 0.5 : 0.2, 
@@ -762,7 +762,7 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
               className="text-muted-foreground text-2xl font-light"
             >
               {activeIndex < tabs.length - 2 && '›'}
-            </motion.div>
+            </LazyMotionDiv>
           </div>
         )}
       </div>

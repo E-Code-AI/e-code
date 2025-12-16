@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -62,17 +61,15 @@ export function LazyImage({
         <Skeleton className="absolute inset-0 z-10" />
       )}
       
-      <motion.img
+      <img
         src={imageSrc}
         alt={alt}
         className={cn(
           'w-full h-full object-cover transition-all duration-700',
           blurUp && isLoading && 'blur-lg scale-105',
-          !isLoading && 'blur-0 scale-100'
+          !isLoading && 'blur-0 scale-100',
+          isLoading ? 'opacity-50' : 'opacity-100'
         )}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isLoading ? 0.5 : 1 }}
-        transition={{ duration: 0.5 }}
       />
     </div>
   );
@@ -115,17 +112,14 @@ export function ProgressiveImage({
   }, [src, onLoad, onError]);
 
   return (
-    <motion.img
+    <img
       src={currentSrc}
       alt={alt}
       className={cn(
-        'transition-all duration-1000',
+        'transition-all duration-1000 animate-fadeIn',
         !isHighResLoaded && 'filter blur-sm',
         className
       )}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
       {...props}
     />
   );

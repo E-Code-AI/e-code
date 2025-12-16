@@ -15,7 +15,7 @@ import {
 import { useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 
 interface AlertManagerProps {
   alerts?: any;
@@ -158,9 +158,9 @@ export function AlertManager({ alerts }: AlertManagerProps) {
           ) : (
             <ScrollArea className="h-[600px]">
               <div className="space-y-3">
-                <AnimatePresence>
+                <LazyAnimatePresence>
                   {filteredAlerts.map((alert: any) => (
-                    <motion.div
+                    <LazyMotionDiv
                       key={alert.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -246,9 +246,9 @@ export function AlertManager({ alerts }: AlertManagerProps) {
                           </div>
                         </CardContent>
                       </Card>
-                    </motion.div>
+                    </LazyMotionDiv>
                   ))}
-                </AnimatePresence>
+                </LazyAnimatePresence>
               </div>
             </ScrollArea>
           )}

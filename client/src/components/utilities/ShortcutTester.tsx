@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { LazyMotionDiv } from "@/lib/motion";
 import { Zap, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -49,7 +49,7 @@ export function ShortcutTester() {
   if (!showTester || !lastShortcut) return null;
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.8 }}
@@ -65,6 +65,6 @@ export function ShortcutTester() {
         </div>
         <Check className="w-4 h-4 text-green-500" />
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }

@@ -5,7 +5,7 @@ import { DesignPrototypeViewer } from './DesignPrototypeViewer';
 import { MVPCompletionDialog } from './MVPCompletionDialog';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { Loader2, Sparkles } from 'lucide-react';
 
 type WorkflowPhase = 
@@ -386,10 +386,10 @@ export function AgentWorkflowOrchestrator({
 
   return (
     <div className="min-h-screen py-8 px-4">
-      <AnimatePresence mode="wait">
+      <LazyAnimatePresence mode="wait">
         {/* Generating Features */}
         {phase === 'generating_features' && (
-          <motion.div
+          <LazyMotionDiv
             key="generating"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -400,7 +400,7 @@ export function AgentWorkflowOrchestrator({
             <p className="text-lg text-gray-600 dark:text-gray-400">
               Analyzing your request and generating feature list...
             </p>
-          </motion.div>
+          </LazyMotionDiv>
         )}
 
         {/* Build Option Selection */}
@@ -415,7 +415,7 @@ export function AgentWorkflowOrchestrator({
 
         {/* Building Design */}
         {phase === 'building_design' && (
-          <motion.div
+          <LazyMotionDiv
             key="building-design"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -429,7 +429,7 @@ export function AgentWorkflowOrchestrator({
             <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
               This will take approximately 5-10 minutes
             </p>
-          </motion.div>
+          </LazyMotionDiv>
         )}
 
         {/* Design Preview */}
@@ -445,7 +445,7 @@ export function AgentWorkflowOrchestrator({
 
         {/* Building Full App */}
         {phase === 'building_full' && (
-          <motion.div
+          <LazyMotionDiv
             key="building-full"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -459,7 +459,7 @@ export function AgentWorkflowOrchestrator({
             <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
               This will take approximately 10-20 minutes
             </p>
-          </motion.div>
+          </LazyMotionDiv>
         )}
 
         {/* MVP Complete */}
@@ -475,7 +475,7 @@ export function AgentWorkflowOrchestrator({
 
         {/* Extended Build */}
         {phase === 'extended_build' && (
-          <motion.div
+          <LazyMotionDiv
             key="extended-build"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -497,12 +497,12 @@ export function AgentWorkflowOrchestrator({
                 {buildProgress}% complete
               </p>
             </div>
-          </motion.div>
+          </LazyMotionDiv>
         )}
 
         {/* Complete */}
         {phase === 'complete' && (
-          <motion.div
+          <LazyMotionDiv
             key="complete"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -517,9 +517,9 @@ export function AgentWorkflowOrchestrator({
             <p className="text-gray-600 dark:text-gray-400">
               Your application is ready to use
             </p>
-          </motion.div>
+          </LazyMotionDiv>
         )}
-      </AnimatePresence>
+      </LazyAnimatePresence>
     </div>
   );
 }

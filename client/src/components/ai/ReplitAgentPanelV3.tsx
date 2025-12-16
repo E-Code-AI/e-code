@@ -93,7 +93,7 @@ import { OrchestratorProgress, MiniProgressIndicator, type SessionProgressData }
 import { MessageQueue, type QueuedMessage } from '@/components/agent/MessageQueue';
 import { History, X, MousePointer2, Coins, Database, Volume2, VolumeX, DollarSign, RotateCcw } from 'lucide-react';
 import { SiFigma } from 'react-icons/si';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionSpan, LazyAnimatePresence } from '@/lib/motion';
 import { 
   EnhancedChatMessage, 
   StreamingSkeleton, 
@@ -2035,7 +2035,7 @@ export function ReplitAgentPanelV3({
 
           {/* Active Thinking Steps (while streaming) */}
           {isWorking && activeThinking.length > 0 && (
-            <motion.div 
+            <LazyMotionDiv 
               key="active-thinking"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -2062,12 +2062,12 @@ export function ReplitAgentPanelV3({
                   />
                 )}
               </div>
-            </motion.div>
+            </LazyMotionDiv>
           )}
 
           {/* Streaming message with enhanced styling */}
           {isWorking && streamingContent && (
-            <motion.div 
+            <LazyMotionDiv 
               key="streaming"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -2081,7 +2081,7 @@ export function ReplitAgentPanelV3({
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <motion.div 
+                <LazyMotionDiv 
                   className="bg-muted/80 text-foreground rounded-2xl rounded-bl-md px-4 py-3 max-w-[85%] shadow-md border border-border/50" 
                   data-testid="streaming-content"
                   initial={{ scale: 0.95 }}
@@ -2089,16 +2089,16 @@ export function ReplitAgentPanelV3({
                 >
                   <p className="text-sm whitespace-pre-wrap break-words leading-relaxed" data-testid="streaming-text">
                     {streamingContent}
-                    <motion.span 
+                    <LazyMotionSpan 
                       className="inline-block w-0.5 h-4 bg-primary ml-1 align-middle"
                       animate={{ opacity: [1, 0] }}
                       transition={{ duration: 0.8, repeat: Infinity }}
                       data-testid="streaming-cursor" 
                     />
                   </p>
-                </motion.div>
+                </LazyMotionDiv>
               </div>
-            </motion.div>
+            </LazyMotionDiv>
           )}
 
           {/* Loading indicator - Shows streaming skeleton while waiting for first response */}
@@ -2304,7 +2304,7 @@ export function ReplitAgentPanelV3({
                 </Tooltip>
               </TooltipProvider>
               
-              <motion.div 
+              <LazyMotionDiv 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -2328,7 +2328,7 @@ export function ReplitAgentPanelV3({
                     <Send className="h-3.5 w-3.5" />
                   )}
                 </Button>
-              </motion.div>
+              </LazyMotionDiv>
             </div>
           </div>
           

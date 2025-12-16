@@ -19,7 +19,7 @@ import {
 import { cn } from '@/lib/utils';
 import { TerminalMetricsIndicator } from '@/components/terminal/TerminalMetricsIndicator';
 import { useToast } from '@/hooks/use-toast';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 
 interface ReplitTerminalPanelProps {
   projectId?: string | number;
@@ -28,7 +28,7 @@ interface ReplitTerminalPanelProps {
 
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
-    <motion.div
+    <LazyMotionDiv
       className={cn("rounded-lg bg-muted", className)}
       animate={{ opacity: [0.5, 0.8, 0.5] }}
       transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}

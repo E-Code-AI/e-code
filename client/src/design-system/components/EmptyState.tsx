@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton } from '@/lib/motion';
 import { useDesignSystem } from '../hooks/useDesignSystem';
 
 // ============================================================================
@@ -30,8 +30,8 @@ export interface EmptyStateProps {
 
 const Illustrations = {
   files: (color: string) => (
-    <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-      <motion.rect
+    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" className="animate-fadeIn">
+      <rect
         x="30"
         y="20"
         width="50"
@@ -39,11 +39,10 @@ const Illustrations = {
         rx="4"
         fill={color}
         opacity="0.1"
-        initial={{ y: 25, opacity: 0 }}
-        animate={{ y: 20, opacity: 0.1 }}
-        transition={{ delay: 0.1, duration: 0.5 }}
+        className="animate-slide-in-up"
+        style={{ animationDelay: '0.1s' }}
       />
-      <motion.rect
+      <rect
         x="40"
         y="30"
         width="50"
@@ -51,11 +50,10 @@ const Illustrations = {
         rx="4"
         fill={color}
         opacity="0.15"
-        initial={{ y: 35, opacity: 0 }}
-        animate={{ y: 30, opacity: 0.15 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
+        className="animate-slide-in-up"
+        style={{ animationDelay: '0.2s' }}
       />
-      <motion.rect
+      <rect
         x="50"
         y="40"
         width="50"
@@ -63,16 +61,15 @@ const Illustrations = {
         rx="4"
         fill={color}
         opacity="0.2"
-        initial={{ y: 45, opacity: 0 }}
-        animate={{ y: 40, opacity: 0.2 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
+        className="animate-slide-in-up"
+        style={{ animationDelay: '0.3s' }}
       />
     </svg>
   ),
 
   search: (color: string) => (
-    <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-      <motion.circle
+    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" className="animate-fadeIn">
+      <circle
         cx="50"
         cy="50"
         r="25"
@@ -80,11 +77,9 @@ const Illustrations = {
         strokeWidth="4"
         opacity="0.2"
         fill="none"
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 0.2 }}
-        transition={{ duration: 0.5 }}
+        className="animate-scale-in"
       />
-      <motion.line
+      <line
         x1="70"
         y1="70"
         x2="85"
@@ -93,16 +88,15 @@ const Illustrations = {
         strokeWidth="4"
         strokeLinecap="round"
         opacity="0.2"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
+        className="animate-fadeIn"
+        style={{ animationDelay: '0.3s' }}
       />
     </svg>
   ),
 
   error: (color: string) => (
-    <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-      <motion.circle
+    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" className="animate-fadeIn">
+      <circle
         cx="60"
         cy="60"
         r="30"
@@ -110,44 +104,38 @@ const Illustrations = {
         strokeWidth="4"
         opacity="0.2"
         fill="none"
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 0.2 }}
-        transition={{ duration: 0.5 }}
+        className="animate-scale-in"
       />
-      <motion.path
+      <path
         d="M45 45 L75 75 M75 45 L45 75"
         stroke={color}
         strokeWidth="4"
         strokeLinecap="round"
         opacity="0.3"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
+        className="animate-fadeIn"
+        style={{ animationDelay: '0.3s' }}
       />
     </svg>
   ),
 
   network: (color: string) => (
-    <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-      <motion.path
+    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" className="animate-fadeIn">
+      <path
         d="M30 60 Q45 40, 60 60 T90 60"
         stroke={color}
         strokeWidth="3"
         fill="none"
         opacity="0.2"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+        className="animate-pulse"
       />
-      <motion.circle
+      <circle
         cx="60"
         cy="60"
         r="5"
         fill={color}
         opacity="0.3"
-        initial={{ scale: 0 }}
-        animate={{ scale: [0, 1.2, 1] }}
-        transition={{ delay: 0.5, duration: 0.5 }}
+        className="animate-scale-in"
+        style={{ animationDelay: '0.5s' }}
       />
     </svg>
   ),
@@ -186,8 +174,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     visible: { opacity: 1, y: 0 },
   };
 
-  const Container = animated ? motion.div : 'div';
-  const Item = animated ? motion.div : 'div';
+  const Container = animated ? LazyMotionDiv : 'div';
+  const Item = animated ? LazyMotionDiv : 'div';
 
   return (
     <Container
@@ -263,7 +251,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       {/* Action Button */}
       {action && (
         <Item {...(animated && { variants: itemVariants })}>
-          <motion.button
+          <LazyMotionButton
             onClick={action.onPress}
             whileTap={{ scale: 0.95 }}
             whileHover={{ scale: 1.02 }}
@@ -287,7 +275,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             }}
           >
             {action.label}
-          </motion.button>
+          </LazyMotionButton>
         </Item>
       )}
     </Container>

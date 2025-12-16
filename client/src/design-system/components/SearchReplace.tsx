@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
 import { useDesignSystem } from '../hooks/useDesignSystem';
 import { triggerHaptic } from '../hooks/useGestures';
 
@@ -177,7 +177,7 @@ export const SearchReplace: React.FC<SearchReplaceProps> = ({
   if (!isOpen) return null;
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -371,7 +371,7 @@ export const SearchReplace: React.FC<SearchReplaceProps> = ({
           />
         </div>
 
-        <motion.button
+        <LazyMotionButton
           onClick={handleToggleReplace}
           whileTap={{ scale: 0.95 }}
           style={{
@@ -387,9 +387,9 @@ export const SearchReplace: React.FC<SearchReplaceProps> = ({
           }}
         >
           {showReplace ? '−' : '+'} Replace
-        </motion.button>
+        </LazyMotionButton>
       </div>
-    </motion.div>
+    </LazyMotionDiv>
   );
 };
 
@@ -417,7 +417,7 @@ const OptionButton: React.FC<OptionButtonProps> = ({
 
   return (
     <div style={{ position: 'relative' }}>
-      <motion.button
+      <LazyMotionButton
         onClick={onClick}
         disabled={disabled}
         onMouseEnter={() => setShowTooltip(true)}
@@ -442,12 +442,12 @@ const OptionButton: React.FC<OptionButtonProps> = ({
         }}
       >
         {icon}
-      </motion.button>
+      </LazyMotionButton>
 
       {/* Tooltip */}
-      <AnimatePresence>
+      <LazyAnimatePresence>
         {tooltip && showTooltip && !ds.device.isTouch && (
-          <motion.div
+          <LazyMotionDiv
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 5 }}
@@ -470,9 +470,9 @@ const OptionButton: React.FC<OptionButtonProps> = ({
             }}
           >
             {tooltip}
-          </motion.div>
+          </LazyMotionDiv>
         )}
-      </AnimatePresence>
+      </LazyAnimatePresence>
     </div>
   );
 };

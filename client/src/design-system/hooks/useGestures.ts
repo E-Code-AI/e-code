@@ -4,7 +4,8 @@
  */
 
 import { useRef, useCallback, useEffect } from 'react';
-import { PanInfo, useAnimation } from 'framer-motion';
+import type { PanInfo } from '@/lib/motion';
+import { useAnimation } from '@/lib/motion';
 
 // ============================================================================
 // HAPTIC FEEDBACK

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotionSpan } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 
 interface TypewriterEffectProps {
@@ -40,7 +40,7 @@ export function TypewriterEffect({
     <span className={cn('inline-flex items-center', className)}>
       {displayedText}
       {cursor && (
-        <motion.span
+        <LazyMotionSpan
           animate={{ opacity: isTyping ? [1, 0] : 0 }}
           transition={{
             duration: 0.5,
@@ -68,9 +68,9 @@ export function StaggeredText({
   const words = text.split(' ');
 
   return (
-    <motion.span className={className}>
+    <LazyMotionSpan className={className}>
       {words.map((word, wordIndex) => (
-        <motion.span
+        <LazyMotionSpan
           key={wordIndex}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -81,7 +81,7 @@ export function StaggeredText({
           className="inline-block mr-1"
         >
           {word.split('').map((char, charIndex) => (
-            <motion.span
+            <LazyMotionSpan
               key={`${wordIndex}-${charIndex}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -92,10 +92,10 @@ export function StaggeredText({
               className="inline-block"
             >
               {char}
-            </motion.span>
+            </LazyMotionSpan>
           ))}
-        </motion.span>
+        </LazyMotionSpan>
       ))}
-    </motion.span>
+    </LazyMotionSpan>
   );
 }

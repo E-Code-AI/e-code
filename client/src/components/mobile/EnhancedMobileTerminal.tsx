@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useCallback, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { MobileTerminal } from './MobileTerminal';
 import {
   usePullToRefresh,
@@ -94,7 +94,7 @@ export function EnhancedMobileTerminal(props: EnhancedMobileTerminalProps) {
   return (
     <>
       <Toaster />
-      <motion.div
+      <LazyMotionDiv
         ref={terminalContainerRef}
         {...pullToRefreshProps}
         style={{
@@ -104,7 +104,7 @@ export function EnhancedMobileTerminal(props: EnhancedMobileTerminalProps) {
         }}
       >
         {/* Pull-to-refresh indicator */}
-        <motion.div
+        <LazyMotionDiv
           style={{
             position: 'absolute',
             top: 0,
@@ -115,7 +115,7 @@ export function EnhancedMobileTerminal(props: EnhancedMobileTerminalProps) {
           }}
         >
           {isLoading && (
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 10 }}
               exit={{ opacity: 0, y: -20 }}
@@ -128,13 +128,13 @@ export function EnhancedMobileTerminal(props: EnhancedMobileTerminalProps) {
               }}
             >
               Clearing terminal...
-            </motion.div>
+            </LazyMotionDiv>
           )}
-        </motion.div>
+        </LazyMotionDiv>
 
         {/* Base Terminal */}
         <MobileTerminal {...props} />
-      </motion.div>
+      </LazyMotionDiv>
     </>
   );
 }

@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton } from '@/lib/motion';
 import { useDesignSystem } from '../hooks/useDesignSystem';
 import { triggerHaptic } from '../hooks/useGestures';
 
@@ -140,7 +140,7 @@ export const KeyboardShortcuts: React.FC<KeyboardShortcutsProps> = ({
   if (!isOpen) return null;
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -158,7 +158,7 @@ export const KeyboardShortcuts: React.FC<KeyboardShortcutsProps> = ({
         padding: ds.spacing[5],
       }}
     >
-      <motion.div
+      <LazyMotionDiv
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -210,7 +210,7 @@ export const KeyboardShortcuts: React.FC<KeyboardShortcutsProps> = ({
               Keyboard Shortcuts
             </h2>
 
-            <motion.button
+            <LazyMotionButton
               onClick={handleClose}
               whileTap={{ scale: 0.95 }}
               style={{
@@ -224,7 +224,7 @@ export const KeyboardShortcuts: React.FC<KeyboardShortcutsProps> = ({
               }}
             >
               ✕
-            </motion.button>
+            </LazyMotionButton>
           </div>
 
           {/* Search */}
@@ -339,8 +339,8 @@ export const KeyboardShortcuts: React.FC<KeyboardShortcutsProps> = ({
             to toggle this panel
           </div>
         </div>
-      </motion.div>
-    </motion.div>
+      </LazyMotionDiv>
+    </LazyMotionDiv>
   );
 };
 
@@ -423,7 +423,7 @@ const ShortcutItem: React.FC<ShortcutItemProps> = ({
               : 'Press keys...'}
           </div>
 
-          <motion.button
+          <LazyMotionButton
             onClick={onSaveEdit}
             whileTap={{ scale: 0.95 }}
             disabled={recordingKeys.length === 0}
@@ -439,9 +439,9 @@ const ShortcutItem: React.FC<ShortcutItemProps> = ({
             }}
           >
             ✓
-          </motion.button>
+          </LazyMotionButton>
 
-          <motion.button
+          <LazyMotionButton
             onClick={onCancelEdit}
             whileTap={{ scale: 0.95 }}
             style={{
@@ -455,7 +455,7 @@ const ShortcutItem: React.FC<ShortcutItemProps> = ({
             }}
           >
             ✕
-          </motion.button>
+          </LazyMotionButton>
         </div>
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', gap: ds.spacing[2] }}>
@@ -491,7 +491,7 @@ const ShortcutItem: React.FC<ShortcutItemProps> = ({
           ))}
 
           {shortcut.customizable && (
-            <motion.button
+            <LazyMotionButton
               onClick={onStartEdit}
               whileTap={{ scale: 0.95 }}
               style={{
@@ -505,7 +505,7 @@ const ShortcutItem: React.FC<ShortcutItemProps> = ({
               }}
             >
               ✏️
-            </motion.button>
+            </LazyMotionButton>
           )}
         </div>
       )}

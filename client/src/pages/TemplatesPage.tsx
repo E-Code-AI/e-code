@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { useDebounce } from '@/hooks/use-debounce';
 import { PageShell, PageHeader } from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/button';
@@ -233,11 +233,9 @@ export default function TemplatesPage() {
 
 function TemplateCard({ template, onUse, index }: { template: Template; onUse: () => void; index: number }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-      whileHover={{ y: -4 }}
+    <div
+      className="animate-slide-in-up opacity-0 hover:-translate-y-1 transition-transform"
+      style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
     >
       <Card className="h-full flex flex-col hover:shadow-lg transition-shadow" data-testid={`card-template-${template.id}`}>
         {template.image && (
@@ -322,6 +320,6 @@ function TemplateCard({ template, onUse, index }: { template: Template; onUse: (
           </Button>
         </CardFooter>
       </Card>
-    </motion.div>
+    </div>
   );
 }

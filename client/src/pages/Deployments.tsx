@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import {
   Globe, RefreshCw, Shield, AlertTriangle, Rocket, Terminal,
   ExternalLink, Clock, Server, Activity, Download, Plus, Settings,
@@ -197,12 +197,10 @@ export default function Deployments() {
                     const StatusIcon = statusConfig.icon;
 
                     return (
-                      <motion.div
+                      <div
                         key={deployment.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="border rounded-lg p-4 hover:border-primary/50 transition-colors"
+                        className="border rounded-lg p-4 hover:border-primary/50 transition-colors animate-slide-in-up opacity-0"
+                        style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
                         data-testid={`card-deployment-${deployment.id}`}
                       >
                         <div className="flex items-start justify-between">
@@ -285,7 +283,7 @@ export default function Deployments() {
                             </Button>
                           </div>
                         </div>
-                      </motion.div>
+                      </div>
                     );
                   })}
                 </div>

@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { 
   Loader2, Code, AlertCircle, ArrowRight, Eye, EyeOff,
   Mail, Lock, User, Github, Chrome, Twitter, CheckCircle2,
@@ -177,7 +177,7 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-gray-50/50 to-background dark:from-background dark:via-gray-900/50 dark:to-background flex">
       {/* Left Side - Form - Mobile Optimized */}
-      <motion.div 
+      <LazyMotionDiv 
         className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-8 lg:p-16 overflow-y-auto"
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
@@ -208,9 +208,9 @@ export default function Register() {
           </div>
 
           {/* Errors */}
-          <AnimatePresence>
+          <LazyAnimatePresence>
             {errors.length > 0 && (
-              <motion.div
+              <LazyMotionDiv
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
@@ -225,9 +225,9 @@ export default function Register() {
                     </ul>
                   </AlertDescription>
                 </Alert>
-              </motion.div>
+              </LazyMotionDiv>
             )}
-          </AnimatePresence>
+          </LazyAnimatePresence>
 
           {/* Form - Mobile Responsive */}
           <form onSubmit={handleRegister} className="space-y-4 sm:space-y-5">
@@ -487,10 +487,10 @@ export default function Register() {
             </Link>
           </p>
         </div>
-      </motion.div>
+      </LazyMotionDiv>
 
       {/* Right Side - Image & Features */}
-      <motion.div 
+      <LazyMotionDiv 
         className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-orange-500 to-amber-500 relative overflow-hidden"
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
@@ -537,18 +537,16 @@ export default function Register() {
                 { icon: Code, text: "Support for 50+ languages" },
                 { icon: CheckCircle, text: "99.99% uptime guaranteed" }
               ].map((feature, idx) => (
-                <motion.div 
+                <div 
                   key={idx}
-                  className="flex items-center gap-3"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 + idx * 0.1 }}
+                  className="flex items-center gap-3 animate-slide-in-up opacity-0"
+                  style={{ animationDelay: `${200 + idx * 100}ms`, animationFillMode: 'forwards' }}
                 >
                   <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
                     <feature.icon className="h-5 w-5" />
                   </div>
                   <span className="text-white/90">{feature.text}</span>
-                </motion.div>
+                </div>
               ))}
             </div>
 
@@ -565,7 +563,7 @@ export default function Register() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </LazyMotionDiv>
     </div>
   );
 }

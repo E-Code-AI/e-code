@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 
 // Lazy load Enhanced Mobile Code Editor (CodeMirror 6 based)
 const EnhancedMobileCodeEditor = lazy(() => 
@@ -20,7 +20,7 @@ interface LazyMobileCodeEditorProps {
 }
 
 const MobileEditorSkeleton = () => (
-  <motion.div 
+  <LazyMotionDiv 
     className="flex flex-col h-full w-full bg-background"
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -54,7 +54,7 @@ const MobileEditorSkeleton = () => (
         <Skeleton className="h-8 w-8 rounded bg-surface-tertiary-solid" />
       </div>
     </div>
-  </motion.div>
+  </LazyMotionDiv>
 );
 
 export function LazyMobileCodeEditor(props: LazyMobileCodeEditorProps) {

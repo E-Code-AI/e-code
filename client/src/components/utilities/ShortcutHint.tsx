@@ -1,5 +1,5 @@
 import { useState, useEffect, ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { LazyMotionDiv, LazyAnimatePresence } from "@/lib/motion";
 
 export function ShortcutHint() {
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
@@ -80,9 +80,9 @@ export function ShortcutHint() {
   const shortcuts = getShortcuts();
 
   return (
-    <AnimatePresence>
+    <LazyAnimatePresence>
       {showHint && shortcuts.length > 0 && (
-        <motion.div
+        <LazyMotionDiv
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
@@ -109,8 +109,8 @@ export function ShortcutHint() {
               ))}
             </div>
           </div>
-        </motion.div>
+        </LazyMotionDiv>
       )}
-    </AnimatePresence>
+    </LazyAnimatePresence>
   );
 }

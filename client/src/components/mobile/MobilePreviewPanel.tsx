@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { 
   Smartphone, Tablet, Monitor, RotateCw, RefreshCw,
   ExternalLink, ChevronDown, Lock, Copy, Globe,
@@ -208,7 +208,7 @@ function PhysicalButtons({ isLandscape, scale }: {
 
 function AppNotRunningState({ onRun }: { onRun: () => void }) {
   return (
-    <motion.div 
+    <LazyMotionDiv 
       className="absolute inset-0 z-40 flex flex-col items-center justify-center rounded-[24px] bg-white dark:bg-gray-900"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -238,7 +238,7 @@ function AppNotRunningState({ onRun }: { onRun: () => void }) {
         <Play className="w-4 h-4" />
         Run
       </Button>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -659,7 +659,7 @@ export function MobilePreviewPanel({
 
       {/* Preview Area */}
       <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
-        <motion.div
+        <LazyMotionDiv
           className="relative"
           animate={{
             width: deviceWidth * scale,
@@ -696,11 +696,11 @@ export function MobilePreviewPanel({
               height: deviceHeight * scale,
             }}
           >
-            <AnimatePresence mode="wait">
+            <LazyAnimatePresence mode="wait">
               {isLoading && (
                 <PreviewSplashScreen key="splash" />
               )}
-            </AnimatePresence>
+            </LazyAnimatePresence>
 
             {hasError ? (
               <AppNotRunningState onRun={handleRun} />
@@ -724,7 +724,7 @@ export function MobilePreviewPanel({
               />
             )}
           </div>
-        </motion.div>
+        </LazyMotionDiv>
       </div>
 
       {/* Options Sheet */}

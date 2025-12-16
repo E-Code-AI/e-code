@@ -20,7 +20,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 
@@ -143,7 +143,7 @@ export function DeploymentMetrics({ deploymentId, className }: DeploymentMetrics
     icon: any; 
     color: string;
   }) => (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -172,7 +172,7 @@ export function DeploymentMetrics({ deploymentId, className }: DeploymentMetrics
           </div>
         </CardContent>
       </Card>
-    </motion.div>
+    </LazyMotionDiv>
   );
 
   const chartData = metrics?.metrics || [];

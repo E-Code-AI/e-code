@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { CheckCircle, Eye } from 'lucide-react';
 
 interface DesignPrototypeViewerProps {
@@ -17,7 +17,7 @@ export function DesignPrototypeViewer({
   isProcessing = false 
 }: DesignPrototypeViewerProps) {
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-4xl mx-auto space-y-4"
@@ -69,6 +69,6 @@ export function DesignPrototypeViewer({
           </div>
         </CardContent>
       </Card>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }

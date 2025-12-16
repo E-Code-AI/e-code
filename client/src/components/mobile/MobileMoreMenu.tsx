@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence, useMotionValue, useTransform } from '@/lib/motion';
 import { 
   GitBranch, Bug, Settings, Database,
   Share2, Users, X,
@@ -414,10 +414,10 @@ export function MobileMoreMenu({
   }
 
   return (
-    <AnimatePresence>
+    <LazyAnimatePresence>
       {isOpen && (
         <>
-          <motion.div
+          <LazyMotionDiv
             className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[60]"
             variants={backdropVariants}
             initial="hidden"
@@ -428,7 +428,7 @@ export function MobileMoreMenu({
             data-testid="mobile-more-menu-backdrop"
           />
           
-          <motion.div
+          <LazyMotionDiv
             className={cn(
               'fixed bottom-0 left-0 right-0 bg-card dark:bg-[var(--ecode-surface)] rounded-t-2xl shadow-2xl z-[70] max-h-[70vh] flex flex-col',
               className
@@ -451,7 +451,7 @@ export function MobileMoreMenu({
               onTouchEnd={handleDragEnd}
               data-testid="mobile-more-menu-handle"
             >
-              <motion.div 
+              <LazyMotionDiv 
                 className="w-12 h-1 bg-muted-foreground/30 rounded-full"
                 whileHover={prefersReducedMotion ? {} : { scaleX: 1.2 }}
                 transition={SPRING_CONFIG.default}
@@ -472,14 +472,14 @@ export function MobileMoreMenu({
             </div>
 
             <ScrollArea className="flex-1 overflow-y-auto mobile-hide-scrollbar">
-              <motion.div 
+              <LazyMotionDiv 
                 className="grid grid-cols-4 gap-2 p-4 pb-safe"
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
               >
                 {menuItems.map((item) => (
-                  <motion.button
+                  <LazyMotionButton
                     key={item.id}
                     className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl hover:bg-muted active:bg-muted/80 transition-colors touch-manipulation"
                     onClick={item.onClick}
@@ -502,13 +502,13 @@ export function MobileMoreMenu({
                     <span className="text-xs text-muted-foreground font-medium text-center">
                       {item.label}
                     </span>
-                  </motion.button>
+                  </LazyMotionButton>
                 ))}
-              </motion.div>
+              </LazyMotionDiv>
             </ScrollArea>
-          </motion.div>
+          </LazyMotionDiv>
         </>
       )}
-    </AnimatePresence>
+    </LazyAnimatePresence>
   );
 }

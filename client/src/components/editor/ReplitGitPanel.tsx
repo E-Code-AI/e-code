@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import {
   GitBranch,
   GitCommit,
@@ -149,7 +149,7 @@ function DiffViewer({ diff, isLoading }: { diff: string; isLoading: boolean }) {
 function ShimmerBar({ className }: { className?: string }) {
   return (
     <div className={cn("relative overflow-hidden bg-muted rounded", className)}>
-      <motion.div
+      <LazyMotionDiv
         className="absolute inset-0 bg-gradient-to-r from-transparent via-muted-foreground/10 to-transparent"
         animate={{ x: ['-100%', '100%'] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}

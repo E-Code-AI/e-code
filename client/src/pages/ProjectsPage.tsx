@@ -9,7 +9,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { cn, getProjectUrl } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { useDebounce } from '@/hooks/use-debounce';
 
 import { Button } from '@/components/ui/button';
@@ -322,7 +322,7 @@ const ProjectsPage = () => {
     >
       <div className="max-w-7xl mx-auto">
         {/* Header Section with E-Code Gradient */}
-        <motion.div 
+        <LazyMotionDiv 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
@@ -508,13 +508,13 @@ const ProjectsPage = () => {
               </div>
             </div>
           </div>
-        </motion.div>
+        </LazyMotionDiv>
 
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
           {/* Sidebar Filters - E-Code Styled - Hidden on mobile */}
-          <AnimatePresence>
+          <LazyAnimatePresence>
             {showFilters && (
-              <motion.aside
+              <LazyMotionDiv
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
@@ -617,9 +617,9 @@ const ProjectsPage = () => {
                     </Button>
                   </CardContent>
                 </Card>
-              </motion.aside>
+              </LazyMotionDiv>
             )}
-          </AnimatePresence>
+          </LazyAnimatePresence>
 
           {/* Main Content */}
           <div className="flex-1">
@@ -714,10 +714,8 @@ const ProjectsPage = () => {
 
                     {/* Bulk Actions */}
                     {selectedProjects.length > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="flex items-center gap-2"
+                      <div
+                        className="flex items-center gap-2 animate-fadeIn"
                       >
                         <Badge className="bg-[var(--ecode-accent)]/10 text-[var(--ecode-accent)] border border-[var(--ecode-accent)]/30">
                           {selectedProjects.length} selected
@@ -763,7 +761,7 @@ const ProjectsPage = () => {
                         >
                           <X className="h-4 w-4" />
                         </Button>
-                      </motion.div>
+                      </div>
                     )}
                   </div>
 
@@ -822,21 +820,16 @@ const ProjectsPage = () => {
                 </div>
               </Card>
             ) : viewMode === 'grid' ? (
-              <motion.div 
+              <div 
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
-                variants={containerVariants}
-                initial="hidden"
-                animate="show"
               >
-                <AnimatePresence mode="popLayout">
-                  {filteredAndSortedProjects.map((project, index) => (
-                    <motion.div
-                      key={project.id}
-                      variants={itemVariants}
-                      whileHover={{ y: -4 }}
-                      className="relative"
-                      data-testid={`project-card-${project.id}`}
-                    >
+                {filteredAndSortedProjects.map((project, index) => (
+                  <div
+                    key={project.id}
+                    className="relative animate-slide-in-up opacity-0 hover:-translate-y-1 transition-transform"
+                    style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
+                    data-testid={`project-card-${project.id}`}
+                  >
                       <Card className="overflow-hidden border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[var(--ecode-accent)]/30 hover:shadow-[0_8px_24px_-8px_rgba(242,98,7,0.2)] transition-all duration-300 group">
                         {/* Selection Checkbox */}
                         <div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -995,26 +988,21 @@ const ProjectsPage = () => {
                           </div>
                         </CardContent>
                       </Card>
-                    </motion.div>
+                    </div>
                   ))}
-                </AnimatePresence>
-              </motion.div>
+              </div>
             ) : (
               // List View - E-Code Styled
-              <motion.div 
+              <div 
                 className="space-y-4"
-                variants={containerVariants}
-                initial="hidden"
-                animate="show"
               >
-                <AnimatePresence mode="popLayout">
-                  {filteredAndSortedProjects.map((project, index) => (
-                    <motion.div
-                      key={project.id}
-                      variants={itemVariants}
-                      whileHover={{ x: 4 }}
-                      data-testid={`project-row-${project.id}`}
-                    >
+                {filteredAndSortedProjects.map((project, index) => (
+                  <div
+                    key={project.id}
+                    className="animate-slide-in-up opacity-0 hover:translate-x-1 transition-transform"
+                    style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
+                    data-testid={`project-row-${project.id}`}
+                  >
                       <Card className="border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[var(--ecode-accent)]/30 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.15)] transition-all duration-300">
                         <CardContent className="p-4">
                           <div className="flex items-center gap-4">
@@ -1143,19 +1131,15 @@ const ProjectsPage = () => {
                           </div>
                         </CardContent>
                       </Card>
-                    </motion.div>
+                    </div>
                   ))}
-                </AnimatePresence>
-              </motion.div>
+              </div>
             )}
 
             {/* Pagination - E-Code Styled */}
             {filteredAndSortedProjects.length > 0 && (
-              <motion.div 
-                className="mt-8 flex justify-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
+              <div 
+                className="mt-8 flex justify-center animate-fadeIn"
               >
                 <div className="flex items-center gap-2">
                   <Button 
@@ -1201,7 +1185,7 @@ const ProjectsPage = () => {
                     Next
                   </Button>
                 </div>
-              </motion.div>
+              </div>
             )}
           </div>
         </div>

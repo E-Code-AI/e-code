@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { 
   Loader2, Code, ArrowRight, Eye, EyeOff, 
   Sparkles, Mail, Lock, Github, Chrome,
@@ -141,7 +141,7 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-gray-50/50 to-background dark:from-background dark:via-gray-900/50 dark:to-background flex">
       {/* Left Side - Form - Mobile Optimized */}
-      <motion.div 
+      <LazyMotionDiv 
         className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-8 lg:p-16"
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
@@ -355,10 +355,10 @@ export default function Login() {
             </Link>
           </p>
         </div>
-      </motion.div>
+      </LazyMotionDiv>
 
       {/* Right Side - Image & Features */}
-      <motion.div 
+      <LazyMotionDiv 
         className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-orange-500 to-amber-500 relative overflow-hidden"
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
@@ -405,18 +405,16 @@ export default function Login() {
                 { icon: Code, text: "Support for 50+ languages" },
                 { icon: CheckCircle, text: "99.99% uptime guaranteed" }
               ].map((feature, idx) => (
-                <motion.div 
+                <div 
                   key={idx}
-                  className="flex items-center gap-3"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 + idx * 0.1 }}
+                  className="flex items-center gap-3 animate-slide-in-up opacity-0"
+                  style={{ animationDelay: `${200 + idx * 100}ms`, animationFillMode: 'forwards' }}
                 >
                   <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
                     <feature.icon className="h-5 w-5" />
                   </div>
                   <span className="text-white/90">{feature.text}</span>
-                </motion.div>
+                </div>
               ))}
             </div>
 
@@ -433,7 +431,7 @@ export default function Login() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </LazyMotionDiv>
     </div>
   );
 }

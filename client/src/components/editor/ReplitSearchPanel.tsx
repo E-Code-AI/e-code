@@ -12,7 +12,7 @@ import {
   FileCode
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 
 interface SearchResult {
   id: string;
@@ -28,7 +28,7 @@ function ShimmerSkeleton() {
   return (
     <div className="p-3 space-y-3">
       {[1, 2, 3, 4].map((i) => (
-        <motion.div
+        <LazyMotionDiv
           key={i}
           className="flex items-start gap-2"
           initial={{ opacity: 0.5 }}
@@ -40,7 +40,7 @@ function ShimmerSkeleton() {
             <div className="h-4 w-3/4 rounded bg-muted" />
             <div className="h-3 w-full rounded bg-muted/50" />
           </div>
-        </motion.div>
+        </LazyMotionDiv>
       ))}
     </div>
   );

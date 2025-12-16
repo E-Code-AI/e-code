@@ -41,7 +41,7 @@ import {
   Clock,
   Database
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 
 interface ReviewSettings {
@@ -519,7 +519,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
             
             <div className="space-y-3">
               {Object.entries(localSettings.enabledChecks).map(([check, enabled]) => (
-                <motion.div
+                <LazyMotionDiv
                   key={check}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -541,7 +541,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
                     onCheckedChange={(value) => updateSetting(`enabledChecks.${check}`, value)}
                     data-testid={`switch-check-${check}`}
                   />
-                </motion.div>
+                </LazyMotionDiv>
               ))}
             </div>
             

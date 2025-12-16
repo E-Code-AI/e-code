@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useDraggable, useDroppable, DndContext } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { motion, AnimatePresence, useSpring, useMotionValue } from 'framer-motion';
+import { LazyMotionDiv, LazyAnimatePresence, useMotionValue, useSpring } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 import { PaneGroup, TabInfo, DragItem, DropZone } from '@/types/splits';
 import useSplitsStore from '@/stores/splits-store';
@@ -154,7 +154,7 @@ export function SplitsPane({
 
   return (
     <ContextMenuTrigger>
-      <motion.div
+      <LazyMotionDiv
         ref={paneRef}
         className={cn(
           "flex flex-col h-full bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-md overflow-hidden",
@@ -181,7 +181,7 @@ export function SplitsPane({
         <div className="flex items-center h-9 bg-[var(--ecode-background)] border-b border-[var(--ecode-border)]">
           <div className="flex-1 flex items-center overflow-x-auto scrollbar-none">
             {paneGroup.tabs.map((tab, index) => (
-              <motion.div
+              <LazyMotionDiv
                 key={tab.id}
                 className={cn(
                   "group flex items-center gap-1 px-3 h-9 cursor-pointer border-r border-[var(--ecode-border)] hover:bg-[var(--ecode-hover)]",
@@ -208,7 +208,7 @@ export function SplitsPane({
                     <X className="h-3 w-3" />
                   </Button>
                 )}
-              </motion.div>
+              </LazyMotionDiv>
             ))}
           </div>
           
@@ -279,9 +279,9 @@ export function SplitsPane({
           )}
 
           {/* Drop Zone Indicators */}
-          <AnimatePresence>
+          <LazyAnimatePresence>
             {showDropPreview && dropZone && (
-              <motion.div
+              <LazyMotionDiv
                 className={cn(
                   "absolute pointer-events-none bg-blue-500 bg-opacity-20 border-2 border-blue-500 border-dashed rounded",
                   dropZone === 'center' && "inset-4",
@@ -297,9 +297,9 @@ export function SplitsPane({
                 transition={{ duration: 0.15 }}
               />
             )}
-          </AnimatePresence>
+          </LazyAnimatePresence>
         </div>
-      </motion.div>
+      </LazyMotionDiv>
 
       {/* Context Menu */}
       <ContextMenuContent>

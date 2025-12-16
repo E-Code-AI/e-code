@@ -3,7 +3,7 @@ import { PublicFooter } from '@/components/layout/PublicFooter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { 
   Sparkles, 
   Zap, 
@@ -341,7 +341,7 @@ export default function AI() {
         
         <div className="container-responsive relative">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
@@ -378,24 +378,22 @@ export default function AI() {
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {stats.map((stat) => (
-                  <motion.div 
+                {stats.map((stat, idx) => (
+                  <div 
                     key={stat.label} 
-                    className="text-center"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 + stats.indexOf(stat) * 0.1 }}
+                    className="text-center animate-slide-in-up opacity-0"
+                    style={{ animationDelay: `${400 + idx * 100}ms`, animationFillMode: 'forwards' }}
                   >
                     <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                       {stat.value}
                     </div>
                     <div className="text-sm text-muted-foreground font-medium">{stat.label}</div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
-            </motion.div>
+            </LazyMotionDiv>
 
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
@@ -420,7 +418,7 @@ export default function AI() {
               </div>
               <div className="absolute -bottom-6 -right-6 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
               <div className="absolute -top-6 -left-6 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
-            </motion.div>
+            </LazyMotionDiv>
           </div>
         </div>
       </section>
@@ -438,7 +436,7 @@ export default function AI() {
           </div>
 
           <div className="max-w-6xl mx-auto">
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
@@ -512,7 +510,7 @@ export default function AI() {
                   )}
                 </Button>
               </div>
-            </motion.div>
+            </LazyMotionDiv>
 
             <div className="grid gap-4 mt-12 sm:grid-cols-2 xl:grid-cols-3">
               {demoHighlights.map((highlight) => {
@@ -565,11 +563,9 @@ export default function AI() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-center"
+            <div
+              className="text-center animate-slide-in-up opacity-0"
+              style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
             >
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-2xl flex items-center justify-center text-white">
                 <MessageSquare className="h-10 w-10" />
@@ -578,13 +574,11 @@ export default function AI() {
               <p className="text-muted-foreground">
                 Tell our AI what you want to build in plain language - any language you prefer.
               </p>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-center"
+            <div
+              className="text-center animate-slide-in-up opacity-0"
+              style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}
             >
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-fuchsia-500 to-orange-500 rounded-2xl flex items-center justify-center text-white">
                 <Brain className="h-10 w-10" />
@@ -593,13 +587,11 @@ export default function AI() {
               <p className="text-muted-foreground">
                 Watch as AI creates files, writes code, and sets up your entire project automatically.
               </p>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-center"
+            <div
+              className="text-center animate-slide-in-up opacity-0"
+              style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}
             >
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center text-white">
                 <Globe className="h-10 w-10" />
@@ -608,7 +600,7 @@ export default function AI() {
               <p className="text-muted-foreground">
                 Your app is live and shareable immediately. No configuration or setup needed.
               </p>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>

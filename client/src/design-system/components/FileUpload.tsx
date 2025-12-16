@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { useDesignSystem } from '../hooks/useDesignSystem';
 import { triggerHaptic } from '../hooks/useGestures';
 
@@ -200,7 +200,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   return (
     <div className={className}>
       {/* Drop Zone */}
-      <motion.div
+      <LazyMotionDiv
         onClick={handleClick}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -276,7 +276,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           style={{ display: 'none' }}
           disabled={disabled}
         />
-      </motion.div>
+      </LazyMotionDiv>
 
       {/* Upload Progress */}
       <div
@@ -336,7 +336,7 @@ const UploadProgress: React.FC<UploadProgressProps> = ({ file }) => {
   };
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
@@ -409,7 +409,7 @@ const UploadProgress: React.FC<UploadProgressProps> = ({ file }) => {
           />
         </div>
       )}
-    </motion.div>
+    </LazyMotionDiv>
   );
 };
 
