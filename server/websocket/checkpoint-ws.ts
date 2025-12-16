@@ -11,10 +11,19 @@ import { storage } from '../storage';
 import { centralUpgradeDispatcher } from './central-upgrade-dispatcher';
 import { markSocketAsHandled } from './upgrade-guard';
 import { getJwtSecret } from '../utils/secrets-manager';
+import { wsMetrics } from './ws-metrics';
+import { registerShutdownHandler } from './graceful-shutdown';
 
 const logger = createLogger('checkpoint-ws');
 
 const getSecret = () => getJwtSecret();
+
+// Configuration from environment
+const PING_INTERVAL_MS = parseInt(process.env.WS_PING_INTERVAL_MS || '30000', 10);
+const MAX_CONNECTIONS_PER_USER = parseInt(process.env.WS_MAX_CONNECTIONS_PER_USER || '5', 10);
+
+// Track connections per user
+const userConnectionCounts = new Map<string, number>();
 
 // W-H2: Rate limiting utility for per-client throttling
 const clientThrottles = new Map<string, Map<string, number>>();
@@ -44,9 +53,11 @@ interface AuthenticatedWebSocket extends WebSocket {
   userId?: string;
   username?: string;
   subscribedProjects?: Set<number>;
+  lastActivity?: Date;
 }
 
 const clients = new Map<number, Set<AuthenticatedWebSocket>>();
+let pingInterval: NodeJS.Timeout | null = null;
 
 async function handleAuth(ws: AuthenticatedWebSocket, data: any) {
   try {
@@ -86,11 +97,31 @@ async function handleAuth(ws: AuthenticatedWebSocket, data: any) {
       return;
     }
 
-    ws.userId = String(user.id);
+    const userId = String(user.id);
+    
+    // Check connection limit per user
+    const currentCount = userConnectionCounts.get(userId) || 0;
+    if (currentCount >= MAX_CONNECTIONS_PER_USER) {
+      logger.warn(`User ${userId} exceeded max connections (${MAX_CONNECTIONS_PER_USER})`);
+      ws.send(JSON.stringify({
+        type: 'auth-failed',
+        message: 'Maximum connections exceeded',
+        timestamp: new Date().toISOString()
+      }));
+      ws.close(4004, 'Maximum connections exceeded');
+      return;
+    }
+    
+    // Track connection count
+    userConnectionCounts.set(userId, currentCount + 1);
+    wsMetrics.recordConnection('checkpoint');
+    
+    ws.userId = userId;
     ws.username = user.username;
     ws.subscribedProjects = new Set();
+    ws.lastActivity = new Date();
     
-    logger.info(`✅ Checkpoint WS: Client authenticated as user ${user.id} (${user.username})`);
+    logger.info(`✅ Checkpoint WS: Client authenticated as user ${user.id} (${user.username}), connections: ${currentCount + 1}/${MAX_CONNECTIONS_PER_USER}`);
     
     ws.send(JSON.stringify({
       type: 'auth-success',
@@ -102,12 +133,13 @@ async function handleAuth(ws: AuthenticatedWebSocket, data: any) {
     }));
   } catch (error) {
     logger.error('Authentication error:', error);
+    wsMetrics.recordError('checkpoint');
     ws.send(JSON.stringify({
       type: 'auth-failed',
       message: 'Authentication failed',
       timestamp: new Date().toISOString()
     }));
-    ws.close();
+    ws.close(4000, 'Authentication failed');
   }
 }
 
@@ -203,11 +235,41 @@ export function setupCheckpointWebSocket(httpServer: Server) {
       wss.emit('connection', ws, request);
     });
   });
+  
+  // Start heartbeat/ping interval
+  pingInterval = setInterval(() => {
+    wss.clients.forEach((ws: AuthenticatedWebSocket) => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.ping();
+      }
+    });
+  }, PING_INTERVAL_MS);
+  
+  // Register shutdown handler
+  registerShutdownHandler('checkpoint-ws', () => {
+    logger.info('Shutting down checkpoint WebSocket service...');
+    if (pingInterval) {
+      clearInterval(pingInterval);
+    }
+    wss.clients.forEach((ws: AuthenticatedWebSocket) => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'server-shutdown', timestamp: new Date().toISOString() }));
+        ws.close(1001, 'Server shutting down');
+      }
+    });
+    wss.close();
+    logger.info('Checkpoint WebSocket service shut down');
+  }, 50);
 
   wss.on('connection', (ws: AuthenticatedWebSocket, request: IncomingMessage) => {
     logger.info('[Checkpoint WS] New client connected');
     
     ws.subscribedProjects = new Set();
+    ws.lastActivity = new Date();
+    
+    ws.on('pong', () => {
+      ws.lastActivity = new Date();
+    });
 
     ws.on('message', async (data) => {
       try {
@@ -256,7 +318,20 @@ export function setupCheckpointWebSocket(httpServer: Server) {
       }
     });
 
-    ws.on('close', () => {
+    ws.on('close', (code: number, reason: Buffer) => {
+      logger.info(`[Checkpoint WS] Client disconnected with code ${code}, reason: ${reason?.toString() || 'none'}`);
+      wsMetrics.recordDisconnection('checkpoint');
+      
+      // Update connection count
+      if (ws.userId) {
+        const currentCount = userConnectionCounts.get(ws.userId) || 1;
+        if (currentCount <= 1) {
+          userConnectionCounts.delete(ws.userId);
+        } else {
+          userConnectionCounts.set(ws.userId, currentCount - 1);
+        }
+      }
+      
       // W-H6: Proper cleanup on disconnect
       ws.subscribedProjects?.forEach(projectId => {
         clients.get(projectId)?.delete(ws);
@@ -268,11 +343,22 @@ export function setupCheckpointWebSocket(httpServer: Server) {
       if (ws.userId) {
         cleanupClientThrottles(ws.userId);
       }
-      logger.info('[Checkpoint WS] Client disconnected');
     });
 
     ws.on('error', (error) => {
       logger.error('[Checkpoint WS] WebSocket error:', error);
+      wsMetrics.recordError('checkpoint');
+      
+      // Update connection count
+      if (ws.userId) {
+        const currentCount = userConnectionCounts.get(ws.userId) || 1;
+        if (currentCount <= 1) {
+          userConnectionCounts.delete(ws.userId);
+        } else {
+          userConnectionCounts.set(ws.userId, currentCount - 1);
+        }
+      }
+      
       // W-H6: Cleanup on error path too
       ws.subscribedProjects?.forEach(projectId => {
         clients.get(projectId)?.delete(ws);

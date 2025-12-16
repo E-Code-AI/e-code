@@ -13,11 +13,20 @@ import { storage } from '../storage';
 import { centralUpgradeDispatcher } from './central-upgrade-dispatcher';
 import { markSocketAsHandled } from './upgrade-guard';
 import { getJwtSecret } from '../utils/secrets-manager';
+import { wsMetrics } from './ws-metrics';
+import { registerShutdownHandler } from './graceful-shutdown';
 
 const logger = createLogger('background-testing-ws');
 
 // ✅ Fortune 500 Security: Use centralized secrets manager
 const getSecret = () => getJwtSecret();
+
+// Configuration from environment
+const PING_INTERVAL_MS = parseInt(process.env.WS_PING_INTERVAL_MS || '30000', 10);
+const MAX_CONNECTIONS_PER_USER = parseInt(process.env.WS_MAX_CONNECTIONS_PER_USER || '5', 10);
+
+// Track connections per user
+const userConnectionCounts = new Map<string, number>();
 
 /**
  * 🔥 SECURITY IMPLEMENTATION: Authenticated WebSocket with project access control
@@ -69,10 +78,29 @@ async function handleAuth(ws: AuthenticatedWebSocket, data: any) {
       return;
     }
 
-    ws.userId = String(user.id);
+    const userId = String(user.id);
+    
+    // Check connection limit per user
+    const currentCount = userConnectionCounts.get(userId) || 0;
+    if (currentCount >= MAX_CONNECTIONS_PER_USER) {
+      logger.warn(`User ${userId} exceeded max connections (${MAX_CONNECTIONS_PER_USER})`);
+      ws.send(JSON.stringify({
+        type: 'auth-failed',
+        message: 'Maximum connections exceeded',
+        timestamp: new Date().toISOString()
+      }));
+      ws.close(4004, 'Maximum connections exceeded');
+      return;
+    }
+    
+    // Track connection count
+    userConnectionCounts.set(userId, currentCount + 1);
+    wsMetrics.recordConnection('background-testing');
+    
+    ws.userId = userId;
     ws.username = user.username;
     
-    logger.info(`✅ Client authenticated as user ${user.id} (${user.username})`);
+    logger.info(`✅ Client authenticated as user ${user.id} (${user.username}), connections: ${currentCount + 1}/${MAX_CONNECTIONS_PER_USER}`);
     
     ws.send(JSON.stringify({
       type: 'auth-success',
@@ -84,12 +112,13 @@ async function handleAuth(ws: AuthenticatedWebSocket, data: any) {
     }));
   } catch (error) {
     logger.error('Authentication error:', error);
+    wsMetrics.recordError('background-testing');
     ws.send(JSON.stringify({
       type: 'auth-failed',
       message: 'Authentication failed',
       timestamp: new Date().toISOString()
     }));
-    ws.close();
+    ws.close(4000, 'Authentication failed');
   }
 }
 
@@ -161,6 +190,7 @@ async function handleSubscribe(ws: AuthenticatedWebSocket, projectId: number) {
  */
 class BackgroundTestingWebSocketService {
   private wss: WebSocketServer | null = null;
+  private pingInterval: NodeJS.Timeout | null = null;
 
   /**
    * Initialize the background testing WebSocket service
@@ -172,6 +202,7 @@ class BackgroundTestingWebSocketService {
 
     this.wss.on('error', (err: Error) => {
       logger.error('[BackgroundTestingWS] WebSocketServer ERROR:', err.message);
+      wsMetrics.recordError('background-testing');
     });
 
     centralUpgradeDispatcher.register(
@@ -181,6 +212,20 @@ class BackgroundTestingWebSocketService {
       },
       { pathMatch: 'exact', priority: 50 }
     );
+    
+    // Start heartbeat/ping interval
+    this.pingInterval = setInterval(() => {
+      if (this.wss) {
+        this.wss.clients.forEach((ws: WebSocket) => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.ping();
+          }
+        });
+      }
+    }, PING_INTERVAL_MS);
+    
+    // Register shutdown handler
+    registerShutdownHandler('background-testing-ws', () => this.shutdown(), 50);
 
     logger.info('[BackgroundTestingWS] ✅ Service initialized with central dispatcher (noServer mode)');
 
@@ -316,8 +361,20 @@ class BackgroundTestingWebSocketService {
         }
       });
       
-      ws.on('close', () => {
-        logger.info('[BackgroundTestingWS] Client disconnected');
+      ws.on('close', (code: number, reason: Buffer) => {
+        logger.info(`[BackgroundTestingWS] Client disconnected with code ${code}, reason: ${reason?.toString() || 'none'}`);
+        wsMetrics.recordDisconnection('background-testing');
+        
+        // Update connection count
+        if ((ws as AuthenticatedWebSocket).userId) {
+          const userId = (ws as AuthenticatedWebSocket).userId!;
+          const currentCount = userConnectionCounts.get(userId) || 1;
+          if (currentCount <= 1) {
+            userConnectionCounts.delete(userId);
+          } else {
+            userConnectionCounts.set(userId, currentCount - 1);
+          }
+        }
         
         backgroundTestingService.off('test:queued', handleTestQueued);
         backgroundTestingService.off('test:started', handleTestStarted);
@@ -328,8 +385,29 @@ class BackgroundTestingWebSocketService {
       
       ws.on('error', (error) => {
         logger.error('[BackgroundTestingWS] WebSocket error:', error);
+        wsMetrics.recordError('background-testing');
       });
     });
+  }
+  
+  shutdown(): void {
+    logger.info('[BackgroundTestingWS] Shutting down...');
+    
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+    }
+    
+    if (this.wss) {
+      this.wss.clients.forEach((ws: WebSocket) => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'server-shutdown', timestamp: new Date().toISOString() }));
+          ws.close(1001, 'Server shutting down');
+        }
+      });
+      this.wss.close();
+    }
+    
+    logger.info('[BackgroundTestingWS] Shut down complete');
   }
 
   /**
