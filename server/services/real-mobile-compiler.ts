@@ -228,33 +228,48 @@ export class RealMobileCompiler {
   ) {
     result.logs.push(`[${new Date().toISOString()}] Building React Native iOS app`);
 
-    // Note: iOS builds require macOS, so this would typically run on a Mac build server
-    // For now, we'll simulate the process
-
+    // iOS builds require macOS or a cloud build service
     if (process.platform !== 'darwin') {
-      result.logs.push('Warning: iOS builds require macOS. Simulating build process.');
+      // Check for cloud build service configuration
+      const easBuildToken = process.env.EAS_BUILD_TOKEN;
+      const codemagicToken = process.env.CODEMAGIC_API_TOKEN;
       
-      // In production, this would trigger a build on a Mac server
-      // For now, create a mock IPA
-      const mockIpa = Buffer.from('Mock IPA content');
-      const artifactKey = `builds/${config.projectId}/${result.buildId}/app.ipa`;
-      
-      const uploaded = await realObjectStorageService.uploadFile(
-        artifactKey,
-        mockIpa,
-        { contentType: 'application/octet-stream' }
-      );
+      if (easBuildToken) {
+        // Use EAS Build service
+        result.logs.push('[iOS] Using EAS Build service for iOS compilation');
+        await this.buildWithEAS(config, result, easBuildToken);
+        return;
+      } else if (codemagicToken) {
+        // Use Codemagic service
+        result.logs.push('[iOS] Using Codemagic service for iOS compilation');
+        await this.buildWithCodemagic(config, result, codemagicToken);
+        return;
+      } else {
+        // No cloud build service configured - fail gracefully in production
+        const isProduction = process.env.NODE_ENV === 'production';
+        
+        if (isProduction) {
+          result.success = false;
+          result.logs.push('[iOS] ERROR: iOS builds require macOS or a cloud build service');
+          result.logs.push('[iOS] Configure EAS_BUILD_TOKEN or CODEMAGIC_API_TOKEN to enable iOS builds');
+          result.logs.push('[iOS] See: https://docs.expo.dev/build/setup/ or https://docs.codemagic.io/');
+          throw new Error('iOS build service not configured. Set EAS_BUILD_TOKEN or CODEMAGIC_API_TOKEN');
+        }
+        
+        // Development mode: return placeholder with clear warning
+        result.logs.push('[iOS] WARNING: Development mode - iOS build simulated');
+        result.logs.push('[iOS] To enable real iOS builds, configure EAS_BUILD_TOKEN or CODEMAGIC_API_TOKEN');
+        
+        result.artifacts.push({
+          type: 'ipa',
+          path: 'NOT_AVAILABLE',
+          size: 0,
+          downloadUrl: undefined,
+          warning: 'iOS builds require macOS or cloud build service configuration'
+        });
 
-      const downloadUrl = await realObjectStorageService.getSignedUrl(artifactKey, 86400);
-
-      result.artifacts.push({
-        type: 'ipa',
-        path: artifactKey,
-        size: uploaded.size,
-        downloadUrl
-      });
-
-      return;
+        return;
+      }
     }
 
     // Real iOS build process (requires macOS)
@@ -499,6 +514,191 @@ export class RealMobileCompiler {
     build.endTime = new Date();
     
     return true;
+  }
+
+  /**
+   * Build iOS app using EAS Build (Expo Application Services)
+   * Requires EAS_BUILD_TOKEN environment variable
+   * See: https://docs.expo.dev/build/setup/
+   */
+  private async buildWithEAS(
+    config: MobileBuildConfig,
+    result: MobileBuildResult,
+    token: string
+  ): Promise<void> {
+    try {
+      result.logs.push('[EAS Build] Initiating iOS build via EAS...');
+      
+      const response = await fetch('https://api.expo.dev/v2/builds', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          platform: 'ios',
+          profile: config.buildType === 'appstore' ? 'production' : 'development',
+          projectId: config.projectId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`EAS Build API error: ${response.status} - ${errorText}`);
+      }
+
+      const buildData = await response.json();
+      result.logs.push(`[EAS Build] Build initiated: ${buildData.id}`);
+      result.logs.push(`[EAS Build] Monitor at: https://expo.dev/builds/${buildData.id}`);
+
+      // Poll for build completion (with timeout)
+      const maxWaitTime = 30 * 60 * 1000; // 30 minutes
+      const pollInterval = 30 * 1000; // 30 seconds
+      const startTime = Date.now();
+
+      while (Date.now() - startTime < maxWaitTime) {
+        const statusResponse = await fetch(`https://api.expo.dev/v2/builds/${buildData.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+
+        if (statusResponse.ok) {
+          const status = await statusResponse.json();
+          result.logs.push(`[EAS Build] Status: ${status.status}`);
+
+          if (status.status === 'finished') {
+            // Download and store the IPA
+            if (status.artifacts?.buildUrl) {
+              const ipaResponse = await fetch(status.artifacts.buildUrl);
+              const ipaBuffer = Buffer.from(await ipaResponse.arrayBuffer());
+              
+              const artifactKey = `builds/${config.projectId}/${result.buildId}/app.ipa`;
+              const uploaded = await realObjectStorageService.uploadFile(
+                artifactKey,
+                ipaBuffer,
+                { contentType: 'application/octet-stream' }
+              );
+
+              const downloadUrl = await realObjectStorageService.getSignedUrl(artifactKey, 86400);
+
+              result.artifacts.push({
+                type: 'ipa',
+                path: artifactKey,
+                size: uploaded.size,
+                downloadUrl
+              });
+
+              result.logs.push('[EAS Build] iOS build completed successfully');
+            }
+            return;
+          } else if (status.status === 'errored' || status.status === 'canceled') {
+            throw new Error(`EAS Build failed: ${status.error || 'Unknown error'}`);
+          }
+        }
+
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+      }
+
+      throw new Error('EAS Build timed out after 30 minutes');
+    } catch (error) {
+      result.success = false;
+      result.error = error instanceof Error ? error.message : 'EAS Build failed';
+      result.logs.push(`[EAS Build] ERROR: ${result.error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Build iOS app using Codemagic CI/CD
+   * Requires CODEMAGIC_API_TOKEN environment variable
+   * See: https://docs.codemagic.io/rest-api/overview/
+   */
+  private async buildWithCodemagic(
+    config: MobileBuildConfig,
+    result: MobileBuildResult,
+    token: string
+  ): Promise<void> {
+    try {
+      result.logs.push('[Codemagic] Initiating iOS build...');
+      
+      const response = await fetch('https://api.codemagic.io/builds', {
+        method: 'POST',
+        headers: {
+          'x-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          appId: process.env.CODEMAGIC_APP_ID,
+          workflowId: config.buildType === 'appstore' ? 'ios-production' : 'ios-development',
+          branch: 'main',
+          environment: {
+            variables: config.environmentVars,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Codemagic API error: ${response.status} - ${errorText}`);
+      }
+
+      const buildData = await response.json();
+      result.logs.push(`[Codemagic] Build initiated: ${buildData.buildId}`);
+
+      // Poll for build completion
+      const maxWaitTime = 30 * 60 * 1000;
+      const pollInterval = 30 * 1000;
+      const startTime = Date.now();
+
+      while (Date.now() - startTime < maxWaitTime) {
+        const statusResponse = await fetch(`https://api.codemagic.io/builds/${buildData.buildId}`, {
+          headers: { 'x-auth-token': token },
+        });
+
+        if (statusResponse.ok) {
+          const status = await statusResponse.json();
+          result.logs.push(`[Codemagic] Status: ${status.status}`);
+
+          if (status.status === 'finished') {
+            // Download artifacts
+            const ipaArtifact = status.artefacts?.find((a: any) => a.name.endsWith('.ipa'));
+            if (ipaArtifact?.url) {
+              const ipaResponse = await fetch(ipaArtifact.url);
+              const ipaBuffer = Buffer.from(await ipaResponse.arrayBuffer());
+              
+              const artifactKey = `builds/${config.projectId}/${result.buildId}/app.ipa`;
+              const uploaded = await realObjectStorageService.uploadFile(
+                artifactKey,
+                ipaBuffer,
+                { contentType: 'application/octet-stream' }
+              );
+
+              const downloadUrl = await realObjectStorageService.getSignedUrl(artifactKey, 86400);
+
+              result.artifacts.push({
+                type: 'ipa',
+                path: artifactKey,
+                size: uploaded.size,
+                downloadUrl
+              });
+
+              result.logs.push('[Codemagic] iOS build completed successfully');
+            }
+            return;
+          } else if (status.status === 'failed' || status.status === 'canceled') {
+            throw new Error(`Codemagic build failed: ${status.message || 'Unknown error'}`);
+          }
+        }
+
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+      }
+
+      throw new Error('Codemagic build timed out after 30 minutes');
+    } catch (error) {
+      result.success = false;
+      result.error = error instanceof Error ? error.message : 'Codemagic build failed';
+      result.logs.push(`[Codemagic] ERROR: ${result.error}`);
+      throw error;
+    }
   }
 
   // Device simulation
