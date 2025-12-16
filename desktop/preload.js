@@ -54,7 +54,12 @@ const validReceiveChannels = [
   'menu-show-shortcuts',
   'update-available',
   'update-downloaded',
+  'update-progress',
+  'update-status',
   'deep-link',
+  'file-changed',
+  'theme-changed',
+  'open-recent-file',
 ];
 
 // Expose protected methods that allow the renderer process to use
@@ -100,6 +105,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   writeFile: (filePath, content) => ipcRenderer.invoke('write-file', filePath, content),
   fileExists: (filePath) => ipcRenderer.invoke('file-exists', filePath),
   readDirectory: (dirPath) => ipcRenderer.invoke('read-directory', dirPath),
+  deleteFile: (filePath) => ipcRenderer.invoke('delete-file', filePath),
+  mkdir: (dirPath) => ipcRenderer.invoke('mkdir', dirPath),
+  stat: (filePath) => ipcRenderer.invoke('stat', filePath),
+  rename: (oldPath, newPath) => ipcRenderer.invoke('rename', oldPath, newPath),
+  copyFile: (src, dest) => ipcRenderer.invoke('copy', src, dest),
+  appendFile: (filePath, content) => ipcRenderer.invoke('append-file', filePath, content),
+  watchFile: (filePath) => ipcRenderer.invoke('watch-file', filePath),
+  unwatchFile: (id) => ipcRenderer.invoke('unwatch-file', id),
+  onFileChanged: (callback) => {
+    const handler = (event, data) => callback(data);
+    ipcRenderer.on('file-changed', handler);
+    return () => ipcRenderer.removeListener('file-changed', handler);
+  },
 
   // ==========================================
   // Shell APIs
@@ -130,6 +148,47 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // ==========================================
   clipboardWriteText: (text) => ipcRenderer.invoke('clipboard-write-text', text),
   clipboardReadText: () => ipcRenderer.invoke('clipboard-read-text'),
+
+  // ==========================================
+  // Recent Files APIs
+  // ==========================================
+  getRecentFiles: () => ipcRenderer.invoke('get-recent-files'),
+  addRecentFile: (filePath) => ipcRenderer.invoke('add-recent-file', filePath),
+  removeRecentFile: (filePath) => ipcRenderer.invoke('remove-recent-file', filePath),
+  clearRecentFiles: () => ipcRenderer.invoke('clear-recent-files'),
+  onOpenRecentFile: (callback) => {
+    const handler = (event, filePath) => callback(filePath);
+    ipcRenderer.on('open-recent-file', handler);
+    return () => ipcRenderer.removeListener('open-recent-file', handler);
+  },
+
+  // ==========================================
+  // Update APIs
+  // ==========================================
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  getUpdateInfo: () => ipcRenderer.invoke('get-update-info'),
+  setAutoUpdate: (enabled) => ipcRenderer.invoke('set-auto-update', enabled),
+  onUpdateAvailable: (callback) => {
+    const handler = (event, data) => callback(data);
+    ipcRenderer.on('update-available', handler);
+    return () => ipcRenderer.removeListener('update-available', handler);
+  },
+  onUpdateDownloaded: (callback) => {
+    const handler = (event, data) => callback(data);
+    ipcRenderer.on('update-downloaded', handler);
+    return () => ipcRenderer.removeListener('update-downloaded', handler);
+  },
+  onUpdateProgress: (callback) => {
+    const handler = (event, data) => callback(data);
+    ipcRenderer.on('update-progress', handler);
+    return () => ipcRenderer.removeListener('update-progress', handler);
+  },
+  onUpdateStatus: (callback) => {
+    const handler = (event, data) => callback(data);
+    ipcRenderer.on('update-status', handler);
+    return () => ipcRenderer.removeListener('update-status', handler);
+  },
 
   // ==========================================
   // Menu Event Listeners

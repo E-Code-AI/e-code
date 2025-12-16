@@ -70,11 +70,22 @@ function main() {
     indexHtml = indexHtml.replace('<head>', '<head>\n    <base href="./">');
   }
   
-  // Add CSP for Electron
+  // Add CSP for Electron - using strict CSP without unsafe-eval/unsafe-inline
+  // Generate a unique nonce for this build
+  const crypto = require('crypto');
+  const nonce = crypto.randomBytes(16).toString('base64');
+  
   if (!indexHtml.includes('Content-Security-Policy')) {
-    const csp = `<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: ws: wss: https:; img-src 'self' data: blob: https:; font-src 'self' data: https:;">`;
+    // Use nonce-based CSP for inline scripts and strict-dynamic for loaded scripts
+    const csp = `<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-${nonce}'; style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' ws: wss: https:; media-src 'self' blob:; object-src 'none'; frame-ancestors 'self'; base-uri 'self'; form-action 'self';">`;
     indexHtml = indexHtml.replace('<head>', `<head>\n    ${csp}`);
   }
+  
+  // Add nonce to all inline scripts
+  indexHtml = indexHtml.replace(/<script(?![^>]*src=)([^>]*)>/g, `<script nonce="${nonce}"$1>`);
+  
+  // Add nonce to all inline styles
+  indexHtml = indexHtml.replace(/<style([^>]*)>/g, `<style nonce="${nonce}"$1>`);
   
   fs.writeFileSync(path.join(RENDERER_PATH, 'index.html'), indexHtml);
 
