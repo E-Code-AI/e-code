@@ -265,6 +265,7 @@ export class StripePaymentService {
         payment_behavior: 'default_incomplete',
         payment_settings: { save_default_payment_method: 'on_subscription' },
         expand: ['latest_invoice.payment_intent'],
+        automatic_tax: { enabled: true },
         metadata: {
           userId: String(userId),
           planId,
@@ -285,6 +286,7 @@ export class StripePaymentService {
           payment_behavior: 'default_incomplete',
           payment_settings: { save_default_payment_method: 'on_subscription' },
           expand: ['latest_invoice.payment_intent'],
+          automatic_tax: { enabled: true },
           metadata: {
             userId: String(userId),
             planId,
@@ -377,6 +379,15 @@ export class StripePaymentService {
     currency: string = 'usd',
     description?: string
   ): Promise<Stripe.PaymentIntent> {
+    const amountInCents = Math.round(amount * 100);
+    
+    if (amountInCents < 50) {
+      throw new Error('Amount must be at least $0.50 (50 cents)');
+    }
+    if (amountInCents > 99999999) {
+      throw new Error('Amount exceeds maximum allowed ($999,999.99)');
+    }
+
     const user = await storage.getUser(String(userId));
     if (!user) {
       throw new Error('User not found');
@@ -392,10 +403,11 @@ export class StripePaymentService {
     }
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
+      amount: amountInCents,
       currency,
       customer: customerId,
       description,
+      automatic_payment_methods: { enabled: true },
       metadata: {
         userId: String(userId),
       },
@@ -538,6 +550,14 @@ export class StripePaymentService {
       case 'invoice.payment_failed':
         await this.handlePaymentFailed(event.data.object as Stripe.Invoice);
         break;
+
+      case 'charge.refunded':
+        await this.handleChargeRefunded(event.data.object as Stripe.Charge);
+        break;
+
+      case 'charge.dispute.created':
+        await this.handleDisputeCreated(event.data.object as Stripe.Dispute);
+        break;
         
       default:
         // Unhandled webhook event type
@@ -571,11 +591,83 @@ export class StripePaymentService {
   }
 
   private async handlePaymentSucceeded(invoice: Stripe.Invoice) {
-    // Could send email notification, update credits, etc.
+    const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
+    if (!customerId) return;
+
+    try {
+      const customer = await stripe.customers.retrieve(customerId);
+      if (customer.deleted) return;
+      
+      const userId = (customer as Stripe.Customer).metadata?.userId;
+      if (!userId) return;
+
+      await storage.updateUser(userId, {
+        lastPaymentDate: new Date(),
+        paymentFailedAt: null,
+      });
+
+      console.log(`[Stripe] Payment succeeded for user ${userId}, invoice ${invoice.id}`);
+    } catch (error) {
+      console.error('[Stripe] Error handling payment success:', error);
+    }
   }
 
   private async handlePaymentFailed(invoice: Stripe.Invoice) {
-    // Could send email notification, restrict access, etc.
+    const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
+    if (!customerId) return;
+
+    try {
+      const customer = await stripe.customers.retrieve(customerId);
+      if (customer.deleted) return;
+      
+      const userId = (customer as Stripe.Customer).metadata?.userId;
+      if (!userId) return;
+
+      await storage.updateUser(userId, {
+        paymentFailedAt: new Date(),
+      });
+
+      console.warn(`[Stripe] Payment failed for user ${userId}, invoice ${invoice.id}`);
+    } catch (error) {
+      console.error('[Stripe] Error handling payment failure:', error);
+    }
+  }
+
+  private async handleChargeRefunded(charge: Stripe.Charge) {
+    const customerId = typeof charge.customer === 'string' ? charge.customer : charge.customer?.id;
+    if (!customerId) return;
+
+    try {
+      const customer = await stripe.customers.retrieve(customerId);
+      if (customer.deleted) return;
+      
+      const userId = (customer as Stripe.Customer).metadata?.userId;
+      if (!userId) return;
+
+      const refundedAmount = charge.amount_refunded / 100;
+      console.log(`[Stripe] Charge refunded for user ${userId}: $${refundedAmount}`);
+    } catch (error) {
+      console.error('[Stripe] Error handling charge refund:', error);
+    }
+  }
+
+  private async handleDisputeCreated(dispute: Stripe.Dispute) {
+    const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id;
+    if (!chargeId) return;
+
+    try {
+      const charge = await stripe.charges.retrieve(chargeId);
+      const customerId = typeof charge.customer === 'string' ? charge.customer : charge.customer?.id;
+      if (!customerId) return;
+
+      const customer = await stripe.customers.retrieve(customerId);
+      if (customer.deleted) return;
+      
+      const userId = (customer as Stripe.Customer).metadata?.userId;
+      console.warn(`[Stripe] DISPUTE CREATED for user ${userId}: $${dispute.amount / 100} - Reason: ${dispute.reason}`);
+    } catch (error) {
+      console.error('[Stripe] Error handling dispute:', error);
+    }
   }
 
   private async saveUsageRecord(record: UsageRecord): Promise<void> {

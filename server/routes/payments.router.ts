@@ -1,4 +1,6 @@
 import { Router, Request, Response } from 'express';
+import express from 'express';
+import rateLimit from 'express-rate-limit';
 import { StripePaymentService } from '../payments/stripe-service';
 import { StripeBillingService } from '../services/stripe-billing-service';
 import { ensureAuthenticated } from '../middleware/auth';
@@ -6,6 +8,14 @@ import { createLogger } from '../utils/logger';
 import { retryFailedQueueItems, getQueueHealthMetrics } from '../workflows/payg-queue-processor';
 
 const router = Router();
+
+const adminPaymentRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 const paymentService = new StripePaymentService();
 const billingService = new StripeBillingService();
 const logger = createLogger('payments-router');
@@ -143,8 +153,8 @@ router.post('/create-payment-intent', ensureAuthenticated, async (req: Request, 
   }
 });
 
-// Stripe webhook handler
-router.post('/webhook', async (req: Request, res: Response) => {
+// Stripe webhook handler - P-C1 FIX: Use express.raw() for raw body buffer
+router.post('/webhook', express.raw({ type: 'application/json' }), async (req: Request, res: Response) => {
   try {
     const sig = req.headers['stripe-signature'];
 
@@ -152,11 +162,17 @@ router.post('/webhook', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Missing stripe-signature header' });
     }
 
+    // P-C1 FIX: Pass raw buffer (req.body is now a Buffer due to express.raw())
     await paymentService.handleWebhook(req.body, sig as string);
     res.json({ received: true });
   } catch (error: any) {
     logger.error('Webhook error:', error);
-    res.status(400).json({ error: error.message || 'Webhook handler failed' });
+    // Return 200 on handled errors to prevent Stripe retries for known issues
+    if (error.message?.includes('signature verification failed')) {
+      return res.status(400).json({ error: 'Invalid webhook signature' });
+    }
+    // For other handled errors, return 200 to acknowledge receipt
+    res.status(200).json({ received: true, warning: error.message || 'Webhook handler encountered an error' });
   }
 });
 
@@ -277,7 +293,7 @@ async function ensureAdmin(req: Request, res: Response, next: Function) {
  * Returns counts and oldest items for monitoring
  * ADMIN ONLY - Privileged operation
  */
-router.get('/queue-health', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
+router.get('/queue-health', ensureAuthenticated, ensureAdmin, adminPaymentRateLimiter, async (req: Request, res: Response) => {
   try {
     const metrics = await getQueueHealthMetrics();
     
@@ -298,7 +314,7 @@ router.get('/queue-health', ensureAuthenticated, ensureAdmin, async (req: Reques
  * Safe to call multiple times - idempotency keys prevent double-charging
  * ADMIN ONLY - Privileged operation
  */
-router.post('/queue-retry', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
+router.post('/queue-retry', ensureAuthenticated, ensureAdmin, adminPaymentRateLimiter, async (req: Request, res: Response) => {
   try {
     logger.info(`Queue retry initiated by admin user ${req.user!.id}`);
     
