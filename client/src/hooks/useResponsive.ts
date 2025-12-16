@@ -50,6 +50,9 @@ export function useResponsive(): ResponsiveState {
   });
 
   useEffect(() => {
+    // Debounce timeout for resize events to prevent excessive re-renders
+    let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
+    
     const updateState = () => {
       const deviceType = getDeviceType();
       const capabilities = getDeviceCapabilities();
@@ -70,16 +73,33 @@ export function useResponsive(): ResponsiveState {
       });
     };
 
+    // Debounced handler for resize events
+    const handleResize = () => {
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+      resizeTimeout = setTimeout(updateState, 100);
+    };
+
+    // Orientation changes should update immediately
+    const handleOrientationChange = () => {
+      updateState();
+    };
+
     // Listen for resize and orientation changes
-    window.addEventListener('resize', updateState);
-    window.addEventListener('orientationchange', updateState);
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleOrientationChange);
 
     // Update on mount
     updateState();
 
+    // Cleanup: remove listeners and clear any pending timeout
     return () => {
-      window.removeEventListener('resize', updateState);
-      window.removeEventListener('orientationchange', updateState);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
     };
   }, []);
 
