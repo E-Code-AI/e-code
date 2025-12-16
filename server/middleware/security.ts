@@ -287,7 +287,7 @@ export const securityMiddleware = (): RequestHandler[] => {
     // API-specific headers
     if (req.path.startsWith('/api')) {
       res.setHeader('X-API-Version', '1.0');
-      res.setHeader('X-RateLimit-Policy', 'https://docs.ecode-platform.com/rate-limits');
+      res.setHeader('X-RateLimit-Policy', 'https://docs.e-code.ai/rate-limits');
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');

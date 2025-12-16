@@ -227,9 +227,9 @@ The implementation follows:
 ## Support
 
 For security concerns or to report vulnerabilities:
-- Security Email: security@ecode-platform.com
-- Bug Bounty Program: https://ecode-platform.com/security/bug-bounty
-- Security Documentation: https://docs.ecode-platform.com/security
+- Security Email: security@e-code.ai
+- Bug Bounty Program: https://e-code.ai/security/bug-bounty
+- Security Documentation: https://docs.e-code.ai/security
 
 ## Version History
 

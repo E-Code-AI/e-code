@@ -148,8 +148,8 @@ The CLI stores configuration in `~/.ecode/config.json`. Project-specific configu
 
 ## Environment Variables
 
-- `ECODE_API_URL`: Override the API endpoint (default: https://api.e-code.com)
-- `ECODE_WEB_URL`: Override the web URL (default: https://e-code.com)
+- `ECODE_API_URL`: Override the API endpoint (default: https://api.e-code.ai)
+- `ECODE_WEB_URL`: Override the web URL (default: https://e-code.ai)
 
 ## Features
 

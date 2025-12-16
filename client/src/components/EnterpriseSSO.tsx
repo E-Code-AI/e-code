@@ -668,7 +668,7 @@ export function EnterpriseSSO() {
                 <div>
                   <Label>SCIM Base URL</Label>
                   <Input
-                    value="https://e-code.com/scim/v2"
+                    value="https://e-code.ai/scim/v2"
                     readOnly
                     className="font-mono text-sm"
                   />

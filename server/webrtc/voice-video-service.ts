@@ -45,7 +45,7 @@ export class VoiceVideoService extends EventEmitter {
     // Only add TURN server if credential is configured
     if (turnSecret) {
       servers.push({
-        urls: ['turn:turn.e-code.com:3478'],
+        urls: ['turn:turn.e-code.ai:3478'],
         username: 'ecode',
         credential: turnSecret,
       });
@@ -333,7 +333,7 @@ export class VoiceVideoService extends EventEmitter {
     room.recording = false;
 
     // In production, stop recording and upload to storage
-    const recordingUrl = `https://recordings.e-code.com/${room.sessionId}.webm`;
+    const recordingUrl = `https://recordings.e-code.ai/${room.sessionId}.webm`;
 
     await db.update(voiceVideoSessions)
       .set({ 

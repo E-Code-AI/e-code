@@ -198,7 +198,7 @@ export default function ReportAbuse() {
                     <Input 
                       id="url" 
                       type="url" 
-                      placeholder="https://e-code.com/..."
+                      placeholder="https://e-code.ai/..."
                       required
                       className="mt-2"
                     />
