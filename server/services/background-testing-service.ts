@@ -346,18 +346,91 @@ export class BackgroundTestingService extends EventEmitter {
   }
   
   private async notifyAgent(projectId: number, results: TestResults): Promise<void> {
-    console.log(`[BackgroundTesting] Notifying agent for project ${projectId} - tests failed`);
+    logger.info(`[BackgroundTesting] Notifying agent for project ${projectId} - tests failed`);
+    
+    // Generate AI fix suggestions for failed tests
+    let fixSuggestions: string[] = [];
+    try {
+      fixSuggestions = await this.generateAIFixSuggestions(results);
+    } catch (error) {
+      logger.warn('[BackgroundTesting] Failed to generate AI fix suggestions:', error);
+    }
     
     // Emit event that can be picked up by WebSocket or AI agent
     this.emit('test:agent-notification', {
       projectId,
       message: `Background tests failed for project ${projectId}`,
       failures: results.failures,
+      fixSuggestions,
       timestamp: new Date()
     });
     
-    // TODO: Integrate with AI agent conversation to suggest fixes
-    // This could trigger an automatic rollback or create a checkpoint
+    // Emit specific event for AI agent to pick up
+    this.emit('test:fix-suggestions', {
+      projectId,
+      suggestions: fixSuggestions,
+      failures: results.failures,
+      autoFixAvailable: fixSuggestions.length > 0
+    });
+  }
+  
+  private async generateAIFixSuggestions(results: TestResults): Promise<string[]> {
+    try {
+      const { aiProviderManager } = await import('../ai/ai-provider-manager');
+      
+      // Build context from failures
+      const failureContext = results.failures
+        .map(f => `- Test "${f.test}" failed: ${f.error}`)
+        .join('\n');
+      
+      const systemPrompt = `You are an expert debugging assistant. Analyze test failures and provide concise, actionable fix suggestions.
+RULES:
+- Provide 1-3 specific, actionable suggestions
+- Focus on the most likely root cause
+- Be concise - each suggestion should be 1-2 sentences
+- Format as a simple list`;
+
+      const userPrompt = `The following automated tests failed. Suggest fixes:
+
+Test Results Summary:
+- Page Load: ${results.pageLoadPassed ? 'PASSED' : 'FAILED'}
+- Console Errors: ${results.noConsoleErrors ? 'NONE' : 'DETECTED'}
+- Clickable Elements: ${results.clickableElementsPassed ? 'PASSED' : 'FAILED'}
+- Forms: ${results.formsSubmitPassed ? 'PASSED' : 'FAILED'}
+
+Failures:
+${failureContext || 'No specific failure details available'}
+
+Provide 1-3 actionable fix suggestions:`;
+
+      const messages = [
+        { role: 'system' as const, content: systemPrompt },
+        { role: 'user' as const, content: userPrompt }
+      ];
+
+      // Use fast model for quick suggestions
+      const response = await aiProviderManager.generateChat('gpt-4o', messages, {
+        max_tokens: 500,
+        temperature: 0.3
+      });
+
+      if (response && response.trim()) {
+        // Parse response into suggestions array
+        const suggestions = response
+          .split('\n')
+          .filter((line: string) => line.trim().startsWith('-') || line.trim().match(/^\d+\./))
+          .map((line: string) => line.replace(/^[-\d.]+\s*/, '').trim())
+          .filter((s: string) => s.length > 10);
+        
+        logger.info(`[BackgroundTesting] Generated ${suggestions.length} AI fix suggestions`);
+        return suggestions.slice(0, 3); // Max 3 suggestions
+      }
+      
+      return [];
+    } catch (error) {
+      logger.error('[BackgroundTesting] AI fix suggestion generation failed:', error);
+      return [];
+    }
   }
   
   // Get current test status for a project
