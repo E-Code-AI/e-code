@@ -50,7 +50,7 @@ export default function Explore() {
   const [sortBy, setSortBy] = useState('trending');
   
   // Fetch public projects from API
-  const { data: publicRepls = [], isLoading } = useQuery<any[]>({
+  const { data: publicRepls = [], isLoading, error: exploreError } = useQuery<any[]>({
     queryKey: ['/api/explore/projects', { category: selectedCategory, sort: sortBy, search: searchQuery }],
     queryFn: async ({ queryKey }) => {
       const [, params] = queryKey as [string, any];
@@ -63,6 +63,7 @@ export default function Explore() {
       if (!response.ok) throw new Error('Failed to fetch projects');
       return response.json();
     },
+    retry: 2,
   });
 
   const getLanguageColor = (language: string) => {

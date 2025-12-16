@@ -89,6 +89,13 @@ export default function UserManagement() {
         title: "Success",
         description: "User account locked for 24 hours"
       });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to lock user account",
+        variant: "destructive"
+      });
     }
   });
 

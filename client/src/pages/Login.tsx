@@ -52,8 +52,13 @@ export default function Login() {
       window.sessionStorage.setItem(`agent-prompt-${project.id}`, description);
       const projectUrl = getProjectUrl(project, project.owner?.username);
       navigate(`${projectUrl}?agent=true&prompt=${encodeURIComponent(description)}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create project:', error);
+      toast({
+        title: "Project creation failed",
+        description: error.message || "Unable to create project. Redirecting to dashboard.",
+        variant: "destructive"
+      });
       navigate('/dashboard');
     }
   };

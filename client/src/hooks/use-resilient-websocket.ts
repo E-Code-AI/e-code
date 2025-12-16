@@ -83,6 +83,8 @@ export function useResilientWebSocket({
       ws.destroy();
       wsRef.current = null;
     };
+    // Note: config and onStateChange are intentionally excluded to prevent reconnection loops
+    // They are captured at creation time and changes require remounting with new url/enabled
   }, [url, enabled]);
 
   // Update message handler when it changes
