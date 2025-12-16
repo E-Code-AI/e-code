@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion';
 import { 
-  Play, Square, Monitor, CheckSquare, Globe, 
+  Play, Square, Monitor, Plus, Globe, 
   PanelRightOpen, PanelRightClose
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type MobileTab = 'preview' | 'agent' | 'deploy' | 'tasks';
+export type MobileTab = 'preview' | 'agent' | 'deploy' | 'more';
 
 interface ReplitMobileNavigationProps {
   activeTab: MobileTab;
@@ -14,6 +14,7 @@ interface ReplitMobileNavigationProps {
   onPlayStop?: () => void;
   isPanelOpen?: boolean;
   onPanelToggle?: () => void;
+  onMorePress?: () => void;
 }
 
 const ReplitAgentIcon = ({ className }: { className?: string }) => (
@@ -42,6 +43,7 @@ export function ReplitMobileNavigation({
   onPlayStop,
   isPanelOpen = false,
   onPanelToggle,
+  onMorePress,
 }: ReplitMobileNavigationProps) {
   const handleTabClick = (tabId: MobileTab) => {
     if ('vibrate' in navigator) {
@@ -62,6 +64,13 @@ export function ReplitMobileNavigation({
       navigator.vibrate(10);
     }
     onPanelToggle?.();
+  };
+
+  const handleMorePress = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+    onMorePress?.();
   };
 
   return (
@@ -142,34 +151,17 @@ export function ReplitMobileNavigation({
           <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
           
           <motion.button
-            onClick={() => handleTabClick('tasks')}
+            onClick={handleMorePress}
             className={cn(
               "relative flex items-center justify-center w-10 h-10 rounded-full transition-all",
-              activeTab === 'tasks'
-                ? "bg-white dark:bg-[#3A3A3A]" 
-                : "hover:bg-gray-200 dark:hover:bg-[#3A3A3A]"
+              "hover:bg-gray-200 dark:hover:bg-[#3A3A3A]"
             )}
             whileTap={{ scale: 0.95 }}
-            data-testid="tab-tasks"
+            data-testid="button-more-tools"
           >
-            <CheckSquare 
-              className={cn(
-                "h-5 w-5 transition-colors",
-                activeTab === 'tasks'
-                  ? "text-gray-900 dark:text-white" 
-                  : "text-gray-500 dark:text-gray-400"
-              )} 
+            <Plus 
+              className="h-5 w-5 transition-colors text-gray-500 dark:text-gray-400"
             />
-            
-            {activeTab === 'tasks' && (
-              <motion.div
-                className="absolute -bottom-1 left-1/2 w-1 h-1 bg-[#7C65C1] rounded-full"
-                layoutId="activeTabIndicator"
-                initial={false}
-                style={{ x: '-50%' }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              />
-            )}
           </motion.button>
         </div>
 
