@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShieldCheck,
   ShieldAlert,
@@ -294,16 +293,9 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
             </Button>
           </div>
 
-          <AnimatePresence>
-            {showSettings && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="bg-background rounded-lg p-3 space-y-2 border border-border shadow-sm">
+          <div className={cn("collapsible-content", showSettings && "expanded")}>
+            <div>
+              <div className="bg-background rounded-lg p-3 space-y-2 border border-border shadow-sm">
                   <div className="flex items-center justify-between">
                     <h3 className="font-medium text-foreground text-[15px] leading-[20px]">Scan Settings</h3>
                     <button 
@@ -343,9 +335,8 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </div>
+            </div>
 
           <div className="border-b border-border">
             <div className="flex gap-6">
@@ -438,15 +429,9 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                     )}
                   </button>
 
-                  <AnimatePresence>
-                    {expandedCards.has(vuln.id) && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <div className="px-3 pb-3 space-y-2 border-t border-border">
+                  <div className={cn("collapsible-content", expandedCards.has(vuln.id) && "expanded")}>
+                    <div>
+                      <div className="px-3 pb-3 space-y-2 border-t border-border">
                           <p className="text-[15px] leading-[20px] text-muted-foreground pt-3">
                             {vuln.description}
                           </p>
@@ -488,9 +473,8 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
                             </Button>
                           </div>
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                      </div>
+                    </div>
                 </div>
               ))
             )}

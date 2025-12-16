@@ -170,24 +170,22 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
         isUser && "flex flex-col items-end"
       )}>
         {hasThinking && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="w-full"
-          >
-            {isCompactMode ? (
-              <ThinkingDisplayCompact
-                steps={message.thinking!}
-                isActive={message.isStreaming}
-              />
-            ) : (
-              <ThinkingDisplay
-                steps={message.thinking!}
-                isActive={message.isStreaming}
-                mode="detailed"
-              />
-            )}
-          </motion.div>
+          <div className="collapsible-content expanded w-full">
+            <div>
+              {isCompactMode ? (
+                <ThinkingDisplayCompact
+                  steps={message.thinking!}
+                  isActive={message.isStreaming}
+                />
+              ) : (
+                <ThinkingDisplay
+                  steps={message.thinking!}
+                  isActive={message.isStreaming}
+                  mode="detailed"
+                />
+              )}
+            </div>
+          </div>
         )}
 
         <motion.div 
@@ -337,22 +335,15 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
                 <ChevronDown className="h-3 w-3 text-muted-foreground" />
               )}
             </div>
-            <AnimatePresence>
-              {isExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ToolExecutionList 
-                    toolExecutions={message.toolExecutions!} 
-                    showFilters={false}
-                    compact={true}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div className={cn("collapsible-content", isExpanded && "expanded")}>
+              <div>
+                <ToolExecutionList 
+                  toolExecutions={message.toolExecutions!} 
+                  showFilters={false}
+                  compact={true}
+                />
+              </div>
+            </div>
           </motion.div>
         )}
 
@@ -731,38 +722,42 @@ export const ConversationSyncIndicator = memo(function ConversationSyncIndicator
   lastSyncedAt?: number;
   hasUnsyncedChanges?: boolean;
 }) {
-  if (!isSyncing && !hasUnsyncedChanges && !lastSyncedAt) return null;
+  const isVisible = isSyncing || hasUnsyncedChanges || lastSyncedAt;
   
   return (
-    <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: "auto" }}
-      exit={{ opacity: 0, height: 0 }}
+    <div
       className={cn(
-        "flex items-center justify-center gap-2 py-1.5 px-3 text-xs",
-        "bg-muted/50 border-b border-border/50"
+        "collapsible-content",
+        isVisible && "expanded"
       )}
       data-testid="sync-indicator"
     >
-      {isSyncing ? (
-        <>
-          <Loader2 className="h-3 w-3 animate-spin text-primary" />
-          <span className="text-muted-foreground">Syncing conversation...</span>
-        </>
-      ) : hasUnsyncedChanges ? (
-        <>
-          <AlertCircle className="h-3 w-3 text-yellow-500" />
-          <span className="text-muted-foreground">Unsaved changes</span>
-        </>
-      ) : lastSyncedAt ? (
-        <>
-          <Check className="h-3 w-3 text-green-500" />
-          <span className="text-muted-foreground">
-            Saved {new Date(lastSyncedAt).toLocaleTimeString()}
-          </span>
-        </>
-      ) : null}
-    </motion.div>
+      <div
+        className={cn(
+          "flex items-center justify-center gap-2 py-1.5 px-3 text-xs",
+          "bg-muted/50 border-b border-border/50"
+        )}
+      >
+        {isSyncing ? (
+          <>
+            <Loader2 className="h-3 w-3 animate-spin text-primary" />
+            <span className="text-muted-foreground">Syncing conversation...</span>
+          </>
+        ) : hasUnsyncedChanges ? (
+          <>
+            <AlertCircle className="h-3 w-3 text-yellow-500" />
+            <span className="text-muted-foreground">Unsaved changes</span>
+          </>
+        ) : lastSyncedAt ? (
+          <>
+            <Check className="h-3 w-3 text-green-500" />
+            <span className="text-muted-foreground">
+              Saved {new Date(lastSyncedAt).toLocaleTimeString()}
+            </span>
+          </>
+        ) : null}
+      </div>
+    </div>
   );
 });
 

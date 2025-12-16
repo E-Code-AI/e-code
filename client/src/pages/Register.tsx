@@ -319,12 +319,8 @@ export default function Register() {
               </div>
               
               {/* Password Strength Indicator */}
-              {formData.password && (
-                <motion.div 
-                  className="space-y-2"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                >
+              <div className={`collapsible-content ${formData.password ? 'expanded' : ''}`}>
+                <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">Password strength</span>
                     <span className={`text-xs font-medium ${
@@ -349,8 +345,8 @@ export default function Register() {
                       </div>
                     ))}
                   </div>
-                </motion.div>
-              )}
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">

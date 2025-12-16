@@ -286,11 +286,9 @@ export function AnimatedProgress({
   return (
     <div className={cn('w-full', className)}>
       <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${percentage}%` }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+        <div
+          className="h-full bg-gradient-to-r from-primary to-secondary rounded-full transition-transform duration-500 ease-out origin-left"
+          style={{ transform: `scaleX(${percentage / 100})` }}
         />
       </div>
       {showLabel && (

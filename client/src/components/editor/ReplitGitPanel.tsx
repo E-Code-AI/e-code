@@ -477,18 +477,12 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                 {showConnections ? <ChevronUp className="w-[18px] h-[18px] text-muted-foreground" /> : <ChevronDown className="w-[18px] h-[18px] text-muted-foreground" />}
               </button>
 
-              <AnimatePresence>
-                {showConnections && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="space-y-2"
+              <div className={cn("collapsible-content", showConnections && "expanded")}>
+                <div className="space-y-2">
+                  <div 
+                    className="flex items-center justify-between p-3 bg-card border border-border rounded-lg"
+                    data-testid="github-connection-section"
                   >
-                    <div 
-                      className="flex items-center justify-between p-3 bg-card border border-border rounded-lg"
-                      data-testid="github-connection-section"
-                    >
                       {isLoadingGitHub ? (
                         <div className="flex items-center gap-3">
                           <SiGithub className="w-[18px] h-[18px]" />
@@ -575,13 +569,12 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                           Disconnected
                         </span>
                       </div>
-                      <Button variant="outline" size="sm" className="h-8 border-border rounded-lg">
-                        <ExternalLink className="w-3 h-3 mr-1" />Sign in
-                      </Button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    <Button variant="outline" size="sm" className="h-8 border-border rounded-lg">
+                      <ExternalLink className="w-3 h-3 mr-1" />Sign in
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -658,14 +651,8 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
         </div>
       </div>
 
-      <AnimatePresence>
-        {showBranchDropdown && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="absolute top-12 left-2 right-2 z-50 bg-card border border-border rounded-lg shadow-lg overflow-hidden"
-          >
+      <div className={cn("collapsible-content absolute top-12 left-2 right-2 z-50", showBranchDropdown && "expanded")}>
+        <div className="bg-card border border-border rounded-lg shadow-lg overflow-hidden">
             <div className="p-2 border-b border-border">
               <div className="flex items-center gap-2 px-2 py-1.5 bg-muted rounded-lg border border-border">
                 <Search className="w-[18px] h-[18px] text-muted-foreground" />
@@ -755,9 +742,8 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                 )}
               </div>
             </ScrollArea>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
 
       <ScrollArea className="flex-1">
         <div className={cn("space-y-2", touchMode ? "p-4" : "p-3")}>

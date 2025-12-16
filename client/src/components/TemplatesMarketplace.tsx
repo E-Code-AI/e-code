@@ -554,15 +554,9 @@ export function TemplatesMarketplace() {
             </Button>
           </form>
 
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
-              >
-                <Card className="p-4" data-testid="filters-panel">
+          <div className={cn("collapsible-content", showFilters && "expanded")}>
+            <div>
+              <Card className="p-4" data-testid="filters-panel">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                       <Label className="text-sm mb-2 block">Category</Label>
@@ -672,9 +666,8 @@ export function TemplatesMarketplace() {
                     </Button>
                   </div>
                 </Card>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            </div>
+          </div>
         </div>
 
         <section data-testid="templates-grid">

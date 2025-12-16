@@ -368,15 +368,9 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                 )}
               </button>
 
-              <AnimatePresence>
-                {showConnections && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="space-y-2">
+              <div className={cn("collapsible-content", showConnections && "expanded")}>
+                <div>
+                  <div className="space-y-2">
                       {/* GitHub - Dynamic */}
                       <div 
                         className="flex items-center justify-between min-h-[44px] p-3 bg-card border border-border rounded-lg"
@@ -485,10 +479,9 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                         </Button>
                       </div>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                  </div>
+                </div>
+              </div>
 
             <div className="space-y-3">
               <h3 className="text-[15px] font-medium leading-tight text-foreground">Commit author</h3>
@@ -568,14 +561,8 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
         </div>
       </div>
 
-      <AnimatePresence>
-        {showBranchDropdown && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="absolute top-12 left-3 right-3 z-50 bg-card border border-border rounded-md shadow-lg overflow-hidden"
-          >
+      <div className={cn("collapsible-content absolute top-12 left-3 right-3 z-50 bg-card border border-border rounded-md shadow-lg", showBranchDropdown && "expanded")}>
+        <div>
             <div className="p-2 border-b border-border">
               <div className="flex items-center gap-2 px-2.5 h-8 bg-muted rounded-md border border-border">
                 <Search className="w-4 h-4 text-muted-foreground" />
@@ -650,9 +637,9 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                 )}
               </div>
             </ScrollArea>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      </div>
 
       <ScrollArea className="flex-1 pb-20">
         <div className="p-3 space-y-4">
@@ -737,16 +724,9 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                   </div>
                 </button>
 
-                <AnimatePresence>
-                  {showChanges && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="space-y-3 pt-1">
+                <div className={cn("collapsible-content", showChanges && "expanded")}>
+                  <div>
+                    <div className="space-y-3 pt-1">
                         <div className="flex gap-2">
                           <Button
                             variant="outline"
@@ -890,9 +870,9 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                           </div>
                         )}
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
             

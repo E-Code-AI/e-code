@@ -566,3 +566,24 @@
 .animate-spin-loader {
   animation: spin 1s linear infinite;
 }
+
+/* ============================================
+ * GPU-Accelerated Collapsible Content
+ * Uses grid-template-rows which IS animatable
+ * ============================================ */
+
+.collapsible-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease-out, opacity 0.2s ease-out;
+  opacity: 0;
+}
+
+.collapsible-content.expanded {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.collapsible-content > div {
+  overflow: hidden;
+}

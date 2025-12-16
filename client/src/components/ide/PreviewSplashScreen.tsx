@@ -266,12 +266,9 @@ export function PreviewSplashScreen({
                 data-testid="splash-progress-container"
               >
                 <div className="h-1.5 rounded-full bg-gray-200 dark:bg-zinc-700 overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.5, ease: 'easeOut' }}
-                    className="h-full rounded-full"
-                    style={{ backgroundColor: DOT_COLOR }}
+                  <div
+                    className="h-full rounded-full transition-transform duration-500 ease-out origin-left"
+                    style={{ backgroundColor: DOT_COLOR, transform: `scaleX(${(progress || 0) / 100})` }}
                     data-testid="splash-progress-bar"
                   />
                 </div>
