@@ -150,24 +150,39 @@ Generate the complete ${fileName} file:`;
       ];
       
       // Try multiple models with fallback for code generation
-      const fallbackModels = ['gpt-5.1', 'gpt-4o', 'claude-sonnet-4-5-20250929', 'gemini-2-5-flash'];
+      // Use actual model IDs from provider configuration
+      const fallbackModels = [
+        'gpt-4o',                         // OpenAI fast, reliable
+        'claude-sonnet-4-5-20250929',     // Anthropic balanced
+        'gemini-2.5-flash',               // Google fast
+        'gpt-5.1',                        // OpenAI latest
+      ];
       let result: string | null = null;
+      let lastError: string | null = null;
       
       for (const modelId of fallbackModels) {
         try {
-          logger.debug(`[ContentGenerator] Trying model ${modelId} for ${path}`);
+          logger.info(`[ContentGenerator] Trying model ${modelId} for ${path}`);
           result = await aiProvider.generateChat(modelId, messages, {
-            max_tokens: 2000,
+            max_tokens: 4000,
             temperature: 0.2
           });
-          if (result && result.trim().length > 20) {
-            logger.info(`[ContentGenerator] Successfully generated code with ${modelId}`);
+          if (result && result.trim().length > 50) {
+            logger.info(`[ContentGenerator] Successfully generated ${result.length} chars with ${modelId}`);
             break;
+          } else {
+            logger.warn(`[ContentGenerator] Model ${modelId} returned insufficient content (${result?.length || 0} chars)`);
+            result = null;
           }
         } catch (modelError: any) {
+          lastError = modelError.message;
           logger.warn(`[ContentGenerator] Model ${modelId} failed: ${modelError.message}`);
           continue;
         }
+      }
+      
+      if (!result && lastError) {
+        logger.error(`[ContentGenerator] All AI models failed for ${path}. Last error: ${lastError}`);
       }
       
       if (result && result.trim().length > 20) {
