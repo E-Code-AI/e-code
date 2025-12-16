@@ -272,7 +272,7 @@ export default function Landing() {
             src={cloudComputingImg} 
             alt="Cloud Computing Technology"
             className="w-full h-full object-cover opacity-10 dark:opacity-5"
-            loading="eager"
+            loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[var(--ecode-background)]/80 via-[var(--ecode-background)]/90 to-[var(--ecode-background)]" />
         </div>

@@ -27,3 +27,9 @@ cacheReconciliation.init();
 
 // FIXED: Removed duplicate ThemeProvider - already wrapped in App.tsx
 createRoot(document.getElementById("root")!).render(<App />);
+
+// Hide initial loader once React has rendered
+const initialLoader = document.getElementById('initial-loader');
+if (initialLoader) {
+  initialLoader.classList.add('hidden');
+}

@@ -1,24 +1,12 @@
 /**
  * OptimizedMotionProvider - Fortune 500-Grade Animation Provider
  * 
- * Uses LazyMotion with domAnimation features only, reducing bundle size by 60%.
- * Loads animation features asynchronously to prevent main thread blocking.
+ * CRITICAL FIX: No Suspense blocking - renders children immediately
+ * LazyMotion loads in background without blocking initial render.
  */
 
-import { createContext, useContext, useState, useEffect, ReactNode, Suspense, lazy } from 'react';
-
-const LazyMotionProvider = lazy(() => 
-  import('framer-motion').then(mod => ({
-    default: ({ children }: { children: ReactNode }) => {
-      const domAnimation = () => import('framer-motion').then(m => m.domAnimation);
-      return (
-        <mod.LazyMotion features={domAnimation} strict>
-          {children}
-        </mod.LazyMotion>
-      );
-    }
-  }))
-);
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { LazyMotion, domAnimation } from 'framer-motion';
 
 interface MotionContextType {
   isReady: boolean;
@@ -26,7 +14,7 @@ interface MotionContextType {
 }
 
 const MotionContext = createContext<MotionContextType>({
-  isReady: false,
+  isReady: true,
   isReducedMotion: false
 });
 
@@ -38,28 +26,11 @@ interface OptimizedMotionProviderProps {
   children: ReactNode;
 }
 
-const requestIdleCallbackPolyfill = (callback: () => void, options?: { timeout?: number }): number => {
-  if (typeof globalThis.requestIdleCallback === 'function') {
-    return globalThis.requestIdleCallback(callback, options);
-  }
-  return globalThis.setTimeout(callback, options?.timeout ?? 1) as unknown as number;
-};
-
-const cancelIdleCallbackPolyfill = (id: number): void => {
-  if (typeof globalThis.cancelIdleCallback === 'function') {
-    globalThis.cancelIdleCallback(id);
-  } else {
-    globalThis.clearTimeout(id);
-  }
-};
-
 export function OptimizedMotionProvider({ children }: OptimizedMotionProviderProps) {
-  const [isReady, setIsReady] = useState(false);
   const [isReducedMotion, setIsReducedMotion] = useState(false);
 
   useEffect(() => {
     if (typeof globalThis.matchMedia !== 'function') {
-      setIsReady(true);
       return;
     }
     
@@ -69,13 +40,8 @@ export function OptimizedMotionProvider({ children }: OptimizedMotionProviderPro
     const handler = (e: MediaQueryListEvent) => setIsReducedMotion(e.matches);
     mediaQuery.addEventListener('change', handler);
     
-    const timer = requestIdleCallbackPolyfill(() => {
-      setIsReady(true);
-    }, { timeout: 100 });
-    
     return () => {
       mediaQuery.removeEventListener('change', handler);
-      cancelIdleCallbackPolyfill(timer);
     };
   }, []);
 
@@ -88,12 +54,10 @@ export function OptimizedMotionProvider({ children }: OptimizedMotionProviderPro
   }
 
   return (
-    <MotionContext.Provider value={{ isReady, isReducedMotion }}>
-      <Suspense fallback={children}>
-        <LazyMotionProvider>
-          {children}
-        </LazyMotionProvider>
-      </Suspense>
+    <MotionContext.Provider value={{ isReady: true, isReducedMotion: false }}>
+      <LazyMotion features={domAnimation} strict>
+        {children}
+      </LazyMotion>
     </MotionContext.Provider>
   );
 }

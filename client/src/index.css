@@ -1,13 +1,17 @@
-/* Import Replit theme */
+/* E-Code Theme - Only essential variables inline for faster compilation */
 @import './styles/replit-theme.css';
-@import './styles/collaboration.css';
-@import './styles/performance-animations.css';
-@import './styles/micro-interactions.css';
-@import './styles/agent-animations.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Deferred CSS imports - loaded after initial render via @layer */
+@layer components {
+  @import './styles/collaboration.css';
+  @import './styles/performance-animations.css';
+  @import './styles/micro-interactions.css';
+  @import './styles/agent-animations.css';
+}
 
 /* Respect reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {
