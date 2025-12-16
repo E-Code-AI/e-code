@@ -637,7 +637,6 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                 )}
               </div>
             </ScrollArea>
-          </div>
         </div>
       </div>
 
@@ -869,7 +868,6 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                             </div>
                           </div>
                         )}
-                      </div>
                     </div>
                   </div>
                 </div>
