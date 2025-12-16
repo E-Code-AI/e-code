@@ -203,8 +203,9 @@ router.get('/api/runtime/:projectId/logs', ensureAuthenticated, async (req, res)
 /**
  * GET /api/runtime/dependencies
  * Get runtime dependencies (Docker, Nix, languages)
+ * SECURITY: Requires authentication to prevent enumeration attacks
  */
-router.get('/api/runtime/dependencies', getRuntimeDependencies);
+router.get('/api/runtime/dependencies', ensureAuthenticated, getRuntimeDependencies);
 
 // ===============================
 // Direct Code Execution Routes (No Docker Required)
@@ -404,8 +405,9 @@ router.post('/api/projects/:id/execute-direct', ensureAuthenticated, async (req,
 /**
  * GET /api/execute/languages
  * Get list of supported languages for direct execution
+ * SECURITY: Requires authentication to gate execution feature info
  */
-router.get('/api/execute/languages', (req, res) => {
+router.get('/api/execute/languages', ensureAuthenticated, (req, res) => {
   res.json({
     languages: [
       { id: 'javascript', name: 'JavaScript', extension: '.js' },
