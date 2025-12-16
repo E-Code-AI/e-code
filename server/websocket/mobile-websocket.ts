@@ -3,6 +3,28 @@ import { Server as HttpServer } from 'http';
 import { storage } from '../storage';
 import { spawn } from 'child_process';
 import jwt from 'jsonwebtoken';
+import { createLogger } from '../utils/logger';
+import { wsMetrics } from './ws-metrics';
+
+const logger = createLogger('mobile-websocket');
+
+// Configuration from environment
+const PING_INTERVAL_MS = parseInt(process.env.WS_PING_INTERVAL_MS || '25000', 10);
+const PING_TIMEOUT_MS = parseInt(process.env.WS_PING_TIMEOUT_MS || '30000', 10);
+const MAX_CONNECTIONS_PER_USER = parseInt(process.env.WS_MAX_CONNECTIONS_PER_USER || '5', 10);
+
+// CORS allowlist - default to strict origins, can be overridden via env
+const CORS_ORIGINS = process.env.WS_CORS_ORIGINS 
+  ? process.env.WS_CORS_ORIGINS.split(',').map(s => s.trim())
+  : [
+      'http://localhost:5000',
+      'http://localhost:3000',
+      'https://localhost:5000',
+      process.env.FRONTEND_URL || 'http://localhost:5000'
+    ].filter(Boolean);
+
+// Track connections per user
+const userConnectionCounts = new Map<string, number>();
 
 export class MobileWebSocketService {
   private io: Server;
@@ -12,12 +34,33 @@ export class MobileWebSocketService {
   constructor(httpServer: HttpServer) {
     this.io = new Server(httpServer, {
       cors: {
-        origin: '*',
-        methods: ['GET', 'POST']
-      }
+        origin: (origin, callback) => {
+          // Allow requests with no origin (like mobile apps or curl)
+          if (!origin) return callback(null, true);
+          
+          // Check against allowlist
+          if (CORS_ORIGINS.includes(origin) || CORS_ORIGINS.includes('*')) {
+            return callback(null, true);
+          }
+          
+          // In development, allow localhost variants
+          if (process.env.NODE_ENV !== 'production' && origin.includes('localhost')) {
+            return callback(null, true);
+          }
+          
+          logger.warn(`CORS blocked origin: ${origin}`);
+          return callback(new Error('Not allowed by CORS'), false);
+        },
+        methods: ['GET', 'POST'],
+        credentials: true
+      },
+      pingInterval: PING_INTERVAL_MS,
+      pingTimeout: PING_TIMEOUT_MS,
+      connectTimeout: PING_TIMEOUT_MS
     });
 
     this.setupNamespaces();
+    logger.info(`Mobile WebSocket service initialized with CORS origins: ${CORS_ORIGINS.join(', ')}`);
   }
 
   private setupNamespaces() {
@@ -25,21 +68,49 @@ export class MobileWebSocketService {
       try {
         const token = socket.handshake.auth?.token || socket.handshake.query?.token;
         if (!token) {
+          logger.warn('Connection attempt without token');
           return next(new Error('Authentication token required'));
         }
         
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret') as { userId: number };
         const user = await storage.getUser(decoded.userId);
         if (!user) {
+          logger.warn(`User ${decoded.userId} not found`);
           return next(new Error('User not found'));
         }
         
+        // Check connection limit
+        const userId = String(user.id);
+        const currentCount = userConnectionCounts.get(userId) || 0;
+        if (currentCount >= MAX_CONNECTIONS_PER_USER) {
+          logger.warn(`User ${userId} exceeded max connections (${MAX_CONNECTIONS_PER_USER})`);
+          return next(new Error('Maximum connections exceeded'));
+        }
+        
+        // Track connection
+        userConnectionCounts.set(userId, currentCount + 1);
+        wsMetrics.recordConnection('mobile');
+        
         socket.userId = user.id;
         socket.username = user.username;
+        logger.info(`User ${user.id} authenticated, connections: ${currentCount + 1}/${MAX_CONNECTIONS_PER_USER}`);
         next();
       } catch (error) {
+        logger.error('Auth middleware error:', error);
         next(new Error('Invalid or expired token'));
       }
+    };
+    
+    const handleDisconnect = (socket: any, namespace: string) => {
+      const userId = String(socket.userId);
+      const currentCount = userConnectionCounts.get(userId) || 1;
+      if (currentCount <= 1) {
+        userConnectionCounts.delete(userId);
+      } else {
+        userConnectionCounts.set(userId, currentCount - 1);
+      }
+      wsMetrics.recordDisconnection('mobile');
+      logger.info(`User ${userId} disconnected from ${namespace}`);
     };
 
     // Terminal WebSocket namespace with JWT auth
@@ -50,15 +121,20 @@ export class MobileWebSocketService {
         const { command, projectId } = data;
         
         try {
+          wsMetrics.recordMessageReceived('mobile-terminal');
           const result = await this.executeCommand(command, projectId);
           socket.emit('output', { text: result.stdout || result.stderr });
+          wsMetrics.recordMessageSent('mobile-terminal');
         } catch (error: any) {
+          logger.error('Command execution error:', error);
+          wsMetrics.recordError('mobile-terminal');
           socket.emit('error', { message: error.message });
         }
       });
 
       socket.on('disconnect', () => {
         this.terminalSessions.delete(socket.id);
+        handleDisconnect(socket, 'terminal');
       });
     });
 
@@ -68,6 +144,7 @@ export class MobileWebSocketService {
     aiNs.on('connection', (socket) => {
       socket.on('message', async (data) => {
         const { message, projectId } = data;
+        wsMetrics.recordMessageReceived('mobile-ai');
         
         socket.emit('ai-streaming', { chunk: 'I understand you need help with ' });
         
@@ -82,11 +159,13 @@ export class MobileWebSocketService {
         setTimeout(() => {
           const response = this.generateAIResponse(message);
           socket.emit('ai-response', { text: response });
+          wsMetrics.recordMessageSent('mobile-ai');
         }, 500);
       });
 
       socket.on('disconnect', () => {
         this.aiSessions.delete(socket.id);
+        handleDisconnect(socket, 'ai');
       });
     });
 
@@ -97,10 +176,12 @@ export class MobileWebSocketService {
       socket.on('join-project', (projectId) => {
         socket.join(`project-${projectId}`);
         socket.to(`project-${projectId}`).emit('user-joined', { userId: (socket as any).userId });
+        wsMetrics.recordMessageReceived('mobile-collaboration');
       });
 
       socket.on('code-change', (data) => {
         socket.to(`project-${data.projectId}`).emit('code-update', data);
+        wsMetrics.recordMessageSent('mobile-collaboration');
       });
 
       socket.on('cursor-move', (data) => {
@@ -108,8 +189,15 @@ export class MobileWebSocketService {
       });
 
       socket.on('disconnect', () => {
-        // Client disconnected
+        handleDisconnect(socket, 'collaboration');
       });
+    });
+  }
+  
+  public shutdown(): void {
+    logger.info('Shutting down mobile WebSocket service...');
+    this.io.close(() => {
+      logger.info('Mobile WebSocket service shut down');
     });
   }
 

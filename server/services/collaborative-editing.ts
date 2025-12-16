@@ -5,6 +5,15 @@ import { db } from '../db';
 import { collaborationSessions, sessionParticipants } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import * as crypto from 'crypto';
+import { createLogger } from '../utils/logger';
+import { generateDeterministicColor } from '../websocket/ws-metrics';
+
+const logger = createLogger('collaborative-editing');
+
+// Configuration from environment
+const INACTIVE_THRESHOLD_MS = parseInt(process.env.WS_INACTIVE_THRESHOLD_MS || '1800000', 10); // 30 min default
+const CLEANUP_INTERVAL_MS = parseInt(process.env.WS_CLEANUP_INTERVAL_MS || '300000', 10); // 5 min default
+const EMPTY_SESSION_DELAY_MS = parseInt(process.env.WS_EMPTY_SESSION_DELAY_MS || '30000', 10); // 30 sec default
 
 interface CollaborativeSession {
   id: string;
@@ -53,19 +62,6 @@ interface AwarenessState {
   };
 }
 
-// Predefined colors for collaborative cursors (E-Code theme)
-const CURSOR_COLORS = [
-  '#F26207', // E-Code orange (owner)
-  '#3B82F6', // Blue
-  '#8B5CF6', // Purple
-  '#10B981', // Green
-  '#EF4444', // Red
-  '#F59E0B', // Yellow
-  '#EC4899', // Pink
-  '#14B8A6', // Teal
-  '#6366F1', // Indigo
-  '#84CC16', // Lime
-];
 
 // W-H16: Simple mutex for Yjs operations to handle race conditions
 const yjsLocks = new Map<string, Promise<void>>();
@@ -94,6 +90,7 @@ export class CollaborativeEditingService {
   constructor() {
     // W-H8: Single cleanup interval (avoid duplicates)
     this.startCleanupInterval();
+    logger.info('CollaborativeEditingService initialized');
   }
 
   private startCleanupInterval(): void {
@@ -101,10 +98,11 @@ export class CollaborativeEditingService {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
     }
-    // Cleanup inactive sessions every 5 minutes
+    // Cleanup inactive sessions (configurable interval)
     this.cleanupInterval = setInterval(() => {
       this.cleanupInactiveSessions();
-    }, 5 * 60 * 1000);
+    }, CLEANUP_INTERVAL_MS);
+    logger.info(`Cleanup interval set to ${CLEANUP_INTERVAL_MS}ms`);
   }
 
   /**
@@ -153,9 +151,8 @@ export class CollaborativeEditingService {
       session.lastActivity = new Date();
     }
 
-    // Assign color to user (owner gets orange, others get rotating colors)
-    const isOwner = session.participants.size === 0;
-    const color = isOwner ? CURSOR_COLORS[0] : CURSOR_COLORS[(this.userColorIndex++ % (CURSOR_COLORS.length - 1)) + 1];
+    // Assign deterministic color based on userId (consistent across sessions)
+    const color = generateDeterministicColor(userId);
 
     // Add participant
     const participant: Participant = {
@@ -349,14 +346,14 @@ export class CollaborativeEditingService {
       }
     });
 
-    // If no participants left, mark session as inactive after a delay
+    // If no participants left, mark session as inactive after a configurable delay
     if (session.participants.size === 0) {
       setTimeout(async () => {
         const currentSession = this.sessions.get(sessionId);
         if (currentSession && currentSession.participants.size === 0) {
           await this.closeSession(sessionId);
         }
-      }, 30000); // Wait 30 seconds before closing empty session
+      }, EMPTY_SESSION_DELAY_MS);
     }
   }
 
@@ -420,25 +417,32 @@ export class CollaborativeEditingService {
   }
 
   /**
-   * Cleanup inactive sessions
+   * Cleanup inactive sessions (configurable threshold)
    */
   private async cleanupInactiveSessions(): Promise<void> {
     const now = new Date();
-    const inactiveThreshold = 30 * 60 * 1000; // 30 minutes
+    let cleanedCount = 0;
 
     for (const [sessionId, session] of this.sessions) {
       const timeSinceActivity = now.getTime() - session.lastActivity.getTime();
       
-      if (timeSinceActivity > inactiveThreshold) {
+      if (timeSinceActivity > INACTIVE_THRESHOLD_MS) {
+        logger.info(`Cleaning up inactive session ${sessionId} (inactive for ${timeSinceActivity}ms)`);
         await this.closeSession(sessionId);
+        cleanedCount++;
       } else {
         // Check for disconnected participants
         for (const [userId, participant] of session.participants) {
           if (participant.websocket.readyState !== WebSocket.OPEN) {
+            logger.info(`Cleaning up disconnected participant ${userId} from session ${sessionId}`);
             await this.handleParticipantLeave(sessionId, userId);
           }
         }
       }
+    }
+    
+    if (cleanedCount > 0) {
+      logger.info(`Cleaned up ${cleanedCount} inactive sessions`);
     }
   }
 
@@ -458,12 +462,18 @@ export class CollaborativeEditingService {
    * Cleanup on service shutdown
    */
   async shutdown(): Promise<void> {
-    clearInterval(this.cleanupInterval);
+    logger.info('Shutting down collaborative editing service...');
+    
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
     
     // Close all sessions
     for (const sessionId of this.sessions.keys()) {
       await this.closeSession(sessionId);
     }
+    
+    logger.info('Collaborative editing service shut down');
   }
 }
 

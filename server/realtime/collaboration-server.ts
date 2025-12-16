@@ -11,6 +11,18 @@ import type { Duplex } from 'stream';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
 import jwt from 'jsonwebtoken';
+import { createLogger } from '../utils/logger';
+import { wsMetrics, generateDeterministicColor } from '../websocket/ws-metrics';
+
+const logger = createLogger('collaboration-server');
+
+// Configuration from environment
+const PING_INTERVAL_MS = parseInt(process.env.WS_PING_INTERVAL_MS || '30000', 10);
+const MAX_CONNECTIONS_PER_USER = parseInt(process.env.WS_MAX_CONNECTIONS_PER_USER || '5', 10);
+const PARTICIPANT_SYNC_INTERVAL_MS = parseInt(process.env.WS_PARTICIPANT_SYNC_INTERVAL_MS || '60000', 10);
+
+// Track connections per user
+const userConnectionCounts = new Map<string, number>();
 
 interface CollaborationClient {
   ws: WebSocket;
@@ -86,6 +98,8 @@ export class CollaborationServer {
   private projectClients: Map<number, Set<WebSocket>> = new Map();
   private fileClients: Map<string, Set<WebSocket>> = new Map();
   private yjsDocs: Map<string, Y.Doc> = new Map();
+  private pingInterval: NodeJS.Timeout | null = null;
+  private participantSyncInterval: NodeJS.Timeout | null = null;
 
   initialize(server: Server) {
     // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
@@ -102,16 +116,36 @@ export class CollaborationServer {
       { pathMatch: 'prefix', priority: 63 }
     );
 
-    // Ping clients every 30 seconds to keep connections alive
-    setInterval(() => {
+    // Ping clients at configurable interval to keep connections alive
+    this.pingInterval = setInterval(() => {
       this.clients.forEach((client, ws) => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.ping();
         }
       });
-    }, 30000);
+    }, PING_INTERVAL_MS);
     
-    console.log('[Realtime CollaborationServer] Initialized (using central dispatcher)');
+    // Periodic participant list sync
+    this.participantSyncInterval = setInterval(() => {
+      this.syncAllParticipants();
+    }, PARTICIPANT_SYNC_INTERVAL_MS);
+    
+    logger.info('[Realtime CollaborationServer] Initialized (using central dispatcher)');
+  }
+  
+  private syncAllParticipants(): void {
+    this.projectClients.forEach((wsSet, projectId) => {
+      const users = this.getProjectUsers(projectId);
+      wsSet.forEach(ws => {
+        if (ws.readyState === WebSocket.OPEN) {
+          this.send(ws, {
+            type: 'participant_sync',
+            users,
+            timestamp: Date.now()
+          });
+        }
+      });
+    });
   }
   
   /**
@@ -133,6 +167,8 @@ export class CollaborationServer {
   }
 
   private handleConnection(ws: WebSocket, req: any) {
+    wsMetrics.recordConnection('collaboration');
+    
     // Initialize client info
     const clientInfo: CollaborationClient = {
       ws,
@@ -145,6 +181,7 @@ export class CollaborationServer {
 
     ws.on('message', async (message: Buffer) => {
       try {
+        wsMetrics.recordMessageReceived('collaboration', message.length);
         const data = JSON.parse(message.toString()) as CollaborationMessage;
         // W-H13: Validate message schema
         if (!validateMessage(data)) {
@@ -157,7 +194,8 @@ export class CollaborationServer {
         }
         await this.handleMessage(ws, data);
       } catch (error) {
-        console.error('Failed to handle collaboration message:', error);
+        logger.error('Failed to handle collaboration message:', error);
+        wsMetrics.recordError('collaboration');
         // W-H17: Send error response to client
         this.send(ws, {
           type: 'error',
@@ -167,12 +205,15 @@ export class CollaborationServer {
       }
     });
 
-    ws.on('close', () => {
+    ws.on('close', (code: number, reason: Buffer) => {
+      logger.info(`Collaboration WS closed with code ${code}, reason: ${reason?.toString() || 'none'}`);
+      wsMetrics.recordDisconnection('collaboration');
       this.handleDisconnection(ws);
     });
 
     ws.on('error', (error) => {
-      console.error('WebSocket error:', error);
+      logger.error('WebSocket error:', error);
+      wsMetrics.recordError('collaboration');
       this.handleDisconnection(ws);
     });
 
@@ -242,7 +283,7 @@ export class CollaborationServer {
         break;
 
       default:
-        console.warn('[CollaborationServer] Unknown message type:', message.type);
+        logger.warn('[CollaborationServer] Unknown message type:', message.type);
     }
   }
 
@@ -264,7 +305,7 @@ export class CollaborationServer {
     try {
       decoded = jwt.verify(message.data.token, process.env.JWT_SECRET || 'dev-secret') as { userId: number };
     } catch (jwtError) {
-      console.error('[CollaborationServer] JWT verification failed:', jwtError);
+      logger.error('[CollaborationServer] JWT verification failed:', jwtError);
       this.send(ws, {
         type: 'auth_failed',
         error: 'Invalid or expired token',
@@ -284,16 +325,37 @@ export class CollaborationServer {
       ws.close(1008, 'Invalid user');
       return;
     }
+    
+    const userId = String(user.id);
+    
+    // Check connection limit per user
+    const currentCount = userConnectionCounts.get(userId) || 0;
+    if (currentCount >= MAX_CONNECTIONS_PER_USER) {
+      logger.warn(`User ${userId} exceeded max connections (${MAX_CONNECTIONS_PER_USER})`);
+      this.send(ws, {
+        type: 'auth_failed',
+        error: 'Maximum connections exceeded',
+        timestamp: Date.now()
+      });
+      ws.close(4004, 'Maximum connections exceeded');
+      return;
+    }
+    
+    // Track connection count
+    userConnectionCounts.set(userId, currentCount + 1);
 
     // Update client info with verified user data
     client.userId = user.id;
     client.username = user.username;
+    
+    logger.info(`User ${userId} authenticated, connections: ${currentCount + 1}/${MAX_CONNECTIONS_PER_USER}`);
 
-    // Send auth success
+    // Send auth success with deterministic color
     this.send(ws, {
       type: 'auth_success',
       userId: user.id,
       username: user.username,
+      color: generateDeterministicColor(userId),
       timestamp: Date.now()
     });
   }
@@ -604,9 +666,18 @@ export class CollaborationServer {
     const client = this.clients.get(ws);
     if (!client) return;
 
-    // W-H7: Cleanup throttle tracking
+    // Update connection count
     if (client.userId) {
-      cleanupClientThrottles(String(client.userId));
+      const userId = String(client.userId);
+      const currentCount = userConnectionCounts.get(userId) || 1;
+      if (currentCount <= 1) {
+        userConnectionCounts.delete(userId);
+      } else {
+        userConnectionCounts.set(userId, currentCount - 1);
+      }
+      
+      // W-H7: Cleanup throttle tracking
+      cleanupClientThrottles(userId);
     }
 
     // Leave project and file
@@ -614,6 +685,32 @@ export class CollaborationServer {
 
     // Remove from clients
     this.clients.delete(ws);
+  }
+  
+  public shutdown(): void {
+    logger.info('Shutting down collaboration server...');
+    
+    // Clear intervals
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+    }
+    if (this.participantSyncInterval) {
+      clearInterval(this.participantSyncInterval);
+    }
+    
+    // Close all connections with proper code/reason
+    this.clients.forEach((client, ws) => {
+      if (ws.readyState === WebSocket.OPEN) {
+        this.send(ws, { type: 'server_shutdown', timestamp: Date.now() });
+        ws.close(1001, 'Server shutting down');
+      }
+    });
+    
+    if (this.wss) {
+      this.wss.close();
+    }
+    
+    logger.info('Collaboration server shut down');
   }
 
   private send(ws: WebSocket, data: any) {

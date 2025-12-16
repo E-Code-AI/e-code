@@ -5,6 +5,16 @@ import jwt from 'jsonwebtoken';
 import { storage } from '../storage';
 import * as Y from 'yjs';
 import { applyUpdate } from 'yjs';
+import { createLogger } from '../utils/logger';
+import { wsMetrics } from './ws-metrics';
+
+const logger = createLogger('collaborative-editing-ws');
+
+// Configuration from environment with defaults
+const MAX_CONNECTIONS_PER_USER = parseInt(process.env.WS_MAX_CONNECTIONS_PER_USER || '5', 10);
+const PING_INTERVAL_MS = parseInt(process.env.WS_PING_INTERVAL_MS || '30000', 10);
+const SOCKET_TIMEOUT_MS = parseInt(process.env.WS_SOCKET_TIMEOUT_MS || '30000', 10);
+const INACTIVE_THRESHOLD_MS = parseInt(process.env.WS_INACTIVE_THRESHOLD_MS || '1800000', 10); // 30 min default
 
 interface WebSocketMessage {
   type: string;
@@ -44,11 +54,15 @@ interface AuthenticatedWebSocket extends WebSocket {
   fileId?: number;
   projectId?: string;
   pingInterval?: NodeJS.Timeout;
+  lastActivity?: Date;
 }
+
+// Track connection counts per user for limit enforcement
+const userConnectionCounts = new Map<string, number>();
 
 export class CollaborativeEditingWebSocketHandler {
   private wss: WebSocketServer;
-  private connections: Map<string, AuthenticatedWebSocket> = new Map();
+  private connections: Map<string, Set<AuthenticatedWebSocket>> = new Map(); // Changed to Set for multiple connections
 
   constructor(server: Server) {
     // W-H9: Add maxPayload to prevent DoS via large messages
@@ -77,19 +91,24 @@ export class CollaborativeEditingWebSocketHandler {
   }
 
   private async handleConnection(ws: AuthenticatedWebSocket, request: any) {
-    // Set up ping/pong to detect disconnected clients
+    ws.lastActivity = new Date();
+    wsMetrics.recordConnection('collaborative-editing');
+    
+    // Set up ping/pong to detect disconnected clients (configurable interval)
     ws.pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.ping();
       }
-    }, 30000);
+    }, PING_INTERVAL_MS);
 
     ws.on('pong', () => {
-      // Client is still connected
+      ws.lastActivity = new Date();
     });
 
     ws.on('message', async (message: Buffer) => {
       try {
+        ws.lastActivity = new Date();
+        wsMetrics.recordMessageReceived('collaborative-editing', message.length);
         const msg = JSON.parse(message.toString());
         // W-H13: Validate message schema
         if (!validateMessage(msg)) {
@@ -103,7 +122,8 @@ export class CollaborativeEditingWebSocketHandler {
         }
         await this.handleMessage(ws, msg);
       } catch (error) {
-        console.error('Error handling WebSocket message:', error);
+        logger.error('Error handling WebSocket message:', error);
+        wsMetrics.recordError('collaborative-editing');
         // W-H17: Check readyState before sending error
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({
@@ -114,12 +134,15 @@ export class CollaborativeEditingWebSocketHandler {
       }
     });
 
-    ws.on('close', () => {
+    ws.on('close', (code: number, reason: Buffer) => {
+      logger.info(`WebSocket closed with code ${code}, reason: ${reason?.toString() || 'none'}`);
+      wsMetrics.recordDisconnection('collaborative-editing');
       this.handleDisconnection(ws);
     });
 
     ws.on('error', (error) => {
-      console.error('WebSocket error:', error);
+      logger.error('WebSocket error:', error);
+      wsMetrics.recordError('collaborative-editing');
       this.handleDisconnection(ws);
     });
   }
@@ -148,7 +171,7 @@ export class CollaborativeEditingWebSocketHandler {
         ws.send(JSON.stringify({ type: 'pong' }));
         break;
       default:
-        console.warn('Unknown message type:', message.type);
+        logger.warn('Unknown message type:', message.type);
     }
   }
 
@@ -159,7 +182,7 @@ export class CollaborativeEditingWebSocketHandler {
           type: 'auth-failed',
           data: { message: 'Authentication token required' },
         }));
-        ws.close();
+        ws.close(4001, 'Authentication token required');
         return;
       }
 
@@ -167,12 +190,12 @@ export class CollaborativeEditingWebSocketHandler {
       try {
         decoded = jwt.verify(data.token, process.env.JWT_SECRET || 'dev-secret') as { userId: number };
       } catch (jwtError) {
-        console.error('JWT verification failed:', jwtError);
+        logger.error('JWT verification failed:', jwtError);
         ws.send(JSON.stringify({
           type: 'auth-failed',
           data: { message: 'Invalid or expired token' },
         }));
-        ws.close();
+        ws.close(4002, 'Invalid or expired token');
         return;
       }
 
@@ -182,15 +205,37 @@ export class CollaborativeEditingWebSocketHandler {
           type: 'auth-failed',
           data: { message: 'User not found' },
         }));
-        ws.close();
+        ws.close(4003, 'User not found');
         return;
       }
 
-      ws.userId = String(user.id);
+      const userId = String(user.id);
+      
+      // Check connection limit per user
+      const currentCount = userConnectionCounts.get(userId) || 0;
+      if (currentCount >= MAX_CONNECTIONS_PER_USER) {
+        logger.warn(`User ${userId} exceeded max connections (${MAX_CONNECTIONS_PER_USER})`);
+        ws.send(JSON.stringify({
+          type: 'auth-failed',
+          data: { message: 'Maximum connections exceeded' },
+        }));
+        ws.close(4004, 'Maximum connections exceeded');
+        return;
+      }
+
+      ws.userId = userId;
       ws.username = user.username || 'Anonymous';
       
-      // Store connection
-      this.connections.set(ws.userId, ws);
+      // Track connection count
+      userConnectionCounts.set(userId, currentCount + 1);
+      
+      // Store connection (using Set for multiple connections per user)
+      if (!this.connections.has(ws.userId)) {
+        this.connections.set(ws.userId, new Set());
+      }
+      this.connections.get(ws.userId)!.add(ws);
+
+      logger.info(`User ${userId} authenticated, connections: ${currentCount + 1}/${MAX_CONNECTIONS_PER_USER}`);
 
       ws.send(JSON.stringify({
         type: 'auth-success',
@@ -200,12 +245,12 @@ export class CollaborativeEditingWebSocketHandler {
         },
       }));
     } catch (error) {
-      console.error('Authentication error:', error);
+      logger.error('Authentication error:', error);
       ws.send(JSON.stringify({
         type: 'auth-failed',
         data: { message: 'Authentication failed' },
       }));
-      ws.close();
+      ws.close(4000, 'Authentication failed');
     }
   }
 
@@ -259,7 +304,7 @@ export class CollaborativeEditingWebSocketHandler {
         }
       });
     } catch (error) {
-      console.error('Error joining session:', error);
+      logger.error('Error joining session:', error);
       ws.send(JSON.stringify({
         type: 'error',
         data: { message: 'Failed to join session' },
@@ -284,7 +329,7 @@ export class CollaborativeEditingWebSocketHandler {
         update
       );
     } catch (error) {
-      console.error('Error handling document update:', error);
+      logger.error('Error handling document update:', error);
       ws.send(JSON.stringify({
         type: 'error',
         data: { message: 'Failed to update document' },
@@ -312,7 +357,7 @@ export class CollaborativeEditingWebSocketHandler {
         data
       );
     } catch (error) {
-      console.error('Error handling cursor update:', error);
+      logger.error('Error handling cursor update:', error);
       // W-H17: Send error response
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({
@@ -338,7 +383,7 @@ export class CollaborativeEditingWebSocketHandler {
         data
       );
     } catch (error) {
-      console.error('Error handling selection update:', error);
+      logger.error('Error handling selection update:', error);
     }
   }
 
@@ -362,7 +407,7 @@ export class CollaborativeEditingWebSocketHandler {
         },
       }));
     } catch (error) {
-      console.error('Error getting session state:', error);
+      logger.error('Error getting session state:', error);
       ws.send(JSON.stringify({
         type: 'error',
         data: { message: 'Failed to get session state' },
@@ -378,7 +423,23 @@ export class CollaborativeEditingWebSocketHandler {
 
     // W-H5: Cleanup connections Map on ALL paths
     if (ws.userId) {
-      this.connections.delete(ws.userId);
+      // Update connection count
+      const currentCount = userConnectionCounts.get(ws.userId) || 1;
+      if (currentCount <= 1) {
+        userConnectionCounts.delete(ws.userId);
+      } else {
+        userConnectionCounts.set(ws.userId, currentCount - 1);
+      }
+      
+      // Remove from connections set
+      const userConnections = this.connections.get(ws.userId);
+      if (userConnections) {
+        userConnections.delete(ws);
+        if (userConnections.size === 0) {
+          this.connections.delete(ws.userId);
+        }
+      }
+      
       // W-H5: Cleanup throttle tracking for this client
       cleanupClientThrottles(ws.userId);
     }
@@ -390,31 +451,42 @@ export class CollaborativeEditingWebSocketHandler {
           ws.userId
         );
       } catch (error) {
-        console.error('Error handling participant leave:', error);
+        logger.error('Error handling participant leave:', error);
       }
     }
   }
 
   private sendToUser(userId: string, message: any) {
-    const ws = this.connections.get(userId);
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(message));
+    const userConnections = this.connections.get(userId);
+    if (userConnections) {
+      const messageStr = JSON.stringify(message);
+      userConnections.forEach(ws => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(messageStr);
+          wsMetrics.recordMessageSent('collaborative-editing', messageStr.length);
+        }
+      });
     }
   }
 
   public async shutdown() {
-    // Close all connections
-    this.connections.forEach(ws => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-          type: 'server-shutdown',
-        }));
-        ws.close();
-      }
+    logger.info('Shutting down collaborative editing WebSocket service...');
+    
+    // Close all connections with proper code/reason
+    this.connections.forEach((wsSet, userId) => {
+      wsSet.forEach(ws => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'server-shutdown',
+          }));
+          ws.close(1001, 'Server shutting down');
+        }
+      });
     });
 
     this.wss.close();
     await collaborativeEditingService.shutdown();
+    logger.info('Collaborative editing WebSocket service shut down');
   }
 }
 
