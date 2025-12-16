@@ -224,21 +224,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     const projectBasePath = path.join(process.cwd(), 'projects', String(project.id));
     memoryBankService.setProjectBasePath(project.id, projectBasePath);
     
-    // 2.6 ✅ AI-POWERED MEMORY BANK (Dec 16, 2025)
-    // Replit-identical: Memory Bank is created with AI-generated context based on user prompt
-    // Runs in background - non-blocking for fast workspace creation
-    memoryBankService.initializeWithAI(project.id, prompt, {
-      language: options.language,
-      framework: options.framework,
-      buildMode: buildMode
-    }).then(() => {
-      logger.info(`[Bootstrap] ✅ Memory Bank AI-generated for project ${project.id} at ${projectBasePath}`);
-    }).catch((memoryError) => {
-      // Non-blocking: Memory Bank failure shouldn't block project creation
-      // Falls back to template-based content automatically
-      logger.warn(`[Bootstrap] Memory Bank AI generation failed (non-blocking):`, memoryError);
-    });
-    
+    // 2.5.1 ✅ Get user's preferred model FIRST (needed for Memory Bank generation)
     let modelId = userData?.preferredAiModel || null;
     
     // Get available models first for validation
@@ -261,6 +247,23 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
       modelId = availableModels[0].id;
       logger.info(`[Bootstrap] No preferred model, using first available: ${modelId}`);
     }
+    
+    // 2.6 ✅ AI-POWERED MEMORY BANK (Dec 16, 2025)
+    // Replit-identical: Memory Bank is created with AI-generated context based on user prompt
+    // ✅ Uses user's preferred model (or validated fallback) - supports ALL providers
+    // Runs in background - non-blocking for fast workspace creation
+    memoryBankService.initializeWithAI(project.id, prompt, {
+      language: options.language,
+      framework: options.framework,
+      buildMode: buildMode,
+      preferredModel: modelId // ✅ Use user's validated preferred model
+    }).then(() => {
+      logger.info(`[Bootstrap] ✅ Memory Bank AI-generated for project ${project.id} using model ${modelId}`);
+    }).catch((memoryError) => {
+      // Non-blocking: Memory Bank failure shouldn't block project creation
+      // Falls back to template-based content automatically
+      logger.warn(`[Bootstrap] Memory Bank AI generation failed (non-blocking):`, memoryError);
+    });
     
     // 4. Create agent session
     const session = await agentOrchestrator.createSession(
