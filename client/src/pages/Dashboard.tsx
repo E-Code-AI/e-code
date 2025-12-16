@@ -44,7 +44,11 @@ function getProjectIcon(project: Project) {
   const firstLetter = project.name.charAt(0).toUpperCase();
 
   return (
-    <div className={`${bgColor} w-12 h-12 rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-lg`}>
+    <div 
+      className={`${bgColor} w-12 h-12 rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-lg`}
+      role="img"
+      aria-label={`Project icon for ${project.name}`}
+    >
       {firstLetter}
     </div>
   );
@@ -90,6 +94,7 @@ export default function Dashboard() {
   const { data: recentProjects = [], isLoading, error: projectsError } = useQuery<ProjectWithDeployment[]>({
     queryKey: ['/api/projects'],
     enabled: !!user,
+    staleTime: 30000, // 30 seconds - prevent excessive refetches
     select: (data) => {
       // Sort by most recent first (updatedAt descending)
       const sorted = [...data].sort((a, b) => {

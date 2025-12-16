@@ -32,20 +32,29 @@ export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
 
   React.useEffect(() => {
+    let resizeTimeout: ReturnType<typeof setTimeout> | null = null
+    
     const checkMobile = () => {
       setIsMobile(detectMobileDevice(window.innerWidth, window.innerHeight))
     }
     
+    // Debounced resize handler to prevent excessive re-renders
+    const handleResize = () => {
+      if (resizeTimeout) clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(checkMobile, 100)
+    }
+    
     // Listen for both resize and orientation changes
-    window.addEventListener("resize", checkMobile)
+    window.addEventListener("resize", handleResize)
     window.addEventListener("orientationchange", checkMobile)
     
     // Initial check
     checkMobile()
     
     return () => {
-      window.removeEventListener("resize", checkMobile)
+      window.removeEventListener("resize", handleResize)
       window.removeEventListener("orientationchange", checkMobile)
+      if (resizeTimeout) clearTimeout(resizeTimeout)
     }
   }, [])
 
@@ -73,6 +82,8 @@ export function useDeviceInfo(): DeviceInfo {
   })
 
   React.useEffect(() => {
+    let resizeTimeout: ReturnType<typeof setTimeout> | null = null
+    
     const updateDeviceInfo = () => {
       const width = window.innerWidth
       const height = window.innerHeight
@@ -103,14 +114,21 @@ export function useDeviceInfo(): DeviceInfo {
       })
     }
     
-    window.addEventListener("resize", updateDeviceInfo)
+    // Debounced resize handler
+    const handleResize = () => {
+      if (resizeTimeout) clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(updateDeviceInfo, 100)
+    }
+    
+    window.addEventListener("resize", handleResize)
     window.addEventListener("orientationchange", updateDeviceInfo)
     
     updateDeviceInfo()
     
     return () => {
-      window.removeEventListener("resize", updateDeviceInfo)
+      window.removeEventListener("resize", handleResize)
       window.removeEventListener("orientationchange", updateDeviceInfo)
+      if (resizeTimeout) clearTimeout(resizeTimeout)
     }
   }, [])
 

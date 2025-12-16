@@ -36,23 +36,24 @@ class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="min-h-screen flex items-center justify-center bg-background" role="alert" aria-live="assertive">
           <div className="max-w-md w-full px-6 py-8 text-center">
-            <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" aria-hidden="true" />
             <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
             <p className="text-muted-foreground mb-4">
               We encountered an unexpected error. Please try refreshing the page.
             </p>
             {this.state.error && (
-              <pre className="text-xs text-left bg-muted p-3 rounded-md mb-4 overflow-auto max-h-32">
+              <pre className="text-xs text-left bg-muted p-3 rounded-md mb-4 overflow-auto max-h-32" aria-label="Error details">
                 {this.state.error.message}
               </pre>
             )}
             <div className="flex gap-2 justify-center">
-              <Button onClick={this.handleReset}>Try Again</Button>
+              <Button onClick={this.handleReset} data-testid="button-error-retry">Try Again</Button>
               <Button
                 variant="outline"
                 onClick={() => window.location.reload()}
+                data-testid="button-error-refresh"
               >
                 Refresh Page
               </Button>

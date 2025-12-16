@@ -29,8 +29,15 @@ import {
   Shield,
 } from 'lucide-react';
 
+// Category type for type safety
+interface Category {
+  id: string;
+  name: string;
+  icon: typeof Globe;
+}
+
 // Language categories and icons
-const categories = [
+const categories: Category[] = [
   { id: 'all', name: 'All', icon: Globe },
   { id: 'web', name: 'Web', icon: Globe },
   { id: 'games', name: 'Games', icon: Gamepad2 },
@@ -49,8 +56,22 @@ export default function Explore() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('trending');
   
+  // Project type for explore page
+  interface ExploreProject {
+    id: number;
+    name: string;
+    description?: string;
+    language?: string;
+    stars?: number;
+    forks?: number;
+    views?: number;
+    owner?: { username: string; avatar?: string };
+    createdAt?: string;
+    updatedAt?: string;
+  }
+
   // Fetch public projects from API
-  const { data: publicRepls = [], isLoading, error: exploreError } = useQuery<any[]>({
+  const { data: publicRepls = [], isLoading, error: exploreError } = useQuery<ExploreProject[]>({
     queryKey: ['/api/explore/projects', { category: selectedCategory, sort: sortBy, search: searchQuery }],
     queryFn: async ({ queryKey }) => {
       const [, params] = queryKey as [string, any];

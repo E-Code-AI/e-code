@@ -89,7 +89,7 @@ const TopNavbar = ({
     <div className="h-9 border-b border-border bg-background flex items-center justify-between px-2">
       {/* Left Section - Just Project Name */}
       <div className="flex items-center gap-2">
-        <span className="text-sm font-medium text-foreground">
+        <span className="text-sm font-medium text-foreground" aria-label={`Project: ${projectTitle}`}>
           {projectTitle}
         </span>
       </div>

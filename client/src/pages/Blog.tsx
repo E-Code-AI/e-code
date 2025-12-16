@@ -62,13 +62,13 @@ export default function Blog() {
   // Filter posts by category
   const filteredPosts = selectedCategory === 'All' 
     ? allPosts 
-    : allPosts.filter((post: any) => post.category?.toLowerCase() === selectedCategory.toLowerCase());
+    : allPosts.filter((post: BlogPost) => post.category?.toLowerCase() === selectedCategory.toLowerCase());
 
   // Get the first featured post
-  const featuredPost = featuredPosts[0];
+  const featuredPost = featuredPosts[0] as BlogPost | undefined;
 
   // Get non-featured posts
-  const posts = filteredPosts.filter((post: any) => !post.featured).slice(0, 6);
+  const posts = filteredPosts.filter((post: BlogPost) => !post.featured).slice(0, 6);
 
   const categories = ['All', 'Product', 'Engineering', 'Announcements', 'Tutorial', 'Community'];
 
