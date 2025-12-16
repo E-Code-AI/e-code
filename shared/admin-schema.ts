@@ -3,24 +3,31 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./schema";
 
-// API Keys Management
-export const apiKeys = pgTable("api_keys", {
+// AI Provider Keys for admin panel - DIFFERENT from user api_keys in shared/schema.ts
+// NOTE: shared/schema.ts has api_keys for user-generated API keys with userId
+// This schema is for admin-managed AI provider credentials (OpenAI, Anthropic, etc.)
+// These two have DIFFERENT purposes and should NOT be confused:
+// - shared/schema.ts api_keys: User-generated keys for platform API access (has userId, permissions JSONB)
+// - This file: Admin-managed AI provider credentials (has provider, isActive, usageLimit)
+export const adminApiKeys = pgTable("admin_api_keys", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   provider: varchar("provider", { length: 50 }).notNull(), // openai, anthropic, gemini, xai, perplexity
-  key: text("key").notNull(),
+  keyHash: text("key_hash").notNull(), // SHA-256 hash of API key (never store plain text)
+  keyPrefix: varchar("key_prefix", { length: 12 }), // First 8 chars for identification (sk-xxxx...)
   name: varchar("name", { length: 255 }),
   description: text("description"),
   isActive: boolean("is_active").default(true),
   usageLimit: integer("usage_limit"),
   currentUsage: integer("current_usage").default(0),
+  expiresAt: timestamp("expires_at"), // S-H2 FIXED: Expiry enforcement
   lastUsedAt: timestamp("last_used_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
-export const insertApiKeySchema = createInsertSchema(apiKeys);
-export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
-export type ApiKey = typeof apiKeys.$inferSelect;
+export const insertAdminApiKeySchema = createInsertSchema(adminApiKeys);
+export type InsertAdminApiKey = z.infer<typeof insertAdminApiKeySchema>;
+export type AdminApiKey = typeof adminApiKeys.$inferSelect;
 
 // CMS Pages
 export const cmsPages = pgTable("cms_pages", {

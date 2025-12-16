@@ -11,17 +11,26 @@ import { Octokit } from '@octokit/rest';
 
 const router = Router();
 
+// S-C5 FIXED: Strong password validation with complexity requirements
+const passwordSchema = z.string()
+  .min(8, 'Password must be at least 8 characters')
+  .max(100, 'Password must be at most 100 characters')
+  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+  .regex(/[0-9]/, 'Password must contain at least one number')
+  .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character');
+
 // Validation schemas
 const registerSchema = z.object({
   username: z.string().min(3).max(20).regex(/^[a-zA-Z0-9_-]+$/),
   email: z.string().email(),
-  password: z.string().min(8).max(100),
+  password: passwordSchema,
   displayName: z.string().min(1).max(50)
 });
 
 const resetPasswordSchema = z.object({
   token: z.string(),
-  newPassword: z.string().min(8).max(100)
+  newPassword: passwordSchema
 });
 
 const verifyEmailSchema = z.object({

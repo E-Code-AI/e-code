@@ -239,6 +239,7 @@ export class HealthRouter {
   }
 
   private async getAllProvidersHealth(): Promise<any> {
+    // S-H1 FIXED: Never expose API keys in responses - use masked check
     const providers = [
       { name: 'openai', key: process.env.OPENAI_API_KEY },
       { name: 'anthropic', key: process.env.ANTHROPIC_API_KEY },
@@ -251,7 +252,12 @@ export class HealthRouter {
     const results = await Promise.all(
       providers.map(async ({ name, key }) => {
         const health = await this.checkProviderHealth(name, key);
-        return { provider: name, ...health };
+        // S-H1 FIXED (Fortune 500): Only boolean configured flag, no key exposure
+        return { 
+          provider: name, 
+          configured: !!key,
+          ...health 
+        };
       })
     );
 
