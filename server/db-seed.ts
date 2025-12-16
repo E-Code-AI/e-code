@@ -174,7 +174,12 @@ This project is automatically created for E2E testing.
         emailVerified: true
       });
       
-      console.log('✅ Admin user seeded (admin@test.com / adminpass123)');
+      // ✅ B-C2 FIX: Don't leak password in logs - only show if using dev default
+      if (!process.env.ADMIN_USER_PASSWORD && !isProduction) {
+        console.log('✅ Admin user seeded (admin@test.com / adminpass123 - DEV ONLY)');
+      } else {
+        console.log('✅ Admin user seeded (admin@test.com / [password from env or random])');
+      }
     } else if (!existingAdmin.emailVerified || existingAdmin.role !== 'admin') {
       // Update existing admin to have email verified and admin role
       await storage.updateUser(String(existingAdmin.id), {

@@ -15,11 +15,13 @@ import * as crypto from "crypto";
 
 // MCP Server URL configuration with production validation
 const DEFAULT_MCP_SERVER_URL = "http://localhost:3200/mcp";
-const MCP_SERVER_URL = process.env.MCP_SERVER_URL || DEFAULT_MCP_SERVER_URL;
 
+// ✅ B-C3 FIX: Require MCP_SERVER_URL in production
 if (process.env.NODE_ENV === 'production' && !process.env.MCP_SERVER_URL) {
-  console.warn('[MCP] MCP_SERVER_URL not set in production - MCP functionality may not work');
+  throw new Error('[MCP] CRITICAL: MCP_SERVER_URL environment variable is required in production');
 }
+
+const MCP_SERVER_URL = process.env.MCP_SERVER_URL || DEFAULT_MCP_SERVER_URL;
 
 // Custom HTTP transport for MCP
 class HttpClientTransport extends EventEmitter {
