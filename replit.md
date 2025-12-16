@@ -42,6 +42,17 @@ Scroll-triggered animations using native Intersection Observer for zero main-thr
 - **Variable Slide Distance**: Extracts actual distance from variant values (e.g., `y: 40` → 40px slide)
 - **Stagger Support**: Basic child staggering via CSS animation-delay when `transition.staggerChildren` is present
 
+### Native Motion Library (Fortune 500-Grade)
+Zero-dependency animation system replacing framer-motion hooks for 60fps GPU-accelerated animations:
+- **useNativeMotionValue** (`client/src/lib/native-motion/useNativeMotionValue.ts`): RAF-based motion values with `{ get, set, subscribe, destroy }` API
+- **useDerivedMotionValue**: Derived values from sources with automatic cleanup on unmount
+- **useSpringValue** (`client/src/lib/native-motion/useSpringValue.ts`): Spring physics using Web Animations API with configurable stiffness/damping
+- **usePanGesture** (`client/src/lib/native-motion/usePanGesture.ts`): Pointer Events-based pan gestures with velocity in px/ms (framer-motion compatible)
+- **useAnimationControls** (`client/src/lib/native-motion/useAnimationControls.ts`): Imperative WAAPI controls with composite transform stacking
+- **PanInfo type**: Compatible with framer-motion's `{ point, delta, offset, velocity }` structure
+- **Memory safety**: All hooks properly clean up RAF subscriptions and WAAPI animations on unmount
+- **Import pattern**: `import { useNativeMotionValue, useSpringValue, usePanGesture, createPanHandlers } from '@/lib/native-motion'`
+
 ### Memory Bank System (Replit-Identical)
 Auto-initializing context storage in `.ecode/memory-bank/` for each project:
 - **AI-Generated Content**: When a workspace is created, Claude generates 5 contextual markdown files based on the user's prompt

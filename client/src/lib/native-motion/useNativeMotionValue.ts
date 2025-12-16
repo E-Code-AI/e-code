@@ -71,14 +71,20 @@ export function useDerivedMotionValue<T, R>(
 ): NativeMotionValue<R> {
   const derivedRef = useRef<R>(transform(source.get()));
   const subscribersRef = useRef<Set<(value: R) => void>>(new Set());
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    const unsubscribe = source.subscribe((value) => {
+    unsubscribeRef.current = source.subscribe((value) => {
       const derived = transform(value);
       derivedRef.current = derived;
       subscribersRef.current.forEach(callback => callback(derived));
     });
-    return unsubscribe;
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
+    };
   }, [source, transform]);
 
   const get = useCallback(() => derivedRef.current, []);
@@ -95,8 +101,18 @@ export function useDerivedMotionValue<T, R>(
   }, []);
 
   const destroy = useCallback(() => {
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+      unsubscribeRef.current = null;
+    }
     subscribersRef.current.clear();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      destroy();
+    };
+  }, [destroy]);
 
   return { get, set, subscribe, destroy };
 }

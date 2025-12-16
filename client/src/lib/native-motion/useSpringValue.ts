@@ -34,6 +34,7 @@ export interface SpringValue {
   set: (target: number) => void;
   subscribe: (callback: (value: number) => void) => () => void;
   stop: () => void;
+  destroy: () => void;
 }
 
 export function useSpringValue(
@@ -125,14 +126,18 @@ export function useSpringValue(
     velocityRef.current = 0;
   }, []);
 
-  useEffect(() => {
-    return () => {
-      stop();
-      subscribersRef.current.clear();
-    };
+  const destroy = useCallback(() => {
+    stop();
+    subscribersRef.current.clear();
   }, [stop]);
 
-  return { get, set, subscribe, stop };
+  useEffect(() => {
+    return () => {
+      destroy();
+    };
+  }, [destroy]);
+
+  return { get, set, subscribe, stop, destroy };
 }
 
 export function useSpring(

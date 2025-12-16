@@ -49,10 +49,12 @@ export function usePanGesture(
     previous: { x: number; y: number },
     timeDelta: number
   ) => {
+    // Returns velocity in px/ms (framer-motion compatible units)
+    // timeDelta is already in milliseconds from performance.now()
     if (timeDelta <= 0) return { x: 0, y: 0 };
     return {
-      x: ((current.x - previous.x) / timeDelta) * 1000,
-      y: ((current.y - previous.y) / timeDelta) * 1000
+      x: (current.x - previous.x) / timeDelta,
+      y: (current.y - previous.y) / timeDelta
     };
   }, []);
 
@@ -203,9 +205,10 @@ export function createPanHandlers(config: {
       const timeDelta = now - lastTime;
 
       if (timeDelta > 0) {
+        // Velocity in px/ms (framer-motion compatible units)
         velocity = {
-          x: ((touch.clientX - lastPoint.x) / timeDelta) * 1000,
-          y: ((touch.clientY - lastPoint.y) / timeDelta) * 1000
+          x: (touch.clientX - lastPoint.x) / timeDelta,
+          y: (touch.clientY - lastPoint.y) / timeDelta
         };
       }
 
