@@ -37,6 +37,7 @@ import { sanitizeInput } from './middleware/input-validation';
 import { loggingMiddleware, securityLoggingMiddleware, performanceLoggingMiddleware } from './logging/logging-middleware';
 import { createCentralizedLogger } from './logging/centralized-logger';
 import { centralUpgradeDispatcher } from './websocket/central-upgrade-dispatcher';
+import { performanceHeaders, earlyHints } from './middleware/performance-headers';
 
 const serverLogger = createCentralizedLogger('server');
 const app = express();
@@ -50,6 +51,10 @@ app.set('trust proxy', true);
 
 // Security middleware (CSP, HSTS, etc.) - apply BEFORE other middleware
 securityMiddleware().forEach(middleware => app.use(middleware));
+
+// Fortune 500 Performance Headers - aggressive caching and early hints
+app.use(performanceHeaders());
+app.use(earlyHints());
 
 // Basic middleware
 app.use(express.json({ limit: '10mb' }));
