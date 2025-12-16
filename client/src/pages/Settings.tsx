@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -70,11 +71,42 @@ export default function Settings() {
     marketing: false,
   });
 
-  const handleSaveProfile = () => {
-    toast({
-      title: 'Profile updated',
-      description: 'Your profile has been successfully updated.',
-    });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      await apiRequest('PATCH', '/api/users/profile', {
+        displayName,
+        email,
+        bio,
+        preferences: {
+          theme,
+          editorTheme,
+          fontSize: parseInt(fontSize),
+          tabSize: parseInt(tabSize),
+          wordWrap,
+          minimap,
+          autoSave,
+        },
+        notifications,
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      
+      toast({
+        title: 'Profile saved',
+        description: 'Your profile has been successfully updated.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error saving profile',
+        description: error instanceof Error ? error.message : 'Failed to save your profile. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -126,10 +158,11 @@ export default function Settings() {
               <Button 
                 className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200"
                 onClick={handleSaveProfile}
+                disabled={isSaving}
                 data-testid="button-save-changes"
               >
                 <Check className="h-4 w-4" />
-                Save changes
+                {isSaving ? 'Saving...' : 'Save changes'}
               </Button>
             </div>
           )}
