@@ -8,27 +8,103 @@
  * fall back to CSS transitions for better performance.
  */
 
-import { lazy, Suspense, ReactNode, forwardRef } from 'react';
+import { lazy, Suspense, ReactNode, forwardRef, Children, cloneElement, isValidElement } from 'react';
 import type { HTMLMotionProps, AnimatePresenceProps } from 'framer-motion';
 import { useAnimationPerformance } from './AnimationMonitor';
 import { CSSFade, CSSInViewFade, CSSInViewSlide, CSSInViewScale } from './CSSAnimations';
 
-function detectInViewAnimationType(whileInView: Record<string, unknown> | undefined): 'fade' | 'slide' | 'scale' | null {
-  if (!whileInView) return null;
-  if ('scale' in whileInView) return 'scale';
-  if ('y' in whileInView) return 'slide';
-  if ('x' in whileInView) return 'slide';
-  if ('opacity' in whileInView) return 'fade';
+type VariantObject = Record<string, unknown>;
+type Variants = Record<string, VariantObject>;
+
+function resolveVariant(
+  value: string | VariantObject | undefined,
+  variants: Variants | undefined
+): VariantObject | undefined {
+  if (!value) return undefined;
+  if (typeof value === 'string') {
+    return variants?.[value] as VariantObject | undefined;
+  }
+  return value;
+}
+
+function detectInViewAnimationType(
+  whileInView: string | VariantObject | undefined,
+  variants?: Variants
+): 'fade' | 'slide' | 'scale' | null {
+  const resolved = resolveVariant(whileInView, variants);
+  if (!resolved) return null;
+  if ('scale' in resolved) return 'scale';
+  if ('y' in resolved) return 'slide';
+  if ('x' in resolved) return 'slide';
+  if ('opacity' in resolved) return 'fade';
   return null;
 }
 
-function getSlideDirection(initial: Record<string, unknown> | undefined): 'up' | 'down' | 'left' | 'right' {
-  if (!initial) return 'up';
-  const y = initial.y as number | undefined;
-  const x = initial.x as number | undefined;
+function getSlideDirection(
+  initial: string | VariantObject | undefined,
+  variants?: Variants
+): 'up' | 'down' | 'left' | 'right' {
+  const resolved = resolveVariant(initial, variants);
+  if (!resolved) return 'up';
+  const y = resolved.y as number | undefined;
+  const x = resolved.x as number | undefined;
   if (typeof y === 'number') return y > 0 ? 'up' : 'down';
   if (typeof x === 'number') return x > 0 ? 'left' : 'right';
   return 'up';
+}
+
+function getSlideDistance(
+  initial: string | VariantObject | undefined,
+  variants?: Variants
+): number {
+  const resolved = resolveVariant(initial, variants);
+  if (!resolved) return 20;
+  const y = resolved.y as number | undefined;
+  const x = resolved.x as number | undefined;
+  if (typeof y === 'number') return Math.abs(y);
+  if (typeof x === 'number') return Math.abs(x);
+  return 20;
+}
+
+function getStaggerDelay(
+  transition: Record<string, unknown> | undefined,
+  childIndex?: number
+): number {
+  if (!transition || childIndex === undefined) return 0;
+  const staggerChildren = transition.staggerChildren as number | undefined;
+  const delayChildren = (transition.delayChildren as number) || 0;
+  if (typeof staggerChildren === 'number') {
+    return (delayChildren + staggerChildren * childIndex) * 1000;
+  }
+  return 0;
+}
+
+function applyStaggerToChildren(
+  children: ReactNode,
+  transition: Record<string, unknown> | undefined
+): ReactNode {
+  const staggerChildren = transition?.staggerChildren as number | undefined;
+  if (!staggerChildren) return children;
+  
+  const delayChildren = ((transition?.delayChildren as number) || 0) * 1000;
+  const staggerMs = staggerChildren * 1000;
+  
+  return Children.map(children, (child, index) => {
+    if (!isValidElement(child)) return child;
+    
+    const childDelay = delayChildren + staggerMs * index;
+    const existingStyle = (child.props as { style?: Record<string, unknown> }).style || {};
+    
+    return cloneElement(child, {
+      style: {
+        ...existingStyle,
+        '--stagger-delay': `${staggerMs}ms`,
+        '--child-index': index,
+        transitionDelay: `${childDelay}ms`,
+        animationDelay: `${childDelay}ms`,
+      },
+    } as Record<string, unknown>);
+  });
 }
 
 type MotionDivProps = HTMLMotionProps<'div'>;
@@ -55,10 +131,14 @@ export const LazyMotionDiv = forwardRef<HTMLDivElement, MotionDivProps>(({ class
   }
   
   if (shouldUseCSS) {
-    const whileInView = props.whileInView as Record<string, unknown> | undefined;
-    const initial = props.initial as Record<string, unknown> | undefined;
+    const whileInView = props.whileInView as string | VariantObject | undefined;
+    const initial = props.initial as string | VariantObject | undefined;
+    const variants = props.variants as Variants | undefined;
     const viewport = props.viewport as { once?: boolean } | undefined;
-    const animationType = detectInViewAnimationType(whileInView);
+    const transition = props.transition as Record<string, unknown> | undefined;
+    const animationType = detectInViewAnimationType(whileInView, variants);
+    
+    const staggeredChildren = applyStaggerToChildren(children as ReactNode, transition);
     
     if (whileInView && animationType) {
       const once = viewport?.once ?? true;
@@ -67,25 +147,26 @@ export const LazyMotionDiv = forwardRef<HTMLDivElement, MotionDivProps>(({ class
         case 'scale':
           return (
             <CSSInViewScale className={className} once={once} ref={ref}>
-              {children as ReactNode}
+              {staggeredChildren}
             </CSSInViewScale>
           );
         case 'slide':
           return (
             <CSSInViewSlide 
               className={className} 
-              direction={getSlideDirection(initial)} 
+              direction={getSlideDirection(initial, variants)}
+              distance={getSlideDistance(initial, variants)}
               once={once}
               ref={ref}
             >
-              {children as ReactNode}
+              {staggeredChildren}
             </CSSInViewSlide>
           );
         case 'fade':
         default:
           return (
             <CSSInViewFade className={className} once={once} ref={ref}>
-              {children as ReactNode}
+              {staggeredChildren}
             </CSSInViewFade>
           );
       }
@@ -93,7 +174,7 @@ export const LazyMotionDiv = forwardRef<HTMLDivElement, MotionDivProps>(({ class
     
     return (
       <CSSFade show={true} className={className}>
-        {children as ReactNode}
+        {staggeredChildren}
       </CSSFade>
     );
   }
@@ -196,9 +277,12 @@ export const LazyMotionUl = forwardRef<HTMLUListElement, MotionUlProps>(({ class
   }
   
   if (shouldUseCSS) {
+    const transition = props.transition as Record<string, unknown> | undefined;
+    const staggeredChildren = applyStaggerToChildren(children as ReactNode, transition);
+    
     return (
-      <ul className={className}>
-        {children as ReactNode}
+      <ul className={className} ref={ref}>
+        {staggeredChildren}
       </ul>
     );
   }
