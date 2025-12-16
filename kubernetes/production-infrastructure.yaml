@@ -215,7 +215,9 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
       - name: e-code-platform
-        image: gcr.io/votre-projet-ecode/e-code-platform:production
+        # Replace with specific version tag in production
+        image: ${CONTAINER_REGISTRY}/${PROJECT_ID}/e-code-platform:${IMAGE_TAG}
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
         env:
@@ -241,15 +243,20 @@ spec:
           limits:
             memory: "2Gi"
             cpu: "1"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         livenessProbe:
           httpGet:
-            path: /api/health
+            path: /api/monitoring/health
             port: 5000
           initialDelaySeconds: 30
           periodSeconds: 10
         readinessProbe:
           httpGet:
-            path: /api/health
+            path: /api/monitoring/health
             port: 5000
           initialDelaySeconds: 10
           periodSeconds: 5
@@ -406,7 +413,9 @@ spec:
       hostNetwork: true
       containers:
       - name: container-runtime
-        image: gcr.io/votre-projet-ecode/container-orchestrator:latest
+        # Replace with specific version tag in production
+        image: ${CONTAINER_REGISTRY}/${PROJECT_ID}/container-orchestrator:${IMAGE_TAG}
+        imagePullPolicy: Always
         securityContext:
           privileged: true
         volumeMounts:
