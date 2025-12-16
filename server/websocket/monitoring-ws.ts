@@ -13,6 +13,30 @@ import { storage } from '../storage';
 
 const logger = createLogger('monitoring-ws');
 
+// W-H3: Rate limiting utility for per-client throttling
+const clientThrottles = new Map<string, Map<string, number>>();
+
+function isThrottled(clientId: string, action: string, intervalMs: number): boolean {
+  const now = Date.now();
+  if (!clientThrottles.has(clientId)) {
+    clientThrottles.set(clientId, new Map());
+  }
+  const clientActions = clientThrottles.get(clientId)!;
+  const lastTime = clientActions.get(action) || 0;
+  if (now - lastTime < intervalMs) return true;
+  clientActions.set(action, now);
+  return false;
+}
+
+function cleanupClientThrottles(clientId: string): void {
+  clientThrottles.delete(clientId);
+}
+
+// W-H13: Message validation helper
+function validateMessage(msg: any): boolean {
+  return typeof msg === 'object' && msg !== null && typeof msg.type === 'string';
+}
+
 interface MonitoringClient {
   id: string;
   ws: WebSocket;
@@ -67,9 +91,14 @@ export class MonitoringWebSocketService {
     // Send initial data
     this.sendInitialData(client);
 
-    // Handle messages
-    ws.on('message', (data) => {
-      this.handleMessage(client, data.toString());
+    // Handle messages - W-H13: Wrap in try-catch for error handling
+    ws.on('message', async (data) => {
+      try {
+        await this.handleMessage(client, data.toString());
+      } catch (error) {
+        logger.error('Error in message handler:', error);
+        this.sendError(client, 'Internal error processing message');
+      }
     });
 
     // Handle pong responses
@@ -79,19 +108,29 @@ export class MonitoringWebSocketService {
 
     // Handle disconnect
     ws.on('close', () => {
+      // W-H6: Cleanup clients Map and throttles on disconnect
       this.clients.delete(clientId);
+      cleanupClientThrottles(clientId);
       logger.info(`Monitoring client disconnected: ${clientId}`);
     });
 
     ws.on('error', (error) => {
       logger.error(`WebSocket error for client ${clientId}:`, error);
+      // W-H6: Cleanup clients Map and throttles on error
       this.clients.delete(clientId);
+      cleanupClientThrottles(clientId);
     });
   }
 
-  private handleMessage(client: MonitoringClient, message: string) {
+  private async handleMessage(client: MonitoringClient, message: string) {
     try {
       const data = JSON.parse(message);
+      
+      // W-H13: Validate message schema
+      if (!validateMessage(data)) {
+        this.sendError(client, 'Invalid message schema');
+        return;
+      }
       
       switch (data.type) {
         case 'subscribe':
@@ -101,13 +140,18 @@ export class MonitoringWebSocketService {
           this.handleUnsubscribe(client, data.channels);
           break;
         case 'get_metrics':
-          this.handleGetMetrics(client, data.options);
+          // W-H3: 200ms throttle on metrics requests to prevent DoS
+          if (isThrottled(client.id, 'get_metrics', 200)) {
+            this.sendError(client, 'Rate limit exceeded, please slow down');
+            break;
+          }
+          await this.handleGetMetrics(client, data.options);
           break;
         case 'get_alerts':
           this.handleGetAlerts(client);
           break;
         case 'acknowledge_alert':
-          this.handleAcknowledgeAlert(client, data.alertId, data.userId);
+          await this.handleAcknowledgeAlert(client, data.alertId, data.userId);
           break;
         case 'mute_alert':
           this.handleMuteAlert(client, data.alertId, data.duration);

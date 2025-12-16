@@ -11,6 +11,32 @@ interface WebSocketMessage {
   data: any;
 }
 
+// W-H1: Rate limiting utility for per-client throttling
+const clientThrottles = new Map<string, Map<string, number>>();
+
+function isThrottled(clientId: string, action: string, intervalMs: number): boolean {
+  const now = Date.now();
+  if (!clientThrottles.has(clientId)) {
+    clientThrottles.set(clientId, new Map());
+  }
+  const clientActions = clientThrottles.get(clientId)!;
+  const lastTime = clientActions.get(action) || 0;
+  if (now - lastTime < intervalMs) return true;
+  clientActions.set(action, now);
+  return false;
+}
+
+function cleanupClientThrottles(clientId: string): void {
+  clientThrottles.delete(clientId);
+}
+
+// W-H13: Message validation helper
+function validateMessage(msg: any): msg is WebSocketMessage {
+  return typeof msg === 'object' && 
+         msg !== null && 
+         typeof msg.type === 'string';
+}
+
 interface AuthenticatedWebSocket extends WebSocket {
   userId?: string;
   username?: string;
@@ -25,9 +51,11 @@ export class CollaborativeEditingWebSocketHandler {
   private connections: Map<string, AuthenticatedWebSocket> = new Map();
 
   constructor(server: Server) {
+    // W-H9: Add maxPayload to prevent DoS via large messages
     this.wss = new WebSocketServer({
       server,
       path: '/ws/collaborate',
+      maxPayload: 10 * 1024 * 1024, // 10MB max
       perMessageDeflate: {
         zlibDeflateOptions: {
           chunkSize: 1024,
@@ -62,14 +90,27 @@ export class CollaborativeEditingWebSocketHandler {
 
     ws.on('message', async (message: Buffer) => {
       try {
-        const msg: WebSocketMessage = JSON.parse(message.toString());
+        const msg = JSON.parse(message.toString());
+        // W-H13: Validate message schema
+        if (!validateMessage(msg)) {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              type: 'error',
+              data: { message: 'Invalid message schema' },
+            }));
+          }
+          return;
+        }
         await this.handleMessage(ws, msg);
       } catch (error) {
         console.error('Error handling WebSocket message:', error);
-        ws.send(JSON.stringify({
-          type: 'error',
-          data: { message: 'Invalid message format' },
-        }));
+        // W-H17: Check readyState before sending error
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'error',
+            data: { message: 'Invalid message format' },
+          }));
+        }
       }
     });
 
@@ -259,8 +300,12 @@ export class CollaborativeEditingWebSocketHandler {
       return;
     }
 
+    // W-H1: 100ms throttle on cursor updates to prevent DoS
+    if (isThrottled(ws.userId, 'cursor-update', 100)) {
+      return;
+    }
+
     try {
-      // Throttle cursor updates (100ms)
       await collaborativeEditingService.handleCursorUpdate(
         ws.sessionId,
         ws.userId,
@@ -268,6 +313,13 @@ export class CollaborativeEditingWebSocketHandler {
       );
     } catch (error) {
       console.error('Error handling cursor update:', error);
+      // W-H17: Send error response
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'error',
+          data: { message: 'Failed to update cursor' },
+        }));
+      }
     }
   }
 
@@ -324,8 +376,11 @@ export class CollaborativeEditingWebSocketHandler {
       clearInterval(ws.pingInterval);
     }
 
+    // W-H5: Cleanup connections Map on ALL paths
     if (ws.userId) {
       this.connections.delete(ws.userId);
+      // W-H5: Cleanup throttle tracking for this client
+      cleanupClientThrottles(ws.userId);
     }
 
     if (ws.sessionId && ws.userId) {

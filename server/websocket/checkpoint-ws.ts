@@ -16,6 +16,30 @@ const logger = createLogger('checkpoint-ws');
 
 const getSecret = () => getJwtSecret();
 
+// W-H2: Rate limiting utility for per-client throttling
+const clientThrottles = new Map<string, Map<string, number>>();
+
+function isThrottled(clientId: string, action: string, intervalMs: number): boolean {
+  const now = Date.now();
+  if (!clientThrottles.has(clientId)) {
+    clientThrottles.set(clientId, new Map());
+  }
+  const clientActions = clientThrottles.get(clientId)!;
+  const lastTime = clientActions.get(action) || 0;
+  if (now - lastTime < intervalMs) return true;
+  clientActions.set(action, now);
+  return false;
+}
+
+function cleanupClientThrottles(clientId: string): void {
+  clientThrottles.delete(clientId);
+}
+
+// W-H13: Message validation helper
+function validateMessage(msg: any): boolean {
+  return typeof msg === 'object' && msg !== null && typeof msg.type === 'string';
+}
+
 interface AuthenticatedWebSocket extends WebSocket {
   userId?: string;
   username?: string;
@@ -169,7 +193,8 @@ function broadcastToProject(projectId: number, message: any) {
 }
 
 export function setupCheckpointWebSocket(httpServer: Server) {
-  const wss = new WebSocketServer({ noServer: true });
+  // W-H10: Add maxPayload to prevent DoS via large messages
+  const wss = new WebSocketServer({ noServer: true, maxPayload: 10 * 1024 * 1024 });
 
   centralUpgradeDispatcher.register('/ws/checkpoints', (request, socket, head) => {
     markSocketAsHandled(request, socket);
@@ -195,6 +220,15 @@ export function setupCheckpointWebSocket(httpServer: Server) {
 
           case 'subscribe':
             if (typeof message.projectId === 'number') {
+              // W-H2: 200ms throttle on subscriptions to prevent DoS
+              if (ws.userId && isThrottled(ws.userId, 'subscribe', 200)) {
+                ws.send(JSON.stringify({
+                  type: 'error',
+                  message: 'Rate limit exceeded, please slow down',
+                  timestamp: new Date().toISOString()
+                }));
+                break;
+              }
               await handleSubscribe(ws, message.projectId);
             }
             break;
@@ -223,17 +257,32 @@ export function setupCheckpointWebSocket(httpServer: Server) {
     });
 
     ws.on('close', () => {
+      // W-H6: Proper cleanup on disconnect
       ws.subscribedProjects?.forEach(projectId => {
         clients.get(projectId)?.delete(ws);
         if (clients.get(projectId)?.size === 0) {
           clients.delete(projectId);
         }
       });
+      // W-H6: Cleanup throttle tracking
+      if (ws.userId) {
+        cleanupClientThrottles(ws.userId);
+      }
       logger.info('[Checkpoint WS] Client disconnected');
     });
 
     ws.on('error', (error) => {
       logger.error('[Checkpoint WS] WebSocket error:', error);
+      // W-H6: Cleanup on error path too
+      ws.subscribedProjects?.forEach(projectId => {
+        clients.get(projectId)?.delete(ws);
+        if (clients.get(projectId)?.size === 0) {
+          clients.delete(projectId);
+        }
+      });
+      if (ws.userId) {
+        cleanupClientThrottles(ws.userId);
+      }
     });
   });
 
