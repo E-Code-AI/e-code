@@ -418,30 +418,49 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
           });
           
           // Wait for server to be ready with health check polling
+          // Use Promise.race with explicit timeout to prevent hanging
           const maxWaitMs = 30000;
           const pollIntervalMs = 500;
-          let serverReady = false;
-          const startWait = Date.now();
           
-          while (Date.now() - startWait < maxWaitMs && !serverReady) {
-            try {
-              await new Promise<void>((resolve, reject) => {
-                const req = http.get(`http://localhost:${validationPort}`, (res: any) => {
-                  if (res.statusCode && res.statusCode < 500) {
-                    serverReady = true;
-                  }
-                  res.resume();
-                  resolve();
-                });
-                req.on('error', () => resolve());
-                req.setTimeout(1000, () => { req.destroy(); resolve(); });
-              });
-            } catch (e) { /* ignore connection errors during startup */ }
+          const waitForServer = async (): Promise<boolean> => {
+            const startWait = Date.now();
             
-            if (!serverReady) {
+            while (Date.now() - startWait < maxWaitMs) {
+              try {
+                const isReady = await new Promise<boolean>((resolve) => {
+                  const req = http.get(`http://localhost:${validationPort}`, (res: any) => {
+                    if (res.statusCode && res.statusCode < 500) {
+                      res.resume();
+                      resolve(true);
+                    } else {
+                      res.resume();
+                      resolve(false);
+                    }
+                  });
+                  req.on('error', () => resolve(false));
+                  req.setTimeout(1000, () => { req.destroy(); resolve(false); });
+                });
+                
+                if (isReady) return true;
+              } catch (e) { 
+                // Ignore connection errors during startup
+              }
+              
               await new Promise(r => setTimeout(r, pollIntervalMs));
             }
-          }
+            return false;
+          };
+          
+          // Race between server startup and absolute timeout
+          const serverReady = await Promise.race([
+            waitForServer(),
+            new Promise<boolean>((_, reject) => 
+              setTimeout(() => reject(new Error('Dev server startup timeout exceeded')), maxWaitMs + 5000)
+            )
+          ]).catch((err: Error) => {
+            logger.error(`[Bootstrap] Server wait failed:`, { error: err.message });
+            return false;
+          });
           
           if (!serverReady) {
             devServer.kill('SIGTERM');
