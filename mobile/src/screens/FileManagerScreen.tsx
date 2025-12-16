@@ -6,22 +6,28 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Modal,
+  TextInput
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { ProjectFile } from '../types';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
+import { getFiles, createFile, renameFile, deleteFile } from '../services/api';
 
-type FileManagerScreenProps = NativeStackScreenProps<RootStackParamList, 'FileManager'> & {
-  projectId: number;
-  token: string;
-};
+type FileManagerScreenProps = NativeStackScreenProps<RootStackParamList, 'FileManager'>;
 
-const FileManagerScreen: React.FC<FileManagerScreenProps> = ({ navigation, projectId, token }) => {
+const FileManagerScreen: React.FC<FileManagerScreenProps> = ({ navigation, route }) => {
+  const { projectId, token } = route.params;
   const [files, setFiles] = useState<ProjectFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPath, setCurrentPath] = useState('/');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalType, setModalType] = useState<'newFile' | 'newFolder' | 'rename'>('newFile');
+  const [inputValue, setInputValue] = useState('');
+  const [selectedFile, setSelectedFile] = useState<ProjectFile | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     fetchFiles();
@@ -30,17 +36,10 @@ const FileManagerScreen: React.FC<FileManagerScreenProps> = ({ navigation, proje
   const fetchFiles = async () => {
     setLoading(true);
     try {
-      // TODO: Implement real API
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const mockFiles: ProjectFile[] = [
-        { id: 1, name: 'src', path: '/src', isDirectory: true, size: 0, content: '' },
-        { id: 2, name: 'package.json', path: '/package.json', isDirectory: false, size: 1024, content: '' },
-        { id: 3, name: 'README.md', path: '/README.md', isDirectory: false, size: 512, content: '' },
-        { id: 4, name: 'tsconfig.json', path: '/tsconfig.json', isDirectory: false, size: 256, content: '' }
-      ];
-
-      setFiles(mockFiles);
+      const fetchedFiles = await getFiles(projectId, currentPath, token);
+      setFiles(fetchedFiles);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to load files');
     } finally {
       setLoading(false);
     }
@@ -50,10 +49,47 @@ const FileManagerScreen: React.FC<FileManagerScreenProps> = ({ navigation, proje
     if (file.isDirectory) {
       setCurrentPath(file.path);
     } else {
-      // Open file in editor
-      Alert.alert('Open File', `Opening ${file.name}`);
+      navigation.navigate('Editor', { 
+        projectId, 
+        fileId: file.id, 
+        fileName: file.name,
+        fileContent: file.content || '',
+        token 
+      });
     }
+  }, [navigation, projectId, token]);
+
+  const handleRename = useCallback((file: ProjectFile) => {
+    setSelectedFile(file);
+    setInputValue(file.name);
+    setModalType('rename');
+    setModalVisible(true);
   }, []);
+
+  const handleDelete = useCallback((file: ProjectFile) => {
+    Alert.alert(
+      'Delete File',
+      `Are you sure you want to delete "${file.name}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setActionLoading(true);
+            try {
+              await deleteFile(projectId, file.id, token);
+              await fetchFiles();
+            } catch (error) {
+              Alert.alert('Error', error instanceof Error ? error.message : 'Failed to delete file');
+            } finally {
+              setActionLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  }, [projectId, token]);
 
   const handleFileLongPress = useCallback((file: ProjectFile) => {
     Alert.alert(
@@ -61,12 +97,71 @@ const FileManagerScreen: React.FC<FileManagerScreenProps> = ({ navigation, proje
       'Choose an action',
       [
         { text: 'Open', onPress: () => handleFilePress(file) },
-        { text: 'Rename', onPress: () => Alert.alert('Coming Soon') },
-        { text: 'Delete', style: 'destructive', onPress: () => Alert.alert('Coming Soon') },
+        { text: 'Rename', onPress: () => handleRename(file) },
+        { text: 'Delete', style: 'destructive', onPress: () => handleDelete(file) },
         { text: 'Cancel', style: 'cancel' }
       ]
     );
-  }, [handleFilePress]);
+  }, [handleFilePress, handleRename, handleDelete]);
+
+  const openNewFileModal = useCallback(() => {
+    setSelectedFile(null);
+    setInputValue('');
+    setModalType('newFile');
+    setModalVisible(true);
+  }, []);
+
+  const openNewFolderModal = useCallback(() => {
+    setSelectedFile(null);
+    setInputValue('');
+    setModalType('newFolder');
+    setModalVisible(true);
+  }, []);
+
+  const handleModalSubmit = async () => {
+    if (!inputValue.trim()) {
+      Alert.alert('Error', 'Please enter a name');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      if (modalType === 'rename' && selectedFile) {
+        await renameFile(projectId, selectedFile.id, inputValue.trim(), token);
+      } else if (modalType === 'newFile' || modalType === 'newFolder') {
+        const filePath = currentPath === '/' ? `/${inputValue.trim()}` : `${currentPath}/${inputValue.trim()}`;
+        await createFile(
+          projectId,
+          {
+            name: inputValue.trim(),
+            path: filePath,
+            isDirectory: modalType === 'newFolder'
+          },
+          token
+        );
+      }
+      setModalVisible(false);
+      setInputValue('');
+      await fetchFiles();
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Operation failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const getModalTitle = () => {
+    switch (modalType) {
+      case 'newFile':
+        return 'New File';
+      case 'newFolder':
+        return 'New Folder';
+      case 'rename':
+        return 'Rename';
+      default:
+        return '';
+    }
+  };
 
   const getFileIcon = (file: ProjectFile) => {
     if (file.isDirectory) return '📁';
@@ -105,6 +200,7 @@ const FileManagerScreen: React.FC<FileManagerScreenProps> = ({ navigation, proje
         style={styles.fileItem}
         onPress={() => handleFilePress(item)}
         onLongPress={() => handleFileLongPress(item)}
+        data-testid={`file-item-${item.id}`}
       >
         <Text style={styles.fileIcon}>{getFileIcon(item)}</Text>
         <View style={styles.fileInfo}>
@@ -122,7 +218,7 @@ const FileManagerScreen: React.FC<FileManagerScreenProps> = ({ navigation, proje
   return (
     <View style={styles.container}>
       <View style={styles.pathBar}>
-        <TouchableOpacity onPress={() => setCurrentPath('/')}>
+        <TouchableOpacity onPress={() => setCurrentPath('/')} data-testid="path-home">
           <Text style={styles.pathText}>~</Text>
         </TouchableOpacity>
         <Text style={styles.pathText}>{currentPath}</Text>
@@ -147,13 +243,75 @@ const FileManagerScreen: React.FC<FileManagerScreenProps> = ({ navigation, proje
       )}
 
       <View style={styles.actionBar}>
-        <TouchableOpacity style={styles.actionButton} onPress={() => Alert.alert('Coming Soon')}>
+        <TouchableOpacity 
+          style={styles.actionButton} 
+          onPress={openNewFileModal}
+          disabled={actionLoading}
+          data-testid="button-new-file"
+        >
           <Text style={styles.actionButtonText}>+ New File</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={() => Alert.alert('Coming Soon')}>
+        <TouchableOpacity 
+          style={styles.actionButton} 
+          onPress={openNewFolderModal}
+          disabled={actionLoading}
+          data-testid="button-new-folder"
+        >
           <Text style={styles.actionButtonText}>+ New Folder</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{getModalTitle()}</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={inputValue}
+              onChangeText={setInputValue}
+              placeholder={modalType === 'newFolder' ? 'Folder name' : 'File name'}
+              placeholderTextColor={mobileColors.textMuted}
+              autoFocus
+              data-testid="input-name"
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setModalVisible(false)}
+                disabled={actionLoading}
+                data-testid="button-cancel"
+              >
+                <Text style={styles.modalButtonCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSubmit]}
+                onPress={handleModalSubmit}
+                disabled={actionLoading}
+                data-testid="button-submit"
+              >
+                {actionLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.modalButtonSubmitText}>
+                    {modalType === 'rename' ? 'Rename' : 'Create'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {actionLoading && !modalVisible && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={mobileColors.primary} />
+        </View>
+      )}
     </View>
   );
 };
@@ -252,6 +410,72 @@ const styles = StyleSheet.create({
     fontSize: mobileTypography.fontSize.sm,
     fontWeight: '600',
     color: '#fff'
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: mobileSpacing.lg
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: mobileColors.surface,
+    borderRadius: mobileBorderRadius.lg,
+    padding: mobileSpacing.lg
+  },
+  modalTitle: {
+    fontSize: mobileTypography.fontSize.lg,
+    fontWeight: '600',
+    color: mobileColors.text,
+    marginBottom: mobileSpacing.md,
+    textAlign: 'center'
+  },
+  modalInput: {
+    backgroundColor: mobileColors.surfaceSecondary,
+    borderRadius: mobileBorderRadius.md,
+    padding: mobileSpacing.md,
+    fontSize: mobileTypography.fontSize.base,
+    color: mobileColors.text,
+    borderWidth: 1,
+    borderColor: mobileColors.border,
+    marginBottom: mobileSpacing.md
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: mobileSpacing.sm
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: mobileSpacing.sm,
+    borderRadius: mobileBorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44
+  },
+  modalButtonCancel: {
+    backgroundColor: mobileColors.surfaceSecondary,
+    borderWidth: 1,
+    borderColor: mobileColors.border
+  },
+  modalButtonSubmit: {
+    backgroundColor: mobileColors.primary
+  },
+  modalButtonCancelText: {
+    fontSize: mobileTypography.fontSize.sm,
+    fontWeight: '600',
+    color: mobileColors.text
+  },
+  modalButtonSubmitText: {
+    fontSize: mobileTypography.fontSize.sm,
+    fontWeight: '600',
+    color: '#fff'
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center'
   }
 });
 

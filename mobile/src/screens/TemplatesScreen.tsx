@@ -6,29 +6,21 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert
+  Alert,
+  TextInput
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
+import { getTemplates, createProjectFromTemplate, Template } from '../services/api';
 
-type TemplatesScreenProps = NativeStackScreenProps<RootStackParamList, 'Templates'> & {
-  token: string;
-};
+type TemplatesScreenProps = NativeStackScreenProps<RootStackParamList, 'Templates'>;
 
-type Template = {
-  id: string;
-  name: string;
-  description: string;
-  language: string;
-  category: string;
-  downloads: number;
-  icon: string;
-};
-
-const TemplatesScreen: React.FC<TemplatesScreenProps> = ({ navigation, token }) => {
+const TemplatesScreen: React.FC<TemplatesScreenProps> = ({ navigation, route }) => {
+  const { token } = route.params;
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const categories = ['all', 'web', 'mobile', 'api', 'ml', 'game'];
@@ -40,73 +32,44 @@ const TemplatesScreen: React.FC<TemplatesScreenProps> = ({ navigation, token }) 
   const fetchTemplates = async () => {
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const mockTemplates: Template[] = [
-        {
-          id: '1',
-          name: 'React Starter',
-          description: 'Basic React app with TypeScript',
-          language: 'TypeScript',
-          category: 'web',
-          downloads: 15420,
-          icon: '⚛️'
-        },
-        {
-          id: '2',
-          name: 'Express API',
-          description: 'RESTful API with Express.js',
-          language: 'JavaScript',
-          category: 'api',
-          downloads: 8750,
-          icon: '🚀'
-        },
-        {
-          id: '3',
-          name: 'React Native App',
-          description: 'Mobile app template',
-          language: 'TypeScript',
-          category: 'mobile',
-          downloads: 6200,
-          icon: '📱'
-        },
-        {
-          id: '4',
-          name: 'Python ML',
-          description: 'Machine Learning starter',
-          language: 'Python',
-          category: 'ml',
-          downloads: 4580,
-          icon: '🤖'
-        }
-      ];
-
-      const filtered =
-        selectedCategory === 'all'
-          ? mockTemplates
-          : mockTemplates.filter(t => t.category === selectedCategory);
-
-      setTemplates(filtered);
+      const data = await getTemplates(selectedCategory, token);
+      setTemplates(data);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to load templates');
     } finally {
       setLoading(false);
     }
   };
 
   const handleUseTemplate = useCallback((template: Template) => {
-    Alert.alert(
-      'Use Template',
-      `Create a new project from "${template.name}"?`,
+    Alert.prompt(
+      'Create Project',
+      `Enter a name for your new project from "${template.name}":`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Create',
-          onPress: () => {
-            Alert.alert('Success', 'Project created from template!');
+          onPress: async (projectName?: string) => {
+            if (!projectName?.trim()) {
+              Alert.alert('Error', 'Please enter a project name');
+              return;
+            }
+            setCreating(true);
+            try {
+              await createProjectFromTemplate(template.id, projectName.trim(), token);
+              Alert.alert('Success', `Project "${projectName}" created from template!`);
+            } catch (error) {
+              Alert.alert('Error', error instanceof Error ? error.message : 'Failed to create project');
+            } finally {
+              setCreating(false);
+            }
           }
         }
-      ]
+      ],
+      'plain-text',
+      template.name
     );
-  }, []);
+  }, [token]);
 
   const renderCategory = useCallback(
     (category: string) => (

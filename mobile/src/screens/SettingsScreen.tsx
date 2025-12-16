@@ -7,22 +7,34 @@ import {
   View,
   Switch,
   Alert,
-  Platform
+  Platform,
+  ActivityIndicator
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
+import { logout, clearCache } from '../services/api';
 
 type SettingsScreenProps = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
-const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
-  // Settings state
+const formatBytes = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
+
+const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation, route }) => {
+  const { token } = route.params;
   const [notifications, setNotifications] = useState(true);
   const [autoSave, setAutoSave] = useState(true);
   const [darkMode, setDarkMode] = useState(true);
   const [offlineMode, setOfflineMode] = useState(false);
   const [biometric, setBiometric] = useState(false);
   const [analytics, setAnalytics] = useState(true);
+  const [clearingCache, setClearingCache] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   const handleClearCache = useCallback(() => {
     Alert.alert(
@@ -33,14 +45,21 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
         {
           text: 'Clear',
           style: 'destructive',
-          onPress: () => {
-            // TODO: Implement cache clearing
-            Alert.alert('Success', 'Cache cleared successfully');
+          onPress: async () => {
+            setClearingCache(true);
+            try {
+              const result = await clearCache(token);
+              Alert.alert('Success', `Cache cleared successfully (${formatBytes(result.clearedBytes)} freed)`);
+            } catch (error) {
+              Alert.alert('Error', error instanceof Error ? error.message : 'Failed to clear cache');
+            } finally {
+              setClearingCache(false);
+            }
           }
         }
       ]
     );
-  }, []);
+  }, [token]);
 
   const handleResetSettings = useCallback(() => {
     Alert.alert(
@@ -173,7 +192,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.actionItem}
-          onPress={() => navigation.navigate('Profile')}
+          onPress={() => Alert.alert('Coming Soon', 'Edit Profile from settings coming soon')}
         >
           <Text style={styles.actionLabel}>Edit Profile</Text>
           <Text style={styles.actionArrow}>›</Text>
@@ -203,9 +222,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
         <TouchableOpacity
           style={styles.actionItem}
           onPress={handleClearCache}
+          disabled={clearingCache}
         >
           <Text style={styles.actionLabel}>Clear Cache</Text>
-          <Text style={styles.actionValue}>128 MB</Text>
+          {clearingCache ? (
+            <ActivityIndicator size="small" color={mobileColors.primary} />
+          ) : (
+            <Text style={styles.actionValue}>128 MB</Text>
+          )}
         </TouchableOpacity>
 
         <View style={styles.actionItem}>
@@ -264,6 +288,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
 
         <TouchableOpacity
           style={[styles.actionItem, styles.dangerItem]}
+          disabled={signingOut}
           onPress={() => {
             Alert.alert(
               'Sign Out',
@@ -273,16 +298,29 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
                 {
                   text: 'Sign Out',
                   style: 'destructive',
-                  onPress: () => {
-                    // TODO: Implement logout
-                    Alert.alert('Signed Out', 'You have been signed out');
+                  onPress: async () => {
+                    setSigningOut(true);
+                    try {
+                      await logout(token);
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'Login' }]
+                      });
+                    } catch (error) {
+                      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to sign out');
+                      setSigningOut(false);
+                    }
                   }
                 }
               ]
             );
           }}
         >
-          <Text style={styles.dangerLabel}>Sign Out</Text>
+          {signingOut ? (
+            <ActivityIndicator size="small" color="#ef4444" />
+          ) : (
+            <Text style={styles.dangerLabel}>Sign Out</Text>
+          )}
         </TouchableOpacity>
       </View>
 

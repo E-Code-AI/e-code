@@ -11,10 +11,9 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
+import { getNotifications, markNotificationRead, markAllNotificationsRead, Notification as ApiNotification } from '../services/api';
 
-type NotificationsScreenProps = NativeStackScreenProps<RootStackParamList, 'Notifications'> & {
-  token: string;
-};
+type NotificationsScreenProps = NativeStackScreenProps<RootStackParamList, 'Notifications'>;
 
 type Notification = {
   id: string;
@@ -26,57 +25,31 @@ type Notification = {
   actionUrl?: string;
 };
 
-const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation, token }) => {
+function transformApiNotification(apiNotification: ApiNotification): Notification {
+  return {
+    ...apiNotification,
+    timestamp: new Date(apiNotification.timestamp)
+  };
+}
+
+const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ route }) => {
+  const { token } = route.params;
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchNotifications = useCallback(async () => {
     try {
-      // TODO: Implement real API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const mockNotifications: Notification[] = [
-        {
-          id: '1',
-          type: 'success',
-          title: 'Build Successful',
-          message: 'Your project "React App" has been built successfully',
-          timestamp: new Date(Date.now() - 3600000),
-          read: false
-        },
-        {
-          id: '2',
-          type: 'info',
-          title: 'New Collaborator',
-          message: 'John Doe joined your project',
-          timestamp: new Date(Date.now() - 7200000),
-          read: false
-        },
-        {
-          id: '3',
-          type: 'warning',
-          title: 'Storage Warning',
-          message: 'You are using 80% of your storage',
-          timestamp: new Date(Date.now() - 86400000),
-          read: true
-        },
-        {
-          id: '4',
-          type: 'error',
-          title: 'Deploy Failed',
-          message: 'Failed to deploy to production',
-          timestamp: new Date(Date.now() - 172800000),
-          read: true
-        }
-      ];
-
-      setNotifications(mockNotifications);
+      const apiNotifications = await getNotifications(token);
+      const transformedNotifications = apiNotifications.map(transformApiNotification);
+      setNotifications(transformedNotifications);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     fetchNotifications();
@@ -87,15 +60,25 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation, t
     fetchNotifications();
   }, [fetchNotifications]);
 
-  const handleMarkAsRead = useCallback((id: string) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, read: true } : n))
-    );
-  }, []);
+  const handleMarkAsRead = useCallback(async (id: string) => {
+    try {
+      await markNotificationRead(id, token);
+      setNotifications(prev =>
+        prev.map(n => (n.id === id ? { ...n, read: true } : n))
+      );
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  }, [token]);
 
-  const handleMarkAllAsRead = useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  }, []);
+  const handleMarkAllAsRead = useCallback(async () => {
+    try {
+      await markAllNotificationsRead(token);
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error);
+    }
+  }, [token]);
 
   const getIconForType = (type: Notification['type']) => {
     switch (type) {
