@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronRight, CheckCircle2, Clock, Code2,
   Sparkles, Plus, Github, BookMarked, FileText,
@@ -247,11 +246,8 @@ export default function Dashboard() {
     <div className="min-h-screen bg-[var(--ecode-background)] p-4 md:p-6 lg:p-8" style={{ fontFamily: 'var(--ecode-font-sans)' }}>
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Welcome Header with AI Prompt - E-Code Branded */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[var(--ecode-accent)] via-[var(--ecode-accent)]/90 to-[var(--ecode-accent)]/80 shadow-[0_8px_32px_-8px_rgba(var(--ecode-accent-rgb,242,98,7),0.4)]"
+        <div 
+          className="animate-slide-in-up relative rounded-2xl overflow-hidden bg-gradient-to-br from-[var(--ecode-accent)] via-[var(--ecode-accent)]/90 to-[var(--ecode-accent)]/80 shadow-[0_8px_32px_-8px_rgba(var(--ecode-accent-rgb,242,98,7),0.4)]"
         >
           {/* Decorative background pattern */}
           <div className="absolute inset-0 opacity-10">
@@ -312,18 +308,17 @@ export default function Dashboard() {
               </div>
             </form>
           </div>
-        </motion.div>
+        </div>
 
         {/* Agents & Automations Section */}
         <div>
           <h2 className="text-lg font-semibold mb-4 text-[var(--ecode-text)]">Agents & Automations</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {agentsAutomations.map((item, index) => (
-              <motion.div
+              <div
                 key={item.title}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05, duration: 0.3 }}
+                className="animate-slide-in-up opacity-0"
+                style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
               >
                 <Card
                   className="cursor-pointer group border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[var(--ecode-accent)]/30 hover:shadow-[0_4px_16px_-4px_rgba(var(--ecode-accent-rgb,242,98,7),0.15)] transition-all duration-200"
@@ -338,7 +333,7 @@ export default function Dashboard() {
                     <p className="text-xs text-[var(--ecode-text-muted)] hidden md:block">{item.description}</p>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -348,11 +343,10 @@ export default function Dashboard() {
           <h2 className="text-lg font-semibold mb-4 text-[var(--ecode-text)]">Quick Actions</h2>
           <div className={`grid ${TABLET_GRID_CLASSES.quickActionsTabletOptimized} gap-4`}>
             {quickActions.map((action, index) => (
-              <motion.div
+              <div
                 key={action.title}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05, duration: 0.3 }}
+                className="animate-slide-in-up opacity-0"
+                style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
               >
                 <Card
                   className="cursor-pointer group border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[var(--ecode-accent)]/30 hover:shadow-[0_4px_16px_-4px_rgba(var(--ecode-accent-rgb,242,98,7),0.15)] transition-all duration-200"
@@ -367,7 +361,7 @@ export default function Dashboard() {
                     <p className="text-xs text-[var(--ecode-text-muted)] hidden md:block">{action.description}</p>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -428,81 +422,77 @@ export default function Dashboard() {
             </Card>
           ) : (
             <div className={`grid ${TABLET_GRID_CLASSES.projectsTabletOptimized} gap-4`}>
-              <AnimatePresence>
-                {filteredProjects.map((project, index) => (
-                  <motion.div
-                    key={project.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ delay: index * 0.03, duration: 0.3 }}
+              {filteredProjects.map((project, index) => (
+                <div
+                  key={project.id}
+                  className="animate-slide-in-up opacity-0"
+                  style={{ animationDelay: `${index * 30}ms`, animationFillMode: 'forwards' }}
+                >
+                  <Card
+                    className="cursor-pointer group border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[var(--ecode-accent)]/30 hover:shadow-[0_8px_24px_-8px_rgba(var(--ecode-accent-rgb,242,98,7),0.2)] transition-all duration-200 overflow-hidden"
+                    onClick={() => {
+                      navigate(`/ide/${project.id}`);
+                    }}
+                    data-testid={`project-card-${project.id}`}
                   >
-                    <Card
-                      className="cursor-pointer group border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-[var(--ecode-accent)]/30 hover:shadow-[0_8px_24px_-8px_rgba(var(--ecode-accent-rgb,242,98,7),0.2)] transition-all duration-200 overflow-hidden"
-                      onClick={() => {
-                        navigate(`/ide/${project.id}`);
-                      }}
-                      data-testid={`project-card-${project.id}`}
-                    >
-                      {/* Project Icon/Preview */}
-                      <div className="aspect-video relative bg-gradient-to-br from-[var(--ecode-accent)]/5 to-[var(--ecode-accent)]/10 flex items-center justify-center">
-                        {getProjectIcon(project)}
-                        {project.isDeployed && (
-                          <Badge className="absolute top-2 right-2 bg-[hsl(var(--ecode-green))] text-white border-0 shadow-sm">
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Live
-                          </Badge>
-                        )}
-                        <Badge variant="secondary" className="absolute bottom-2 left-2 text-xs bg-[var(--ecode-surface)] text-[var(--ecode-text-muted)] border border-[var(--ecode-border)]">
-                          {project.language || 'JavaScript'}
+                    {/* Project Icon/Preview */}
+                    <div className="aspect-video relative bg-gradient-to-br from-[var(--ecode-accent)]/5 to-[var(--ecode-accent)]/10 flex items-center justify-center">
+                      {getProjectIcon(project)}
+                      {project.isDeployed && (
+                        <Badge className="absolute top-2 right-2 bg-[hsl(var(--ecode-green))] text-white border-0 shadow-sm">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Live
                         </Badge>
-                      </div>
+                      )}
+                      <Badge variant="secondary" className="absolute bottom-2 left-2 text-xs bg-[var(--ecode-surface)] text-[var(--ecode-text-muted)] border border-[var(--ecode-border)]">
+                        {project.language || 'JavaScript'}
+                      </Badge>
+                    </div>
 
-                      <CardContent className="p-4">
-                        <h3 className="font-semibold truncate mb-1 text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors">
-                          {project.name}
-                        </h3>
-                        <p className="text-sm text-[var(--ecode-text-muted)] mb-3 line-clamp-2">
-                          {project.description || 'No description'}
-                        </p>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold truncate mb-1 text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors">
+                        {project.name}
+                      </h3>
+                      <p className="text-sm text-[var(--ecode-text-muted)] mb-3 line-clamp-2">
+                        {project.description || 'No description'}
+                      </p>
 
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-[var(--ecode-text-muted)] flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {getTimeAgo(project.updatedAt)}
-                          </span>
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              className="h-8 w-8 p-0 hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]" 
-                              data-testid={`button-open-${project.id}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/ide/${project.id}`);
-                              }}
-                            >
-                              <Play className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              className="h-8 w-8 p-0 hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const projectUrl = getProjectUrl(project, user?.username);
-                                navigate(projectUrl);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-[var(--ecode-text-muted)] flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {getTimeAgo(project.updatedAt)}
+                        </span>
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="h-8 w-8 p-0 hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]" 
+                            data-testid={`button-open-${project.id}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/ide/${project.id}`);
+                            }}
+                          >
+                            <Play className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="h-8 w-8 p-0 hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const projectUrl = getProjectUrl(project, user?.username);
+                              navigate(projectUrl);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              ))}
             </div>
           )}
         </div>

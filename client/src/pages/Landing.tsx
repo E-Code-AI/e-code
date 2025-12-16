@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { LazyMotionDiv, CSSFade, CSSSlide, fadeVariants, staggerVariants } from '@/lib/motion';
-import { useScroll, useTransform } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { 
@@ -72,9 +71,6 @@ export default function Landing() {
   const [buildModeDialogOpen, setBuildModeDialogOpen] = useState(false);
   const [pendingBuildPrompt, setPendingBuildPrompt] = useState('');
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { scrollYProgress } = useScroll();
-  const y = useTransform(scrollYProgress, [0, 1], [0, -50]);
-  const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
 
   // Check if user just registered and needs to trigger workspace creation
   useEffect(() => {
@@ -270,11 +266,8 @@ export default function Landing() {
         transition={{ duration: 0.8 }}
         data-testid="section-hero"
       >
-        {/* Background Image with Parallax */}
-        <LazyMotionDiv 
-          className="absolute inset-0 z-0"
-          style={{ y }}
-        >
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
           <img 
             src={cloudComputingImg} 
             alt="Cloud Computing Technology"
@@ -282,7 +275,7 @@ export default function Landing() {
             loading="eager"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[var(--ecode-background)]/80 via-[var(--ecode-background)]/90 to-[var(--ecode-background)]" />
-        </LazyMotionDiv>
+        </div>
 
         {/* Animated Grid Background */}
         <div className="absolute inset-0 bg-grid-pattern opacity-5 dark:opacity-10" />
