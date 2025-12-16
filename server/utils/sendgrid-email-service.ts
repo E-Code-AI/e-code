@@ -4,13 +4,24 @@ import { hashToken } from './auth-utils';
 import { securityLogs } from '@shared/schema';
 import { db } from '../db';
 
-// Check if running in test environment
+// Check if running in test/development environment
 const isTestEnv = process.env.NODE_ENV === 'test';
+const isDevelopment = process.env.NODE_ENV === 'development';
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Initialize SendGrid with API key (skip in test mode to prevent 401 errors)
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '';
+// Initialize SendGrid with API key
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+
+// Validate API key in production - critical security check
+if (isProduction && !SENDGRID_API_KEY) {
+  throw new Error('SENDGRID_API_KEY is required in production environment');
+}
+
+// Initialize SendGrid if key is available (skip in test mode to prevent 401 errors)
 if (SENDGRID_API_KEY && !isTestEnv) {
   sgMail.setApiKey(SENDGRID_API_KEY);
+} else if (!isTestEnv && !SENDGRID_API_KEY) {
+  console.warn('[SendGrid] API key not configured - email functionality disabled');
 }
 
 // Configuration
