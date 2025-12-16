@@ -167,7 +167,8 @@ class BackgroundTestingWebSocketService {
    * Registers with the central upgrade dispatcher
    */
   initialize(server: Server): void {
-    this.wss = new WebSocketServer({ noServer: true });
+    // W-H11: Add maxPayload to prevent DoS via large messages
+    this.wss = new WebSocketServer({ noServer: true, maxPayload: 10 * 1024 * 1024 });
 
     this.wss.on('error', (err: Error) => {
       logger.error('[BackgroundTestingWS] WebSocketServer ERROR:', err.message);

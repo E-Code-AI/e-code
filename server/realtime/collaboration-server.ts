@@ -38,6 +38,48 @@ interface CollaborationMessage {
   timestamp: number;
 }
 
+// W-H4: Rate limiting utility for per-client throttling
+const clientThrottles = new Map<string, Map<string, number>>();
+
+function isThrottled(clientId: string, action: string, intervalMs: number): boolean {
+  const now = Date.now();
+  if (!clientThrottles.has(clientId)) {
+    clientThrottles.set(clientId, new Map());
+  }
+  const clientActions = clientThrottles.get(clientId)!;
+  const lastTime = clientActions.get(action) || 0;
+  if (now - lastTime < intervalMs) return true;
+  clientActions.set(action, now);
+  return false;
+}
+
+function cleanupClientThrottles(clientId: string): void {
+  clientThrottles.delete(clientId);
+}
+
+// W-H13: Message validation helper
+function validateMessage(msg: any): boolean {
+  return typeof msg === 'object' && msg !== null && typeof msg.type === 'string';
+}
+
+// W-H16: Simple mutex for Yjs operations
+const yjsLocks = new Map<string, Promise<void>>();
+
+async function withYjsLock<T>(fileKey: string, fn: () => Promise<T> | T): Promise<T> {
+  while (yjsLocks.has(fileKey)) {
+    await yjsLocks.get(fileKey);
+  }
+  let resolve: () => void;
+  const promise = new Promise<void>(r => { resolve = r; });
+  yjsLocks.set(fileKey, promise);
+  try {
+    return await fn();
+  } finally {
+    yjsLocks.delete(fileKey);
+    resolve!();
+  }
+}
+
 export class CollaborationServer {
   private wss: WebSocketServer | null = null;
   private clients: Map<WebSocket, CollaborationClient> = new Map();
@@ -48,7 +90,8 @@ export class CollaborationServer {
   initialize(server: Server) {
     // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
     // Use noServer mode and register with central dispatcher to eliminate race conditions
-    this.wss = new WebSocketServer({ noServer: true });
+    // W-H12: Add maxPayload to prevent DoS via large messages
+    this.wss = new WebSocketServer({ noServer: true, maxPayload: 10 * 1024 * 1024 });
 
     // Register /ws/collaboration handler with central dispatcher (priority 63)
     // Note: Socket.IO also uses /ws/collaboration in unified-collaboration-service.ts
@@ -103,9 +146,24 @@ export class CollaborationServer {
     ws.on('message', async (message: Buffer) => {
       try {
         const data = JSON.parse(message.toString()) as CollaborationMessage;
+        // W-H13: Validate message schema
+        if (!validateMessage(data)) {
+          this.send(ws, {
+            type: 'error',
+            error: 'Invalid message schema',
+            timestamp: Date.now()
+          });
+          return;
+        }
         await this.handleMessage(ws, data);
       } catch (error) {
         console.error('Failed to handle collaboration message:', error);
+        // W-H17: Send error response to client
+        this.send(ws, {
+          type: 'error',
+          error: 'Failed to process message',
+          timestamp: Date.now()
+        });
       }
     });
 
@@ -126,6 +184,13 @@ export class CollaborationServer {
   private async handleMessage(ws: WebSocket, message: CollaborationMessage) {
     const client = this.clients.get(ws);
     if (!client) return;
+
+    // W-H4: 100ms throttle on all messages to prevent DoS (except auth)
+    if (message.type !== 'auth' && client.userId) {
+      if (isThrottled(String(client.userId), message.type, 100)) {
+        return;
+      }
+    }
 
     switch (message.type) {
       case 'auth':
@@ -472,23 +537,26 @@ export class CollaborationServer {
     const yjsDoc = this.yjsDocs.get(fileKey);
     if (!yjsDoc) return;
 
-    // Apply update to Yjs document
-    const update = new Uint8Array(message.data.update);
-    Y.applyUpdate(yjsDoc, update);
+    // W-H16: Use mutex to handle Yjs race conditions
+    await withYjsLock(fileKey, async () => {
+      // Apply update to Yjs document
+      const update = new Uint8Array(message.data.update);
+      Y.applyUpdate(yjsDoc, update);
 
-    // Broadcast update to other clients
-    this.broadcastToFile(fileKey, {
-      type: 'yjs_update',
-      update: Array.from(update),
-      timestamp: Date.now()
-    }, ws);
+      // Broadcast update to other clients
+      this.broadcastToFile(fileKey, {
+        type: 'yjs_update',
+        update: Array.from(update),
+        timestamp: Date.now()
+      }, ws);
 
-    // Save to database periodically (debounced)
-    if (message.data.saveToDb) {
-      const yText = yjsDoc.getText('content');
-      const content = yText.toString();
-      await storage.updateFile(client.fileId, { content });
-    }
+      // Save to database periodically (debounced)
+      if (message.data.saveToDb) {
+        const yText = yjsDoc.getText('content');
+        const content = yText.toString();
+        await storage.updateFile(client.fileId!, { content });
+      }
+    });
   }
 
   private handleRequestUsers(ws: WebSocket) {
@@ -535,6 +603,11 @@ export class CollaborationServer {
   private handleDisconnection(ws: WebSocket) {
     const client = this.clients.get(ws);
     if (!client) return;
+
+    // W-H7: Cleanup throttle tracking
+    if (client.userId) {
+      cleanupClientThrottles(String(client.userId));
+    }
 
     // Leave project and file
     this.handleLeaveProject(ws);

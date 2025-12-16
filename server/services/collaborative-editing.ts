@@ -67,13 +67,40 @@ const CURSOR_COLORS = [
   '#84CC16', // Lime
 ];
 
+// W-H16: Simple mutex for Yjs operations to handle race conditions
+const yjsLocks = new Map<string, Promise<void>>();
+
+async function withYjsLock<T>(sessionId: string, fn: () => Promise<T> | T): Promise<T> {
+  while (yjsLocks.has(sessionId)) {
+    await yjsLocks.get(sessionId);
+  }
+  let resolve: () => void;
+  const promise = new Promise<void>(r => { resolve = r; });
+  yjsLocks.set(sessionId, promise);
+  try {
+    return await fn();
+  } finally {
+    yjsLocks.delete(sessionId);
+    resolve!();
+  }
+}
+
 export class CollaborativeEditingService {
   private sessions: Map<string, CollaborativeSession> = new Map();
   private fileToSession: Map<number, string> = new Map();
   private userColorIndex: number = 0;
-  private cleanupInterval: NodeJS.Timeout;
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor() {
+    // W-H8: Single cleanup interval (avoid duplicates)
+    this.startCleanupInterval();
+  }
+
+  private startCleanupInterval(): void {
+    // Clear any existing interval to prevent duplicates
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
     // Cleanup inactive sessions every 5 minutes
     this.cleanupInterval = setInterval(() => {
       this.cleanupInactiveSessions();
@@ -174,6 +201,7 @@ export class CollaborativeEditingService {
 
   /**
    * Handle document update from a participant
+   * W-H16: Uses mutex to prevent race conditions in Yjs operations
    */
   async handleDocumentUpdate(
     sessionId: string,
@@ -185,18 +213,22 @@ export class CollaborativeEditingService {
       throw new Error('Session not found');
     }
 
-    // Apply update to the Yjs document
-    applyUpdate(session.ydoc, update);
-    session.lastActivity = new Date();
+    // W-H16: Use mutex to handle Yjs race conditions
+    await withYjsLock(sessionId, () => {
+      // Apply update to the Yjs document
+      applyUpdate(session.ydoc, update);
+      session.lastActivity = new Date();
 
-    // Broadcast update to all other participants
-    session.participants.forEach((participant, participantId) => {
-      if (participantId !== userId && participant.websocket.readyState === WebSocket.OPEN) {
-        participant.websocket.send(JSON.stringify({
-          type: 'document-update',
-          data: Array.from(update),
-        }));
-      }
+      // Broadcast update to all other participants
+      // W-H17: Check readyState before sending
+      session.participants.forEach((participant, participantId) => {
+        if (participantId !== userId && participant.websocket.readyState === WebSocket.OPEN) {
+          participant.websocket.send(JSON.stringify({
+            type: 'document-update',
+            data: Array.from(update),
+          }));
+        }
+      });
     });
   }
 
