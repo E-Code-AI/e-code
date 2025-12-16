@@ -65,9 +65,21 @@ export default function Home() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const { data: projects, isLoading } = useQuery<Project[]>({
+  const { data: projects, isLoading, error: projectsError } = useQuery<Project[]>({
     queryKey: ['/api/projects'],
+    retry: 2,
   });
+
+  // Show error toast if projects fail to load
+  useEffect(() => {
+    if (projectsError) {
+      toast({
+        title: "Error loading projects",
+        description: "Failed to fetch your projects. Please refresh the page.",
+        variant: "destructive",
+      });
+    }
+  }, [projectsError, toast]);
 
   // Redirect to login if not authenticated
   useEffect(() => {

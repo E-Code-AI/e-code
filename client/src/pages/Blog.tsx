@@ -7,7 +7,7 @@ import {
   Code, Calendar, Clock, User, Tag, ChevronRight, 
   ArrowRight, TrendingUp, Zap, Users, Globe
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { ECodeLoading } from '@/components/ECodeLoading';
@@ -36,13 +36,24 @@ export default function Blog() {
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   // Fetch blog posts from API
-  const { data: rawPosts, isLoading } = useQuery({
+  const { data: rawPosts, isLoading, error: postsError } = useQuery({
     queryKey: ['/api/blog/posts'],
   });
 
-  const { data: rawFeatured } = useQuery({
+  const { data: rawFeatured, error: featuredError } = useQuery({
     queryKey: ['/api/blog/featured'],
   });
+
+  // Show error toast if posts fail to load
+  useEffect(() => {
+    if (postsError || featuredError) {
+      toast({
+        title: "Error loading blog posts",
+        description: "Failed to fetch blog content. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  }, [postsError, featuredError, toast]);
 
   // Ensure we always have arrays (API may return null)
   const allPosts = Array.isArray(rawPosts) ? rawPosts : [];

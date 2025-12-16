@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Project } from '@shared/schema';
@@ -87,7 +87,7 @@ export default function Dashboard() {
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   // Fetch recent projects
-  const { data: recentProjects = [], isLoading } = useQuery<ProjectWithDeployment[]>({
+  const { data: recentProjects = [], isLoading, error: projectsError } = useQuery<ProjectWithDeployment[]>({
     queryKey: ['/api/projects'],
     enabled: !!user,
     select: (data) => {
@@ -100,6 +100,17 @@ export default function Dashboard() {
       return sorted.slice(0, 12); // Show up to 12 recent projects
     },
   });
+
+  // Show error toast if projects fail to load
+  useEffect(() => {
+    if (projectsError) {
+      toast({
+        title: "Error loading projects",
+        description: projectsError.message || "Failed to fetch your projects. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [projectsError, toast]);
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
