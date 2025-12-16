@@ -1,20 +1,21 @@
-import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useCallback, memo } from 'react';
 import { Monitor, Loader2 } from 'lucide-react';
 import { ReplitMobileHeader } from './ReplitMobileHeader';
 import { ReplitMobileNavigation, type MobileTab } from './ReplitMobileNavigation';
 import { ReplitMobileInputBar } from './ReplitMobileInputBar';
 import { ReplitToolsSheet } from './ReplitToolsSheet';
 import { useLocation } from 'wouter';
+import { cn } from '@/lib/utils';
 
-const ReplitAgentIcon = ({ className }: { className?: string }) => (
+const ReplitAgentIcon = memo(({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
     <circle cx="7" cy="7" r="2.5" />
     <circle cx="17" cy="7" r="2.5" />
     <circle cx="7" cy="17" r="2.5" />
     <circle cx="17" cy="17" r="2.5" />
   </svg>
-);
+));
+ReplitAgentIcon.displayName = 'ReplitAgentIcon';
 
 interface ReplitMobileIDEProps {
   projectId?: number;
@@ -26,7 +27,7 @@ interface ReplitMobileIDEProps {
   isAgentBusy?: boolean;
 }
 
-export function ReplitMobileIDE({
+export const ReplitMobileIDE = memo(function ReplitMobileIDE({
   projectId,
   children,
   isLoading = false,
@@ -87,12 +88,7 @@ export function ReplitMobileIDE({
         <div className="flex-1 flex flex-col items-center justify-center px-8">
           {activeTab === 'agent' ? (
             <>
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              >
-                <ReplitAgentIcon className="h-12 w-12 text-[#7C65C1] mb-4" />
-              </motion.div>
+              <ReplitAgentIcon className="h-12 w-12 text-[#7C65C1] mb-4 animate-spin-slow" />
               <Loader2 className="h-6 w-6 text-gray-400 animate-spin mb-3" />
             </>
           ) : (
@@ -139,18 +135,15 @@ export function ReplitMobileIDE({
       />
 
       <main className="flex-1 flex flex-col overflow-hidden relative">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.15 }}
-            className="flex-1 flex flex-col overflow-auto"
-          >
-            {renderTabContent()}
-          </motion.div>
-        </AnimatePresence>
+        <div
+          key={activeTab}
+          className={cn(
+            "flex-1 flex flex-col overflow-auto",
+            "animate-fade-in-fast"
+          )}
+        >
+          {renderTabContent()}
+        </div>
       </main>
 
       {showInputBar && activeTab === 'agent' && (
@@ -180,4 +173,4 @@ export function ReplitMobileIDE({
       />
     </div>
   );
-}
+});

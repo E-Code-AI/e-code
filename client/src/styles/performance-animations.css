@@ -320,3 +320,90 @@
   will-change: transform;
   transform: translateZ(0);
 }
+
+/* ============================================
+ * High-Performance Mobile Navigation Animations
+ * Using CSS instead of framer-motion for speed
+ * ============================================ */
+
+/* Fast fade in animation */
+@keyframes fadeInFast {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInFast 0.2s ease-out forwards;
+}
+
+.animate-fade-in-fast {
+  animation: fadeInFast 0.1s ease-out forwards;
+}
+
+/* Scale in animation */
+@keyframes scaleInPop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scaleInPop 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Width expand animation for active indicators - GPU accelerated with scaleX */
+@keyframes scaleXExpand {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+.animate-width-expand {
+  width: 60%;
+  transform-origin: center;
+  animation: scaleXExpand 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Slow spin for loading states */
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 2s linear infinite;
+}
+
+/* Slow pulse for connection indicators */
+@keyframes pulseSlow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.15);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulseSlow 3s ease-in-out infinite;
+}
