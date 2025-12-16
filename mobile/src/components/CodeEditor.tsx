@@ -188,7 +188,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           style={styles.codeScroll}
           showsVerticalScrollIndicator={true}
           keyboardShouldPersistTaps="handled"
-          onScroll={(e) => {
+          onScroll={(e: { nativeEvent: { contentOffset: { y: number } } }) => {
             // Sync scroll with line numbers
             scrollViewRef.current?.scrollTo({ y: e.nativeEvent.contentOffset.y, animated: false });
           }}
