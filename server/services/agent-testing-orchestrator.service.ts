@@ -484,34 +484,92 @@ export class AgentTestingOrchestrator extends EventEmitter {
       mimeType: string;
     }
   ): Promise<string> {
-    // TODO [Phase 2 Production]: Replace with object storage abstraction (S3/R2)
-    // Current implementation uses filesystem paths that require directory provisioning
-    // Production should use setupObjectStorage() or equivalent cloud storage service
-    const storageUrl = `/test-artifacts/${executionId}/${artifact.fileName}`;
+    // Use object storage for production-grade artifact persistence
+    const { realObjectStorageService } = await import('./real-object-storage.service');
+    
+    const storageKey = `test-artifacts/${executionId}/${artifact.fileName}`;
+    
+    try {
+      // Upload to object storage (S3/R2/local based on environment)
+      await realObjectStorageService.uploadFile(storageKey, artifact.data, {
+        contentType: artifact.mimeType,
+      });
+      
+      // Get signed URL for access (24 hour expiry)
+      const storageUrl = await realObjectStorageService.getSignedUrl(storageKey, 86400);
 
-    await db.insert(testArtifacts).values({
-      executionId,
-      artifactType: artifact.type,
-      fileName: artifact.fileName,
-      storageUrl,
-      mimeType: artifact.mimeType,
-      size: artifact.data.length,
-      metadata: {
-        timestamp: new Date().toISOString()
-      }
-    });
+      await db.insert(testArtifacts).values({
+        executionId,
+        artifactType: artifact.type,
+        fileName: artifact.fileName,
+        storageUrl,
+        mimeType: artifact.mimeType,
+        size: artifact.data.length,
+        metadata: {
+          timestamp: new Date().toISOString(),
+          storageKey,
+        }
+      });
 
-    return storageUrl;
+      return storageUrl;
+    } catch (error) {
+      console.error(`[AgentTesting] Failed to upload artifact ${artifact.fileName}:`, error);
+      // Fallback to local path for development
+      const fallbackUrl = `/test-artifacts/${executionId}/${artifact.fileName}`;
+      
+      await db.insert(testArtifacts).values({
+        executionId,
+        artifactType: artifact.type,
+        fileName: artifact.fileName,
+        storageUrl: fallbackUrl,
+        mimeType: artifact.mimeType,
+        size: artifact.data.length,
+        metadata: {
+          timestamp: new Date().toISOString(),
+          error: 'Object storage upload failed',
+        }
+      });
+      
+      return fallbackUrl;
+    }
   }
 
   private async uploadVideo(executionId: string, videoPath: string): Promise<string> {
-    // In production, upload to S3/object storage
-    return `/test-videos/${executionId}/video.webm`;
+    const { realObjectStorageService } = await import('./real-object-storage.service');
+    const fs = await import('fs/promises');
+    
+    try {
+      const videoData = await fs.readFile(videoPath);
+      const storageKey = `test-videos/${executionId}/video.webm`;
+      
+      await realObjectStorageService.uploadFile(storageKey, videoData, {
+        contentType: 'video/webm',
+      });
+      
+      return await realObjectStorageService.getSignedUrl(storageKey, 86400);
+    } catch (error) {
+      console.error('[AgentTesting] Failed to upload video:', error);
+      return `/test-videos/${executionId}/video.webm`;
+    }
   }
 
   private async uploadTrace(executionId: string, tracePath: string): Promise<string> {
-    // In production, upload to S3/object storage
-    return `/test-traces/${executionId}/trace.zip`;
+    const { realObjectStorageService } = await import('./real-object-storage.service');
+    const fs = await import('fs/promises');
+    
+    try {
+      const traceData = await fs.readFile(tracePath);
+      const storageKey = `test-traces/${executionId}/trace.zip`;
+      
+      await realObjectStorageService.uploadFile(storageKey, traceData, {
+        contentType: 'application/zip',
+      });
+      
+      return await realObjectStorageService.getSignedUrl(storageKey, 86400);
+    } catch (error) {
+      console.error('[AgentTesting] Failed to upload trace:', error);
+      return `/test-traces/${executionId}/trace.zip`;
+    }
   }
 
   /**
