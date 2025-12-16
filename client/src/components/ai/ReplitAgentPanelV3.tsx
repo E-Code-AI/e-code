@@ -82,7 +82,8 @@ import { UsageTrackingIcon } from './UsageTrackingIcon';
 import { VideoReplayViewer } from './VideoReplayViewer';
 import { ECodeLogo } from '@/components/ECodeLogo';
 import { RAGToggle, RAGStatsDisplay, RetrievedContextPanel, useRAGStats } from './RAGControls';
-import { MemoryBankPanel, MemoryBankStatusBadge, useMemoryBankStatus } from './MemoryBankPanel';
+// ✅ Memory Bank is 100% TRANSPARENT (like Replit) - no UI, works invisibly in background
+// Context is auto-injected into AI prompts via server/api/ai-streaming.ts
 import { EffortPricingDisplay } from '@/components/EffortPricingDisplay';
 import { CheckpointsPanel } from '@/components/CheckpointsPanel';
 import { PreviewDeploymentButton } from './PreviewDeploymentPanel';
@@ -503,8 +504,8 @@ export function ReplitAgentPanelV3({
   const [showRAGContext, setShowRAGContext] = useState(false);
   const { data: ragStats } = useRAGStats();
   
-  // Memory Bank status for persistent project context
-  const { data: memoryBankStatus } = useMemoryBankStatus(projectIdNum);
+  // ✅ Memory Bank works 100% transparently - no UI needed
+  // Context auto-injected into AI prompts on server side
   
   // Derive validation step from autonomousBuildStore current task (Task 6)
   useEffect(() => {
@@ -1804,10 +1805,7 @@ export function ReplitAgentPanelV3({
                 <span className="hidden sm:inline">Working</span>
               </Badge>
             )}
-            {/* Memory Bank status indicator - shows if persistent context is active */}
-            {memoryBankStatus?.initialized && (
-              <MemoryBankStatusBadge initialized={true} className="hidden sm:flex text-[10px]" />
-            )}
+            {/* ✅ Memory Bank is 100% TRANSPARENT - no visible badge like Replit */}
             {/* Web Search Toggle - Prominent first-class feature (Task 8: Replit Agent 3 parity) */}
             <WebSearchToggle
               enabled={agentToolsSettings.webSearch}
@@ -1996,12 +1994,8 @@ export function ReplitAgentPanelV3({
         
         <ScrollArea ref={scrollRef} className="flex-1 min-h-0 px-3 sm:px-4 py-3">
           <div className="space-y-4 sm:space-y-5">
-          {/* Memory Bank Inline Card - Replit-style: appears at top of chat */}
-          <MemoryBankPanel
-            projectId={projectIdNum}
-            compact={true}
-            className="mb-2"
-          />
+          {/* ✅ Memory Bank is 100% TRANSPARENT - no visible UI like Replit */}
+          {/* Context is auto-injected into AI prompts via server/api/ai-streaming.ts */}
           
           {/* Checkpoints Panel with Rollback UI */}
           <div
