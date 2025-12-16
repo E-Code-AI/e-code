@@ -5,10 +5,14 @@
 
 import { EventEmitter } from 'events';
 import * as os from 'os';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import { createLogger } from '../utils/logger';
 import { db } from '../db';
 import { performanceMetrics, alerts, alertHistory } from '@shared/schema';
 import { and, gte, lte, eq, desc, sql } from 'drizzle-orm';
+
+const execAsync = promisify(exec);
 
 const logger = createLogger('performance-monitoring');
 
@@ -171,11 +175,38 @@ export class PerformanceMonitoringService extends EventEmitter {
   }
 
   private async getDiskInfo() {
-    // Simplified disk info - in production, use a library like 'diskusage'
+    try {
+      // Use 'df' command for real disk stats (works on Linux/macOS)
+      const { stdout } = await execAsync('df -B1 / 2>/dev/null || df -k / 2>/dev/null');
+      const lines = stdout.trim().split('\n');
+      
+      if (lines.length >= 2) {
+        // Parse df output: Filesystem 1B-blocks Used Available Use% Mounted
+        const parts = lines[1].split(/\s+/);
+        
+        // Check if output is in bytes (-B1) or kilobytes (-k)
+        const multiplier = stdout.includes('1B-blocks') ? 1 : 1024;
+        
+        // parts: [Filesystem, Size, Used, Avail, Use%, Mounted]
+        const total = parseInt(parts[1], 10) * multiplier;
+        const used = parseInt(parts[2], 10) * multiplier;
+        const free = parseInt(parts[3], 10) * multiplier;
+        const usagePercent = parseInt(parts[4].replace('%', ''), 10);
+        
+        if (!isNaN(total) && !isNaN(used) && !isNaN(free)) {
+          return { total, free, used, usagePercent };
+        }
+      }
+    } catch (error: any) {
+      logger.warn('Failed to get disk stats via df:', { error: error.message });
+    }
+    
+    // Fallback: use memory-based estimation (some cloud environments)
+    const totalMem = os.totalmem();
     return {
-      total: 100 * 1024 * 1024 * 1024, // 100GB placeholder
-      free: 50 * 1024 * 1024 * 1024,   // 50GB placeholder
-      used: 50 * 1024 * 1024 * 1024,   // 50GB placeholder
+      total: totalMem * 10,  // Estimate: 10x RAM for disk
+      free: totalMem * 5,
+      used: totalMem * 5,
       usagePercent: 50
     };
   }
