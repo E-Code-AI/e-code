@@ -6,6 +6,7 @@
 
 import { Router, Request, Response } from 'express';
 import { createLogger } from '../utils/logger';
+import { tierRateLimiters } from '../middleware/tier-rate-limiter';
 
 const logger = createLogger('FeatureFlagsRouter');
 const router = Router();
@@ -25,8 +26,9 @@ const envBool = (key: string, defaultValue: boolean = false): boolean => {
  * 
  * Note: These are runtime flags for gradual rollout of experimental features.
  * Reads from FEATURE_AI_UX_* environment variables.
+ * Rate limited to prevent abuse on this public endpoint.
  */
-router.get('/api/feature-flags', async (req: Request, res: Response) => {
+router.get('/api/feature-flags', tierRateLimiters.api, async (req: Request, res: Response) => {
   try {
     // Read AI UX features from environment variables
     const flags = {
