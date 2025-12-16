@@ -328,11 +328,13 @@ function UnifiedIDELayout({
     : publishState?.status === 'failed' ? 'failed' 
     : 'idle';
 
-  if (isLoadingProject) {
+  // For mobile and tablet, show navigation even during loading (matches Replit behavior)
+  // For desktop, show the full loading screen
+  if (isLoadingProject && deviceType === 'desktop') {
     return <ECodeLoading fullScreen size="lg" text="Loading workspace..." />;
   }
 
-  if (!project) {
+  if (!project && !isLoadingProject) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
@@ -343,6 +345,15 @@ function UnifiedIDELayout({
   }
 
   const renderMobileContent = () => {
+    // Show loading state if project is still loading
+    if (isLoadingProject) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <ECodeLoading size="md" text="Loading workspace..." />
+        </div>
+      );
+    }
+    
     switch (mobileActiveTab) {
       case 'preview':
         return (
@@ -1165,8 +1176,8 @@ function UnifiedIDELayout({
       
       <div className="flex flex-col flex-1 min-w-0">
         <TopNavBar
-          projectName={project.name}
-          projectSlug={project.slug || String(project.id)}
+          projectName={project?.name || 'Loading...'}
+          projectSlug={project?.slug || String(project?.id || projectId)}
           ownerUsername={user?.username || ''}
           projectId={projectId}
           isDeployed={false}
