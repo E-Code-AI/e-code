@@ -125,6 +125,9 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full px-3 py-2 border rounded-md bg-muted border-border"
                       required
+                      pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$"
+                      title="Please enter a valid email address"
+                      data-testid="input-email"
                     />
                   </div>
                 )}
@@ -137,7 +140,16 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full px-3 py-2 border rounded-md bg-muted border-border"
                     required
+                    minLength={8}
+                    pattern={mode === 'register' ? "(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" : undefined}
+                    title={mode === 'register' ? "8+ characters with uppercase, lowercase and number" : undefined}
+                    data-testid="input-password"
                   />
+                  {mode === 'register' && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      8+ characters with uppercase, lowercase and number
+                    </p>
+                  )}
                 </div>
 
                 {mode === 'register' && (
