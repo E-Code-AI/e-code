@@ -13,6 +13,14 @@ import {
 import { EventEmitter } from "events";
 import * as crypto from "crypto";
 
+// MCP Server URL configuration with production validation
+const DEFAULT_MCP_SERVER_URL = "http://localhost:3200/mcp";
+const MCP_SERVER_URL = process.env.MCP_SERVER_URL || DEFAULT_MCP_SERVER_URL;
+
+if (process.env.NODE_ENV === 'production' && !process.env.MCP_SERVER_URL) {
+  console.warn('[MCP] MCP_SERVER_URL not set in production - MCP functionality may not work');
+}
+
 // Custom HTTP transport for MCP
 class HttpClientTransport extends EventEmitter {
   private baseUrl: string;
@@ -110,7 +118,7 @@ export class MCPClient {
   private transport: HttpClientTransport;
   private isConnected: boolean = false;
   
-  constructor(serverUrl: string = "http://localhost:3200/mcp") {
+  constructor(serverUrl: string = MCP_SERVER_URL) {
     this.transport = new HttpClientTransport(serverUrl);
     this.client = new Client(
       { name: "E-Code Platform", version: "1.0.0" },
