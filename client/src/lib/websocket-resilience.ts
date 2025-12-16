@@ -25,6 +25,8 @@ export interface WebSocketConfig {
   baseDelay?: number;
   maxDelay?: number;
   jitterFactor?: number;
+  /** Enable application-level heartbeat (only for JSON-based protocols, NOT for raw PTY) */
+  enableHeartbeat?: boolean;
   heartbeatInterval?: number;
   heartbeatTimeout?: number;
   circuitBreakerThreshold?: number;
@@ -48,6 +50,7 @@ const DEFAULT_CONFIG = {
   baseDelay: 1000,
   maxDelay: 30000,
   jitterFactor: 0.3,
+  enableHeartbeat: false, // Disabled by default - only enable for JSON protocols
   heartbeatInterval: 30000,
   heartbeatTimeout: 10000,
   circuitBreakerThreshold: 5,
@@ -165,16 +168,22 @@ export class ResilientWebSocket {
   }
 
   /**
-   * Start heartbeat monitoring
+   * Start heartbeat monitoring (only for JSON-based protocols)
+   * IMPORTANT: Do NOT enable heartbeat for raw PTY terminals - it corrupts the data stream
    */
   private startHeartbeat(): void {
+    // Skip heartbeat for raw data protocols (like PTY terminal)
+    if (!this.config.enableHeartbeat) {
+      return;
+    }
+    
     this.stopHeartbeat();
     
     this.lastPongTime = Date.now();
     
     this.heartbeatTimer = setInterval(() => {
       if (this.ws?.readyState === WebSocket.OPEN) {
-        // Send ping
+        // Send ping (JSON format - only use for JSON-based protocols)
         try {
           this.ws.send(JSON.stringify({ type: 'ping', timestamp: Date.now() }));
         } catch (err) {
@@ -465,6 +474,7 @@ export class ResilientWebSocket {
 
 /**
  * Create a resilient WebSocket instance for terminal connections
+ * NOTE: Heartbeat is DISABLED for terminal - PTY uses raw binary/text data, not JSON
  */
 export function createTerminalWebSocket(
   projectId: string | number,
@@ -482,8 +492,7 @@ export function createTerminalWebSocket(
     baseDelay: 500,
     maxDelay: 30000,
     jitterFactor: 0.25,
-    heartbeatInterval: 25000,
-    heartbeatTimeout: 8000,
+    enableHeartbeat: false, // CRITICAL: PTY sends raw data, not JSON - heartbeat would corrupt terminal
     circuitBreakerThreshold: 5,
     circuitBreakerResetTime: 45000,
   });
@@ -491,6 +500,7 @@ export function createTerminalWebSocket(
 
 /**
  * Create a resilient WebSocket instance for agent connections
+ * NOTE: Heartbeat is ENABLED for agent - uses JSON protocol
  */
 export function createAgentWebSocket(
   projectId: string | number,
@@ -512,6 +522,7 @@ export function createAgentWebSocket(
     baseDelay: 1000,
     maxDelay: 60000,
     jitterFactor: 0.3,
+    enableHeartbeat: true, // Agent uses JSON protocol - heartbeat is safe
     heartbeatInterval: 30000,
     heartbeatTimeout: 10000,
     circuitBreakerThreshold: 7,
