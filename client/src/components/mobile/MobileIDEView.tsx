@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect, Suspense } from 'react';
-import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence, useMotionValue, useTransform, type PanInfo } from '@/lib/motion';
+import React, { useState, useRef, useEffect, Suspense, useCallback } from 'react';
+import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence, type PanInfo } from '@/lib/motion';
+import { useNativeMotionValue } from '@/lib/native-motion';
 import { Terminal, Monitor, MoreHorizontal, Sparkles, Loader2, CheckCircle, ExternalLink, FolderOpen, Rocket, Code, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EnhancedMobileFileExplorer } from './EnhancedMobileFileExplorer';
@@ -539,11 +540,47 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
     setIsBuildModeOpen(false);
   };
   
-  const x = useMotionValue(0);
+  const x = useNativeMotionValue(0);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  const parallaxOffset = useTransform(x, [-200, 0, 200], [30, 0, -30]);
-  const dragOpacity = useTransform(x, [-150, -50, 0, 50, 150], [0.6, 0.9, 1, 0.9, 0.6]);
+  // State-based style values derived from native motion value
+  const [dragStyles, setDragStyles] = useState({ x: 0, parallaxOffset: 0, opacity: 1 });
+  
+  // Interpolation helper for derived values
+  const interpolate = useCallback((
+    value: number,
+    inputRange: number[],
+    outputRange: number[]
+  ): number => {
+    // Clamp to input range
+    const minInput = inputRange[0];
+    const maxInput = inputRange[inputRange.length - 1];
+    const clampedValue = Math.max(minInput, Math.min(maxInput, value));
+    
+    // Find the segment
+    for (let i = 0; i < inputRange.length - 1; i++) {
+      if (clampedValue >= inputRange[i] && clampedValue <= inputRange[i + 1]) {
+        const inputStart = inputRange[i];
+        const inputEnd = inputRange[i + 1];
+        const outputStart = outputRange[i];
+        const outputEnd = outputRange[i + 1];
+        
+        const t = (clampedValue - inputStart) / (inputEnd - inputStart);
+        return outputStart + t * (outputEnd - outputStart);
+      }
+    }
+    return outputRange[outputRange.length - 1];
+  }, []);
+  
+  // Subscribe to native motion value changes and compute derived styles
+  useEffect(() => {
+    const unsubscribe = x.subscribe((value) => {
+      const parallaxOffset = interpolate(value, [-200, 0, 200], [30, 0, -30]);
+      const opacity = interpolate(value, [-150, -50, 0, 50, 150], [0.6, 0.9, 1, 0.9, 0.6]);
+      setDragStyles({ x: value, parallaxOffset, opacity });
+    });
+    return unsubscribe;
+  }, [x, interpolate]);
   
   const activeIndex = tabs.findIndex(tab => tab.id === activeTab);
   const SWIPE_THRESHOLD = 50;
@@ -555,6 +592,9 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
   };
 
   const handleDrag = (_: unknown, info: PanInfo) => {
+    // Update native motion value with current drag offset
+    x.set(info.offset.x);
+    
     if (info.offset.x > 20) {
       setSwipeDirection('right');
     } else if (info.offset.x < -20) {
@@ -658,7 +698,10 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
           onDragStart={handleDragStart}
           onDrag={handleDrag}
           onDragEnd={handleDragEnd}
-          style={{ x, opacity: prefersReducedMotion ? 1 : dragOpacity }}
+          style={{ 
+            transform: `translateX(${dragStyles.x}px)`,
+            opacity: prefersReducedMotion ? 1 : dragStyles.opacity 
+          }}
           className={cn('h-full', isDragging && 'cursor-grabbing')}
         >
           <LazyAnimatePresence mode="wait" initial={false}>
@@ -670,7 +713,9 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
               exit="exit"
               transition={getReducedMotionTransition(prefersReducedMotion, SPRING_CONFIG.default)}
               className="h-full"
-              style={{ x: prefersReducedMotion ? 0 : parallaxOffset }}
+              style={{ 
+                transform: prefersReducedMotion ? 'translateX(0px)' : `translateX(${dragStyles.parallaxOffset}px)` 
+              }}
             >
               {activeTab === 'agent' && (
                 <Suspense fallback={<AgentFallback />}>

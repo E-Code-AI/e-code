@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useDraggable, useDroppable, DndContext } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { LazyMotionDiv, LazyAnimatePresence, useMotionValue, useSpring } from '@/lib/motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
+import { useSpring, useNativeMotionValue as useMotionValue } from '@/lib/native-motion';
 import { cn } from '@/lib/utils';
 import { PaneGroup, TabInfo, DragItem, DropZone } from '@/types/splits';
 import useSplitsStore from '@/stores/splits-store';

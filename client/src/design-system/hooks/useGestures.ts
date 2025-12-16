@@ -4,8 +4,11 @@
  */
 
 import { useRef, useCallback, useEffect } from 'react';
-import type { PanInfo } from '@/lib/motion';
-import { useAnimation } from '@/lib/motion';
+import type { PanInfo } from '@/lib/native-motion';
+import { useAnimationControls } from '@/lib/native-motion';
+
+const SPRING_EASING = 'cubic-bezier(0.34, 1.56, 0.64, 1)';
+const SPRING_DURATION = 300;
 
 // ============================================================================
 // HAPTIC FEEDBACK
@@ -166,7 +169,7 @@ export interface PullToRefreshConfig {
 export const usePullToRefresh = (config: PullToRefreshConfig) => {
   const { threshold = 80, onRefresh, hapticFeedback = true } = config;
 
-  const controls = useAnimation();
+  const controls = useAnimationControls();
   const isRefreshingRef = useRef(false);
   const hasTriggeredRef = useRef(false);
 
@@ -178,10 +181,10 @@ export const usePullToRefresh = (config: PullToRefreshConfig) => {
       if (window.scrollY > 0) return;
 
       if (offset.y > 0) {
-        controls.start({
-          y: Math.min(offset.y * 0.5, threshold),
-          transition: { type: 'spring', stiffness: 300, damping: 30 },
-        });
+        controls.start(
+          { y: Math.min(offset.y * 0.5, threshold) },
+          { duration: SPRING_DURATION, easing: SPRING_EASING }
+        );
 
         // Trigger haptic at threshold
         if (offset.y > threshold && !hasTriggeredRef.current) {
@@ -201,28 +204,28 @@ export const usePullToRefresh = (config: PullToRefreshConfig) => {
         isRefreshingRef.current = true;
 
         // Show loading state
-        controls.start({
-          y: threshold * 0.6,
-          transition: { type: 'spring', stiffness: 200, damping: 20 },
-        });
+        controls.start(
+          { y: threshold * 0.6 },
+          { duration: SPRING_DURATION, easing: SPRING_EASING }
+        );
 
         // Execute refresh
         await onRefresh();
 
         // Reset
-        controls.start({
-          y: 0,
-          transition: { type: 'spring', stiffness: 400, damping: 30 },
-        });
+        controls.start(
+          { y: 0 },
+          { duration: SPRING_DURATION, easing: SPRING_EASING }
+        );
 
         isRefreshingRef.current = false;
         hasTriggeredRef.current = false;
       } else {
         // Snap back
-        controls.start({
-          y: 0,
-          transition: { type: 'spring', stiffness: 400, damping: 30 },
-        });
+        controls.start(
+          { y: 0 },
+          { duration: SPRING_DURATION, easing: SPRING_EASING }
+        );
         hasTriggeredRef.current = false;
       }
     },
@@ -235,7 +238,8 @@ export const usePullToRefresh = (config: PullToRefreshConfig) => {
     dragElastic: 0.3,
     onDrag: handleDrag,
     onDragEnd: handleDragEnd,
-    animate: controls,
+    controlsRef: controls.ref,
+    controls,
   };
 };
 
@@ -328,7 +332,7 @@ export interface SwipeBackConfig {
 export const useSwipeBack = (config: SwipeBackConfig) => {
   const { onSwipeBack, threshold = 100, hapticFeedback = true } = config;
 
-  const controls = useAnimation();
+  const controls = useAnimationControls();
   const hasTriggeredRef = useRef(false);
 
   const handleDrag = useCallback(
@@ -337,11 +341,7 @@ export const useSwipeBack = (config: SwipeBackConfig) => {
 
       // Only allow swipe from left edge
       if (offset.x > 0 && offset.x < 300) {
-        controls.start({
-          x: offset.x,
-          opacity: 1 - offset.x / 300,
-          transition: { type: 'spring', stiffness: 400, damping: 40 },
-        });
+        controls.set({ x: offset.x, opacity: 1 - offset.x / 300 });
 
         if (offset.x > threshold && !hasTriggeredRef.current) {
           if (hapticFeedback) triggerHaptic('light');
@@ -358,22 +358,20 @@ export const useSwipeBack = (config: SwipeBackConfig) => {
 
       if (offset.x > threshold || velocity.x > 0.5) {
         // Complete the swipe back
-        controls.start({
-          x: 300,
-          opacity: 0,
-          transition: { type: 'spring', stiffness: 300, damping: 30 },
-        });
+        controls.start(
+          { x: 300, opacity: 0 },
+          { duration: SPRING_DURATION, easing: SPRING_EASING }
+        );
 
         setTimeout(() => {
           onSwipeBack();
         }, 200);
       } else {
         // Snap back
-        controls.start({
-          x: 0,
-          opacity: 1,
-          transition: { type: 'spring', stiffness: 400, damping: 30 },
-        });
+        controls.start(
+          { x: 0, opacity: 1 },
+          { duration: SPRING_DURATION, easing: SPRING_EASING }
+        );
       }
 
       hasTriggeredRef.current = false;
@@ -387,7 +385,8 @@ export const useSwipeBack = (config: SwipeBackConfig) => {
     dragElastic: 0.2,
     onDrag: handleDrag,
     onDragEnd: handleDragEnd,
-    animate: controls,
+    controlsRef: controls.ref,
+    controls,
   };
 };
 
