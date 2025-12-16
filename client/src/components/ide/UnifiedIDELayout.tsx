@@ -10,7 +10,6 @@
  */
 
 import { useState, useCallback, Suspense, lazy, useRef, useEffect } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useIDEWorkspace, availableTools } from '@/hooks';
 import { useDeviceType } from '@/hooks/use-media-query';
@@ -260,6 +259,8 @@ function UnifiedIDELayout({
   
   const touchStartX = useRef<number>(0);
   const touchStartTime = useRef<number>(0);
+  const mobileSwipeStartX = useRef<number>(0);
+  const mobileSwipeStartTime = useRef<number>(0);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -281,10 +282,20 @@ function UnifiedIDELayout({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [setShowQuickFileSearch]);
 
-  const handleMobileSwipe = useCallback((info: PanInfo) => {
-    const { offset, velocity } = info;
-    const isSwipeLeft = offset.x < -SWIPE_THRESHOLD && velocity.x < -SWIPE_VELOCITY_THRESHOLD;
-    const isSwipeRight = offset.x > SWIPE_THRESHOLD && velocity.x > SWIPE_VELOCITY_THRESHOLD;
+  const handleMobileSwipeTouchStart = useCallback((e: React.TouchEvent) => {
+    mobileSwipeStartX.current = e.touches[0].clientX;
+    mobileSwipeStartTime.current = Date.now();
+  }, []);
+
+  const handleMobileSwipeTouchEnd = useCallback((e: React.TouchEvent) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndTime = Date.now();
+    const deltaX = touchEndX - mobileSwipeStartX.current;
+    const deltaTime = touchEndTime - mobileSwipeStartTime.current;
+    const velocity = Math.abs(deltaX) / deltaTime;
+    
+    const isSwipeLeft = deltaX < -SWIPE_THRESHOLD && velocity > SWIPE_VELOCITY_THRESHOLD;
+    const isSwipeRight = deltaX > SWIPE_THRESHOLD && velocity > SWIPE_VELOCITY_THRESHOLD;
     
     if (isSwipeLeft || isSwipeRight) {
       const currentIndex = mobileTabOrder.indexOf(mobileActiveTab);
@@ -517,28 +528,20 @@ function UnifiedIDELayout({
         />
 
         {/* Main Content Area - With bottom padding for fixed navigation */}
-        <motion.div 
+        <div 
           className="flex-1 overflow-hidden pb-16"
-          drag={mobileActiveTab === 'preview' || mobileActiveTab === 'agent' ? "x" : false}
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.1}
-          onDragEnd={(_, info) => handleMobileSwipe(info)}
+          onTouchStart={(mobileActiveTab === 'preview' || mobileActiveTab === 'agent') ? handleMobileSwipeTouchStart : undefined}
+          onTouchEnd={(mobileActiveTab === 'preview' || mobileActiveTab === 'agent') ? handleMobileSwipeTouchEnd : undefined}
           data-testid="mobile-swipe-area"
           style={{ paddingBottom: mobileActiveTab === 'agent' ? '8rem' : '3.5rem' }}
         >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={mobileActiveTab}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="h-full overflow-auto"
-            >
-              {renderMobileContent()}
-            </motion.div>
-          </AnimatePresence>
-        </motion.div>
+          <div
+            key={mobileActiveTab}
+            className="h-full overflow-auto animate-fade-in"
+          >
+            {renderMobileContent()}
+          </div>
+        </div>
 
         {/* Replit-style Floating Input Bar - Only shown on Agent tab */}
         {mobileActiveTab === 'agent' && (
@@ -807,50 +810,45 @@ function UnifiedIDELayout({
         onTouchStart={handleTabletTouchStart}
         onTouchEnd={handleTabletTouchEnd}
       >
-        <AnimatePresence>
-          {tabletDrawerOpen && (
-            <motion.div
-              initial={{ x: -280 }}
-              animate={{ x: 0 }}
-              exit={{ x: -280 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed left-0 top-0 z-40 h-full bg-background border-r border-border shadow-xl w-[280px]"
-              data-testid="tablet-drawer"
-            >
-              <div className="flex items-center justify-between h-14 px-4 border-b border-border bg-muted/30">
-                <h2 className="text-sm font-semibold">Files</h2>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setTabletDrawerOpen(false)}
-                  className="h-10 w-10 touch-manipulation"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </Button>
-              </div>
-              <div className="h-[calc(100%-3.5rem)] overflow-hidden">
-                <ReplitFileExplorer
-                  projectId={projectId}
-                  onFileSelect={(file) => {
-                    handleFileSelect(file);
-                    setTabletPanel('editor');
-                  }}
-                  selectedFileId={selectedFileId}
-                />
-              </div>
-            </motion.div>
+        <div
+          className={cn(
+            "fixed left-0 top-0 z-40 h-full bg-background border-r border-border shadow-xl w-[280px]",
+            "transition-transform duration-300 ease-out",
+            tabletDrawerOpen ? "translate-x-0" : "-translate-x-full"
           )}
-        </AnimatePresence>
+          data-testid="tablet-drawer"
+        >
+          <div className="flex items-center justify-between h-14 px-4 border-b border-border bg-muted/30">
+            <h2 className="text-sm font-semibold">Files</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTabletDrawerOpen(false)}
+              className="h-10 w-10 touch-manipulation"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+          </div>
+          <div className="h-[calc(100%-3.5rem)] overflow-hidden">
+            <ReplitFileExplorer
+              projectId={projectId}
+              onFileSelect={(file) => {
+                handleFileSelect(file);
+                setTabletPanel('editor');
+              }}
+              selectedFileId={selectedFileId}
+            />
+          </div>
+        </div>
 
-        {tabletDrawerOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-30 bg-black/20 backdrop-blur-sm"
-            onClick={() => setTabletDrawerOpen(false)}
-          />
-        )}
+        <div
+          className={cn(
+            "fixed inset-0 z-30 bg-black/20 backdrop-blur-sm",
+            "transition-opacity duration-300",
+            tabletDrawerOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          )}
+          onClick={() => setTabletDrawerOpen(false)}
+        />
 
         <div className="flex-1 flex flex-col">
           {/* Replit-style Header for Tablet - Integrated with File Drawer Toggle */}
