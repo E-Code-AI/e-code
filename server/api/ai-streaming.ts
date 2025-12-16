@@ -369,6 +369,10 @@ ${historyItems}
     
     if (projectId) {
       try {
+        // ✅ Ensure project-specific path is set before fetching context
+        const projectBasePath = path.join(process.cwd(), 'projects', String(projectId));
+        memoryBankService.setProjectBasePath(Number(projectId), projectBasePath);
+        
         memoryBankContext = await memoryBankService.getContextForAgent(projectId);
         if (memoryBankContext) {
           logger.info(`[MemoryBank] Injected memory bank context for project ${projectId} (${memoryBankContext.length} chars)`);

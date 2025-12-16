@@ -220,7 +220,11 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     
     logger.info(`[Bootstrap] Project created: ${project.id}`, { projectId: project.id, slug });
     
-    // 2.5 ✅ AI-POWERED MEMORY BANK (Dec 16, 2025)
+    // 2.5 ✅ Set project base path for Memory Bank (required BEFORE initialization)
+    const projectBasePath = path.join(process.cwd(), 'projects', String(project.id));
+    memoryBankService.setProjectBasePath(project.id, projectBasePath);
+    
+    // 2.6 ✅ AI-POWERED MEMORY BANK (Dec 16, 2025)
     // Replit-identical: Memory Bank is created with AI-generated context based on user prompt
     // Runs in background - non-blocking for fast workspace creation
     memoryBankService.initializeWithAI(project.id, prompt, {
@@ -228,7 +232,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
       framework: options.framework,
       buildMode: buildMode
     }).then(() => {
-      logger.info(`[Bootstrap] ✅ Memory Bank AI-generated for project ${project.id}`);
+      logger.info(`[Bootstrap] ✅ Memory Bank AI-generated for project ${project.id} at ${projectBasePath}`);
     }).catch((memoryError) => {
       // Non-blocking: Memory Bank failure shouldn't block project creation
       // Falls back to template-based content automatically

@@ -6,8 +6,18 @@
 import { Router, Request, Response } from 'express';
 import { memoryBankService } from '../services/memory-bank.service';
 import { z } from 'zod';
+import path from 'path';
 
 const router = Router();
+
+/**
+ * Helper to ensure project base path is set before any Memory Bank operation
+ * This ensures each project has its Memory Bank in projects/${projectId}/.ecode/memory-bank/
+ */
+function ensureProjectBasePath(projectId: number): void {
+  const projectBasePath = path.join(process.cwd(), 'projects', String(projectId));
+  memoryBankService.setProjectBasePath(projectId, projectBasePath);
+}
 
 /**
  * GET /api/memory-bank
@@ -46,6 +56,9 @@ router.get('/:projectId', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
 
+    // ✅ Ensure project-specific path is set
+    ensureProjectBasePath(projectId);
+    
     let memoryBank = await memoryBankService.getMemoryBank(projectId);
     
     // ✅ AUTO-INIT: Initialize automatically if not exists
@@ -83,6 +96,7 @@ router.get('/:projectId/status', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
 
+    ensureProjectBasePath(projectId);
     let initialized = await memoryBankService.isInitialized(projectId);
     
     // ✅ AUTO-INIT FALLBACK: Initialize automatically for existing projects
@@ -115,6 +129,7 @@ router.get('/:projectId/context', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
 
+    ensureProjectBasePath(projectId);
     const context = await memoryBankService.getContextForAgent(projectId);
     res.json({ 
       context,
@@ -138,6 +153,7 @@ router.get('/:projectId/files/:filename', async (req: Request, res: Response) =>
       return res.status(400).json({ error: 'Invalid project ID' });
     }
 
+    ensureProjectBasePath(projectId);
     const { filename } = req.params;
     const file = await memoryBankService.getFile(projectId, filename);
     
@@ -163,6 +179,7 @@ router.put('/:projectId/files/:filename', async (req: Request, res: Response) =>
       return res.status(400).json({ error: 'Invalid project ID' });
     }
 
+    ensureProjectBasePath(projectId);
     const validation = updateFileSchema.safeParse(req.body);
     if (!validation.success) {
       return res.status(400).json({ error: validation.error.errors });
@@ -204,6 +221,7 @@ router.delete('/:projectId/files/:filename', async (req: Request, res: Response)
       return res.status(400).json({ error: 'Invalid project ID' });
     }
 
+    ensureProjectBasePath(projectId);
     const { filename } = req.params;
     const deleted = await memoryBankService.deleteFile(projectId, filename);
     
@@ -229,6 +247,7 @@ router.post('/:projectId/log-change', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
 
+    ensureProjectBasePath(projectId);
     const validation = logChangeSchema.safeParse(req.body);
     if (!validation.success) {
       return res.status(400).json({ error: validation.error.errors });
