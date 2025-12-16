@@ -69,7 +69,7 @@ ZOOM_API_SECRET=your_api_secret
 ```
 
 **Behavior Without Configuration**:
-- Returns placeholder URL: `https://meet.ecode.com/session/{sessionId}`
+- Returns placeholder URL: `https://meet.e-code.ai/session/{sessionId}`
 - Logs warning: "Zoom service not initialized"
 - Meeting still tracked in database
 - No errors thrown

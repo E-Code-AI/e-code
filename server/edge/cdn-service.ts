@@ -397,8 +397,8 @@ export class CDNService extends EventEmitter {
     // In production, this would generate actual CDN URLs
     // For now, simulate with edge location prefix
     const baseUrl = locationId 
-      ? `https://${locationId}.edge.ecode.com`
-      : 'https://cdn.ecode.com';
+      ? `https://${locationId}.edge.e-code.ai`
+      : 'https://cdn.e-code.ai';
     
     return `${baseUrl}/${projectId}/${filePath}`;
   }

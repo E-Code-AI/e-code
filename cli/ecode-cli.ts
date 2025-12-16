@@ -17,7 +17,7 @@ import inquirer from 'inquirer';
 import WebSocket from 'ws';
 
 const CONFIG_FILE = path.join(os.homedir(), '.ecode', 'config.json');
-const API_BASE = process.env.ECODE_API_URL || 'https://e-code.com/api';
+const API_BASE = process.env.ECODE_API_URL || 'https://e-code.ai/api';
 
 interface Config {
   token?: string;
@@ -121,7 +121,7 @@ class ECodeCLI {
       });
 
       spinner.succeed(chalk.green(`Project "${data.name}" created!`));
-      console.log(chalk.blue(`URL: https://e-code.com/${data.slug}`));
+      console.log(chalk.blue(`URL: https://e-code.ai/${data.slug}`));
       
       this.config.currentProject = data.id;
       this.saveConfig();
@@ -211,7 +211,7 @@ class ECodeCLI {
     console.log(chalk.blue(`Running: ${command.join(' ')}`));
 
     // Connect to WebSocket for real-time command execution
-    const ws = new WebSocket(`wss://e-code.com/cli/exec?token=${this.config.token}&project=${projectId}`);
+    const ws = new WebSocket(`wss://e-code.ai/cli/exec?token=${this.config.token}&project=${projectId}`);
 
     ws.on('open', () => {
       ws.send(JSON.stringify({ command: command.join(' ') }));
@@ -244,7 +244,7 @@ class ECodeCLI {
 
     if (follow) {
       // Stream logs via WebSocket
-      const ws = new WebSocket(`wss://e-code.com/cli/logs?token=${this.config.token}&project=${projectId}`);
+      const ws = new WebSocket(`wss://e-code.ai/cli/logs?token=${this.config.token}&project=${projectId}`);
       
       ws.on('message', (data: string) => {
         console.log(data);

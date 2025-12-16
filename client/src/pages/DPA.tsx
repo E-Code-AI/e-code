@@ -73,7 +73,7 @@ export default function DPA() {
               <h2 className="text-2xl font-semibold mb-6">5. Sub-processors</h2>
               <div className="space-y-4 text-sm">
                 <p>Customer acknowledges and agrees that E-Code may engage third-party Sub-processors in connection with the provision of the Services.</p>
-                <p>E-Code maintains a list of current Sub-processors at <a href="/subprocessors" className="text-primary hover:underline">e-code.com/subprocessors</a>.</p>
+                <p>E-Code maintains a list of current Sub-processors at <a href="/subprocessors" className="text-primary hover:underline">e-code.ai/subprocessors</a>.</p>
                 <p>E-Code shall notify Customer of any intended changes concerning the addition or replacement of Sub-processors, giving Customer the opportunity to object to such changes.</p>
               </div>
             </Card>

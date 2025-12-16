@@ -858,7 +858,7 @@ session.share({ team: "Field Ops" });
                     <QrCode className="h-16 w-16 text-muted-foreground" />
                     <div className="text-left">
                       <p className="text-sm font-medium">Scan to download</p>
-                      <p className="text-xs text-muted-foreground">Or visit ecode.com/mobile</p>
+                      <p className="text-xs text-muted-foreground">Or visit e-code.ai/mobile</p>
                     </div>
                   </div>
                 </div>

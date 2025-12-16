@@ -154,16 +154,16 @@ if [ ! -f "/etc/nginx/sites-enabled/e-code.conf" ]; then
         cat > "$APP_DIR/nginx.conf" <<'EOF'
 server {
     listen 80;
-    server_name e-code.com www.e-code.com;
+    server_name e-code.ai www.e-code.ai;
     return 301 https://$server_name$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name e-code.com www.e-code.com;
+    server_name e-code.ai www.e-code.ai;
 
-    ssl_certificate /etc/letsencrypt/live/e-code.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/e-code.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/e-code.ai/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/e-code.ai/privkey.pem;
 
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -227,8 +227,8 @@ fi
 echo ""
 echo "✅ Deployment complete!"
 echo ""
-echo "🌐 Application URL: https://e-code.com"
-echo "🏥 Health check: https://e-code.com/api/monitoring/health"
+echo "🌐 Application URL: https://e-code.ai"
+echo "🏥 Health check: https://e-code.ai/api/monitoring/health"
 echo ""
 echo "📊 Monitoring commands:"
 case $DEPLOY_METHOD in

@@ -367,9 +367,9 @@ export class MobileAppService {
         syncInterval: 30000 // 30 seconds
       },
       endpoints: {
-        api: process.env.API_BASE_URL || 'https://api.ecode.com',
-        websocket: process.env.WS_BASE_URL || 'wss://ws.ecode.com',
-        upload: process.env.UPLOAD_BASE_URL || 'https://upload.ecode.com'
+        api: process.env.API_BASE_URL || 'https://api.e-code.ai',
+        websocket: process.env.WS_BASE_URL || 'wss://ws.e-code.ai',
+        upload: process.env.UPLOAD_BASE_URL || 'https://upload.e-code.ai'
       }
     };
   }

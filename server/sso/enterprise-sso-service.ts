@@ -651,7 +651,7 @@ export class EnterpriseSSOService {
     try {
       res.json({
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig'],
-        documentationUri: 'https://e-code.com/docs/scim',
+        documentationUri: 'https://e-code.ai/docs/scim',
         patch: {
           supported: true
         },
@@ -676,7 +676,7 @@ export class EnterpriseSSOService {
           name: 'Bearer Token',
           description: 'Authentication scheme using HTTP Bearer Token',
           specUri: 'https://tools.ietf.org/html/draft-ietf-oauth-v2-bearer-01',
-          documentationUri: 'https://e-code.com/docs/scim-auth'
+          documentationUri: 'https://e-code.ai/docs/scim-auth'
         }]
       });
     } catch (error) {

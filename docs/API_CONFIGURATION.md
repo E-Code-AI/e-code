@@ -256,8 +256,8 @@ Please set ECODE_API_URL to a valid production URL.
 
 **CLI** (cli/src/constants.ts):
 ```typescript
-export const API_BASE_URL = 'https://api.e-code.com';  // Wrong domain
-export const WS_BASE_URL = 'wss://api.e-code.com';    // Wrong domain
+export const API_BASE_URL = 'https://api.e-code.ai';  // Correct domain
+export const WS_BASE_URL = 'wss://api.e-code.ai';    // Correct domain
 ```
 
 **SDK** (sdk/javascript/src/index.ts):

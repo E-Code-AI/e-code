@@ -357,7 +357,7 @@ export class MentorshipService {
     if (!zoomService.isInitialized()) {
       console.warn(`[MentorshipService] Zoom service not initialized for session ${sessionId}`);
       console.warn('[MentorshipService] Set ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET, and ZOOM_ACCOUNT_ID to enable real meeting links');
-      return `https://meet.ecode.com/session/${sessionId}`;
+      return `https://meet.e-code.ai/session/${sessionId}`;
     }
 
     try {
@@ -379,11 +379,11 @@ export class MentorshipService {
         return meeting.join_url;
       } else {
         console.error(`[MentorshipService] Failed to create Zoom meeting for session ${sessionId}`);
-        return `https://meet.ecode.com/session/${sessionId}`;
+        return `https://meet.e-code.ai/session/${sessionId}`;
       }
     } catch (error) {
       console.error(`[MentorshipService] Error creating Zoom meeting:`, error);
-      return `https://meet.ecode.com/session/${sessionId}`;
+      return `https://meet.e-code.ai/session/${sessionId}`;
     }
   }
 }

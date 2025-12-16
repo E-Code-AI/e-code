@@ -222,7 +222,7 @@ export default function TeamSettings() {
               <div>
                 <Label htmlFor="team-slug">Team URL</Label>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">e-code.com/teams/</span>
+                  <span className="text-sm text-muted-foreground">e-code.ai/teams/</span>
                   <Input
                     id="team-slug"
                     value={teamSlug}

@@ -205,7 +205,7 @@ If integrations are not configured:
 - API endpoints still return success (for compatibility)
 
 ### Zoom Meetings
-- Returns placeholder URL: `https://meet.ecode.com/session/{sessionId}`
+- Returns placeholder URL: `https://meet.e-code.ai/session/{sessionId}`
 - Warning message displayed: "Zoom service not initialized"
 - Meetings can still be tracked in database
 - Users must use alternative meeting solution
