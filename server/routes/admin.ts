@@ -266,7 +266,7 @@ router.get('/dashboard/stats', async (req, res) => {
     res.json(stats);
   } catch (error) {
     logger.error('Error fetching dashboard stats', { error: error.message });
-    console.error('Error fetching dashboard stats:', error);
+    logger.error('Error fetching dashboard stats', { error });
     res.status(500).json({ message: 'Failed to fetch dashboard stats' });
   }
 });
@@ -278,7 +278,7 @@ router.get('/stats', async (req, res) => {
     res.json(stats);
   } catch (error) {
     logger.error('Error fetching stats', { error: error.message });
-    console.error('Error fetching stats:', error);
+    logger.error('Error fetching stats', { error });
     res.status(500).json({ message: 'Failed to fetch stats' });
   }
 });
@@ -297,7 +297,7 @@ router.get('/users', async (req, res) => {
     const result = await adminService.getAllUsers(filter);
     res.json(result);
   } catch (error) {
-    console.error('Error fetching users:', error);
+    logger.error('Error fetching users', { error });
     res.status(500).json({ message: 'Failed to fetch users' });
   }
 });
@@ -448,7 +448,7 @@ router.get('/api-keys', async (req, res) => {
     }));
     res.json(maskedKeys);
   } catch (error) {
-    console.error('Error fetching API keys:', error);
+    logger.error('Error fetching API keys', { error });
     res.status(500).json({ message: 'Failed to fetch API keys' });
   }
 });
@@ -462,7 +462,7 @@ router.get('/api-keys/:provider', async (req, res) => {
     // Don't send the actual key in response
     res.json({ ...apiKey, key: 'REDACTED' });
   } catch (error) {
-    console.error('Error fetching API key:', error);
+    logger.error('Error fetching API key', { error });
     res.status(500).json({ message: 'Failed to fetch API key' });
   }
 });
@@ -481,7 +481,7 @@ router.post('/api-keys', async (req, res) => {
     const apiKey = await adminService.createApiKey(data, getAuthUser(req).id.toString());
     res.json({ ...apiKey, key: 'REDACTED' });
   } catch (error) {
-    console.error('Error creating API key:', error);
+    logger.error('Error creating API key', { error });
     res.status(500).json({ message: 'Failed to create API key' });
   }
 });
@@ -504,7 +504,7 @@ router.patch('/api-keys/:id', async (req, res) => {
     }
     res.json({ ...apiKey, key: 'REDACTED' });
   } catch (error) {
-    console.error('Error updating API key:', error);
+    logger.error('Error updating API key', { error });
     res.status(500).json({ message: 'Failed to update API key' });
   }
 });
@@ -514,7 +514,7 @@ router.delete('/api-keys/:id', async (req, res) => {
     await adminService.deleteApiKey(parseInt(req.params.id), getAuthUser(req).id.toString());
     res.json({ success: true });
   } catch (error) {
-    console.error('Error deleting API key:', error);
+    logger.error('Error deleting API key', { error });
     res.status(500).json({ message: 'Failed to delete API key' });
   }
 });
@@ -558,7 +558,7 @@ router.patch('/users/:id', async (req, res) => {
     
     res.json({ success: true, user });
   } catch (error) {
-    console.error('Error updating user:', error);
+    logger.error('Error updating user', { error });
     res.status(500).json({ message: 'Failed to update user' });
   }
 });
@@ -589,7 +589,7 @@ router.delete('/users/:id', async (req, res) => {
     res.json({ success: true });
   } catch (error: any) {
     logger.error('Error deleting user', { error: error?.message });
-    console.error('Error deleting user:', error);
+    logger.error('Error deleting user', { error });
     res.status(500).json({ message: 'Failed to delete user' });
   }
 });
@@ -601,8 +601,10 @@ router.get('/projects', async (req, res) => {
     const visibility = req.query.visibility as string;
     const language = req.query.language as string;
     const status = req.query.status as string;
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
-    const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
+    // Bound limit and offset to prevent abuse
+    const MAX_LIMIT = 100;
+    const limit = Math.min(Math.max(req.query.limit ? parseInt(req.query.limit as string) : 20, 1), MAX_LIMIT);
+    const offset = Math.max(req.query.offset ? parseInt(req.query.offset as string) : 0, 0);
 
     const result = await adminService.getAllProjects({
       search,
@@ -615,7 +617,7 @@ router.get('/projects', async (req, res) => {
     
     res.json(result);
   } catch (error) {
-    console.error('Error fetching projects:', error);
+    logger.error('Error fetching projects', { error });
     res.status(500).json({ message: 'Failed to fetch projects' });
   }
 });
@@ -623,13 +625,17 @@ router.get('/projects', async (req, res) => {
 router.patch('/projects/:id', async (req, res) => {
   try {
     const projectId = req.params.id;
-    const updates = req.body;
     
-    // Don't allow updating sensitive fields
-    delete updates.id;
-    delete updates.ownerId;
-    delete updates.createdAt;
+    // SECURITY: Validate update data with Zod schema
+    const validation = updateProjectSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        message: 'Invalid project update data',
+        errors: validation.error.errors
+      });
+    }
     
+    const updates = validation.data;
     const project = await storage.updateProject(projectId, updates);
     
     if (!project) {
@@ -638,7 +644,7 @@ router.patch('/projects/:id', async (req, res) => {
     
     res.json({ success: true, project });
   } catch (error) {
-    console.error('Error updating project:', error);
+    logger.error('Error updating project', { error });
     res.status(500).json({ message: 'Failed to update project' });
   }
 });
@@ -650,7 +656,7 @@ router.delete('/projects/:id', async (req, res) => {
     await storage.deleteProject(projectId);
     res.json({ success: true });
   } catch (error) {
-    console.error('Error deleting project:', error);
+    logger.error('Error deleting project', { error });
     res.status(500).json({ message: 'Failed to delete project' });
   }
 });
@@ -669,7 +675,7 @@ router.patch('/projects/:id/pin', async (req, res) => {
     
     res.json({ success: true, project });
   } catch (error) {
-    console.error('Error pinning project:', error);
+    logger.error('Error pinning project', { error });
     res.status(500).json({ message: 'Failed to pin project' });
   }
 });
@@ -688,7 +694,7 @@ router.patch('/projects/:id/unpin', async (req, res) => {
     
     res.json({ success: true, project });
   } catch (error) {
-    console.error('Error unpinning project:', error);
+    logger.error('Error unpinning project', { error });
     res.status(500).json({ message: 'Failed to unpin project' });
   }
 });
@@ -699,7 +705,7 @@ router.get('/cms/pages', async (req, res) => {
     const pages = await adminService.getCmsPages();
     res.json(pages);
   } catch (error) {
-    console.error('Error fetching CMS pages:', error);
+    logger.error('Error fetching CMS pages', { error });
     res.status(500).json({ message: 'Failed to fetch CMS pages' });
   }
 });
@@ -712,7 +718,7 @@ router.get('/cms/pages/:slug', async (req, res) => {
     }
     res.json(page);
   } catch (error) {
-    console.error('Error fetching CMS page:', error);
+    logger.error('Error fetching CMS page', { error });
     res.status(500).json({ message: 'Failed to fetch CMS page' });
   }
 });
@@ -735,7 +741,7 @@ router.post('/cms/pages', async (req, res) => {
     const page = await adminService.createCmsPage(data, getAuthUser(req).id.toString());
     res.json(page);
   } catch (error) {
-    console.error('Error creating CMS page:', error);
+    logger.error('Error creating CMS page', { error });
     res.status(500).json({ message: 'Failed to create CMS page' });
   }
 });
@@ -770,7 +776,7 @@ router.patch('/cms/pages/:id', async (req, res) => {
     }
     res.json(page);
   } catch (error) {
-    console.error('Error updating CMS page:', error);
+    logger.error('Error updating CMS page', { error });
     res.status(500).json({ message: 'Failed to update CMS page' });
   }
 });
@@ -783,7 +789,7 @@ router.post('/cms/pages/:id/publish', async (req, res) => {
     }
     res.json(page);
   } catch (error) {
-    console.error('Error publishing CMS page:', error);
+    logger.error('Error publishing CMS page', { error });
     res.status(500).json({ message: 'Failed to publish CMS page' });
   }
 });
@@ -793,7 +799,7 @@ router.delete('/cms/pages/:id', async (req, res) => {
     await adminService.deleteCmsPage(parseInt(req.params.id), getAuthUser(req).id.toString());
     res.json({ success: true });
   } catch (error) {
-    console.error('Error deleting CMS page:', error);
+    logger.error('Error deleting CMS page', { error });
     res.status(500).json({ message: 'Failed to delete CMS page' });
   }
 });
@@ -804,7 +810,7 @@ router.get('/docs/categories', async (req, res) => {
     const categories = await adminService.getDocCategories();
     res.json(categories);
   } catch (error) {
-    console.error('Error fetching doc categories:', error);
+    logger.error('Error fetching doc categories', { error });
     res.status(500).json({ message: 'Failed to fetch doc categories' });
   }
 });
@@ -824,7 +830,7 @@ router.post('/docs/categories', async (req, res) => {
     const category = await adminService.createDocCategory(data, getAuthUser(req).id.toString());
     res.json(category);
   } catch (error) {
-    console.error('Error creating doc category:', error);
+    logger.error('Error creating doc category', { error });
     res.status(500).json({ message: 'Failed to create doc category' });
   }
 });
@@ -837,7 +843,7 @@ router.get('/docs', async (req, res) => {
       : await adminService.getDocumentation();
     res.json(docs);
   } catch (error) {
-    console.error('Error fetching documentation:', error);
+    logger.error('Error fetching documentation', { error });
     res.status(500).json({ message: 'Failed to fetch documentation' });
   }
 });
@@ -860,7 +866,7 @@ router.post('/docs', async (req, res) => {
     const doc = await adminService.createDocumentation(data, getAuthUser(req).id.toString());
     res.json(doc);
   } catch (error) {
-    console.error('Error creating documentation:', error);
+    logger.error('Error creating documentation', { error });
     res.status(500).json({ message: 'Failed to create documentation' });
   }
 });
@@ -873,7 +879,7 @@ router.patch('/docs/:id', async (req, res) => {
     }
     res.json(doc);
   } catch (error) {
-    console.error('Error updating documentation:', error);
+    logger.error('Error updating documentation', { error });
     res.status(500).json({ message: 'Failed to update documentation' });
   }
 });
@@ -886,7 +892,7 @@ router.post('/docs/:id/publish', async (req, res) => {
     }
     res.json(doc);
   } catch (error) {
-    console.error('Error publishing documentation:', error);
+    logger.error('Error publishing documentation', { error });
     res.status(500).json({ message: 'Failed to publish documentation' });
   }
 });
@@ -903,7 +909,7 @@ router.get('/support/tickets', async (req, res) => {
     const tickets = await adminService.getSupportTickets(filter);
     res.json(tickets);
   } catch (error) {
-    console.error('Error fetching support tickets:', error);
+    logger.error('Error fetching support tickets', { error });
     res.status(500).json({ message: 'Failed to fetch support tickets' });
   }
 });
@@ -916,7 +922,7 @@ router.get('/support/tickets/:id', async (req, res) => {
     }
     res.json(ticket);
   } catch (error) {
-    console.error('Error fetching support ticket:', error);
+    logger.error('Error fetching support ticket', { error });
     res.status(500).json({ message: 'Failed to fetch support ticket' });
   }
 });
@@ -926,7 +932,7 @@ router.get('/support/tickets/:id/replies', async (req, res) => {
     const replies = await adminService.getTicketReplies(parseInt(req.params.id));
     res.json(replies);
   } catch (error) {
-    console.error('Error fetching ticket replies:', error);
+    logger.error('Error fetching ticket replies', { error });
     res.status(500).json({ message: 'Failed to fetch ticket replies' });
   }
 });
@@ -950,7 +956,7 @@ router.post('/support/tickets/:id/replies', async (req, res) => {
     }, getAuthUser(req).id.toString());
     res.json(reply);
   } catch (error) {
-    console.error('Error creating ticket reply:', error);
+    logger.error('Error creating ticket reply', { error });
     res.status(500).json({ message: 'Failed to create ticket reply' });
   }
 });
@@ -961,7 +967,7 @@ router.post('/support/tickets/:id/assign', async (req, res) => {
     await adminService.assignTicket(parseInt(req.params.id), assignedTo, getAuthUser(req).id.toString());
     res.json({ success: true });
   } catch (error) {
-    console.error('Error assigning ticket:', error);
+    logger.error('Error assigning ticket', { error });
     res.status(500).json({ message: 'Failed to assign ticket' });
   }
 });
@@ -971,7 +977,7 @@ router.post('/support/tickets/:id/resolve', async (req, res) => {
     await adminService.resolveTicket(parseInt(req.params.id), getAuthUser(req).id.toString());
     res.json({ success: true });
   } catch (error) {
-    console.error('Error resolving ticket:', error);
+    logger.error('Error resolving ticket', { error });
     res.status(500).json({ message: 'Failed to resolve ticket' });
   }
 });
@@ -981,7 +987,7 @@ router.post('/support/tickets/:id/close', async (req, res) => {
     await adminService.closeTicket(parseInt(req.params.id), getAuthUser(req).id.toString());
     res.json({ success: true });
   } catch (error) {
-    console.error('Error closing ticket:', error);
+    logger.error('Error closing ticket', { error });
     res.status(500).json({ message: 'Failed to close ticket' });
   }
 });
@@ -997,7 +1003,7 @@ router.get('/subscriptions', async (req, res) => {
     const subscriptions = await adminService.getUserSubscriptions(filter);
     res.json(subscriptions);
   } catch (error) {
-    console.error('Error fetching subscriptions:', error);
+    logger.error('Error fetching subscriptions', { error });
     res.status(500).json({ message: 'Failed to fetch subscriptions' });
   }
 });
@@ -1041,7 +1047,7 @@ router.patch('/subscriptions/:id', async (req, res) => {
     }
     res.json(subscription);
   } catch (error) {
-    console.error('Error updating subscription:', error);
+    logger.error('Error updating subscription', { error });
     res.status(500).json({ message: 'Failed to update subscription' });
   }
 });
@@ -1051,7 +1057,7 @@ router.post('/subscriptions/:id/cancel', async (req, res) => {
     await adminService.cancelSubscription(parseInt(req.params.id), getAuthUser(req).id.toString());
     res.json({ success: true });
   } catch (error) {
-    console.error('Error cancelling subscription:', error);
+    logger.error('Error cancelling subscription', { error });
     res.status(500).json({ message: 'Failed to cancel subscription' });
   }
 });
@@ -1068,7 +1074,7 @@ router.get('/activity-logs', async (req, res) => {
     const logs = await adminService.getAdminActivityLogs(filter);
     res.json(logs);
   } catch (error) {
-    console.error('Error fetching activity logs:', error);
+    logger.error('Error fetching activity logs', { error });
     res.status(500).json({ message: 'Failed to fetch activity logs' });
   }
 });

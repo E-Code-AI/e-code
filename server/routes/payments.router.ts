@@ -30,6 +30,21 @@ router.post('/create-subscription', ensureAuthenticated, async (req: Request, re
     if (!tier) {
       return res.status(400).json({ error: 'Tier is required' });
     }
+    
+    // Validate tier value
+    const validTiers = ['free', 'core', 'teams', 'enterprise'];
+    if (!validTiers.includes(tier.toLowerCase())) {
+      return res.status(400).json({ error: 'Invalid tier. Must be one of: ' + validTiers.join(', ') });
+    }
+    
+    // For paid tiers, validate payment method presence
+    if (tier.toLowerCase() !== 'free' && !paymentMethodId) {
+      logger.warn('Subscription attempt without payment method', { userId, tier });
+      return res.status(400).json({ 
+        error: 'Payment method required for paid subscriptions',
+        requiresPaymentMethod: true
+      });
+    }
 
     // Map tier to plan ID based on interval
     let planId = tier.toLowerCase();

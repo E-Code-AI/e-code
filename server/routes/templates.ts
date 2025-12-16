@@ -35,8 +35,10 @@ import {
 import { eq, desc, sql, and, or, ilike, gte, lte, asc } from 'drizzle-orm';
 import { z } from 'zod';
 import { csrfProtection } from '../middleware/csrf';
+import { createLogger } from '../utils/logger';
 
 const router = Router();
+const logger = createLogger('templates-routes');
 
 /**
  * CSRF protection for mutating operations
@@ -145,9 +147,10 @@ router.get('/api/templates', async (req, res) => {
         query = query.orderBy(orderFn(templates.downloads));
     }
 
-    // Pagination
-    const limitNum = parseInt(limit as string);
-    const offsetNum = parseInt(offset as string);
+    // Pagination with bounds
+    const MAX_LIMIT = 100;
+    const limitNum = Math.min(Math.max(parseInt(limit as string) || 20, 1), MAX_LIMIT);
+    const offsetNum = Math.max(parseInt(offset as string) || 0, 0);
     
     const results = await query.limit(limitNum).offset(offsetNum);
 
@@ -167,7 +170,7 @@ router.get('/api/templates', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching templates:', error);
+    logger.error('Error fetching templates', { error });
     res.status(500).json({ error: 'Failed to fetch templates' });
   }
 });
@@ -199,7 +202,7 @@ router.get('/api/templates/featured', async (req, res) => {
       total: featuredTemplates.length
     });
   } catch (error) {
-    console.error('Error fetching featured templates:', error);
+    logger.error('Error fetching featured templates', { error });
     res.status(500).json({ error: 'Failed to fetch featured templates' });
   }
 });
@@ -246,7 +249,7 @@ router.get('/api/templates/:id', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching template:', error);
+    logger.error('Error fetching template', { error });
     res.status(500).json({ error: 'Failed to fetch template' });
   }
 });
@@ -293,7 +296,7 @@ router.post('/api/templates', async (req, res) => {
 
     res.status(201).json(newTemplate);
   } catch (error) {
-    console.error('Error creating template:', error);
+    logger.error('Error creating template', { error });
     res.status(500).json({ error: 'Failed to create template' });
   }
 });
@@ -325,15 +328,26 @@ router.patch('/api/templates/:id', async (req, res) => {
       return res.status(403).json({ error: 'Not authorized to update this template' });
     }
 
+    // SECURITY: Filter allowed update fields
+    const allowedFields = ['title', 'description', 'category', 'difficulty', 'language', 
+                           'tags', 'thumbnail', 'previewUrl', 'isPublished', 'isFeatured'];
+    const updates: Record<string, any> = {};
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    }
+    updates.updatedAt = new Date();
+
     const [updated] = await db
       .update(templates)
-      .set({ ...req.body, updatedAt: new Date() })
+      .set(updates)
       .where(eq(templates.id, id))
       .returning();
 
     res.json(updated);
   } catch (error) {
-    console.error('Error updating template:', error);
+    logger.error('Error updating template', { error });
     res.status(500).json({ error: 'Failed to update template' });
   }
 });
@@ -369,7 +383,7 @@ router.delete('/api/templates/:id', async (req, res) => {
 
     res.json({ success: true, message: 'Template deleted successfully' });
   } catch (error) {
-    console.error('Error deleting template:', error);
+    logger.error('Error deleting template', { error });
     res.status(500).json({ error: 'Failed to delete template' });
   }
 });
@@ -387,7 +401,7 @@ router.get('/api/templates/categories', async (req, res) => {
 
     res.json(categories);
   } catch (error) {
-    console.error('Error fetching categories:', error);
+    logger.error('Error fetching categories', { error });
     res.status(500).json({ error: 'Failed to fetch categories' });
   }
 });
@@ -483,7 +497,7 @@ router.post('/api/templates/:id/rate', async (req, res) => {
       templateReviewCount: Number(ratingStats.count)
     });
   } catch (error) {
-    console.error('Error rating template:', error);
+    logger.error('Error rating template', { error });
     res.status(500).json({ error: 'Failed to rate template' });
   }
 });
@@ -507,7 +521,7 @@ router.post('/api/templates/:id/use', requireAuth, async (req, res) => {
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error incrementing usage:', error);
+    logger.error('Error incrementing usage', { error });
     res.status(500).json({ error: 'Failed to update usage count' });
   }
 });
@@ -544,7 +558,7 @@ router.get('/api/templates/:id/preview', async (req, res) => {
       hasLivePreview: !!template.livePreviewUrl
     });
   } catch (error) {
-    console.error('Error fetching template preview:', error);
+    logger.error('Error fetching template preview', { error });
     res.status(500).json({ error: 'Failed to fetch template preview' });
   }
 });
@@ -617,7 +631,7 @@ router.post('/api/templates/:id/fork', async (req, res) => {
       message: `Successfully forked template "${template.name}"`
     });
   } catch (error) {
-    console.error('Error forking template:', error);
+    logger.error('Error forking template', { error });
     res.status(500).json({ error: 'Failed to fork template' });
   }
 });
@@ -669,7 +683,7 @@ router.get('/api/templates/:id/forks', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching template forks:', error);
+    logger.error('Error fetching template forks', { error });
     res.status(500).json({ error: 'Failed to fetch template forks' });
   }
 });
@@ -755,7 +769,7 @@ router.get('/api/templates/:id/ratings', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching template ratings:', error);
+    logger.error('Error fetching template ratings', { error });
     res.status(500).json({ error: 'Failed to fetch template ratings' });
   }
 });
@@ -773,7 +787,7 @@ router.get('/api/templates/collections', async (req, res) => {
 
     res.json(collections);
   } catch (error) {
-    console.error('Error fetching collections:', error);
+    logger.error('Error fetching collections', { error });
     res.status(500).json({ error: 'Failed to fetch collections' });
   }
 });
@@ -811,7 +825,7 @@ router.get('/api/templates/collections/:id', async (req, res) => {
       templates: collectionTemplatesData.map((ct: any) => ct.template)
     });
   } catch (error) {
-    console.error('Error fetching collection templates:', error);
+    logger.error('Error fetching collection templates', { error });
     res.status(500).json({ error: 'Failed to fetch collection templates' });
   }
 });

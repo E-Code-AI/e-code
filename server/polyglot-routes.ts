@@ -5,8 +5,10 @@
 
 import { Router } from 'express';
 import { PolyglotCoordinator } from './services/polyglot-coordinator';
+import { createLogger } from './utils/logger';
 
 const router = Router();
+const logger = createLogger('polyglot-routes');
 // Lazy initialize coordinator to prevent health checks before server starts
 let coordinator: PolyglotCoordinator | null = null;
 
@@ -50,7 +52,10 @@ router.post('/api/containers/create', async (req, res) => {
       
       // Fallback to local container simulation
       const containerId = `container-${projectId}-${Date.now()}`;
-      const port = 8000 + (projectId || Math.floor(Math.random() * 1000));
+      // Use deterministic port based on projectId to avoid collisions
+      const basePort = 8000;
+      const maxPortOffset = 1000;
+      const port = basePort + (projectId ? (projectId % maxPortOffset) : Math.floor(Math.random() * maxPortOffset));
       
       result = {
         status: 200,
@@ -74,7 +79,7 @@ router.post('/api/containers/create', async (req, res) => {
     
     res.status(result.status).json(result.data);
   } catch (error) {
-    console.error('[CONTAINERS] Error creating container:', error);
+    logger.error('[CONTAINERS] Error creating container', { error });
     res.status(500).json({ 
       error: 'Failed to create container',
       message: error.message
