@@ -116,6 +116,9 @@ export class ContextWindowManager {
     disposable: 0
   };
   
+  // ✅ CONVERSATION LIMIT (Dec 16, 2025): Prevent unbounded memory growth
+  private static readonly MAX_CONVERSATION_MESSAGES = 100;
+  
   constructor(maxTokens: number = 100000) {
     this.maxTokens = maxTokens;
     this.memoryStoragePath = path.join(process.cwd(), '.ai-memory');
@@ -366,6 +369,28 @@ export class ContextWindowManager {
     session.messages.push(message);
     session.lastActivity = Date.now();
     session.totalTokensUsed += message.tokens;
+    
+    // ✅ CONVERSATION LIMIT (Dec 16, 2025): Enforce max message count to prevent memory exhaustion
+    if (session.messages.length > ContextWindowManager.MAX_CONVERSATION_MESSAGES) {
+      // Remove oldest non-system messages to stay within limit
+      const systemMessages = session.messages.filter(m => m.role === 'system');
+      const nonSystemMessages = session.messages.filter(m => m.role !== 'system');
+      
+      // Keep newest messages, removing oldest non-system messages
+      const excessCount = session.messages.length - ContextWindowManager.MAX_CONVERSATION_MESSAGES;
+      const messagesToRemove = nonSystemMessages.slice(0, excessCount);
+      const tokensRemoved = messagesToRemove.reduce((sum, m) => sum + (m.tokens || 0), 0);
+      
+      const keptNonSystem = nonSystemMessages.slice(excessCount);
+      session.messages = [...systemMessages, ...keptNonSystem];
+      session.totalTokensUsed -= tokensRemoved;
+      
+      logger.warn(`[Session ${sessionId}] Trimmed ${excessCount} oldest messages to enforce limit`, {
+        limit: ContextWindowManager.MAX_CONVERSATION_MESSAGES,
+        tokensRemoved,
+        remainingMessages: session.messages.length
+      });
+    }
     
     this.extractKeyFacts(message, session.userId, session.projectId);
     

@@ -9,6 +9,9 @@ import { ContextWindowManager } from './context-window-manager';
 import { agentWebSocketService } from '../services/agent-websocket-service';
 import { promptCacheManager } from './prompt-cache-manager';
 import { providerLatencyMonitor } from './provider-latency-monitor';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('ai-provider-manager');
 
 /**
  * Model configuration with provider metadata
@@ -309,7 +312,7 @@ export class AIProviderManager {
       }));
     }
     
-    console.log('[AI Provider Manager] ✓ Circuit breakers initialized for all providers');
+    logger.info('Circuit breakers initialized for all providers');
   }
   
   /**
@@ -317,24 +320,26 @@ export class AIProviderManager {
    */
   private initializeProviders() {
     // DEBUG: Log environment variable state
-    console.log('[AI Provider Manager] Initializing providers...');
-    console.log('[AI Provider Manager] OPENAI_API_KEY exists:', !!process.env.OPENAI_API_KEY);
-    console.log('[AI Provider Manager] ANTHROPIC_API_KEY exists:', !!process.env.ANTHROPIC_API_KEY);
-    console.log('[AI Provider Manager] GEMINI_API_KEY exists:', !!process.env.GEMINI_API_KEY);
-    console.log('[AI Provider Manager] XAI_API_KEY exists:', !!process.env.XAI_API_KEY);
-    console.log('[AI Provider Manager] MOONSHOT_API_KEY exists:', !!process.env.MOONSHOT_API_KEY);
+    logger.info('Initializing providers...');
+    logger.debug('API key status', {
+      OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
+      ANTHROPIC_API_KEY: !!process.env.ANTHROPIC_API_KEY,
+      GEMINI_API_KEY: !!process.env.GEMINI_API_KEY,
+      XAI_API_KEY: !!process.env.XAI_API_KEY,
+      MOONSHOT_API_KEY: !!process.env.MOONSHOT_API_KEY
+    });
     
     // OpenAI
     if (process.env.OPENAI_API_KEY) {
       try {
         this.providers.set('openai', AIProviderFactory.create('openai', process.env.OPENAI_API_KEY));
         this.openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-        console.log('[AI Provider Manager] ✓ OpenAI provider initialized');
+        logger.info('OpenAI provider initialized');
       } catch (error) {
-        console.warn('[AI Provider Manager] Failed to initialize OpenAI provider:', error);
+        logger.warn('Failed to initialize OpenAI provider:', error);
       }
     } else {
-      console.warn('[AI Provider Manager] OpenAI API key not found in environment');
+      logger.warn('OpenAI API key not found in environment');
     }
     
     // Anthropic
@@ -342,12 +347,12 @@ export class AIProviderManager {
       try {
         this.providers.set('anthropic', AIProviderFactory.create('anthropic', process.env.ANTHROPIC_API_KEY));
         this.anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-        console.log('[AI Provider Manager] ✓ Anthropic provider initialized');
+        logger.info('Anthropic provider initialized');
       } catch (error) {
-        console.warn('[AI Provider Manager] Failed to initialize Anthropic provider:', error);
+        logger.warn('Failed to initialize Anthropic provider:', error);
       }
     } else {
-      console.warn('[AI Provider Manager] Anthropic API key not found in environment');
+      logger.warn('Anthropic API key not found in environment');
     }
     
     // Gemini
@@ -355,24 +360,24 @@ export class AIProviderManager {
       try {
         this.providers.set('gemini', AIProviderFactory.create('gemini', process.env.GEMINI_API_KEY));
         this.geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        console.log('[AI Provider Manager] ✓ Gemini provider initialized');
+        logger.info('Gemini provider initialized');
       } catch (error) {
-        console.warn('[AI Provider Manager] Failed to initialize Gemini provider:', error);
+        logger.warn('Failed to initialize Gemini provider:', error);
       }
     } else {
-      console.warn('[AI Provider Manager] Gemini API key not found in environment');
+      logger.warn('Gemini API key not found in environment');
     }
     
     // xAI (Grok)
     if (process.env.XAI_API_KEY) {
       try {
         this.providers.set('xai', AIProviderFactory.create('xai', process.env.XAI_API_KEY));
-        console.log('[AI Provider Manager] ✓ xAI provider initialized');
+        logger.info('xAI provider initialized');
       } catch (error) {
-        console.warn('[AI Provider Manager] Failed to initialize xAI provider:', error);
+        logger.warn('Failed to initialize xAI provider:', error);
       }
     } else {
-      console.warn('[AI Provider Manager] xAI API key not found in environment');
+      logger.warn('xAI API key not found in environment');
     }
     
     // Moonshot AI (Kimi-K2) - OpenAI-compatible API
@@ -386,24 +391,24 @@ export class AIProviderManager {
           apiKey: process.env.MOONSHOT_API_KEY,
           baseURL: 'https://api.moonshot.ai/v1'
         });
-        console.log('[AI Provider Manager] ✓ Moonshot AI provider initialized');
+        logger.info('Moonshot AI provider initialized');
       } catch (error) {
-        console.warn('[AI Provider Manager] Failed to initialize Moonshot AI provider:', error);
+        logger.warn('Failed to initialize Moonshot AI provider:', error);
       }
     } else {
-      console.warn('[AI Provider Manager] Moonshot AI API key not found in environment');
+      logger.warn('Moonshot AI API key not found in environment');
     }
     
     // Groq (Mixtral, Llama)
     if (process.env.GROQ_API_KEY) {
       try {
         this.providers.set('groq', AIProviderFactory.create('groq', process.env.GROQ_API_KEY));
-        console.log('[AI Provider Manager] ✓ Groq provider initialized');
+        logger.info('Groq provider initialized');
       } catch (error) {
-        console.warn('[AI Provider Manager] Failed to initialize Groq provider:', error);
+        logger.warn('Failed to initialize Groq provider:', error);
       }
     } else {
-      console.warn('[AI Provider Manager] Groq API key not found in environment');
+      logger.warn('Groq API key not found in environment');
     }
     
     // Other providers (for future expansion)
@@ -413,18 +418,18 @@ export class AIProviderManager {
       if (process.env[envKey]) {
         try {
           this.providers.set(provider, AIProviderFactory.create(provider, process.env[envKey]!));
-          console.log(`[AI Provider Manager] ✓ ${provider} provider initialized`);
+          logger.info(`${provider} provider initialized`);
         } catch (error) {
-          console.warn(`[AI Provider Manager] Failed to initialize ${provider} provider:`, error);
+          logger.warn(`Failed to initialize ${provider} provider:`, error);
         }
       }
     });
     
     // Log summary
     const providerCount = this.providers.size;
-    console.log(`[AI Provider Manager] Initialization complete: ${providerCount} provider(s) initialized`);
+    logger.info(`Initialization complete: ${providerCount} provider(s) initialized`);
     if (providerCount === 0) {
-      console.error('[AI Provider Manager] ⚠️  NO PROVIDERS INITIALIZED! Please configure API keys in Replit Secrets.');
+      logger.error('NO PROVIDERS INITIALIZED! Please configure API keys in Replit Secrets.');
     }
   }
   
@@ -530,7 +535,7 @@ export class AIProviderManager {
       yield* this.generateChatStreamWithRetry(modelId, optimizedMessages, options);
       return;
     } catch (primaryError: any) {
-      console.log(`[AIProviderManager] Primary model ${modelId} failed, trying fallback chain...`);
+      logger.info(`Primary model ${modelId} failed, trying fallback chain...`);
       
       // Get primary provider for degraded mode notification
       const primaryModel = this.getModel(modelId);
@@ -551,7 +556,7 @@ export class AIProviderManager {
         // ✅ FORTUNE 500 FIX: Skip if we already tried this provider and it failed
         // This prevents hammering the same failed provider with different models
         if (triedProviders.has(fallbackModel.provider)) {
-          console.log(`[AIProviderManager] Skipping ${fallbackModelId} - provider ${fallbackModel.provider} already failed`);
+          logger.info(`Skipping ${fallbackModelId} - provider ${fallbackModel.provider} already failed`);
           continue;
         }
         
@@ -560,7 +565,7 @@ export class AIProviderManager {
         if (circuitBreaker) {
           const status = circuitBreaker.getStatus();
           if (status.state === 'OPEN') {
-            console.log(`[AIProviderManager] Skipping ${fallbackModelId} - circuit breaker OPEN for ${fallbackModel.provider}`);
+            logger.info(`Skipping ${fallbackModelId} - circuit breaker OPEN for ${fallbackModel.provider}`);
             openCircuits.push(fallbackModel.provider);
             triedProviders.add(fallbackModel.provider);
             
@@ -576,7 +581,7 @@ export class AIProviderManager {
         }
         
         try {
-          console.log(`[AIProviderManager] Trying fallback: ${fallbackModelId} (provider: ${fallbackModel.provider})`);
+          logger.info(`Trying fallback: ${fallbackModelId} (provider: ${fallbackModel.provider})`);
           triedProviders.add(fallbackModel.provider);
           
           // ✅ GRACEFUL DEGRADATION: Broadcast fallback activation notification
@@ -588,10 +593,10 @@ export class AIProviderManager {
           });
           
           yield* this.generateChatStreamWithRetry(fallbackModelId, optimizedMessages, options);
-          console.log(`[AIProviderManager] ✓ Fallback successful: ${fallbackModelId}`);
+          logger.info(`Fallback successful: ${fallbackModelId}`);
           return;
         } catch (fallbackError: any) {
-          console.log(`[AIProviderManager] Fallback ${fallbackModelId} failed:`, fallbackError.message);
+          logger.warn(`Fallback ${fallbackModelId} failed:`, fallbackError.message);
           continue;
         }
       }
@@ -622,7 +627,7 @@ export class AIProviderManager {
       agentWebSocketService.broadcastDegradedMode(data);
     } catch (error) {
       // Don't let WebSocket errors affect AI operations
-      console.warn(`[AIProviderManager] Failed to broadcast degraded mode notification:`, error);
+      logger.warn('Failed to broadcast degraded mode notification:', error);
     }
   }
   
@@ -722,28 +727,28 @@ export class AIProviderManager {
       try {
         yield* this.streamAnthropic(modelId, messages, options);
       } catch (error: any) {
-        console.error(`[AIProviderManager] Anthropic streaming failed for ${modelId}:`, error.status, error.message || JSON.stringify(error));
+        logger.error(`Anthropic streaming failed for ${modelId}:`, { status: error.status, message: error.message });
         throw error; // Propagate to outer fallback loop
       }
     } else if (model.provider === 'openai' && this.openaiClient) {
       try {
         yield* this.streamOpenAI(modelId, messages, options);
       } catch (error: any) {
-        console.error(`[AIProviderManager] OpenAI streaming failed for ${modelId}:`, error.status, error.message || JSON.stringify(error));
+        logger.error(`OpenAI streaming failed for ${modelId}:`, { status: error.status, message: error.message });
         throw error; // Propagate to outer fallback loop
       }
     } else if (model.provider === 'gemini' && this.geminiClient) {
       try {
         yield* this.streamGemini(modelId, messages, options);
       } catch (error: any) {
-        console.error(`[AIProviderManager] Gemini streaming failed for ${modelId}:`, error.status, error.message || JSON.stringify(error));
+        logger.error(`Gemini streaming failed for ${modelId}:`, { status: error.status, message: error.message });
         throw error; // Propagate to outer fallback loop
       }
     } else if (model.provider === 'moonshot' && this.moonshotClient) {
       try {
         yield* this.streamMoonshot(modelId, messages, options);
       } catch (error: any) {
-        console.error(`[AIProviderManager] Moonshot streaming failed for ${modelId}:`, error.status, error.message || JSON.stringify(error));
+        logger.error(`Moonshot streaming failed for ${modelId}:`, { status: error.status, message: error.message });
         throw error; // Propagate to outer fallback loop
       }
     } else {
@@ -801,7 +806,7 @@ export class AIProviderManager {
             }
           }
         } catch (chunkError: any) {
-          console.warn(`[Anthropic] Chunk parsing error: ${chunkError.message}`);
+          logger.warn(`Anthropic chunk parsing error: ${chunkError.message}`);
           continue;
         }
       }
@@ -812,7 +817,7 @@ export class AIProviderManager {
       
       success = true;
     } catch (error: any) {
-      console.error(`[Anthropic] Stream error: ${error.message}`);
+      logger.error(`Anthropic stream error: ${error.message}`);
       providerLatencyMonitor.recordLatency('anthropic', modelId, Date.now() - startTime, false, 0, error.message);
       throw error;
     } finally {
@@ -892,7 +897,7 @@ export class AIProviderManager {
             yield content;
           }
         } catch (chunkError: any) {
-          console.warn(`[OpenAI] Chunk parsing error: ${chunkError.message}`);
+          logger.warn(`OpenAI chunk parsing error: ${chunkError.message}`);
           continue;
         }
       }
@@ -903,7 +908,7 @@ export class AIProviderManager {
       
       success = true;
     } catch (error: any) {
-      console.error(`[OpenAI] Stream error: ${error.message}`);
+      logger.error(`OpenAI stream error: ${error.message}`);
       providerLatencyMonitor.recordLatency('openai', modelId, Date.now() - startTime, false, 0, error.message);
       throw error;
     } finally {
@@ -958,7 +963,7 @@ export class AIProviderManager {
         const errors = (stream as any).body.errors;
         const errorMsg = errors[0]?.message || JSON.stringify(errors);
         const errorCode = errors[0]?.code || 'UNKNOWN_ERROR';
-        console.error(`[Moonshot] API returned error payload:`, { code: errorCode, message: errorMsg, errors });
+        logger.error('Moonshot API returned error payload:', { code: errorCode, message: errorMsg, errors });
         throw new Error(`Moonshot API error (${errorCode}): ${errorMsg}`);
       }
       
@@ -979,7 +984,7 @@ export class AIProviderManager {
             yield content;
           }
         } catch (chunkError: any) {
-          console.warn(`[Moonshot] Chunk parsing error: ${chunkError.message}`);
+          logger.warn(`Moonshot chunk parsing error: ${chunkError.message}`);
           continue;
         }
       }
@@ -990,10 +995,10 @@ export class AIProviderManager {
       }
       
       success = true;
-      console.log(`[Moonshot] Stream completed successfully: ${buffer.length} chars from ${chunkCount} chunks`);
+      logger.info(`Moonshot stream completed successfully: ${buffer.length} chars from ${chunkCount} chunks`);
     } catch (error: any) {
       // ✅ ENHANCED LOGGING: Include status code, error details for diagnostics
-      console.error(`[Moonshot] Stream error:`, {
+      logger.error('Moonshot stream error:', {
         message: error.message,
         statusCode: error.status || error.statusCode || error.code,
         errorType: error.constructor?.name,
@@ -1079,7 +1084,7 @@ export class AIProviderManager {
             yield text;
           }
         } catch (chunkError: any) {
-          console.warn(`[Gemini] Chunk parsing error: ${chunkError.message}`);
+          logger.warn(`Gemini chunk parsing error: ${chunkError.message}`);
           // Continue to next chunk instead of failing completely
           continue;
         }
@@ -1097,7 +1102,7 @@ export class AIProviderManager {
       
       success = true;
     } catch (error: any) {
-      console.error(`[Gemini] Stream error: ${error.message}`);
+      logger.error(`Gemini stream error: ${error.message}`);
       providerLatencyMonitor.recordLatency('gemini', modelId, Date.now() - startTime, false, 0, error.message);
       throw new Error(`Gemini streaming failed: ${error.message}`);
     } finally {
