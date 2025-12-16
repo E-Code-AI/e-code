@@ -11,6 +11,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { EventEmitter } from 'events';
+import Anthropic from '@anthropic-ai/sdk';
 
 export interface MemoryBankFile {
   name: string;
@@ -263,6 +264,261 @@ ${projectDescription}
     console.log(`[MemoryBank] Initialized for project ${projectId} with ${files.length} files`);
     
     return memoryBank;
+  }
+
+  /**
+   * Initialize memory bank with AI-generated content based on user prompt
+   * Replit-identical: Generates contextual documentation automatically
+   * 
+   * @param projectId - The project ID
+   * @param userPrompt - The user's original prompt describing what they want to build
+   * @param options - Additional context (language, framework, etc.)
+   */
+  async initializeWithAI(
+    projectId: number, 
+    userPrompt: string,
+    options?: {
+      language?: string;
+      framework?: string;
+      buildMode?: string;
+    }
+  ): Promise<MemoryBank> {
+    const mbPath = this.getMemoryBankPath(projectId);
+    
+    // Create directory
+    await fs.mkdir(mbPath, { recursive: true });
+    
+    console.log(`[MemoryBank] 🤖 Generating AI-powered context for project ${projectId}...`);
+    
+    // Generate AI content for all files in parallel
+    const aiContent = await this.generateAIContent(userPrompt, options);
+    
+    const files: MemoryBankFile[] = [];
+    
+    // Write all files with AI-generated content
+    for (const [filename, content] of Object.entries(aiContent)) {
+      const filePath = path.join(mbPath, filename);
+      await fs.writeFile(filePath, content, 'utf-8');
+      
+      files.push({
+        name: filename,
+        content,
+        lastUpdated: new Date(),
+        size: Buffer.byteLength(content, 'utf-8')
+      });
+    }
+    
+    const memoryBank: MemoryBank = {
+      projectId,
+      files,
+      totalSize: files.reduce((sum, f) => sum + f.size, 0),
+      initialized: true,
+      lastUpdated: new Date()
+    };
+    
+    this.memoryCache.set(projectId, memoryBank);
+    this.emit('initialized', { projectId, memoryBank, aiGenerated: true });
+    
+    console.log(`[MemoryBank] ✅ AI-generated Memory Bank for project ${projectId} (${files.length} files, ${memoryBank.totalSize} bytes)`);
+    
+    return memoryBank;
+  }
+
+  /**
+   * Generate AI content for all Memory Bank files based on user prompt
+   * Uses Claude for intelligent context generation
+   */
+  private async generateAIContent(
+    userPrompt: string,
+    options?: {
+      language?: string;
+      framework?: string;
+      buildMode?: string;
+    }
+  ): Promise<Record<string, string>> {
+    const language = options?.language || 'typescript';
+    const framework = options?.framework || 'react';
+    const buildMode = options?.buildMode || 'full-app';
+    
+    try {
+      const anthropic = new Anthropic();
+      
+      const systemPrompt = `You are an expert software architect. Generate project documentation for a Memory Bank system.
+The user wants to build: "${userPrompt}"
+Tech stack: ${language} with ${framework}
+Build mode: ${buildMode}
+
+Generate JSON with exactly 5 keys, each containing markdown content:
+1. "projectbrief.md" - Project overview, core requirements, goals, and scope
+2. "productContext.md" - Problem statement, target users, UX goals, key user flows
+3. "systemPatterns.md" - Architecture overview, key technical decisions, design patterns
+4. "techContext.md" - Tech stack details, development setup, key dependencies, env vars
+5. "activeContext.md" - Current focus (initial setup), next steps as a checklist
+
+Keep each file concise (10-30 lines). Be specific to this project, not generic.
+Output valid JSON only, no markdown code blocks.`;
+
+      const response = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [
+          {
+            role: 'user',
+            content: `Generate Memory Bank documentation for this project. Return JSON only.\n\nProject: ${userPrompt}`
+          }
+        ],
+        system: systemPrompt
+      });
+
+      // Extract text content from response
+      const textContent = response.content.find(c => c.type === 'text');
+      if (!textContent || textContent.type !== 'text') {
+        throw new Error('No text content in AI response');
+      }
+
+      // Parse JSON response
+      let parsed: Record<string, string>;
+      try {
+        // Clean potential markdown code blocks
+        let jsonStr = textContent.text.trim();
+        if (jsonStr.startsWith('```')) {
+          jsonStr = jsonStr.replace(/^```json?\n?/, '').replace(/\n?```$/, '');
+        }
+        parsed = JSON.parse(jsonStr);
+      } catch (parseError) {
+        console.warn('[MemoryBank] Failed to parse AI response, using fallback:', parseError);
+        return this.generateFallbackContent(userPrompt, options);
+      }
+
+      // Validate all required files exist
+      const requiredFiles = ['projectbrief.md', 'productContext.md', 'systemPatterns.md', 'techContext.md', 'activeContext.md'];
+      for (const file of requiredFiles) {
+        if (!parsed[file] || typeof parsed[file] !== 'string') {
+          console.warn(`[MemoryBank] Missing or invalid ${file}, using fallback content`);
+          parsed[file] = DEFAULT_FILES[file]?.template || `# ${file}\n\nContent to be added.`;
+        }
+      }
+
+      return parsed;
+    } catch (error) {
+      console.error('[MemoryBank] AI generation failed, using fallback:', error);
+      return this.generateFallbackContent(userPrompt, options);
+    }
+  }
+
+  /**
+   * Fallback content generation when AI is unavailable
+   */
+  private generateFallbackContent(
+    userPrompt: string,
+    options?: {
+      language?: string;
+      framework?: string;
+    }
+  ): Record<string, string> {
+    const language = options?.language || 'typescript';
+    const framework = options?.framework || 'react';
+    const date = new Date().toISOString().split('T')[0];
+
+    return {
+      'projectbrief.md': `# Project Brief
+
+## Overview
+${userPrompt}
+
+## Core Requirements
+- Implement the core functionality described above
+- Ensure responsive design for all screen sizes
+- Follow best practices for ${language} development
+
+## Project Goals
+- Deliver a working MVP
+- Clean, maintainable code
+- Good user experience
+
+## Scope
+- Frontend: ${framework} application
+- Backend: API endpoints as needed
+- Database: PostgreSQL for persistence
+`,
+      'productContext.md': `# Product Context
+
+## Problem Statement
+${userPrompt}
+
+## Target Users
+- Primary users who need this functionality
+- Secondary users who may benefit
+
+## User Experience Goals
+- Intuitive interface
+- Fast performance
+- Accessible design
+
+## How It Should Work
+1. User accesses the application
+2. Core functionality is immediately available
+3. Data is persisted across sessions
+`,
+      'systemPatterns.md': `# System Patterns
+
+## Architecture Overview
+- Frontend: ${framework} with ${language}
+- Backend: Express.js API
+- Database: PostgreSQL with Drizzle ORM
+- Styling: Tailwind CSS with shadcn/ui
+
+## Key Technical Decisions
+1. ${framework}: Modern, component-based UI
+2. ${language}: Type safety and better DX
+3. Drizzle ORM: Type-safe database queries
+
+## Design Patterns in Use
+- Repository pattern for data access
+- Component composition for UI
+- Server-side validation with Zod
+`,
+      'techContext.md': `# Technical Context
+
+## Tech Stack
+- Frontend: ${framework}, ${language}, Tailwind CSS
+- Backend: Express.js, Node.js
+- Database: PostgreSQL
+- ORM: Drizzle
+
+## Development Setup
+\`\`\`bash
+npm run dev  # Start development server
+\`\`\`
+
+## Key Dependencies
+- TanStack Query for data fetching
+- shadcn/ui for UI components
+- Zod for validation
+
+## Environment Variables
+- DATABASE_URL: PostgreSQL connection string
+`,
+      'activeContext.md': `# Active Context
+
+## Current Focus
+- Initial project setup based on user requirements
+- Implementing core functionality
+
+## Recent Changes
+- [${date}] Project initialized from prompt
+
+## Next Steps
+- [ ] Set up database schema
+- [ ] Create API endpoints
+- [ ] Build UI components
+- [ ] Connect frontend to backend
+- [ ] Test and refine
+
+---
+*Auto-generated by E-Code Memory Bank*
+`
+    };
   }
 
   /**

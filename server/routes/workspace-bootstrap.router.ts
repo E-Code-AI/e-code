@@ -220,15 +220,20 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     
     logger.info(`[Bootstrap] Project created: ${project.id}`, { projectId: project.id, slug });
     
-    // 2.5 ✅ AUTO-INITIALIZE MEMORY BANK (Dec 15, 2025)
-    // Replit-identical: Memory Bank is created automatically with each project
-    try {
-      await memoryBankService.initialize(project.id, prompt);
-      logger.info(`[Bootstrap] ✅ Memory Bank auto-initialized for project ${project.id}`);
-    } catch (memoryError) {
+    // 2.5 ✅ AI-POWERED MEMORY BANK (Dec 16, 2025)
+    // Replit-identical: Memory Bank is created with AI-generated context based on user prompt
+    // Runs in background - non-blocking for fast workspace creation
+    memoryBankService.initializeWithAI(project.id, prompt, {
+      language: options.language,
+      framework: options.framework,
+      buildMode: buildMode
+    }).then(() => {
+      logger.info(`[Bootstrap] ✅ Memory Bank AI-generated for project ${project.id}`);
+    }).catch((memoryError) => {
       // Non-blocking: Memory Bank failure shouldn't block project creation
-      logger.warn(`[Bootstrap] Memory Bank init failed (non-blocking):`, memoryError);
-    }
+      // Falls back to template-based content automatically
+      logger.warn(`[Bootstrap] Memory Bank AI generation failed (non-blocking):`, memoryError);
+    });
     
     let modelId = userData?.preferredAiModel || null;
     
