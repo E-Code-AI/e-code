@@ -315,7 +315,9 @@ router.post('/push', ensureAuthenticated, csrfProtection, async (req: Request, r
         res.json({ success: true, output: stdout || stderr || 'Pushed successfully' });
       } finally {
         // Always restore original URL to prevent credential leakage
-        await execa('git', ['remote', 'set-url', 'origin', originalUrl], { cwd: PROJECT_ROOT }).catch(() => {});
+        await execa('git', ['remote', 'set-url', 'origin', originalUrl], { cwd: PROJECT_ROOT }).catch((error) => {
+          console.error('[Git] Failed to restore original remote URL after push:', error.message || error);
+        });
       }
     } else {
       const { stdout, stderr } = await execa('git', ['push'], { 
@@ -385,7 +387,9 @@ router.post('/pull', ensureAuthenticated, csrfProtection, async (req: Request, r
         res.json({ success: true, output: stdout || stderr || 'Pulled successfully' });
       } finally {
         // Always restore original URL to prevent credential leakage
-        await execa('git', ['remote', 'set-url', 'origin', originalUrl], { cwd: PROJECT_ROOT }).catch(() => {});
+        await execa('git', ['remote', 'set-url', 'origin', originalUrl], { cwd: PROJECT_ROOT }).catch((error) => {
+          console.error('[Git] Failed to restore original remote URL after pull:', error.message || error);
+        });
       }
     } else {
       const { stdout, stderr } = await execa('git', ['pull'], { 
@@ -455,7 +459,9 @@ router.post('/fetch', ensureAuthenticated, csrfProtection, async (req: Request, 
         res.json({ success: true, output: stdout || stderr || 'Fetched successfully' });
       } finally {
         // Always restore original URL to prevent credential leakage
-        await execa('git', ['remote', 'set-url', 'origin', originalUrl], { cwd: PROJECT_ROOT }).catch(() => {});
+        await execa('git', ['remote', 'set-url', 'origin', originalUrl], { cwd: PROJECT_ROOT }).catch((error) => {
+          console.error('[Git] Failed to restore original remote URL after fetch:', error.message || error);
+        });
       }
     } else {
       const { stdout, stderr } = await execa('git', ['fetch', '--all', '--prune'], { 
