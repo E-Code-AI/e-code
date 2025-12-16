@@ -3,6 +3,7 @@ import { checkpoints, projects } from '@shared/schema';
 import { eq, and, desc, asc } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
 import { checkpointService } from './checkpoint-service';
+import { conversationManagementService } from './conversation-management-service';
 
 const logger = createLogger('rollback-service');
 
@@ -403,16 +404,63 @@ export class RollbackService {
     projectId: number,
     conversationSnapshot: any
   ): Promise<void> {
-    // 🔥 REAL IMPLEMENTATION: Restore AI conversation history
     try {
-      // In production, this would restore to conversation-management-service
-      // For now, we log the restoration
+      if (!conversationSnapshot || !Array.isArray(conversationSnapshot)) {
+        logger.info(`No conversation snapshot to restore for project ${projectId}`);
+        return;
+      }
+
       logger.info(`Restoring conversation history for project ${projectId} with ${conversationSnapshot.length} messages`);
-      
-      // TODO: Integrate with conversation-management-service.ts when implementing AI Agent
-      // await conversationManagementService.restoreConversation(projectId, conversationSnapshot);
+
+      // Get existing conversations for this project to archive them
+      const existingConversations = await conversationManagementService.getProjectConversations(projectId, {
+        status: 'active'
+      });
+
+      // Archive existing active conversations before restoring
+      for (const conv of existingConversations) {
+        try {
+          await conversationManagementService.archiveConversation(conv.id);
+          logger.debug(`Archived existing conversation ${conv.id} before rollback`);
+        } catch (archiveError) {
+          logger.warn(`Failed to archive conversation ${conv.id}:`, archiveError);
+        }
+      }
+
+      // Create a new conversation from the snapshot
+      if (conversationSnapshot.length > 0) {
+        const restoredConversation = await conversationManagementService.createConversation({
+          projectId,
+          userId: conversationSnapshot[0]?.userId || 0,
+          title: `Restored conversation (rollback ${new Date().toISOString().split('T')[0]})`,
+          context: {
+            currentFile: conversationSnapshot[0]?.context?.currentFile,
+            selectedCode: null,
+            recentFiles: conversationSnapshot[0]?.context?.recentFiles || [],
+            projectContext: conversationSnapshot[0]?.context?.projectContext
+          }
+        });
+
+        // Add messages from snapshot
+        for (const msg of conversationSnapshot) {
+          if (msg.role && msg.content) {
+            await conversationManagementService.addMessage(restoredConversation.id, {
+              role: msg.role,
+              content: msg.content,
+              metadata: {
+                ...msg.metadata,
+                restoredFromRollback: true,
+                originalTimestamp: msg.timestamp
+              }
+            });
+          }
+        }
+
+        logger.info(`Successfully restored conversation ${restoredConversation.id} with ${conversationSnapshot.length} messages`);
+      }
     } catch (error) {
       logger.error('Failed to restore conversation history:', error);
+      // Don't throw - conversation restore failure shouldn't block file rollback
     }
   }
 }
