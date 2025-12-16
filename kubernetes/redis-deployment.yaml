@@ -1,11 +1,13 @@
 # Redis Cache Deployment
+# NOTE: For production high-availability, consider using Redis Sentinel or Redis Cluster
+# with proper failover configuration. This deployment uses 3 replicas for basic redundancy.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis
   namespace: e-code-platform
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: redis
@@ -17,6 +19,7 @@ spec:
       containers:
       - name: redis
         image: redis:7-alpine
+        imagePullPolicy: Always
         command:
           - redis-server
           - --requirepass
@@ -41,6 +44,11 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "500m"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         livenessProbe:
           tcpSocket:
             port: 6379

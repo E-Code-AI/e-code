@@ -1,3 +1,4 @@
+# WARNING: Do not commit real secrets. Use sealed-secrets or external-secrets-operator in production.
 # Fixed deployment configuration for existing GKE cluster
 apiVersion: v1
 kind: ConfigMap
@@ -12,8 +13,7 @@ data:
   POSTGRES_DB: "ecode"
   REDIS_HOST: "redis-service"  
   REDIS_PORT: "6379"
-  CORS_ORIGIN: "*"
-  SESSION_SECRET: "change-this-to-secure-secret"
+  CORS_ORIGIN: "https://ecode.cloud,https://*.ecode.cloud"
   REPLIT_DOMAINS: "35.189.194.33"
   ISSUER_URL: "https://replit.com/oidc"
   REPL_ID: "e-code-platform"
@@ -26,20 +26,22 @@ metadata:
   namespace: e-code-platform
 type: Opaque
 stringData:
-  DATABASE_URL: "postgresql://postgres:postgres@postgres-service:5432/ecode"
-  POSTGRES_USER: "postgres"
-  POSTGRES_PASSWORD: "postgres"
-  PGDATABASE: "ecode"
-  PGHOST: "postgres-service"
-  PGPASSWORD: "postgres"
-  PGPORT: "5432"
-  PGUSER: "postgres"
-  REDIS_PASSWORD: "redis-password"
+  # IMPORTANT: Replace with values from Google Secret Manager or HashiCorp Vault
+  # Do NOT commit real values to version control
+  DATABASE_URL: "${DATABASE_URL}"
+  POSTGRES_USER: "${POSTGRES_USER}"
+  POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+  PGDATABASE: "${PGDATABASE}"
+  PGHOST: "${PGHOST}"
+  PGPASSWORD: "${PGPASSWORD}"
+  PGPORT: "${PGPORT}"
+  PGUSER: "${PGUSER}"
+  REDIS_PASSWORD: "${REDIS_PASSWORD}"
   OPENAI_API_KEY: "${OPENAI_API_KEY}"
   STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY}"
   VITE_STRIPE_PUBLIC_KEY: "${VITE_STRIPE_PUBLIC_KEY}"
-  SESSION_SECRET: "your-secure-session-secret-here"
-  JWT_SECRET: "your-jwt-secret-here"
+  SESSION_SECRET: "${SESSION_SECRET}"
+  JWT_SECRET: "${JWT_SECRET}"
 
 ---
 apiVersion: apps/v1
@@ -59,7 +61,9 @@ spec:
     spec:
       containers:
       - name: e-code-platform
-        image: gcr.io/votre-projet-ecode/e-code-platform:latest
+        # Replace with specific version tag in production
+        image: ${CONTAINER_REGISTRY}/${PROJECT_ID}/e-code-platform:${IMAGE_TAG}
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
         envFrom:
@@ -74,16 +78,21 @@ spec:
           limits:
             memory: "2Gi"
             cpu: "1000m"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         livenessProbe:
           httpGet:
-            path: /api/health
+            path: /api/monitoring/health
             port: 5000
           initialDelaySeconds: 60
           periodSeconds: 10
           failureThreshold: 3
         readinessProbe:
           httpGet:
-            path: /api/health
+            path: /api/monitoring/health
             port: 5000
           initialDelaySeconds: 30
           periodSeconds: 5
