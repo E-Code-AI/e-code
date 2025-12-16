@@ -561,43 +561,287 @@ export class DeploymentRollbackService extends EventEmitter {
   }
 
   private async stopDeployment(deploymentId: string): Promise<void> {
-    // In production, this would stop the actual deployment
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log(`[Rollback] Stopping deployment ${deploymentId}`);
+    
+    // Update deployment status in database
+    const { deployments } = await import('@shared/schema');
+    await db.update(deployments)
+      .set({ 
+        status: 'stopping',
+        updatedAt: new Date(),
+      })
+      .where(eq(deployments.id, deploymentId));
+
+    // Stop the running process if applicable
+    try {
+      // Try graceful shutdown via process management
+      await execAsync(`pkill -f "deployment-${deploymentId}" || true`);
+    } catch (error) {
+      // Process may not exist, which is fine
+      console.log(`[Rollback] No running process found for deployment ${deploymentId}`);
+    }
+
+    // Update status to stopped
+    await db.update(deployments)
+      .set({ 
+        status: 'stopped',
+        updatedAt: new Date(),
+      })
+      .where(eq(deployments.id, deploymentId));
   }
 
   private async restoreFiles(deploymentId: string, snapshot: DeploymentSnapshot): Promise<void> {
-    // In production, this would restore actual files
-    await new Promise(resolve => setTimeout(resolve, 2000));
-  }
-
-  private async restoreConfig(deploymentId: string, snapshot: DeploymentSnapshot): Promise<void> {
-    // In production, this would restore configuration
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
-
-  private async restoreDatabase(deploymentId: string, snapshot: DeploymentSnapshot): Promise<void> {
-    // In production, this would restore database
-    await new Promise(resolve => setTimeout(resolve, 3000));
-  }
-
-  private async startDeployment(deploymentId: string, snapshot: DeploymentSnapshot): Promise<void> {
-    // In production, this would start the deployment with restored config
-    await new Promise(resolve => setTimeout(resolve, 2000));
-  }
-
-  private async verifyDeployment(deploymentId: string): Promise<void> {
-    // In production, this would verify the deployment is healthy
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    console.log(`[Rollback] Restoring files for deployment ${deploymentId} from snapshot ${snapshot.id}`);
     
-    // Check health metrics
-    const health = Math.random() > 0.1; // 90% success rate
-    if (!health) {
-      throw new Error('Deployment verification failed');
+    const snapshotPath = path.join(
+      this.snapshotBasePath,
+      snapshot.deploymentId,
+      snapshot.id!,
+      'files'
+    );
+    
+    // Verify snapshot exists
+    try {
+      await fs.access(snapshotPath);
+    } catch (error) {
+      throw new Error(`Snapshot files not found at ${snapshotPath}`);
+    }
+
+    // Get deployment target path
+    const targetPath = `/tmp/deployments/${deploymentId}`;
+    
+    // Clear existing files (except node_modules to speed up)
+    try {
+      const entries = await fs.readdir(targetPath);
+      for (const entry of entries) {
+        if (entry !== 'node_modules' && entry !== '.git') {
+          await fs.rm(path.join(targetPath, entry), { recursive: true, force: true });
+        }
+      }
+    } catch (error) {
+      // Target may not exist yet
+      await fs.mkdir(targetPath, { recursive: true });
+    }
+
+    // Copy files from snapshot
+    await this.copyDeploymentFiles(snapshotPath, targetPath);
+    
+    // Verify file manifest matches
+    for (const file of snapshot.fileManifest) {
+      const filePath = path.join(targetPath, file.path);
+      try {
+        const content = await fs.readFile(filePath);
+        const hash = crypto.createHash('sha256').update(content).digest('hex');
+        if (hash !== file.hash) {
+          console.warn(`[Rollback] File hash mismatch for ${file.path}`);
+        }
+      } catch (error) {
+        console.warn(`[Rollback] Could not verify file ${file.path}`);
+      }
     }
   }
 
+  private async restoreConfig(deploymentId: string, snapshot: DeploymentSnapshot): Promise<void> {
+    console.log(`[Rollback] Restoring configuration for deployment ${deploymentId}`);
+    
+    const { deployments, environmentVariables } = await import('@shared/schema');
+    
+    // Update deployment configuration in database
+    await db.update(deployments)
+      .set({
+        buildCommand: snapshot.config.buildCommand,
+        startCommand: snapshot.config.startCommand,
+        nodeVersion: snapshot.config.nodeVersion,
+        dockerImage: snapshot.config.dockerImage,
+        updatedAt: new Date(),
+      })
+      .where(eq(deployments.id, deploymentId));
+
+    // Restore environment variables
+    if (snapshot.config.environmentVars) {
+      // Delete current env vars for this deployment
+      await db.delete(environmentVariables)
+        .where(eq(environmentVariables.projectId, deploymentId));
+
+      // Insert restored env vars
+      const envVarEntries = Object.entries(snapshot.config.environmentVars);
+      if (envVarEntries.length > 0) {
+        await db.insert(environmentVariables).values(
+          envVarEntries.map(([key, value]) => ({
+            projectId: deploymentId,
+            key,
+            value,
+            isSecret: key.includes('SECRET') || key.includes('KEY') || key.includes('PASSWORD'),
+          }))
+        );
+      }
+    }
+  }
+
+  private async restoreDatabase(deploymentId: string, snapshot: DeploymentSnapshot): Promise<void> {
+    console.log(`[Rollback] Restoring database for deployment ${deploymentId}`);
+    
+    if (!snapshot.databaseSchema) {
+      console.log('[Rollback] No database schema in snapshot, skipping database restore');
+      return;
+    }
+
+    // For now, log the migration rollback that would be needed
+    // Full database rollback requires careful handling of migrations
+    console.log(`[Rollback] Database schema version: ${snapshot.databaseSchema.version}`);
+    console.log(`[Rollback] Tables to restore: ${snapshot.databaseSchema.tables.join(', ')}`);
+    console.log(`[Rollback] Migrations applied: ${snapshot.databaseSchema.migrations.join(', ')}`);
+
+    // In production, this would:
+    // 1. Check current migration version
+    // 2. Generate rollback SQL for migrations applied after snapshot
+    // 3. Execute rollback transactions
+    // 4. Verify schema matches snapshot
+    
+    // For safety, we emit an event for manual intervention if needed
+    this.emit('databaseRollbackRequired', {
+      deploymentId,
+      targetSchema: snapshot.databaseSchema,
+    });
+  }
+
+  private async startDeployment(deploymentId: string, snapshot: DeploymentSnapshot): Promise<void> {
+    console.log(`[Rollback] Starting deployment ${deploymentId} with restored config`);
+    
+    const { deployments } = await import('@shared/schema');
+    const deploymentPath = `/tmp/deployments/${deploymentId}`;
+
+    // Install dependencies if package.json exists
+    try {
+      await fs.access(path.join(deploymentPath, 'package.json'));
+      console.log('[Rollback] Installing dependencies...');
+      await execAsync('npm install', { cwd: deploymentPath, timeout: 300000 });
+    } catch (error) {
+      // No package.json or install failed
+      console.log('[Rollback] Skipping npm install');
+    }
+
+    // Build if build command exists
+    if (snapshot.config.buildCommand) {
+      console.log(`[Rollback] Running build: ${snapshot.config.buildCommand}`);
+      await execAsync(snapshot.config.buildCommand, { cwd: deploymentPath, timeout: 600000 });
+    }
+
+    // Update deployment status
+    await db.update(deployments)
+      .set({
+        status: 'running',
+        version: snapshot.version,
+        updatedAt: new Date(),
+      })
+      .where(eq(deployments.id, deploymentId));
+
+    // Start the deployment process
+    if (snapshot.config.startCommand) {
+      console.log(`[Rollback] Starting: ${snapshot.config.startCommand}`);
+      // Use spawn for background process (non-blocking)
+      exec(
+        `cd ${deploymentPath} && ${snapshot.config.startCommand}`,
+        { env: { ...process.env, ...snapshot.config.environmentVars } }
+      );
+    }
+  }
+
+  private async verifyDeployment(deploymentId: string): Promise<void> {
+    console.log(`[Rollback] Verifying deployment ${deploymentId}`);
+    
+    const { deployments } = await import('@shared/schema');
+    
+    // Wait a bit for the deployment to start
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    // Get deployment details
+    const [deployment] = await db.select()
+      .from(deployments)
+      .where(eq(deployments.id, deploymentId))
+      .limit(1);
+
+    if (!deployment) {
+      throw new Error('Deployment not found');
+    }
+
+    // Health check on deployment URL if available
+    if (deployment.url) {
+      try {
+        const healthUrl = `${deployment.url}/api/health`;
+        const response = await fetch(healthUrl, { 
+          method: 'GET',
+          signal: AbortSignal.timeout(10000),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Health check failed with status ${response.status}`);
+        }
+        
+        console.log(`[Rollback] Health check passed for ${healthUrl}`);
+      } catch (error) {
+        // Try root endpoint as fallback
+        try {
+          const response = await fetch(deployment.url, { 
+            method: 'GET',
+            signal: AbortSignal.timeout(10000),
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Root health check failed with status ${response.status}`);
+          }
+          
+          console.log(`[Rollback] Root endpoint check passed`);
+        } catch (fallbackError) {
+          throw new Error(`Deployment verification failed: ${fallbackError.message}`);
+        }
+      }
+    }
+
+    // Update deployment with verified status
+    await db.update(deployments)
+      .set({
+        status: 'running',
+        lastHealthCheck: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(deployments.id, deploymentId));
+  }
+
   private async attemptRecovery(deploymentId: string): Promise<void> {
-    // In production, this would attempt to restore the previous working state
+    console.log(`[Rollback] Attempting recovery for deployment ${deploymentId}`);
+    
+    try {
+      // Get the most recent working snapshot
+      const snapshots = await this.getSnapshots(deploymentId);
+      const lastWorkingSnapshot = snapshots.find(s => s.status === 'active');
+      
+      if (lastWorkingSnapshot) {
+        console.log(`[Rollback] Found working snapshot ${lastWorkingSnapshot.id}, attempting restore`);
+        
+        // Attempt to restore to last known good state
+        await this.restoreFiles(deploymentId, lastWorkingSnapshot);
+        await this.restoreConfig(deploymentId, lastWorkingSnapshot);
+        await this.startDeployment(deploymentId, lastWorkingSnapshot);
+        
+        console.log('[Rollback] Recovery completed successfully');
+      } else {
+        console.error('[Rollback] No working snapshot found for recovery');
+        
+        // Emit event for manual intervention
+        this.emit('recoveryFailed', {
+          deploymentId,
+          reason: 'No working snapshot available',
+        });
+      }
+    } catch (error) {
+      console.error('[Rollback] Recovery attempt failed:', error);
+      
+      this.emit('recoveryFailed', {
+        deploymentId,
+        reason: error.message,
+      });
+    }
   }
 
   async getSnapshots(deploymentId: string): Promise<DeploymentSnapshot[]> {
