@@ -130,11 +130,64 @@ console.log('[HTTP Server] ✅ Upgrade listener blocking enabled - only dispatch
   httpServer.prependListener = originalHttpServerPrependListener;
 };
 
-// Health check endpoint for deployment health checks
-// Note: Root '/' is handled by Vite middleware (dev) or serveStatic (prod) to serve the React app
+/**
+ * Fortune 500 Performance-Optimized Health Endpoints
+ * 
+ * Kubernetes-style liveness and readiness probes for:
+ * - Replit preview reliability
+ * - Load balancer health checks
+ * - Container orchestration
+ */
+
+// Track server readiness state
+const serverState = {
+  phase: 'starting' as 'starting' | 'listening' | 'loading' | 'ready',
+  servicesLoaded: 0,
+  totalServices: 12,
+  startTime: Date.now(),
+  errors: [] as string[]
+};
+
+// Main health check - responds with detailed status
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
+  const uptime = Date.now() - serverState.startTime;
+  res.json({
+    status: serverState.phase === 'ready' ? 'ok' : 'starting',
+    phase: serverState.phase,
+    uptime: `${Math.round(uptime / 1000)}s`,
+    services: `${serverState.servicesLoaded}/${serverState.totalServices}`,
+    message: serverState.phase === 'ready'
+      ? 'Server is fully operational'
+      : `Server is starting (${serverState.servicesLoaded}/${serverState.totalServices} services loaded)`
+  });
 });
+
+// Kubernetes-style liveness probe - always returns 200 if process is alive
+app.get('/health/liveness', (_req, res) => {
+  res.status(200).json({ status: 'alive' });
+});
+
+// Kubernetes-style readiness probe - returns 503 until server is ready
+app.get('/health/readiness', (_req, res) => {
+  if (serverState.phase === 'ready') {
+    res.status(200).json({ status: 'ready' });
+  } else {
+    res.status(503).json({
+      status: 'not ready',
+      phase: serverState.phase,
+      services: `${serverState.servicesLoaded}/${serverState.totalServices}`
+    });
+  }
+});
+
+// Helper to track service loading
+const trackServiceLoad = (serviceName: string) => {
+  serverState.servicesLoaded++;
+  console.log(`[Startup] ✅ ${serviceName} (${serverState.servicesLoaded}/${serverState.totalServices})`);
+};
+
+// Mark server as listening immediately
+serverState.phase = 'listening';
 
 // CORS configuration health check endpoint
 app.get('/api/cors-health', async (_req, res) => {
@@ -715,6 +768,10 @@ app.get('/api/cors-health', async (_req, res) => {
     console.log('[DEBUG] After guard - upgrade listeners:', httpServer.listenerCount('upgrade'));
     console.log('[Upgrade Guard] Final catch-all guard registered for orphan socket cleanup');
     console.log('[HTTP Server] ✅ Upgrade listeners locked: only dispatcher + guard active');
+    
+    // ✅ Mark server as fully ready for health probes
+    serverState.phase = 'ready';
+    console.log(`[Startup] ✅ Server ready (${Date.now() - serverState.startTime}ms startup time)`);
   });
 
   // ✅ PRODUCTION OPTIMIZATION: Graceful shutdown handler
