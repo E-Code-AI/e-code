@@ -9,11 +9,17 @@ const ensureProjectAccess = async (req: any, res: any, next: any) => {
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-  const projectId = req.params.projectId || req.params.id;
+  const projectIdParam = req.params.projectId || req.params.id;
   
-  if (!projectId || (typeof projectId === 'string' && projectId.trim().length === 0)) {
+  // Validate projectId is a positive integer
+  const projectIdNum = parseInt(projectIdParam, 10);
+  if (isNaN(projectIdNum) || projectIdNum <= 0) {
     return res.status(400).json({ message: "Invalid project ID" });
   }
+  
+  // Store validated projectId for downstream use (as string for storage API)
+  const projectId = String(projectIdNum);
+  req.validatedProjectId = projectId;
   
   const project = await storage.getProject(projectId);
   if (!project) {
@@ -49,11 +55,12 @@ router.get('/url', ensureAuthenticated, async (req, res) => {
       return res.status(400).json({ error: 'Project ID is required' });
     }
     
-    const projectId = projectIdParam as string;
-    
-    if (!projectId || (typeof projectId === 'string' && projectId.trim().length === 0)) {
+    // Validate projectId is a positive integer
+    const projectIdNum = parseInt(projectIdParam as string, 10);
+    if (isNaN(projectIdNum) || projectIdNum <= 0) {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
+    const projectId = String(projectIdNum);
     
     // Check project access
     const userId = req.user?.id;
