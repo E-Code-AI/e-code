@@ -49,7 +49,7 @@ import { ReplitToolsSheet } from '@/components/ide/ReplitToolsSheet';
 import { QuickFileSearch } from '@/components/ide/QuickFileSearch';
 import { KeyboardShortcutsOverlay } from '@/components/ide/KeyboardShortcutsOverlay';
 import { ReplitFileExplorer } from '@/components/editor/ReplitFileExplorer';
-import { ReplitBottomTabs } from '@/components/mobile/ReplitBottomTabs';
+import { ReplitMobileNavigation, ReplitMobileInputBar, ReplitMobileHeader, type MobileTab } from '@/components/mobile';
 
 const ReplitMonacoEditor = lazy(() => import('@/components/editor/ReplitMonacoEditor').then(mod => ({ default: mod.ReplitMonacoEditor })));
 const ReplitTerminalPanel = lazy(() => import('@/components/editor/ReplitTerminalPanel').then(mod => ({ default: mod.ReplitTerminalPanel })));
@@ -94,13 +94,12 @@ interface UnifiedIDELayoutProps {
   onWorkspaceError?: (error: string) => void;
 }
 
-type MobileTab = 'agent' | 'files' | 'console' | 'preview' | 'more';
 type TabletPanel = 'editor' | 'terminal' | 'preview' | 'agent' | 'more';
 
 const SWIPE_THRESHOLD = 50;
 const SWIPE_VELOCITY_THRESHOLD = 0.3;
 
-const mobileTabOrder: MobileTab[] = ['agent', 'files', 'console', 'preview', 'more'];
+const mobileTabOrder: MobileTab[] = ['preview', 'agent', 'deploy', 'tasks'];
 
 function UnifiedIDELayout({ 
   projectId, 
@@ -345,6 +344,12 @@ function UnifiedIDELayout({
 
   const renderMobileContent = () => {
     switch (mobileActiveTab) {
+      case 'preview':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Preview..." /></div>}>
+            <MobilePreviewPanel projectId={projectId} />
+          </Suspense>
+        );
       case 'agent':
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Agent..." /></div>}>
@@ -358,72 +363,16 @@ function UnifiedIDELayout({
             />
           </Suspense>
         );
-      case 'files':
+      case 'deploy':
         return (
-          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Files..." /></div>}>
-            <EnhancedMobileFileExplorer
-              projectId={projectId}
-              isOpen={true}
-              onClose={() => setMobileActiveTab('agent')}
-              onFileSelect={(file) => {
-                setSelectedFileId(file.id);
-                setMobileActiveTab('console');
-              }}
-            />
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Deploy..." /></div>}>
+            <ReplitDeploymentPanel projectId={projectId} />
           </Suspense>
         );
-      case 'console':
+      case 'tasks':
         return (
-          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Editor..." /></div>}>
-            <div className="h-full flex flex-col">
-              <div className="flex-1">
-                <LazyMobileCodeEditor
-                  projectId={projectId}
-                  fileId={selectedFileId}
-                  className="h-full"
-                />
-              </div>
-              <div className="h-1/3 border-t">
-                <EnhancedMobileTerminal projectId={projectId} />
-              </div>
-            </div>
-          </Suspense>
-        );
-      case 'preview':
-        return (
-          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Preview..." /></div>}>
-            <MobilePreviewPanel projectId={projectId} />
-          </Suspense>
-        );
-      case 'more':
-        return (
-          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading..." /></div>}>
-            <MobileMoreMenu 
-              projectId={projectId}
-              isOpen={true}
-              inline={true}
-              onClose={() => setMobileActiveTab('agent')}
-              onOpenFiles={() => setMobileActiveTab('files')}
-              onOpenGit={() => setShowGitPanel(true)}
-              onOpenPackages={() => setShowPackagesPanel(true)}
-              onOpenSecrets={() => setShowSecretsPanel(true)}
-              onOpenDatabase={() => setShowReplitDB(true)}
-              onOpenSettings={() => setShowSettingsPanel(true)}
-              onOpenDebug={() => setShowDebugPanel(true)}
-              onOpenCollaboration={() => setShowCollaboration(true)}
-              onOpenWorkflows={() => setShowWorkflowsPanel(true)}
-              onOpenHistory={() => setShowHistoryPanel(true)}
-              onOpenCheckpoints={() => setShowCheckpointsPanel(true)}
-              onOpenExtensions={() => setShowExtensionsPanel(true)}
-              onOpenSecurity={() => setShowSecurityPanel(true)}
-              onOpenActions={() => { setLeftPanelTab('actions'); setMobileActiveTab('agent'); }}
-              onOpenTools={() => { setLeftPanelTab('tools'); setMobileActiveTab('agent'); }}
-              onOpenDeploy={() => { setLeftPanelTab('deployment'); setMobileActiveTab('agent'); }}
-              onOpenCommandPalette={() => setShowCommandPalette(true)}
-              onOpenGlobalSearch={() => setShowGlobalSearch(true)}
-              onOpenQuickFileSearch={() => setShowQuickFileSearch(true)}
-              onOpenKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
-            />
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Tasks..." /></div>}>
+            <AgentActionsPanel projectId={projectId} />
           </Suspense>
         );
       default:
@@ -551,13 +500,24 @@ function UnifiedIDELayout({
         )}
         data-testid="mobile-layout"
       >
+        {/* Replit-style Mobile Header */}
+        <ReplitMobileHeader
+          activeTab={mobileActiveTab}
+          onBack={() => window.history.back()}
+          onHistory={() => setShowHistoryPanel(true)}
+          onNewTab={() => setShowQuickFileSearch(true)}
+          onMore={() => setShowToolsSheet(true)}
+        />
+
+        {/* Main Content Area - With bottom padding for fixed navigation */}
         <motion.div 
-          className="flex-1 overflow-hidden"
-          drag={mobileActiveTab !== 'more' && mobileActiveTab !== 'files' ? "x" : false}
+          className="flex-1 overflow-hidden pb-16"
+          drag={mobileActiveTab === 'preview' || mobileActiveTab === 'agent' ? "x" : false}
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.1}
           onDragEnd={(_, info) => handleMobileSwipe(info)}
           data-testid="mobile-swipe-area"
+          style={{ paddingBottom: mobileActiveTab === 'agent' ? '8rem' : '3.5rem' }}
         >
           <AnimatePresence mode="wait">
             <motion.div
@@ -566,21 +526,31 @@ function UnifiedIDELayout({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
-              className="h-full"
+              className="h-full overflow-auto"
             >
               {renderMobileContent()}
             </motion.div>
           </AnimatePresence>
         </motion.div>
 
-        <ReplitBottomTabs
+        {/* Replit-style Floating Input Bar - Only shown on Agent tab */}
+        {mobileActiveTab === 'agent' && (
+          <ReplitMobileInputBar
+            placeholder="Make, test, iterate..."
+            onSubmit={(value) => {
+              console.log('Agent prompt:', value);
+            }}
+          />
+        )}
+
+        {/* Replit-style Bottom Navigation */}
+        <ReplitMobileNavigation
           activeTab={mobileActiveTab}
-          onTabChange={(tab) => setMobileActiveTab(tab as MobileTab)}
-          badgeCounts={{
-            git: gitChangesCount,
-            errors: errorsCount,
-          }}
-          isConnected={isConnected}
+          onTabChange={setMobileActiveTab}
+          isRunning={isRunning}
+          onPlayStop={handleRunStop}
+          isPanelOpen={showToolsSheet}
+          onPanelToggle={() => setShowToolsSheet(!showToolsSheet)}
         />
 
         {/* Mobile Panel Overlays - Fixed positioned panels that appear over mobile content */}
@@ -875,59 +845,74 @@ function UnifiedIDELayout({
         )}
 
         <div className="flex-1 flex flex-col">
-          <div className="flex items-center gap-2 h-14 px-4 border-b border-border bg-background/95 backdrop-blur">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTabletDrawerOpen(!tabletDrawerOpen)}
-              className="h-10 w-10 touch-manipulation"
-            >
-              {tabletDrawerOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
-            </Button>
-            <div className="flex-1 flex items-center gap-2">
-              <Code className="h-5 w-5 text-muted-foreground" />
-              <span className="text-sm font-medium truncate">
-                {selectedFileId ? `File ${selectedFileId}` : 'No file selected'}
+          {/* Replit-style Header for Tablet - Integrated with File Drawer Toggle */}
+          <header className="sticky top-0 z-30 flex items-center justify-between h-12 px-3 bg-white dark:bg-[#1C1C1C] border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTabletDrawerOpen(!tabletDrawerOpen)}
+                className="h-9 w-9"
+                data-testid="button-tablet-drawer-toggle"
+              >
+                {tabletDrawerOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-gray-900 dark:text-white text-sm capitalize">
+                {mobileActiveTab}
               </span>
             </div>
-          </div>
 
-          <div className="flex items-center gap-1 border-b border-border bg-background/95 backdrop-blur p-1" data-testid="tablet-panel-tabs">
-            {(['editor', 'preview', 'terminal', 'agent', 'more'] as TabletPanel[]).map((panel) => (
+            <div className="flex items-center gap-1">
               <Button
-                key={panel}
-                variant={tabletPanel === panel ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setTabletPanel(panel)}
-                className="flex-1 h-10 touch-manipulation"
-                data-testid={`tablet-tab-${panel}`}
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowQuickFileSearch(true)}
+                className="h-9 w-9"
+                data-testid="button-quick-search"
               >
-                {panel === 'editor' && <Code className="h-4 w-4 mr-1" />}
-                {panel === 'preview' && <Monitor className="h-4 w-4 mr-1" />}
-                {panel === 'terminal' && <Terminal className="h-4 w-4 mr-1" />}
-                {panel === 'agent' && <Bot className="h-4 w-4 mr-1" />}
-                {panel === 'more' && <MoreHorizontal className="h-4 w-4 mr-1" />}
-                <span className="text-xs capitalize">{panel}</span>
+                <Code className="h-4 w-4" />
               </Button>
-            ))}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowToolsSheet(true)}
+                className="h-9 w-9"
+                data-testid="button-tablet-more"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </div>
+          </header>
+
+          {/* Main Content Area - With bottom padding for fixed navigation */}
+          <div 
+            className="flex-1 overflow-auto"
+            style={{ paddingBottom: mobileActiveTab === 'agent' ? '8rem' : '3.5rem' }}
+          >
+            {renderMobileContent()}
           </div>
 
-          <div className="flex-1 overflow-hidden">
-            {renderTabletContent()}
-          </div>
+          {/* Replit-style Floating Input Bar for Agent Tab */}
+          {mobileActiveTab === 'agent' && (
+            <ReplitMobileInputBar
+              placeholder="Make, test, iterate..."
+              onSubmit={(value) => {
+                console.log('Agent prompt:', value);
+              }}
+            />
+          )}
 
-          <StatusBar
-            gitBranch={gitBranch}
+          {/* Replit-style Bottom Navigation for Tablet */}
+          <ReplitMobileNavigation
+            activeTab={mobileActiveTab}
+            onTabChange={setMobileActiveTab}
             isRunning={isRunning}
-            cursorPosition={cursorPosition}
-            language="TypeScript"
-            encoding="UTF-8"
-            onShowShortcuts={() => setShowKeyboardShortcuts(true)}
-            isConnected={isConnected}
-            lastSaved={lastSaved}
-            problems={problemsCount}
-            deploymentStatus={deploymentStatus}
-            deploymentUrl={publishState?.url}
+            onPlayStop={handleRunStop}
+            isPanelOpen={showToolsSheet}
+            onPanelToggle={() => setShowToolsSheet(!showToolsSheet)}
           />
         </div>
 
