@@ -12,7 +12,7 @@
  * - Deep linking support
  */
 
-const { app, BrowserWindow, Menu, shell, ipcMain, dialog, nativeTheme, session } = require('electron');
+const { app, BrowserWindow, Menu, Tray, shell, ipcMain, dialog, nativeTheme, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const Store = require('electron-store');
@@ -33,6 +33,7 @@ const store = new Store({
 // Keep a global reference of the window object
 let mainWindow = null;
 let splashWindow = null;
+let tray = null;
 
 // Development mode detection
 const isDev = process.argv.includes('--dev') || 
@@ -290,15 +291,43 @@ function createWindow() {
 // Get icon path based on platform
 function getIconPath() {
   const resourcesPath = path.join(__dirname, 'resources');
+  const iconsPath = path.join(resourcesPath, 'icons');
+  
+  // Platform-specific icon paths with fallbacks
+  const iconCandidates = [];
   
   switch (process.platform) {
     case 'darwin':
-      return path.join(resourcesPath, 'icon.icns');
+      iconCandidates.push(
+        path.join(resourcesPath, 'icon.icns'),
+        path.join(resourcesPath, 'icon.png'),
+        path.join(iconsPath, '512x512.png'),
+        path.join(iconsPath, '256x256.png')
+      );
+      break;
     case 'win32':
-      return path.join(resourcesPath, 'icon.ico');
+      iconCandidates.push(
+        path.join(resourcesPath, 'icon.ico'),
+        path.join(resourcesPath, 'icon.png'),
+        path.join(iconsPath, '256x256.png')
+      );
+      break;
     default:
-      return path.join(resourcesPath, 'icon.png');
+      iconCandidates.push(
+        path.join(resourcesPath, 'icon.png'),
+        path.join(iconsPath, '512x512.png'),
+        path.join(iconsPath, '256x256.png')
+      );
   }
+  
+  // Return first existing icon or last fallback
+  for (const iconPath of iconCandidates) {
+    if (fs.existsSync(iconPath)) {
+      return iconPath;
+    }
+  }
+  
+  return iconCandidates[iconCandidates.length - 1];
 }
 
 // Create application menu
@@ -579,6 +608,90 @@ function createMenu() {
   Menu.setApplicationMenu(menu);
 }
 
+// Create system tray
+function createTray() {
+  const iconPath = getIconPath();
+  
+  // Use a smaller icon for tray on some platforms
+  const trayIconPath = process.platform === 'darwin' 
+    ? path.join(__dirname, 'resources', 'icon-tray.png')
+    : iconPath;
+  
+  // Check if tray icon exists, fallback to main icon
+  const finalTrayIcon = fs.existsSync(trayIconPath) ? trayIconPath : iconPath;
+  
+  tray = new Tray(finalTrayIcon);
+  tray.setToolTip('E-Code Desktop');
+  
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Show/Hide Window',
+      click: () => {
+        if (mainWindow) {
+          if (mainWindow.isVisible()) {
+            mainWindow.hide();
+          } else {
+            mainWindow.show();
+            mainWindow.focus();
+          }
+        }
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Check for Updates',
+      click: checkForUpdates
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click: () => {
+        app.quit();
+      }
+    }
+  ]);
+  
+  tray.setContextMenu(contextMenu);
+  
+  // Click behavior to show/hide window
+  tray.on('click', () => {
+    if (mainWindow) {
+      if (mainWindow.isVisible()) {
+        mainWindow.hide();
+      } else {
+        mainWindow.show();
+        mainWindow.focus();
+      }
+    }
+  });
+  
+  // Double-click to show window (Windows)
+  tray.on('double-click', () => {
+    if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+}
+
+// Handle deep link URL
+function handleDeepLink(url) {
+  console.log('[E-Code Desktop] Deep link received:', url);
+  
+  // Parse the ecode:// URL
+  if (url && url.startsWith('ecode://')) {
+    // Send to renderer process
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('deep-link', url);
+      
+      // Make sure window is visible and focused
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  }
+}
+
 // Show about dialog
 function showAboutDialog() {
   dialog.showMessageBox(mainWindow, {
@@ -655,10 +768,21 @@ if (!isDev) {
 
 autoUpdater.on('checking-for-update', () => {
   console.log('[E-Code Desktop] Checking for updates...');
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update-status', { status: 'checking' });
+  }
 });
 
 autoUpdater.on('update-available', (info) => {
   console.log('[E-Code Desktop] Update available:', info.version);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update-available', { 
+      version: info.version,
+      releaseDate: info.releaseDate,
+      releaseNotes: info.releaseNotes
+    });
+    mainWindow.webContents.send('update-status', { status: 'available', version: info.version });
+  }
   dialog.showMessageBox(mainWindow, {
     type: 'info',
     title: 'Update Available',
@@ -670,11 +794,26 @@ autoUpdater.on('update-available', (info) => {
 
 autoUpdater.on('update-not-available', () => {
   console.log('[E-Code Desktop] No updates available');
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update-status', { status: 'up-to-date' });
+  }
 });
 
 autoUpdater.on('download-progress', (progress) => {
   console.log(`[E-Code Desktop] Download progress: ${Math.round(progress.percent)}%`);
   mainWindow?.setProgressBar(progress.percent / 100);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update-progress', {
+      percent: progress.percent,
+      bytesPerSecond: progress.bytesPerSecond,
+      transferred: progress.transferred,
+      total: progress.total
+    });
+    mainWindow.webContents.send('update-status', { 
+      status: 'downloading', 
+      percent: Math.round(progress.percent) 
+    });
+  }
 });
 
 autoUpdater.on('update-downloaded', (info) => {
@@ -696,7 +835,23 @@ autoUpdater.on('update-downloaded', (info) => {
 
 autoUpdater.on('error', (error) => {
   console.error('[E-Code Desktop] Auto-updater error:', error);
+  mainWindow?.setProgressBar(-1);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update-status', { 
+      status: 'error', 
+      error: error.message 
+    });
+  }
 });
+
+// Periodic update checks (every 4 hours in production)
+if (!isDev) {
+  setInterval(() => {
+    autoUpdater.checkForUpdatesAndNotify().catch(err => {
+      console.log('[E-Code Desktop] Periodic update check failed:', err.message);
+    });
+  }, 4 * 60 * 60 * 1000);
+}
 
 // ============================================
 // IPC Handlers - Native Desktop Features
@@ -776,6 +931,96 @@ ipcMain.handle('read-directory', async (event, dirPath) => {
   }
 });
 
+// Additional file system operations
+ipcMain.handle('delete-file', async (event, filePath) => {
+  try {
+    await fs.promises.unlink(filePath);
+    return true;
+  } catch (error) {
+    throw new Error(`Failed to delete file: ${error.message}`);
+  }
+});
+
+ipcMain.handle('mkdir', async (event, dirPath) => {
+  try {
+    await fs.promises.mkdir(dirPath, { recursive: true });
+    return true;
+  } catch (error) {
+    throw new Error(`Failed to create directory: ${error.message}`);
+  }
+});
+
+ipcMain.handle('stat', async (event, filePath) => {
+  try {
+    const stats = await fs.promises.stat(filePath);
+    return {
+      size: stats.size,
+      isFile: stats.isFile(),
+      isDirectory: stats.isDirectory(),
+      mtime: stats.mtime.toISOString(),
+      ctime: stats.ctime.toISOString(),
+    };
+  } catch (error) {
+    throw new Error(`Failed to get file stats: ${error.message}`);
+  }
+});
+
+ipcMain.handle('rename', async (event, oldPath, newPath) => {
+  try {
+    await fs.promises.rename(oldPath, newPath);
+    return true;
+  } catch (error) {
+    throw new Error(`Failed to rename file: ${error.message}`);
+  }
+});
+
+ipcMain.handle('copy', async (event, src, dest) => {
+  try {
+    fs.copyFileSync(src, dest);
+    return true;
+  } catch (error) {
+    throw new Error(`Failed to copy file: ${error.message}`);
+  }
+});
+
+ipcMain.handle('append-file', async (event, filePath, content) => {
+  try {
+    await fs.promises.appendFile(filePath, content, 'utf-8');
+    return true;
+  } catch (error) {
+    throw new Error(`Failed to append to file: ${error.message}`);
+  }
+});
+
+// File watchers registry
+const fileWatchers = new Map();
+let watcherId = 0;
+
+ipcMain.handle('watch-file', (event, filePath) => {
+  try {
+    const id = ++watcherId;
+    const watcher = fs.watch(filePath, (eventType, filename) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('file-changed', { id, eventType, filename, path: filePath });
+      }
+    });
+    fileWatchers.set(id, watcher);
+    return id;
+  } catch (error) {
+    throw new Error(`Failed to watch file: ${error.message}`);
+  }
+});
+
+ipcMain.handle('unwatch-file', (event, id) => {
+  const watcher = fileWatchers.get(id);
+  if (watcher) {
+    watcher.close();
+    fileWatchers.delete(id);
+    return true;
+  }
+  return false;
+});
+
 // Shell operations
 ipcMain.handle('open-external', async (event, url) => {
   await shell.openExternal(url);
@@ -817,8 +1062,128 @@ ipcMain.handle('clipboard-read-text', () => {
 });
 
 // ============================================
+// Recent Files Management
+// ============================================
+const MAX_RECENT_FILES = 10;
+
+ipcMain.handle('get-recent-files', () => {
+  return store.get('recentFiles', []);
+});
+
+ipcMain.handle('add-recent-file', (event, filePath) => {
+  const recentFiles = store.get('recentFiles', []);
+  
+  // Remove if already exists
+  const filtered = recentFiles.filter(f => f.path !== filePath);
+  
+  // Add to beginning with timestamp
+  filtered.unshift({
+    path: filePath,
+    name: path.basename(filePath),
+    directory: path.dirname(filePath),
+    timestamp: Date.now()
+  });
+  
+  // Keep only MAX_RECENT_FILES
+  const trimmed = filtered.slice(0, MAX_RECENT_FILES);
+  store.set('recentFiles', trimmed);
+  
+  // Update application menu with recent files
+  updateRecentFilesMenu(trimmed);
+  
+  return trimmed;
+});
+
+ipcMain.handle('remove-recent-file', (event, filePath) => {
+  const recentFiles = store.get('recentFiles', []);
+  const filtered = recentFiles.filter(f => f.path !== filePath);
+  store.set('recentFiles', filtered);
+  updateRecentFilesMenu(filtered);
+  return filtered;
+});
+
+ipcMain.handle('clear-recent-files', () => {
+  store.set('recentFiles', []);
+  updateRecentFilesMenu([]);
+  return [];
+});
+
+// Update File > Open Recent submenu
+function updateRecentFilesMenu(recentFiles) {
+  const menu = Menu.getApplicationMenu();
+  if (!menu) return;
+  
+  const fileMenu = menu.items.find(item => item.label === 'File');
+  if (!fileMenu || !fileMenu.submenu) return;
+  
+  const openRecentItem = fileMenu.submenu.items.find(item => item.label === 'Open Recent');
+  if (!openRecentItem || !openRecentItem.submenu) return;
+  
+  // Rebuild recent files submenu
+  const recentSubmenu = Menu.buildFromTemplate([
+    ...recentFiles.map(file => ({
+      label: file.name,
+      sublabel: file.directory,
+      click: () => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('open-recent-file', file.path);
+        }
+      }
+    })),
+    { type: 'separator' },
+    {
+      label: 'Clear Recent',
+      click: () => {
+        store.set('recentFiles', []);
+        updateRecentFilesMenu([]);
+      }
+    }
+  ]);
+  
+  // Note: Menu submenu replacement requires menu rebuild
+  // This is a limitation of Electron's Menu API
+}
+
+// ============================================
+// Update Management IPC
+// ============================================
+ipcMain.handle('check-for-updates', () => {
+  if (isDev) {
+    return { status: 'dev-mode', message: 'Updates disabled in development' };
+  }
+  autoUpdater.checkForUpdatesAndNotify();
+  return { status: 'checking' };
+});
+
+ipcMain.handle('install-update', () => {
+  autoUpdater.quitAndInstall(false, true);
+});
+
+ipcMain.handle('get-update-info', () => {
+  return {
+    currentVersion: app.getVersion(),
+    autoUpdate: store.get('autoUpdate', true),
+    channel: autoUpdater.channel
+  };
+});
+
+ipcMain.handle('set-auto-update', (event, enabled) => {
+  store.set('autoUpdate', enabled);
+  autoUpdater.autoDownload = enabled;
+});
+
+// ============================================
 // App Lifecycle
 // ============================================
+
+// Register ecode:// protocol for deep linking
+app.setAsDefaultProtocolClient('ecode');
+
+// Handle deep link on macOS (open-url event)
+app.on('open-url', (event, url) => {
+  event.preventDefault();
+  handleDeepLink(url);
+});
 
 // Single instance lock
 const gotTheLock = app.requestSingleInstanceLock();
@@ -832,6 +1197,12 @@ if (!gotTheLock) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
     }
+    
+    // Handle deep link on Windows/Linux (protocol in command line)
+    const url = commandLine.find(arg => arg.startsWith('ecode://'));
+    if (url) {
+      handleDeepLink(url);
+    }
   });
 
   app.whenReady().then(() => {
@@ -842,11 +1213,21 @@ if (!gotTheLock) {
     setTimeout(() => {
       createWindow();
       
+      // Create system tray
+      createTray();
+      
       // Check for updates in production
       if (!isDev && store.get('autoUpdate', true)) {
         setTimeout(() => {
           autoUpdater.checkForUpdatesAndNotify();
         }, 5000);
+      }
+      
+      // Handle deep link if app was started with a URL (Windows/Linux)
+      const url = process.argv.find(arg => arg.startsWith('ecode://'));
+      if (url) {
+        // Delay to ensure window is ready
+        setTimeout(() => handleDeepLink(url), 1000);
       }
     }, 500);
 
