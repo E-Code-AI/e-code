@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotionDiv } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 
 interface StaggerContainerProps {
@@ -40,18 +40,18 @@ export function StaggerContainer({
   };
 
   return (
-    <motion.div
+    <LazyMotionDiv
       className={cn('w-full', className)}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {React.Children.map(children, (child, index) => (
-        <motion.div key={index} variants={itemVariants}>
+        <LazyMotionDiv key={index} variants={itemVariants}>
           {child}
-        </motion.div>
+        </LazyMotionDiv>
       ))}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -71,7 +71,7 @@ export function FadeInStagger({
   once = true
 }: FadeInStaggerProps) {
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once }}
@@ -83,7 +83,7 @@ export function FadeInStagger({
       className={className}
     >
       {children}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -101,7 +101,7 @@ export function ScaleStagger({
   return (
     <div className={cn('grid gap-4', className)}>
       {React.Children.map(children, (child, index) => (
-        <motion.div
+        <LazyMotionDiv
           key={index}
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -116,7 +116,7 @@ export function ScaleStagger({
           className="card-lift"
         >
           {child}
-        </motion.div>
+        </LazyMotionDiv>
       ))}
     </div>
   );
