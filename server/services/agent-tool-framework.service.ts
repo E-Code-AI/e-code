@@ -354,13 +354,58 @@ export class AgentToolFrameworkService extends EventEmitter {
         database: z.string().optional().default('default')
       }),
       execute: async (input, context) => {
-        // This would connect to the actual database service
-        // For now, returning a placeholder
-        return {
-          query: input.query,
-          result: 'Database operation would be executed here',
-          affectedRows: 0
-        };
+        const { db } = await import('../db');
+        const { sql } = await import('drizzle-orm');
+        
+        try {
+          // Security: Validate query to prevent dangerous operations
+          const queryUpper = input.query.trim().toUpperCase();
+          const dangerousPatterns = ['DROP DATABASE', 'DROP SCHEMA', 'TRUNCATE', 'ALTER SYSTEM'];
+          
+          for (const pattern of dangerousPatterns) {
+            if (queryUpper.includes(pattern)) {
+              return {
+                success: false,
+                error: `Dangerous operation blocked: ${pattern}`,
+                query: input.query.substring(0, 100)
+              };
+            }
+          }
+          
+          // Execute the query
+          const result = await db.execute(sql.raw(input.query));
+          
+          // Determine query type for response formatting
+          const isSelect = queryUpper.startsWith('SELECT');
+          const isInsert = queryUpper.startsWith('INSERT');
+          const isUpdate = queryUpper.startsWith('UPDATE');
+          const isDelete = queryUpper.startsWith('DELETE');
+          
+          if (isSelect) {
+            const rows = Array.isArray(result) ? result : (result as any).rows || [];
+            return {
+              success: true,
+              operation: 'select',
+              rowCount: rows.length,
+              rows: rows.slice(0, 100) // Limit to 100 rows for safety
+            };
+          }
+          
+          // For mutating queries, return affected row count
+          const rowCount = (result as any).rowCount || (result as any).affectedRows || 0;
+          return {
+            success: true,
+            operation: isInsert ? 'insert' : isUpdate ? 'update' : isDelete ? 'delete' : 'execute',
+            affectedRows: rowCount
+          };
+        } catch (error: any) {
+          logger.error('[ToolFramework] SQL execution failed:', error);
+          return {
+            success: false,
+            error: error.message,
+            query: input.query.substring(0, 100)
+          };
+        }
       }
     });
 
