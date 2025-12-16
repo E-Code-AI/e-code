@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShieldCheck,
   ShieldAlert,
@@ -38,20 +37,8 @@ function VulnerabilitySkeleton() {
   return (
     <div className="bg-card rounded-lg border border-border p-4" data-testid="vulnerability-skeleton">
       <div className="flex items-center gap-2">
-        <div className="relative overflow-hidden w-20 h-5 bg-muted rounded">
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-muted-foreground/20 to-transparent"
-            animate={{ x: ['-100%', '100%'] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-          />
-        </div>
-        <div className="relative overflow-hidden flex-1 h-4 bg-muted rounded">
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-muted-foreground/20 to-transparent"
-            animate={{ x: ['-100%', '100%'] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-          />
-        </div>
+        <div className="relative overflow-hidden w-20 h-5 bg-muted rounded skeleton-shimmer" />
+        <div className="relative overflow-hidden flex-1 h-4 bg-muted rounded skeleton-shimmer" />
       </div>
     </div>
   );
@@ -308,58 +295,48 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
           </div>
 
           {/* Scan Settings Panel */}
-          <AnimatePresence>
-            {showSettings && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="bg-card rounded-lg p-4 space-y-3 border border-border shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-[17px] font-medium leading-tight text-foreground">Scan Settings</h3>
-                    <button 
-                      onClick={() => setShowSettings(false)}
-                      className="w-11 h-11 flex items-center justify-center hover:bg-muted rounded-lg"
-                      data-testid="close-settings-button"
-                    >
-                      <X className="w-[18px] h-[18px] text-muted-foreground" />
-                    </button>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[15px] leading-[20px] text-foreground">
-                        Enable privacy vulnerability detection
-                      </span>
-                      <Switch
-                        checked={settings?.privacyDetectionEnabled ?? true}
-                        onCheckedChange={(checked) => 
-                          updateSettingsMutation.mutate({ privacyDetectionEnabled: checked })
-                        }
-                        data-testid="privacy-toggle"
-                      />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-[15px] leading-[20px] text-foreground">
-                        Enable security vulnerability detection
-                      </span>
-                      <Switch
-                        checked={settings?.securityDetectionEnabled ?? true}
-                        onCheckedChange={(checked) => 
-                          updateSettingsMutation.mutate({ securityDetectionEnabled: checked })
-                        }
-                        data-testid="security-toggle"
-                      />
-                    </div>
-                  </div>
+          <div className={`collapsible-panel ${showSettings ? 'expanded' : 'collapsed'}`}>
+            <div className="bg-card rounded-lg p-4 space-y-3 border border-border shadow-sm">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[17px] font-medium leading-tight text-foreground">Scan Settings</h3>
+                <button 
+                  onClick={() => setShowSettings(false)}
+                  className="w-11 h-11 flex items-center justify-center hover:bg-muted rounded-lg"
+                  data-testid="close-settings-button"
+                >
+                  <X className="w-[18px] h-[18px] text-muted-foreground" />
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[15px] leading-[20px] text-foreground">
+                    Enable privacy vulnerability detection
+                  </span>
+                  <Switch
+                    checked={settings?.privacyDetectionEnabled ?? true}
+                    onCheckedChange={(checked) => 
+                      updateSettingsMutation.mutate({ privacyDetectionEnabled: checked })
+                    }
+                    data-testid="privacy-toggle"
+                  />
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-[15px] leading-[20px] text-foreground">
+                    Enable security vulnerability detection
+                  </span>
+                  <Switch
+                    checked={settings?.securityDetectionEnabled ?? true}
+                    onCheckedChange={(checked) => 
+                      updateSettingsMutation.mutate({ securityDetectionEnabled: checked })
+                    }
+                    data-testid="security-toggle"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Tabs */}
           <div className="border-b border-border">
@@ -478,60 +455,51 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
                   </button>
 
                   {/* Expanded Content */}
-                  <AnimatePresence>
-                    {expandedCards.has(vuln.id) && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <div className="px-4 pb-4 space-y-3 border-t border-border">
-                          <p className="text-[15px] leading-[20px] text-muted-foreground pt-3">
-                            {vuln.description}
-                          </p>
+                  <div className={`collapsible-panel ${expandedCards.has(vuln.id) ? 'expanded' : 'collapsed'}`}>
+                    <div className="px-4 pb-4 space-y-3 border-t border-border">
+                      <p className="text-[15px] leading-[20px] text-muted-foreground pt-3">
+                        {vuln.description}
+                      </p>
 
-                          {/* Package Dependencies (if applicable) */}
-                          {vuln.packageName && (
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2 text-[15px] leading-[20px] text-muted-foreground">
-                                <Package className="w-[18px] h-[18px]" />
-                                <span className="font-mono">{vuln.packageName}@{vuln.vulnerableVersion}</span>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* File Path */}
-                          {vuln.filePath && (
-                            <p className="text-[13px] text-muted-foreground font-mono bg-muted px-2 py-1 rounded">
-                              {vuln.filePath}{vuln.lineNumber ? `:${vuln.lineNumber}` : ''}
-                            </p>
-                          )}
-
-                          {/* Action Buttons - Mobile touch targets */}
-                          <div className="flex gap-2 pt-1">
-                            <Button
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleHideMutation.mutate({ id: vuln.id, isHidden: !vuln.isHidden });
-                              }}
-                              className="h-10 px-4 border-border text-muted-foreground hover:bg-muted rounded-lg text-[15px] leading-[20px]"
-                              data-testid={`toggle-hide-${vuln.id}`}
-                            >
-                              {vuln.isHidden ? 'Unhide' : 'Hide'}
-                            </Button>
-                            <Button
-                              className="h-11 px-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-[15px] leading-[20px]"
-                              data-testid={`fix-with-agent-${vuln.id}`}
-                            >
-                              Fix with Agent
-                            </Button>
+                      {/* Package Dependencies (if applicable) */}
+                      {vuln.packageName && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-[15px] leading-[20px] text-muted-foreground">
+                            <Package className="w-[18px] h-[18px]" />
+                            <span className="font-mono">{vuln.packageName}@{vuln.vulnerableVersion}</span>
                           </div>
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                      )}
+
+                      {/* File Path */}
+                      {vuln.filePath && (
+                        <p className="text-[13px] text-muted-foreground font-mono bg-muted px-2 py-1 rounded">
+                          {vuln.filePath}{vuln.lineNumber ? `:${vuln.lineNumber}` : ''}
+                        </p>
+                      )}
+
+                      {/* Action Buttons - Mobile touch targets */}
+                      <div className="flex gap-2 pt-1">
+                        <Button
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleHideMutation.mutate({ id: vuln.id, isHidden: !vuln.isHidden });
+                          }}
+                          className="h-10 px-4 border-border text-muted-foreground hover:bg-muted rounded-lg text-[15px] leading-[20px]"
+                          data-testid={`toggle-hide-${vuln.id}`}
+                        >
+                          {vuln.isHidden ? 'Unhide' : 'Hide'}
+                        </Button>
+                        <Button
+                          className="h-11 px-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-[15px] leading-[20px]"
+                          data-testid={`fix-with-agent-${vuln.id}`}
+                        >
+                          Fix with Agent
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))
             )}

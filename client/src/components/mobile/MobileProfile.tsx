@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { User, Settings, Moon, Sun, LogOut, ChevronRight, Code, Users, Flame, Edit2, Shield, Bell, CreditCard, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,13 +30,12 @@ export function MobileProfile() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   
-  // Mock user data - uses avatar API for dynamic initials-based avatar
   const user = {
     name: "John Developer",
     username: "@johnddev",
     email: "john@example.com",
     avatar: "/api/avatar/John%20Developer/100",
-    coverImage: null, // Using gradient instead of placeholder
+    coverImage: null,
     bio: "Full-stack developer passionate about creating amazing web experiences",
     joinedDate: "January 2024",
   };
@@ -94,7 +92,6 @@ export function MobileProfile() {
   ];
 
   const handleSignOut = () => {
-    // Haptic feedback
     if ('vibrate' in navigator) navigator.vibrate([10, 10, 10]);
     
     toast({
@@ -102,7 +99,6 @@ export function MobileProfile() {
       description: "You'll be redirected to the login page",
     });
     
-    // Implement actual sign out logic
     setTimeout(() => {
       window.location.href = '/login';
     }, 1000);
@@ -110,10 +106,8 @@ export function MobileProfile() {
 
   return (
     <div className="min-h-screen pb-20 bg-background">
-      {/* Cover Image & Avatar */}
       <div className="relative">
         <div className="h-32 bg-gradient-to-br from-primary to-secondary relative">
-          {/* Pattern overlay */}
           <div className="absolute inset-0">
             <div className="absolute inset-0" style={{
               backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 35px, var(--ecode-surface-hover) 35px, var(--ecode-surface-hover) 70px)`,
@@ -131,19 +125,17 @@ export function MobileProfile() {
             </Avatar>
             
             {!isEditing && (
-              <motion.button
+              <button
                 onClick={() => setIsEditing(true)}
-                className="ml-auto mb-2 px-4 py-2 bg-secondary rounded-full text-sm font-medium"
-                whileTap={{ scale: 0.95 }}
+                className="ml-auto mb-2 px-4 py-2 bg-secondary rounded-full text-sm font-medium active:scale-95 transition-transform"
               >
                 Edit Profile
-              </motion.button>
+              </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* User Info */}
       <div className="px-4 mt-4">
         <h1 className="text-2xl font-bold">{user.name}</h1>
         <p className="text-muted-foreground">{user.username}</p>
@@ -153,28 +145,27 @@ export function MobileProfile() {
         </p>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-3 gap-3 px-4 mt-6">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <motion.div
+            <div
               key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              className={cn(
+                "animate-slideInUp",
+                `animate-stagger-${index + 1}`
+              )}
             >
               <Card className="p-4 text-center hover:shadow-md transition-shadow">
                 <Icon className="h-5 w-5 text-primary mx-auto mb-2" />
                 <div className="text-2xl font-bold">{stat.value}</div>
                 <div className="text-xs text-muted-foreground">{stat.label}</div>
               </Card>
-            </motion.div>
+            </div>
           );
         })}
       </div>
 
-      {/* Settings List */}
       <div className="mt-6 px-4">
         <h2 className="text-sm font-medium text-muted-foreground mb-3 px-1">
           Settings
@@ -184,7 +175,7 @@ export function MobileProfile() {
           {settings.map((setting, index) => {
             const Icon = setting.icon;
             return (
-              <motion.button
+              <button
                 key={setting.label}
                 onClick={() => {
                   if (setting.action) {
@@ -194,11 +185,11 @@ export function MobileProfile() {
                   }
                   if ('vibrate' in navigator) navigator.vibrate(5);
                 }}
-                className="w-full flex items-center justify-between p-4 hover:bg-surface-tertiary-solid rounded-lg transition-colors group"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                whileTap={{ scale: 0.98 }}
+                className={cn(
+                  "w-full flex items-center justify-between p-4 hover:bg-surface-tertiary-solid rounded-lg transition-colors group",
+                  "animate-fade-in active:scale-98 transition-transform",
+                  `animate-stagger-${Math.min(index + 1, 5)}`
+                )}
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-secondary rounded-lg group-hover:bg-primary/10 transition-colors">
@@ -216,13 +207,12 @@ export function MobileProfile() {
                 ) : (
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 )}
-              </motion.button>
+              </button>
             );
           })}
         </div>
       </div>
 
-      {/* Theme Switcher */}
       <div className="mt-6 px-4">
         <h2 className="text-sm font-medium text-muted-foreground mb-3 px-1">
           Appearance
@@ -245,43 +235,40 @@ export function MobileProfile() {
             </div>
             
             <div className="flex gap-2">
-              <motion.button
+              <button
                 onClick={() => {
                   setTheme('light');
                   if ('vibrate' in navigator) navigator.vibrate(5);
                 }}
                 className={cn(
-                  "p-2 rounded-lg transition-colors",
+                  "p-2 rounded-lg transition-all duration-200 active:scale-95",
                   theme === 'light' 
                     ? "bg-primary/10 text-primary" 
                     : "bg-secondary text-muted-foreground"
                 )}
-                whileTap={{ scale: 0.95 }}
               >
                 <Sun className="h-4 w-4" />
-              </motion.button>
+              </button>
               
-              <motion.button
+              <button
                 onClick={() => {
                   setTheme('dark');
                   if ('vibrate' in navigator) navigator.vibrate(5);
                 }}
                 className={cn(
-                  "p-2 rounded-lg transition-colors",
+                  "p-2 rounded-lg transition-all duration-200 active:scale-95",
                   theme === 'dark' 
                     ? "bg-primary/10 text-primary" 
                     : "bg-secondary text-muted-foreground"
                 )}
-                whileTap={{ scale: 0.95 }}
               >
                 <Moon className="h-4 w-4" />
-              </motion.button>
+              </button>
             </div>
           </div>
         </Card>
       </div>
 
-      {/* Sign Out Button */}
       <div className="mt-8 px-4 pb-8">
         <Button
           variant="outline"

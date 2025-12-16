@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { motion } from 'framer-motion';
 import {
   Lock,
   Plus,
@@ -51,17 +50,7 @@ interface MobileSecretsPanelProps {
 
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
-    <motion.div
-      className={cn("bg-muted rounded-lg", className)}
-      animate={{
-        opacity: [0.5, 0.8, 0.5],
-      }}
-      transition={{
-        duration: 1.5,
-        repeat: Infinity,
-        ease: "easeInOut",
-      }}
-    />
+    <div className={cn("bg-muted rounded-lg animate-opacity-pulse", className)} />
   );
 }
 

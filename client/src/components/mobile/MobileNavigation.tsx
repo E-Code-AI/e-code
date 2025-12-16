@@ -1,7 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { Home, Folder, Plus, Bell, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -33,16 +32,12 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
   const [showPulse, setShowPulse] = useState(true);
   const activeIndicatorRef = useRef<HTMLDivElement>(null);
   
-  // Use improved mobile detection that considers both width AND height
-  // This correctly shows mobile nav for phone landscape mode
   const isMobile = useIsMobile();
 
-  // Update active tab when location changes
   useEffect(() => {
     setActiveTab(location);
   }, [location]);
 
-  // Pulse animation for Create button
   useEffect(() => {
     const interval = setInterval(() => {
       setShowPulse(prev => !prev);
@@ -51,17 +46,14 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
   }, []);
 
   const handleItemClick = (item: NavItem, e?: React.MouseEvent) => {
-    // Haptic feedback
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
     }
 
-    // Double-tap on Home to scroll to top
     if (item.path === '/dashboard' && activeTab === '/dashboard') {
       const currentTime = Date.now();
       if (currentTime - lastTapTime < 500) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        // Stronger haptic for double-tap
         if ('vibrate' in navigator) {
           navigator.vibrate([10, 10, 10]);
         }
@@ -71,7 +63,6 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
 
     if (item.isCenter && onCreateClick) {
       onCreateClick();
-      // Special haptic pattern for create
       if ('vibrate' in navigator) {
         navigator.vibrate([20, 10, 20]);
       }
@@ -80,23 +71,13 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
     }
   };
 
-  // Don't render if not mobile (this handles both portrait and landscape phones)
   if (!isMobile) {
     return null;
   }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 mobile-safe-bottom">
-      {/* Solid background */}
       <div className="absolute inset-0 bg-[var(--mobile-ide-bg)] border-t border-[var(--ecode-border)]" />
-      
-      {/* Active tab slide indicator */}
-      <motion.div
-        className="absolute top-0 h-[2px] bg-ecode-accent"
-        layoutId="activeIndicator"
-        initial={false}
-        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-      />
       
       <nav className="relative flex items-center justify-around h-14">
         {navItems.map((item, index) => {
@@ -108,43 +89,22 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
 
           if (isCenter) {
             return (
-              <motion.button
+              <button
                 key={item.label}
                 onClick={() => handleItemClick(item)}
-                className="relative mobile-touch-target flex items-center justify-center"
-                whileTap={{ scale: 0.85 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                className="relative mobile-touch-target flex items-center justify-center active:scale-85 transition-transform duration-150"
               >
-                <motion.div
+                <div
                   className={cn(
-                    "relative bg-gradient-to-br from-ecode-accent to-ecode-accent-hover rounded-full p-3 shadow-lg",
+                    "relative bg-gradient-to-br from-ecode-accent to-ecode-accent-hover rounded-full p-3 shadow-lg transition-transform duration-300",
                     showPulse && "animate-pulse"
                   )}
-                  whileHover={{ scale: 1.05 }}
-                  animate={{ 
-                    rotate: showPulse ? [0, -5, 5, -5, 0] : 0,
-                    scale: showPulse ? [1, 1.05, 1] : 1
-                  }}
-                  transition={{ 
-                    rotate: { duration: 0.5 },
-                    scale: { duration: 0.3 }
-                  }}
                 >
                   <Icon className="h-6 w-6 text-white" />
                   
-                  {/* Ripple effect */}
-                  <motion.div
-                    className="absolute inset-0 rounded-full bg-white"
-                    initial={{ scale: 0, opacity: 0.5 }}
-                    animate={{ scale: 2, opacity: 0 }}
-                    transition={{ 
-                      duration: 1,
-                      repeat: Infinity,
-                      repeatDelay: 2
-                    }}
-                  />
-                </motion.div>
-              </motion.button>
+                  <div className="absolute inset-0 rounded-full bg-white animate-ripple" />
+                </div>
+              </button>
             );
           }
 
@@ -155,14 +115,11 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
               onClick={(e) => handleItemClick(item, e)}
               className="relative mobile-touch-target flex flex-col items-center justify-center px-3 py-2 group"
             >
-              <motion.div
-                className="relative"
-                whileTap={{ scale: 0.92 }}
-                animate={{ 
-                  y: isActive ? -2 : 0,
-                  scale: isActive ? 1.1 : 1
-                }}
-                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              <div
+                className={cn(
+                  "relative transition-transform duration-200 active:scale-92",
+                  isActive && "-translate-y-0.5 scale-110"
+                )}
               >
                 <Icon
                   className={cn(
@@ -173,62 +130,33 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
                   )}
                 />
                 
-                {/* Badge notification */}
                 {hasBadge && badgeCount > 0 && (
-                  <motion.div
-                    className="absolute -top-1 -right-1"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-                  >
+                  <div className="absolute -top-1 -right-1 animate-scale-in">
                     <div className="bg-status-critical text-white text-[9px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
                       {badgeCount > 9 ? '9+' : badgeCount}
                     </div>
                     
-                    {/* Badge pulse animation */}
-                    <motion.div
-                      className="absolute inset-0 bg-status-critical rounded-full"
-                      animate={{ scale: [1, 1.3, 1], opacity: [0.7, 0, 0.7] }}
-                      transition={{ 
-                        duration: 1.5,
-                        repeat: Infinity,
-                        repeatType: 'reverse'
-                      }}
-                    />
-                  </motion.div>
+                    <div className="absolute inset-0 bg-status-critical rounded-full animate-badge-pulse" />
+                  </div>
                 )}
                 
-                {/* Active indicator with sliding animation */}
-                <AnimatePresence mode="wait">
-                  {isActive && (
-                    <motion.div
-                      className="absolute -bottom-2 left-1/2 transform -translate-x-1/2"
-                      initial={{ width: 0, opacity: 0 }}
-                      animate={{ width: 20, opacity: 1 }}
-                      exit={{ width: 0, opacity: 0 }}
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    >
-                      <div className="h-[2px] bg-ecode-accent rounded-full" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+                {isActive && (
+                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 animate-width-expand">
+                    <div className="h-[2px] w-5 bg-ecode-accent rounded-full" />
+                  </div>
+                )}
+              </div>
               
-              <motion.span 
+              <span 
                 className={cn(
                   'text-[10px] mt-1 transition-all duration-300',
                   isActive 
-                    ? 'text-ecode-accent font-semibold' 
-                    : 'text-[var(--ecode-text-muted)] font-normal'
+                    ? 'text-ecode-accent font-semibold scale-105' 
+                    : 'text-[var(--ecode-text-muted)] font-normal opacity-80'
                 )}
-                animate={{ 
-                  scale: isActive ? 1.05 : 1,
-                  opacity: isActive ? 1 : 0.8
-                }}
-                transition={{ duration: 0.2 }}
               >
                 {item.label}
-              </motion.span>
+              </span>
             </Link>
           );
         })}

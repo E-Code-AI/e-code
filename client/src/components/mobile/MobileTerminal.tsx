@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
-import { motion } from 'framer-motion';
 import { 
   Copy, Clipboard, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
   CornerDownLeft, Delete, X as Escape, Command, Keyboard
@@ -14,7 +13,7 @@ import { TerminalMetricsIndicator } from '@/components/terminal/TerminalMetricsI
 import 'xterm/css/xterm.css';
 
 interface MobileTerminalProps {
-  projectId: string | number; // Support both UUID strings and numeric IDs
+  projectId: string | number;
   sessionId?: string;
   className?: string;
 }
@@ -27,22 +26,19 @@ export function MobileTerminal({
   const terminalRef = useRef<HTMLDivElement>(null);
   const termInstanceRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
-  const wsRef = useRef<WebSocket | null>(null); // WebSocket reference for backend communication
-  const commandBufferRef = useRef<string>(''); // Shared command buffer
+  const wsRef = useRef<WebSocket | null>(null);
+  const commandBufferRef = useRef<string>('');
   const [showKeyboard, setShowKeyboard] = useState(true);
   const [canPaste, setCanPaste] = useState(false);
   const [currentLine, setCurrentLine] = useState('');
   const [historyIndex, setHistoryIndex] = useState(-1);
   const { toast } = useToast();
   
-  // Persistent terminal history
   const { history, addToHistory } = useTerminalHistoryPersistence(projectId);
 
-  // Initialize terminal
   useEffect(() => {
     if (!terminalRef.current) return;
 
-    // Get theme colors from CSS variables for dynamic theme support
     const getTerminalTheme = () => {
       const computedStyle = getComputedStyle(document.documentElement);
       const terminalBg = computedStyle.getPropertyValue('--ecode-terminal-bg').trim() || '#1e1e1e';
@@ -73,11 +69,10 @@ export function MobileTerminal({
       };
     };
 
-    // Create terminal instance with mobile-optimized settings
     const terminal = new Terminal({
       cursorBlink: true,
       cursorStyle: 'block',
-      fontSize: 13, // Slightly larger for mobile
+      fontSize: 13,
       fontFamily: 'Menlo, Monaco, "Courier New", monospace',
       lineHeight: 1.4,
       theme: getTerminalTheme(),
@@ -87,12 +82,10 @@ export function MobileTerminal({
       allowProposedApi: true,
     });
 
-    // Listen for theme changes and update terminal theme dynamically
     const handleThemeChange = () => {
       terminal.options.theme = getTerminalTheme();
     };
     
-    // Observe class changes on html element for theme switching
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.attributeName === 'class') {
@@ -102,29 +95,23 @@ export function MobileTerminal({
     });
     observer.observe(document.documentElement, { attributes: true });
 
-    // Fit addon for responsive sizing
     const fitAddon = new FitAddon();
     terminal.loadAddon(fitAddon);
     
-    // Open terminal
     terminal.open(terminalRef.current);
     fitAddon.fit();
 
-    // Store refs
     termInstanceRef.current = terminal;
     fitAddonRef.current = fitAddon;
 
-    // Connect to WebSocket backend
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/api/terminal/ws?projectId=${projectId}`;
     
     try {
       const ws = new WebSocket(wsUrl);
-      wsRef.current = ws; // Store WebSocket in ref for clearBackendBuffer()
+      wsRef.current = ws;
       
-      ws.onopen = () => {
-        // WebSocket connected
-      };
+      ws.onopen = () => {};
       
       ws.onmessage = (event) => {
         try {
@@ -147,7 +134,7 @@ export function MobileTerminal({
       
       ws.onclose = () => {
         terminal.writeln('\r\n\x1b[33mTerminal disconnected. Please refresh.\x1b[0m\r\n');
-        wsRef.current = null; // Clear ref on disconnect
+        wsRef.current = null;
       };
       
     } catch (error) {
@@ -156,12 +143,9 @@ export function MobileTerminal({
       terminal.writeln('Type commands below (local mode - commands will not execute).\r\n$ ');
     }
 
-    // Handle terminal input with WebSocket
     terminal.onData((data) => {
-      // Auto-scroll to bottom on input
       terminal.scrollToBottom();
       
-      // Send input to WebSocket backend
       const ws = wsRef.current;
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({
@@ -170,20 +154,16 @@ export function MobileTerminal({
         }));
       }
       
-      // Handle enter key locally for history tracking
       if (data === '\r') {
-        // Add non-empty commands to history
         if (commandBufferRef.current.trim()) {
           addToHistory(commandBufferRef.current.trim());
         }
         
-        // Reset for next command
         commandBufferRef.current = '';
         setHistoryIndex(-1);
         return;
       }
       
-      // Handle backspace
       if (data === '\x7F') {
         if (commandBufferRef.current.length > 0) {
           commandBufferRef.current = commandBufferRef.current.slice(0, -1);
@@ -191,13 +171,11 @@ export function MobileTerminal({
         return;
       }
       
-      // Handle regular characters
       if (data >= ' ' && data <= '~') {
         commandBufferRef.current += data;
       }
     });
 
-    // Send terminal resize to backend
     const handleResize = () => {
       fitAddon.fit();
       
@@ -213,7 +191,6 @@ export function MobileTerminal({
     };
     window.addEventListener('resize', handleResize);
 
-    // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
       observer.disconnect();
@@ -225,7 +202,6 @@ export function MobileTerminal({
     };
   }, [projectId, sessionId, addToHistory]);
 
-  // Keyboard toolbar actions - Use paste() to trigger onData event
   const sendToTerminal = (text: string) => {
     termInstanceRef.current?.paste(text);
     termInstanceRef.current?.scrollToBottom();
@@ -236,7 +212,6 @@ export function MobileTerminal({
   const handleEscape = () => sendToTerminal('\x1B');
   const handleBackspace = () => sendToTerminal('\x7F');
   
-  // Atomic replace current line with recalled command (prevents race conditions)
   const replaceCurrentLine = (newCommand: string) => {
     const ws = wsRef.current;
     if (ws && ws.readyState === WebSocket.OPEN) {
@@ -246,7 +221,6 @@ export function MobileTerminal({
           command: newCommand
         }));
         
-        // Update local buffer to match
         commandBufferRef.current = newCommand;
         setCurrentLine(newCommand);
       } catch (error) {
@@ -262,34 +236,25 @@ export function MobileTerminal({
     }
   };
 
-  // Navigate backward in command history
   const handleArrowUp = () => {
     if (history.length > 0) {
       const newIndex = historyIndex < history.length - 1 ? historyIndex + 1 : historyIndex;
       if (newIndex >= 0 && newIndex < history.length) {
         setHistoryIndex(newIndex);
         const command = history[history.length - 1 - newIndex];
-        
-        // Atomic replace: clear + set new command in single operation
         replaceCurrentLine(command);
       }
     }
   };
   
-  // Navigate forward in command history
   const handleArrowDown = () => {
     if (historyIndex > 0) {
       const newIndex = historyIndex - 1;
       setHistoryIndex(newIndex);
       const command = history[history.length - 1 - newIndex];
-      
-      // Atomic replace
       replaceCurrentLine(command);
     } else if (historyIndex === 0) {
-      // Back to empty line
       setHistoryIndex(-1);
-      
-      // Atomic replace with empty command
       replaceCurrentLine('');
     }
   };
@@ -297,10 +262,9 @@ export function MobileTerminal({
   const handleArrowLeft = () => sendToTerminal('\x1B[D');
   const handleArrowRight = () => sendToTerminal('\x1B[C');
   
-  const handleCtrlC = () => sendToTerminal('\x03'); // Ctrl+C
-  const handleCtrlD = () => sendToTerminal('\x04'); // Ctrl+D
+  const handleCtrlC = () => sendToTerminal('\x03');
+  const handleCtrlD = () => sendToTerminal('\x04');
 
-  // Copy selected text
   const handleCopy = async () => {
     const selection = termInstanceRef.current?.getSelection();
     if (selection) {
@@ -320,7 +284,6 @@ export function MobileTerminal({
     }
   };
 
-  // Paste from clipboard
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText();
@@ -338,7 +301,6 @@ export function MobileTerminal({
     }
   };
 
-  // Check clipboard permissions
   useEffect(() => {
     const checkClipboard = async () => {
       try {
@@ -347,14 +309,12 @@ export function MobileTerminal({
         });
         setCanPaste(permission.state === 'granted' || permission.state === 'prompt');
       } catch {
-        // Fallback: assume paste is available
         setCanPaste(true);
       }
     };
     checkClipboard();
   }, []);
 
-  // Clear terminal
   const handleClear = () => {
     termInstanceRef.current?.clear();
     termInstanceRef.current?.write('$ ');
@@ -362,18 +322,16 @@ export function MobileTerminal({
 
   return (
     <div className={cn('flex flex-col h-full bg-[var(--ecode-terminal-bg)]', className)}>
-      {/* Mobile Terminal Keyboard Toolbar */}
       {showKeyboard && (
         <div 
           className="flex-shrink-0 border-b border-border dark:border-[var(--ecode-border)] bg-card dark:bg-[var(--ecode-surface)] overflow-x-auto mobile-hide-scrollbar"
           data-testid="mobile-terminal-keyboard-toolbar"
         >
           <div className="flex items-center gap-1 p-2 min-w-max">
-            {/* Control Keys */}
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 px-3 text-xs font-mono hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 px-3 text-xs font-mono hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation transition-transform"
               onClick={handleTab}
               data-testid="mobile-terminal-tab"
             >
@@ -383,7 +341,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 px-3 text-xs font-mono hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 px-3 text-xs font-mono hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation transition-transform"
               onClick={handleEscape}
               data-testid="mobile-terminal-esc"
             >
@@ -393,7 +351,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 px-3 text-xs font-mono hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation flex items-center gap-1"
+              className="h-8 px-3 text-xs font-mono hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation transition-transform flex items-center gap-1"
               onClick={handleCtrlC}
               data-testid="mobile-terminal-ctrl-c"
             >
@@ -404,7 +362,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 px-3 text-xs font-mono hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation flex items-center gap-1"
+              className="h-8 px-3 text-xs font-mono hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation transition-transform flex items-center gap-1"
               onClick={handleCtrlD}
               data-testid="mobile-terminal-ctrl-d"
             >
@@ -414,11 +372,10 @@ export function MobileTerminal({
 
             <div className="w-px h-6 bg-border dark:bg-[var(--ecode-border)]" />
 
-            {/* Arrow Keys */}
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation transition-transform"
               onClick={handleArrowUp}
               data-testid="mobile-terminal-arrow-up"
             >
@@ -428,7 +385,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation transition-transform"
               onClick={handleArrowDown}
               data-testid="mobile-terminal-arrow-down"
             >
@@ -438,7 +395,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation transition-transform"
               onClick={handleArrowLeft}
               data-testid="mobile-terminal-arrow-left"
             >
@@ -448,7 +405,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation transition-transform"
               onClick={handleArrowRight}
               data-testid="mobile-terminal-arrow-right"
             >
@@ -457,11 +414,10 @@ export function MobileTerminal({
 
             <div className="w-px h-6 bg-border dark:bg-[var(--ecode-border)]" />
 
-            {/* Text Operations */}
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation transition-transform"
               onClick={handleEnter}
               data-testid="mobile-terminal-enter"
             >
@@ -471,7 +427,7 @@ export function MobileTerminal({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation transition-transform"
               onClick={handleBackspace}
               data-testid="mobile-terminal-backspace"
             >
@@ -480,11 +436,10 @@ export function MobileTerminal({
 
             <div className="w-px h-6 bg-border dark:bg-[var(--ecode-border)]" />
 
-            {/* Clipboard */}
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation transition-transform"
               onClick={handleCopy}
               data-testid="mobile-terminal-copy"
             >
@@ -495,7 +450,7 @@ export function MobileTerminal({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+                className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation transition-transform"
                 onClick={handlePaste}
                 data-testid="mobile-terminal-paste"
               >
@@ -505,11 +460,10 @@ export function MobileTerminal({
 
             <div className="w-px h-6 bg-border dark:bg-[var(--ecode-border)]" />
 
-            {/* Clear */}
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 px-3 text-xs hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 px-3 text-xs hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation transition-transform"
               onClick={handleClear}
               data-testid="mobile-terminal-clear"
             >
@@ -518,16 +472,14 @@ export function MobileTerminal({
 
             <div className="w-px h-6 bg-border dark:bg-[var(--ecode-border)]" />
 
-            {/* Fortune 500 Terminal Metrics */}
             <div className="ml-auto mr-2">
               <TerminalMetricsIndicator compact data-testid="mobile-terminal-metrics-compact" />
             </div>
 
-            {/* Hide toolbar */}
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation"
+              className="h-8 w-8 p-0 hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation transition-transform"
               onClick={() => setShowKeyboard(false)}
               data-testid="mobile-terminal-hide-toolbar"
             >
@@ -537,27 +489,20 @@ export function MobileTerminal({
         </div>
       )}
 
-      {/* Show toolbar floating button when hidden */}
       {!showKeyboard && (
-        <motion.div
-          className="absolute top-2 right-2 z-10"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', damping: 15 }}
-        >
+        <div className="absolute top-2 right-2 z-10 animate-scale-in">
           <Button
             size="sm"
             variant="default"
-            className="h-9 w-9 rounded-full shadow-lg bg-primary hover:bg-primary/90 active:scale-95 touch-manipulation"
+            className="h-9 w-9 rounded-full shadow-lg bg-primary hover:bg-primary/90 active:scale-95 touch-manipulation transition-transform"
             onClick={() => setShowKeyboard(true)}
             data-testid="mobile-terminal-show-toolbar"
           >
             <Keyboard className="h-4 w-4" />
           </Button>
-        </motion.div>
+        </div>
       )}
 
-      {/* Terminal Container */}
       <div 
         ref={terminalRef} 
         className="flex-1 min-h-0 p-2 overflow-auto"
