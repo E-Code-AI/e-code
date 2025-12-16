@@ -9,8 +9,9 @@
  * Uses useIDEWorkspace for centralized state management
  */
 
-import { useState, useCallback, Suspense, lazy, useRef, useEffect } from 'react';
+import { useState, useCallback, Suspense, lazy, useRef, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { createPanHandlers, type PanInfo } from '@/lib/native-motion';
 import { useIDEWorkspace, availableTools } from '@/hooks';
 import { useDeviceType } from '@/hooks/use-media-query';
 import { useConnectionStatus } from '@/hooks/use-connection-status';
@@ -257,10 +258,7 @@ function UnifiedIDELayout({
     setActiveActivityItem('files');
   }, [setActiveActivityItem]);
   
-  const touchStartX = useRef<number>(0);
-  const touchStartTime = useRef<number>(0);
-  const mobileSwipeStartX = useRef<number>(0);
-  const mobileSwipeStartTime = useRef<number>(0);
+  const tabletSwipeStartX = useRef<number>(0);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -282,57 +280,51 @@ function UnifiedIDELayout({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [setShowQuickFileSearch]);
 
-  const handleMobileSwipeTouchStart = useCallback((e: React.TouchEvent) => {
-    mobileSwipeStartX.current = e.touches[0].clientX;
-    mobileSwipeStartTime.current = Date.now();
-  }, []);
-
-  const handleMobileSwipeTouchEnd = useCallback((e: React.TouchEvent) => {
-    const touchEndX = e.changedTouches[0].clientX;
-    const touchEndTime = Date.now();
-    const deltaX = touchEndX - mobileSwipeStartX.current;
-    const deltaTime = touchEndTime - mobileSwipeStartTime.current;
-    const velocity = Math.abs(deltaX) / deltaTime;
-    
-    const isSwipeLeft = deltaX < -SWIPE_THRESHOLD && velocity > SWIPE_VELOCITY_THRESHOLD;
-    const isSwipeRight = deltaX > SWIPE_THRESHOLD && velocity > SWIPE_VELOCITY_THRESHOLD;
-    
-    if (isSwipeLeft || isSwipeRight) {
-      const currentIndex = mobileTabOrder.indexOf(mobileActiveTab);
-      let newIndex = currentIndex;
+  const mobileSwipeHandlers = useMemo(() => createPanHandlers({
+    axis: 'x',
+    threshold: SWIPE_THRESHOLD,
+    onEnd: (info: PanInfo) => {
+      const isSwipeLeft = info.offset.x < -SWIPE_THRESHOLD && Math.abs(info.velocity.x) > SWIPE_VELOCITY_THRESHOLD * 1000;
+      const isSwipeRight = info.offset.x > SWIPE_THRESHOLD && Math.abs(info.velocity.x) > SWIPE_VELOCITY_THRESHOLD * 1000;
       
-      if (isSwipeLeft && currentIndex < mobileTabOrder.length - 1) {
-        newIndex = currentIndex + 1;
-      } else if (isSwipeRight && currentIndex > 0) {
-        newIndex = currentIndex - 1;
-      }
-      
-      if (newIndex !== currentIndex) {
-        setMobileActiveTab(mobileTabOrder[newIndex]);
-        if ('vibrate' in navigator) {
-          navigator.vibrate(10);
+      if (isSwipeLeft || isSwipeRight) {
+        const currentIndex = mobileTabOrder.indexOf(mobileActiveTab);
+        let newIndex = currentIndex;
+        
+        if (isSwipeLeft && currentIndex < mobileTabOrder.length - 1) {
+          newIndex = currentIndex + 1;
+        } else if (isSwipeRight && currentIndex > 0) {
+          newIndex = currentIndex - 1;
+        }
+        
+        if (newIndex !== currentIndex) {
+          setMobileActiveTab(mobileTabOrder[newIndex]);
+          if ('vibrate' in navigator) {
+            navigator.vibrate(10);
+          }
         }
       }
     }
-  }, [mobileActiveTab]);
+  }), [mobileActiveTab]);
 
-  const handleTabletTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartTime.current = Date.now();
-  };
-
-  const handleTabletTouchEnd = (e: React.TouchEvent) => {
-    const touchEndX = e.changedTouches[0].clientX;
-    const swipeDistance = touchEndX - touchStartX.current;
-    
-    if (!tabletDrawerOpen && touchStartX.current < 20 && swipeDistance > 80) {
-      setTabletDrawerOpen(true);
-      if ('vibrate' in navigator) navigator.vibrate(10);
-    } else if (tabletDrawerOpen && swipeDistance < -80) {
-      setTabletDrawerOpen(false);
-      if ('vibrate' in navigator) navigator.vibrate(10);
+  const tabletPanHandlers = useMemo(() => createPanHandlers({
+    axis: 'x',
+    threshold: 20,
+    onStart: (info: PanInfo) => {
+      tabletSwipeStartX.current = info.point.x;
+    },
+    onEnd: (info: PanInfo) => {
+      const swipeDistance = info.offset.x;
+      
+      if (!tabletDrawerOpen && tabletSwipeStartX.current < 20 && swipeDistance > 80) {
+        setTabletDrawerOpen(true);
+        if ('vibrate' in navigator) navigator.vibrate(10);
+      } else if (tabletDrawerOpen && swipeDistance < -80) {
+        setTabletDrawerOpen(false);
+        if ('vibrate' in navigator) navigator.vibrate(10);
+      }
     }
-  };
+  }), [tabletDrawerOpen]);
 
   const deploymentStatus = publishState?.status === 'live' ? 'live' 
     : publishState?.status === 'publishing' ? 'deploying' 
@@ -530,8 +522,7 @@ function UnifiedIDELayout({
         {/* Main Content Area - With bottom padding for fixed navigation */}
         <div 
           className="flex-1 overflow-hidden pb-16"
-          onTouchStart={(mobileActiveTab === 'preview' || mobileActiveTab === 'agent') ? handleMobileSwipeTouchStart : undefined}
-          onTouchEnd={(mobileActiveTab === 'preview' || mobileActiveTab === 'agent') ? handleMobileSwipeTouchEnd : undefined}
+          {...((mobileActiveTab === 'preview' || mobileActiveTab === 'agent') ? mobileSwipeHandlers : {})}
           data-testid="mobile-swipe-area"
           style={{ paddingBottom: mobileActiveTab === 'agent' ? '8rem' : '3.5rem' }}
         >
@@ -807,8 +798,7 @@ function UnifiedIDELayout({
           className
         )}
         data-testid="tablet-layout"
-        onTouchStart={handleTabletTouchStart}
-        onTouchEnd={handleTabletTouchEnd}
+        {...tabletPanHandlers}
       >
         <div
           className={cn(

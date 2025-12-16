@@ -1,5 +1,6 @@
-import { useRef } from 'react';
-import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence, useMotionValue, useTransform } from '@/lib/motion';
+import { useRef, useState, useEffect } from 'react';
+import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
+import { useNativeMotionValue } from '@/lib/native-motion';
 import { 
   GitBranch, Bug, Settings, Database,
   Share2, Users, X,
@@ -80,17 +81,22 @@ export function MobileMoreMenu({
   const { toast } = useToast();
   const prefersReducedMotion = useReducedMotion();
   
-  const dragY = useMotionValue(0);
-  const dragOpacity = useTransform(dragY, (value) => {
-    if (typeof value !== 'number' || isNaN(value)) return 1;
-    const clamped = Math.max(0, Math.min(150, value));
-    return 1 - (clamped / 150) * 0.5;
-  });
-  const dragScale = useTransform(dragY, (value) => {
-    if (typeof value !== 'number' || isNaN(value)) return 1;
-    const clamped = Math.max(0, Math.min(150, value));
-    return 1 - (clamped / 150) * 0.02;
-  });
+  const dragY = useNativeMotionValue(0);
+  const [dragStyles, setDragStyles] = useState({ y: 0, opacity: 1, scale: 1 });
+  
+  useEffect(() => {
+    const unsubscribe = dragY.subscribe((value) => {
+      if (typeof value !== 'number' || isNaN(value)) {
+        setDragStyles({ y: 0, opacity: 1, scale: 1 });
+        return;
+      }
+      const clamped = Math.max(0, Math.min(150, value));
+      const opacity = 1 - (clamped / 150) * 0.5;
+      const scale = 1 - (clamped / 150) * 0.02;
+      setDragStyles({ y: value, opacity, scale });
+    });
+    return unsubscribe;
+  }, [dragY]);
   
   const startY = useRef(0);
   const velocity = useRef(0);
@@ -438,9 +444,9 @@ export function MobileMoreMenu({
             animate="visible"
             exit="hidden"
             style={prefersReducedMotion ? {} : { 
-              y: dragY, 
-              opacity: dragOpacity,
-              scale: dragScale,
+              y: dragStyles.y, 
+              opacity: dragStyles.opacity,
+              scale: dragStyles.scale,
             }}
             data-testid="mobile-more-menu-sheet"
           >

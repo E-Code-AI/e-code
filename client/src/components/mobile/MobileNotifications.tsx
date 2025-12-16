@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { LazyMotionDiv, LazyAnimatePresence, useAnimation } from '@/lib/motion';
+import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
+import { useAnimationControls } from '@/lib/native-motion';
 import { Bell, Heart, UserPlus, MessageCircle, Code, AlertCircle, Check, X, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
