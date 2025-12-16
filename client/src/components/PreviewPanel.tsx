@@ -40,9 +40,26 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
   });
 
   const handleRefresh = () => {
-    setIsRefreshing(true);
-    // Simulate refresh
-    setTimeout(() => setIsRefreshing(false), 1000);
+    try {
+      setIsRefreshing(true);
+      
+      // Attempt to refresh the iframe if it exists
+      const iframe = document.querySelector('iframe[data-preview="true"]') as HTMLIFrameElement | null;
+      if (iframe?.contentWindow) {
+        iframe.contentWindow.location.reload();
+      }
+      
+      // Reset refreshing state after animation
+      setTimeout(() => setIsRefreshing(false), 1000);
+    } catch (error) {
+      console.error('Preview refresh failed:', error);
+      setIsRefreshing(false);
+      toast({
+        title: "Refresh Failed",
+        description: "Could not refresh the preview. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDeploy = async () => {
