@@ -8,6 +8,9 @@ import { IStorage } from '../storage';
 import { ensureAdmin } from '../middleware/admin-auth';
 import { ChatGPTService } from '../services/chatgpt-service';
 import { ensureAuthenticated } from '../middleware/auth';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('chatgpt-router');
 
 export class ChatGPTRouter {
   private router: Router;
@@ -156,6 +159,15 @@ export class ChatGPTRouter {
 
     // Send a streaming message to ChatGPT
     this.router.post('/api/admin/chatgpt/sessions/:sessionId/stream', async (req: Request, res: Response) => {
+      let streamEnded = false;
+      let clientDisconnected = false;
+      
+      // Handle client disconnect to prevent memory leaks
+      req.on('close', () => {
+        clientDisconnected = true;
+        logger.info('[ChatGPT] Client disconnected during streaming');
+      });
+      
       try {
         const { message, includeProjectContext } = req.body;
         
@@ -180,22 +192,41 @@ export class ChatGPTRouter {
             includeProjectContext
           );
 
-          // Stream the response
+          // Stream the response with client disconnect check
           for await (const chunk of stream) {
+            if (clientDisconnected) {
+              logger.info('[ChatGPT] Stopping stream due to client disconnect');
+              break;
+            }
             res.write(`data: ${JSON.stringify({ type: 'content', content: chunk })}\n\n`);
           }
 
-          // Send completion message
-          res.write('data: {"type":"done"}\n\n');
-          res.end();
-        } catch (streamError) {
-          console.error('Streaming error:', streamError);
-          res.write(`data: ${JSON.stringify({ type: 'error', message: streamError.message })}\n\n`);
-          res.end();
+          // Send completion message only if client is still connected
+          if (!clientDisconnected) {
+            res.write('data: {"type":"done"}\n\n');
+          }
+        } catch (streamError: any) {
+          logger.error('[ChatGPT] Streaming error:', streamError);
+          if (!clientDisconnected && !streamEnded) {
+            try {
+              res.write(`data: ${JSON.stringify({ type: 'error', message: streamError.message || 'Stream error' })}\n\n`);
+            } catch (writeError) {
+              logger.error('[ChatGPT] Failed to write error to stream:', writeError);
+            }
+          }
+        } finally {
+          // Always end the response to prevent memory leaks
+          if (!streamEnded) {
+            streamEnded = true;
+            res.end();
+          }
         }
-      } catch (error) {
-        console.error('Failed to setup streaming:', error);
-        res.status(500).json({ message: error.message || 'Failed to setup streaming' });
+      } catch (error: any) {
+        logger.error('[ChatGPT] Failed to setup streaming:', error);
+        if (!streamEnded) {
+          streamEnded = true;
+          res.status(500).json({ message: error.message || 'Failed to setup streaming' });
+        }
       }
     });
   }
