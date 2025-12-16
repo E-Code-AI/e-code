@@ -90,3 +90,7 @@ TESTING_VITE_STRIPE_PUBLIC_KEY = "pk_test_51QPg0B2VSIgdqPLPngii8d0mAYVtYtaHQZSaC
 [[ports]]
 localPort = 5000
 externalPort = 5000
+
+[[ports]]
+localPort = 24678
+externalPort = 80
