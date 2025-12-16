@@ -407,3 +407,162 @@
 .animate-pulse-slow {
   animation: pulseSlow 3s ease-in-out infinite;
 }
+
+/* ============================================
+ * Mobile Panel Slide Animations
+ * ============================================ */
+
+/* Slide from bottom (for search panels, modals) */
+@keyframes slideFromBottom {
+  from {
+    transform: translate3d(0, 100%, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-slide-from-bottom {
+  animation: slideFromBottom 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* Slide from left (for file explorer drawer) */
+@keyframes slideFromLeft {
+  from {
+    transform: translate3d(-100%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-slide-from-left {
+  animation: slideFromLeft 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* Slide from right (for slide panels) */
+@keyframes slideFromRight {
+  from {
+    transform: translate3d(100%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-slide-from-right {
+  animation: slideFromRight 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* Context menu slide up */
+@keyframes slideUpMenu {
+  from {
+    transform: translate3d(0, 100%, 0);
+    opacity: 0;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up-menu {
+  animation: slideUpMenu 0.25s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* Ripple effect animation */
+@keyframes rippleExpand {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-ripple {
+  animation: rippleExpand 1s ease-out infinite;
+  animation-delay: 2s;
+}
+
+/* Badge pulse animation */
+@keyframes badgePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
+
+.animate-badge-pulse {
+  animation: badgePulse 1.5s ease-in-out infinite;
+}
+
+/* Staggered fade-in for list items */
+.animate-stagger-1 { animation-delay: 0.05s; }
+.animate-stagger-2 { animation-delay: 0.1s; }
+.animate-stagger-3 { animation-delay: 0.15s; }
+.animate-stagger-4 { animation-delay: 0.2s; }
+.animate-stagger-5 { animation-delay: 0.25s; }
+
+/* Expand/collapse for folder contents */
+.folder-content-enter {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.2s ease-out, opacity 0.2s ease-out;
+}
+
+.folder-content-enter.expanded {
+  max-height: 2000px;
+  opacity: 1;
+}
+
+/* Button tap states using CSS */
+.tap-scale {
+  transition: transform 0.1s ease-out;
+}
+
+.tap-scale:active {
+  transform: scale(0.95);
+}
+
+/* Collapsible panel animations */
+.collapsible-panel {
+  overflow: hidden;
+  transition: max-height 0.2s ease-out, opacity 0.2s ease-out;
+}
+
+.collapsible-panel.collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
+.collapsible-panel.expanded {
+  max-height: 2000px;
+  opacity: 1;
+}
+
+/* Opacity pulse for skeleton loading */
+@keyframes opacityPulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-opacity-pulse {
+  animation: opacityPulse 1.5s ease-in-out infinite;
+}
+
+/* Spin animation for loaders */
+.animate-spin-loader {
+  animation: spin 1s linear infinite;
+}

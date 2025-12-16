@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { motion } from 'framer-motion';
 import {
   Bug,
   Play,
@@ -54,17 +53,7 @@ interface MobileDebugPanelProps {
 
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
-    <motion.div
-      className={cn("bg-muted rounded-lg", className)}
-      animate={{
-        opacity: [0.5, 0.8, 0.5],
-      }}
-      transition={{
-        duration: 1.5,
-        repeat: Infinity,
-        ease: "easeInOut",
-      }}
-    />
+    <div className={cn("bg-muted rounded-lg animate-opacity-pulse", className)} />
   );
 }
 
@@ -240,11 +229,7 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
             <h3 className="text-[17px] font-medium leading-tight text-foreground">Debugger</h3>
           </div>
           {isLoading && (
-            <motion.div
-              className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            />
+            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           )}
           {!isLoading && isRunning && (
             <Badge 
@@ -270,11 +255,7 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
               data-testid="button-debug-start"
             >
               {startMutation.isPending ? (
-                <motion.div
-                  className="w-[18px] h-[18px] border-2 border-primary-foreground border-t-transparent rounded-full mr-2"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                />
+                <div className="w-[18px] h-[18px] border-2 border-primary-foreground border-t-transparent rounded-full mr-2 animate-spin" />
               ) : (
                 <Play className="w-[18px] h-[18px] mr-2" />
               )}
@@ -290,11 +271,7 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                   data-testid="button-debug-continue"
                 >
                   {continueMutation.isPending ? (
-                    <motion.div
-                      className="w-[18px] h-[18px] border-2 border-foreground border-t-transparent rounded-full mr-2"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    />
+                    <div className="w-[18px] h-[18px] border-2 border-foreground border-t-transparent rounded-full mr-2 animate-spin" />
                   ) : (
                     <Play className="w-[18px] h-[18px] mr-2" />
                   )}
@@ -308,11 +285,7 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                   data-testid="button-debug-pause"
                 >
                   {pauseMutation.isPending ? (
-                    <motion.div
-                      className="w-[18px] h-[18px] border-2 border-foreground border-t-transparent rounded-full mr-2"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    />
+                    <div className="w-[18px] h-[18px] border-2 border-foreground border-t-transparent rounded-full mr-2 animate-spin" />
                   ) : (
                     <Pause className="w-[18px] h-[18px] mr-2" />
                   )}
@@ -326,11 +299,7 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
                 data-testid="button-debug-stop"
               >
                 {stopMutation.isPending ? (
-                  <motion.div
-                    className="w-[18px] h-[18px] border-2 border-foreground border-t-transparent rounded-full"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  />
+                  <div className="w-[18px] h-[18px] border-2 border-foreground border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <Square className="w-[18px] h-[18px]" />
                 )}

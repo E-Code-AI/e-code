@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { motion } from 'framer-motion';
 import {
   Database,
   RefreshCw,
@@ -71,18 +70,7 @@ const iconMap: Record<string, any> = {
 
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
-    <motion.div
-      className={cn("bg-muted rounded-lg overflow-hidden relative", className)}
-      initial={{ opacity: 0.5 }}
-      animate={{ opacity: [0.5, 0.8, 0.5] }}
-      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-    >
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-muted-foreground/20 to-transparent"
-        animate={{ x: ['-100%', '100%'] }}
-        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-      />
-    </motion.div>
+    <div className={cn("bg-muted rounded-lg overflow-hidden relative skeleton-shimmer", className)} />
   );
 }
 
@@ -326,13 +314,10 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
               const isExpanded = expandedTables.has(table.name);
 
               return (
-                <motion.div
+                <div
                   key={table.name}
-                  className="border border-border rounded-lg overflow-hidden bg-card"
+                  className="border border-border rounded-lg overflow-hidden bg-card animate-fade-in"
                   data-testid={`table-${table.name}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
                 >
                   <div className="flex items-center justify-between p-4 hover:bg-muted transition-colors cursor-pointer">
                     <div
@@ -369,54 +354,51 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
                     </Button>
                   </div>
 
-                  {isExpanded && (() => {
-                    const schemaQuery = getSchemaForTable(table.name);
-                    const schemaData = schemaQuery?.data;
-                    const schemaLoading = schemaQuery?.isLoading;
+                  <div className={`collapsible-panel ${isExpanded ? 'expanded' : 'collapsed'}`}>
+                    {isExpanded && (() => {
+                      const schemaQuery = getSchemaForTable(table.name);
+                      const schemaData = schemaQuery?.data;
+                      const schemaLoading = schemaQuery?.isLoading;
 
-                    return (
-                      <motion.div
-                        className="border-t border-border bg-background p-4 space-y-3"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        {schemaLoading && (
-                          <div className="space-y-2">
-                            {[1, 2, 3].map((i) => (
-                              <ShimmerSkeleton key={i} className="h-8 w-full" />
-                            ))}
-                          </div>
-                        )}
-
-                        {schemaData && schemaData.columns && (
-                          <div className="space-y-2">
-                            <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-3">
-                              Columns
+                      return (
+                        <div className="border-t border-border bg-background p-4 space-y-3">
+                          {schemaLoading && (
+                            <div className="space-y-2">
+                              {[1, 2, 3].map((i) => (
+                                <ShimmerSkeleton key={i} className="h-8 w-full" />
+                              ))}
                             </div>
-                            {schemaData.columns.map((col: TableColumn) => (
-                              <div
-                                key={col.name}
-                                className="flex items-center justify-between py-2 px-3 rounded-lg bg-card min-h-[40px]"
-                                data-testid={`column-${col.name}`}
-                              >
-                                <span className="font-mono text-[13px] text-foreground">{col.name}</span>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[13px] text-muted-foreground">{col.type}</span>
-                                  {col.isPrimaryKey && (
-                                    <Badge className="bg-primary/10 text-primary border-primary/30 text-[11px]">
-                                      PK
-                                    </Badge>
-                                  )}
-                                </div>
+                          )}
+
+                          {schemaData && schemaData.columns && (
+                            <div className="space-y-2">
+                              <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-3">
+                                Columns
                               </div>
-                            ))}
-                          </div>
-                        )}
-                      </motion.div>
-                    );
-                  })()}
-                </motion.div>
+                              {schemaData.columns.map((col: TableColumn) => (
+                                <div
+                                  key={col.name}
+                                  className="flex items-center justify-between py-2 px-3 rounded-lg bg-card min-h-[40px]"
+                                  data-testid={`column-${col.name}`}
+                                >
+                                  <span className="font-mono text-[13px] text-foreground">{col.name}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[13px] text-muted-foreground">{col.type}</span>
+                                    {col.isPrimaryKey && (
+                                      <Badge className="bg-primary/10 text-primary border-primary/30 text-[11px]">
+                                        PK
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -454,13 +436,11 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
                 </div>
 
                 {tableData.rows.map((row, idx) => (
-                  <motion.div
+                  <div
                     key={idx}
-                    className="border border-border rounded-lg p-4 space-y-3 bg-card"
+                    className="border border-border rounded-lg p-4 space-y-3 bg-card animate-fade-in"
                     data-testid={`row-${idx}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2, delay: idx * 0.05 }}
+                    style={{ animationDelay: `${idx * 0.05}s` }}
                   >
                     {Object.entries(row).map(([key, value]) => (
                       <div key={key} className="flex items-start justify-between gap-3">
@@ -472,7 +452,7 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
                         </span>
                       </div>
                     ))}
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             )}
