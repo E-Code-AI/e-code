@@ -18,22 +18,25 @@ export class APIKeyManager {
   /**
    * Generate new API key pair
    */
-  generateAPIKey(): { key: string; hash: string; publicKey: string } {
+  generateAPIKey(): { key: string; hash: string; publicKey: string; keyPrefix: string } {
     // Generate random bytes
     const randomBytes = crypto.randomBytes(this.keyLength);
     
     // Create the full API key
     const key = `${this.keyPrefix}${randomBytes.toString('base64url')}`;
     
-    // Create hash for storage
+    // Create hash for storage - S-C1 FIXED: Never store plain text
     const hash = crypto.createHash('sha256').update(key).digest('hex');
     
     // Create public key (first 8 chars of hash for identification)
     const publicKey = `pk_${hash.substring(0, 8)}`;
     
+    // Store first 12 chars for identification in UI
+    const keyPrefixDisplay = key.substring(0, 12);
+    
     logger.info('API key generated', { publicKey });
     
-    return { key, hash, publicKey };
+    return { key, hash, publicKey, keyPrefix: keyPrefixDisplay };
   }
   
   /**
@@ -45,28 +48,30 @@ export class APIKeyManager {
     permissions?: string[],
     expiresIn?: number // Days
   ): Promise<{ key: string; publicKey: string; id: number }> {
-    const { key, hash, publicKey } = this.generateAPIKey();
+    const { key, hash, publicKey, keyPrefix } = this.generateAPIKey();
     
     const expiresAt = expiresIn 
       ? new Date(Date.now() + (expiresIn * 24 * 3600000))
       : null;
     
     try {
+      // S-C1 FIXED: Store keyHash and keyPrefix, never plain text
       const result = await db.insert(apiKeys).values({
         userId,
         name,
         publicKey,
         keyHash: hash,
-        permissions: permissions ? JSON.stringify(permissions) : null,
+        keyPrefix, // S-C1: Store prefix for identification
+        permissions: permissions || [], // JSONB array, not JSON string
         expiresAt,
         createdAt: new Date(),
         lastUsedAt: null,
         active: true,
-        metadata: JSON.stringify({
+        metadata: {
           createdBy: userId,
-          createdAt: new Date(),
+          createdAt: new Date().toISOString(),
           userAgent: null
-        })
+        }
       }).returning({ id: apiKeys.id });
       
       logger.info('API key created', {
@@ -147,7 +152,8 @@ export class APIKeyManager {
       return {
         valid: true,
         userId: keyData.userId,
-        permissions: keyData.permissions ? JSON.parse(keyData.permissions) : [],
+        // S-C1 FIXED: permissions is now JSONB array, not JSON string
+        permissions: Array.isArray(keyData.permissions) ? keyData.permissions : [],
         keyId: keyData.id
       };
     } catch (error) {
@@ -166,10 +172,11 @@ export class APIKeyManager {
         .set({ 
           active: false,
           revokedAt: new Date(),
-          metadata: JSON.stringify({
+          // S-C1 FIXED: metadata is JSONB, not JSON string
+          metadata: {
             revokedBy,
-            revokedAt: new Date()
-          })
+            revokedAt: new Date().toISOString()
+          }
         })
         .where(eq(apiKeys.id, keyId));
       
@@ -191,6 +198,7 @@ export class APIKeyManager {
           id: apiKeys.id,
           name: apiKeys.name,
           publicKey: apiKeys.publicKey,
+          keyPrefix: apiKeys.keyPrefix, // S-C1: Include for UI display
           createdAt: apiKeys.createdAt,
           lastUsedAt: apiKeys.lastUsedAt,
           expiresAt: apiKeys.expiresAt,
@@ -201,9 +209,10 @@ export class APIKeyManager {
         .from(apiKeys)
         .where(eq(apiKeys.userId, userId));
       
+      // S-C1 FIXED: permissions is JSONB array, not JSON string
       return keys.map(key => ({
         ...key,
-        permissions: key.permissions ? JSON.parse(key.permissions) : []
+        permissions: Array.isArray(key.permissions) ? key.permissions : []
       }));
     } catch (error) {
       logger.error('Failed to list API keys', { error, userId });
@@ -229,8 +238,11 @@ export class APIKeyManager {
       
       const oldKey = existing[0];
       
-      // Generate new key
-      const { key, hash, publicKey } = this.generateAPIKey();
+      // Generate new key - S-C1: Includes keyPrefix
+      const { key, hash, publicKey, keyPrefix } = this.generateAPIKey();
+      
+      // S-C1 FIXED: metadata is JSONB, merge properly
+      const existingMetadata = typeof oldKey.metadata === 'object' ? oldKey.metadata : {};
       
       // Update with new key
       await db
@@ -238,12 +250,13 @@ export class APIKeyManager {
         .set({
           keyHash: hash,
           publicKey,
+          keyPrefix, // S-C1: Update prefix on rotation
           rotatedAt: new Date(),
-          metadata: JSON.stringify({
-            ...JSON.parse(oldKey.metadata || '{}'),
-            rotatedAt: new Date(),
+          metadata: {
+            ...existingMetadata,
+            rotatedAt: new Date().toISOString(),
             previousPublicKey: oldKey.publicKey
-          })
+          }
         })
         .where(eq(apiKeys.id, keyId));
       

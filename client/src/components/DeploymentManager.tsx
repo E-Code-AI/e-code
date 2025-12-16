@@ -993,6 +993,6 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
