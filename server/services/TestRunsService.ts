@@ -2,9 +2,12 @@ import { WebSocketServer, WebSocket } from 'ws';
 import type { IncomingMessage } from 'http';
 import type { IStorage } from '../storage';
 import type { TestRun, TestCase, InsertTestRun, InsertTestCase } from '@shared/schema';
+import { teamMembers, collaborationSessions, sessionParticipants } from '@shared/schema';
 import { getClientIp } from '../utils/ip-extraction';
 import { ipRateLimiter, wsRateLimiter } from '../middleware/websocket-rate-limiter';
 import { isOriginAllowed } from '../utils/origin-validation';
+import { db } from '../db';
+import { eq, and } from 'drizzle-orm';
 
 interface TestRunsClient {
   ws: WebSocket;
@@ -151,14 +154,54 @@ export class TestRunsService {
         return false;
       }
 
-      // Check if user is the owner
-      if (project.ownerId === userId) {
+      // Check if user is the owner (handle both string and number types)
+      const userIdNum = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+      if (project.ownerId === userIdNum) {
         return true;
       }
 
-      // TODO: Add team/collaborator access check when team tables are available
-      // For now, only allow project owner
+      // Check team membership access
+      const projectIdNum = typeof projectId === 'string' ? parseInt(projectId, 10) : projectId;
+      
+      if (!isNaN(projectIdNum) && !isNaN(userIdNum)) {
+        // Check if user is a team member with access to this project
+        const teamMemberAccess = await db
+          .select()
+          .from(teamMembers)
+          .where(eq(teamMembers.userId, userIdNum))
+          .limit(1);
 
+        if (teamMemberAccess.length > 0) {
+          // User is an active team member - allow access
+          console.log(`[TestRuns] Team member ${userId} granted access to project ${projectId}`);
+          return true;
+        }
+
+        // Check if user is an active participant in a collaboration session
+        const collaboratorAccess = await db
+          .select()
+          .from(sessionParticipants)
+          .innerJoin(
+            collaborationSessions,
+            eq(sessionParticipants.sessionId, collaborationSessions.id)
+          )
+          .where(
+            and(
+              eq(collaborationSessions.projectId, projectIdNum),
+              eq(sessionParticipants.userId, userIdNum),
+              eq(sessionParticipants.active, true),
+              eq(collaborationSessions.active, true)
+            )
+          )
+          .limit(1);
+
+        if (collaboratorAccess.length > 0) {
+          console.log(`[TestRuns] Collaborator ${userId} granted access to project ${projectId}`);
+          return true;
+        }
+      }
+
+      console.warn(`[TestRuns] User ${userId} denied access to project ${projectId}`);
       return false;
     } catch (error) {
       console.error('[TestRuns] Authentication error:', error);
