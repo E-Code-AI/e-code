@@ -1,5 +1,27 @@
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import { storage } from "./storage";
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Generate secure random password for production if not provided
+function getSecurePassword(envVar: string, devDefault: string): string {
+  const envPassword = process.env[envVar];
+  
+  if (envPassword) {
+    return envPassword;
+  }
+  
+  if (isProduction) {
+    // In production, generate random password and log it securely
+    const randomPassword = crypto.randomBytes(32).toString('hex');
+    console.warn(`[Security] ${envVar} not set - generated random password (check logs)`);
+    return randomPassword;
+  }
+  
+  // Only use hardcoded defaults in development/test
+  return devDefault;
+}
 
 // Password hashing function - uses bcrypt to match auth.router.ts
 async function hashPassword(password: string) {
@@ -14,8 +36,8 @@ export async function seedDatabase() {
     let isNewUser = false;
     
     if (!testUser) {
-      // Create test user with deterministic password for E2E testing
-      const testPassword = process.env.TEST_USER_PASSWORD || "testpass123";
+      // Create test user with secure password handling
+      const testPassword = getSecurePassword('TEST_USER_PASSWORD', 'testpass123');
       const hashedPassword = await hashPassword(testPassword);
       testUser = await storage.createUser({
         username: "testuser",
@@ -137,7 +159,7 @@ This project is automatically created for E2E testing.
     // Create admin user for E2E testing if it doesn't exist
     const existingAdmin = await storage.getUserByUsername("admin");
     if (!existingAdmin) {
-      const adminPassword = process.env.ADMIN_USER_PASSWORD || "adminpass123";
+      const adminPassword = getSecurePassword('ADMIN_USER_PASSWORD', 'adminpass123');
       const adminHashedPassword = await hashPassword(adminPassword);
       const adminUser = await storage.createUser({
         username: "admin",
