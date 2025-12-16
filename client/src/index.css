@@ -440,6 +440,16 @@
   }
 }
 
+/* Wave Animation for Skeleton Loaders */
+@keyframes wave {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 /* Ripple Effect Animation */
 @keyframes ripple {
   from {

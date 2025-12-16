@@ -2,7 +2,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { LazyMotionDiv, CSSFade, CSSSlide, fadeVariants, staggerVariants } from '@/lib/motion';
+import { useScroll, useTransform } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { 
@@ -261,7 +262,7 @@ export default function Landing() {
   return (
     <MarketingLayout>
       {/* Hero Section with E-Code Gradient */}
-      <motion.section 
+      <LazyMotionDiv 
         className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-[var(--ecode-background)]"
         style={{ fontFamily: 'var(--ecode-font-sans)' }}
         initial={{ opacity: 0 }}
@@ -270,7 +271,7 @@ export default function Landing() {
         data-testid="section-hero"
       >
         {/* Background Image with Parallax */}
-        <motion.div 
+        <LazyMotionDiv 
           className="absolute inset-0 z-0"
           style={{ y }}
         >
@@ -281,21 +282,21 @@ export default function Landing() {
             loading="eager"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[var(--ecode-background)]/80 via-[var(--ecode-background)]/90 to-[var(--ecode-background)]" />
-        </motion.div>
+        </LazyMotionDiv>
 
         {/* Animated Grid Background */}
         <div className="absolute inset-0 bg-grid-pattern opacity-5 dark:opacity-10" />
         
         {/* Content */}
         <div className="container-responsive relative z-10 max-w-7xl text-center px-4 py-20">
-          <motion.div 
+          <LazyMotionDiv 
             className="space-y-8"
             variants={staggerContainer}
             initial="initial"
             animate="animate"
           >
             {/* Badge */}
-            <motion.div variants={fadeInUp}>
+            <LazyMotionDiv variants={fadeInUp}>
               <Badge 
                 variant="secondary" 
                 className="mx-auto inline-flex items-center gap-2 px-6 py-2 text-sm font-semibold bg-gradient-to-r from-ecode-accent/10 to-ecode-secondary-accent/10 border border-ecode-accent/20 dark:from-ecode-accent/15 dark:to-ecode-secondary-accent/15 dark:border-ecode-accent/30 transition-all duration-300 hover:border-ecode-accent/40"
@@ -305,10 +306,10 @@ export default function Landing() {
                 AI-Powered Enterprise Development Platform
                 <Sparkles className="h-4 w-4 text-ecode-accent" />
               </Badge>
-            </motion.div>
+            </LazyMotionDiv>
 
             {/* Main Headline */}
-            <motion.h1 
+            <LazyMotionDiv 
               className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight"
               variants={fadeInUp}
               data-testid="heading-hero"
@@ -324,30 +325,30 @@ export default function Landing() {
               <span className="bg-gradient-to-r from-[var(--ecode-text)] to-[var(--ecode-text-secondary)] bg-clip-text text-transparent">
                 in Minutes
               </span>
-            </motion.h1>
+            </LazyMotionDiv>
 
             {/* Subheadline */}
-            <motion.p 
+            <LazyMotionDiv 
               className="mx-auto max-w-3xl text-xl sm:text-2xl text-[var(--ecode-text-muted)] font-medium"
               variants={fadeInUp}
               data-testid="text-hero-description"
             >
               The only platform that combines AI agents, cloud infrastructure, and enterprise security 
               to deliver Fortune 500 development velocity to every team.
-            </motion.p>
+            </LazyMotionDiv>
 
             {/* AI Model Selection */}
-            <motion.div
+            <LazyMotionDiv
               className="max-w-4xl mx-auto mt-8"
               variants={fadeInUp}
             >
               <div className="flex justify-center">
                 <AIModelSelector variant="card" className="w-full max-w-2xl" />
               </div>
-            </motion.div>
+            </LazyMotionDiv>
 
             {/* AI Input Section */}
-            <motion.div 
+            <LazyMotionDiv 
               className="max-w-4xl mx-auto mt-8"
               variants={fadeInUp}
             >
@@ -396,7 +397,7 @@ export default function Landing() {
               </div>
 
               {/* Popular Examples Below Input */}
-              <motion.div 
+              <LazyMotionDiv 
                 className="mt-8 space-y-4"
                 variants={fadeInUp}
               >
@@ -472,10 +473,10 @@ export default function Landing() {
                     </button>
                   ))}
                 </div>
-              </motion.div>
+              </LazyMotionDiv>
 
               {/* Features below input */}
-              <motion.div 
+              <LazyMotionDiv 
                 className="flex flex-wrap justify-center gap-4 mt-6"
                 variants={fadeInUp}
               >
@@ -491,11 +492,11 @@ export default function Landing() {
                   <CheckCircle className="h-4 w-4 text-ecode-accent" />
                   Scale to millions
                 </div>
-              </motion.div>
-            </motion.div>
+              </LazyMotionDiv>
+            </LazyMotionDiv>
 
             {/* CTA Buttons */}
-            <motion.div 
+            <LazyMotionDiv 
               className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mt-8 w-full px-4 sm:px-0"
               variants={fadeInUp}
             >
@@ -522,24 +523,24 @@ export default function Landing() {
                 View Pricing
                 <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
-            </motion.div>
-          </motion.div>
+            </LazyMotionDiv>
+          </LazyMotionDiv>
         </div>
 
         {/* Scroll Indicator */}
-        <motion.div 
+        <LazyMotionDiv 
           className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
           <ChevronRight className="h-8 w-8 text-gray-400 rotate-90" />
-        </motion.div>
-      </motion.section>
+        </LazyMotionDiv>
+      </LazyMotionDiv>
 
       {/* Stats Section */}
       <section className="py-20 bg-gradient-to-b from-[var(--ecode-background)] to-[var(--ecode-surface-tertiary)]" data-testid="section-stats">
         <div className="container-responsive max-w-7xl">
-          <motion.div 
+          <LazyMotionDiv 
             className="grid grid-cols-2 md:grid-cols-4 gap-8"
             initial="initial"
             whileInView="animate"
@@ -547,7 +548,7 @@ export default function Landing() {
             variants={staggerContainer}
           >
             {stats.map((stat, index) => (
-              <motion.div 
+              <LazyMotionDiv 
                 key={index}
                 className="text-center group"
                 variants={fadeInUp}
@@ -562,37 +563,37 @@ export default function Landing() {
                 <div className="text-sm text-[var(--ecode-text-muted)] mt-1">
                   {stat.label}
                 </div>
-              </motion.div>
+              </LazyMotionDiv>
             ))}
-          </motion.div>
+          </LazyMotionDiv>
         </div>
       </section>
 
       {/* Video Demo Section */}
       <section id="video-demo" className="py-20 bg-[var(--ecode-surface-tertiary)]" data-testid="section-video-demo">
         <div className="container-responsive max-w-7xl">
-          <motion.div 
+          <LazyMotionDiv 
             className="text-center mb-12"
             initial="initial"
             whileInView="animate"
             viewport={{ once: true }}
             variants={staggerContainer}
           >
-            <motion.h2 
+            <LazyMotionDiv 
               className="text-4xl sm:text-5xl font-bold mb-4 text-[var(--ecode-text)]"
               variants={fadeInUp}
             >
               See E-Code Platform in Action
-            </motion.h2>
-            <motion.p 
+            </LazyMotionDiv>
+            <LazyMotionDiv 
               className="text-xl text-[var(--ecode-text-muted)] max-w-3xl mx-auto"
               variants={fadeInUp}
             >
               Watch a real demo: Build and deploy a full-stack application in under 2 minutes using AI agents
-            </motion.p>
-          </motion.div>
+            </LazyMotionDiv>
+          </LazyMotionDiv>
 
-          <motion.div 
+          <LazyMotionDiv 
             className="relative max-w-5xl mx-auto"
             initial={{ scale: 0.9, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
@@ -688,35 +689,35 @@ export default function Landing() {
                 <Badge variant="secondary">Database Setup</Badge>
               </div>
             </div>
-          </motion.div>
+          </LazyMotionDiv>
         </div>
       </section>
 
       {/* Projects Showcase - Examples Built with E-Code */}
       <section className="py-20 bg-[var(--ecode-background)]" data-testid="section-projects">
         <div className="container-responsive max-w-7xl">
-          <motion.div 
+          <LazyMotionDiv 
             className="text-center mb-12"
             initial="initial"
             whileInView="animate"
             viewport={{ once: true }}
             variants={staggerContainer}
           >
-            <motion.h2 
+            <LazyMotionDiv 
               className="text-4xl sm:text-5xl font-bold mb-4 text-[var(--ecode-text)]"
               variants={fadeInUp}
             >
               Built with E-Code Platform
-            </motion.h2>
-            <motion.p 
+            </LazyMotionDiv>
+            <LazyMotionDiv 
               className="text-xl text-[var(--ecode-text-muted)] max-w-3xl mx-auto"
               variants={fadeInUp}
             >
               Real production applications built by our community in hours, not months
-            </motion.p>
-          </motion.div>
+            </LazyMotionDiv>
+          </LazyMotionDiv>
 
-          <motion.div 
+          <LazyMotionDiv 
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
             initial="initial"
             whileInView="animate"
@@ -773,7 +774,7 @@ export default function Landing() {
                 creator: "Built by FinTech Innovations"
               }
             ].map((project, index) => (
-              <motion.div
+              <LazyMotionDiv
                 key={index}
                 variants={scaleIn}
                 whileHover={{ scale: 1.03 }}
@@ -817,11 +818,11 @@ export default function Landing() {
                     </div>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </LazyMotionDiv>
             ))}
-          </motion.div>
+          </LazyMotionDiv>
 
-          <motion.div 
+          <LazyMotionDiv 
             className="text-center mt-12"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -838,35 +839,35 @@ export default function Landing() {
               Explore More Projects
               <ArrowRight className="h-4 w-4" />
             </Button>
-          </motion.div>
+          </LazyMotionDiv>
         </div>
       </section>
 
       {/* Features Grid */}
       <section className="py-20 bg-[var(--ecode-surface-tertiary)]" data-testid="section-features">
         <div className="container-responsive max-w-7xl">
-          <motion.div 
+          <LazyMotionDiv 
             className="text-center mb-16"
             initial="initial"
             whileInView="animate"
             viewport={{ once: true }}
             variants={staggerContainer}
           >
-            <motion.h2 
+            <LazyMotionDiv 
               className="text-4xl sm:text-5xl font-bold mb-4 text-[var(--ecode-text)]"
               variants={fadeInUp}
             >
               Enterprise Features, Startup Speed
-            </motion.h2>
-            <motion.p 
+            </LazyMotionDiv>
+            <LazyMotionDiv 
               className="text-xl text-[var(--ecode-text-muted)] max-w-3xl mx-auto"
               variants={fadeInUp}
             >
               Everything you need to build, deploy, and scale production applications
-            </motion.p>
-          </motion.div>
+            </LazyMotionDiv>
+          </LazyMotionDiv>
 
-          <motion.div 
+          <LazyMotionDiv 
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
             initial="initial"
             whileInView="animate"
@@ -874,7 +875,7 @@ export default function Landing() {
             variants={staggerContainer}
           >
             {features.map((feature, index) => (
-              <motion.div
+              <LazyMotionDiv
                 key={index}
                 variants={scaleIn}
                 whileHover={{ scale: 1.05 }}
@@ -896,9 +897,9 @@ export default function Landing() {
                     </p>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </LazyMotionDiv>
             ))}
-          </motion.div>
+          </LazyMotionDiv>
         </div>
       </section>
 
@@ -906,7 +907,7 @@ export default function Landing() {
       <section className="py-20 bg-gradient-to-b from-[var(--ecode-surface-tertiary)] to-[var(--ecode-background)]" data-testid="section-showcase">
         <div className="container-responsive max-w-7xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0, x: -50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -919,9 +920,9 @@ export default function Landing() {
                 className="rounded-2xl shadow-[0_8px_32px_-8px_rgba(242,98,7,0.3)]"
                 loading="lazy"
               />
-            </motion.div>
+            </LazyMotionDiv>
             
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -951,11 +952,11 @@ export default function Landing() {
                 Try Collaboration
                 <ArrowRight className="h-4 w-4" />
               </Button>
-            </motion.div>
+            </LazyMotionDiv>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0, x: -50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -985,9 +986,9 @@ export default function Landing() {
                 Explore AI Features
                 <ArrowRight className="h-4 w-4" />
               </Button>
-            </motion.div>
+            </LazyMotionDiv>
             
-            <motion.div
+            <LazyMotionDiv
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -999,7 +1000,7 @@ export default function Landing() {
                 className="rounded-2xl shadow-[0_8px_32px_-8px_rgba(242,98,7,0.3)]"
                 loading="lazy"
               />
-            </motion.div>
+            </LazyMotionDiv>
           </div>
         </div>
       </section>
@@ -1007,26 +1008,26 @@ export default function Landing() {
       {/* Language Support */}
       <section className="py-20 bg-[var(--ecode-background)]" data-testid="section-languages">
         <div className="container-responsive max-w-7xl text-center">
-          <motion.div
+          <LazyMotionDiv
             initial="initial"
             whileInView="animate"
             viewport={{ once: true }}
             variants={staggerContainer}
           >
-            <motion.h2 
+            <LazyMotionDiv 
               className="text-4xl font-bold mb-4 text-[var(--ecode-text)]"
               variants={fadeInUp}
             >
               Any Language, Any Framework
-            </motion.h2>
-            <motion.p 
+            </LazyMotionDiv>
+            <LazyMotionDiv 
               className="text-xl text-[var(--ecode-text-muted)] mb-12 max-w-3xl mx-auto"
               variants={fadeInUp}
             >
               Build with the tools you love. E-Code supports all major languages and frameworks out of the box.
-            </motion.p>
+            </LazyMotionDiv>
             
-            <motion.div 
+            <LazyMotionDiv 
               className="flex flex-wrap justify-center gap-6"
               variants={fadeInUp}
             >
@@ -1044,7 +1045,7 @@ export default function Landing() {
                 { Icon: SiKubernetes, name: 'Kubernetes', color: 'text-ecode-accent' },
                 { Icon: SiSpring, name: 'Spring', color: 'text-green-600' }
               ].map(({ Icon, name, color }, index) => (
-                <motion.div
+                <LazyMotionDiv
                   key={name}
                   className="flex flex-col items-center gap-2 p-4 rounded-xl bg-[var(--ecode-surface)] border border-transparent hover:border-ecode-accent/30 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.15)] transition-all duration-300"
                   whileHover={{ scale: 1.1 }}
@@ -1055,38 +1056,38 @@ export default function Landing() {
                 >
                   <Icon className={`h-12 w-12 ${color}`} />
                   <span className="text-sm font-medium text-[var(--ecode-text)]">{name}</span>
-                </motion.div>
+                </LazyMotionDiv>
               ))}
-            </motion.div>
-          </motion.div>
+            </LazyMotionDiv>
+          </LazyMotionDiv>
         </div>
       </section>
 
       {/* Testimonials */}
       <section className="py-20 bg-gradient-to-b from-[var(--ecode-background)] to-[var(--ecode-surface-tertiary)]" data-testid="section-testimonials">
         <div className="container-responsive max-w-7xl">
-          <motion.div 
+          <LazyMotionDiv 
             className="text-center mb-16"
             initial="initial"
             whileInView="animate"
             viewport={{ once: true }}
             variants={staggerContainer}
           >
-            <motion.h2 
+            <LazyMotionDiv 
               className="text-4xl sm:text-5xl font-bold mb-4 text-[var(--ecode-text)]"
               variants={fadeInUp}
             >
               Trusted by Industry Leaders
-            </motion.h2>
-            <motion.p 
+            </LazyMotionDiv>
+            <LazyMotionDiv 
               className="text-xl text-[var(--ecode-text-muted)]"
               variants={fadeInUp}
             >
               See why thousands of companies choose E-Code
-            </motion.p>
-          </motion.div>
+            </LazyMotionDiv>
+          </LazyMotionDiv>
 
-          <motion.div 
+          <LazyMotionDiv 
             className="grid md:grid-cols-3 gap-8"
             initial="initial"
             whileInView="animate"
@@ -1094,7 +1095,7 @@ export default function Landing() {
             variants={staggerContainer}
           >
             {testimonials.map((testimonial, index) => (
-              <motion.div key={index} variants={scaleIn} data-testid={`testimonial-${index}`}>
+              <LazyMotionDiv key={index} variants={scaleIn} data-testid={`testimonial-${index}`}>
                 <Card className="h-full border border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:border-ecode-accent/30 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.2)] transition-all duration-300">
                   <CardHeader>
                     <div className="flex items-center gap-4 mb-4">
@@ -1121,12 +1122,12 @@ export default function Landing() {
                     </p>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </LazyMotionDiv>
             ))}
-          </motion.div>
+          </LazyMotionDiv>
 
           {/* Enterprise Logos */}
-          <motion.div 
+          <LazyMotionDiv 
             className="mt-16 text-center"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1144,7 +1145,7 @@ export default function Landing() {
               <span className="text-2xl font-bold">Oracle</span>
               <span className="text-2xl font-bold">Meta</span>
             </div>
-          </motion.div>
+          </LazyMotionDiv>
         </div>
       </section>
 
@@ -1154,7 +1155,7 @@ export default function Landing() {
         data-testid="section-cta"
       >
         <div className="container-responsive max-w-4xl text-center">
-          <motion.div
+          <LazyMotionDiv
             initial={{ scale: 0.9, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
             viewport={{ once: true }}
@@ -1197,7 +1198,7 @@ export default function Landing() {
                 Contact Sales
               </Button>
             </div>
-          </motion.div>
+          </LazyMotionDiv>
         </div>
       </section>
 

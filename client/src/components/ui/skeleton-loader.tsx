@@ -1,6 +1,5 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
 
 interface SkeletonLoaderProps {
   className?: string;
@@ -42,17 +41,7 @@ export function SkeletonLoader({
   );
 
   const pulseAnimation = animation === 'pulse' ? 'animate-pulse' : '';
-  
-  const waveAnimation = animation === 'wave' ? {
-    animate: { 
-      opacity: [0.5, 1, 0.5],
-    },
-    transition: {
-      duration: 1.5,
-      repeat: Infinity,
-      ease: 'easeInOut',
-    }
-  } : {};
+  const waveAnimation = animation === 'wave' ? 'animate-wave' : '';
 
   if (lines > 1) {
     return (
@@ -76,20 +65,12 @@ export function SkeletonLoader({
 
   const skeletonElement = (
     <div
-      className={cn(baseClasses, pulseAnimation)}
+      className={cn(baseClasses, pulseAnimation, waveAnimation)}
       style={{ width, height }}
     >
       {animation === 'shimmer' && shimmerGradient}
     </div>
   );
-
-  if (animation === 'wave') {
-    return (
-      <motion.div {...waveAnimation} style={{ width, height }}>
-        {skeletonElement}
-      </motion.div>
-    );
-  }
 
   return skeletonElement;
 }
