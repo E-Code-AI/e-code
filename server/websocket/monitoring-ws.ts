@@ -8,6 +8,8 @@ import { createLogger } from '../utils/logger';
 import { performanceMonitoringService } from '../services/performance-monitoring';
 import { alertSystem } from '../services/alert-system';
 import { metricsCollector } from '../services/metrics-collector';
+import jwt from 'jsonwebtoken';
+import { storage } from '../storage';
 
 const logger = createLogger('monitoring-ws');
 
@@ -114,8 +116,7 @@ export class MonitoringWebSocketService {
           this.sendMessage(client, { type: 'pong', timestamp: Date.now() });
           break;
         case 'auth':
-          client.userId = data.userId;
-          logger.info(`Client ${client.id} authenticated as user ${data.userId}`);
+          await this.handleAuth(client, data);
           break;
         default:
           logger.warn(`Unknown message type: ${data.type}`);
@@ -150,6 +151,42 @@ export class MonitoringWebSocketService {
       channels,
       timestamp: Date.now()
     });
+  }
+
+  private async handleAuth(client: MonitoringClient, data: any) {
+    try {
+      if (!data.token) {
+        this.sendError(client, 'Authentication token required');
+        return;
+      }
+
+      let decoded: { userId: number };
+      try {
+        decoded = jwt.verify(data.token, process.env.JWT_SECRET || 'dev-secret') as { userId: number };
+      } catch (jwtError) {
+        logger.warn('JWT verification failed:', jwtError);
+        this.sendError(client, 'Invalid or expired token');
+        return;
+      }
+
+      const user = await storage.getUser(decoded.userId);
+      if (!user) {
+        this.sendError(client, 'User not found');
+        return;
+      }
+
+      client.userId = String(user.id);
+      logger.info(`Client ${client.id} authenticated as user ${user.id} (${user.username})`);
+      
+      this.sendMessage(client, {
+        type: 'auth_success',
+        data: { userId: user.id, username: user.username },
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      logger.error('Authentication error:', error);
+      this.sendError(client, 'Authentication failed');
+    }
   }
 
   private async handleGetMetrics(client: MonitoringClient, options: any = {}) {
