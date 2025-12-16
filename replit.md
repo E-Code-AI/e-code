@@ -33,6 +33,15 @@ Enterprise-grade WebSocket connection management for mobile network reliability:
 - **Mobile resilience**: Auto-reconnect on network online/offline events, visibility change detection for backgrounded apps
 - **Factory functions**: `createTerminalWebSocket()` (15 attempts, 500ms-30s backoff) and `createAgentWebSocket()` (20 attempts, 1s-60s backoff)
 
+### Memory Bank System (Replit-Identical)
+Auto-initializing context storage in `.ecode/memory-bank/` for each project:
+- **AI-Generated Content**: When a workspace is created, Claude generates 5 contextual markdown files based on the user's prompt
+- **Files**: `projectbrief.md`, `productContext.md`, `systemPatterns.md`, `techContext.md`, `activeContext.md`
+- **Auto-Injection**: Memory Bank content is automatically injected into AI prompts for context persistence
+- **Fallback**: Template-based content when AI generation fails
+- **Service**: `server/services/memory-bank.service.ts` with `initializeWithAI()` method
+- **API**: `/api/memory-bank/:projectId` endpoints for CRUD operations
+
 ### Feature Specifications
 Core features include a Monaco Code Editor with enhancements, an interactive xterm.js terminal, file management, real-time collaboration, authentication, TypeScript-based container orchestration, Global Search & Replace, Environment Variables Manager, Logs Viewer, and Debugger UI. Autonomous workspace creation involves a Bootstrap API call, AI plan generation, WebSocket-based real-time progress, autonomous execution, and a live preview. An Agent Activity Dashboard with AG Grid provides real-time metrics and session history. Agent conversation persistence is managed via Zustand and backend synchronization. An Agentic RAG system provides automatic backend RAG context retrieval. Build modes (`design-first`, `full-app`, `continue-planning`) are supported for workspace creation.
 
