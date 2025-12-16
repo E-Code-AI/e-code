@@ -1,7 +1,6 @@
-import { useState, useMemo, ComponentType } from 'react';
+import { useState, useMemo, useCallback, memo, ComponentType } from 'react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Search,
   FileText,
@@ -23,9 +22,10 @@ import {
   Zap,
   Store,
   ChevronRight,
+  X,
 } from 'lucide-react';
 
-const ReplitAgentIcon = ({ className }: { className?: string }) => (
+const ReplitAgentIcon = memo(({ className }: { className?: string }) => (
   <svg 
     viewBox="0 0 24 24" 
     className={className}
@@ -36,7 +36,8 @@ const ReplitAgentIcon = ({ className }: { className?: string }) => (
     <circle cx="7" cy="17" r="2.5" />
     <circle cx="17" cy="17" r="2.5" />
   </svg>
-);
+));
+ReplitAgentIcon.displayName = 'ReplitAgentIcon';
 
 export interface ToolItem {
   id: string;
@@ -77,7 +78,7 @@ interface ReplitToolsSheetProps {
   className?: string;
 }
 
-export function ReplitToolsSheet({
+export const ReplitToolsSheet = memo(function ReplitToolsSheet({
   open,
   onClose,
   onSelectTool,
@@ -95,34 +96,50 @@ export function ReplitToolsSheet({
     );
   }, [searchQuery]);
 
-  const searchItems = filteredTools.filter(t => t.section === 'search');
-  const toolItems = filteredTools.filter(t => t.section === 'tools');
+  const { searchItems, toolItems } = useMemo(() => ({
+    searchItems: filteredTools.filter(t => t.section === 'search'),
+    toolItems: filteredTools.filter(t => t.section === 'tools'),
+  }), [filteredTools]);
 
-  const handleSelect = (toolId: string) => {
+  const handleSelect = useCallback((toolId: string) => {
     onSelectTool(toolId);
     onClose();
     setSearchQuery('');
-  };
+  }, [onSelectTool, onClose]);
+
+  const handleClose = useCallback(() => {
+    onClose();
+    setSearchQuery('');
+  }, [onClose]);
 
   if (!open) return null;
 
   return (
     <>
       <div 
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-in fade-in-0 duration-200"
-        onClick={onClose}
+        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+        onClick={handleClose}
         data-testid="tools-sheet-backdrop"
+        style={{ WebkitBackdropFilter: 'blur(4px)' }}
       />
       
       <div
         className={cn(
-          'fixed inset-0 z-50 bg-white dark:bg-[#1C1C1C]',
-          'flex flex-col animate-in fade-in-0 slide-in-from-bottom-4 duration-300',
+          'fixed bottom-0 left-0 right-0 z-50',
+          'bg-white dark:bg-[#1C1C1C]',
+          'rounded-t-2xl shadow-2xl',
+          'flex flex-col',
+          'max-h-[85vh]',
+          'animate-in slide-in-from-bottom duration-300',
           className
         )}
         data-testid="tools-sheet"
       >
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex-shrink-0 flex justify-center pt-3 pb-2">
+          <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
+        </div>
+
+        <div className="flex-shrink-0 flex items-center gap-3 px-4 pb-3 border-b border-gray-200 dark:border-gray-800">
           <div className="flex-1 relative">
             <Input
               type="text"
@@ -141,15 +158,15 @@ export function ReplitToolsSheet({
             />
           </div>
           <button
-            onClick={onClose}
-            className="text-gray-900 dark:text-white font-medium text-[15px] hover:opacity-70 transition-opacity px-2"
+            onClick={handleClose}
+            className="text-gray-900 dark:text-white font-medium text-[15px] active:opacity-50 transition-opacity px-2 touch-manipulation"
             data-testid="tools-sheet-close"
           >
             Close
           </button>
         </div>
 
-        <ScrollArea className="flex-1">
+        <div className="flex-1 overflow-y-auto overscroll-contain">
           <div className="py-2">
             {searchItems.length > 0 && (
               <div className="mb-2">
@@ -193,11 +210,11 @@ export function ReplitToolsSheet({
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </>
   );
-}
+});
 
 interface ToolItemRowProps {
   item: ToolItem;
@@ -205,18 +222,21 @@ interface ToolItemRowProps {
   showArrow?: boolean;
 }
 
-function ToolItemRow({ item, onSelect, showArrow }: ToolItemRowProps) {
+const ToolItemRow = memo(function ToolItemRow({ item, onSelect, showArrow }: ToolItemRowProps) {
   const Icon = item.icon;
+  
+  const handleClick = useCallback(() => {
+    onSelect(item.id);
+  }, [onSelect, item.id]);
   
   return (
     <button
-      onClick={() => onSelect(item.id)}
+      onClick={handleClick}
       className={cn(
         'w-full flex items-start gap-3 px-4 py-3',
-        'text-left transition-colors duration-150',
-        'hover:bg-gray-100 dark:hover:bg-[#2A2A2A]',
-        'focus:outline-none focus:bg-gray-100 dark:focus:bg-[#2A2A2A]',
-        'active:bg-gray-200 dark:active:bg-[#333]'
+        'text-left transition-colors duration-100',
+        'active:bg-gray-100 dark:active:bg-[#2A2A2A]',
+        'touch-manipulation'
       )}
       data-testid={`tool-item-${item.id}`}
     >
@@ -230,7 +250,7 @@ function ToolItemRow({ item, onSelect, showArrow }: ToolItemRowProps) {
         <div className="font-medium text-gray-900 dark:text-white text-[15px] leading-tight">
           {item.title}
         </div>
-        <div className="text-[13px] text-gray-500 dark:text-gray-400 leading-snug mt-0.5">
+        <div className="text-[13px] text-gray-500 dark:text-gray-400 leading-snug mt-0.5 line-clamp-2">
           {item.description}
         </div>
       </div>
@@ -241,4 +261,4 @@ function ToolItemRow({ item, onSelect, showArrow }: ToolItemRowProps) {
       )}
     </button>
   );
-}
+});
