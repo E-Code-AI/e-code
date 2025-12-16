@@ -278,6 +278,55 @@ export class RedisCacheService {
   }
 
   /**
+   * Add member to a Set (SADD)
+   * Used for project→session mappings
+   */
+  async sadd(key: string, ...members: string[]): Promise<number> {
+    if (!this.isEnabled || !this.client) {
+      return 0;
+    }
+
+    try {
+      return await this.client.sadd(key, ...members);
+    } catch (error) {
+      logger.error(`Cache SADD error for key ${key}:`, error);
+      return 0;
+    }
+  }
+
+  /**
+   * Get all members of a Set (SMEMBERS)
+   */
+  async smembers(key: string): Promise<string[]> {
+    if (!this.isEnabled || !this.client) {
+      return [];
+    }
+
+    try {
+      return await this.client.smembers(key);
+    } catch (error) {
+      logger.error(`Cache SMEMBERS error for key ${key}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Remove member from a Set (SREM)
+   */
+  async srem(key: string, ...members: string[]): Promise<number> {
+    if (!this.isEnabled || !this.client) {
+      return 0;
+    }
+
+    try {
+      return await this.client.srem(key, ...members);
+    } catch (error) {
+      logger.error(`Cache SREM error for key ${key}:`, error);
+      return 0;
+    }
+  }
+
+  /**
    * Flush all cache
    */
   async flushAll(): Promise<boolean> {

@@ -205,6 +205,10 @@ export class AgentSessionCacheService {
   async invalidateSession(sessionId: string): Promise<void> {
     this.stats.invalidations++;
     
+    // Get session data before deleting to clean up project mapping
+    const session = this.memoryCache.get(sessionId);
+    const projectId = session?.projectId;
+    
     // Remove from both caches
     this.memoryCache.delete(sessionId);
     this.memoryExpirations.delete(sessionId);
@@ -212,29 +216,57 @@ export class AgentSessionCacheService {
     const cacheKey = this.getCacheKey(sessionId);
     await redisCache.del(cacheKey);
     
-    logger.info('Session cache invalidated:', { sessionId });
+    // Clean up project→session mapping
+    if (projectId) {
+      await this.removeFromProjectMapping(String(projectId), sessionId);
+    }
+    
+    logger.info('Session cache invalidated:', { sessionId, projectId });
   }
 
   /**
    * Invalidate all sessions for a project
+   * Uses Redis Set mapping for O(n) invalidation where n = sessions for project
    */
   async invalidateProject(projectId: string): Promise<void> {
+    this.stats.invalidations++;
+    
     // Memory cache: Filter by projectId
-    const invalidatedSessions: string[] = [];
+    const memoryInvalidated: string[] = [];
     for (const [sessionId, session] of this.memoryCache.entries()) {
-      if (session.projectId === projectId) {
+      if (String(session.projectId) === projectId) {
         this.memoryCache.delete(sessionId);
         this.memoryExpirations.delete(sessionId);
-        invalidatedSessions.push(sessionId);
+        memoryInvalidated.push(sessionId);
       }
     }
 
-    // Redis: Invalidate only sessions for this project
-    // Note: This requires iterating sessions in memory or maintaining project→session mapping
-    // For now, we invalidate from memory cache only (Redis entries expire naturally)
-    // TODO: Add project→session mapping for efficient Redis invalidation
+    // Redis: Use project→session mapping for efficient invalidation
+    let redisInvalidated = 0;
+    try {
+      const sessionIds = await this.getProjectSessions(projectId);
+      
+      if (sessionIds.length > 0) {
+        // Delete each session from Redis cache
+        await Promise.all(sessionIds.map(async (sessionId) => {
+          const cacheKey = this.getCacheKey(sessionId);
+          await redisCache.del(cacheKey);
+          redisInvalidated++;
+        }));
+        
+        // Clean up the mapping key itself
+        const mappingKey = this.getProjectMappingKey(projectId);
+        await redisCache.del(mappingKey);
+      }
+    } catch (error: any) {
+      logger.warn('Redis project invalidation partial failure:', { projectId, error: error.message });
+    }
     
-    logger.info('Project sessions invalidated:', { projectId, count: invalidatedSessions.length });
+    logger.info('Project sessions invalidated:', { 
+      projectId, 
+      memoryCount: memoryInvalidated.length,
+      redisCount: redisInvalidated
+    });
   }
 
   /**
@@ -269,9 +301,61 @@ export class AgentSessionCacheService {
     try {
       const cacheKey = this.getCacheKey(sessionId);
       await redisCache.set(cacheKey, session, this.CACHE_TTL);
+      
+      // Maintain project→session mapping for efficient invalidation
+      if (session.projectId) {
+        await this.addToProjectMapping(String(session.projectId), sessionId);
+      }
     } catch (error: any) {
       logger.error('Redis set error:', { sessionId, error: error.message });
     }
+  }
+  
+  /**
+   * Add session to project→session mapping in Redis
+   * Uses Redis Set for O(1) membership operations
+   */
+  private async addToProjectMapping(projectId: string, sessionId: string): Promise<void> {
+    try {
+      const mappingKey = this.getProjectMappingKey(projectId);
+      await redisCache.sadd(mappingKey, sessionId);
+      // Set TTL on the mapping key to auto-expire stale mappings
+      await redisCache.expire(mappingKey, this.CACHE_TTL * 2);
+    } catch (error: any) {
+      logger.warn('Failed to add project→session mapping:', { projectId, sessionId, error: error.message });
+    }
+  }
+  
+  /**
+   * Remove session from project→session mapping in Redis
+   */
+  private async removeFromProjectMapping(projectId: string, sessionId: string): Promise<void> {
+    try {
+      const mappingKey = this.getProjectMappingKey(projectId);
+      await redisCache.srem(mappingKey, sessionId);
+    } catch (error: any) {
+      logger.warn('Failed to remove project→session mapping:', { projectId, sessionId, error: error.message });
+    }
+  }
+  
+  /**
+   * Get all session IDs for a project from Redis mapping
+   */
+  private async getProjectSessions(projectId: string): Promise<string[]> {
+    try {
+      const mappingKey = this.getProjectMappingKey(projectId);
+      return await redisCache.smembers(mappingKey);
+    } catch (error: any) {
+      logger.warn('Failed to get project sessions:', { projectId, error: error.message });
+      return [];
+    }
+  }
+  
+  /**
+   * Get Redis key for project→session mapping
+   */
+  private getProjectMappingKey(projectId: string): string {
+    return `project_sessions:${projectId}`;
   }
 
   /**
