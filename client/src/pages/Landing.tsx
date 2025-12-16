@@ -18,8 +18,6 @@ import {
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { MarketingLayout } from '@/components/layout/MarketingLayout';
-import { MobileChatInterface } from '@/components/MobileChatInterface';
-import { AnimatedPlatformDemo } from '@/components/AnimatedPlatformDemo';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { Spinner } from '@/components/ui/spinner';
@@ -280,6 +278,7 @@ export default function Landing() {
             src={cloudComputingImg} 
             alt="Cloud Computing Technology"
             className="w-full h-full object-cover opacity-10 dark:opacity-5"
+            loading="eager"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[var(--ecode-background)]/80 via-[var(--ecode-background)]/90 to-[var(--ecode-background)]" />
         </motion.div>
@@ -918,6 +917,7 @@ export default function Landing() {
                 src={modernSoftwareImg}
                 alt="Team Collaboration"
                 className="rounded-2xl shadow-[0_8px_32px_-8px_rgba(242,98,7,0.3)]"
+                loading="lazy"
               />
             </motion.div>
             
@@ -997,6 +997,7 @@ export default function Landing() {
                 src={codingWorkspaceImg}
                 alt="Developer Workspace"
                 className="rounded-2xl shadow-[0_8px_32px_-8px_rgba(242,98,7,0.3)]"
+                loading="lazy"
               />
             </motion.div>
           </div>
