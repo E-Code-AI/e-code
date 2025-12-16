@@ -370,10 +370,17 @@ export const useAgentConversationStore = create<AgentConversationStore>()(
     }),
     {
       name: 'agent-conversation-storage',
-      partialize: (state) => ({ 
-        messages: state.messages,
-        lastSyncedAt: state.lastSyncedAt
-      }),
+      partialize: (state) => {
+        const limitedMessages: Record<number, typeof state.messages[number]> = {};
+        for (const [key, msgs] of Object.entries(state.messages)) {
+          const conversationId = parseInt(key, 10);
+          limitedMessages[conversationId] = msgs.slice(-100);
+        }
+        return { 
+          messages: limitedMessages,
+          lastSyncedAt: state.lastSyncedAt
+        };
+      },
       onRehydrateStorage: () => (state) => {
         if (state) {
           Object.keys(state.messages).forEach(key => {
