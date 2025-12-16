@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -75,15 +76,14 @@ export default function Contact() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await apiRequest('POST', '/api/contact', formData);
 
       setIsSubmitted(true);
       toast({
         title: "Message sent!",
         description: "We'll get back to you within 24 hours."
       });
-    } catch {
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to send message. Please try again.",
