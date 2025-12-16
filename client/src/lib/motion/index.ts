@@ -34,11 +34,14 @@ export { AnimationMonitor, useAnimationPerformance } from './AnimationMonitor';
 export { fadeVariants, slideVariants, scaleVariants, staggerVariants } from './variants';
 
 export type { PanInfo, AnimationControls, Variants, DragControls } from 'framer-motion';
-export { 
-  useAnimation, 
-  useReducedMotion, 
-  useMotionValue, 
-  useTransform,
-  useSpring,
-  useDragControls 
-} from 'framer-motion';
+
+/**
+ * Tree-shaking optimized exports:
+ * - Only useDragControls is exported (used by FloatingPane.tsx)
+ * - All other hooks migrated to @/lib/native-motion:
+ *   - useAnimation → useAnimationControls
+ *   - useMotionValue → useNativeMotionValue  
+ *   - useTransform → useDerivedMotionValue
+ *   - useSpring → useSpring (native)
+ */
+export { useDragControls, useReducedMotion } from 'framer-motion';
