@@ -21,7 +21,9 @@ spec:
     spec:
       containers:
       - name: typescript-core
-        image: gcr.io/PROJECT_ID/e-code-platform:latest
+        # Replace with specific version tag in production
+        image: ${CONTAINER_REGISTRY}/${PROJECT_ID}/e-code-platform:${IMAGE_TAG}
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
           name: http
@@ -42,15 +44,20 @@ spec:
           limits:
             memory: "2Gi"
             cpu: "2000m"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         livenessProbe:
           httpGet:
-            path: /api/health
+            path: /api/monitoring/health
             port: 5000
           initialDelaySeconds: 60
           periodSeconds: 10
         readinessProbe:
           httpGet:
-            path: /api/health
+            path: /api/monitoring/health
             port: 5000
           initialDelaySeconds: 30
           periodSeconds: 5
@@ -78,7 +85,9 @@ spec:
     spec:
       containers:
       - name: go-runtime
-        image: gcr.io/PROJECT_ID/e-code-go-runtime:latest
+        # Replace with specific version tag in production
+        image: ${CONTAINER_REGISTRY}/${PROJECT_ID}/e-code-go-runtime:${IMAGE_TAG}
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
           name: http
@@ -99,15 +108,20 @@ spec:
           limits:
             memory: "1Gi"
             cpu: "1000m"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         livenessProbe:
           httpGet:
-            path: /health
+            path: /api/monitoring/health
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 10
         readinessProbe:
           httpGet:
-            path: /health
+            path: /api/monitoring/health
             port: 8080
           initialDelaySeconds: 15
           periodSeconds: 5
@@ -142,7 +156,9 @@ spec:
     spec:
       containers:
       - name: python-ml
-        image: gcr.io/PROJECT_ID/e-code-python-ml:latest
+        # Replace with specific version tag in production
+        image: ${CONTAINER_REGISTRY}/${PROJECT_ID}/e-code-python-ml:${IMAGE_TAG}
+        imagePullPolicy: Always
         ports:
         - containerPort: 8081
           name: http
@@ -163,15 +179,20 @@ spec:
           limits:
             memory: "2Gi"
             cpu: "2000m"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         livenessProbe:
           httpGet:
-            path: /health
+            path: /api/monitoring/health
             port: 8081
           initialDelaySeconds: 40
           periodSeconds: 10
         readinessProbe:
           httpGet:
-            path: /health
+            path: /api/monitoring/health
             port: 8081
           initialDelaySeconds: 20
           periodSeconds: 5
@@ -199,7 +220,9 @@ spec:
     spec:
       containers:
       - name: mcp-server
-        image: gcr.io/PROJECT_ID/e-code-mcp:latest
+        # Replace with specific version tag in production
+        image: ${CONTAINER_REGISTRY}/${PROJECT_ID}/e-code-mcp:${IMAGE_TAG}
+        imagePullPolicy: Always
         ports:
         - containerPort: 3200
           name: http
@@ -220,9 +243,14 @@ spec:
           limits:
             memory: "1Gi"
             cpu: "1000m"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         livenessProbe:
           httpGet:
-            path: /health
+            path: /api/monitoring/health
             port: 3200
           initialDelaySeconds: 30
           periodSeconds: 10
