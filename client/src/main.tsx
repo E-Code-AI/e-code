@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import "./lib/monaco-config";
+import "./i18n"; // Initialize i18n for internationalization
 import { monitoring } from "./lib/monitoring";
 import { initTelemetry } from "./lib/telemetry";
 import { registerServiceWorker } from "./utils/service-worker-registration";

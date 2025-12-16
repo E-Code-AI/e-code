@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -60,6 +61,7 @@ const offices = [
 ];
 
 export default function Contact() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -80,12 +82,12 @@ export default function Contact() {
 
       setIsSubmitted(true);
       toast({
-        title: "Message sent!",
-        description: "We'll get back to you within 24 hours."
+        title: t('contact.success.title'),
+        description: t('contact.success.description')
       });
     } catch (error) {
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: "Failed to send message. Please try again.",
         variant: "destructive"
       });
@@ -105,14 +107,13 @@ export default function Contact() {
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16">
           <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0">
-            Get in Touch
+            {t('common.contactUs')}
           </Badge>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
-            Contact Us
+            {t('contact.title')}
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto">
-            Have a question or want to learn more about E-Code?
-            We'd love to hear from you. Our team typically responds within 24 hours.
+            {t('contact.subtitle')}
           </p>
         </div>
 
@@ -162,17 +163,18 @@ export default function Contact() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Full Name *</Label>
+                      <Label htmlFor="name">{t('contact.form.name')} *</Label>
                       <Input
                         id="name"
                         required
                         placeholder="John Doe"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        data-testid="input-contact-name"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email *</Label>
+                      <Label htmlFor="email">{t('contact.form.email')} *</Label>
                       <Input
                         id="email"
                         type="email"
@@ -180,18 +182,20 @@ export default function Contact() {
                         placeholder="john@company.com"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        data-testid="input-contact-email"
                       />
                     </div>
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="company">Company</Label>
+                      <Label htmlFor="company">{t('contact.form.company')}</Label>
                       <Input
                         id="company"
                         placeholder="Company name"
                         value={formData.company}
                         onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                        data-testid="input-contact-company"
                       />
                     </div>
                     <div className="space-y-2">
@@ -215,7 +219,7 @@ export default function Contact() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="message">Message *</Label>
+                    <Label htmlFor="message">{t('contact.form.message')} *</Label>
                     <Textarea
                       id="message"
                       required
@@ -223,6 +227,7 @@ export default function Contact() {
                       rows={5}
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      data-testid="textarea-contact-message"
                     />
                   </div>
 
@@ -231,16 +236,17 @@ export default function Contact() {
                     size="lg"
                     className="w-full gap-2"
                     disabled={isSubmitting}
+                    data-testid="button-contact-submit"
                   >
                     {isSubmitting ? (
                       <>
                         <Loader2 className="h-5 w-5 animate-spin" />
-                        Sending...
+                        {t('common.loading')}
                       </>
                     ) : (
                       <>
                         <Send className="h-5 w-5" />
-                        Send Message
+                        {t('contact.form.submit')}
                       </>
                     )}
                   </Button>
