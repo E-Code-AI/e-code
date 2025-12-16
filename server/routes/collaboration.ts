@@ -4,6 +4,10 @@ import { db } from '../db';
 import { collaborationSessions, sessionParticipants } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { ensureAuthenticated as requireAuth } from '../middleware/auth';
+import { realEmailService } from '../services/real-email-service';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('collaboration-router');
 
 const router = Router();
 
@@ -186,27 +190,95 @@ router.post('/invite', requireAuth, async (req: Request, res: Response) => {
   try {
     const { projectId, email, role } = req.body;
     const inviterId = req.user?.id;
-    const inviterName = req.user?.username || 'Someone';
+    const inviterName = req.user?.username || 'A team member';
     
     if (!projectId || !email) {
       return res.status(400).json({ error: 'Missing projectId or email' });
     }
     
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    
     // Generate invitation token
     const inviteToken = require('nanoid').nanoid(32);
-    const inviteLink = `${req.protocol}://${req.get('host')}/ide/${projectId}?invite=${inviteToken}`;
+    const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+    const inviteLink = `${baseUrl}/ide/${projectId}?invite=${inviteToken}`;
     
-    // TODO: Send email invitation (integrate with SendGrid/email service)
-    // For now, just return success with the link
-    console.log(`[Collaboration] Invite sent from ${inviterName} to ${email} for project ${projectId}`);
+    // Send email invitation via SendGrid
+    const roleDisplay = role === 'editor' ? 'Editor' : role === 'viewer' ? 'Viewer' : 'Collaborator';
     
-    res.json({ 
-      success: true, 
-      message: `Invitation sent to ${email}`,
-      inviteLink
+    const emailResult = await realEmailService.sendEmail({
+      to: email,
+      subject: `${inviterName} invited you to collaborate on E-Code`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+            .header h1 { margin: 0; font-size: 24px; }
+            .content { padding: 30px; background: #f8f9fa; }
+            .message { background: white; padding: 25px; border-radius: 8px; margin-bottom: 20px; }
+            .button { display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 15px; }
+            .button:hover { opacity: 0.9; }
+            .role-badge { display: inline-block; background: #e9ecef; padding: 4px 12px; border-radius: 4px; font-size: 14px; color: #495057; margin-top: 10px; }
+            .footer { text-align: center; padding: 20px; color: #6c757d; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>You're Invited to Collaborate!</h1>
+            </div>
+            <div class="content">
+              <div class="message">
+                <p>Hi there,</p>
+                <p><strong>${inviterName}</strong> has invited you to collaborate on a project in E-Code, an AI-powered development platform.</p>
+                <p>Your role: <span class="role-badge">${roleDisplay}</span></p>
+                <p>Click the button below to accept the invitation and start collaborating:</p>
+                <center>
+                  <a href="${inviteLink}" class="button">Accept Invitation</a>
+                </center>
+                <p style="margin-top: 20px; font-size: 13px; color: #6c757d;">
+                  Or copy this link: <br>
+                  <a href="${inviteLink}" style="color: #667eea; word-break: break-all;">${inviteLink}</a>
+                </p>
+              </div>
+            </div>
+            <div class="footer">
+              <p>This invitation was sent by E-Code Platform.<br>If you didn't expect this invitation, you can safely ignore this email.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `${inviterName} invited you to collaborate on E-Code!\n\nYour role: ${roleDisplay}\n\nAccept the invitation: ${inviteLink}\n\nIf you didn't expect this invitation, you can safely ignore this email.`
     });
-  } catch (error) {
-    console.error('Error sending invitation:', error);
+    
+    if (emailResult.success) {
+      logger.info(`[Collaboration] Invitation email sent to ${email} for project ${projectId} by user ${inviterId}`);
+      res.json({ 
+        success: true, 
+        message: `Invitation sent to ${email}`,
+        inviteLink
+      });
+    } else {
+      logger.warn(`[Collaboration] Failed to send invitation email to ${email}: ${emailResult.error}`);
+      // Still return success with link - user can share manually
+      res.json({ 
+        success: true, 
+        message: `Email delivery failed, but you can share this link manually`,
+        inviteLink,
+        emailError: emailResult.error
+      });
+    }
+  } catch (error: any) {
+    logger.error('Error sending invitation:', error);
     res.status(500).json({ error: 'Failed to send invitation' });
   }
 });
