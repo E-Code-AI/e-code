@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   Play, Square, Monitor, CheckSquare, Globe, 
   PanelRightOpen, PanelRightClose
@@ -35,7 +34,6 @@ const tabs: { id: MobileTab; icon: typeof Monitor; label: string }[] = [
   { id: 'preview', icon: Monitor, label: 'Preview' },
   { id: 'agent', icon: ReplitAgentIcon as any, label: 'Agent' },
   { id: 'deploy', icon: Globe, label: 'Deploy' },
-  { id: 'tasks', icon: CheckSquare, label: 'Tasks' },
 ];
 
 export function ReplitMobileNavigation({
@@ -159,7 +157,7 @@ export function ReplitMobileNavigation({
                 : "hover:bg-gray-200 dark:hover:bg-[#3A3A3A]"
             )}
             whileTap={{ scale: 0.95 }}
-            data-testid="tab-tasks-check"
+            data-testid="tab-tasks"
           >
             <CheckSquare 
               className={cn(
@@ -169,6 +167,16 @@ export function ReplitMobileNavigation({
                   : "text-gray-500 dark:text-gray-400"
               )} 
             />
+            
+            {activeTab === 'tasks' && (
+              <motion.div
+                className="absolute -bottom-1 left-1/2 w-1 h-1 bg-[#7C65C1] rounded-full"
+                layoutId="activeTabIndicator"
+                initial={false}
+                style={{ x: '-50%' }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              />
+            )}
           </motion.button>
         </div>
 

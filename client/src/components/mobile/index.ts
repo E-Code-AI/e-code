@@ -1,5 +1,9 @@
 export { ReplitBottomTabs } from './ReplitBottomTabs';
 export { ReplitToolsSheet } from './ReplitToolsSheet';
+export { ReplitMobileNavigation, type MobileTab } from './ReplitMobileNavigation';
+export { ReplitMobileInputBar } from './ReplitMobileInputBar';
+export { ReplitMobileHeader } from './ReplitMobileHeader';
+export { ReplitMobileIDE } from './ReplitMobileIDE';
 export { MobileNavigation } from './MobileNavigation';
 export { MobileFileExplorer } from './MobileFileExplorer';
 export { LazyMobileCodeEditor } from './LazyMobileCodeEditor';
