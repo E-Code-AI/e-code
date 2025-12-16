@@ -4,6 +4,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { IStorage } from '../storage';
 import { ensureAdmin } from '../middleware/admin-auth';
 import { ChatGPTService } from '../services/chatgpt-service';
@@ -11,6 +12,22 @@ import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('chatgpt-router');
+
+// Validation schemas
+const createSessionSchema = z.object({
+  projectId: z.number().int().positive().optional()
+});
+
+const sendMessageSchema = z.object({
+  message: z.string().min(1, 'Message is required').max(100000, 'Message too long'),
+  includeProjectContext: z.boolean().optional()
+});
+
+const generateCodeSchema = z.object({
+  sessionId: z.string().min(1, 'Session ID is required'),
+  request: z.string().min(1, 'Request is required').max(50000, 'Request too long'),
+  language: z.string().max(50).optional()
+});
 
 export class ChatGPTRouter {
   private router: Router;
@@ -39,11 +56,20 @@ export class ChatGPTRouter {
     // Create a new chat session
     this.router.post('/api/admin/chatgpt/sessions', async (req: Request, res: Response) => {
       try {
-        const { projectId } = req.body;
+        // Validate request body
+        const validation = createSessionSchema.safeParse(req.body);
+        if (!validation.success) {
+          return res.status(400).json({
+            message: 'Invalid request data',
+            errors: validation.error.errors
+          });
+        }
+        
+        const { projectId } = validation.data;
         const session = await this.chatgptService.createSession(req.user!.id, projectId);
         res.json(session);
-      } catch (error) {
-        console.error('Failed to create session:', error);
+      } catch (error: any) {
+        logger.error('Failed to create session:', { error: error.message });
         res.status(500).json({ message: 'Failed to create chat session' });
       }
     });
@@ -81,11 +107,16 @@ export class ChatGPTRouter {
     // Send a message to ChatGPT
     this.router.post('/api/admin/chatgpt/sessions/:sessionId/messages', async (req: Request, res: Response) => {
       try {
-        const { message, includeProjectContext } = req.body;
-        
-        if (!message) {
-          return res.status(400).json({ message: 'Message is required' });
+        // Validate request body
+        const validation = sendMessageSchema.safeParse(req.body);
+        if (!validation.success) {
+          return res.status(400).json({
+            message: 'Invalid request data',
+            errors: validation.error.errors
+          });
         }
+        
+        const { message, includeProjectContext } = validation.data;
 
         const response = await this.chatgptService.sendMessage(
           req.params.sessionId,
@@ -95,8 +126,8 @@ export class ChatGPTRouter {
         );
         
         res.json(response);
-      } catch (error) {
-        console.error('Failed to send message:', error);
+      } catch (error: any) {
+        logger.error('Failed to send message:', { error: error.message });
         res.status(500).json({ message: error.message || 'Failed to send message' });
       }
     });
@@ -104,11 +135,16 @@ export class ChatGPTRouter {
     // Generate code
     this.router.post('/api/admin/chatgpt/generate-code', async (req: Request, res: Response) => {
       try {
-        const { sessionId, request, language } = req.body;
-        
-        if (!sessionId || !request) {
-          return res.status(400).json({ message: 'Session ID and request are required' });
+        // Validate request body
+        const validation = generateCodeSchema.safeParse(req.body);
+        if (!validation.success) {
+          return res.status(400).json({
+            message: 'Invalid request data',
+            errors: validation.error.errors
+          });
         }
+        
+        const { sessionId, request, language } = validation.data;
 
         const result = await this.chatgptService.generateCode(
           sessionId,
@@ -118,8 +154,8 @@ export class ChatGPTRouter {
         );
         
         res.json(result);
-      } catch (error) {
-        console.error('Failed to generate code:', error);
+      } catch (error: any) {
+        logger.error('Failed to generate code:', { error: error.message });
         res.status(500).json({ message: error.message || 'Failed to generate code' });
       }
     });
