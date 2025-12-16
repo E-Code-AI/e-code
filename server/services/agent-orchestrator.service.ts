@@ -268,6 +268,8 @@ export class AgentOrchestratorService extends EventEmitter {
   private recoveryWorkerInterval: ReturnType<typeof setInterval> | null = null;
   private static readonly RECOVERY_INTERVAL_MS = 30000; // 30 seconds
   private static readonly MAX_RECOVERY_RETRIES = 10; // Max retries before giving up
+  private static readonly MAX_PENDING_RECOVERY_SIZE = 1000; // Max items in recovery queue
+  private static readonly WORKFLOW_TIMEOUT_MS = 600000; // 10 minutes workflow execution timeout
 
   constructor() {
     super();
@@ -1452,6 +1454,27 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         retryCount: existingItem.retryCount
       });
     } else {
+      // ✅ SIZE LIMIT CHECK (Dec 16, 2025): Enforce max queue size to prevent memory exhaustion
+      if (this.pendingRecovery.size >= AgentOrchestratorService.MAX_PENDING_RECOVERY_SIZE) {
+        // Remove oldest items by addedAt to make room
+        const entries = Array.from(this.pendingRecovery.entries());
+        entries.sort((a, b) => a[1].addedAt.getTime() - b[1].addedAt.getTime());
+        
+        // Remove oldest 10% or at least 1 item
+        const removeCount = Math.max(1, Math.floor(entries.length * 0.1));
+        for (let i = 0; i < removeCount; i++) {
+          const [oldSessionId, oldItem] = entries[i];
+          this.pendingRecovery.delete(oldSessionId);
+          logger.warn(`[Recovery Queue] Evicted oldest session ${oldSessionId} to make room`, {
+            targetStatus: oldItem.targetStatus,
+            age: Date.now() - oldItem.addedAt.getTime(),
+            retryCount: oldItem.retryCount
+          });
+        }
+        
+        logger.warn(`[Recovery Queue] Queue cleanup: removed ${removeCount} oldest items (limit: ${AgentOrchestratorService.MAX_PENDING_RECOVERY_SIZE})`);
+      }
+      
       // Add new entry
       this.pendingRecovery.set(sessionId, {
         sessionId,
@@ -1726,8 +1749,14 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       agentWorkflowEngine.on('step_failed', handleStepFailed);
 
       try {
-        // Execute the workflow
-        const workflow = await agentWorkflowEngine.executeWorkflow(
+        // ✅ WORKFLOW TIMEOUT (Dec 16, 2025): Wrap execution in timeout to prevent stuck workflows
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => {
+            reject(new Error(`Workflow execution timeout after ${AgentOrchestratorService.WORKFLOW_TIMEOUT_MS / 1000} seconds`));
+          }, AgentOrchestratorService.WORKFLOW_TIMEOUT_MS);
+        });
+        
+        const workflowPromise = agentWorkflowEngine.executeWorkflow(
           sessionId,
           projectIdNum,
           `Build: ${plan.goal}`,
@@ -1735,6 +1764,9 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           workflowSteps,
           userId
         );
+        
+        // Execute with timeout protection
+        const workflow = await Promise.race([workflowPromise, timeoutPromise]);
 
         const isSuccess = workflow.status === 'completed';
         logger.info(`[Execute Plan] Workflow ${workflow.id} execution completed`, {

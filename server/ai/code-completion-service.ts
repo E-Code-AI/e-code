@@ -5,6 +5,9 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { OpenAI } from 'openai';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('code-completion-service');
 
 interface CompletionRequest {
   code: string;
@@ -101,7 +104,7 @@ export class CodeCompletionService {
       
       return result;
     } catch (error) {
-      console.error('[CodeCompletionService] Error getting completions:', error);
+      logger.error('Error getting completions:', error);
       return { completions: [] };
     }
   }
@@ -178,7 +181,7 @@ Only provide completions that are highly relevant and would actually help the de
       
       return '';
     } catch (error) {
-      console.error('[CodeCompletionService] AI provider error:', error);
+      logger.error('AI provider error:', error);
       return '';
     }
   }
@@ -204,7 +207,7 @@ Only provide completions that are highly relevant and would actually help the de
         }
       })).filter((comp: any) => comp.text && comp.text.trim().length > 0);
     } catch (error) {
-      console.error('[CodeCompletionService] Error parsing completions:', error);
+      logger.error('Error parsing completions:', error);
       return [];
     }
   }

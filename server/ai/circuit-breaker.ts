@@ -9,6 +9,10 @@
  * - Graceful degradation
  */
 
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('circuit-breaker');
+
 export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
 
 export interface CircuitBreakerConfig {
@@ -273,7 +277,7 @@ export class CircuitBreaker {
    */
   private log(message: string): void {
     if (this.config.debug || process.env.NODE_ENV === 'development') {
-      console.log(`[CircuitBreaker:${this.name}] ${message}`);
+      logger.debug(`[${this.name}] ${message}`);
     }
   }
 }
@@ -321,7 +325,7 @@ export class RetryExecutor {
         
         // Calculate delay with exponential backoff
         const delay = this.calculateDelay(attempt);
-        console.log(`[RetryExecutor] Attempt ${attempt + 1}/${this.config.maxRetries + 1} failed, retrying in ${delay}ms...`);
+        logger.info(`[RetryExecutor] Attempt ${attempt + 1}/${this.config.maxRetries + 1} failed, retrying in ${delay}ms...`);
         
         await this.sleep(delay);
       }
@@ -358,7 +362,7 @@ export class RetryExecutor {
         
         // Calculate delay with exponential backoff
         const delay = this.calculateDelay(attempt);
-        console.log(`[RetryExecutor] Stream attempt ${attempt + 1}/${this.config.maxRetries + 1} failed, retrying in ${delay}ms...`);
+        logger.info(`[RetryExecutor] Stream attempt ${attempt + 1}/${this.config.maxRetries + 1} failed, retrying in ${delay}ms...`);
         
         await this.sleep(delay);
       }
