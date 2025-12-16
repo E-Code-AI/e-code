@@ -79,7 +79,7 @@ import {
   insertNewsletterSubscriberSchema, insertNewsletterCampaignSchema, insertNewsletterDeliverySchema,
   insertNotificationSchema, insertNotificationPreferenceSchema,
   customerRequests, insertCustomerRequestSchema,
-  projectImports, // Added import for projectImports
+  projectImports, auditLogs, // Added imports for projectImports and auditLogs
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -2386,24 +2386,35 @@ export class DatabaseStorage implements IStorage {
 
   // Project Imports
   async createProjectImport(data: any): Promise<any> {
-    // For now, return a mock import since we don't have the imports table in DB yet
-    const importRecord = {
-      id: Date.now(),
-      ...data,
-      createdAt: new Date(),
-      completedAt: null
-    };
-    return importRecord;
+    const [record] = await this.db.insert(projectImports).values({
+      projectId: data.projectId,
+      userId: data.userId,
+      importType: data.importType || data.type,
+      sourceUrl: data.sourceUrl || data.url,
+      status: data.status || 'pending',
+      metadata: data.metadata || null,
+    }).returning();
+    return record;
   }
 
   async updateProjectImport(id: number, updates: any): Promise<any> {
-    // Mock implementation for now
-    return { id, ...updates };
+    const [record] = await this.db
+      .update(projectImports)
+      .set({
+        ...updates,
+        completedAt: updates.status === 'completed' ? new Date() : updates.completedAt,
+      })
+      .where(eq(projectImports.id, id))
+      .returning();
+    return record;
   }
 
   async getProjectImport(id: number): Promise<any | undefined> {
-    // Mock implementation for now
-    return undefined;
+    const [record] = await this.db
+      .select()
+      .from(projectImports)
+      .where(eq(projectImports.id, id));
+    return record;
   }
 
   async getProjectImports(projectId: string): Promise<ProjectImport[]> {
@@ -2423,39 +2434,41 @@ export class DatabaseStorage implements IStorage {
 
 
   async getImportStatistics(): Promise<any> {
-    // Mock implementation for import statistics
+    // Get real import statistics from database
+    const stats = await this.db.select({
+      importType: projectImports.importType,
+      count: sql<number>`COUNT(*)`,
+    })
+    .from(projectImports)
+    .groupBy(projectImports.importType);
+
+    const recent = await this.db.select()
+      .from(projectImports)
+      .orderBy(desc(projectImports.createdAt))
+      .limit(5);
+
+    const result: Record<string, number> = {
+      figma: 0,
+      bolt: 0,
+      lovable: 0,
+      webContent: 0,
+      total: 0,
+    };
+
+    stats.forEach(row => {
+      result[row.importType] = Number(row.count);
+      result.total += Number(row.count);
+    });
+
     return {
-      figma: 12,
-      bolt: 8,
-      lovable: 5,
-      webContent: 23,
-      total: 48,
-      recent: [
-        {
-          id: 1,
-          type: 'figma',
-          url: 'https://figma.com/file/example',
-          projectId: 1,
-          status: 'completed',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 2,
-          type: 'bolt',
-          url: 'https://bolt.new/project',
-          projectId: 2,
-          status: 'completed',
-          createdAt: new Date(Date.now() - 3600000).toISOString()
-        },
-        {
-          id: 3,
-          type: 'lovable',
-          url: 'https://lovable.dev/app',
-          projectId: 3,
-          status: 'processing',
-          createdAt: new Date(Date.now() - 7200000).toISOString()
-        }
-      ]
+      ...result,
+      recent: recent.map(r => ({
+        id: r.id,
+        type: r.importType,
+        url: r.sourceUrl,
+        status: r.status,
+        createdAt: r.createdAt,
+      })),
     };
   }
 
@@ -2582,16 +2595,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProjectActivity(projectId: string, limit?: number): Promise<any[]> {
-    // Return mock activity for now
-    return [
-      {
-        id: 1,
-        type: 'file_created',
-        userId: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293',
-        timestamp: new Date(),
-        details: { fileName: 'app.js' }
-      }
-    ];
+    // Query audit logs related to this project
+    // Note: auditLogs table uses resource/resourceId pattern, not direct projectId
+    const activities = await this.db.select()
+      .from(auditLogs)
+      .where(and(
+        eq(auditLogs.resource, 'project'),
+        eq(auditLogs.resourceId, projectId)
+      ))
+      .orderBy(desc(auditLogs.timestamp))
+      .limit(limit || 50);
+
+    return activities.map(log => ({
+      id: log.id,
+      type: log.action,
+      userId: log.userId,
+      timestamp: log.timestamp,
+      details: log.details || {},
+    }));
   }
 
   // File methods
