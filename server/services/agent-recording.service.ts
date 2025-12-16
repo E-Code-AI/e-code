@@ -138,10 +138,20 @@ export class AgentRecordingService extends EventEmitter {
 
     const screenshotBuffer = await activeRecording.page.screenshot();
     
-    // In production, upload to S3/object storage
-    const screenshotUrl = `/recording-screenshots/${recordingId}/${Date.now()}.png`;
-
-    return screenshotUrl;
+    // Upload to object storage for production-grade persistence
+    const { realObjectStorageService } = await import('./real-object-storage.service');
+    const timestamp = Date.now();
+    const storageKey = `recording-screenshots/${recordingId}/${timestamp}.png`;
+    
+    try {
+      await realObjectStorageService.uploadFile(storageKey, screenshotBuffer, {
+        contentType: 'image/png',
+      });
+      return await realObjectStorageService.getSignedUrl(storageKey, 86400);
+    } catch (error) {
+      console.error('[AgentRecording] Failed to upload screenshot:', error);
+      return `/recording-screenshots/${recordingId}/${timestamp}.png`;
+    }
   }
 
   /**
@@ -155,6 +165,10 @@ export class AgentRecordingService extends EventEmitter {
 
     const { browser, page, timeline, startTime } = activeRecording;
     const duration = Date.now() - startTime;
+    
+    // Import object storage service
+    const { realObjectStorageService } = await import('./real-object-storage.service');
+    const fs = await import('fs/promises');
 
     // Get video path
     const video = page.video();
@@ -163,18 +177,39 @@ export class AgentRecordingService extends EventEmitter {
 
     if (video) {
       const videoPath = await video.path();
-      // TODO [Phase 2 Production]: Replace with object storage abstraction (S3/R2)
-      // Current implementation uses filesystem paths - production should use cloud storage
-      videoUrl = `/session-videos/${recordingId}/video.webm`;
       
-      // Get video file size
-      // videoSize = (await fs.stat(videoPath)).size;
-      videoSize = 1024 * 1024; // Placeholder
+      try {
+        // Read video file and get size
+        const videoData = await fs.readFile(videoPath);
+        videoSize = videoData.length;
+        
+        // Upload to object storage
+        const videoStorageKey = `session-videos/${recordingId}/video.webm`;
+        await realObjectStorageService.uploadFile(videoStorageKey, videoData, {
+          contentType: 'video/webm',
+        });
+        videoUrl = await realObjectStorageService.getSignedUrl(videoStorageKey, 30 * 24 * 60 * 60); // 30 days
+      } catch (error) {
+        console.error('[AgentRecording] Failed to upload video:', error);
+        videoUrl = `/session-videos/${recordingId}/video.webm`;
+        videoSize = 0;
+      }
     }
 
-    // Generate thumbnail
+    // Generate and upload thumbnail
     const thumbnailBuffer = await page.screenshot();
-    const thumbnailUrl = `/session-thumbnails/${recordingId}/thumbnail.png`;
+    let thumbnailUrl = '';
+    
+    try {
+      const thumbnailStorageKey = `session-thumbnails/${recordingId}/thumbnail.png`;
+      await realObjectStorageService.uploadFile(thumbnailStorageKey, thumbnailBuffer, {
+        contentType: 'image/png',
+      });
+      thumbnailUrl = await realObjectStorageService.getSignedUrl(thumbnailStorageKey, 30 * 24 * 60 * 60);
+    } catch (error) {
+      console.error('[AgentRecording] Failed to upload thumbnail:', error);
+      thumbnailUrl = `/session-thumbnails/${recordingId}/thumbnail.png`;
+    }
 
     // Close browser
     await browser.close();
