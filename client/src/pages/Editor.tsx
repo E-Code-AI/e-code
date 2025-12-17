@@ -9,6 +9,7 @@ import TopNavbar from "@/components/TopNavbar";
 import { ReplitEditorLayout } from "@/components/editor/ReplitEditorLayout";
 import { ReplitFileSidebar } from "@/components/editor/ReplitFileSidebar";
 import { ReplitAgentPanelV3 } from "@/components/ai/ReplitAgentPanelV3";
+import { AgentPanelErrorBoundary } from "@/components/ai/AgentPanelErrorBoundary";
 import { WebPreview } from "@/components/WebPreview";
 import { ConsolePanel } from "@/components/ide/ConsolePanel";
 import { ReplitDB } from "@/components/ReplitDB";
@@ -484,15 +485,17 @@ export default function Editor(props: EditorProps = {}) {
         icon: <Bot className="h-3.5 w-3.5" />,
         content: (
           <div className="h-full overflow-hidden" data-testid="agent-panel">
-            <ReplitAgentPanelV3
-              projectId={activeProjectId as any}
-              selectedFile={activeFile?.name}
-              selectedCode={selectedCode}
-              className="h-full"
-              initialPrompt={initialAgentPrompt}
-              websocket={agentWebSocket.current}
-              mode="desktop"
-            />
+            <AgentPanelErrorBoundary>
+              <ReplitAgentPanelV3
+                projectId={activeProjectId as any}
+                selectedFile={activeFile?.name}
+                selectedCode={selectedCode}
+                className="h-full"
+                initialPrompt={initialAgentPrompt}
+                websocket={agentWebSocket.current}
+                mode="desktop"
+              />
+            </AgentPanelErrorBoundary>
           </div>
         )
       });

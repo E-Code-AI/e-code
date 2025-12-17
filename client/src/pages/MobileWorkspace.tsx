@@ -12,6 +12,7 @@ import { MobilePackagesPanel } from '@/components/mobile/MobilePackagesPanel';
 import { ReplitGitPanel } from '@/components/editor/ReplitGitPanel';
 import { MobileDebugPanel } from '@/components/mobile/MobileDebugPanel';
 import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
+import { AgentPanelErrorBoundary } from '@/components/ai/AgentPanelErrorBoundary';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -92,10 +93,12 @@ export default function MobileWorkspace() {
       case 'more':
         return (
           <div className="flex-1 flex flex-col bg-background pb-16">
-            <ReplitAgentPanelV3 
-              projectId={projectId}
-              className="h-full"
-            />
+            <AgentPanelErrorBoundary>
+              <ReplitAgentPanelV3 
+                projectId={projectId}
+                className="h-full"
+              />
+            </AgentPanelErrorBoundary>
           </div>
         );
       

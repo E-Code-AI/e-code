@@ -18,10 +18,12 @@ import {
   Globe,
   Zap,
   Copy,
-  Settings
+  Settings,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/queryClient';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -757,6 +759,27 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
       
       {/* Preview iframe or status message */}
       <div className={`flex-1 bg-muted/50 ${deviceMode !== 'desktop' ? 'p-2 sm:p-4 flex items-center justify-center' : ''}`}>
+        {/* Loading skeleton when starting */}
+        {previewStatus.status === 'starting' && !previewUrl && (
+          <div className="flex flex-col items-center justify-center h-full p-4 sm:p-8">
+            <div className="w-full max-w-md space-y-4">
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <span className="text-sm font-medium">Starting preview server...</span>
+              </div>
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-32 w-full mt-4" />
+              <div className="flex gap-2 mt-4">
+                <Skeleton className="h-8 w-20" />
+                <Skeleton className="h-8 w-24" />
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Active preview iframe */}
         {previewUrl ? (
           <div style={deviceStyles} className="h-full bg-background">
             <iframe
@@ -767,7 +790,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
             />
           </div>
-        ) : (
+        ) : previewStatus.status !== 'starting' && (
           <div className="flex flex-col items-center justify-center h-full text-center p-4 sm:p-8">
             <AlertCircle className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mb-3 sm:mb-4" />
             <h3 className="text-base sm:text-lg font-semibold mb-1.5 sm:mb-2">
