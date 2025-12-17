@@ -192,7 +192,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     const username = user.username || 'user';
     logger.info(`[Bootstrap] Authenticated user ${userId}`, { username });
     
-    console.log('🚀 [Bootstrap] RECEIVED REQUEST from user', userId, 'prompt:', prompt.substring(0, 50));
+    logger.info('🚀 [Bootstrap] RECEIVED REQUEST from user', userId, 'prompt:', prompt.substring(0, 50));
     logger.info(`[Bootstrap] Starting workspace creation for user ${userId}`, { prompt, options });
     
     // 2. Create project and fetch user preferences in PARALLEL
@@ -640,7 +640,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
       promptPreview: prompt.substring(0, 50)
     });
     
-    console.log(`[Bootstrap] 📋 Workflow deferred until WebSocket connection for session ${session.id}`);
+    logger.info(`[Bootstrap] 📋 Workflow deferred until WebSocket connection for session ${session.id}`);
     
   } catch (error: any) {
     const elapsed = Date.now() - startTime;

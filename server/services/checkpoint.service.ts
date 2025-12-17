@@ -18,6 +18,9 @@ import {
 } from '../../shared/schema';
 import { eq, desc, lt, and, sql, inArray } from 'drizzle-orm';
 import { EventEmitter } from 'events';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('checkpoint-service');
 
 export interface CheckpointWithFiles extends AutoCheckpoint {
   files?: AutoCheckpointFile[];
@@ -72,7 +75,7 @@ export class CheckpointService extends EventEmitter {
     })();
 
     if (isRateLimited) {
-      console.log(`[CheckpointService] Rate-limited auto-checkpoint for project ${projectId} - skipping silently`);
+      logger.info(`[CheckpointService] Rate-limited auto-checkpoint for project ${projectId} - skipping silently`);
       // Throw a specific error that callers can catch and handle gracefully
       const error = new Error('CHECKPOINT_RATE_LIMITED');
       (error as any).code = 'RATE_LIMITED';
@@ -103,7 +106,7 @@ export class CheckpointService extends EventEmitter {
     }
 
     this.emit('checkpointCreated', { projectId, checkpoint });
-    console.log(`[CheckpointService] Created checkpoint ${checkpoint.id} for project ${projectId}`);
+    logger.info(`[CheckpointService] Created checkpoint ${checkpoint.id} for project ${projectId}`);
 
     return checkpoint;
   }
@@ -211,7 +214,7 @@ export class CheckpointService extends EventEmitter {
       .where(inArray(autoCheckpoints.id, idsToDelete));
 
     this.emit('checkpointsPruned', { projectId, count: idsToDelete.length });
-    console.log(`[CheckpointService] Pruned ${idsToDelete.length} old checkpoints for project ${projectId}`);
+    logger.info(`[CheckpointService] Pruned ${idsToDelete.length} old checkpoints for project ${projectId}`);
 
     return idsToDelete.length;
   }
@@ -227,7 +230,7 @@ export class CheckpointService extends EventEmitter {
 
     if (result.length > 0) {
       this.emit('checkpointDeleted', { checkpointId: id });
-      console.log(`[CheckpointService] Deleted checkpoint ${id}`);
+      logger.info(`[CheckpointService] Deleted checkpoint ${id}`);
       return true;
     }
 
@@ -257,7 +260,7 @@ export class CheckpointService extends EventEmitter {
       .returning();
 
     this.emit('checkpointRestored', { checkpointId, projectId, userId, status });
-    console.log(`[CheckpointService] Logged restore of checkpoint ${checkpointId} by user ${userId}`);
+    logger.info(`[CheckpointService] Logged restore of checkpoint ${checkpointId} by user ${userId}`);
 
     return restoreLog;
   }
@@ -362,7 +365,7 @@ export class CheckpointService extends EventEmitter {
       .returning();
 
     if (updated) {
-      console.log(`[CheckpointService] Updated checkpoint ${id} with database=${data.includesDatabase}, conversation=${!!data.conversationSnapshot}, dbPath=${!!data.dbSnapshotPath}`);
+      logger.info(`[CheckpointService] Updated checkpoint ${id} with database=${data.includesDatabase}, conversation=${!!data.conversationSnapshot}, dbPath=${!!data.dbSnapshotPath}`);
     }
 
     return updated || null;

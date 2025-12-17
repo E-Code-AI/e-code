@@ -2,6 +2,9 @@ import { Request, Response, NextFunction } from 'express';
 import fetch from 'node-fetch';
 import { storage } from '../storage';
 import jwt from 'jsonwebtoken';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('github-oauth-service');
 
 interface GitHubUser {
   id: number;
@@ -49,7 +52,7 @@ export class GitHubOAuthService {
     
     // Validate configuration on initialization
     if (!this.clientId || !this.clientSecret) {
-      console.warn('[GitHubOAuthService] WARNING: GitHub OAuth not configured. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables to enable GitHub integration.');
+      logger.warn('[GitHubOAuthService] WARNING: GitHub OAuth not configured. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables to enable GitHub integration.');
     }
   }
   
@@ -196,7 +199,7 @@ export class GitHubOAuthService {
             }
           }
         } catch (error) {
-          console.error(`Failed to fetch content for ${item.path}:`, error);
+          logger.error(`Failed to fetch content for ${item.path}:`, error);
         }
       }
     }
@@ -223,9 +226,9 @@ export class GitHubOAuthService {
         githubTokenCreatedAt: new Date()
       });
       
-      console.log(`[GitHubOAuthService] Token stored securely for user ${userId}`);
+      logger.info(`[GitHubOAuthService] Token stored securely for user ${userId}`);
     } catch (error) {
-      console.error('[GitHubOAuthService] Failed to store token:', error);
+      logger.error('[GitHubOAuthService] Failed to store token:', error);
       throw new Error('Failed to store GitHub credentials securely');
     }
   }
@@ -241,7 +244,7 @@ export class GitHubOAuthService {
       const { decryptToken } = await import('./credential-encryption');
       return decryptToken(user.githubTokenCiphertext, user.githubTokenIv);
     } catch (error) {
-      console.error('[GitHubOAuthService] Failed to decrypt token:', error);
+      logger.error('[GitHubOAuthService] Failed to decrypt token:', error);
       return null;
     }
   }
@@ -295,7 +298,7 @@ export class GitHubOAuthService {
         password: token
       };
     } catch (error) {
-      console.error('[GitHubOAuthService] Failed to get Git credentials:', error);
+      logger.error('[GitHubOAuthService] Failed to get Git credentials:', error);
       return null;
     }
   }
@@ -309,9 +312,9 @@ export class GitHubOAuthService {
         githubTokenIv: null,
         githubTokenCreatedAt: null
       });
-      console.log(`[GitHubOAuthService] GitHub disconnected for user ${userId}`);
+      logger.info(`[GitHubOAuthService] GitHub disconnected for user ${userId}`);
     } catch (error) {
-      console.warn('[GitHubOAuthService] Failed to clear GitHub connection:', error);
+      logger.warn('[GitHubOAuthService] Failed to clear GitHub connection:', error);
     }
   }
 

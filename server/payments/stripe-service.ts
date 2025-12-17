@@ -3,6 +3,9 @@ import { storage } from '../storage';
 import { getSubscriptionPeriodBoundary } from '../services/stripe-utils';
 import { PLANS, getPlanByTier } from './pricing-constants';
 import { creditsService } from '../services/credits-service';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('stripe-service');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-08-27.basil',  // ✅ FIXED: Updated to latest Stripe API version
@@ -271,12 +274,12 @@ export class StripePaymentService {
           planId,
         },
       });
-      console.log(`[Stripe] ✅ Created subscription with ${usagePriceIds.length} usage-based items`);
+      logger.info(`[Stripe] ✅ Created subscription with ${usagePriceIds.length} usage-based items`);
     } catch (error: any) {
       // If interval mismatch error, create with base plan only
       if (error.code === 'parameter_invalid_empty' || 
           error.message?.includes('recurring.interval')) {
-        console.warn(
+        logger.warn(
           `[Stripe] ⚠️  Could not add usage-based items to subscription (interval mismatch). ` +
           `Creating with base plan only. Configure usage prices with same interval in Stripe Dashboard.`
         );
@@ -444,7 +447,7 @@ export class StripePaymentService {
 
     const priceId = usagePriceIds[metric];
     if (!priceId) {
-      console.warn(`[Stripe] No price ID configured for metric: ${metric}`);
+      logger.warn(`[Stripe] No price ID configured for metric: ${metric}`);
       return false;
     }
 
@@ -470,7 +473,7 @@ export class StripePaymentService {
         // Usage-based items must be added to subscription during creation
         // or manually via Stripe Dashboard. We can't dynamically add them here
         // due to Stripe's recurring interval constraints.
-        console.warn(
+        logger.warn(
           `[Stripe] Usage item for ${metric} not found in subscription ${user.stripeSubscriptionId}. ` +
           `Usage-based items must be configured during subscription creation.`
         );
@@ -480,7 +483,7 @@ export class StripePaymentService {
       // Record usage on existing item
       const usageItemId = usageItem.id;
       if (!usageItemId) {
-        console.error('[Stripe] Unable to determine subscription item identifier for usage record');
+        logger.error('[Stripe] Unable to determine subscription item identifier for usage record');
         return false;
       }
 
@@ -490,10 +493,10 @@ export class StripePaymentService {
         action: 'increment',
       });
 
-      console.log(`[Stripe] ✅ Recorded ${quantity} ${metric} for user ${userId}`);
+      logger.info(`[Stripe] ✅ Recorded ${quantity} ${metric} for user ${userId}`);
       return true; // Successfully reported to Stripe
     } catch (error) {
-      console.error(`[Stripe] Failed to record usage for ${metric}:`, error);
+      logger.error(`[Stripe] Failed to record usage for ${metric}:`, error);
       return false; // Stored locally but Stripe reporting failed
     }
   }
@@ -606,9 +609,9 @@ export class StripePaymentService {
         paymentFailedAt: null,
       });
 
-      console.log(`[Stripe] Payment succeeded for user ${userId}, invoice ${invoice.id}`);
+      logger.info(`[Stripe] Payment succeeded for user ${userId}, invoice ${invoice.id}`);
     } catch (error) {
-      console.error('[Stripe] Error handling payment success:', error);
+      logger.error('[Stripe] Error handling payment success:', error);
     }
   }
 
@@ -627,9 +630,9 @@ export class StripePaymentService {
         paymentFailedAt: new Date(),
       });
 
-      console.warn(`[Stripe] Payment failed for user ${userId}, invoice ${invoice.id}`);
+      logger.warn(`[Stripe] Payment failed for user ${userId}, invoice ${invoice.id}`);
     } catch (error) {
-      console.error('[Stripe] Error handling payment failure:', error);
+      logger.error('[Stripe] Error handling payment failure:', error);
     }
   }
 
@@ -645,9 +648,9 @@ export class StripePaymentService {
       if (!userId) return;
 
       const refundedAmount = charge.amount_refunded / 100;
-      console.log(`[Stripe] Charge refunded for user ${userId}: $${refundedAmount}`);
+      logger.info(`[Stripe] Charge refunded for user ${userId}: $${refundedAmount}`);
     } catch (error) {
-      console.error('[Stripe] Error handling charge refund:', error);
+      logger.error('[Stripe] Error handling charge refund:', error);
     }
   }
 
@@ -664,9 +667,9 @@ export class StripePaymentService {
       if (customer.deleted) return;
       
       const userId = (customer as Stripe.Customer).metadata?.userId;
-      console.warn(`[Stripe] DISPUTE CREATED for user ${userId}: $${dispute.amount / 100} - Reason: ${dispute.reason}`);
+      logger.warn(`[Stripe] DISPUTE CREATED for user ${userId}: $${dispute.amount / 100} - Reason: ${dispute.reason}`);
     } catch (error) {
-      console.error('[Stripe] Error handling dispute:', error);
+      logger.error('[Stripe] Error handling dispute:', error);
     }
   }
 
@@ -704,9 +707,9 @@ export class StripePaymentService {
         billingPeriodEnd,
       });
       
-      console.log(`[Usage] Saved ${record.quantity} ${metricInfo.type} for user ${record.userId}`);
+      logger.info(`[Usage] Saved ${record.quantity} ${metricInfo.type} for user ${record.userId}`);
     } catch (error) {
-      console.error('[Usage] Failed to save usage record:', error);
+      logger.error('[Usage] Failed to save usage record:', error);
       // Don't throw - we don't want to break the main flow if DB save fails
     }
   }
@@ -740,7 +743,7 @@ export class StripePaymentService {
         timestamp: r.timestamp || new Date(),
       }));
     } catch (error) {
-      console.error('[Usage] Failed to fetch usage records:', error);
+      logger.error('[Usage] Failed to fetch usage records:', error);
       return [];
     }
   }

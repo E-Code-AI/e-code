@@ -1,6 +1,9 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('extension-manager');
 
 export interface Extension {
   id: string;
@@ -68,7 +71,7 @@ export class ExtensionManager {
       await fs.mkdir(this.extensionsPath, { recursive: true });
       this.loadBuiltInExtensions();
     } catch (error) {
-      console.error('Failed to initialize extensions:', error);
+      logger.error('Failed to initialize extensions:', error);
     }
   }
 
@@ -211,7 +214,7 @@ export class ExtensionManager {
 
       return true;
     } catch (error) {
-      console.error('Failed to install extension:', error);
+      logger.error('Failed to install extension:', error);
       return false;
     }
   }
@@ -221,7 +224,7 @@ export class ExtensionManager {
       await this.removeUserExtension(userId, extensionId);
       return true;
     } catch (error) {
-      console.error('Failed to uninstall extension:', error);
+      logger.error('Failed to uninstall extension:', error);
       return false;
     }
   }
@@ -251,7 +254,7 @@ export class ExtensionManager {
       await this.saveUserExtension(userId, extensionId, userExt);
       return true;
     } catch (error) {
-      console.error('Failed to configure extension:', error);
+      logger.error('Failed to configure extension:', error);
       return false;
     }
   }
@@ -395,7 +398,7 @@ export class ExtensionManager {
       await this.saveUserExtension(userId, extensionId, userExt);
       return true;
     } catch (error) {
-      console.error('Failed to update extension status:', error);
+      logger.error('Failed to update extension status:', error);
       return false;
     }
   }

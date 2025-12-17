@@ -4,6 +4,9 @@ import https from 'https';
 import { IStorage } from '../storage';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('load-testing-service');
 
 /**
  * Enterprise Load Testing Service
@@ -87,7 +90,7 @@ export class LoadTestingService extends EventEmitter {
     const tasks: Promise<void>[] = [];
     const totalRequests = config.concurrency * Math.ceil(config.duration / 1000);
     
-    console.log(`Starting AI streaming load test: ${config.concurrency} concurrent streams for ${config.duration}ms`);
+    logger.info(`Starting AI streaming load test: ${config.concurrency} concurrent streams for ${config.duration}ms`);
     
     for (let i = 0; i < config.concurrency; i++) {
       const delay = (i / config.concurrency) * config.rampUp;
@@ -144,7 +147,7 @@ export class LoadTestingService extends EventEmitter {
     const queriesPerSecond = 100;
     const totalQueries = queriesPerSecond * (config.duration / 1000);
     
-    console.log(`Starting database load test: ${queriesPerSecond} queries/sec for ${config.duration}ms`);
+    logger.info(`Starting database load test: ${queriesPerSecond} queries/sec for ${config.duration}ms`);
 
     for (let i = 0; i < config.concurrency; i++) {
       const delay = (i / config.concurrency) * config.rampUp;
@@ -202,7 +205,7 @@ export class LoadTestingService extends EventEmitter {
 
     const connections: any[] = [];
     
-    console.log(`Starting WebSocket load test: ${config.concurrency} concurrent connections`);
+    logger.info(`Starting WebSocket load test: ${config.concurrency} concurrent connections`);
 
     try {
       for (let i = 0; i < config.concurrency; i++) {
@@ -235,7 +238,7 @@ export class LoadTestingService extends EventEmitter {
       });
       
     } catch (error: any) {
-      console.error('WebSocket test error:', error);
+      logger.error('WebSocket test error:', error);
     }
 
     const endTime = new Date();

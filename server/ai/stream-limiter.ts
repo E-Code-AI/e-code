@@ -8,6 +8,10 @@
  * - Malformed chunk handling
  */
 
+import { createLogger } from '../utils/logger';
+
+const streamLogger = createLogger('stream-limiter');
+
 export interface StreamLimiterConfig {
   /**
    * Maximum total size of stream in bytes
@@ -175,7 +179,7 @@ export class StreamLimiter {
    */
   private log(message: string): void {
     if (this.config.debug || process.env.NODE_ENV === 'development') {
-      console.log(`[StreamLimiter:${this.name}] ${message}`);
+      streamLogger.debug(`[StreamLimiter:${this.name}] ${message}`);
     }
   }
 

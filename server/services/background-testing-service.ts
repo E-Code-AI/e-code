@@ -106,7 +106,7 @@ export class BackgroundTestingService extends EventEmitter {
       createdAt: new Date()
     };
     
-    console.log(`[BackgroundTesting] Scheduling test for project ${projectId} with ${changedFiles.length} changed files`);
+    logger.info(`[BackgroundTesting] Scheduling test for project ${projectId} with ${changedFiles.length} changed files`);
     this.testQueue.set(projectId, job);
     
     // Emit event for real-time updates via WebSocket
@@ -133,7 +133,7 @@ export class BackgroundTestingService extends EventEmitter {
   
   private async processQueue(): Promise<void> {
     if (this.isProcessing) {
-      console.log('[BackgroundTesting] Already processing queue');
+      logger.debug('[BackgroundTesting] Already processing queue');
       return;
     }
     
@@ -143,7 +143,7 @@ export class BackgroundTestingService extends EventEmitter {
       for (const [projectId, job] of this.testQueue.entries()) {
         if (job.status !== 'queued') continue;
         
-        console.log(`[BackgroundTesting] Running tests for project ${projectId}`);
+        logger.info(`[BackgroundTesting] Running tests for project ${projectId}`);
         job.status = 'running';
         job.startedAt = new Date();
         this.emit('test:started', { projectId, job });
@@ -154,7 +154,7 @@ export class BackgroundTestingService extends EventEmitter {
           job.completedAt = new Date();
           job.results = results;
           
-          console.log(`[BackgroundTesting] Tests completed for project ${projectId}:`, results);
+          logger.info(`[BackgroundTesting] Tests completed for project ${projectId}:`, results);
           this.emit('test:completed', { projectId, job, results });
           
           // 3. Si tests échouent, notifier l'agent
@@ -162,7 +162,7 @@ export class BackgroundTestingService extends EventEmitter {
             await this.notifyAgent(projectId, results);
           }
         } catch (error) {
-          console.error(`[BackgroundTesting] Tests failed for project ${projectId}:`, error);
+          logger.error(`[BackgroundTesting] Tests failed for project ${projectId}:`, error);
           job.status = 'failed';
           job.completedAt = new Date();
           this.emit('test:failed', { projectId, job, error });

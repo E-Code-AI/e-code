@@ -152,12 +152,12 @@ class AgentWebSocketService {
     
     // 🔍 DEBUG: Add error handlers
     this.wss.on('error', (err: Error) => {
-      console.error('[Agent WebSocket] WebSocketServer ERROR:', err.message, err.stack);
+      logger.error('[Agent WebSocket] WebSocketServer ERROR:', err.message, err.stack);
     });
     
     this.wss.on('wsClientError', (err: Error, socket: any, request: any) => {
-      console.error('[Agent WebSocket] wsClientError:', err.message);
-      console.error('[Agent WebSocket] wsClientError URL:', request?.url);
+      logger.error('[Agent WebSocket] wsClientError:', err.message);
+      logger.error('[Agent WebSocket] wsClientError URL:', request?.url);
     });
     
     // Register with the central dispatcher (priority 10 = high priority)
@@ -176,7 +176,7 @@ class AgentWebSocketService {
     this.startHeartbeat();
     
     this.wss.on('connection', (ws, req) => {
-      console.log(`[Agent WebSocket] 🎯 CONNECTION ESTABLISHED! URL: ${req.url}, ws.readyState: ${ws.readyState}`);
+      logger.info(`[Agent WebSocket] 🎯 CONNECTION ESTABLISHED! URL: ${req.url}, ws.readyState: ${ws.readyState}`);
       
       logger.info(`[Agent WebSocket] New connection attempt from ${req.socket.remoteAddress} - URL: ${req.url}`);
       
@@ -228,12 +228,12 @@ class AgentWebSocketService {
         message: 'WebSocket connection established'
       });
       
-      console.log(`[Agent WebSocket] 📤 SENDING 'connected' message, ws.readyState: ${ws.readyState}, OPEN=${ws.readyState === 1}`);
+      logger.info(`[Agent WebSocket] 📤 SENDING 'connected' message, ws.readyState: ${ws.readyState}, OPEN=${ws.readyState === 1}`);
       try {
         ws.send(connectedMsg);
-        console.log(`[Agent WebSocket] ✅ 'connected' message SENT successfully to ${connectionKey}`);
+        logger.info(`[Agent WebSocket] ✅ 'connected' message SENT successfully to ${connectionKey}`);
       } catch (sendError: any) {
-        console.error(`[Agent WebSocket] ❌ FAILED to send 'connected' message:`, sendError.message);
+        logger.error(`[Agent WebSocket] ❌ FAILED to send 'connected' message:`, sendError.message);
       }
       
       // Trigger workflow check/start
@@ -307,7 +307,7 @@ class AgentWebSocketService {
           
           // Complete the WebSocket handshake
           this.wss!.handleUpgrade(request, socket, head, (ws) => {
-            console.log(`[Agent WebSocket] 🎯 UPGRADE COMPLETE! Emitting connection event...`);
+            logger.info(`[Agent WebSocket] 🎯 UPGRADE COMPLETE! Emitting connection event...`);
             this.wss!.emit('connection', ws, request);
           });
           return;
@@ -329,7 +329,7 @@ class AgentWebSocketService {
         
         // Complete the WebSocket handshake SYNCHRONOUSLY
         this.wss!.handleUpgrade(request, socket, head, (ws) => {
-          console.log(`[Agent WebSocket] 🎯 UPGRADE COMPLETE (session auth pending validation)!`);
+          logger.info(`[Agent WebSocket] 🎯 UPGRADE COMPLETE (session auth pending validation)!`);
           
           // Now validate the session asynchronously
           this.validateSessionCookie(cookies['ecode.sid'], projectId)
@@ -608,12 +608,12 @@ class AgentWebSocketService {
             sessionId,
             projectId
           });
-          console.log(`[Agent WebSocket] 📤 SENDING 'status' message (${session.workflowStatus}), ws.readyState: ${ws.readyState}`);
+          logger.info(`[Agent WebSocket] 📤 SENDING 'status' message (${session.workflowStatus}), ws.readyState: ${ws.readyState}`);
           try {
             ws.send(statusMsg);
-            console.log(`[Agent WebSocket] ✅ 'status' message SENT for session ${sessionId}`);
+            logger.info(`[Agent WebSocket] ✅ 'status' message SENT for session ${sessionId}`);
           } catch (sendError: any) {
-            console.error(`[Agent WebSocket] ❌ FAILED to send 'status' message:`, sendError.message);
+            logger.error(`[Agent WebSocket] ❌ FAILED to send 'status' message:`, sendError.message);
           }
         }
       }

@@ -9,6 +9,9 @@ import { TaskType } from './ai-optimization/task-classifier.service';
 import { db } from '../db';
 import { agentSessions } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('ai-optimization-worker');
 
 export class AiOptimizationWorker {
   private isRunning = false;
@@ -21,12 +24,12 @@ export class AiOptimizationWorker {
    */
   start() {
     if (this.isRunning) {
-      console.log('[AI Optimization Worker] Already running');
+      logger.debug('[AI Optimization Worker] Already running');
       return;
     }
 
     this.isRunning = true;
-    console.log('[AI Optimization Worker] Starting worker...');
+    logger.info('[AI Optimization Worker] Starting worker...');
     this.poll();
   }
 
@@ -35,7 +38,7 @@ export class AiOptimizationWorker {
    */
   stop() {
     this.isRunning = false;
-    console.log('[AI Optimization Worker] Stopping worker...');
+    logger.info('[AI Optimization Worker] Stopping worker...');
   }
 
   /**
@@ -62,7 +65,7 @@ export class AiOptimizationWorker {
         // Wait before next poll
         await new Promise(resolve => setTimeout(resolve, this.pollInterval));
       } catch (error: any) {
-        console.error('[AI Optimization Worker] Poll error:', error);
+        logger.error('[AI Optimization Worker] Poll error:', error);
         await new Promise(resolve => setTimeout(resolve, this.pollInterval * 2));
       }
     }
@@ -77,7 +80,7 @@ export class AiOptimizationWorker {
     let success = false;
 
     try {
-      console.log(`[AI Optimization Worker] Processing request ${request.id} (${request.taskType})`);
+      logger.info(`[AI Optimization Worker] Processing request ${request.id} (${request.taskType})`);
 
       // Step 1: Classify task (deterministic vs creative)
       const classification = await aiOptimization.taskClassifier.classify({
@@ -85,7 +88,7 @@ export class AiOptimizationWorker {
         context: request.payload.context,
       });
 
-      console.log(`[AI Optimization Worker] Classification: ${classification.category} (${classification.preferredExecutor})`);
+      logger.info(`[AI Optimization Worker] Classification: ${classification.category} (${classification.preferredExecutor})`);
 
       // Step 2: Check circuit breaker if using AI
       let provider = request.provider;
@@ -228,9 +231,9 @@ export class AiOptimizationWorker {
         },
       });
 
-      console.log(`[AI Optimization Worker] ✓ Request ${request.id} completed in ${Date.now() - startTime}ms`);
+      logger.info(`[AI Optimization Worker] ✓ Request ${request.id} completed in ${Date.now() - startTime}ms`);
     } catch (error: any) {
-      console.error(`[AI Optimization Worker] ✗ Request ${request.id} failed:`, error.message);
+      logger.error(`[AI Optimization Worker] ✗ Request ${request.id} failed:`, error.message);
 
       // Record failure in circuit breaker
       if (request.provider) {

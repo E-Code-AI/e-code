@@ -5,7 +5,9 @@ import { promisify } from "util";
 import { existsSync } from "fs";
 import { resolve } from "path";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
+import { createLogger } from './utils/logger';
 
+const logger = createLogger('db-init');
 const scryptAsync = promisify(scrypt);
 
 // Password hashing function
@@ -36,7 +38,7 @@ async function ensurePreferredAiModelColumn() {
     `;
 
     if (!result?.exists) {
-      console.log('[DB Init] Creating preferred_ai_model column...');
+      logger.info('[DB Init] Creating preferred_ai_model column...');
       
       // Create column with ALTER TABLE (safe, idempotent)
       await client`
@@ -44,13 +46,13 @@ async function ensurePreferredAiModelColumn() {
         ADD COLUMN preferred_ai_model varchar;
       `;
       
-      console.log('[DB Init] ✓ preferred_ai_model column created successfully');
+      logger.info('[DB Init] ✓ preferred_ai_model column created successfully');
     } else {
-      console.log('[DB Init] ✓ preferred_ai_model column already exists');
+      logger.info('[DB Init] ✓ preferred_ai_model column already exists');
     }
   } catch (error: any) {
     // Log error but don't crash - column might already exist
-    console.warn('[DB Init] Failed to ensure preferred_ai_model column:', error.message);
+    logger.warn('[DB Init] Failed to ensure preferred_ai_model column:', error.message);
   }
 }
 
@@ -62,7 +64,7 @@ async function ensureDatabaseMigrated(force = false) {
   const migrationsFolder = resolve(process.cwd(), "migrations");
 
   if (!existsSync(migrationsFolder)) {
-    console.warn(
+    logger.warn(
       `Database migrations folder not found at ${migrationsFolder}. ` +
       "Automatic migration skipped. Run `npm run db:push` to create the schema manually.",
     );
@@ -85,7 +87,7 @@ async function ensureDatabaseMigrated(force = false) {
 
       isFreshDatabase = !row?.exists;
     } catch (error) {
-      console.warn("Failed to inspect database schema, attempting automatic migration", error);
+      logger.warn("Failed to inspect database schema, attempting automatic migration", error);
       isFreshDatabase = true;
     }
   }
@@ -105,7 +107,7 @@ async function ensureDatabaseMigrated(force = false) {
     if (isEnumExistsError) {
       migrationsEnsured = true;
     } else {
-      console.error("Automatic database migration failed:", migrationError);
+      logger.error("Automatic database migration failed:", migrationError);
       throw migrationError;
     }
   }
@@ -246,16 +248,16 @@ document.addEventListener('DOMContentLoaded', function() {
       
     } catch (error) {
       lastError = error;
-      console.error(`Database initialization attempt failed:`, error.message);
+      logger.error(`Database initialization attempt failed:`, error.message);
 
       if (error?.code === '42P01' || /relation ".+" does not exist/.test(error?.message || "")) {
         // Table is missing even after our initial migration attempt. Force rerun migrations.
         try {
-          console.warn("Detected missing tables after initialization attempt. Retrying migrations...");
+          logger.warn("Detected missing tables after initialization attempt. Retrying migrations...");
           migrationsEnsured = false; // allow ensureDatabaseMigrated to run again
           await ensureDatabaseMigrated(true);
         } catch (migrationError) {
-          console.error("Forced migration retry failed:", migrationError.message);
+          logger.error("Forced migration retry failed:", migrationError.message);
         }
       }
 
@@ -269,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // All retries failed
-  console.error("Failed to initialize database after all retries:", lastError);
+  logger.error("Failed to initialize database after all retries:", lastError);
   // Don't throw - let the server continue running
   // Database operations will fail gracefully when accessed
 }

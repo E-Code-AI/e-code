@@ -24,7 +24,7 @@ router.post('/generate-link', requireAuth, async (req: Request, res: Response) =
     
     res.json({ link });
   } catch (error) {
-    console.error('Error generating collaboration link:', error);
+    logger.error('Error generating collaboration link:', error);
     res.status(500).json({ error: 'Failed to generate collaboration link' });
   }
 });
@@ -50,7 +50,7 @@ router.get('/sessions/:projectId', requireAuth, async (req: Request, res: Respon
     
     res.json(sessions);
   } catch (error) {
-    console.error('Error fetching sessions:', error);
+    logger.error('Error fetching sessions:', error);
     res.status(500).json({ error: 'Failed to fetch sessions' });
   }
 });
@@ -72,7 +72,7 @@ router.get('/sessions/:sessionId/participants', requireAuth, async (req: Request
     
     res.json(participants);
   } catch (error) {
-    console.error('Error fetching participants:', error);
+    logger.error('Error fetching participants:', error);
     res.status(500).json({ error: 'Failed to fetch participants' });
   }
 });
@@ -137,7 +137,7 @@ router.post('/join', requireAuth, async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Error joining session:', error);
+    logger.error('Error joining session:', error);
     res.status(500).json({ error: 'Failed to join session' });
   }
 });
@@ -180,7 +180,7 @@ router.get('/stats/:projectId', requireAuth, async (req: Request, res: Response)
       totalParticipants: totalParticipants.length,
     });
   } catch (error) {
-    console.error('Error fetching stats:', error);
+    logger.error('Error fetching stats:', error);
     res.status(500).json({ error: 'Failed to fetch statistics' });
   }
 });
@@ -295,7 +295,7 @@ router.get('/active', requireAuth, async (req: Request, res: Response) => {
     // Return empty array for now - real data comes from WebSocket
     res.json([]);
   } catch (error) {
-    console.error('Error fetching active collaborators:', error);
+    logger.error('Error fetching active collaborators:', error);
     res.status(500).json({ error: 'Failed to fetch collaborators' });
   }
 });
@@ -369,7 +369,7 @@ router.get('/:projectId/users', requireAuth, async (req: Request, res: Response)
     
     res.json({ collaborators });
   } catch (error) {
-    console.error('Error fetching project collaborators:', error);
+    logger.error('Error fetching project collaborators:', error);
     res.status(500).json({ error: 'Failed to fetch collaborators' });
   }
 });
@@ -393,7 +393,7 @@ router.post('/:projectId/invite', requireAuth, async (req: Request, res: Respons
     const inviteToken = require('nanoid').nanoid(32);
     const inviteLink = `${req.protocol}://${req.get('host')}/ide/${projectIdNum}?invite=${inviteToken}`;
     
-    console.log(`[Collaboration] Invite sent from ${inviterName} to ${email} for project ${projectIdNum} as ${role || 'editor'}`);
+    logger.info(`[Collaboration] Invite sent from ${inviterName} to ${email} for project ${projectIdNum} as ${role || 'editor'}`);
     
     res.json({ 
       success: true, 
@@ -401,7 +401,7 @@ router.post('/:projectId/invite', requireAuth, async (req: Request, res: Respons
       inviteLink
     });
   } catch (error) {
-    console.error('Error sending invitation:', error);
+    logger.error('Error sending invitation:', error);
     res.status(500).json({ error: 'Failed to send invitation' });
   }
 });
@@ -422,14 +422,14 @@ router.patch('/:projectId/users/:collaboratorId', requireAuth, async (req: Reque
     }
     
     // For now, just acknowledge - real role management would need a separate table
-    console.log(`[Collaboration] Updated role for ${collaboratorId} to ${role} in project ${projectIdNum}`);
+    logger.info(`[Collaboration] Updated role for ${collaboratorId} to ${role} in project ${projectIdNum}`);
     
     res.json({ 
       success: true, 
       message: `Role updated to ${role}`
     });
   } catch (error) {
-    console.error('Error updating collaborator role:', error);
+    logger.error('Error updating collaborator role:', error);
     res.status(500).json({ error: 'Failed to update role' });
   }
 });
@@ -450,14 +450,14 @@ router.delete('/:projectId/users/:collaboratorId', requireAuth, async (req: Requ
       .set({ active: false, leftAt: new Date() })
       .where(eq(sessionParticipants.id, collaboratorId));
     
-    console.log(`[Collaboration] Removed collaborator ${collaboratorId} from project ${projectIdNum}`);
+    logger.info(`[Collaboration] Removed collaborator ${collaboratorId} from project ${projectIdNum}`);
     
     res.json({ 
       success: true, 
       message: 'Collaborator removed'
     });
   } catch (error) {
-    console.error('Error removing collaborator:', error);
+    logger.error('Error removing collaborator:', error);
     res.status(500).json({ error: 'Failed to remove collaborator' });
   }
 });

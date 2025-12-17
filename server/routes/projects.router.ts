@@ -11,6 +11,9 @@ import { aiApprovalQueue } from '../services/ai-approval-queue.service';
 import { aiSecurityService } from '../services/ai-security.service';
 import { createRateLimitMiddleware } from '../middleware/rate-limiter';
 import { memoryBankService } from '../services/memory-bank.service';
+import { createLogger } from '../utils/logger';
+
+const projectLogger = createLogger('projects-router');
 
 export class ProjectsRouter {
   private router: Router;
@@ -125,7 +128,7 @@ export class ProjectsRouter {
         const actualProjectId = String(project.id);
         
         if (tokenProjectId !== actualProjectId) {
-          console.warn('[ensureProjectAccess] Bootstrap token project mismatch:', {
+          projectLogger.warn('[ensureProjectAccess] Bootstrap token project mismatch:', {
             tokenProjectId,
             actualProjectId,
             tokenProjectIdType: typeof decoded.projectId,
@@ -141,7 +144,7 @@ export class ProjectsRouter {
         
       } catch (error) {
         // Invalid or expired token
-        console.error('[ensureProjectAccess] Bootstrap token validation failed:', error);
+        projectLogger.error('[ensureProjectAccess] Bootstrap token validation failed:', error);
         return res.status(401).json({
           message: "Invalid or expired bootstrap token",
           code: "BOOTSTRAP_TOKEN_INVALID",
@@ -222,7 +225,7 @@ export class ProjectsRouter {
           }
         });
       } catch (error) {
-        console.error('Error fetching projects:', error);
+        projectLogger.error('Error fetching projects:', error);
         res.status(500).json({ 
           message: "Failed to fetch projects",
           code: "FETCH_ERROR"
@@ -266,17 +269,17 @@ export class ProjectsRouter {
             project.id, 
             validatedData.description || validatedData.name
           );
-          console.log(`[Projects] Memory bank initialized for project ${project.id}`);
+          projectLogger.info(`[Projects] Memory bank initialized for project ${project.id}`);
         } catch (mbError) {
           // Memory bank initialization failure should not block project creation
-          console.warn(`[Projects] Failed to initialize memory bank for project ${project.id}:`, mbError);
+          projectLogger.warn(`[Projects] Failed to initialize memory bank for project ${project.id}:`, mbError);
         }
         
         const owner = await this.storage.getUser(String(userId));
         
         res.json({ ...project, owner });
       } catch (error: any) {
-        console.error('Error creating project:', error);
+        projectLogger.error('Error creating project:', error);
         if (error.name === 'ZodError') {
           return res.status(400).json({ 
             message: "Invalid project data",
@@ -308,7 +311,7 @@ export class ProjectsRouter {
         
         res.json({ ...project, owner });
       } catch (error) {
-        console.error('Error fetching project:', error);
+        projectLogger.error('Error fetching project:', error);
         res.status(500).json({ 
           message: "Failed to fetch project",
           code: "FETCH_ERROR"
@@ -337,7 +340,7 @@ export class ProjectsRouter {
         
         res.json(project);
       } catch (error) {
-        console.error('Error updating project:', error);
+        projectLogger.error('Error updating project:', error);
         res.status(500).json({ 
           message: "Failed to update project",
           code: "UPDATE_ERROR"
@@ -369,7 +372,7 @@ export class ProjectsRouter {
         await this.storage.deleteProject(projectId);
         res.json({ message: "Project deleted successfully" });
       } catch (error) {
-        console.error('Error deleting project:', error);
+        projectLogger.error('Error deleting project:', error);
         res.status(500).json({ 
           message: "Failed to delete project",
           code: "DELETE_ERROR"
@@ -385,7 +388,7 @@ export class ProjectsRouter {
         // Get user by username
         const user = await this.storage.getUserByUsername(username);
         if (!user) {
-          console.error('[Projects] User not found');
+          projectLogger.error('[Projects] User not found');
           return res.status(404).json({ 
             error: 'User not found',
             code: 'USER_NOT_FOUND',
@@ -395,7 +398,7 @@ export class ProjectsRouter {
         
         const project = await this.storage.getProjectBySlug(slug, String(user.id));
         if (!project) {
-          console.error('[Projects] Project not found');
+          projectLogger.error('[Projects] Project not found');
           return res.status(404).json({ 
             error: 'Project not found',
             code: 'PROJECT_NOT_FOUND',
@@ -443,7 +446,7 @@ export class ProjectsRouter {
           owner
         });
       } catch (error) {
-        console.error('[Projects] Error accessing project:', error);
+        projectLogger.error('[Projects] Error accessing project:', error);
         res.status(500).json({ 
           error: 'Failed to access project',
           code: 'SERVER_ERROR' 
@@ -505,7 +508,7 @@ export class ProjectsRouter {
           res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
           res.end();
         } catch (streamError: any) {
-          console.error('[ProjectAI] Streaming error:', streamError);
+          projectLogger.error('[ProjectAI] Streaming error:', streamError);
           res.write(`data: ${JSON.stringify({ 
             type: 'error', 
             content: streamError.message || 'Streaming failed' 
@@ -513,7 +516,7 @@ export class ProjectsRouter {
           res.end();
         }
       } catch (error: any) {
-        console.error('[ProjectAI] Error in AI chat:', error);
+        projectLogger.error('[ProjectAI] Error in AI chat:', error);
         
         // If headers not sent yet, send JSON error
         if (!res.headersSent) {
@@ -591,7 +594,7 @@ export class ProjectsRouter {
             });
 
           } catch (error: any) {
-            console.error(`[ProjectAI] Failed to create file:`, error);
+            projectLogger.error(`[ProjectAI] Failed to create file:`, error);
 
             // Log failed action
             await aiSecurityService.logAction(userId, projectId, action, {
@@ -654,7 +657,7 @@ export class ProjectsRouter {
             });
 
           } catch (error: any) {
-            console.error(`[ProjectAI] Failed to edit file:`, error);
+            projectLogger.error(`[ProjectAI] Failed to edit file:`, error);
 
             await aiSecurityService.logAction(userId, projectId, action, {
               success: false,
@@ -675,7 +678,7 @@ export class ProjectsRouter {
         }
 
       } catch (error: any) {
-        console.error('[ProjectAI] Error in approval endpoint:', error);
+        projectLogger.error('[ProjectAI] Error in approval endpoint:', error);
         return res.status(500).json({ 
           error: error.message || 'Failed to approve action',
           code: 'APPROVAL_ERROR' 
@@ -709,7 +712,7 @@ export class ProjectsRouter {
         });
 
       } catch (error: any) {
-        console.error('[ProjectAI] Error in reject endpoint:', error);
+        projectLogger.error('[ProjectAI] Error in reject endpoint:', error);
         return res.status(500).json({ 
           error: error.message || 'Failed to reject action',
           code: 'REJECTION_ERROR' 
@@ -739,7 +742,7 @@ export class ProjectsRouter {
         });
 
       } catch (error: any) {
-        console.error('[ProjectAI] Error getting pending actions:', error);
+        projectLogger.error('[ProjectAI] Error getting pending actions:', error);
         return res.status(500).json({ 
           error: error.message || 'Failed to get pending actions',
           code: 'PENDING_ERROR' 

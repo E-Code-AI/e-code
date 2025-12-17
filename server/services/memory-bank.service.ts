@@ -12,6 +12,9 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { EventEmitter } from 'events';
 import { aiProviderManager } from '../ai/ai-provider-manager';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('memory-bank-service');
 
 export interface MemoryBankFile {
   name: string;
@@ -261,7 +264,7 @@ ${projectDescription}
     this.memoryCache.set(projectId, memoryBank);
     this.emit('initialized', { projectId, memoryBank });
     
-    console.log(`[MemoryBank] Initialized for project ${projectId} with ${files.length} files`);
+    logger.info(`[MemoryBank] Initialized for project ${projectId} with ${files.length} files`);
     
     return memoryBank;
   }
@@ -289,7 +292,7 @@ ${projectDescription}
     // Create directory
     await fs.mkdir(mbPath, { recursive: true });
     
-    console.log(`[MemoryBank] 🤖 Generating AI-powered context for project ${projectId}...`);
+    logger.info(`[MemoryBank] 🤖 Generating AI-powered context for project ${projectId}...`);
     
     // Generate AI content for all files in parallel
     const aiContent = await this.generateAIContent(userPrompt, options);
@@ -320,7 +323,7 @@ ${projectDescription}
     this.memoryCache.set(projectId, memoryBank);
     this.emit('initialized', { projectId, memoryBank, aiGenerated: true });
     
-    console.log(`[MemoryBank] ✅ AI-generated Memory Bank for project ${projectId} (${files.length} files, ${memoryBank.totalSize} bytes)`);
+    logger.info(`[MemoryBank] ✅ AI-generated Memory Bank for project ${projectId} (${files.length} files, ${memoryBank.totalSize} bytes)`);
     
     return memoryBank;
   }
@@ -365,7 +368,7 @@ Output valid JSON only, no markdown code blocks.`;
       // ✅ Determine which model to use (user preference or intelligent default)
       const modelId = options?.preferredModel || this.selectBestAvailableModel();
       
-      console.log(`[MemoryBank] 🤖 Using model: ${modelId} for Memory Bank generation`);
+      logger.info(`[MemoryBank] 🤖 Using model: ${modelId} for Memory Bank generation`);
       
       // ✅ Call unified AI provider (works with ANY configured model)
       const response = await aiProviderManager.generateChat(
@@ -387,7 +390,7 @@ Output valid JSON only, no markdown code blocks.`;
         }
         parsed = JSON.parse(jsonStr);
       } catch (parseError) {
-        console.warn('[MemoryBank] Failed to parse AI response, using fallback:', parseError);
+        logger.warn('[MemoryBank] Failed to parse AI response, using fallback:', parseError);
         return this.generateFallbackContent(userPrompt, options);
       }
 
@@ -395,14 +398,14 @@ Output valid JSON only, no markdown code blocks.`;
       const requiredFiles = ['projectbrief.md', 'productContext.md', 'systemPatterns.md', 'techContext.md', 'activeContext.md'];
       for (const file of requiredFiles) {
         if (!parsed[file] || typeof parsed[file] !== 'string') {
-          console.warn(`[MemoryBank] Missing or invalid ${file}, using fallback content`);
+          logger.warn(`[MemoryBank] Missing or invalid ${file}, using fallback content`);
           parsed[file] = DEFAULT_FILES[file]?.template || `# ${file}\n\nContent to be added.`;
         }
       }
 
       return parsed;
     } catch (error) {
-      console.error('[MemoryBank] AI generation failed, using fallback:', error);
+      logger.error('[MemoryBank] AI generation failed, using fallback:', error);
       return this.generateFallbackContent(userPrompt, options);
     }
   }
@@ -601,7 +604,7 @@ npm run dev  # Start development server
       this.memoryCache.set(projectId, memoryBank);
       return memoryBank;
     } catch (error) {
-      console.error(`[MemoryBank] Error reading memory bank for project ${projectId}:`, error);
+      logger.error(`[MemoryBank] Error reading memory bank for project ${projectId}:`, error);
       return null;
     }
   }
@@ -613,7 +616,7 @@ npm run dev  # Start development server
     // Security: Sanitize filename to prevent path traversal
     const safeFilename = sanitizeFilename(filename);
     if (!safeFilename) {
-      console.warn(`[MemoryBank] Rejected unsafe filename: ${filename}`);
+      logger.warn(`[MemoryBank] Rejected unsafe filename: ${filename}`);
       return null;
     }
     
@@ -622,7 +625,7 @@ npm run dev  # Start development server
     
     // Security: Verify path is within memory bank directory
     if (!isPathWithinDirectory(filePath, mbPath)) {
-      console.warn(`[MemoryBank] Path traversal attempt blocked: ${filename}`);
+      logger.warn(`[MemoryBank] Path traversal attempt blocked: ${filename}`);
       return null;
     }
     
@@ -648,7 +651,7 @@ npm run dev  # Start development server
     // Security: Sanitize filename to prevent path traversal
     const safeFilename = sanitizeFilename(filename);
     if (!safeFilename) {
-      console.warn(`[MemoryBank] Rejected unsafe filename for update: ${filename}`);
+      logger.warn(`[MemoryBank] Rejected unsafe filename for update: ${filename}`);
       return null;
     }
     
@@ -661,7 +664,7 @@ npm run dev  # Start development server
     
     // Security: Verify path is within memory bank directory
     if (!isPathWithinDirectory(filePath, mbPath)) {
-      console.warn(`[MemoryBank] Path traversal attempt blocked on update: ${filename}`);
+      logger.warn(`[MemoryBank] Path traversal attempt blocked on update: ${filename}`);
       return null;
     }
     
@@ -678,7 +681,7 @@ npm run dev  # Start development server
     this.memoryCache.delete(projectId);
     
     this.emit('fileUpdated', { projectId, file });
-    console.log(`[MemoryBank] Updated ${safeFilename} for project ${projectId}`);
+    logger.info(`[MemoryBank] Updated ${safeFilename} for project ${projectId}`);
     
     return file;
   }
@@ -690,7 +693,7 @@ npm run dev  # Start development server
     // Security: Sanitize filename to prevent path traversal
     const safeFilename = sanitizeFilename(filename);
     if (!safeFilename) {
-      console.warn(`[MemoryBank] Rejected unsafe filename for delete: ${filename}`);
+      logger.warn(`[MemoryBank] Rejected unsafe filename for delete: ${filename}`);
       return false;
     }
     
@@ -699,7 +702,7 @@ npm run dev  # Start development server
     
     // Security: Verify path is within memory bank directory
     if (!isPathWithinDirectory(filePath, mbPath)) {
-      console.warn(`[MemoryBank] Path traversal attempt blocked on delete: ${filename}`);
+      logger.warn(`[MemoryBank] Path traversal attempt blocked on delete: ${filename}`);
       return false;
     }
     
@@ -925,11 +928,11 @@ ${newEntry}
       }
       
       await this.updateFile(projectId, 'activeContext.md', content);
-      console.log(`[MemoryBank] Auto-updated activeContext.md for project ${projectId}`);
+      logger.info(`[MemoryBank] Auto-updated activeContext.md for project ${projectId}`);
       
       this.emit('autoUpdated', { projectId, file: 'activeContext.md', update });
     } catch (error) {
-      console.error(`[MemoryBank] Failed to auto-update activeContext.md:`, error);
+      logger.error(`[MemoryBank] Failed to auto-update activeContext.md:`, error);
     }
   }
 

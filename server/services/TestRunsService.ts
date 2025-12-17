@@ -8,6 +8,9 @@ import { ipRateLimiter, wsRateLimiter } from '../middleware/websocket-rate-limit
 import { isOriginAllowed } from '../utils/origin-validation';
 import { db } from '../db';
 import { eq, and } from 'drizzle-orm';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('test-runs-service');
 
 interface TestRunsClient {
   ws: WebSocket;
@@ -51,7 +54,7 @@ export class TestRunsService {
 
         // SECURITY: Validate Origin to prevent cross-site WebSocket hijacking
         if (!isOriginAllowed(request.headers.origin, request.headers.host as string | undefined)) {
-          console.warn(`[TestRuns] Rejected connection from unauthorized origin: ${request.headers.origin || request.headers.host}`);
+          logger.warn(`[TestRuns] Rejected connection from unauthorized origin: ${request.headers.origin || request.headers.host}`);
           ws.close(1008, 'Unauthorized origin');
           return;
         }
@@ -63,7 +66,7 @@ export class TestRunsService {
         
         if (!ipRateLimiter.checkLimit(clientIp)) {
           const retryAfter = Math.ceil(ipRateLimiter.getTimeUntilReset(clientIp) / 1000);
-          console.warn(`[TestRuns] Rate limit exceeded for IP ${clientIp}. Retry after ${retryAfter}s`);
+          logger.warn(`[TestRuns] Rate limit exceeded for IP ${clientIp}. Retry after ${retryAfter}s`);
           ws.close(1008, `Rate limit exceeded from your IP. Retry after ${retryAfter} seconds.`);
           return;
         }
@@ -102,7 +105,7 @@ export class TestRunsService {
         // SECURITY: Verify project access authorization
         const authorized = await this.authenticateConnection(request, userId, projectId);
         if (!authorized) {
-          console.warn(`[TestRuns] Unauthorized WebSocket connection attempt: user=${userId}, project=${projectId}`);
+          logger.warn(`[TestRuns] Unauthorized WebSocket connection attempt: user=${userId}, project=${projectId}`);
           ws.close(1008, 'Unauthorized: Invalid session or insufficient permissions');
           return;
         }
@@ -111,14 +114,14 @@ export class TestRunsService {
         // Use authenticated user ID to prevent DoS attacks on other users
         if (!wsRateLimiter.checkLimit(userId)) {
           const retryAfter = Math.ceil(wsRateLimiter.getTimeUntilReset(userId) / 1000);
-          console.warn(`[TestRuns] Rate limit exceeded for authenticated user ${userId}. Retry after ${retryAfter}s`);
+          logger.warn(`[TestRuns] Rate limit exceeded for authenticated user ${userId}. Retry after ${retryAfter}s`);
           ws.close(1008, `Rate limit exceeded. Too many connections. Retry after ${retryAfter} seconds.`);
           return;
         }
 
         await this.handleConnection(ws, request, projectId, userId, runId);
       } catch (error) {
-        console.error('[TestRuns] Connection error:', error);
+        logger.error('[TestRuns] Connection error:', error);
         ws.close(1011, 'Internal server error');
       }
     });
@@ -150,7 +153,7 @@ export class TestRunsService {
       // Verify project exists and user has access
       const project = await this.storage.getProject(projectId);
       if (!project) {
-        console.warn(`[TestRuns] Project not found: ${projectId}`);
+        logger.warn(`[TestRuns] Project not found: ${projectId}`);
         return false;
       }
 
@@ -173,7 +176,7 @@ export class TestRunsService {
 
         if (teamMemberAccess.length > 0) {
           // User is an active team member - allow access
-          console.log(`[TestRuns] Team member ${userId} granted access to project ${projectId}`);
+          logger.info(`[TestRuns] Team member ${userId} granted access to project ${projectId}`);
           return true;
         }
 
@@ -196,15 +199,15 @@ export class TestRunsService {
           .limit(1);
 
         if (collaboratorAccess.length > 0) {
-          console.log(`[TestRuns] Collaborator ${userId} granted access to project ${projectId}`);
+          logger.info(`[TestRuns] Collaborator ${userId} granted access to project ${projectId}`);
           return true;
         }
       }
 
-      console.warn(`[TestRuns] User ${userId} denied access to project ${projectId}`);
+      logger.warn(`[TestRuns] User ${userId} denied access to project ${projectId}`);
       return false;
     } catch (error) {
-      console.error('[TestRuns] Authentication error:', error);
+      logger.error('[TestRuns] Authentication error:', error);
       return false;
     }
   }
@@ -230,7 +233,7 @@ export class TestRunsService {
         testRuns,
       }));
     } catch (error) {
-      console.error('[TestRuns] Error sending initial test runs:', error);
+      logger.error('[TestRuns] Error sending initial test runs:', error);
     }
 
     ws.on('close', () => {
@@ -238,7 +241,7 @@ export class TestRunsService {
     });
 
     ws.on('error', (error) => {
-      console.error('[TestRuns] WebSocket error:', error);
+      logger.error('[TestRuns] WebSocket error:', error);
       this.removeClient(projectId, client);
     });
   }

@@ -8,7 +8,9 @@ import { mobileContainerService } from '../services/mobile-container-service';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { getJwtSecret, getJwtRefreshSecret } from '../utils/secrets-manager';
+import { createLogger } from '../utils/logger';
 
+const logger = createLogger('mobile-api');
 const router = Router();
 
 // ✅ Fortune 500 Security: Use centralized secrets manager
@@ -139,7 +141,7 @@ const mobileEnsureAuthenticated = async (req: Request, res: Response, next: Next
 
     return next();
   } catch (error) {
-    console.error('[Mobile] Auth validation failed:', error);
+    logger.error('[Mobile] Auth validation failed:', error);
     return res.status(401).json({ error: 'Authentication required' });
   }
 };
@@ -173,7 +175,7 @@ router.post('/mobile/auth/login', async (req, res) => {
     try {
       isValidPassword = await bcrypt.compare(password, user.password);
     } catch (bcryptError) {
-      console.error('Password verification error:', bcryptError);
+      logger.error('Password verification error:', bcryptError);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     
@@ -202,7 +204,7 @@ router.post('/mobile/auth/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[Mobile] Login error:', error);
+    logger.error('[Mobile] Login error:', error);
     res.status(500).json({ message: 'Login failed' });
   }
 });
@@ -247,7 +249,7 @@ router.post('/mobile/auth/refresh', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[Mobile] Token refresh error:', error);
+    logger.error('[Mobile] Token refresh error:', error);
     res.status(500).json({ 
       message: 'Token refresh failed',
       error: 'REFRESH_FAILED'
@@ -281,7 +283,7 @@ router.get('/mobile/projects', mobileEnsureAuthenticated, async (req, res) => {
       }
     })));
   } catch (error) {
-    console.error('[Mobile] Failed to fetch projects:', error);
+    logger.error('[Mobile] Failed to fetch projects:', error);
     res.status(500).json({ message: 'Failed to fetch projects' });
   }
 });
@@ -329,7 +331,7 @@ router.post('/mobile/projects', mobileEnsureAuthenticated, async (req, res) => {
 
     res.json(project);
   } catch (error) {
-    console.error('Failed to create mobile project:', error);
+    logger.error('Failed to create mobile project:', error);
     res.status(500).json({ message: 'Failed to create project' });
   }
 });
@@ -351,7 +353,7 @@ router.get('/mobile/projects/:projectId/files', mobileEnsureAuthenticated, async
       size: f.content?.length || 0
     })));
   } catch (error) {
-    console.error('Failed to fetch files:', error);
+    logger.error('Failed to fetch files:', error);
     res.status(500).json({ message: 'Failed to fetch files' });
   }
 });
@@ -366,7 +368,7 @@ router.put('/mobile/projects/:projectId/files/:fileId', mobileEnsureAuthenticate
     
     res.json({ success: true, message: 'File saved' });
   } catch (error) {
-    console.error('Failed to save file:', error);
+    logger.error('Failed to save file:', error);
     res.status(500).json({ message: 'Failed to save file' });
   }
 });
@@ -392,7 +394,7 @@ router.post('/mobile/projects/:projectId/run', mobileEnsureAuthenticated, async 
       executionTime: result.executionTime
     });
   } catch (error) {
-    console.error('Failed to run code:', error);
+    logger.error('Failed to run code:', error);
     res.status(500).json({ message: 'Failed to run code' });
   }
 });
@@ -416,7 +418,7 @@ router.post('/mobile/ai/chat', mobileEnsureAuthenticated, async (req, res) => {
     
     res.json({ response });
   } catch (error) {
-    console.error('AI chat error:', error);
+    logger.error('AI chat error:', error);
     res.status(500).json({ message: 'AI service unavailable' });
   }
 });
@@ -442,7 +444,7 @@ router.get('/mobile/explore', async (req, res) => {
       featured
     });
   } catch (error) {
-    console.error('Failed to fetch explore content:', error);
+    logger.error('Failed to fetch explore content:', error);
     res.status(500).json({ message: 'Failed to fetch content' });
   }
 });
@@ -483,7 +485,7 @@ router.get('/mobile/notifications', mobileEnsureAuthenticated, async (req, res) 
       read: n.read
     })));
   } catch (error) {
-    console.error('Failed to fetch notifications:', error);
+    logger.error('Failed to fetch notifications:', error);
     res.status(500).json({ message: 'Failed to fetch notifications' });
   }
 });

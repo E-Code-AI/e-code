@@ -1,7 +1,9 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { storage } from "./storage";
+import { createLogger } from './utils/logger';
 
+const logger = createLogger('db-seed');
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Generate secure random password for production if not provided
@@ -15,7 +17,7 @@ function getSecurePassword(envVar: string, devDefault: string): string {
   if (isProduction) {
     // In production, generate random password and log it securely
     const randomPassword = crypto.randomBytes(32).toString('hex');
-    console.warn(`[Security] ${envVar} not set - generated random password (check logs)`);
+    logger.warn(`[Security] ${envVar} not set - generated random password (check logs)`);
     return randomPassword;
   }
   
@@ -152,7 +154,7 @@ This project is automatically created for E2E testing.
           await storage.createFile(file);
         }
 
-        console.log(`✅ Test project created with ${sampleFiles.length} sample files (ID: ${testProject.id})`);
+        logger.info(`✅ Test project created with ${sampleFiles.length} sample files (ID: ${testProject.id})`);
       }
     }
 
@@ -176,9 +178,9 @@ This project is automatically created for E2E testing.
       
       // ✅ B-C2 FIX: Don't leak password in logs - only show if using dev default
       if (!process.env.ADMIN_USER_PASSWORD && !isProduction) {
-        console.log('✅ Admin user seeded (admin@test.com / adminpass123 - DEV ONLY)');
+        logger.info('✅ Admin user seeded (admin@test.com / adminpass123 - DEV ONLY)');
       } else {
-        console.log('✅ Admin user seeded (admin@test.com / [password from env or random])');
+        logger.info('✅ Admin user seeded (admin@test.com / [password from env or random])');
       }
     } else if (!existingAdmin.emailVerified || existingAdmin.role !== 'admin') {
       // Update existing admin to have email verified and admin role
@@ -190,6 +192,6 @@ This project is automatically created for E2E testing.
     
     return testUser;
   } catch (error) {
-    console.error("Error seeding database:", error);
+    logger.error("Error seeding database:", error);
   }
 }

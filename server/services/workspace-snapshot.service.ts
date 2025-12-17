@@ -10,6 +10,9 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('workspace-snapshot-service');
 
 export interface FileSnapshot {
   path: string;
@@ -124,7 +127,7 @@ export class WorkspaceSnapshotService extends EventEmitter {
             
             // Skip files that are too large
             if (stats.size > maxFileSize) {
-              console.log(`[WorkspaceSnapshot] Skipping large file: ${relativePath} (${stats.size} bytes)`);
+              logger.info(`[WorkspaceSnapshot] Skipping large file: ${relativePath} (${stats.size} bytes)`);
               continue;
             }
 
@@ -142,13 +145,13 @@ export class WorkspaceSnapshotService extends EventEmitter {
           } catch (readError: any) {
             // Skip binary files or files that can't be read as UTF-8
             if (readError.code !== 'ERR_ENCODING_INVALID_ENCODED_DATA') {
-              console.warn(`[WorkspaceSnapshot] Could not read file: ${relativePath}`, readError.message);
+              logger.warn(`[WorkspaceSnapshot] Could not read file: ${relativePath}`, readError.message);
             }
           }
         }
       }
     } catch (error: any) {
-      console.error(`[WorkspaceSnapshot] Error reading directory ${dirPath}:`, error.message);
+      logger.error(`[WorkspaceSnapshot] Error reading directory ${dirPath}:`, error.message);
     }
 
     return files;
@@ -162,7 +165,7 @@ export class WorkspaceSnapshotService extends EventEmitter {
     projectId: number,
     options: CaptureOptions = {}
   ): Promise<WorkspaceSnapshot> {
-    console.log(`[WorkspaceSnapshot] Capturing file state for project ${projectId} at ${projectBasePath}`);
+    logger.info(`[WorkspaceSnapshot] Capturing file state for project ${projectId} at ${projectBasePath}`);
     
     const startTime = Date.now();
     const files = await this.captureDirectory(projectBasePath, projectBasePath, options);
@@ -179,7 +182,7 @@ export class WorkspaceSnapshotService extends EventEmitter {
     };
 
     const duration = Date.now() - startTime;
-    console.log(`[WorkspaceSnapshot] Captured ${files.length} files (${(totalSize / 1024).toFixed(2)} KB) in ${duration}ms`);
+    logger.info(`[WorkspaceSnapshot] Captured ${files.length} files (${(totalSize / 1024).toFixed(2)} KB) in ${duration}ms`);
 
     this.emit('snapshotCaptured', { projectId, fileCount: files.length, totalSize, duration });
 
@@ -193,7 +196,7 @@ export class WorkspaceSnapshotService extends EventEmitter {
     projectBasePath: string,
     snapshot: WorkspaceSnapshot
   ): Promise<{ restoredCount: number; errors: string[] }> {
-    console.log(`[WorkspaceSnapshot] Restoring ${snapshot.files.length} files for project ${snapshot.projectId}`);
+    logger.info(`[WorkspaceSnapshot] Restoring ${snapshot.files.length} files for project ${snapshot.projectId}`);
     
     const startTime = Date.now();
     let restoredCount = 0;
@@ -213,12 +216,12 @@ export class WorkspaceSnapshotService extends EventEmitter {
       } catch (error: any) {
         const errorMsg = `Failed to restore ${file.path}: ${error.message}`;
         errors.push(errorMsg);
-        console.error(`[WorkspaceSnapshot] ${errorMsg}`);
+        logger.error(`[WorkspaceSnapshot] ${errorMsg}`);
       }
     }
 
     const duration = Date.now() - startTime;
-    console.log(`[WorkspaceSnapshot] Restored ${restoredCount}/${snapshot.files.length} files in ${duration}ms`);
+    logger.info(`[WorkspaceSnapshot] Restored ${restoredCount}/${snapshot.files.length} files in ${duration}ms`);
 
     this.emit('snapshotRestored', { 
       projectId: snapshot.projectId, 
