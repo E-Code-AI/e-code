@@ -553,7 +553,9 @@ Remember:
             };
             
             // Cache the successful plan
-            await redisCache.set(cacheKey, plan, PLAN_CACHE_TTL).catch(() => {});
+            await redisCache.set(cacheKey, plan, PLAN_CACHE_TTL).catch((err) => {
+              logger.debug('[AIPlanGenerator] Failed to cache plan (non-critical):', err?.message);
+            });
             
             yield { type: 'plan', data: plan };
             return; // Exit early - racing succeeded!

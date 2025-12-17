@@ -601,7 +601,9 @@ export class ContainerOrchestrator extends EventEmitter {
       task.status = exitCode === -2 ? 'timeout' : 'completed';
       
       // Cleanup
-      await this.runtime.stopContainer(containerId).catch(() => {});
+      await this.runtime.stopContainer(containerId).catch((err) => {
+        logger.debug(`[ContainerOrchestrator] Container ${containerId} stop cleanup error (non-critical):`, err?.message);
+      });
       await this.runtime.removeContainer(containerId, true);
       await sandboxManager.destroySandbox(sandboxId);
       

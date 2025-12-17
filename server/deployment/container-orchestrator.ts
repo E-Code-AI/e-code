@@ -113,7 +113,9 @@ export class ContainerOrchestrator {
       this.activeDeployments.set(deployment.deploymentId, deployment);
 
       // Clean up manifest file
-      await fs.unlink(manifestPath).catch(() => {});
+      await fs.unlink(manifestPath).catch((err) => {
+        console.warn('[ContainerOrchestrator] Failed to clean up manifest:', manifestPath, err?.message);
+      });
 
       logs.push(`[${new Date().toISOString()}] Deployment completed successfully`);
 
@@ -255,7 +257,9 @@ spec:
       }
     }
 
-    await fs.unlink(ingressPath).catch(() => {});
+    await fs.unlink(ingressPath).catch((err) => {
+      console.warn('[ContainerOrchestrator] Failed to clean up ingress manifest:', ingressPath, err?.message);
+    });
     return url;
   }
 

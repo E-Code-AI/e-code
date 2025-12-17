@@ -58,7 +58,9 @@ export class RealDatabaseHostingService extends EventEmitter {
   constructor() {
     super();
     this.dataDir = path.join(process.cwd(), 'database-instances');
-    fs.mkdir(this.dataDir, { recursive: true }).catch(() => {});
+    fs.mkdir(this.dataDir, { recursive: true }).catch((err) => {
+      logger.warn('[DatabaseHosting] Failed to create data directory:', this.dataDir, err?.message);
+    });
     this.initializeExistingInstances();
     this.initializeProductionMonitoring();
     logger.info('Enhanced database hosting service initialized with production-ready monitoring');

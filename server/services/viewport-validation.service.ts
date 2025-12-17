@@ -109,7 +109,9 @@ export class ViewportValidationService {
     const videoPaths: string[] = [];
     
     if (options.videoDir) {
-      await fs.mkdir(options.videoDir, { recursive: true }).catch(() => {});
+      await fs.mkdir(options.videoDir, { recursive: true }).catch((err) => {
+        logger.warn('[ViewportValidation] Failed to create video directory:', options.videoDir, err?.message);
+      });
     }
 
     if (!this.browser) {
@@ -282,7 +284,9 @@ export class ViewportValidationService {
     } finally {
       // ✅ Close context instead of just page - this properly cleans up Playwright resources
       if (context) {
-        await context.close().catch(() => {});
+        await context.close().catch((err) => {
+          logger.debug('[ViewportValidation] Context cleanup error (non-critical):', err?.message);
+        });
       }
     }
   }
@@ -330,7 +334,9 @@ export class ViewportValidationService {
         logger.error(`Failed to take screenshot for ${viewport.name}:`, error);
       } finally {
         if (page && !page.isClosed()) {
-          await page.close().catch(() => {});
+          await page.close().catch((err) => {
+            logger.debug('[ViewportValidation] Page cleanup error (non-critical):', err?.message);
+          });
         }
       }
     }
@@ -342,7 +348,9 @@ export class ViewportValidationService {
     try {
       const files = await fs.readdir(this.screenshotDir);
       for (const file of files) {
-        await fs.unlink(path.join(this.screenshotDir, file)).catch(() => {});
+        await fs.unlink(path.join(this.screenshotDir, file)).catch((err) => {
+          logger.debug('[ViewportValidation] Failed to delete screenshot:', file, err?.message);
+        });
       }
     } catch (error) {
       logger.warn('Failed to cleanup screenshots:', error);
