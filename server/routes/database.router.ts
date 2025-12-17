@@ -45,16 +45,73 @@ const SAFE_TABLE_NAME_REGEX = /^[a-z_][a-z0-9_]{0,62}$/i;
 
 // Whitelist of allowed tables for data access
 // Add new tables here when they are created in the schema
+// Last updated: Dec 2025 - comprehensive list from shared/schema.ts
 const ALLOWED_TABLES = new Set([
-  'users', 'projects', 'files', 'deployments', 'subscriptions',
-  'sessions', 'ai_agent_sessions', 'ai_agent_conversations', 'ai_agent_steps',
-  'agent_plans', 'agent_step_cache', 'team_members', 'teams', 'invitations',
-  'environment_variables', 'api_keys', 'invoices', 'payment_methods',
-  'usage_records', 'audit_logs', 'build_logs', 'terminal_logs',
-  'test_runs', 'test_cases', 'security_scans', 'vulnerabilities',
-  'security_scan_settings', 'resource_metrics', 'pane_configurations',
-  'lsp_diagnostics', 'collaboration_sessions', 'collaboration_cursors',
-  'collaboration_selections', 'collaboration_changes'
+  // Core user/auth tables
+  'users', 'sessions', 'revoked_tokens', 'email_verification_tokens', 'password_reset_tokens',
+  
+  // Projects & files
+  'projects', 'files', 'environment_variables',
+  
+  // API & security
+  'api_keys', 'api_usage', 'security_logs', 'rate_limit_violations',
+  
+  // Usage & billing
+  'usage_events', 'usage_ledger', 'pay_as_you_go_queue', 'usage_tracking',
+  'user_credits', 'budget_limits', 'usage_alerts',
+  'ai_usage_metering', 'ai_stripe_usage_queue',
+  
+  // Newsletter & customer support
+  'newsletter_subscribers', 'newsletter_campaigns', 'newsletter_deliveries', 'customer_requests',
+  
+  // Community & mentorship
+  'mentor_profiles', 'mentorship_sessions', 'challenges', 'challenge_submissions', 'challenge_leaderboard',
+  'community_categories', 'community_posts', 'community_post_likes', 'community_post_bookmarks',
+  'community_comments', 'community_follows',
+  
+  // Mobile
+  'mobile_devices', 'mobile_sessions', 'push_notifications', 'notification_preferences',
+  
+  // AI & knowledge
+  'knowledge_graph_nodes', 'knowledge_graph_edges', 'conversation_memory',
+  'ai_token_usage', 'ai_task_classifications', 'ai_provider_health', 'ai_request_queue',
+  
+  // Deployments
+  'deployments', 'autoscale_deployments',
+  
+  // Teams
+  'teams', 'team_members', 'invitations',
+  
+  // AI Agent system
+  'ai_agent_sessions', 'ai_agent_conversations', 'ai_agent_steps',
+  'agent_plans', 'agent_step_cache', 'agent_audit_trail', 'agent_permissions',
+  'autonomous_actions', 'database_operations',
+  'ai_approval_queue', 'ai_audit_logs',
+  
+  // Max Autonomy
+  'max_autonomy_sessions', 'max_autonomy_tasks', 'autonomy_message_queue',
+  
+  // Bounties
+  'bounties', 'bounty_submissions', 'bounty_reviews',
+  
+  // Permissions & roles
+  'permissions', 'roles', 'user_roles',
+  
+  // Testing & builds
+  'build_logs', 'terminal_logs', 'test_runs', 'test_cases',
+  'browser_test_executions', 'test_artifacts', 'element_selectors', 'session_recordings',
+  
+  // Security scanning
+  'security_scans', 'vulnerabilities', 'security_scan_settings',
+  
+  // IDE/Editor state
+  'resource_metrics', 'pane_configurations', 'lsp_diagnostics',
+  
+  // Collaboration
+  'collaboration_sessions', 'collaboration_cursors', 'collaboration_selections', 'collaboration_changes',
+  
+  // System
+  'system_settings'
 ]);
 
 function isValidTableName(name: string): boolean {
