@@ -73,7 +73,7 @@ export class MobileWebSocketService {
         }
         
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret') as { userId: number };
-        const user = await storage.getUser(decoded.userId);
+        const user = await storage.getUser(String(decoded.userId));
         if (!user) {
           logger.warn(`User ${decoded.userId} not found`);
           return next(new Error('User not found'));
