@@ -88,6 +88,7 @@ import { EffortPricingDisplay } from '@/components/EffortPricingDisplay';
 import { CheckpointsPanel } from '@/components/CheckpointsPanel';
 import { PreviewDeploymentButton } from './PreviewDeploymentPanel';
 import { TaskDecompositionDisplay, type DecomposedTask } from '@/components/agent/TaskDecompositionDisplay';
+import { SlashCommandMenu, useSlashCommand, DEFAULT_MCP_SERVERS, type MCPServer } from './SlashCommandMenu';
 import { AIModelIndicator, AIModelBadge, type DelegationInfo } from '@/components/agent/AIModelIndicator';
 import { OrchestratorProgress, MiniProgressIndicator, type SessionProgressData } from '@/components/agent/OrchestratorProgress';
 import { MessageQueue, type QueuedMessage } from '@/components/agent/MessageQueue';
@@ -468,6 +469,11 @@ export function ReplitAgentPanelV3({
   const [videoReplayViewerOpen, setVideoReplayViewerOpen] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
   const [showCheckpoints, setShowCheckpoints] = useState(false);
+  
+  // Slash command menu state (Replit-style "/" to show integrations)
+  const slashCommand = useSlashCommand();
+  const [slashSearchQuery, setSlashSearchQuery] = useState('');
+  const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
   
   // Agent Tools Panel settings (Replit Agent 3 exact toggles)
   // Use external settings if provided (lifted state pattern), otherwise use internal state
@@ -1707,7 +1713,75 @@ export function ReplitAgentPanelV3({
     }
   };
 
+  // Filter MCP servers based on slash command search
+  const filteredMCPServers = DEFAULT_MCP_SERVERS.filter(server =>
+    server.name.toLowerCase().includes(slashSearchQuery.toLowerCase()) ||
+    server.description?.toLowerCase().includes(slashSearchQuery.toLowerCase())
+  );
+  
+  // Clamp selected index when filtered list shrinks to prevent out-of-range
+  useEffect(() => {
+    if (slashSelectedIndex >= filteredMCPServers.length && filteredMCPServers.length > 0) {
+      setSlashSelectedIndex(filteredMCPServers.length - 1);
+    }
+  }, [filteredMCPServers.length, slashSelectedIndex]);
+  
+  // Handle MCP server selection from slash command menu
+  const handleSlashCommandSelect = (server: MCPServer) => {
+    // Insert the server reference into input (like @mention)
+    const serverRef = `@${server.name} `;
+    setInput(prev => {
+      // Remove the trailing "/" if present
+      const cleanInput = prev.endsWith('/') ? prev.slice(0, -1) : prev;
+      return cleanInput + serverRef;
+    });
+    slashCommand.close();
+    setSlashSearchQuery('');
+    setSlashSelectedIndex(0);
+    textareaRef.current?.focus();
+    
+    toast({
+      title: `${server.name} selected`,
+      description: server.connected 
+        ? `Using ${server.name} integration` 
+        : `Connect ${server.name} in settings to use this integration`,
+    });
+  };
+  
   const handleKeyPress = (e: React.KeyboardEvent) => {
+    // Handle slash command navigation when menu is open
+    if (slashCommand.isOpen) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        slashCommand.close();
+        setSlashSearchQuery('');
+        setSlashSelectedIndex(0);
+        return;
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSlashSelectedIndex(prev => Math.min(prev + 1, filteredMCPServers.length - 1));
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSlashSelectedIndex(prev => Math.max(prev - 1, 0));
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (filteredMCPServers[slashSelectedIndex]) {
+          handleSlashCommandSelect(filteredMCPServers[slashSelectedIndex]);
+        }
+        return;
+      }
+      // Allow typing to filter the list
+      if (e.key.length === 1 || e.key === 'Backspace') {
+        // Update search query (handled by onChange)
+        return;
+      }
+    }
+    
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -2208,6 +2282,21 @@ export function ReplitAgentPanelV3({
           
           {/* Chat input with inline toolbar - Replit-style with attachment/voice/send */}
           <div className="relative">
+            {/* Slash Command Menu - Replit-style "/" to show MCP integrations */}
+            <SlashCommandMenu
+              isOpen={slashCommand.isOpen}
+              onClose={() => {
+                slashCommand.close();
+                setSlashSearchQuery('');
+                setSlashSelectedIndex(0);
+              }}
+              onSelect={handleSlashCommandSelect}
+              servers={DEFAULT_MCP_SERVERS}
+              searchQuery={slashSearchQuery}
+              onSearchChange={setSlashSearchQuery}
+              selectedIndex={slashSelectedIndex}
+            />
+            
             {/* Hidden file input for attachment button */}
             <input
               type="file"
@@ -2221,12 +2310,39 @@ export function ReplitAgentPanelV3({
             <Textarea
               ref={textareaRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                const prevValue = input;
+                
+                // Detect if user just typed "/" at end of input
+                if (newValue.endsWith('/') && !prevValue.endsWith('/') && !slashCommand.isOpen) {
+                  slashCommand.open();
+                  setSlashSearchQuery('');
+                  setSlashSelectedIndex(0);
+                }
+                
+                // Update search query if menu is open and user is typing after "/"
+                if (slashCommand.isOpen && newValue.includes('/')) {
+                  const slashIndex = newValue.lastIndexOf('/');
+                  const afterSlash = newValue.substring(slashIndex + 1);
+                  setSlashSearchQuery(afterSlash);
+                  setSlashSelectedIndex(0);
+                }
+                
+                // Close menu if "/" is deleted
+                if (slashCommand.isOpen && !newValue.includes('/')) {
+                  slashCommand.close();
+                  setSlashSearchQuery('');
+                  setSlashSelectedIndex(0);
+                }
+                
+                setInput(newValue);
+              }}
               onKeyDown={handleKeyPress}
               placeholder={
-                agentMode === 'build' ? "What would you like me to build?" :
-                agentMode === 'edit' ? "Describe the changes you want to make..." :
-                "Ask a question or describe what you want to plan..."
+                agentMode === 'build' ? "What would you like me to build? Type / for integrations" :
+                agentMode === 'edit' ? "Describe the changes you want to make... Type / for integrations" :
+                "Ask a question or describe what you want to plan... Type / for integrations"
               }
               className={cn(
                 "pr-24 resize-none text-sm min-h-[52px] max-h-[200px]",
