@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 
-interface IndexResult {
+interface Payment.serviceResult {
   data: unknown;
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
 }
 
-export function index(): IndexResult {
+export function payment.service(): Payment.serviceResult {
   const [data, setData] = useState<unknown>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -32,4 +32,4 @@ export function index(): IndexResult {
   return { data, isLoading, error, refetch };
 }
 
-export default index;
+export default payment.service;
