@@ -757,12 +757,12 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
         </div>
       </div>
       
-      {/* Preview iframe or status message */}
-      <div className={`flex-1 bg-muted/50 ${deviceMode !== 'desktop' ? 'p-2 sm:p-4 flex items-center justify-center' : ''}`}>
-        {/* Loading skeleton when starting */}
+      {/* Preview iframe or status message - Responsive container */}
+      <div className={`flex-1 bg-muted/50 overflow-hidden ${deviceMode !== 'desktop' ? 'p-2 sm:p-4 md:p-6 flex items-center justify-center' : ''}`}>
+        {/* Loading skeleton when starting - Responsive layout */}
         {previewStatus.status === 'starting' && !previewUrl && (
-          <div className="flex flex-col items-center justify-center h-full p-4 sm:p-8">
-            <div className="w-full max-w-md space-y-4">
+          <div className="flex flex-col items-center justify-center h-full p-4 sm:p-6 md:p-8">
+            <div className="w-full max-w-xs sm:max-w-sm md:max-w-md space-y-3 sm:space-y-4">
               <div className="flex items-center justify-center gap-3 mb-6">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 <span className="text-sm font-medium">Starting preview server...</span>
@@ -779,9 +779,9 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           </div>
         )}
         
-        {/* Active preview iframe */}
+        {/* Active preview iframe - Responsive frame */}
         {previewUrl ? (
-          <div style={deviceStyles} className="h-full bg-background">
+          <div style={deviceStyles} className="h-full w-full bg-background transition-all duration-300">
             <iframe
               ref={iframeRef}
               className="w-full h-full border-none"
@@ -791,12 +791,12 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             />
           </div>
         ) : previewStatus.status !== 'starting' && (
-          <div className="flex flex-col items-center justify-center h-full text-center p-4 sm:p-8">
-            <AlertCircle className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mb-3 sm:mb-4" />
-            <h3 className="text-base sm:text-lg font-semibold mb-1.5 sm:mb-2">
+          <div className="flex flex-col items-center justify-center h-full text-center p-4 sm:p-6 md:p-8 lg:p-12">
+            <AlertCircle className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-muted-foreground mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-1.5 sm:mb-2">
               {previewStatus.status === 'error' ? 'Preview Error' : 'Preview Server Offline'}
             </h3>
-            <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 max-w-sm sm:max-w-md">
+            <p className="text-xs sm:text-sm md:text-base text-muted-foreground mb-3 sm:mb-4 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
               {projectId 
                 ? previewStatus.status === 'error'
                   ? "There was an error starting the preview server. Check your project files and try again."
