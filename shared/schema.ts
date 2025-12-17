@@ -1947,6 +1947,20 @@ export const sessionParticipants = pgTable("session_participants", {
   active: boolean("active").notNull().default(true),
 });
 
+// 8.8 FIX: Collaboration Chat Messages for Persistence
+export const collaborationMessages = pgTable("collaboration_messages", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: varchar("session_id").notNull().references(() => collaborationSessions.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  username: varchar("username").notNull(),
+  content: text("content").notNull(),
+  type: varchar("type").notNull().default('text'), // 'text', 'code', 'file', 'system'
+  fileUrl: text("file_url"),
+  codeLanguage: varchar("code_language"),
+  metadata: jsonb("metadata"), // Additional message metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Templates table for project templates with marketplace features
 export const templates = pgTable("templates", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),

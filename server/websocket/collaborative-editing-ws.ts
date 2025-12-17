@@ -55,10 +55,23 @@ interface AuthenticatedWebSocket extends WebSocket {
   projectId?: string;
   pingInterval?: NodeJS.Timeout;
   lastActivity?: Date;
+  clientId?: string;
 }
 
 // Track connection counts per user for limit enforcement
 const userConnectionCounts = new Map<string, number>();
+
+// 8.2 FIX: Track unanswered pings for timeout detection
+const PONG_TIMEOUT_MS = 10000;
+const MAX_MISSED_PONGS = 3;
+const unansweredPings = new Map<string, number>();
+
+function getClientId(ws: AuthenticatedWebSocket): string {
+  if (!ws.clientId) {
+    ws.clientId = `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+  return ws.clientId;
+}
 
 export class CollaborativeEditingWebSocketHandler {
   private wss: WebSocketServer;
@@ -94,15 +107,31 @@ export class CollaborativeEditingWebSocketHandler {
     ws.lastActivity = new Date();
     wsMetrics.recordConnection('collaborative-editing');
     
-    // Set up ping/pong to detect disconnected clients (configurable interval)
+    const clientId = getClientId(ws);
+    
+    // 8.2 FIX: Set up ping/pong with timeout tracking
     ws.pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
+        const missedPongs = unansweredPings.get(clientId) || 0;
+        
+        // Force close after MAX_MISSED_PONGS consecutive missed pongs
+        if (missedPongs >= MAX_MISSED_PONGS) {
+          logger.warn(`Client ${clientId} missed ${missedPongs} pongs, terminating connection`);
+          unansweredPings.delete(clientId);
+          ws.terminate(); // Force close immediately
+          return;
+        }
+        
+        // Increment missed pong counter and send ping
+        unansweredPings.set(clientId, missedPongs + 1);
         ws.ping();
       }
     }, PING_INTERVAL_MS);
 
+    // 8.2 FIX: Reset counter on pong received
     ws.on('pong', () => {
       ws.lastActivity = new Date();
+      unansweredPings.set(clientId, 0); // Reset missed pongs on successful pong
     });
 
     ws.on('message', async (message: Buffer) => {
@@ -419,6 +448,11 @@ export class CollaborativeEditingWebSocketHandler {
     // Clear ping interval
     if (ws.pingInterval) {
       clearInterval(ws.pingInterval);
+    }
+
+    // 8.2 FIX: Clean up ping tracking
+    if (ws.clientId) {
+      unansweredPings.delete(ws.clientId);
     }
 
     // W-H5: Cleanup connections Map on ALL paths

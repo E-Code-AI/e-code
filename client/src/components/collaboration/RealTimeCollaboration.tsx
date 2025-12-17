@@ -131,6 +131,45 @@ export function RealTimeCollaboration({
   const localStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
 
+  // 8.1 FIX: WebSocket reconnection with exponential backoff
+  const connectWithRetry = useCallback((
+    ydoc: Y.Doc,
+    roomName: string,
+    attempts: number = 0
+  ): WebsocketProvider => {
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/collaboration`;
+    
+    const wsProvider = new WebsocketProvider(wsUrl, roomName, ydoc, {
+      params: {
+        auth: String(user?.id || 'anonymous'),
+        username: user?.username || 'Anonymous',
+      },
+      connect: true,
+      resyncInterval: 10000,
+      maxBackoffTime: 30000,
+    });
+
+    wsProvider.on('status', ({ status }: { status: string }) => {
+      if (status === 'disconnected' && attempts < 10) {
+        const backoffMs = Math.min(1000 * Math.pow(2, attempts), 30000);
+        console.log(`[Collaboration] Reconnecting in ${backoffMs}ms (attempt ${attempts + 1}/10)`);
+        setTimeout(() => {
+          if (providerRef.current === wsProvider) {
+            wsProvider.connect();
+          }
+        }, backoffMs);
+      }
+    });
+
+    wsProvider.on('sync', (isSynced: boolean) => {
+      if (isSynced) {
+        console.log('[Collaboration] Document synced');
+      }
+    });
+
+    return wsProvider;
+  }, [user]);
+
   // Initialize CRDT collaboration
   useEffect(() => {
     if (!editor || !fileId) return;
@@ -139,18 +178,9 @@ export function RealTimeCollaboration({
     const ydoc = new Y.Doc();
     ydocRef.current = ydoc;
 
-    // Create WebSocket provider for reliability
-    const wsProvider = new WebsocketProvider(
-      `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/collaboration`,
-      `project-${projectId}-file-${fileId}`,
-      ydoc,
-      {
-        params: {
-          auth: String(user?.id || 'anonymous'),
-          username: user?.username || 'Anonymous',
-        }
-      }
-    );
+    // 8.1 FIX: Create WebSocket provider with retry logic
+    const roomName = `project-${projectId}-file-${fileId}`;
+    const wsProvider = connectWithRetry(ydoc, roomName, 0);
     providerRef.current = wsProvider;
 
     // Set up awareness for cursor positions
@@ -189,8 +219,11 @@ export function RealTimeCollaboration({
     // Here we just set up the awareness for collaboration tracking
     const ytext = ydoc.getText('content');
     
-    // Create yCollab extension and add to editor
-    const undoManager = new Y.UndoManager(ytext);
+    // 8.3 FIX: Create UndoManager that only tracks local edits (not remote changes)
+    const undoManager = new Y.UndoManager(ytext, {
+      trackedOrigins: new Set([ydoc.clientID]), // Only track own edits for undo/redo
+      captureTimeout: 500, // Group changes within 500ms
+    });
     const collabExtension = yCollab(ytext, awareness, { undoManager });
     
     // Dispatch the extension to the existing editor

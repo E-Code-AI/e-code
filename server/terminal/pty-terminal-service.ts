@@ -20,6 +20,39 @@ import jwt from 'jsonwebtoken';
 
 const logger = createLogger('pty-terminal');
 
+// 8.4 FIX: Circular buffer for terminal output history
+class CircularBuffer {
+  private buffer: string[] = [];
+  private maxSize: number;
+  
+  constructor(maxSize: number = 10000) {
+    this.maxSize = maxSize;
+  }
+  
+  push(data: string): void {
+    this.buffer.push(data);
+    if (this.buffer.length > this.maxSize) {
+      this.buffer.shift();
+    }
+  }
+  
+  getHistory(): string[] {
+    return [...this.buffer];
+  }
+  
+  getRecentHistory(lines: number = 100): string[] {
+    return this.buffer.slice(-lines);
+  }
+  
+  clear(): void {
+    this.buffer = [];
+  }
+  
+  get length(): number {
+    return this.buffer.length;
+  }
+}
+
 interface PTYSession {
   ptyProcess: pty.IPty;
   projectId: string;
@@ -30,6 +63,7 @@ interface PTYSession {
   rows: number;
   createdAt: number;
   lastActivity: number;
+  outputBuffer: CircularBuffer; // 8.4 FIX: Add output buffer
 }
 
 export class PTYTerminalService {
@@ -136,6 +170,15 @@ export class PTYTerminalService {
         data: 'Connected to terminal'
       }));
 
+      // 8.4 FIX: Send recent terminal history to new clients
+      const recentHistory = session.outputBuffer.getRecentHistory(500);
+      if (recentHistory.length > 0) {
+        ws.send(JSON.stringify({
+          type: 'history',
+          data: recentHistory.join('')
+        }));
+      }
+
       ws.on('message', (data) => {
         this.handleMessage(projectId, ws, data);
       });
@@ -189,10 +232,13 @@ export class PTYTerminalService {
         cols: 80,
         rows: 24,
         createdAt: Date.now(),
-        lastActivity: Date.now()
+        lastActivity: Date.now(),
+        outputBuffer: new CircularBuffer(10000) // 8.4 FIX: Store terminal history
       };
 
+      // 8.4 FIX: Store output in buffer and broadcast
       ptyProcess.onData((data) => {
+        session.outputBuffer.push(data);
         this.broadcastToSession(session, {
           type: 'output',
           data
