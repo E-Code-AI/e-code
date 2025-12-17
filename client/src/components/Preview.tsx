@@ -305,12 +305,18 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
   };
 
   // Refresh the preview
+  // ✅ FIX: Use onload event instead of arbitrary timeout to clear loading state
   const handleRefresh = () => {
     if (iframeRef.current) {
       setIsLoading(true);
+      // onload handler will clear loading state when iframe actually loads
       iframeRef.current.src = iframeRef.current.src;
-      setTimeout(() => setIsLoading(false), 500);
     }
+  };
+  
+  // Handle iframe load event to clear loading state
+  const handleIframeLoad = () => {
+    setIsLoading(false);
   };
   
   // Toggle fullscreen mode
@@ -457,8 +463,26 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     };
   }, [projectId, toast]);
 
-  // Auto-start preview when project changes (enhanced logic)
+  // Track if auto-start has been triggered to prevent race conditions
+  const autoStartTriggeredRef = useRef(false);
+  
+  // Reset auto-start guard when projectId changes or preview returns to idle
   useEffect(() => {
+    autoStartTriggeredRef.current = false;
+  }, [projectId]);
+  
+  // Also reset when preview transitions back to idle (after stop)
+  useEffect(() => {
+    if (previewStatus.status === 'idle') {
+      autoStartTriggeredRef.current = false;
+    }
+  }, [previewStatus.status]);
+  
+  // Auto-start preview when project changes (enhanced logic)
+  // ✅ FIX: Added cleanup for setTimeout and guard against double-starts
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | undefined;
+    
     if (projectId && openFiles.length > 0) {
       // Check if we have runnable files
       const hasExecutable = openFiles.some(f => 
@@ -475,14 +499,28 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
         f.content?.includes('@vitejs/plugin-vue') ||
         f.content?.includes('@angular/core'));
       
-      if (hasExecutable && previewStatus.status === 'idle') {
+      // Only auto-start if idle, not already starting, and hasn't been triggered yet
+      if (hasExecutable && previewStatus.status === 'idle' && !startPreviewMutation.isPending && !autoStartTriggeredRef.current) {
         // Auto-start for projects with runnable files
         if (hasModernFramework || openFiles.some(f => f.name === 'package.json')) {
-          setTimeout(startPreview, 1000); // Slight delay for better UX
+          autoStartTriggeredRef.current = true;
+          timeoutId = setTimeout(() => {
+            // Double-check state before starting (guard against race conditions)
+            if (!startPreviewMutation.isPending) {
+              startPreviewMutation.mutate();
+            }
+          }, 1000);
         }
       }
     }
-  }, [projectId, openFiles]);
+    
+    // Cleanup timeout on unmount or when dependencies change
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [projectId, openFiles, previewStatus.status, startPreviewMutation]);
 
   // Check preview status on component mount
   useEffect(() => {
@@ -523,14 +561,21 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     }
   };
 
+  // Track preview status in ref to avoid stale closure in cleanup
+  const previewStatusRef = useRef(previewStatus.status);
+  useEffect(() => {
+    previewStatusRef.current = previewStatus.status;
+  }, [previewStatus.status]);
+  
   // Clean up preview on unmount
+  // ✅ FIX: Use ref to get latest status value, avoiding stale closure
   useEffect(() => {
     return () => {
-      if (previewStatus.status === 'running') {
-        stopPreview();
+      if (previewStatusRef.current === 'running' && !stopPreviewMutation.isPending) {
+        stopPreviewMutation.mutate();
       }
     };
-  }, []);
+  }, [stopPreviewMutation]);
 
   // Device preset styles
   const deviceStyles = deviceMode === 'desktop' 
@@ -822,6 +867,8 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
               src={previewUrl}
               title="Preview"
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+              onLoad={handleIframeLoad}
+              data-testid="preview-iframe"
             />
           </div>
         ) : previewStatus.status !== 'starting' && (
