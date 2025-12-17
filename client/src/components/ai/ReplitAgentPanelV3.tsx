@@ -100,6 +100,7 @@ import {
   StreamingSkeleton, 
   ConversationSyncIndicator 
 } from './EnhancedChatMessage';
+import { VirtualizedMessageList, useOptimisticMessages, useDebouncedStreamingContent, StreamingText } from './VirtualizedMessageList';
 import { Progress } from '@/components/ui/progress';
 import { Package, Hammer, Smartphone, CheckCircle2, XCircle } from 'lucide-react';
 
@@ -474,6 +475,13 @@ export function ReplitAgentPanelV3({
   const slashCommand = useSlashCommand();
   const [slashSearchQuery, setSlashSearchQuery] = useState('');
   const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
+  
+  // Optimistic UI updates and debounced streaming for faster perceived response
+  const { addOptimisticMessage, hasPendingMessages } = useOptimisticMessages(messages, setMessages);
+  // Note: debouncedStreaming hook removed - using direct setStreamingContent for simplicity
+  
+  // Use virtualized list for long conversations (>20 messages)
+  const useVirtualization = messages.length > 20;
   
   // Agent Tools Panel settings (Replit Agent 3 exact toggles)
   // Use external settings if provided (lifted state pattern), otherwise use internal state
@@ -1410,21 +1418,19 @@ export function ReplitAgentPanelV3({
   const handleSend = async () => {
     if (!input.trim() || isWorking) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
+    const userContent = input.trim();
+    
+    // Use optimistic updates for faster perceived response
+    const optimisticResult = addOptimisticMessage({
       role: 'user',
-      content: input.trim(),
-      timestamp: new Date(),
-      status: 'sent'
-    };
-
-    setMessages(prev => [...prev, userMessage]);
+      content: userContent,
+    });
     
     // Persist user message immediately (fire-and-forget)
     persistMessageToBackend({
       role: 'user',
-      content: userMessage.content,
-      timestamp: userMessage.timestamp,
+      content: userContent,
+      timestamp: new Date(),
     });
     
     setInput('');
@@ -1630,6 +1636,10 @@ export function ReplitAgentPanelV3({
 
       assistantMessage.content = fullContent || "I'll help you with that. Let me analyze your request...";
       assistantMessage.isStreaming = false;
+      
+      // Confirm optimistic user message on successful stream completion
+      optimisticResult.confirm();
+      
       // Update existing assistant message and append any accumulated warnings
       setMessages(prev => [
         ...prev.map(msg => 
@@ -1662,6 +1672,9 @@ export function ReplitAgentPanelV3({
       
       const { title, message: userFriendlyError } = categorizeError(error);
       const errorContent = `⚠️ ${userFriendlyError}\n\nIf this issue persists, please try:\n- Refreshing the page\n- Checking your internet connection\n- Waiting a few moments before trying again`;
+      
+      // Rollback optimistic user message on error
+      optimisticResult.rollback(userFriendlyError);
       
       toast({
         title,
@@ -2093,19 +2106,37 @@ export function ReplitAgentPanelV3({
             )}
           </AnimatePresence>
           
-          <AnimatePresence mode="popLayout">
-          {messages.map((message) => (
-            <EnhancedChatMessage
-              key={message.id}
-              message={message}
+          {/* Conditionally use virtualized list for long conversations (>20 messages) */}
+          {useVirtualization ? (
+            <VirtualizedMessageList
+              messages={messages}
               isCompactMode={isCompactMode}
+              isPendingResponse={isPendingResponse}
+              streamingContent={streamingContent}
               onCopy={handleCopyMessage}
               onApproveAction={handleApproveAction}
               onRejectAction={handleRejectAction}
               onRestoreCheckpoint={handleRestoreCheckpoint}
               isRestoringCheckpoint={isRestoringCheckpoint}
+              className="min-h-[200px]"
+              autoScrollToBottom={true}
             />
-          ))}
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {messages.map((message) => (
+                <EnhancedChatMessage
+                  key={message.id}
+                  message={message}
+                  isCompactMode={isCompactMode}
+                  onCopy={handleCopyMessage}
+                  onApproveAction={handleApproveAction}
+                  onRejectAction={handleRejectAction}
+                  onRestoreCheckpoint={handleRestoreCheckpoint}
+                  isRestoringCheckpoint={isRestoringCheckpoint}
+                />
+              ))}
+            </AnimatePresence>
+          )}
 
           {/* Active Thinking Steps (while streaming) */}
           {isWorking && activeThinking.length > 0 && (
@@ -2139,8 +2170,8 @@ export function ReplitAgentPanelV3({
             </LazyMotionDiv>
           )}
 
-          {/* Streaming message with enhanced styling */}
-          {isWorking && streamingContent && (
+          {/* Streaming message with enhanced styling and optimized text animation */}
+          {isWorking && streamingContent && !useVirtualization && (
             <LazyMotionDiv 
               key="streaming"
               initial={{ opacity: 0, y: 20 }}
@@ -2161,22 +2192,27 @@ export function ReplitAgentPanelV3({
                   initial={{ scale: 0.95 }}
                   animate={{ scale: 1 }}
                 >
-                  <p className="text-sm whitespace-pre-wrap break-words leading-relaxed" data-testid="streaming-text">
-                    {streamingContent}
+                  <div className="text-sm whitespace-pre-wrap break-words leading-relaxed" data-testid="streaming-text">
+                    <StreamingText 
+                      content={streamingContent} 
+                      isComplete={false}
+                      className="text-foreground"
+                    />
                     <LazyMotionSpan 
                       className="inline-block w-0.5 h-4 bg-primary ml-1 align-middle"
                       animate={{ opacity: [1, 0] }}
                       transition={{ duration: 0.8, repeat: Infinity }}
                       data-testid="streaming-cursor" 
                     />
-                  </p>
+                  </div>
                 </LazyMotionDiv>
               </div>
             </LazyMotionDiv>
           )}
 
           {/* Loading indicator - Shows streaming skeleton while waiting for first response */}
-          {isPendingResponse && !streamingContent && activeThinking.length === 0 && (
+          {/* Skip if using virtualization as VirtualizedMessageList handles its own skeleton */}
+          {!useVirtualization && isPendingResponse && !streamingContent && activeThinking.length === 0 && (
             <StreamingSkeleton key="skeleton" />
           )}
           </AnimatePresence>
