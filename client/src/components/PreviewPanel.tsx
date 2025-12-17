@@ -141,7 +141,7 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
               <div className="flex items-center gap-2 flex-1">
                 <Shield className="h-4 w-4 text-green-600" />
                 <Input
-                  value={projectUrl || 'https://localhost:5000'}
+                  value={projectUrl || (typeof window !== 'undefined' ? window.location.origin : '')}
                   readOnly
                   className="h-8 flex-1 font-mono text-sm"
                 />
@@ -157,8 +157,9 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => window.open(projectUrl || 'https://localhost:5000', '_blank')}
+                  onClick={() => projectUrl && window.open(projectUrl, '_blank')}
                   className="h-8 w-8 p-0"
+                  disabled={!projectUrl}
                 >
                   <ExternalLink className="h-4 w-4" />
                 </Button>

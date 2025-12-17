@@ -71,8 +71,10 @@ interface TestRunnerProps {
 }
 
 export function TestRunner({ sessionId, projectId, className }: TestRunnerProps) {
+  // Use current origin in example instead of hardcoded localhost
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5000';
   const [testScript, setTestScript] = useState(
-    `// Example Playwright test\nawait page.goto('http://localhost:5000');\nawait page.waitForSelector('[data-testid="button-login"]');\nawait page.click('[data-testid="button-login"]');`
+    `// Example Playwright test\nawait page.goto('${baseUrl}');\nawait page.waitForSelector('[data-testid="button-login"]');\nawait page.click('[data-testid="button-login"]');`
   );
   const [browser, setBrowser] = useState<'chromium' | 'firefox' | 'webkit'>('chromium');
   const [testType, setTestType] = useState<'e2e' | 'visual_regression' | 'performance' | 'accessibility' | 'cross_browser'>('e2e');

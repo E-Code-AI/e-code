@@ -51,7 +51,9 @@ interface ElementSelectorProps {
 }
 
 export function ElementSelector({ sessionId, projectId, className }: ElementSelectorProps) {
-  const [pageUrl, setPageUrl] = useState('http://localhost:5000');
+  // Use current origin as default instead of hardcoded localhost
+  const defaultUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5000';
+  const [pageUrl, setPageUrl] = useState(defaultUrl);
   const [elementDescription, setElementDescription] = useState('');
   const [preferredType, setPreferredType] = useState<'css' | 'xpath'>('css');
   const [openSelectors, setOpenSelectors] = useState<Set<string>>(new Set());
@@ -149,7 +151,7 @@ export function ElementSelector({ sessionId, projectId, className }: ElementSele
                   type="url"
                   value={pageUrl}
                   onChange={(e) => setPageUrl(e.target.value)}
-                  placeholder="http://localhost:5000"
+                  placeholder="https://your-app.repl.co"
                   data-testid="input-page-url"
                 />
                 <p className="text-xs text-muted-foreground">
