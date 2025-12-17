@@ -1,5 +1,8 @@
 import path from 'path';
 import { z } from 'zod';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('ai-security-service');
 
 /**
  * AI Security Service
@@ -133,7 +136,7 @@ export class AISecurityService {
         action: validated
       };
     } catch (error: any) {
-      console.error('[AI-Security] Validation failed');
+      logger.error('[AI-Security] Validation failed');
       return {
         valid: false,
         reason: error.errors?.[0]?.message || 'Invalid action format'
@@ -289,7 +292,7 @@ export class AISecurityService {
       });
       
     } catch (error) {
-      console.error('[AISecurityService] CRITICAL: Failed to log action to database:', error);
+      logger.error('[AISecurityService] CRITICAL: Failed to log action to database:', error);
     }
   }
 
@@ -338,7 +341,7 @@ export class AISecurityService {
         resetAt
       };
     } catch (error) {
-      console.error('[AISecurityService] Rate limit check failed:', error);
+      logger.error('[AISecurityService] Rate limit check failed:', error);
       // On error, allow the action (fail open for availability)
       return { allowed: true };
     }

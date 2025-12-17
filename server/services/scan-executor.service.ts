@@ -6,6 +6,9 @@
 import type { IStorage } from '../storage';
 import type { SecurityScan } from '@shared/schema';
 import { SecurityScanner, type SecurityIssue } from '../security/security-scanner';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('scan-executor-service');
 
 interface ScanJob {
   scanId: string;
@@ -35,7 +38,7 @@ export class ScanExecutorService {
     };
 
     this.processingQueue.set(scan.id, job);
-    console.log(`[ScanExecutor] Queued scan ${scan.id} for project ${scan.projectId}`);
+    logger.info(`[ScanExecutor] Queued scan ${scan.id} for project ${scan.projectId}`);
 
     // Start processing if not already running
     if (!this.isProcessing) {
@@ -68,7 +71,7 @@ export class ScanExecutorService {
    */
   private async executeScan(job: ScanJob): Promise<void> {
     const startTime = Date.now();
-    console.log(`[ScanExecutor] Starting scan ${job.scanId} for project ${job.projectId}`);
+    logger.info(`[ScanExecutor] Starting scan ${job.scanId} for project ${job.projectId}`);
 
     try {
       // Update status to running
@@ -83,7 +86,7 @@ export class ScanExecutorService {
       const files = await this.storage.getProjectFiles(job.projectId);
       
       if (!files || files.length === 0) {
-        console.log(`[ScanExecutor] No files found for project ${job.projectId}`);
+        logger.info(`[ScanExecutor] No files found for project ${job.projectId}`);
         await this.completeScan(job, 0, startTime);
         return;
       }
@@ -96,7 +99,7 @@ export class ScanExecutorService {
           content: f.content || '',
         }));
 
-      console.log(`[ScanExecutor] Scanning ${scanFiles.length} files for project ${job.projectId}`);
+      logger.info(`[ScanExecutor] Scanning ${scanFiles.length} files for project ${job.projectId}`);
 
       // Run the security scanner
       const result = await this.scanner.scanProject(
@@ -125,7 +128,7 @@ export class ScanExecutorService {
           });
           vulnerabilityCount++;
         } catch (error) {
-          console.error(`[ScanExecutor] Error creating vulnerability:`, error);
+          logger.error(`[ScanExecutor] Error creating vulnerability:`, error);
         }
       }
 
@@ -136,7 +139,7 @@ export class ScanExecutorService {
       await this.completeScan(job, vulnerabilityCount, startTime, result.summary);
 
     } catch (error) {
-      console.error(`[ScanExecutor] Error executing scan ${job.scanId}:`, error);
+      logger.error(`[ScanExecutor] Error executing scan ${job.scanId}:`, error);
       
       // Mark scan as failed
       job.status = 'failed';
@@ -174,7 +177,7 @@ export class ScanExecutorService {
       lowCount: (summary?.low || 0) + (summary?.info || 0),
     });
 
-    console.log(`[ScanExecutor] Completed scan ${job.scanId}: ${vulnerabilityCount} issues found in ${duration}ms`);
+    logger.info(`[ScanExecutor] Completed scan ${job.scanId}: ${vulnerabilityCount} issues found in ${duration}ms`);
     await this.broadcastScanUpdate(job.scanId);
   }
 
@@ -218,7 +221,7 @@ export class ScanExecutorService {
         await securityScannerService.broadcastScanUpdate(scan.projectId.toString(), scan);
       }
     } catch (error) {
-      console.error('[ScanExecutor] Error broadcasting scan update:', error);
+      logger.error('[ScanExecutor] Error broadcasting scan update:', error);
     }
   }
 
@@ -240,7 +243,7 @@ export class ScanExecutorService {
         }
       }
     } catch (error) {
-      console.error('[ScanExecutor] Error broadcasting vulnerability update:', error);
+      logger.error('[ScanExecutor] Error broadcasting vulnerability update:', error);
     }
   }
 
@@ -270,6 +273,6 @@ export function getScanExecutor(storage: IStorage): ScanExecutorService {
 export function setupScanExecutor(storage: IStorage): ScanExecutorService {
   scanExecutorInstance = new ScanExecutorService(storage);
   (global as any).scanExecutor = scanExecutorInstance;
-  console.log('[ScanExecutor] Service initialized');
+  logger.info('[ScanExecutor] Service initialized');
   return scanExecutorInstance;
 }

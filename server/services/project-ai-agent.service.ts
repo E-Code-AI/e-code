@@ -4,6 +4,9 @@ import type { File, Project } from '@shared/schema';
 import { aiSecurityService, type ValidatedAction } from './ai-security.service';
 import { aiApprovalQueue } from './ai-approval-queue.service';
 import { aiProviderManager, type AIModel } from '../ai/ai-provider-manager';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('project-ai-agent-service');
 
 /**
  * Project AI Agent Service
@@ -142,7 +145,7 @@ Always generate complete, production-ready code. No placeholders or TODOs.`;
       
       if (!selectedModelId) {
         selectedModelId = availableModels[0].id;
-        console.log(`[ProjectAIAgent] No model preference found, using fallback: ${selectedModelId}`);
+        logger.info(`[ProjectAIAgent] No model preference found, using fallback: ${selectedModelId}`);
       }
       
       // Get the model and provider
@@ -155,7 +158,7 @@ Always generate complete, production-ready code. No placeholders or TODOs.`;
         return;
       }
       
-      console.log(`[ProjectAIAgent] Using model: ${model.name} (${model.id}) from provider: ${model.provider}`);
+      logger.info(`[ProjectAIAgent] Using model: ${model.name} (${model.id}) from provider: ${model.provider}`);
       
       // Stream response from the selected AI provider
       const stream = await aiProviderManager.streamChat(
@@ -192,7 +195,7 @@ Always generate complete, production-ready code. No placeholders or TODOs.`;
       
       // Log rejected actions for security monitoring
       if (rejected.length > 0) {
-        console.warn('[ProjectAIAgent] Rejected insecure actions');
+        logger.warn('[ProjectAIAgent] Rejected insecure actions');
         yield JSON.stringify({ 
           type: 'security_warning', 
           message: `${rejected.length} actions blocked by security filters`
@@ -231,7 +234,7 @@ Always generate complete, production-ready code. No placeholders or TODOs.`;
       }
 
     } catch (error: any) {
-      console.error('[ProjectAIAgent] Error processing chat:', error);
+      logger.error('[ProjectAIAgent] Error processing chat:', error);
       yield JSON.stringify({ 
         type: 'error', 
         content: error.message || 'An error occurred while processing your request' 
@@ -313,7 +316,7 @@ Generate EVERY file needed for a complete, working application. No placeholders 
 
       return { actions: validActions, rejected };
     } catch (error: any) {
-      console.error('[ProjectAIAgent] Error generating build actions:', error);
+      logger.error('[ProjectAIAgent] Error generating build actions:', error);
       throw error;
     }
   }
@@ -335,7 +338,7 @@ Generate EVERY file needed for a complete, working application. No placeholders 
           return { success: false, error: 'Unknown action type' };
       }
     } catch (error: any) {
-      console.error('[ProjectAIAgent] Error executing action:', error);
+      logger.error('[ProjectAIAgent] Error executing action:', error);
       return { success: false, error: error.message };
     }
   }
@@ -372,7 +375,7 @@ Generate EVERY file needed for a complete, working application. No placeholders 
         }
       };
     } catch (error: any) {
-      console.error('[ProjectAIAgent] Error creating file:', error);
+      logger.error('[ProjectAIAgent] Error creating file:', error);
       return { success: false, error: error.message };
     }
   }
@@ -403,7 +406,7 @@ Generate EVERY file needed for a complete, working application. No placeholders 
         }
       };
     } catch (error: any) {
-      console.error('[ProjectAIAgent] Error editing file:', error);
+      logger.error('[ProjectAIAgent] Error editing file:', error);
       return { success: false, error: error.message };
     }
   }

@@ -8,7 +8,9 @@ import { ensureAuthenticated } from '../middleware/auth';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import type { IncomingMessage } from 'http';
 import type { Duplex } from 'stream';
+import { createLogger } from '../utils/logger';
 
+const logger = createLogger('shell-router');
 const router = Router();
 
 interface ShellSession {
@@ -89,7 +91,7 @@ echo ""
       await fs.writeFile(path.join(userHome, '.bashrc'), bashrcContent);
       
     } catch (error) {
-      console.error('Failed to create user shell directory:', error);
+      logger.error('Failed to create user shell directory:', error);
     }
 
     // Spawn bash process
@@ -154,7 +156,7 @@ echo ""
 
     // Handle errors
     ws.on('error', (error) => {
-      console.error('Shell WebSocket error:', error);
+      logger.error('Shell WebSocket error:', error);
       shell.kill();
       shellSessions.delete(sessionId);
     });
@@ -171,7 +173,7 @@ echo ""
     { pathMatch: 'exact', priority: 35 }
   );
   
-  console.log('[Shell] WebSocket service initialized at /shell');
+  logger.info('[Shell] WebSocket service initialized at /shell');
 }
 
 // Initialize immediately when module loads
@@ -244,7 +246,7 @@ router.post('/generate-command', ensureAuthenticated, async (req, res) => {
     
     res.json({ command, prompt });
   } catch (error) {
-    console.error('Shell command generation error:', error);
+    logger.error('Shell command generation error:', error);
     res.status(500).json({ error: 'Failed to generate command' });
   }
 });

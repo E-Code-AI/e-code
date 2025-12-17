@@ -1,5 +1,8 @@
 import { db } from './db';
+import { createLogger } from './utils/logger';
 // import { templates } from '@shared/schema';
+
+const logger = createLogger('seed-templates');
 
 const REPLIT_TEMPLATES = [
   // Web Development
@@ -1880,13 +1883,13 @@ async function seedTemplates() {
         if (error.code === '23505') {
           // Template already exists
         } else {
-          console.error(`❌ Failed to add template ${template.name}:`, error.message);
+          logger.error(`❌ Failed to add template ${template.name}:`, error.message);
           failCount++;
         }
       }
     }
   } catch (error) {
-    console.error('❌ Error seeding templates:', error);
+    logger.error('❌ Error seeding templates:', error);
     throw error;
   }
 }
@@ -1897,6 +1900,6 @@ seedTemplates()
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Template seeding failed:', error);
+    logger.error('❌ Template seeding failed:', error);
     process.exit(1);
   });

@@ -2,6 +2,9 @@ import { randomBytes, createHash } from 'crypto';
 import { db } from '../db';
 import { apiKeys, apiUsage, users } from '@shared/schema';
 import { eq, and, desc, count, sql } from 'drizzle-orm';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('sdk-service');
 
 export class SDKService {
   // Generate API key
@@ -55,7 +58,7 @@ export class SDKService {
         permissions: keyRecord.permissions || []
       };
     } catch (error) {
-      console.error('[SDKService] Error validating API key:', error);
+      logger.error('[SDKService] Error validating API key:', error);
       return { isValid: false };
     }
   }

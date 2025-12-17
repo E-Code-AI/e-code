@@ -1,6 +1,9 @@
 import { Router, Request, Response } from "express";
 import { type IStorage } from "../storage";
 import { LoadTestingService, type LoadTestConfig, type LoadTestResult } from "../services/load-testing.service";
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('load-testing-router');
 
 /**
  * Load Testing Router
@@ -43,8 +46,8 @@ export class LoadTestingRouter {
           rampUp: Math.min(req.body.rampUp || 5000, 30000)
         };
 
-        console.log('Starting comprehensive load test suite...');
-        console.log(`Config: ${config.concurrency} concurrent, ${config.duration}ms duration, ${config.rampUp}ms ramp-up`);
+        logger.info('Starting comprehensive load test suite...');
+        logger.info(`Config: ${config.concurrency} concurrent, ${config.duration}ms duration, ${config.rampUp}ms ramp-up`);
         
         this.loadTestingService.clearMetrics();
         
@@ -56,43 +59,43 @@ export class LoadTestingRouter {
 
         const totalTestDuration = config.duration * 3 + config.rampUp;
 
-        console.log('\n=== Starting System Performance Monitoring (Background) ===');
+        logger.info('=== Starting System Performance Monitoring (Background) ===');
         const metricsPromise = this.loadTestingService.monitorSystemPerformance(totalTestDuration);
 
-        console.log('\n=== Test 1: Concurrent AI Streaming ===');
+        logger.info('=== Test 1: Concurrent AI Streaming ===');
         const aiStreamingResult = await this.loadTestingService.testConcurrentAIStreaming({
           concurrency: Math.min(config.concurrency, 50),
           duration: config.duration,
           rampUp: config.rampUp
         });
-        console.log(`✓ AI Streaming: ${aiStreamingResult.successfulRequests}/${aiStreamingResult.totalRequests} successful`);
-        console.log(`  Avg response time: ${aiStreamingResult.avgResponseTime}ms`);
-        console.log(`  P95: ${aiStreamingResult.p95ResponseTime}ms, P99: ${aiStreamingResult.p99ResponseTime}ms`);
-        console.log(`  RPS: ${aiStreamingResult.requestsPerSecond.toFixed(2)}`);
+        logger.info(`AI Streaming: ${aiStreamingResult.successfulRequests}/${aiStreamingResult.totalRequests} successful`);
+        logger.info(`  Avg response time: ${aiStreamingResult.avgResponseTime}ms`);
+        logger.info(`  P95: ${aiStreamingResult.p95ResponseTime}ms, P99: ${aiStreamingResult.p99ResponseTime}ms`);
+        logger.info(`  RPS: ${aiStreamingResult.requestsPerSecond.toFixed(2)}`);
 
-        console.log('\n=== Test 2: Database Query Performance ===');
+        logger.info('=== Test 2: Database Query Performance ===');
         const dbPerformanceResult = await this.loadTestingService.testDatabasePerformance({
           concurrency: 20,
           duration: config.duration,
           rampUp: config.rampUp
         });
-        console.log(`✓ Database: ${dbPerformanceResult.successfulRequests}/${dbPerformanceResult.totalRequests} successful`);
-        console.log(`  Avg response time: ${dbPerformanceResult.avgResponseTime}ms`);
-        console.log(`  P95: ${dbPerformanceResult.p95ResponseTime}ms, P99: ${dbPerformanceResult.p99ResponseTime}ms`);
-        console.log(`  QPS: ${dbPerformanceResult.requestsPerSecond.toFixed(2)}`);
+        logger.info(`Database: ${dbPerformanceResult.successfulRequests}/${dbPerformanceResult.totalRequests} successful`);
+        logger.info(`  Avg response time: ${dbPerformanceResult.avgResponseTime}ms`);
+        logger.info(`  P95: ${dbPerformanceResult.p95ResponseTime}ms, P99: ${dbPerformanceResult.p99ResponseTime}ms`);
+        logger.info(`  QPS: ${dbPerformanceResult.requestsPerSecond.toFixed(2)}`);
 
-        console.log('\n=== Test 3: WebSocket Connection Limits ===');
+        logger.info('=== Test 3: WebSocket Connection Limits ===');
         const wsLimitsResult = await this.loadTestingService.testWebSocketLimits({
           concurrency: Math.min(config.concurrency * 10, 500),
           duration: config.duration,
           rampUp: config.rampUp
         });
-        console.log(`✓ WebSocket: ${wsLimitsResult.successfulRequests}/${wsLimitsResult.totalRequests} connections`);
-        console.log(`  Avg connection time: ${wsLimitsResult.avgResponseTime}ms`);
+        logger.info(`WebSocket: ${wsLimitsResult.successfulRequests}/${wsLimitsResult.totalRequests} connections`);
+        logger.info(`  Avg connection time: ${wsLimitsResult.avgResponseTime}ms`);
 
-        console.log('\n=== Test 4: Waiting for System Metrics ===');
+        logger.info('=== Test 4: Waiting for System Metrics ===');
         const systemMetrics = await metricsPromise;
-        console.log(`✓ System Metrics: ${systemMetrics.length} samples collected`);
+        logger.info(`System Metrics: ${systemMetrics.length} samples collected`);
 
         results.tests.push(aiStreamingResult, dbPerformanceResult, wsLimitsResult);
 
@@ -114,9 +117,9 @@ export class LoadTestingRouter {
           metrics: systemMetrics
         };
 
-        console.log(`✓ System Metrics: ${systemMetrics.length} samples collected`);
-        console.log(`  Avg CPU load: ${avgCpuLoad.toFixed(2)}`);
-        console.log(`  Avg memory usage: ${avgMemUsage.toFixed(1)}%`);
+        logger.info(`System Metrics: ${systemMetrics.length} samples collected`);
+        logger.info(`  Avg CPU load: ${avgCpuLoad.toFixed(2)}`);
+        logger.info(`  Avg memory usage: ${avgMemUsage.toFixed(1)}%`);
 
         // Compile overall results
         results.summary = {
@@ -131,9 +134,9 @@ export class LoadTestingRouter {
         results.summary.overallSuccessRate = 
           (results.summary.totalSuccessful / results.summary.totalRequests * 100).toFixed(2) + '%';
 
-        console.log('\n=== Comprehensive Load Test Complete ===');
-        console.log(`Overall Success Rate: ${results.summary.overallSuccessRate}`);
-        console.log(`Total Requests: ${results.summary.totalRequests}`);
+        logger.info('=== Comprehensive Load Test Complete ===');
+        logger.info(`Overall Success Rate: ${results.summary.overallSuccessRate}`);
+        logger.info(`Total Requests: ${results.summary.totalRequests}`);
 
         // Clear metrics for next test
         this.loadTestingService.clearMetrics();
@@ -141,7 +144,7 @@ export class LoadTestingRouter {
         res.json(results);
         
       } catch (error: any) {
-        console.error('Load test error:', error);
+        logger.error('Load test error:', error);
         res.status(500).json({
           error: 'Load test failed',
           message: error.message,

@@ -11,7 +11,9 @@ import { db } from '../db';
 import { agentSessions, fileOperations, commandExecutions, toolExecutions, agentWorkflows, AI_MODELS } from '@shared/schema';
 import { eq, desc } from 'drizzle-orm';
 import type { IStorage } from '../storage';
+import { createLogger } from '../utils/logger';
 
+const logger = createLogger('agent-router');
 const router = Router();
 
 // Public agent routes (require authentication only)
@@ -26,7 +28,7 @@ router.get('/models', async (req, res) => {
     const models = preferencesService.getAvailableModels();
     res.json({ models });
   } catch (error: any) {
-    console.error('[AgentRouter] Error fetching models:', error);
+    logger.error('[AgentRouter] Error fetching models:', error);
     res.status(500).json({ error: 'Failed to fetch models' });
   }
 });
@@ -57,7 +59,7 @@ router.get('/preferences', async (req, res) => {
 
     res.json(preferences);
   } catch (error: any) {
-    console.error('[AgentRouter] Error fetching preferences:', error);
+    logger.error('[AgentRouter] Error fetching preferences:', error);
     res.status(500).json({ error: 'Failed to fetch preferences' });
   }
 });
@@ -81,7 +83,7 @@ router.put('/preferences', async (req, res) => {
     const updated = await preferencesService.updateUserPreferences(userId, updates);
     res.json(updated);
   } catch (error: any) {
-    console.error('[AgentRouter] Error updating preferences:', error);
+    logger.error('[AgentRouter] Error updating preferences:', error);
     res.status(500).json({ error: error.message || 'Failed to update preferences' });
   }
 });
@@ -108,7 +110,7 @@ router.post('/recommend-model', async (req, res) => {
       reasoning: `Selected ${recommended} based on: complexity=${complexity || 'medium'}, speedPriority=${speedPriority || 'balanced'}, extendedThinking=${requiresExtendedThinking || false}`,
     });
   } catch (error: any) {
-    console.error('[AgentRouter] Error recommending model:', error);
+    logger.error('[AgentRouter] Error recommending model:', error);
     res.status(500).json({ error: 'Failed to recommend model' });
   }
 });
@@ -151,7 +153,7 @@ router.get('/conversation', async (req, res) => {
       projectId: conversation.projectId,
     });
   } catch (error: any) {
-    console.error('[AgentRouter] Error fetching conversation:', error);
+    logger.error('[AgentRouter] Error fetching conversation:', error);
     res.status(500).json({ error: 'Failed to fetch conversation' });
   }
 });
@@ -214,7 +216,7 @@ router.post('/conversation', async (req, res) => {
       existing: false,
     });
   } catch (error: any) {
-    console.error('[AgentRouter] Error creating conversation:', error);
+    logger.error('[AgentRouter] Error creating conversation:', error);
     res.status(500).json({ error: 'Failed to create conversation' });
   }
 });
@@ -274,7 +276,7 @@ router.post('/conversation/:id/mode', async (req, res) => {
       message: `Conversation mode updated to ${mode.toUpperCase()}`,
     });
   } catch (error: any) {
-    console.error('[AgentRouter] Error updating conversation mode:', error);
+    logger.error('[AgentRouter] Error updating conversation mode:', error);
     res.status(500).json({ error: 'Failed to update conversation mode' });
   }
 });
@@ -352,7 +354,7 @@ router.get('/conversation/:id/messages', async (req, res) => {
       count: 0,
     });
   } catch (error: any) {
-    console.error('[AgentRouter] Error fetching conversation messages:', error);
+    logger.error('[AgentRouter] Error fetching conversation messages:', error);
     res.status(500).json({ error: 'Failed to fetch conversation messages' });
   }
 });
@@ -423,7 +425,7 @@ router.post('/conversation/:id/messages', async (req, res) => {
       })
       .returning();
 
-    console.log('[AgentRouter] Message persisted:', {
+    logger.info('[AgentRouter] Message persisted:', {
       id: savedMessage.id,
       conversationId,
       role,
@@ -435,7 +437,7 @@ router.post('/conversation/:id/messages', async (req, res) => {
       message: savedMessage,
     });
   } catch (error: any) {
-    console.error('[AgentRouter] Error persisting message:', error);
+    logger.error('[AgentRouter] Error persisting message:', error);
     res.status(500).json({ error: 'Failed to persist message' });
   }
 });
@@ -451,7 +453,7 @@ router.post('/sessions', ensureAdmin, async (req, res) => {
     const session = await agentOrchestrator.createSession(userId, projectId, model);
     res.json({ success: true, session });
   } catch (error: any) {
-    console.error('Error creating agent session:', error);
+    logger.error('Error creating agent session:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -477,7 +479,7 @@ router.post('/sessions/:sessionId/execute', ensureAdmin, async (req, res) => {
     const result = await agentOrchestrator.executeAgent(sessionId, messages, userId);
     res.json(result);
   } catch (error: any) {
-    console.error('Error executing agent:', error);
+    logger.error('Error executing agent:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -502,7 +504,7 @@ router.post('/sessions/:sessionId/stream', ensureAdmin, async (req, res) => {
     res.write('data: [DONE]\n\n');
     res.end();
   } catch (error: any) {
-    console.error('Error streaming agent execution:', error);
+    logger.error('Error streaming agent execution:', error);
     res.status(500).json({ error: error.message });
   }
 });

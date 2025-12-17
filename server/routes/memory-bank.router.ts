@@ -7,7 +7,9 @@ import { Router, Request, Response } from 'express';
 import { memoryBankService } from '../services/memory-bank.service';
 import { z } from 'zod';
 import path from 'path';
+import { createLogger } from '../utils/logger';
 
+const logger = createLogger('memory-bank-router');
 const router = Router();
 
 /**
@@ -65,9 +67,9 @@ router.get('/:projectId', async (req: Request, res: Response) => {
     if (!memoryBank) {
       try {
         memoryBank = await memoryBankService.initialize(projectId, undefined);
-        console.log(`[MemoryBank] ✅ Auto-initialized for project ${projectId} on first fetch`);
+        logger.info(`[MemoryBank] ✅ Auto-initialized for project ${projectId} on first fetch`);
       } catch (initError) {
-        console.warn(`[MemoryBank] Auto-init failed for project ${projectId}:`, initError);
+        logger.warn(`[MemoryBank] Auto-init failed for project ${projectId}:`, initError);
         return res.status(404).json({ 
           error: 'Memory bank not initialized',
           initialized: false 
@@ -77,7 +79,7 @@ router.get('/:projectId', async (req: Request, res: Response) => {
 
     res.json(memoryBank);
   } catch (error) {
-    console.error('[MemoryBank API] Error getting memory bank:', error);
+    logger.error('[MemoryBank API] Error getting memory bank:', error);
     res.status(500).json({ error: 'Failed to get memory bank' });
   }
 });
@@ -104,16 +106,16 @@ router.get('/:projectId/status', async (req: Request, res: Response) => {
       try {
         await memoryBankService.initialize(projectId, undefined);
         initialized = true;
-        console.log(`[MemoryBank] ✅ Auto-initialized for existing project ${projectId}`);
+        logger.info(`[MemoryBank] ✅ Auto-initialized for existing project ${projectId}`);
       } catch (initError) {
         // Non-blocking: return uninitialized status if auto-init fails
-        console.warn(`[MemoryBank] Auto-init failed for project ${projectId}:`, initError);
+        logger.warn(`[MemoryBank] Auto-init failed for project ${projectId}:`, initError);
       }
     }
     
     res.json({ initialized });
   } catch (error) {
-    console.error('[MemoryBank API] Error checking status:', error);
+    logger.error('[MemoryBank API] Error checking status:', error);
     res.status(500).json({ error: 'Failed to check memory bank status' });
   }
 });
@@ -137,7 +139,7 @@ router.get('/:projectId/context', async (req: Request, res: Response) => {
       tokenEstimate: Math.ceil(context.length / 4)
     });
   } catch (error) {
-    console.error('[MemoryBank API] Error getting context:', error);
+    logger.error('[MemoryBank API] Error getting context:', error);
     res.status(500).json({ error: 'Failed to get memory bank context' });
   }
 });
@@ -163,7 +165,7 @@ router.get('/:projectId/files/:filename', async (req: Request, res: Response) =>
 
     res.json(file);
   } catch (error) {
-    console.error('[MemoryBank API] Error getting file:', error);
+    logger.error('[MemoryBank API] Error getting file:', error);
     res.status(500).json({ error: 'Failed to get file' });
   }
 });
@@ -205,7 +207,7 @@ router.put('/:projectId/files/:filename', async (req: Request, res: Response) =>
       file
     });
   } catch (error) {
-    console.error('[MemoryBank API] Error updating file:', error);
+    logger.error('[MemoryBank API] Error updating file:', error);
     res.status(500).json({ error: 'Failed to update file' });
   }
 });
@@ -231,7 +233,7 @@ router.delete('/:projectId/files/:filename', async (req: Request, res: Response)
 
     res.json({ message: 'File deleted successfully' });
   } catch (error) {
-    console.error('[MemoryBank API] Error deleting file:', error);
+    logger.error('[MemoryBank API] Error deleting file:', error);
     res.status(500).json({ error: 'Failed to delete file' });
   }
 });
@@ -262,7 +264,7 @@ router.post('/:projectId/log-change', async (req: Request, res: Response) => {
 
     res.json({ message: 'Change logged successfully' });
   } catch (error) {
-    console.error('[MemoryBank API] Error logging change:', error);
+    logger.error('[MemoryBank API] Error logging change:', error);
     res.status(500).json({ error: 'Failed to log change' });
   }
 });
@@ -276,7 +278,7 @@ router.get('/templates', async (_req: Request, res: Response) => {
     const templates = memoryBankService.getDefaultTemplates();
     res.json({ templates });
   } catch (error) {
-    console.error('[MemoryBank API] Error getting templates:', error);
+    logger.error('[MemoryBank API] Error getting templates:', error);
     res.status(500).json({ error: 'Failed to get templates' });
   }
 });

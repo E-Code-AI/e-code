@@ -14,6 +14,9 @@ import { workspaceSnapshotService, type FileSnapshot } from './workspace-snapsho
 import { EventEmitter } from 'events';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('checkpoint-restore-service');
 
 export interface RestoreResult {
   success: boolean;
@@ -56,7 +59,7 @@ export class CheckpointRestoreService extends EventEmitter {
     const startTime = Date.now();
     const errors: string[] = [];
 
-    console.log(`[CheckpointRestore] Starting restore to checkpoint ${checkpointId}`);
+    logger.info(`[CheckpointRestore] Starting restore to checkpoint ${checkpointId}`);
 
     try {
       // Get checkpoint details
@@ -85,9 +88,9 @@ export class CheckpointRestoreService extends EventEmitter {
             createdBy: options.userId,
           });
 
-          console.log(`[CheckpointRestore] Created backup checkpoint before restore`);
+          logger.info(`[CheckpointRestore] Created backup checkpoint before restore`);
         } catch (backupError: any) {
-          console.warn(`[CheckpointRestore] Failed to create backup checkpoint: ${backupError.message}`);
+          logger.warn(`[CheckpointRestore] Failed to create backup checkpoint: ${backupError.message}`);
           errors.push(`Backup creation failed: ${backupError.message}`);
         }
       }
@@ -177,11 +180,11 @@ export class CheckpointRestoreService extends EventEmitter {
               });
               
               restoredDatabase = true;
-              console.log(`[CheckpointRestore] Database restored from ${snapshotPath}`);
+              logger.info(`[CheckpointRestore] Database restored from ${snapshotPath}`);
             } catch (accessError: any) {
               if (accessError.code === 'ENOENT') {
                 errors.push(`Database snapshot file not found: ${snapshotPath}`);
-                console.warn(`[CheckpointRestore] Database snapshot not found: ${snapshotPath}`);
+                logger.warn(`[CheckpointRestore] Database snapshot not found: ${snapshotPath}`);
               } else {
                 throw accessError;
               }
@@ -191,7 +194,7 @@ export class CheckpointRestoreService extends EventEmitter {
           }
         } catch (dbError: any) {
           errors.push(`Database restore failed: ${dbError.message}`);
-          console.error(`[CheckpointRestore] Database restore failed:`, dbError);
+          logger.error(`[CheckpointRestore] Database restore failed:`, dbError);
         }
       }
 
@@ -257,14 +260,14 @@ export class CheckpointRestoreService extends EventEmitter {
               });
               
               restoredConversation = true;
-              console.log(`[CheckpointRestore] Restored ${conversationData.length} conversation messages (conversationId: ${checkpointConversationId})`);
+              logger.info(`[CheckpointRestore] Restored ${conversationData.length} conversation messages (conversationId: ${checkpointConversationId})`);
             } else {
               errors.push('No conversation found to restore messages to');
             }
           }
         } catch (convError: any) {
           errors.push(`Conversation restore failed: ${convError.message}`);
-          console.error(`[CheckpointRestore] Conversation restore failed:`, convError);
+          logger.error(`[CheckpointRestore] Conversation restore failed:`, convError);
         }
       }
 
@@ -285,7 +288,7 @@ export class CheckpointRestoreService extends EventEmitter {
       }
 
       const duration = Date.now() - startTime;
-      console.log(`[CheckpointRestore] Restored to checkpoint ${checkpointId} in ${duration}ms (${restoredFiles} files, db=${restoredDatabase}, conv=${restoredConversation})`);
+      logger.info(`[CheckpointRestore] Restored to checkpoint ${checkpointId} in ${duration}ms (${restoredFiles} files, db=${restoredDatabase}, conv=${restoredConversation})`);
 
       this.emit('restored', { checkpointId, projectId, restoredFiles, restoredDatabase, restoredConversation, duration });
 
@@ -301,7 +304,7 @@ export class CheckpointRestoreService extends EventEmitter {
       };
     } catch (error: any) {
       const duration = Date.now() - startTime;
-      console.error(`[CheckpointRestore] Restore failed:`, error);
+      logger.error(`[CheckpointRestore] Restore failed:`, error);
 
       // Log failed restore if userId provided
       if (options.userId) {
@@ -316,7 +319,7 @@ export class CheckpointRestoreService extends EventEmitter {
             );
           }
         } catch (logError) {
-          console.error(`[CheckpointRestore] Failed to log restore error:`, logError);
+          logger.error(`[CheckpointRestore] Failed to log restore error:`, logError);
         }
       }
 

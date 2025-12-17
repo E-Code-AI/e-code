@@ -20,7 +20,9 @@ import {
 import { ensureAuthenticated as requireAuth } from '../middleware/auth';
 import { checkpointRestoreService } from '../services/checkpoint-restore.service';
 import { Server as SocketIOServer } from 'socket.io';
+import { createLogger } from '../utils/logger';
 
+const logger = createLogger('auto-checkpoints-router');
 const router = Router();
 
 // Validation schemas
@@ -119,7 +121,7 @@ router.get('/projects/:projectId/auto-checkpoints', requireAuth, async (req: Req
       },
     });
   } catch (error) {
-    console.error('[AutoCheckpoints API] Error listing checkpoints:', error);
+    logger.error('[AutoCheckpoints API] Error listing checkpoints:', error);
     res.status(500).json({ error: 'Failed to list checkpoints' });
   }
 });
@@ -170,7 +172,7 @@ router.post('/projects/:projectId/auto-checkpoints', requireAuth, async (req: Re
       checkpoint,
     });
   } catch (error) {
-    console.error('[AutoCheckpoints API] Error creating checkpoint:', error);
+    logger.error('[AutoCheckpoints API] Error creating checkpoint:', error);
     res.status(500).json({ error: 'Failed to create checkpoint' });
   }
 });
@@ -218,7 +220,7 @@ router.get('/auto-checkpoints/:id', requireAuth, async (req: Request, res: Respo
       restoreHistory: restores,
     });
   } catch (error) {
-    console.error('[AutoCheckpoints API] Error getting checkpoint:', error);
+    logger.error('[AutoCheckpoints API] Error getting checkpoint:', error);
     res.status(500).json({ error: 'Failed to get checkpoint' });
   }
 });
@@ -282,7 +284,7 @@ router.get('/auto-checkpoints/:id/files', requireAuth, async (req: Request, res:
       },
     });
   } catch (error) {
-    console.error('[AutoCheckpoints API] Error getting checkpoint files:', error);
+    logger.error('[AutoCheckpoints API] Error getting checkpoint files:', error);
     res.status(500).json({ error: 'Failed to get checkpoint files' });
   }
 });
@@ -333,7 +335,7 @@ router.post('/auto-checkpoints/:id/files', requireAuth, async (req: Request, res
       files: insertedFiles,
     });
   } catch (error) {
-    console.error('[AutoCheckpoints API] Error adding files to checkpoint:', error);
+    logger.error('[AutoCheckpoints API] Error adding files to checkpoint:', error);
     res.status(500).json({ error: 'Failed to add files to checkpoint' });
   }
 });
@@ -411,7 +413,7 @@ router.post('/auto-checkpoints/:id/restore', requireAuth, async (req: Request, r
       errors: restoreResult.errors.length > 0 ? restoreResult.errors : undefined,
     });
   } catch (error) {
-    console.error('[AutoCheckpoints API] Error restoring checkpoint:', error);
+    logger.error('[AutoCheckpoints API] Error restoring checkpoint:', error);
     res.status(500).json({ error: 'Failed to restore checkpoint' });
   }
 });
@@ -467,7 +469,7 @@ router.patch('/auto-checkpoints/:id', requireAuth, async (req: Request, res: Res
       checkpoint: updated,
     });
   } catch (error) {
-    console.error('[AutoCheckpoints API] Error updating checkpoint:', error);
+    logger.error('[AutoCheckpoints API] Error updating checkpoint:', error);
     res.status(500).json({ error: 'Failed to update checkpoint' });
   }
 });
@@ -505,7 +507,7 @@ router.delete('/auto-checkpoints/:id', requireAuth, async (req: Request, res: Re
       deletedCheckpoint: deleted,
     });
   } catch (error) {
-    console.error('[AutoCheckpoints API] Error deleting checkpoint:', error);
+    logger.error('[AutoCheckpoints API] Error deleting checkpoint:', error);
     res.status(500).json({ error: 'Failed to delete checkpoint' });
   }
 });
@@ -518,13 +520,13 @@ export function setupCheckpointWebSocket(io: SocketIOServer) {
   const checkpointNamespace = io.of('/checkpoints');
 
   checkpointNamespace.on('connection', (socket) => {
-    console.log('[Checkpoint WS] Client connected:', socket.id);
+    logger.info('[Checkpoint WS] Client connected:', socket.id);
 
     // Allow clients to subscribe to specific project checkpoints
     socket.on('subscribe:project', (projectId: number) => {
       if (typeof projectId === 'number' && projectId > 0) {
         socket.join(`project:${projectId}`);
-        console.log(`[Checkpoint WS] Socket ${socket.id} subscribed to project ${projectId}`);
+        logger.info(`[Checkpoint WS] Socket ${socket.id} subscribed to project ${projectId}`);
       }
     });
 
@@ -533,7 +535,7 @@ export function setupCheckpointWebSocket(io: SocketIOServer) {
     });
 
     socket.on('disconnect', () => {
-      console.log('[Checkpoint WS] Client disconnected:', socket.id);
+      logger.info('[Checkpoint WS] Client disconnected:', socket.id);
     });
   });
 
