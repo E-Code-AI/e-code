@@ -16,6 +16,7 @@ import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
+import jwt from 'jsonwebtoken';
 
 const logger = createLogger('pty-terminal');
 
@@ -82,6 +83,30 @@ export class PTYTerminalService {
         logger.warn('Terminal connection rejected: missing projectId');
         ws.close(1008, 'Missing projectId');
         return;
+      }
+
+      // Extract token from query params or Authorization header
+      const queryToken = url.searchParams.get('token');
+      const authHeader = request.headers['authorization'];
+      const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+      const token = queryToken || headerToken;
+
+      // Validate authentication (skip in development for easier testing)
+      if (process.env.NODE_ENV === 'production') {
+        if (!token) {
+          logger.warn('Terminal connection rejected: missing authentication token');
+          ws.close(1008, 'Authentication required');
+          return;
+        }
+
+        try {
+          const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'development-secret';
+          jwt.verify(token, jwtSecret);
+        } catch (error) {
+          logger.warn('Terminal connection rejected: invalid token');
+          ws.close(1008, 'Invalid authentication token');
+          return;
+        }
       }
 
       logger.info(`Terminal connection for project ${projectId}`);
