@@ -1268,6 +1268,17 @@ class LegacyProviderAdapter {
     const model = this.manager.getModel(this.modelId);
     return model ? this.manager['providers'].has(model.provider) : false;
   }
+  
+  async *streamChat(
+    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    maxTokens = 2048,
+    temperature = 0.5
+  ): AsyncGenerator<string, void, unknown> {
+    yield* this.manager.streamChatWithFallback(this.modelId, messages, {
+      max_tokens: maxTokens,
+      temperature
+    });
+  }
 }
 
 // Singleton instance

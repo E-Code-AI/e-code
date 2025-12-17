@@ -2,12 +2,18 @@ import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+export type ChatMessage = {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+};
+
 export interface AIProvider {
   name: string;
   generateChat(messages: any[], options?: any): Promise<string>;
   generateCodeWithUnderstanding(messages: any[], codeAnalysis: any, options?: any): Promise<string>;
   
   generateChatStream?(messages: any[], options?: any): AsyncGenerator<string>;
+  streamChat?(messages: ChatMessage[], maxTokens?: number, temperature?: number): AsyncGenerator<string, void, unknown>;
 }
 
 export class OpenAIProvider implements AIProvider {

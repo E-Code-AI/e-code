@@ -122,10 +122,6 @@ export function ReplitEditorLayout({
           onFileRename={onFileRename}
           projectName={projectName}
           projectId={projectId}
-          editorContent={centerPanel}
-          terminalContent={bottomPanel}
-          previewContent={rightPanels.find(p => p.id === 'preview')?.content}
-          consoleContent={rightPanels.find(p => p.id === 'console')?.content}
         />
       </React.Suspense>
     );

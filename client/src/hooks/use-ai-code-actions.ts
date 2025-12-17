@@ -5,7 +5,15 @@
 
 import { useEffect, useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { AICodeActionEvent } from '@/lib/monaco-features-enhancement';
+
+// Type for AI Code Action events dispatched by Monaco editor enhancements
+export interface AICodeActionEvent {
+  type: 'loading' | 'result' | 'error';
+  action: string;
+  code?: string;
+  result?: any;
+  error?: string;
+}
 
 interface AICodeActionState {
   isLoading: boolean;
