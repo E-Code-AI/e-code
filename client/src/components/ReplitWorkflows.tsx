@@ -96,14 +96,22 @@ const generateStepId = () =>
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2);
 
-const createDefaultWorkflow = () => ({
+interface NewWorkflowState {
+  name: string;
+  description: string;
+  trigger: WorkflowTrigger;
+  steps: WorkflowStep[];
+  enabled: boolean;
+}
+
+const createDefaultWorkflow = (): NewWorkflowState => ({
   name: '',
   description: '',
   trigger: { type: 'manual', config: {} },
   steps: [
     { id: generateStepId(), name: 'Install dependencies', type: 'command', command: 'npm install' },
     { id: generateStepId(), name: 'Run tests', type: 'command', command: 'npm test' }
-  ],
+  ] as WorkflowStep[],
   enabled: true
 });
 

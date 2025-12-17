@@ -96,6 +96,10 @@ export default function Dashboard() {
     enabled: !!user,
     staleTime: 30000, // 30 seconds - prevent excessive refetches
     select: (data) => {
+      // Safety check - ensure data is an array, throw error if not
+      if (!data || !Array.isArray(data)) {
+        throw new Error('Invalid response: expected an array of projects');
+      }
       // Sort by most recent first (updatedAt descending)
       const sorted = [...data].sort((a, b) => {
         const dateA = new Date(b.updatedAt).getTime();
