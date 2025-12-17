@@ -109,56 +109,80 @@ export default function Editor(props: EditorProps = {}) {
         try {
           // Parse JWT token (client-side, payload is not encrypted)
           const tokenParts = bootstrapToken.split('.');
-          if (tokenParts.length === 3) {
-            const payload = JSON.parse(atob(tokenParts[1]));
-            const { projectId, sessionId, conversationId } = payload;
-            
-            // Create and connect WebSocket for real-time agent progress (Task 5)
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${projectId}&sessionId=${sessionId}`;
-
-            const ws = new WebSocket(wsUrl);
-
-            ws.onopen = () => {
-              agentWebSocket.current = ws;
-              setAgentWebSocketConnected(true);
-
-              toast({
-                title: "Agent Connected",
-                description: "AI agent is building your project...",
-              });
-            };
-
-            ws.onerror = (error) => {
-              console.error('[Workspace Bootstrap] WebSocket error:', error);
-              toast({
-                title: "Connection Error",
-                description: "Failed to connect to AI agent. Retrying...",
-                variant: "destructive",
-              });
-            };
-
-            ws.onclose = () => {
-              setAgentWebSocketConnected(false);
-            };
-
-            // Store session info for reference
-            window.sessionStorage.setItem(`agent-session-${resolvedProjectId}`, JSON.stringify({
-              sessionId,
-              conversationId,
-              websocketUrl: wsUrl
-            }));
-
-            // Auto-open agent panel
-            setActiveRightPanel('agent');
-            setRightPanelOpen(true);
-            setInitialAgentPrompt('AI Agent is building your application...');
-            hasStartedAgent.current = true;
-
-            // Clean up URL
-            const cleanUrl = window.location.pathname;
-            window.history.replaceState({}, '', cleanUrl);
+          if (tokenParts.length !== 3) {
+            throw new Error('Invalid token format: expected 3 parts');
           }
+          
+          // Validate and parse payload with proper error handling
+          let payload: { projectId?: unknown; sessionId?: unknown; conversationId?: unknown };
+          try {
+            payload = JSON.parse(atob(tokenParts[1]));
+          } catch {
+            throw new Error('Invalid token encoding: failed to decode payload');
+          }
+          
+          // Validate required fields exist and have correct types
+          const { projectId, sessionId, conversationId } = payload;
+          if (!projectId || (typeof projectId !== 'string' && typeof projectId !== 'number')) {
+            throw new Error('Invalid token: missing or invalid projectId');
+          }
+          if (!sessionId || typeof sessionId !== 'string') {
+            throw new Error('Invalid token: missing or invalid sessionId');
+          }
+          
+          // Sanitize projectId to prevent injection
+          const sanitizedProjectId = String(projectId).replace(/[^a-zA-Z0-9-_]/g, '');
+          const sanitizedSessionId = String(sessionId).replace(/[^a-zA-Z0-9-_]/g, '');
+          
+          if (sanitizedProjectId !== String(projectId) || sanitizedSessionId !== sessionId) {
+            throw new Error('Invalid token: contains disallowed characters');
+          }
+            
+          // Create and connect WebSocket for real-time agent progress (Task 5)
+          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${encodeURIComponent(sanitizedProjectId)}&sessionId=${encodeURIComponent(sanitizedSessionId)}`;
+
+          const ws = new WebSocket(wsUrl);
+
+          ws.onopen = () => {
+            agentWebSocket.current = ws;
+            setAgentWebSocketConnected(true);
+
+            toast({
+              title: "Agent Connected",
+              description: "AI agent is building your project...",
+            });
+          };
+
+          ws.onerror = (error) => {
+            console.error('[Workspace Bootstrap] WebSocket error:', error);
+            toast({
+              title: "Connection Error",
+              description: "Failed to connect to AI agent. Retrying...",
+              variant: "destructive",
+            });
+          };
+
+          ws.onclose = () => {
+            setAgentWebSocketConnected(false);
+          };
+
+          // Store session info for reference (use sanitized values)
+          window.sessionStorage.setItem(`agent-session-${resolvedProjectId}`, JSON.stringify({
+            sessionId: sanitizedSessionId,
+            conversationId: typeof conversationId === 'string' ? conversationId : undefined,
+            websocketUrl: wsUrl
+          }));
+
+          // Auto-open agent panel
+          setActiveRightPanel('agent');
+          setRightPanelOpen(true);
+          setInitialAgentPrompt('AI Agent is building your application...');
+          hasStartedAgent.current = true;
+
+          // Clean up URL
+          const cleanUrl = window.location.pathname;
+          window.history.replaceState({}, '', cleanUrl);
         } catch (error) {
           console.error('[Workspace Bootstrap] Failed to parse bootstrap token:', error);
           toast({
