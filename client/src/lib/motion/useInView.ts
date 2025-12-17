@@ -32,8 +32,11 @@ export function useInView({
   once = true
 }: UseInViewOptions = {}): UseInViewResult {
   const ref = useRef<HTMLDivElement>(null);
-  const [isInView, setIsInView] = useState(false);
+  // Start with true to prevent content from being invisible on initial render
+  // This ensures content is always visible, then animations trigger as expected
+  const [isInView, setIsInView] = useState(true);
   const hasTriggered = useRef(false);
+  const observerSetup = useRef(false);
 
   useEffect(() => {
     if (prefersReducedMotion()) {
@@ -45,6 +48,33 @@ export function useInView({
     if (!element) return;
 
     if (once && hasTriggered.current) return;
+
+    // Check if IntersectionObserver is supported
+    if (typeof IntersectionObserver === 'undefined') {
+      // Fallback: keep content visible
+      setIsInView(true);
+      return;
+    }
+
+    // Reset to false briefly to allow animation, but only after mount
+    // This prevents flash of invisible content
+    if (!observerSetup.current) {
+      observerSetup.current = true;
+      // Small delay to ensure smooth animation
+      requestAnimationFrame(() => {
+        setIsInView(false);
+        // Immediately check if element is already in viewport
+        const rect = element.getBoundingClientRect();
+        const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+        if (isVisible) {
+          // Element is already in viewport, trigger animation
+          setTimeout(() => {
+            setIsInView(true);
+            hasTriggered.current = true;
+          }, 50);
+        }
+      });
+    }
 
     const observer = new IntersectionObserver(
       (entries) => {
