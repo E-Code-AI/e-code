@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import { createLogger } from '../utils/logger';
 import { db } from '../db';
 import {
   toolRegistry,
@@ -19,6 +20,8 @@ import { OpenAI } from 'openai';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import fetch from 'node-fetch';
+
+const logger = createLogger('agent-tool-framework');
 
 // Tool execution event for real-time feedback
 export interface ToolExecutionEvent {
@@ -80,9 +83,9 @@ export class AgentToolFrameworkService extends EventEmitter {
     try {
       this.registerBuiltInTools();
       this.toolsRegistered = true;
-      console.log('[AgentToolFramework] ✅ Built-in tools registered successfully');
+      logger.info('[AgentToolFramework] ✅ Built-in tools registered successfully');
     } catch (error) {
-      console.error('[AgentToolFramework] Failed to register built-in tools:', error);
+      logger.error('[AgentToolFramework] Failed to register built-in tools:', error);
     } finally {
       this.toolsRegistering = false;
     }

@@ -16,6 +16,9 @@ import type { Duplex } from 'stream';
 import { storage } from '../storage';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('collaboration-server');
 
 interface CollaborationRoom {
   doc: Y.Doc;
@@ -50,7 +53,7 @@ export class CollaborationServer {
     );
 
     this.startCleanupInterval();
-    console.log('[CollaborationServer] Initialized (using central dispatcher)');
+    logger.info('[CollaborationServer] Initialized (using central dispatcher)');
   }
   
   /**

@@ -4,6 +4,10 @@
  * AI compute is now handled directly through integrated AI providers.
  */
 
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('gpu-service');
+
 export const gpuService = {
   available: false,
   deprecated: true,
@@ -14,7 +18,7 @@ export const gpuService = {
   },
   
   async allocate() {
-    console.log('GPU providers deprecated - use AI providers directly');
+    logger.warn('GPU providers deprecated - use AI providers directly');
     return { success: false, message: 'GPU providers deprecated' };
   },
   
@@ -41,7 +45,7 @@ export class GpuService {
   }
   
   async allocate() {
-    console.log('GPU providers deprecated - use AI providers directly');
+    logger.warn('GPU providers deprecated - use AI providers directly');
     return { success: false, message: 'GPU providers deprecated' };
   }
   
@@ -59,6 +63,6 @@ export class GpuService {
 }
 
 export function getGpuService() {
-  console.log('GPU providers deprecated - use AI providers directly');
+  logger.warn('GPU providers deprecated - use AI providers directly');
   return gpuService;
 }

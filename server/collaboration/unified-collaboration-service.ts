@@ -24,6 +24,9 @@ import { eq, and } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('unified-collaboration-service');
 
 interface CollaboratorInfo {
   id: string;
@@ -140,7 +143,7 @@ export class UnifiedCollaborationService {
       { pathMatch: 'prefix', priority: 61 }
     );
     
-    console.log('[Collaboration] Socket.IO initialized with standalone Engine.IO (true noServer mode)');
+    logger.info('[Collaboration] Socket.IO initialized with standalone Engine.IO (true noServer mode)');
     
     // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher for Yjs
     // Use noServer mode and register with central dispatcher to eliminate race conditions
@@ -154,18 +157,18 @@ export class UnifiedCollaborationService {
     );
     
     this.engineServer.on('connection_error', (err) => {
-      console.log('[Collaboration] Engine connection error:', err.message, err.context);
+      logger.warn('[Collaboration] Engine connection error:', err.message, err.context);
     });
     
     this.io.on('connect_error', (err) => {
-      console.log('[Collaboration] Socket.IO connect error:', err);
+      logger.warn('[Collaboration] Socket.IO connect error:', err);
     });
     
     this.setupSocketIO();
     this.setupYjsWebSocket();
     this.startCleanupInterval();
     
-    console.log('[Collaboration] ✅ Unified collaboration service initialized (Socket.IO noServer + Yjs via central dispatcher)');
+    logger.info('[Collaboration] ✅ Unified collaboration service initialized (Socket.IO noServer + Yjs via central dispatcher)');
   }
   
   /**
@@ -180,7 +183,7 @@ export class UnifiedCollaborationService {
     // Engine.IO handles the WebSocket handshake and protocol
     this.engineServer.handleUpgrade(request, socket, head);
     
-    console.log('[Collaboration] Socket.IO WebSocket upgrade handled via central dispatcher');
+    logger.info('[Collaboration] Socket.IO WebSocket upgrade handled via central dispatcher');
   }
   
   private getColorForUser(odUserId: string): string {
@@ -197,7 +200,7 @@ export class UnifiedCollaborationService {
       
       const userIdValue = (userId || queryOdUserId) as string;
       if (!projectId || !userIdValue) {
-        console.log('[Collaboration] Socket rejected - missing projectId or userId');
+        logger.warn('[Collaboration] Socket rejected - missing projectId or userId');
         socket.disconnect();
         return;
       }
@@ -455,7 +458,7 @@ export class UnifiedCollaborationService {
               break;
           }
         } catch (error) {
-          console.error('[Collaboration] Yjs message error:', error);
+          logger.error('[Collaboration] Yjs message error:', error);
         }
       });
       
@@ -468,7 +471,7 @@ export class UnifiedCollaborationService {
   private setupYjsWebSocket() {
     // Connection handling is now done in handleYjsUpgrade via central dispatcher
     // This method is kept for any additional setup that may be needed
-    console.log('[Collaboration] Yjs WebSocket setup complete (using central dispatcher)');
+    logger.info('[Collaboration] Yjs WebSocket setup complete (using central dispatcher)');
   }
   
   private handleYjsSync(decoder: any, ws: WebSocket, room: CollaborationRoom) {
