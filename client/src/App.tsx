@@ -38,22 +38,22 @@ const RuntimesPage = lazy(() => import("@/pages/RuntimesPage"));
 const RuntimeDiagnosticsPage = lazy(() => import("@/pages/RuntimeDiagnosticsPage"));
 const RuntimePublicPage = lazy(() => import("@/pages/RuntimePublicPage"));
 
-const Dashboard = lazy(() => import("@/pages/Dashboard"));
-const Explore = lazy(() => import("@/pages/Explore"));
-const Teams = lazy(() => import("@/pages/Teams"));
-const Notifications = lazy(() => import("@/pages/Notifications"));
-const Analytics = lazy(() => import("@/pages/Analytics"));
+const Dashboard = instrumentedLazy(() => import("@/pages/Dashboard"), "Dashboard");
+const Explore = instrumentedLazy(() => import("@/pages/Explore"), "Explore");
+const Teams = instrumentedLazy(() => import("@/pages/Teams"), "Teams");
+const Notifications = instrumentedLazy(() => import("@/pages/Notifications"), "Notifications");
+const Analytics = instrumentedLazy(() => import("@/pages/Analytics"), "Analytics");
 
 const Education = lazy(() => import("@/pages/Education"));
 const Marketplace = lazy(() => import("@/pages/Marketplace"));
 const TemplateMarketplace = lazy(() => import("@/pages/TemplateMarketplace"));
 
-const TeamPage = lazy(() => import("@/pages/TeamPage"));
-const TeamSettings = lazy(() => import("@/pages/TeamSettings"));
-const Settings = lazy(() => import("@/pages/Settings"));
-const Profile = lazy(() => import("@/pages/Profile"));
-const UserProfile = lazy(() => import("@/pages/UserProfile"));
-const UserSettings = lazy(() => import("@/pages/UserSettings"));
+const TeamPage = instrumentedLazy(() => import("@/pages/TeamPage"), "TeamPage");
+const TeamSettings = instrumentedLazy(() => import("@/pages/TeamSettings"), "TeamSettings");
+const Settings = instrumentedLazy(() => import("@/pages/Settings"), "Settings");
+const Profile = instrumentedLazy(() => import("@/pages/Profile"), "Profile");
+const UserProfile = instrumentedLazy(() => import("@/pages/UserProfile"), "UserProfile");
+const UserSettings = instrumentedLazy(() => import("@/pages/UserSettings"), "UserSettings");
 const TemplatesPage = lazy(() => import("@/pages/TemplatesPage"));
 const Community = lazy(() => import("@/pages/Community"));
 const CommunityPost = lazy(() => import("@/pages/CommunityPost"));
@@ -135,21 +135,21 @@ const SSOConfiguration = lazy(() => import("@/pages/SSOConfiguration"));
 const AuditLogs = lazy(() => import("@/pages/AuditLogs"));
 const CustomRoles = lazy(() => import("@/pages/CustomRoles"));
 const Subprocessors = lazy(() => import("@/pages/Subprocessors"));
-const HealthDashboard = lazy(() => import("@/pages/HealthDashboard"));
-const StudentDPA = lazy(() => import("@/pages/StudentDPA"));
-const Languages = lazy(() => import("@/pages/Languages"));
-const GitHubImport = lazy(() => import("@/pages/GitHubImport"));
+const HealthDashboard = instrumentedLazy(() => import("@/pages/HealthDashboard"), "HealthDashboard");
+const StudentDPA = instrumentedLazy(() => import("@/pages/StudentDPA"), "StudentDPA");
+const Languages = instrumentedLazy(() => import("@/pages/Languages"), "Languages");
+const GitHubImport = instrumentedLazy(() => import("@/pages/GitHubImport"), "GitHubImport");
 
-const Secrets = lazy(() => import("@/pages/Secrets"));
-const Workflows = lazy(() => import("@/pages/Workflows"));
-const SSH = lazy(() => import("@/pages/SSH"));
-const SecurityScanner = lazy(() => import("@/pages/SecurityScanner"));
-const Dependencies = lazy(() => import("@/pages/Dependencies"));
-const ObjectStorage = lazy(() => import("@/pages/ObjectStorage"));
+const Secrets = instrumentedLazy(() => import("@/pages/Secrets"), "Secrets");
+const Workflows = instrumentedLazy(() => import("@/pages/Workflows"), "Workflows");
+const SSH = instrumentedLazy(() => import("@/pages/SSH"), "SSH");
+const SecurityScanner = instrumentedLazy(() => import("@/pages/SecurityScanner"), "SecurityScanner");
+const Dependencies = instrumentedLazy(() => import("@/pages/Dependencies"), "Dependencies");
+const ObjectStorage = instrumentedLazy(() => import("@/pages/ObjectStorage"), "ObjectStorage");
 
-const DatabaseManagement = lazy(() => import("@/pages/DatabaseManagement"));
-const SecretManagement = lazy(() => import("@/pages/SecretManagement"));
-const UsageAlerts = lazy(() => import("@/pages/UsageAlerts"));
+const DatabaseManagement = instrumentedLazy(() => import("@/pages/DatabaseManagement"), "DatabaseManagement");
+const SecretManagement = instrumentedLazy(() => import("@/pages/SecretManagement"), "SecretManagement");
+const UsageAlerts = instrumentedLazy(() => import("@/pages/UsageAlerts"), "UsageAlerts");
 // Newsletter pages
 const NewsletterConfirmed = lazy(() => import("@/pages/NewsletterConfirmed"));
 const NewsletterConfirm = lazy(() => import("@/pages/NewsletterConfirm"));
