@@ -237,7 +237,16 @@ export async function searchAll(
   query: string,
   token: string
 ): Promise<SearchResult[]> {
-  return request<SearchResult[]>(`/mobile/search?q=${encodeURIComponent(query)}`, { token });
+  // Search results use short TTL cache to enable offline access to recent searches
+  const result = await requestWithCache<SearchResult[]>(
+    `/mobile/search?q=${encodeURIComponent(query)}`, 
+    { 
+      token,
+      cacheTtl: 30 * 1000, // 30 seconds - short TTL for search
+      cacheKey: `search:${query}`,
+    }
+  );
+  return result.data;
 }
 
 // ============================================================================
@@ -297,16 +306,21 @@ export async function updateProfile(
   });
 }
 
-// File Manager API
+// File Manager API (with offline caching)
 export async function getFiles(
   projectId: number,
   path: string,
   token: string
 ): Promise<ProjectFile[]> {
-  return request<ProjectFile[]>(
+  const result = await requestWithCache<ProjectFile[]>(
     `/mobile/projects/${projectId}/files?path=${encodeURIComponent(path)}`,
-    { token }
+    { 
+      token,
+      cacheTtl: CACHE_TTL.files,
+      cacheKey: `projects/${projectId}/files/${path}`,
+    }
   );
+  return result.data;
 }
 
 export async function createFile(
@@ -359,7 +373,15 @@ export async function getDeployments(
   projectId: number,
   token: string
 ): Promise<Deployment[]> {
-  return request<Deployment[]>(`/mobile/projects/${projectId}/deployments`, { token });
+  const result = await requestWithCache<Deployment[]>(
+    `/mobile/projects/${projectId}/deployments`, 
+    { 
+      token,
+      cacheTtl: CACHE_TTL.deployments,
+      cacheKey: `projects/${projectId}/deployments`,
+    }
+  );
+  return result.data;
 }
 
 export async function createDeployment(
@@ -389,7 +411,15 @@ export async function getCollaborators(
   projectId: number,
   token: string
 ): Promise<Collaborator[]> {
-  return request<Collaborator[]>(`/mobile/projects/${projectId}/collaborators`, { token });
+  const result = await requestWithCache<Collaborator[]>(
+    `/mobile/projects/${projectId}/collaborators`, 
+    { 
+      token,
+      cacheTtl: CACHE_TTL.collaborators,
+      cacheKey: `projects/${projectId}/collaborators`,
+    }
+  );
+  return result.data;
 }
 
 export async function inviteCollaborator(
@@ -468,4 +498,63 @@ export async function clearCache(token: string): Promise<{ success: boolean; cle
     method: 'POST',
     token
   });
+}
+
+// ============================================================================
+// Offline Support
+// ============================================================================
+
+/**
+ * Prefetch critical data for offline use
+ * Call this when on good network to prepare for offline mode
+ */
+export async function prefetchForOffline(token: string, projectIds?: number[]): Promise<void> {
+  console.log('[API] Prefetching data for offline use...');
+  
+  const prefetchPromises: Promise<void>[] = [];
+
+  // Prefetch projects list
+  prefetchPromises.push(
+    offlineCacheService.prefetch('projects', () => 
+      request<Project[]>('/mobile/projects', { token }), 
+      CACHE_TTL.projects
+    )
+  );
+
+  // Prefetch templates
+  prefetchPromises.push(
+    offlineCacheService.prefetch('templates-all', () => 
+      request<Template[]>('/mobile/templates', { token }), 
+      CACHE_TTL.templates
+    )
+  );
+
+  // Prefetch files for specified projects
+  if (projectIds && projectIds.length > 0) {
+    for (const projectId of projectIds) {
+      prefetchPromises.push(
+        offlineCacheService.prefetch(`projects/${projectId}/files`, () => 
+          request<ProjectFile[]>(`/mobile/projects/${projectId}/files`, { token }), 
+          CACHE_TTL.files
+        )
+      );
+    }
+  }
+
+  await Promise.allSettled(prefetchPromises);
+  console.log('[API] Offline prefetch complete');
+}
+
+/**
+ * Get offline cache statistics
+ */
+export async function getOfflineCacheStats(): Promise<{ entryCount: number; keys: string[] }> {
+  return offlineCacheService.getStats();
+}
+
+/**
+ * Clear all offline cached data
+ */
+export async function clearOfflineCache(): Promise<void> {
+  await offlineCacheService.clearAll();
 }
