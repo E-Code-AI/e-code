@@ -466,21 +466,22 @@ export class RealDeploymentService {
   
   // Helper methods
   private async detectProjectType(projectPath: string): Promise<string> {
+    // File existence checks - absence is expected condition for detection
     try {
       await fs.access(path.join(projectPath, 'package.json'));
       return 'node';
-    } catch {}
+    } catch { /* File not found - check next type */ }
     
     try {
       await fs.access(path.join(projectPath, 'requirements.txt'));
       return 'python';
-    } catch {}
+    } catch { /* File not found - check next type */ }
     
     try {
       // Check for Go
       await fs.access(path.join(projectPath, 'go.mod'));
       return 'go';
-    } catch {}
+    } catch { /* File not found - use default */ }
     
     return 'static';
   }
@@ -592,7 +593,7 @@ CMD ["sh"]`;
           });
         }
       }
-    } catch {}
+    } catch { /* api/ directory may not exist - that's OK */ }
     
     return functions;
   }

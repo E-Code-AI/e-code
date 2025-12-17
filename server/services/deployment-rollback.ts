@@ -1989,7 +1989,9 @@ export class DeploymentRollbackService extends EventEmitter {
                 await fs.rm(path.join(deploymentPath, entry), { recursive: true, force: true });
               }
             }
-          } catch (e) { }
+          } catch {
+            // Expected: directory may not exist or may be in use during recovery cleanup
+          }
           
           await this.copyDeploymentFiles(filesBackupPath, `/tmp/deployments`);
         }

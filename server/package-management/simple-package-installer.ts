@@ -220,23 +220,23 @@ export class SimplePackageInstaller {
   }
   
   private async detectLanguage(projectDir: string): Promise<string> {
-    // Check for package.json
+    // Check for package.json (file not existing is expected condition)
     try {
       await fs.access(path.join(projectDir, 'package.json'));
       return 'nodejs';
-    } catch {}
+    } catch { /* File not found - check next type */ }
     
     // Check for requirements.txt
     try {
       await fs.access(path.join(projectDir, 'requirements.txt'));
       return 'python';
-    } catch {}
+    } catch { /* File not found - check next type */ }
     
     // Check for Gemfile
     try {
       await fs.access(path.join(projectDir, 'Gemfile'));
       return 'ruby';
-    } catch {}
+    } catch { /* File not found - use default */ }
     
     return 'nodejs'; // Default
   }

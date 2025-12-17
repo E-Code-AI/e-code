@@ -1897,56 +1897,121 @@ export class DatabaseStorage implements IStorage {
     return [];
   }
 
-  // Storage operations
+  // Storage operations - using objectStorageBuckets table
   async getStorageBuckets(): Promise<any[]> {
-    // Return sample buckets for now - in production, this would query a storage_buckets table
-    return [
-      {
-        id: 'global-assets',
-        name: 'global-assets',
-        region: 'us-east-1',
-        created: new Date('2024-01-01'),
-        isPublic: true,
-        objectCount: 0,
-        totalSize: 0,
-      }
-    ];
+    const buckets = await this.db
+      .select()
+      .from(objectStorageBuckets)
+      .orderBy(desc(objectStorageBuckets.createdAt));
+    
+    // Get file counts and sizes for each bucket
+    const bucketsWithStats = await Promise.all(buckets.map(async (bucket) => {
+      const files = await this.db
+        .select()
+        .from(objectStorageFiles)
+        .where(eq(objectStorageFiles.bucketId, bucket.id));
+      
+      return {
+        id: bucket.id,
+        name: bucket.bucketName,
+        region: bucket.region,
+        created: bucket.createdAt,
+        isPublic: bucket.publicAccess ?? false,
+        objectCount: files.length,
+        totalSize: files.reduce((sum, f) => sum + (f.size || 0), 0),
+        storageClass: bucket.storageClass,
+        corsEnabled: bucket.corsEnabled,
+        metadata: bucket.metadata,
+      };
+    }));
+    
+    return bucketsWithStats;
   }
 
   async createStorageBucket(bucket: { projectId: string; name: string; region: string; isPublic: boolean }): Promise<any> {
-    // In production, this would create a bucket in the storage_buckets table
+    const [newBucket] = await this.db
+      .insert(objectStorageBuckets)
+      .values({
+        projectId: parseInt(bucket.projectId),
+        bucketName: bucket.name,
+        region: bucket.region,
+        publicAccess: bucket.isPublic,
+        storageClass: 'STANDARD',
+        corsEnabled: true,
+        metadata: {},
+      })
+      .returning();
+    
     return {
-      id: crypto.randomBytes(8).toString('hex'),
-      ...bucket,
-      created: new Date(),
+      id: newBucket.id,
+      name: newBucket.bucketName,
+      region: newBucket.region,
+      created: newBucket.createdAt,
+      isPublic: newBucket.publicAccess ?? false,
       objectCount: 0,
       totalSize: 0,
+      storageClass: newBucket.storageClass,
+      corsEnabled: newBucket.corsEnabled,
     };
   }
 
   async getProjectStorageBuckets(projectId: string): Promise<any[]> {
-    // Return project-specific buckets - in production, query by projectId
-    return [
-      {
-        id: `project-${projectId}-assets`,
-        name: `project-${projectId}-assets`,
-        region: 'us-east-1',
-        created: new Date(),
-        isPublic: true,
-        objectCount: 0,
-        totalSize: 0,
-      }
-    ];
+    const buckets = await this.db
+      .select()
+      .from(objectStorageBuckets)
+      .where(eq(objectStorageBuckets.projectId, parseInt(projectId)))
+      .orderBy(desc(objectStorageBuckets.createdAt));
+    
+    // Get file counts and sizes for each bucket
+    const bucketsWithStats = await Promise.all(buckets.map(async (bucket) => {
+      const files = await this.db
+        .select()
+        .from(objectStorageFiles)
+        .where(eq(objectStorageFiles.bucketId, bucket.id));
+      
+      return {
+        id: bucket.id,
+        name: bucket.bucketName,
+        region: bucket.region,
+        created: bucket.createdAt,
+        isPublic: bucket.publicAccess ?? false,
+        objectCount: files.length,
+        totalSize: files.reduce((sum, f) => sum + (f.size || 0), 0),
+        storageClass: bucket.storageClass,
+        corsEnabled: bucket.corsEnabled,
+        metadata: bucket.metadata,
+      };
+    }));
+    
+    return bucketsWithStats;
   }
 
   async getStorageObjects(bucketId: string): Promise<any[]> {
-    // Return empty array for now - in production, query storage_objects table
-    return [];
+    const files = await this.db
+      .select()
+      .from(objectStorageFiles)
+      .where(eq(objectStorageFiles.bucketId, parseInt(bucketId)))
+      .orderBy(desc(objectStorageFiles.uploadedAt));
+    
+    return files.map(file => ({
+      id: file.id,
+      fileName: file.fileName,
+      filePath: file.filePath,
+      contentType: file.contentType,
+      size: file.size,
+      url: file.url,
+      uploadedAt: file.uploadedAt,
+      metadata: file.metadata,
+    }));
   }
 
   async deleteStorageObject(bucketId: string, objectKey: string): Promise<void> {
-    // In production, delete from storage_objects table
-    // Deleting object from bucket
+    await this.db
+      .delete(objectStorageFiles)
+      .where(and(
+        eq(objectStorageFiles.bucketId, parseInt(bucketId)),
+        eq(objectStorageFiles.filePath, objectKey)
+      ));
   }
 
   // Team operations

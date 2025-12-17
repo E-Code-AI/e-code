@@ -113,7 +113,9 @@ export class BuildVerificationService extends EventEmitter {
           setTimeout(() => {
             try {
               process.kill(-child.pid!, 'SIGKILL');
-            } catch {}
+            } catch {
+              // Expected: process may have already exited after SIGTERM
+            }
           }, 5000);
         }
       }, timeout);
