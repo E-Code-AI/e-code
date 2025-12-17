@@ -356,6 +356,7 @@ export interface IStorage {
   getFile(id: number): Promise<File | undefined>;
   getFilesByProjectId(projectId: string): Promise<File[]>;
   getFilesByProject(projectId: string): Promise<File[]>; // Alias for compatibility
+  getFileByPath(projectId: string, path: string): Promise<File | undefined>;
   createFile(file: InsertFile): Promise<File>;
   updateFile(id: number, file: Partial<InsertFile>): Promise<File | undefined>;
   deleteFile(id: number): Promise<boolean>;
@@ -1314,6 +1315,15 @@ export class DatabaseStorage implements IStorage {
 
   async getFilesByProject(projectId: string): Promise<File[]> {
     return this.getFilesByProjectId(projectId); // Alias for compatibility
+  }
+
+  async getFileByPath(projectId: string, path: string): Promise<File | undefined> {
+    const [file] = await this.db
+      .select()
+      .from(files)
+      .where(and(eq(files.projectId, parseInt(projectId)), eq(files.path, path)))
+      .limit(1);
+    return file;
   }
 
   async createFile(data: { projectId: string; path: string; content: string }): Promise<File>;
