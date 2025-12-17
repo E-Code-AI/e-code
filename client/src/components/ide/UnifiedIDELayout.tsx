@@ -86,6 +86,7 @@ const ExtensionsMarketplace = lazy(() => import('@/components/ExtensionsMarketpl
 
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
+import { useElectronMenuEvents } from '@/hooks/useElectron';
 
 interface UnifiedIDELayoutProps {
   projectId: string;
@@ -258,6 +259,85 @@ function UnifiedIDELayout({
     setter(false);
     setActiveActivityItem('files');
   }, [setActiveActivityItem]);
+
+  // Electron Desktop Menu Event Handlers (5.1 IPC Handlers)
+  useElectronMenuEvents({
+    onNewProject: () => {
+      // Navigate to new project page
+      window.location.href = '/';
+    },
+    onOpenProject: () => {
+      setShowQuickFileSearch(true);
+    },
+    onSave: () => {
+      // Trigger save via Monaco editor command
+      const event = new CustomEvent('electron-save');
+      document.dispatchEvent(event);
+      toast({ title: 'File saved', description: 'Your changes have been saved.' });
+    },
+    onSaveAll: () => {
+      // Trigger save all via Monaco editor
+      const event = new CustomEvent('electron-save-all');
+      document.dispatchEvent(event);
+      toast({ title: 'All files saved', description: 'All open files have been saved.' });
+    },
+    onPreferences: () => {
+      setShowSettingsPanel(true);
+    },
+    onFind: () => {
+      // Trigger Monaco find widget
+      const event = new CustomEvent('electron-find');
+      document.dispatchEvent(event);
+    },
+    onFindReplace: () => {
+      // Trigger Monaco find-replace widget
+      const event = new CustomEvent('electron-find-replace');
+      document.dispatchEvent(event);
+    },
+    onNewTerminal: () => {
+      handleAddTool('terminal');
+    },
+    onClearTerminal: () => {
+      const event = new CustomEvent('electron-clear-terminal');
+      document.dispatchEvent(event);
+    },
+    onToggleSidebar: () => {
+      setShowFileExplorer(prev => !prev);
+    },
+    onToggleTerminal: () => {
+      handleAddTool('terminal');
+    },
+    onToggleAI: () => {
+      setIsSidebarCollapsed(prev => !prev);
+      if (isSidebarCollapsed) {
+        setLeftPanelTab('agent');
+      }
+    },
+    onQuickOpen: () => {
+      setShowQuickFileSearch(true);
+    },
+    onGoToLine: () => {
+      const event = new CustomEvent('electron-go-to-line');
+      document.dispatchEvent(event);
+    },
+    onGoToSymbol: () => {
+      const event = new CustomEvent('electron-go-to-symbol');
+      document.dispatchEvent(event);
+    },
+    onGoToDefinition: () => {
+      const event = new CustomEvent('electron-go-to-definition');
+      document.dispatchEvent(event);
+    },
+    onRunCode: () => {
+      setIsRunning(true);
+    },
+    onStopExecution: () => {
+      setIsRunning(false);
+    },
+    onShowShortcuts: () => {
+      setShowKeyboardShortcuts(true);
+    },
+  });
   
   const tabletSwipeStartX = useRef<number>(0);
 
