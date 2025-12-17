@@ -290,19 +290,88 @@ export class RealTerminalService {
     }
   }
 
+  // 8.5 FIX: Improved terminal resize with fallback
   private async resizeTerminal(sessionId: string, message: any) {
     const session = this.sessions.get(sessionId);
-    if (!session || !session.exec) {
+    if (!session) {
       return;
     }
 
     const { cols, rows } = message;
+    
+    // Validate dimensions
+    if (!cols || !rows || cols < 1 || rows < 1 || cols > 500 || rows > 200) {
+      logger.warn(`Invalid resize dimensions: ${cols}x${rows}`);
+      return;
+    }
 
     try {
-      // Resize the exec session
-      await session.exec.resize({ w: cols, h: rows });
+      if (session.exec) {
+        // Try to resize the existing exec session
+        await session.exec.resize({ w: cols, h: rows });
+        logger.debug(`Resized terminal for session ${sessionId} to ${cols}x${rows}`);
+      }
     } catch (error) {
-      logger.error(`Failed to resize terminal: ${error}`);
+      logger.warn(`Direct resize failed for session ${sessionId}, attempting recreation: ${error}`);
+      
+      // 8.5 FIX: If resize fails, recreate the exec session with new dimensions
+      try {
+        const container = docker.getContainer(session.containerId);
+        
+        // Close old stream gracefully
+        if (session.stream) {
+          session.stream.destroy();
+        }
+        
+        // Create new exec with correct dimensions
+        const newExec = await container.exec({
+          AttachStdin: true,
+          AttachStdout: true,
+          AttachStderr: true,
+          Tty: true,
+          Cmd: ['/bin/sh'],
+          Env: [`TERM=xterm-256color`, `COLUMNS=${cols}`, `LINES=${rows}`]
+        });
+        
+        const newStream = await newExec.start({
+          Detach: false,
+          Tty: true,
+          stdin: true,
+          hijack: true
+        });
+        
+        // Update session with new exec and stream
+        session.exec = newExec;
+        session.stream = newStream;
+        
+        // Re-attach output handler
+        newStream.on('data', (chunk: Buffer) => {
+          session.ws.send(JSON.stringify({
+            type: 'output',
+            data: chunk.toString('base64')
+          }));
+        });
+        
+        newStream.on('end', () => {
+          session.ws.send(JSON.stringify({ type: 'exit', code: 0 }));
+          this.cleanupSession(sessionId);
+        });
+        
+        // Notify client of resize completion
+        session.ws.send(JSON.stringify({
+          type: 'resized',
+          cols,
+          rows
+        }));
+        
+        logger.info(`Recreated exec for session ${sessionId} with size ${cols}x${rows}`);
+      } catch (recreateError) {
+        logger.error(`Failed to recreate exec session: ${recreateError}`);
+        session.ws.send(JSON.stringify({
+          type: 'error',
+          error: 'Failed to resize terminal'
+        }));
+      }
     }
   }
 

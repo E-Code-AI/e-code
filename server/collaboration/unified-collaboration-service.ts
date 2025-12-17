@@ -567,19 +567,74 @@ export class UnifiedCollaborationService {
     this.io.to(room.id).emit('chat:message', message);
   }
   
+  // 8.6 FIX: Immediate presence update on status change
+  public updatePresence(
+    roomId: string, 
+    socketId: string, 
+    status: 'active' | 'idle' | 'away',
+    activity?: string
+  ): void {
+    const room = this.rooms.get(roomId);
+    if (!room) return;
+    
+    const collab = room.collaborators.get(socketId);
+    if (!collab) return;
+    
+    const previousStatus = collab.status;
+    collab.status = status;
+    collab.lastSeen = new Date();
+    if (activity) {
+      collab.activity = activity;
+    }
+    
+    // Only broadcast if status actually changed
+    if (previousStatus !== status) {
+      this.io.to(roomId).emit('presence:update', {
+        userId: collab.odUserId,
+        socketId,
+        status,
+        activity: collab.activity,
+        timestamp: Date.now(),
+      });
+      
+      logger.debug(`[Collaboration] Presence updated: ${collab.username} -> ${status}`);
+    }
+  }
+  
+  // 8.6 FIX: Update presence on any user activity (called from socket handlers)
+  public touchPresence(roomId: string, socketId: string): void {
+    const room = this.rooms.get(roomId);
+    if (!room) return;
+    
+    const collab = room.collaborators.get(socketId);
+    if (!collab) return;
+    
+    // If user was idle/away, mark as active immediately
+    if (collab.status !== 'active') {
+      this.updatePresence(roomId, socketId, 'active');
+    } else {
+      collab.lastSeen = new Date();
+    }
+  }
+
   private startCleanupInterval() {
+    // 8.6 FIX: Reduced interval from 60s to 10s for faster presence updates
     setInterval(() => {
       const now = new Date();
       this.rooms.forEach((room, roomId) => {
         room.collaborators.forEach((collab, socketId) => {
           const idleTime = now.getTime() - collab.lastSeen.getTime();
-          if (idleTime > 5 * 60 * 1000 && collab.status !== 'away') {
-            collab.status = idleTime > 10 * 60 * 1000 ? 'away' : 'idle';
-            this.io.to(roomId).emit('status:updated', {
-              odUserId: collab.odUserId,
-              socketId,
-              status: collab.status
-            });
+          
+          // 8.6 FIX: More granular status thresholds
+          let newStatus: 'active' | 'idle' | 'away' = collab.status;
+          if (idleTime > 10 * 60 * 1000) {
+            newStatus = 'away';
+          } else if (idleTime > 2 * 60 * 1000) {
+            newStatus = 'idle';
+          }
+          
+          if (collab.status !== newStatus) {
+            this.updatePresence(roomId, socketId, newStatus);
           }
         });
         
@@ -588,7 +643,7 @@ export class UnifiedCollaborationService {
           this.rooms.delete(roomId);
         }
       });
-    }, 60 * 1000);
+    }, 10 * 1000); // 8.6 FIX: 10 second interval instead of 60
   }
   
   public getRoomInfo(projectId: number) {

@@ -1,11 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { collaborativeEditingService } from '../services/collaborative-editing';
 import { db } from '../db';
-import { collaborationSessions, sessionParticipants } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { collaborationSessions, sessionParticipants, collaborationMessages } from '@shared/schema';
+import { eq, and, desc } from 'drizzle-orm';
 import { ensureAuthenticated as requireAuth } from '../middleware/auth';
 import { realEmailService } from '../services/real-email-service';
 import { createLogger } from '../utils/logger';
+import { getCollaborationService } from '../collaboration/unified-collaboration-service';
 
 const logger = createLogger('collaboration-router');
 
@@ -459,6 +460,225 @@ router.delete('/:projectId/users/:collaboratorId', requireAuth, async (req: Requ
   } catch (error) {
     logger.error('Error removing collaborator:', error);
     res.status(500).json({ error: 'Failed to remove collaborator' });
+  }
+});
+
+// ============================================================================
+// 8.8 FIX: CHAT MESSAGE PERSISTENCE ROUTES
+// ============================================================================
+
+// Get chat messages for a session
+router.get('/sessions/:sessionId/messages', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+    const limit = parseInt(req.query.limit as string) || 100;
+    const offset = parseInt(req.query.offset as string) || 0;
+    
+    const messages = await db
+      .select()
+      .from(collaborationMessages)
+      .where(eq(collaborationMessages.sessionId, sessionId))
+      .orderBy(desc(collaborationMessages.createdAt))
+      .limit(limit)
+      .offset(offset);
+    
+    // Reverse to get chronological order
+    res.json(messages.reverse());
+  } catch (error) {
+    logger.error('Error fetching chat messages:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Send a new chat message (persisted)
+router.post('/sessions/:sessionId/messages', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+    const { content, type = 'text', codeLanguage, metadata } = req.body;
+    const userId = req.user?.id;
+    const username = req.user?.username || 'Anonymous';
+    
+    if (!content) {
+      return res.status(400).json({ error: 'Message content is required' });
+    }
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    
+    // Verify session exists
+    const [session] = await db
+      .select()
+      .from(collaborationSessions)
+      .where(eq(collaborationSessions.id, sessionId));
+    
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    // Insert the message
+    const [newMessage] = await db
+      .insert(collaborationMessages)
+      .values({
+        sessionId,
+        userId,
+        username,
+        content,
+        type,
+        codeLanguage,
+        metadata,
+      })
+      .returning();
+    
+    // Also broadcast via WebSocket for real-time delivery
+    try {
+      const collabService = getCollaborationService();
+      if (collabService) {
+        collabService.sendChat(`project-${session.projectId}`, {
+          odUserId: userId,
+          username,
+          message: content,
+          timestamp: newMessage.createdAt.toISOString(),
+          id: newMessage.id,
+        });
+      }
+    } catch (wsError) {
+      logger.warn('Failed to broadcast message via WebSocket:', wsError);
+    }
+    
+    logger.debug(`[Collaboration] Message persisted: ${newMessage.id} by ${username}`);
+    
+    res.json(newMessage);
+  } catch (error) {
+    logger.error('Error saving chat message:', error);
+    res.status(500).json({ error: 'Failed to save message' });
+  }
+});
+
+// Get chat messages for a project (uses active session)
+router.get('/:projectId/messages', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const projectIdNum = parseInt(req.params.projectId, 10);
+    const limit = parseInt(req.query.limit as string) || 100;
+    
+    if (isNaN(projectIdNum)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+    
+    // Get active session for this project
+    const [activeSession] = await db
+      .select()
+      .from(collaborationSessions)
+      .where(
+        and(
+          eq(collaborationSessions.projectId, projectIdNum),
+          eq(collaborationSessions.active, true)
+        )
+      )
+      .orderBy(desc(collaborationSessions.createdAt))
+      .limit(1);
+    
+    if (!activeSession) {
+      return res.json([]);
+    }
+    
+    // Get messages for this session
+    const messages = await db
+      .select()
+      .from(collaborationMessages)
+      .where(eq(collaborationMessages.sessionId, activeSession.id))
+      .orderBy(desc(collaborationMessages.createdAt))
+      .limit(limit);
+    
+    res.json(messages.reverse());
+  } catch (error) {
+    logger.error('Error fetching project messages:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Send a message to a project (uses or creates active session)
+router.post('/:projectId/messages', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const projectIdNum = parseInt(req.params.projectId, 10);
+    const { content, type = 'text', codeLanguage, metadata, fileId } = req.body;
+    const userId = req.user?.id;
+    const username = req.user?.username || 'Anonymous';
+    
+    if (isNaN(projectIdNum)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+    
+    if (!content) {
+      return res.status(400).json({ error: 'Message content is required' });
+    }
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    
+    // Get or create active session for this project
+    let [activeSession] = await db
+      .select()
+      .from(collaborationSessions)
+      .where(
+        and(
+          eq(collaborationSessions.projectId, projectIdNum),
+          eq(collaborationSessions.active, true)
+        )
+      )
+      .orderBy(desc(collaborationSessions.createdAt))
+      .limit(1);
+    
+    // Create a new session if none exists
+    if (!activeSession) {
+      const [newSession] = await db
+        .insert(collaborationSessions)
+        .values({
+          projectId: projectIdNum,
+          fileId: fileId || 0, // Default to 0 if no file specified
+          active: true,
+        })
+        .returning();
+      activeSession = newSession;
+    }
+    
+    // Insert the message
+    const [newMessage] = await db
+      .insert(collaborationMessages)
+      .values({
+        sessionId: activeSession.id,
+        userId,
+        username,
+        content,
+        type,
+        codeLanguage,
+        metadata,
+      })
+      .returning();
+    
+    // Also broadcast via WebSocket for real-time delivery
+    try {
+      const collabService = getCollaborationService();
+      if (collabService) {
+        collabService.sendChat(`project-${projectIdNum}`, {
+          odUserId: userId,
+          username,
+          message: content,
+          timestamp: newMessage.createdAt.toISOString(),
+          id: newMessage.id,
+        });
+      }
+    } catch (wsError) {
+      logger.warn('Failed to broadcast message via WebSocket:', wsError);
+    }
+    
+    logger.debug(`[Collaboration] Project message persisted: ${newMessage.id} by ${username}`);
+    
+    res.json(newMessage);
+  } catch (error) {
+    logger.error('Error saving project message:', error);
+    res.status(500).json({ error: 'Failed to save message' });
   }
 });
 
