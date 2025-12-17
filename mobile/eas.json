@@ -29,7 +29,7 @@
       },
       "env": {
         "EXPO_PUBLIC_ENV": "staging",
-        "EXPO_PUBLIC_API_BASE": "https://staging.e-code.app/api"
+        "EXPO_PUBLIC_API_BASE": "https://e-code.ai/api"
       }
     },
     "production": {
@@ -42,7 +42,7 @@
       },
       "env": {
         "EXPO_PUBLIC_ENV": "production",
-        "EXPO_PUBLIC_API_BASE": "https://e-code.app/api"
+        "EXPO_PUBLIC_API_BASE": "https://e-code.ai/api"
       }
     }
   },
