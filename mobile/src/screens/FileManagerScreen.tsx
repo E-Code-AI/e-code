@@ -11,11 +11,14 @@ import {
   TextInput,
   Platform
 } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { ProjectFile } from '../types';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
 import { getFiles, createFile, renameFile, deleteFile } from '../services/api';
+import { SwipeableRow, swipeActions } from '../components/SwipeableRow';
+import { haptics } from '../services/haptics';
 
 type FileManagerScreenProps = NativeStackScreenProps<RootStackParamList, 'FileManager'>;
 
@@ -197,23 +200,36 @@ const FileManagerScreen: React.FC<FileManagerScreenProps> = ({ navigation, route
 
   const renderFile = useCallback(
     ({ item }: { item: ProjectFile }) => (
-      <TouchableOpacity
-        style={styles.fileItem}
-        onPress={() => handleFilePress(item)}
-        onLongPress={() => handleFileLongPress(item)}
-        data-testid={`file-item-${item.id}`}
+      <SwipeableRow
+        rightActions={[
+          swipeActions.delete(() => handleDelete(item)),
+          swipeActions.rename(() => handleRename(item)),
+        ]}
       >
-        <Text style={styles.fileIcon}>{getFileIcon(item)}</Text>
-        <View style={styles.fileInfo}>
-          <Text style={styles.fileName}>{item.name}</Text>
-          {!item.isDirectory && (
-            <Text style={styles.fileSize}>{formatFileSize(item.size)}</Text>
-          )}
-        </View>
-        <Text style={styles.fileArrow}>›</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.fileItem}
+          onPress={() => {
+            haptics.light();
+            handleFilePress(item);
+          }}
+          onLongPress={() => {
+            haptics.impact();
+            handleFileLongPress(item);
+          }}
+          data-testid={`file-item-${item.id}`}
+        >
+          <Text style={styles.fileIcon}>{getFileIcon(item)}</Text>
+          <View style={styles.fileInfo}>
+            <Text style={styles.fileName}>{item.name}</Text>
+            {!item.isDirectory && (
+              <Text style={styles.fileSize}>{formatFileSize(item.size)}</Text>
+            )}
+          </View>
+          <Text style={styles.fileArrow}>›</Text>
+        </TouchableOpacity>
+      </SwipeableRow>
     ),
-    [handleFilePress, handleFileLongPress]
+    [handleFilePress, handleFileLongPress, handleDelete, handleRename]
   );
 
   return (
