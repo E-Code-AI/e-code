@@ -21,6 +21,8 @@ const API_BASE = process.env.ECODE_API_URL || 'https://e-code.ai/api';
 
 interface Config {
   token?: string;
+  refreshToken?: string;
+  tokenExpiry?: number;
   apiUrl?: string;
   currentProject?: string;
 }
@@ -50,7 +52,108 @@ class ECodeCLI {
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2));
   }
 
+  private async validateToken(): Promise<boolean> {
+    if (!this.config.token) {
+      return false;
+    }
+
+    try {
+      // Decode JWT payload to check expiration
+      const parts = this.config.token.split('.');
+      if (parts.length !== 3) {
+        return false;
+      }
+
+      // Base64 decode the payload (handle URL-safe base64)
+      const base64Payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString('utf-8'));
+
+      // Check if token is expired (with 30 second buffer)
+      const expirationBuffer = 30 * 1000; // 30 seconds
+      if (payload.exp && (payload.exp * 1000) < (Date.now() + expirationBuffer)) {
+        // Token is expired or about to expire, try to refresh
+        console.log(chalk.yellow('Token expired, attempting refresh...'));
+        return await this.refreshToken();
+      }
+
+      return true;
+    } catch (error) {
+      // Invalid token format
+      console.error(chalk.red('Invalid token format'));
+      return false;
+    }
+  }
+
+  private async refreshToken(): Promise<boolean> {
+    if (!this.config.refreshToken) {
+      console.log(chalk.yellow('No refresh token available. Please login again.'));
+      return false;
+    }
+
+    try {
+      const response = await fetch(`${this.config.apiUrl || API_BASE}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          refreshToken: this.config.refreshToken,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Refresh failed');
+      }
+
+      const data = await response.json();
+
+      if (data.token) {
+        this.config.token = data.token;
+        if (data.refreshToken) {
+          this.config.refreshToken = data.refreshToken;
+        }
+        if (data.expiresAt) {
+          this.config.tokenExpiry = data.expiresAt;
+        }
+        this.saveConfig();
+        console.log(chalk.green('Token refreshed successfully'));
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.log(chalk.red('Session expired. Please login again with: ecode login'));
+      // Clear expired tokens
+      this.config.token = undefined;
+      this.config.refreshToken = undefined;
+      this.config.tokenExpiry = undefined;
+      this.saveConfig();
+      return false;
+    }
+  }
+
+  private async ensureAuthenticated(): Promise<boolean> {
+    if (!this.config.token) {
+      console.error(chalk.red('Not logged in. Please run: ecode login'));
+      return false;
+    }
+
+    const isValid = await this.validateToken();
+    if (!isValid) {
+      console.error(chalk.red('Authentication failed. Please run: ecode login'));
+      return false;
+    }
+
+    return true;
+  }
+
   private async apiRequest(endpoint: string, options: any = {}) {
+    // Validate token before making request (skip for auth endpoints)
+    if (!endpoint.includes('/auth/') && !endpoint.includes('/cli/login')) {
+      const isAuthenticated = await this.ensureAuthenticated();
+      if (!isAuthenticated) {
+        throw new Error('Authentication required');
+      }
+    }
+
     const url = `${this.config.apiUrl || API_BASE}${endpoint}`;
     const response = await fetch(url, {
       ...options,
@@ -60,6 +163,28 @@ class ECodeCLI {
         ...options.headers,
       },
     });
+
+    // Handle 401 specifically - try token refresh
+    if (response.status === 401) {
+      const refreshed = await this.refreshToken();
+      if (refreshed) {
+        // Retry the request with new token
+        const retryResponse = await fetch(url, {
+          ...options,
+          headers: {
+            'Authorization': `Bearer ${this.config.token}`,
+            'Content-Type': 'application/json',
+            ...options.headers,
+          },
+        });
+        
+        if (!retryResponse.ok) {
+          throw new Error(`API Error: ${retryResponse.statusText}`);
+        }
+        return retryResponse.json();
+      }
+      throw new Error('Authentication failed');
+    }
 
     if (!response.ok) {
       throw new Error(`API Error: ${response.statusText}`);
@@ -95,6 +220,14 @@ class ECodeCLI {
 
       if (data.token) {
         this.config.token = data.token;
+        // Store refresh token if provided
+        if (data.refreshToken) {
+          this.config.refreshToken = data.refreshToken;
+        }
+        // Store token expiry if provided
+        if (data.expiresAt) {
+          this.config.tokenExpiry = data.expiresAt;
+        }
         this.saveConfig();
         spinner.succeed(chalk.green('Login successful!'));
       } else {
@@ -107,6 +240,8 @@ class ECodeCLI {
 
   async logout() {
     this.config.token = undefined;
+    this.config.refreshToken = undefined;
+    this.config.tokenExpiry = undefined;
     this.saveConfig();
     console.log(chalk.green('Logged out successfully'));
   }
