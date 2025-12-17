@@ -10,6 +10,7 @@ import { AuthResponse, User } from './src/types';
 import { login as loginRequest } from './src/services/api';
 import { validateConfig, getConfig } from './src/services/config';
 import { notificationService } from './src/services/notifications';
+import { offlineCacheService } from './src/services/offline-cache';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import AgentScreen from './src/screens/AgentScreen';
@@ -154,6 +155,19 @@ export default function App() {
       };
     }
   }, [token, user]);
+
+  // Initialize offline cache service on app startup
+  useEffect(() => {
+    offlineCacheService.initialize().then(() => {
+      console.log('[App] Offline cache service initialized');
+    }).catch(err => {
+      console.warn('[App] Offline cache initialization failed:', err);
+    });
+
+    return () => {
+      offlineCacheService.destroy();
+    };
+  }, []);
 
   useEffect(() => {
     const restoreSession = async () => {
