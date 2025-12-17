@@ -160,6 +160,17 @@ export const config: AppConfig = createConfig();
 export const API_BASE_URL: string = config.apiBaseUrl;
 
 /**
+ * Get the current configuration
+ * Returns a structured config object for use in services
+ */
+export function getConfig(): { API_BASE_URL: string; environment: Environment } {
+  return {
+    API_BASE_URL: config.apiBaseUrl,
+    environment: config.environment,
+  };
+}
+
+/**
  * Validate configuration at runtime
  * Call this from your app entry point to fail fast
  */
