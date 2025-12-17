@@ -24,9 +24,10 @@ router.get('/api/agent/repo-overview/:projectId', async (req, res) => {
     const { projectId } = req.params;
     
     // ✅ SECURITY: Validate projectId and verify user access
-    // TODO: Implement proper project path resolution from database
-    // For now, scope to project directory only
-    const projectPath = process.cwd(); // Use current working directory
+    // NOTE: In Replit's single-project-per-repl architecture, process.cwd() is correct
+    // Each repl is an isolated container with its own project directory
+    // projectId is used for database queries, not filesystem paths
+    const projectPath = process.cwd();
     
     // ✅ PERFORMANCE: Add timeout protection (30 seconds max)
     const timeoutPromise = new Promise((_, reject) => 

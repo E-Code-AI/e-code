@@ -630,7 +630,39 @@ export class AdvancedAnalyticsService {
   }
 
   private async generatePDF(data: any): Promise<string> {
-    // In production, use a PDF generation library
-    return `PDF export not implemented. Data: ${JSON.stringify(data)}`;
+    // Generate a text-based report format that can be used as PDF content
+    // For full PDF generation, integrate pdfkit or puppeteer in production
+    const lines: string[] = [];
+    lines.push('═══════════════════════════════════════════════════════════');
+    lines.push('                    E-CODE ANALYTICS REPORT                 ');
+    lines.push('═══════════════════════════════════════════════════════════');
+    lines.push('');
+    lines.push(`Generated: ${new Date().toISOString()}`);
+    lines.push('');
+    
+    const formatSection = (title: string, obj: any, indent = 0): void => {
+      const prefix = '  '.repeat(indent);
+      lines.push(`${prefix}${title}`);
+      lines.push(`${prefix}${'─'.repeat(40)}`);
+      
+      for (const [key, value] of Object.entries(obj)) {
+        if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+          formatSection(key, value, indent + 1);
+        } else if (Array.isArray(value)) {
+          lines.push(`${prefix}  ${key}: [${value.length} items]`);
+        } else {
+          lines.push(`${prefix}  ${key}: ${value}`);
+        }
+      }
+      lines.push('');
+    };
+    
+    formatSection('Analytics Data', data);
+    
+    lines.push('═══════════════════════════════════════════════════════════');
+    lines.push('                      END OF REPORT                        ');
+    lines.push('═══════════════════════════════════════════════════════════');
+    
+    return lines.join('\n');
   }
 }

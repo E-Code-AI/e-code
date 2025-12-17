@@ -43,8 +43,26 @@ interface QueryResult {
 // Only allows lowercase letters, numbers, and underscores, starting with letter or underscore
 const SAFE_TABLE_NAME_REGEX = /^[a-z_][a-z0-9_]{0,62}$/i;
 
+// Whitelist of allowed tables for data access
+// Add new tables here when they are created in the schema
+const ALLOWED_TABLES = new Set([
+  'users', 'projects', 'files', 'deployments', 'subscriptions',
+  'sessions', 'ai_agent_sessions', 'ai_agent_conversations', 'ai_agent_steps',
+  'agent_plans', 'agent_step_cache', 'team_members', 'teams', 'invitations',
+  'environment_variables', 'api_keys', 'invoices', 'payment_methods',
+  'usage_records', 'audit_logs', 'build_logs', 'terminal_logs',
+  'test_runs', 'test_cases', 'security_scans', 'vulnerabilities',
+  'security_scan_settings', 'resource_metrics', 'pane_configurations',
+  'lsp_diagnostics', 'collaboration_sessions', 'collaboration_cursors',
+  'collaboration_selections', 'collaboration_changes'
+]);
+
 function isValidTableName(name: string): boolean {
   return SAFE_TABLE_NAME_REGEX.test(name) && !name.includes('--') && !name.includes(';');
+}
+
+function isAllowedTable(name: string): boolean {
+  return ALLOWED_TABLES.has(name.toLowerCase());
 }
 
 // Security: Escape identifier for safe use in SQL (double quotes escape)
@@ -243,6 +261,14 @@ databaseRouter.get('/table/:tableName/data', ensureAdmin, async (req: Request, r
     // Security: Strict table name validation
     if (!isValidTableName(tableName)) {
       return res.status(400).json({ error: 'Invalid table name format' });
+    }
+
+    // Security: Whitelist check - only allow access to known application tables
+    if (!isAllowedTable(tableName)) {
+      return res.status(403).json({ 
+        error: 'Access to this table is not permitted',
+        message: 'Table is not in the allowed whitelist'
+      });
     }
 
     const startTime = Date.now();

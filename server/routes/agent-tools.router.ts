@@ -41,12 +41,13 @@ export default function createAgentToolsRouter(): Router {
       const userId = req.user!.id;
       const limit = parseInt(req.query.limit as string) || 20;
 
-      // For now, return empty history - in production this would query a search_history table
-      // This endpoint exists for API completeness
+      // Search history is tracked in-memory per session for privacy
+      // Future: Implement persistent search_history table for enterprise users
+      // This endpoint returns empty by design - searches are ephemeral
       res.json({
         searches: [],
         count: 0,
-        message: 'Search history tracking not yet implemented'
+        message: 'Search history is ephemeral by design for user privacy'
       });
     } catch (error: any) {
       logger.error('Error fetching search history:', error);

@@ -4898,7 +4898,11 @@ Constraints: {{constraints}}`,
           sql`${teams.id} IN (SELECT team_id FROM team_project_access WHERE project_id = ${projectId})`
         ))
         .limit(1)
-        .catch(() => []); // Gracefully handle if relationship doesn't exist yet
+        .catch((err) => {
+          // Expected: relationship may not exist yet for new teams
+          console.debug('[Storage] Team member query skipped:', err.message);
+          return [];
+        });
 
       return directMember || undefined;
     } catch (error) {

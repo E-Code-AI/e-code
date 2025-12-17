@@ -220,7 +220,9 @@ export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming'
       });
       
       // Log violation to database (async, don't block response)
-      logViolation(req, tier, limitType, rejRes.consumedPoints || 0, limits.points).catch(() => {});
+      logViolation(req, tier, limitType, rejRes.consumedPoints || 0, limits.points).catch((err) => {
+        logger.warn('[RateLimiter] Failed to log violation:', err.message);
+      });
       
       res.setHeader('Retry-After', retryAfter);
       res.setHeader('X-RateLimit-Limit', limits.points * DEV_MULTIPLIER);
