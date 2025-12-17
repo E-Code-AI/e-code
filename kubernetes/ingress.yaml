@@ -1,4 +1,23 @@
-# Ingress Controller for E-Code Platform
+# =============================================================================
+# E-CODE INGRESS CONFIGURATION
+# =============================================================================
+# TLS SETUP OPTIONS:
+#
+# Option 1: cert-manager (RECOMMENDED - automatic Let's Encrypt)
+#   kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
+#   kubectl apply -f kubernetes/cert-manager-issuer.yaml
+#   # cert-manager will automatically create e-code-tls secret
+#
+# Option 2: Manual TLS secret
+#   kubectl create secret tls e-code-tls \
+#     --cert=path/to/fullchain.pem \
+#     --key=path/to/privkey.pem \
+#     -n e-code-platform
+#
+# Option 3: Cloud provider managed certificates
+#   - GKE: Use ManagedCertificate CRD
+#   - AWS: Use ACM with ALB Ingress Controller
+# =============================================================================
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
