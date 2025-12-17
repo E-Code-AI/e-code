@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -114,9 +114,43 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
     }
   };
 
+  // Security Fix: Store interval ref to ensure cleanup on unmount
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingAttemptsRef = useRef<number>(0);
+  const MAX_POLLING_ATTEMPTS = 300; // Max 5 minutes (300 * 1000ms)
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+        pollingTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  const stopPolling = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    if (pollingTimeoutRef.current) {
+      clearTimeout(pollingTimeoutRef.current);
+      pollingTimeoutRef.current = null;
+    }
+    pollingAttemptsRef.current = 0;
+    setRunning(false);
+  };
+
   const runAllTests = async () => {
     try {
       setRunning(true);
+      pollingAttemptsRef.current = 0;
       const response = await apiRequest('POST', `/api/tests/${projectId}/run`);
 
       if (response.ok) {
@@ -125,37 +159,51 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
           description: "Running all test suites..."
         });
         
-        // Poll for updates
-        const interval = setInterval(async () => {
+        // Poll for updates with guaranteed cleanup
+        pollingIntervalRef.current = setInterval(async () => {
+          // Security: Max attempts to prevent infinite polling
+          pollingAttemptsRef.current++;
+          if (pollingAttemptsRef.current >= MAX_POLLING_ATTEMPTS) {
+            stopPolling();
+            toast({
+              title: "Timeout",
+              description: "Test polling timed out after 5 minutes",
+              variant: "destructive"
+            });
+            return;
+          }
+
           await fetchTestSuites();
           await fetchTestRuns();
           
           // Check if tests are complete
-          const updatedResponse = await fetch(`/api/tests/${projectId}/status`, {
-            credentials: 'include'
-          });
-          
-          if (updatedResponse.ok) {
-            const status = await updatedResponse.json();
-            if (status.running === false) {
-              clearInterval(interval);
-              setRunning(false);
-              toast({
-                title: "Tests Completed",
-                description: `${status.results.passed}/${status.results.total} tests passed`
-              });
+          try {
+            const updatedResponse = await fetch(`/api/tests/${projectId}/status`, {
+              credentials: 'include'
+            });
+            
+            if (updatedResponse.ok) {
+              const status = await updatedResponse.json();
+              if (status.running === false) {
+                stopPolling();
+                toast({
+                  title: "Tests Completed",
+                  description: `${status.results.passed}/${status.results.total} tests passed`
+                });
+              }
             }
+          } catch (e) {
+            // Network error during polling - continue polling
           }
         }, 1000);
         
-        // Stop polling after 5 minutes
-        setTimeout(() => {
-          clearInterval(interval);
-          setRunning(false);
+        // Backup timeout to stop polling after 5 minutes
+        pollingTimeoutRef.current = setTimeout(() => {
+          stopPolling();
         }, 300000);
       }
     } catch (error) {
-      setRunning(false);
+      stopPolling();
       toast({
         title: "Error",
         description: "Failed to run tests",
