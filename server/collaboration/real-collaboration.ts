@@ -200,6 +200,11 @@ export class RealCollaborationService {
   private yjsWss!: WebSocketServer;
   private sessions: Map<string, CollaborationSession> = new Map();
   private userSessions: Map<number, Set<string>> = new Map();
+  
+  // Security Fix: Debounced save timers to prevent data loss
+  // Replaces probabilistic 10% save with guaranteed debounced saves
+  private saveTimers: Map<string, NodeJS.Timeout> = new Map();
+  private readonly SAVE_DEBOUNCE_MS = 2000; // Save 2 seconds after last change
 
   constructor() {}
 
@@ -470,10 +475,36 @@ export class RealCollaborationService {
       operation: message.operation
     }, session.peers.get(peerId)?.ws);
 
-    // Auto-save periodically
-    if (Math.random() < 0.1) { // 10% chance to save
-      await this.saveDocument(session);
+    // Security Fix: Use debounced save instead of probabilistic save
+    // This guarantees saves happen 2 seconds after the last change
+    this.scheduleDebouncedSave(session);
+  }
+
+  /**
+   * Schedule a debounced save for the session
+   * Guarantees document is saved 2 seconds after the last modification
+   * Replaces the unsafe probabilistic 10% save that could cause data loss
+   */
+  private scheduleDebouncedSave(session: CollaborationSession): void {
+    const sessionKey = `${session.projectId}-${session.fileId}`;
+    
+    // Clear existing timer if any
+    const existingTimer = this.saveTimers.get(sessionKey);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
     }
+    
+    // Schedule new save
+    const timer = setTimeout(async () => {
+      try {
+        await this.saveDocument(session);
+        this.saveTimers.delete(sessionKey);
+      } catch (error) {
+        logger.error(`Failed to save document for session ${sessionKey}:`, error);
+      }
+    }, this.SAVE_DEBOUNCE_MS);
+    
+    this.saveTimers.set(sessionKey, timer);
   }
 
   private async handleWebRTCSignal(session: CollaborationSession, peerId: string, message: any) {
@@ -594,6 +625,14 @@ export class RealCollaborationService {
 
     // Clean up empty sessions
     if (session.peers.size === 0) {
+      // Clear any pending debounced save timer
+      const existingTimer = this.saveTimers.get(sessionKey);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+        this.saveTimers.delete(sessionKey);
+      }
+      
+      // Final save before cleanup
       this.saveDocument(session).then(() => {
         session.doc.destroy();
         this.sessions.delete(sessionKey);
