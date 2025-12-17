@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { createSecurityWebSocket, type ResilientWebSocket, type ConnectionState } from '@/lib/websocket-resilience';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -15,6 +16,7 @@ import {
   ChevronDown,
   ChevronUp,
   Package,
+  WifiOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SecurityScan, Vulnerability, SecurityScanSettings } from '@shared/schema';
@@ -49,8 +51,8 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
   const [showSettings, setShowSettings] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [realtimeScans, setRealtimeScans] = useState<SecurityScan[]>([]);
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [wsConnectionState, setWsConnectionState] = useState<ConnectionState>('disconnected');
+  const wsRef = useRef<ResilientWebSocket | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -158,64 +160,57 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
   useEffect(() => {
     if (!projectId) return;
 
-    const connectWebSocket = () => {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/api/security-scans/ws?projectId=${projectId}`;
+    const resilientWs = createSecurityWebSocket(projectId);
+    wsRef.current = resilientWs;
 
+    const unsubscribeState = resilientWs.onStateChange((event) => {
+      setWsConnectionState(event.state);
+      
+      if (event.state === 'failed' || event.state === 'circuit_open') {
+        console.warn(`[MobileSecurityPanel] WebSocket ${event.state}: ${event.error}`);
+      }
+    });
+
+    const unsubscribeMessage = resilientWs.onMessage((event) => {
       try {
-        const ws = new WebSocket(wsUrl);
-        wsRef.current = ws;
-
-        ws.onmessage = (event) => {
-          try {
-            const message: WebSocketMessage = JSON.parse(event.data);
-            switch (message.type) {
-              case 'initial':
-                if (message.scans) setRealtimeScans(message.scans);
-                break;
-              case 'scan_update':
-                if (message.scan) {
-                  setRealtimeScans(prev => {
-                    const index = prev.findIndex(s => s.id === message.scan!.id);
-                    if (index >= 0) {
-                      const updated = [...prev];
-                      updated[index] = message.scan!;
-                      return updated;
-                    }
-                    return [message.scan!, ...prev];
-                  });
+        const message: WebSocketMessage = JSON.parse(event.data);
+        switch (message.type) {
+          case 'initial':
+            if (message.scans) setRealtimeScans(message.scans);
+            break;
+          case 'scan_update':
+            if (message.scan) {
+              setRealtimeScans(prev => {
+                const index = prev.findIndex(s => s.id === message.scan!.id);
+                if (index >= 0) {
+                  const updated = [...prev];
+                  updated[index] = message.scan!;
+                  return updated;
                 }
-                break;
-              case 'vulnerability_update':
-                queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'] });
-                queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'hidden'] });
-                break;
-              case 'error':
-                console.error('[MobileSecurityPanel] WebSocket error:', message.message);
-                break;
+                return [message.scan!, ...prev];
+              });
             }
-          } catch (error) {
-            console.error('[MobileSecurityPanel] Error parsing WebSocket message:', error);
-          }
-        };
-
-        ws.onerror = (error) => console.error('[MobileSecurityPanel] WebSocket error:', error);
-        ws.onclose = () => {
-          wsRef.current = null;
-          reconnectTimeoutRef.current = setTimeout(connectWebSocket, 3000);
-        };
+            break;
+          case 'vulnerability_update':
+            queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'hidden'] });
+            break;
+          case 'error':
+            console.error('[MobileSecurityPanel] WebSocket error:', message.message);
+            break;
+        }
       } catch (error) {
-        console.error('[MobileSecurityPanel] Error creating WebSocket:', error);
+        console.error('[MobileSecurityPanel] Error parsing WebSocket message:', error);
       }
-    };
+    });
 
-    connectWebSocket();
+    resilientWs.connect();
+
     return () => {
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
+      unsubscribeState();
+      unsubscribeMessage();
+      resilientWs.destroy();
+      wsRef.current = null;
     };
   }, [projectId, queryClient]);
 
