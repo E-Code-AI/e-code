@@ -36,6 +36,7 @@ export class PlanCacheService {
       // Increment hit count
       cached.metadata.hitCount++;
       await redisCacheService.set(cacheKey, cached, this.TTL_SECONDS);
+      this.trackCacheOperation('hit');
     }
 
     return cached;
@@ -66,6 +67,7 @@ export class PlanCacheService {
     };
 
     await redisCacheService.set(cacheKey, cachedPlan, this.TTL_SECONDS);
+    this.trackCacheOperation('set', params.tokensUsed);
   }
 
   /**
@@ -90,20 +92,40 @@ export class PlanCacheService {
 
   /**
    * Get cache statistics
+   * Uses internal counters tracked on each cache hit
    */
+  private cacheStats = {
+    totalCached: 0,
+    totalHits: 0,
+    totalTokensSaved: 0,
+  };
+
   async getStats(): Promise<{
     totalCached: number;
     totalHits: number;
     avgTokensSaved: number;
   }> {
-    // This would require iterating all cache keys
-    // Not implemented in current Redis service
-    // Return placeholder
     return {
-      totalCached: 0,
-      totalHits: 0,
-      avgTokensSaved: 0,
+      totalCached: this.cacheStats.totalCached,
+      totalHits: this.cacheStats.totalHits,
+      avgTokensSaved: this.cacheStats.totalCached > 0 
+        ? Math.round(this.cacheStats.totalTokensSaved / this.cacheStats.totalCached) 
+        : 0,
     };
+  }
+
+  /**
+   * Increment cache stats (called internally on cache operations)
+   */
+  private trackCacheOperation(operation: 'set' | 'hit', tokensUsed?: number): void {
+    if (operation === 'set') {
+      this.cacheStats.totalCached++;
+      if (tokensUsed) {
+        this.cacheStats.totalTokensSaved += tokensUsed;
+      }
+    } else if (operation === 'hit') {
+      this.cacheStats.totalHits++;
+    }
   }
 
   /**

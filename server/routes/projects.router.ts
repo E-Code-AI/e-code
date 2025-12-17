@@ -605,11 +605,67 @@ export class ProjectsRouter {
             });
           }
         } else if (action.type === 'edit_file') {
-          // Handle edit_file action
-          return res.status(501).json({ 
-            error: 'Edit file action not yet implemented',
-            code: 'NOT_IMPLEMENTED' 
-          });
+          try {
+            // Validate path (defense in depth)
+            const pathValidation = aiSecurityService.validatePath(action.path);
+            if (!pathValidation.valid) {
+              await aiSecurityService.logAction(userId, projectId, action, {
+                success: false,
+                error: `Path validation failed: ${pathValidation.reason}`
+              });
+
+              return res.status(403).json({ 
+                error: pathValidation.reason,
+                code: 'SECURITY_BLOCKED' 
+              });
+            }
+
+            const targetPath = pathValidation.sanitized || action.path;
+
+            // Get existing file to verify it exists
+            const existingFile = await this.storage.getFileByPath(projectId, targetPath);
+            if (!existingFile) {
+              await aiSecurityService.logAction(userId, projectId, action, {
+                success: false,
+                error: 'File not found'
+              });
+
+              return res.status(404).json({ 
+                error: `File not found: ${targetPath}`,
+                code: 'FILE_NOT_FOUND' 
+              });
+            }
+
+            // Update file content
+            const updatedFile = await this.storage.updateFile(existingFile.id, {
+              content: action.content || ''
+            });
+
+            // Log successful action
+            await aiSecurityService.logAction(userId, projectId, action, {
+              success: true,
+              fileId: String(existingFile.id)
+            }, actionId);
+
+            return res.json({ 
+              success: true,
+              file: updatedFile,
+              message: `Updated ${targetPath}` 
+            });
+
+          } catch (error: any) {
+            console.error(`[ProjectAI] Failed to edit file:`, error);
+
+            await aiSecurityService.logAction(userId, projectId, action, {
+              success: false,
+              error: error.message
+            });
+
+            return res.status(500).json({ 
+              error: error.message || 'Failed to edit file',
+              code: 'EXECUTION_FAILED' 
+            });
+          }
         } else {
           // TypeScript ensures this is unreachable, but keeping for safety
           return res.status(400).json({ 
