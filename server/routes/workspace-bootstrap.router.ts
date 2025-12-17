@@ -35,6 +35,12 @@ import { speculativeScaffold } from '../services/speculative-scaffold.service';
 import { ViewportValidationService } from '../services/viewport-validation.service';
 import { memoryBankService } from '../services/memory-bank.service';
 import * as path from 'path';
+import { exec, spawn } from 'child_process';
+import { promisify } from 'util';
+import * as fs from 'fs';
+import * as http from 'http';
+
+const execAsync = promisify(exec);
 
 const logger = createLogger('workspace-bootstrap');
 const router = Router();
@@ -331,9 +337,6 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
       // Fire and forget - npm install runs in background
       (async () => {
         try {
-          const { exec } = require('child_process');
-          const { promisify } = require('util');
-          const execAsync = promisify(exec);
           const installStartTime = Date.now();
           
           await execAsync('npm install --prefer-offline --no-audit', { 
@@ -354,9 +357,6 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
       // Legacy blocking behavior
       try {
         logger.info(`[Bootstrap] Running npm install in ${scaffoldPath}`);
-        const { exec } = require('child_process');
-        const { promisify } = require('util');
-        const execAsync = promisify(exec);
         const { stdout } = await execAsync('npm install --prefer-offline --no-audit', { 
           cwd: scaffoldPath, 
           timeout: 120000 
@@ -376,14 +376,10 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     if (ENABLE_BOOTSTRAP_VALIDATION) {
       try {
         logger.info(`[Bootstrap] Running validation suite (can be disabled via ENABLE_BOOTSTRAP_VALIDATION=false)`);
-        const { exec } = require('child_process');
-        const { promisify } = require('util');
-        const execAsync = promisify(exec);
         
         // ✅ Task 2 (Dec 14, 2025): Build verification after npm install
         try {
           // Check if build script exists in package.json
-          const fs = require('fs');
           const packageJsonPath = path.join(scaffoldPath, 'package.json');
           let hasBuildScript = false;
           
@@ -406,7 +402,6 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
             // ✅ FIX (Dec 14, 2025): Properly await process and check exit code
             logger.info(`[Bootstrap] No build script found, running npm run dev health check`);
             try {
-              const { spawn } = require('child_process');
               const devProcess = spawn('npm', ['run', 'dev'], { 
                 cwd: scaffoldPath,
                 stdio: 'pipe'
@@ -464,8 +459,6 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
           const viewportValidator = new ViewportValidationService();
           
           // Start dev server for validation on port 3099
-          const { spawn } = require('child_process');
-          const http = require('http');
           const validationPort = 3099;
           
           // Spawn with explicit port argument for Vite
