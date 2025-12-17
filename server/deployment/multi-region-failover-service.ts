@@ -2,6 +2,10 @@ import { EventEmitter } from 'events';
 import axios from 'axios';
 import { db } from '../db';
 import { eq, and, inArray } from 'drizzle-orm';
+import { isKubernetesEnabled } from '../config/deployment-mode';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('multi-region-failover');
 
 interface Region {
     id: string;
@@ -66,6 +70,10 @@ export class MultiRegionFailoverService extends EventEmitter {
 
     constructor() {
         super();
+        if (!isKubernetesEnabled()) {
+            logger.info('Multi-region failover disabled in single-VM mode');
+            return;
+        }
         this.initializeRegions();
         this.startGlobalMonitoring();
     }
@@ -163,6 +171,10 @@ export class MultiRegionFailoverService extends EventEmitter {
         secondaryRegions: string[],
         config?: Partial<MultiRegionDeployment>
     ): Promise<MultiRegionDeployment> {
+        if (!isKubernetesEnabled()) {
+            throw new Error('Multi-region deployment is disabled in single-VM mode');
+        }
+        
         // Validate regions
         for (const regionId of [primaryRegion, ...secondaryRegions]) {
             const region = this.regions.get(regionId);

@@ -3,6 +3,10 @@ import * as crypto from 'crypto';
 import * as path from 'path';
 import { storage } from '../storage';
 import { containerBuilder } from './container-builder';
+import { isKubernetesEnabled } from '../config/deployment-mode';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('k8s-deployment-service');
 
 export interface DeploymentConfig {
   projectId: number;
@@ -36,7 +40,14 @@ export class K8sDeploymentService {
   private k8sNetworkingApi: k8s.NetworkingV1Api;
   private kc: k8s.KubeConfig;
   
+  private initialized = false;
+
   constructor() {
+    if (!isKubernetesEnabled()) {
+      logger.info('K8s deployment service disabled in single-VM mode');
+      return;
+    }
+
     this.kc = new k8s.KubeConfig();
     
     // Load from default kubeconfig or in-cluster config
@@ -50,9 +61,15 @@ export class K8sDeploymentService {
     this.k8sApi = this.kc.makeApiClient(k8s.CoreV1Api);
     this.k8sAppsApi = this.kc.makeApiClient(k8s.AppsV1Api);
     this.k8sNetworkingApi = this.kc.makeApiClient(k8s.NetworkingV1Api);
+    this.initialized = true;
   }
 
   async deploy(config: DeploymentConfig): Promise<DeploymentStatus> {
+    if (!isKubernetesEnabled() || !this.initialized) {
+      logger.warn('K8s deployment requested but K8s is disabled in single-VM mode');
+      throw new Error('Kubernetes deployment is disabled in single-VM mode');
+    }
+
     const deploymentId = crypto.randomBytes(16).toString('hex');
     const project = await storage.getProject(config.projectId);
     

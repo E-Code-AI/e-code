@@ -53,6 +53,31 @@ Zero-dependency animation system replacing framer-motion hooks for 60fps GPU-acc
 - **Memory safety**: All hooks properly clean up RAF subscriptions and WAAPI animations on unmount
 - **Import pattern**: `import { useNativeMotionValue, useSpringValue, usePanGesture, createPanHandlers } from '@/lib/native-motion'`
 
+### Deployment Architecture (Single-VM vs Kubernetes)
+The platform supports two deployment modes with graceful fallbacks:
+
+**Configuration (`server/config/deployment-mode.ts`):**
+- `DEPLOYMENT_MODE` env var: `single-vm` (default) | `kubernetes` | `hybrid`
+- `KUBERNETES_ENABLED` env var: `true` | `false` (default)
+- Functions: `isKubernetesEnabled()`, `isSingleVMMode()`, `getDeploymentMode()`
+
+**Single-VM Mode (Default - Replit):**
+- Uses `docker-compose.prod.yml` for orchestration
+- Services: Node.js app, PostgreSQL, Redis, Docker-in-Docker (sandbox)
+- K8s modules skip initialization and return graceful no-ops
+- All health endpoints work regardless of mode
+
+**Kubernetes Mode (Enterprise):**
+- Requires `KUBERNETES_ENABLED=true` and `DEPLOYMENT_MODE=kubernetes`
+- Enables full K8s orchestration via `@kubernetes/client-node`
+- Multi-region failover, auto-scaling, Ingress management
+- **Note**: K8s modules have type mismatches with latest `@kubernetes/client-node` API - requires library update for full K8s support
+
+**Files:**
+- `docker-compose.prod.yml` - Single-VM production deployment
+- `.env.production.example` - Required environment variables
+- `server/config/deployment-mode.ts` - Mode detection and feature flags
+
 ### Secure Code Execution (Docker Isolation)
 Enterprise-grade sandboxed code execution for user-submitted code:
 - **DockerExecutor** (`server/docker-executor.ts`): Secure container-based execution replacing insecure simple-executor
