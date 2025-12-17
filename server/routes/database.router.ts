@@ -39,6 +39,20 @@ interface QueryResult {
   }>;
 }
 
+// Security: Strict table name validation to prevent SQL injection
+// Only allows lowercase letters, numbers, and underscores, starting with letter or underscore
+const SAFE_TABLE_NAME_REGEX = /^[a-z_][a-z0-9_]{0,62}$/i;
+
+function isValidTableName(name: string): boolean {
+  return SAFE_TABLE_NAME_REGEX.test(name) && !name.includes('--') && !name.includes(';');
+}
+
+// Security: Escape identifier for safe use in SQL (double quotes escape)
+function escapeIdentifier(identifier: string): string {
+  // Replace any double quotes with two double quotes (SQL standard escape)
+  return `"${identifier.replace(/"/g, '""')}"`;
+}
+
 /**
  * GET /api/admin/database/tables
  * Liste toutes les tables disponibles avec leurs métadonnées
@@ -48,7 +62,7 @@ databaseRouter.get('/tables', ensureAdmin, async (req: Request, res: Response) =
   try {
     const startTime = Date.now();
 
-    // Query PostgreSQL system tables to get all user tables
+    // Query PostgreSQL system tables to get all user tables (no user input - safe)
     const result = await pool.unsafe(`
       SELECT 
         table_name,
@@ -63,23 +77,32 @@ databaseRouter.get('/tables', ensureAdmin, async (req: Request, res: Response) =
     const tables: TableInfo[] = await Promise.all(
       result.map(async (table: any) => {
         try {
-          const countResult = await pool.unsafe(`
-            SELECT COUNT(*) as count FROM "${table.table_name}"
-          `);
+          const tableName = table.table_name;
           
-          const columnsResult = await pool.unsafe(`
+          // Security: Validate table name from database result
+          if (!isValidTableName(tableName)) {
+            console.warn(`[Database API] Skipping invalid table name: ${tableName}`);
+            return { name: tableName, rowCount: 0, columns: [] };
+          }
+          
+          // Use parameterized query for columns (information_schema is safe)
+          const columnsResult = await pool`
             SELECT 
               column_name,
               data_type,
               is_nullable,
               column_default
             FROM information_schema.columns
-            WHERE table_name = '${table.table_name}'
+            WHERE table_name = ${tableName}
             ORDER BY ordinal_position
-          `);
+          `;
+
+          // For COUNT query, we must use identifier - validated above
+          const safeTableName = escapeIdentifier(tableName);
+          const countResult = await pool.unsafe(`SELECT COUNT(*) as count FROM ${safeTableName}`);
 
           return {
-            name: table.table_name,
+            name: tableName,
             rowCount: parseInt(countResult[0]?.count || '0', 10),
             columns: columnsResult.map((col: any) => ({
               name: col.column_name,
@@ -122,11 +145,12 @@ databaseRouter.get('/table/:tableName/schema', ensureAdmin, async (req: Request,
     const { tableName } = req.params;
 
     // Security: Validate table name to prevent SQL injection
-    if (!/^[a-z_][a-z0-9_]*$/i.test(tableName)) {
+    if (!isValidTableName(tableName)) {
       return res.status(400).json({ error: 'Invalid table name format' });
     }
 
-    const columnsResult = await pool.unsafe(`
+    // Use parameterized queries for all user-provided values
+    const columnsResult = await pool`
       SELECT 
         c.column_name,
         c.data_type,
@@ -141,17 +165,17 @@ databaseRouter.get('/table/:tableName/schema', ensureAdmin, async (req: Request,
         AND c.column_name = kcu.column_name
       LEFT JOIN information_schema.table_constraints tc 
         ON kcu.constraint_name = tc.constraint_name
-      WHERE c.table_name = '${tableName}'
+      WHERE c.table_name = ${tableName}
       ORDER BY c.ordinal_position
-    `);
+    `;
 
-    const indexesResult = await pool.unsafe(`
+    const indexesResult = await pool`
       SELECT
         indexname,
         indexdef
       FROM pg_indexes
-      WHERE tablename = '${tableName}'
-    `);
+      WHERE tablename = ${tableName}
+    `;
 
     return res.json({
       tableName,
@@ -206,35 +230,51 @@ databaseRouter.post('/query', ensureAdmin, async (req: Request, res: Response) =
  * GET /api/admin/database/table/:tableName/data
  * Retourne les données d'une table avec pagination
  * ⚠️ ADMIN-ONLY
+ * 
+ * Security: Uses parameterized queries and validated identifiers
  */
 databaseRouter.get('/table/:tableName/data', ensureAdmin, async (req: Request, res: Response) => {
   try {
     const { tableName } = req.params;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = Math.min(parseInt(req.query.limit as string) || 100, 1000);
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(Math.max(1, parseInt(req.query.limit as string) || 100), 1000);
     const offset = (page - 1) * limit;
 
-    // Security: Validate table name
-    if (!/^[a-z_][a-z0-9_]*$/i.test(tableName)) {
+    // Security: Strict table name validation
+    if (!isValidTableName(tableName)) {
       return res.status(400).json({ error: 'Invalid table name format' });
     }
 
     const startTime = Date.now();
+    const safeTableName = escapeIdentifier(tableName);
 
-    // Get total count
-    const countResult = await pool.unsafe(`
-      SELECT COUNT(*) as total FROM "${tableName}"
-    `);
+    // Get total count - table name validated and escaped
+    const countResult = await pool.unsafe(`SELECT COUNT(*) as total FROM ${safeTableName}`);
     const total = parseInt(countResult[0]?.total || '0', 10);
 
-    // Get paginated data
-    const rows = await pool.unsafe(`
-      SELECT * FROM "${tableName}"
-      ORDER BY (SELECT column_name FROM information_schema.columns 
-                WHERE table_name = '${tableName}' 
-                LIMIT 1) 
-      LIMIT ${limit} OFFSET ${offset}
-    `);
+    // Get first column name for ordering using parameterized query
+    const firstColumnResult = await pool`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = ${tableName} 
+      ORDER BY ordinal_position 
+      LIMIT 1
+    `;
+    
+    // Get paginated data with safe ordering
+    // Note: LIMIT and OFFSET are integers, validated above
+    let rows;
+    if (firstColumnResult.length > 0) {
+      const orderColumn = escapeIdentifier(firstColumnResult[0].column_name);
+      rows = await pool.unsafe(
+        `SELECT * FROM ${safeTableName} ORDER BY ${orderColumn} LIMIT ${limit} OFFSET ${offset}`
+      );
+    } else {
+      // Fallback: no ordering if no columns found
+      rows = await pool.unsafe(
+        `SELECT * FROM ${safeTableName} LIMIT ${limit} OFFSET ${offset}`
+      );
+    }
 
     const executionTime = Date.now() - startTime;
 
@@ -261,24 +301,26 @@ databaseRouter.get('/table/:tableName/data', ensureAdmin, async (req: Request, r
  * GET /api/admin/database/stats
  * Retourne les statistiques globales de la base de données
  * ⚠️ ADMIN-ONLY
+ * 
+ * Security: No user input in these queries - all from system catalog
  */
 databaseRouter.get('/stats', ensureAdmin, async (req: Request, res: Response) => {
   try {
     const startTime = Date.now();
 
-    // Get database size
+    // Get database size (no user input - safe)
     const sizeResult = await pool.unsafe(`
       SELECT pg_database_size(current_database()) as size
     `);
 
-    // Get table count
+    // Get table count (no user input - safe)
     const tableCountResult = await pool.unsafe(`
       SELECT COUNT(*) as count 
       FROM information_schema.tables 
       WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
     `);
 
-    // Get total row count across all tables
+    // Get total row count across all tables (no user input - safe)
     const tables = await pool.unsafe(`
       SELECT table_name 
       FROM information_schema.tables 
@@ -288,7 +330,14 @@ databaseRouter.get('/stats', ensureAdmin, async (req: Request, res: Response) =>
     let totalRows = 0;
     for (const table of tables) {
       try {
-        const result = await pool.unsafe(`SELECT COUNT(*) as count FROM "${table.table_name}"`);
+        const tableName = table.table_name;
+        // Security: Validate table names from database before using
+        if (!isValidTableName(tableName)) {
+          console.warn(`[Database API] Skipping invalid table name in stats: ${tableName}`);
+          continue;
+        }
+        const safeTableName = escapeIdentifier(tableName);
+        const result = await pool.unsafe(`SELECT COUNT(*) as count FROM ${safeTableName}`);
         totalRows += parseInt(result[0]?.count || '0', 10);
       } catch (error) {
         console.error(`Error counting rows in ${table.table_name}:`, error);
