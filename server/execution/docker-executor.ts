@@ -160,9 +160,28 @@ export class DockerExecutor extends EventEmitter {
       // Set up monitoring
       this.monitorContainer(containerId, container, result);
 
-      // Set up timeout if specified
+      // Set up timeout if specified - with guaranteed kill after grace period
       if (config.timeout) {
-        setTimeout(() => this.stopContainer(containerId), config.timeout * 1000);
+        const timeoutMs = config.timeout * 1000;
+        
+        // First attempt: graceful stop
+        setTimeout(() => this.stopContainer(containerId), timeoutMs);
+        
+        // Second attempt: force kill after 5s grace period if still running
+        setTimeout(async () => {
+          try {
+            const containerInfo = this.activeContainers.get(containerId);
+            if (containerInfo) {
+              const inspect = await containerInfo.container.inspect();
+              if (inspect.State.Running) {
+                logger.warn(`Container ${containerId} still running after timeout, forcing kill`);
+                await containerInfo.container.kill({ signal: 'SIGKILL' });
+              }
+            }
+          } catch (e) {
+            // Container already terminated - this is expected
+          }
+        }, timeoutMs + 5000);
       }
 
       logger.info(`Container ${containerName} started successfully`);
