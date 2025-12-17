@@ -75,7 +75,7 @@ const loadPersistedState = (projectId: string) => {
   try {
     const stored = sessionStorage.getItem(getStorageKey(projectId));
     return stored ? JSON.parse(stored) : null;
-  } catch {
+  } catch { /* Storage check - expected to fail in some environments */
     return null;
   }
 };
@@ -84,8 +84,7 @@ const savePersistedState = (projectId: string, state: Record<string, unknown>) =
   if (typeof window === 'undefined') return;
   try {
     sessionStorage.setItem(getStorageKey(projectId), JSON.stringify(state));
-  } catch {
-    // Ignore quota errors
+  } catch { /* Storage quota - expected to fail when storage is full */
   }
 };
 

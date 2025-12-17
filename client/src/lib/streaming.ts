@@ -40,7 +40,8 @@ export async function streamCodeAction(
     try {
       const error = await response.json();
       options.onError?.(error.error || 'Stream failed');
-    } catch {
+    } catch (err) {
+      console.warn('[Streaming] Failed to parse error response JSON:', err);
       options.onError?.(`Stream failed with status ${response.status}`);
     }
     return;
@@ -94,8 +95,8 @@ export async function streamCodeAction(
         if (data.done) {
           options.onComplete?.(data.provider || 'unknown');
         }
-      } catch (e) {
-        // Ignore incomplete final chunk
+      } catch (err) {
+        console.warn('[Streaming] Incomplete final SSE chunk, ignoring:', err);
       }
     }
   } catch (error) {
@@ -137,7 +138,8 @@ export async function streamCodeActionWithAbort(
     try {
       const error = await response.json();
       options.onError?.(error.error || 'Stream failed');
-    } catch {
+    } catch (err) {
+      console.warn('[Streaming] Failed to parse error response JSON:', err);
       options.onError?.(`Stream failed with status ${response.status}`);
     }
     return;

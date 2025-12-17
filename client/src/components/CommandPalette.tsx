@@ -91,7 +91,7 @@ function getRecentCommands(): string[] {
   try {
     const stored = localStorage.getItem(RECENT_COMMANDS_KEY);
     return stored ? JSON.parse(stored) : [];
-  } catch {
+  } catch { /* Storage check - expected to fail in some environments */
     return [];
   }
 }
@@ -102,15 +102,14 @@ function saveRecentCommand(commandId: string): void {
     const filtered = recent.filter((id) => id !== commandId);
     const updated = [commandId, ...filtered].slice(0, MAX_RECENT_COMMANDS);
     localStorage.setItem(RECENT_COMMANDS_KEY, JSON.stringify(updated));
-  } catch {
-    // Silently fail if localStorage is unavailable
+  } catch { /* Storage check - expected to fail in some environments */
   }
 }
 
 function useSafeAuth() {
   try {
     return useAuth();
-  } catch {
+  } catch { /* Auth context check - expected to fail when outside AuthProvider */
     return { user: null, logoutMutation: { mutate: () => {} } };
   }
 }
