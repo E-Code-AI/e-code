@@ -210,8 +210,12 @@ export class SSHManager {
     try {
       // Remove key files
       const keyPath = path.join(this.sshKeysDir, keyId);
-      await fs.unlink(keyPath).catch(() => {}); // Private key
-      await fs.unlink(`${keyPath}.pub`).catch(() => {}); // Public key
+      await fs.unlink(keyPath).catch((err) => {
+        console.warn('[SSH] Failed to delete private key:', keyPath, err?.message);
+      });
+      await fs.unlink(`${keyPath}.pub`).catch((err) => {
+        console.warn('[SSH] Failed to delete public key:', `${keyPath}.pub`, err?.message);
+      });
 
       // Remove from memory
       userKeys.splice(keyIndex, 1);

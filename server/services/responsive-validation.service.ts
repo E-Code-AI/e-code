@@ -312,7 +312,9 @@ export class ResponsiveValidationService {
       };
     } finally {
       if (page && !page.isClosed()) {
-        await page.close().catch(() => {});
+        await page.close().catch((err) => {
+          logger.debug('[ResponsiveValidation] Page cleanup error (non-critical):', err?.message);
+        });
       }
     }
   }
@@ -378,7 +380,9 @@ export class ResponsiveValidationService {
         logger.error(`Failed to take screenshot for breakpoint ${breakpoint.name}:`, error);
       } finally {
         if (page && !page.isClosed()) {
-          await page.close().catch(() => {});
+          await page.close().catch((err) => {
+            logger.debug('[ResponsiveValidation] Page cleanup error (non-critical):', err?.message);
+          });
         }
       }
     }
@@ -392,7 +396,9 @@ export class ResponsiveValidationService {
       
       for (const file of files) {
         const filePath = path.join(this.screenshotDir, file);
-        await fs.unlink(filePath).catch(() => {});
+        await fs.unlink(filePath).catch((err) => {
+          logger.debug('[ResponsiveValidation] Failed to delete screenshot:', file, err?.message);
+        });
       }
 
       logger.debug('Screenshot cleanup completed');

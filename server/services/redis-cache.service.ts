@@ -26,7 +26,7 @@ export class RedisCacheService {
   private initialize() {
     // Check if Redis is enabled in config (respects REDIS_DISABLED env var)
     if (!config.redis.enabled) {
-      logger.info('Redis disabled in configuration - caching disabled (using in-memory fallback)');
+      logger.warn('⚠️ Redis disabled in configuration - using in-memory fallback (not suitable for production at scale)');
       this.isEnabled = false;
       this.client = null;
       return;
@@ -36,7 +36,7 @@ export class RedisCacheService {
     const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
     
     if (!redisUrl) {
-      logger.info('Redis not configured - caching disabled (using in-memory fallback)');
+      logger.warn('⚠️ Redis not configured (REDIS_URL missing) - using in-memory fallback (not suitable for production at scale)');
       this.isEnabled = false;
       this.client = null;
       return;

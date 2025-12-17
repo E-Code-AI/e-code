@@ -43,7 +43,9 @@ export class ContainerBuilder {
       throw new Error(`Failed to build container: ${error.message}`);
     } finally {
       // Clean up Dockerfile
-      await fs.unlink(dockerfilePath).catch(() => {});
+      await fs.unlink(dockerfilePath).catch((err) => {
+        console.warn('[ContainerBuilder] Failed to clean up Dockerfile:', dockerfilePath, err?.message);
+      });
     }
   }
 
