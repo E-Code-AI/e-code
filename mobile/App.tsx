@@ -1,9 +1,10 @@
 import 'react-native-gesture-handler';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, View, StyleSheet, Alert, TouchableOpacity, Text } from 'react-native';
+import { ActivityIndicator, View, StyleSheet, Alert, TouchableOpacity, Text, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import * as Notifications from 'expo-notifications';
 
 import { RootStackParamList } from './src/navigation/types';
 import { AuthResponse, User } from './src/types';
@@ -18,6 +19,20 @@ import ProjectScreen from './src/screens/ProjectScreen';
 import { CommandPalette } from './src/components/CommandPalette';
 import { CommandPaletteGestureWrapper } from './src/components/CommandPaletteGestureWrapper';
 import { useCommandPalette } from './src/hooks/useCommandPalette';
+
+/**
+ * Configure notification behavior when app is in foreground
+ * This determines how notifications appear when the user is actively using the app
+ */
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 /**
  * Validate configuration at app startup

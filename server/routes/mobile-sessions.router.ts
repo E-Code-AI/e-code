@@ -168,6 +168,69 @@ router.patch('/sessions/:deviceId', requireAuth, asyncHandler(async (req: Reques
   }
 }));
 
+/**
+ * POST /push-token - Register or update push notification token
+ * Called by mobile app when user grants notification permissions
+ */
+const pushTokenSchema = z.object({
+  pushToken: z.string().min(1, 'Push token is required'),
+  platform: z.enum(['ios', 'android']),
+  deviceType: z.string().optional(),
+  deviceId: z.string().optional(),
+});
+
+router.post('/push-token', requireAuth, asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req.user as any)?.id;
+  
+  if (!userId) {
+    res.status(401).json({ error: 'User not authenticated' });
+    return;
+  }
+
+  const validation = pushTokenSchema.safeParse(req.body);
+  if (!validation.success) {
+    res.status(400).json({ 
+      error: 'Invalid request body',
+      details: validation.error.errors 
+    });
+    return;
+  }
+
+  const { pushToken, platform, deviceId } = validation.data;
+  const actualDeviceId = deviceId || `${platform}-${Date.now()}`;
+
+  try {
+    const existingSession = await storage.getMobileSession(userId, actualDeviceId);
+    
+    if (existingSession) {
+      await storage.updateMobileSession(userId, actualDeviceId, {
+        pushToken,
+        lastActiveAt: new Date(),
+        isActive: true,
+      });
+      
+      logger.info('Push token updated for existing session', { userId, deviceId: actualDeviceId });
+    } else {
+      await storage.createMobileSession({
+        userId,
+        deviceId: actualDeviceId,
+        deviceName: null,
+        platform,
+        pushToken,
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        isActive: true,
+      });
+      
+      logger.info('Push token registered with new session', { userId, deviceId: actualDeviceId });
+    }
+
+    res.json({ success: true, message: 'Push token registered successfully' });
+  } catch (error) {
+    logger.error('Failed to register push token', { userId, error });
+    res.status(500).json({ error: 'Failed to register push token' });
+  }
+}));
+
 router.delete('/sessions/:deviceId', requireAuth, asyncHandler(async (req: Request, res: Response) => {
   const userId = (req.user as any)?.id;
   const { deviceId } = req.params;

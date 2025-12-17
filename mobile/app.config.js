@@ -74,14 +74,27 @@ export default ({ config }) => {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: 'com.ecode.mobile'
+      bundleIdentifier: 'com.ecode.mobile',
+      infoPlist: {
+        UIBackgroundModes: ['remote-notification'],
+      },
     },
     android: {
       adaptiveIcon: {
         backgroundColor: '#0f172a'
       },
-      package: 'com.ecode.mobile'
+      package: 'com.ecode.mobile',
+      useNextNotificationsApi: true,
     },
+    plugins: [
+      [
+        'expo-notifications',
+        {
+          color: '#38bdf8',
+          sounds: [],
+        },
+      ],
+    ],
     web: {
       bundler: 'metro'
     }
