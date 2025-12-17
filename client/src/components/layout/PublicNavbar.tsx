@@ -197,7 +197,7 @@ export function PublicNavbar() {
   const primaryCta = (
     <Button
       onClick={() => window.location.href = '/register'}
-      className="hidden md:inline-flex shrink-0 bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400 shadow-lg shadow-blue-500 min-h-[44px] px-4"
+      className="hidden sm:inline-flex shrink-0 bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400 shadow-lg shadow-blue-500/30 min-h-[44px] px-3 sm:px-4 text-sm whitespace-nowrap"
       data-testid="button-get-started"
     >
       Get started
