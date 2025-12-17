@@ -38,8 +38,9 @@ services:
 
   redis:
     image: redis:7-alpine
-    # Security: Added password authentication
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-dev_redis_secret}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-dev_redis_secret} --appendonly yes
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-dev_redis_secret}
     volumes:
       - redis-data:/data
     # Security: No external port exposure - only internal network access
