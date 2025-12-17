@@ -1442,7 +1442,7 @@ export function ReplitAgentPanelV3({
     const extendedThinkingEnabled = capabilities.find(c => c.id === 'extended_thinking')?.enabled;
     
     if (extendedThinkingEnabled) {
-      const thinkingSteps = simulateThinkingSteps(userMessage.content);
+      const thinkingSteps = simulateThinkingSteps(userContent);
       setActiveThinking(thinkingSteps);
     }
 
@@ -1462,7 +1462,7 @@ export function ReplitAgentPanelV3({
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          message: userMessage.content,
+          message: userContent,
           projectId: projectId,
           conversationId: chatConversationId,
           provider: selectedProvider,
@@ -2122,7 +2122,7 @@ export function ReplitAgentPanelV3({
               autoScrollToBottom={true}
             />
           ) : (
-            <AnimatePresence mode="popLayout">
+            <LazyAnimatePresence mode="popLayout">
               {messages.map((message) => (
                 <EnhancedChatMessage
                   key={message.id}
