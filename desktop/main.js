@@ -242,6 +242,10 @@ function createWindow() {
     frame: true,
   });
 
+  // Initialize application menu with stored recent files
+  const storedRecentFiles = store.get('recentFiles', []);
+  createMenuWithRecentFiles(storedRecentFiles);
+
   // Load the application
   const loadPath = getLoadPath();
   console.log(`[E-Code Desktop] Loading: ${loadPath.type} - ${loadPath.path}`);
