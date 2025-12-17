@@ -103,6 +103,7 @@
     "@tanstack/query-persist-client-core": "^5.91.11",
     "@tanstack/react-query": "^5.60.5",
     "@tanstack/react-query-persist-client": "^5.90.14",
+    "@tanstack/react-virtual": "^3.13.13",
     "@types/jsdom": "^21.1.7",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
