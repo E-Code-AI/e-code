@@ -757,18 +757,10 @@ app.get('/api/cors-health', async (_req, res) => {
   // NOW start listening - ONLY after all middleware and routes are registered
   // This prevents the race condition where requests arrive before Vite middleware is ready
   
-  // 🔍 DEBUG: Log upgrade listeners BEFORE listen (should be 1 = dispatcher only due to blocking)
-  console.log('[DEBUG] Before listen - upgrade listeners:', httpServer.listenerCount('upgrade'));
-  console.log('[DEBUG] Upgrade listener functions:', httpServer.listeners('upgrade').map((l: any) => l.name || 'anonymous'));
-  
   httpServer.listen(port, "0.0.0.0", () => {
     // ✅ CRITICAL: Log that server is listening - this is what Replit workflow monitors for
     console.log(`🚀 E-Code Platform listening on port ${port}`);
     console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
-    
-    // 🔍 DEBUG: Log upgrade listeners AFTER listen
-    console.log('[DEBUG] After listen - upgrade listeners:', httpServer.listenerCount('upgrade'));
-    console.log('[DEBUG] Upgrade listener functions:', httpServer.listeners('upgrade').map((l: any) => l.name || 'anonymous'));
     
     // ✅ Restore original methods to allow adding the final guard
     if ((global as any).__restoreUpgradeListenerMethods) {
@@ -795,7 +787,6 @@ app.get('/api/cors-health', async (_req, res) => {
     httpServer.addListener = blockUpgradeListener(httpServer.addListener.bind(httpServer)) as typeof httpServer.addListener;
     httpServer.prependListener = blockUpgradeListener(httpServer.prependListener.bind(httpServer)) as typeof httpServer.prependListener;
     
-    console.log('[DEBUG] After guard - upgrade listeners:', httpServer.listenerCount('upgrade'));
     console.log('[Upgrade Guard] Final catch-all guard registered for orphan socket cleanup');
     console.log('[HTTP Server] ✅ Upgrade listeners locked: only dispatcher + guard active');
     

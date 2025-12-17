@@ -164,6 +164,7 @@ function getDockerConfig(
         command = ['node', 'index.js'];
       }
     } catch {
+      // Expected: package.json may be malformed - use safe fallback
       command = ['node', 'index.js'];
     }
   } else if (hasIndexHtml) {
