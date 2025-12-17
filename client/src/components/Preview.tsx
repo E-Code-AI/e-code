@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { File } from '@shared/schema';
+import { useMutation } from '@tanstack/react-query';
 import { 
   RefreshCw, 
   ExternalLink, 
@@ -117,16 +118,17 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     }
   };
 
-  // Start preview server for project
-  const startPreview = async () => {
-    if (!projectId) return;
-    
-    setPreviewStatus({ status: 'starting' });
-    setIsLoading(true);
-    
-    try {
-      const data = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`);
-      
+  // Start preview server mutation - prevents race conditions from double-clicks
+  const startPreviewMutation = useMutation({
+    mutationFn: async () => {
+      if (!projectId) throw new Error('No project ID');
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`);
+    },
+    onMutate: () => {
+      setPreviewStatus({ status: 'starting' });
+      setIsLoading(true);
+    },
+    onSuccess: (data) => {
       if (data.success && data.preview) {
         const preview = data.preview;
         setPreviewStatus({
@@ -159,7 +161,8 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
       } else {
         throw new Error(data.error || 'Failed to start preview');
       }
-    } catch (error: any) {
+    },
+    onError: (error: Error) => {
       console.error('Failed to start preview:', error);
       setPreviewStatus({ status: 'error' });
       toast({
@@ -167,17 +170,19 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
         description: error.message || "Failed to start preview server",
         variant: "destructive"
       });
-    } finally {
+    },
+    onSettled: () => {
       setIsLoading(false);
     }
-  };
+  });
 
-  // Stop preview server
-  const stopPreview = async () => {
-    if (!projectId) return;
-    
-    try {
-      await apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`);
+  // Stop preview server mutation - prevents race conditions
+  const stopPreviewMutation = useMutation({
+    mutationFn: async () => {
+      if (!projectId) throw new Error('No project ID');
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`);
+    },
+    onSuccess: () => {
       setPreviewUrl(null);
       setPreviewStatus({ status: 'idle' });
       setSelectedPort(null);
@@ -186,32 +191,44 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
         title: "Preview Stopped",
         description: "Preview server has been stopped",
       });
-    } catch (error) {
+    },
+    onError: (error: Error) => {
       console.error('Failed to stop preview:', error);
       toast({
         title: "Error",
-        description: "Failed to stop preview server",
+        description: error.message || "Failed to stop preview server",
         variant: "destructive"
       });
     }
+  });
+
+  // Legacy function wrappers for compatibility
+  const startPreview = () => {
+    if (projectId && !startPreviewMutation.isPending) {
+      startPreviewMutation.mutate();
+    }
   };
 
-  // Switch to different port
-  const switchPort = async (port: number) => {
-    if (!projectId || !previewStatus.ports?.includes(port)) return;
-    
-    try {
-      const data = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/switch-port`, {
-        port
-      });
-      
+  const stopPreview = () => {
+    if (projectId && !stopPreviewMutation.isPending) {
+      stopPreviewMutation.mutate();
+    }
+  };
+
+  // Switch to different port mutation - prevents race conditions
+  const switchPortMutation = useMutation({
+    mutationFn: async (port: number) => {
+      if (!projectId || !previewStatus.ports?.includes(port)) {
+        throw new Error('Invalid port selection');
+      }
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/switch-port`, { port });
+    },
+    onSuccess: (data, port) => {
       if (data.success) {
         setSelectedPort(port);
-        // Use the API preview route (port info for future multi-service support)
         setPreviewUrl(`/api/preview/projects/${projectId}/preview/`);
         savePreference('port', port.toString());
         
-        // Update status
         setPreviewStatus(prev => ({
           ...prev,
           currentPort: port
@@ -224,13 +241,20 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
       } else {
         throw new Error(data.error || 'Failed to switch port');
       }
-    } catch (error: any) {
+    },
+    onError: (error: Error) => {
       console.error('Failed to switch port:', error);
       toast({
         title: "Port Switch Failed",
         description: error.message || "Unable to switch to selected port",
         variant: "destructive"
       });
+    }
+  });
+
+  const switchPort = (port: number) => {
+    if (!switchPortMutation.isPending) {
+      switchPortMutation.mutate(port);
     }
   };
 
@@ -563,11 +587,12 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
         </div>
         
         <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
-          {/* Port selector */}
+          {/* Port selector - disabled during port switch to prevent race conditions */}
           {previewStatus.ports && previewStatus.ports.length > 1 && (
             <Select 
               value={selectedPort?.toString() || previewStatus.primaryPort?.toString()} 
               onValueChange={(value) => switchPort(parseInt(value))}
+              disabled={switchPortMutation.isPending}
             >
               <SelectTrigger className="h-7 sm:h-8 w-16 sm:w-20 text-xs">
                 <SelectValue />
@@ -595,18 +620,22 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             </Select>
           )}
           
-          {/* Start/Stop button */}
+          {/* Start/Stop button - uses mutation isPending to prevent double-clicks */}
           {previewStatus.status !== 'running' ? (
             <Button
               variant="ghost"
               size="icon"
               className="h-7 w-7 sm:h-8 sm:w-8"
               onClick={startPreview}
-              disabled={!projectId || previewStatus.status === 'starting'}
+              disabled={!projectId || startPreviewMutation.isPending || previewStatus.status === 'starting'}
               title="Start preview"
               data-testid="button-start-preview"
             >
-              <Play className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              {startPreviewMutation.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+              ) : (
+                <Play className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              )}
             </Button>
           ) : (
             <Button
@@ -614,10 +643,15 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
               size="icon"
               className="h-7 w-7 sm:h-8 sm:w-8"
               onClick={stopPreview}
+              disabled={stopPreviewMutation.isPending}
               title="Stop preview"
               data-testid="button-stop-preview"
             >
-              <Square className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              {stopPreviewMutation.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+              ) : (
+                <Square className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              )}
             </Button>
           )}
           
