@@ -499,6 +499,30 @@ export function createTerminalWebSocket(
 }
 
 /**
+ * Create a resilient WebSocket instance for security scan connections
+ * NOTE: Heartbeat is ENABLED - uses JSON protocol
+ */
+export function createSecurityWebSocket(
+  projectId: string | number
+): ResilientWebSocket {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const url = `${protocol}//${window.location.host}/api/security-scans/ws?projectId=${projectId}`;
+  
+  return new ResilientWebSocket({
+    url,
+    maxReconnectAttempts: 10,
+    baseDelay: 1000,
+    maxDelay: 30000,
+    jitterFactor: 0.25,
+    enableHeartbeat: true,
+    heartbeatInterval: 45000,
+    heartbeatTimeout: 15000,
+    circuitBreakerThreshold: 5,
+    circuitBreakerResetTime: 60000,
+  });
+}
+
+/**
  * Create a resilient WebSocket instance for agent connections
  * NOTE: Heartbeat is ENABLED for agent - uses JSON protocol
  */
