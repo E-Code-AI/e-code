@@ -57,8 +57,8 @@ export default ({ config }) => {
   
   return {
     ...config,
-    name: 'E-Code Mobile',
-    slug: 'ecode-mobile',
+    name: 'E-Code',
+    slug: 'ecodeai',
     version: '1.0.0',
     orientation: 'portrait',
     scheme: 'ecode',
@@ -68,7 +68,7 @@ export default ({ config }) => {
       environment,
       releaseChannel,
       eas: {
-        projectId: process.env.EXPO_PUBLIC_PROJECT_ID || undefined
+        projectId: "17ae93ae-3912-48a0-97d1-05d9f7d0799a"
       }
     },
     ios: {
