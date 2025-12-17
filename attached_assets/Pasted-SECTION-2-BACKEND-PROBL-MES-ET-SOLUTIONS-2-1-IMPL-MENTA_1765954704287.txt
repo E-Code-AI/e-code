@@ -1,0 +1,165 @@
+SECTION 2: BACKEND - PROBLÈMES ET SOLUTIONS
+2.1 IMPLÉMENTATIONS STUB INCOMPLÈTES
+Fichier: server/storage.ts (lignes 4607-4825)
+
+Problème: Méthodes marquées "stub implementations":
+
+Build Logs (ligne 4607)
+Test Runs (ligne 4652)
+Security Scans (ligne 4703)
+Resource Metrics (ligne 4800)
+Pane Configurations (ligne 4825)
+Solution: Compléter chaque méthode avec:
+
+Validation des paramètres d'entrée
+Gestion des erreurs complète
+Tests unitaires
+2.2 STATISTIQUES DE CACHE PLACEHOLDER
+Fichier: server/services/ai-optimization/plan-cache.service.ts (lignes 86-106)
+
+Problème:
+
+async getStats(): Promise<...> {
+  return {
+    totalCached: 0,    // Toujours 0!
+    totalHits: 0,
+    avgTokensSaved: 0,
+  };
+}
+
+Solution:
+
+async getStats(): Promise<CacheStats> {
+  const keys = await this.redis.keys('plan-cache:*');
+  const hits = await this.redis.get('plan-cache:hits') || 0;
+  const tokensSaved = await this.redis.get('plan-cache:tokens-saved') || 0;
+  
+  return {
+    totalCached: keys.length,
+    totalHits: Number(hits),
+    avgTokensSaved: keys.length ? Number(tokensSaved) / keys.length : 0,
+  };
+}
+
+2.3 EXPORT PDF NON IMPLÉMENTÉ
+Fichier: server/services/advanced-analytics-service.ts (ligne 634)
+
+Problème:
+
+return `PDF export not implemented. Data: ${JSON.stringify(data)}`;
+
+Solution:
+
+import PDFDocument from 'pdfkit';
+
+async exportToPDF(data: AnalyticsData): Promise<Buffer> {
+  const doc = new PDFDocument();
+  const chunks: Buffer[] = [];
+  
+  doc.on('data', (chunk) => chunks.push(chunk));
+  doc.fontSize(20).text('Analytics Report', { align: 'center' });
+  // ... ajouter le contenu
+  doc.end();
+  
+  return Buffer.concat(chunks);
+}
+
+2.4 HISTORIQUE DE RECHERCHE NON IMPLÉMENTÉ
+Fichier: server/routes/agent-tools.router.ts (lignes 44-50)
+
+Problème:
+
+res.json({
+  searches: [],
+  count: 0,
+  message: 'Search history tracking not yet implemented'
+});
+
+Solution:
+
+Créer table search_history dans le schéma
+Implémenter le tracking dans les routes de recherche
+Retourner l'historique réel
+2.5 ACTION EDIT_FILE NON IMPLÉMENTÉE
+Fichier: server/routes/projects.router.ts (lignes 609-612)
+
+Problème:
+
+else if (action.type === 'edit_file') {
+  return res.status(501).json({ 
+    error: 'Edit file action not yet implemented'
+  });
+}
+
+Solution: Implémenter la logique d'édition avec:
+
+Validation du contenu
+Gestion des conflits
+Sauvegarde des versions
+2.6 CHEMIN PROJET HARDCODÉ
+Fichier: server/agent/routes/agent-context.ts (ligne 27)
+
+Problème:
+
+// TODO: Implement proper project path resolution
+const projectPath = process.cwd(); // Incorrect!
+
+Solution:
+
+const project = await db.query.projects.findFirst({
+  where: eq(projects.id, projectId)
+});
+const projectPath = project?.path || `/projects/${projectId}`;
+
+2.7 ERREURS SILENCIEUSES
+Fichier: Multiples fichiers
+
+Problème:
+
+.catch(() => {});  // Erreurs ignorées silencieusement
+.catch(() => []);
+
+Solution:
+
+.catch((error) => {
+  logger.warn('Expected error handled:', error.message);
+  return [];
+});
+
+2.8 BUG SESSIONS BLOQUÉES
+Fichier: server/services/agent-orchestrator.service.ts (ligne 1617)
+
+Problème: Sessions bloquées en état 'planning'
+
+Solution:
+
+Ajouter un timeout pour la phase de planning
+Implémenter un mécanisme de récupération automatique
+Ajouter des tests de régression
+2.9 REDIS DÉSACTIVÉ SANS FALLBACK CLAIR
+Fichier: server/services/redis-cache.service.ts (lignes 29-39)
+
+Problème: Redis désactivé avec fallback en mémoire sans logging clair
+
+Solution:
+
+if (!this.redisAvailable) {
+  logger.warn('⚠️ Redis unavailable - using in-memory cache (not suitable for production)');
+}
+
+2.10 VALIDATION INPUT INSUFFISANTE
+Fichier: server/routes/database.router.ts (lignes 218-220)
+
+Problème:
+
+if (!/^[a-z_][a-z0-9_]*$/i.test(tableName)) {
+  return res.status(400).json({ error: 'Invalid table name format' });
+}
+// Ne vérifie pas si la table existe réellement
+
+Solution:
+
+const allowedTables = ['users', 'projects', 'files', ...];
+if (!allowedTables.includes(tableName)) {
+  return res.status(403).json({ error: 'Access to this table is not permitted' });
+}

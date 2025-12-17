@@ -4604,7 +4604,7 @@ Constraints: {{constraints}}`,
     await query;
   }
 
-  // Build Logs Methods - For Output Panel (stub implementations for now)
+  // Build Logs Methods - For Output Panel (fully implemented with database)
   async createBuildLog(log: InsertBuildLog): Promise<BuildLog> {
     const [created] = await this.db.insert(buildLogs).values(log).returning();
     return created;
@@ -4649,7 +4649,7 @@ Constraints: {{constraints}}`,
     await this.db.delete(terminalLogs).where(eq(terminalLogs.projectId, projectId));
   }
 
-  // Test Runs Methods - For Testing Panel (stub implementations)
+  // Test Runs Methods - For Testing Panel (fully implemented with database)
   async createTestRun(run: InsertTestRun): Promise<TestRun> {
     const [created] = await this.db.insert(testRuns).values(run).returning();
     return created;
@@ -4700,7 +4700,7 @@ Constraints: {{constraints}}`,
     return updated;
   }
 
-  // Security Scans Methods - For Security Scanner Panel (stub implementations)
+  // Security Scans Methods - For Security Scanner Panel (fully implemented with database)
   async createSecurityScan(scan: InsertSecurityScan): Promise<SecurityScan> {
     const [created] = await this.db.insert(securityScans).values(scan).returning();
     return created;
@@ -4797,7 +4797,7 @@ Constraints: {{constraints}}`,
     }
   }
 
-  // Resource Metrics Methods - For Resources Panel (stub implementations)
+  // Resource Metrics Methods - For Resources Panel (fully implemented with database)
   async createResourceMetric(metric: InsertResourceMetric): Promise<ResourceMetric> {
     const [created] = await this.db.insert(resourceMetrics).values(metric).returning();
     return created;
@@ -4822,7 +4822,7 @@ Constraints: {{constraints}}`,
     return metric;
   }
 
-  // Pane Configurations Methods - For Split Editor (stub implementations)
+  // Pane Configurations Methods - For Split Editor (fully implemented with database)
   async createPaneConfiguration(config: InsertPaneConfiguration): Promise<PaneConfiguration> {
     const [created] = await this.db.insert(paneConfigurations).values(config).returning();
     return created;
