@@ -451,7 +451,7 @@ ${f.content.slice(0, 1000)}${f.content.length > 1000 ? '...' : ''}
   }
 }
 
-// SSE Streaming for Code Actions
+// SSE Streaming for Code Actions with Full Project Context
 export async function handleCodeActionsStream(req: Request, res: Response) {
   try {
     const { action, code, language, projectId, provider: providerName, filePath } = req.body;
@@ -464,6 +464,17 @@ export async function handleCodeActionsStream(req: Request, res: Response) {
     const validActions = ['explain', 'debug', 'test', 'document', 'optimize', 'review', 'search'];
     if (!validActions.includes(action)) {
       return res.status(400).json({ error: `Invalid action: ${action}` });
+    }
+
+    // Get project context if projectId provided (Fortune 500-grade context awareness)
+    let projectContext: ProjectContext | null = null;
+    if (projectId && filePath) {
+      try {
+        const contextService = new ProjectContextService(storage);
+        projectContext = await contextService.getContextForFile(projectId, filePath, code);
+      } catch (e) {
+        console.warn('[AI Code Actions Stream] Failed to get project context:', e);
+      }
     }
 
     let provider;
@@ -483,25 +494,38 @@ export async function handleCodeActionsStream(req: Request, res: Response) {
     res.setHeader('X-Accel-Buffering', 'no');
     res.flushHeaders();
 
-    // Build messages (use existing systemPrompts and userPrompts from handleCodeActions)
+    // Build context block if project context is available
+    const contextBlock = projectContext ? `
+
+## Project Context
+File Tree: ${projectContext.fileTree.slice(0, 20).join(', ')}${projectContext.fileTree.length > 20 ? '...' : ''}
+
+Related Files:
+${projectContext.relatedFiles.slice(0, 5).map(f => `### ${f.path} (${f.relation})
+\`\`\`
+${f.content.slice(0, 1000)}${f.content.length > 1000 ? '...' : ''}
+\`\`\``).join('\n')}
+` : '';
+
+    // Build action-specific prompts with project context
     const systemPrompts: Record<string, string> = {
-      explain: 'You are an expert programmer. Explain this code clearly and concisely.',
-      debug: 'You are an expert debugger. Find bugs and suggest fixes.',
-      test: 'You are a test engineer. Generate comprehensive unit tests.',
-      document: 'You are a technical writer. Add documentation to this code.',
-      optimize: 'You are a performance engineer. Optimize this code.',
-      review: 'You are a senior code reviewer. Review for quality and best practices.',
-      search: 'You are a code analyst. Suggest search queries for similar implementations.',
+      explain: 'You are an expert programmer that provides clear, concise explanations of code. Explain what the code does, its purpose, any important patterns, and potential issues. Use markdown formatting.' + contextBlock,
+      debug: 'You are an expert debugger. Analyze the code for bugs, errors, edge cases, and potential issues. Provide specific fixes and explanations. Use markdown formatting.' + contextBlock,
+      test: 'You are an expert test engineer. Generate comprehensive unit tests for the given code using the appropriate testing framework for the language. Include edge cases and error scenarios. Return complete, runnable test code.' + contextBlock,
+      document: 'You are an expert technical writer. Add comprehensive JSDoc/docstring comments to the code explaining parameters, return values, and functionality. Return the fully documented code.' + contextBlock,
+      optimize: 'You are an expert performance engineer. Analyze the code for performance issues, memory leaks, and inefficiencies. Provide an optimized version with explanations. Return the improved code.' + contextBlock,
+      review: 'You are a senior code reviewer. Review the code for: code quality, best practices, security issues, maintainability, and suggest improvements. Use markdown formatting.' + contextBlock,
+      search: 'You are an expert code analyst. Analyze the code snippet and suggest keywords, libraries, patterns, or similar implementations to search for. Provide actionable search queries.' + contextBlock,
     };
 
     const userPrompts: Record<string, string> = {
       explain: `Explain this ${language || 'code'}:\n\n\`\`\`${language}\n${code}\n\`\`\``,
-      debug: `Debug this code:\n\n\`\`\`${language}\n${code}\n\`\`\``,
-      test: `Generate tests for:\n\n\`\`\`${language}\n${code}\n\`\`\``,
-      document: `Document this code:\n\n\`\`\`${language}\n${code}\n\`\`\``,
-      optimize: `Optimize this code:\n\n\`\`\`${language}\n${code}\n\`\`\``,
-      review: `Review this code:\n\n\`\`\`${language}\n${code}\n\`\`\``,
-      search: `Suggest searches for:\n\n\`\`\`${language}\n${code}\n\`\`\``,
+      debug: `Debug this ${language || 'code'} and identify issues:\n\n\`\`\`${language}\n${code}\n\`\`\``,
+      test: `Generate unit tests for this ${language || 'code'}:\n\n\`\`\`${language}\n${code}\n\`\`\``,
+      document: `Add documentation to this ${language || 'code'}:\n\n\`\`\`${language}\n${code}\n\`\`\``,
+      optimize: `Optimize this ${language || 'code'} for better performance:\n\n\`\`\`${language}\n${code}\n\`\`\``,
+      review: `Review this ${language || 'code'} for quality and best practices:\n\n\`\`\`${language}\n${code}\n\`\`\``,
+      search: `Analyze this ${language || 'code'} and suggest search queries to find similar implementations:\n\n\`\`\`${language}\n${code}\n\`\`\``,
     };
 
     const messages: ChatMessage[] = [
