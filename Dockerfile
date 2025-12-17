@@ -13,8 +13,8 @@ RUN npm run build
 FROM node:20-alpine AS production
 WORKDIR /app
 
-# Install PostgreSQL client for health checks and Docker CLI for code execution
-RUN apk add --no-cache postgresql-client docker-cli
+# Install PostgreSQL client for health checks, curl for healthcheck, and Docker CLI for code execution
+RUN apk add --no-cache postgresql-client docker-cli curl
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
@@ -36,8 +36,8 @@ USER nodejs
 EXPOSE 5000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/api/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:5000/api/monitoring/health || exit 1
 
 # Run migrations then start app
 ENTRYPOINT ["./docker-entrypoint.sh"]
