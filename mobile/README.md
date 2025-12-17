@@ -7,6 +7,62 @@ A React Native application built with Expo that lets you access your E-Code proj
 - Open a project, view and edit files, and save changes back to the server
 - Execute code through the real mobile execution service and review terminal output
 
+## EAS Build Pipeline (iOS & Android)
+
+### Prerequisites for Production Builds
+
+1. Install EAS CLI globally:
+   ```bash
+   npm install -g eas-cli
+   ```
+
+2. Log in to your Expo account:
+   ```bash
+   eas login
+   ```
+
+3. Configure your project (first time only):
+   ```bash
+   eas build:configure
+   ```
+
+### Build Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run build:dev` | Development build (internal distribution) |
+| `npm run build:preview` | Preview/staging build (APK for Android) |
+| `npm run build:ios` | Production iOS build (.ipa) |
+| `npm run build:android` | Production Android build (.aab) |
+| `npm run build:all` | Production builds for both platforms |
+
+### Submit to App Stores
+
+| Command | Description |
+|---------|-------------|
+| `npm run submit:ios` | Submit to Apple App Store |
+| `npm run submit:android` | Submit to Google Play Store |
+| `npm run submit:all` | Submit to both stores |
+
+### Required Secrets for Production
+
+Set these in your EAS dashboard or as environment variables:
+
+- `APPLE_ID` - Your Apple Developer account email
+- `ASC_APP_ID` - App Store Connect App ID
+- `APPLE_TEAM_ID` - Your Apple Team ID
+- `google-services.json` - Google Play Console service account key
+
+## Shared Code Integration
+
+This mobile app shares types and utilities with the main E-Code platform via `@shared/*` imports:
+
+```typescript
+import { User, Project, AI_MODELS } from '@shared/mobile-types';
+```
+
+The `shared/mobile-types.ts` file exports React Native-compatible types that avoid Drizzle ORM dependencies.
+
 ## Getting started
 
 ### Prerequisites
