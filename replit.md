@@ -14,6 +14,7 @@ E-Code is an AI-assisted web-based IDE designed for rapid prototyping, education
 - **Docker Build:** Optimized for <2GiB images
 - **Rate Limiting:** Tier-based (Free: 500/min, Pro: 1000/min, Teams: 5000/min, Enterprise: 10000/min)
 - **Monaco Editor:** Safe disposal pattern with optional chaining (`d?.dispose?.()`) for all enhancement classes
+- **Lazy Loading:** Use `instrumentedLazy()` instead of `lazy()` for pages - adds retry logic (3 attempts, 1s delay) for transient Vite HMR failures
 - **Documentation:** Ruthlessly remove obsolete/misleading docs - maintain technical honesty
 
 ## System Architecture
