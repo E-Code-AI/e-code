@@ -1,0 +1,44 @@
+# Exclude parent workspace directories
+../*
+.git
+.git/**
+.local
+.local/**
+.cache
+.cache/**
+.npm
+.npm/**
+.pnpm-store
+.pnpm-store/**
+
+# Exclude workspace root folders (relative to mobile/)
+../client
+../server
+../shared
+../desktop
+../node_modules
+../.local
+
+# Development files
+node_modules
+*.log
+.env.local
+.env
+
+# Test files
+__tests__
+__mocks__
+*.test.ts
+*.test.tsx
+jest.config.js
+jest.setup.js
+
+# Documentation
+*.md
+!README.md
+
+# Build artifacts
+android/app/build
+ios/build
+*.jks
+*.keystore
