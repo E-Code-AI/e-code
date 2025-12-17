@@ -8,7 +8,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from './src/navigation/types';
 import { AuthResponse, User } from './src/types';
 import { login as loginRequest } from './src/services/api';
-import { validateConfig } from './src/services/config';
+import { validateConfig, getConfig } from './src/services/config';
+import { notificationService } from './src/services/notifications';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import AgentScreen from './src/screens/AgentScreen';
@@ -103,6 +104,57 @@ export default function App() {
     enableShakeToOpen: true,
   });
 
+  // Initialize push notifications when user is authenticated
+  useEffect(() => {
+    if (token && user) {
+      const config = getConfig();
+      notificationService.initialize({
+        serverUrl: config.API_BASE_URL,
+        userId: user.id?.toString(),
+        token: token,
+      }).then((success) => {
+        if (success) {
+          console.log('[App] Push notifications initialized');
+        }
+      });
+
+      // Set up notification listeners
+      let receivedCleanup: (() => void) | null = null;
+      let responseCleanup: (() => void) | null = null;
+
+      const setupListeners = async () => {
+        // Foreground notification handler
+        receivedCleanup = await notificationService.addNotificationReceivedListener(
+          (notification) => {
+            console.log('[App] Notification received:', notification);
+          }
+        );
+
+        // Notification tap handler - navigate to appropriate screen
+        responseCleanup = await notificationService.addNotificationResponseListener(
+          (response) => {
+            const data = response.notification?.request?.content?.data;
+            console.log('[App] Notification tapped:', data);
+
+            if (data?.projectId && navigationRef.current) {
+              navigationRef.current.navigate('Project', {
+                projectId: data.projectId,
+                projectName: data.projectName || 'Project',
+              });
+            }
+          }
+        );
+      };
+
+      setupListeners();
+
+      return () => {
+        receivedCleanup?.();
+        responseCleanup?.();
+      };
+    }
+  }, [token, user]);
+
   useEffect(() => {
     const restoreSession = async () => {
       try {
@@ -140,6 +192,8 @@ export default function App() {
 
   const handleLogout = useCallback(async () => {
     try {
+      // Clear push notification token on logout
+      await notificationService.clearToken();
       await AsyncStorage.multiRemove([TOKEN_STORAGE_KEY, USER_STORAGE_KEY]);
     } catch (error) {
       console.warn('Failed to clear session', error);
