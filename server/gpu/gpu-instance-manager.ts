@@ -4,13 +4,17 @@
  * AI compute is now handled directly through integrated AI providers.
  */
 
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('gpu-instance-manager');
+
 export const gpuInstanceManager = {
   available: false,
   deprecated: true,
   message: 'GPU compute is now handled via AI providers directly',
   
   async getInstance(id: string) {
-    console.log('GPU providers deprecated - use AI providers directly');
+    logger.warn('GPU providers deprecated - use AI providers directly');
     return null;
   },
   
@@ -37,7 +41,7 @@ export class GPUInstanceManager {
   message = 'GPU compute is now handled via AI providers directly';
   
   async getInstance(id: string) {
-    console.log('GPU providers deprecated - use AI providers directly');
+    logger.warn('GPU providers deprecated - use AI providers directly');
     return null;
   }
   

@@ -95,7 +95,7 @@ export class BackgroundTestingService extends EventEmitter {
     // Ne teste PAS après chaque message
     // Teste seulement si changement significatif
     if (!this.shouldTest(changedFiles)) {
-      console.log(`[BackgroundTesting] Skipping test for project ${projectId} - no significant changes`);
+      logger.debug(`[BackgroundTesting] Skipping test for project ${projectId} - no significant changes`);
       return;
     }
     
