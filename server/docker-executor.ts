@@ -667,7 +667,9 @@ export class DockerExecutor {
           killed = true;
           try {
             spawn('docker', ['kill', containerName], { shell: false });
-          } catch {}
+          } catch (e) {
+            // Expected: container may already be stopped or not exist
+          }
           dockerProcess.kill('SIGKILL');
         }, this.timeout);
 
@@ -692,7 +694,9 @@ export class DockerExecutor {
 
           try {
             await fs.promises.rm(tempDir, { recursive: true, force: true });
-          } catch {}
+          } catch {
+            // Expected: temp cleanup may fail if already cleaned or permissions issue
+          }
 
           if (killed) {
             resolve({
@@ -722,7 +726,9 @@ export class DockerExecutor {
 
           try {
             await fs.promises.rm(tempDir, { recursive: true, force: true });
-          } catch {}
+          } catch {
+            // Expected: temp cleanup may fail if already cleaned or permissions issue
+          }
 
           resolve({
             success: false,
@@ -734,7 +740,9 @@ export class DockerExecutor {
     } catch (error) {
       try {
         await fs.promises.rm(tempDir, { recursive: true, force: true });
-      } catch {}
+      } catch {
+        // Expected: temp cleanup may fail if already cleaned or permissions issue
+      }
 
       return {
         success: false,

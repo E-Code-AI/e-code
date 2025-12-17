@@ -99,23 +99,24 @@ export class SimpleDeployer {
   }
   
   private async detectProjectType(projectDir: string): Promise<string> {
+    // File existence checks - absence is expected condition for detection
     try {
       // Check for package.json
       await fs.access(path.join(projectDir, 'package.json'));
       return 'node.js';
-    } catch {}
+    } catch { /* File not found - check next type */ }
     
     try {
       // Check for requirements.txt
       await fs.access(path.join(projectDir, 'requirements.txt'));
       return 'python';
-    } catch {}
+    } catch { /* File not found - check next type */ }
     
     try {
       // Check for index.html
       await fs.access(path.join(projectDir, 'index.html'));
       return 'static';
-    } catch {}
+    } catch { /* File not found - use default */ }
     
     return 'unknown';
   }
