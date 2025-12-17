@@ -39,7 +39,8 @@
     "react-native-syntax-highlighter": "^2.1.0",
     "socket.io-client": "^4.5.0",
     "expo-constants": "~14.4.2",
-    "@react-native-community/netinfo": "^11.3.0"
+    "@react-native-community/netinfo": "^11.3.0",
+    "fuse.js": "^7.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
