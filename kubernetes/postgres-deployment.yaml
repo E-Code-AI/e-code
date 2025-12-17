@@ -1,26 +1,37 @@
-# PostgreSQL Database Deployment
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: postgres-pvc
-  namespace: e-code-platform
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 20Gi
-  storageClassName: standard-rwo
+# =============================================================================
+# E-CODE POSTGRESQL DEPLOYMENT
+# =============================================================================
+# PRODUCTION RECOMMENDATION: Use managed database services instead:
+#   - Google Cloud SQL
+#   - AWS RDS
+#   - Azure Database for PostgreSQL
+#   - Neon Serverless PostgreSQL (used by Replit)
+#
+# For self-managed K8s PostgreSQL with HA, consider:
+#   - CloudNativePG Operator: https://cloudnative-pg.io/
+#   - Zalando Postgres Operator: https://github.com/zalando/postgres-operator
+#   - CrunchyData PGO: https://github.com/CrunchyData/postgres-operator
+#
+# BACKUP STRATEGY:
+#   - Use Velero for PV snapshots: https://velero.io/
+#   - Configure pg_dump CronJob (see postgres-backup-cronjob.yaml)
+#   - Enable WAL archiving for point-in-time recovery
+# =============================================================================
 
----
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres
   namespace: e-code-platform
+  labels:
+    app: postgres
+    component: database
 spec:
-  serviceName: postgres-service
+  serviceName: postgres-headless
   replicas: 1
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
   selector:
     matchLabels:
       app: postgres
@@ -28,13 +39,22 @@ spec:
     metadata:
       labels:
         app: postgres
+      annotations:
+        backup.velero.io/backup-volumes: postgres-storage
     spec:
+      terminationGracePeriodSeconds: 120
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+        runAsNonRoot: true
       containers:
       - name: postgres
         image: postgres:15-alpine
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5432
           name: postgres
+          protocol: TCP
         env:
         - name: POSTGRES_DB
           valueFrom:
@@ -53,40 +73,92 @@ spec:
               key: POSTGRES_PASSWORD
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata
+        - name: POSTGRES_INITDB_ARGS
+          value: "--encoding=UTF8 --locale=en_US.UTF-8"
         volumeMounts:
         - name: postgres-storage
           mountPath: /var/lib/postgresql/data
+        - name: postgres-config
+          mountPath: /etc/postgresql/conf.d
         resources:
           requests:
-            memory: "256Mi"
+            memory: "512Mi"
             cpu: "250m"
           limits:
-            memory: "1Gi"
+            memory: "2Gi"
             cpu: "1000m"
         livenessProbe:
           exec:
             command:
-              - pg_isready
-              - -U
-              - $(POSTGRES_USER)
+              - /bin/sh
+              - -c
+              - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
           initialDelaySeconds: 30
           periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
         readinessProbe:
           exec:
             command:
-              - pg_isready
-              - -U
-              - $(POSTGRES_USER)
+              - /bin/sh
+              - -c
+              - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
           initialDelaySeconds: 5
           periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+              - ALL
+      volumes:
+      - name: postgres-config
+        configMap:
+          name: postgres-config
   volumeClaimTemplates:
   - metadata:
       name: postgres-storage
+      labels:
+        app: postgres
     spec:
       accessModes: ["ReadWriteOnce"]
+      storageClassName: standard-rwo
       resources:
         requests:
-          storage: 20Gi
+          storage: 50Gi
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: e-code-platform
+data:
+  postgresql.conf: |
+    # Performance tuning
+    shared_buffers = 256MB
+    effective_cache_size = 768MB
+    maintenance_work_mem = 64MB
+    checkpoint_completion_target = 0.9
+    wal_buffers = 16MB
+    default_statistics_target = 100
+    random_page_cost = 1.1
+    effective_io_concurrency = 200
+    work_mem = 4MB
+    min_wal_size = 1GB
+    max_wal_size = 4GB
+    max_connections = 200
+    
+    # Logging
+    log_statement = 'ddl'
+    log_duration = off
+    log_min_duration_statement = 1000
+    
+    # WAL archiving for backup (configure archive_command for your storage)
+    # archive_mode = on
+    # archive_command = 'gcloud storage cp %p gs://your-bucket/wal/%f'
 
 ---
 apiVersion: v1
@@ -94,10 +166,30 @@ kind: Service
 metadata:
   name: postgres-service
   namespace: e-code-platform
+  labels:
+    app: postgres
 spec:
   selector:
     app: postgres
   ports:
   - port: 5432
     targetPort: 5432
+    protocol: TCP
   type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-headless
+  namespace: e-code-platform
+  labels:
+    app: postgres
+spec:
+  clusterIP: None
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
