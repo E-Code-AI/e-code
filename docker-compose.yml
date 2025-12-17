@@ -9,7 +9,7 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
       - SESSION_SECRET=${SESSION_SECRET}
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-dev_redis_secret}@redis:6379
     depends_on:
       - postgres
       - redis
@@ -28,19 +28,22 @@ services:
       - POSTGRES_PASSWORD=${PGPASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    # Security: No external port exposure - only internal network access
+    # ports:
+    #   - "5432:5432"  # REMOVED: Prevents external access to database
     restart: unless-stopped
     networks:
       - ecode-network
 
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes
+    # Security: Added password authentication
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-dev_redis_secret}
     volumes:
       - redis-data:/data
-    ports:
-      - "6379:6379"
+    # Security: No external port exposure - only internal network access
+    # ports:
+    #   - "6379:6379"  # REMOVED: Prevents external access to Redis
     restart: unless-stopped
     networks:
       - ecode-network
