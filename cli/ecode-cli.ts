@@ -211,10 +211,19 @@ class ECodeCLI {
     console.log(chalk.blue(`Running: ${command.join(' ')}`));
 
     // Connect to WebSocket for real-time command execution
-    const ws = new WebSocket(`wss://e-code.ai/cli/exec?token=${this.config.token}&project=${projectId}`);
+    // Security: Send token via message, not URL (tokens in URLs can leak via logs/referrer)
+    const ws = new WebSocket(`wss://e-code.ai/cli/exec?project=${projectId}`);
 
     ws.on('open', () => {
-      ws.send(JSON.stringify({ command: command.join(' ') }));
+      // Authenticate first, then send command
+      ws.send(JSON.stringify({ 
+        type: 'auth', 
+        token: this.config.token 
+      }));
+      ws.send(JSON.stringify({ 
+        type: 'command',
+        command: command.join(' ') 
+      }));
     });
 
     ws.on('message', (data: string) => {
@@ -244,8 +253,17 @@ class ECodeCLI {
 
     if (follow) {
       // Stream logs via WebSocket
-      const ws = new WebSocket(`wss://e-code.ai/cli/logs?token=${this.config.token}&project=${projectId}`);
+      // Security: Send token via message, not URL (tokens in URLs can leak via logs/referrer)
+      const ws = new WebSocket(`wss://e-code.ai/cli/logs?project=${projectId}`);
       
+      ws.on('open', () => {
+        // Authenticate before receiving logs
+        ws.send(JSON.stringify({ 
+          type: 'auth', 
+          token: this.config.token 
+        }));
+      });
+
       ws.on('message', (data: string) => {
         console.log(data);
       });
