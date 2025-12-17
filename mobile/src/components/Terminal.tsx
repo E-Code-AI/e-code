@@ -15,21 +15,37 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
 } from 'react-native';
+import Constants from 'expo-constants';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
 
-// Auto-detect Replit or use environment variable
+/**
+ * Get WebSocket URL from configuration
+ * Priority: Expo config > environment detection > defaults
+ */
 function getWsUrl(): string {
+  // Check Expo config for WebSocket URL (highest priority)
+  const configuredWsUrl = Constants.expoConfig?.extra?.wsUrl as string | undefined;
+  if (configuredWsUrl) {
+    return configuredWsUrl;
+  }
+
+  // Check for API base URL and convert to WebSocket URL
+  const apiBaseUrl = Constants.expoConfig?.extra?.apiBaseUrl as string | undefined;
+  if (apiBaseUrl) {
+    // Convert http(s):// to ws(s)://
+    return apiBaseUrl
+      .replace(/^https:\/\//, 'wss://')
+      .replace(/^http:\/\//, 'ws://')
+      .replace(/\/api\/?$/, ''); // Remove /api suffix if present
+  }
+
+  // Development mode fallback
   if (__DEV__) {
-    return 'ws://localhost:3000';
+    return 'ws://localhost:5000';
   }
 
-  // Use environment variable if set (configured in .env.production)
-  if (process.env.EXPO_PUBLIC_WS_URL) {
-    return process.env.EXPO_PUBLIC_WS_URL;
-  }
-
-  // Default production URL (update for your deployment)
-  return 'wss://your-production-host.com';
+  // Production default for E-Code
+  return 'wss://e-code.ai';
 }
 
 interface TerminalProps {
@@ -69,15 +85,47 @@ export const Terminal: React.FC<TerminalProps> = ({
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [reconnectAttempt, setReconnectAttempt] = useState(0);
 
   const wsRef = useRef<WebSocket | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const maxReconnectAttempts = 5;
+  const baseReconnectDelay = 1000; // 1 second
 
   // Auto-scroll to bottom when new lines added
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [lines]);
+
+  // Clear any pending reconnect timeout
+  const clearReconnectTimeout = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Schedule automatic reconnection with exponential backoff
+  const scheduleReconnect = useCallback(() => {
+    if (reconnectAttempt >= maxReconnectAttempts) {
+      addLine('error', `Max reconnection attempts (${maxReconnectAttempts}) reached. Tap "Reconnect" to try again.`);
+      setReconnectAttempt(0);
+      return;
+    }
+
+    const delay = baseReconnectDelay * Math.pow(2, reconnectAttempt);
+    const jitter = Math.random() * 500; // Add jitter to prevent thundering herd
+    const totalDelay = delay + jitter;
+
+    addLine('output', `Reconnecting in ${Math.round(totalDelay / 1000)}s... (attempt ${reconnectAttempt + 1}/${maxReconnectAttempts})`);
+
+    reconnectTimeoutRef.current = setTimeout(() => {
+      setReconnectAttempt(prev => prev + 1);
+      connectWebSocket();
+    }, totalDelay);
+  }, [reconnectAttempt]);
 
   // Connect to WebSocket terminal backend
   const connectWebSocket = useCallback(() => {
@@ -85,6 +133,7 @@ export const Terminal: React.FC<TerminalProps> = ({
       return; // Already connected
     }
 
+    clearReconnectTimeout();
     setIsConnecting(true);
 
     try {
@@ -92,12 +141,14 @@ export const Terminal: React.FC<TerminalProps> = ({
       const baseWsUrl = getWsUrl();
       const wsUrl = `${baseWsUrl}/api/terminal/ws?projectId=${projectId}&token=${token}`;
 
+      console.log('[Terminal] Connecting to:', wsUrl.replace(token, '***'));
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
         setIsConnected(true);
         setIsConnecting(false);
+        setReconnectAttempt(0); // Reset on successful connection
         addLine('output', 'Terminal connected. Type commands below.');
       };
 
@@ -111,8 +162,8 @@ export const Terminal: React.FC<TerminalProps> = ({
             addLine('error', message.error || message.data);
           }
         } catch (error) {
-          console.error('[Terminal] Failed to parse message:', error);
-          addLine('output', event.data); // Fallback: show raw data
+          // Fallback: show raw data (for non-JSON terminal output)
+          addLine('output', event.data);
         }
       };
 
@@ -120,29 +171,44 @@ export const Terminal: React.FC<TerminalProps> = ({
         console.error('[Terminal] WebSocket error:', error);
         setIsConnected(false);
         setIsConnecting(false);
-        addLine('error', 'Terminal connection error. Tap "Reconnect" to retry.');
       };
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         setIsConnected(false);
         setIsConnecting(false);
-        addLine('output', 'Terminal disconnected.');
+        
+        // Only show message and attempt reconnect if not a clean close
+        if (event.code !== 1000) {
+          addLine('output', 'Terminal disconnected unexpectedly.');
+          scheduleReconnect();
+        } else {
+          addLine('output', 'Terminal disconnected.');
+        }
       };
     } catch (error) {
       console.error('[Terminal] Failed to create WebSocket:', error);
       setIsConnecting(false);
       addLine('error', 'Failed to connect to terminal.');
+      scheduleReconnect();
     }
-  }, [projectId, token]);
+  }, [projectId, token, clearReconnectTimeout, scheduleReconnect]);
 
-  // Connect on mount
+  // Manual reconnect (resets attempt counter)
+  const manualReconnect = useCallback(() => {
+    setReconnectAttempt(0);
+    clearReconnectTimeout();
+    connectWebSocket();
+  }, [connectWebSocket, clearReconnectTimeout]);
+
+  // Connect on mount, cleanup on unmount
   useEffect(() => {
     connectWebSocket();
 
     return () => {
-      wsRef.current?.close();
+      clearReconnectTimeout();
+      wsRef.current?.close(1000, 'Component unmounted');
     };
-  }, [connectWebSocket]);
+  }, [connectWebSocket, clearReconnectTimeout]);
 
   const addLine = (type: TerminalLine['type'], text: string) => {
     setLines(prev => [
@@ -238,7 +304,7 @@ export const Terminal: React.FC<TerminalProps> = ({
           ) : (
             <>
               <View style={[styles.statusDot, styles.statusDotDisconnected]} />
-              <TouchableOpacity onPress={connectWebSocket}>
+              <TouchableOpacity onPress={manualReconnect} testID="button-terminal-reconnect">
                 <Text style={styles.reconnectText}>Reconnect</Text>
               </TouchableOpacity>
             </>
