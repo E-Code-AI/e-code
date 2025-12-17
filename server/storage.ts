@@ -791,7 +791,7 @@ export class DatabaseStorage implements IStorage {
     await this.db
       .update(projects)
       .set({ isPinned: true, updatedAt: new Date() })
-      .where(and(eq(projects.id, projectId), eq(projects.ownerId, userId)));
+      .where(and(eq(projects.id, parseInt(projectId)), eq(projects.ownerId, parseInt(userId))));
 
     // Optionally record the pin action for analytics
     await this.trackUsage(userId, "project.pin", 1, { unit: "action" });
@@ -801,14 +801,14 @@ export class DatabaseStorage implements IStorage {
     await this.db
       .update(projects)
       .set({ isPinned: false, updatedAt: new Date() })
-      .where(and(eq(projects.id, projectId), eq(projects.ownerId, userId)));
+      .where(and(eq(projects.id, parseInt(projectId)), eq(projects.ownerId, parseInt(userId))));
 
     await this.trackUsage(userId, "project.unpin", 1, { unit: "action" });
   }
 
   // User operations
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await this.db.select().from(users).where(eq(users.id, id));
+    const [user] = await this.db.select().from(users).where(eq(users.id, parseInt(id)));
     return user;
   }
 
@@ -838,13 +838,13 @@ export class DatabaseStorage implements IStorage {
     const [user] = await this.db
       .update(users)
       .set({ ...userData, updatedAt: new Date() })
-      .where(eq(users.id, id))
+      .where(eq(users.id, parseInt(id)))
       .returning();
     return user;
   }
 
   async deleteUser(id: string): Promise<boolean> {
-    const result = await this.db.delete(users).where(eq(users.id, id));
+    const result = await this.db.delete(users).where(eq(users.id, parseInt(id)));
     return result.length > 0;
   }
 
@@ -866,7 +866,7 @@ export class DatabaseStorage implements IStorage {
   // Email Verification Token operations
   async saveEmailVerificationToken(userId: string, email: string, token: string, expiresAt: Date): Promise<void> {
     await this.db.insert(emailVerificationTokens).values({
-      userId,
+      userId: parseInt(userId),
       email,
       token, // This should be hashed before storing
       expiresAt,
@@ -891,7 +891,7 @@ export class DatabaseStorage implements IStorage {
   // Password Reset Token operations
   async savePasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<void> {
     await this.db.insert(passwordResetTokens).values({
-      userId,
+      userId: parseInt(userId),
       token, // This should be hashed before storing
       expiresAt,
     });
@@ -1023,7 +1023,7 @@ export class DatabaseStorage implements IStorage {
         source: context?.source ?? subscriber.source,
         metadata: {
           ...mergedMetadata,
-          lastUnsubscribeReason: context?.reason ?? mergedMetadata.lastUnsubscribeReason ?? null,
+          lastUnsubscribeReason: context?.reason ?? (mergedMetadata as Record<string, any>).lastUnsubscribeReason ?? null,
         },
       })
       .where(eq(newsletterSubscribers.id, subscriber.id));
@@ -1158,7 +1158,7 @@ export class DatabaseStorage implements IStorage {
     const payload = {
       ...campaign,
       status: campaign.status ?? 'draft',
-      metrics: campaign.metrics ?? {},
+      metrics: (campaign as any).metrics ?? {},
     };
 
     const [created] = await this.db
@@ -1202,12 +1202,12 @@ export class DatabaseStorage implements IStorage {
 
   // Project operations
   async getProject(id: string): Promise<Project | undefined> {
-    const [project] = await this.db.select().from(projects).where(eq(projects.id, id));
+    const [project] = await this.db.select().from(projects).where(eq(projects.id, parseInt(id)));
     return project;
   }
 
   async getProjectsByUser(userId: string): Promise<Project[]> {
-    return await this.db.select().from(projects).where(eq(projects.ownerId, userId));
+    return await this.db.select().from(projects).where(eq(projects.ownerId, parseInt(userId)));
   }
 
   // Alias for backward compatibility
@@ -1220,14 +1220,14 @@ export class DatabaseStorage implements IStorage {
       this.db
         .select()
         .from(projects)
-        .where(eq(projects.ownerId, userId))
+        .where(eq(projects.ownerId, parseInt(userId)))
         .orderBy(desc(projects.createdAt))
         .limit(limit)
         .offset(offset),
       this.db
         .select({ count: sql<number>`count(*)::int` })
         .from(projects)
-        .where(eq(projects.ownerId, userId))
+        .where(eq(projects.ownerId, parseInt(userId)))
     ]);
     
     return {
@@ -1244,7 +1244,7 @@ export class DatabaseStorage implements IStorage {
     try {
       const condition =
         ownerId !== undefined
-          ? and(eq(projects.slug, slug), eq(projects.ownerId, ownerId))
+          ? and(eq(projects.slug, slug), eq(projects.ownerId, parseInt(ownerId)))
           : eq(projects.slug, slug);
 
       const result = await this.db
@@ -1285,13 +1285,13 @@ export class DatabaseStorage implements IStorage {
     const [project] = await this.db
       .update(projects)
       .set({ ...projectData, updatedAt: new Date() })
-      .where(eq(projects.id, id))
+      .where(eq(projects.id, parseInt(id)))
       .returning();
     return project;
   }
 
   async deleteProject(id: string): Promise<boolean> {
-    const result = await this.db.delete(projects).where(eq(projects.id, id));
+    const result = await this.db.delete(projects).where(eq(projects.id, parseInt(id)));
     return result.length > 0;
   }
 
@@ -1299,7 +1299,7 @@ export class DatabaseStorage implements IStorage {
     await this.db
       .update(projects)
       .set({ views: sql`${projects.views} + 1` })
-      .where(eq(projects.id, id));
+      .where(eq(projects.id, parseInt(id)));
   }
 
   // File operations
@@ -1309,7 +1309,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getFilesByProjectId(projectId: string): Promise<File[]> {
-    return await this.db.select().from(files).where(eq(files.projectId, projectId)).orderBy(files.path);
+    return await this.db.select().from(files).where(eq(files.projectId, parseInt(projectId))).orderBy(files.path);
   }
 
   async getFilesByProject(projectId: string): Promise<File[]> {
@@ -1326,7 +1326,7 @@ export class DatabaseStorage implements IStorage {
       : {
           name: fileData.path.split("/").pop() ?? fileData.path,
           path: fileData.path,
-          projectId: fileData.projectId,
+          projectId: parseInt(fileData.projectId),
           content: fileData.content,
           isDirectory: false,
         };
@@ -1375,7 +1375,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserApiKeys(userId: string): Promise<ApiKey[]> {
-    return await this.db.select().from(apiKeys).where(eq(apiKeys.userId, userId)).orderBy(desc(apiKeys.createdAt));
+    return await this.db.select().from(apiKeys).where(eq(apiKeys.userId, parseInt(userId))).orderBy(desc(apiKeys.createdAt));
   }
 
   async getApiKey(id: number): Promise<ApiKey | undefined> {
@@ -1424,7 +1424,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProjectCodeReviews(projectId: string): Promise<CodeReview[]> {
-    return await this.db.select().from(codeReviews).where(eq(codeReviews.projectId, projectId)).orderBy(desc(codeReviews.createdAt));
+    return await this.db.select().from(codeReviews).where(eq(codeReviews.projectId, parseInt(projectId))).orderBy(desc(codeReviews.createdAt));
   }
 
   async updateCodeReview(id: number, reviewData: Partial<InsertCodeReview>): Promise<CodeReview | undefined> {
@@ -1503,7 +1503,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMentorProfile(userId: string): Promise<MentorProfile | undefined> {
-    const [profile] = await this.db.select().from(mentorProfiles).where(eq(mentorProfiles.userId, userId));
+    const [profile] = await this.db.select().from(mentorProfiles).where(eq(mentorProfiles.userId, parseInt(userId)));
     return profile;
   }
 
@@ -1529,7 +1529,7 @@ export class DatabaseStorage implements IStorage {
     const [profile] = await this.db
       .update(mentorProfiles)
       .set(mentorUpdate)
-      .where(eq(mentorProfiles.userId, userId))
+      .where(eq(mentorProfiles.userId, parseInt(userId)))
       .returning();
     return profile;
   }
@@ -1537,7 +1537,7 @@ export class DatabaseStorage implements IStorage {
   // Template operations
   async getAllTemplates(publishedOnly?: boolean): Promise<Template[]> {
     const query = publishedOnly
-      ? this.db.select().from(templates).where(eq(templates.isPublished, true))
+      ? this.db.select().from(templates).where(eq(templates.published, true))
       : this.db.select().from(templates);
 
     return await query;
@@ -1607,7 +1607,7 @@ export class DatabaseStorage implements IStorage {
         features: ['SEO optimized', 'Dark mode', 'Markdown support', 'RSS feed'],
         isFeatured: true,
         isOfficial: true,
-        isPublished: true
+        published: true
       },
       {
         slug: 'react-dashboard',
@@ -1627,7 +1627,7 @@ export class DatabaseStorage implements IStorage {
         features: ['Charts', 'Tables', 'Authentication', 'Responsive'],
         isFeatured: true,
         isOfficial: true,
-        isPublished: true
+        published: true
       },
       {
         slug: 'express-api',
@@ -1647,7 +1647,7 @@ export class DatabaseStorage implements IStorage {
         features: ['JWT Auth', 'MongoDB', 'Rate limiting', 'API documentation'],
         isFeatured: false,
         isOfficial: true,
-        isPublished: true
+        published: true
       },
       {
         slug: 'nodejs-api',
@@ -1667,7 +1667,7 @@ export class DatabaseStorage implements IStorage {
         features: ['Database integration', 'CRUD operations', 'Error handling', 'Logging'],
         isFeatured: false,
         isOfficial: true,
-        isPublished: true
+        published: true
       },
       {
         slug: 'python-flask',
@@ -1687,7 +1687,7 @@ export class DatabaseStorage implements IStorage {
         features: ['User authentication', 'Database ORM', 'Templates', 'Forms'],
         isFeatured: true,
         isOfficial: true,
-        isPublished: true
+        published: true
       },
       {
         slug: 'vuejs-app',
@@ -1707,7 +1707,7 @@ export class DatabaseStorage implements IStorage {
         features: ['Vue Router', 'Vuex store', 'Composition API', 'TypeScript support'],
         isFeatured: false,
         isOfficial: true,
-        isPublished: true
+        published: true
       },
       {
         slug: 'discord-bot',
@@ -1727,7 +1727,7 @@ export class DatabaseStorage implements IStorage {
         features: ['Slash commands', 'Event handlers', 'Moderation tools', 'Music player'],
         isFeatured: true,
         isOfficial: true,
-        isPublished: true
+        published: true
       },
       {
         slug: 'phaser-game',
@@ -1747,7 +1747,7 @@ export class DatabaseStorage implements IStorage {
         features: ['Physics engine', 'Sprite animations', 'Sound effects', 'Level system'],
         isFeatured: false,
         isOfficial: true,
-        isPublished: true
+        published: true
       }
     ];
 
@@ -1820,7 +1820,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDeployments(projectId: string): Promise<Deployment[]> {
-    return await this.db.select().from(deployments).where(eq(deployments.projectId, projectId));
+    return await this.db.select().from(deployments).where(eq(deployments.projectId, parseInt(projectId)));
   }
 
   async updateDeployment(deploymentIdOrNumber: number | string, updates: Partial<InsertDeployment>): Promise<Deployment | undefined> {
@@ -1864,7 +1864,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProjectDeployments(projectId: string): Promise<Deployment[]> {
-    return await this.db.select().from(deployments).where(eq(deployments.projectId, projectId));
+    return await this.db.select().from(deployments).where(eq(deployments.projectId, parseInt(projectId)));
   }
 
   async getRecentDeployments(userId: string): Promise<Deployment[]> {
@@ -1953,7 +1953,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(teams)
       .innerJoin(teamMembers, eq(teams.id, teamMembers.teamId))
-      .where(eq(teamMembers.userId, userId));
+      .where(eq(teamMembers.userId, parseInt(userId)));
 
     return userTeams;
   }
@@ -2015,7 +2015,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProjectComments(projectId: string): Promise<Comment[]> {
-    return await this.db.select().from(comments).where(eq(comments.projectId, projectId)).orderBy(desc(comments.createdAt));
+    return await this.db.select().from(comments).where(eq(comments.projectId, parseInt(projectId))).orderBy(desc(comments.createdAt));
   }
 
   async getFileComments(fileId: number): Promise<Comment[] > {
@@ -2043,7 +2043,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProjectCheckpoints(projectId: string): Promise<Checkpoint[]> {
-    return await this.db.select().from(checkpoints).where(eq(checkpoints.projectId, projectId)).orderBy(desc(checkpoints.createdAt));
+    return await this.db.select().from(checkpoints).where(eq(checkpoints.projectId, parseInt(projectId))).orderBy(desc(checkpoints.createdAt));
   }
 
   // Agent operations
@@ -2114,15 +2114,15 @@ export class DatabaseStorage implements IStorage {
   async getActiveTimeTracking(projectId: string, userId: string): Promise<TimeTracking | undefined> {
     const [tracking] = await this.db.select().from(projectTimeTracking)
       .where(and(
-        eq(projectTimeTracking.projectId, projectId),
-        eq(projectTimeTracking.userId, userId),
+        eq(projectTimeTracking.projectId, parseInt(projectId)),
+        eq(projectTimeTracking.userId, parseInt(userId)),
         eq(projectTimeTracking.active, true)
       ));
     return tracking;
   }
 
   async getProjectTimeTracking(projectId: string): Promise<TimeTracking[]> {
-    return await this.db.select().from(projectTimeTracking).where(eq(projectTimeTracking.projectId, projectId)).orderBy(desc(projectTimeTracking.startTime));
+    return await this.db.select().from(projectTimeTracking).where(eq(projectTimeTracking.projectId, parseInt(projectId))).orderBy(desc(projectTimeTracking.startTime));
   }
 
   // Screenshot operations
@@ -2132,7 +2132,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProjectScreenshots(projectId: string): Promise<Screenshot[]> {
-    return await this.db.select().from(projectScreenshots).where(eq(projectScreenshots.projectId, projectId)).orderBy(desc(projectScreenshots.createdAt));
+    return await this.db.select().from(projectScreenshots).where(eq(projectScreenshots.projectId, parseInt(projectId))).orderBy(desc(projectScreenshots.createdAt));
   }
 
   async getScreenshot(id: number): Promise<Screenshot | undefined> {
@@ -2152,7 +2152,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProjectTaskSummaries(projectId: string): Promise<TaskSummary[] > {
-    return await this.db.select().from(taskSummaries).where(eq(taskSummaries.projectId, projectId)).orderBy(desc(taskSummaries.createdAt));
+    return await this.db.select().from(taskSummaries).where(eq(taskSummaries.projectId, parseInt(projectId))).orderBy(desc(taskSummaries.createdAt));
   }
 
   async updateTaskSummary(id: number, summary: Partial<InsertTaskSummary>): Promise<TaskSummary | undefined> {
@@ -2184,7 +2184,7 @@ export class DatabaseStorage implements IStorage {
     const [updated] = await this.db
       .update(users)
       .set(updatePayload)
-      .where(eq(users.id, userId))
+      .where(eq(users.id, parseInt(userId)))
       .returning();
 
     return updated;
@@ -2193,7 +2193,7 @@ export class DatabaseStorage implements IStorage {
   async updateStripeCustomerId(userId: string, customerId: string): Promise<User | undefined> {
     const [updated] = await this.db.update(users)
       .set({ stripeCustomerId: customerId, updatedAt: new Date() })
-      .where(eq(users.id, userId))
+      .where(eq(users.id, parseInt(userId)))
       .returning();
     return updated;
   }
@@ -2251,7 +2251,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUsageStats(userId: string, startDate?: Date, endDate?: Date): Promise<any> {
-    let query = eq(usageTracking.userId, userId);
+    let query = eq(usageTracking.userId, parseInt(userId));
 
     if (startDate && endDate) {
       query = and(
@@ -2287,10 +2287,10 @@ export class DatabaseStorage implements IStorage {
   async getUserUsage(userId: string, billingPeriodStart?: Date): Promise<any> {
     const query = billingPeriodStart
       ? and(
-          eq(usageTracking.userId, userId),
+          eq(usageTracking.userId, parseInt(userId)),
           eq(usageTracking.billingPeriodStart, billingPeriodStart)
         )
-      : eq(usageTracking.userId, userId);
+      : eq(usageTracking.userId, parseInt(userId));
 
     const results = await this.db.select({
       metricType: usageTracking.metricType,
@@ -2315,7 +2315,7 @@ export class DatabaseStorage implements IStorage {
 
   async getUsageHistory(userId: string, startDate: Date, endDate: Date, metricType?: string): Promise<any[]> {
     let query = and(
-      eq(usageTracking.userId, userId),
+      eq(usageTracking.userId, parseInt(userId)),
       gte(usageTracking.timestamp, startDate),
       lte(usageTracking.timestamp, endDate)
     );
@@ -2372,7 +2372,7 @@ export class DatabaseStorage implements IStorage {
     })
     .from(usageTracking)
     .where(and(
-      eq(usageTracking.userId, userId),
+      eq(usageTracking.userId, parseInt(userId)),
       gte(usageTracking.timestamp, startDate),
       lte(usageTracking.timestamp, endDate)
     ))
