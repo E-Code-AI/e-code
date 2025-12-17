@@ -148,17 +148,26 @@ class NotificationService {
     }
 
     try {
-      const response = await fetch(`${this.config.serverUrl}/api/users/push-token`, {
+      // Get device ID for session tracking
+      let deviceId: string | undefined;
+      try {
+        const Device = await import('expo-device');
+        deviceId = Device.modelId || Device.deviceName || undefined;
+      } catch {
+        // Device module not available
+      }
+
+      const response = await fetch(`${this.config.serverUrl}/api/mobile/push-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`,
         },
         body: JSON.stringify({
-          userId,
           pushToken,
-          platform: Platform.OS,
+          platform: Platform.OS as 'ios' | 'android',
           deviceType: Platform.OS === 'ios' ? 'ios' : 'android',
+          deviceId,
         }),
       });
 
