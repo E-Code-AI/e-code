@@ -7,7 +7,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
-  Alert
+  Alert,
+  Platform
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -223,8 +224,8 @@ const styles = StyleSheet.create({
   deploymentCommit: {
     fontSize: mobileTypography.fontSize.sm,
     color: mobileColors.textSecondary,
-    fontFamily: 'monospace',
-    marginBottom: 2
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace' }),
+    marginBottom: 2,
   },
   deploymentTime: {
     fontSize: mobileTypography.fontSize.xs,

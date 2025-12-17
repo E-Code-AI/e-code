@@ -8,7 +8,8 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
-  TextInput
+  TextInput,
+  Platform
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -334,7 +335,7 @@ const styles = StyleSheet.create({
   pathText: {
     fontSize: mobileTypography.fontSize.sm,
     color: mobileColors.textSecondary,
-    fontFamily: 'monospace'
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace' }),
   },
   loader: {
     flex: 1,
@@ -370,7 +371,7 @@ const styles = StyleSheet.create({
   fileSize: {
     fontSize: mobileTypography.fontSize.xs,
     color: mobileColors.textMuted,
-    fontFamily: 'monospace'
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace' }),
   },
   fileArrow: {
     fontSize: 24,

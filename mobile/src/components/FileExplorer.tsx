@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
 
 export type FileNode = {
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: mobileTypography.fontSize.sm,
     color: mobileColors.text,
-    fontFamily: 'monospace'
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace' }),
   },
   fileNameSelected: {
     color: mobileColors.primary,

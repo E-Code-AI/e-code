@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { CodeEditor } from '../components/CodeEditor';
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     fontSize: mobileTypography.fontSize.base,
     fontWeight: '600',
     color: mobileColors.text,
-    fontFamily: 'monospace'
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace' }),
   },
   unsavedIndicator: {
     fontSize: mobileTypography.fontSize.sm,
