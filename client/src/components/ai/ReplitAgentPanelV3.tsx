@@ -2215,7 +2215,6 @@ export function ReplitAgentPanelV3({
           {!useVirtualization && isPendingResponse && !streamingContent && activeThinking.length === 0 && (
             <StreamingSkeleton key="skeleton" />
           )}
-          </AnimatePresence>
           
           {/* Scroll sentinel - always at the bottom */}
           <div ref={lastMessageRef} className="h-0" />
