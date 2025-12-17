@@ -25,6 +25,7 @@ import {
 } from 'react-native';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
 import { useKeyboardToolbar } from './KeyboardToolbar';
+import { haptics } from '../services/haptics';
 
 interface CodeEditorProps {
   value: string;
@@ -66,8 +67,19 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     onChange(processedText);
   }, [processTextChange, onChange, value]);
 
-  const increaseFontSize = () => setFontSize(prev => Math.min(prev + 2, 24));
-  const decreaseFontSize = () => setFontSize(prev => Math.max(prev - 2, 10));
+  const increaseFontSize = () => {
+    haptics.light();
+    setFontSize(prev => Math.min(prev + 2, 24));
+  };
+  const decreaseFontSize = () => {
+    haptics.light();
+    setFontSize(prev => Math.max(prev - 2, 10));
+  };
+  
+  const handleSave = useCallback(() => {
+    haptics.success();
+    onSave?.();
+  }, [onSave]);
 
   return (
     <KeyboardAvoidingView
@@ -96,7 +108,10 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
           <TouchableOpacity 
             style={styles.settingsButton} 
-            onPress={() => setShowLineNumbers(!showLineNumbers)}
+            onPress={() => {
+              haptics.light();
+              setShowLineNumbers(!showLineNumbers);
+            }}
             data-testid="editor-toggle-lines"
           >
             <Text style={styles.settingsButtonText}>{showLineNumbers ? 'Hide #' : 'Show #'}</Text>
@@ -190,7 +205,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         {onSave && (
           <TouchableOpacity 
             style={styles.saveButton} 
-            onPress={onSave}
+            onPress={handleSave}
             data-testid="editor-save-button"
           >
             <Text style={styles.saveButtonText}>Save</Text>

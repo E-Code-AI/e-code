@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
+import { haptics } from '../services/haptics';
 
 export type FileNode = {
   id: string;
@@ -82,6 +83,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
               isSelected && styles.fileItemSelected
             ]}
             onPress={() => {
+              haptics.light();
               if (file.type === 'directory') {
                 toggleDirectory(file.id);
               } else {
