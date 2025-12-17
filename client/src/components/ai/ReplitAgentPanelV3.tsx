@@ -1902,11 +1902,11 @@ export function ReplitAgentPanelV3({
               showLabel={false}
             />
             {/* Web Search Badge - Shows when web search is active */}
-            <AnimatePresence>
+            <LazyAnimatePresence>
               {agentToolsSettings.webSearch && !isCompactMode && (
                 <WebSearchBadge enabled={agentToolsSettings.webSearch} />
               )}
-            </AnimatePresence>
+            </LazyAnimatePresence>
             {/* Model chip with dropdown for quick model selection */}
             <DropdownMenu open={isModelSelectorOpen} onOpenChange={setIsModelSelectorOpen}>
               <DropdownMenuTrigger asChild>
@@ -2095,7 +2095,7 @@ export function ReplitAgentPanelV3({
           </div>
           
           {/* Build/Install/QA Validation Progress (Task 6) */}
-          <AnimatePresence>
+          <LazyAnimatePresence>
             {validationStep !== 'idle' && (
               <BuildValidationProgress
                 currentStep={validationStep}
@@ -2104,7 +2104,7 @@ export function ReplitAgentPanelV3({
                 qaResult={qaResult}
               />
             )}
-          </AnimatePresence>
+          </LazyAnimatePresence>
           
           {/* Conditionally use virtualized list for long conversations (>20 messages) */}
           {useVirtualization ? (
@@ -2135,7 +2135,7 @@ export function ReplitAgentPanelV3({
                   isRestoringCheckpoint={isRestoringCheckpoint}
                 />
               ))}
-            </AnimatePresence>
+            </LazyAnimatePresence>
           )}
 
           {/* Active Thinking Steps (while streaming) */}
