@@ -78,7 +78,8 @@ if (redisUrl) {
       redisClient = null;
     });
     
-    redisClient.connect().catch(() => {
+    redisClient.connect().catch((err) => {
+      logger.warn('Redis rate limiter connection failed, using in-memory fallback', { error: err?.message || 'Unknown error' });
       redisClient = null;
     });
   } catch (error) {
