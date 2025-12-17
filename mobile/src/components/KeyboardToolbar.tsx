@@ -201,13 +201,15 @@ export function useKeyboardToolbar(
   /**
    * Process text changes for auto-completion features
    * 
-   * IMPORTANT: We calculate cursor position from text diff, NOT from selection state
-   * because selection state updates async AFTER onChangeText fires.
+   * IMPORTANT: Auto-close brackets is DISABLED because React Native's TextInput
+   * doesn't support programmatic cursor positioning after text modification.
+   * This causes duplicate characters when the cursor isn't repositioned correctly.
    * 
-   * Auto-completion features:
-   * - Auto-close brackets: {}, [], (), "", '', ``
-   * - Auto-indent on Enter
-   * - Skip closing bracket if already present (prevents duplicates)
+   * Instead, use the keyboard toolbar buttons for bracket insertion which
+   * properly handles cursor positioning via the insertText function.
+   * 
+   * Auto-completion features (enabled):
+   * - Auto-indent on Enter (preserves indentation level)
    */
   const processTextChange = useCallback((newText: string, previousText: string): string => {
     // Only process single character insertions
@@ -229,35 +231,8 @@ export function useKeyboardToolbar(
     }
 
     const insertedChar = newText[insertPos];
-    const charAfter = newText[insertPos + 1];
 
-    // Handle closing bracket - skip if already present (prevents duplicates)
-    if (CLOSING_BRACKETS.has(insertedChar) && insertedChar === charAfter) {
-      // User typed a closing bracket that's already there from auto-complete
-      // Remove the duplicate by returning text without the extra character
-      return newText.slice(0, insertPos + 1) + newText.slice(insertPos + 2);
-    }
-
-    // Auto-close opening brackets (only if next char isn't already the closing bracket)
-    if (BRACKET_PAIRS[insertedChar]) {
-      const closingBracket = BRACKET_PAIRS[insertedChar];
-      
-      // Don't auto-close if:
-      // 1. Next character is already the closing bracket
-      // 2. Next character is alphanumeric (likely typing inside a word)
-      if (charAfter === closingBracket) {
-        return newText; // Already has closing bracket
-      }
-      if (charAfter && /[a-zA-Z0-9]/.test(charAfter)) {
-        return newText; // Don't auto-close in middle of word
-      }
-
-      const before = newText.slice(0, insertPos + 1);
-      const after = newText.slice(insertPos + 1);
-      return before + closingBracket + after;
-    }
-
-    // Auto-indent on Enter
+    // Auto-indent on Enter (this works correctly as cursor stays at end of insertion)
     if (insertedChar === '\n') {
       const lines = newText.slice(0, insertPos + 1).split('\n');
       const currentLine = lines[lines.length - 2] || '';
@@ -277,6 +252,8 @@ export function useKeyboardToolbar(
       return before + indent + after;
     }
 
+    // No auto-close brackets - use toolbar buttons instead
+    // This prevents duplicate character issues caused by async cursor updates
     return newText;
   }, [getIndentLevel]);
 
